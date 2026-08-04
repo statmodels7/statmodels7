@@ -1,0 +1,28 @@
+url: https://statmodels7.github.io/statmodels7/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: The toolkit
+  desc: >
+    Which packages the toolkit is made of, at which versions, and whether any
+    of their exports mask one another.
+  contents:
+  - statmodels7_packages
+  - statmodels7_versions
+  - statmodels7_conflicts
+
+- title: Installing and updating
+  desc: >
+    The toolkit is not on CRAN, so the install path is GitHub and the
+    dependencies among the members are resolved by pak.
+  contents:
+  - statmodels7_update
+
+- title: Internals
+  desc: >
+    The machinery the exported functions are built from. None of it is
+    exported, and none is needed to use the package.
+  contents:
+  - has_keyword("internal")

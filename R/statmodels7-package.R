@@ -1,0 +1,28 @@
+#' @keywords internal
+"_PACKAGE"
+
+## usethis namespace: start
+## usethis namespace: end
+NULL
+
+# The members sit in Imports rather than Depends. Depends would attach them
+# through R's own mechanism, in the order the field happens to list them and
+# with no message, which leaves a caller no way to see what was attached or at
+# which version. Imports pulls them all at installation, which is what makes
+# one install command install the toolkit, and the attaching is done here so
+# that it can be reported.
+#
+# The names are read out of the package's own DESCRIPTION rather than written
+# out a second time here: a list repeated in two places is a list that will
+# disagree with itself.
+#
+# R CMD check reports "All declared Imports should be used" for every member,
+# and the note is correct as far as its heuristic can see: nothing here calls
+# any member by name. It is left standing rather than silenced. The Imports
+# field is what makes installing this package install the toolkit, which is
+# the package's whole purpose, and the alternatives are worse -- importing an
+# arbitrary symbol from each member to satisfy the check would put five
+# unused bindings in the namespace and say something false about what the
+# package uses, while moving the members to Depends would give up control of
+# the attaching that this package exists to exercise. The note is a NOTE, and
+# the CI treats only warnings as failures.
