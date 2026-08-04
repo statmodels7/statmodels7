@@ -1,0 +1,136 @@
+# statmodels7
+
+[statmodels7](https://statmodels7.github.io/statmodels7/) installs and
+attaches the packages of the
+[statmodels7](https://statmodels7.github.io) toolkit, an S7 framework
+for statistical modelling. Installing this package installs all of them,
+and attaching it attaches all of them.
+
+## Installation
+
+``` r
+
+# install.packages("pak")
+pak::pak("statmodels7/statmodels7")
+```
+
+Attaching it attaches the members, and says which arrived at which
+version.
+
+``` r
+
+library(statmodels7)
+#> -- Attaching the statmodels7 toolkit 0.1.0
+#> v basis7         0.3.1        v optimizers7    0.0.0.9000
+#> v distributions7 0.0.0.9000   v parameters7    0.3.0
+#> v linkfunctions7 0.0.0.9000
+```
+
+To install or update every member afterwards:
+
+``` r
+
+statmodels7_update("install")
+```
+
+## What the toolkit is
+
+Almost every R modelling package carries its own distributions and link
+functions, written as internal helpers: a `switch` on a character
+string, closures private to the package that owns them. They are not
+objects, so nothing outside can reuse them, extend them, or ask them for
+anything their author did not happen to need — and since each package
+writes only what it needs, that is usually the density and the score,
+sometimes the Hessian, and nothing beyond.
+
+A Gamma is a fixed mathematical object. It should be written once,
+correctly, with everything a modelling routine could want already
+computed, and then everyone builds on top. The same argument applies to
+an optimiser, whose stopping rule decides what a run means by *finished*
+and is usually a number buried three levels down inside the function
+that needs it.
+
+``` r
+
+statmodels7_packages()
+#> [1] "basis7"         "distributions7" "linkfunctions7" "optimizers7"   
+#> [5] "parameters7"
+```
+
+| package | what it provides |
+|----|----|
+| [linkfunctions7](https://statmodels7.github.io/linkfunctions7/) | link functions as objects, with exact derivatives to fourth order in both directions |
+| [distributions7](https://statmodels7.github.io/distributions7/) | univariate and multivariate distributions with exact score, information and higher derivatives |
+| [optimizers7](https://statmodels7.github.io/optimizers7/) | optimisation algorithms as objects, with composable stopping rules |
+| [basis7](https://statmodels7.github.io/basis7/) | basis expansions with derivatives, anchored integrals and exact Gram matrices |
+| [parameters7](https://statmodels7.github.io/parameters7/) | constrained parameters as maps from an unconstrained vector, exact to fourth order |
+
+## What this package does
+
+Four functions, and an attach hook.
+
+``` r
+
+statmodels7_versions()
+#>          package    version
+#> 1         basis7      0.3.1
+#> 2 distributions7 0.0.0.9000
+#> 3 linkfunctions7 0.0.0.9000
+#> 4    optimizers7 0.0.0.9000
+#> 5    parameters7      0.3.0
+```
+
+``` r
+
+statmodels7_conflicts()
+#> named list()
+```
+
+The members sit in `Imports` rather than `Depends`, which is what lets
+the attaching be reported rather than merely happen: `Depends` would
+attach them in the order the field lists them, with no message and no
+way for a caller to see what arrived at which version.
+
+## Related
+
+The mathematical companion to the whole toolkit is the
+[book](https://statmodels7.github.io/book/), which gives every formula
+the packages implement with its derivation and its citation.
+
+# Package index
+
+## The toolkit
+
+Which packages the toolkit is made of, at which versions, and whether
+any of their exports mask one another.
+
+- [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
+  : The Packages of the Toolkit
+- [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md)
+  : Installed Versions of the Toolkit
+- [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
+  : Exports of the Toolkit That Mask One Another
+
+## Installing and updating
+
+The toolkit is not on CRAN, so the install path is GitHub and the
+dependencies among the members are resolved by pak.
+
+- [`statmodels7_update()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_update.md)
+  : Install or Update the Toolkit
+
+## Internals
+
+The machinery the exported functions are built from. None of it is
+exported, and none is needed to use the package.
+
+- [`format_conflicts()`](https://statmodels7.github.io/statmodels7/reference/format_conflicts.md)
+  : Render a Conflict Report
+- [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
+  [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
+  : statmodels7: The S7 Toolkit for Statistical Modelling
+- [`statmodels7_attach()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach.md)
+  : Attach the Member Packages
+- [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)
+  : The Body of the Attach Message
+
