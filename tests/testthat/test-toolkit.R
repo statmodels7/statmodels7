@@ -4,7 +4,7 @@
 test_that("the members are the ones DESCRIPTION imports", {
   pkgs <- statmodels7_packages()
   expect_identical(pkgs, c("basis7", "distributions7", "linkfunctions7",
-                           "optimizers7", "parameters7"))
+                           "numericals7", "optimizers7", "parameters7"))
 
   # The list is read rather than written out, so it must agree with the field
   # it is read from. Parsed here a second way, so that a mistake in the
