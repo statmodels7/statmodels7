@@ -48,10 +48,10 @@ asking for explicitly.
 ``` r
 statmodels7_update()
 #> statmodels7 toolkit, installed versions:
-#>   basis7           0.3.1
+#>   basis7           0.4.0
 #>   distributions7   0.0.0.9000
 #>   linkfunctions7   0.0.0.9000
-#>   numericals7      0.1.0
+#>   numericals7      0.4.0
 #>   optimizers7      0.0.0.9000
 #>   parameters7      0.5.0
 #> 

@@ -23,10 +23,10 @@ member that is not installed.
 ``` r
 statmodels7_versions()
 #>          package    version
-#> 1         basis7      0.3.1
+#> 1         basis7      0.4.0
 #> 2 distributions7 0.0.0.9000
 #> 3 linkfunctions7 0.0.0.9000
-#> 4    numericals7      0.1.0
+#> 4    numericals7      0.4.0
 #> 5    optimizers7 0.0.0.9000
 #> 6    parameters7      0.5.0
 ```

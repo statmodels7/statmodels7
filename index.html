@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>The S7 Toolkit for Statistical Modelling • statmodels7</title>
+<title>The S7 Toolkit for Statistical Modeling • statmodels7</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -15,9 +15,9 @@
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="The S7 Toolkit for Statistical Modelling">
-<meta name="description" content="Installs and attaches the packages of the statmodels7 toolkit, a set of statistical modelling components built on the S7 object system: link functions, probability distributions, optimisation algorithms, basis expansions and constrained parameters. Installing this package installs all of them, attaching it attaches all of them, and it reports which are out of date and which of their exports mask one another.">
-<meta property="og:description" content="Installs and attaches the packages of the statmodels7 toolkit, a set of statistical modelling components built on the S7 object system: link functions, probability distributions, optimisation algorithms, basis expansions and constrained parameters. Installing this package installs all of them, attaching it attaches all of them, and it reports which are out of date and which of their exports mask one another.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="The S7 Toolkit for Statistical Modeling">
+<meta name="description" content="Installs and attaches the packages of the statmodels7 toolkit, a set of statistical modeling components built on the S7 object system: link functions, probability distributions, optimization algorithms, basis expansions and constrained parameters. Installing this package installs all of them, attaching it attaches all of them, and it reports which are out of date and which of their exports mask one another.">
+<meta property="og:description" content="Installs and attaches the packages of the statmodels7 toolkit, a set of statistical modeling components built on the S7 object system: link functions, probability distributions, optimization algorithms, basis expansions and constrained parameters. Installing this package installs all of them, attaching it attaches all of them, and it reports which are out of date and which of their exports mask one another.">
 <meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png">
 </head>
 <body>
@@ -58,7 +58,7 @@
 <img src="logo.png" class="logo" alt=""><h1 id="statmodels7-">statmodels7 <a class="anchor" aria-label="anchor" href="#statmodels7-"></a>
 </h1>
 </div>
-<p><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a> installs and attaches the packages of the <a href="https://statmodels7.github.io" class="external-link">statmodels7</a> toolkit, an S7 framework for statistical modelling. Installing this package installs all of them, and attaching it attaches all of them.</p>
+<p><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a> installs and attaches the packages of the <a href="https://statmodels7.github.io" class="external-link">statmodels7</a> toolkit, an S7 framework for statistical modeling. Installing this package installs all of them, and attaching it attaches all of them.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -79,8 +79,8 @@
 <div class="section level2">
 <h2 id="what-the-toolkit-is">What the toolkit is<a class="anchor" aria-label="anchor" href="#what-the-toolkit-is"></a>
 </h2>
-<p>Almost every R modelling package carries its own distributions and link functions, written as internal helpers: a <code>switch</code> on a character string, closures private to the package that owns them. They are not objects, so nothing outside can reuse them, extend them, or ask them for anything their author did not happen to need — and since each package writes only what it needs, that is usually the density and the score, sometimes the Hessian, and nothing beyond.</p>
-<p>A Gamma is a fixed mathematical object. It should be written once, correctly, with everything a modelling routine could want already computed, and then everyone builds on top. The same argument applies to an optimiser, whose stopping rule decides what a run means by <em>finished</em> and is usually a number buried three levels down inside the function that needs it.</p>
+<p>Almost every R modeling package carries its own distributions and link functions, written as internal helpers: a <code>switch</code> on a character string, closures private to the package that owns them. They are not objects, so nothing outside can reuse them, extend them, or ask them for anything their author did not happen to need — and since each package writes only what it needs, that is usually the density and the score, sometimes the Hessian, and nothing beyond.</p>
+<p>A Gamma is a fixed mathematical object. It should be written once, correctly, with everything a modeling routine could want already computed, and then everyone builds on top. The same argument applies to an optimizer, whose stopping rule decides what a run means by <em>finished</em> and is usually a number buried three levels down inside the function that needs it.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_packages.html">statmodels7_packages</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "basis7"         "distributions7" "linkfunctions7" "optimizers7"   </span></span>
@@ -105,7 +105,7 @@
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/optimizers7/" class="external-link">optimizers7</a></td>
-<td>optimisation algorithms as objects, with composable stopping rules</td>
+<td>optimization algorithms as objects, with composable stopping rules</td>
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/basis7/" class="external-link">basis7</a></td>

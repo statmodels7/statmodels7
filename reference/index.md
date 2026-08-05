@@ -29,7 +29,7 @@ exported, and none is needed to use the package.
   : Render a Conflict Report
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
-  : statmodels7: The S7 Toolkit for Statistical Modelling
+  : statmodels7: The S7 Toolkit for Statistical Modeling
 - [`statmodels7_attach()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach.md)
   : Attach the Member Packages
 - [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)

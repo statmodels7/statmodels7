@@ -1,8 +1,8 @@
-# statmodels7: The S7 Toolkit for Statistical Modelling
+# statmodels7: The S7 Toolkit for Statistical Modeling
 
 Installs and attaches the packages of the statmodels7 toolkit, a set of
-statistical modelling components built on the S7 object system: link
-functions, probability distributions, optimisation algorithms, basis
+statistical modeling components built on the S7 object system: link
+functions, probability distributions, optimization algorithms, basis
 expansions and constrained parameters. Installing this package installs
 all of them, attaching it attaches all of them, and it reports which are
 out of date and which of their exports mask one another.

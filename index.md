@@ -3,7 +3,7 @@
 [statmodels7](https://statmodels7.github.io/statmodels7/) installs and
 attaches the packages of the
 [statmodels7](https://statmodels7.github.io) toolkit, an S7 framework
-for statistical modelling. Installing this package installs all of them,
+for statistical modeling. Installing this package installs all of them,
 and attaching it attaches all of them.
 
 ## Installation
@@ -35,7 +35,7 @@ statmodels7_update("install")
 
 ## What the toolkit is
 
-Almost every R modelling package carries its own distributions and link
+Almost every R modeling package carries its own distributions and link
 functions, written as internal helpers: a `switch` on a character
 string, closures private to the package that owns them. They are not
 objects, so nothing outside can reuse them, extend them, or ask them for
@@ -44,9 +44,9 @@ writes only what it needs, that is usually the density and the score,
 sometimes the Hessian, and nothing beyond.
 
 A Gamma is a fixed mathematical object. It should be written once,
-correctly, with everything a modelling routine could want already
+correctly, with everything a modeling routine could want already
 computed, and then everyone builds on top. The same argument applies to
-an optimiser, whose stopping rule decides what a run means by *finished*
+an optimizer, whose stopping rule decides what a run means by *finished*
 and is usually a number buried three levels down inside the function
 that needs it.
 
@@ -61,7 +61,7 @@ statmodels7_packages()
 |----|----|
 | [linkfunctions7](https://statmodels7.github.io/linkfunctions7/) | link functions as objects, with exact derivatives to fourth order in both directions |
 | [distributions7](https://statmodels7.github.io/distributions7/) | univariate and multivariate distributions with exact score, information and higher derivatives |
-| [optimizers7](https://statmodels7.github.io/optimizers7/) | optimisation algorithms as objects, with composable stopping rules |
+| [optimizers7](https://statmodels7.github.io/optimizers7/) | optimization algorithms as objects, with composable stopping rules |
 | [basis7](https://statmodels7.github.io/basis7/) | basis expansions with derivatives, anchored integrals and exact Gram matrices |
 | [parameters7](https://statmodels7.github.io/parameters7/) | constrained parameters as maps from an unconstrained vector, exact to fourth order |
 
