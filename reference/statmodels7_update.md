@@ -51,12 +51,13 @@ statmodels7_update()
 #>   basis7           0.3.1
 #>   distributions7   0.0.0.9000
 #>   linkfunctions7   0.0.0.9000
+#>   numericals7      0.1.0
 #>   optimizers7      0.0.0.9000
-#>   parameters7      0.3.0
+#>   parameters7      0.5.0
 #> 
 #> To install or update every member:
 #>   statmodels7_update("install")
-#>   pak::pak(c("statmodels7/basis7", "statmodels7/distributions7", "statmodels7/linkfunctions7", "statmodels7/optimizers7", "statmodels7/parameters7"))
+#>   pak::pak(c("statmodels7/basis7", "statmodels7/distributions7", "statmodels7/linkfunctions7", "statmodels7/numericals7", "statmodels7/optimizers7", "statmodels7/parameters7"))
 
 if (FALSE) { # \dontrun{
 statmodels7_update("install")

@@ -10,13 +10,13 @@ Source:
 [`DESCRIPTION`](https://github.com/statmodels7/statmodels7/blob/master/DESCRIPTION)
 
 Tinervia G (2026). *statmodels7: The S7 Toolkit for Statistical
-Modelling*. R package version 0.1.0,
+Modelling*. R package version 0.2.0,
 <https://statmodels7.github.io/statmodels7/>.
 
     @Manual{,
       title = {statmodels7: The S7 Toolkit for Statistical Modelling},
       author = {Giovanni Tinervia},
       year = {2026},
-      note = {R package version 0.1.0},
+      note = {R package version 0.2.0},
       url = {https://statmodels7.github.io/statmodels7/},
     }

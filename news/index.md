@@ -1,5 +1,13 @@
 # Changelog
 
+## statmodels7 0.2.0
+
+- numericals7 joins the toolkit as its sixth member and the root of its
+  dependency graph: the numerical layer – jets, and next the single
+  stencil library and the parameter-vectorized quadrature – written once
+  where every package above can consume it. The member list is read from
+  `Imports`, so nothing else changed.
+
 ## statmodels7 0.1.0
 
 - First release. The package installs and attaches the five members of
