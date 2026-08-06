@@ -31,5 +31,5 @@ two cannot disagree. A base or third-party dependency does not end in
 ``` r
 statmodels7_packages()
 #> [1] "basis7"         "distributions7" "linkfunctions7" "numericals7"   
-#> [5] "optimizers7"    "parameters7"   
+#> [5] "optimizers7"    "parameters7"    "penalties7"    
 ```

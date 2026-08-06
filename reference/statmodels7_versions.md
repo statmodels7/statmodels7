@@ -26,7 +26,8 @@ statmodels7_versions()
 #> 1         basis7      0.4.0
 #> 2 distributions7 0.0.0.9000
 #> 3 linkfunctions7 0.0.0.9000
-#> 4    numericals7      0.4.0
+#> 4    numericals7      0.7.0
 #> 5    optimizers7 0.0.0.9000
-#> 6    parameters7      0.5.0
+#> 6    parameters7      0.7.0
+#> 7     penalties7      0.2.0
 ```
