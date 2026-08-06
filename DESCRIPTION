@@ -25,6 +25,7 @@ Imports:
     numericals7,
     optimizers7,
     parameters7,
+    penalties7,
     utils
 Suggests:
     pak,
@@ -37,7 +38,8 @@ Remotes:
     statmodels7/linkfunctions7,
     statmodels7/numericals7,
     statmodels7/optimizers7,
-    statmodels7/parameters7
+    statmodels7/parameters7,
+    statmodels7/penalties7
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
