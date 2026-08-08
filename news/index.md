@@ -10,8 +10,8 @@
 
 ## statmodels7 0.1.0
 
-- First release. The package installs and attaches the five members of
-  the toolkit – `linkfunctions7`, `distributions7`, `optimizers7`,
+- First release. The package installs and attaches the member packages
+  of the toolkit – `linkfunctions7`, `distributions7`, `optimizers7`,
   `basis7` and `parameters7` – so that installing it installs all of
   them and
   [`library(statmodels7)`](https://statmodels7.github.io/statmodels7/)
