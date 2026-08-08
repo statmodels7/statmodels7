@@ -1,5 +1,12 @@
 # Changelog
 
+## statmodels7 0.3.0
+
+- modelterms7 joins the toolkit as its eighth member: model terms as
+  objects – the parametric block, the penalized quartet, grouped random
+  effects, the formula interpreter and the censored response. The member
+  list is read from `Imports`, so nothing else changed.
+
 ## statmodels7 0.2.0
 
 - numericals7 joins the toolkit as its sixth member and the root of its

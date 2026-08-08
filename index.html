@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,10 +68,11 @@
 <p>Attaching it attaches the members, and says which arrived at which version.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.1.0</span></span>
-<span><span class="co">#&gt; v basis7         0.3.1        v optimizers7    0.0.0.9000</span></span>
-<span><span class="co">#&gt; v distributions7 0.0.0.9000   v parameters7    0.3.0</span></span>
-<span><span class="co">#&gt; v linkfunctions7 0.0.0.9000</span></span></code></pre></div>
+<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.3.0</span></span>
+<span><span class="co">#&gt; v basis7         0.4.0        v numericals7    0.7.0</span></span>
+<span><span class="co">#&gt; v distributions7 0.0.0.9000   v optimizers7    0.0.0.9000</span></span>
+<span><span class="co">#&gt; v linkfunctions7 0.0.0.9000   v parameters7    0.8.0</span></span>
+<span><span class="co">#&gt; v modelterms7    0.5.0        v penalties7     0.2.0</span></span></code></pre></div>
 <p>To install or update every member afterwards:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_update.html">statmodels7_update</a></span><span class="op">(</span><span class="st">"install"</span><span class="op">)</span></span></code></pre></div>
@@ -83,8 +84,8 @@
 <p>A Gamma is a fixed mathematical object. It should be written once, correctly, with everything a modeling routine could want already computed, and then everyone builds on top. The same argument applies to an optimizer, whose stopping rule decides what a run means by <em>finished</em> and is usually a number buried three levels down inside the function that needs it.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_packages.html">statmodels7_packages</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "basis7"         "distributions7" "linkfunctions7" "optimizers7"   </span></span>
-<span><span class="co">#&gt; [5] "parameters7"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "basis7"         "distributions7" "linkfunctions7" "modelterms7"   </span></span>
+<span><span class="co">#&gt; [5] "numericals7"    "optimizers7"    "parameters7"    "penalties7"</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="50%">
@@ -125,11 +126,14 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_versions.html">statmodels7_versions</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          package    version</span></span>
-<span><span class="co">#&gt; 1         basis7      0.3.1</span></span>
+<span><span class="co">#&gt; 1         basis7      0.4.0</span></span>
 <span><span class="co">#&gt; 2 distributions7 0.0.0.9000</span></span>
 <span><span class="co">#&gt; 3 linkfunctions7 0.0.0.9000</span></span>
-<span><span class="co">#&gt; 4    optimizers7 0.0.0.9000</span></span>
-<span><span class="co">#&gt; 5    parameters7      0.3.0</span></span></code></pre></div>
+<span><span class="co">#&gt; 4    modelterms7      0.5.0</span></span>
+<span><span class="co">#&gt; 5    numericals7      0.7.0</span></span>
+<span><span class="co">#&gt; 6    optimizers7 0.0.0.9000</span></span>
+<span><span class="co">#&gt; 7    parameters7      0.8.0</span></span>
+<span><span class="co">#&gt; 8     penalties7      0.2.0</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_conflicts.html">statmodels7_conflicts</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; named list()</span></span></code></pre></div>
