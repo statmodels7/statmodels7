@@ -29,8 +29,8 @@ names therefore does not matter.
 
 With \code{action = "report"}, the default, nothing is installed and the
 function returns the versions currently installed together with the call
-that would update them. Installing packages is a side effect worth asking
-for explicitly.
+that would update them. Installing packages is a side effect that must
+be requested explicitly.
 }
 \examples{
 statmodels7_update()

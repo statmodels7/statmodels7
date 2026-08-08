@@ -67,9 +67,8 @@ statmodels7_versions <- function() {
 #' run of spaces is invisible where it is written and visible wherever the
 #' message is pasted. A member that is not installed is marked rather than
 #' shown blank: the two are different states and only one of them is a
-#' complete toolkit. Plain ASCII throughout, a non-ASCII character in a
-#' package's own output being a portability question not worth answering for
-#' a decoration.
+#' complete toolkit. Plain ASCII throughout: a non-ASCII character in a
+#' package's own output is a portability risk taken for a decoration.
 #'
 #' @param versions A data frame as \code{\link{statmodels7_versions}} returns.
 #'
