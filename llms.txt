@@ -21,10 +21,10 @@ version.
 
 library(statmodels7)
 #> -- Attaching the statmodels7 toolkit 0.3.0
-#> v basis7         0.4.0        v numericals7    0.7.0
-#> v distributions7 0.0.0.9000   v optimizers7    0.0.0.9000
-#> v linkfunctions7 0.0.0.9000   v parameters7    0.8.0
-#> v modelterms7    0.5.0        v penalties7     0.2.0
+#> v basis7         0.4.0    v numericals7    0.7.0
+#> v distributions7 0.1.0    v optimizers7    0.1.0
+#> v linkfunctions7 0.1.0    v parameters7    0.8.0
+#> v modelterms7    0.13.0   v penalties7     0.5.0
 ```
 
 To install or update every member afterwards:
@@ -73,15 +73,15 @@ Four functions, and an attach hook.
 ``` r
 
 statmodels7_versions()
-#>          package    version
-#> 1         basis7      0.4.0
-#> 2 distributions7 0.0.0.9000
-#> 3 linkfunctions7 0.0.0.9000
-#> 4    modelterms7      0.5.0
-#> 5    numericals7      0.7.0
-#> 6    optimizers7 0.0.0.9000
-#> 7    parameters7      0.8.0
-#> 8     penalties7      0.2.0
+#>          package version
+#> 1         basis7   0.4.0
+#> 2 distributions7   0.1.0
+#> 3 linkfunctions7   0.1.0
+#> 4    modelterms7  0.13.0
+#> 5    numericals7   0.7.0
+#> 6    optimizers7   0.1.0
+#> 7    parameters7   0.8.0
+#> 8     penalties7   0.5.0
 ```
 
 ``` r
