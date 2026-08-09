@@ -15,6 +15,14 @@
 #' Only members that are attached are examined, since a package that is merely
 #' installed masks nothing.
 #'
+#' The names come from each member's namespace rather than from its attached
+#' environment. The two agree for an installed package and do not under
+#' \pkg{pkgload}, which attaches a package's internal objects along with its
+#' exports and adds shims of its own (\code{system.file},
+#' \code{library.dynam.unload}); reading the attached environment reports those
+#' shims as a name every member exports, which is a conflict between packages
+#' that export no such thing.
+#'
 #' @return A named list, one entry per masked name, each a character vector of
 #'   the packages exporting it, most recently attached first. Empty when there
 #'   is nothing to report.
@@ -33,8 +41,9 @@ statmodels7_conflicts <- function() {
   on_path <- intersect(search(), attached)
   if (length(on_path) < 2L) return(structure(list(), names = character()))
 
-  exports <- lapply(on_path, function(env) ls(as.environment(env)))
-  names(exports) <- sub("^package:", "", on_path)
+  nms <- sub("^package:", "", on_path)
+  exports <- lapply(nms, getNamespaceExports)
+  names(exports) <- nms
 
   all_names <- unlist(exports, use.names = FALSE)
   dup <- unique(all_names[duplicated(all_names)])

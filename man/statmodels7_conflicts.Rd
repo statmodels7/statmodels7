@@ -25,6 +25,14 @@ dispatch, they do not mask.
 
 Only members that are attached are examined, since a package that is merely
 installed masks nothing.
+
+The names come from each member's namespace rather than from its attached
+environment. The two agree for an installed package and do not under
+\pkg{pkgload}, which attaches a package's internal objects along with its
+exports and adds shims of its own (\code{system.file},
+\code{library.dynam.unload}); reading the attached environment reports those
+shims as a name every member exports, which is a conflict between packages
+that export no such thing.
 }
 \examples{
 statmodels7_conflicts()

@@ -89,6 +89,26 @@ test_that("conflicts are reported in the order the search path resolves them", {
   }
 })
 
+test_that("a conflict is read from the namespace, not the attached frame", {
+  # The two agree for an installed package and do not under pkgload, which
+  # attaches a package's internals along with its exports and adds shims of
+  # its own. Reading the attached frame reported `system.file` as a name
+  # every member exports -- a conflict between packages that export no such
+  # thing -- whenever more than one member had been loaded from source in
+  # the same session.
+  attached <- intersect(search(),
+                        paste0("package:", statmodels7_packages()))
+  skip_if(length(attached) < 2L, "fewer than two members attached")
+
+  for (env in attached) {
+    p <- sub("^package:", "", env)
+    extra <- setdiff(ls(as.environment(env)), getNamespaceExports(p))
+    # nothing outside the namespace's exports may reach the report
+    expect_false(any(names(statmodels7_conflicts()) %in% extra),
+                 label = sprintf("%s: report drew on the attached frame", p))
+  }
+})
+
 test_that("the report describes what is installed without installing it", {
   out <- utils::capture.output(res <- statmodels7_update())
   expect_identical(res$package, statmodels7_packages())
