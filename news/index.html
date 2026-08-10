@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.1" id="statmodels7-071">statmodels7 0.7.1<a class="anchor" aria-label="anchor" href="#statmodels7-071"></a></h2>
+<ul><li><p>The exact Hessian of a marginal or prediction-error criterion is now exact for a separable penalty too, penalties7 having stopped differencing its second-order pieces. A ridge and a random effect go through no difference at all.</p></li>
+<li><p><code><a href="../reference/outer_pieces.html">outer_pieces()</a></code> takes an order and does not call the second-order generics at order 1, so a penalty that supplies only <code>penalty_dhessian()</code> gives an exact gradient rather than being rejected for a quantity the gradient does not use.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="statmodels7-070">statmodels7 0.7.0<a class="anchor" aria-label="anchor" href="#statmodels7-070"></a></h2>
 <ul><li>
