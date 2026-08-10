@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.0" id="statmodels7-070">statmodels7 0.7.0<a class="anchor" aria-label="anchor" href="#statmodels7-070"></a></h2>
+<ul><li>
+<code><a href="../reference/aic.html">aic()</a></code> and <code><a href="../reference/aic.html">bic()</a></code> choose the hyperparameters by an estimate of prediction error, <code>-2l + k*tau</code> with <code>tau = tr[(H+S)^-1 H]</code>, and both derivatives are exact. The envelope theorem does not apply to these: the log-likelihood alone is not stationary at the penalized mode, so its derivative carries <code>db/dt</code> from the first order, and what makes it computable is that at the mode <code>dl/db</code> equals <code>drho/db</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="statmodels7-060">statmodels7 0.6.0<a class="anchor" aria-label="anchor" href="#statmodels7-060"></a></h2>
 <ul><li><p>The marginal criterion has an exact Hessian as well as an exact gradient, and both are modular: everything the penalty contributes is asked of the penalty through penalties7’s generics, so a ridge, a random effect and a structured prior are covered by the same assembly as a spline. The route used to require a Hessian linear in the hyperparameters, measured rather than asked, which excluded every penalty built from a density.</p></li>

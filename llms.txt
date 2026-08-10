@@ -141,6 +141,9 @@ alternated around them.
 - [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   : Estimate the Hyperparameters by a Marginal Likelihood
+- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  : Prediction-Error Criteria for the Hyperparameters
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   : Simulate a Response From a Written Model
 
@@ -218,6 +221,10 @@ exported, and none is needed to use the package.
   : Format a Step Length
 - [`format_conflicts()`](https://statmodels7.github.io/statmodels7/reference/format_conflicts.md)
   : Render a Conflict Report
+- [`free_scale()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
+  [`free_scale2()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
+  [`link_slopes()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
+  : Carry a Hyperparameter Derivative onto the Free Scale
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
@@ -253,8 +260,14 @@ exported, and none is needed to use the package.
   : Can the Exact Gradient Be Computed Here?
 - [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   : The Hyperparameters an Outer Method Estimates
+- [`outer_k()`](https://statmodels7.github.io/statmodels7/reference/outer_k.md)
+  : The Price of One Degree of Freedom
+- [`outer_minimize()`](https://statmodels7.github.io/statmodels7/reference/outer_minimize.md)
+  : Is a Criterion Minimized?
 - [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
   : The Per-Hyperparameter Pieces of the Outer Derivatives
+- [`outer_tau()`](https://statmodels7.github.io/statmodels7/reference/outer_tau.md)
+  : The Effective Degrees of Freedom of a Whole Fit
 - [`pair_key()`](https://statmodels7.github.io/statmodels7/reference/pair_key.md)
   : The Key of a Hyperparameter Pair
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
@@ -317,6 +330,11 @@ exported, and none is needed to use the package.
   : The Exact Hessian of the Marginal Criterion
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
+- [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
+  : A Prediction-Error Criterion at Given Coefficients and
+  Hyperparameters
+- [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
+  : The Exact Derivatives of a Prediction-Error Criterion
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
   : The Penalty of a Specification at Given Coefficients
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)

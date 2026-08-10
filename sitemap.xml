@@ -10,6 +10,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_predictors.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_offsets.html</loc></url>
@@ -30,6 +31,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fmt_step.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_conflicts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_duration.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/free_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hess_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.html</loc></url>
@@ -48,7 +50,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_k.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_minimize.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_pieces.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_tau.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pair_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/par_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_repair.html</loc></url>
@@ -85,6 +90,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_objective.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_pe.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_score_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_spec.html</loc></url>
