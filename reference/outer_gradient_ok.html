@@ -13,7 +13,7 @@ observed information."><meta property="og:image" content="https://statmodels7.gi
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@ observed information.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_gradient_ok</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">idx</span>, <span class="va">method</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_gradient_ok</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">idx</span>, <span class="va">method</span>, order <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +69,10 @@ observed information.</p>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>An <code><a href="OuterMethod-class.html">OuterMethod</a></code>.</p></dd>
 
+
+<dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
+<dd><p><code>1</code> for the gradient, <code>2</code> for the Hessian as well.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -85,21 +89,17 @@ derivative in \(\beta\) of \(-E[\ell'']\), which is not
 \(-E[\ell''']\) and is not one of that package's generics. So
 <code>reml(hessian = "observed")</code> is what the exact route asks for, and
 <code>"expected"</code> keeps the derivative-free search.</p>
-<p><strong>Why linear.</strong> \(\partial S/\partial\theta\) is not a generic of
-<span class="pkg">penalties7</span>: what that package exposes is the penalty, its gradient,
-its Hessian and the mixed block, not the third derivative
-\(\partial^3\rho/\partial\beta^2\partial\theta\). For a penalty whose
-Hessian is linear in the hyperparameters the derivative is recoverable from
-the Hessian itself and nothing has to be differentiated; for one that is
-not – a ridge, whose Hessian carries \(1/\sigma^2\), or any penalty built
-from a density – it is not, and the search stays derivative-free. Closing
-that case is a generic in <span class="pkg">penalties7</span>, and for the density branch it
-would need \(\partial^3\ell/\partial y^2\partial\theta\) from
-<span class="pkg">distributions7</span>, which does not exist either.</p>
-<p>The linearity is <strong>checked and not assumed</strong>: a penalty is asked for
-its Hessian at \(\theta\) and at \(2\theta\), and at two coefficient
-vectors, and admitted only if the first doubles and the second does not
-move.</p>
+<p><strong>Why the penalty is asked.</strong> \(\partial S/\partial\theta\) and its
+second derivative are generics of <span class="pkg">penalties7</span>
+(<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalty_dhessian</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalty_d2hessian</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalty_dcross</a></code>). A penalty that answers them is
+estimable by a marginal criterion whatever its shape: the quadratic, the
+additive, the structured and the separable branches all do, so a ridge, a
+random effect and a heavy-tailed prior are covered as well as a spline. One
+that does not – a SCAD, an MCP, anything with a kink – rejects, and the
+search stays derivative-free. Nothing here tests a penalty's behaviour to
+find out what it is; it is asked.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

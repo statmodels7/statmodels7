@@ -66,11 +66,11 @@ statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
 #> $equations
 #> $equations$mu
 #> ~x1 + x2
-#> <environment: 0x559ac732c920>
+#> <environment: 0x555daeda74f0>
 #> 
 #> $equations$sigma
 #> ~z
-#> <environment: 0x559ac732c920>
+#> <environment: 0x555daeda74f0>
 #> 
 #> 
 #> $given

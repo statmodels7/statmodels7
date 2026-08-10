@@ -6,7 +6,16 @@ of the hyperparameters under estimation.
 ## Usage
 
 ``` r
-statmod_marginal_grad(spec, design, coef, hyper, method, idx, basis = NULL)
+statmod_marginal_grad(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  idx,
+  basis = NULL,
+  free = TRUE
+)
 ```
 
 ## Arguments
@@ -40,6 +49,11 @@ statmod_marginal_grad(spec, design, coef, hyper, method, idx, basis = NULL)
 - basis:
 
   The integrated subspace, or `NULL`.
+
+- free:
+
+  Whether to carry the result onto the free scale. The Hessian asks for
+  the parameter scale, having its own second-order chain rule to apply.
 
 ## Value
 

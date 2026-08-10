@@ -8,7 +8,7 @@ observed information.
 ## Usage
 
 ``` r
-outer_gradient_ok(spec, design, idx, method)
+outer_gradient_ok(spec, design, idx, method, order = 1L)
 ```
 
 ## Arguments
@@ -32,6 +32,10 @@ outer_gradient_ok(spec, design, idx, method)
   An
   [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
+- order:
+
+  `1` for the gradient, `2` for the Hessian as well.
+
 ## Value
 
 `TRUE` or `FALSE`.
@@ -48,22 +52,18 @@ would be the derivative in \\\beta\\ of \\-E\[\ell''\]\\, which is not
 `reml(hessian = "observed")` is what the exact route asks for, and
 `"expected"` keeps the derivative-free search.
 
-**Why linear.** \\\partial S/\partial\theta\\ is not a generic of
-penalties7: what that package exposes is the penalty, its gradient, its
-Hessian and the mixed block, not the third derivative
-\\\partial^3\rho/\partial\beta^2\partial\theta\\. For a penalty whose
-Hessian is linear in the hyperparameters the derivative is recoverable
-from the Hessian itself and nothing has to be differentiated; for one
-that is not – a ridge, whose Hessian carries \\1/\sigma^2\\, or any
-penalty built from a density – it is not, and the search stays
-derivative-free. Closing that case is a generic in penalties7, and for
-the density branch it would need \\\partial^3\ell/\partial
-y^2\partial\theta\\ from distributions7, which does not exist either.
-
-The linearity is **checked and not assumed**: a penalty is asked for its
-Hessian at \\\theta\\ and at \\2\theta\\, and at two coefficient
-vectors, and admitted only if the first doubles and the second does not
-move.
+**Why the penalty is asked.** \\\partial S/\partial\theta\\ and its
+second derivative are generics of penalties7
+([`penalty_dhessian`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
+[`penalty_d2hessian`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html),
+[`penalty_dcross`](https://statmodels7.github.io/penalties7/reference/penalty_dcross.html)).
+A penalty that answers them is estimable by a marginal criterion
+whatever its shape: the quadratic, the additive, the structured and the
+separable branches all do, so a ridge, a random effect and a
+heavy-tailed prior are covered as well as a spline. One that does not –
+a SCAD, an MCP, anything with a kink – rejects, and the search stays
+derivative-free. Nothing here tests a penalty's behaviour to find out
+what it is; it is asked.
 
 ## See also
 

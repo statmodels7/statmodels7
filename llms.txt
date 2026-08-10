@@ -182,6 +182,8 @@ exported, and none is needed to use the package.
   : A Summary of a Fitted Model
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
+- [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
+  : The Predictors a Coefficient Direction Induces
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
   : Validate Offsets
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
@@ -194,10 +196,16 @@ exported, and none is needed to use the package.
   : Where Each Stacked Coefficient Comes From
 - [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   : Confidence Intervals for a Fit
+- [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
+  : The Third Derivative of the Objective Contracted Once
+- [`contract4()`](https://statmodels7.github.io/statmodels7/reference/contract4.md)
+  : The Fourth Derivative of the Objective Contracted Twice
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
 - [`d3_key()`](https://statmodels7.github.io/statmodels7/reference/d3_key.md)
   : The Name of a Third-Derivative Component
+- [`d4_key()`](https://statmodels7.github.io/statmodels7/reference/d4_key.md)
+  : The Name of a Fourth-Derivative Component
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -245,16 +253,18 @@ exported, and none is needed to use the package.
   : Can the Exact Gradient Be Computed Here?
 - [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   : The Hyperparameters an Outer Method Estimates
+- [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
+  : The Per-Hyperparameter Pieces of the Outer Derivatives
+- [`pair_key()`](https://statmodels7.github.io/statmodels7/reference/pair_key.md)
+  : The Key of a Hyperparameter Pair
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
   : Resolve a Parameter Structure
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
-- [`penalty_dhessian()`](https://statmodels7.github.io/statmodels7/reference/penalty_dhessian.md)
-  : The Derivative of a Penalty's Hessian in Its Hyperparameters
+- [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
+  : Does a Penalty Supply What a Marginal Criterion Needs?
 - [`penalty_has_kink()`](https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.md)
   : Does a Penalty Have a Kink?
-- [`penalty_hessian_linear()`](https://statmodels7.github.io/statmodels7/reference/penalty_hessian_linear.md)
-  : Is a Penalty's Hessian Linear in the Hyperparameters?
 - [`penalty_range_basis()`](https://statmodels7.github.io/statmodels7/reference/penalty_range_basis.md)
   : An Orthonormal Basis of a Penalty's Range Space
 - [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
@@ -303,6 +313,8 @@ exported, and none is needed to use the package.
   : The Marginal Criterion at Given Coefficients and Hyperparameters
 - [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
   : The Exact Gradient of the Marginal Criterion
+- [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  : The Exact Hessian of the Marginal Criterion
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
