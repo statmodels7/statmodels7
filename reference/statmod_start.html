@@ -9,7 +9,7 @@ coefficient at zero."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,11 +70,21 @@ coefficient at zero.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="https://statmodels7.github.io/distributions7/reference/distrib_start.html" class="external-link">distrib_start</a></code> gives a starting value computed
-from the data rather than from the parameter's domain, which is what makes
-a fit arrive in a handful of iterations instead of spending its budget
-travelling. The penalized blocks start at zero, where their penalty is
-smallest.</p>
+    <p>Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
+<code><a href="https://statmodels7.github.io/distributions7/reference/fit_distrib.html" class="external-link">fit_distrib</a></code> supplies: the model with every
+covariate removed is the right place for the model with them to begin, and
+it costs one small fit. The penalized blocks start at zero, where their
+penalty is smallest.</p>
+<p><code><a href="https://statmodels7.github.io/distributions7/reference/distrib_start.html" class="external-link">distrib_start</a></code> is the fallback. It returns ONE
+LIST PER START, each keyed by parameter, so the value wanted is
+<code>th[[1]][[p]]</code>; indexing the outer list by a parameter's name gives
+<code>NULL</code>, and this function did that, so every start silently fell to
+zero on the link scale. On a response centred at 5.84 that put the location
+at 0 and sent the run travelling, which is how a Student t fitted to iris
+reached a variance of \(10^7\).</p>
+<p>A start that cannot be obtained is not an error: the fit still runs, from a
+worse place. What would be an error is not noticing, which is why the two
+routes are tried in order rather than one being assumed to work.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

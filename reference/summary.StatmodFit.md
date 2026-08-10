@@ -125,10 +125,10 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> Parametric terms
 #>             estimate     se        z         p   lower   upper
-#> (Intercept) -0.96470 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
-#> x            0.02161 0.2389  0.09044    0.9279 -0.4466  0.4898
+#> (Intercept)  -0.9647 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
+#> x             0.0216 0.2389  0.09041     0.928 -0.4466  0.4898
 #> 
 #> 95% intervals, bayesian variance
 #> log-likelihood -55.844138    df 4.00    AIC 119.688    BIC 130.838
-#> fitted in 30 ms, converged
+#> fitted in 42 ms, converged
 ```

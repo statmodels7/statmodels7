@@ -217,6 +217,8 @@ exported, and none is needed to use the package.
   : Fit the Smooth Block
 - [`fitted(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
   : The Fitted Values of a Model
+- [`flat_directions()`](https://statmodels7.github.io/statmodels7/reference/flat_directions.md)
+  : Which Coefficients a Singular Curvature Is Flat In
 - [`fmt_step()`](https://statmodels7.github.io/statmodels7/reference/fmt_step.md)
   : Format a Step Length
 - [`format_conflicts()`](https://statmodels7.github.io/statmodels7/reference/format_conflicts.md)
@@ -296,6 +298,10 @@ exported, and none is needed to use the package.
   : Print a Model Summary
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
   : Print One Block of a Summary
+- [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
+  : Does a Term Recompute Its Own Block?
+- [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
+  : Reject a Term the Fitting Scheme Does Not Cover
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   : Which Coefficients of a Smooth Are the Linear Part
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
@@ -320,6 +326,8 @@ exported, and none is needed to use the package.
   : The Hyperparameters a Specification Starts From
 - [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
   : The Information of the Weighted Log-Likelihood
+- [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
+  : The Intercept of Each Equation, on the Link Scale
 - [`statmod_loglik_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.md)
   : The Weighted Log-Likelihood of a Specification at Given Coefficients
 - [`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md)
@@ -360,6 +368,8 @@ exported, and none is needed to use the package.
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
   : The Trace of the Determinant's Movement With the Coefficients
+- [`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
+  : Why a Term Is Outside the Fitting Scheme
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)

@@ -33,8 +33,20 @@ A stacked numeric vector.
 
 ## Details
 
-[`distrib_start`](https://statmodels7.github.io/distributions7/reference/distrib_start.html)
-gives a starting value computed from the data rather than from the
-parameter's domain, which is what makes a fit arrive in a handful of
-iterations instead of spending its budget travelling. The penalized
+Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
+[`fit_distrib`](https://statmodels7.github.io/distributions7/reference/fit_distrib.html)
+supplies: the model with every covariate removed is the right place for
+the model with them to begin, and it costs one small fit. The penalized
 blocks start at zero, where their penalty is smallest.
+
+[`distrib_start`](https://statmodels7.github.io/distributions7/reference/distrib_start.html)
+is the fallback. It returns ONE LIST PER START, each keyed by parameter,
+so the value wanted is `th[[1]][[p]]`; indexing the outer list by a
+parameter's name gives `NULL`, and this function did that, so every
+start silently fell to zero on the link scale. On a response centred at
+5.84 that put the location at 0 and sent the run travelling, which is
+how a Student t fitted to iris reached a variance of \\10^7\\.
+
+A start that cannot be obtained is not an error: the fit still runs,
+from a worse place. What would be an error is not noticing, which is why
+the two routes are tried in order rather than one being assumed to work.

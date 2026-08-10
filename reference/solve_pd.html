@@ -9,7 +9,7 @@ does not exist."><meta property="og:image" content="https://statmodels7.github.i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ does not exist.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">solve_pd</span><span class="op">(</span><span class="va">A</span>, <span class="va">what</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">solve_pd</span><span class="op">(</span><span class="va">A</span>, <span class="va">what</span>, labels <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -55,6 +55,10 @@ does not exist.</p>
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
 <dd><p>What the matrix is, for the message.</p></dd>
 
+
+<dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
+<dd><p>The names of the coefficients <code>A</code> is indexed by.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -64,10 +68,17 @@ does not exist.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite, so
-a factor that does not exist says the run stopped somewhere that is not one,
-or that two columns of the design carry the same information. Returning a
-pseudo-inverse instead would give a standard error for a direction the data
-does not identify.</p>
+a factor that does not exist says something about where the run stopped.
+Returning a pseudo-inverse instead would give a standard error for a
+direction the data does not identify.</p>
+<p>The message names the directions rather than the causes. A first version
+offered two – the run not having reached a maximum, or two columns of the
+design carrying the same information – and on a Student t fitted to iris
+NEITHER was right: the design was full rank and the score was 4e-5. What had
+happened is the third and commonest case, a parameter drifting to where its
+information vanishes, and no list of guesses would have said so. The
+eigenvector of the smallest eigenvalue does: it is read off and the
+coefficients that load on it are printed.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -28,6 +28,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/flat_directions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fmt_step.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_conflicts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_duration.html</loc></url>
@@ -68,6 +69,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print_block.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/reject_unfittable.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reml.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.html</loc></url>
@@ -85,6 +88,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.html</loc></url>
@@ -109,6 +113,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/unfittable_reason.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_inner.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>

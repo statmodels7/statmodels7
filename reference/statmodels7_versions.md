@@ -24,9 +24,9 @@ member that is not installed.
 statmodels7_versions()
 #>          package version
 #> 1         basis7   0.4.0
-#> 2 distributions7  0.10.0
+#> 2 distributions7  0.14.0
 #> 3 linkfunctions7   0.1.0
-#> 4    modelterms7  0.13.0
+#> 4    modelterms7  0.14.0
 #> 5    numericals7   0.7.0
 #> 6    optimizers7   0.1.0
 #> 7    parameters7  0.10.0
