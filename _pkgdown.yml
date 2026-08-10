@@ -24,10 +24,20 @@ reference:
 
 - title: Fitting
   desc: >
-    The method that fits the block of terms whose penalties are
-    differentiable, with its own choice of curvature and of decomposition.
+    One formula, one distribution, and a scheme that fits the terms whose
+    penalties are differentiable all together while the others are alternated
+    around them.
   contents:
+  - statmod
   - iwls
+
+- title: Reading a fit
+  desc: >
+    The model as a function of parameters and data, and the elapsed time in
+    the unit it deserves.
+  contents:
+  - loglik
+  - format_duration
 
 - title: Installing and updating
   desc: >

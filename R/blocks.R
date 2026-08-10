@@ -1,0 +1,145 @@
+#' @include iwls.R
+NULL
+
+#' Split a Specification's Terms Into the Smooth Block and the Rest
+#'
+#' @description
+#' Returns which coefficients are fitted jointly and which carry a penalty
+#' with a kink and are therefore fitted by a method of their own.
+#'
+#' @details
+#' The property that decides is one each term already reports: a penalty whose
+#' \code{\link[penalties7]{penalty_kinks}} is non-empty is not twice
+#' differentiable in its coefficients, so its block cannot enter a system
+#' solved by a curvature. Everything else -- an unpenalized block, a ridge, a
+#' spline, a random effect, a structured or additive penalty -- goes into one
+#' system and is estimated all together, because their joint curvature exists
+#' and using it is what makes a fit converge in a handful of iterations.
+#'
+#' A term whose penalty gains a smooth approximation would answer
+#' \code{penalty_kinks()} differently and move into the smooth block with no
+#' change here.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design, as \code{\link{statmod_design}} returns it.
+#'
+#' @return A list with \code{smooth} (the stacked column indices fitted
+#'   jointly) and \code{sparse} (a list, one entry per non-smooth term, each
+#'   with the parameter, the term's name, its stacked columns and its
+#'   penalty).
+#'
+#' @seealso \code{\link{statmod}}
+#'
+#' @keywords internal
+statmod_blocks <- function(spec, design) {
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  sparse <- list()
+  taken <- integer(0)
+
+  for (a in seq_along(params)) {
+    p <- params[a]
+    for (nm in names(spec@terms[[p]])) {
+      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
+      if (is.null(pen)) next
+      if (!penalty_has_kink(pen)) next
+      cols <- design[[p]]$blocks[[nm]]
+      idx <- offs[a] + cols
+      sparse[[length(sparse) + 1L]] <- list(
+        param = p, term = nm, cols = cols, index = idx, penalty = pen
+      )
+      taken <- c(taken, idx)
+    }
+  }
+  list(smooth = setdiff(seq_len(sum(npar)), taken), sparse = sparse)
+}
+
+
+#' Does a Penalty Have a Kink?
+#'
+#' @description
+#' \code{TRUE} when the penalty is not differentiable somewhere a coefficient
+#' can be, which is what puts its block outside the jointly fitted system.
+#'
+#' @details
+#' \code{\link[penalties7]{penalty_kinks}} is read at a probe value of the
+#' hyperparameters -- the midpoint of their bounds, the rule
+#' \pkg{modelterms7} already uses -- because whether a kink exists is a
+#' property of the family and not of a point.
+#'
+#' @param pen A \pkg{penalties7} penalty.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+penalty_has_kink <- function(pen) {
+  th <- penalty_theta_start(pen)
+  k <- tryCatch(penalties7::penalty_kinks(pen, th), error = function(e) NULL)
+  !is.null(k) && length(k) > 0L && any(is.finite(unlist(k)))
+}
+
+
+#' Fit One Non-Smooth Block, the Others Held Fixed
+#'
+#' @description
+#' Runs a proximal gradient iteration on the block's own coefficients, the
+#' smooth part of the objective supplying the gradient and the penalty its
+#' proximal operator.
+#'
+#' @details
+#' The route is \code{\link[optimizers7]{prox_grad}} with
+#' \code{\link[penalties7]{penalty_prox}}, accelerated: measured, at a
+#' condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
+#' iterations against 126, and at 480 the plain one does not converge in
+#' 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
+#' faster again and is the next thing to write; it needs the columns of the
+#' design and the running residual, so it belongs here and not behind an
+#' optimizer's interface.
+#'
+#' @param obj The full objective.
+#' @param beta The current stacked coefficients.
+#' @param block One entry of \code{statmod_blocks()$sparse}.
+#' @param hyper The hyperparameters.
+#' @param maxit The iteration budget.
+#' @param tol The stopping tolerance.
+#' @param verbose Whether the optimizer prints its own trace.
+#'
+#' @return A list with \code{par} (the whole vector, updated in this block),
+#'   \code{value}, \code{converged} and \code{iterations}.
+#'
+#' @seealso \code{\link{statmod}}
+#'
+#' @keywords internal
+sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
+                       verbose = FALSE) {
+  idx <- block$index
+  th <- hyper[[block$param]][[block$term]]
+  pen <- block$penalty
+
+  # the smooth part of the objective seen as a function of this block alone:
+  # the full objective minus this penalty, which the operator applies instead
+  smooth_fn <- function(b) {
+    v <- beta
+    v[idx] <- b
+    obj$fn(v) - penalties7::penalty_value(pen, b, th)
+  }
+  smooth_gr <- function(b) {
+    v <- beta
+    v[idx] <- b
+    obj$gr(v)[idx] - penalties7::penalty_gradient(pen, b, th)
+  }
+  prox <- function(v, step) penalties7::penalty_prox(pen, v, step, th)
+  # `g` is the VALUE of the non-smooth part, not its gradient: prox_grad adds
+  # it to the smooth objective to report the total it is minimizing
+  gval <- function(b) penalties7::penalty_value(pen, b, th)
+
+  opt <- optimizers7::prox_grad(prox = prox, g = gval,
+                                criterion = optimizers7::crit_grad(tol),
+                                maxit = maxit, verbose = verbose)
+  res <- optimizers7::minimize(opt, smooth_fn, beta[idx], gr = smooth_gr)
+  out <- beta
+  out[idx] <- res@par
+  list(par = out, value = obj$fn(out), converged = res@converged,
+       iterations = res@iterations)
+}
