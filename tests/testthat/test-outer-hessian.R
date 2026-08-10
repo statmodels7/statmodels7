@@ -90,12 +90,11 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
   skip_if_not_installed("numDeriv")
   # two hyperparameters inside ONE penalty, where the mixed entry comes from
   # the penalty's own second derivatives rather than from two separate terms.
-  # The intercept is dropped: a tensor block contains the constant.
   set.seed(53)
   n2 <- 250
   d2 <- data.frame(a = runif(n2, -1, 1), b = runif(n2, -1, 1))
   d2$y <- d2$a^2 + sin(3 * d2$b) + stats::rnorm(n2, sd = 0.3)
-  h <- outer_handles(y ~ te(a, b, k = 4) - 1, d2, reml(hessian = "observed"))
+  h <- outer_handles(y ~ te(a, b, k = 4), d2, reml(hessian = "observed"))
   eta <- h$eta0 + c(0.3, -0.3)
   # the loosest tolerance here, and it is the reference's: a tensor design is
   # the worst conditioned of these, so the mode moves least cleanly with the
