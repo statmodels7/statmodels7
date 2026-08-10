@@ -61,6 +61,89 @@
         </dt>
         <dd>Exports of the Toolkit That Mask One Another</dd>
       </dl></div><div class="section level2">
+      <h2 id="specifying-a-model">Specifying a model<a class="anchor" aria-label="anchor" href="#specifying-a-model"></a></h2>
+
+      <div class="section-desc"><p>One formula carries every parameter of the distribution, the equations separated by a bar, and each equation’s terms come from modelterms7.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="statmod_spec.html">statmod_spec()</a></code>
+
+        </dt>
+        <dd>Build a Model Specification</dd>
+
+        <dt>
+
+          <code><a href="statmod_equations.html">statmod_equations()</a></code>
+
+        </dt>
+        <dd>Split a Multi-Parameter Formula Into One Equation Per Parameter</dd>
+
+        <dt>
+
+          <code><a href="statmod_design.html">statmod_design()</a></code>
+
+        </dt>
+        <dd>The Design of a Specification</dd>
+      </dl></div><div class="section level2">
+      <h2 id="fitting">Fitting<a class="anchor" aria-label="anchor" href="#fitting"></a></h2>
+
+      <div class="section-desc"><p>One formula, one distribution, and a scheme that fits the terms whose penalties are differentiable all together while the others are alternated around them.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="statmod.html">statmod()</a></code>
+
+        </dt>
+        <dd>Fit a Model</dd>
+
+        <dt>
+
+          <code><a href="iwls.html">iwls()</a></code> <code><a href="iwls.html">print(<i>&lt;Iwls&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Iterated Weighted Least Squares</dd>
+
+        <dt>
+
+          <code><a href="rstatmod.html">rstatmod()</a></code>
+
+        </dt>
+        <dd>Simulate a Response From a Written Model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="reading-a-fit">Reading a fit<a class="anchor" aria-label="anchor" href="#reading-a-fit"></a></h2>
+
+      <div class="section-desc"><p>The model as a function of parameters and data, any parameter or moment predicted at new data, and the elapsed time in the unit it deserves.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="loglik.html">loglik()</a></code> <code><a href="loglik.html">gradient()</a></code> <code><a href="loglik.html">hessian()</a></code>
+
+        </dt>
+        <dd>The Model as a Function of Parameters and Data</dd>
+
+        <dt>
+
+          <code><a href="format_duration.html">format_duration()</a></code>
+
+        </dt>
+        <dd>Format a Duration in the Unit It Deserves</dd>
+      </dl></div><div class="section level2">
       <h2 id="installing-and-updating">Installing and updating<a class="anchor" aria-label="anchor" href="#installing-and-updating"></a></h2>
 
       <div class="section-desc"><p>The toolkit is not on CRAN, so the install path is GitHub and the dependencies among the members are resolved by pak.</p></div>
@@ -88,10 +171,304 @@
 
       <dl><dt>
 
+          <code><a href="Iwls-class.html">Iwls()</a></code>
+
+        </dt>
+        <dd>The Iterated Weighted Least Squares Method</dd>
+
+        <dt>
+
+          <code><a href="StatmodFit-class.html">StatmodFit()</a></code>
+
+        </dt>
+        <dd>A Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>
+
+        </dt>
+        <dd>The Specification of a Model, Before It Is Fitted</dd>
+
+        <dt>
+
+          <code><a href="augmented_solve.html">augmented_solve()</a></code>
+
+        </dt>
+        <dd>Solve a Scoring Step From the Square-Root Design</dd>
+
+        <dt>
+
+          <code><a href="check_offsets.html">check_offsets()</a></code>
+
+        </dt>
+        <dd>Validate Offsets</dd>
+
+        <dt>
+
+          <code><a href="check_weights.html">check_weights()</a></code>
+
+        </dt>
+        <dd>Validate Prior Weights</dd>
+
+        <dt>
+
+          <code><a href="chol_blocks.html">chol_blocks()</a></code>
+
+        </dt>
+        <dd>Cholesky Factors of Small Blocks, Vectorized Over Observations</dd>
+
+        <dt>
+
+          <code><a href="coef.StatmodFit.html">coef(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Coefficients of a Fit</dd>
+
+        <dt>
+
+          <code><a href="draw_coefficients.html">draw_coefficients()</a></code>
+
+        </dt>
+        <dd>Draw or Validate the Coefficients of a Simulation</dd>
+
+        <dt>
+
+          <code><a href="fit_smooth.html">fit_smooth()</a></code>
+
+        </dt>
+        <dd>Fit the Smooth Block</dd>
+
+        <dt>
+
+          <code><a href="fitted.StatmodFit.html">fitted(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Fitted Values of a Model</dd>
+
+        <dt>
+
+          <code><a href="fmt_step.html">fmt_step()</a></code>
+
+        </dt>
+        <dd>Format a Step Length</dd>
+
+        <dt>
+
           <code><a href="format_conflicts.html">format_conflicts()</a></code>
 
         </dt>
         <dd>Render a Conflict Report</dd>
+
+        <dt>
+
+          <code><a href="hess_key.html">hess_key()</a></code>
+
+        </dt>
+        <dd>The Name of a Second-Derivative Component</dd>
+
+        <dt>
+
+          <code><a href="info_blocks.html">info_blocks()</a></code>
+
+        </dt>
+        <dd>The Per-Observation Information Blocks</dd>
+
+        <dt>
+
+          <code><a href="iwls_fit.html">iwls_fit()</a></code>
+
+        </dt>
+        <dd>Fit the Smooth Block by Iterated Weighted Least Squares</dd>
+
+        <dt>
+
+          <code><a href="iwls_pieces.html">iwls_pieces()</a></code>
+
+        </dt>
+        <dd>The Pieces One Scoring Step Needs</dd>
+
+        <dt>
+
+          <code><a href="iwls_solve.html">iwls_solve()</a></code>
+
+        </dt>
+        <dd>Solve One Weighted Least Squares Step</dd>
+
+        <dt>
+
+          <code><a href="logLik.StatmodFit.html">logLik(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Maximized Log-Likelihood of a Fit</dd>
+
+        <dt>
+
+          <code><a href="loglik.html">loglik()</a></code> <code><a href="loglik.html">gradient()</a></code> <code><a href="loglik.html">hessian()</a></code>
+
+        </dt>
+        <dd>The Model as a Function of Parameters and Data</dd>
+
+        <dt>
+
+          <code><a href="one_sided.html">one_sided()</a></code>
+
+        </dt>
+        <dd>Build a One-Sided Formula From an Expression</dd>
+
+        <dt>
+
+          <code><a href="par_at.html">par_at()</a></code>
+
+        </dt>
+        <dd>Resolve a Parameter Structure</dd>
+
+        <dt>
+
+          <code><a href="pd_repair.html">pd_repair()</a></code>
+
+        </dt>
+        <dd>Floor the Eigenvalues of a Curvature Matrix</dd>
+
+        <dt>
+
+          <code><a href="penalty_has_kink.html">penalty_has_kink()</a></code>
+
+        </dt>
+        <dd>Does a Penalty Have a Kink?</dd>
+
+        <dt>
+
+          <code><a href="penalty_sqrt.html">penalty_sqrt()</a></code>
+
+        </dt>
+        <dd>A Square-Root Factor of the Penalty</dd>
+
+        <dt>
+
+          <code><a href="penalty_theta_start.html">penalty_theta_start()</a></code>
+
+        </dt>
+        <dd>A Penalty's Starting Hyperparameters</dd>
+
+        <dt>
+
+          <code><a href="predict.StatmodFit.html">predict(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Predict From a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="predict_moments.html">predict_moments()</a></code>
+
+        </dt>
+        <dd>The Quantities a Fit Can Predict</dd>
+
+        <dt>
+
+          <code><a href="print.StatmodFit.html">print(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="sparse_fit.html">sparse_fit()</a></code>
+
+        </dt>
+        <dd>Fit One Non-Smooth Block, the Others Held Fixed</dd>
+
+        <dt>
+
+          <code><a href="spec_at.html">spec_at()</a></code>
+
+        </dt>
+        <dd>Rebuild a Specification Against New Data</dd>
+
+        <dt>
+
+          <code><a href="sqrt_design.html">sqrt_design()</a></code>
+
+        </dt>
+        <dd>The Square-Root Design</dd>
+
+        <dt>
+
+          <code><a href="statmod_blocks.html">statmod_blocks()</a></code>
+
+        </dt>
+        <dd>Split a Specification's Terms Into the Smooth Block and the Rest</dd>
+
+        <dt>
+
+          <code><a href="statmod_edf.html">statmod_edf()</a></code>
+
+        </dt>
+        <dd>Effective Degrees of Freedom, Per Term</dd>
+
+        <dt>
+
+          <code><a href="statmod_eta.html">statmod_eta()</a></code>
+
+        </dt>
+        <dd>The Linear Predictors and the Parameters They Give</dd>
+
+        <dt>
+
+          <code><a href="statmod_hyper_start.html">statmod_hyper_start()</a></code>
+
+        </dt>
+        <dd>The Hyperparameters a Specification Starts From</dd>
+
+        <dt>
+
+          <code><a href="statmod_information_at.html">statmod_information_at()</a></code>
+
+        </dt>
+        <dd>The Information of the Weighted Log-Likelihood</dd>
+
+        <dt>
+
+          <code><a href="statmod_loglik_at.html">statmod_loglik_at()</a></code>
+
+        </dt>
+        <dd>The Weighted Log-Likelihood of a Specification at Given Coefficients</dd>
+
+        <dt>
+
+          <code><a href="statmod_objective.html">statmod_objective()</a></code>
+
+        </dt>
+        <dd>The Objective, Its Gradient and Its Hessian, Stacked</dd>
+
+        <dt>
+
+          <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>
+
+        </dt>
+        <dd>The Penalty of a Specification at Given Coefficients</dd>
+
+        <dt>
+
+          <code><a href="statmod_score_at.html">statmod_score_at()</a></code>
+
+        </dt>
+        <dd>The Score of the Weighted Log-Likelihood</dd>
+
+        <dt>
+
+          <code><a href="statmod_start.html">statmod_start()</a></code>
+
+        </dt>
+        <dd>Starting Coefficients</dd>
+
+        <dt>
+
+          <code><a href="statmod_terms.html">statmod_terms()</a></code>
+
+        </dt>
+        <dd>Interpret and Build Each Parameter's Terms</dd>
 
         <dt>
 
@@ -113,6 +490,27 @@
 
         </dt>
         <dd>The Body of the Attach Message</dd>
+
+        <dt>
+
+          <code><a href="terms_first.html">terms_first()</a></code>
+
+        </dt>
+        <dd>Evaluate a Formula's Terms With modelterms7 in Front</dd>
+
+        <dt>
+
+          <code><a href="unknown_what.html">unknown_what()</a></code>
+
+        </dt>
+        <dd>The Message for an Unrecognized Prediction Target</dd>
+
+        <dt>
+
+          <code><a href="verbosity.html">verbosity()</a></code>
+
+        </dt>
+        <dd>Resolve the Verbosity Setting</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
