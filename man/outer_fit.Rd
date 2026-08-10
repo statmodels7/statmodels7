@@ -32,7 +32,8 @@ outer_fit(
 
 \item{method}{An \code{\link{OuterMethod}}.}
 
-\item{optimizer}{An \pkg{optimizers7} optimizer.}
+\item{optimizer}{An \pkg{optimizers7} optimizer, or \code{NULL} to let the
+availability of the exact gradient decide.}
 
 \item{beta}{The starting coefficients, stacked.}
 
@@ -56,13 +57,14 @@ which is what makes the search affordable: after the first few
 hyperparameters the coefficients move very little and the inner loop
 converges in two or three iterations.
 
-The default optimizer compares values and asks for no derivative. An exact
-gradient of this criterion is available in principle -- the envelope theorem
-kills the term through \eqn{d\hat\beta/d\theta} in the first two pieces, so
-only the determinant's derivative is left -- and it is not written; a
-gradient-based optimizer supplied here is handed a numerical one, whose step
-has to stay well above the noise the inner tolerance leaves on the
-criterion.
+\strong{The optimizer is chosen by whether the gradient exists.} Where
+\code{\link{statmod_marginal_grad}} applies -- the observed information, and
+penalties whose Hessian is linear in their hyperparameters -- the criterion
+is handed its exact derivative and \code{\link[optimizers7]{lbfgs}} is the
+default; otherwise the search compares values and
+\code{\link[optimizers7]{nelder_mead}} is. An optimizer given explicitly is
+used as given, and one that needs a gradient it cannot be given will say so
+itself.
 }
 \seealso{
 \code{\link{reml}}, \code{\link{statmod}}

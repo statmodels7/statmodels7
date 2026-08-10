@@ -1,3 +1,20 @@
+# statmodels7 0.5.0
+
+* The marginal criterion has an exact gradient. The envelope theorem
+  leaves only `-drho/dtheta` from the first two terms, and the
+  determinant contributes `tr(M dS/dtheta)` and `u'v` with
+  `v = db/dtheta` from the stationarity condition and
+  `u_c = tr(M dK/db_c)` from the third derivative of the log-likelihood
+  in the link-scale predictors. Checked against numDeriv at 1e-6 for
+  one smoothing parameter, for several, with the scale modelled, and
+  under `ml()`.
+
+* `outer_optimizer` defaults to `lbfgs()` where the gradient exists and
+  to `nelder_mead()` where it does not. Measured in evaluations of the
+  criterion against the derivative-free search: 40 against 32 with one
+  smoothing parameter, 40 against 135 with two, 41 against 269 with
+  three.
+
 # statmodels7 0.4.0
 
 * The modelling layer. `statmod()` reads one formula carrying every

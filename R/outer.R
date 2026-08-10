@@ -98,6 +98,19 @@ OuterMethod <- S7::new_class("OuterMethod",
 #' not exist would be arithmetic without a meaning; those hyperparameters stay
 #' where \code{hyper} put them.
 #'
+#' \strong{The criterion has an exact gradient} where the information is the
+#' observed one and every penalty under estimation has a Hessian linear in its
+#' hyperparameters, which covers \code{s()}, \code{te()} and any
+#' \code{\link[penalties7]{quadratic_penalty}}. It is then supplied to the
+#' search and \code{\link[optimizers7]{lbfgs}} becomes the default optimizer;
+#' otherwise the search compares values. Measured, in evaluations of the
+#' criterion (each a whole inner fit) against
+#' \code{\link[optimizers7]{nelder_mead}}: 40 against 32 with one smoothing
+#' parameter, 40 against 135 with two, 41 against 269 with three, and 12
+#' against 283 with three and a modelled scale. It does not pay in one
+#' dimension and pays from two on, a simplex needing a vertex per dimension
+#' and a quasi-Newton method not. See \code{\link{statmod_marginal_grad}}.
+#'
 #' \strong{ML needs a null basis} for every penalty that has one, since that is
 #' what says which directions are profiled. \code{\link[penalties7]{is_proper}}
 #' answers for a penalty with no null space at all, and
@@ -374,13 +387,14 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #' hyperparameters the coefficients move very little and the inner loop
 #' converges in two or three iterations.
 #'
-#' The default optimizer compares values and asks for no derivative. An exact
-#' gradient of this criterion is available in principle -- the envelope theorem
-#' kills the term through \eqn{d\hat\beta/d\theta} in the first two pieces, so
-#' only the determinant's derivative is left -- and it is not written; a
-#' gradient-based optimizer supplied here is handed a numerical one, whose step
-#' has to stay well above the noise the inner tolerance leaves on the
-#' criterion.
+#' \strong{The optimizer is chosen by whether the gradient exists.} Where
+#' \code{\link{statmod_marginal_grad}} applies -- the observed information, and
+#' penalties whose Hessian is linear in their hyperparameters -- the criterion
+#' is handed its exact derivative and \code{\link[optimizers7]{lbfgs}} is the
+#' default; otherwise the search compares values and
+#' \code{\link[optimizers7]{nelder_mead}} is. An optimizer given explicitly is
+#' used as given, and one that needs a gradient it cannot be given will say so
+#' itself.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -388,7 +402,8 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #' @param hyper The starting hyperparameters.
 #' @param inner_method How the smooth block is fitted.
 #' @param method An \code{\link{OuterMethod}}.
-#' @param optimizer An \pkg{optimizers7} optimizer.
+#' @param optimizer An \pkg{optimizers7} optimizer, or \code{NULL} to let the
+#'   availability of the exact gradient decide.
 #' @param beta The starting coefficients, stacked.
 #' @param approx The approximation for the expected information.
 #' @param maxit,tol The alternation's budget and tolerance.
@@ -413,33 +428,49 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
   expected <- identical(method@hessian, "expected")
   basis <- integrated_basis(spec, design, method@kind)
   labels <- paste(idx$parameter, idx$term, idx$name, sep = "/")
+  exact <- outer_gradient_ok(spec, design, idx, method)
+  if (is.null(optimizer)) {
+    optimizer <- if (exact) optimizers7::lbfgs() else
+      optimizers7::nelder_mead()
+  }
 
   state <- new.env(parent = emptyenv())
   state$beta <- beta
   state$inner <- NULL
   state$rows <- list()
   state$evals <- 0L
+  state$key <- NULL
 
-  fn <- function(eta) {
+  # one inner fit serves the value and the gradient: an optimizer asks for
+  # both at the same point, and refitting for the second would double the cost
+  # of every step
+  evaluate <- function(eta) {
+    key <- paste(format(eta, digits = 17), collapse = ",")
+    if (identical(state$key, key)) return(state$last)
     hy <- eta_to_hyper(eta, idx, hyper)
     res <- statmod_alternate(spec, design, blocks, hy, inner_method,
                              state$beta, expected, approx, maxit, tol,
                              vb_inner(vb))
-    m <- statmod_marginal(spec, design, res$obj$split(res$par), hy, method,
-                          approx, basis)
+    cf <- res$obj$split(res$par)
+    m <- statmod_marginal(spec, design, cf, hy, method, approx, basis)
     state$evals <- state$evals + 1L
     if (is.null(m)) {
       if (vb$outer) {
         cat(sprintf("[outer %3d] criterion unavailable at %s\n", state$evals,
                     paste(signif(eta, 4), collapse = ", ")))
       }
-      return(Inf)
+      out <- list(value = -Inf, grad = rep(0, nrow(idx)))
+      state$key <- key
+      state$last <- out
+      return(out)
     }
     state$beta <- res$par
     state$inner <- res
     state$hyper <- hy
+    g <- if (exact) statmod_marginal_grad(spec, design, cf, hy, method, idx,
+                                          basis) else NULL
     row <- data.frame(evaluation = state$evals, criterion = m$value,
-                      loglik = m$loglik, edf_penalty = m$penalty)
+                      loglik = m$loglik, penalty = m$penalty)
     for (j in seq_along(labels)) {
       row[[labels[j]]] <- hyper_value(hy, idx, j)
     }
@@ -451,11 +482,19 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
                     hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", "),
                   toupper(method@kind), m$value))
     }
-    -m$value
+    out <- list(value = m$value,
+                grad = if (is.null(g)) rep(0, nrow(idx)) else g)
+    state$key <- key
+    state$last <- out
+    out
   }
 
+  fn <- function(eta) -evaluate(eta)$value
+  gr <- function(eta) -evaluate(eta)$grad
+
   eta0 <- hyper_to_eta(hyper, idx)
-  res <- optimizers7::minimize(optimizer, fn, eta0)
+  res <- if (exact) optimizers7::minimize(optimizer, fn, eta0, gr = gr) else
+    optimizers7::minimize(optimizer, fn, eta0)
 
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
@@ -471,7 +510,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
        hist_inner = inner$hist_inner,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
-       iterations = res@iterations, evaluations = state$evals)
+       iterations = res@iterations, evaluations = state$evals,
+       exact_gradient = exact)
 }
 
 

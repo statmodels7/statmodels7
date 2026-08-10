@@ -12,7 +12,7 @@ statmod(
   offsets = NULL,
   inner_method = iwls(),
   outer_method = NULL,
-  outer_optimizer = optimizers7::nelder_mead(),
+  outer_optimizer = NULL,
   hyper = NULL,
   start = NULL,
   verbose = 0
@@ -35,7 +35,8 @@ an \pkg{optimizers7} optimizer.}
 \item{outer_method}{How the hyperparameters are estimated:
 \code{\link{reml}()}, \code{\link{ml}()}, or \code{NULL} to hold them.}
 
-\item{outer_optimizer}{The optimizer that searches over them.}
+\item{outer_optimizer}{The optimizer that searches over them, or
+\code{NULL} to let the availability of the exact gradient decide.}
 
 \item{hyper}{Optional hyperparameters, a named list of named lists as
 \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these

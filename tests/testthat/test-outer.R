@@ -162,12 +162,18 @@ test_that("ml refuses a penalty whose null space it cannot read", {
   set.seed(24)
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + dt$x2 + stats::rnorm(200, sd = 0.3)
-  expect_error(statmod(y ~ te(x1, x2, k = 4),
+  # the intercept is dropped from the formula because a tensor block CONTAINS
+  # the constant: with one beside it the design is rank deficient by exactly
+  # one (measured, 25 of 26 columns, smallest singular value 0), the penalized
+  # information has an eigenvalue at 5e-13 and chol() accepts it only by the
+  # luck of rounding. That is a defect of te() and not of the criterion, and
+  # the criterion should not be exercised on a model that has it.
+  expect_error(statmod(y ~ te(x1, x2, k = 4) - 1,
                        distributions7::gaussian1_distrib(), dt,
                        outer_method = ml()),
                "cannot read the null space")
   # while reml integrates everything and needs no such basis
-  fit <- statmod(y ~ te(x1, x2, k = 4),
+  fit <- statmod(y ~ te(x1, x2, k = 4) - 1,
                  distributions7::gaussian1_distrib(), dt,
                  outer_method = reml())
   expect_true(is.finite(fit@criterion))

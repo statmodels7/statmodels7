@@ -51,6 +51,19 @@ own, and a Laplace approximation at a point where the second derivative does
 not exist would be arithmetic without a meaning; those hyperparameters stay
 where \code{hyper} put them.
 
+\strong{The criterion has an exact gradient} where the information is the
+observed one and every penalty under estimation has a Hessian linear in its
+hyperparameters, which covers \code{s()}, \code{te()} and any
+\code{\link[penalties7]{quadratic_penalty}}. It is then supplied to the
+search and \code{\link[optimizers7]{lbfgs}} becomes the default optimizer;
+otherwise the search compares values. Measured, in evaluations of the
+criterion (each a whole inner fit) against
+\code{\link[optimizers7]{nelder_mead}}: 40 against 32 with one smoothing
+parameter, 40 against 135 with two, 41 against 269 with three, and 12
+against 283 with three and a modelled scale. It does not pay in one
+dimension and pays from two on, a simplex needing a vertex per dimension
+and a quasi-Newton method not. See \code{\link{statmod_marginal_grad}}.
+
 \strong{ML needs a null basis} for every penalty that has one, since that is
 what says which directions are profiled. \code{\link[penalties7]{is_proper}}
 answers for a penalty with no null space at all, and

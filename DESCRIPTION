@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.4.0
+Version: 0.5.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Installs and attaches the packages of the statmodels7 toolkit,
@@ -62,5 +62,6 @@ Collate:
     'predict.R'
     'inference.R'
     'outer.R'
+    'outer_gradient.R'
     'statmodels7-package.R'
     'update.R'
