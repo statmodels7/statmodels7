@@ -209,7 +209,7 @@ statmod_penalty_at <- function(spec, coef, hyper,
       if (is.null(pen)) next
       cols <- design[[p]]$blocks[[nm]]
       b <- coef[[p]][cols]
-      th <- hyper[[p]][[nm]]
+      th <- as.list(hyper[[p]][[nm]])
       if (what == "value") {
         value <- value + penalties7::penalty_value(pen, b, th)
       } else if (what == "gradient") {

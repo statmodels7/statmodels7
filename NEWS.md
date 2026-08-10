@@ -1,3 +1,29 @@
+# statmodels7 0.8.1
+
+* `scad()` and `mcp()` are fitted by the proximal scheme, as `lasso()`
+  already was. The hyperparameters were passed to the penalty as a named
+  numeric vector where the contract asks for a list, which `penalty_kinks()`
+  accepts for some branches and rejects for these two; the failure was
+  caught and read as "no kink", so both terms went into the jointly fitted
+  system -- solved by the curvature of a function that has none. On a design
+  of twenty noise columns the fit kept 19.00 effective degrees of freedom out
+  of 20, which is no selection at all, and `y ~ scad(x)` stopped with
+  "$ operator is invalid for atomic vectors" before reaching it.
+
+  A penalty that stops when asked whether it has a kink is now reported,
+  naming the term: the two schemes differ by exactly that property, so a
+  penalty that does not answer cannot be assigned to one of them.
+
+  The point the proximal scheme reaches satisfies the subdifferential
+  conditions of the objective (stationarity 8e-8 where a coefficient is away
+  from zero, and the unpenalized score inside the interval the kink opens
+  where it is not), and the shrinkage answers the smoothing parameter: 17, 9
+  and 0 of the twenty columns survive at lambda 1, 5 and 20. Against
+  `ncvreg::ncvfit()` on the same objective the two land on different
+  stationary points of a non-convex problem, ours the lower on both families
+  (52.9966 against 53.5323 for SCAD, 52.9948 against 53.6638 for MCP), and
+  starting the iteration from theirs moves 6e-2 back to ours.
+
 # statmodels7 0.8.0
 
 * Five defects a Student t fitted to `iris` exposed, each of which had
