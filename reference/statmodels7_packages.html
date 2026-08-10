@@ -51,8 +51,13 @@
 <code>DESCRIPTION</code>, keeping the entries whose names end in <code>7</code>, which
 is the toolkit's naming convention. Reading it rather than writing it out
 keeps one enumeration: a member added to <code>Imports</code> is a member here,
-and the two cannot disagree. A base or third-party dependency does not end
-in <code>7</code> and is therefore not reported as a member.</p>
+and the two cannot disagree.</p>
+<p><code>S7</code> is excluded, and it is the one name the convention cannot tell
+apart on its own: its <code>7</code> counts R's object systems and not this
+toolkit's, and it is what every member is built on rather than a member.
+Declaring it in <code>Imports</code>, which <code>R CMD check</code> requires because
+the code says <code>S7::</code> throughout, therefore made it report as a ninth
+package until this line existed.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

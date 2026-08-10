@@ -38,6 +38,11 @@ statmod_spec(
 
   Optional named list of offsets, one per parameter.
 
+- need_response:
+
+  Whether the left-hand side must evaluate. A likelihood needs it; a
+  prediction does not, and new data routinely has no response column.
+
 ## Value
 
 An object of class
