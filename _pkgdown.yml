@@ -31,6 +31,7 @@ reference:
   - statmod
   - iwls
   - reml
+  - aic
   - rstatmod
 
 - title: Reading a fit

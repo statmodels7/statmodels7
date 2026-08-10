@@ -1,3 +1,12 @@
+# statmodels7 0.7.0
+
+* `aic()` and `bic()` choose the hyperparameters by an estimate of
+  prediction error, `-2l + k*tau` with `tau = tr[(H+S)^-1 H]`, and both
+  derivatives are exact. The envelope theorem does not apply to these:
+  the log-likelihood alone is not stationary at the penalized mode, so
+  its derivative carries `db/dt` from the first order, and what makes
+  it computable is that at the mode `dl/db` equals `drho/db`.
+
 # statmodels7 0.6.0
 
 * The marginal criterion has an exact Hessian as well as an exact

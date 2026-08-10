@@ -5,12 +5,15 @@
 \alias{OuterMethod}
 \title{How the Hyperparameters Are Estimated}
 \usage{
-OuterMethod(kind = character(0), hessian = character(0))
+OuterMethod(kind = character(0), hessian = character(0), k = integer(0))
 }
 \arguments{
-\item{kind}{\code{"reml"} or \code{"ml"}.}
+\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"} or \code{"bic"}.}
 
 \item{hessian}{\code{"expected"} or \code{"observed"}.}
+
+\item{k}{The price of one degree of freedom, for a prediction-error
+criterion. \code{NA} where the method resolves it against the sample size.}
 }
 \value{
 An object of class \code{OuterMethod}.
@@ -23,9 +26,11 @@ matrix enters the determinant.
 \examples{
 reml()
 ml(hessian = "observed")
+aic()
 
 }
 \seealso{
-\code{\link{reml}}, \code{\link{ml}}, \code{\link{statmod}}
+\code{\link{reml}}, \code{\link{ml}}, \code{\link{aic}},
+\code{\link{statmod}}
 }
 \keyword{internal}
