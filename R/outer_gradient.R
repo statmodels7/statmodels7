@@ -43,108 +43,75 @@ NULL
 #' \code{reml(hessian = "observed")} is what the exact route asks for, and
 #' \code{"expected"} keeps the derivative-free search.
 #'
-#' \strong{Why linear.} \eqn{\partial S/\partial\theta} is not a generic of
-#' \pkg{penalties7}: what that package exposes is the penalty, its gradient,
-#' its Hessian and the mixed block, not the third derivative
-#' \eqn{\partial^3\rho/\partial\beta^2\partial\theta}. For a penalty whose
-#' Hessian is linear in the hyperparameters the derivative is recoverable from
-#' the Hessian itself and nothing has to be differentiated; for one that is
-#' not -- a ridge, whose Hessian carries \eqn{1/\sigma^2}, or any penalty built
-#' from a density -- it is not, and the search stays derivative-free. Closing
-#' that case is a generic in \pkg{penalties7}, and for the density branch it
-#' would need \eqn{\partial^3\ell/\partial y^2\partial\theta} from
-#' \pkg{distributions7}, which does not exist either.
-#'
-#' The linearity is \strong{checked and not assumed}: a penalty is asked for
-#' its Hessian at \eqn{\theta} and at \eqn{2\theta}, and at two coefficient
-#' vectors, and admitted only if the first doubles and the second does not
-#' move.
+#' \strong{Why the penalty is asked.} \eqn{\partial S/\partial\theta} and its
+#' second derivative are generics of \pkg{penalties7}
+#' (\code{\link[penalties7]{penalty_dhessian}},
+#' \code{\link[penalties7]{penalty_d2hessian}},
+#' \code{\link[penalties7]{penalty_dcross}}). A penalty that answers them is
+#' estimable by a marginal criterion whatever its shape: the quadratic, the
+#' additive, the structured and the separable branches all do, so a ridge, a
+#' random effect and a heavy-tailed prior are covered as well as a spline. One
+#' that does not -- a SCAD, an MCP, anything with a kink -- rejects, and the
+#' search stays derivative-free. Nothing here tests a penalty's behaviour to
+#' find out what it is; it is asked.
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param design The design.
 #' @param idx The outer index, from \code{\link{outer_hyper_index}}.
 #' @param method An \code{\link{OuterMethod}}.
+#' @param order \code{1} for the gradient, \code{2} for the Hessian as well.
 #'
 #' @return \code{TRUE} or \code{FALSE}.
 #'
 #' @seealso \code{\link{statmod_marginal_grad}}
 #'
 #' @keywords internal
-outer_gradient_ok <- function(spec, design, idx, method) {
+outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   if (!identical(method@hessian, "observed")) return(FALSE)
   if (!nrow(idx)) return(FALSE)
   seen <- unique(paste(idx$parameter, idx$term, sep = "\r"))
   for (s in seen) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
     pen <- modelterms7::term_penalty(spec@terms[[bits[1L]]][[bits[2L]]])
-    if (!penalty_hessian_linear(pen)) return(FALSE)
+    if (!penalty_answers(pen, order)) return(FALSE)
   }
   TRUE
 }
 
 
-#' Is a Penalty's Hessian Linear in the Hyperparameters?
+#' Does a Penalty Supply What a Marginal Criterion Needs?
 #'
 #' @description
-#' Asks the penalty rather than assuming: its Hessian must double when the
-#' hyperparameters double, and must not move when the coefficients do.
+#' Asks the penalty for the derivatives, at a probe value of its
+#' hyperparameters, and reports whether it answered.
+#'
+#' @details
+#' The order-2 route additionally requires the penalty to be quadratic in the
+#' coefficients (\code{\link[penalties7]{beta_quadratic}}), since otherwise the
+#' third and fourth derivatives of the penalty in \eqn{\beta} enter the
+#' criterion's own second derivative and \pkg{penalties7} does not carry them.
 #'
 #' @param pen A \pkg{penalties7} penalty.
+#' @param order \code{1} or \code{2}.
 #'
 #' @return A single logical.
 #'
 #' @keywords internal
-penalty_hessian_linear <- function(pen) {
-  th <- penalty_theta_start(pen)
+penalty_answers <- function(pen, order = 1L) {
+  th <- as.list(penalty_theta_start(pen))
   k <- as.integer(pen@n_coef)
   if (!length(th) || is.na(k) || k < 1L) return(FALSE)
-  b1 <- rep(0.37, k)
-  b2 <- rep(-1.21, k)
+  b <- rep(0.37, k)
   ok <- tryCatch({
-    S1 <- penalties7::penalty_hessian(pen, b1, as.list(th))
-    S2 <- penalties7::penalty_hessian(pen, b1, as.list(th * 2))
-    S3 <- penalties7::penalty_hessian(pen, b2, as.list(th))
-    isTRUE(all.equal(S2, 2 * S1, tolerance = 1e-10)) &&
-      isTRUE(all.equal(S3, S1, tolerance = 1e-10)) &&
-      any(abs(S1) > 0)
+    penalties7::penalty_dhessian(pen, b, th)
+    if (order >= 2L) {
+      if (!isTRUE(penalties7::beta_quadratic(pen, th))) return(FALSE)
+      penalties7::penalty_d2hessian(pen, b, th)
+      penalties7::penalty_dcross(pen, b, th)
+    }
+    TRUE
   }, error = function(e) FALSE)
   isTRUE(ok)
-}
-
-
-#' The Derivative of a Penalty's Hessian in Its Hyperparameters
-#'
-#' @description
-#' One matrix per hyperparameter, for a penalty whose Hessian is linear in
-#' them.
-#'
-#' @details
-#' Under that linearity \eqn{S(\theta + h e_m) = S(\theta) + h\,\partial
-#' S/\partial\theta_m} holds for every \eqn{h}, so the difference below is
-#' exact arithmetic and not an approximation: there is no truncation error to
-#' shrink and no step to choose. It is written as a difference rather than by
-#' evaluating at a unit vector because a hyperparameter of zero is outside the
-#' bounds a penalty validates against, while \eqn{2\theta_m} is not.
-#'
-#' The linearity is verified by \code{\link{penalty_hessian_linear}} before
-#' this is called.
-#'
-#' @param pen A \pkg{penalties7} penalty.
-#' @param beta The term's coefficients.
-#' @param theta The term's hyperparameters.
-#'
-#' @return A named list of matrices.
-#'
-#' @keywords internal
-penalty_dhessian <- function(pen, beta, theta) {
-  th <- as.list(theta)
-  S0 <- penalties7::penalty_hessian(pen, beta, th)
-  stats::setNames(lapply(names(th), function(m) {
-    h <- as.numeric(th[[m]])
-    tp <- th
-    tp[[m]] <- h * 2
-    (penalties7::penalty_hessian(pen, beta, tp) - S0) / h
-  }), names(th))
 }
 
 
@@ -177,6 +144,9 @@ penalty_dhessian <- function(pen, beta, theta) {
 #' @param method An \code{\link{OuterMethod}}.
 #' @param idx The outer index.
 #' @param basis The integrated subspace, or \code{NULL}.
+#' @param free Whether to carry the result onto the free scale. The Hessian
+#'   asks for the parameter scale, having its own second-order chain rule to
+#'   apply.
 #'
 #' @return A numeric vector, one entry per row of \code{idx}, or \code{NULL}
 #'   where the determinant does not exist.
@@ -185,7 +155,7 @@ penalty_dhessian <- function(pen, beta, theta) {
 #'
 #' @keywords internal
 statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
-                                  basis = NULL) {
+                                  basis = NULL, free = TRUE) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -222,7 +192,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       th <- as.list(hyper[[p]][[nm]])
       gt <- penalties7::penalty_grad_theta(pen, bt, th)
       cr <- penalties7::penalty_cross(pen, bt, th)
-      dS <- penalty_dhessian(pen, bt, th)
+      dS <- penalties7::penalty_dhessian(pen, bt, th)
       for (r in rows[idx$term[rows] == nm]) {
         h <- idx$name[r]
         # the mode moves by -(H+S)^-1 d2rho/dbeta dtheta
@@ -234,8 +204,10 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
         dtheta <- -as.numeric(gt[[h]]) -
           (sum(M * dS_m) + sum(u * v)) / 2
         # and onto the free scale the search runs on
-        eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
-        out[r] <- dtheta * linkfunctions7::dlinkinv(links[[r]], eta)
+        out[r] <- if (!free) dtheta else {
+          eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
+          dtheta * linkfunctions7::dlinkinv(links[[r]], eta)
+        }
       }
     }
   }

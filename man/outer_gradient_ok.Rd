@@ -4,7 +4,7 @@
 \alias{outer_gradient_ok}
 \title{Can the Exact Gradient Be Computed Here?}
 \usage{
-outer_gradient_ok(spec, design, idx, method)
+outer_gradient_ok(spec, design, idx, method, order = 1L)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -14,6 +14,8 @@ outer_gradient_ok(spec, design, idx, method)
 \item{idx}{The outer index, from \code{\link{outer_hyper_index}}.}
 
 \item{method}{An \code{\link{OuterMethod}}.}
+
+\item{order}{\code{1} for the gradient, \code{2} for the Hessian as well.}
 }
 \value{
 \code{TRUE} or \code{FALSE}.
@@ -35,22 +37,17 @@ derivative in \eqn{\beta} of \eqn{-E[\ell'']}, which is not
 \code{reml(hessian = "observed")} is what the exact route asks for, and
 \code{"expected"} keeps the derivative-free search.
 
-\strong{Why linear.} \eqn{\partial S/\partial\theta} is not a generic of
-\pkg{penalties7}: what that package exposes is the penalty, its gradient,
-its Hessian and the mixed block, not the third derivative
-\eqn{\partial^3\rho/\partial\beta^2\partial\theta}. For a penalty whose
-Hessian is linear in the hyperparameters the derivative is recoverable from
-the Hessian itself and nothing has to be differentiated; for one that is
-not -- a ridge, whose Hessian carries \eqn{1/\sigma^2}, or any penalty built
-from a density -- it is not, and the search stays derivative-free. Closing
-that case is a generic in \pkg{penalties7}, and for the density branch it
-would need \eqn{\partial^3\ell/\partial y^2\partial\theta} from
-\pkg{distributions7}, which does not exist either.
-
-The linearity is \strong{checked and not assumed}: a penalty is asked for
-its Hessian at \eqn{\theta} and at \eqn{2\theta}, and at two coefficient
-vectors, and admitted only if the first doubles and the second does not
-move.
+\strong{Why the penalty is asked.} \eqn{\partial S/\partial\theta} and its
+second derivative are generics of \pkg{penalties7}
+(\code{\link[penalties7]{penalty_dhessian}},
+\code{\link[penalties7]{penalty_d2hessian}},
+\code{\link[penalties7]{penalty_dcross}}). A penalty that answers them is
+estimable by a marginal criterion whatever its shape: the quadratic, the
+additive, the structured and the separable branches all do, so a ridge, a
+random effect and a heavy-tailed prior are covered as well as a spline. One
+that does not -- a SCAD, an MCP, anything with a kink -- rejects, and the
+search stays derivative-free. Nothing here tests a penalty's behaviour to
+find out what it is; it is asked.
 }
 \seealso{
 \code{\link{statmod_marginal_grad}}

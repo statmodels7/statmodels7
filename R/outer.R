@@ -428,10 +428,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
   expected <- identical(method@hessian, "expected")
   basis <- integrated_basis(spec, design, method@kind)
   labels <- paste(idx$parameter, idx$term, idx$name, sep = "/")
-  exact <- outer_gradient_ok(spec, design, idx, method)
+  exact <- outer_gradient_ok(spec, design, idx, method, 1L)
+  exact2 <- exact && outer_gradient_ok(spec, design, idx, method, 2L)
   if (is.null(optimizer)) {
-    optimizer <- if (exact) optimizers7::lbfgs() else
-      optimizers7::nelder_mead()
+    optimizer <- if (exact2) optimizers7::newton() else
+      if (exact) optimizers7::lbfgs() else optimizers7::nelder_mead()
   }
 
   state <- new.env(parent = emptyenv())
@@ -448,18 +449,51 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
     key <- paste(format(eta, digits = 17), collapse = ",")
     if (identical(state$key, key)) return(state$last)
     hy <- eta_to_hyper(eta, idx, hyper)
-    res <- statmod_alternate(spec, design, blocks, hy, inner_method,
-                             state$beta, expected, approx, maxit, tol,
-                             vb_inner(vb))
-    cf <- res$obj$split(res$par)
-    m <- statmod_marginal(spec, design, cf, hy, method, approx, basis)
+    # a hyperparameter far enough out takes the model somewhere its own
+    # machinery cannot go -- a variance beyond what a density can represent,
+    # a curvature that is no longer definite. That is a step the search should
+    # take back, not an error. At the STARTING point it is neither: nothing
+    # has moved yet, so a failure there is the caller's and is raised.
+    m <- NULL
+    res <- NULL
+    cf <- NULL
+    g <- NULL
+    Hm <- NULL
+    err <- NULL
+    body <- function() {
+      res <<- statmod_alternate(spec, design, blocks, hy, inner_method,
+                                state$beta, expected, approx, maxit, tol,
+                                vb_inner(vb))
+      cf <<- res$obj$split(res$par)
+      m <<- statmod_marginal(spec, design, cf, hy, method, approx, basis)
+      if (is.null(m)) return(invisible(NULL))
+      if (exact) {
+        g <<- statmod_marginal_grad(spec, design, cf, hy, method, idx, basis)
+      }
+      if (exact2) {
+        Hm <<- statmod_marginal_hess(spec, design, cf, hy, method, idx, basis)
+      }
+      invisible(NULL)
+    }
+    if (state$evals == 0L) {
+      body()
+    } else {
+      err <- tryCatch({
+        body()
+        NULL
+      }, error = function(e) conditionMessage(e))
+      if (!is.null(err)) m <- NULL
+    }
     state$evals <- state$evals + 1L
     if (is.null(m)) {
       if (vb$outer) {
-        cat(sprintf("[outer %3d] criterion unavailable at %s\n", state$evals,
-                    paste(signif(eta, 4), collapse = ", ")))
+        cat(sprintf("[outer %3d] criterion unavailable at %s%s\n",
+                    state$evals, paste(signif(eta, 4), collapse = ", "),
+                    if (is.null(err)) "" else paste0(": ", err)))
       }
-      out <- list(value = -Inf, grad = rep(0, nrow(idx)))
+      nh <- nrow(idx)
+      out <- list(value = -Inf, grad = rep(0, nh),
+                  hess = if (exact2) diag(-1, nh, nh) else NULL)
       state$key <- key
       state$last <- out
       return(out)
@@ -467,8 +501,6 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
     state$beta <- res$par
     state$inner <- res
     state$hyper <- hy
-    g <- if (exact) statmod_marginal_grad(spec, design, cf, hy, method, idx,
-                                          basis) else NULL
     row <- data.frame(evaluation = state$evals, criterion = m$value,
                       loglik = m$loglik, penalty = m$penalty)
     for (j in seq_along(labels)) {
@@ -483,7 +515,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
                   toupper(method@kind), m$value))
     }
     out <- list(value = m$value,
-                grad = if (is.null(g)) rep(0, nrow(idx)) else g)
+                grad = if (is.null(g)) rep(0, nrow(idx)) else g,
+                hess = Hm)
     state$key <- key
     state$last <- out
     out
@@ -491,10 +524,16 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
 
   fn <- function(eta) -evaluate(eta)$value
   gr <- function(eta) -evaluate(eta)$grad
+  he <- function(eta) -evaluate(eta)$hess
 
   eta0 <- hyper_to_eta(hyper, idx)
-  res <- if (exact) optimizers7::minimize(optimizer, fn, eta0, gr = gr) else
+  res <- if (exact2) {
+    optimizers7::minimize(optimizer, fn, eta0, gr = gr, he = he)
+  } else if (exact) {
+    optimizers7::minimize(optimizer, fn, eta0, gr = gr)
+  } else {
     optimizers7::minimize(optimizer, fn, eta0)
+  }
 
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
@@ -511,7 +550,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
        iterations = res@iterations, evaluations = state$evals,
-       exact_gradient = exact)
+       exact_gradient = exact, exact_hessian = exact2)
 }
 
 

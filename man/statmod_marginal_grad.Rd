@@ -4,7 +4,16 @@
 \alias{statmod_marginal_grad}
 \title{The Exact Gradient of the Marginal Criterion}
 \usage{
-statmod_marginal_grad(spec, design, coef, hyper, method, idx, basis = NULL)
+statmod_marginal_grad(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  idx,
+  basis = NULL,
+  free = TRUE
+)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -20,6 +29,10 @@ statmod_marginal_grad(spec, design, coef, hyper, method, idx, basis = NULL)
 \item{idx}{The outer index.}
 
 \item{basis}{The integrated subspace, or \code{NULL}.}
+
+\item{free}{Whether to carry the result onto the free scale. The Hessian
+asks for the parameter scale, having its own second-order chain rule to
+apply.}
 }
 \value{
 A numeric vector, one entry per row of \code{idx}, or \code{NULL}

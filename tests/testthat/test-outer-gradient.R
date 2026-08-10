@@ -98,17 +98,19 @@ test_that("the gradient vanishes at the reported optimum", {
   expect_lt(max(abs(g)), 1e-4)
 })
 
-test_that("linearity is checked, not assumed", {
-  # a quadratic penalty's Hessian doubles with lambda and does not move with
-  # the coefficients; a ridge's carries 1/sigma^2 and does neither
+test_that("the penalty is asked, not measured", {
+  # the first version of this decided what a penalty was by testing whether
+  # its Hessian happened to be linear in the hyperparameters, which excluded
+  # every penalty built from a density. The question is now put to the
+  # penalty, and a ridge answers it.
   q <- penalties7::quadratic_penalty(diag(4))
-  expect_true(penalty_hessian_linear(q))
-  expect_false(penalty_hessian_linear(penalties7::ridge_penalty(4)))
-  expect_false(penalty_hessian_linear(penalties7::lasso_penalty(4)))
+  expect_true(penalty_answers(q, 1L))
+  expect_true(penalty_answers(q, 2L))
+  expect_true(penalty_answers(penalties7::ridge_penalty(n_coef = 4L), 2L))
+  # a kinked penalty has no such derivative and says so
+  expect_false(penalty_answers(penalties7::lasso_penalty(n_coef = 4L), 1L))
 
-  # and the derivative extracted under that linearity is the matrix itself
-  # divided by lambda, which is what a quadratic penalty's Hessian is
-  d <- penalty_dhessian(q, rep(0.5, 4), list(lambda = 3))
+  d <- penalties7::penalty_dhessian(q, rep(0.5, 4), list(lambda = 3))
   expect_equal(d$lambda, diag(4), tolerance = 1e-12)
   expect_equal(penalties7::penalty_hessian(q, rep(0.5, 4), list(lambda = 3)),
                3 * d$lambda, tolerance = 1e-12)
@@ -124,8 +126,9 @@ test_that("the exact route is taken only where it applies", {
   # which is not -E[l'''] and is not a generic of distributions7
   expect_false(outer_gradient_ok(spec, design, idx, reml("expected")))
 
-  # a random effect's penalty is built from a density and its Hessian is not
-  # linear in the variance, so that search stays derivative-free
+  # a random effect's penalty is built from a density, and it is covered: its
+  # derivatives come from penalties7's generics, which read the parent's
+  # response surface rather than requiring the Hessian to be linear
   set.seed(33)
   dr <- data.frame(g = factor(rep(paste0("g", 1:12), each = 10)))
   dr$y <- stats::rnorm(120)
@@ -133,11 +136,20 @@ test_that("the exact route is taken only where it applies", {
                       distributions7::gaussian1_distrib(), dr)
   de2 <- statmod_design(sp2)
   ix2 <- outer_hyper_index(sp2, statmod_blocks(sp2, de2))
-  expect_false(outer_gradient_ok(sp2, de2, ix2, reml("observed")))
-  # and it still fits, by the route that needs no derivative
+  expect_true(outer_gradient_ok(sp2, de2, ix2, reml("observed")))
   f <- statmod(y ~ random(~ 1 | g), distributions7::gaussian1_distrib(), dr,
                outer_method = reml("observed"))
   expect_true(is.finite(f@criterion))
+
+  # a lasso is not, its penalty having a kink where a Laplace approximation
+  # asks for a second derivative
+  dl <- dr
+  dl$n1 <- stats::rnorm(120)
+  sp3 <- statmod_spec(y ~ lasso(~ n1),
+                      distributions7::gaussian1_distrib(), dl)
+  de3 <- statmod_design(sp3)
+  ix3 <- outer_hyper_index(sp3, statmod_blocks(sp3, de3))
+  expect_identical(nrow(ix3), 0L)
 })
 
 test_that("exact and derivative-free reach the same hyperparameter", {

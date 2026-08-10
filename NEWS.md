@@ -1,3 +1,18 @@
+# statmodels7 0.6.0
+
+* The marginal criterion has an exact Hessian as well as an exact
+  gradient, and both are modular: everything the penalty contributes is
+  asked of the penalty through penalties7's generics, so a ridge, a
+  random effect and a structured prior are covered by the same assembly
+  as a spline. The route used to require a Hessian linear in the
+  hyperparameters, measured rather than asked, which excluded every
+  penalty built from a density.
+
+* `outer_optimizer` defaults to `newton()` where the Hessian exists,
+  `lbfgs()` where only the gradient does, and `nelder_mead()` otherwise.
+  Measured in evaluations of the criterion: with three smoothing
+  parameters, 31 against 41 against 269.
+
 # statmodels7 0.5.0
 
 * The marginal criterion has an exact gradient. The envelope theorem
