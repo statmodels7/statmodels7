@@ -163,7 +163,131 @@ statmod_terms <- function(equations, data, env) {
       modelterms7::term_build(tm, data))
     names(out_terms[[p]]) <- names(out$terms)
   }
+  reject_unfittable(out_terms)
   list(terms = out_terms, intercepts = intercepts)
+}
+
+
+#' Reject a Term the Fitting Scheme Does Not Cover
+#'
+#' @description
+#' Signals an error naming any term whose block is not a fixed design, which
+#' is what the alternation of \code{\link{statmod}} assembles.
+#'
+#' @details
+#' Two shapes are outside that assembly, and both are read off the term rather
+#' than from a list of class names, so a term written later is covered without
+#' an edit here.
+#'
+#' A \strong{structural} term rewrites the likelihood instead of contributing a
+#' predictor, so it has no design block at all and answers neither
+#' \code{term_matrix()} nor \code{term_npar()}. Reaching it through the design
+#' produced an error naming one of those generics, which says nothing about the
+#' cause.
+#'
+#' A term whose block \strong{depends on its own coefficients} registers a
+#' \code{\link[modelterms7]{term_refresh}} method of its own, the base method
+#' on \code{model_term} being the identity; the class a method was registered
+#' on is \code{attr(m, "signature")[[1]]}. For those the block is a Jacobian
+#' and the working solution is an increment, so assembling it once and solving
+#' for the coefficients estimates something else while reporting convergence:
+#' measured on \code{seg()}, the break-point stays at its starting value and
+#' the fitted mean of a continuous construction carries a step. Rejecting them
+#' is what keeps that out of a returned object until the alternation refreshes
+#' a block between inner fits.
+#'
+#' Every equation is examined before the error is raised, so a model carrying
+#' one such term in the mean and another in the scale reports both rather than
+#' the first.
+#'
+#' @param terms The built terms, a named list of named lists, one per
+#'   distribution parameter.
+#'
+#' @return \code{NULL}, invisibly; called for the error.
+#'
+#' @seealso \code{\link{statmod_terms}}, \code{\link{statmod}}
+#'
+#' @keywords internal
+reject_unfittable <- function(terms) {
+  found <- character(0)
+  for (p in names(terms)) {
+    for (nm in names(terms[[p]])) {
+      why <- unfittable_reason(terms[[p]][[nm]])
+      if (nzchar(why)) {
+        found <- c(found, sprintf("'%s' in '%s': %s", nm, p, why))
+      }
+    }
+  }
+  if (length(found) == 0L) return(invisible(NULL))
+  stop(if (length(found) == 1L) {
+    paste0("statmod() cannot fit ", found)
+  } else {
+    paste0("statmod() cannot fit these terms:\n",
+           paste0("  ", found, collapse = "\n"))
+  }, call. = FALSE)
+}
+
+
+#' Why a Term Is Outside the Fitting Scheme
+#'
+#' @description
+#' Returns the reason a term cannot be assembled as a fixed design block, or
+#' the empty string when it can.
+#'
+#' @param term One built term.
+#'
+#' @return A single string.
+#'
+#' @seealso \code{\link{reject_unfittable}}
+#'
+#' @keywords internal
+unfittable_reason <- function(term) {
+  if (S7::S7_inherits(term, modelterms7::structural_term)) {
+    return(paste("a structural term rewrites the likelihood instead of",
+                 "contributing a predictor, and the fitting scheme has no",
+                 "route for one yet."))
+  }
+  if (refreshes_own_block(term)) {
+    return(paste("its block depends on its own coefficients and the",
+                 "alternation does not refresh a block between inner fits",
+                 "yet, so fitting it here would hold the break-point or the",
+                 "nonlinear parameters at their starting values and report",
+                 "convergence. Iterate it with modelterms7::term_refresh()",
+                 "instead; see its help page."))
+  }
+  ""
+}
+
+
+#' Does a Term Recompute Its Own Block?
+#'
+#' @description
+#' \code{TRUE} when the term registers a
+#' \code{\link[modelterms7]{term_refresh}} method of its own rather than
+#' inheriting the identity registered on \code{model_term}.
+#'
+#' @details
+#' The owning class of a method is \code{attr(m, "signature")[[1]]}, and it is
+#' compared by name and package rather than by \code{identical()}: an S7 class
+#' re-created from the same definition is not identical to the original, which
+#' is what happens whenever a package's code is re-evaluated rather than
+#' loaded.
+#'
+#' @param term One built term.
+#'
+#' @return A single logical.
+#'
+#' @seealso \code{\link{unfittable_reason}}
+#'
+#' @keywords internal
+refreshes_own_block <- function(term) {
+  m <- tryCatch(S7::method(modelterms7::term_refresh, S7::S7_class(term)),
+                error = function(e) NULL)
+  if (is.null(m)) return(FALSE)
+  owner <- attr(m, "signature")[[1]]
+  base <- modelterms7::model_term
+  !(identical(attr(owner, "name"), attr(base, "name")) &&
+    identical(attr(owner, "package"), attr(base, "package")))
 }
 
 

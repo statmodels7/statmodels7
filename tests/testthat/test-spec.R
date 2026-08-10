@@ -51,6 +51,34 @@ test_that("the design's blocks and coefficient names line up", {
                    seq_len(d$mu$npar))
 })
 
+test_that("a design carrying a tensor smooth and an intercept has full rank", {
+  # te() contains the constant and so does its penalty's null space, so before
+  # the centering constraint this design was rank deficient by exactly one --
+  # 25 of 26 columns, smallest singular value 0, condition 8.0e15 -- and chol()
+  # accepted the penalized information anyway, so vcov(), confint() and the
+  # outer criterion returned numbers computed on a singular matrix
+  set.seed(24)
+  dt <- data.frame(a = runif(300, -1, 1), b = runif(300, -1, 1))
+  dt$y <- dt$a^2 + dt$b + stats::rnorm(300, sd = 0.3)
+  spec <- statmod_spec(y ~ te(a, b, k = 5),
+                       distributions7::gaussian1_distrib(), dt)
+  des <- statmod_design(spec)
+  X <- des$mu$X
+  expect_identical(qr(X)$rank, ncol(X))
+  sv <- svd(X)$d
+  expect_lt(sv[1] / sv[length(sv)], 1e6)
+
+  # and the penalized information is definite by a margin, not by the luck of
+  # rounding: chol() succeeding is not the assertion, the eigenvalue is
+  S <- statmod_penalty_at(spec, lapply(des, function(d) numeric(d$npar)),
+                          statmod_hyper_start(spec), design = des,
+                          what = "hessian")
+  mu <- seq_len(des$mu$npar)
+  ev <- eigen(crossprod(X) + S[mu, mu], symmetric = TRUE,
+              only.values = TRUE)$values
+  expect_gt(min(ev), sqrt(.Machine$double.eps) * max(ev))
+})
+
 test_that("a three-parameter family is served", {
   spec <- statmod_spec(y ~ x | sigma ~ z | nu ~ 1,
                        distributions7::student_t1_distrib(), dd)
@@ -102,4 +130,69 @@ test_that("our terms win over an attached package's", {
                            function(tm) S7::S7_inherits(tm, modelterms7::SmoothTerm),
                            logical(1))))
   })
+})
+
+# A term the fitting scheme does not cover is rejected at specification time,
+# where the term can be named, rather than several frames down in the design.
+
+test_that("a term whose block moves with its coefficients is rejected", {
+  for (call in list(quote(seg(x)), quote(jump(x)), quote(jseg(x)))) {
+    fm <- stats::as.formula(paste("y ~", deparse(call)))
+    expect_error(
+      statmod_spec(fm, distributions7::gaussian1_distrib(), dd),
+      "block depends on its own coefficients")
+  }
+})
+
+test_that("nl() is rejected for the same reason", {
+  expect_error(
+    statmod_spec(y ~ nl(~ a * exp(b * x), params = c(a = 1, b = 0.1)),
+                 distributions7::gaussian1_distrib(), dd),
+    "block depends on its own coefficients")
+})
+
+test_that("a structural term is rejected, and says which shape it is", {
+  tt <- data.frame(y = rnorm(60), t = 1:60)
+  for (call in list(quote(gas(1, 1)), quote(regime(2)))) {
+    fm <- stats::as.formula(paste("y ~", deparse(call)))
+    expect_error(statmod_spec(fm, distributions7::gaussian1_distrib(), tt),
+                 "structural term rewrites the likelihood")
+  }
+})
+
+test_that("the message names the term and its parameter", {
+  err <- tryCatch(statmod_spec(y ~ x | sigma ~ seg(z),
+                               distributions7::gaussian1_distrib(), dd),
+                  error = conditionMessage)
+  expect_match(err, "'seg(z)'", fixed = TRUE)
+  expect_match(err, "'sigma'", fixed = TRUE)
+})
+
+test_that("every offending equation is reported, not just the first", {
+  err <- tryCatch(statmod_spec(y ~ seg(x) | sigma ~ jump(z),
+                               distributions7::gaussian1_distrib(), dd),
+                  error = conditionMessage)
+  expect_match(err, "seg(x)", fixed = TRUE)
+  expect_match(err, "jump(z)", fixed = TRUE)
+})
+
+test_that("the terms the scheme does cover are not rejected", {
+  # the guard reads a property off the term, so widening it would show here
+  for (fm in list(y ~ x, y ~ s(x), y ~ te(x, z), y ~ s(x, by = g),
+                  y ~ x + random(~ 1 | g), y ~ ridge(R), y ~ lasso(R),
+                  y ~ x | sigma ~ z)) {
+    expect_no_error(statmod_spec(fm, distributions7::gaussian1_distrib(), dd))
+  }
+})
+
+test_that("the predicate reads the method's owner, not a list of classes", {
+  built <- function(tm) modelterms7::term_build(tm, dd)
+  expect_true(statmodels7:::refreshes_own_block(built(seg(x))))
+  expect_true(statmodels7:::refreshes_own_block(
+    built(nl(~ a * exp(b * x), params = c(a = 1, b = 0.1)))))
+  # these inherit term_refresh's identity method on model_term
+  expect_false(statmodels7:::refreshes_own_block(built(linpar(~x))))
+  expect_false(statmodels7:::refreshes_own_block(built(s(x))))
+  expect_false(statmodels7:::refreshes_own_block(built(ridge(R))))
+  expect_false(statmodels7:::refreshes_own_block(built(random(~ 1 | g))))
 })

@@ -1,3 +1,25 @@
+# statmodels7 0.8.0
+
+* A term the fitting scheme does not cover is rejected when the
+  specification is built, where it can be named, instead of reaching the
+  design and raising on one of `term_matrix()` or `term_npar()`. Two
+  shapes are outside the assembly, and both are read off the term rather
+  than from a list of classes, so a term written later needs no edit
+  here: a structural term, which rewrites the likelihood instead of
+  contributing a predictor, and a term registering a `term_refresh()`
+  method of its own, whose block moves with its coefficients.
+
+  The second was the one that cost something. `seg()`, `jump()`,
+  `jseg()` and `nl()` were assembled once and solved as though their
+  block were a fixed design, so the break-point stayed at its starting
+  value and `converged` was `TRUE`: measured against the same term
+  iterated through `modelterms7::term_refresh()`, the break-point held
+  at 2, 3, 5 and 8 from those four starts against 5.0681 from every one
+  of them, at a residual sum of squares of 907.5, 478.1, 143.1 and 857.1
+  against 143.1. Since the block of `seg()` is a Jacobian, the fit also
+  used its break-point column as an ordinary regressor, giving a
+  continuous construction a fitted mean with a step of -2.93.
+
 # statmodels7 0.7.1
 
 * The exact Hessian of a marginal or prediction-error criterion is now
