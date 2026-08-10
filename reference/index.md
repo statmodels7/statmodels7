@@ -93,6 +93,8 @@ exported, and none is needed to use the package.
   : Confidence Intervals for a Fit
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
+- [`d3_key()`](https://statmodels7.github.io/statmodels7/reference/d3_key.md)
+  : The Name of a Third-Derivative Component
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -136,14 +138,20 @@ exported, and none is needed to use the package.
   : Build a One-Sided Formula From an Expression
 - [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
   : Estimate the Hyperparameters
+- [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  : Can the Exact Gradient Be Computed Here?
 - [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   : The Hyperparameters an Outer Method Estimates
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
   : Resolve a Parameter Structure
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
+- [`penalty_dhessian()`](https://statmodels7.github.io/statmodels7/reference/penalty_dhessian.md)
+  : The Derivative of a Penalty's Hessian in Its Hyperparameters
 - [`penalty_has_kink()`](https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.md)
   : Does a Penalty Have a Kink?
+- [`penalty_hessian_linear()`](https://statmodels7.github.io/statmodels7/reference/penalty_hessian_linear.md)
+  : Is a Penalty's Hessian Linear in the Hyperparameters?
 - [`penalty_range_basis()`](https://statmodels7.github.io/statmodels7/reference/penalty_range_basis.md)
   : An Orthonormal Basis of a Penalty's Range Space
 - [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
@@ -190,6 +198,8 @@ exported, and none is needed to use the package.
   : The Weighted Log-Likelihood of a Specification at Given Coefficients
 - [`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md)
   : The Marginal Criterion at Given Coefficients and Hyperparameters
+- [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+  : The Exact Gradient of the Marginal Criterion
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
@@ -215,6 +225,8 @@ exported, and none is needed to use the package.
   : What Kind of Block a Term Reports As
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
+- [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
+  : The Trace of the Determinant's Movement With the Coefficients
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)

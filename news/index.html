@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="statmodels7-050">statmodels7 0.5.0<a class="anchor" aria-label="anchor" href="#statmodels7-050"></a></h2>
+<ul><li><p>The marginal criterion has an exact gradient. The envelope theorem leaves only <code>-drho/dtheta</code> from the first two terms, and the determinant contributes <code>tr(M dS/dtheta)</code> and <code>u'v</code> with <code>v = db/dtheta</code> from the stationarity condition and <code>u_c = tr(M dK/db_c)</code> from the third derivative of the log-likelihood in the link-scale predictors. Checked against numDeriv at 1e-6 for one smoothing parameter, for several, with the scale modelled, and under <code><a href="../reference/reml.html">ml()</a></code>.</p></li>
+<li><p><code>outer_optimizer</code> defaults to <code>lbfgs()</code> where the gradient exists and to <code>nelder_mead()</code> where it does not. Measured in evaluations of the criterion against the derivative-free search: 40 against 32 with one smoothing parameter, 40 against 135 with two, 41 against 269 with three.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="statmodels7-040">statmodels7 0.4.0<a class="anchor" aria-label="anchor" href="#statmodels7-040"></a></h2>
 <ul><li><p>The modelling layer. <code><a href="../reference/statmod.html">statmod()</a></code> reads one formula carrying every parameter of a distribution, the equations separated by a bar, and fits it: the terms whose penalties are twice differentiable in one system by <code><a href="../reference/iwls.html">iwls()</a></code> or any optimizer, each remaining block by a proximal method with the others held fixed, alternating until the objective stops moving.</p></li>

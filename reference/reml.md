@@ -56,6 +56,22 @@ their own, and a Laplace approximation at a point where the second
 derivative does not exist would be arithmetic without a meaning; those
 hyperparameters stay where `hyper` put them.
 
+**The criterion has an exact gradient** where the information is the
+observed one and every penalty under estimation has a Hessian linear in
+its hyperparameters, which covers `s()`, `te()` and any
+[`quadratic_penalty`](https://statmodels7.github.io/penalties7/reference/quadratic_penalty.html).
+It is then supplied to the search and
+[`lbfgs`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
+becomes the default optimizer; otherwise the search compares values.
+Measured, in evaluations of the criterion (each a whole inner fit)
+against
+[`nelder_mead`](https://statmodels7.github.io/optimizers7/reference/nelder_mead.html):
+40 against 32 with one smoothing parameter, 40 against 135 with two, 41
+against 269 with three, and 12 against 283 with three and a modelled
+scale. It does not pay in one dimension and pays from two on, a simplex
+needing a vertex per dimension and a quasi-Newton method not. See
+[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md).
+
 **ML needs a null basis** for every penalty that has one, since that is
 what says which directions are profiled.
 [`is_proper`](https://statmodels7.github.io/penalties7/reference/is_proper.html)
@@ -100,5 +116,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -35.406015    objective 40.891614
 #> REML -55.814255 over 25 hyperparameter evaluation(s)
-#> fitted in 381 ms, converged
+#> fitted in 361 ms, converged
 ```

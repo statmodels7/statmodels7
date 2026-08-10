@@ -14,7 +14,7 @@ statmod(
   offsets = NULL,
   inner_method = iwls(),
   outer_method = NULL,
-  outer_optimizer = optimizers7::nelder_mead(),
+  outer_optimizer = NULL,
   hyper = NULL,
   start = NULL,
   verbose = 0
@@ -58,7 +58,8 @@ statmod(
 
 - outer_optimizer:
 
-  The optimizer that searches over them.
+  The optimizer that searches over them, or `NULL` to let the
+  availability of the exact gradient decide.
 
 - hyper:
 
@@ -162,7 +163,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 26 ms, converged
+#> fitted in 23 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -180,5 +181,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 45 ms, converged
+#> fitted in 36 ms, converged
 ```

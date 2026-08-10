@@ -18,6 +18,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/criterion_tol.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/draw_coefficients.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
@@ -41,10 +42,13 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/method_budget.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_fit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/par_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_repair.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_dhessian.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_hessian_linear.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_range_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.html</loc></url>
@@ -73,6 +77,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_objective.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_score_at.html</loc></url>
@@ -90,6 +95,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_inner.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>

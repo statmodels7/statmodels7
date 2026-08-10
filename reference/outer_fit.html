@@ -9,7 +9,7 @@ coefficients at every hyperparameter it tries."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,8 @@ coefficients at every hyperparameter it tries.</p>
 
 
 <dt id="arg-optimizer">optimizer<a class="anchor" aria-label="anchor" href="#arg-optimizer"></a></dt>
-<dd><p>An <span class="pkg">optimizers7</span> optimizer.</p></dd>
+<dd><p>An <span class="pkg">optimizers7</span> optimizer, or <code>NULL</code> to let the
+availability of the exact gradient decide.</p></dd>
 
 
 <dt id="arg-beta">beta<a class="anchor" aria-label="anchor" href="#arg-beta"></a></dt>
@@ -116,13 +117,14 @@ coefficients at every hyperparameter it tries.</p>
 which is what makes the search affordable: after the first few
 hyperparameters the coefficients move very little and the inner loop
 converges in two or three iterations.</p>
-<p>The default optimizer compares values and asks for no derivative. An exact
-gradient of this criterion is available in principle – the envelope theorem
-kills the term through \(d\hat\beta/d\theta\) in the first two pieces, so
-only the determinant's derivative is left – and it is not written; a
-gradient-based optimizer supplied here is handed a numerical one, whose step
-has to stay well above the noise the inner tolerance leaves on the
-criterion.</p>
+<p><strong>The optimizer is chosen by whether the gradient exists.</strong> Where
+<code><a href="statmod_marginal_grad.html">statmod_marginal_grad</a></code> applies – the observed information, and
+penalties whose Hessian is linear in their hyperparameters – the criterion
+is handed its exact derivative and <code><a href="https://statmodels7.github.io/optimizers7/reference/lbfgs.html" class="external-link">lbfgs</a></code> is the
+default; otherwise the search compares values and
+<code><a href="https://statmodels7.github.io/optimizers7/reference/nelder_mead.html" class="external-link">nelder_mead</a></code> is. An optimizer given explicitly is
+used as given, and one that needs a gradient it cannot be given will say so
+itself.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

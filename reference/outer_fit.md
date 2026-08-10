@@ -51,7 +51,8 @@ outer_fit(
 
 - optimizer:
 
-  An optimizers7 optimizer.
+  An optimizers7 optimizer, or `NULL` to let the availability of the
+  exact gradient decide.
 
 - beta:
 
@@ -81,13 +82,16 @@ one, which is what makes the search affordable: after the first few
 hyperparameters the coefficients move very little and the inner loop
 converges in two or three iterations.
 
-The default optimizer compares values and asks for no derivative. An
-exact gradient of this criterion is available in principle – the
-envelope theorem kills the term through \\d\hat\beta/d\theta\\ in the
-first two pieces, so only the determinant's derivative is left – and it
-is not written; a gradient-based optimizer supplied here is handed a
-numerical one, whose step has to stay well above the noise the inner
-tolerance leaves on the criterion.
+**The optimizer is chosen by whether the gradient exists.** Where
+[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+applies – the observed information, and penalties whose Hessian is
+linear in their hyperparameters – the criterion is handed its exact
+derivative and
+[`lbfgs`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
+is the default; otherwise the search compares values and
+[`nelder_mead`](https://statmodels7.github.io/optimizers7/reference/nelder_mead.html)
+is. An optimizer given explicitly is used as given, and one that needs a
+gradient it cannot be given will say so itself.
 
 ## See also
 

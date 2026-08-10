@@ -11,7 +11,7 @@ penalized directions and profiles the rest."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,6 +90,18 @@ or an MCP has a kink, its coefficients are estimated by a method of their
 own, and a Laplace approximation at a point where the second derivative does
 not exist would be arithmetic without a meaning; those hyperparameters stay
 where <code>hyper</code> put them.</p>
+<p><strong>The criterion has an exact gradient</strong> where the information is the
+observed one and every penalty under estimation has a Hessian linear in its
+hyperparameters, which covers <code>s()</code>, <code>te()</code> and any
+<code><a href="https://statmodels7.github.io/penalties7/reference/quadratic_penalty.html" class="external-link">quadratic_penalty</a></code>. It is then supplied to the
+search and <code><a href="https://statmodels7.github.io/optimizers7/reference/lbfgs.html" class="external-link">lbfgs</a></code> becomes the default optimizer;
+otherwise the search compares values. Measured, in evaluations of the
+criterion (each a whole inner fit) against
+<code><a href="https://statmodels7.github.io/optimizers7/reference/nelder_mead.html" class="external-link">nelder_mead</a></code>: 40 against 32 with one smoothing
+parameter, 40 against 135 with two, 41 against 269 with three, and 12
+against 283 with three and a modelled scale. It does not pay in one
+dimension and pays from two on, a simplex needing a vertex per dimension
+and a quasi-Newton method not. See <code><a href="statmod_marginal_grad.html">statmod_marginal_grad</a></code>.</p>
 <p><strong>ML needs a null basis</strong> for every penalty that has one, since that is
 what says which directions are profiled. <code><a href="https://statmodels7.github.io/penalties7/reference/is_proper.html" class="external-link">is_proper</a></code>
 answers for a penalty with no null space at all, and
@@ -131,7 +143,7 @@ likelihood estimation of semiparametric generalized linear models.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -35.406015    objective 40.891614</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> REML -55.814255 over 25 hyperparameter evaluation(s)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 381 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 361 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
