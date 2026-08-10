@@ -4,7 +4,14 @@
 \alias{statmod_spec}
 \title{Build a Model Specification}
 \usage{
-statmod_spec(formula, distrib, data, weights = NULL, offsets = NULL)
+statmod_spec(
+  formula,
+  distrib,
+  data,
+  weights = NULL,
+  offsets = NULL,
+  need_response = TRUE
+)
 }
 \arguments{
 \item{formula}{The model formula.}

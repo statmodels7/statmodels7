@@ -84,7 +84,7 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #'
 #' @export
 statmod_spec <- function(formula, distrib, data, weights = NULL,
-                         offsets = NULL) {
+                         offsets = NULL, need_response = TRUE) {
   if (!is.data.frame(data)) {
     stop("'data' must be a data frame.", call. = FALSE)
   }
@@ -99,23 +99,19 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
   # interpret_formula() would evaluate it for a single-parameter model
   env <- environment(formula)
   if (is.null(env)) env <- baseenv()
-  response <- eval(split$response, data, env)
+  # prediction needs the design and not the response, and new data routinely
+  # has no response column; a likelihood needs it and says so
+  response <- tryCatch(eval(split$response, data, env),
+                       error = function(e) if (need_response) stop(e) else NULL)
+  if (is.null(response)) {
+    response <- rep(NA_real_, nrow(data))
+  }
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
 
-  # each equation is interpreted with our terms in front of the search path
-  shim <- terms_first(env)
-  terms_by_param <- stats::setNames(vector("list", length(params)), params)
-  intercepts <- stats::setNames(logical(length(params)), params)
-  for (p in params) {
-    eq <- split$equations[[p]]
-    environment(eq) <- shim
-    out <- modelterms7::interpret_formula(eq, data)
-    intercepts[[p]] <- out$intercept
-    terms_by_param[[p]] <- lapply(out$terms, function(tm)
-      modelterms7::term_build(tm, data))
-    names(terms_by_param[[p]]) <- names(out$terms)
-  }
+  built <- statmod_terms(split$equations, data, env)
+  terms_by_param <- built$terms
+  intercepts <- built$intercepts
 
   weights <- check_weights(weights, n)
   offsets <- check_offsets(offsets, params, n)
@@ -126,6 +122,45 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
     response = response, n_obs = as.integer(n),
     weights = weights, offsets = offsets, intercepts = intercepts
   )
+}
+
+
+#' Interpret and Build Each Parameter's Terms
+#'
+#' @description
+#' Runs \pkg{modelterms7}'s interpreter on every equation and builds the terms
+#' it names against the data.
+#'
+#' @details
+#' The equations are interpreted with \pkg{modelterms7}'s constructors in front
+#' of the search path, so that \code{s()} means ours whatever the user has
+#' attached. A factor covariate needs no special handling: the interpreter
+#' collects bare covariates into one \code{linpar()}, whose block comes from
+#' \code{model.matrix} and therefore carries the contrasts.
+#'
+#' @param equations A named list of one-sided formulas.
+#' @param data A data frame.
+#' @param env The environment the original formula carried.
+#'
+#' @return A list with \code{terms} (a named list per parameter) and
+#'   \code{intercepts} (a named logical).
+#'
+#' @keywords internal
+statmod_terms <- function(equations, data, env) {
+  shim <- terms_first(env)
+  params <- names(equations)
+  out_terms <- stats::setNames(vector("list", length(params)), params)
+  intercepts <- stats::setNames(logical(length(params)), params)
+  for (p in params) {
+    eq <- equations[[p]]
+    environment(eq) <- shim
+    out <- modelterms7::interpret_formula(eq, data)
+    intercepts[[p]] <- out$intercept
+    out_terms[[p]] <- lapply(out$terms, function(tm)
+      modelterms7::term_build(tm, data))
+    names(out_terms[[p]]) <- names(out$terms)
+  }
+  list(terms = out_terms, intercepts = intercepts)
 }
 
 

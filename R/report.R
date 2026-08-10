@@ -162,13 +162,16 @@ hessian <- S7::new_generic("hessian", "object",
 #'
 #' @param fit A \code{\link{StatmodFit}}.
 #' @param data A data frame or \code{NULL}.
+#' @param need_response Whether the response must be there. A likelihood needs
+#'   it; a prediction does not, and new data routinely has no response column.
 #'
 #' @return A \code{\link{StatmodSpec}}.
 #'
 #' @keywords internal
-spec_at <- function(fit, data) {
+spec_at <- function(fit, data, need_response = TRUE) {
   if (is.null(data)) return(fit@spec)
-  statmod_spec(fit@spec@formula, fit@spec@distrib, data)
+  statmod_spec(fit@spec@formula, fit@spec@distrib, data,
+               need_response = need_response)
 }
 
 #' Resolve a Parameter Structure

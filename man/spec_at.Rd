@@ -4,12 +4,15 @@
 \alias{spec_at}
 \title{Rebuild a Specification Against New Data}
 \usage{
-spec_at(fit, data)
+spec_at(fit, data, need_response = TRUE)
 }
 \arguments{
 \item{fit}{A \code{\link{StatmodFit}}.}
 
 \item{data}{A data frame or \code{NULL}.}
+
+\item{need_response}{Whether the response must be there. A likelihood needs
+it; a prediction does not, and new data routinely has no response column.}
 }
 \value{
 A \code{\link{StatmodSpec}}.
