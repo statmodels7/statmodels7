@@ -440,10 +440,14 @@ summary.StatmodFit <- function(object, level = 0.95,
   df <- attr(ll, "df")
   notes <- character(0)
   if (any(lab$penalized)) {
-    notes <- c(notes, paste0(
+    notes <- c(notes, if (is.null(object@methods$outer)) paste0(
       "A hyperparameter is held at the value it was given, not estimated, so ",
       "it has\n  no standard error and every interval beside it is ",
-      "conditional on it."))
+      "conditional on it.") else sprintf(paste0(
+      "A hyperparameter marked estimated was found by %s and still carries no",
+      "\n  standard error: its uncertainty is not this Hessian's to give, and",
+      " every\n  interval beside it is conditional on the value reached."),
+      toupper(object@methods$outer@kind)))
   }
   if (any(lab$kinked)) {
     nz <- sum(lab$kinked &
@@ -508,14 +512,19 @@ summary_blocks <- function(fit, spec, design, p, ci) {
                       stringsAsFactors = FALSE)
     stats::setNames(out, cols)
   }
-  # a hyperparameter is held at the value it was given, so it has an estimate
-  # and nothing else; an interval here would be invented rather than computed
+  # a hyperparameter has an estimate and nothing else, whether an outer
+  # criterion found it or the caller set it: the variance of a hyperparameter
+  # estimated by a marginal criterion is not this Hessian's to give, and an
+  # interval here would be invented rather than computed
+  outer_ran <- !is.null(fit@methods$outer)
   hyper_rows <- function(nm) {
     th <- fit@hyper[[p]][[nm]]
     if (is.null(th) || !length(th)) return(empty)
+    pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
+    role <- if (outer_ran && !penalty_has_kink(pen)) "estimated" else "fixed"
     out <- data.frame(name = names(th), estimate = as.numeric(th),
                       se = NA_real_, statistic = NA_real_, p_value = NA_real_,
-                      lower = NA_real_, upper = NA_real_, role = "fixed",
+                      lower = NA_real_, upper = NA_real_, role = role,
                       stringsAsFactors = FALSE)
     stats::setNames(out, cols)
   }
@@ -644,7 +653,7 @@ print_block <- function(b, digits = 4L) {
     cat("  (nothing to report on its own)\n")
     return(invisible(NULL))
   }
-  fixed <- tb$role == "fixed"
+  fixed <- tb$role %in% c("fixed", "estimated")
   num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
   out <- data.frame(
     estimate = format(signif(tb$estimate, digits)),
@@ -657,7 +666,7 @@ print_block <- function(b, digits = 4L) {
     check.names = FALSE, stringsAsFactors = FALSE)
   # said once, in the column where a standard error would have been, rather
   # than four times across a row that has nothing else in it
-  out$se[fixed] <- "(fixed)"
+  out$se[fixed] <- paste0("(", tb$role[fixed], ")")
   out[fixed, c("z", "p", "lower", "upper")] <- ""
   rownames(out) <- tb$name
   print(out)

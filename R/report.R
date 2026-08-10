@@ -86,6 +86,12 @@ print.StatmodFit <- function(x, ...) {
   cat("\n")
   cat(sprintf("log-likelihood %.6f    objective %.6f\n",
               x@loglik, x@objective))
+  if (!is.null(x@methods$outer) && length(x@criterion) &&
+      is.finite(x@criterion)) {
+    cat(sprintf("%s %.6f over %d hyperparameter evaluation(s)\n",
+                toupper(x@methods$outer@kind), x@criterion,
+                if (is.null(x@history$outer)) 0L else nrow(x@history$outer)))
+  }
   cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {

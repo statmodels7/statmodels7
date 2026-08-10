@@ -15,6 +15,7 @@ StatmodFit(
   fitted = list(),
   converged = logical(0),
   elapsed = integer(0),
+  criterion = integer(0),
   history = list(),
   methods = list(),
   call = NULL
@@ -38,6 +39,9 @@ StatmodFit(
 \item{converged}{Whether every loop stopped on its own rule.}
 
 \item{elapsed}{The elapsed time, in seconds.}
+
+\item{criterion}{The marginal criterion at the estimated hyperparameters,
+\code{NA} when none was used.}
 
 \item{history}{A list of data frames: \code{outer}, \code{blocks},
 \code{inner}.}

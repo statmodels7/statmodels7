@@ -17,6 +17,8 @@ NULL
 #' @param fitted The fitted parameters, per distribution parameter.
 #' @param converged Whether every loop stopped on its own rule.
 #' @param elapsed The elapsed time, in seconds.
+#' @param criterion The marginal criterion at the estimated hyperparameters,
+#'   \code{NA} when none was used.
 #' @param history A list of data frames: \code{outer}, \code{blocks},
 #'   \code{inner}.
 #' @param methods What fitted each block.
@@ -45,6 +47,7 @@ StatmodFit <- S7::new_class("StatmodFit",
     fitted = S7::class_list,
     converged = S7::class_logical,
     elapsed = S7::class_numeric,
+    criterion = S7::class_numeric,
     history = S7::class_list,
     methods = S7::class_list,
     call = S7::class_any
@@ -87,19 +90,22 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 #' set both and be obeyed by neither.
 #'
-#' \strong{The hyperparameters are held fixed.} Estimating a smoothing
-#' parameter by an outer criterion is not written yet, so each one sits at the
-#' probe value of its bounds unless \code{hyper} says otherwise. That value is
-#' a placeholder rather than a choice, and it matters: a lasso at
-#' \eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
-#' observations selects nothing at all.
+#' \strong{The hyperparameters.} With \code{outer_method = NULL}, the default,
+#' each one sits where \code{hyper} put it, or at the probe value of its bounds
+#' otherwise -- a placeholder rather than a choice, and it matters, since a
+#' lasso at \eqn{\lambda = 1} against an unaveraged log-likelihood of a few
+#' hundred observations selects nothing at all. With
+#' \code{outer_method = \link{reml}()} or \code{\link{ml}()} they are estimated
+#' by a marginal criterion, \code{outer_optimizer} searching over them and the
+#' coefficients being refitted at each. Only a twice differentiable penalty
+#' takes part: a lasso, a SCAD or an MCP keeps the value it was given.
 #'
 #' \strong{Verbosity} has three levels, naming the loops rather than counting
-#' them: \code{1} the alternation, \code{2} the inner method's own iterations,
-#' \code{3} the optimizers' traces as well. A named form is accepted too, as
-#' \code{verbose = c(blocks = TRUE, inner = TRUE, optimizer = FALSE)}, since
-#' watching the alternation while silencing a chatty inner optimizer is the
-#' common case.
+#' them: \code{1} the outer search and the alternation, \code{2} the inner
+#' method's own iterations, \code{3} the optimizers' traces as well. A named
+#' form is accepted too, as \code{verbose = c(outer = TRUE, blocks = FALSE)},
+#' since watching the hyperparameters move while silencing a chatty inner
+#' optimizer is the common case.
 #'
 #' @param formula The model formula.
 #' @param distrib A \pkg{distributions7} distribution object.
@@ -108,6 +114,9 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param offsets Optional named list of offsets, one per parameter.
 #' @param inner_method How the smooth block is fitted: \code{\link{iwls}()} or
 #'   an \pkg{optimizers7} optimizer.
+#' @param outer_method How the hyperparameters are estimated:
+#'   \code{\link{reml}()}, \code{\link{ml}()}, or \code{NULL} to hold them.
+#' @param outer_optimizer The optimizer that searches over them.
 #' @param hyper Optional hyperparameters, a named list of named lists as
 #'   \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
 #'   values.
@@ -131,8 +140,9 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
-                    inner_method = iwls(), hyper = NULL, start = NULL,
-                    verbose = 0) {
+                    inner_method = iwls(), outer_method = NULL,
+                    outer_optimizer = optimizers7::nelder_mead(),
+                    hyper = NULL, start = NULL, verbose = 0) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   vb <- verbosity(verbose)
@@ -150,13 +160,82 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   approx <- if (S7::S7_inherits(inner_method, Iwls)) inner_method@approx else
     "bartlett"
   obj <- statmod_objective(spec, hyper, design, expected, approx)
-
   beta <- statmod_start(spec, design, obj, start)
+
+  if (is.null(outer_method)) {
+    res <- statmod_alternate(spec, design, blocks, hyper, inner_method, beta,
+                             expected, approx, maxit, tol, vb)
+    crit <- NA_real_
+  } else {
+    if (!S7::S7_inherits(outer_method, OuterMethod)) {
+      stop("'outer_method' must be reml(), ml() or NULL.", call. = FALSE)
+    }
+    res <- outer_fit(spec, design, blocks, hyper, inner_method, outer_method,
+                     outer_optimizer, beta, approx, maxit, tol, vb)
+    hyper <- res$hyper
+    crit <- res$criterion
+  }
+
+  coef <- res$obj$split(res$par)
+  fitted <- statmod_eta(spec, design, coef)$theta
+  StatmodFit(
+    spec = spec, coefficients = coef, hyper = hyper,
+    loglik = statmod_loglik_at(spec, coef, design),
+    objective = res$value,
+    edf = statmod_edf(spec, coef, design, hyper, expected, approx),
+    fitted = fitted, converged = res$converged,
+    elapsed = proc.time()[["elapsed"]] - t0,
+    criterion = crit,
+    history = list(
+      outer = res$hist_outer,
+      blocks = if (length(res$hist_blocks)) do.call(rbind, res$hist_blocks)
+        else NULL,
+      inner = if (length(res$hist_inner)) do.call(rbind, res$hist_inner)
+        else NULL
+    ),
+    methods = list(smooth = inner_method, outer = outer_method,
+                   sparse = vapply(blocks$sparse, function(b)
+                     paste(b$param, b$term, sep = "/"), character(1))),
+    call = cl
+  )
+}
+
+
+#' The Alternation Between the Smooth Block and the Rest
+#'
+#' @description
+#' Fits the terms whose penalties are twice differentiable in one system and
+#' each remaining block by a method of its own, sweeping until the objective
+#' stops moving.
+#'
+#' @details
+#' It is a function of its own because the outer search calls it once per
+#' hyperparameter it tries, warm-started from the previous coefficients.
+#'
+#' @param spec The specification.
+#' @param design The design.
+#' @param blocks The block split.
+#' @param hyper The hyperparameters.
+#' @param inner_method How the smooth block is fitted.
+#' @param beta The starting coefficients, stacked.
+#' @param expected Whether the information is the expected one.
+#' @param approx The approximation for the expected information.
+#' @param maxit,tol The budget and the tolerance.
+#' @param vb The resolved verbosity.
+#'
+#' @return A list with \code{par}, \code{value}, \code{converged}, \code{obj},
+#'   \code{hist_blocks} and \code{hist_inner}.
+#'
+#' @seealso \code{\link{statmod}}
+#'
+#' @keywords internal
+statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
+                              expected, approx, maxit, tol, vb) {
+  obj <- statmod_objective(spec, hyper, design, expected, approx)
   value <- obj$fn(beta)
   hist_blocks <- list()
   hist_inner <- list()
   converged <- FALSE
-  sweep <- 0L
 
   for (sweep in seq_len(as.integer(maxit))) {
     before <- value
@@ -210,26 +289,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       break
     }
   }
-
-  coef <- obj$split(beta)
-  fitted <- statmod_eta(spec, design, coef)$theta
-  StatmodFit(
-    spec = spec, coefficients = coef, hyper = hyper,
-    loglik = statmod_loglik_at(spec, coef, design),
-    objective = value,
-    edf = statmod_edf(spec, coef, design, hyper, expected, approx),
-    fitted = fitted, converged = converged,
-    elapsed = proc.time()[["elapsed"]] - t0,
-    history = list(
-      outer = NULL,
-      blocks = if (length(hist_blocks)) do.call(rbind, hist_blocks) else NULL,
-      inner = if (length(hist_inner)) do.call(rbind, hist_inner) else NULL
-    ),
-    methods = list(smooth = inner_method,
-                   sparse = vapply(blocks$sparse, function(b)
-                     paste(b$param, b$term, sep = "/"), character(1))),
-    call = cl
-  )
+  list(par = beta, value = value, converged = converged, obj = obj,
+       hist_blocks = hist_blocks, hist_inner = hist_inner)
 }
 
 
@@ -509,23 +570,25 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
 #'
 #' @keywords internal
 verbosity <- function(verbose) {
+  switches <- c("outer", "blocks", "inner", "optimizer")
   if (is.logical(verbose) && !is.null(names(verbose))) {
-    bad <- setdiff(names(verbose), c("blocks", "inner", "optimizer"))
+    bad <- setdiff(names(verbose), switches)
     if (length(bad)) {
-      stop(sprintf(paste0("'verbose' names '%s'. The switches are 'blocks',\n",
-                          "  'inner' and 'optimizer'."), bad[1L]),
+      stop(sprintf(paste0("'verbose' names '%s'. The switches are %s."),
+                   bad[1L], paste0("'", switches, "'", collapse = ", ")),
            call. = FALSE)
     }
-    # a switch left out is off, so that naming one of the three is a complete
+    # a switch left out is off, so that naming one of the four is a complete
     # request rather than an error
     on <- function(nm) nm %in% names(verbose) && isTRUE(verbose[[nm]])
-    return(list(blocks = on("blocks"), inner = on("inner"),
-                optimizer = on("optimizer")))
+    return(list(outer = on("outer"), blocks = on("blocks"),
+                inner = on("inner"), optimizer = on("optimizer")))
   }
   if (!is.numeric(verbose) || length(verbose) != 1L) {
     stop("'verbose' must be a number from 0 to 3 or a named logical vector.",
          call. = FALSE)
   }
   lv <- as.integer(verbose)
-  list(blocks = lv >= 1L, inner = lv >= 2L, optimizer = lv >= 3L)
+  list(outer = lv >= 1L, blocks = lv >= 1L, inner = lv >= 2L,
+       optimizer = lv >= 3L)
 }

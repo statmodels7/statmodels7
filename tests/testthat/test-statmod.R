@@ -111,11 +111,14 @@ test_that("the elapsed time is reported in the unit it deserves", {
 
 test_that("verbosity names the loops", {
   expect_identical(statmodels7:::verbosity(0),
-                   list(blocks = FALSE, inner = FALSE, optimizer = FALSE))
+                   list(outer = FALSE, blocks = FALSE, inner = FALSE,
+                        optimizer = FALSE))
   expect_identical(statmodels7:::verbosity(2),
-                   list(blocks = TRUE, inner = TRUE, optimizer = FALSE))
+                   list(outer = TRUE, blocks = TRUE, inner = TRUE,
+                        optimizer = FALSE))
   expect_identical(statmodels7:::verbosity(c(blocks = TRUE, inner = FALSE)),
-                   list(blocks = TRUE, inner = FALSE, optimizer = FALSE))
+                   list(outer = FALSE, blocks = TRUE, inner = FALSE,
+                        optimizer = FALSE))
   expect_error(statmodels7:::verbosity(c(wrong = TRUE)), "'blocks'")
   expect_error(statmodels7:::verbosity("loud"), "number from 0 to 3")
   # and it actually prints

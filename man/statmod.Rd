@@ -11,6 +11,8 @@ statmod(
   weights = NULL,
   offsets = NULL,
   inner_method = iwls(),
+  outer_method = NULL,
+  outer_optimizer = optimizers7::nelder_mead(),
   hyper = NULL,
   start = NULL,
   verbose = 0
@@ -29,6 +31,11 @@ statmod(
 
 \item{inner_method}{How the smooth block is fitted: \code{\link{iwls}()} or
 an \pkg{optimizers7} optimizer.}
+
+\item{outer_method}{How the hyperparameters are estimated:
+\code{\link{reml}()}, \code{\link{ml}()}, or \code{NULL} to hold them.}
+
+\item{outer_optimizer}{The optimizer that searches over them.}
 
 \item{hyper}{Optional hyperparameters, a named list of named lists as
 \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
@@ -74,19 +81,22 @@ which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
 (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 set both and be obeyed by neither.
 
-\strong{The hyperparameters are held fixed.} Estimating a smoothing
-parameter by an outer criterion is not written yet, so each one sits at the
-probe value of its bounds unless \code{hyper} says otherwise. That value is
-a placeholder rather than a choice, and it matters: a lasso at
-\eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
-observations selects nothing at all.
+\strong{The hyperparameters.} With \code{outer_method = NULL}, the default,
+each one sits where \code{hyper} put it, or at the probe value of its bounds
+otherwise -- a placeholder rather than a choice, and it matters, since a
+lasso at \eqn{\lambda = 1} against an unaveraged log-likelihood of a few
+hundred observations selects nothing at all. With
+\code{outer_method = \link{reml}()} or \code{\link{ml}()} they are estimated
+by a marginal criterion, \code{outer_optimizer} searching over them and the
+coefficients being refitted at each. Only a twice differentiable penalty
+takes part: a lasso, a SCAD or an MCP keeps the value it was given.
 
 \strong{Verbosity} has three levels, naming the loops rather than counting
-them: \code{1} the alternation, \code{2} the inner method's own iterations,
-\code{3} the optimizers' traces as well. A named form is accepted too, as
-\code{verbose = c(blocks = TRUE, inner = TRUE, optimizer = FALSE)}, since
-watching the alternation while silencing a chatty inner optimizer is the
-common case.
+them: \code{1} the outer search and the alternation, \code{2} the inner
+method's own iterations, \code{3} the optimizers' traces as well. A named
+form is accepted too, as \code{verbose = c(outer = TRUE, blocks = FALSE)},
+since watching the hyperparameters move while silencing a chatty inner
+optimizer is the common case.
 }
 \examples{
 set.seed(1)

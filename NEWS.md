@@ -1,3 +1,24 @@
+# statmodels7 0.4.0
+
+* The modelling layer. `statmod()` reads one formula carrying every
+  parameter of a distribution, the equations separated by a bar, and
+  fits it: the terms whose penalties are twice differentiable in one
+  system by `iwls()` or any optimizer, each remaining block by a
+  proximal method with the others held fixed, alternating until the
+  objective stops moving.
+
+* `reml()` and `ml()` estimate the hyperparameters by the Laplace
+  approximation to the marginal likelihood, `outer_optimizer` searching
+  over them. The criterion needs nothing added by hand: a penalties7
+  penalty keeps its normalizing constant, so it is minus a log prior
+  density, and written out the expression reproduces Wood's (2011) REML
+  criterion term for term.
+
+* `summary()` reads each distribution parameter as blocks -- the
+  parametric terms together, then one per smooth, random effect or
+  selection -- rather than as one list of coefficients. `vcov()`,
+  `confint()`, `predict()` and `rstatmod()` come with it.
+
 # statmodels7 0.3.0
 
 * modelterms7 joins the toolkit as its eighth member: model terms as

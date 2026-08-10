@@ -9,3 +9,7 @@
 **/*.quarto_ipynb
 vignettes/figure/
 docs/
+# a script run with Rscript that draws anything writes this into whatever
+# directory it was run from, and R CMD check reports it as a non-standard
+# top-level file
+Rplots.pdf
