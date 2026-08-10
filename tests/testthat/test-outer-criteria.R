@@ -193,3 +193,22 @@ test_that("aic is validated and prints", {
   expect_output(print(aic()), "AIC")
   expect_output(print(bic()), "BIC")
 })
+
+test_that("the gradient never asks for a second derivative", {
+  # a penalty that supplies penalty_dhessian() and nothing beyond it must
+  # still give an exact gradient: asking it for a derivative the gradient does
+  # not use would reject it for a quantity nobody wanted
+  spec <- statmod_spec(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+                       dc)
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+
+  first <- outer_pieces(spec, design, statmod(y ~ s(x, k = 8),
+                                              distributions7::gaussian1_distrib(),
+                                              dc)@coefficients,
+                        statmod_hyper_start(spec), idx, offs, sum(npar), 1L)
+  expect_named(first, c("S", "c"))
+  expect_null(first$S2)
+})

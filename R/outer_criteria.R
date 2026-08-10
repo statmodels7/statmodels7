@@ -245,7 +245,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
                                    scale = "link")
   } else NULL
 
-  pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total)
+  pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total, order)
   grho <- statmod_penalty_at(spec, coef, hyper, design, "gradient")
   grho <- unlist(grho[params], use.names = FALSE)
 

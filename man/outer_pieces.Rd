@@ -4,7 +4,7 @@
 \alias{outer_pieces}
 \title{The Per-Hyperparameter Pieces of the Outer Derivatives}
 \usage{
-outer_pieces(spec, design, coef, hyper, idx, offs, total)
+outer_pieces(spec, design, coef, hyper, idx, offs, total, order = 2L)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -18,14 +18,24 @@ outer_pieces(spec, design, coef, hyper, idx, offs, total)
 \item{idx}{The outer index.}
 
 \item{offs, total}{The block offsets and the total width.}
+
+\item{order}{\code{1} for the first-order pieces alone, \code{2} for the
+second-order ones as well.}
 }
 \value{
-A list with \code{S} (one matrix per hyperparameter), \code{c} (one
-vector), \code{S2} and \code{c2} (one per pair, keyed), \code{rho2} (the
-hyperparameter Hessian) and \code{pair} (the key of each pair).
+A list with \code{S} (one matrix per hyperparameter) and \code{c}
+(one vector), and at order 2 also \code{S2} and \code{c2} (one per pair,
+keyed), \code{rho2} (the hyperparameter Hessian) and \code{pair} (the key
+of each pair).
 }
 \description{
 The penalty's contributions to the criterion's gradient and Hessian, placed
 in the stacked coefficient space.
+}
+\details{
+At order 1 the second-order generics are not called at all. That is what
+lets a penalty supplying only \code{penalty_dhessian()} give an exact
+gradient: asking it for a derivative the gradient does not use would have
+rejected it for a quantity nobody wanted.
 }
 \keyword{internal}

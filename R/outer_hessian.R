@@ -158,13 +158,23 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 #' @param hyper The hyperparameters.
 #' @param idx The outer index.
 #' @param offs,total The block offsets and the total width.
+#' @param order \code{1} for the first-order pieces alone, \code{2} for the
+#'   second-order ones as well.
 #'
-#' @return A list with \code{S} (one matrix per hyperparameter), \code{c} (one
-#'   vector), \code{S2} and \code{c2} (one per pair, keyed), \code{rho2} (the
-#'   hyperparameter Hessian) and \code{pair} (the key of each pair).
+#' @details
+#' At order 1 the second-order generics are not called at all. That is what
+#' lets a penalty supplying only \code{penalty_dhessian()} give an exact
+#' gradient: asking it for a derivative the gradient does not use would have
+#' rejected it for a quantity nobody wanted.
+#'
+#' @return A list with \code{S} (one matrix per hyperparameter) and \code{c}
+#'   (one vector), and at order 2 also \code{S2} and \code{c2} (one per pair,
+#'   keyed), \code{rho2} (the hyperparameter Hessian) and \code{pair} (the key
+#'   of each pair).
 #'
 #' @keywords internal
-outer_pieces <- function(spec, design, coef, hyper, idx, offs, total) {
+outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
+                         order = 2L) {
   params <- spec@distrib@params
   nh <- nrow(idx)
   Sm <- vector("list", nh)
@@ -187,9 +197,6 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total) {
     th <- as.list(hyper[[p]][[nm]])
     dS <- penalties7::penalty_dhessian(pen, bt, th)
     cr <- penalties7::penalty_cross(pen, bt, th)
-    d2S <- penalties7::penalty_d2hessian(pen, bt, th)
-    dcr <- penalties7::penalty_dcross(pen, bt, th)
-    ht <- penalties7::penalty_hess_theta(pen, bt, th)
     rows <- which(idx$parameter == p & idx$term == nm)
     for (r in rows) {
       Sm[[r]] <- matrix(0, total, total)
@@ -197,6 +204,10 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total) {
       cm[[r]] <- numeric(total)
       cm[[r]][pos] <- as.numeric(cr[[idx$name[r]]])
     }
+    if (order < 2L) next
+    d2S <- penalties7::penalty_d2hessian(pen, bt, th)
+    dcr <- penalties7::penalty_dcross(pen, bt, th)
+    ht <- penalties7::penalty_hess_theta(pen, bt, th)
     for (r in rows) {
       for (q in rows) {
         key <- pair_key(idx$name[r], idx$name[q], names(ht))
@@ -212,6 +223,7 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total) {
       }
     }
   }
+  if (order < 2L) return(list(S = Sm, c = cm))
   # two hyperparameters of DIFFERENT terms are independent: the penalty is a
   # sum, so no second derivative mixes them
   zeroS <- matrix(0, total, total)
