@@ -11,6 +11,7 @@ statmod(
   weights = NULL,
   offsets = NULL,
   inner_method = iwls(),
+  hyper = NULL,
   start = NULL,
   maxit = 50L,
   tol = 1e-08,
@@ -30,6 +31,10 @@ statmod(
 
 \item{inner_method}{How the smooth block is fitted: \code{\link{iwls}()} or
 an \pkg{optimizers7} optimizer.}
+
+\item{hyper}{Optional hyperparameters, a named list of named lists as
+\code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
+values.}
 
 \item{start}{Optional starting coefficients, a named list.}
 
@@ -68,6 +73,13 @@ plus the penalties at full size, since a penalty is a negative log-prior
 and a posterior adds the two at full size. What is scaled instead is the
 stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
 at \eqn{n = 10^7}.
+
+\strong{The hyperparameters are held fixed.} Estimating a smoothing
+parameter by an outer criterion is not written yet, so each one sits at the
+probe value of its bounds unless \code{hyper} says otherwise. That value is
+a placeholder rather than a choice, and it matters: a lasso at
+\eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
+observations selects nothing at all.
 
 \strong{Verbosity} has three levels, naming the loops rather than counting
 them: \code{1} the alternation, \code{2} the inner method's own iterations,

@@ -4,7 +4,7 @@
 \alias{statmod_edf}
 \title{Effective Degrees of Freedom, Per Term}
 \usage{
-statmod_edf(spec, coef, design, hyper)
+statmod_edf(spec, coef, design, hyper, expected = TRUE, approx = "bartlett")
 }
 \arguments{
 \item{spec}{The specification.}
@@ -14,11 +14,28 @@ statmod_edf(spec, coef, design, hyper)
 \item{design}{The design.}
 
 \item{hyper}{The hyperparameters.}
+
+\item{expected}{Whether the curvature is the expected information.}
+
+\item{approx}{The approximation for the expected information.}
 }
 \value{
 A data frame with one row per term.
 }
 \description{
 Asks each term what it spends, through \pkg{modelterms7}'s \code{edf()}.
+}
+\details{
+A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
+block, so it needs the unpenalized curvature there and not only its
+coefficients and its hyperparameters. That block is cut out of the
+likelihood's information, which is computed once for every term rather than
+per term.
+
+The arguments are passed BY NAME. \code{edf()}'s third argument is the
+curvature and its fourth the hyperparameters, and a positional call put the
+hyperparameters where the curvature belongs: every smooth term then reported
+\code{NA}, the total degrees of freedom counted the unpenalized terms alone,
+and AIC and BIC were built on that count.
 }
 \keyword{internal}

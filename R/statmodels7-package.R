@@ -5,6 +5,17 @@
 ## usethis namespace: end
 NULL
 
+# S7 methods registered on a BASE generic -- print, summary, coef, vcov,
+# confint, predict, fitted, logLik -- reach S3's dispatch table only when this
+# runs. Under pkgload they are registered as a side effect of evaluating the
+# package's code, so a suite run with test_local() is green either way; from an
+# INSTALLED package they are simply absent, and a fit prints as its raw
+# property dump while confint() fails inside the method it never reached.
+#' @noRd
+.onLoad <- function(libname, pkgname) {
+  S7::methods_register()
+}
+
 # The members sit in Imports rather than Depends. Depends would attach them
 # through R's own mechanism, in the order the field happens to list them and
 # with no message, which leaves a caller no way to see what was attached or at

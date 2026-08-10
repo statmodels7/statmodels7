@@ -158,3 +158,79 @@ test_that("coef names the coefficients", {
   expect_named(cf, c("mu", "sigma"))
   expect_identical(names(cf$mu)[1L], "(Intercept)")
 })
+
+test_that("hyper sets a hyperparameter by key or by label", {
+  # a term is keyed by its call as written, which is what keeps two lassos on
+  # different covariates apart, and named by its label, which is what anybody
+  # would type
+  f <- y ~ x + lasso(~ z)
+  fit_key <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                     hyper = list(mu = list(`lasso(~z)` = c(lambda = 50))))
+  fit_lab <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                     hyper = list(mu = list(lasso = c(lambda = 50))))
+  expect_equal(fit_key@coefficients$mu, fit_lab@coefficients$mu,
+               tolerance = 1e-12)
+  expect_equal(unname(fit_lab@hyper$mu[[1L]][["lambda"]]), 50)
+
+  # a larger penalty shrinks harder, which is the property a hyperparameter is
+  # for and the cheapest evidence that the value reached the penalty at all
+  weak <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                  hyper = list(mu = list(lasso = c(lambda = 1))))
+  strong <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                    hyper = list(mu = list(lasso = c(lambda = 500))))
+  expect_lt(abs(strong@coefficients$mu[3L]), abs(weak@coefficients$mu[3L]))
+})
+
+test_that("hyper is validated and says what is available", {
+  f <- y ~ x + lasso(~ z)
+  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
+                       hyper = list(wrong = list(lasso = 1))),
+               "not a parameter")
+  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
+                       hyper = list(mu = list(ridge = 1))),
+               "names no penalized term")
+  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
+                       hyper = list(mu = list(lasso = c(nu = 1)))),
+               "hyperparameters are")
+  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
+                       hyper = list(mu = list(lasso = c(1, 2)))),
+               "has length 2")
+  # two terms sharing a label is ambiguous, and guessing would set the
+  # hyperparameter on the wrong block
+  expect_error(statmod(y ~ lasso(~ x) + lasso(~ z),
+                       distributions7::gaussian1_distrib(), dd,
+                       hyper = list(mu = list(lasso = c(lambda = 5)))),
+               "ambiguous")
+})
+
+
+test_that("a smooth term reports an edf between its null space and its rank", {
+  # edf() takes the term's unpenalized curvature as its THIRD argument and the
+  # hyperparameters as its fourth; a positional call put the second where the
+  # first belonged, every smooth term reported NA, and the degrees of freedom
+  # then counted the unpenalized terms alone
+  set.seed(9)
+  n2 <- 300
+  ds <- data.frame(x = runif(n2, -2, 2))
+  ds$y <- sin(1.4 * ds$x) + stats::rnorm(n2, sd = 0.3)
+  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+
+  e <- fit@edf
+  sm <- e[e$term != "linpar" & e$parameter == "mu", , drop = FALSE]
+  expect_identical(nrow(sm), 1L)
+  expect_false(is.na(sm$edf))
+  # the Demmler-Reinsch penalty is rank deficient by exactly one, so the edf
+  # runs from the coefficient count down to one and never outside it
+  expect_gt(sm$edf, 1 - 1e-8)
+  expect_lt(sm$edf, sm$coefficients + 1e-8)
+
+  # a heavier penalty spends less, which is what the number is for
+  hard <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+                  hyper = list(mu = list(`s(x)` = c(lambda = 1e6))))
+  hs <- hard@edf
+  expect_lt(hs$edf[hs$term != "linpar" & hs$parameter == "mu"], sm$edf)
+
+  # and the criteria are built on the total, so they see the smooth
+  expect_equal(attr(stats::logLik(fit), "df"), sum(e$edf), tolerance = 1e-12)
+  expect_gt(attr(stats::logLik(fit), "df"), 3)
+})

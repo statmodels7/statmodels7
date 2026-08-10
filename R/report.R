@@ -255,7 +255,11 @@ logLik.StatmodFit <- function(object, ...) {
   df <- if (is.null(object@edf)) {
     sum(lengths(object@coefficients))
   } else {
-    sum(object@edf$edf, na.rm = TRUE)
+    # a term whose count could not be obtained falls back to its number of
+    # columns, which is the upper bound: dropping it would understate the
+    # dimension of the model and flatter every criterion built on it
+    e <- object@edf
+    sum(ifelse(is.na(e$edf), e$coefficients, e$edf))
   }
   structure(object@loglik, df = df, nobs = object@spec@n_obs,
             class = "logLik")

@@ -252,6 +252,130 @@ statmod_hyper_start <- function(spec) {
 }
 
 
+#' Override the Starting Hyperparameters
+#'
+#' @description
+#' Merges a caller's hyperparameters into the ones
+#' \code{\link{statmod_hyper_start}} computed, by parameter and by term.
+#'
+#' @details
+#' Until a hyperparameter is estimated by an outer criterion it is held at the
+#' probe value, which is a placeholder and not a choice: a lasso at
+#' \eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
+#' observations selects nothing. This is what lets a caller set it.
+#'
+#' A vector is matched by name against the penalty's own hyperparameters, so
+#' \code{c(lambda = 5)} sets that one and leaves the rest where they were; an
+#' unnamed vector of the full length replaces them all.
+#'
+#' A term is named either by the key the specification holds it under, which is
+#' its call deparsed, or by its \code{label} -- \code{"lasso"} rather than
+#' \code{"lasso(~noise1 + noise2)"}. Two terms sharing a label are ambiguous
+#' and the keys are asked for instead.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param start The hyperparameters as computed.
+#' @param user A named list of named lists, or \code{NULL}.
+#'
+#' @return The merged structure.
+#'
+#' @keywords internal
+statmod_hyper_merge <- function(spec, start, user) {
+  if (is.null(user)) return(start)
+  if (!is.list(user) || is.null(names(user))) {
+    stop("'hyper' must be a named list, one entry per distribution parameter.",
+         call. = FALSE)
+  }
+  bad <- setdiff(names(user), names(start))
+  if (length(bad)) {
+    stop(sprintf(paste0("'hyper' names '%s', which is not a parameter.\n",
+                        "  They are: %s."),
+                 bad[1L], paste(names(start), collapse = ", ")), call. = FALSE)
+  }
+  for (p in names(user)) {
+    u <- user[[p]]
+    if (!is.list(u) || is.null(names(u))) {
+      stop(sprintf(paste0("'hyper$%s' must be a named list, one entry per\n",
+                          "  penalized term. This one has: %s."),
+                   p, paste(names(start[[p]]), collapse = ", ")),
+           call. = FALSE)
+    }
+    keys <- vapply(names(u), function(k) hyper_key(spec, start, p, k),
+                   character(1))
+    for (i in seq_along(u)) {
+      nm <- keys[[i]]
+      cur <- start[[p]][[nm]]
+      v <- u[[i]]
+      if (!is.null(names(v))) {
+        miss <- setdiff(names(v), names(cur))
+        if (length(miss)) {
+          stop(sprintf(paste0("'hyper$%s$%s' names '%s'. That penalty's\n",
+                              "  hyperparameters are: %s."),
+                       p, nm, miss[1L], paste(names(cur), collapse = ", ")),
+               call. = FALSE)
+        }
+        cur[names(v)] <- as.numeric(v)
+      } else {
+        if (length(v) != length(cur)) {
+          stop(sprintf(paste0("'hyper$%s$%s' has length %d but that penalty",
+                              " has %d\n  hyperparameters: %s."),
+                       p, nm, length(v), length(cur),
+                       paste(names(cur), collapse = ", ")), call. = FALSE)
+        }
+        cur[] <- as.numeric(v)
+      }
+      start[[p]][[nm]] <- cur
+    }
+  }
+  start
+}
+
+
+#' Resolve a Term's Name Against a Specification
+#'
+#' @description
+#' Turns the name a caller used into the key the specification holds the term
+#' under, accepting either that key or the term's \code{label}.
+#'
+#' @details
+#' A specification keys its terms by the call as written, so a lasso is
+#' \code{"lasso(~noise1 + noise2)"}. That is what makes two lassos on different
+#' covariates distinct, and it is not what anybody wants to type; the label the
+#' term constructor carries is. Where two terms share a label the request is
+#' ambiguous and the keys are asked for, since guessing would set a
+#' hyperparameter on the wrong block.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param start The hyperparameter structure, whose names are the keys.
+#' @param p The distribution parameter.
+#' @param name What the caller wrote.
+#'
+#' @return A single key.
+#'
+#' @keywords internal
+hyper_key <- function(spec, start, p, name) {
+  keys <- names(start[[p]])
+  if (name %in% keys) return(name)
+  labels <- vapply(keys, function(k) {
+    lb <- tryCatch(spec@terms[[p]][[k]]@label, error = function(e) "")
+    if (is.character(lb) && length(lb) == 1L) lb else ""
+  }, character(1))
+  hit <- keys[labels == name]
+  if (length(hit) == 1L) return(hit)
+  if (length(hit) > 1L) {
+    stop(sprintf(paste0("'hyper$%s$%s' is ambiguous: %d terms of '%s' carry",
+                        " that label.\n  Name one of them: %s."),
+                 p, name, length(hit), p, paste(hit, collapse = ", ")),
+         call. = FALSE)
+  }
+  stop(sprintf(paste0("'hyper$%s$%s' names no penalized term of '%s'.\n",
+                      "  The penalized terms there are: %s."),
+               p, name, p,
+               if (length(keys)) paste(keys, collapse = ", ") else "none"),
+       call. = FALSE)
+}
+
+
 #' A Penalty's Starting Hyperparameters
 #'
 #' @description

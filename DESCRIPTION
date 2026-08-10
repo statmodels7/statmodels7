@@ -57,5 +57,6 @@ Collate:
     'statmod.R'
     'report.R'
     'predict.R'
+    'inference.R'
     'statmodels7-package.R'
     'update.R'

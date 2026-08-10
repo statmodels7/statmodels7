@@ -80,6 +80,13 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
 #' at \eqn{n = 10^7}.
 #'
+#' \strong{The hyperparameters are held fixed.} Estimating a smoothing
+#' parameter by an outer criterion is not written yet, so each one sits at the
+#' probe value of its bounds unless \code{hyper} says otherwise. That value is
+#' a placeholder rather than a choice, and it matters: a lasso at
+#' \eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
+#' observations selects nothing at all.
+#'
 #' \strong{Verbosity} has three levels, naming the loops rather than counting
 #' them: \code{1} the alternation, \code{2} the inner method's own iterations,
 #' \code{3} the optimizers' traces as well. A named form is accepted too, as
@@ -94,6 +101,9 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param offsets Optional named list of offsets, one per parameter.
 #' @param inner_method How the smooth block is fitted: \code{\link{iwls}()} or
 #'   an \pkg{optimizers7} optimizer.
+#' @param hyper Optional hyperparameters, a named list of named lists as
+#'   \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
+#'   values.
 #' @param start Optional starting coefficients, a named list.
 #' @param maxit The alternation's iteration budget.
 #' @param tol The alternation's tolerance, on the relative change in the
@@ -117,7 +127,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
-                    inner_method = iwls(), start = NULL,
+                    inner_method = iwls(), hyper = NULL, start = NULL,
                     maxit = 50L, tol = 1e-8, verbose = 0) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
@@ -125,7 +135,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 
   spec <- statmod_spec(formula, distrib, data, weights, offsets)
   design <- statmod_design(spec)
-  hyper <- statmod_hyper_start(spec)
+  hyper <- statmod_hyper_merge(spec, statmod_hyper_start(spec), hyper)
   blocks <- statmod_blocks(spec, design)
 
   expected <- !S7::S7_inherits(inner_method, Iwls) ||
@@ -200,7 +210,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     spec = spec, coefficients = coef, hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = value,
-    edf = statmod_edf(spec, coef, design, hyper),
+    edf = statmod_edf(spec, coef, design, hyper, expected, approx),
     fitted = fitted, converged = converged,
     elapsed = proc.time()[["elapsed"]] - t0,
     history = list(
@@ -340,27 +350,61 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #' @description
 #' Asks each term what it spends, through \pkg{modelterms7}'s \code{edf()}.
 #'
+#' @details
+#' A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
+#' block, so it needs the unpenalized curvature there and not only its
+#' coefficients and its hyperparameters. That block is cut out of the
+#' likelihood's information, which is computed once for every term rather than
+#' per term.
+#'
+#' The arguments are passed BY NAME. \code{edf()}'s third argument is the
+#' curvature and its fourth the hyperparameters, and a positional call put the
+#' hyperparameters where the curvature belongs: every smooth term then reported
+#' \code{NA}, the total degrees of freedom counted the unpenalized terms alone,
+#' and AIC and BIC were built on that count.
+#'
 #' @param spec The specification.
 #' @param coef The coefficients.
 #' @param design The design.
 #' @param hyper The hyperparameters.
+#' @param expected Whether the curvature is the expected information.
+#' @param approx The approximation for the expected information.
 #'
 #' @return A data frame with one row per term.
 #'
 #' @keywords internal
-statmod_edf <- function(spec, coef, design, hyper) {
+statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
+                        approx = "bartlett") {
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  H <- NULL
   rows <- list()
-  for (p in spec@distrib@params) {
+  for (a in seq_along(params)) {
+    p <- params[a]
     for (nm in names(spec@terms[[p]])) {
       cols <- design[[p]]$blocks[[nm]]
       pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
       v <- if (is.null(pen)) {
         as.numeric(length(cols))
       } else {
+        if (is.null(H)) {
+          H <- statmod_information_at(spec, coef, design, expected, approx)
+        }
+        idx <- offs[a] + cols
         tryCatch(
-          modelterms7::edf(spec@terms[[p]][[nm]], coef[[p]][cols],
-                           hyper[[p]][[nm]]),
-          error = function(e) NA_real_)
+          modelterms7::edf(spec@terms[[p]][[nm]],
+                           coef = coef[[p]][cols],
+                           hessian = H[idx, idx, drop = FALSE],
+                           theta = as.list(hyper[[p]][[nm]])),
+          error = function(e) {
+            # the count is not worth abandoning a fit for, but a message that
+            # named none of this would leave the reader to guess why a column
+            # went missing
+            warning(sprintf("edf() failed for '%s' in '%s': %s", nm, p,
+                            conditionMessage(e)), call. = FALSE)
+            NA_real_
+          })
       }
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = p, term = nm, coefficients = length(cols),
