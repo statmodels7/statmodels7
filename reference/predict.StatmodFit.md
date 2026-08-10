@@ -89,9 +89,9 @@ dd <- data.frame(x = runif(60))
 dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 head(predict(fit, "mu"))
-#> Error in UseMethod("predict"): no applicable method for 'predict' applied to an object of class "c('statmodels7::StatmodFit', 'S7_object')"
+#> [1] 1.598880 1.804324 2.191124 2.837341 1.475888 2.818422
 head(predict(fit, "variance"))
-#> Error in UseMethod("predict"): no applicable method for 'predict' applied to an object of class "c('statmodels7::StatmodFit', 'S7_object')"
+#> [1] 0.16066196 0.13864759 0.10505462 0.06608503 0.17548016 0.06698798
 head(predict(fit, "link:sigma"))
-#> Error in UseMethod("predict"): no applicable method for 'predict' applied to an object of class "c('statmodels7::StatmodFit', 'S7_object')"
+#> [1] -0.9142264 -0.9879099 -1.1266374 -1.3584065 -0.8701146 -1.3516210
 ```

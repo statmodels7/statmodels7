@@ -110,19 +110,9 @@ S\beta\\, and how depends on this argument.
 
 ``` r
 iwls()
-#> <statmodels7::Iwls>
-#>  @ hessian      : chr "expected"
-#>  @ approx       : chr "bartlett"
-#>  @ decomposition: chr "qr"
-#>  @ maxit        : num 100
-#>  @ tol          : num 1e-06
-#>  @ step_halving : num 30
+#> iwls: expected information, qr
+#>   maxit 100, tol 1e-06
 iwls(hessian = "observed", decomposition = "svd")
-#> <statmodels7::Iwls>
-#>  @ hessian      : chr "observed"
-#>  @ approx       : chr "bartlett"
-#>  @ decomposition: chr "svd"
-#>  @ maxit        : num 100
-#>  @ tol          : num 1e-06
-#>  @ step_halving : num 30
+#> iwls: observed information, svd
+#>   maxit 100, tol 1e-06
 ```

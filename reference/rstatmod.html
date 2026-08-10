@@ -126,144 +126,21 @@ symbol, and <code>"y"</code> otherwise.</p>
 <span class="r-in"><span><span class="va">sim2</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span>,</span></span>
 <span class="r-in"><span>                 par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">0.3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">sim2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;statmodels7::StatmodFit&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ spec        : &lt;statmodels7::StatmodSpec&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ formula   :Class 'formula'  language y ~ x</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55dffe86bcb0&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ distrib   : &lt;distributions7::Gaussian1Distrib&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ distrib_name         : chr "gaussian1"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ dimension            : chr "univariate"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ bounds               : num [1:2] -Inf Inf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ params               : chr [1:2] "mu" "sigma"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ params_interpretation: Named chr [1:2] "mean" "standard deviation"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. - attr(*, "names")= chr [1:2] "mu" "sigma"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ n_params             : num 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ params_bounds        :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ mu   : num [1:2] -Inf Inf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ sigma: num [1:2] 0 Inf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ link_params          :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ mu   : &lt;linkfunctions7::IdentityLink&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_name  : chr "identity"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_bounds: num [1:2] -Inf Inf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_params: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ sigma: &lt;linkfunctions7::LogLink&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_name  : chr "log"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_bounds: num [1:2] 0 Inf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ link_params: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. @ params_smooth        : logi(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ equations :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ mu   :Class 'formula'  language ~x</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..- attr(*, ".Environment")=&lt;environment: 0x55dffe86bcb0&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ sigma:Class 'formula'  language ~1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..- attr(*, ".Environment")=&lt;environment: 0x55dffe86bcb0&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ terms     :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ mu   :List of 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  ..$ linpar: &lt;modelterms7::LinparTerm&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ label     : chr ""</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ X         : num [1:50, 1:2] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. - attr(*, "dimnames")=List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..$ : chr [1:50] "1" "2" "3" "4" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..$ : chr [1:2] "(Intercept)" "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ coef_names: chr [1:2] "(Intercept)" "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ blueprint :List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ terms    :Classes 'terms', 'formula'  language ~x</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "variables")= language list(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "factors")= int [1, 1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. .. ..- attr(*, "dimnames")=List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. .. .. ..$ : chr "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. .. .. ..$ : chr "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "term.labels")= chr "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "order")= int 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "intercept")= int 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "response")= int 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, ".Environment")=&lt;environment: 0x55e00116ca68&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "predvars")= language list(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "dataClasses")= Named chr "numeric"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. .. ..- attr(*, "names")= chr "x"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ xlev     : Named list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ contrasts: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ penalty   : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ formula   :Class 'formula'  language ~x</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55e00116ca68&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ sigma:List of 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  ..$ linpar: &lt;modelterms7::LinparTerm&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ label     : chr ""</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ X         : num [1:50, 1] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. - attr(*, "dimnames")=List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..$ : chr [1:50] "1" "2" "3" "4" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..$ : chr "(Intercept)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ coef_names: chr "(Intercept)"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ blueprint :List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ terms    :Classes 'terms', 'formula'  language ~1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "variables")= language list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "factors")= int(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "term.labels")= chr(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "order")= int(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "intercept")= int 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "response")= int 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, ".Environment")=&lt;environment: 0x55e00116ca68&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "predvars")= language list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. ..- attr(*, "dataClasses")= Named chr(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  .. .. ..- attr(*, "names")= chr(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ xlev     : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ contrasts: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ penalty   : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. ..  .. ..@ formula   :Class 'formula'  language ~1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..- attr(*, ".Environment")=&lt;environment: 0x55e00116ca68&gt; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ response  : num [1:50] 1.354 1.574 2.105 3.17 0.946 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ n_obs     : int 50</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ weights   : num [1:50] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ offsets   :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ mu   : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. $ sigma: NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. @ intercepts: Named logi [1:2] TRUE TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. - attr(*, "names")= chr [1:2] "mu" "sigma"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ coefficients:List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ mu   : num [1:2] 1.05 1.96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ sigma: num -1.43</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ hyper       :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ mu   : list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ sigma: list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ loglik      : num 0.466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ objective   : num -0.466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ edf         :'data.frame':	2 obs. of  4 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ parameter   : chr  "mu" "sigma"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ term        : chr  "linpar" "linpar"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ coefficients: int  2 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ edf         : num  2 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ fitted      :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ mu   : num [1:50] 1.57 1.78 2.17 2.83 1.44 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ sigma: num [1:50] 0.24 0.24 0.24 0.24 0.24 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ converged   : logi TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ elapsed     : num 0.027</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ history     :List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ outer : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ blocks:'data.frame':	1 obs. of  6 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ sweep     : int 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ block     : chr "smooth"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ objective : num -0.466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ change    : num 164</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ iterations: int 12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ converged : logi TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ inner :'data.frame':	11 obs. of  8 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ iteration: int [1:11] 1 2 3 4 5 6 7 8 9 10 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ objective: num [1:11] 138.7 113.8 89.1 64.8 41.6 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ score    : num [1:11] 3.709 0.999 0.996 0.99 0.972 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ step     : num [1:11] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ rank     : int [1:11] 3 3 3 3 3 3 3 3 3 3 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ route    : chr [1:11] "qr" "qr" "qr" "qr" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ sweep    : int [1:11] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..$ block    : chr [1:11] "smooth" "smooth" "smooth" "smooth" ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ methods     :List of 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ smooth: &lt;statmodels7::Iwls&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ hessian      : chr "expected"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ approx       : chr "bartlett"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ decomposition: chr "qr"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ maxit        : num 100</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ tol          : num 1e-06</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ step_halving : num 30</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ sparse: chr(0) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ call        : language statmod(formula = y ~ x, distrib = distributions7::gaussian1_distrib(),      data = sim2)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A statmod fit</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Call:  statmod(formula = y ~ x, distrib = distributions7::gaussian1_distrib(), </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             data = sim2)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Distribution: gaussian1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Observations: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   mu         ~ x</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sigma      ~ 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood 0.466254    objective -0.466254</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 24 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

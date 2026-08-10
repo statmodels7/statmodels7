@@ -41,7 +41,8 @@ alternated around them.
 ## Reading a fit
 
 The model as a function of parameters and data, any parameter or moment
-predicted at new data, and the elapsed time in the unit it deserves.
+predicted at new data, what the fit says about its own uncertainty, and
+the elapsed time in the unit it deserves.
 
 - [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
@@ -69,6 +70,8 @@ exported, and none is needed to use the package.
   : A Fitted Model
 - [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
   : The Specification of a Model, Before It Is Fitted
+- [`StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md)
+  : A Summary of a Fitted Model
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
@@ -79,8 +82,14 @@ exported, and none is needed to use the package.
   : Cholesky Factors of Small Blocks, Vectorized Over Observations
 - [`coef(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
   : The Coefficients of a Fit
+- [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
+  : Where Each Stacked Coefficient Comes From
+- [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
+  : Confidence Intervals for a Fit
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
+- [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
+  : Which Information Matrix a Fit Used
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   : Fit the Smooth Block
 - [`fitted(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
@@ -91,6 +100,8 @@ exported, and none is needed to use the package.
   : Render a Conflict Report
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
+- [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
+  : Resolve a Term's Name Against a Specification
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
 - [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
@@ -123,6 +134,10 @@ exported, and none is needed to use the package.
   : The Quantities a Fit Can Predict
 - [`print(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md)
   : Print a Fitted Model
+- [`print(`*`<StatmodSummary>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
+  : Print a Model Summary
+- [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  : Invert a Matrix That Ought to Be Positive Definite
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
   : Fit One Non-Smooth Block, the Others Held Fixed
 - [`spec_at()`](https://statmodels7.github.io/statmodels7/reference/spec_at.md)
@@ -135,6 +150,8 @@ exported, and none is needed to use the package.
   : Effective Degrees of Freedom, Per Term
 - [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   : The Linear Predictors and the Parameters They Give
+- [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
+  : Override the Starting Hyperparameters
 - [`statmod_hyper_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.md)
   : The Hyperparameters a Specification Starts From
 - [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
@@ -158,9 +175,13 @@ exported, and none is needed to use the package.
   : Attach the Member Packages
 - [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)
   : The Body of the Attach Message
+- [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+  : Summarize a Fitted Model
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
+- [`vcov(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+  : The Variance Matrix of a Fit
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting

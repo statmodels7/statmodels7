@@ -8,18 +8,23 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/Iwls-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_weights.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/chol_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/draw_coefficients.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fmt_step.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_conflicts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_duration.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hess_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/index.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/info_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls.html</loc></url>
@@ -37,7 +42,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/predict_moments.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/spec_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sqrt_design.html</loc></url>
@@ -47,6 +54,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_edf.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_equations.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_eta.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>
@@ -63,8 +71,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_update.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/verbosity.html</loc></url>
 </urlset>
 
