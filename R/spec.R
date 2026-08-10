@@ -43,7 +43,8 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     n_obs = S7::class_integer,
     weights = S7::class_numeric,
     offsets = S7::class_list,
-    intercepts = S7::class_logical
+    intercepts = S7::class_logical,
+    newdata = S7::class_any
   )
 )
 
@@ -123,8 +124,54 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
     formula = formula, distrib = distrib,
     equations = split$equations, terms = terms_by_param,
     response = response, n_obs = as.integer(n),
-    weights = weights, offsets = offsets, intercepts = intercepts
+    weights = weights, offsets = offsets, intercepts = intercepts,
+    newdata = NULL
   )
+}
+
+
+#' The Same Model Read on Other Rows
+#'
+#' @description
+#' A specification carrying the fitted terms and a new data frame, so that
+#' every block is reapplied to those rows rather than rebuilt from them.
+#'
+#' @details
+#' A term records how its block was made -- a factor's levels and contrasts, a
+#' spline's knots, a basis reparametrization -- and
+#' \code{\link[modelterms7]{term_predict}} reapplies that record. Rebuilding
+#' instead gives a block of the same shape, multiplying the same coefficients,
+#' that means something else: measured on \code{y ~ s(x, k = 10)} at 200
+#' observations, predicting on 40 of the rows the model was fitted to differed
+#' from the fitted values there by 0.237, and on the 51 rows with
+#' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. The whole
+#' data handed back agrees exactly, which is why nothing noticed.
+#'
+#' @param spec The fitted \code{\link{StatmodSpec}}.
+#' @param data The rows to read it on.
+#' @param need_response Whether the response has to be there.
+#'
+#' @return A \code{\link{StatmodSpec}} whose \code{newdata} is set.
+#'
+#' @seealso \code{\link{statmod_design}}
+#'
+#' @keywords internal
+statmod_respec <- function(spec, data, need_response = TRUE) {
+  if (!is.data.frame(data)) {
+    stop("'data' must be a data frame.", call. = FALSE)
+  }
+  env <- environment(spec@formula)
+  if (is.null(env)) env <- baseenv()
+  split <- statmod_equations(spec@formula, spec@distrib@params)
+  response <- tryCatch(eval(split$response, data, env),
+                       error = function(e) if (need_response) stop(e) else NULL)
+  if (is.null(response)) response <- rep(NA_real_, nrow(data))
+  n <- if (is.matrix(response)) nrow(response) else length(response)
+  if (n == 0L) stop("The response is empty.", call. = FALSE)
+  S7::set_props(spec, response = response, n_obs = as.integer(n),
+                weights = rep(1, n),
+                offsets = check_offsets(NULL, spec@distrib@params, n),
+                newdata = data)
 }
 
 
@@ -393,7 +440,12 @@ statmod_design <- function(spec) {
       return(list(X = matrix(0, spec@n_obs, 0L), coef_names = character(0),
                   npar = 0L, blocks = list()))
     }
-    mats <- lapply(tms, modelterms7::term_matrix)
+    # on other rows every block is REAPPLIED, never rebuilt: a term records
+    # how its block was made and term_predict() replays that record, where
+    # building again would give a block of the same shape multiplying the same
+    # coefficients and meaning something else
+    mats <- if (is.null(spec@newdata)) lapply(tms, modelterms7::term_matrix)
+      else lapply(tms, modelterms7::term_predict, newdata = spec@newdata)
     nms <- lapply(tms, modelterms7::term_coef_names)
     widths <- vapply(mats, ncol, integer(1))
     ends <- cumsum(widths)

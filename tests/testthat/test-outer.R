@@ -152,7 +152,7 @@ test_that("an outer method with nothing to estimate says so", {
                "no hyperparameter to", fixed = TRUE)
   expect_error(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
                        ds, outer_method = "reml"),
-               "reml(), ml() or NULL", fixed = TRUE)
+               "reml(), ml(), aic(), bic(), cv() or NULL", fixed = TRUE)
 })
 
 test_that("ml refuses a penalty whose null space it cannot read", {

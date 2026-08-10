@@ -156,10 +156,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   hyper <- statmod_hyper_merge(spec, statmod_hyper_start(spec), hyper)
   blocks <- statmod_blocks(spec, design)
 
-  expected <- !S7::S7_inherits(inner_method, Iwls) ||
-    identical(inner_method@hessian, "expected")
-  approx <- if (S7::S7_inherits(inner_method, Iwls)) inner_method@approx else
-    "bartlett"
+  cfg <- inner_settings(inner_method)
+  expected <- cfg$expected
+  approx <- cfg$approx
   obj <- statmod_objective(spec, hyper, design, expected, approx)
   beta <- statmod_start(spec, design, obj, start)
 
@@ -169,10 +168,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     crit <- NA_real_
   } else {
     if (!S7::S7_inherits(outer_method, OuterMethod)) {
-      stop("'outer_method' must be reml(), ml() or NULL.", call. = FALSE)
+      stop("'outer_method' must be reml(), ml(), aic(), bic(), cv() or NULL.",
+           call. = FALSE)
     }
-    res <- outer_fit(spec, design, blocks, hyper, inner_method, outer_method,
-                     outer_optimizer, beta, approx, maxit, tol, vb)
+    res <- statmod_select(spec, design, blocks, hyper, inner_method,
+                          outer_method, outer_optimizer, beta, approx, maxit,
+                          tol, vb, data, weights, offsets)
     hyper <- res$hyper
     crit <- res$criterion
   }
@@ -349,6 +350,35 @@ method_budget <- function(method) {
   }
   list(maxit = as.integer(method@maxit),
        tol = criterion_tol(method@criterion))
+}
+
+
+#' What the Inner Method Says About How to Fit
+#'
+#' @description
+#' The information matrix, its approximation and the budget, read off the inner
+#' method in one place.
+#'
+#' @details
+#' Every route that fits the coefficients reads these, and reading them in one
+#' place is what keeps a refit inside a path or a fold on the same terms as the
+#' fit the caller asked for. Hard-coding them instead ran cross-validation at a
+#' tolerance a hundred times tighter than \code{\link{iwls}}'s own, which cost
+#' 26 per cent in time and answered a question the caller had not asked.
+#'
+#' @param method \code{\link{iwls}()} or an \pkg{optimizers7} optimizer.
+#'
+#' @return A list with \code{expected}, \code{approx}, \code{maxit} and
+#'   \code{tol}.
+#'
+#' @keywords internal
+inner_settings <- function(method) {
+  b <- method_budget(method)
+  list(expected = !S7::S7_inherits(method, Iwls) ||
+         identical(method@hessian, "expected"),
+       approx = if (S7::S7_inherits(method, Iwls)) method@approx else
+         "bartlett",
+       maxit = b$maxit, tol = b$tol)
 }
 
 

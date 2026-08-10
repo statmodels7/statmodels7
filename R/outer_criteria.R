@@ -88,13 +88,15 @@ aic <- function(k = 2, hessian = c("observed", "expected")) {
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0) {
     stop("'k' must be a single non-negative number.", call. = FALSE)
   }
-  OuterMethod(kind = "aic", hessian = match.arg(hessian), k = as.numeric(k))
+  do.call(OuterMethod, c(list(kind = "aic", hessian = match.arg(hessian),
+                             k = as.numeric(k)), outer_path_defaults()))
 }
 
 #' @rdname aic
 #' @export
 bic <- function(hessian = c("observed", "expected")) {
-  OuterMethod(kind = "bic", hessian = match.arg(hessian), k = NA_real_)
+  do.call(OuterMethod, c(list(kind = "bic", hessian = match.arg(hessian),
+                             k = NA_real_), outer_path_defaults()))
 }
 
 
@@ -116,7 +118,7 @@ bic <- function(hessian = c("observed", "expected")) {
 #'
 #' @keywords internal
 outer_minimize <- function(method) {
-  method@kind %in% c("aic", "bic")
+  method@kind %in% c("aic", "bic", "cv")
 }
 
 
@@ -143,13 +145,33 @@ outer_k <- function(method, n) {
 #' @description
 #' \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]}, the trace of the influence matrix.
 #'
+#' A penalty with a kink is not twice differentiable everywhere, and the mode
+#' of such a fit sits at the kink for every coefficient it sets to zero. It is
+#' twice differentiable away from the kink, so the trace is taken over the
+#' active coordinates alone, which is the submodel the fit has selected. For a
+#' penalty that is linear there -- the lasso -- \eqn{S_{AA}} vanishes and
+#' \eqn{\tau} is the number of coefficients that survived, which is the
+#' unbiased count of Zou, Hastie and Tibshirani (2007). The elastic net keeps
+#' its quadratic part, and SCAD and MCP their own curvature.
+#'
 #' @param J The penalized information.
 #' @param H The likelihood's information.
+#' @param active A logical vector over the stacked coefficients, or
+#'   \code{NULL} for all of them.
 #'
 #' @return A single number.
 #'
+#' @references
+#' Zou, H., Hastie, T. and Tibshirani, R. (2007). On the degrees of freedom of
+#' the lasso. \emph{The Annals of Statistics} 35(5), 2173--2192.
+#'
 #' @keywords internal
-outer_tau <- function(J, H) {
+outer_tau <- function(J, H, active = NULL) {
+  if (!is.null(active)) {
+    if (!any(active)) return(0)
+    J <- J[active, active, drop = FALSE]
+    H <- H[active, active, drop = FALSE]
+  }
   P <- tryCatch(chol2inv(chol(J)), error = function(e) NULL)
   if (is.null(P)) return(NA_real_)
   sum(P * t(H))
@@ -167,6 +189,9 @@ outer_tau <- function(J, H) {
 #' @param hyper The hyperparameters.
 #' @param method An \code{\link{OuterMethod}}.
 #' @param approx The approximation for the expected information.
+#' @param active Which coefficients are away from a kink, as
+#'   \code{\link{statmod_active}} reports them, or \code{NULL} where no
+#'   penalty has one.
 #'
 #' @return A list with \code{value}, \code{loglik}, \code{penalty} and
 #'   \code{edf}, or \code{NULL} where the information is not invertible.
@@ -175,13 +200,13 @@ outer_tau <- function(J, H) {
 #'
 #' @keywords internal
 statmod_pe <- function(spec, design, coef, hyper, method,
-                       approx = "bartlett") {
+                       approx = "bartlett", active = NULL) {
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
   H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S[!is.finite(S)] <- 0
-  tau <- outer_tau(H + S, H)
+  tau <- outer_tau(H + S, H, active)
   if (!is.finite(tau)) return(NULL)
   k <- outer_k(method, spec@n_obs)
   list(value = -2 * ll + k * tau, loglik = ll,

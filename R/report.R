@@ -176,8 +176,7 @@ hessian <- S7::new_generic("hessian", "object",
 #' @keywords internal
 spec_at <- function(fit, data, need_response = TRUE) {
   if (is.null(data)) return(fit@spec)
-  statmod_spec(fit@spec@formula, fit@spec@distrib, data,
-               need_response = need_response)
+  statmod_respec(fit@spec, data, need_response = need_response)
 }
 
 #' Resolve a Parameter Structure

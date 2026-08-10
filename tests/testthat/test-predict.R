@@ -189,3 +189,43 @@ test_that("a data frame passed second is named rather than failing inside", {
   # and the spelling the message suggests works
   expect_length(predict(fit, newdata = dd[1:3, ])$mu, 3L)
 })
+
+
+test_that("new data reapplies each block instead of rebuilding it", {
+  # A term records how its block was made -- a factor's levels and contrasts,
+  # a spline's knots, a basis reparametrization -- and term_predict() replays
+  # that record. Rebuilding gives a block of the same shape multiplying the
+  # same coefficients and meaning something else, so the identity that has to
+  # hold is that rows the model was fitted to predict to their fitted values.
+  # Measured before the fix: 0.237 on 40 arbitrary rows and 1.19 on the 51
+  # with |x| < 0.5, where rebuilt knots move furthest. The whole data handed
+  # back agreed exactly, which is why nothing noticed.
+  set.seed(5)
+  n <- 200L
+  dn <- data.frame(x = stats::runif(n, -2, 2),
+                   g = factor(sample(letters[1:3], n, TRUE)))
+  dn$y <- sin(1.4 * dn$x) + stats::rnorm(n, sd = 0.3)
+  fit <- statmod(y ~ s(x, k = 10) + g, distributions7::gaussian1_distrib(), dn)
+  full <- predict(fit, "mu")
+
+  for (rows in list(1:40, which(abs(dn$x) < 0.5), c(3L, 7L, 100L))) {
+    got <- predict(fit, "mu", dn[rows, , drop = FALSE])
+    expect_equal(got, full[rows], tolerance = 1e-12)
+  }
+  # and the whole thing, which agreed even when it was wrong
+  expect_equal(predict(fit, "mu", dn), full, tolerance = 1e-12)
+
+  # the log-likelihood on a subset is the sum of that subset's contributions
+  rows <- 1:60
+  part <- as.numeric(loglik(fit, data = dn[rows, , drop = FALSE]))
+  th <- predict(fit, "parameter", dn[rows, , drop = FALSE])
+  by_hand <- sum(log(distributions7::distrib_pdf(
+    fit@spec@distrib, dn$y[rows], th)))
+  expect_equal(part, by_hand, tolerance = 1e-10)
+
+  # a factor level absent from the new rows keeps its column, the levels
+  # being the fitted term's and not the new data's
+  drop_c <- droplevels(dn[dn$g != "c", , drop = FALSE])
+  expect_equal(predict(fit, "mu", drop_c),
+               full[dn$g != "c"], tolerance = 1e-12)
+})

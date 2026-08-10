@@ -4,7 +4,15 @@
 \alias{statmod_pe}
 \title{A Prediction-Error Criterion at Given Coefficients and Hyperparameters}
 \usage{
-statmod_pe(spec, design, coef, hyper, method, approx = "bartlett")
+statmod_pe(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  approx = "bartlett",
+  active = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -18,6 +26,10 @@ statmod_pe(spec, design, coef, hyper, method, approx = "bartlett")
 \item{method}{An \code{\link{OuterMethod}}.}
 
 \item{approx}{The approximation for the expected information.}
+
+\item{active}{Which coefficients are away from a kink, as
+\code{\link{statmod_active}} reports them, or \code{NULL} where no
+penalty has one.}
 }
 \value{
 A list with \code{value}, \code{loglik}, \code{penalty} and

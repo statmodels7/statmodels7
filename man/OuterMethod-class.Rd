@@ -5,15 +5,40 @@
 \alias{OuterMethod}
 \title{How the Hyperparameters Are Estimated}
 \usage{
-OuterMethod(kind = character(0), hessian = character(0), k = integer(0))
+OuterMethod(
+  kind = character(0),
+  hessian = character(0),
+  k = integer(0),
+  n_values = integer(0),
+  min_ratio = integer(0),
+  nfolds = integer(0),
+  rule = character(0),
+  folds = integer(0),
+  over = character(0)
+)
 }
 \arguments{
-\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"} or \code{"bic"}.}
+\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or
+\code{"cv"}.}
 
 \item{hessian}{\code{"expected"} or \code{"observed"}.}
 
 \item{k}{The price of one degree of freedom, for a prediction-error
 criterion. \code{NA} where the method resolves it against the sample size.}
+
+\item{n_values}{How many points a path over a kinked hyperparameter visits.}
+
+\item{min_ratio}{The smallest kink a path reaches, as a fraction of the one
+that empties the block.}
+
+\item{nfolds}{How many folds cross-validation uses.}
+
+\item{rule}{\code{"min"} or \code{"1se"}.}
+
+\item{folds}{A fold number per observation, or \code{integer(0)}.}
+
+\item{over}{Which hyperparameters a path varies, or \code{character(0)} for
+the ones that set the size of the kink.}
 }
 \value{
 An object of class \code{OuterMethod}.
@@ -27,10 +52,11 @@ matrix enters the determinant.
 reml()
 ml(hessian = "observed")
 aic()
+cv(nfolds = 5)
 
 }
 \seealso{
 \code{\link{reml}}, \code{\link{ml}}, \code{\link{aic}},
-\code{\link{statmod}}
+\code{\link{cv}}, \code{\link{statmod}}
 }
 \keyword{internal}

@@ -27,20 +27,30 @@ NULL
 #' subspace of the coefficients is integrated over, and which information
 #' matrix enters the determinant.
 #'
-#' @param kind \code{"reml"}, \code{"ml"}, \code{"aic"} or \code{"bic"}.
+#' @param kind \code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or
+#'   \code{"cv"}.
 #' @param hessian \code{"expected"} or \code{"observed"}.
 #' @param k The price of one degree of freedom, for a prediction-error
 #'   criterion. \code{NA} where the method resolves it against the sample size.
+#' @param n_values How many points a path over a kinked hyperparameter visits.
+#' @param min_ratio The smallest kink a path reaches, as a fraction of the one
+#'   that empties the block.
+#' @param nfolds How many folds cross-validation uses.
+#' @param rule \code{"min"} or \code{"1se"}.
+#' @param folds A fold number per observation, or \code{integer(0)}.
+#' @param over Which hyperparameters a path varies, or \code{character(0)} for
+#'   the ones that set the size of the kink.
 #'
 #' @return An object of class \code{OuterMethod}.
 #'
 #' @seealso \code{\link{reml}}, \code{\link{ml}}, \code{\link{aic}},
-#'   \code{\link{statmod}}
+#'   \code{\link{cv}}, \code{\link{statmod}}
 #'
 #' @examples
 #' reml()
 #' ml(hessian = "observed")
 #' aic()
+#' cv(nfolds = 5)
 #'
 #' @name OuterMethod-class
 #' @aliases OuterMethod
@@ -50,20 +60,56 @@ OuterMethod <- S7::new_class("OuterMethod",
   properties = list(
     kind = S7::class_character,
     hessian = S7::class_character,
-    k = S7::class_numeric
+    k = S7::class_numeric,
+    n_values = S7::class_numeric,
+    min_ratio = S7::class_numeric,
+    nfolds = S7::class_numeric,
+    rule = S7::class_character,
+    folds = S7::class_numeric,
+    over = S7::class_character
   ),
   validator = function(self) {
     if (!identical(length(self@kind), 1L) ||
-        !self@kind %in% c("reml", "ml", "aic", "bic")) {
-      return("Property 'kind' must be \"reml\", \"ml\", \"aic\" or \"bic\".")
+        !self@kind %in% c("reml", "ml", "aic", "bic", "cv")) {
+      return(paste0("Property 'kind' must be \"reml\", \"ml\", \"aic\", ",
+                    "\"bic\" or \"cv\"."))
     }
     if (!identical(length(self@hessian), 1L) ||
         !self@hessian %in% c("expected", "observed")) {
       return("Property 'hessian' must be \"expected\" or \"observed\".")
     }
+    if (!identical(length(self@rule), 1L) ||
+        !self@rule %in% c("min", "1se")) {
+      return("Property 'rule' must be \"min\" or \"1se\".")
+    }
+    if (length(self@n_values) != 1L || self@n_values < 2) {
+      return("Property 'n_values' must be a single number, at least 2.")
+    }
+    if (length(self@min_ratio) != 1L || self@min_ratio <= 0 ||
+        self@min_ratio >= 1) {
+      return("Property 'min_ratio' must be a single number in (0, 1).")
+    }
+    if (length(self@nfolds) != 1L || self@nfolds < 2) {
+      return("Property 'nfolds' must be a single number, at least 2.")
+    }
     NULL
   }
 )
+
+
+#' The Defaults a Path Carries
+#'
+#' @description
+#' The properties every \code{\link{OuterMethod}} needs whether or not it uses
+#' them, so that one class serves every criterion.
+#'
+#' @return A named list.
+#'
+#' @keywords internal
+outer_path_defaults <- function() {
+  list(n_values = 25, min_ratio = 1e-3, nfolds = 10, rule = "min",
+       folds = numeric(0), over = character(0))
+}
 
 
 #' Estimate the Hyperparameters by a Marginal Likelihood
@@ -144,13 +190,15 @@ OuterMethod <- S7::new_class("OuterMethod",
 #'
 #' @export
 reml <- function(hessian = c("expected", "observed")) {
-  OuterMethod(kind = "reml", hessian = match.arg(hessian), k = NA_real_)
+  do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
+                             k = NA_real_), outer_path_defaults()))
 }
 
 #' @rdname reml
 #' @export
 ml <- function(hessian = c("expected", "observed")) {
-  OuterMethod(kind = "ml", hessian = match.arg(hessian), k = NA_real_)
+  do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
+                             k = NA_real_), outer_path_defaults()))
 }
 
 
@@ -163,6 +211,12 @@ ml <- function(hessian = c("expected", "observed")) {
 #' @seealso \code{\link{reml}}
 #' @keywords internal
 print.OuterMethod <- function(x, ...) {
+  if (identical(x@kind, "cv")) {
+    cat(sprintf("<CV>  %s folds, %d values, rule \"%s\"\n",
+                if (length(x@folds)) "given" else format(x@nfolds),
+                as.integer(x@n_values), x@rule))
+    return(invisible(x))
+  }
   cat(sprintf("<%s>  %s information\n", toupper(x@kind), x@hessian))
   invisible(x)
 }
@@ -485,7 +539,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
         m <<- NULL
         return(invisible(NULL))
       }
-      m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx) else
+      m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx,
+                               statmod_active(spec, blocks, res$par, hy)) else
         statmod_marginal(spec, design, cf, hy, method, approx, basis)
       if (is.null(m)) return(invisible(NULL))
       if (exact && pe) {
@@ -589,7 +644,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
   inner <- statmod_alternate(spec, design, blocks, hy, inner_method,
                              state$beta, expected, approx, maxit, tol, vb)
   cff <- inner$obj$split(inner$par)
-  m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx) else
+  m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx,
+                          statmod_active(spec, blocks, inner$par, hy)) else
     statmod_marginal(spec, design, cff, hy, method, approx, basis)
   list(par = inner$par, hyper = hy, value = inner$value,
        criterion = if (is.null(m)) NA_real_ else m$value,

@@ -56,6 +56,50 @@ statmod_blocks <- function(spec, design) {
 }
 
 
+#' Which Coefficients Are Not Sitting at a Kink
+#'
+#' @description
+#' A logical vector over the stacked coefficients, \code{FALSE} where one lies
+#' at a point its penalty is not differentiable at.
+#'
+#' @details
+#' The kink locations come from \code{\link[penalties7]{penalty_kinks}} read at
+#' the hyperparameters in force, and a coefficient is inactive when it sits at
+#' one of them. Everything outside a kinked block is active, having no kink to
+#' sit at.
+#'
+#' The map of a kinked penalty is the identity here: a separable penalty under
+#' a general map is the generalized-lasso problem, which
+#' \code{\link[penalties7]{penalty_prox}} rejects, so a block that reaches this
+#' function penalizes its coefficients one at a time and a kink of the penalty
+#' is a kink in a coefficient.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param blocks The blocks, as \code{\link{statmod_blocks}} returns them.
+#' @param beta The stacked coefficients.
+#' @param hyper The hyperparameters.
+#' @param tol How close to a kink counts as at it.
+#'
+#' @return A logical vector as long as \code{beta}.
+#'
+#' @seealso \code{\link{outer_tau}}
+#'
+#' @keywords internal
+statmod_active <- function(spec, blocks, beta, hyper, tol = 1e-8) {
+  active <- rep(TRUE, length(beta))
+  for (b in blocks$sparse) {
+    th <- as.list(hyper[[b$param]][[b$term]])
+    k <- penalties7::penalty_kinks(b$penalty, th)
+    k <- k[is.finite(k)]
+    if (!length(k)) next
+    v <- beta[b$index]
+    at <- vapply(v, function(x) any(abs(x - k) <= tol), logical(1))
+    active[b$index] <- !at
+  }
+  active
+}
+
+
 #' Does a Penalty Have a Kink?
 #'
 #' @description
