@@ -2,9 +2,9 @@
 
 What
 [`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-returns: one coefficient table per distribution parameter, the degrees
-of freedom, the information criteria and whatever has to be said about
-how the numbers should be read.
+returns: the blocks of each distribution parameter, the degrees of
+freedom, the information criteria and whatever has to be said about how
+the numbers should be read.
 
 ## Usage
 
@@ -43,7 +43,8 @@ StatmodSummary(
 
 - tables:
 
-  A named list of data frames, one per distribution parameter.
+  A named list, one entry per distribution parameter, each a list of
+  block records.
 
 - edf:
 

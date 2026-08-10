@@ -40,16 +40,55 @@ A
 
 ## Details
 
+**Each distribution parameter is read as blocks, not as one list of
+coefficients**, because most of a fitted model's coefficients are not
+quantities anybody reads. The blocks are
+
+- the parametric terms:
+
+  every unpenalized term together, one row per coefficient, which is the
+  ordinary table.
+
+- one block per smooth:
+
+  the linear component's coefficient where the construction carries one,
+  the smoothing parameter, and the effective degrees of freedom. The
+  coefficients of the wiggly part are not shown: they are coordinates in
+  an orthonormal basis and say nothing one at a time, while what they
+  say together is the edf.
+
+- one block per random effect:
+
+  the parameters of the effects' distribution – what is usually called
+  the variance component – and the edf. Not the effects themselves, of
+  which there is one per level.
+
+- one block per selection:
+
+  a lasso, a SCAD or an MCP: its hyperparameters, how many coefficients
+  survived, and those coefficients. The ones set exactly to zero are
+  counted, not listed.
+
+- one block per other penalized term:
+
+  its coefficients, which stay interpretable under a ridge, together
+  with its hyperparameters.
+
+**A hyperparameter carries no standard error yet.** It is held at the
+value it was given rather than estimated, so the row reports the value
+and marks it fixed; inventing an interval for a number nothing estimated
+would be worse than the empty column. Estimating them by an outer
+criterion is what fills those rows in.
+
 **What a Wald p-value means here depends on the row**, and the summary
 says which is which rather than printing one column and leaving it at
 that. For an unpenalized coefficient it is the usual thing. For a
 coefficient in a penalized block it is conditional on the smoothing
 parameter, which was not estimated jointly with it, and it does not
-account for the shrinkage of the estimate towards zero. For a block a
-kinked penalty selected – a lasso, a SCAD, an MCP – the row exists only
-because that coefficient survived the selection, and a naive interval
-there under-covers; the coefficients set exactly to zero carry `NA`,
-since at the kink there is no curvature to read.
+account for the shrinkage of the estimate towards zero. For a
+coefficient a kinked penalty selected, the row exists only because that
+coefficient survived the selection, and a naive interval there
+under-covers.
 
 **The degrees of freedom** are the effective ones, summed over the
 terms, so that a penalized term counts what it spends rather than how
@@ -75,18 +114,21 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> Distribution: gaussian1     Observations: 120
 #> 
-#> mu
-#>                      estimate      se     z       p  lower upper  
-#> linpar / (Intercept)    1.063 0.07514 14.14 < 1e-16 0.9156 1.210  
-#> linpar / x              1.903 0.13020 14.62 < 1e-16 1.6480 2.158  
+#> === mu
 #> 
-#> sigma
-#>                      estimate     se        z         p   lower   upper  
-#> linpar / (Intercept) -0.96470 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931  
-#> linpar / x            0.02161 0.2389  0.09044    0.9279 -0.4466  0.4898  
+#> Parametric terms
+#>             estimate      se     z       p  lower upper
+#> (Intercept)    1.063 0.07514 14.14 < 1e-16 0.9156 1.210
+#> x              1.903 0.13020 14.62 < 1e-16 1.6480 2.158
+#> 
+#> === sigma
+#> 
+#> Parametric terms
+#>             estimate     se        z         p   lower   upper
+#> (Intercept) -0.96470 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
+#> x            0.02161 0.2389  0.09044    0.9279 -0.4466  0.4898
 #> 
 #> 95% intervals, bayesian variance
-#> 
 #> log-likelihood -55.844138    df 4.00    AIC 119.688    BIC 130.838
-#> fitted in 31 ms, converged
+#> fitted in 29 ms, converged
 ```

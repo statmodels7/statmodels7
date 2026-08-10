@@ -74,16 +74,47 @@ the information criteria and the qualifications the numbers carry.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>What a Wald p-value means here depends on the row</strong>, and the summary
+    <p><strong>Each distribution parameter is read as blocks, not as one list of
+coefficients</strong>, because most of a fitted model's coefficients are not
+quantities anybody reads. The blocks are</p><dl><dt>the parametric terms</dt>
+<dd><p>every unpenalized term together, one row per
+coefficient, which is the ordinary table.</p></dd>
+
+<dt>one block per smooth</dt>
+<dd><p>the linear component's coefficient where the
+construction carries one, the smoothing parameter, and the effective
+degrees of freedom. The coefficients of the wiggly part are not shown:
+they are coordinates in an orthonormal basis and say nothing one at a
+time, while what they say together is the edf.</p></dd>
+
+<dt>one block per random effect</dt>
+<dd><p>the parameters of the effects'
+distribution – what is usually called the variance component – and the
+edf. Not the effects themselves, of which there is one per level.</p></dd>
+
+<dt>one block per selection</dt>
+<dd><p>a lasso, a SCAD or an MCP: its
+hyperparameters, how many coefficients survived, and those coefficients.
+The ones set exactly to zero are counted, not listed.</p></dd>
+
+<dt>one block per other penalized term</dt>
+<dd><p>its coefficients, which stay
+interpretable under a ridge, together with its hyperparameters.</p></dd>
+
+
+</dl><p><strong>A hyperparameter carries no standard error yet.</strong> It is held at the
+value it was given rather than estimated, so the row reports the value and
+marks it fixed; inventing an interval for a number nothing estimated would
+be worse than the empty column. Estimating them by an outer criterion is
+what fills those rows in.</p>
+<p><strong>What a Wald p-value means here depends on the row</strong>, and the summary
 says which is which rather than printing one column and leaving it at that.
 For an unpenalized coefficient it is the usual thing. For a coefficient in a
 penalized block it is conditional on the smoothing parameter, which was not
 estimated jointly with it, and it does not account for the shrinkage of the
-estimate towards zero. For a block a kinked penalty selected – a lasso, a
-SCAD, an MCP – the row exists only because that coefficient survived the
-selection, and a naive interval there under-covers; the coefficients set
-exactly to zero carry <code>NA</code>, since at the kink there is no curvature to
-read.</p>
+estimate towards zero. For a coefficient a kinked penalty selected, the row
+exists only because that coefficient survived the selection, and a naive
+interval there under-covers.</p>
 <p><strong>The degrees of freedom</strong> are the effective ones, summed over the
 terms, so that a penalized term counts what it spends rather than how many
 columns it has. The information criteria are built on that count.</p>
@@ -107,20 +138,23 @@ columns it has. The information criteria are built on that count.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Distribution: gaussian1     Observations: 120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mu</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      estimate      se     z       p  lower upper  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> linpar / (Intercept)    1.063 0.07514 14.14 &lt; 1e-16 0.9156 1.210  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> linpar / x              1.903 0.13020 14.62 &lt; 1e-16 1.6480 2.158  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> === mu</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      estimate     se        z         p   lower   upper  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> linpar / (Intercept) -0.96470 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> linpar / x            0.02161 0.2389  0.09044    0.9279 -0.4466  0.4898  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parametric terms</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             estimate      se     z       p  lower upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)    1.063 0.07514 14.14 &lt; 1e-16 0.9156 1.210</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> x              1.903 0.13020 14.62 &lt; 1e-16 1.6480 2.158</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> === sigma</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parametric terms</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             estimate     se        z         p   lower   upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.96470 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> x            0.02161 0.2389  0.09044    0.9279 -0.4466  0.4898</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -55.844138    df 4.00    AIC 119.688    BIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 31 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 29 ms, converged</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

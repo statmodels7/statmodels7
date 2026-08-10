@@ -16,6 +16,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/criterion_tol.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/draw_coefficients.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
@@ -33,6 +34,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/loglik.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/method_budget.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/par_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_repair.html</loc></url>
@@ -43,7 +45,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/predict_moments.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/print_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/spec_at.html</loc></url>
@@ -72,6 +76,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_update.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/summary_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>

@@ -15,8 +15,6 @@ statmod(
   inner_method = iwls(),
   hyper = NULL,
   start = NULL,
-  maxit = 50L,
-  tol = 1e-08,
   verbose = 0
 )
 ```
@@ -59,14 +57,6 @@ statmod(
 
   Optional starting coefficients, a named list.
 
-- maxit:
-
-  The alternation's iteration budget.
-
-- tol:
-
-  The alternation's tolerance, on the relative change in the objective.
-
 - verbose:
 
   A level from 0 to 3, or a named logical vector.
@@ -102,6 +92,15 @@ the penalties at full size, since a penalty is a negative log-prior and
 a posterior adds the two at full size. What is scaled instead is the
 stopping rule, so that a threshold means the same thing at \\n = 10\\
 and at \\n = 10^7\\.
+
+**The budget and the stopping rule belong to the method.** There is no
+`maxit` and no `tol` here: they are set on `inner_method`, which is
+[`iwls`](https://statmodels7.github.io/statmodels7/reference/iwls.md)`(maxit =, tol =)`
+or an optimizer with its own `maxit` and `criterion`, and the
+alternation reads them from there (see
+[`method_budget`](https://statmodels7.github.io/statmodels7/reference/method_budget.md)).
+Carrying a second copy would let a caller set both and be obeyed by
+neither.
 
 **The hyperparameters are held fixed.** Estimating a smoothing parameter
 by an outer criterion is not written yet, so each one sits at the probe
@@ -145,7 +144,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 24 ms, converged
+#> fitted in 26 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -163,5 +162,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 39 ms, converged
+#> fitted in 36 ms, converged
 ```

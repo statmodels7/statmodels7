@@ -50,8 +50,6 @@ terms it names into a penalized likelihood, and fits it.</p>
 <span>  inner_method <span class="op">=</span> <span class="fu"><a href="iwls.html">iwls</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  hyper <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  maxit <span class="op">=</span> <span class="fl">50L</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -95,15 +93,6 @@ values.</p></dd>
 <dd><p>Optional starting coefficients, a named list.</p></dd>
 
 
-<dt id="arg-maxit">maxit<a class="anchor" aria-label="anchor" href="#arg-maxit"></a></dt>
-<dd><p>The alternation's iteration budget.</p></dd>
-
-
-<dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>The alternation's tolerance, on the relative change in the
-objective.</p></dd>
-
-
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>A level from 0 to 3, or a named logical vector.</p></dd>
 
@@ -130,6 +119,12 @@ plus the penalties at full size, since a penalty is a negative log-prior
 and a posterior adds the two at full size. What is scaled instead is the
 stopping rule, so that a threshold means the same thing at \(n = 10\) and
 at \(n = 10^7\).</p>
+<p><strong>The budget and the stopping rule belong to the method.</strong> There is no
+<code>maxit</code> and no <code>tol</code> here: they are set on <code>inner_method</code>,
+which is <code><a href="iwls.html">iwls</a>(maxit =, tol =)</code> or an optimizer with its own
+<code>maxit</code> and <code>criterion</code>, and the alternation reads them from there
+(see <code><a href="method_budget.html">method_budget</a></code>). Carrying a second copy would let a caller
+set both and be obeyed by neither.</p>
 <p><strong>The hyperparameters are held fixed.</strong> Estimating a smoothing
 parameter by an outer criterion is not written yet, so each one sits at the
 probe value of its bounds unless <code>hyper</code> says otherwise. That value is
@@ -170,7 +165,7 @@ common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -34.947195    objective 34.947195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 24 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 26 ms, converged</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># every parameter can be modelled</span></span></span>
 <span class="r-in"><span><span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
@@ -188,7 +183,7 @@ common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 39 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 36 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

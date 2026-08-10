@@ -189,6 +189,8 @@ exported, and none is needed to use the package.
   : Where Each Stacked Coefficient Comes From
 - [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   : Confidence Intervals for a Fit
+- [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
+  : The Tolerance a Criterion Asks For
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -219,6 +221,8 @@ exported, and none is needed to use the package.
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   : The Model as a Function of Parameters and Data
+- [`method_budget()`](https://statmodels7.github.io/statmodels7/reference/method_budget.md)
+  : The Budget and the Stopping Rule of the Alternation
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
@@ -239,6 +243,10 @@ exported, and none is needed to use the package.
   : Print a Fitted Model
 - [`print(`*`<StatmodSummary>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
   : Print a Model Summary
+- [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
+  : Print One Block of a Summary
+- [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
+  : Which Coefficients of a Smooth Are the Linear Part
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   : Invert a Matrix That Ought to Be Positive Definite
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
@@ -280,6 +288,10 @@ exported, and none is needed to use the package.
   : The Body of the Attach Message
 - [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
   : Summarize a Fitted Model
+- [`summary_blocks()`](https://statmodels7.github.io/statmodels7/reference/summary_blocks.md)
+  : The Blocks of One Distribution Parameter
+- [`term_block_kind()`](https://statmodels7.github.io/statmodels7/reference/term_block_kind.md)
+  : What Kind of Block a Term Reports As
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)

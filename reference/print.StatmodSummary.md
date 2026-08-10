@@ -1,7 +1,7 @@
 # Print a Model Summary
 
-The call, one coefficient table per distribution parameter, the degrees
-of freedom, the criteria and the notes.
+The call, then each distribution parameter's blocks, then the degrees of
+freedom, the criteria and the notes.
 
 ## Usage
 
