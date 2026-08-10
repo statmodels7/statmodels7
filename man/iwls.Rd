@@ -17,6 +17,22 @@ iwls(
 \method{print}{Iwls}(x, ...)
 }
 \arguments{
+\item{hessian}{Either \code{"expected"} -- Fisher scoring -- or
+\code{"observed"}, which is Newton.}
+
+\item{approx}{The approximation of the expected information, read only
+where the family has no closed form.}
+
+\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"},
+\code{"chol"} or \code{"chol_crossprod"}.}
+
+\item{maxit}{The iteration budget.}
+
+\item{tol}{The stopping tolerance on the scaled score.}
+
+\item{step_halving}{The number of halvings allowed before a step is
+abandoned.}
+
 \item{x}{An \code{\link{Iwls}} object.}
 
 \item{...}{Unused.}

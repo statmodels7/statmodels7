@@ -4,38 +4,67 @@
 \alias{predict.StatmodFit}
 \title{Predict From a Fitted Model}
 \usage{
-\method{predict}{StatmodFit}(object, newdata = NULL, type = c("parameter", "link", "response"), ...)
+\method{predict}{StatmodFit}(object, what = "parameter", newdata = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{\link{StatmodFit}}.}
 
-\item{newdata}{A data frame, or \code{NULL} for the fitting data.}
+\item{what}{What to predict: a parameter's name, a moment's name,
+\code{"parameter"} or \code{"link"}.}
 
-\item{type}{One of \code{"parameter"}, \code{"link"} or \code{"response"}.}
+\item{newdata}{A data frame, or \code{NULL} for the fitting data.}
 
 \item{...}{Unused.}
 }
 \value{
-A named list of vectors for \code{"link"} and \code{"parameter"},
-and a vector for \code{"response"}.
+A numeric vector when \code{what} names one quantity, and a named
+list of vectors for \code{"parameter"} and \code{"link"}.
 }
 \description{
-The linear predictors, the distribution's parameters, or the response's
-mean, at the fitting data or at new data.
+Any one of the distribution's parameters, any of its moments, or all of the
+parameters or linear predictors at once, at the fitting data or at new data.
 }
 \details{
-New data goes through the terms' blueprints, so a factor keeps the levels
-and the contrasts it was fitted with rather than being rebuilt from
-whatever the new frame happens to contain -- which is the whole reason a
-term records a blueprint.
+\strong{What can be asked for.} \code{what} takes
+\describe{
+\item{a parameter's name}{\code{"mu"}, \code{"sigma"}, \code{"alpha"} --
+whatever the family calls them. Always available, whatever the family:
+a parameter is what the model fits, and it exists even where a moment
+does not.}
+\item{a moment's name}{\code{"mean"}, \code{"variance"},
+\code{"std_dev"}, \code{"skewness"}, \code{"kurtosis"}. Available where
+the family has one, and answering \code{NaN} or \code{NA} where it does
+not exist -- a Cauchy's mean is \code{NaN}, which is the honest answer
+and not a failure.}
+\item{\code{"parameter"}}{every parameter at once, as a named list. The
+default.}
+\item{\code{"link"}}{every linear predictor at once, before the inverse
+link.}
+}
+A parameter's name may be prefixed by \code{"link:"} to ask for its
+predictor instead of its value, as \code{"link:sigma"}.
 
-\code{type = "link"} gives the linear predictors, one vector per
-distribution parameter; \code{"parameter"} maps each through its inverse
-link, which is what the density takes; \code{"response"} gives the mean of
-the distribution at those parameters, and is refused for a family that has
-none.
+\strong{The argument order departs from \code{\link[stats]{predict}}}, where
+the second argument is \code{newdata}. Here it is \code{what}, because a
+statmod fit has several parameters and several moments and choosing among
+them is the ordinary variation, while predicting on new data is the
+occasional one. Passing a data frame second is caught and named rather than
+failing somewhere inside.
+
+\strong{New data} goes through the terms' blueprints, so a factor keeps the
+levels and the contrasts it was fitted with rather than being rebuilt from
+whatever the new frame happens to contain.
+}
+\examples{
+set.seed(1)
+dd <- data.frame(x = runif(60))
+dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
+fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+head(predict(fit, "mu"))
+head(predict(fit, "variance"))
+head(predict(fit, "link:sigma"))
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link{statmod}}, \code{\link{fitted.StatmodFit}}
 }
 \keyword{internal}

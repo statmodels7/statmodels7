@@ -78,26 +78,57 @@ test_that("prediction does not need the response", {
   # one would be useless for the thing prediction is for
   nd <- dd[1:5, ]
   expect_false("y" %in% names(nd))
-  p <- predict(fit, nd, "link")
+  p <- predict(fit, "link", nd)
   expect_named(p, c("mu", "sigma"))
   expect_length(p$mu, 5L)
   expect_true(all(is.finite(unlist(p))))
 })
 
-test_that("the three types of prediction agree with each other", {
-  sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
-  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+test_that("a parameter can be asked for by its own name", {
+  sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))
+  fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   nd <- dd[1:8, ]
-  eta <- predict(fit, nd, "link")
-  th <- predict(fit, nd, "parameter")
+  th <- predict(fit, "parameter", nd)
+  eta <- predict(fit, "link", nd)
+
+  expect_equal(predict(fit, "mu", nd), th$mu, tolerance = 1e-14)
+  expect_equal(predict(fit, "sigma", nd), th$sigma, tolerance = 1e-14)
+  # the prefix asks for the predictor of that one parameter
+  expect_equal(predict(fit, "link:sigma", nd), eta$sigma, tolerance = 1e-14)
   # the parameter is the inverse link of the predictor
   expect_equal(th$sigma, exp(eta$sigma), tolerance = 1e-12)
-  expect_equal(th$mu, eta$mu, tolerance = 1e-12)
-  # and for a gaussian the mean IS the location
-  expect_equal(predict(fit, nd, "response"), th$mu, tolerance = 1e-12)
-  # at the fitting data, prediction and fitted() are the same thing
-  expect_equal(predict(fit), fitted(fit), tolerance = 1e-12)
+
+  # a parameter that does not vary still comes back one value per observation,
+  # so a prediction has the length the data has whatever the model
+  fit2 <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  expect_length(predict(fit2, "sigma", nd), 8L)
+})
+
+test_that("a moment can be asked for, and agrees with the parameters", {
+  sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))
+  fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
+  nd <- dd[1:8, ]
+  th <- predict(fit, "parameter", nd)
+
+  expect_equal(predict(fit, "mean", nd), th$mu, tolerance = 1e-12)
+  expect_equal(predict(fit, "variance", nd), th$sigma^2, tolerance = 1e-10)
+  expect_equal(predict(fit, "std_dev", nd), th$sigma, tolerance = 1e-10)
+  # a gaussian's shape does not depend on the fit at all
+  expect_equal(predict(fit, "skewness", nd), rep(0, 8), tolerance = 1e-12)
+  expect_equal(predict(fit, "kurtosis", nd), rep(0, 8), tolerance = 1e-12)
+})
+
+test_that("a moment of a count model varies with the fitted mean", {
+  sim <- rstatmod(counts ~ x, distributions7::poisson_distrib(), dd,
+                  par = list(mu = c(0.5, 1.5)))
+  fit <- statmod(counts ~ x, distributions7::poisson_distrib(), sim)
+  nd <- dd[1:6, ]
+  mu <- predict(fit, "mu", nd)
+  # the Poisson's variance is its mean, which is a check of the routing
+  expect_equal(predict(fit, "variance", nd), mu, tolerance = 1e-10)
+  expect_equal(predict(fit, "skewness", nd), 1 / sqrt(mu), tolerance = 1e-8)
 })
 
 test_that("a level absent from the new data keeps its contrasts", {
@@ -108,19 +139,53 @@ test_that("a level absent from the new data keeps its contrasts", {
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
   one_level <- dd[dd$g == "a", ][1:4, ]
   expect_length(levels(droplevels(one_level$g)), 1L)
-  p <- predict(fit, one_level, "link")
+  p <- predict(fit, "link", one_level)
   expect_length(p$mu, 4L)
   expect_true(all(is.finite(p$mu)))
 })
 
-test_that("a mean that does not exist is reported as NaN, not as a number", {
+test_that("a moment that does not exist is reported as NaN, not as a number", {
   # the Cauchy has no mean, and distributions7 answers NaN rather than
   # returning the location, which would be a plausible wrong number. The
   # prediction carries that through instead of hiding it.
   sim <- rstatmod(y ~ x, distributions7::cauchy_distrib(), dd,
                   par = list(mu = c(0, 1), sigma = log(0.5)))
   fit <- statmod(y ~ x, distributions7::cauchy_distrib(), sim)
-  expect_true(all(is.nan(predict(fit, dd[1:3, ], "response"))))
-  # while the parameters are perfectly available, which is what to ask for
-  expect_true(all(is.finite(predict(fit, dd[1:3, ], "parameter")$mu)))
+  expect_true(all(is.nan(suppressWarnings(predict(fit, "mean", dd[1:3, ])))))
+  expect_true(all(is.nan(suppressWarnings(
+    predict(fit, "variance", dd[1:3, ])))))
+  # while the parameters are perfectly available, which is the whole reason a
+  # parameter can be asked for by name: a family with no moments still has a
+  # location, and a fit still estimates it
+  expect_true(all(is.finite(predict(fit, "mu", dd[1:3, ]))))
+  expect_true(all(is.finite(predict(fit, "sigma", dd[1:3, ]))))
+})
+
+test_that("at the fitting data, prediction and fitted() are the same thing", {
+  sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = log(0.4)))
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  expect_equal(predict(fit), fitted(fit), tolerance = 1e-12)
+})
+
+test_that("an unrecognized target names what is available", {
+  sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = log(0.4)))
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  expect_error(predict(fit, "median"), "neither a parameter")
+  expect_error(predict(fit, "median"), "mu, sigma")
+  expect_error(predict(fit, "link:nu"), "neither a parameter")
+  expect_error(predict(fit, c("mu", "sigma")), "a single string")
+})
+
+test_that("a data frame passed second is named rather than failing inside", {
+  # the argument order departs from predict.lm on purpose, so the departure has
+  # to report itself: without this a data frame lands in 'what' and the failure
+  # surfaces several frames away from the mistake
+  sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = log(0.4)))
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  expect_error(predict(fit, dd[1:3, ]), "is 'what', not")
+  # and the spelling the message suggests works
+  expect_length(predict(fit, newdata = dd[1:3, ])$mu, 3L)
 })

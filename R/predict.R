@@ -2,59 +2,144 @@
 #' @importFrom stats predict fitted
 NULL
 
+#' The Quantities a Fit Can Predict
+#'
+#' @description
+#' The moment names \code{\link{predict.StatmodFit}} understands, mapped to the
+#' \pkg{distributions7} generic each one asks.
+#'
+#' @return A named list of functions.
+#'
+#' @keywords internal
+predict_moments <- function() {
+  list(
+    mean = function(d, th) mean(d, th),
+    variance = function(d, th) distributions7::variance(d, th),
+    std_dev = function(d, th) distributions7::std_dev(d, th),
+    skewness = function(d, th) distributions7::skewness(d, th),
+    kurtosis = function(d, th) distributions7::kurtosis(d, th)
+  )
+}
+
+
 #' @title Predict From a Fitted Model
 #' @name predict.StatmodFit
 #' @description
-#' The linear predictors, the distribution's parameters, or the response's
-#' mean, at the fitting data or at new data.
+#' Any one of the distribution's parameters, any of its moments, or all of the
+#' parameters or linear predictors at once, at the fitting data or at new data.
 #' @details
-#' New data goes through the terms' blueprints, so a factor keeps the levels
-#' and the contrasts it was fitted with rather than being rebuilt from
-#' whatever the new frame happens to contain -- which is the whole reason a
-#' term records a blueprint.
+#' \strong{What can be asked for.} \code{what} takes
+#' \describe{
+#'   \item{a parameter's name}{\code{"mu"}, \code{"sigma"}, \code{"alpha"} --
+#'     whatever the family calls them. Always available, whatever the family:
+#'     a parameter is what the model fits, and it exists even where a moment
+#'     does not.}
+#'   \item{a moment's name}{\code{"mean"}, \code{"variance"},
+#'     \code{"std_dev"}, \code{"skewness"}, \code{"kurtosis"}. Available where
+#'     the family has one, and answering \code{NaN} or \code{NA} where it does
+#'     not exist -- a Cauchy's mean is \code{NaN}, which is the honest answer
+#'     and not a failure.}
+#'   \item{\code{"parameter"}}{every parameter at once, as a named list. The
+#'     default.}
+#'   \item{\code{"link"}}{every linear predictor at once, before the inverse
+#'     link.}
+#' }
+#' A parameter's name may be prefixed by \code{"link:"} to ask for its
+#' predictor instead of its value, as \code{"link:sigma"}.
 #'
-#' \code{type = "link"} gives the linear predictors, one vector per
-#' distribution parameter; \code{"parameter"} maps each through its inverse
-#' link, which is what the density takes; \code{"response"} gives the mean of
-#' the distribution at those parameters, and is refused for a family that has
-#' none.
+#' \strong{The argument order departs from \code{\link[stats]{predict}}}, where
+#' the second argument is \code{newdata}. Here it is \code{what}, because a
+#' statmod fit has several parameters and several moments and choosing among
+#' them is the ordinary variation, while predicting on new data is the
+#' occasional one. Passing a data frame second is caught and named rather than
+#' failing somewhere inside.
+#'
+#' \strong{New data} goes through the terms' blueprints, so a factor keeps the
+#' levels and the contrasts it was fitted with rather than being rebuilt from
+#' whatever the new frame happens to contain.
 #' @param object A \code{\link{StatmodFit}}.
+#' @param what What to predict: a parameter's name, a moment's name,
+#'   \code{"parameter"} or \code{"link"}.
 #' @param newdata A data frame, or \code{NULL} for the fitting data.
-#' @param type One of \code{"parameter"}, \code{"link"} or \code{"response"}.
 #' @param ... Unused.
-#' @return A named list of vectors for \code{"link"} and \code{"parameter"},
-#'   and a vector for \code{"response"}.
-#' @seealso \code{\link{statmod}}
+#' @return A numeric vector when \code{what} names one quantity, and a named
+#'   list of vectors for \code{"parameter"} and \code{"link"}.
+#' @seealso \code{\link{statmod}}, \code{\link{fitted.StatmodFit}}
+#' @examples
+#' set.seed(1)
+#' dd <- data.frame(x = runif(60))
+#' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
+#' fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+#' head(predict(fit, "mu"))
+#' head(predict(fit, "variance"))
+#' head(predict(fit, "link:sigma"))
 #' @keywords internal
-predict.StatmodFit <- function(object, newdata = NULL,
-                               type = c("parameter", "link", "response"),
+predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                                ...) {
-  type <- match.arg(type)
+  if (is.data.frame(what)) {
+    stop(paste0("The second argument of statmod's predict() is 'what', not\n",
+                "  'newdata': a fit has several parameters and several\n",
+                "  moments, so choosing among them is the ordinary variation.\n",
+                "  Write predict(fit, \"mu\", newdata) or\n",
+                "  predict(fit, newdata = your_data)."), call. = FALSE)
+  }
+  if (!is.character(what) || length(what) != 1L) {
+    stop("'what' must be a single string.", call. = FALSE)
+  }
   spec <- spec_at(object, newdata, need_response = FALSE)
   design <- statmod_design(spec)
   ep <- statmod_eta(spec, design, object@coefficients)
-  if (type == "link") return(ep$eta)
-  if (type == "parameter") return(ep$theta)
-  # `mean` is the base generic distributions7 registers a method on, so it is
-  # called unqualified. Only a missing method becomes the friendly message:
-  # a catch-all here would report any failure as "this family has no mean",
-  # which is the shape of error message the toolkit records as worse than
-  # none.
-  m <- withCallingHandlers(
-    tryCatch(mean(spec@distrib, ep$theta),
-             error = function(e) {
-               if (grepl("method", conditionMessage(e), fixed = TRUE)) {
-                 stop(sprintf(paste0(
-                   "'%s' has no mean, so type = \"response\" has no answer.\n",
-                   "  Ask for \"parameter\" instead."),
-                   spec@distrib@distrib_name), call. = FALSE)
-               }
-               stop(e)
-             }),
-    warning = function(w) invokeRestart("muffleWarning"))
-  rep_len(m, spec@n_obs)
+  params <- spec@distrib@params
+
+  if (identical(what, "link")) return(ep$eta)
+  if (identical(what, "parameter")) return(ep$theta)
+
+  if (startsWith(what, "link:")) {
+    p <- substring(what, 6L)
+    if (!p %in% params) stop(unknown_what(p, params), call. = FALSE)
+    return(ep$eta[[p]])
+  }
+  if (what %in% params) return(rep_len(ep$theta[[what]], spec@n_obs))
+
+  mom <- predict_moments()
+  if (what %in% names(mom)) {
+    # only a missing method becomes the friendly message: a catch-all here
+    # would report any failure as "this family has no such moment", which is
+    # the shape of error the toolkit records as worse than none
+    v <- tryCatch(mom[[what]](spec@distrib, ep$theta),
+                  error = function(e) {
+                    if (grepl("method", conditionMessage(e), fixed = TRUE)) {
+                      stop(sprintf(paste0(
+                        "'%s' does not implement %s(). Its parameters are\n",
+                        "  available: ask for one of %s."),
+                        spec@distrib@distrib_name, what,
+                        paste(params, collapse = ", ")), call. = FALSE)
+                    }
+                    stop(e)
+                  })
+    return(rep_len(v, spec@n_obs))
+  }
+  stop(unknown_what(what, params), call. = FALSE)
 }
 S7::method(predict, StatmodFit) <- predict.StatmodFit
+
+
+#' The Message for an Unrecognized Prediction Target
+#'
+#' @param what What was asked for.
+#' @param params The family's parameter names.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+unknown_what <- function(what, params) {
+  sprintf(paste0("'%s' is neither a parameter of this distribution nor a\n",
+                 "  moment. The parameters are: %s.\n",
+                 "  The moments are: %s.\n",
+                 "  \"parameter\" and \"link\" give all of them at once."),
+          what, paste(params, collapse = ", "),
+          paste(names(predict_moments()), collapse = ", "))
+}
 
 
 #' @title The Fitted Values of a Model

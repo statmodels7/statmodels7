@@ -34,8 +34,8 @@ reference:
 
 - title: Reading a fit
   desc: >
-    The model as a function of parameters and data, and the elapsed time in
-    the unit it deserves.
+    The model as a function of parameters and data, any parameter or moment
+    predicted at new data, and the elapsed time in the unit it deserves.
   contents:
   - loglik
   - format_duration

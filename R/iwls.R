@@ -79,7 +79,7 @@ Iwls <- S7::new_class("Iwls",
 #'     the choice is the user's.}
 #' }
 #'
-#' @inheritParams Iwls
+#' @inheritParams Iwls-class
 #'
 #' @return An object of class \code{\link{Iwls}}.
 #'
