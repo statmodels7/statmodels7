@@ -20,10 +20,18 @@ NULL
 #' @param offsets A named list of offsets, one per parameter or \code{NULL}.
 #' @param intercepts A named logical, whether each equation carried one.
 #'
-#' @return An object of class \code{statmod_spec}.
+#' @return An object of class \code{StatmodSpec}.
 #'
 #' @seealso \code{\link{statmod_spec}}
 #'
+#' @examples
+#' dd <- data.frame(y = rnorm(10), x = runif(10))
+#' S7::S7_inherits(statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd),
+#'                 StatmodSpec)
+#'
+#' @name StatmodSpec-class
+#' @aliases StatmodSpec
+#' @keywords internal
 #' @export
 StatmodSpec <- S7::new_class("StatmodSpec",
   properties = list(

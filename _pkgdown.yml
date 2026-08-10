@@ -13,6 +13,22 @@ reference:
   - statmodels7_versions
   - statmodels7_conflicts
 
+- title: Specifying a model
+  desc: >
+    One formula carries every parameter of the distribution, the equations
+    separated by a bar, and each equation's terms come from modelterms7.
+  contents:
+  - statmod_spec
+  - statmod_equations
+  - statmod_design
+
+- title: Fitting
+  desc: >
+    The method that fits the block of terms whose penalties are
+    differentiable, with its own choice of curvature and of decomposition.
+  contents:
+  - iwls
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the
