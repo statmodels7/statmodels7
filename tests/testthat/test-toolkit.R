@@ -19,6 +19,13 @@ test_that("the members are the ones DESCRIPTION imports", {
   # a base or third-party dependency is not a member
   expect_false("utils" %in% pkgs)
   expect_true("utils" %in% declared)
+
+  # S7 is the one name the convention cannot tell apart on its own: it ends in
+  # 7, it is declared in Imports because the code says S7:: throughout, and it
+  # is what every member is BUILT ON rather than a member. It reported as a
+  # ninth package the moment it was declared.
+  expect_true("S7" %in% declared)
+  expect_false("S7" %in% pkgs)
 })
 
 test_that("every member is installed and reports a version", {

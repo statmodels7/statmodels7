@@ -8,8 +8,14 @@
 #' \code{DESCRIPTION}, keeping the entries whose names end in \code{7}, which
 #' is the toolkit's naming convention. Reading it rather than writing it out
 #' keeps one enumeration: a member added to \code{Imports} is a member here,
-#' and the two cannot disagree. A base or third-party dependency does not end
-#' in \code{7} and is therefore not reported as a member.
+#' and the two cannot disagree.
+#'
+#' \code{S7} is excluded, and it is the one name the convention cannot tell
+#' apart on its own: its \code{7} counts R's object systems and not this
+#' toolkit's, and it is what every member is built on rather than a member.
+#' Declaring it in \code{Imports}, which \code{R CMD check} requires because
+#' the code says \code{S7::} throughout, therefore made it report as a ninth
+#' package until this line existed.
 #'
 #' @return A character vector of package names, sorted.
 #'
@@ -27,7 +33,7 @@ statmodels7_packages <- function() {
   pkgs <- trimws(strsplit(imports, ",")[[1L]])
   # a version constraint travels with the name and is not part of it
   pkgs <- trimws(sub("\\(.*", "", pkgs))
-  sort(pkgs[nzchar(pkgs) & grepl("7$", pkgs)])
+  sort(pkgs[nzchar(pkgs) & grepl("7$", pkgs) & pkgs != "S7"])
 }
 
 

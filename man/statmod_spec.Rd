@@ -23,6 +23,10 @@ statmod_spec(
 \item{weights}{Optional prior weights, one per observation.}
 
 \item{offsets}{Optional named list of offsets, one per parameter.}
+
+\item{need_response}{Whether the left-hand side must evaluate. A likelihood
+needs it; a prediction does not, and new data routinely has no response
+column.}
 }
 \value{
 An object of class \code{\link{StatmodSpec}}.

@@ -72,6 +72,9 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' @param data A data frame.
 #' @param weights Optional prior weights, one per observation.
 #' @param offsets Optional named list of offsets, one per parameter.
+#' @param need_response Whether the left-hand side must evaluate. A likelihood
+#'   needs it; a prediction does not, and new data routinely has no response
+#'   column.
 #'
 #' @return An object of class \code{\link{StatmodSpec}}.
 #'

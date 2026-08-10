@@ -27,8 +27,11 @@ Imports:
     optimizers7,
     parameters7,
     penalties7,
+    S7,
+    stats,
     utils
 Suggests:
+    numDeriv,
     pak,
     pkgdown,
     rmarkdown,
