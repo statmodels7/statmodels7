@@ -13,6 +13,8 @@ statmod(
   weights = NULL,
   offsets = NULL,
   inner_method = iwls(),
+  outer_method = NULL,
+  outer_optimizer = optimizers7::nelder_mead(),
   hyper = NULL,
   start = NULL,
   verbose = 0
@@ -46,6 +48,17 @@ statmod(
   How the smooth block is fitted:
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   or an optimizers7 optimizer.
+
+- outer_method:
+
+  How the hyperparameters are estimated:
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  or `NULL` to hold them.
+
+- outer_optimizer:
+
+  The optimizer that searches over them.
 
 - hyper:
 
@@ -102,19 +115,24 @@ alternation reads them from there (see
 Carrying a second copy would let a caller set both and be obeyed by
 neither.
 
-**The hyperparameters are held fixed.** Estimating a smoothing parameter
-by an outer criterion is not written yet, so each one sits at the probe
-value of its bounds unless `hyper` says otherwise. That value is a
-placeholder rather than a choice, and it matters: a lasso at \\\lambda =
-1\\ against an unaveraged log-likelihood of a few hundred observations
-selects nothing at all.
+**The hyperparameters.** With `outer_method = NULL`, the default, each
+one sits where `hyper` put it, or at the probe value of its bounds
+otherwise – a placeholder rather than a choice, and it matters, since a
+lasso at \\\lambda = 1\\ against an unaveraged log-likelihood of a few
+hundred observations selects nothing at all. With
+`outer_method = `[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+they are estimated by a marginal criterion, `outer_optimizer` searching
+over them and the coefficients being refitted at each. Only a twice
+differentiable penalty takes part: a lasso, a SCAD or an MCP keeps the
+value it was given.
 
 **Verbosity** has three levels, naming the loops rather than counting
-them: `1` the alternation, `2` the inner method's own iterations, `3`
-the optimizers' traces as well. A named form is accepted too, as
-`verbose = c(blocks = TRUE, inner = TRUE, optimizer = FALSE)`, since
-watching the alternation while silencing a chatty inner optimizer is the
-common case.
+them: `1` the outer search and the alternation, `2` the inner method's
+own iterations, `3` the optimizers' traces as well. A named form is
+accepted too, as `verbose = c(outer = TRUE, blocks = FALSE)`, since
+watching the hyperparameters move while silencing a chatty inner
+optimizer is the common case.
 
 ## See also
 
@@ -162,5 +180,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 36 ms, converged
+#> fitted in 45 ms, converged
 ```

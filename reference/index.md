@@ -35,6 +35,9 @@ alternated around them.
 - [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   [`print(`*`<Iwls>`*`)`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   : Iterated Weighted Least Squares
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  : Estimate the Hyperparameters by a Marginal Likelihood
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   : Simulate a Response From a Written Model
 
@@ -66,6 +69,8 @@ exported, and none is needed to use the package.
 
 - [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
   : The Iterated Weighted Least Squares Method
+- [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
+  : How the Hyperparameters Are Estimated
 - [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   : A Fitted Model
 - [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
@@ -104,8 +109,15 @@ exported, and none is needed to use the package.
   : The Name of a Second-Derivative Component
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
   : Resolve a Term's Name Against a Specification
+- [`hyper_to_eta()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
+  [`eta_to_hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
+  : Move Between the Hyperparameters and the Free Vector
+- [`hyper_value()`](https://statmodels7.github.io/statmodels7/reference/hyper_value.md)
+  : One Hyperparameter of an Index
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
+- [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)
+  : The Subspace a Marginal Criterion Integrates Over
 - [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
   : Fit the Smooth Block by Iterated Weighted Least Squares
 - [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
@@ -122,12 +134,18 @@ exported, and none is needed to use the package.
   : The Budget and the Stopping Rule of the Alternation
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
+- [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+  : Estimate the Hyperparameters
+- [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
+  : The Hyperparameters an Outer Method Estimates
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
   : Resolve a Parameter Structure
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
 - [`penalty_has_kink()`](https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.md)
   : Does a Penalty Have a Kink?
+- [`penalty_range_basis()`](https://statmodels7.github.io/statmodels7/reference/penalty_range_basis.md)
+  : An Orthonormal Basis of a Penalty's Range Space
 - [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
   : A Square-Root Factor of the Penalty
 - [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
@@ -136,6 +154,8 @@ exported, and none is needed to use the package.
   : Predict From a Fitted Model
 - [`predict_moments()`](https://statmodels7.github.io/statmodels7/reference/predict_moments.md)
   : The Quantities a Fit Can Predict
+- [`print(`*`<OuterMethod>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.OuterMethod.md)
+  : Print an Outer Method
 - [`print(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md)
   : Print a Fitted Model
 - [`print(`*`<StatmodSummary>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
@@ -152,6 +172,8 @@ exported, and none is needed to use the package.
   : Rebuild a Specification Against New Data
 - [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
   : The Square-Root Design
+- [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
+  : The Alternation Between the Smooth Block and the Rest
 - [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
   : Split a Specification's Terms Into the Smooth Block and the Rest
 - [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
@@ -166,6 +188,8 @@ exported, and none is needed to use the package.
   : The Information of the Weighted Log-Likelihood
 - [`statmod_loglik_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.md)
   : The Weighted Log-Likelihood of a Specification at Given Coefficients
+- [`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md)
+  : The Marginal Criterion at Given Coefficients and Hyperparameters
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
@@ -193,6 +217,8 @@ exported, and none is needed to use the package.
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
+- [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)
+  : The Verbosity of an Inner Fit Inside the Outer Search
 - [`vcov(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
   : The Variance Matrix of a Fit
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)

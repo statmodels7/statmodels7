@@ -18,6 +18,7 @@ StatmodFit(
   fitted = list(),
   converged = logical(0),
   elapsed = integer(0),
+  criterion = integer(0),
   history = list(),
   methods = list(),
   call = NULL
@@ -63,6 +64,11 @@ StatmodFit(
 - elapsed:
 
   The elapsed time, in seconds.
+
+- criterion:
+
+  The marginal criterion at the estimated hyperparameters, `NA` when
+  none was used.
 
 - history:
 
