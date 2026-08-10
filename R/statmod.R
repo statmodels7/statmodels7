@@ -237,6 +237,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
   hist_blocks <- list()
   hist_inner <- list()
   converged <- FALSE
+  smooth_ok <- TRUE
+  smooth_note <- NULL
 
   for (sweep in seq_len(as.integer(maxit))) {
     before <- value
@@ -251,6 +253,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
                         inner_method, vb)
       beta <- res$par
       value <- res$value
+      smooth_ok <- isTRUE(res$converged)
+      smooth_note <- res$note
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
         sweep = sweep, block = "smooth", objective = value,
         change = before - value, iterations = res$iterations,
@@ -285,12 +289,22 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
       cat(sprintf("[sweep %d] objective %.8f, relative change %.3e\n",
                   sweep, value, rel))
     }
-    if (!length(blocks$sparse) || rel < tol) {
+    # With nothing to alternate WITH, the sweep is the inner fit and the
+    # verdict is the inner fit's. This line used to set converged
+    # unconditionally in that case, so every model without a kinked penalty
+    # reported success whatever the inner method had done -- including a run
+    # that stopped on a non-finite score.
+    if (!length(blocks$sparse)) {
+      converged <- isTRUE(smooth_ok)
+      break
+    }
+    if (rel < tol) {
       converged <- TRUE
       break
     }
   }
   list(par = beta, value = value, converged = converged, obj = obj,
+       note = smooth_note,
        hist_blocks = hist_blocks, hist_inner = hist_inner)
 }
 
@@ -428,11 +442,23 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' coefficient at zero.
 #'
 #' @details
-#' \code{\link[distributions7]{distrib_start}} gives a starting value computed
-#' from the data rather than from the parameter's domain, which is what makes
-#' a fit arrive in a handful of iterations instead of spending its budget
-#' travelling. The penalized blocks start at zero, where their penalty is
-#' smallest.
+#' Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
+#' \code{\link[distributions7]{fit_distrib}} supplies: the model with every
+#' covariate removed is the right place for the model with them to begin, and
+#' it costs one small fit. The penalized blocks start at zero, where their
+#' penalty is smallest.
+#'
+#' \code{\link[distributions7]{distrib_start}} is the fallback. It returns ONE
+#' LIST PER START, each keyed by parameter, so the value wanted is
+#' \code{th[[1]][[p]]}; indexing the outer list by a parameter's name gives
+#' \code{NULL}, and this function did that, so every start silently fell to
+#' zero on the link scale. On a response centred at 5.84 that put the location
+#' at 0 and sent the run travelling, which is how a Student t fitted to iris
+#' reached a variance of \eqn{10^7}.
+#'
+#' A start that cannot be obtained is not an error: the fit still runs, from a
+#' worse place. What would be an error is not noticing, which is why the two
+#' routes are tried in order rather than one being assumed to work.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -444,23 +470,26 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' @keywords internal
 statmod_start <- function(spec, design, obj, start = NULL) {
   params <- spec@distrib@params
-  links <- spec@distrib@link_params
-  out <- lapply(design, function(d) numeric(d$npar))
-  names(out) <- params
+  zero <- lapply(design, function(d) numeric(d$npar))
+  names(zero) <- params
 
-  th0 <- tryCatch(
-    distributions7::distrib_start(spec@distrib, spec@response, 1L),
-    error = function(e) NULL)
+  eta0 <- statmod_intercepts(spec)
+  out <- zero
   for (p in params) {
     if (design[[p]]$npar == 0L) next
-    v <- if (!is.null(th0) && !is.null(th0[[p]])) th0[[p]][[1L]] else NULL
+    v <- eta0[[p]]
     if (is.null(v) || !is.finite(v)) next
     # the intercept carries the whole of it when there is one
     if (identical(design[[p]]$coef_names[1L], "(Intercept)") ||
         grepl("\\(Intercept\\)$", design[[p]]$coef_names[1L])) {
-      out[[p]][1L] <- linkfunctions7::linkfun(links[[p]], v)
+      out[[p]][1L] <- v
     }
   }
+  # Damping the intercepts and letting the objective pick among the results
+  # was tried and measured: on the Student t of the report it changed nothing
+  # for the better, the model's own flatness deciding where the run ends
+  # whatever it starts from. It is left out rather than kept as machinery
+  # that earns nothing.
   if (!is.null(start)) {
     for (p in names(start)) {
       if (!p %in% params) {
@@ -476,6 +505,82 @@ statmod_start <- function(spec, design, obj, start = NULL) {
     }
   }
   obj$stack(out)
+}
+
+
+#' The Intercept of Each Equation, on the Link Scale
+#'
+#' @description
+#' The intercept-only maximum likelihood estimate, where it can be had, and a
+#' draw from the parameter's domain otherwise.
+#'
+#' @details
+#' Two routes, tried in order. \code{\link[distributions7]{fit_distrib}} fits
+#' the distribution to the response with no covariates, which is the same model
+#' with every slope set to zero and therefore exactly where the fit should
+#' begin; its link-scale coefficients are the intercepts.
+#' \code{\link[distributions7]{distrib_start}} is the fallback, and its result
+#' is a list of starts, each keyed by parameter, so a value is reached at
+#' \code{[[1]][[p]]}.
+#'
+#' \strong{The random stream is pinned and restored.} That intercept-only fit
+#' starts from draws over the parameters' domains, so it returns a different
+#' answer on every call where a parameter is weakly identified -- fitted to
+#' \code{iris}, a Student t's \eqn{\nu} came back at \eqn{e^{39}}, \eqn{e^{21}}
+#' and \eqn{e^{17}} on three consecutive runs, and \code{statmod()} inherited
+#' that: the same call gave log-likelihoods of -103.49, -112.11 and -111.83. A
+#' fitting function has to give the same answer twice, so the seed is fixed for
+#' the length of this call and the caller's stream is put back afterwards.
+#'
+#' Pinning makes it reproducible and not necessarily good, since one draw is
+#' one draw; several are taken and the best kept. What would make it good is a
+#' data-based \code{distrib_start} method on the univariate families, which is
+#' the design \pkg{distributions7} already documents and which only its
+#' multivariate gaussian implements.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#'
+#' @return A named list, one entry per distribution parameter, on the link
+#'   scale; an entry is \code{NULL} where neither route answered.
+#'
+#' @seealso \code{\link{statmod_start}}
+#'
+#' @keywords internal
+statmod_intercepts <- function(spec) {
+  params <- spec@distrib@params
+  links <- spec@distrib@link_params
+  none <- stats::setNames(vector("list", length(params)), params)
+
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
+  } else {
+    on.exit(rm(".Random.seed", envir = globalenv()), add = TRUE)
+  }
+  set.seed(20260810L)
+
+  fd <- tryCatch(
+    suppressWarnings(distributions7::fit_distrib(spec@distrib,
+                                                 spec@response,
+                                                 n_start = 10L)),
+    error = function(e) NULL)
+  if (!is.null(fd)) {
+    e <- tryCatch(stats::coef(fd, scale = "link"), error = function(e) NULL)
+    if (!is.null(e) && length(e) == length(params) && all(is.finite(e))) {
+      return(stats::setNames(as.list(as.numeric(e)), params))
+    }
+  }
+
+  th <- tryCatch(
+    distributions7::distrib_start(spec@distrib, spec@response, 1L),
+    error = function(e) NULL)
+  if (is.null(th) || !length(th)) return(none)
+  th1 <- th[[1L]]
+  stats::setNames(lapply(params, function(p) {
+    v <- th1[[p]]
+    if (is.null(v) || !is.finite(v[[1L]])) return(NULL)
+    linkfunctions7::linkfun(links[[p]], v[[1L]])
+  }), params)
 }
 
 

@@ -23,10 +23,22 @@ An intercept-only fit per distribution parameter, with every other
 coefficient at zero.
 }
 \details{
-\code{\link[distributions7]{distrib_start}} gives a starting value computed
-from the data rather than from the parameter's domain, which is what makes
-a fit arrive in a handful of iterations instead of spending its budget
-travelling. The penalized blocks start at zero, where their penalty is
-smallest.
+Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
+\code{\link[distributions7]{fit_distrib}} supplies: the model with every
+covariate removed is the right place for the model with them to begin, and
+it costs one small fit. The penalized blocks start at zero, where their
+penalty is smallest.
+
+\code{\link[distributions7]{distrib_start}} is the fallback. It returns ONE
+LIST PER START, each keyed by parameter, so the value wanted is
+\code{th[[1]][[p]]}; indexing the outer list by a parameter's name gives
+\code{NULL}, and this function did that, so every start silently fell to
+zero on the link scale. On a response centred at 5.84 that put the location
+at 0 and sent the run travelling, which is how a Student t fitted to iris
+reached a variance of \eqn{10^7}.
+
+A start that cannot be obtained is not an error: the fit still runs, from a
+worse place. What would be an error is not noticing, which is why the two
+routes are tried in order rather than one being assumed to work.
 }
 \keyword{internal}

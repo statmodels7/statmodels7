@@ -156,6 +156,11 @@ iwls_solve <- function(pieces, u, how) {
   }
   A <- pd_repair(pieces$A)
   route <- if (how %in% c("qr", "svd")) paste0(how, "->chol") else how
+  # nothing can be solved at a point whose curvature is not finite; the caller
+  # reads a zero step as "this iterate is unusable" and keeps the last good one
+  if (is.null(A)) {
+    return(list(delta = numeric(length(u)), rank = 0L, route = route))
+  }
   ch <- chol(A)
   list(delta = as.numeric(backsolve(ch, forwardsolve(t(ch), u))),
        rank = ncol(A), route = route)
@@ -234,6 +239,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
   converged <- FALSE
   it <- 0L
   score <- Inf
+  note <- NULL
 
   if (verbose) {
     cat(sprintf("  %-5s %14s %12s %10s\n", "iter", "objective", "score/n",
@@ -241,6 +247,16 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
   }
   for (it in seq_len(as.integer(method@maxit))) {
     g <- obj$gr(beta)
+    # a step whose OBJECTIVE is finite can still land where the score is not:
+    # the line search below checks the value and nothing checked this, so a
+    # non-finite gradient reached `if (score < tol)` and stopped the run with
+    # "missing value where TRUE/FALSE needed", naming neither the iteration
+    # nor the cause. The point is unusable and the last good one is kept.
+    if (!all(is.finite(g))) {
+      note <- paste0("the score is not finite at iteration ", it,
+                     ", so the run stopped at the last usable point")
+      break
+    }
     score <- max(abs(g)) / n
     if (verbose) {
       cat(sprintf("  %-5d %14.6f %12.3e %10s\n", it - 1L, value, score,
@@ -277,15 +293,17 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
   # the rule is asked once more at the point reached, so that a run which
   # could not move is still converged when the POINT says so
   if (!converged) {
-    score <- max(abs(obj$gr(beta))) / n
+    gfin <- obj$gr(beta)
+    score <- if (all(is.finite(gfin))) max(abs(gfin)) / n else Inf
     converged <- score < method@tol
   }
   if (verbose) {
     cat(sprintf("  %-5s %14.6f %12.3e %10s\n", "end", value, score,
                 if (converged) "converged" else "stopped"))
+    if (!is.null(note)) cat("  ", note, "\n", sep = "")
   }
   list(par = beta, value = value, converged = converged,
-       iterations = it, score = score,
+       iterations = it, score = score, note = note,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
 }
 
@@ -309,6 +327,10 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
 #' @keywords internal
 pd_repair <- function(A, rel = 1e-8) {
   if (nrow(A) == 0L) return(A)
+  # a curvature with a non-finite entry is not a matrix to repair: eigen()
+  # signals "infinite or missing values in 'x'" from three frames down, which
+  # names the arithmetic and not the iterate that produced it
+  if (!all(is.finite(A))) return(NULL)
   ok <- tryCatch({
     chol(A)
     TRUE

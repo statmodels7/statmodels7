@@ -4,12 +4,14 @@
 \alias{solve_pd}
 \title{Invert a Matrix That Ought to Be Positive Definite}
 \usage{
-solve_pd(A, what)
+solve_pd(A, what, labels = NULL)
 }
 \arguments{
 \item{A}{A square matrix.}
 
 \item{what}{What the matrix is, for the message.}
+
+\item{labels}{The names of the coefficients \code{A} is indexed by.}
 }
 \value{
 The inverse.
@@ -21,9 +23,17 @@ does not exist.
 \details{
 A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite, so
-a factor that does not exist says the run stopped somewhere that is not one,
-or that two columns of the design carry the same information. Returning a
-pseudo-inverse instead would give a standard error for a direction the data
-does not identify.
+a factor that does not exist says something about where the run stopped.
+Returning a pseudo-inverse instead would give a standard error for a
+direction the data does not identify.
+
+The message names the directions rather than the causes. A first version
+offered two -- the run not having reached a maximum, or two columns of the
+design carrying the same information -- and on a Student t fitted to iris
+NEITHER was right: the design was full rank and the score was 4e-5. What had
+happened is the third and commonest case, a parameter drifting to where its
+information vanishes, and no list of guesses would have said so. The
+eigenvector of the smallest eigenvalue does: it is read off and the
+coefficients that load on it are printed.
 }
 \keyword{internal}

@@ -127,13 +127,16 @@ test_that("a variance component is covered by aic too", {
   #   eta  0.000   0.4785699 / 0.4785074   1.3e-4
   #   eta  0.200   0.4376933 / 0.4376832   2.3e-5
   #   eta  0.600   0.2571270 / 0.2571267   9.2e-7
-  #   eta -0.500  -0.9987488 / -0.9988609  1.1e-4
+  #   eta -0.500  -0.9987500 / -0.9989900  2.4e-4
   # the criterion is strongly curved here -- the gradient goes from 0.48 to
   # -1.00 over half a unit -- and that is what the reference's own step is
-  # fighting, so the tolerance is set to what it can support
+  # fighting, so the tolerance is set to what it can support. It moved when
+  # the fits started from the intercept-only MLE instead of from zeros: the
+  # reference refits the mode at every perturbation, so where the mode sits
+  # is part of its accuracy.
   for (shift in c(0, 0.2, 0.6, -0.5)) {
     eta <- h$eta0 + shift
-    expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 2e-4)
+    expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 5e-4)
   }
   f <- statmod(y ~ x + random(~ 1 | g),
                distributions7::gaussian1_distrib(), dr, outer_method = aic())

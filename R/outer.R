@@ -472,6 +472,19 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
                                 state$beta, expected, approx, maxit, tol,
                                 vb_inner(vb))
       cf <<- res$obj$split(res$par)
+      # Both criteria are read AT THE MODE -- a Laplace approximation there,
+      # or a log-likelihood and an edf there -- so where the inner fit did not
+      # reach one there is no criterion to compare, and the point is
+      # unavailable rather than merely worse. This used to be enforced by
+      # accident: a wild hyperparameter made the inner fit RAISE, the catch
+      # below turned that into an unavailable point, and the search stepped
+      # back. Once the inner fit stopped raising and started returning its
+      # last usable point, the criterion at that point looked ordinary and the
+      # search walked to a smoothing parameter of 1.8e308.
+      if (!isTRUE(res$converged)) {
+        m <<- NULL
+        return(invisible(NULL))
+      }
       m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx) else
         statmod_marginal(spec, design, cf, hy, method, approx, basis)
       if (is.null(m)) return(invisible(NULL))

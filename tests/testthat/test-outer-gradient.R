@@ -77,7 +77,11 @@ test_that("the gradient matches numDeriv with several parameters at once", {
   eta <- h$eta0 + c(0.5, -0.6)
   g <- h$gr(eta)
   expect_length(g, 2L)
-  expect_equal(g, numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  # the reference refits the mode at every perturbation, so it carries the
+  # inner tolerance; measured here, 2.2021349 against 2.2021371 and 2.1755400
+  # against 2.1755434, which is 1.5e-6 relative. It passed at 1e-6 while the
+  # fits started somewhere else, which was luck rather than accuracy.
+  expect_equal(g, numDeriv::grad(h$fn, eta), tolerance = 1e-5)
 })
 
 test_that("the gradient matches numDeriv under ml, on the range space", {

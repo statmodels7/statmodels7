@@ -142,7 +142,7 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   out <- matrix(NA_real_, total, total, dimnames = list(nm, nm))
   if (!any(keep)) return(out)
   A <- (H + S)[keep, keep, drop = FALSE]
-  Vb <- solve_pd(A, "the penalized information")
+  Vb <- solve_pd(A, "the penalized information", nm[keep])
   V <- if (type == "bayesian") Vb else
     Vb %*% H[keep, keep, drop = FALSE] %*% Vb
   out[keep, keep] <- V
@@ -160,27 +160,75 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' @details
 #' A failure here is a statement about the fit rather than about the
 #' arithmetic: at a maximum the penalized information is positive definite, so
-#' a factor that does not exist says the run stopped somewhere that is not one,
-#' or that two columns of the design carry the same information. Returning a
-#' pseudo-inverse instead would give a standard error for a direction the data
-#' does not identify.
+#' a factor that does not exist says something about where the run stopped.
+#' Returning a pseudo-inverse instead would give a standard error for a
+#' direction the data does not identify.
+#'
+#' The message names the directions rather than the causes. A first version
+#' offered two -- the run not having reached a maximum, or two columns of the
+#' design carrying the same information -- and on a Student t fitted to iris
+#' NEITHER was right: the design was full rank and the score was 4e-5. What had
+#' happened is the third and commonest case, a parameter drifting to where its
+#' information vanishes, and no list of guesses would have said so. The
+#' eigenvector of the smallest eigenvalue does: it is read off and the
+#' coefficients that load on it are printed.
 #'
 #' @param A A square matrix.
 #' @param what What the matrix is, for the message.
+#' @param labels The names of the coefficients \code{A} is indexed by.
 #'
 #' @return The inverse.
 #'
 #' @keywords internal
-solve_pd <- function(A, what) {
+solve_pd <- function(A, what, labels = NULL) {
   R <- tryCatch(chol(A), error = function(e) NULL)
-  if (is.null(R)) {
-    stop(sprintf(paste0("%s is not positive definite, so there is no\n",
-                        "  variance matrix at this point. Either the fit did",
-                        " not reach a\n  maximum -- check its convergence --",
-                        " or two columns of the design\n  carry the same",
-                        " information."), what), call. = FALSE)
+  if (!is.null(R)) return(chol2inv(R))
+  stop(sprintf(paste0("%s is not positive definite, so there is no variance",
+                      "\n  matrix at this point.%s\n  A fit can reach such a",
+                      " point without failing: a parameter that runs\n  to",
+                      " the edge of its space leaves no information behind,",
+                      " and the score\n  is then small because the surface is",
+                      " flat, not because it is a maximum.\n  Compare the",
+                      " fitted parameters against the data before reading",
+                      " anything\n  else."),
+               what, flat_directions(A, labels)), call. = FALSE)
+}
+
+
+#' Which Coefficients a Singular Curvature Is Flat In
+#'
+#' @description
+#' The eigenvector of the smallest eigenvalue, reported as the coefficients
+#' that load on it.
+#'
+#' @param A A square matrix.
+#' @param labels Its coefficient names.
+#'
+#' @return A single string, empty when nothing can be said.
+#'
+#' @keywords internal
+flat_directions <- function(A, labels) {
+  if (is.null(labels) || !length(labels)) return("")
+  # a parameter far enough out makes its own row non-finite rather than merely
+  # small, and then there is no eigenvector to read: the rows themselves are
+  # the answer, and they are the more direct one
+  bad <- labels[apply(!is.finite(A), 1L, any)]
+  if (length(bad)) {
+    return(sprintf(paste0("\n  Its entries are not finite in the rows of: %s",
+                          "\n  which is what a parameter that has run out of",
+                          " its range looks like here."),
+                   paste(bad, collapse = ", ")))
   }
-  chol2inv(R)
+  e <- tryCatch(eigen(A, symmetric = TRUE), error = function(e) NULL)
+  if (is.null(e)) return("")
+  k <- which.min(e$values)
+  v <- abs(e$vectors[, k])
+  hit <- labels[v > 0.2 * max(v)]
+  if (!length(hit)) return("")
+  sprintf(paste0("\n  It is flat along a direction carried by: %s\n  (its",
+                 " smallest eigenvalue is %s, against %s at the largest)."),
+          paste(hit, collapse = ", "), format(signif(e$values[k], 3)),
+          format(signif(max(e$values), 3)))
 }
 
 

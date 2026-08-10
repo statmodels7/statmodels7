@@ -1,5 +1,37 @@
 # statmodels7 0.8.0
 
+* Five defects a Student t fitted to `iris` exposed, each of which had
+  been silent.
+
+  `statmod_start()` read `distrib_start()`'s result by parameter name,
+  where that result is a list of starts each keyed by parameter, so the
+  name matched nothing and every fit began at zeros on the link scale --
+  a location of 0 for a response centred at 5.84. The intercept of each
+  equation now starts at the intercept-only maximum likelihood estimate,
+  which for a gaussian is the sample mean and standard deviation
+  exactly. That estimate draws its own starting values at random, so the
+  stream is fixed for the length of the call and restored afterwards:
+  without it the same call returned log-likelihoods of -103.49, -112.11
+  and -111.83 on consecutive runs.
+
+  `iwls()` stopped with "missing value where TRUE/FALSE needed" when the
+  gradient at an accepted step was not finite, the line search having
+  checked the objective alone, and `pd_repair()` raised from three
+  frames further down on the same matrix. Such a point is now reported
+  as unusable and the last good iterate is kept.
+
+  The alternation set `converged` to `TRUE` as soon as there were no
+  sparse blocks to alternate with, whatever the inner method had done,
+  which is what let the three above go unnoticed. The verdict is the
+  inner fit's.
+
+  `vcov()` and `summary()` named two causes for a singular information,
+  the fit not having reached a maximum and two columns carrying the same
+  information, and on this fit neither applied: the design is full rank
+  and the score is 4e-5. The message names the directions instead --
+  which coefficients carry the flat eigenvector, or which rows are not
+  finite.
+
 * A term the fitting scheme does not cover is rejected when the
   specification is built, where it can be named, instead of reaching the
   design and raising on one of `term_matrix()` or `term_npar()`. Two
