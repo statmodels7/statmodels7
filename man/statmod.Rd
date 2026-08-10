@@ -13,8 +13,6 @@ statmod(
   inner_method = iwls(),
   hyper = NULL,
   start = NULL,
-  maxit = 50L,
-  tol = 1e-08,
   verbose = 0
 )
 }
@@ -37,11 +35,6 @@ an \pkg{optimizers7} optimizer.}
 values.}
 
 \item{start}{Optional starting coefficients, a named list.}
-
-\item{maxit}{The alternation's iteration budget.}
-
-\item{tol}{The alternation's tolerance, on the relative change in the
-objective.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
 }
@@ -73,6 +66,13 @@ plus the penalties at full size, since a penalty is a negative log-prior
 and a posterior adds the two at full size. What is scaled instead is the
 stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
 at \eqn{n = 10^7}.
+
+\strong{The budget and the stopping rule belong to the method.} There is no
+\code{maxit} and no \code{tol} here: they are set on \code{inner_method},
+which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
+\code{maxit} and \code{criterion}, and the alternation reads them from there
+(see \code{\link{method_budget}}). Carrying a second copy would let a caller
+set both and be obeyed by neither.
 
 \strong{The hyperparameters are held fixed.} Estimating a smoothing
 parameter by an outer criterion is not written yet, so each one sits at the

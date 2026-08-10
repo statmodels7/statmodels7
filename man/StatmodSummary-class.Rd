@@ -29,7 +29,8 @@ StatmodSummary(
 
 \item{n_obs}{The number of observations.}
 
-\item{tables}{A named list of data frames, one per distribution parameter.}
+\item{tables}{A named list, one entry per distribution parameter, each a
+list of block records.}
 
 \item{edf}{The per-term degrees of freedom.}
 
@@ -53,7 +54,7 @@ StatmodSummary(
 An object of class \code{StatmodSummary}.
 }
 \description{
-What \code{\link{summary.StatmodFit}} returns: one coefficient table per
+What \code{\link{summary.StatmodFit}} returns: the blocks of each
 distribution parameter, the degrees of freedom, the information criteria and
 whatever has to be said about how the numbers should be read.
 }

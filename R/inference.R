@@ -251,17 +251,74 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
 S7::method(confint, StatmodFit) <- confint.StatmodFit
 
 
+#' What Kind of Block a Term Reports As
+#'
+#' @description
+#' Which of the four readings a term gets in a summary: its coefficients, a
+#' smooth's linear part and smoothing parameter, a random effect's variance
+#' parameters, or a selection's survivors.
+#'
+#' @details
+#' The classification is by the term's class and by its penalty, not by its
+#' label, so a term given a name of its own is read the same way.
+#'
+#' @param term A built term.
+#'
+#' @return One of \code{"parametric"}, \code{"smooth"}, \code{"random"},
+#'   \code{"selection"}, \code{"penalized"}.
+#'
+#' @keywords internal
+term_block_kind <- function(term) {
+  pen <- modelterms7::term_penalty(term)
+  if (is.null(pen)) return("parametric")
+  if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
+  if (S7::S7_inherits(term, modelterms7::SmoothTerm)) return("smooth")
+  if (penalty_has_kink(pen)) return("selection")
+  "penalized"
+}
+
+
+#' Which Coefficients of a Smooth Are the Linear Part
+#'
+#' @description
+#' \code{TRUE} for the columns a Demmler-Reinsch smooth carries its linear
+#' effect in, which are the ones worth printing.
+#'
+#' @details
+#' The rest of the block are coefficients of an orthonormal basis of the
+#' wiggly part; individually they say nothing, and what they say jointly is the
+#' effective degrees of freedom, which the block header reports instead.
+#'
+#' The question is asked of the term's own specification (\code{spec$linear})
+#' rather than of a suffix in a coefficient's name, since a name is a label and
+#' this is a fact about the construction.
+#'
+#' @param term A built smooth term.
+#' @param k The number of columns in its block.
+#'
+#' @return A logical vector of length \code{k}.
+#'
+#' @keywords internal
+smooth_linear_cols <- function(term, k) {
+  out <- rep(FALSE, k)
+  sp <- tryCatch(term@spec, error = function(e) NULL)
+  if (is.list(sp) && isTRUE(sp$linear) && k > 0L) out[1L] <- TRUE
+  out
+}
+
+
 #' A Summary of a Fitted Model
 #'
 #' @description
-#' What \code{\link{summary.StatmodFit}} returns: one coefficient table per
+#' What \code{\link{summary.StatmodFit}} returns: the blocks of each
 #' distribution parameter, the degrees of freedom, the information criteria and
 #' whatever has to be said about how the numbers should be read.
 #'
 #' @param call The fit's call.
 #' @param distrib_name The distribution's name.
 #' @param n_obs The number of observations.
-#' @param tables A named list of data frames, one per distribution parameter.
+#' @param tables A named list, one entry per distribution parameter, each a
+#'   list of block records.
 #' @param edf The per-term degrees of freedom.
 #' @param loglik The maximized log-likelihood.
 #' @param df The effective degrees of freedom in total.
@@ -313,16 +370,41 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' error, Wald statistic, p-value and interval -- with the degrees of freedom,
 #' the information criteria and the qualifications the numbers carry.
 #' @details
+#' \strong{Each distribution parameter is read as blocks, not as one list of
+#' coefficients}, because most of a fitted model's coefficients are not
+#' quantities anybody reads. The blocks are
+#' \describe{
+#'   \item{the parametric terms}{every unpenalized term together, one row per
+#'     coefficient, which is the ordinary table.}
+#'   \item{one block per smooth}{the linear component's coefficient where the
+#'     construction carries one, the smoothing parameter, and the effective
+#'     degrees of freedom. The coefficients of the wiggly part are not shown:
+#'     they are coordinates in an orthonormal basis and say nothing one at a
+#'     time, while what they say together is the edf.}
+#'   \item{one block per random effect}{the parameters of the effects'
+#'     distribution -- what is usually called the variance component -- and the
+#'     edf. Not the effects themselves, of which there is one per level.}
+#'   \item{one block per selection}{a lasso, a SCAD or an MCP: its
+#'     hyperparameters, how many coefficients survived, and those coefficients.
+#'     The ones set exactly to zero are counted, not listed.}
+#'   \item{one block per other penalized term}{its coefficients, which stay
+#'     interpretable under a ridge, together with its hyperparameters.}
+#' }
+#'
+#' \strong{A hyperparameter carries no standard error yet.} It is held at the
+#' value it was given rather than estimated, so the row reports the value and
+#' marks it fixed; inventing an interval for a number nothing estimated would
+#' be worse than the empty column. Estimating them by an outer criterion is
+#' what fills those rows in.
+#'
 #' \strong{What a Wald p-value means here depends on the row}, and the summary
 #' says which is which rather than printing one column and leaving it at that.
 #' For an unpenalized coefficient it is the usual thing. For a coefficient in a
 #' penalized block it is conditional on the smoothing parameter, which was not
 #' estimated jointly with it, and it does not account for the shrinkage of the
-#' estimate towards zero. For a block a kinked penalty selected -- a lasso, a
-#' SCAD, an MCP -- the row exists only because that coefficient survived the
-#' selection, and a naive interval there under-covers; the coefficients set
-#' exactly to zero carry \code{NA}, since at the kink there is no curvature to
-#' read.
+#' estimate towards zero. For a coefficient a kinked penalty selected, the row
+#' exists only because that coefficient survived the selection, and a naive
+#' interval there under-covers.
 #'
 #' \strong{The degrees of freedom} are the effective ones, summed over the
 #' terms, so that a penalized term counts what it spends rather than how many
@@ -345,37 +427,32 @@ summary.StatmodFit <- function(object, level = 0.95,
   type <- match.arg(type)
   ci <- confint(object, level = level, type = type, ...)
   spec <- object@spec
-  lab <- coef_labels(spec, statmod_design(spec))
+  design <- statmod_design(spec)
+  ci$statistic <- ci$estimate / ci$se
+  ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
+  lab <- coef_labels(spec, design)
 
-  zval <- ci$estimate / ci$se
-  ci$statistic <- zval
-  ci$p_value <- 2 * stats::pnorm(-abs(zval))
-  ci$penalized <- lab$penalized
-  ci$selected <- lab$kinked
-
-  tables <- lapply(spec@distrib@params, function(p) {
-    r <- ci[ci$parameter == p, , drop = FALSE]
-    r[, c("term", "coefficient", "estimate", "se", "statistic", "p_value",
-          "lower", "upper", "penalized", "selected")]
-  })
+  tables <- lapply(spec@distrib@params, function(p)
+    summary_blocks(object, spec, design, p, ci))
   names(tables) <- spec@distrib@params
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
   notes <- character(0)
-  if (any(lab$penalized & !lab$kinked)) {
+  if (any(lab$penalized)) {
     notes <- c(notes, paste0(
-      "A penalized coefficient's interval is conditional on its smoothing ",
-      "parameter,\n  which was held fixed and not estimated jointly with it."))
+      "A hyperparameter is held at the value it was given, not estimated, so ",
+      "it has\n  no standard error and every interval beside it is ",
+      "conditional on it."))
   }
   if (any(lab$kinked)) {
     nz <- sum(lab$kinked &
                 unlist(object@coefficients[spec@distrib@params],
                        use.names = FALSE) != 0)
     notes <- c(notes, sprintf(paste0(
-      "%d of %d coefficients under a kinked penalty are non-zero. Their ",
-      "rows are\n  conditional on that selection, and the zeros carry NA: ",
-      "at the kink there\n  is no curvature to read."),
+      "%d of %d coefficients under a kinked penalty survived. Their rows ",
+      "are\n  conditional on that selection, and the ones at zero have no ",
+      "variance at\n  all: at the kink there is no curvature to read."),
       nz, sum(lab$kinked)))
   }
   if (!object@converged) {
@@ -396,10 +473,103 @@ summary.StatmodFit <- function(object, level = 0.95,
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
 
+#' The Blocks of One Distribution Parameter
+#'
+#' @description
+#' Groups a parameter's terms into the readings a summary prints: the
+#' parametric terms together, and one block per penalized term.
+#'
+#' @param fit A \code{\link{StatmodFit}}.
+#' @param spec The specification.
+#' @param design The design.
+#' @param p The distribution parameter.
+#' @param ci The flat interval table, as \code{\link{confint.StatmodFit}}
+#'   returns it with the statistic and the p-value added.
+#'
+#' @return A list of block records, each with \code{kind}, \code{label},
+#'   \code{n_coef}, \code{edf}, \code{n_zero} and \code{table}.
+#'
+#' @keywords internal
+summary_blocks <- function(fit, spec, design, p, ci) {
+  rows <- ci[ci$parameter == p, , drop = FALSE]
+  cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
+            "upper", "role")
+  empty <- stats::setNames(
+    data.frame(character(0), numeric(0), numeric(0), numeric(0), numeric(0),
+               numeric(0), numeric(0), character(0),
+               stringsAsFactors = FALSE), cols)
+
+  coef_rows <- function(nm) {
+    r <- rows[rows$term == nm, , drop = FALSE]
+    if (!nrow(r)) return(empty)
+    out <- data.frame(name = r$coefficient, estimate = r$estimate, se = r$se,
+                      statistic = r$statistic, p_value = r$p_value,
+                      lower = r$lower, upper = r$upper, role = "coefficient",
+                      stringsAsFactors = FALSE)
+    stats::setNames(out, cols)
+  }
+  # a hyperparameter is held at the value it was given, so it has an estimate
+  # and nothing else; an interval here would be invented rather than computed
+  hyper_rows <- function(nm) {
+    th <- fit@hyper[[p]][[nm]]
+    if (is.null(th) || !length(th)) return(empty)
+    out <- data.frame(name = names(th), estimate = as.numeric(th),
+                      se = NA_real_, statistic = NA_real_, p_value = NA_real_,
+                      lower = NA_real_, upper = NA_real_, role = "fixed",
+                      stringsAsFactors = FALSE)
+    stats::setNames(out, cols)
+  }
+  term_edf <- function(nm) {
+    if (is.null(fit@edf)) return(NA_real_)
+    e <- fit@edf
+    v <- e$edf[e$parameter == p & e$term == nm]
+    if (length(v)) v[1L] else NA_real_
+  }
+
+  blocks <- list()
+  para <- character(0)
+  for (nm in names(spec@terms[[p]])) {
+    if (identical(term_block_kind(spec@terms[[p]][[nm]]), "parametric")) {
+      para <- c(para, nm)
+    }
+  }
+  if (length(para)) {
+    tb <- do.call(rbind, lapply(para, coef_rows))
+    blocks[[length(blocks) + 1L]] <- list(
+      kind = "parametric", label = "Parametric terms", term = NA_character_,
+      n_coef = nrow(tb), edf = sum(vapply(para, term_edf, numeric(1))),
+      n_zero = 0L, table = tb)
+  }
+
+  for (nm in names(spec@terms[[p]])) {
+    term <- spec@terms[[p]][[nm]]
+    kind <- term_block_kind(term)
+    if (identical(kind, "parametric")) next
+    k <- length(design[[p]]$blocks[[nm]])
+    cr <- coef_rows(nm)
+    keep <- switch(kind,
+      smooth = smooth_linear_cols(term, nrow(cr)),
+      # a coefficient a kinked penalty set to zero is counted, not listed
+      selection = cr$estimate != 0,
+      rep(TRUE, nrow(cr)))
+    if (identical(kind, "random")) keep <- rep(FALSE, nrow(cr))
+    tb <- rbind(cr[keep, , drop = FALSE], hyper_rows(nm))
+    blocks[[length(blocks) + 1L]] <- list(
+      kind = kind,
+      label = switch(kind, smooth = "Smooth", random = "Random effect",
+                     selection = "Selection", "Penalized"),
+      term = nm, n_coef = k, edf = term_edf(nm),
+      n_zero = if (identical(kind, "selection")) sum(cr$estimate == 0) else 0L,
+      table = tb)
+  }
+  blocks
+}
+
+
 #' @title Print a Model Summary
 #' @name print.StatmodSummary
 #' @description
-#' The call, one coefficient table per distribution parameter, the degrees of
+#' The call, then each distribution parameter's blocks, then the degrees of
 #' freedom, the criteria and the notes.
 #' @param x A \code{\link{StatmodSummary}}.
 #' @param digits Significant digits in the tables.
@@ -415,31 +585,17 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
       "\n", sep = "")
 
   for (p in names(x@tables)) {
-    tb <- x@tables[[p]]
-    cat("\n", p, "\n", sep = "")
-    if (!nrow(tb)) {
+    cat("\n", strrep("=", 3L), " ", p, "\n", sep = "")
+    blocks <- x@tables[[p]]
+    if (!length(blocks)) {
       cat("  (no coefficients)\n")
       next
     }
-    mark <- ifelse(tb$selected, "*", ifelse(tb$penalized, "+", " "))
-    out <- data.frame(
-      estimate = signif(tb$estimate, digits),
-      se = signif(tb$se, digits),
-      z = signif(tb$statistic, digits),
-      p = format.pval(tb$p_value, digits = digits, eps = 1e-16),
-      lower = signif(tb$lower, digits),
-      upper = signif(tb$upper, digits),
-      ` ` = mark, check.names = FALSE)
-    rownames(out) <- paste(tb$term, tb$coefficient, sep = " / ")
-    print(out)
+    for (b in blocks) print_block(b, digits)
   }
 
   cat(sprintf("\n%.0f%% intervals, %s variance\n", 100 * x@level, x@type))
-  if (!is.null(x@edf) && any(x@edf$edf != x@edf$coefficients)) {
-    cat("\nDegrees of freedom, per term\n")
-    print(x@edf, row.names = FALSE)
-  }
-  cat(sprintf("\nlog-likelihood %.6f    df %.2f    AIC %.3f    BIC %.3f\n",
+  cat(sprintf("log-likelihood %.6f    df %.2f    AIC %.3f    BIC %.3f\n",
               x@loglik, x@df, x@aic, x@bic))
   cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
@@ -450,3 +606,60 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
   invisible(x)
 }
 S7::method(print, StatmodSummary) <- print.StatmodSummary
+
+
+#' Print One Block of a Summary
+#'
+#' @description
+#' A header saying what the block is and what it spends, then its rows.
+#'
+#' @details
+#' A row whose quantity was held fixed prints its value and blanks the rest,
+#' rather than showing \code{NA} four times over: what the columns say is that
+#' nothing estimated it, and the mark in the header says so once.
+#'
+#' @param b A block record, as \code{\link{summary_blocks}} returns.
+#' @param digits Significant digits.
+#'
+#' @return \code{NULL}, invisibly.
+#'
+#' @keywords internal
+print_block <- function(b, digits = 4L) {
+  head <- if (is.na(b$term)) b$label else sprintf("%s  %s", b$label, b$term)
+  bits <- character(0)
+  if (!identical(b$kind, "parametric")) {
+    bits <- c(bits, sprintf("%d coefficients", b$n_coef))
+    if (is.finite(b$edf)) bits <- c(bits, sprintf("edf %.2f", b$edf))
+  }
+  if (identical(b$kind, "selection")) {
+    bits <- c(bits, sprintf("%d selected, %d at zero",
+                            b$n_coef - b$n_zero, b$n_zero))
+  }
+  cat("\n", head, sep = "")
+  if (length(bits)) cat("   [", paste(bits, collapse = ", "), "]", sep = "")
+  cat("\n")
+
+  tb <- b$table
+  if (!nrow(tb)) {
+    cat("  (nothing to report on its own)\n")
+    return(invisible(NULL))
+  }
+  fixed <- tb$role == "fixed"
+  num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
+  out <- data.frame(
+    estimate = format(signif(tb$estimate, digits)),
+    se = num(tb$se),
+    z = num(tb$statistic),
+    p = ifelse(is.na(tb$p_value), "",
+               format.pval(tb$p_value, digits = digits, eps = 1e-16)),
+    lower = num(tb$lower),
+    upper = num(tb$upper),
+    check.names = FALSE, stringsAsFactors = FALSE)
+  # said once, in the column where a standard error would have been, rather
+  # than four times across a row that has nothing else in it
+  out$se[fixed] <- "(fixed)"
+  out[fixed, c("z", "p", "lower", "upper")] <- ""
+  rownames(out) <- tb$name
+  print(out)
+  invisible(NULL)
+}

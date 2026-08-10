@@ -80,6 +80,13 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
 #' at \eqn{n = 10^7}.
 #'
+#' \strong{The budget and the stopping rule belong to the method.} There is no
+#' \code{maxit} and no \code{tol} here: they are set on \code{inner_method},
+#' which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
+#' \code{maxit} and \code{criterion}, and the alternation reads them from there
+#' (see \code{\link{method_budget}}). Carrying a second copy would let a caller
+#' set both and be obeyed by neither.
+#'
 #' \strong{The hyperparameters are held fixed.} Estimating a smoothing
 #' parameter by an outer criterion is not written yet, so each one sits at the
 #' probe value of its bounds unless \code{hyper} says otherwise. That value is
@@ -105,9 +112,6 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
 #'   values.
 #' @param start Optional starting coefficients, a named list.
-#' @param maxit The alternation's iteration budget.
-#' @param tol The alternation's tolerance, on the relative change in the
-#'   objective.
 #' @param verbose A level from 0 to 3, or a named logical vector.
 #'
 #' @return An object of class \code{\link{StatmodFit}}.
@@ -128,10 +132,13 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     inner_method = iwls(), hyper = NULL, start = NULL,
-                    maxit = 50L, tol = 1e-8, verbose = 0) {
+                    verbose = 0) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   vb <- verbosity(verbose)
+  budget <- method_budget(inner_method)
+  maxit <- budget$maxit
+  tol <- budget$tol
 
   spec <- statmod_spec(formula, distrib, data, weights, offsets)
   design <- statmod_design(spec)
@@ -223,6 +230,71 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                      paste(b$param, b$term, sep = "/"), character(1))),
     call = cl
   )
+}
+
+
+#' The Budget and the Stopping Rule of the Alternation
+#'
+#' @description
+#' Reads the iteration budget and the tolerance off the method that fits the
+#' smooth block, which is where they are set.
+#'
+#' @details
+#' \code{\link{statmod}} carries neither a \code{maxit} nor a \code{tol} of its
+#' own. An argument accepted and ignored is worse than one that signals an
+#' error, and that is what a second copy would be: a caller setting
+#' \code{iwls(maxit = 20)} and a loose \code{maxit = 100} would get one of them
+#' with nothing said about the other. \pkg{distributions7}'s
+#' \code{fit_distrib()} shed the same pair for the same reason.
+#'
+#' \code{\link{iwls}} carries both directly. An \pkg{optimizers7} optimizer
+#' carries \code{maxit} and a \code{criterion}; the tolerance is the largest
+#' one the criterion tree contains, since a combined rule stops at whichever of
+#' its parts fires first and the alternation should not ask for more precision
+#' than the loop inside it can deliver. A criterion carrying no tolerance at
+#' all leaves the default of \code{\link[optimizers7]{crit_grad}}, read from
+#' that function rather than copied as a number.
+#'
+#' @param method \code{\link{iwls}()} or an \pkg{optimizers7} optimizer.
+#'
+#' @return A list with \code{maxit} and \code{tol}.
+#'
+#' @seealso \code{\link{statmod}}, \code{\link{iwls}}
+#'
+#' @keywords internal
+method_budget <- function(method) {
+  if (S7::S7_inherits(method, Iwls)) {
+    return(list(maxit = as.integer(method@maxit), tol = method@tol))
+  }
+  if (!S7::S7_inherits(method, optimizers7::optimizer)) {
+    stop(paste0("'inner_method' must be iwls() or an optimizers7 optimizer.\n",
+                "  The budget and the stopping rule are read off it, so there",
+                " is\n  nowhere else for them to come from."), call. = FALSE)
+  }
+  list(maxit = as.integer(method@maxit),
+       tol = criterion_tol(method@criterion))
+}
+
+
+#' The Tolerance a Criterion Asks For
+#'
+#' @description
+#' The largest \code{tol} in a criterion, walking a combined one into its
+#' parts.
+#'
+#' @param crit An \pkg{optimizers7} criterion.
+#'
+#' @return A single number.
+#'
+#' @keywords internal
+criterion_tol <- function(crit) {
+  nms <- S7::prop_names(crit)
+  if ("criteria" %in% nms) {
+    parts <- vapply(crit@criteria, criterion_tol, numeric(1))
+    return(max(parts))
+  }
+  if ("tol" %in% nms) return(as.numeric(crit@tol)[1L])
+  eval(formals(optimizers7::crit_grad)$tol)
 }
 
 

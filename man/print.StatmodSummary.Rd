@@ -17,7 +17,7 @@
 \code{x}, invisibly.
 }
 \description{
-The call, one coefficient table per distribution parameter, the degrees of
+The call, then each distribution parameter's blocks, then the degrees of
 freedom, the criteria and the notes.
 }
 \seealso{

@@ -234,3 +234,52 @@ test_that("a smooth term reports an edf between its null space and its rank", {
   expect_equal(attr(stats::logLik(fit), "df"), sum(e$edf), tolerance = 1e-12)
   expect_gt(attr(stats::logLik(fit), "df"), 3)
 })
+
+test_that("the budget and the tolerance are read off the method", {
+  # statmod() carries neither: an argument accepted and ignored is worse than
+  # one that errors, and a caller setting iwls(maxit = 20) and a loose
+  # maxit = 100 would get one of them with nothing said about the other
+  fm <- names(formals(statmod))
+  expect_false("maxit" %in% fm)
+  expect_false("tol" %in% fm)
+
+  b <- method_budget(iwls(maxit = 20, tol = 1e-4))
+  expect_identical(b$maxit, 20L)
+  expect_equal(b$tol, 1e-4)
+
+  # an optimizer carries maxit and a criterion, and the tolerance is the
+  # largest one that criterion contains: a combined rule stops at whichever
+  # part fires first, so asking for more than the loop inside can deliver
+  # would be asking the alternation to outlive it
+  o <- optimizers7::bfgs(maxit = 33,
+                         criterion = optimizers7::crit_grad(1e-5))
+  expect_identical(method_budget(o)$maxit, 33L)
+  expect_equal(method_budget(o)$tol, 1e-5)
+
+  cmb <- optimizers7::crit_any(optimizers7::crit_grad(1e-9),
+                              optimizers7::crit_rel_obj(1e-3))
+  expect_equal(criterion_tol(cmb), 1e-3)
+
+  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                       inner_method = "bfgs"),
+               "an optimizers7 optimizer", fixed = TRUE)
+})
+
+test_that("the alternation obeys the method's budget", {
+  # one sweep is not enough for a lasso to settle beside the smooth block, so
+  # a budget of one must come back not converged rather than claiming it
+  dl <- dd
+  dl$noise <- stats::rnorm(nrow(dl))
+  one <- statmod(y ~ x + lasso(~ noise),
+                 distributions7::gaussian1_distrib(), dl,
+                 inner_method = iwls(maxit = 1L),
+                 hyper = list(mu = list(lasso = c(lambda = 5))))
+  expect_identical(max(one@history$blocks$sweep), 1L)
+  expect_false(one@converged)
+
+  many <- statmod(y ~ x + lasso(~ noise),
+                  distributions7::gaussian1_distrib(), dl,
+                  hyper = list(mu = list(lasso = c(lambda = 5))))
+  expect_true(many@converged)
+  expect_gt(max(many@history$blocks$sweep), 1L)
+})
