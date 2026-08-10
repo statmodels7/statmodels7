@@ -41,7 +41,7 @@ in the stacked coefficient space.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_pieces</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">idx</span>, <span class="va">offs</span>, <span class="va">total</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_pieces</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">idx</span>, <span class="va">offs</span>, <span class="va">total</span>, order <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,12 +71,25 @@ in the stacked coefficient space.</p>
 <dt id="arg-offs-total">offs, total<a class="anchor" aria-label="anchor" href="#arg-offs-total"></a></dt>
 <dd><p>The block offsets and the total width.</p></dd>
 
+
+<dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
+<dd><p><code>1</code> for the first-order pieces alone, <code>2</code> for the
+second-order ones as well.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>S</code> (one matrix per hyperparameter), <code>c</code> (one
-vector), <code>S2</code> and <code>c2</code> (one per pair, keyed), <code>rho2</code> (the
-hyperparameter Hessian) and <code>pair</code> (the key of each pair).</p>
+    <p>A list with <code>S</code> (one matrix per hyperparameter) and <code>c</code>
+(one vector), and at order 2 also <code>S2</code> and <code>c2</code> (one per pair,
+keyed), <code>rho2</code> (the hyperparameter Hessian) and <code>pair</code> (the key
+of each pair).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>At order 1 the second-order generics are not called at all. That is what
+lets a penalty supplying only <code>penalty_dhessian()</code> give an exact
+gradient: asking it for a derivative the gradient does not use would have
+rejected it for a quantity nobody wanted.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
