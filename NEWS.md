@@ -1,3 +1,15 @@
+# statmodels7 0.7.1
+
+* The exact Hessian of a marginal or prediction-error criterion is now
+  exact for a separable penalty too, penalties7 having stopped
+  differencing its second-order pieces. A ridge and a random effect go
+  through no difference at all.
+
+* `outer_pieces()` takes an order and does not call the second-order
+  generics at order 1, so a penalty that supplies only
+  `penalty_dhessian()` gives an exact gradient rather than being
+  rejected for a quantity the gradient does not use.
+
 # statmodels7 0.7.0
 
 * `aic()` and `bic()` choose the hyperparameters by an estimate of

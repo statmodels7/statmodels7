@@ -191,3 +191,29 @@ test_that("the exact route now covers the penalties it used to refuse", {
   # the expected information still is not, for the reason it never was
   expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
 })
+
+test_that("a variance component's Hessian is exact now, not differenced", {
+  # penalties7 used to difference the second-order pieces of a separable
+  # penalty; distributions7 supplies them closed for a gaussian parent, so a
+  # ridge and a random effect go through no difference at all. The tolerance
+  # is what says so: it is the reference's, not ours.
+  skip_if_not_installed("numDeriv")
+  set.seed(55)
+  m <- 20
+  dr <- data.frame(g = factor(rep(paste0("g", seq_len(m)), each = 10)),
+                   x = runif(200))
+  u <- stats::rnorm(m, sd = 0.7)
+  dr$y <- 1 + 2 * dr$x + u[as.integer(dr$g)] + stats::rnorm(200, sd = 0.4)
+  h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(hessian = "observed"))
+  for (shift in c(0.2, -0.4)) {
+    eta <- h$eta0 + shift
+    expect_equal(as.numeric(h$he(eta)),
+                 as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
+  }
+  # and the fit runs through newton(), which needs the Hessian at every step
+  f <- statmod(y ~ x + random(~ 1 | g),
+               distributions7::gaussian1_distrib(), dr,
+               outer_method = reml(hessian = "observed"))
+  expect_true(is.finite(f@criterion))
+  expect_gt(f@hyper$mu[["random(~1 | g)"]][[1L]], 0.3)
+})
