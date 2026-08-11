@@ -202,24 +202,18 @@ statmod_penalty_at <- function(spec, coef, hyper,
   grad <- stats::setNames(lapply(npar, numeric), params)
   hess <- matrix(0, total, total)
 
-  for (a in seq_along(params)) {
-    p <- params[a]
-    for (nm in names(spec@terms[[p]])) {
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      if (is.null(pen)) next
-      cols <- design[[p]]$blocks[[nm]]
-      b <- coef[[p]][cols]
-      th <- as.list(hyper[[p]][[nm]])
-      if (what == "value") {
-        value <- value + penalties7::penalty_value(pen, b, th)
-      } else if (what == "gradient") {
-        grad[[p]][cols] <- grad[[p]][cols] +
-          penalties7::penalty_gradient(pen, b, th)
-      } else {
-        idx <- offs[a] + cols
-        hess[idx, idx] <- hess[idx, idx] +
-          penalties7::penalty_hessian(pen, b, th)
-      }
+  for (u in statmod_penalized(spec, design)) {
+    p <- u$param
+    b <- coef[[p]][u$cols]
+    th <- as.list(hyper[[p]][[u$key]])
+    if (what == "value") {
+      value <- value + penalties7::penalty_value(u$penalty, b, th)
+    } else if (what == "gradient") {
+      grad[[p]][u$cols] <- grad[[p]][u$cols] +
+        penalties7::penalty_gradient(u$penalty, b, th)
+    } else {
+      hess[u$index, u$index] <- hess[u$index, u$index] +
+        penalties7::penalty_hessian(u$penalty, b, th)
     }
   }
   switch(what, value = value, gradient = grad, hessian = hess)
@@ -237,18 +231,14 @@ statmod_penalty_at <- function(spec, coef, hyper,
 #' @return A named list, one entry per parameter.
 #'
 #' @keywords internal
-statmod_hyper_start <- function(spec) {
+statmod_hyper_start <- function(spec, design = NULL) {
   params <- spec@distrib@params
-  stats::setNames(lapply(params, function(p) {
-    tms <- spec@terms[[p]]
-    out <- list()
-    for (nm in names(tms)) {
-      pen <- modelterms7::term_penalty(tms[[nm]])
-      if (is.null(pen)) next
-      out[[nm]] <- penalty_theta_start(pen)
-    }
-    out
-  }), params)
+  if (is.null(design)) design <- statmod_design(spec)
+  out <- stats::setNames(lapply(params, function(p) list()), params)
+  for (u in statmod_penalized(spec, design)) {
+    out[[u$param]][[u$key]] <- penalty_theta_start(u$penalty)
+  }
+  out
 }
 
 

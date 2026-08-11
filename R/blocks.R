@@ -32,25 +32,16 @@ NULL
 #'
 #' @keywords internal
 statmod_blocks <- function(spec, design) {
-  params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
-  offs <- cumsum(npar) - npar
   sparse <- list()
   taken <- integer(0)
-
-  for (a in seq_along(params)) {
-    p <- params[a]
-    for (nm in names(spec@terms[[p]])) {
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      if (is.null(pen)) next
-      if (!penalty_has_kink(pen, sprintf("The penalty of %s", nm))) next
-      cols <- design[[p]]$blocks[[nm]]
-      idx <- offs[a] + cols
-      sparse[[length(sparse) + 1L]] <- list(
-        param = p, term = nm, cols = cols, index = idx, penalty = pen
-      )
-      taken <- c(taken, idx)
-    }
+  for (u in statmod_penalized(spec, design)) {
+    if (!penalty_has_kink(u$penalty,
+                          sprintf("The penalty of %s", u$key))) next
+    sparse[[length(sparse) + 1L]] <- list(
+      param = u$param, term = u$key, cols = u$cols, index = u$index,
+      penalty = u$penalty)
+    taken <- c(taken, u$index)
   }
   list(smooth = setdiff(seq_len(sum(npar)), taken), sparse = sparse)
 }
@@ -212,4 +203,62 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
        iterations = res@iterations)
+}
+
+
+#' Every Penalized Unit of a Specification
+#'
+#' @description
+#' One entry per penalty in the model, whatever term it belongs to and whether
+#' or not that term has more than one.
+#'
+#' @details
+#' Twelve places used to run the same loop -- over the distribution parameters,
+#' over each one's terms, asking each term for its penalty -- and each of them
+#' assumed a term carries at most one. A term may carry several, over different
+#' subsets of its own parameters, which is what a panel model with a population
+#' value and a shrunk deviation per group needs. Enumerating once is both the
+#' generalization and the removal of eleven copies.
+#'
+#' \strong{The key} is the term's name in the formula, and the entry's own name
+#' appended after \code{::} when the term carries more than one. Two
+#' \code{ridge()} terms are two terms with two keys and two hyperparameters,
+#' which they already were; a term with one penalty over the whole of itself
+#' keys exactly as before, so nothing that reads a hyperparameter by term name
+#' changes.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design, as \code{\link{statmod_design}} returns it.
+#'
+#' @return A list of entries, each with \code{param}, \code{term} (the name in
+#'   the formula), \code{key}, \code{cols} (positions within the parameter's
+#'   coefficients), \code{index} (positions in the stacked vector) and
+#'   \code{penalty}.
+#'
+#' @seealso \code{\link{statmod_blocks}},
+#'   \code{\link[modelterms7]{term_penalties}}
+#'
+#' @keywords internal
+statmod_penalized <- function(spec, design) {
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  out <- list()
+  for (a in seq_along(params)) {
+    p <- params[a]
+    for (nm in names(spec@terms[[p]])) {
+      ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
+      if (!length(ent)) next
+      block <- design[[p]]$blocks[[nm]]
+      for (e in ent) {
+        key <- if (length(ent) > 1L && nzchar(e$name))
+          paste0(nm, "::", e$name) else nm
+        cols <- block[e$index]
+        out[[length(out) + 1L]] <- list(
+          param = p, term = nm, key = key, cols = cols,
+          index = offs[a] + cols, penalty = e$penalty)
+      }
+    }
+  }
+  out
 }

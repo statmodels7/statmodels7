@@ -4,7 +4,7 @@
 \alias{statmod_hyper_start}
 \title{The Hyperparameters a Specification Starts From}
 \usage{
-statmod_hyper_start(spec)
+statmod_hyper_start(spec, design = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
