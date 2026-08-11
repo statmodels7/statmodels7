@@ -104,10 +104,14 @@ exported, and none is needed to use the package.
   : The Third Derivative of the Objective Contracted Once
 - [`contract4()`](https://statmodels7.github.io/statmodels7/reference/contract4.md)
   : The Fourth Derivative of the Objective Contracted Twice
+- [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
+  : Which Way of Holding the Gradient Is Cheaper
 - [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
   : Fit a Separable Block by Coordinate Descent
 - [`coord_offset()`](https://statmodels7.github.io/statmodels7/reference/coord_offset.md)
   : The Offset of One Equation
+- [`coord_screen()`](https://statmodels7.github.io/statmodels7/reference/coord_screen.md)
+  : Which Coordinates a Path Point Has to Visit
 - [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
   : The Working Response and Weights of One Equation
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)

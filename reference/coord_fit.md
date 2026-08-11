@@ -16,7 +16,8 @@ coord_fit(
   expected,
   approx,
   maxit = 100L,
-  tol = 1e-08
+  tol = 1e-08,
+  prev_kink = NULL
 )
 ```
 
@@ -63,6 +64,11 @@ coord_fit(
 
   The stopping tolerance.
 
+- prev_kink:
+
+  The size of the kink at the previous point of a path, or `NULL` to
+  cycle over every coordinate.
+
 ## Value
 
 A list shaped like
@@ -97,6 +103,36 @@ least squares iteration by
 and the compiled sweeps read it, so the kernel names no family and a
 penalty that describes its operator gets the compiled route without an
 edit here.
+
+**Screening.** Passing from one point of a path to the next, a
+coordinate can be discarded when the gradient it had at the previous
+point is below \\2s_k - s\_{k-1}\\, with \\s\\ the size of the kink: the
+sequential strong rule of Tibshirani and others (2012), which assumes
+the gradient moves at most as fast as the threshold does. That
+assumption is not a theorem, so the rule can discard a coordinate that
+belongs in the fit, and what makes the answer exact is the check
+afterwards: the gradient is read over every column at the point reached,
+any discarded coordinate whose gradient exceeds the kink is put back,
+and the fit is repeated. Without the check the route would be wrong now
+and then rather than slow.
+
+**Which update.** The gradient is kept either as a residual, at \\O(n)\\
+a visit, or as itself through \\g_j = (X'Wz)\_j - \sum_k
+(X'WX)\_{jk}\beta_k\\, at \\O(m)\\ a change with the Gram columns cached
+as coordinates come alive. The second wins when \\n\\ is large next to
+the number of live coordinates and pays in memory, so the choice is made
+by size rather than declared.
+
+## References
+
+Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths
+for generalized linear models via coordinate descent. *Journal of
+Statistical Software* 33(1), 1–22.
+
+Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor,
+J. and Tibshirani, R. J. (2012). Strong rules for discarding predictors
+in lasso-type problems. *Journal of the Royal Statistical Society,
+Series B* 74(2), 245–266.
 
 ## See also
 

@@ -9,7 +9,7 @@ working quadratic of its own equation, the other blocks held fixed."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,8 @@ working quadratic of its own equation, the other blocks held fixed.</p>
 <span>  <span class="va">expected</span>,</span>
 <span>  <span class="va">approx</span>,</span>
 <span>  maxit <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-08</span></span>
+<span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
+<span>  prev_kink <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,6 +99,11 @@ working quadratic of its own equation, the other blocks held fixed.</p>
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
 <dd><p>The stopping tolerance.</p></dd>
 
+
+<dt id="arg-prev-kink">prev_kink<a class="anchor" aria-label="anchor" href="#arg-prev-kink"></a></dt>
+<dd><p>The size of the kink at the previous point of a path, or
+<code>NULL</code> to cycle over every coordinate.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -128,6 +134,32 @@ weighted least squares iteration by
 <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_prox_spec.html" class="external-link">penalty_prox_spec</a></code> and the compiled sweeps read it,
 so the kernel names no family and a penalty that describes its operator gets
 the compiled route without an edit here.</p>
+<p><strong>Screening.</strong> Passing from one point of a path to the next, a
+coordinate can be discarded when the gradient it had at the previous point
+is below \(2s_k - s_{k-1}\), with \(s\) the size of the kink: the
+sequential strong rule of Tibshirani and others (2012), which assumes the
+gradient moves at most as fast as the threshold does. That assumption is not
+a theorem, so the rule can discard a coordinate that belongs in the fit, and
+what makes the answer exact is the check afterwards: the gradient is read
+over every column at the point reached, any discarded coordinate whose
+gradient exceeds the kink is put back, and the fit is repeated. Without the
+check the route would be wrong now and then rather than slow.</p>
+<p><strong>Which update.</strong> The gradient is kept either as a residual, at
+\(O(n)\) a visit, or as itself through
+\(g_j = (X'Wz)_j - \sum_k (X'WX)_{jk}\beta_k\), at \(O(m)\) a change
+with the Gram columns cached as coordinates come alive. The second wins when
+\(n\) is large next to the number of live coordinates and pays in memory,
+so the choice is made by size rather than declared.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for
+generalized linear models via coordinate descent. <em>Journal of
+Statistical Software</em> 33(1), 1–22.</p>
+<p>Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.
+and Tibshirani, R. J. (2012). Strong rules for discarding predictors in
+lasso-type problems. <em>Journal of the Royal Statistical Society, Series
+B</em> 74(2), 245–266.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
