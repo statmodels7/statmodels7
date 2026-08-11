@@ -72,8 +72,8 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   seen <- unique(paste(idx$parameter, idx$term, sep = "\r"))
   for (s in seen) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
-    pen <- modelterms7::term_penalty(spec@terms[[bits[1L]]][[bits[2L]]])
-    if (!penalty_answers(pen, order)) return(FALSE)
+    u <- statmod_unit(spec, design, bits[1L], bits[2L])
+    if (is.null(u) || !penalty_answers(u$penalty, order)) return(FALSE)
   }
   TRUE
 }
@@ -185,9 +185,12 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     rows <- which(idx$parameter == p)
     if (!length(rows)) next
     for (nm in unique(idx$term[rows])) {
-      cols <- design[[p]]$blocks[[nm]]
-      pos <- offs[a] + cols
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
+      # not `u`: this function already uses that name for the contraction of
+      # the third derivative, and shadowing it fails several frames down
+      un <- statmod_unit(spec, design, p, nm)
+      cols <- un$cols
+      pos <- un$index
+      pen <- un$penalty
       bt <- coef[[p]][cols]
       th <- as.list(hyper[[p]][[nm]])
       gt <- penalties7::penalty_grad_theta(pen, bt, th)

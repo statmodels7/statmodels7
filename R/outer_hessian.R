@@ -190,9 +190,10 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     p <- bits[1L]
     nm <- bits[2L]
     a <- match(p, params)
-    cols <- design[[p]]$blocks[[nm]]
-    pos <- offs[a] + cols
-    pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
+    un <- statmod_unit(spec, design, p, nm)
+    cols <- un$cols
+    pos <- un$index
+    pen <- un$penalty
     bt <- coef[[p]][cols]
     th <- as.list(hyper[[p]][[nm]])
     dS <- penalties7::penalty_dhessian(pen, bt, th)

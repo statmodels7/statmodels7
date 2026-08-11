@@ -247,16 +247,13 @@ outer_hyper_index <- function(spec, blocks) {
     paste(b$param, b$term, sep = "\r"), character(1))
   rows <- list()
   links <- list()
-  for (p in spec@distrib@params) {
-    for (nm in names(spec@terms[[p]])) {
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      if (is.null(pen)) next
-      if (paste(p, nm, sep = "\r") %in% kinked) next
-      for (h in pen@params) {
-        rows[[length(rows) + 1L]] <- data.frame(
-          parameter = p, term = nm, name = h, stringsAsFactors = FALSE)
-        links[[length(links) + 1L]] <- pen@link_params[[h]]
-      }
+  for (u in statmod_penalty_keys(spec)) {
+    if (paste(u$param, u$key, sep = "\r") %in% kinked) next
+    for (h in u$penalty@params) {
+      rows[[length(rows) + 1L]] <- data.frame(
+        parameter = u$param, term = u$key, name = h,
+        stringsAsFactors = FALSE)
+      links[[length(links) + 1L]] <- u$penalty@link_params[[h]]
     }
   }
   if (!length(rows)) {
@@ -336,17 +333,14 @@ integrated_basis <- function(spec, design, kind) {
   offs <- cumsum(npar) - npar
   total <- sum(npar)
   cols <- list()
-  for (a in seq_along(params)) {
-    p <- params[a]
-    for (nm in names(spec@terms[[p]])) {
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      if (is.null(pen)) next
-      blk <- design[[p]]$blocks[[nm]]
-      k <- length(blk)
-      R <- penalty_range_basis(pen, k, p, nm)
+  for (u in statmod_penalized(spec, design)) {
+    {
+      pen <- u$penalty
+      k <- length(u$cols)
+      R <- penalty_range_basis(pen, k, u$param, u$key)
       if (!ncol(R)) next
       M <- matrix(0, total, ncol(R))
-      M[offs[a] + blk, ] <- R
+      M[u$index, ] <- R
       cols[[length(cols) + 1L]] <- M
     }
   }

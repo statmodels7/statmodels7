@@ -26,6 +26,7 @@ NULL
 #' @keywords internal
 coef_labels <- function(spec, design) {
   params <- spec@distrib@params
+  units <- statmod_penalized(spec, design)
   rows <- list()
   for (p in params) {
     d <- design[[p]]
@@ -33,14 +34,11 @@ coef_labels <- function(spec, design) {
     term <- rep(NA_character_, d$npar)
     pen <- rep(FALSE, d$npar)
     kink <- rep(FALSE, d$npar)
-    for (nm in names(d$blocks)) {
-      cols <- d$blocks[[nm]]
-      term[cols] <- nm
-      tp <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      if (!is.null(tp)) {
-        pen[cols] <- TRUE
-        kink[cols] <- penalty_has_kink(tp)
-      }
+    for (nm in names(d$blocks)) term[d$blocks[[nm]]] <- nm
+    for (u in units) {
+      if (!identical(u$param, p)) next
+      pen[u$cols] <- TRUE
+      kink[u$cols] <- penalty_has_kink(u$penalty)
     }
     rows[[length(rows) + 1L]] <- data.frame(
       parameter = p, term = term, coefficient = d$coef_names,
@@ -568,8 +566,10 @@ summary_blocks <- function(fit, spec, design, p, ci) {
   hyper_rows <- function(nm) {
     th <- fit@hyper[[p]][[nm]]
     if (is.null(th) || !length(th)) return(empty)
-    pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-    role <- if (outer_ran && !penalty_has_kink(pen)) "estimated" else "fixed"
+    u <- statmod_unit(spec, statmod_design(spec), p, nm)
+    if (is.null(u)) return(empty)
+    role <- if (outer_ran && !penalty_has_kink(u$penalty)) "estimated" else
+      "fixed"
     out <- data.frame(name = names(th), estimate = as.numeric(th),
                       se = NA_real_, statistic = NA_real_, p_value = NA_real_,
                       lower = NA_real_, upper = NA_real_, role = role,

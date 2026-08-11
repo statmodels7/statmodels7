@@ -243,22 +243,72 @@ statmod_penalized <- function(spec, design) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
+  lapply(statmod_penalty_keys(spec), function(u) {
+    a <- match(u$param, params)
+    cols <- design[[u$param]]$blocks[[u$term]][u$within]
+    c(u, list(cols = cols, index = offs[a] + cols))
+  })
+}
+
+
+#' Every Penalty in a Model, Without the Design
+#'
+#' @description
+#' The same enumeration as \code{\link{statmod_penalized}} minus the column
+#' positions, for the callers that need to know which penalties exist before a
+#' design has been built.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#'
+#' @return A list of entries with \code{param}, \code{term}, \code{key},
+#'   \code{within} (positions among the term's own parameters) and
+#'   \code{penalty}.
+#'
+#' @seealso \code{\link{statmod_penalized}}
+#'
+#' @keywords internal
+statmod_penalty_keys <- function(spec) {
   out <- list()
-  for (a in seq_along(params)) {
-    p <- params[a]
+  for (p in spec@distrib@params) {
     for (nm in names(spec@terms[[p]])) {
       ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
       if (!length(ent)) next
-      block <- design[[p]]$blocks[[nm]]
       for (e in ent) {
         key <- if (length(ent) > 1L && nzchar(e$name))
           paste0(nm, "::", e$name) else nm
-        cols <- block[e$index]
         out[[length(out) + 1L]] <- list(
-          param = p, term = nm, key = key, cols = cols,
-          index = offs[a] + cols, penalty = e$penalty)
+          param = p, term = nm, key = key, within = e$index,
+          penalty = e$penalty)
       }
     }
   }
   out
+}
+
+
+#' One Penalized Unit, by Parameter and Key
+#'
+#' @description
+#' The entry of \code{\link{statmod_penalized}} a hyperparameter row names, or
+#' \code{NULL} where there is none.
+#'
+#' @details
+#' The places that read a penalty from a \code{(parameter, term)} pair used to
+#' fetch it with \code{term_penalty()} and take the term's whole block, which
+#' assumes one penalty per term. Looking it up here answers the same question
+#' where that holds and the right question where it does not.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param param The distribution parameter.
+#' @param key The key, as \code{statmod_penalized()} composes it.
+#'
+#' @return One entry, or \code{NULL}.
+#'
+#' @keywords internal
+statmod_unit <- function(spec, design, param, key) {
+  for (u in statmod_penalized(spec, design)) {
+    if (identical(u$param, param) && identical(u$key, key)) return(u)
+  }
+  NULL
 }
