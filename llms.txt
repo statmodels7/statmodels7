@@ -397,6 +397,8 @@ exported, and none is needed to use the package.
   : Every Penalized Unit of a Specification
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
   : The Penalty of a Specification at Given Coefficients
+- [`statmod_penalty_keys()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.md)
+  : Every Penalty in a Model, Without the Design
 - [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
   : The Same Model Read on Other Rows
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
@@ -407,6 +409,8 @@ exported, and none is needed to use the package.
   : Starting Coefficients
 - [`statmod_terms()`](https://statmodels7.github.io/statmodels7/reference/statmod_terms.md)
   : Interpret and Build Each Parameter's Terms
+- [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
+  : One Penalized Unit, by Parameter and Key
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   : statmodels7: The S7 Toolkit for Statistical Modeling

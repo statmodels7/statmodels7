@@ -22,10 +22,23 @@
   What this opens is a penalty over parameters that are not coefficients
   of a design block, which is what `gas()` on panel data, `nl()` and
   `seg()` need for a population value with shrunk deviations per group.
-  The remaining nine call sites are reporting and hyperparameter
-  estimation; they still key by term name, which is correct for every
-  term that ships today and is what the rest of the sweep has to reach
-  before a term with two penalties can be fitted end to end.
+
+- The sweep is finished: the hyperparameter index, the integrated basis
+  of
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  the exact gradient and Hessian of the marginal criterion, and the
+  labels a summary reads all enumerate penalties rather than terms.
+  [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
+  looks one up by parameter and key, which is the same answer where a
+  term carries one penalty and the right answer where it carries
+  several.
+
+  What still reports per term rather than per penalty is `edf()`, which
+  is the right granularity for a table of terms and would need
+  [`modelterms7::edf()`](https://statmodels7.github.io/modelterms7/reference/edf.html)
+  to accept more than one set of hyperparameters. A term with two
+  penalties currently has its degrees of freedom reported as its
+  coefficient count.
 
 ## statmodels7 0.11.0
 
