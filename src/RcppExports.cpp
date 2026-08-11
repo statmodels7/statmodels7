@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // coord_descent
-List coord_descent(NumericMatrix X, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, int maxit, double tol);
-RcppExport SEXP _statmodels7_coord_descent(SEXP XSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP maxitSEXP, SEXP tolSEXP) {
+List coord_descent(NumericMatrix X, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance);
+RcppExport SEXP _statmodels7_coord_descent(SEXP XSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -23,15 +23,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type cut(cutSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type slope(slopeSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type icept(iceptSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type screen(screenSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(coord_descent(X, z, w, beta0, cut, slope, icept, maxit, tol));
+    Rcpp::traits::input_parameter< bool >::type covariance(covarianceSEXP);
+    rcpp_result_gen = Rcpp::wrap(coord_descent(X, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 9},
+    {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
     {NULL, NULL, 0}
 };
 

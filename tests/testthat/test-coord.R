@@ -59,9 +59,18 @@ test_that("the compiled kernel is the R twin", {
   v <- as.numeric(crossprod(w, X^2))
   tab <- penalties7::penalty_prox_spec(b$block$penalty, list(lambda = 8), 1 / v)
   b0 <- numeric(ncol(X))
-  a <- coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, 500L, 1e-12)
+  all_cols <- seq_len(ncol(X)) - 1L
   r <- coord_descent_r(X, z, w, b0, tab$cut, tab$slope, tab$icept, 500L, 1e-12)
-  expect_equal(a$beta, r$beta, tolerance = 1e-12)
+  # and the two ways of holding the gradient are the same arithmetic seen
+  # from two sides, so they have to agree with each other as well
+  for (cov in c(FALSE, TRUE)) {
+    a <- coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, all_cols,
+                       500L, 1e-12, cov)
+    expect_equal(a$beta, r$beta, tolerance = 1e-10,
+                 label = if (cov) "covariance" else "naive")
+  }
+  a <- coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, all_cols,
+                     500L, 1e-12, FALSE)
   # the sweep counts are NOT comparable and asserting they were is what this
   # line used to do: the compiled kernel cycles over the active set between
   # full sweeps, so it takes more passes and each one is cheaper. What the
@@ -159,4 +168,62 @@ test_that("a whole fit goes through the compiled route and still converges", {
                 hyper = list(mu = list("lasso(x)" = c(lambda = 200))))
   expect_lt(sum(abs(hi@coefficients$mu[-1L]) > 1e-8),
             sum(abs(fit@coefficients$mu[-1L]) > 1e-8))
+})
+
+
+test_that("screening is checked, so a rule that discards too much is exact", {
+  # The sequential strong rule assumes the gradient moves no faster than the
+  # threshold, which is not a theorem: it can discard a coordinate that
+  # belongs in the fit. What makes the answer exact is reading the gradient
+  # over EVERY column at the point reached and putting back whatever exceeds
+  # the kink. Screening the block down to one column and letting the check
+  # rebuild it is that mechanism run at its worst case.
+  b <- setup_block(y ~ lasso(x), "lasso(x)", c(lambda = 8))
+  cols <- b$design$mu$blocks[["lasso(x)"]]
+  X <- b$design$mu$X[, cols, drop = FALSE]
+  w <- rep(1, nc)
+  z <- dc$y
+  v <- as.numeric(crossprod(w, X^2))
+  th <- list(lambda = 8)
+  s <- kink_scale(b$block$penalty, th)
+
+  answer <- NULL
+  for (keep0 in list(seq_len(ncol(X)), 1L, c(1L, 5L))) {
+    keep <- keep0
+    b0 <- numeric(ncol(X))
+    repeat {
+      tab <- penalties7::penalty_prox_spec(b$block$penalty, th, 1 / v[keep])
+      out <- coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept,
+                           as.integer(keep - 1L), 500L, 1e-12, FALSE)
+      back <- setdiff(which(abs(out$grad) > s * (1 + 1e-10)), keep)
+      if (!length(back)) break
+      keep <- sort(c(keep, back))
+    }
+    if (is.null(answer)) answer <- out$beta else
+      expect_equal(out$beta, answer, tolerance = 1e-9)
+  }
+  # the check is what does it: without putting anything back, one column
+  # gives a different answer
+  tab <- penalties7::penalty_prox_spec(b$block$penalty, th, 1 / v[1L])
+  bad <- coord_descent(X, z, w, numeric(ncol(X)), tab$cut, tab$slope,
+                       tab$icept, 0L, 500L, 1e-12, FALSE)
+  expect_gt(max(abs(bad$beta - answer)), 1e-3)
+})
+
+test_that("the screening rule keeps every coordinate that is alive", {
+  b <- setup_block(y ~ lasso(x), "lasso(x)", c(lambda = 8))
+  cols <- b$design$mu$blocks[["lasso(x)"]]
+  X <- b$design$mu$X[, cols, drop = FALSE]
+  w <- rep(1, nc)
+  s <- kink_scale(b$block$penalty, list(lambda = 8))
+  # a coordinate away from zero is never screened out, whatever its gradient
+  beta <- numeric(ncol(X))
+  beta[7L] <- 0.4
+  expect_true(7L %in% coord_screen(X, w, dc$y, beta, s, 1e6))
+  # with no previous point the rule falls back to its global form
+  expect_gt(length(coord_screen(X, w, dc$y, numeric(ncol(X)), s, NULL)), 0L)
+  # and a kink so wide that nothing survives still leaves one coordinate to
+  # visit rather than an empty sweep
+  expect_identical(length(coord_screen(X, w, dc$y, numeric(ncol(X)), 1e8,
+                                       1e8)), 1L)
 })

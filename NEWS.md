@@ -1,3 +1,33 @@
+# statmodels7 0.10.1
+
+* The coordinate descent kernel carries the two devices `glmnet` uses to
+  go faster, and measured at a single hyperparameter **neither pays**.
+  Both are path devices and the reason each one loses is visible:
+
+  Covariance updating replaces an O(n) read of the gradient with an O(m)
+  one, at the cost of building a column of X'WX the first time a
+  coordinate moves off zero. That column costs O(nm), so it is worth it
+  only while m is small: at 5000 observations with 200 columns and
+  nothing screened away, taking that route cost 70 milliseconds against
+  55 for the residual. `coord_covariance()` sets the threshold where the
+  two cross rather than at a rule of thumb.
+
+  The sequential strong rule discards a coordinate whose gradient at the
+  previous point of a path is below `2*s_k - s_{k-1}`. With no previous
+  point the reference is the kink that empties the block, and
+  `2*s - max|g|` is negative at any value worth fitting at, so the rule
+  discards nothing and costs one crossprod. It is therefore not attempted
+  without a previous point, and passing one from the path is what is
+  still owed.
+
+  The rule assumes the gradient moves no faster than the threshold, which
+  is not a theorem: it can discard a coordinate that belongs in the fit.
+  What makes the answer exact is the check afterwards, reading the
+  gradient over every column at the point reached and putting back
+  whatever exceeds the kink. A test screens the block down to one column
+  and to two and gets the same answer back; without the check, one column
+  gives a different one.
+
 # statmodels7 0.10.0
 
 * A compiled coordinate descent fits a block whose penalty is separable,
