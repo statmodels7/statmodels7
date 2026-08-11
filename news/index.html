@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,38 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.10.0" id="statmodels7-0100">statmodels7 0.10.0<a class="anchor" aria-label="anchor" href="#statmodels7-0100"></a></h2>
+<ul><li>
+<p>A compiled coordinate descent fits a block whose penalty is separable, in <code>src/coord_descent.cpp</code>, the package’s first compiled code. It reads the block’s own columns and the running residual – the model rather than the objective – which is why it is not an optimizer and lives here. Measured against the proximal route on the same block, agreeing with it to 1e-10 on the coefficients and to 1e-9 on the objective:</p>
+<table class="table"><thead><tr><th></th>
+<th>n = 200, p = 20</th>
+<th>n = 1000, p = 100</th>
+<th>n = 5000, p = 200</th>
+</tr></thead><tbody><tr><td>lasso</td>
+<td>26x</td>
+<td>135x</td>
+<td>27x</td>
+</tr><tr><td>elastic net</td>
+<td>40x</td>
+<td>9x</td>
+<td>43x</td>
+</tr><tr><td>SCAD</td>
+<td>21x</td>
+<td>154x</td>
+<td>24x</td>
+</tr><tr><td>MCP</td>
+<td>353x</td>
+<td>156x</td>
+<td>7x</td>
+</tr></tbody></table><p>The proximal route read the whole model at every step: one block fit at 200 observations made 88 evaluations of the objective, 75 of the gradient and 83 of the operator, each over every parameter of the distribution, and closed in 36 iterations where a coordinate descent closes in six sweeps.</p>
+</li>
+<li><p>The penalty arrives as a piecewise linear table from <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_prox_spec.html" class="external-link">penalties7::penalty_prox_spec()</a></code>, so the kernel names no family and a penalty that describes its operator gets the compiled route without an edit here. A penalty with no table – a heavy-tailed prior, whose operator is a root – keeps the proximal route.</p></li>
+<li>
+<p><strong>Against the reference packages we are still slower</strong>, and the lasso is the only comparison whose objectives match exactly, being homogeneous of degree one in lambda so that a rescaling of the loss is absorbed. There we agree with <code>glmnet</code> to 0, 1.4e-14 and 1.1e-13 at the three sizes and take 4.2, 10.6 and 12.6 times as long. For the elastic net, SCAD and MCP the shape parameters make the penalty non-homogeneous, so a lambda rescaling cannot match the two objectives and only the timing compares: 0.22x to 0.02x against <code>glmnet</code> and <code>ncvreg</code>.</p>
+<p>Of the remaining distance, at n = 5000 and p = 200 the kernel is 21 ms of a 60 ms block fit and the R around it is the other 36; what <code>glmnet</code> has beyond that is covariance updates and strong rules, which this kernel does not.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="statmodels7-090">statmodels7 0.9.0<a class="anchor" aria-label="anchor" href="#statmodels7-090"></a></h2>
 <ul><li><p><code><a href="../reference/cv.html">cv()</a></code> chooses the hyperparameters of a penalty with a kink, which no criterion in the package could reach before. A marginal criterion approximates an integral at the penalized mode and asks for the penalty’s second derivative there; the mode of a lasso, a SCAD or an MCP sits at the kink for every coefficient it sets to zero, which is where that derivative does not exist. Cross-validation asks about prediction instead and needs nothing from the penalty beyond a fit. <code>rule = "1se"</code> takes the largest kink whose criterion is within one standard error of the smallest.</p></li>

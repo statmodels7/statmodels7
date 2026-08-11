@@ -1,5 +1,50 @@
 # Changelog
 
+## statmodels7 0.10.0
+
+- A compiled coordinate descent fits a block whose penalty is separable,
+  in `src/coord_descent.cpp`, the package’s first compiled code. It
+  reads the block’s own columns and the running residual – the model
+  rather than the objective – which is why it is not an optimizer and
+  lives here. Measured against the proximal route on the same block,
+  agreeing with it to 1e-10 on the coefficients and to 1e-9 on the
+  objective:
+
+  |             | n = 200, p = 20 | n = 1000, p = 100 | n = 5000, p = 200 |
+  |-------------|-----------------|-------------------|-------------------|
+  | lasso       | 26x             | 135x              | 27x               |
+  | elastic net | 40x             | 9x                | 43x               |
+  | SCAD        | 21x             | 154x              | 24x               |
+  | MCP         | 353x            | 156x              | 7x                |
+
+  The proximal route read the whole model at every step: one block fit
+  at 200 observations made 88 evaluations of the objective, 75 of the
+  gradient and 83 of the operator, each over every parameter of the
+  distribution, and closed in 36 iterations where a coordinate descent
+  closes in six sweeps.
+
+- The penalty arrives as a piecewise linear table from
+  [`penalties7::penalty_prox_spec()`](https://statmodels7.github.io/penalties7/reference/penalty_prox_spec.html),
+  so the kernel names no family and a penalty that describes its
+  operator gets the compiled route without an edit here. A penalty with
+  no table – a heavy-tailed prior, whose operator is a root – keeps the
+  proximal route.
+
+- **Against the reference packages we are still slower**, and the lasso
+  is the only comparison whose objectives match exactly, being
+  homogeneous of degree one in lambda so that a rescaling of the loss is
+  absorbed. There we agree with `glmnet` to 0, 1.4e-14 and 1.1e-13 at
+  the three sizes and take 4.2, 10.6 and 12.6 times as long. For the
+  elastic net, SCAD and MCP the shape parameters make the penalty
+  non-homogeneous, so a lambda rescaling cannot match the two objectives
+  and only the timing compares: 0.22x to 0.02x against `glmnet` and
+  `ncvreg`.
+
+  Of the remaining distance, at n = 5000 and p = 200 the kernel is 21 ms
+  of a 60 ms block fit and the R around it is the other 36; what
+  `glmnet` has beyond that is covariance updates and strong rules, which
+  this kernel does not.
+
 ## statmodels7 0.9.0
 
 - [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)

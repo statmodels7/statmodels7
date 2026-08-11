@@ -55,7 +55,7 @@ statmodels7_update()
 #>   numericals7      0.7.0
 #>   optimizers7      0.1.0
 #>   parameters7      0.10.0
-#>   penalties7       0.7.1
+#>   penalties7       0.9.0
 #> 
 #> To install or update every member:
 #>   statmodels7_update("install")

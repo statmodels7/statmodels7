@@ -30,5 +30,5 @@ statmodels7_versions()
 #> 5    numericals7   0.7.0
 #> 6    optimizers7   0.1.0
 #> 7    parameters7  0.10.0
-#> 8     penalties7   0.7.1
+#> 8     penalties7   0.9.0
 ```

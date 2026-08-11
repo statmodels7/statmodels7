@@ -7,7 +7,19 @@ proximal operator.
 ## Usage
 
 ``` r
-sparse_fit(obj, beta, block, hyper, maxit = 500, tol = 1e-08, verbose = FALSE)
+sparse_fit(
+  obj,
+  beta,
+  block,
+  hyper,
+  maxit = 500,
+  tol = 1e-08,
+  verbose = FALSE,
+  spec = NULL,
+  design = NULL,
+  expected = TRUE,
+  approx = "bartlett"
+)
 ```
 
 ## Arguments

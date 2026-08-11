@@ -207,6 +207,12 @@ exported, and none is needed to use the package.
   : The Third Derivative of the Objective Contracted Once
 - [`contract4()`](https://statmodels7.github.io/statmodels7/reference/contract4.md)
   : The Fourth Derivative of the Objective Contracted Twice
+- [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  : Fit a Separable Block by Coordinate Descent
+- [`coord_offset()`](https://statmodels7.github.io/statmodels7/reference/coord_offset.md)
+  : The Offset of One Equation
+- [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
+  : The Working Response and Weights of One Equation
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
