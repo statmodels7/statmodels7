@@ -6,7 +6,7 @@ rule modelterms7 already uses when it reads a penalty's kinks.
 ## Usage
 
 ``` r
-statmod_hyper_start(spec)
+statmod_hyper_start(spec, design = NULL)
 ```
 
 ## Arguments

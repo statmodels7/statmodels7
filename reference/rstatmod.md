@@ -107,5 +107,5 @@ statmod(y ~ x, distributions7::gaussian1_distrib(), sim2)
 #>                linpar           1 coef
 #> 
 #> log-likelihood 0.466254    objective -0.466254
-#> fitted in 28 ms, converged
+#> fitted in 26 ms, converged
 ```

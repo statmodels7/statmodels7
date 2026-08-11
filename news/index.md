@@ -1,5 +1,32 @@
 # Changelog
 
+## statmodels7 0.12.0
+
+- [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+  enumerates the penalized units of a model – one entry per penalty,
+  whatever term it belongs to and whether or not that term has more than
+  one – and the fitting core reads it instead of looping over terms
+  itself. Twelve places ran the same loop, over the distribution
+  parameters and over each one’s terms, and every one of them assumed a
+  term carries at most one penalty. Three of the twelve are the fitting
+  core and now read the enumeration: the block split, the penalty
+  assembled at given coefficients, and the starting hyperparameters.
+
+  The key is the term’s name in the formula, with the entry’s own name
+  after `::` where a term carries several. A term with one penalty over
+  the whole of itself keys exactly as it did, so nothing that reads a
+  hyperparameter by term name changes, and two `ridge()` terms remain
+  two terms with two hyperparameters – which they already were, at every
+  layer.
+
+  What this opens is a penalty over parameters that are not coefficients
+  of a design block, which is what `gas()` on panel data, `nl()` and
+  `seg()` need for a population value with shrunk deviations per group.
+  The remaining nine call sites are reporting and hyperparameter
+  estimation; they still key by term name, which is correct for every
+  term that ships today and is what the rest of the sweep has to reach
+  before a term with two penalties can be fitted end to end.
+
 ## statmodels7 0.11.0
 
 - The path carries the size of the kink at the point just fitted onto

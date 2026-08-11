@@ -290,6 +290,8 @@ exported, and none is needed to use the package.
   Hyperparameters
 - [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
   : The Exact Derivatives of a Prediction-Error Criterion
+- [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+  : Every Penalized Unit of a Specification
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
   : The Penalty of a Specification at Given Coefficients
 - [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
