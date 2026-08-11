@@ -13,6 +13,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_predictors.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bounded_bump.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_weights.html</loc></url>
@@ -37,6 +38,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/fitted_ranges.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/flat_directions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fmt_step.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/format_conflicts.html</loc></url>

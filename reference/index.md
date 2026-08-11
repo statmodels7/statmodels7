@@ -86,6 +86,8 @@ exported, and none is needed to use the package.
   : Solve a Scoring Step From the Square-Root Design
 - [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
   : The Predictors a Coefficient Direction Induces
+- [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
+  : Record Where a Path Has Just Been
 - [`bounded_bump()`](https://statmodels7.github.io/statmodels7/reference/bounded_bump.md)
   : Move a Hyperparameter Without Leaving Its Interval
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
@@ -132,6 +134,8 @@ exported, and none is needed to use the package.
   : Fit the Smooth Block
 - [`fitted(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
   : The Fitted Values of a Model
+- [`fitted_ranges()`](https://statmodels7.github.io/statmodels7/reference/fitted_ranges.md)
+  : What Each Distribution Parameter Reached
 - [`flat_directions()`](https://statmodels7.github.io/statmodels7/reference/flat_directions.md)
   : Which Coefficients a Singular Curvature Is Flat In
 - [`fmt_step()`](https://statmodels7.github.io/statmodels7/reference/fmt_step.md)

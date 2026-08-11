@@ -136,6 +136,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -75.244717    objective 65.014193
 #> CV 2.532049 over 6 hyperparameter evaluation(s)
-#> fitted in 844 ms, converged
+#> fitted in 768 ms, converged
 #> 1 sweeps over 2 block(s)
 ```

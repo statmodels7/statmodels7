@@ -130,5 +130,5 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> 95% intervals, bayesian variance
 #> log-likelihood -55.844138    df 4.00    AIC 119.688    BIC 130.838
-#> fitted in 34 ms, converged
+#> fitted in 31 ms, converged
 ```
