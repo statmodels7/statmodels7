@@ -180,6 +180,37 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev) {
 }
 
 
+#' Record Where a Path Has Just Been
+#'
+#' @description
+#' Writes the size of each kinked penalty's kink at the given hyperparameters
+#' onto its block, so that the next point of a path can screen against it.
+#'
+#' @details
+#' The previous point travels on the blocks rather than through the argument
+#' list of every layer between the path and the descent. It is a property of
+#' the block -- where its penalty was a moment ago -- and the path rebuilds the
+#' blocks at each point anyway.
+#'
+#' @param blocks The blocks, as \code{\link{statmod_blocks}} returns them.
+#' @param hyper The hyperparameters at the point just fitted.
+#'
+#' @return The blocks, each sparse entry carrying \code{prev_kink}.
+#'
+#' @seealso \code{\link{coord_screen}}, \code{\link{statmod_path}}
+#'
+#' @keywords internal
+blocks_at_kink <- function(blocks, hyper) {
+  for (i in seq_along(blocks$sparse)) {
+    b <- blocks$sparse[[i]]
+    th <- as.list(hyper[[b$param]][[b$term]])
+    s <- tryCatch(kink_scale(b$penalty, th), error = function(e) NA_real_)
+    blocks$sparse[[i]]$prev_kink <- if (is.finite(s) && s > 0) s else NULL
+  }
+  blocks
+}
+
+
 #' Which Way of Holding the Gradient Is Cheaper
 #'
 #' @description

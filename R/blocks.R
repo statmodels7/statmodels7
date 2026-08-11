@@ -180,7 +180,7 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
   # operator as a table; everything else takes the proximal route below.
   if (!is.null(spec) && !is.null(design)) {
     cd <- coord_fit(obj, beta, block, hyper, spec, design, expected, approx,
-                    tol = tol)
+                    tol = tol, prev_kink = block$prev_kink)
     if (!is.null(cd)) return(cd)
   }
   idx <- block$index

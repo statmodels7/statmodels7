@@ -94,6 +94,7 @@ print.StatmodFit <- function(x, ...) {
   }
   cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
+  if (!x@converged) cat(fitted_ranges(x))
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {
     cat(sprintf("%d sweeps over %d block(s)\n",
                 max(x@history$blocks$sweep),
@@ -286,3 +287,48 @@ coef.StatmodFit <- function(object, ...) {
     stats::setNames(object@coefficients[[p]], design[[p]]$coef_names)), params)
 }
 S7::method(coef, StatmodFit) <- coef.StatmodFit
+
+
+#' What Each Distribution Parameter Reached
+#'
+#' @description
+#' One line per parameter of the distribution, giving the range of its fitted
+#' values, for a fit that did not converge.
+#'
+#' @details
+#' The measured case this exists for: a lasso at a fixed hyperparameter, with a
+#' free scale and a design the model can interpolate. Fitting the coefficients
+#' shrinks the residuals, which shrinks the scale, which raises the working
+#' weights, which makes the penalty count for relatively less, which lets more
+#' coefficients in. At 200 observations and 400 columns the scale reached
+#' 3.8e-15 and 380 of the 400 coefficients survived, where the same block
+#' fitted at a held scale kept the five that were real.
+#'
+#' Nothing here diagnoses that. It reports where the parameters ended up, which
+#' is a fact, and a scale at 1e-15 says the rest on its own. Naming a cause
+#' would mean picking a threshold for what counts as running away, and the same
+#' fit at 100 columns converges to a scale of 0.77 that is nothing of the kind.
+#'
+#' @param x A \code{\link{StatmodFit}}.
+#'
+#' @return A single string, empty when the parameters cannot be read.
+#'
+#' @seealso \code{\link{statmod}}
+#'
+#' @keywords internal
+fitted_ranges <- function(x) {
+  th <- tryCatch(x@fitted, error = function(e) NULL)
+  if (!length(th)) return("")
+  rows <- vapply(names(th), function(p) {
+    v <- as.numeric(th[[p]])
+    v <- v[is.finite(v)]
+    if (!length(v)) return(sprintf("  %-10s not finite", p))
+    if (length(unique(v)) == 1L) {
+      sprintf("  %-10s %s", p, format(signif(v[1L], 4)))
+    } else {
+      sprintf("  %-10s %s to %s", p, format(signif(min(v), 4)),
+              format(signif(max(v), 4)))
+    }
+  }, character(1))
+  paste0("  the parameters it reached:\n", paste(rows, collapse = "\n"), "\n")
+}

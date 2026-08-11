@@ -413,11 +413,13 @@ cv_curve <- function(spec, data, weights, offsets, inner_method, hypers,
     cfgs <- inner_settings(inner_method)
     obj <- statmod_objective(ts, hypers[[1L]], td, cfgs$expected, cfgs$approx)
     warm <- statmod_start(ts, td, obj, NULL)
+    tbj <- tb
     for (j in seq_len(m)) {
-      r <- tryCatch(statmod_alternate(ts, td, tb, hypers[[j]], inner_method,
+      r <- tryCatch(statmod_alternate(ts, td, tbj, hypers[[j]], inner_method,
                                       warm, cfgs$expected, cfgs$approx,
                                       cfgs$maxit, cfgs$tol, verbosity(0)),
                     error = function(e) NULL)
+      tbj <- blocks_at_kink(tb, hypers[[j]])
       if (is.null(r) || !isTRUE(r$converged)) next
       warm <- r$par
       cf <- r$obj$split(r$par)
@@ -520,14 +522,14 @@ statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
 
   # one fit at one setting, warm-started, with the differentiable
   # hyperparameters estimated inside it where there are any
-  fit_at <- function(hy, warm) {
+  fit_at <- function(hy, warm, bk = blocks) {
     if (nested) {
-      r <- tryCatch(outer_fit(spec, design, blocks, hy, inner_method, method,
+      r <- tryCatch(outer_fit(spec, design, bk, hy, inner_method, method,
                               optimizer, warm, approx, maxit, tol,
                               vb_inner(vb)), error = function(e) NULL)
       if (!is.null(r)) return(r)
     }
-    r <- statmod_alternate(spec, design, blocks, hy, inner_method, warm,
+    r <- statmod_alternate(spec, design, bk, hy, inner_method, warm,
                            expected, approx, maxit, tol, vb_inner(vb))
     r$hyper <- hy
     r$criterion <- NA_real_
@@ -571,8 +573,13 @@ statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
       } else {
         warm <- beta
         value <- rep(NA_real_, length(hys))
+        # the point just fitted is what the next one screens against: the grid
+        # runs from the emptiest fit towards the fullest, so the kink shrinks
+        # and the strong rule has a previous size to compare with
+        bk <- blocks
         for (j in seq_along(hys)) {
-          r <- fit_at(hys[[j]], warm)
+          r <- fit_at(hys[[j]], warm, bk)
+          bk <- blocks_at_kink(blocks, hys[[j]])
           if (!isTRUE(r$converged)) next
           warm <- r$par
           value[[j]] <- score_at(r, r$hyper)

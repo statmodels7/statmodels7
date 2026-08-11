@@ -227,3 +227,69 @@ test_that("the screening rule keeps every coordinate that is alive", {
   expect_identical(length(coord_screen(X, w, dc$y, numeric(ncol(X)), 1e8,
                                        1e8)), 1L)
 })
+
+
+test_that("the path carries the previous kink onto the blocks", {
+  # the previous point travels on the blocks rather than through the argument
+  # list of every layer between the path and the descent
+  b <- setup_block(y ~ lasso(x), "lasso(x)", c(lambda = 8))
+  expect_null(b$block$prev_kink)
+  bk <- blocks_at_kink(list(sparse = list(b$block)), b$hyper)
+  expect_equal(bk$sparse[[1L]]$prev_kink, 8, tolerance = 1e-9)
+  # a kink of 1e-300 is still a kink, and the first version of this asserted
+  # otherwise; what leaves nothing to screen against is a penalty with no kink
+  hy0 <- b$hyper
+  hy0$mu[["lasso(x)"]][["lambda"]] <- 1e-300
+  expect_equal(blocks_at_kink(list(sparse = list(b$block)),
+                              hy0)$sparse[[1L]]$prev_kink, 1e-300)
+  spec2 <- statmod_spec(y ~ ridge(x), distributions7::gaussian1_distrib(), dc)
+  pen <- modelterms7::term_penalty(spec2@terms$mu[["ridge(x)"]])
+  expect_equal(kink_scale(pen, list(sigma = 1)), 0)
+})
+
+test_that("screening along a path does not change where the path lands", {
+  # the rule discards, the check puts back, and the answer is the one the
+  # unscreened path reaches. That is the property worth pinning: the speed is
+  # a measurement and this is a fact.
+  set.seed(21)
+  n <- 150L
+  p <- 60L
+  X <- scale(matrix(stats::rnorm(n * p), n, p), TRUE, FALSE)
+  y <- as.numeric(X %*% c(rep(2, 4), rep(0, p - 4))) + stats::rnorm(n)
+  dd <- data.frame(y = y - mean(y))
+  dd$x <- X
+  spec <- statmod_spec(y ~ lasso(x) - 1 | sigma ~ 1,
+                       distributions7::gaussian1_distrib(), dd)
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  hy <- statmod_hyper_start(spec)
+  obj <- statmod_objective(spec, hy, design)
+  b0 <- statmod_start(spec, design, obj, NULL)
+  top <- path_null_score(obj, b0, blocks$sparse[[1L]], hy)
+  vals <- path_values(blocks$sparse[[1L]]$penalty, hy$mu[[1L]], "lambda", top,
+                      12L, 1e-2)
+
+  walk <- function(screen) {
+    warm <- b0
+    last <- NULL
+    out <- list()
+    for (v in vals) {
+      h <- hyper_set(hy, list(parameter = "mu", term = "lasso(x)",
+                              name = "lambda"), v)
+      bk <- if (screen && !is.null(last)) blocks_at_kink(blocks, last) else
+        blocks
+      r <- statmod_alternate(spec, design, bk, h, iwls(), warm, TRUE,
+                             "bartlett", 100L, 1e-8, verbosity(0))
+      warm <- r$par
+      last <- h
+      out[[length(out) + 1L]] <- r$obj$split(r$par)$mu
+    }
+    out
+  }
+  a <- walk(FALSE)
+  b <- walk(TRUE)
+  for (j in seq_along(a)) {
+    expect_equal(b[[j]], a[[j]], tolerance = 1e-7,
+                 label = sprintf("point %d of the path", j))
+  }
+})

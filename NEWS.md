@@ -1,3 +1,41 @@
+# statmodels7 0.11.0
+
+* The path carries the size of the kink at the point just fitted onto the
+  blocks, so the next point can screen against it. It travels there rather
+  than through the argument list of every layer between the path and the
+  descent: it is a property of the block, where its penalty was a moment
+  ago, and the path rebuilds the blocks at each point anyway.
+
+  **Measured, the rule still discards nothing**, and the reason is the grid
+  rather than the data. On a geometric grid of ratio r the rule keeps a
+  coordinate whose gradient exceeds `(2 - 1/r)` times the kink. At the
+  default 25 points over `min_ratio` 1e-3 the ratio is 0.75 and the
+  threshold two thirds of the kink, which almost every inactive coordinate
+  clears; at `glmnet`'s 100 points over 1e-2 the ratio is 0.955 and the
+  threshold 0.95 of the kink, just under it, so most inactive coordinates
+  fall below. The rule lives on fine grids and ours is deliberately coarse,
+  each point being a whole fit. Measured over a path: 5 per cent of the
+  columns discarded and 0.93 to 0.96 times the speed.
+
+* A fit that did not converge now reports the range each distribution
+  parameter reached. The case it exists for: a lasso at a fixed
+  hyperparameter with a free scale, on a design the model can interpolate.
+  Fitting the coefficients shrinks the residuals, which shrinks the scale,
+  which raises the working weights, which makes the penalty count for
+  relatively less, which lets more coefficients in. At 200 observations and
+  400 columns the scale reached 3.8e-15 and 380 of the 400 coefficients
+  survived, where the same block fitted at a held scale kept the five that
+  were real.
+
+  Nothing diagnoses that. The parameters it reached are a fact and a scale
+  at 1e-15 says the rest, where naming a cause would mean choosing a
+  threshold for running away -- and the same fit at 100 columns converges
+  to a scale of 0.77 that is nothing of the kind. What that fit is doing is
+  the joint mode over coefficients and scale, which is degenerate wherever
+  the likelihood can be driven up without bound; it is the reason the
+  hyperparameters here are estimated by a marginal criterion or by
+  prediction rather than jointly.
+
 # statmodels7 0.10.1
 
 * The coordinate descent kernel carries the two devices `glmnet` uses to

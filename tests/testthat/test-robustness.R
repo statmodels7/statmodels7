@@ -93,3 +93,36 @@ test_that("a well-identified model is unharmed by any of it", {
   expect_true(all(is.finite(vcov(fit))))
   expect_identical(nrow(confint(fit)), 6L)
 })
+
+
+test_that("a fit that did not converge says where its parameters ended up", {
+  # A lasso at a fixed hyperparameter, a free scale, and a design the model
+  # can interpolate: fitting the coefficients shrinks the residuals, which
+  # shrinks the scale, which raises the working weights, which makes the
+  # penalty count for relatively less, which lets more coefficients in. At
+  # 200 observations and 400 columns the scale reached 3.8e-15 and 380 of the
+  # 400 coefficients survived, where the same block at a held scale kept the
+  # five that were real. The fit reports failure, and now also reports the
+  # number that explains it.
+  set.seed(7)
+  n <- 120L
+  p <- 300L
+  X <- scale(matrix(stats::rnorm(n * p), n, p), TRUE, FALSE)
+  y <- as.numeric(X %*% c(rep(2, 5), rep(0, p - 5))) + stats::rnorm(n)
+  dd <- data.frame(y = y - mean(y))
+  dd$x <- X
+  fit <- statmod(y ~ lasso(x) - 1 | sigma ~ 1,
+                 distributions7::gaussian1_distrib(), dd,
+                 hyper = list(mu = list("lasso(x)" = c(lambda = 12))))
+  skip_if(fit@converged, "the runaway did not happen on this platform")
+  out <- paste(utils::capture.output(print(fit)), collapse = "\n")
+  expect_match(out, "DID NOT CONVERGE")
+  expect_match(out, "the parameters it reached")
+  expect_match(out, "sigma")
+  # and a fit that converged says nothing of the kind
+  ok <- statmod(y ~ x1, distributions7::gaussian1_distrib(),
+                data.frame(y = stats::rnorm(50), x1 = stats::rnorm(50)))
+  expect_true(ok@converged)
+  expect_false(grepl("the parameters it reached",
+                     paste(utils::capture.output(print(ok)), collapse = "\n")))
+})
