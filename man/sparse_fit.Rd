@@ -4,7 +4,19 @@
 \alias{sparse_fit}
 \title{Fit One Non-Smooth Block, the Others Held Fixed}
 \usage{
-sparse_fit(obj, beta, block, hyper, maxit = 500, tol = 1e-08, verbose = FALSE)
+sparse_fit(
+  obj,
+  beta,
+  block,
+  hyper,
+  maxit = 500,
+  tol = 1e-08,
+  verbose = FALSE,
+  spec = NULL,
+  design = NULL,
+  expected = TRUE,
+  approx = "bartlett"
+)
 }
 \arguments{
 \item{obj}{The full objective.}

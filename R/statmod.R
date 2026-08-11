@@ -275,7 +275,9 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
         cat(sprintf("[sweep %d] %s in %s: %d coefficients\n", sweep,
                     bl$term, bl$param, length(bl$index)))
       }
-      res <- sparse_fit(obj, beta, bl, hyper, verbose = vb$optimizer)
+      res <- sparse_fit(obj, beta, bl, hyper, verbose = vb$optimizer,
+                        spec = spec, design = design, expected = expected,
+                        approx = approx)
       beta <- res$par
       value <- res$value
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(

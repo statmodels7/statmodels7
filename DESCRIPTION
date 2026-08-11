@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.9.0
+Version: 0.10.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Installs and attaches the packages of the statmodels7 toolkit,
@@ -27,10 +27,14 @@ Imports:
     optimizers7,
     parameters7,
     penalties7,
+    Rcpp,
     S7,
     stats,
     utils
+LinkingTo:
+    Rcpp
 Suggests:
+    glmnet,
     ncvreg,
     numDeriv,
     pak,
@@ -50,6 +54,7 @@ Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
 Collate: 
+    'RcppExports.R'
     'attach.R'
     'formula.R'
     'spec.R'
@@ -67,5 +72,6 @@ Collate:
     'outer_hessian.R'
     'outer_criteria.R'
     'path.R'
+    'coord.R'
     'statmodels7-package.R'
     'update.R'
