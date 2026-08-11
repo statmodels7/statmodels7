@@ -144,6 +144,8 @@ alternated around them.
 - [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   : Prediction-Error Criteria for the Hyperparameters
+- [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) :
+  Choose the Hyperparameters by Cross-Validation
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   : Simulate a Response From a Written Model
 
@@ -187,6 +189,8 @@ exported, and none is needed to use the package.
   : Solve a Scoring Step From the Square-Root Design
 - [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
   : The Predictors a Coefficient Direction Induces
+- [`bounded_bump()`](https://statmodels7.github.io/statmodels7/reference/bounded_bump.md)
+  : Move a Hyperparameter Without Leaving Its Interval
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
   : Validate Offsets
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
@@ -205,6 +209,10 @@ exported, and none is needed to use the package.
   : The Fourth Derivative of the Objective Contracted Twice
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
+- [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
+  : The Held-Out Deviance of Every Point of a Path
+- [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
+  : Assign the Observations to Folds
 - [`d3_key()`](https://statmodels7.github.io/statmodels7/reference/d3_key.md)
   : The Name of a Third-Derivative Component
 - [`d4_key()`](https://statmodels7.github.io/statmodels7/reference/d4_key.md)
@@ -231,6 +239,10 @@ exported, and none is needed to use the package.
   : The Name of a Second-Derivative Component
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
   : Resolve a Term's Name Against a Specification
+- [`hyper_plain()`](https://statmodels7.github.io/statmodels7/reference/hyper_plain.md)
+  : The Hyperparameters in the Shape statmod() Accepts
+- [`hyper_set()`](https://statmodels7.github.io/statmodels7/reference/hyper_set.md)
+  : Set One Hyperparameter
 - [`hyper_to_eta()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
   [`eta_to_hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
   : Move Between the Hyperparameters and the Free Vector
@@ -238,6 +250,8 @@ exported, and none is needed to use the package.
   : One Hyperparameter of an Index
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
+- [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md)
+  : What the Inner Method Says About How to Fit
 - [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)
   : The Subspace a Marginal Criterion Integrates Over
 - [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
@@ -246,6 +260,12 @@ exported, and none is needed to use the package.
   : The Pieces One Scoring Step Needs
 - [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   : Solve One Weighted Least Squares Step
+- [`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
+  : Which Hyperparameters Set the Size of the Kink
+- [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md)
+  : The Size of a Penalty's Kink
+- [`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
+  : The Hyperparameter That Gives the Kink a Chosen Size
 - [`logLik(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
   : The Maximized Log-Likelihood of a Fit
 - [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
@@ -266,6 +286,8 @@ exported, and none is needed to use the package.
   : The Price of One Degree of Freedom
 - [`outer_minimize()`](https://statmodels7.github.io/statmodels7/reference/outer_minimize.md)
   : Is a Criterion Minimized?
+- [`outer_path_defaults()`](https://statmodels7.github.io/statmodels7/reference/outer_path_defaults.md)
+  : The Defaults a Path Carries
 - [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
   : The Per-Hyperparameter Pieces of the Outer Derivatives
 - [`outer_tau()`](https://statmodels7.github.io/statmodels7/reference/outer_tau.md)
@@ -274,6 +296,16 @@ exported, and none is needed to use the package.
   : The Key of a Hyperparameter Pair
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
   : Resolve a Parameter Structure
+- [`path_block()`](https://statmodels7.github.io/statmodels7/reference/path_block.md)
+  : The Block a Path Row Belongs To
+- [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
+  : The Largest Score a Kinked Block Has to Beat
+- [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)
+  : Choose a Point of the Path
+- [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)
+  : Which Hyperparameters a Path Has to Select
+- [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
+  : The Values a Path Visits
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
 - [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
@@ -312,6 +344,8 @@ exported, and none is needed to use the package.
   : Rebuild a Specification Against New Data
 - [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
   : The Square-Root Design
+- [`statmod_active()`](https://statmodels7.github.io/statmodels7/reference/statmod_active.md)
+  : Which Coefficients Are Not Sitting at a Kink
 - [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
   : The Alternation Between the Smooth Block and the Rest
 - [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
@@ -338,6 +372,8 @@ exported, and none is needed to use the package.
   : The Exact Hessian of the Marginal Criterion
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
+- [`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
+  : Select the Hyperparameters of a Kinked Penalty Along a Path
 - [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
   : A Prediction-Error Criterion at Given Coefficients and
   Hyperparameters
@@ -345,8 +381,12 @@ exported, and none is needed to use the package.
   : The Exact Derivatives of a Prediction-Error Criterion
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
   : The Penalty of a Specification at Given Coefficients
+- [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+  : The Same Model Read on Other Rows
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
   : The Score of the Weighted Log-Likelihood
+- [`statmod_select()`](https://statmodels7.github.io/statmodels7/reference/statmod_select.md)
+  : Estimate the Hyperparameters, by Whichever Route Each One Admits
 - [`statmod_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_start.md)
   : Starting Coefficients
 - [`statmod_terms()`](https://statmodels7.github.io/statmodels7/reference/statmod_terms.md)

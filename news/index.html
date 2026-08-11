@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,17 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0" id="statmodels7-090">statmodels7 0.9.0<a class="anchor" aria-label="anchor" href="#statmodels7-090"></a></h2>
+<ul><li><p><code><a href="../reference/cv.html">cv()</a></code> chooses the hyperparameters of a penalty with a kink, which no criterion in the package could reach before. A marginal criterion approximates an integral at the penalized mode and asks for the penalty’s second derivative there; the mode of a lasso, a SCAD or an MCP sits at the kink for every coefficient it sets to zero, which is where that derivative does not exist. Cross-validation asks about prediction instead and needs nothing from the penalty beyond a fit. <code>rule = "1se"</code> takes the largest kink whose criterion is within one standard error of the smallest.</p></li>
+<li><p><code><a href="../reference/aic.html">aic()</a></code> and <code><a href="../reference/aic.html">bic()</a></code> reach those hyperparameters too, the effective degrees of freedom now being the trace over the coefficients that are away from the kink – the submodel the fit selected, where the penalty is twice differentiable. For the lasso, which is linear there, that is exactly the number of surviving coefficients (Zou, Hastie and Tibshirani, 2007); the elastic net keeps its quadratic part and spends less, SCAD and MCP their own curvature and spend slightly more. The trace over the whole vector could not see the selection at all: measured on twenty noise columns it read 14 at every value of lambda, so a criterion built on it would have priced a model that selects nothing the same as one that selects everything.</p></li>
+<li>
+<p>Neither is a gradient search. The penalized mode is piecewise smooth in the hyperparameter, differentiable while the active set holds and turning a corner whenever a coefficient joins it or leaves, so the value is swept over a grid. The grid is geometric in the size of the kink – read from the penalty by probing its subdifferential rather than assumed to be lambda – from the value that empties the block down to <code>min_ratio</code> of it, with every fit warm-started from the previous one. A choice at either end of the grid is reported: it is the grid’s and not the criterion’s.</p>
+<p>On 200 observations of twenty columns with three true predictors, every route keeps all three. <code><a href="../reference/aic.html">bic()</a></code> keeps four in all, <code>cv(rule = "1se")</code> six – the same count as <code>cv.glmnet</code>’s own one-standard-error rule – and <code>cv(rule = "min")</code> sixteen against glmnet’s nineteen.</p>
+</li>
+<li><p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> and <code><a href="../reference/loglik.html">loglik()</a></code> at new data reapply each term’s recorded block instead of rebuilding it. A term records how its block was made, and <code><a href="https://statmodels7.github.io/modelterms7/reference/term_predict.html" class="external-link">modelterms7::term_predict()</a></code> replays that record; rebuilding gives a block of the same shape multiplying the same coefficients that means something else. Measured on <code>y ~ s(x, k = 10)</code> at 200 observations, predicting on 40 of the rows the model was fitted to differed from the fitted values there by 0.237, and on the 51 rows with <code>|x| &lt; 0.5</code>, where rebuilt knots move furthest, by 1.19. The whole data handed back agreed exactly, which is why nothing noticed, and cross-validation would have inherited it.</p></li>
+<li><p>The information matrix, its approximation and the budget are read off <code>inner_method</code> in one place, so a refit inside a path or a fold runs on the terms the caller asked for.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.1" id="statmodels7-081">statmodels7 0.8.1<a class="anchor" aria-label="anchor" href="#statmodels7-081"></a></h2>
 <ul><li>

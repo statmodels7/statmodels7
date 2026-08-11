@@ -16,7 +16,8 @@ StatmodSpec(
   n_obs = integer(0),
   weights = integer(0),
   offsets = list(),
-  intercepts = logical(0)
+  intercepts = logical(0),
+  newdata = NULL
 )
 ```
 

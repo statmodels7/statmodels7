@@ -1,5 +1,67 @@
 # Changelog
 
+## statmodels7 0.9.0
+
+- [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  chooses the hyperparameters of a penalty with a kink, which no
+  criterion in the package could reach before. A marginal criterion
+  approximates an integral at the penalized mode and asks for the
+  penalty’s second derivative there; the mode of a lasso, a SCAD or an
+  MCP sits at the kink for every coefficient it sets to zero, which is
+  where that derivative does not exist. Cross-validation asks about
+  prediction instead and needs nothing from the penalty beyond a fit.
+  `rule = "1se"` takes the largest kink whose criterion is within one
+  standard error of the smallest.
+
+- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  reach those hyperparameters too, the effective degrees of freedom now
+  being the trace over the coefficients that are away from the kink –
+  the submodel the fit selected, where the penalty is twice
+  differentiable. For the lasso, which is linear there, that is exactly
+  the number of surviving coefficients (Zou, Hastie and Tibshirani,
+  2007); the elastic net keeps its quadratic part and spends less, SCAD
+  and MCP their own curvature and spend slightly more. The trace over
+  the whole vector could not see the selection at all: measured on
+  twenty noise columns it read 14 at every value of lambda, so a
+  criterion built on it would have priced a model that selects nothing
+  the same as one that selects everything.
+
+- Neither is a gradient search. The penalized mode is piecewise smooth
+  in the hyperparameter, differentiable while the active set holds and
+  turning a corner whenever a coefficient joins it or leaves, so the
+  value is swept over a grid. The grid is geometric in the size of the
+  kink – read from the penalty by probing its subdifferential rather
+  than assumed to be lambda – from the value that empties the block down
+  to `min_ratio` of it, with every fit warm-started from the previous
+  one. A choice at either end of the grid is reported: it is the grid’s
+  and not the criterion’s.
+
+  On 200 observations of twenty columns with three true predictors,
+  every route keeps all three.
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  keeps four in all, `cv(rule = "1se")` six – the same count as
+  `cv.glmnet`’s own one-standard-error rule – and `cv(rule = "min")`
+  sixteen against glmnet’s nineteen.
+
+- [`predict()`](https://rdrr.io/r/stats/predict.html) and
+  [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
+  at new data reapply each term’s recorded block instead of rebuilding
+  it. A term records how its block was made, and
+  [`modelterms7::term_predict()`](https://statmodels7.github.io/modelterms7/reference/term_predict.html)
+  replays that record; rebuilding gives a block of the same shape
+  multiplying the same coefficients that means something else. Measured
+  on `y ~ s(x, k = 10)` at 200 observations, predicting on 40 of the
+  rows the model was fitted to differed from the fitted values there by
+  0.237, and on the 51 rows with `|x| < 0.5`, where rebuilt knots move
+  furthest, by 1.19. The whole data handed back agreed exactly, which is
+  why nothing noticed, and cross-validation would have inherited it.
+
+- The information matrix, its approximation and the budget are read off
+  `inner_method` in one place, so a refit inside a path or a fold runs
+  on the terms the caller asked for.
+
 ## statmodels7 0.8.1
 
 - `scad()` and `mcp()` are fitted by the proximal scheme, as `lasso()`

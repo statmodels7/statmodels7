@@ -5,7 +5,15 @@
 ## Usage
 
 ``` r
-statmod_pe(spec, design, coef, hyper, method, approx = "bartlett")
+statmod_pe(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  approx = "bartlett",
+  active = NULL
+)
 ```
 
 ## Arguments
@@ -35,6 +43,12 @@ statmod_pe(spec, design, coef, hyper, method, approx = "bartlett")
 - approx:
 
   The approximation for the expected information.
+
+- active:
+
+  Which coefficients are away from a kink, as
+  [`statmod_active`](https://statmodels7.github.io/statmodels7/reference/statmod_active.md)
+  reports them, or `NULL` where no penalty has one.
 
 ## Value
 
