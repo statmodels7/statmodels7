@@ -107,7 +107,7 @@ OuterMethod <- S7::new_class("OuterMethod",
 #'
 #' @keywords internal
 outer_path_defaults <- function() {
-  list(n_values = 25, min_ratio = 1e-3, nfolds = 10, rule = "min",
+  list(n_values = 25, min_ratio = 1e-4, nfolds = 10, rule = "min",
        folds = numeric(0), over = character(0))
 }
 
@@ -186,7 +186,7 @@ outer_path_defaults <- function() {
 #' dd <- data.frame(x = runif(200, -2, 2))
 #' dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 #' statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-#'         outer_method = reml())
+#'         outer_criterion = reml())
 #'
 #' @export
 reml <- function(hessian = c("expected", "observed")) {
@@ -334,15 +334,19 @@ integrated_basis <- function(spec, design, kind) {
   total <- sum(npar)
   cols <- list()
   for (u in statmod_penalized(spec, design)) {
-    {
-      pen <- u$penalty
-      k <- length(u$cols)
-      R <- penalty_range_basis(pen, k, u$param, u$key)
-      if (!ncol(R)) next
-      M <- matrix(0, total, ncol(R))
-      M[u$index, ] <- R
-      cols[[length(cols) + 1L]] <- M
-    }
+    # a penalty over a structural term's own parameters owns no column of the
+    # design; its directions are appended by statmod_marginal_full()
+    if (isTRUE(u$structural)) next
+    pen <- u$penalty
+    k <- length(u$cols)
+    R <- penalty_range_basis(pen, k, u$param, u$key)
+    if (!ncol(R)) next
+    M <- matrix(0, total, ncol(R))
+    M[u$index, ] <- R
+    cols[[length(cols) + 1L]] <- M
+  }
+  if (!length(cols) && structural_penalized(spec, design)) {
+    return(matrix(0, total, 0))
   }
   if (!length(cols)) {
     stop(paste0("ml() found no penalized direction to integrate over.\n",
@@ -387,6 +391,126 @@ penalty_range_basis <- function(pen, k, p, nm) {
 }
 
 
+#' Does a Structural Term Carry a Penalty of Its Own?
+#'
+#' @description
+#' \code{TRUE} where some penalty of the model covers the parameters of a
+#' structural term rather than a block of design columns.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#'
+#' @return A single logical.
+#'
+#' @seealso \code{\link{statmod_marginal_full}}
+#'
+#' @keywords internal
+structural_penalized <- function(spec, design) {
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$structural)) return(TRUE)
+  }
+  FALSE
+}
+
+
+#' The Penalized Curvature Over the Coefficients and a Filter's Parameters
+#'
+#' @description
+#' The matrix whose determinant the Laplace approximation reads, where a
+#' penalty covers a structural term's own parameters instead of a block of
+#' design columns.
+#'
+#' @details
+#' A marginal criterion integrates the quantities its penalty shrinks. Where
+#' that penalty is a term's own -- the deviations of a panel -- those
+#' quantities are not coefficients, so the determinant has to span them too:
+#' taken over the coefficients alone it does not depend on the hyperparameter
+#' at all, and the criterion is the penalized likelihood, whose maximum in a
+#' shrinkage parameter is at no shrinkage.
+#'
+#' Both pieces exist already. \code{\link{statmod_full_information}} spans the
+#' coefficients followed by the term's free parameters, which is the order the
+#' joint fit uses, and \code{\link{statmod_structural_penalty}} gives the
+#' penalty's Hessian in those same parameters. The information here is the
+#' OBSERVED one whatever the method asks for: the expected information over a
+#' filter's own parameters is not one of the quantities the toolkit carries,
+#' the recursion's state entering the expectation.
+#'
+#' For \code{\link{ml}()} the tail is integrated over the penalized
+#' coordinates alone, through the penalty's own range basis, so a parameter
+#' the penalty does not cover -- a population value -- is profiled rather than
+#' integrated, exactly as an unpenalized coefficient is.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param coef The coefficients, at the penalized mode.
+#' @param hyper The hyperparameters.
+#' @param basis The integrated subspace over the coefficients, or \code{NULL}
+#'   for \code{\link{reml}()}.
+#'
+#' @return A square matrix, or \code{NULL} where the term could not be run.
+#'
+#' @seealso \code{\link{statmod_marginal}}
+#'
+#' @keywords internal
+statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
+  sst <- statmod_structural_state(design)
+  su <- Filter(function(u) identical(u$kind, "filter"),
+               attr(design, "structural"))
+  if (is.null(sst) || !length(su)) return(NULL)
+  key <- su[[1L]]$term
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(design, function(d) d$npar, integer(1)))
+  ix <- nb + seq_along(free)
+
+  K <- tryCatch(statmod_full_information(spec, coef, design),
+                error = function(e) NULL)
+  if (is.null(K) || nrow(K) != nb + length(free)) return(NULL)
+  S <- matrix(0, nrow(K), ncol(K))
+  S[seq_len(nb), seq_len(nb)] <-
+    statmod_penalty_at(spec, coef, hyper, design, "hessian")
+  ps <- structural_penalty_block(spec, design, hyper, length(free))
+  if (!is.null(ps)) S[ix, ix] <- ps
+  S[!is.finite(S)] <- 0
+  M <- K + S
+  if (is.null(basis)) return(M)
+
+  cols <- structural_range_cols(spec, design, key, free)
+  A <- matrix(0, nrow(M), ncol(basis) + length(cols))
+  A[seq_len(nrow(basis)), seq_len(ncol(basis))] <- basis
+  if (length(cols)) {
+    A[cbind(nb + cols, ncol(basis) + seq_along(cols))] <- 1
+  }
+  crossprod(A, M %*% A)
+}
+
+
+#' Which of a Structural Term's Free Parameters a Penalty Covers
+#'
+#' @description
+#' Positions among the term's free parameters that some penalty of the model
+#' shrinks, which are the directions \code{\link{ml}()} integrates over.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param key The term's name.
+#' @param free The term's free parameters, in order.
+#'
+#' @return An integer vector.
+#'
+#' @keywords internal
+structural_range_cols <- function(spec, design, key, free) {
+  sst <- statmod_structural_state(design)
+  nm <- names(sst$zeta[[key]])
+  out <- integer(0)
+  for (u in statmod_penalized(spec, design)) {
+    if (!isTRUE(u$structural) || !identical(u$term, key)) next
+    out <- c(out, match(nm[u$cols], free))
+  }
+  sort(unique(out[!is.na(out)]))
+}
+
+
 #' The Marginal Criterion at Given Coefficients and Hyperparameters
 #'
 #' @description
@@ -411,11 +535,16 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")
-  H <- statmod_information_at(spec, coef, design, expected, approx)
-  S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  S[!is.finite(S)] <- 0
-  M <- H + S
-  if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
+  if (structural_penalized(spec, design)) {
+    M <- statmod_marginal_full(spec, design, coef, hyper, basis)
+    if (is.null(M)) return(NULL)
+  } else {
+    H <- statmod_information_at(spec, coef, design, expected, approx)
+    S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
+    S[!is.finite(S)] <- 0
+    M <- H + S
+    if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
+  }
   R <- tryCatch(chol(M), error = function(e) NULL)
   # a determinant that does not exist is a hyperparameter the search should
   # step away from, not an error: at a far-out value the penalized information
@@ -453,7 +582,7 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #' @param design The design.
 #' @param blocks The block split.
 #' @param hyper The starting hyperparameters.
-#' @param inner_method How the smooth block is fitted.
+#' @param inner_optimizer How the smooth block is fitted.
 #' @param method An \code{\link{OuterMethod}}.
 #' @param optimizer An \pkg{optimizers7} optimizer, or \code{NULL} to let the
 #'   availability of the exact gradient decide.
@@ -468,14 +597,19 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #' @seealso \code{\link{reml}}, \code{\link{statmod}}
 #'
 #' @keywords internal
-outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
+outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                       optimizer, beta, approx, maxit, tol, vb) {
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) {
-    stop(paste0("outer_method was given but there is no hyperparameter to\n",
+    # statmod() does not reach this: a criterion applies to the smooth
+    # penalties and comes into play only where there is one, so a model with
+    # none leaves it unused rather than failing. What this guards is the
+    # internal contract, for a caller reaching the outer loop directly.
+    stop(paste0("there is no hyperparameter for a marginal criterion to\n",
                 "  estimate: no term here carries a penalty that is twice\n",
-                "  differentiable. A lasso, a scad or an mcp keeps the value",
-                "\n  'hyper' gave it, its penalty having a kink."),
+                "  differentiable. A lasso, a scad or an mcp is chosen by a",
+                "\n  path over its own values instead -- cv() or bic() --",
+                " its penalty\n  having a kink."),
          call. = FALSE)
   }
   expected <- identical(method@hessian, "expected")
@@ -516,7 +650,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
     Hm <- NULL
     err <- NULL
     body <- function() {
-      res <<- statmod_alternate(spec, design, blocks, hy, inner_method,
+      res <<- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
                                 state$beta, expected, approx, maxit, tol,
                                 vb_inner(vb))
       cf <<- res$obj$split(res$par)
@@ -635,7 +769,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_method, method,
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
   hy <- eta_to_hyper(res@par, idx, hyper)
-  inner <- statmod_alternate(spec, design, blocks, hy, inner_method,
+  inner <- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
                              state$beta, expected, approx, maxit, tol, vb)
   cff <- inner$obj$split(inner$par)
   m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx,

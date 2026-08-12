@@ -72,7 +72,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' \strong{The fitting scheme.} The terms split in two by a property each one
 #' already reports. Every term whose penalty is twice differentiable in its
 #' coefficients -- an unpenalized block, a ridge, a spline, a random effect --
-#' is estimated in ONE system by \code{inner_method}, because their joint
+#' is estimated in ONE system by \code{inner_optimizer}, because their joint
 #' curvature exists and using it is what makes a fit converge in a handful of
 #' iterations. A term whose penalty has a kink -- lasso, scad, mcp -- is
 #' estimated by a method of its own with everything else held fixed. The fit
@@ -85,21 +85,39 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' at \eqn{n = 10^7}.
 #'
 #' \strong{The budget and the stopping rule belong to the method.} There is no
-#' \code{maxit} and no \code{tol} here: they are set on \code{inner_method},
+#' \code{maxit} and no \code{tol} here: they are set on \code{inner_optimizer},
 #' which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
 #' \code{maxit} and \code{criterion}, and the alternation reads them from there
 #' (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 #' set both and be obeyed by neither.
 #'
-#' \strong{The hyperparameters.} With \code{outer_method = NULL}, the default,
-#' each one sits where \code{hyper} put it, or at the probe value of its bounds
-#' otherwise -- a placeholder rather than a choice, and it matters, since a
-#' lasso at \eqn{\lambda = 1} against an unaveraged log-likelihood of a few
-#' hundred observations selects nothing at all. With
-#' \code{outer_method = \link{reml}()} or \code{\link{ml}()} they are estimated
-#' by a marginal criterion, \code{outer_optimizer} searching over them and the
-#' coefficients being refitted at each. Only a twice differentiable penalty
-#' takes part: a lasso, a SCAD or an MCP keeps the value it was given.
+#' \strong{The hyperparameters are ESTIMATED by default}, by
+#' \code{\link{reml}()}, with \code{outer_optimizer} searching over them and
+#' the coefficients refitted at each. A hyperparameter left where it started
+#' is a placeholder and not a choice, and a model carrying a smooth, a ridge
+#' or a random effect is one whose author wants them chosen from the data.
+#'
+#' A KINKED penalty is a different instrument and has its own
+#' argument. \code{sparse_criterion}, \code{\link{bic}()} by default, sweeps
+#' it along a PATH of its own values -- from the kink that empties the block
+#' down to \code{min_ratio} of it -- because the penalized mode is only
+#' piecewise smooth in that hyperparameter, turning a corner whenever a
+#' coefficient joins the active set or leaves it, so a criterion read there
+#' inherits the corners and a gradient search reads a slope about to change.
+#' Where a model carries both kinds the path is outside and the marginal
+#' criterion is estimated inside each of its points, so a smoothing parameter
+#' can come from REML and a lasso's \eqn{\lambda} from BIC in the same fit.
+#'
+#' The top of that path is DATA-DEPENDENT and depends on the rest of the
+#' model: it is the kink that empties the block, found at the coefficients in
+#' hand rather than at a refitted null, so the other terms' fits enter it.
+#'
+#' It comes into play IF AND ONLY IF the model carries a smooth penalty.
+#' Where nothing is estimable -- an ordinary \code{y ~ x}, or a model whose
+#' only penalty is kinked -- it is simply not run, and that is a property of
+#' the model rather than of how the argument was written, so typing the
+#' default changes nothing. \code{outer_criterion = NULL} holds every
+#' hyperparameter where \code{hyper} put it.
 #'
 #' \strong{Verbosity} has three levels, naming the loops rather than counting
 #' them: \code{1} the outer search and the alternation, \code{2} the inner
@@ -113,15 +131,25 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param data A data frame.
 #' @param weights Optional prior weights, taken as given and not normalized.
 #' @param offsets Optional named list of offsets, one per parameter.
-#' @param inner_method How the smooth block is fitted: \code{\link{iwls}()} or
+#' @param inner_optimizer How the smooth block is fitted: \code{\link{iwls}()} or
 #'   an \pkg{optimizers7} optimizer.
-#' @param outer_method How the hyperparameters are estimated:
-#'   \code{\link{reml}()}, \code{\link{ml}()}, or \code{NULL} to hold them.
+#' @param outer_criterion How the SMOOTH hyperparameters are estimated:
+#'   \code{\link{reml}()} (the default), \code{\link{ml}()},
+#'   \code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()}, or
+#'   \code{NULL} to hold them where they are.
+#' @param sparse_criterion How the hyperparameter of a KINKED penalty --
+#'   lasso, scad, mcp -- is chosen: \code{\link{bic}()} (the default),
+#'   \code{\link{aic}()}, \code{\link{cv}()}, or \code{NULL} to hold it.
+#'   A marginal criterion is rejected here, being read at a mode that sits on
+#'   the kink.
 #' @param outer_optimizer The optimizer that searches over them, or
 #'   \code{NULL} to let the availability of the exact gradient decide.
 #' @param hyper Optional hyperparameters, a named list of named lists as
 #'   \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
-#'   values.
+#'   values: supplying them steps the default criterion aside, since
+#'   estimating away a value the caller wrote would answer a question nobody
+#'   asked. Naming a criterion explicitly overrides that, and \code{hyper} is
+#'   then where its search starts.
 #' @param start Optional starting coefficients, a named list.
 #' @param verbose A level from 0 to 3, or a named logical vector.
 #'
@@ -142,39 +170,120 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
-                    inner_method = iwls(), outer_method = NULL,
-                    outer_optimizer = NULL,
+                    inner_optimizer = iwls(), outer_criterion = reml(),
+                    sparse_criterion = bic(), outer_optimizer = NULL,
                     hyper = NULL, start = NULL, verbose = 0) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
+  asked <- !missing(outer_criterion)
+  asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
-  budget <- method_budget(inner_method)
+  budget <- method_budget(inner_optimizer)
   maxit <- budget$maxit
   tol <- budget$tol
 
   spec <- statmod_spec(formula, distrib, data, weights, offsets)
   design <- statmod_design(spec)
+  user_hyper <- hyper
   hyper <- statmod_hyper_merge(spec, statmod_hyper_start(spec), hyper)
   blocks <- statmod_blocks(spec, design)
 
-  cfg <- inner_settings(inner_method)
+  cfg <- inner_settings(inner_optimizer)
   expected <- cfg$expected
   approx <- cfg$approx
   obj <- statmod_objective(spec, hyper, design, expected, approx)
   beta <- statmod_start(spec, design, obj, start)
 
-  if (is.null(outer_method)) {
-    res <- statmod_alternate(spec, design, blocks, hyper, inner_method, beta,
+  # A hyperparameter left where it started is a placeholder and not a choice,
+  # so the criterion ESTIMATES by default: a model carrying a smooth, a ridge
+  # or a random effect is one whose author wants those chosen from the data,
+  # and mgcv and lme4 both estimate by default for the same reason.
+  #
+  # It applies to the SMOOTH penalties and to nothing else, and it comes into
+  # play if and only if there is one. A kinked penalty -- lasso, scad, mcp --
+  # is not estimated by a marginal criterion at all but by a path over its own
+  # values, so it is absent from `outer_hyper_index()` and a model carrying
+  # only kinked penalties, like a model carrying none, leaves the criterion
+  # with nothing to do and it is not run. That is a property of the model
+  # rather than of how the argument was written, so typing the default
+  # changes nothing: there is one rule and no hidden second one.
+  if (!is.null(outer_criterion) && !S7::S7_inherits(outer_criterion,
+                                                   OuterMethod)) {
+    stop("'outer_criterion' must be reml(), ml(), aic(), bic(), cv() or NULL.",
+         call. = FALSE)
+  }
+  if (!is.null(sparse_criterion) && !S7::S7_inherits(sparse_criterion,
+                                                    OuterMethod)) {
+    stop("'sparse_criterion' must be bic(), aic(), cv() or NULL.",
+         call. = FALSE)
+  }
+  # a kinked penalty is chosen by a path over its own values, which only a
+  # prediction-error criterion scores: a marginal one is a Laplace expansion
+  # at the mode and the mode sits AT the kink for every coefficient set to
+  # zero, where the second derivative it asks for does not exist
+  if (!is.null(sparse_criterion) && !outer_minimize(sparse_criterion)) {
+    stop(paste0("'sparse_criterion' must be bic(), aic() or cv(): a kinked",
+                "
+  penalty is chosen by a path over its own values, and",
+                " reml() and ml()
+  are read at a mode that sits on the",
+                " kink, where the curvature they
+  need does not exist."),
+         call. = FALSE)
+  }
+  if (!is.null(sparse_criterion) &&
+      !nrow(path_rows(spec, blocks, hyper, sparse_criterion))) {
+    sparse_criterion <- NULL
+  }
+  # and it steps aside for a caller who set the hyperparameters by hand:
+  # `hyper` says HELD AT THESE VALUES, so estimating them away would answer a
+  # question nobody asked. Asking for a criterion explicitly overrides that,
+  # in which case `hyper` is where the search starts.
+  # "nothing to do" is asked OF THE CRITERION, since the two kinds reach
+  # different penalties. A marginal one -- reml(), ml() -- reaches the smooth
+  # penalties, which is what `outer_hyper_index()` enumerates. A
+  # prediction-error one -- aic(), bic(), cv() -- walks a path over the
+  # hyperparameter's own values and so reaches a KINKED penalty too, which is
+  # how a lasso's lambda is chosen; for those, having nothing to do means
+  # carrying no penalized term at all.
+  if (!is.null(outer_criterion)) {
+    nothing <- !nrow(outer_hyper_index(spec, blocks))
+    if (nothing || (!asked && !is.null(user_hyper))) outer_criterion <- NULL
+  }
+  if (!is.null(user_hyper) && !asked_sparse) sparse_criterion <- NULL
+
+  # A prediction-error criterion for the SMOOTH penalties cannot be nested
+  # inside a path over the kinked ones: it scores the same quantity at two
+  # levels, and measured, every point of the path came back NA -- the
+  # penalized information at a smoothing parameter chosen by one criterion
+  # and read by the other is not positive definite -- so the path had nothing
+  # to choose between and the hyperparameter kept its starting value while
+  # the fit reported success. It is rejected rather than left to do that.
+  if (!is.null(sparse_criterion) && !is.null(outer_criterion) &&
+      outer_minimize(outer_criterion)) {
+    stop(paste0("'outer_criterion' is ", outer_criterion@kind, "() and the",
+                " model also carries a penalty
+  with a kink, whose",
+                " hyperparameter is chosen by a path.
+  A prediction-error",
+                " criterion cannot be nested inside that path: it
+  would",
+                " score the same quantity at both levels. Use reml() or",
+                " ml() for
+  the smooth penalties and 'sparse_criterion'",
+                " for the kinked ones, or
+  hold one of the two with",
+                " 'hyper'."), call. = FALSE)
+  }
+
+  if (is.null(outer_criterion) && is.null(sparse_criterion)) {
+    res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer, beta,
                              expected, approx, maxit, tol, vb)
     crit <- NA_real_
   } else {
-    if (!S7::S7_inherits(outer_method, OuterMethod)) {
-      stop("'outer_method' must be reml(), ml(), aic(), bic(), cv() or NULL.",
-           call. = FALSE)
-    }
-    res <- statmod_select(spec, design, blocks, hyper, inner_method,
-                          outer_method, outer_optimizer, beta, approx, maxit,
-                          tol, vb, data, weights, offsets)
+    res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                          outer_criterion, outer_optimizer, beta, approx, maxit,
+                          tol, vb, data, weights, offsets, sparse_criterion)
     hyper <- res$hyper
     crit <- res$criterion
   }
@@ -200,7 +309,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       inner = if (length(res$hist_inner)) do.call(rbind, res$hist_inner)
         else NULL
     ),
-    methods = list(smooth = inner_method, outer = outer_method,
+    methods = list(smooth = inner_optimizer, outer = outer_criterion,
                    sparse = vapply(blocks$sparse, function(b)
                      paste(b$param, b$term, sep = "/"), character(1))),
     call = cl
@@ -223,7 +332,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @param design The design.
 #' @param blocks The block split.
 #' @param hyper The hyperparameters.
-#' @param inner_method How the smooth block is fitted.
+#' @param inner_optimizer How the smooth block is fitted.
 #' @param beta The starting coefficients, stacked.
 #' @param expected Whether the information is the expected one.
 #' @param approx The approximation for the expected information.
@@ -236,7 +345,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @seealso \code{\link{statmod}}
 #'
 #' @keywords internal
-statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
+statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta,
                               expected, approx, maxit, tol, vb) {
   obj <- statmod_objective(spec, hyper, design, expected, approx)
   value <- obj$fn(beta)
@@ -265,8 +374,17 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
 
     if (joint) {
       if (vb$blocks) cat(sprintf("[sweep %d] joint system\n", sweep))
+      # the caller's optimizer, where they named one. `iwls()` is a scoring
+      # iteration over a design block and has no meaning over a filter's own
+      # parameters, so it is what asks for the joint step's own default
+      # rather than a choice to be honoured here; anything else is used as
+      # given, and passing NULL unconditionally made `inner_optimizer`
+      # accepted and ignored for exactly the models it matters most for
       res <- statmod_fit_joint(spec, design, obj, beta, hyper,
-                               optimizer = NULL, verbose = vb$blocks)
+                               optimizer = if (S7::S7_inherits(
+                                 inner_optimizer, optimizers7::optimizer))
+                                 inner_optimizer else NULL,
+                               verbose = vb$blocks)
       beta <- res$par
       value <- res$value
       smooth_ok <- isTRUE(res$converged)
@@ -285,7 +403,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
                     length(blocks$smooth)))
       }
       res <- fit_smooth(obj, beta, blocks$smooth, spec, design, hyper,
-                        inner_method, vb)
+                        inner_optimizer, vb)
       beta <- res$par
       value <- res$value
       smooth_ok <- isTRUE(res$converged)
@@ -421,7 +539,7 @@ method_budget <- function(method) {
     return(list(maxit = as.integer(method@maxit), tol = method@tol))
   }
   if (!S7::S7_inherits(method, optimizers7::optimizer)) {
-    stop(paste0("'inner_method' must be iwls() or an optimizers7 optimizer.\n",
+    stop(paste0("'inner_optimizer' must be iwls() or an optimizers7 optimizer.\n",
                 "  The budget and the stopping rule are read off it, so there",
                 " is\n  nowhere else for them to come from."), call. = FALSE)
   }
@@ -484,7 +602,7 @@ criterion_tol <- function(crit) {
 #' Fit the Smooth Block
 #'
 #' @description
-#' Runs \code{inner_method} on the jointly fitted coefficients, the others
+#' Runs \code{inner_optimizer} on the jointly fitted coefficients, the others
 #' held fixed.
 #'
 #' @param obj The objective.

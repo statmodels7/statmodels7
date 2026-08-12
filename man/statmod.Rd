@@ -10,8 +10,9 @@ statmod(
   data,
   weights = NULL,
   offsets = NULL,
-  inner_method = iwls(),
-  outer_method = NULL,
+  inner_optimizer = iwls(),
+  outer_criterion = reml(),
+  sparse_criterion = bic(),
   outer_optimizer = NULL,
   hyper = NULL,
   start = NULL,
@@ -29,18 +30,29 @@ statmod(
 
 \item{offsets}{Optional named list of offsets, one per parameter.}
 
-\item{inner_method}{How the smooth block is fitted: \code{\link{iwls}()} or
+\item{inner_optimizer}{How the smooth block is fitted: \code{\link{iwls}()} or
 an \pkg{optimizers7} optimizer.}
 
-\item{outer_method}{How the hyperparameters are estimated:
-\code{\link{reml}()}, \code{\link{ml}()}, or \code{NULL} to hold them.}
+\item{outer_criterion}{How the SMOOTH hyperparameters are estimated:
+\code{\link{reml}()} (the default), \code{\link{ml}()},
+\code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()}, or
+\code{NULL} to hold them where they are.}
+
+\item{sparse_criterion}{How the hyperparameter of a KINKED penalty --
+lasso, scad, mcp -- is chosen: \code{\link{bic}()} (the default),
+\code{\link{aic}()}, \code{\link{cv}()}, or \code{NULL} to hold it.
+A marginal criterion is rejected here, being read at a mode that sits on
+the kink.}
 
 \item{outer_optimizer}{The optimizer that searches over them, or
 \code{NULL} to let the availability of the exact gradient decide.}
 
 \item{hyper}{Optional hyperparameters, a named list of named lists as
 \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
-values.}
+values: supplying them steps the default criterion aside, since
+estimating away a value the caller wrote would answer a question nobody
+asked. Naming a criterion explicitly overrides that, and \code{hyper} is
+then where its search starts.}
 
 \item{start}{Optional starting coefficients, a named list.}
 
@@ -63,7 +75,7 @@ A parameter with no equation gets an intercept. See
 \strong{The fitting scheme.} The terms split in two by a property each one
 already reports. Every term whose penalty is twice differentiable in its
 coefficients -- an unpenalized block, a ridge, a spline, a random effect --
-is estimated in ONE system by \code{inner_method}, because their joint
+is estimated in ONE system by \code{inner_optimizer}, because their joint
 curvature exists and using it is what makes a fit converge in a handful of
 iterations. A term whose penalty has a kink -- lasso, scad, mcp -- is
 estimated by a method of its own with everything else held fixed. The fit
@@ -76,21 +88,39 @@ stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
 at \eqn{n = 10^7}.
 
 \strong{The budget and the stopping rule belong to the method.} There is no
-\code{maxit} and no \code{tol} here: they are set on \code{inner_method},
+\code{maxit} and no \code{tol} here: they are set on \code{inner_optimizer},
 which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
 \code{maxit} and \code{criterion}, and the alternation reads them from there
 (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 set both and be obeyed by neither.
 
-\strong{The hyperparameters.} With \code{outer_method = NULL}, the default,
-each one sits where \code{hyper} put it, or at the probe value of its bounds
-otherwise -- a placeholder rather than a choice, and it matters, since a
-lasso at \eqn{\lambda = 1} against an unaveraged log-likelihood of a few
-hundred observations selects nothing at all. With
-\code{outer_method = \link{reml}()} or \code{\link{ml}()} they are estimated
-by a marginal criterion, \code{outer_optimizer} searching over them and the
-coefficients being refitted at each. Only a twice differentiable penalty
-takes part: a lasso, a SCAD or an MCP keeps the value it was given.
+\strong{The hyperparameters are ESTIMATED by default}, by
+\code{\link{reml}()}, with \code{outer_optimizer} searching over them and
+the coefficients refitted at each. A hyperparameter left where it started
+is a placeholder and not a choice, and a model carrying a smooth, a ridge
+or a random effect is one whose author wants them chosen from the data.
+
+A KINKED penalty is a different instrument and has its own
+argument. \code{sparse_criterion}, \code{\link{bic}()} by default, sweeps
+it along a PATH of its own values -- from the kink that empties the block
+down to \code{min_ratio} of it -- because the penalized mode is only
+piecewise smooth in that hyperparameter, turning a corner whenever a
+coefficient joins the active set or leaves it, so a criterion read there
+inherits the corners and a gradient search reads a slope about to change.
+Where a model carries both kinds the path is outside and the marginal
+criterion is estimated inside each of its points, so a smoothing parameter
+can come from REML and a lasso's \eqn{\lambda} from BIC in the same fit.
+
+The top of that path is DATA-DEPENDENT and depends on the rest of the
+model: it is the kink that empties the block, found at the coefficients in
+hand rather than at a refitted null, so the other terms' fits enter it.
+
+It comes into play IF AND ONLY IF the model carries a smooth penalty.
+Where nothing is estimable -- an ordinary \code{y ~ x}, or a model whose
+only penalty is kinked -- it is simply not run, and that is a property of
+the model rather than of how the argument was written, so typing the
+default changes nothing. \code{outer_criterion = NULL} holds every
+hyperparameter where \code{hyper} put it.
 
 \strong{Verbosity} has three levels, naming the loops rather than counting
 them: \code{1} the outer search and the alternation, \code{2} the inner

@@ -61,7 +61,7 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-        outer_method = aic())
+        outer_criterion = aic())
 
 }
 \references{

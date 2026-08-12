@@ -9,7 +9,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 0.001,
+  min_ratio = 1e-04,
   over = NULL
 )
 }
@@ -83,7 +83,7 @@ set.seed(1)
 dd <- data.frame(y = rnorm(60))
 dd$x <- matrix(rnorm(60 * 5), 60, 5)
 statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-        outer_method = cv(nfolds = 3, n_values = 6))
+        outer_criterion = cv(nfolds = 3, n_values = 6))
 
 }
 \references{

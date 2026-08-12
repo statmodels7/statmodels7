@@ -61,7 +61,7 @@ test_that("convergence is the inner method's, not the absence of blocks", {
 
   # one iteration is not enough for this model, and the fit says so
   short <- statmod(f3, distributions7::student_t1_distrib(), iris,
-                   inner_method = iwls(maxit = 1L))
+                   inner_optimizer = iwls(maxit = 1L))
   expect_false(short@converged)
 })
 

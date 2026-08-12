@@ -7,7 +7,8 @@ dc$y <- sin(1.4 * dc$x) + stats::rnorm(n, sd = 0.3)
 
 pe_handles <- function(formula, data, method) {
   distrib <- distributions7::gaussian1_distrib()
-  fit0 <- statmod(formula, distrib, data)
+  # the probe value, not the estimated optimum: see test-outer-gradient.R
+  fit0 <- statmod(formula, distrib, data, outer_criterion = NULL)
   spec <- fit0@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -39,7 +40,7 @@ pe_handles <- function(formula, data, method) {
 
 test_that("the criterion is minus twice the log-likelihood plus k times edf", {
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-                 outer_method = aic())
+                 outer_criterion = aic())
   spec <- fit@spec
   design <- statmod_design(spec)
   H <- statmod_information_at(spec, fit@coefficients, design, FALSE)
@@ -60,9 +61,9 @@ test_that("the criterion is minus twice the log-likelihood plus k times edf", {
 
 test_that("bic prices a degree of freedom at log n", {
   a <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-               outer_method = aic())
+               outer_criterion = aic())
   b <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-               outer_method = bic())
+               outer_criterion = bic())
   expect_equal(outer_k(aic(), n), 2)
   expect_equal(outer_k(bic(), n), log(n))
   # the dearer degree of freedom buys a smoother fit
@@ -139,7 +140,7 @@ test_that("a variance component is covered by aic too", {
     expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 5e-4)
   }
   f <- statmod(y ~ x + random(~ 1 | g),
-               distributions7::gaussian1_distrib(), dr, outer_method = aic())
+               distributions7::gaussian1_distrib(), dr, outer_criterion = aic())
   expect_true(is.finite(f@criterion))
 })
 
@@ -151,7 +152,7 @@ test_that("the search minimizes a prediction-error criterion", {
   expect_false(outer_minimize(reml()))
 
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-                 outer_method = aic())
+                 outer_criterion = aic())
   spec <- fit@spec
   design <- statmod_design(spec)
   nm <- "s(x, k = 10)"
@@ -171,9 +172,9 @@ test_that("aic and reml need not agree, and both are stationary", {
   # they estimate different things, so a difference is not a defect; what has
   # to hold is that each is at rest where it stopped
   a <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-               outer_method = aic())
+               outer_criterion = aic())
   r <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-               outer_method = reml(hessian = "observed"))
+               outer_criterion = reml(hessian = "observed"))
   spec <- a@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -252,7 +253,7 @@ test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
                                      env = genv),
                    data = dd, method = "REML")
     u <- statmod(y ~ s(x, k = 15), distributions7::gaussian1_distrib(), dd,
-                 outer_method = reml())
+                 outer_criterion = reml())
     got <- summary(u, correct = TRUE)@df - summary(u)@df
     # ABSOLUTE, because the quantity is a fraction of a parameter and what
     # is left between the two packages is the difference between their
@@ -298,7 +299,7 @@ test_that("the correction applies to a random effect, not only a smooth", {
   b <- stats::rnorm(m, sd = 0.8)
   dd$y <- 1 + 0.7 * dd$x + b[as.integer(dd$g)] + stats::rnorm(n)
   u <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(),
-               dd, outer_method = reml())
+               dd, outer_criterion = reml())
   naive <- summary(u)@df
   corr <- summary(u, correct = TRUE)@df
   expect_gt(corr, naive)
@@ -348,9 +349,9 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
 
   cases <- list(
     statmod(y ~ s(x, k = 10) | sigma ~ s(z, k = 10),
-            distributions7::gaussian1_distrib(), dd, outer_method = reml()),
+            distributions7::gaussian1_distrib(), dd, outer_criterion = reml()),
     statmod(y ~ 1 | sigma ~ s(z, k = 10),
-            distributions7::gaussian1_distrib(), dd, outer_method = reml())
+            distributions7::gaussian1_distrib(), dd, outer_criterion = reml())
   )
   for (fit in cases) {
     r <- ref_total(fit)

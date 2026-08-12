@@ -9,7 +9,7 @@ statmod_path(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -21,7 +21,8 @@ statmod_path(
   weights,
   offsets,
   rows,
-  sweeps = 2L
+  sweeps = 2L,
+  nested_method = NULL
 )
 }
 \arguments{
@@ -33,7 +34,7 @@ statmod_path(
 
 \item{hyper}{The hyperparameters.}
 
-\item{inner_method}{The inner method.}
+\item{inner_optimizer}{The inner method.}
 
 \item{method}{An \code{\link{OuterMethod}}.}
 

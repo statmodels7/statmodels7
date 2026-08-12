@@ -7,6 +7,17 @@
 ## usethis namespace: end
 NULL
 
+# A design carrying a grouping indicator is SPARSE, and the operations that
+# assemble a fit -- the transpose, the crossproduct, the solve, the Cholesky
+# -- are S4 generics in Matrix rather than the base functions of the same
+# name. A package that only Imports Matrix does not get that dispatch: base's
+# `t()` reaches `t.default()` and reports that its argument is not a matrix,
+# from inside the assembly and naming nothing a caller wrote. Importing the
+# generics is what Matrix documents for this, and it changes nothing for a
+# dense design, each generic falling back to the base function there.
+#' @importFrom Matrix t crossprod tcrossprod solve chol diag rowSums colSums
+NULL
+
 # S7 methods registered on a BASE generic -- print, summary, coef, vcov,
 # confint, predict, fitted, logLik -- reach S3's dispatch table only when this
 # runs. Under pkgload they are registered as a side effect of evaluating the

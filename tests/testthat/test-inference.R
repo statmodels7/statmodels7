@@ -142,7 +142,8 @@ test_that("a summary carries the tables, the criteria and the notes", {
 test_that("a penalized term is a block of its own, with its hyperparameter", {
   sim <- rstatmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2, -1), sigma = log(0.5)))
-  fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), sim)
+  fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(),
+                 sim, outer_criterion = NULL)
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   expect_true("penalized" %in% kinds)
@@ -190,7 +191,8 @@ test_that("a random effect shows its variance parameters, not its levels", {
   ds <- data.frame(g = factor(sample(paste0("g", 1:15), n2, replace = TRUE)))
   u <- stats::rnorm(15, sd = 0.7)
   ds$y <- 1 + u[as.integer(ds$g)] + stats::rnorm(n2, sd = 0.4)
-  fit <- statmod(y ~ random(~ 1 | g), distributions7::gaussian1_distrib(), ds)
+  fit <- statmod(y ~ random(~ 1 | g), distributions7::gaussian1_distrib(),
+                 ds, outer_criterion = NULL)
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "random")]]

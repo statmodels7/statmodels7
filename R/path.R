@@ -239,7 +239,7 @@ path_null_score <- function(obj, beta, block, hyper) {
 #'
 #' @keywords internal
 path_values <- function(pen, theta, name, s_max, n_values = 40L,
-                        min_ratio = 1e-3) {
+                        min_ratio = 1e-4) {
   s <- exp(seq(log(s_max), log(s_max * min_ratio), length.out = n_values))
   v <- vapply(s, function(target) kink_solve(pen, theta, name, target),
               numeric(1))
@@ -378,7 +378,7 @@ hyper_set <- function(hyper, row, value) {
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param data The data the fit was called on.
 #' @param weights,offsets As \code{\link{statmod}} received them.
-#' @param inner_method The inner method.
+#' @param inner_optimizer The inner method.
 #' @param hypers A list of hyperparameter settings, one per path point.
 #' @param folds A fold number per observation.
 #'
@@ -387,7 +387,7 @@ hyper_set <- function(hyper, row, value) {
 #' @seealso \code{\link{cv}}
 #'
 #' @keywords internal
-cv_curve <- function(spec, data, weights, offsets, inner_method, hypers,
+cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
                      folds) {
   nf <- max(folds)
   m <- length(hypers)
@@ -410,12 +410,12 @@ cv_curve <- function(spec, data, weights, offsets, inner_method, hypers,
     tb <- statmod_blocks(ts, td)
     hs <- statmod_respec(ts, test)
     hd <- statmod_design(hs)
-    cfgs <- inner_settings(inner_method)
+    cfgs <- inner_settings(inner_optimizer)
     obj <- statmod_objective(ts, hypers[[1L]], td, cfgs$expected, cfgs$approx)
     warm <- statmod_start(ts, td, obj, NULL)
     tbj <- tb
     for (j in seq_len(m)) {
-      r <- tryCatch(statmod_alternate(ts, td, tbj, hypers[[j]], inner_method,
+      r <- tryCatch(statmod_alternate(ts, td, tbj, hypers[[j]], inner_optimizer,
                                       warm, cfgs$expected, cfgs$approx,
                                       cfgs$maxit, cfgs$tol, verbosity(0)),
                     error = function(e) NULL)
@@ -494,7 +494,7 @@ path_pick <- function(value, se = NULL, rule = "min") {
 #' @param design The design.
 #' @param blocks The blocks.
 #' @param hyper The hyperparameters.
-#' @param inner_method The inner method.
+#' @param inner_optimizer The inner method.
 #' @param method An \code{\link{OuterMethod}}.
 #' @param optimizer The optimizer for the differentiable hyperparameters.
 #' @param beta The starting coefficients.
@@ -511,35 +511,51 @@ path_pick <- function(value, se = NULL, rule = "min") {
 #' @seealso \code{\link{cv}}, \code{\link{path_rows}}
 #'
 #' @keywords internal
-statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
+statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
                          optimizer, beta, approx, maxit, tol, vb, data,
-                         weights, offsets, rows, sweeps = 2L) {
+                         weights, offsets, rows, sweeps = 2L,
+                         nested_method = NULL) {
   expected <- identical(method@hessian, "expected")
   smooth_idx <- outer_hyper_index(spec, blocks)
   is_cv <- identical(method@kind, "cv")
-  nested <- nrow(smooth_idx) > 0L && !is_cv
+  # the smooth hyperparameters are estimated inside each point of the path by
+  # THEIR OWN criterion, which is not the path's: a smoothing parameter is
+  # read at the mode by reml() while a lasso's lambda is swept by bic()
+  inner_crit <- if (is.null(nested_method)) method else nested_method
+  nested <- nrow(smooth_idx) > 0L && !is.null(inner_crit) &&
+    !identical(inner_crit@kind, "cv")
   obj0 <- statmod_objective(spec, hyper, design, expected, approx)
 
   # one fit at one setting, warm-started, with the differentiable
   # hyperparameters estimated inside it where there are any
   fit_at <- function(hy, warm, bk = blocks) {
     if (nested) {
-      r <- tryCatch(outer_fit(spec, design, bk, hy, inner_method, method,
-                              optimizer, warm, approx, maxit, tol,
+      r <- tryCatch(outer_fit(spec, design, bk, hy, inner_optimizer,
+                              inner_crit, optimizer, warm, approx, maxit, tol,
                               vb_inner(vb)), error = function(e) NULL)
       if (!is.null(r)) return(r)
     }
-    r <- statmod_alternate(spec, design, bk, hy, inner_method, warm,
+    r <- statmod_alternate(spec, design, bk, hy, inner_optimizer, warm,
                            expected, approx, maxit, tol, vb_inner(vb))
     r$hyper <- hy
     r$criterion <- NA_real_
     r
   }
 
+  # The criterion is read at the hyperparameters the fit ACTUALLY used. Where
+  # the smooth ones were estimated inside this point, `r$hyper` carries what
+  # they were estimated to and `hy` still carries what the path came in with:
+  # scoring at `hy` then reads a penalty at one smoothing parameter against
+  # coefficients fitted at another, and the penalized information that
+  # mismatch produces need not be positive definite. Measured, it was not:
+  # every point of the path scored NA, path_pick() had nothing to choose
+  # between, and the hyperparameter kept its starting value while the sweep
+  # looked like it had run.
   score_at <- function(r, hy) {
     cf <- r$obj$split(r$par)
-    act <- statmod_active(spec, blocks, r$par, hy)
-    m <- statmod_pe(spec, design, cf, hy, method, approx, act)
+    at <- if (!is.null(r$hyper)) r$hyper else hy
+    act <- statmod_active(spec, blocks, r$par, at)
+    m <- statmod_pe(spec, design, cf, at, method, approx, act)
     if (is.null(m)) NA_real_ else m$value
   }
 
@@ -549,6 +565,29 @@ statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
   for (i in seq_len(nrow(rows))) {
     b <- path_block(blocks, rows[i, ])
     top[[i]] <- path_null_score(obj0, beta, b, hyper)
+  }
+
+  # path_null_score() reads the score with the OTHER coefficients where the
+  # caller left them rather than at their optimum with this block zeroed, so
+  # it is a starting point and not a boundary -- and measured, it can be an
+  # order of magnitude short: on eight coefficients of which three carried
+  # real signal it returned 26.5 where the block first empties near 500, so
+  # the path covered a nearly flat stretch of the criterion and every fit
+  # chose its sparse end. Doubling until the fit really is empty is the check
+  # the documentation already described, and it costs a handful of fits.
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    b <- path_block(blocks, row)
+    for (step in seq_len(24L)) {
+      v <- kink_solve(b$penalty, hyper[[row$parameter]][[row$term]],
+                      row$name, top[[i]])
+      if (!is.finite(v) || v <= 0) break
+      r <- tryCatch(fit_at(hyper_set(hyper, row, v), beta),
+                    error = function(e) NULL)
+      if (is.null(r)) break
+      if (max(abs(r$par[b$index])) <= 1e-8) break
+      top[[i]] <- top[[i]] * 2
+    }
   }
 
   cur <- hyper
@@ -567,7 +606,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
 
       if (is_cv) {
         folds <- cv_folds(spec@n_obs, method@nfolds, method@folds)
-        cc <- cv_curve(spec, data, weights, offsets, inner_method, hys, folds)
+        cc <- cv_curve(spec, data, weights, offsets, inner_optimizer, hys, folds)
         value <- cc$cvm
         se <- cc$cvse
       } else {
@@ -594,10 +633,24 @@ statmod_path <- function(spec, design, blocks, hyper, inner_method, method,
 
       j <- path_pick(value, se, method@rule)
       if (is.na(j)) next
-      # a choice at either end is a choice the grid made: the criterion was
-      # still falling where the path stopped, so the value reported is the
-      # limit of the sweep and not a minimum
-      if (identical(method@rule, "min") && j %in% c(1L, length(value))) {
+      # A choice at either end MAY be the grid's rather than the criterion's,
+      # and the two are told apart by asking whether the criterion is still
+      # improving there. It is not always: the top of the path now empties
+      # the block by construction, so the criterion is FLAT across the
+      # emptied stretch and index 1 is a legitimate minimum. Warning on the
+      # index alone said "the criterion was still falling there" of a
+      # criterion that was doing nothing of the kind -- a message naming a
+      # cause that is not the real one, which section 7 records as worse than
+      # no message.
+      falling <- function(j) {
+        k <- if (j == 1L) 2L else length(value) - 1L
+        if (k < 1L || k > length(value)) return(FALSE)
+        v <- value[c(j, k)]
+        if (!all(is.finite(v))) return(FALSE)
+        v[1L] < v[2L] - 1e-8 * max(1, abs(v[2L]))
+      }
+      if (identical(method@rule, "min") && j %in% c(1L, length(value)) &&
+          falling(j)) {
         warning(sprintf(paste0("The path for '%s' in '%s' stopped at its %s ",
                                "end (%s = %s).\n  The criterion was still ",
                                "falling there, so widen the path with ",
@@ -726,11 +779,11 @@ path_block <- function(blocks, row) {
 #' dd <- data.frame(y = rnorm(60))
 #' dd$x <- matrix(rnorm(60 * 5), 60, 5)
 #' statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-#'         outer_method = cv(nfolds = 3, n_values = 6))
+#'         outer_criterion = cv(nfolds = 3, n_values = 6))
 #'
 #' @export
 cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se"),
-               n_values = 25, min_ratio = 1e-3, over = NULL) {
+               n_values = 25, min_ratio = 1e-4, over = NULL) {
   OuterMethod(kind = "cv", hessian = "observed", k = NA_real_,
               n_values = as.numeric(n_values),
               min_ratio = as.numeric(min_ratio),
@@ -759,11 +812,23 @@ cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se"),
 #' @seealso \code{\link{statmod}}
 #'
 #' @keywords internal
-statmod_select <- function(spec, design, blocks, hyper, inner_method, method,
+statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
                            optimizer, beta, approx, maxit, tol, vb, data,
-                           weights, offsets) {
-  rows <- path_rows(spec, blocks, hyper, method)
+                           weights, offsets, sparse_method = NULL) {
+  # Two families of penalty, two criteria. A kinked one is swept over a path
+  # of its own values by `sparse_method`; a twice differentiable one is read
+  # by `method` at the mode. Where both are present the path is outside and
+  # the marginal criterion is estimated inside each of its points, so a model
+  # can have its smoothing parameter by REML and its lasso by BIC at once --
+  # which one argument could not express.
+  sm <- if (is.null(sparse_method)) method else sparse_method
+  rows <- path_rows(spec, blocks, hyper, sm)
   if (!nrow(rows)) {
+    if (is.null(method)) {
+      return(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+                               beta, identical(sm@hessian, "expected"),
+                               approx, maxit, tol, vb))
+    }
     if (identical(method@kind, "cv")) {
       stop(paste0("cv() has nothing to select: no term here carries a penalty",
                   "\n  with a kink. A smoothing parameter that is twice",
@@ -771,9 +836,10 @@ statmod_select <- function(spec, design, blocks, hyper, inner_method, method,
                   " bic(), which read a criterion\n  rather than refitting on",
                   " folds."), call. = FALSE)
     }
-    return(outer_fit(spec, design, blocks, hyper, inner_method, method,
+    return(outer_fit(spec, design, blocks, hyper, inner_optimizer, method,
                      optimizer, beta, approx, maxit, tol, vb))
   }
-  statmod_path(spec, design, blocks, hyper, inner_method, method, optimizer,
-               beta, approx, maxit, tol, vb, data, weights, offsets, rows)
+  statmod_path(spec, design, blocks, hyper, inner_optimizer, sm, optimizer,
+               beta, approx, maxit, tol, vb, data, weights, offsets, rows,
+               nested_method = method)
 }

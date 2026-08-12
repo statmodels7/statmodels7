@@ -93,7 +93,7 @@ test_that("the block split reads the kink and not the term's name", {
 
 test_that("an optimizer can replace the scoring step", {
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
-                 inner_method = optimizers7::bfgs())
+                 inner_optimizer = optimizers7::bfgs())
   ref <- unname(stats::coef(stats::lm(y ~ x + g, dd)))
   expect_equal(fit@coefficients$mu, ref, tolerance = 1e-5)
 })
@@ -264,7 +264,7 @@ test_that("the budget and the tolerance are read off the method", {
   expect_equal(criterion_tol(cmb), 1e-3)
 
   expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                       inner_method = "bfgs"),
+                       inner_optimizer = "bfgs"),
                "an optimizers7 optimizer", fixed = TRUE)
 })
 
@@ -275,7 +275,7 @@ test_that("the alternation obeys the method's budget", {
   dl$noise <- stats::rnorm(nrow(dl))
   one <- statmod(y ~ x + lasso(~ noise),
                  distributions7::gaussian1_distrib(), dl,
-                 inner_method = iwls(maxit = 1L),
+                 inner_optimizer = iwls(maxit = 1L),
                  hyper = list(mu = list(lasso = c(lambda = 5))))
   expect_identical(max(one@history$blocks$sweep), 1L)
   expect_false(one@converged)

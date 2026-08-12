@@ -81,7 +81,7 @@ NULL
 #' dd <- data.frame(x = runif(200, -2, 2))
 #' dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 #' statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-#'         outer_method = aic())
+#'         outer_criterion = aic())
 #'
 #' @export
 aic <- function(k = 2, hessian = c("observed", "expected")) {
@@ -167,6 +167,8 @@ outer_k <- function(method, n) {
 #'
 #' @keywords internal
 outer_tau <- function(J, H, active = NULL) {
+  J <- as_dense(J)
+  H <- as_dense(H)
   if (!is.null(active)) {
     if (!any(active)) return(0)
     J <- J[active, active, drop = FALSE]
@@ -257,7 +259,9 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   H <- statmod_information_at(spec, coef, design, expected = FALSE)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S[!is.finite(S)] <- 0
-  J <- H + S
+  # The routes below form a FULL inverse, and the inverse of a sparse matrix
+  # is dense, so densifying here gives up nothing sparsity could have kept.
+  J <- as_dense(H + S)
   Jfac <- tryCatch(chol(J), error = function(e) NULL)
   if (is.null(Jfac)) return(NULL)
   P <- chol2inv(Jfac)

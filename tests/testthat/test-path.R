@@ -110,7 +110,7 @@ test_that("the elastic net spends less than its count, the ridge part shrinking"
 test_that("a criterion selects a lasso, and the true predictors survive", {
   for (m in list(aic(), bic())) {
     fit <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-                   outer_method = m)
+                   sparse_criterion = m)
     b <- fit@coefficients$mu[-1L]
     kept <- which(abs(b) > 1e-8)
     expect_true(all(1:3 %in% kept))
@@ -119,9 +119,9 @@ test_that("a criterion selects a lasso, and the true predictors survive", {
   }
   # bic prices a degree of freedom higher and keeps fewer of them
   a <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               outer_method = aic())
+               sparse_criterion = aic())
   b <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               outer_method = bic())
+               sparse_criterion = bic())
   expect_gt(b@hyper$mu[["lasso(x)"]][["lambda"]],
             a@hyper$mu[["lasso(x)"]][["lambda"]])
   expect_lt(sum(abs(b@coefficients$mu[-1L]) > 1e-8),
@@ -132,7 +132,7 @@ test_that("cross-validation selects, and its one-standard-error rule is sparser"
   skip_on_cran()
   f <- function(rule) {
     statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-            outer_method = cv(nfolds = 5, n_values = 12, rule = rule))
+            sparse_criterion = cv(nfolds = 5, n_values = 12, rule = rule))
   }
   m <- f("min")
   s <- f("1se")
@@ -150,14 +150,14 @@ test_that("the folds are the caller's when the caller gives them", {
   skip_on_cran()
   fo <- rep_len(1:4, np)
   a <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               outer_method = cv(folds = fo, n_values = 8))
+               sparse_criterion = cv(folds = fo, n_values = 8))
   b <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               outer_method = cv(folds = fo, n_values = 8))
+               sparse_criterion = cv(folds = fo, n_values = 8))
   expect_equal(a@hyper$mu[["lasso(x)"]][["lambda"]],
                b@hyper$mu[["lasso(x)"]][["lambda"]])
   expect_equal(a@criterion, b@criterion)
   expect_error(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-                       outer_method = cv(folds = 1:3)),
+                       sparse_criterion = cv(folds = 1:3)),
                "3 entries but there are")
 })
 
@@ -167,9 +167,13 @@ test_that("cv is refused where it has nothing to select", {
   # asked for
   dq <- data.frame(x = stats::runif(120, -2, 2))
   dq$y <- sin(1.4 * dq$x) + stats::rnorm(120, sd = 0.3)
-  expect_error(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
-                       dq, outer_method = cv()),
-               "nothing to select")
+  # and asking for one where there is no kinked penalty is the symmetric case
+  # of reml() on a model with no smooth one: the criterion applies to a family
+  # of penalties the model does not carry, so it does not run
+  f <- statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(), dq,
+               sparse_criterion = cv())
+  expect_true(f@converged)
+  expect_false(is.na(f@criterion))
 })
 
 test_that("the selection is stated where the path ran out", {
@@ -177,13 +181,13 @@ test_that("the selection is stated where the path ran out", {
   # so it is reported rather than returned as though it were a minimum. A path
   # of two points close together has to end at one of them.
   expect_warning(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(),
-                         dp, outer_method = aic(k = 2)) -> wide,
+                         dp, sparse_criterion = aic(k = 2)) -> wide,
                  NA)
   narrow <- aic()
   narrow@n_values <- 2
   narrow@min_ratio <- 0.9
   expect_warning(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(),
-                         dp, outer_method = narrow),
+                         dp, sparse_criterion = narrow),
                  "stopped at its")
   # and the interior choice of the wide path is not at either end
   lam <- wide@hyper$mu[["lasso(x)"]][["lambda"]]

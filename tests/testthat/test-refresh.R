@@ -143,7 +143,7 @@ test_that("a break-point term composes with a penalized one", {
     stats::rnorm(250, sd = 0.3)
   fit <- statmod(y ~ seg(x, psi = 5) + ridge(~ z1 + z2),
                  distributions7::gaussian1_distrib(), dm,
-                 outer_method = reml())
+                 outer_criterion = reml())
   expect_true(fit@converged)
   expect_equal(modelterms7::seg_psi(fitted_term(fit, "seg(")), 6,
                tolerance = 0.3)

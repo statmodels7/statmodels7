@@ -9,7 +9,7 @@ statmod_alternate(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   beta,
   expected,
   approx,
@@ -27,7 +27,7 @@ statmod_alternate(
 
 \item{hyper}{The hyperparameters.}
 
-\item{inner_method}{How the smooth block is fitted.}
+\item{inner_optimizer}{How the smooth block is fitted.}
 
 \item{beta}{The starting coefficients, stacked.}
 

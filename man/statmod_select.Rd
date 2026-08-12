@@ -9,7 +9,7 @@ statmod_select(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -19,7 +19,8 @@ statmod_select(
   vb,
   data,
   weights,
-  offsets
+  offsets,
+  sparse_method = NULL
 )
 }
 \arguments{
@@ -31,7 +32,7 @@ statmod_select(
 
 \item{hyper}{The hyperparameters.}
 
-\item{inner_method}{The inner method.}
+\item{inner_optimizer}{The inner method.}
 
 \item{method}{An \code{\link{OuterMethod}}.}
 

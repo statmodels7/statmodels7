@@ -290,7 +290,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
     npar <- vapply(design, function(d) d$npar, integer(1))
     offs <- cumsum(npar) - npar
     total <- sum(npar)
-    out <- matrix(0, total, total)
+    out <- zero_information(design, total)
     for (k in seq_along(r$mu)) {
       thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
       Hk <- if (expected) {
@@ -328,7 +328,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   total <- sum(npar)
-  out <- matrix(0, total, total)
+  out <- zero_information(design, total)
   for (a in seq_along(params)) {
     if (npar[a] == 0L) next
     for (b in seq_along(params)) {

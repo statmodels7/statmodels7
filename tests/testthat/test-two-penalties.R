@@ -63,8 +63,8 @@ test_that("a term's two penalties get a key each", {
 
 test_that("the two are estimated apart and counted together", {
   fit <- statmod(fml, distributions7::gaussian1_distrib(), dd,
-                 inner_method = iwls(maxit = 500L),
-                 outer_method = reml())
+                 inner_optimizer = iwls(maxit = 500L),
+                 outer_criterion = reml())
   # The convergence flag is NOT asserted here, and the reason is measured
   # rather than assumed. On macOS the inner alternation does not settle for
   # this term at a budget of 500 -- five times the default, so it is not the
@@ -119,7 +119,7 @@ test_that("the two are estimated apart and counted together", {
 
 test_that("the summary shows a hyperparameter per penalty, named for it", {
   fit <- statmod(fml, distributions7::gaussian1_distrib(), dd,
-                 outer_method = reml())
+                 outer_criterion = reml())
   sm <- summary(fit)
   blk <- Filter(function(b) identical(b$term, tn), sm@tables$mu)
   expect_length(blk, 1L)

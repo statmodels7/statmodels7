@@ -10,8 +10,12 @@ dg$y <- sin(1.4 * dg$x) + stats::rnorm(n, sd = 0.3)
 # differentiating it numerically shares no arithmetic with the assembly the
 # gradient uses.
 crit_of_eta <- function(formula, data, method, hyper0 = NULL) {
+  # the base point is the PROBE value, not the estimated optimum: this
+  # differentiates the criterion at a point where its gradient is not zero,
+  # which is the only place a relative comparison against numDeriv means
+  # anything
   fit0 <- statmod(formula, distributions7::gaussian1_distrib(), data,
-                  hyper = hyper0)
+                  hyper = hyper0, outer_criterion = NULL)
   spec <- fit0@spec
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
@@ -93,7 +97,7 @@ test_that("the gradient matches numDeriv under ml, on the range space", {
 
 test_that("the gradient vanishes at the reported optimum", {
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
-                 outer_method = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed"))
   spec <- fit@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -142,7 +146,7 @@ test_that("the exact route is taken only where it applies", {
   ix2 <- outer_hyper_index(sp2, statmod_blocks(sp2, de2))
   expect_true(outer_gradient_ok(sp2, de2, ix2, reml("observed")))
   f <- statmod(y ~ random(~ 1 | g), distributions7::gaussian1_distrib(), dr,
-               outer_method = reml("observed"))
+               outer_criterion = reml("observed"))
   expect_true(is.finite(f@criterion))
 
   # a lasso is not, its penalty having a kink where a Laplace approximation
@@ -160,9 +164,9 @@ test_that("exact and derivative-free reach the same hyperparameter", {
   # the two routes share the criterion and nothing else, so agreeing on where
   # it is largest is a check of the gradient rather than of the optimizer
   fast <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
-                  outer_method = reml(hessian = "observed"))
+                  outer_criterion = reml(hessian = "observed"))
   slow <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
-                  outer_method = reml(hessian = "observed"),
+                  outer_criterion = reml(hessian = "observed"),
                   outer_optimizer = optimizers7::nelder_mead())
   lam_f <- fast@hyper$mu[["s(x, k = 10)"]][["lambda"]]
   lam_s <- slow@hyper$mu[["s(x, k = 10)"]][["lambda"]]
@@ -185,9 +189,9 @@ test_that("the gradient pays from the second hyperparameter on", {
   d3$y <- sin(1.4 * d3$a) + d3$b^2 + stats::rnorm(n2, sd = 0.3)
   f <- y ~ s(a, k = 8) + s(b, k = 8)
   fast <- statmod(f, distributions7::gaussian1_distrib(), d3,
-                  outer_method = reml(hessian = "observed"))
+                  outer_criterion = reml(hessian = "observed"))
   slow <- statmod(f, distributions7::gaussian1_distrib(), d3,
-                  outer_method = reml(hessian = "observed"),
+                  outer_criterion = reml(hessian = "observed"),
                   outer_optimizer = optimizers7::nelder_mead())
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
   expect_lt(nrow(fast@history$outer), nrow(slow@history$outer))

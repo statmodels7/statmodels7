@@ -21,7 +21,7 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
   # of it than the one the default produces. Measured, five of these
   # comparisons went from agreeing to disagreeing.
   inner <- iwls()
-  fit0 <- statmod(formula, distrib, data, inner_method = inner)
+  fit0 <- statmod(formula, distrib, data, inner_optimizer = inner)
   spec <- fit0@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -32,7 +32,7 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
       lapply(pp, function(v) stats::setNames(as.numeric(v), names(v))))
     hl <- hl[lengths(hl) > 0L]
     list(hy = hy, fit = statmod(formula, distrib, data, hyper = hl,
-                                inner_method = inner))
+                                inner_optimizer = inner))
   }
   list(
     idx = idx,
@@ -143,7 +143,7 @@ test_that("a Newton step on the exact pair lands where the search does", {
   # used to take Newton steps, and they must arrive where an optimizer that
   # only ever sees the value and the gradient arrives
   ref <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dh,
-                 outer_method = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed"))
   spec <- ref@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -212,7 +212,7 @@ test_that("a variance component's Hessian is exact now, not differenced", {
   # and the fit runs through newton(), which needs the Hessian at every step
   f <- statmod(y ~ x + random(~ 1 | g),
                distributions7::gaussian1_distrib(), dr,
-               outer_method = reml(hessian = "observed"))
+               outer_criterion = reml(hessian = "observed"))
   expect_true(is.finite(f@criterion))
   expect_gt(f@hyper$mu[["random(~1 | g)"]][[1L]], 0.3)
 })

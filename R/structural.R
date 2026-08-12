@@ -437,17 +437,25 @@ statmod_full_information <- function(spec, coef,
   # inside term_curvature() reproduces exactly: it runs at the same
   # parameters over the same static predictor, so the two agree by
   # construction and the callback need not evaluate the family again.
-  blocks <- function(e, i, D) {
-    cross <- numeric(m)
+  # The pieces are built on the ACTIVE SET the term asks for -- with a panel
+  # that is the coefficients, the population parameters and one group's
+  # deviations -- so the outer products here are of the same size whatever
+  # the number of groups. Building them over every unknown and letting the
+  # term subset would put the quadratic cost back exactly where the
+  # restriction removes it.
+  blocks <- function(e, i, D, act = NULL) {
+    if (is.null(act)) act <- seq_len(m)
+    mk <- length(act)
+    cross <- numeric(mk)
     for (q in seq_along(params)) {
       if (q == ap) next
-      cross <- cross + at(H[[hess_key(params, ap, q)]], i) * Vs[[q]][i, ]
+      cross <- cross + at(H[[hess_key(params, ap, q)]], i) * Vs[[q]][i, act]
     }
-    M <- matrix(0, m, m)
+    M <- matrix(0, mk, mk)
     for (r in seq_along(params)) {
-      vr <- if (r == ap) D else Vs[[r]][i, ]
+      vr <- if (r == ap) D else Vs[[r]][i, act]
       for (r2 in seq_along(params)) {
-        vr2 <- if (r2 == ap) D else Vs[[r2]][i, ]
+        vr2 <- if (r2 == ap) D else Vs[[r2]][i, act]
         M <- M + at(D3[[deriv3_key(params, ap, r, r2)]], i) * outer(vr, vr2)
       }
     }
@@ -730,6 +738,43 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
   list(value = obj$fn(beta), converged = ok, iterations = its)
 }
 
+#' The Penalty Over a Structural Term's Free Parameters, as a Block
+#'
+#' @description
+#' The Hessian of whatever penalty covers a structural term's own parameters,
+#' over the FREE ones and in their order, which is the order the tail of
+#' \code{\link{statmod_full_information}} carries them in.
+#'
+#' @details
+#' Written once because three readers need it and a block each of them placed
+#' for itself would agree only by accident: the joint fit, the variance
+#' matrix, and the marginal criterion. Where no structural term carries a
+#' penalty the answer is \code{NULL}, and a caller pads with zeros as before.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param hyper The hyperparameters.
+#' @param nfree The number of free parameters the caller expects, or
+#'   \code{NULL} to take whatever the term has.
+#'
+#' @return A square matrix, or \code{NULL}.
+#'
+#' @seealso \code{\link{statmod_structural_penalty}}
+#'
+#' @keywords internal
+structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
+  ph <- statmod_structural_penalty(spec, design, hyper, "hessian")
+  if (!length(ph)) return(NULL)
+  st <- statmod_structural_state(design)
+  for (nm in names(ph)) {
+    free <- setdiff(names(st$zeta[[nm]]), st$held[[nm]])
+    if (!is.null(nfree) && length(free) != nfree) next
+    return(ph[[nm]][free, free, drop = FALSE])
+  }
+  NULL
+}
+
+
 #' Fit the Coefficients and a Filter's Parameters in One System
 #'
 #' @description
@@ -921,11 +966,20 @@ statmod_structural_table <- function(fit, level = 0.95) {
   su <- attr(design, "structural")
   if (is.null(su) || !length(su)) return(NULL)
 
+  nb <- sum(vapply(design, function(d) d$npar, integer(1)))
   V <- tryCatch({
     I <- statmod_full_information(spec, fit@coefficients, design)
+    # with a penalty over the term's own parameters the matrix to invert is
+    # the penalized one: the deviations of a panel are identified by that
+    # penalty and by nothing else, so the unpenalized information is singular
+    # along the direction that trades a population value against them
+    ps <- structural_penalty_block(spec, design, fit@hyper, nrow(I) - nb)
+    if (!is.null(ps)) {
+      ix <- nb + seq_len(nrow(I) - nb)
+      I[ix, ix] <- I[ix, ix] + ps
+    }
     solve(I)
   }, error = function(e) NULL)
-  nb <- sum(vapply(design, function(d) d$npar, integer(1)))
   z <- stats::qnorm(1 - (1 - level) / 2)
 
   rows <- list()
@@ -935,35 +989,47 @@ statmod_structural_table <- function(fit, level = 0.95) {
     zeta <- st$zeta[[u$term]]
     held <- st$held[[u$term]]
     nm <- modelterms7::term_params(tm)
-    links <- modelterms7::term_links(tm)
     free <- setdiff(nm, held)
+    # What is reported is what the TERM says it reports, which is not always
+    # the coordinate it was estimated on: a score-driven persistence rides a
+    # partial autocorrelation, and the literature's beta_j is the
+    # autoregressive coefficient, a function of the whole chart. The Jacobian
+    # comes with it, so the standard error is the delta method over the JOINT
+    # variance rather than one entry of its diagonal -- above q = 1 a
+    # coefficient reads several coordinates and their covariance matters.
+    rd <- modelterms7::term_readable(tm, zeta)
     # the joint matrix drops a held level, so its tail is the free ones in
     # the term's own order
-    se_z <- rep(NA_real_, length(nm))
-    names(se_z) <- nm
-    if (!is.null(V) && nrow(V) == nb + length(free)) {
-      d <- diag(V)[nb + seq_along(free)]
-      se_z[free] <- sqrt(pmax(d, 0))
+    Vz <- matrix(0, length(nm), length(nm), dimnames = list(nm, nm))
+    ok <- !is.null(V) && nrow(V) == nb + length(free)
+    if (ok) {
+      Vz[free, free] <- V[nb + seq_along(free), nb + seq_along(free),
+                          drop = FALSE]
     }
-    for (j in nm) {
-      lk <- links[[j]]
-      zj <- zeta[[j]]
-      psi <- linkfunctions7::linkinv(lk, zj)
-      s <- se_z[[j]]
+    J <- rd$jacobian
+    vq <- if (ok) diag(J %*% Vz %*% t(J)) else rep(NA_real_, length(nm))
+    # a held parameter is not estimated, and a quantity that reads one is not
+    # either: it would be reported with the variance of the rest alone
+    touches_held <- apply(J[, held, drop = FALSE] != 0, 1L, any)
+    for (i in seq_along(rd$name)) {
+      s <- if (ok && !touches_held[[i]]) sqrt(max(vq[[i]], 0)) else NA_real_
+      val <- rd$value[[i]]
       lo <- hi <- NA_real_
       if (is.finite(s)) {
-        ends <- sort(c(linkfunctions7::linkinv(lk, zj - z * s),
-                       linkfunctions7::linkinv(lk, zj + z * s)))
+        # the interval is built on the scale that keeps the quantity in its
+        # own set and mapped back, as every interval in the toolkit is
+        g <- rd$scale[[i]]
+        t0 <- linkfunctions7::linkfun(g, val)
+        st <- s * abs(linkfunctions7::dlinkfun(g, val))
+        ends <- sort(c(linkfunctions7::linkinv(g, t0 - z * st),
+                       linkfunctions7::linkinv(g, t0 + z * st)))
         lo <- ends[1L]
         hi <- ends[2L]
       }
       rows[[length(rows) + 1L]] <- data.frame(
-        parameter = u$param, term = u$term, name = j,
-        estimate = as.numeric(psi),
-        se = if (is.finite(s))
-          abs(linkfunctions7::dlinkinv(lk, zj)) * s else NA_real_,
-        lower = lo, upper = hi,
-        held = j %in% held, stringsAsFactors = FALSE)
+        parameter = u$param, term = u$term, name = rd$name[[i]],
+        estimate = as.numeric(val), se = s, lower = lo, upper = hi,
+        held = nm[[i]] %in% held, stringsAsFactors = FALSE)
     }
   }
   do.call(rbind, rows)

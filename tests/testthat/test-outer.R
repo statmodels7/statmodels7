@@ -10,7 +10,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
   # the observed information is asked for so that numDeriv's Hessian of the
   # penalized objective is the same matrix the criterion uses
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                 outer_method = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed"))
   spec <- fit@spec
   design <- statmod_design(spec)
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
@@ -41,7 +41,7 @@ test_that("REML is Wood's criterion, reached by the other route", {
   # (p - r) log 2pi, which here is the intercept, the smooth's linear
   # component and the scale's intercept.
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                 outer_method = reml())
+                 outer_criterion = reml())
   spec <- fit@spec
   design <- statmod_design(spec)
   nm <- names(spec@terms$mu)[vapply(spec@terms$mu, function(t)
@@ -70,7 +70,7 @@ test_that("REML is Wood's criterion, reached by the other route", {
 
 test_that("the reported hyperparameter is where the criterion is best", {
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                 outer_method = reml())
+                 outer_criterion = reml())
   nm <- names(fit@hyper$mu)[1L]
   lam <- fit@hyper$mu[[nm]][["lambda"]]
   at <- function(v) {
@@ -92,7 +92,7 @@ test_that("the reported hyperparameter is where the criterion is best", {
 
 test_that("a smoothing parameter estimated by REML lands on a sane edf", {
   fit <- statmod(y ~ s(x, k = 12), distributions7::gaussian1_distrib(), ds,
-                 outer_method = reml())
+                 outer_criterion = reml())
   e <- fit@edf$edf[fit@edf$term != "linpar" & fit@edf$parameter == "mu"]
   # a sine over four periods of the covariate is neither a straight line nor
   # an interpolation of 300 points
@@ -115,9 +115,9 @@ test_that("ML puts less variance on a random effect than REML", {
   dv$y <- 1 + 2 * dv$x + u[as.integer(g)] + stats::rnorm(250, sd = 0.5)
 
   r <- statmod(y ~ x + random(~ 1 | g),
-               distributions7::gaussian1_distrib(), dv, outer_method = reml())
+               distributions7::gaussian1_distrib(), dv, outer_criterion = reml())
   l <- statmod(y ~ x + random(~ 1 | g),
-               distributions7::gaussian1_distrib(), dv, outer_method = ml())
+               distributions7::gaussian1_distrib(), dv, outer_criterion = ml())
   nm <- "random(~1 | g)"
   sd_r <- r@hyper$mu[[nm]][[1L]]
   sd_l <- l@hyper$mu[[nm]][[1L]]
@@ -139,19 +139,43 @@ test_that("a kinked penalty keeps the hyperparameter it was given", {
   fit <- statmod(y ~ s(x, k = 10) + lasso(~ n1 + n2 + n3),
                  distributions7::gaussian1_distrib(), dl,
                  hyper = list(mu = list(lasso = c(lambda = 40))),
-                 outer_method = reml())
+                 outer_criterion = reml())
   expect_equal(unname(fit@hyper$mu[["lasso(~n1 + n2 + n3)"]][["lambda"]]), 40)
   # while the smooth's did move
   expect_false(isTRUE(all.equal(
     unname(fit@hyper$mu[["s(x, k = 10)"]][["lambda"]]), 1)))
 })
 
-test_that("an outer method with nothing to estimate says so", {
-  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), ds,
-                       outer_method = reml()),
-               "no hyperparameter to", fixed = TRUE)
+test_that("the criterion applies to a smooth penalty and to nothing else", {
+  # It comes into play if and only if the model carries one, which is a
+  # property of the MODEL and not of how the argument was written: a model
+  # with no penalty fits and estimates nothing, whether or not the default
+  # was typed out.
+  a <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds)
+  b <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds,
+               outer_criterion = reml())
+  expect_equal(a@coefficients, b@coefficients)
+  expect_length(unlist(a@hyper), 0L)
+  expect_true(is.na(a@criterion))
+
+  # a kinked penalty is not a marginal criterion's business: it is chosen by
+  # `sparse_criterion`, a path over its own values, which is bic() by default
+  k <- statmod(y ~ lasso(~ x), distributions7::gaussian1_distrib(), ds)
+  expect_false(isTRUE(all.equal(unname(unlist(k@hyper)), 1)))
+  expect_true(is.finite(k@criterion))
+  # and holding it is asking for that
+  h <- statmod(y ~ lasso(~ x), distributions7::gaussian1_distrib(), ds,
+               sparse_criterion = NULL)
+  expect_equal(unname(unlist(h@hyper)), 1)
+
+  # and where there IS a smooth penalty it acts, without being asked
+  m <- statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(), ds)
+  expect_false(isTRUE(all.equal(
+    unname(m@hyper$mu[["s(x, k = 8)"]][["lambda"]]), 1)))
+  expect_false(is.na(m@criterion))
+
   expect_error(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
-                       ds, outer_method = "reml"),
+                       ds, outer_criterion = "reml"),
                "reml(), ml(), aic(), bic(), cv() or NULL", fixed = TRUE)
 })
 
@@ -164,12 +188,12 @@ test_that("ml refuses a penalty whose null space it cannot read", {
   dt$y <- dt$x1^2 + dt$x2 + stats::rnorm(200, sd = 0.3)
   expect_error(statmod(y ~ te(x1, x2, k = 4),
                        distributions7::gaussian1_distrib(), dt,
-                       outer_method = ml()),
+                       outer_criterion = ml()),
                "cannot read the null space")
   # while reml integrates everything and needs no such basis
   fit <- statmod(y ~ te(x1, x2, k = 4),
                  distributions7::gaussian1_distrib(), dt,
-                 outer_method = reml())
+                 outer_criterion = reml())
   expect_true(is.finite(fit@criterion))
   # one smoothing parameter per margin, both moved off the probe value
   th <- fit@hyper$mu[["te(x1, x2, k = 4)"]]
@@ -178,7 +202,7 @@ test_that("ml refuses a penalty whose null space it cannot read", {
 
 test_that("the summary marks an estimated hyperparameter as estimated", {
   fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                 outer_method = reml())
+                 outer_criterion = reml())
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "smooth")]]

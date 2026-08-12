@@ -28,7 +28,7 @@ A list with \code{par}, \code{value}, \code{converged},
 \code{iterations} and \code{history}.
 }
 \description{
-Runs \code{inner_method} on the jointly fitted coefficients, the others
+Runs \code{inner_optimizer} on the jointly fitted coefficients, the others
 held fixed.
 }
 \keyword{internal}

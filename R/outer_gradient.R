@@ -74,6 +74,13 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
     u <- statmod_unit(spec, design, bits[1L], bits[2L])
     if (is.null(u) || !penalty_answers(u$penalty, order)) return(FALSE)
+    # A penalty over a STRUCTURAL term's own parameters is left to the
+    # derivative-free search. The route below reads how the determinant moves
+    # with the mode through u_vector(), which contracts the family's third
+    # derivative against the design blocks -- an assembly that assumes the
+    # predictor is X beta. A filter's level is a recursion of the term's
+    # parameters, so the same contraction is not the derivative there.
+    if (isTRUE(u$structural)) return(FALSE)
   }
   TRUE
 }
@@ -164,7 +171,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   H <- statmod_information_at(spec, coef, design, expected = FALSE)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S[!is.finite(S)] <- 0
-  K <- H + S
+  # The routes below form a FULL inverse, and the inverse of a sparse matrix
+  # is dense, so densifying here gives up nothing sparsity could have kept.
+  K <- as_dense(H + S)
   Kfac <- tryCatch(chol(K), error = function(e) NULL)
   if (is.null(Kfac)) return(NULL)
   Kinv <- chol2inv(Kfac)

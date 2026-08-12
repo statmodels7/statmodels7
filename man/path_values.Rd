@@ -4,7 +4,7 @@
 \alias{path_values}
 \title{The Values a Path Visits}
 \usage{
-path_values(pen, theta, name, s_max, n_values = 40L, min_ratio = 0.001)
+path_values(pen, theta, name, s_max, n_values = 40L, min_ratio = 1e-04)
 }
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty.}

@@ -1,6 +1,84 @@
 #' @include formula.R
 NULL
 
+#' Bind a Model's Term Blocks Side by Side
+#'
+#' @description
+#' The assembled design, sparse when any term's block is.
+#'
+#' @details
+#' A grouping indicator is sparse by construction -- a row belongs to one
+#' group, so a random effect over \eqn{m} of them has density \eqn{1/m} --
+#' and \pkg{modelterms7} builds it that way. Binding it beside a dense block
+#' with \code{cbind()} does not work: base dispatch reads the sparse block as
+#' a vector and reports that the number of items to replace is not a multiple
+#' of the replacement length, three frames from anything a caller wrote.
+#'
+#' The result is sparse whenever ONE block is, which is the right rule
+#' because sparsity is a property of the assembled matrix rather than of its
+#' pieces: a dense fixed block beside a large indicator leaves a matrix that
+#' is still overwhelmingly zero, and its factorization stays sparse under a
+#' fill-reducing ordering.
+#'
+#' @param mats A list of blocks.
+#' @param n The number of observations, for the empty case.
+#'
+#' @return A matrix, or a \pkg{Matrix} sparse matrix.
+#'
+#' @keywords internal
+bind_blocks <- function(mats, n) {
+  if (!length(mats)) return(matrix(0, n, 0L))
+  if (!any(vapply(mats, isS4, logical(1)))) return(do.call(cbind, mats))
+  Reduce(function(a, b) Matrix::cbind2(a, b), mats)
+}
+
+
+#' Is a Design Sparse, and the Zero Matrix to Accumulate It Into
+#'
+#' @description
+#' \code{design_sparse()} reports whether any equation's block is sparse, and
+#' \code{zero_information()} gives the square zero matrix of the right kind to
+#' accumulate the information into.
+#'
+#' @details
+#' The information is assembled one \code{crossprod} per parameter pair and
+#' placed into a square accumulator. With a sparse design each product is
+#' sparse, and placing it into a dense accumulator signals that the number of
+#' items to replace is not a multiple of the replacement length -- from
+#' inside the assembly, naming nothing a caller wrote. The accumulator
+#' follows the design instead.
+#'
+#' @param design The design.
+#' @param total The number of stacked coefficients.
+#'
+#' @return A logical, or a square matrix of zeros.
+#'
+#' @keywords internal
+design_sparse <- function(design) {
+  any(vapply(design, function(d) isS4(d$X), logical(1)))
+}
+
+#' @rdname design_sparse
+#' @keywords internal
+as_dense <- function(A) if (isS4(A)) as.matrix(A) else A
+
+#' @rdname design_sparse
+#' @keywords internal
+as_sparse <- function(A) {
+  if (isS4(A)) A else methods::as(methods::as(A, "denseMatrix"), "CsparseMatrix")
+}
+
+#' @rdname design_sparse
+#' @keywords internal
+zero_information <- function(design, total) {
+  if (design_sparse(design)) {
+    Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
+                         dims = c(total, total))
+  } else {
+    matrix(0, total, total)
+  }
+}
+
 #' The Specification of a Model, Before It Is Fitted
 #'
 #' @description
@@ -602,7 +680,7 @@ statmod_design_blocks <- function(spec) {
     ends <- cumsum(widths)
     starts <- ends - widths + 1L
     list(
-      X = do.call(cbind, mats),
+      X = bind_blocks(mats, spec@n_obs),
       coef_names = unlist(nms, use.names = FALSE),
       npar = as.integer(sum(widths)),
       blocks = stats::setNames(

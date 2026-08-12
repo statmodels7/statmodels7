@@ -4,14 +4,14 @@
 # derivative of the objective in a coefficient is not the block times the
 # score, and a fit built on that converges to the wrong point.
 
-sim_gas <- function(n, omega, a1, b1, sd = 1, seed = 21) {
+sim_gas <- function(n, omega, alpha1, b1, sd = 1, seed = 21) {
   set.seed(seed)
   f <- numeric(n)
   y <- numeric(n)
   s <- 0
   f0 <- omega / (1 - b1)
   for (t in seq_len(n)) {
-    f[t] <- omega + a1 * (if (t > 1) s else 0) +
+    f[t] <- omega + alpha1 * (if (t > 1) s else 0) +
       b1 * (if (t > 1) f[t - 1] else f0)
     y[t] <- f[t] + stats::rnorm(1, sd = sd)
     s <- (y[t] - f[t]) / sd^2
@@ -47,7 +47,7 @@ test_that("the gradient in the coefficients carries the filter's feedback", {
                        distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
   sst <- statmod_structural_state(des)
-  sst$zeta[[1L]] <- c(omega = 0.2, a1 = 0.3, pacf1 = 0.6)
+  sst$zeta[[1L]] <- c(omega = 0.2, alpha1 = 0.3, pacf1 = 0.6)
   cf <- list(mu = 0.8, sigma = 0.1)
 
   L <- function(v) {
@@ -77,7 +77,7 @@ test_that("the gradient in the term's own parameters is exact", {
   des <- statmod_design(spec)
   sst <- statmod_structural_state(des)
   cf <- list(mu = 0.8, sigma = 0.1)
-  nm <- c("omega", "a1", "pacf1")
+  nm <- c("omega", "alpha1", "pacf1")
   z0 <- c(0.2, 0.3, 0.6)
 
   L <- function(z) {
@@ -92,13 +92,13 @@ test_that("the gradient in the term's own parameters is exact", {
 })
 
 test_that("statmod recovers a score-driven model it simulated", {
-  truth <- c(omega = 0.3, a1 = 0.4, pacf1 = 0.7)
-  dd <- sim_gas(2000, truth[["omega"]], truth[["a1"]], truth[["pacf1"]])
+  truth <- c(omega = 0.3, alpha1 = 0.4, pacf1 = 0.7)
+  dd <- sim_gas(2000, truth[["omega"]], truth[["alpha1"]], truth[["pacf1"]])
   fit <- statmod(y ~ gas(p = 1, q = 1, time = t) - 1,
                  distributions7::gaussian1_distrib(), dd)
   expect_true(fit@converged)
   est <- fit@structural[[1L]]$parameter
-  expect_named(est, c("omega", "a1", "pacf1"))
+  expect_named(est, c("omega", "alpha1", "pacf1"))
   expect_equal(unname(est), unname(truth), tolerance = 0.15)
   expect_equal(exp(fit@coefficients$sigma), 1, tolerance = 0.1,
                ignore_attr = TRUE)
@@ -529,7 +529,7 @@ test_that("the two likelihoods of a penalized fit are both available", {
   b <- stats::rnorm(m, sd = 0.8)
   dd$y <- 1 + 0.7 * dd$x + b[as.integer(dd$g)] + stats::rnorm(n)
   fit <- statmod(y ~ x + random(~ 1 | g), gaussian1_distrib(), dd,
-                 outer_method = ml())
+                 outer_criterion = ml())
 
   lc <- logLik(fit)
   lm_ <- logLik(fit, type = "marginal")
@@ -570,4 +570,158 @@ test_that("a filter is fitted in the same system as the coefficients", {
   # and a term of the LIKELIHOOD shape keeps the alternation, its information
   # being assembled by a different route
   expect_true(is.function(statmod_fit_joint))
+})
+
+
+test_that("a filter is reported under the names its literature uses", {
+  dd <- sim_gas(1500, 0.3, 0.4, 0.7)
+  fit <- statmod(y ~ gas(p = 1, q = 1, time = t) - 1,
+                 distributions7::gaussian1_distrib(), dd)
+  tb <- statmod_structural_table(fit)
+  expect_identical(tb$name, c("omega", "alpha1", "beta1"))
+  expect_true(all(is.finite(tb$se)))
+  # the persistence is reported as the COEFFICIENT, so it must agree with the
+  # chart carried through Levinson-Durbin rather than with the free value
+  z <- fit@structural[[1L]]$unconstrained
+  expect_equal(tb$estimate[[3L]],
+               modelterms7::term_readable(fit@spec@terms$mu[[1L]], z)$value[[3L]])
+  expect_equal(tb$estimate, unname(c(0.3, 0.4, 0.7)), tolerance = 0.15)
+  # and the interval respects the region: |beta| < 1 for a stationary AR(1)
+  expect_true(tb$lower[[3L]] > -1 && tb$upper[[3L]] < 1)
+  expect_output(print(summary(fit)), "beta1")
+  expect_output(print(summary(fit)), "alpha1")
+
+  # above q = 1 the coefficient is a function of the WHOLE chart, so the
+  # reported quantity and the free coordinate are different numbers and the
+  # standard error is a delta method over the joint variance rather than one
+  # entry of its diagonal
+  dd2 <- sim_gas(1200, 0.3, 0.4, 0.7, seed = 4)
+  f2 <- statmod(y ~ gas(p = 1, q = 2, time = t) - 1,
+                distributions7::gaussian1_distrib(), dd2)
+  t2 <- statmod_structural_table(f2)
+  expect_identical(t2$name, c("omega", "alpha1", "beta1", "beta2"))
+  z2 <- f2@structural[[1L]]$unconstrained
+  rho <- linkfunctions7::linkinv(linkfunctions7::rhobit_link(),
+                                 z2[c("pacf1", "pacf2")])
+  expect_false(isTRUE(all.equal(t2$estimate[[3L]], unname(rho[[1L]]))))
+  expect_true(all(is.finite(t2$se)))
+})
+
+
+# A panel: each group runs the same filter with a departure of its own, which
+# is what deviations are for, and the ridge over them is what identifies them.
+sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) {
+  set.seed(seed)
+  out <- list()
+  for (gi in seq_len(m)) {
+    om <- omega + spread * stats::rnorm(1)
+    f <- numeric(n); y <- numeric(n); s <- 0
+    f0 <- om / (1 - b1)
+    for (t in seq_len(n)) {
+      f[t] <- om + alpha1 * (if (t > 1) s else 0) + b1 * (if (t > 1) f[t - 1] else f0)
+      y[t] <- f[t] + stats::rnorm(1, sd = sd)
+      s <- (y[t] - f[t]) / sd^2
+    }
+    out[[gi]] <- data.frame(id = factor(gi), t = seq_len(n), y = y)
+  }
+  do.call(rbind, out)
+}
+
+panel_fml <- y ~ gas(p = 1, q = 1, by = id, time = t, deviations = TRUE,
+                     penalty = "ridge") - 1
+
+# the criterion at a given hyperparameter, with the mode refitted there, which
+# is what outer_fit()'s own evaluation does
+panel_at <- function(spec, design, blocks, hyper, beta, value, method,
+                     basis = NULL) {
+  hy <- hyper
+  for (k in names(hy$mu)) hy$mu[[k]][[1L]] <- value
+  res <- statmod_alternate(spec, design, blocks, hy, iwls(), beta, FALSE,
+                           "bartlett", 50, 1e-6, vb_inner(verbosity(0)))
+  cf <- res$obj$split(res$par)
+  m <- statmod_marginal(spec, design, cf, hy, method, "bartlett", basis)
+  z <- statmod_structural_state(design)$zeta[[1L]]
+  list(m = m, coef = cf, hyper = hy, dev = as.numeric(z)[-seq_len(3L)])
+}
+
+test_that("a marginal criterion reaches a penalty on a filter's parameters", {
+  skip_if_not_installed("numDeriv")
+  dd <- sim_panel(3, 40, 0.4, 0.4, 0.6)
+  spec <- statmod_spec(panel_fml, distributions7::gaussian1_distrib(), dd)
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  hyper <- statmod_hyper_start(spec, design)
+  obj0 <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  beta <- statmod_start(spec, design, obj0, NULL)
+
+  # the penalty covers the term's own parameters, one entry per parameter
+  # carrying deviations, and each entry supplies a hyperparameter to estimate
+  idx <- outer_hyper_index(spec, blocks)
+  expect_identical(nrow(idx), 3L)
+  expect_true(structural_penalized(spec, design))
+
+  got <- panel_at(spec, design, blocks, hyper, beta, 0.3, reml())
+  expect_false(is.null(got$m))
+  # the determinant spans the coefficients AND the term's free parameters:
+  # over the coefficients alone it would not depend on the hyperparameter
+  nb <- sum(vapply(design, function(d) d$npar, integer(1)))
+  sst <- statmod_structural_state(design)
+  key <- names(sst$zeta)[[1L]]
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nfree <- length(free)
+  expect_identical(got$m$q, as.integer(nb + nfree))
+
+  # and it is the Laplace formula, assembled here over those same unknowns by
+  # a route that shares no arithmetic with it: numDeriv on the objective
+  b <- unlist(got$coef[spec@distrib@params], use.names = FALSE)
+  z0 <- as.numeric(sst$zeta[[key]][free])
+  obj <- statmod_objective(spec, got$hyper, design, FALSE, "bartlett")
+  pen_of <- function(u) {
+    v <- sst$zeta[[key]]
+    v[free] <- u[nb + seq_along(free)]
+    sst$zeta[[key]] <- v
+    sst$key <- NULL
+    sst$value <- NULL
+    obj$fn(u[seq_len(nb)])
+  }
+  M <- numDeriv::hessian(pen_of, c(b, z0))
+  sst$zeta[[key]][free] <- z0
+  sst$key <- NULL
+  sst$value <- NULL
+  ll <- statmod_loglik_at(spec, got$coef, design)
+  rho <- statmod_penalty_at(spec, got$coef, got$hyper, design, "value")
+  by_hand <- ll - rho + (nb + nfree) / 2 * log(2 * pi) -
+    determinant(M, logarithm = TRUE)$modulus[[1L]] / 2
+  expect_equal(got$m$value, as.numeric(by_hand), tolerance = 1e-5)
+
+  # the exact-gradient route refuses here rather than returning the wrong
+  # derivative: it reads how the determinant moves with the mode through a
+  # contraction that assumes the predictor is X beta
+  expect_false(outer_gradient_ok(spec, design, idx, reml(), 1L))
+})
+
+test_that("the criterion prefers shrinkage where the groups do not differ", {
+  # groups simulated from the SAME parameters, so every deviation is truly
+  # zero and a criterion that reads the penalty must say so
+  dd <- sim_panel(3, 40, 0.4, 0.4, 0.6, spread = 0)
+  spec <- statmod_spec(panel_fml, distributions7::gaussian1_distrib(), dd)
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  hyper <- statmod_hyper_start(spec, design)
+  obj0 <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  beta <- statmod_start(spec, design, obj0, NULL)
+
+  tight <- panel_at(spec, design, blocks, hyper, beta, 0.02, reml())
+  loose <- panel_at(spec, design, blocks, hyper, beta, 2, reml())
+  expect_gt(tight$m$value, loose$m$value)
+  # and the penalty is doing the shrinking, not the criterion alone
+  expect_lt(max(abs(tight$dev)), max(abs(loose$dev)))
+
+  # ml() integrates the penalized directions alone, so its determinant is
+  # smaller than reml()'s by exactly the parameters no penalty covers
+  basis <- integrated_basis(spec, design, "ml")
+  expect_identical(ncol(basis), 0L)
+  mm <- panel_at(spec, design, blocks, hyper, beta, 0.3, ml(), basis)$m
+  rr <- panel_at(spec, design, blocks, hyper, beta, 0.3, reml())$m
+  expect_identical(mm$q, rr$q - 4L)
 })

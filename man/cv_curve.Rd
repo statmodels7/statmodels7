@@ -4,7 +4,7 @@
 \alias{cv_curve}
 \title{The Held-Out Deviance of Every Point of a Path}
 \usage{
-cv_curve(spec, data, weights, offsets, inner_method, hypers, folds)
+cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -13,7 +13,7 @@ cv_curve(spec, data, weights, offsets, inner_method, hypers, folds)
 
 \item{weights, offsets}{As \code{\link{statmod}} received them.}
 
-\item{inner_method}{The inner method.}
+\item{inner_optimizer}{The inner method.}
 
 \item{hypers}{A list of hyperparameter settings, one per path point.}
 

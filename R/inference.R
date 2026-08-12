@@ -139,9 +139,15 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
   if (nz > 0L) {
-    # the term's parameters carry no penalty, so the block is padded
     S <- rbind(cbind(S, matrix(0, total, nz)),
                matrix(0, nz, total + nz))
+    # A penalty over the term's OWN parameters belongs in that tail. Leaving
+    # it out is not a conservative choice: the deviations of a panel are not
+    # identified without it -- a constant added to a population value and
+    # taken off every deviation leaves the filter unchanged -- so the matrix
+    # is singular along exactly that direction and nothing can be reported.
+    ps <- structural_penalty_block(spec, design, object@hyper, nz)
+    if (!is.null(ps)) S[total + seq_len(nz), total + seq_len(nz)] <- ps
   }
 
   keep <- rep(TRUE, total)
@@ -212,6 +218,14 @@ solve_pd <- function(A, what, labels = NULL) {
   # and it is not a matrix to decompose: eigen() raises its own error there,
   # which would replace the message below with one naming neither the fit nor
   # the direction. flat_directions() reports those rows instead.
+  # The eigenvalue test and the message's flat direction both need a dense
+  # matrix, and there is no cheap sparse eigendecomposition to replace them
+  # with. Densifying HERE is deliberate rather than a lapse: this runs once,
+  # at vcov(), on a p by p matrix, where the sparsity that matters is in the
+  # n by p design and the per-iteration products taken against it. The same
+  # judgement is recorded for the observed Hessian of a regime mixture, which
+  # is also computed once and left in R.
+  A <- as_dense(A)
   pd <- FALSE
   if (all(is.finite(A))) {
     ev <- eigen(A, symmetric = TRUE, only.values = TRUE)$values

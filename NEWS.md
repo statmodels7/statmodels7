@@ -1,3 +1,165 @@
+# statmodels7 0.26.0
+
+* A model carrying a grouping indicator is fitted SPARSE end to end, and the
+  gain is an order of magnitude:
+
+  | n | groups | before | after | speedup |
+  |---|---|---|---|---|
+  | 2000 | 50 | 1.38 s | 1.29 s | 1.1x |
+  | 4000 | 100 | 3.45 s | 0.70 s | 4.9x |
+  | 6000 | 200 | 15.13 s | 0.86 s | 17.6x |
+  | 8000 | 400 | 92.81 s | 3.31 s | **28.0x** |
+
+  The shape changes and not only the constant: 3.45, 15.13, 92.81 was
+  accelerating, and 0.70, 0.86, 3.31 is nearly flat. The log-likelihood is
+  identical to the last printed digit at every size and the fixed effects
+  agree with `lmer` to 2.0e-05.
+
+  It took two steps and the first alone was not enough. With the block sparse
+  the fit was 0.9x to 1.4x: `crossprod` left the profile entirely, and
+  `.Fortran` ROSE from 57.9 to 72.6 per cent, because `iwls()` still ran a
+  dense QR. **A profile share is not a speedup: removing the cheaper half
+  leaves the dearer one.** `sqrt_design()` now keeps sparsity, where it
+  assembled dense zero blocks per pair per iteration, and `augmented_solve()`
+  reaches `Matrix::qr()`: 695x at 100 groups and 75475x at 1000 on the
+  augmented design alone.
+
+  A sparse QR is a QR, so the conditioning property the augmented route
+  exists for is kept exactly, and the choice against a Cholesky of the normal
+  equations -- which times the same and squares the conditioning -- does not
+  arise.
+
+  ⚠️ `Matrix`'s generics must be IMPORTED: a package that only depends on it
+  gets base `t()`, which reaches `t.default()` and reports that its argument
+  is not a matrix, from inside the assembly. `bind_blocks()`,
+  `zero_information()`, `as_dense()` and `as_sparse()` are where the two
+  kinds meet; the full-inverse sites densify deliberately, the inverse of a
+  sparse matrix being dense.
+
+* `inner_method` is `inner_optimizer` and `outer_method` is
+  `outer_criterion`. The first takes optimizers, like `outer_optimizer`; the
+  second takes criteria. `iwls()` stays a statmodels7 object rather than an
+  optimizers7 one for the reason coordinate descent does: it needs the model,
+  not `fn` and `gr`.
+
+  The joint step passed `optimizer = NULL` unconditionally, so
+  `inner_optimizer` was ACCEPTED AND IGNORED for exactly the models it
+  matters most for. Measured now that it is honoured: `lbfgs` is 2x on a
+  three-parameter filter (5.08 s against 9.95) and `newton` is 2.8x on a
+  33-parameter panel (4.58 s against 12.97, 14 iterations against 130), the
+  log-likelihood identical throughout. The default stays Newton, which wins
+  where the parameters are many.
+
+* The hyperparameters are ESTIMATED by default. `outer_criterion` is
+  `reml()`, and it applies to the SMOOTH penalties and comes into play if and
+  only if the model carries one -- a property of the model and not of how the
+  argument was written, so typing the default changes nothing. A model with
+  no penalty, or one whose only penalty is kinked, leaves it unused. On a
+  smooth the difference is real: the effective degrees of freedom go from
+  9.01, which is no penalization at all, to 7.81.
+
+  `hyper` still means HELD AT THESE VALUES and steps the default aside.
+
+* `sparse_criterion`, `bic()` by default, chooses the hyperparameter of a
+  kinked penalty along a path over its own values. Where a model carries both
+  kinds the path is outside and the marginal criterion is estimated inside
+  each of its points, so a smoothing parameter comes from REML and a lasso's
+  lambda from BIC in one fit -- which one argument could not express.
+
+  A prediction-error criterion for the smooth penalties nested inside that
+  path is REJECTED: it scores the same quantity at two levels, and measured,
+  every point of the path came back NA, so the path had nothing to choose
+  between and the hyperparameter kept its starting value while the fit
+  reported success.
+
+* The top of a path now empties the block. The documentation described a
+  check -- "a top whose fit is not empty is doubled until it is" -- that was
+  not implemented, so the grid covered a nearly flat stretch of the criterion
+  and the choice fell on its edge: on eight coefficients of which three
+  carried real signal the top read 26.5 where the block first empties near
+  500. `min_ratio` is 1e-4, which is glmnet's own ratio now that the top is
+  comparable to its `lambda.max`.
+
+  ⚠️ The warning that reports a choice at an end fired on the INDEX alone
+  while its text claimed the criterion was still falling. With the top now
+  emptying the block the criterion is FLAT across that stretch, so index one
+  is a legitimate minimum and the message was naming a cause that was not the
+  real one. It compares against the neighbouring point now, and the two
+  warnings the suite carried were both of that kind.
+
+# statmodels7 0.25.0
+
+* A structural term is reported under the names its literature uses, and
+  under the quantities rather than the coordinates. For a score-driven term
+  that is `omega`, `alpha1` and `beta1`: the last is the AUTOREGRESSIVE
+  COEFFICIENT, taken through the Levinson-Durbin recursion, where the free
+  coordinate is a partial autocorrelation and above `q = 1` a different
+  number.
+
+  The standard error is the delta method over the JOINT variance,
+  `sqrt(J V J')` with `J` from `modelterms7::term_readable()`, not one entry
+  of a diagonal: a coefficient reads the whole chart, so the covariance
+  between its coordinates enters. The interval is built on the scale that
+  keeps each quantity in its own set and mapped back, as every interval in
+  the toolkit is, and a quantity that reads a held parameter is reported
+  without one rather than with the variance of the rest.
+
+  Nothing else moved: for a term whose coordinates are already its
+  quantities the base method reports them on the parameter scale with the
+  diagonal Jacobian of their links, which is what this function did before.
+
+# statmodels7 0.24.0
+
+* `reml()` and `ml()` reach a penalty over a structural term's own
+  parameters, where they used to return a criterion that did not move.
+
+  A marginal criterion integrates the quantities its penalty shrinks. Where
+  that penalty is a term's own -- the deviations of a panel -- those
+  quantities are not coefficients, so a determinant taken over the
+  coefficients alone does not depend on the hyperparameter at all and the
+  criterion is the penalized likelihood, whose maximum in a shrinkage
+  parameter is at no shrinkage. `statmod_marginal_full()` spans the
+  coefficients AND the term's free parameters, which is the order
+  `statmod_full_information()` already carries them in, with the penalty's
+  own Hessian in the tail. Nothing was derived: both pieces existed.
+
+  Measured on a panel of three groups, a ridge on every deviation, the mode
+  refitted at each value: the criterion moves from -157.361 at a prior
+  scale of 0.01 through a maximum of -157.347 at 0.05 to -189.023 at 50,
+  and the deviations follow, sd 0.0008 to 0.148. Against a Laplace formula
+  assembled by `numDeriv` over the same unknowns it agrees to 1e-5.
+
+  `ml()` integrates the penalized coordinates alone, through the penalty's
+  own range basis, so a population value the penalty does not cover is
+  profiled rather than integrated, exactly as an unpenalized coefficient
+  is.
+
+  The EXACT gradient rejects here and the search stays derivative-free.
+  That route reads how the determinant moves with the mode through a
+  contraction of the family's third derivative against the design blocks,
+  an assembly that assumes the predictor is `X beta`; a filter's level is a
+  recursion of the term's parameters and the same contraction is not the
+  derivative there.
+
+* `vcov()` and the summary's structural table report a term whose own
+  parameters carry a penalty.
+
+  Both inverted the unpenalized information, on the comment that a term's
+  parameters carry no penalty. That is not a conservative choice: the
+  deviations of a panel are identified by their penalty and by nothing
+  else, a constant added to a population value and taken off every
+  deviation leaving the filter exactly unchanged, so the matrix is singular
+  along that direction. The table reported a missing standard error for
+  every parameter of the term. `structural_penalty_block()` places the
+  penalty in the tail, written once because the fit, the variance matrix
+  and the criterion all need it and a block each of them placed for itself
+  would agree only by accident.
+
+* A panel with deviations fits again. `statmod_fit_joint()` reaches
+  `modelterms7::term_curvature()`, which rejected deviations, so every such
+  model -- with or without a penalty -- signalled an error rather than
+  fitting. It needs `modelterms7` 0.21.0.
+
 # statmodels7 0.23.0
 
 * A structural term of the filter shape is fitted in the SAME system as the

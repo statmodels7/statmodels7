@@ -9,7 +9,7 @@ outer_fit(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -28,7 +28,7 @@ outer_fit(
 
 \item{hyper}{The starting hyperparameters.}
 
-\item{inner_method}{How the smooth block is fitted.}
+\item{inner_optimizer}{How the smooth block is fitted.}
 
 \item{method}{An \code{\link{OuterMethod}}.}
 

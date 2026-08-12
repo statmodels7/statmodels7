@@ -79,7 +79,9 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   H <- statmod_information_at(spec, coef, design, expected = FALSE)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S[!is.finite(S)] <- 0
-  K <- H + S
+  # The routes below form a FULL inverse, and the inverse of a sparse matrix
+  # is dense, so densifying here gives up nothing sparsity could have kept.
+  K <- as_dense(H + S)
   Kfac <- tryCatch(chol(K), error = function(e) NULL)
   if (is.null(Kfac)) return(NULL)
   Kinv <- chol2inv(Kfac)
@@ -309,7 +311,7 @@ block_predictors <- function(design, params, npar, offs, v) {
 contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
   keys <- names(d3)
   n <- spec@n_obs
-  out <- matrix(0, total, total)
+  out <- zero_information(design, total)
   for (a in seq_along(params)) {
     if (npar[a] == 0L) next
     for (b in a:length(params)) {
@@ -349,7 +351,7 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
 contract4 <- function(spec, design, d4, params, npar, offs, total, tv, tu) {
   keys <- names(d4)
   n <- spec@n_obs
-  out <- matrix(0, total, total)
+  out <- zero_information(design, total)
   for (a in seq_along(params)) {
     if (npar[a] == 0L) next
     for (b in a:length(params)) {
