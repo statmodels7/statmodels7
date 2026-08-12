@@ -177,7 +177,10 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' @details
 #' A failure here is a statement about the fit rather than about the
 #' arithmetic: at a maximum the penalized information is positive definite, so
-#' a factor that does not exist says something about where the run stopped.
+#' a matrix that is not says something about where the run stopped. The test is
+#' \code{min(ev) > tol * max(ev)} on the eigenvalues rather than whether
+#' \code{chol()} raised, because on an exactly singular matrix the latter is
+#' decided by rounding and differs between platforms.
 #' Returning a pseudo-inverse instead would give a standard error for a
 #' direction the data does not identify.
 #'
@@ -198,8 +201,26 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #'
 #' @keywords internal
 solve_pd <- function(A, what, labels = NULL) {
-  R <- tryCatch(chol(A), error = function(e) NULL)
-  if (!is.null(R)) return(chol2inv(R))
+  # The verdict comes from the eigenvalues and not from whether chol() raised.
+  # On a matrix with an exactly zero eigenvalue -- two columns of the design
+  # carrying the same information is the ordinary way to get one -- the pivot
+  # that should be zero comes out positive or negative according to rounding,
+  # so the same fit was refused on Windows and accepted on Linux and macOS.
+  # min(ev) > tol * max(ev) is a statement about the matrix instead, and the
+  # decomposition is what the message below already needs.
+  # A non-finite entry is what a parameter run out of its range leaves behind,
+  # and it is not a matrix to decompose: eigen() raises its own error there,
+  # which would replace the message below with one naming neither the fit nor
+  # the direction. flat_directions() reports those rows instead.
+  pd <- FALSE
+  if (all(is.finite(A))) {
+    ev <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+    pd <- length(ev) > 0L && ev[1L] > 0 && min(ev) > 1e-12 * ev[1L]
+  }
+  if (pd) {
+    R <- tryCatch(chol(A), error = function(e) NULL)
+    if (!is.null(R)) return(chol2inv(R))
+  }
   stop(sprintf(paste0("%s is not positive definite, so there is no variance",
                       "\n  matrix at this point.%s\n  A fit can reach such a",
                       " point without failing: a parameter that runs\n  to",
