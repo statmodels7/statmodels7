@@ -250,11 +250,36 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
   terms_ok <- TRUE
   struct_ok <- TRUE
 
+  # A structural term of the FILTER shape is fitted in the same system as the
+  # coefficients rather than alternated with them: the joint gradient and the
+  # joint observed information both exist, and the alternation was paying for
+  # one optimizer per sweep whose every iteration re-ran the recursion. A term
+  # of the likelihood shape -- a regime -- keeps the alternation, its
+  # information being assembled by a different route.
+  joint <- has_structural && length(blocks$smooth) &&
+    all(vapply(attr(design, "structural"),
+               function(u) identical(u$kind, "filter"), logical(1)))
+
   for (sweep in seq_len(as.integer(maxit))) {
     before <- value
 
+    if (joint) {
+      if (vb$blocks) cat(sprintf("[sweep %d] joint system\n", sweep))
+      res <- statmod_fit_joint(spec, design, obj, beta, hyper,
+                               optimizer = NULL, verbose = vb$blocks)
+      beta <- res$par
+      value <- res$value
+      smooth_ok <- isTRUE(res$converged)
+      struct_ok <- smooth_ok
+      hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
+        sweep = sweep, block = "joint", objective = value,
+        change = before - value, iterations = res$iterations,
+        converged = res$converged
+      )
+    }
+
     # the smooth block, all of it at once
-    if (length(blocks$smooth)) {
+    if (!joint && length(blocks$smooth)) {
       if (vb$blocks) {
         cat(sprintf("[sweep %d] smooth block: %d coefficients\n", sweep,
                     length(blocks$smooth)))
@@ -279,7 +304,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
 
     # the structural terms' own parameters, the coefficients held where the
     # smooth block left them
-    if (has_structural) {
+    if (has_structural && !joint) {
       v0 <- value
       if (vb$blocks) cat(sprintf("[sweep %d] structural terms\n", sweep))
       res <- statmod_fit_structural(spec, design, obj, beta, hyper, NULL,

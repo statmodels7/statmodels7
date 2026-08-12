@@ -244,9 +244,19 @@ statmod_penalized <- function(spec, design) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   lapply(statmod_penalty_keys(spec), function(u) {
+    # A structural term contributes no design columns, so its penalty covers
+    # positions among the TERM'S OWN parameters and there is nothing to look
+    # up in the design. Reading `blocks[[term]]` for it returned NULL, and the
+    # positions then indexed the equation's coefficients -- 25 of them where
+    # the equation has one -- so the penalty was evaluated at NA and every
+    # quantity built on it was not finite.
+    if (S7::S7_inherits(spec@terms[[u$param]][[u$term]],
+                        modelterms7::structural_term)) {
+      return(c(u, list(structural = TRUE, cols = u$within, index = NULL)))
+    }
     a <- match(u$param, params)
     cols <- design[[u$param]]$blocks[[u$term]][u$within]
-    c(u, list(cols = cols, index = offs[a] + cols))
+    c(u, list(structural = FALSE, cols = cols, index = offs[a] + cols))
   })
 }
 

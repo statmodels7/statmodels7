@@ -1,3 +1,53 @@
+# statmodels7 0.23.0
+
+* A structural term of the filter shape is fitted in the SAME system as the
+  coefficients rather than alternated with them.
+
+  The alternation was never a statement about the model: the exact gradient
+  of both blocks and the exact observed information over both together were
+  already available, the second as `statmod_full_information()`, which was
+  built for `vcov()` and discarded for the fit. What it cost is filter runs.
+  Each sweep handed the term's parameters to an optimizer of their own -- and
+  always `lbfgs()`, whatever the caller asked for -- whose every iteration
+  re-ran the recursion and its adjoint with the coefficients held at a point
+  that was about to move.
+
+  `statmod_fit_joint()` runs one Newton step over the stacked coefficients
+  and the term's free parameters. The unknowns are ordered as the information
+  orders them, so no permutation is needed, and a level an intercept in the
+  same equation carries is held and leaves the system exactly as it leaves
+  the information. Measured on a panel of 25 groups and 750 observations:
+  16.91 s to 3.21 s, a factor of 5.3, at a slightly higher maximum
+  (-1248.7824347 against -1248.7825410). A term of the likelihood shape --
+  `regime()` -- keeps the alternation, its information being assembled by a
+  different route.
+
+* A penalty over a structural term's own parameters is read from the term's
+  own vector.
+
+  `statmod_penalized()` looked its positions up in the design, which a
+  structural term does not have: `blocks[[term]]` was NULL and the positions
+  then indexed the equation's coefficients, 25 of them where the equation
+  has one. The penalty was evaluated at `NA`, and everything built on it
+  followed -- an objective that was not finite, an outer criterion reported
+  as unavailable, and an inner run that spent its whole budget.
+
+  Such a unit is now marked as structural and evaluated from the term's
+  state, and `statmod_structural_penalty()` returns its derivative and its
+  Hessian in the term's own parameters. The gradient of the structural block
+  adds that derivative, which its objective had been including all along:
+  two functions differing by a penalty are not each other's gradient, and
+  optimizers7's own check had been saying so. Verified against `numDeriv` at
+  three points, agreeing to the reference's own accuracy.
+
+* The per-observation callbacks a filter runs reuse one buffer instead of
+  rebuilding a list of scalars on every call. Worth 1.09x on its own; the
+  number of filter runs, which the joint step addresses, is where the time
+  actually was.
+
+* `solve_pd()` decides positive definiteness from the eigenvalues rather than
+  from whether `chol()` raised.
+
 # statmodels7 0.22.0
 
 * A term's effective degrees of freedom are its share of the WHOLE model's

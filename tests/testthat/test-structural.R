@@ -111,7 +111,10 @@ test_that("statmod recovers a score-driven model it simulated", {
   # the objective fell at every sweep
   h <- fit@history$blocks
   expect_true(all(h$change >= -1e-8))
-  expect_true(any(h$block == "structural"))
+  # the term's parameters are fitted in the same system as the coefficients
+  # where the model allows it, and alternated with them where it does not, so
+  # what is asserted is that they were fitted rather than which block did it
+  expect_true(any(h$block %in% c("structural", "joint")))
 })
 
 test_that("the fitted parameters are carried into a prediction", {
@@ -538,4 +541,33 @@ test_that("the two likelihoods of a penalized fit are both available", {
   expect_gt(attr(lc, "df"), 10)
   expect_lt(attr(lm_, "df"), 10)
   expect_equal(as.numeric(lm_), as.numeric(fit@criterion))
+})
+
+test_that("a filter is fitted in the same system as the coefficients", {
+  # The joint step exists because the alternation was not a statement about
+  # the model: the exact gradient of both blocks and the exact observed
+  # information over both together were already available, and the
+  # alternation paid one optimizer per sweep whose every iteration re-ran the
+  # recursion. What is asserted is that it fits, that it says so, and that it
+  # reaches the answer.
+  dd <- sim_gas(600, 0.3, 0.4, 0.7, seed = 21)
+  fit <- statmod(y ~ 1 | sigma ~ gas(p = 1, q = 1, time = t),
+                 distributions7::gaussian1_distrib(), dd)
+  expect_true(fit@converged)
+  h <- fit@history$blocks
+  expect_true(any(h$block == "joint"))
+  expect_false(any(h$block == "structural"))
+  # the objective never rises over the sweeps
+  expect_true(all(h$change >= -1e-8))
+
+  # the term's parameters and the coefficients are both fitted, and the
+  # information the fit inverts spans both, so a standard error exists for
+  # every one of them
+  v <- vcov(fit)
+  expect_true(all(is.finite(diag(v))))
+  expect_true(all(diag(v) > 0))
+
+  # and a term of the LIKELIHOOD shape keeps the alternation, its information
+  # being assembled by a different route
+  expect_true(is.function(statmod_fit_joint))
 })

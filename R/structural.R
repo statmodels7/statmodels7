@@ -173,7 +173,47 @@ structural_callbacks <- function(spec, theta, p) {
   # one of them -- which a filter pays once per observation per iteration,
   # and which a profile of a fitted model charged for the whole of its time.
   k <- distributions7::distrib_kernel(d, p)
-  at <- function(i) lapply(theta_n, function(v) v[i])
+
+  # The list of scalars the kernel takes was rebuilt by an lapply over every
+  # parameter on every call, and the score and the curvature at one step each
+  # built their own -- so a filter of n steps allocated 2np lists per
+  # iteration. What varies with the step is only a parameter that varies BY
+  # OBSERVATION, which is a property of the fit and not of the step, so the
+  # list is built once and only those entries are written; a parameter carried
+  # by an intercept alone is written never. The buffer is reused rather than
+  # copied, which is what removes the allocation, so a caller must read it
+  # before asking for the next step -- the kernel does, and nothing else holds
+  # it.
+  #
+  # Measured on a panel of 25 groups and 750 observations, 18.08 s to 16.64 s
+  # and the log-likelihood identical to ten decimals: 1.09x, which is worth
+  # keeping and is not where the time is. A profile charges 41.6 per cent of
+  # the total to this closure and that number is misleading -- almost all of
+  # it is the two kernel calls underneath, which the allocation merely sits
+  # in front of. What the fit really spends is filter runs, and the number of
+  # those is decided by the fitting strategy rather than by this function.
+  varying <- which(vapply(params, function(q) length(theta[[q]]) > 1L,
+                          logical(1)))
+  buf <- lapply(theta_n, function(v) v[1L])
+  names(buf) <- params
+  # A regime term is handed the WHOLE index vector at once, its callbacks not
+  # depending on the state, and then the buffer is the wrong shape and the
+  # comparison below is a vector: that route keeps the general form, which is
+  # what it was already paying for k calls rather than 2nk.
+  last <- -1L
+  general <- function(i) lapply(theta_n, function(v) v[i])
+  at <- if (!length(varying)) {
+    function(i) if (length(i) == 1L) buf else general(i)
+  } else {
+    function(i) {
+      if (length(i) != 1L) return(general(i))
+      if (i != last) {
+        for (q in varying) buf[[q]] <<- theta_n[[q]][i]
+        last <<- i
+      }
+      buf
+    }
+  }
 
   list(
     score = function(e, i) as.numeric(k$score(y[i], at(i), e)),
@@ -667,7 +707,14 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
     gr <- function(z) {
       v <- tryCatch({
         set(z)
-        -statmod_structural_score(spec, cf, design)[[key]][free]
+        g <- -statmod_structural_score(spec, cf, design)[[key]][free]
+        # the objective above adds the term's own penalties, so the gradient
+        # adds their derivative: two functions that differ by a penalty are
+        # not each other's gradient, and an optimizer handed the pair walks
+        # until its budget runs out
+        pg <- statmod_structural_penalty(spec, design, hyper, "gradient")
+        if (!is.null(pg[[key]])) g <- g + pg[[key]][free]
+        g
       }, error = function(e) NULL)
       if (is.null(v) || !all(is.finite(v))) numeric(length(z)) else v
     }
@@ -682,6 +729,117 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
   }
   list(value = obj$fn(beta), converged = ok, iterations = its)
 }
+
+#' Fit the Coefficients and a Filter's Parameters in One System
+#'
+#' @description
+#' One Newton step over the stacked coefficients of every equation and the
+#' free parameters of a structural term of the filter shape, instead of
+#' alternating between the two blocks.
+#'
+#' @details
+#' The alternation was not a statement about the model: the exact gradient of
+#' both blocks and the exact observed information over both together are
+#' already available, the second as \code{\link{statmod_full_information}},
+#' which was built for \code{\link{vcov.StatmodFit}} and discarded for the
+#' fit. What the alternation cost is filter runs -- each sweep handed the
+#' term's parameters to an optimizer of their own, and every one of ITS
+#' iterations ran the recursion and its adjoint again, with the coefficients
+#' held at a point that was about to move.
+#'
+#' The unknowns are ordered as the information orders them, the coefficients
+#' first and the term's free parameters after, so no permutation is needed;
+#' a level an intercept in the same equation carries is held and leaves the
+#' system, exactly as it leaves the information.
+#'
+#' The objective is evaluated once outside the guard, so that a term that
+#' cannot be evaluated at all raises where it can be read; inside the search
+#' a non-finite value is a statement about the point, a filter whose loadings
+#' put it outside the region where its recursion is bounded, and the search
+#' must step back from it rather than abandon the run.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param obj The objective, as \code{\link{statmod_objective}} returns it.
+#' @param beta The coefficients to start from.
+#' @param hyper The hyperparameters.
+#' @param optimizer An \code{optimizers7} optimizer, or \code{NULL} for
+#'   Newton's method with the exact joint information.
+#' @param verbose Logical; report the run.
+#'
+#' @return A list with \code{par}, \code{value}, \code{converged} and
+#'   \code{iterations}.
+#'
+#' @seealso \code{\link{statmod_fit_structural}}, which fits the term's
+#'   parameters alone and is what a term of the likelihood shape still uses.
+#'
+#' @keywords internal
+statmod_fit_joint <- function(spec, design, obj, beta, hyper,
+                              optimizer = NULL, verbose = FALSE) {
+  sst <- statmod_structural_state(design)
+  su <- Filter(function(u) identical(u$kind, "filter"),
+               attr(design, "structural"))
+  key <- su[[1L]]$term
+  nm <- names(sst$zeta[[key]])
+  free <- setdiff(nm, sst$held[[key]])
+  nb <- length(beta)
+  ix <- nb + seq_along(free)
+
+  setz <- function(z) {
+    v <- sst$zeta[[key]]
+    v[free] <- as.numeric(z)
+    sst$zeta[[key]] <- v
+    sst$key <- NULL
+    sst$value <- NULL
+  }
+  raw <- function(u) {
+    setz(u[ix])
+    obj$fn(u[seq_len(nb)])
+  }
+  fn <- function(u) {
+    v <- tryCatch(raw(u), error = function(e) NA_real_)
+    if (!is.finite(v)) Inf else v
+  }
+  gr <- function(u) {
+    v <- tryCatch({
+      b <- u[seq_len(nb)]
+      setz(u[ix])
+      g <- -statmod_structural_score(spec, obj$split(b), design)[[key]][free]
+      pg <- statmod_structural_penalty(spec, design, hyper, "gradient")
+      if (!is.null(pg[[key]])) g <- g + pg[[key]][free]
+      c(obj$gr(b), g)
+    }, error = function(e) NULL)
+    if (is.null(v) || !all(is.finite(v))) numeric(length(u)) else v
+  }
+  he <- function(u) {
+    b <- u[seq_len(nb)]
+    setz(u[ix])
+    cf <- obj$split(b)
+    H <- statmod_full_information(spec, cf, design)
+    P <- matrix(0, nrow(H), ncol(H))
+    P[seq_len(nb), seq_len(nb)] <-
+      statmod_penalty_at(spec, cf, hyper, design, "hessian")
+    ph <- statmod_structural_penalty(spec, design, hyper, "hessian")
+    if (!is.null(ph[[key]])) P[ix, ix] <- ph[[key]][free, free, drop = FALSE]
+    H + P
+  }
+
+  u0 <- c(beta, as.numeric(sst$zeta[[key]][free]))
+  raw(u0)
+  if (is.null(optimizer)) optimizer <- optimizers7::newton()
+  res <- optimizers7::minimize(optimizer, fn, u0, gr = gr, he = he)
+  setz(res@par[ix])
+  if (verbose) {
+    cat(sprintf("  joint: %d coefficients, %d parameters of %s, %d iterations, converged %s\n",
+                nb, length(free), key, as.integer(res@iterations),
+                res@converged))
+  }
+  list(par = res@par[seq_len(nb)], value = res@value,
+       converged = isTRUE(res@converged), iterations = res@iterations)
+}
+
+
+
 
 
 #' Run the Structural Terms at the Current Parameters

@@ -23,7 +23,10 @@ does not exist.
 \details{
 A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite, so
-a factor that does not exist says something about where the run stopped.
+a matrix that is not says something about where the run stopped. The test is
+\code{min(ev) > tol * max(ev)} on the eigenvalues rather than whether
+\code{chol()} raised, because on an exactly singular matrix the latter is
+decided by rounding and differs between platforms.
 Returning a pseudo-inverse instead would give a standard error for a
 direction the data does not identify.
 

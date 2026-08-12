@@ -404,8 +404,20 @@ statmod_penalty_at <- function(spec, coef, hyper,
   grad <- stats::setNames(lapply(npar, numeric), params)
   hess <- matrix(0, total, total)
 
+  # A penalty over a structural term's own parameters is evaluated from the
+  # term's state, not from the coefficients: it enters the VALUE, which is one
+  # number and belongs to the whole objective, while its derivatives are in a
+  # different vector and are returned by statmod_structural_penalty().
+  sst <- statmod_structural_state(design)
   for (u in statmod_penalized(spec, design)) {
     p <- u$param
+    if (isTRUE(u$structural)) {
+      if (what != "value" || is.null(sst)) next
+      z <- sst$zeta[[u$term]][u$cols]
+      value <- value + penalties7::penalty_value(u$penalty, as.numeric(z),
+                                                 as.list(hyper[[p]][[u$key]]))
+      next
+    }
     b <- coef[[p]][u$cols]
     th <- as.list(hyper[[p]][[u$key]])
     if (what == "value") {
@@ -419,6 +431,71 @@ statmod_penalty_at <- function(spec, coef, hyper,
     }
   }
   switch(what, value = value, gradient = grad, hessian = hess)
+}
+
+
+#' The Penalty Over a Structural Term's Own Parameters
+#'
+#' @description
+#' The derivative of the penalties a structural term declares, in the term's
+#' own parameters rather than in the coefficients.
+#'
+#' @details
+#' The objective of the structural block includes these penalties through
+#' \code{\link{statmod_penalty_at}}, so its gradient must include their
+#' derivative: without it the two describe different functions, an optimizer
+#' walks until its budget runs out, and \code{optimizers7}'s own check reports
+#' that the objective changes at a rate the gradient does not predict.
+#'
+#' The penalty is read on the UNCONSTRAINED scale, which is where the term
+#' carries its parameters and where a deviation from a population value is
+#' defined; for a deviation, whose link is the identity, the two scales
+#' coincide.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param hyper The hyperparameters.
+#' @param what One of \code{"value"}, \code{"gradient"} or \code{"hessian"}.
+#'
+#' @return A named list, one entry per structural term, each a numeric vector
+#'   or matrix over that term's parameters in their own order; empty when no
+#'   structural term carries a penalty.
+#'
+#' @seealso \code{\link{statmod_penalty_at}}
+#'
+#' @keywords internal
+statmod_structural_penalty <- function(spec, design, hyper,
+                                       what = c("value", "gradient",
+                                                "hessian")) {
+  what <- match.arg(what)
+  sst <- statmod_structural_state(design)
+  if (is.null(sst)) return(list())
+  out <- list()
+  for (u in statmod_penalized(spec, design)) {
+    if (!isTRUE(u$structural)) next
+    z <- sst$zeta[[u$term]]
+    b <- as.numeric(z[u$cols])
+    th <- as.list(hyper[[u$param]][[u$key]])
+    if (is.null(out[[u$term]])) {
+      out[[u$term]] <- switch(
+        what,
+        value = 0,
+        gradient = stats::setNames(numeric(length(z)), names(z)),
+        hessian = matrix(0, length(z), length(z),
+                         dimnames = list(names(z), names(z))))
+    }
+    if (what == "value") {
+      out[[u$term]] <- out[[u$term]] +
+        penalties7::penalty_value(u$penalty, b, th)
+    } else if (what == "gradient") {
+      out[[u$term]][u$cols] <- out[[u$term]][u$cols] +
+        penalties7::penalty_gradient(u$penalty, b, th)
+    } else {
+      out[[u$term]][u$cols, u$cols] <- out[[u$term]][u$cols, u$cols] +
+        penalties7::penalty_hessian(u$penalty, b, th)
+    }
+  }
+  out
 }
 
 
