@@ -31,18 +31,56 @@ NULL
 statmod_eta <- function(spec, design, coef) {
   params <- spec@distrib@params
   links <- spec@distrib@link_params
+  sst <- statmod_structural_state(design)
+  if (!is.null(sst)) {
+    # a filter is the expensive part of every evaluation and the objective,
+    # its gradient and its curvature are asked for at the same point in turn
+    key <- list(unlist(coef, use.names = FALSE), sst$zeta)
+    if (!is.null(sst$key) && identical(sst$key, key)) return(sst$value)
+  }
+  design <- statmod_design_at(spec, coef, design)
   eta <- stats::setNames(vector("list", length(params)), params)
   theta <- eta
   for (p in params) {
     d <- design[[p]]
     e <- if (d$npar == 0L) rep(0, spec@n_obs) else
       as.numeric(d$X %*% coef[[p]])
+    # what a term contributes is not always its block times its coefficients:
+    # where the block is a Jacobian the two differ, and the difference is
+    # carried here so that every crossprod elsewhere still reads the block
+    if (!is.null(d$adj)) e <- e + d$adj
     off <- spec@offsets[[p]]
     if (!is.null(off)) e <- e + off
     eta[[p]] <- e
     theta[[p]] <- linkfunctions7::linkinv(links[[p]], e)
   }
-  list(eta = eta, theta = theta)
+  # a structural term rewrites the predictor of the equation it sits in: the
+  # static part above is what its filter is handed, and what comes back is
+  # the predictor with the term's own level in it
+  filters <- list()
+  regimes <- list()
+  if (!is.null(sst)) {
+    eta_static <- eta
+    filters <- statmod_filter_at(spec, design, eta, theta)
+    for (f in filters) {
+      eta[[f$param]] <- f$eta
+      theta[[f$param]] <- linkfunctions7::linkinv(links[[f$param]], f$eta)
+    }
+    # a term whose contribution is a likelihood mixed over states reports no
+    # predictor of its own; what is recorded here is the posterior-weighted
+    # one, which is what a fitted value means for it
+    regimes <- statmod_regime_at(spec, design, eta_static, theta)
+    for (r in regimes) {
+      eta[[r$param]] <- r$eta_bar
+      theta[[r$param]] <- linkfunctions7::linkinv(links[[r$param]], r$eta_bar)
+    }
+    out <- list(eta = eta, theta = theta, filters = filters,
+                regimes = regimes, eta_static = eta_static)
+    sst$key <- list(unlist(coef, use.names = FALSE), sst$zeta)
+    sst$value <- out
+    return(out)
+  }
+  list(eta = eta, theta = theta, filters = filters, regimes = regimes)
 }
 
 
@@ -59,8 +97,17 @@ statmod_eta <- function(spec, design, coef) {
 #'
 #' @keywords internal
 statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
-  th <- statmod_eta(spec, design, coef)$theta
-  ll <- distributions7::distrib_pdf(spec@distrib, spec@response, th,
+  ev <- statmod_eta(spec, design, coef)
+  # a latent Markov term replaces the likelihood rather than shifting a
+  # predictor, so the contribution is the term's own and not the density at
+  # any single point
+  if (length(ev$regimes)) {
+    r <- ev$regimes[[1L]]
+    ll <- modelterms7::term_loglik(r$tm, r$eta_static, spec@response,
+                                   r$cb$logdens, r$cb$score, r$psi)$loglik
+    return(sum(spec@weights * ll))
+  }
+  ll <- distributions7::distrib_pdf(spec@distrib, spec@response, ev$theta,
                                     log = TRUE)
   sum(spec@weights * ll)
 }
@@ -81,14 +128,123 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 #' @keywords internal
 statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
   params <- spec@distrib@params
-  th <- statmod_eta(spec, design, coef)$theta
-  g <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
+  ev <- statmod_eta(spec, design, coef)
+  design <- statmod_design_at(spec, coef, design)
+  n <- spec@n_obs
+
+  # Fisher's identity: the derivative of a likelihood mixed over states is
+  # the posterior-weighted derivative of the ordinary one, in EVERY
+  # predictor and not only the one the regimes shift. K vectorized passes
+  # replace the per-observation callback a filter needs.
+  if (length(ev$regimes)) {
+    r <- ev$regimes[[1L]]
+    gv <- stats::setNames(lapply(params, function(p) numeric(n)), params)
+    for (k in seq_along(r$mu)) {
+      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
+      gk <- distributions7::distrib_gradient(spec@distrib, spec@response, thk,
+                                             scale = "link")
+      for (p in params) {
+        gv[[p]] <- gv[[p]] + r$gamma[, k] * spec@weights * rep_len(gk[[p]], n)
+      }
+    }
+    return(stats::setNames(lapply(params, function(p) {
+      d <- design[[p]]
+      if (d$npar == 0L) return(numeric(0))
+      as.numeric(crossprod(d$X, gv[[p]]))
+    }), params))
+  }
+
+  g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
                                         scale = "link")
+  gv <- stats::setNames(lapply(params, function(p)
+    spec@weights * rep_len(g[[p]], n)), params)
+
+  # Where a filter drives one equation, the derivative of the objective in a
+  # coefficient of ANY equation carries a term the block does not: the level
+  # was driven by scores read at predictors those coefficients enter. The
+  # reverse recursion returns the derivative in that score sequence, and the
+  # derivative of the score in another equation's predictor is the mixed
+  # second derivative of the log-density. For the filter's own equation this
+  # reproduces its `deta`, the curvature being the second derivative there.
+  for (f in ev$filters) {
+    ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
+                                    f$cb$score, f$cb$curvature, f$psi,
+                                    g = gv[[f$param]])
+    H <- distributions7::distrib_hessian(spec@distrib, spec@response,
+                                         ev$theta, scale = "link")
+    a <- match(f$param, params)
+    add <- stats::setNames(lapply(params, function(q) {
+      ad$dscore * rep_len(H[[hess_key(params, a, match(q, params))]], n)
+    }), params)
+    for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
+  }
+
   stats::setNames(lapply(params, function(p) {
     d <- design[[p]]
     if (d$npar == 0L) return(numeric(0))
-    as.numeric(crossprod(d$X, spec@weights * rep_len(g[[p]], spec@n_obs)))
+    as.numeric(crossprod(d$X, gv[[p]]))
   }), params)
+}
+
+
+#' The Score in a Structural Term's Own Parameters
+#'
+#' @description
+#' The derivative of the weighted log-likelihood in the unconstrained
+#' parameters of each structural term, one entry per term.
+#'
+#' @details
+#' The filter's jacobian is the total derivative of the predictor in the
+#' term's parameters, the recursion included, so the chain rule over the
+#' observations is all that is needed here and no reverse pass is: what the
+#' reverse pass answers is the other question, the derivative in the
+#' coefficients of the equations.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param coef A named list of coefficient vectors.
+#' @param design The design.
+#'
+#' @return A named list of numeric vectors, one per structural term.
+#'
+#' @seealso \code{\link{statmod_filter_at}}
+#'
+#' @keywords internal
+statmod_structural_score <- function(spec, coef,
+                                     design = statmod_design(spec)) {
+  ev <- statmod_eta(spec, design, coef)
+  sst <- statmod_structural_state(design)
+  chain_of <- function(tm, key) {
+    links <- modelterms7::term_links(tm)
+    z <- sst$zeta[[key]]
+    vapply(names(z), function(j)
+      linkfunctions7::dlinkinv(links[[j]], z[[j]]), numeric(1))
+  }
+  if (length(ev$regimes)) {
+    out <- list()
+    for (r in ev$regimes) {
+      ll <- modelterms7::term_loglik(r$tm, r$eta_static, spec@response,
+                                     r$cb$logdens, r$cb$score, r$psi)
+      dpsi <- as.numeric(crossprod(ll$jacobian, spec@weights))
+      out[[r$term]] <- stats::setNames(dpsi * chain_of(r$tm, r$term),
+                                       names(sst$zeta[[r$term]]))
+    }
+    return(out)
+  }
+  if (!length(ev$filters)) return(list())
+  g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
+                                        scale = "link")
+  n <- spec@n_obs
+  out <- list()
+  for (f in ev$filters) {
+    gp <- spec@weights * rep_len(g[[f$param]], n)
+    dpsi <- as.numeric(crossprod(f$jacobian, gp))
+    links <- modelterms7::term_links(f$tm)
+    z <- sst$zeta[[f$term]]
+    chain <- vapply(names(z), function(j)
+      linkfunctions7::dlinkinv(links[[j]], z[[j]]), numeric(1))
+    out[[f$term]] <- stats::setNames(dpsi * chain, names(z))
+  }
+  out
 }
 
 
@@ -115,7 +271,53 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
                                    expected = TRUE, approx = "bartlett") {
   params <- spec@distrib@params
-  th <- statmod_eta(spec, design, coef)$theta
+  ev <- statmod_eta(spec, design, coef)
+  th <- ev$theta
+  design <- statmod_design_at(spec, coef, design)
+
+  # For a likelihood mixed over states the matrix assembled here is the
+  # COMPLETE-DATA information, the ordinary one averaged over the smoothed
+  # states. It is the matrix an EM step inverts and it is positive definite,
+  # which is all a scoring matrix has to be once the gradient is exact. It
+  # is not the observed information of the mixture: by the
+  # missing-information principle the two differ by the conditional variance
+  # of the complete-data score, so this one is the LARGER and a standard
+  # error read off it is too small. What vcov() reports comes from
+  # statmod_regime_information(), which differentiates the forward recursion
+  # twice.
+  if (length(ev$regimes)) {
+    r <- ev$regimes[[1L]]
+    npar <- vapply(design, function(d) d$npar, integer(1))
+    offs <- cumsum(npar) - npar
+    total <- sum(npar)
+    out <- matrix(0, total, total)
+    for (k in seq_along(r$mu)) {
+      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
+      Hk <- if (expected) {
+        distributions7::distrib_expected_hessian(spec@distrib, spec@response,
+                                                 thk, scale = "link",
+                                                 approx = approx)
+      } else {
+        distributions7::distrib_hessian(spec@distrib, spec@response, thk,
+                                        scale = "link")
+      }
+      for (a in seq_along(params)) {
+        if (npar[a] == 0L) next
+        for (b in seq_along(params)) {
+          if (npar[b] == 0L || b < a) next
+          wv <- spec@weights * r$gamma[, k] *
+            rep_len(Hk[[hess_key(params, a, b)]], spec@n_obs)
+          blk <- crossprod(design[[params[a]]]$X * wv, design[[params[b]]]$X)
+          ra <- offs[a] + seq_len(npar[a])
+          rb <- offs[b] + seq_len(npar[b])
+          out[ra, rb] <- out[ra, rb] + blk
+          if (a != b) out[rb, ra] <- out[rb, ra] + t(blk)
+        }
+      }
+    }
+    return(-out)
+  }
+
   H <- if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
                                              scale = "link", approx = approx)

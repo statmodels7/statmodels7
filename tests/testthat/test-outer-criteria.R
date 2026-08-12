@@ -215,3 +215,167 @@ test_that("the gradient never asks for a second derivative", {
   expect_named(first, c("S", "c"))
   expect_null(first$S2)
 })
+
+test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
+  # The ordinary effective degrees of freedom read the smoothing parameter
+  # as known; it was estimated from the same data. mgcv sums two terms into
+  # edf2 and this is the first, J V_theta J' contracted with the
+  # information. The second is mgcv's correction for the Gaussian scale,
+  # which it profiles out and we model, so it has no counterpart here.
+  skip_if_not_installed("mgcv")
+  skip_on_cran()
+
+  mgcv_vc1 <- function(g) {
+    XWX <- crossprod(g$R)
+    db <- g$db.drho
+    if (!is.null(g$L)) db <- db %*% g$L[1:ncol(db), , drop = FALSE]
+    ev <- eigen(g$outer.info$hess, symmetric = TRUE)
+    d <- ev$values
+    ind <- d <= 0
+    d[ind] <- 0
+    d[!ind] <- 1 / sqrt(d[!ind])
+    rV <- (d * t(ev$vectors))[, 1:ncol(db), drop = FALSE]
+    sum(rowSums(crossprod(rV %*% t(db)) * XWX) / g$sig2)
+  }
+
+  for (n in c(200L, 400L)) {
+    set.seed(20)
+    dd <- data.frame(x = stats::runif(n))
+    dd$y <- sin(2 * pi * dd$x) + 0.4 * dd$x + stats::rnorm(n, sd = 0.3)
+    # mgcv's s() cannot be namespace-qualified inside a formula, and
+    # attaching mgcv would mask OUR s() for the statmod call below, so the
+    # gam formula is given an environment where s is mgcv's and nothing else
+    # is disturbed
+    genv <- new.env(parent = globalenv())
+    genv$s <- mgcv::s
+    g <- mgcv::gam(stats::as.formula("y ~ s(x, bs = 'bs', k = 15)",
+                                     env = genv),
+                   data = dd, method = "REML")
+    u <- statmod(y ~ s(x, k = 15), distributions7::gaussian1_distrib(), dd,
+                 outer_method = reml())
+    got <- summary(u, correct = TRUE)@df - summary(u)@df
+    # ABSOLUTE, because the quantity is a fraction of a parameter and what
+    # is left between the two packages is the difference between their
+    # bases: the naive counts differ by the same amount as the corrected
+    # ones, so the correction itself is what agrees
+    expect_lt(abs(got - mgcv_vc1(g)), 2e-3)
+    # and it is an ADDITION: the naive count is too generous
+    expect_gt(got, 0)
+  }
+})
+
+test_that("the edf correction is zero where nothing was estimated", {
+  # A kinked penalty's hyperparameter is not chosen by a differentiable
+  # criterion -- outer_hyper_index() skips it -- so there is nothing to
+  # propagate. That is a refusal by construction, not an approximation.
+  set.seed(23)
+  p <- 12L
+  X <- matrix(stats::rnorm(150 * p), 150, p)
+  dd <- data.frame(y = X[, 1] * 2 - X[, 2] * 1.5 + stats::rnorm(150),
+                   X = I(X))
+  u <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), dd,
+               hyper = list(mu = list("lasso(X)" = c(lambda = 20))))
+  expect_equal(summary(u, correct = TRUE)@df, summary(u)@df)
+  expect_true(any(grepl("nothing for the correction",
+                        summary(u, correct = TRUE)@notes)))
+
+  # and a model with no penalty at all is unmoved
+  d2 <- data.frame(x = stats::rnorm(100))
+  d2$y <- 1 + 2 * d2$x + stats::rnorm(100)
+  f2 <- statmod(y ~ x, distributions7::gaussian1_distrib(), d2)
+  expect_equal(summary(f2, correct = TRUE)@df, summary(f2)@df)
+})
+
+test_that("the correction applies to a random effect, not only a smooth", {
+  # a random effect IS a ridge penalty here, so the same code path covers it
+  # with no term-specific branch anywhere
+  set.seed(22)
+  m <- 40L
+  per <- 10L
+  n <- m * per
+  dd <- data.frame(g = factor(rep(seq_len(m), each = per)),
+                   x = stats::rnorm(n))
+  b <- stats::rnorm(m, sd = 0.8)
+  dd$y <- 1 + 0.7 * dd$x + b[as.integer(dd$g)] + stats::rnorm(n)
+  u <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(),
+               dd, outer_method = reml())
+  naive <- summary(u)@df
+  corr <- summary(u, correct = TRUE)@df
+  expect_gt(corr, naive)
+  expect_lt(corr - naive, 5)         # a correction, not a second model
+  expect_true(any(grepl("degrees of freedom carry",
+                        summary(u, correct = TRUE)@notes)))
+})
+
+test_that("a term's edf is its share of the WHOLE model's smoother", {
+  # The definition is the trace of the term's diagonal block of
+  # F = (H + S)^-1 H over the coefficients of EVERY equation. A block-wise
+  # tr[(H_bb + S_b)^-1 H_bb] drops the coupling with the rest of the model,
+  # and the case that shows it is a parameter other than the mean: the
+  # Demmler-Reinsch basis is orthogonalized against the constant in the
+  # unweighted metric, so where the weights vary -- which they do in the
+  # mean's equation as soon as the scale is modelled -- the orthogonality
+  # the construction arranged does not survive.
+  ref_total <- function(fit) {
+    des <- statmod_design(fit@spec)
+    H <- statmod_information_at(fit@spec, fit@coefficients, des, TRUE,
+                                "bartlett")
+    S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
+                            "hessian")
+    S[!is.finite(S)] <- 0
+    list(d = diag(solve(H + S, H)), des = des)
+  }
+  per_term <- function(fit, r) {
+    npar <- vapply(r$des, function(d) d$npar, integer(1))
+    offs <- cumsum(npar) - npar
+    out <- numeric(0)
+    for (a in seq_along(fit@spec@distrib@params)) {
+      p <- fit@spec@distrib@params[a]
+      for (nm in names(fit@spec@terms[[p]])) {
+        cols <- r$des[[p]]$blocks[[nm]]
+        if (!length(cols)) next
+        out[paste(p, nm)] <- sum(r$d[offs[a] + cols])
+      }
+    }
+    out
+  }
+
+  set.seed(40)
+  n <- 400L
+  dd <- data.frame(x = stats::runif(n), z = stats::runif(n))
+  dd$y <- sin(2 * pi * dd$x) +
+    stats::rnorm(n, sd = exp(-1 + 0.8 * sin(2 * pi * dd$z)))
+
+  cases <- list(
+    statmod(y ~ s(x, k = 10) | sigma ~ s(z, k = 10),
+            distributions7::gaussian1_distrib(), dd, outer_method = reml()),
+    statmod(y ~ 1 | sigma ~ s(z, k = 10),
+            distributions7::gaussian1_distrib(), dd, outer_method = reml())
+  )
+  for (fit in cases) {
+    r <- ref_total(fit)
+    got <- stats::setNames(fit@edf$edf, paste(fit@edf$parameter,
+                                              fit@edf$term))
+    want <- per_term(fit, r)
+    expect_equal(got[names(want)], want, tolerance = 1e-10)
+    expect_equal(sum(fit@edf$edf), sum(r$d), tolerance = 1e-10)
+  }
+
+  # a model with no penalty at all still counts one per coefficient
+  d2 <- data.frame(x = stats::rnorm(80))
+  d2$y <- 1 + 2 * d2$x + stats::rnorm(80)
+  f2 <- statmod(y ~ x, distributions7::gaussian1_distrib(), d2)
+  expect_equal(sum(f2@edf$edf), 3)
+
+  # and a kinked penalty is still counted by its survivors, not by a trace
+  # that has no curvature to read at the kink
+  set.seed(23)
+  p <- 12L
+  X <- matrix(stats::rnorm(150 * p), 150, p)
+  d3 <- data.frame(y = X[, 1] * 2 - X[, 2] * 1.5 + stats::rnorm(150),
+                   X = I(X))
+  f3 <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), d3,
+                hyper = list(mu = list("lasso(X)" = c(lambda = 20))))
+  row <- f3@edf[f3@edf$term == "lasso(X)", ]
+  expect_equal(row$edf, sum(coef(f3)$mu[-1] != 0))
+})

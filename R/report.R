@@ -249,15 +249,75 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @title The Maximized Log-Likelihood of a Fit
 #' @name logLik.StatmodFit
 #' @description
-#' The value R's convention expects, carrying the effective degrees of freedom
-#' and the number of observations. \code{\link{loglik}} is the other thing:
-#' the model evaluated at parameters and data of the caller's choosing.
+#' The value R's convention expects, carrying the degrees of freedom and the
+#' number of observations. \code{\link{loglik}} is the other thing: the model
+#' evaluated at parameters and data of the caller's choosing.
+#' @details
+#' \strong{Which likelihood, and it matters.} The default is the
+#' CONDITIONAL one: the log-density at the fitted coefficients, a penalized
+#' coefficient among them, paired with the effective degrees of freedom
+#' \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion built on the pair is the
+#' conditional AIC, and its question is how well the model describes the
+#' groups, curves and states actually observed.
+#'
+#' A mixed-model package reports the MARGINAL likelihood instead: the random
+#' effects are integrated out and the count is the number of estimated
+#' parameters, variance components among them. Its question is about the
+#' population, and its AIC is a different number that is not comparable with
+#' the conditional one. Mixing the two -- a marginal likelihood against an
+#' effective count, or the reverse -- is what neither convention allows
+#' (Vaida and Blanchard, 2005).
+#'
+#' \code{type = "marginal"} returns the value the outer criterion evaluated
+#' while choosing the hyperparameters, with the number of estimated
+#' parameters as its degrees of freedom. It is available only where a
+#' marginal criterion actually ran: \code{\link{ml}} or \code{\link{reml}}.
+#' Where the hyperparameters were held, or found by a prediction criterion,
+#' there is no marginal likelihood to report and asking for one is an error
+#' rather than a number that would look like one.
 #' @param object A \code{\link{StatmodFit}}.
+#' @param type \code{"conditional"} (default) or \code{"marginal"}.
 #' @param ... Unused.
 #' @return A \code{logLik} object.
+#' @references
+#' Vaida, F. and Blanchard, S. (2005). Conditional Akaike information for
+#' mixed-effects models. \emph{Biometrika}, 92(2), 351--370.
 #' @seealso \code{\link{loglik}}
 #' @keywords internal
-logLik.StatmodFit <- function(object, ...) {
+logLik.StatmodFit <- function(object,
+                              type = c("conditional", "marginal"), ...) {
+  type <- match.arg(type)
+  if (identical(type, "marginal")) {
+    outer <- object@methods$outer
+    if (is.null(outer) || !outer@kind %in% c("ml", "reml")) {
+      stop(paste0(
+        "the marginal log-likelihood is the value ml() or reml() optimizes,",
+        "\n  and this fit used ",
+        if (is.null(outer)) "held hyperparameters" else
+          sprintf("%s()", outer@kind),
+        ". There is no marginal likelihood to\n  report; logLik(type = ",
+        "\"conditional\") is what this fit has."), call. = FALSE)
+    }
+    if (!length(object@criterion) || !is.finite(object@criterion)) {
+      stop("the outer criterion was not recorded for this fit.",
+           call. = FALSE)
+    }
+    # The parameters of the MARGINAL model, which is a different count from
+    # the conditional one and not an effective anything: the coefficients it
+    # did not integrate away, one per hyperparameter it estimated, and a
+    # structural term's own parameters, which are estimated rather than
+    # integrated. A penalized coefficient is a random effect under another
+    # name and is integrated out, so it does not appear.
+    design <- statmod_design(object@spec)
+    lab <- coef_labels(object@spec, design)
+    nh <- length(unlist(object@hyper, use.names = FALSE))
+    ns <- sum(vapply(statmod_structural_par(object@spec, design),
+                     function(u) length(u$parameter) - length(u$held),
+                     numeric(1)))
+    return(structure(as.numeric(object@criterion),
+                     df = sum(!lab$penalized) + nh + ns,
+                     nobs = object@spec@n_obs, class = "logLik"))
+  }
   df <- if (is.null(object@edf)) {
     sum(lengths(object@coefficients))
   } else {

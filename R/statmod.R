@@ -40,6 +40,7 @@ StatmodFit <- S7::new_class("StatmodFit",
   properties = list(
     spec = S7::class_any,
     coefficients = S7::class_list,
+    structural = S7::class_list,
     hyper = S7::class_list,
     loglik = S7::class_numeric,
     objective = S7::class_numeric,
@@ -180,8 +181,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 
   coef <- res$obj$split(res$par)
   fitted <- statmod_eta(spec, design, coef)$theta
+  # the terms as the fit left them, so a break-point and a nonlinear
+  # parameter are read off the fitted object and prediction reapplies them
+  spec <- statmod_fitted_spec(spec, coef, design)
   StatmodFit(
-    spec = spec, coefficients = coef, hyper = hyper,
+    spec = spec, coefficients = coef,
+    structural = statmod_structural_par(spec, design), hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = res$value,
     edf = statmod_edf(spec, coef, design, hyper, expected, approx),
@@ -240,6 +245,10 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
   converged <- FALSE
   smooth_ok <- TRUE
   smooth_note <- NULL
+  has_refresh <- length(attr(design, "refresh")) > 0L
+  has_structural <- length(attr(design, "structural")) > 0L
+  terms_ok <- TRUE
+  struct_ok <- TRUE
 
   for (sweep in seq_len(as.integer(maxit))) {
     before <- value
@@ -268,6 +277,22 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
       }
     }
 
+    # the structural terms' own parameters, the coefficients held where the
+    # smooth block left them
+    if (has_structural) {
+      v0 <- value
+      if (vb$blocks) cat(sprintf("[sweep %d] structural terms\n", sweep))
+      res <- statmod_fit_structural(spec, design, obj, beta, hyper, NULL,
+                                    verbose = vb$blocks)
+      value <- res$value
+      struct_ok <- isTRUE(res$converged)
+      hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
+        sweep = sweep, block = "structural", objective = value,
+        change = v0 - value, iterations = res$iterations,
+        converged = res$converged
+      )
+    }
+
     # each non-smooth block in turn, the others held fixed
     for (bl in blocks$sparse) {
       v0 <- value
@@ -287,6 +312,17 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
       )
     }
 
+    # A term whose block depends on its own coefficients has its refresh
+    # committed once here, not once per objective evaluation: what advances
+    # is the rescaling schedule of a discontinuous break-point term, which is
+    # a state of the iteration, and a schedule advancing at the speed of a
+    # line search is not the one the construction was designed with.
+    if (has_refresh) {
+      statmod_commit_refresh(spec, obj$split(beta), design)
+      value <- obj$fn(beta)
+      terms_ok <- statmod_refresh_settled(spec, design)
+    }
+
     rel <- abs(before - value) / max(1, abs(value))
     if (vb$blocks) {
       cat(sprintf("[sweep %d] objective %.8f, relative change %.3e\n",
@@ -297,12 +333,26 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_method, beta,
     # unconditionally in that case, so every model without a kinked penalty
     # reported success whatever the inner method had done -- including a run
     # that stopped on a non-finite score.
-    if (!length(blocks$sparse)) {
+    if (!length(blocks$sparse) && !has_refresh && !has_structural) {
       converged <- isTRUE(smooth_ok)
       break
     }
     if (rel < tol) {
+      # With a term that recomputes its own block the verdict is the
+      # objective's and that term's own, not the inner score's: where the
+      # block is a linearization rather than a Jacobian, the score belongs
+      # to the working model and does not vanish at the answer. With a
+      # structural term it is the objective's and the structural block's,
+      # for the other half of the same reason: the smooth block is fitted
+      # with the term's parameters held, so asking its score to reach the
+      # tolerance at every sweep asks each conditional optimum to be
+      # located to a precision the joint answer does not need.
       converged <- TRUE
+      if (has_refresh) converged <- isTRUE(terms_ok)
+      else if (!length(blocks$sparse) && !has_structural) {
+        converged <- isTRUE(smooth_ok)
+      }
+      converged <- converged && isTRUE(struct_ok)
       break
     }
   }
@@ -628,6 +678,14 @@ statmod_intercepts <- function(spec) {
 #' likelihood's information, which is computed once for every term rather than
 #' per term.
 #'
+#' A term may carry more than one penalty, over different parameters of its
+#' own, and each has hyperparameters of its own filed under a key of its own.
+#' The row stays per term, which is the granularity a table of terms wants,
+#' and the hyperparameters are handed over keyed by the penalty names
+#' \code{\link[modelterms7]{term_penalties}} gives, which is the shape
+#' \code{edf()} reads them in. Passing the hyperparameters of one penalty for
+#' a term carrying two would count the whole block against it.
+#'
 #' The arguments are passed BY NAME. \code{edf()}'s third argument is the
 #' curvature and its fourth the hyperparameters, and a positional call put the
 #' hyperparameters where the curvature belongs: every smooth term then reported
@@ -651,23 +709,82 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   offs <- cumsum(npar) - npar
   H <- NULL
   rows <- list()
+
+  # The model's smoother matrix, ONCE, over the coefficients of every
+  # equation together. A term's share of the degrees of freedom is the trace
+  # of its own diagonal block of this, which is what the definition says and
+  # what a block-wise tr[(H_bb + S_b)^-1 H_bb] only approximates: the latter
+  # drops every coupling between a term's columns and the rest of the model.
+  # Measured on a gaussian with a smooth in each equation the two totals were
+  # 16.98939 and 16.98885, the whole of the gap sitting on the MU smooth
+  # while sigma's agreed exactly -- because the Demmler-Reinsch basis is
+  # orthogonalized against the constant in the UNWEIGHTED metric and mu's
+  # information carries the weights 1/sigma^2, which vary here because sigma
+  # is itself modelled. The gap is small wherever the blocks are nearly
+  # orthogonal and is not bounded in general.
+  #
+  # A kinked penalty is NOT read from this matrix. There the count is the
+  # number of coefficients away from the kink, after Zou, Hastie and
+  # Tibshirani, and the curvature this matrix is built from does not exist at
+  # a coefficient sitting on it.
+  smoother <- NULL
+  if (any(vapply(statmod_penalized(spec, design),
+                 function(u) !penalty_has_kink(u$penalty, u$key),
+                 logical(1)))) {
+    smoother <- tryCatch({
+      H <- statmod_information_at(spec, coef, design, expected, approx)
+      S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
+      S[!is.finite(S)] <- 0
+      diag(solve(H + S, H))
+    }, error = function(e) NULL)
+  }
   for (a in seq_along(params)) {
     p <- params[a]
     for (nm in names(spec@terms[[p]])) {
       cols <- design[[p]]$blocks[[nm]]
-      pen <- modelterms7::term_penalty(spec@terms[[p]][[nm]])
-      v <- if (is.null(pen)) {
+      ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
+      v <- if (S7::S7_inherits(spec@terms[[p]][[nm]],
+                               modelterms7::structural_term)) {
+        # A structural term contributes no columns, so counting its block
+        # gave it ZERO and every criterion built on the total was that much
+        # too generous: a gas(1,1) reported 2 degrees of freedom for a model
+        # carrying four. What it spends is its own parameters, one apiece,
+        # being estimated and unpenalized -- less any level an intercept in
+        # the same equation already carries, which is held rather than
+        # estimated and is not the model's to pay for twice.
+        zn <- modelterms7::term_params(spec@terms[[p]][[nm]])
+        st <- statmod_structural_state(design)
+        as.numeric(length(setdiff(zn, st$held[[nm]])))
+      } else if (!length(ent) && is.null(smoother)) {
         as.numeric(length(cols))
+      } else if (!length(ent)) {
+        # An unpenalized block is not automatically worth one per column
+        # either: coupled to a penalized one it takes whatever share of the
+        # smoother matrix its own directions carry, and reading that off is
+        # the same rule as everywhere else rather than an exception.
+        sum(smoother[offs[a] + cols])
+      } else if (!is.null(smoother) &&
+                 !any(vapply(ent, function(e)
+                   penalty_has_kink(e$penalty, nm), logical(1)))) {
+        sum(smoother[offs[a] + cols])
       } else {
         if (is.null(H)) {
           H <- statmod_information_at(spec, coef, design, expected, approx)
         }
         idx <- offs[a] + cols
+        th <- if (length(ent) == 1L) {
+          as.list(hyper[[p]][[statmod_entry_key(nm, ent, ent[[1L]])]])
+        } else {
+          stats::setNames(
+            lapply(ent, function(e)
+              as.list(hyper[[p]][[statmod_entry_key(nm, ent, e)]])),
+            vapply(ent, function(e) e$name, character(1)))
+        }
         tryCatch(
           modelterms7::edf(spec@terms[[p]][[nm]],
                            coef = coef[[p]][cols],
                            hessian = H[idx, idx, drop = FALSE],
-                           theta = as.list(hyper[[p]][[nm]])),
+                           theta = th),
           error = function(e) {
             # the count is not worth abandoning a fit for, but a message that
             # named none of this would leave the reader to guess why a column

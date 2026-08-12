@@ -15,7 +15,8 @@ StatmodSpec(
   weights = integer(0),
   offsets = list(),
   intercepts = logical(0),
-  newdata = NULL
+  newdata = NULL,
+  structural = list()
 )
 }
 \arguments{

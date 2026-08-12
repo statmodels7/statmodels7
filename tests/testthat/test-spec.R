@@ -135,45 +135,61 @@ test_that("our terms win over an attached package's", {
 # A term the fitting scheme does not cover is rejected at specification time,
 # where the term can be named, rather than several frames down in the design.
 
-test_that("a term whose block moves with its coefficients is rejected", {
-  for (call in list(quote(seg(x)), quote(jump(x)), quote(jseg(x)))) {
+test_that("a term whose block moves with its coefficients is accepted", {
+  # it was rejected until the alternation learned to refresh a block; what
+  # the design now carries is the list of terms it has to refresh
+  for (call in list(quote(seg(x)), quote(jump(x)), quote(jseg(x)),
+                    quote(nl(~ a * exp(b * x), params = c("a", "b"))))) {
     fm <- stats::as.formula(paste("y ~", deparse(call)))
-    expect_error(
-      statmod_spec(fm, distributions7::gaussian1_distrib(), dd),
-      "block depends on its own coefficients")
+    spec <- expect_no_error(
+      statmod_spec(fm, distributions7::gaussian1_distrib(), dd))
+    expect_length(statmod_refreshable(spec), 1L)
+    expect_length(attr(statmod_design(spec), "refresh"), 1L)
   }
+  # and an ordinary model carries none, so it reaches exactly the same
+  # arithmetic as before
+  plain <- statmod_spec(y ~ x + s(z), distributions7::gaussian1_distrib(), dd)
+  expect_length(statmod_refreshable(plain), 0L)
+  expect_null(attr(statmod_design(plain), "refresh"))
 })
 
-test_that("nl() is rejected for the same reason", {
-  expect_error(
-    statmod_spec(y ~ nl(~ a * exp(b * x), params = c(a = 1, b = 0.1)),
-                 distributions7::gaussian1_distrib(), dd),
-    "block depends on its own coefficients")
+test_that("the refreshable terms are found in every equation", {
+  spec <- statmod_spec(y ~ seg(x) | sigma ~ jump(z),
+                       distributions7::gaussian1_distrib(), dd)
+  rf <- statmod_refreshable(spec)
+  expect_length(rf, 2L)
+  expect_identical(vapply(rf, function(r) r$param, character(1)),
+                   c("mu", "sigma"))
+  expect_identical(vapply(rf, function(r) r$term, character(1)),
+                   c("seg(x)", "jump(z)"))
 })
 
-test_that("a structural term is rejected, and says which shape it is", {
+test_that("a structural term is routed by the shape it implements", {
   tt <- data.frame(y = rnorm(60), t = 1:60)
-  for (call in list(quote(gas(1, 1)), quote(regime(2)))) {
-    fm <- stats::as.formula(paste("y ~", deparse(call)))
-    expect_error(statmod_spec(fm, distributions7::gaussian1_distrib(), tt),
-                 "structural term rewrites the likelihood")
-  }
+  # both shapes are fitted, and which one a term is is read off the methods
+  # it registers rather than from a list of class names
+  spec <- statmod_spec(y ~ gas(1, 1, time = t) - 1,
+                       distributions7::gaussian1_distrib(), tt)
+  expect_identical(statmod_structural(spec)[[1L]]$kind, "filter")
+  s2 <- statmod_spec(y ~ regime(2, time = t) - 1,
+                     distributions7::gaussian1_distrib(), tt)
+  expect_identical(statmod_structural(s2)[[1L]]$kind, "loglik")
 })
 
 test_that("the message names the term and its parameter", {
-  err <- tryCatch(statmod_spec(y ~ x | sigma ~ seg(z),
-                               distributions7::gaussian1_distrib(), dd),
+  # a structural term implementing NEITHER shape of the contract is what
+  # remains unfittable, and the error says which term and which equation
+  Hollow <- S7::new_class("Hollow", parent = modelterms7::structural_term)
+  build <- modelterms7::term_build
+  S7::method(build, Hollow) <- function(term, data, ...) term
+  tt <- data.frame(y = rnorm(60), z = runif(60))
+  hollow <- function() Hollow(label = "hollow")
+  err <- tryCatch(statmod_spec(y ~ z | sigma ~ hollow(),
+                               distributions7::gaussian1_distrib(), tt),
                   error = conditionMessage)
-  expect_match(err, "'seg(z)'", fixed = TRUE)
+  expect_match(err, "'hollow()'", fixed = TRUE)
   expect_match(err, "'sigma'", fixed = TRUE)
-})
-
-test_that("every offending equation is reported, not just the first", {
-  err <- tryCatch(statmod_spec(y ~ seg(x) | sigma ~ jump(z),
-                               distributions7::gaussian1_distrib(), dd),
-                  error = conditionMessage)
-  expect_match(err, "seg(x)", fixed = TRUE)
-  expect_match(err, "jump(z)", fixed = TRUE)
+  expect_match(err, "neither shape of the contract", fixed = TRUE)
 })
 
 test_that("the terms the scheme does cover are not rejected", {

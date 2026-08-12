@@ -4,7 +4,13 @@
 \alias{summary.StatmodFit}
 \title{Summarize a Fitted Model}
 \usage{
-\method{summary}{StatmodFit}(object, level = 0.95, type = c("bayesian", "frequentist"), ...)
+\method{summary}{StatmodFit}(
+  object,
+  level = 0.95,
+  type = c("bayesian", "frequentist"),
+  correct = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link{StatmodFit}}.}
@@ -12,6 +18,13 @@
 \item{level}{The confidence level.}
 
 \item{type}{Which variance matrix: passed to \code{\link{vcov.StatmodFit}}.}
+
+\item{correct}{Whether the degrees of freedom carry what the estimation
+of the hyperparameters cost. The ordinary count reads them as known,
+and they were chosen from the same data, so a criterion built on it is
+too generous. See \code{\link{statmod_edf_correction}}. Defaults to
+\code{FALSE} because it changes a number a reader may be comparing with
+an earlier fit; it is zero where no hyperparameter was estimated.}
 
 \item{...}{Passed to \code{\link{vcov.StatmodFit}}.}
 }

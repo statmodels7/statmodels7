@@ -11,6 +11,7 @@ StatmodSummary(
   n_obs = integer(0),
   tables = list(),
   edf = NULL,
+  structural = NULL,
   loglik = integer(0),
   df = integer(0),
   aic = integer(0),

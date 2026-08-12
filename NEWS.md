@@ -1,3 +1,348 @@
+# statmodels7 0.22.0
+
+* A term's effective degrees of freedom are its share of the WHOLE model's
+  smoother matrix, which is the definition, rather than a block-wise
+  approximation to it.
+
+  `statmod_edf()` computed `tr[(H_bb + S_b)^-1 H_bb]` from each term's own
+  block, dropping every coupling between that block and the rest of the
+  model. The definition is `F = (H + S)^-1 H` over the stacked coefficients
+  of every equation, with a term taking the trace of its diagonal block; the
+  matrix is now formed once per call and every term reads its share off it.
+
+  It was found verifying the counts on parameters other than the mean.
+  Measured on a gaussian with a smooth in each equation, the two totals were
+  16.98939 and 16.98885, and the whole of the gap sat on the MU smooth while
+  sigma's agreed exactly: the Demmler-Reinsch basis is orthogonalized
+  against the constant in the UNWEIGHTED metric, and the mean's information
+  carries weights `1/sigma^2` that vary as soon as the scale is modelled, so
+  the orthogonality the construction arranged does not survive the
+  weighting. The gap is small wherever the blocks are nearly orthogonal and
+  is not bounded in general.
+
+  Now exact against the full-model trace, per term and in total, on a
+  gaussian with smooths in both equations, on a gumbel, whose location and
+  scale are NOT information-orthogonal, and on a gamma with its dispersion
+  modelled. A kinked penalty keeps its own count, the number of coefficients
+  away from the kink, since the curvature the smoother matrix is built from
+  does not exist at a coefficient sitting on one.
+
+# statmodels7 0.21.0
+
+* `summary(fit, correct = TRUE)` carries what estimating the hyperparameters
+  cost into the degrees of freedom.
+
+  The ordinary effective degrees of freedom read the smoothing parameters as
+  though they were known, and they were chosen from the same data, so every
+  criterion built on the count is too generous. `statmod_edf_correction()`
+  propagates their uncertainty into the coefficients by the implicit
+  function theorem: with `J = -(H+S)^-1 d2rho/dbeta dtheta` from
+  penalties7's `penalty_cross()` and `V_theta` the inverse of the outer
+  criterion's own Hessian, the corrected count is `tr[(V_b + J V_theta J') H]`.
+
+  It is the first of the two terms mgcv sums into `edf2`, and it reproduces
+  mgcv's to 3.0e-04, 4.7e-04 and 2.6e-05 at n = 200, 400 and 2000 on a
+  univariate smooth. mgcv's second term corrects for the Gaussian scale,
+  which it profiles out of the fit; here every distribution parameter
+  carries its own equation and its own coefficients, so that uncertainty is
+  already inside the information.
+
+  Nothing in it is smooth-specific: it enumerates penalties, so a
+  `random()` effect is corrected by the same code path with no branch.
+  Where no hyperparameter was estimated by a marginal criterion -- a kinked
+  penalty, whose lambda `outer_hyper_index()` skips by construction, or a
+  held one -- the correction is exactly zero and says so. That is a refusal
+  rather than an approximation: the map from the hyperparameter to the
+  penalized mode turns a corner whenever a coefficient joins or leaves the
+  active set, and a delta method needs a derivative that does not exist
+  there.
+
+  It is off by default because it changes a number a reader may be
+  comparing with an earlier fit.
+
+# statmodels7 0.20.0
+
+* A structural term's own parameters are COUNTED and REPORTED.
+
+  A term that rewrites the predictor contributes no design columns, and the
+  degrees of freedom were read off the columns, so `gas(1, 1)` was counted
+  as ZERO and a model carrying four parameters reported two. Every criterion
+  built on the total was that much too generous. What such a term spends is
+  its own parameters, one apiece, less any level an intercept in the same
+  equation already carries -- which is held rather than estimated and is not
+  paid for twice.
+
+  `summary()` now prints them with standard errors and intervals from the
+  joint observed information, which spans the coefficients AND the term's
+  parameters and was already being computed for `vcov()`. Each interval is
+  built on the unconstrained scale and mapped back, so a persistence stays
+  inside `(-1, 1)` and a gap stays positive; the standard error on the
+  parameter scale is the delta method and is reported for reading. A held
+  level is shown as held, with no standard error rather than a zero one.
+
+* `logLik()` says which likelihood it is, and the other one is reachable.
+
+  What it returns is the CONDITIONAL log-likelihood -- the density at the
+  fitted coefficients, a penalized coefficient among them -- paired with the
+  effective degrees of freedom. A criterion built on that pair is the
+  conditional AIC, and `summary()` now labels it as such rather than
+  printing a bare `AIC`. A mixed-model package reports the MARGINAL
+  likelihood instead, integrating its random effects away and counting
+  variance components, and its AIC is a different number answering a
+  different question (Vaida and Blanchard, 2005). The two are not
+  comparable and mixing their halves is what neither convention allows.
+
+  `logLik(fit, type = "marginal")` returns the value `ml()` or `reml()`
+  optimized while choosing the hyperparameters, with the estimated
+  parameters as its degrees of freedom. On a random intercept at 3000
+  observations it is -4372.79 on 4 degrees of freedom against lmer's
+  -4371.71 on 4. Where no marginal criterion ran it is an error rather than
+  a number that would look like one.
+
+# statmodels7 0.19.0
+
+* A structural term's callbacks go through `distributions7::distrib_kernel()`
+  rather than through the derivative generics. A filter calls them once per
+  time step, and each call was validating its arguments, aligning theta by
+  name, dispatching, and assembling every component of its order to keep one
+  of them.
+
+  Measured on a gas(1,1) scale equation at 2000 observations, against
+  rugarch on the same data: 123 seconds before this and the two changes
+  below it, 17.7 after, with the log-likelihood identical to the digit at
+  every size tried. `regime()` shares the callbacks and its standard errors
+  are unchanged to the digit.
+
+# statmodels7 0.18.0
+
+* The callbacks a structural filter runs do their fixed work once instead of
+  once per time step. `structural_callbacks()` recycled every distribution
+  parameter to the sample length inside the closure and rebuilt the
+  second-derivative component key with `match()` and `paste()`, both on
+  every step of every filter pass. Worth about 12 per cent of a gas fit.
+
+  It is not a change of order: `rep_len()` on a vector already of the right
+  length returns it untouched, so the old form was linear in the number of
+  observations like this one. What remains is the two generic calls per
+  step, which is where the rest of the time is.
+
+# statmodels7 0.17.0
+
+* `vcov()` on a model carrying a `regime()` term reports the OBSERVED
+  information. What it inverted before was the complete-data information,
+  the ordinary one averaged over the smoothed states, which is the matrix a
+  scoring step inverts and is not the information the fit carries: the two
+  differ by the conditional variance of the complete-data score, so the
+  complete-data one is the larger and every standard error read off it is
+  too small. Measured on a two-regime gaussian at 300 observations, the
+  matrices differ by 25 per cent and the worst standard error is understated
+  by 30 per cent where the regimes overlap; the gap closes as they separate
+  and the states become known, which is what the missing-information
+  principle says it should do.
+
+* `statmod_regime_information()` supplies the model's side of
+  `modelterms7::term_hessian()`: how each equation's unknowns reach each
+  predictor, and the family's first and second derivatives at the predictor
+  each regime shifts to. Unlike a filter's, those cannot be looked up from
+  one evaluation, so the family is evaluated once per regime, vectorized
+  over observations.
+
+  As for a filter, the matrix spans the coefficients AND the term's own
+  parameters, and the coefficient block of the joint inverse is what is
+  reported; a level an intercept already carries is dropped rather than
+  estimated. Checked against `numDeriv` on the exact gradient away from the
+  optimum, where a wrong Hessian and a right one differ.
+
+# statmodels7 0.16.0
+
+* `statmod()` fits `regime()`, which is the last term modelterms7 defines.
+  Every one of them is now fittable.
+
+  A term of that shape does not report a predictor: its contribution is a
+  likelihood mixed over latent states, so `statmod_loglik_at()` takes the
+  term's own and not the density at any single point. Everything else
+  follows from Fisher's identity -- the derivative of that likelihood in ANY
+  predictor is the posterior-weighted derivative of the ordinary one -- so
+  the score differentiates the log-density once per state, vectorized, and
+  weights by `modelterms7::term_posterior()`. Against `numDeriv`: 1.8e-07
+  in the coefficients on a scale of 246, and 6.0e-09 in the term's own
+  parameters. On 600 observations simulated from the model the fit returns
+  levels (-0.033, 3.057) against a truth of (0, 3) with the scale at 0.973.
+
+  The matrix the scoring step inverts there is the COMPLETE-DATA
+  information, the ordinary one averaged over the smoothed states, which is
+  what an EM step inverts. It is positive definite and it is not the
+  observed information of the mixture, which needs Louis's identity; with an
+  exact gradient a scoring matrix has only to be positive definite.
+
+* Where a structural term's level and a linear intercept are both present,
+  THE LINEAR INTERCEPT WINS and the term's level is held at zero. The two
+  are exactly confounded -- shifting the intercept by `c` and the level by
+  `-c(1 - sum b)` leaves every predictor unchanged -- and a fit reached that
+  ridge reporting convergence, the score being small because the surface is
+  flat. `y ~ x + gas(...)` and `y ~ x + regime(...)` are ordinary things to
+  write again, and nothing is lost: what a constant cannot express is the
+  dynamics, or the difference between one regime and another.
+
+  Which parameter is the level is the term's own answer, through
+  `modelterms7::term_level_param()`; which one is dropped is this layer's,
+  since only it knows what else the equation carries. The question is asked
+  of the SPAN of the equation's design and not of a column named
+  `"(Intercept)"`, a factor coded without one summing to the constant just
+  as well. The held parameter leaves the information as well as the fit,
+  its row and column dropped from the joint matrix.
+
+  Measured, and this is what says the two parametrizations are one model:
+  with the level held and with it free the fits reach the same maximum
+  (-553.793723 against -553.7937276) and the fitted intercept, 0.952936, is
+  the other fit's stationary level `omega/(1 - b)`, 0.95295.
+
+* `fit@structural` carries `held`, the parameters an intercept is carrying
+  instead.
+
+# statmodels7 0.15.0
+
+* The observed information of a model carrying a filter is exact.
+  `statmod_full_information()` assembles
+
+      -d2l/du2 = -sum_t w_t sum_{q,r} l_qr,t V_q,t' V_r,t
+                 - sum_t w_t l_p,t E_t
+
+  over the coefficients of every equation AND the term's own parameters,
+  with `E`, the second derivative of the predictor through the recursion,
+  from `modelterms7::term_curvature()`. Only the filter's equation has a `V`
+  that is not its own design; the third derivatives the second sum needs are
+  distributions7's, in closed form for every family.
+
+  What it replaces is the naive `X'WX`, which the scoring step still uses and
+  is right to -- with an exact gradient any positive definite matrix
+  converges to the right point -- but which is not the information. Measured
+  against numDeriv on the exact gradient, AWAY from the optimum, where a
+  wrong and a right Hessian are told apart: 4.3e-11 relative. The naive
+  curvature differs from the exact one by 17.5 per cent of the coefficient
+  block on a one-equation model and 35.3 per cent on a two-equation one, the
+  second larger because the cross-equation feedback contributes there too.
+
+* `vcov()` inverts the joint matrix and takes the coefficient block, rather
+  than inverting the coefficient block alone. The two differ wherever the
+  coefficients and the filter's parameters are correlated, which is the
+  situation the filter creates; the joint route is what accounts for having
+  estimated the term's parameters rather than known them.
+
+* A filter's level and a constant in its own equation are rejected. They are
+  EXACTLY confounded: shifting an intercept by `c` and the level by
+  `-c(1 - sum b)` leaves every predictor unchanged, the recursion being
+  affine in the level given the score path and the score path depending on
+  the predictor alone. The fit reached that ridge reporting convergence and
+  only the information saw it, so `reject_confounded_level()` asks at design
+  time, where the terms can be named.
+
+  It asks whether the CONSTANT LIES IN THE SPAN of the equation's design and
+  not whether a column is called `"(Intercept)"`: a factor coded without one
+  still sums to the constant, and the span test rejects it where a name test
+  would not.
+
+* No compiled code for any of it, and the measurement is the reason. One
+  curvature costs 1.4 filter runs and is FLAT in the number of unknowns --
+  five against fourteen changes nothing -- so the matrix arithmetic is not
+  where the time is; the family's third derivatives cost 0.0000 s. What it
+  is spent on is the per-observation callbacks, and there the win was in R:
+  a curvature runs at a point already reached, so the score and the
+  curvature of the density can be computed vectorized once and looked up,
+  where the filter must evaluate them at a predictor it has just produced.
+  That change took the curvature from 10.83 s to 3.95 s at n = 8000, a
+  factor of 2.7, and the answer is bit-identical.
+
+# statmodels7 0.14.0
+
+* `statmod()` fits the terms whose block depends on their own coefficients:
+  `seg()`, `jump()`, `jseg()` and `nl()`. They were rejected before, because
+  assembling such a block once and solving for the coefficients estimates
+  something else and reports convergence.
+
+  The block is refreshed at the coefficients inside the objective, and the
+  predictor takes the term's CONTRIBUTION rather than the block times the
+  coefficients. Writing the difference as a per-observation adjustment leaves
+  every crossprod reading the block as it did, and makes the scoring step's
+  increment the Gauss-Newton one. Measured against modelterms7's own
+  iteration, which shares no code with the fitting layer: the break-point
+  agrees to 0.01 and is the same from every start tried, and `nl()` agrees
+  with `nls()` to its own tolerance.
+
+  The refresh is committed once per sweep and not once per objective
+  evaluation, since the rescaling factor of a discontinuous term is a state
+  of the iteration rather than a function of the point: a schedule advancing
+  at the speed of a line search is not the one the construction was designed
+  with, and one that never advanced would solve a permanently smoothed
+  problem.
+
+  The verdict on such a fit is the objective's and the term's own, through
+  `modelterms7::term_converged()`, not the inner score's. Where the block is
+  a working linearization with a frozen weight the score belongs to that
+  working model: measured on `jump()`, the fit reaches the break-point and
+  the jump size to three figures and the score stays at 0.176 forever.
+
+* `statmod()` fits a structural term of the FILTER shape, which is `gas()`.
+  The term contributes no columns; its level is added to the predictor of the
+  equation it sits in, and its own parameters are estimated on the
+  unconstrained scale of `term_links()` by a general optimizer with an exact
+  gradient, alternating with the coefficients.
+
+  What makes the answer right is the gradient. The level was driven by scores
+  read at predictors the coefficients also enter, so the derivative of the
+  objective in a coefficient is not the block times the score;
+  `modelterms7::term_adjoint()` supplies the correction and the layer chains
+  it with its own mixed second derivatives, which reaches the coefficients of
+  the OTHER equations too. Against `numDeriv` the whole gradient agrees to
+  2e-8, and the naive one is out by 9.7. On 2000 observations simulated from
+  the model the fit returns (0.299, 0.440, 0.732) against a truth of
+  (0.3, 0.4, 0.7), with the scale at 0.998 against 1.
+
+  `fit@structural` carries each term's estimated parameters, on their own
+  scale and on the unconstrained one.
+
+* `regime()` is still rejected, and the message now says what the layer is
+  missing -- the derivative of a likelihood mixed over latent states in the
+  predictor it is handed -- rather than naming an internal generic.
+
+* A formula carrying more than one structural term is rejected, whatever
+  equations they sit in. Each rewrites the predictor or the likelihood the
+  others would be read at, so the pair is one recursion written as two and
+  neither term implements it.
+
+* An accepted step that moves the objective by less than its own rounding
+  ends the scoring run. The sufficient-decrease test cannot tell such a step
+  from no step -- at a step of 1e-9 the decrease it asks for is of that order
+  -- so the run spent its budget standing still, which is what a term whose
+  gradient belongs to a working model produces at its own fixed point.
+
+# statmodels7 0.13.0
+
+* A term carrying more than one penalty is fitted, counted and reported per
+  penalty. `statmod_penalized()` already enumerated them, so the fitting core
+  was right; what still read one penalty per term were the three places that
+  report a fit.
+
+  - `statmod_edf()` hands `modelterms7::edf()` the hyperparameters of every
+    penalty the term carries, keyed by the penalty names, which is the shape
+    that function reads them in. It asked for `term_penalty()` before, so a
+    term whose penalty covers part of its parameters was counted as
+    unpenalized -- its coefficient count -- and a term carrying two had the
+    hyperparameters of neither.
+  - `term_block_kind()` reads the same enumeration, so a term penalized over
+    part of itself is a penalized block, and a selection where any of its
+    penalties has a kink, rather than a parametric one.
+  - `summary()` shows one hyperparameter row per penalty. Where a term
+    carries several the name carries the penalty as well (`delta.lambda`),
+    two hyperparameters in one block not being the same number.
+
+  The row of the degrees of freedom stays per TERM, which is the granularity
+  a table of terms wants.
+
+* `statmod_entry_key()` composes the key -- the term's name, with the entry's
+  after `::` where a term carries several -- in one place. Two callers
+  composing it apart would agree by accident.
+
 # statmodels7 0.12.0
 
 * `statmod_penalized()` enumerates the penalized units of a model -- one

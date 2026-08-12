@@ -44,7 +44,8 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     weights = S7::class_numeric,
     offsets = S7::class_list,
     intercepts = S7::class_logical,
-    newdata = S7::class_any
+    newdata = S7::class_any,
+    structural = S7::class_list
   )
 )
 
@@ -222,26 +223,21 @@ statmod_terms <- function(equations, data, env) {
 #' is what the alternation of \code{\link{statmod}} assembles.
 #'
 #' @details
-#' Two shapes are outside that assembly, and both are read off the term rather
-#' than from a list of class names, so a term written later is covered without
-#' an edit here.
+#' One shape is outside that assembly, and it is read off the term rather than
+#' from a list of class names, so a term written later is covered without an
+#' edit here.
 #'
 #' A \strong{structural} term rewrites the likelihood instead of contributing a
 #' predictor, so it has no design block at all and answers neither
 #' \code{term_matrix()} nor \code{term_npar()}. Reaching it through the design
 #' produced an error naming one of those generics, which says nothing about the
-#' cause.
+#' cause. \code{\link{statmod_structural}} routes those, and what remains here
+#' is the term class that is structural and implements neither shape of the
+#' contract.
 #'
-#' A term whose block \strong{depends on its own coefficients} registers a
-#' \code{\link[modelterms7]{term_refresh}} method of its own, the base method
-#' on \code{model_term} being the identity; the class a method was registered
-#' on is \code{attr(m, "signature")[[1]]}. For those the block is a Jacobian
-#' and the working solution is an increment, so assembling it once and solving
-#' for the coefficients estimates something else while reporting convergence:
-#' measured on \code{seg()}, the break-point stays at its starting value and
-#' the fitted mean of a continuous construction carries a step. Rejecting them
-#' is what keeps that out of a returned object until the alternation refreshes
-#' a block between inner fits.
+#' A term whose block depends on its own coefficients was rejected here too
+#' until the alternation learned to refresh one; it is fitted now, by
+#' \code{\link{statmod_design_at}}.
 #'
 #' Every equation is examined before the error is raised, so a model carrying
 #' one such term in the mean and another in the scale reports both rather than
@@ -265,6 +261,7 @@ reject_unfittable <- function(terms) {
       }
     }
   }
+  reject_incompatible(terms)
   if (length(found) == 0L) return(invisible(NULL))
   stop(if (length(found) == 1L) {
     paste0("statmod() cannot fit ", found)
@@ -272,6 +269,112 @@ reject_unfittable <- function(terms) {
     paste0("statmod() cannot fit these terms:\n",
            paste0("  ", found, collapse = "\n"))
   }, call. = FALSE)
+}
+
+
+#' Which Structural Levels a Linear Intercept Already Carries
+#'
+#' @description
+#' The parameters of the structural terms that must be held rather than
+#' estimated, because the equation they sit in already spans the constant
+#' they would shift it by.
+#'
+#' @details
+#' A score-driven level and a regime's first level both add a constant to
+#' their equation's predictor. With an intercept there too the two are
+#' EXACTLY confounded: shifting the intercept by \eqn{c} and the level by
+#' \eqn{-c(1 - \sum_j b_j)} leaves every predictor unchanged, since the
+#' recursion is affine in the level given the score path, the score path
+#' depends on the predictor alone, and the starting level moves by the same
+#' \eqn{c}. The likelihood is flat along that direction, and a fit reaches
+#' the ridge without failing -- the score is small because the surface is
+#' flat, not because it is a maximum.
+#'
+#' \strong{The linear intercept wins.} Where both are present the term's
+#' level is held at zero and the coefficient carries it, which is what makes
+#' \code{y ~ x + gas(...)} an ordinary thing to write. Nothing about the
+#' model is lost: what a constant cannot express is the dynamics, or the
+#' difference between one regime and another, and those are the parameters
+#' that remain free.
+#'
+#' The question is asked of the \strong{span} of the equation's design and
+#' not of a column named \code{"(Intercept)"}: a factor coded without one,
+#' or any set of columns summing to a constant, spans it just as well.
+#' Which parameter is the level is the term's own answer, through
+#' \code{\link[modelterms7]{term_level_param}}.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#'
+#' @return A named list, one character vector per structural term.
+#'
+#' @seealso \code{\link{reject_incompatible}}
+#'
+#' @keywords internal
+statmod_held_levels <- function(spec, design) {
+  su <- attr(design, "structural")
+  out <- list()
+  if (is.null(su) || !length(su)) return(out)
+  n <- spec@n_obs
+  for (u in su) {
+    out[[u$term]] <- character(0)
+    lvl <- modelterms7::term_level_param(spec@terms[[u$param]][[u$term]])
+    if (!length(lvl)) next
+    X <- design[[u$param]]$X
+    if (is.null(X) || !ncol(X)) next
+    # the constant lies in the span exactly when regressing it on the design
+    # leaves nothing behind
+    if (max(abs(qr.resid(qr(X), rep(1, n)))) < 1e-8) out[[u$term]] <- lvl
+  }
+  out
+}
+
+
+#' Combinations of Terms That Are Not a Model
+#'
+#' @description
+#' Rejects a formula carrying more than one structural term, whatever
+#' equations they sit in.
+#'
+#' @details
+#' Two of them are not a model that the layer could fit and then report. A
+#' filter is driven by the score of the log-likelihood at the predictor it
+#' has just produced, so two filters in one equation are two levels adding
+#' up, with nothing to tell one from the other; in two equations, each is
+#' driven by a score that depends on the other's state, and the pair is one
+#' recursion written as two, which neither term implements. A term whose
+#' contribution is a likelihood mixed over latent states does not report a
+#' predictor at all, so it cannot be combined with anything that expects
+#' one.
+#'
+#' The count is over the whole formula rather than per equation because that
+#' is the honest boundary: what makes one admissible is that everything else
+#' in the model is a predictor it can be driven by.
+#'
+#' @param terms The built terms, a named list of named lists.
+#'
+#' @return \code{NULL}, invisibly; called for the error.
+#'
+#' @seealso \code{\link{reject_unfittable}}, \code{\link{statmod_structural}}
+#'
+#' @keywords internal
+reject_incompatible <- function(terms) {
+  found <- character(0)
+  for (p in names(terms)) {
+    for (nm in names(terms[[p]])) {
+      if (S7::S7_inherits(terms[[p]][[nm]], modelterms7::structural_term)) {
+        found <- c(found, sprintf("'%s' in '%s'", nm, p))
+      }
+    }
+  }
+  if (length(found) <= 1L) return(invisible(NULL))
+  stop(sprintf(paste0("statmod() fits at most one structural term and this",
+                      " model has %d:\n  %s.\n",
+                      "  Each rewrites the predictor or the likelihood the",
+                      " others would be read at,\n  so the pair is one",
+                      " recursion written as two and neither term",
+                      " implements it."),
+               length(found), paste(found, collapse = ", ")), call. = FALSE)
 }
 
 
@@ -290,17 +393,12 @@ reject_unfittable <- function(terms) {
 #' @keywords internal
 unfittable_reason <- function(term) {
   if (S7::S7_inherits(term, modelterms7::structural_term)) {
-    return(paste("a structural term rewrites the likelihood instead of",
-                 "contributing a predictor, and the fitting scheme has no",
-                 "route for one yet."))
-  }
-  if (refreshes_own_block(term)) {
-    return(paste("its block depends on its own coefficients and the",
-                 "alternation does not refresh a block between inner fits",
-                 "yet, so fitting it here would hold the break-point or the",
-                 "nonlinear parameters at their starting values and report",
-                 "convergence. Iterate it with modelterms7::term_refresh()",
-                 "instead; see its help page."))
+    kind <- structural_kind(term)
+    if (identical(kind, "filter") || identical(kind, "loglik")) return("")
+    return(paste("it is a structural term implementing neither shape of the",
+                 "contract: a term that rewrites the likelihood has to",
+                 "answer either term_filter(), reporting a predictor, or",
+                 "term_loglik(), reporting a likelihood."))
   }
   ""
 }
@@ -435,7 +533,60 @@ check_offsets <- function(offsets, params, n) {
 #'
 #' @export
 statmod_design <- function(spec) {
+  out <- statmod_design_blocks(spec)
+  su <- statmod_structural(spec)
+  if (length(su)) {
+    sst <- new.env(parent = emptyenv())
+    # a specification a fit has been through carries the parameters it
+    # arrived at; without them a prediction would rebuild the filter at its
+    # starting values, which is the model without the term
+    sst$zeta <- stats::setNames(
+      lapply(su, function(u) {
+        z <- spec@structural[[u$term]]
+        if (is.null(z)) structural_zeta_start(spec@terms[[u$param]][[u$term]])
+        else z
+      }),
+      vapply(su, function(u) u$term, character(1)))
+    sst$key <- NULL
+    sst$value <- NULL
+    attr(out, "structural") <- su
+    attr(out, "structure") <- sst
+    # asked once the blocks exist, since what it compares is the equation's
+    # column space against the constant
+    sst$held <- statmod_held_levels(spec, out)
+  }
+  rf <- statmod_refreshable(spec)
+  if (length(rf)) {
+    # the terms a refresh chains from, and the cache of the last point they
+    # were refreshed at; an environment because a design is copied by value
+    # and the state has to be the same one wherever it is read
+    st <- new.env(parent = emptyenv())
+    st$terms <- spec@terms
+    st$key <- NULL
+    st$value <- NULL
+    attr(out, "refresh") <- rf
+    attr(out, "state") <- st
+  }
+  out
+}
+
+
+#' The Blocks of a Design
+#'
+#' @description
+#' The per-parameter blocks, before any refreshable term is recomputed at
+#' coefficients.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#'
+#' @return A named list, one entry per distribution parameter.
+#'
+#' @keywords internal
+statmod_design_blocks <- function(spec) {
   lapply(spec@terms, function(tms) {
+    # a structural term contributes no columns at all
+    tms <- tms[!vapply(tms, S7::S7_inherits, logical(1),
+                       modelterms7::structural_term)]
     if (!length(tms)) {
       return(list(X = matrix(0, spec@n_obs, 0L), coef_names = character(0),
                   npar = 0L, blocks = list()))

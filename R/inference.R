@@ -127,8 +127,22 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   total <- nrow(lab)
   nm <- rownames(lab)
 
-  H <- statmod_information_at(spec, coef, design, expected)
+  # A model carrying a structural term is inverted over the coefficients AND
+  # the term's own parameters together, and the coefficient block of that
+  # inverse is taken. Inverting the coefficient block alone would report the
+  # variance that would hold with the term's parameters known, which is not
+  # what was estimated. The information there is the observed one: neither a
+  # filter nor a mixture over states has an expected information to offer.
+  fil <- length(attr(design, "structural")) > 0L
+  H <- if (fil) statmod_full_information(spec, coef, design) else
+    statmod_information_at(spec, coef, design, expected)
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
+  nz <- nrow(H) - total
+  if (nz > 0L) {
+    # the term's parameters carry no penalty, so the block is padded
+    S <- rbind(cbind(S, matrix(0, total, nz)),
+               matrix(0, nz, total + nz))
+  }
 
   keep <- rep(TRUE, total)
   beta <- unlist(coef[spec@distrib@params], use.names = FALSE)
@@ -139,10 +153,15 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
 
   out <- matrix(NA_real_, total, total, dimnames = list(nm, nm))
   if (!any(keep)) return(out)
-  A <- (H + S)[keep, keep, drop = FALSE]
-  Vb <- solve_pd(A, "the penalized information", nm[keep])
+  keep_full <- c(keep, rep(TRUE, nz))
+  A <- (H + S)[keep_full, keep_full, drop = FALSE]
+  Vb <- solve_pd(A, "the penalized information",
+                 c(nm[keep], rep("", nz)))
   V <- if (type == "bayesian") Vb else
-    Vb %*% H[keep, keep, drop = FALSE] %*% Vb
+    Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
+  # the coefficient block of the joint inverse, which is not the inverse of
+  # the coefficient block wherever the two are correlated
+  V <- V[seq_len(sum(keep)), seq_len(sum(keep)), drop = FALSE]
   out[keep, keep] <- V
   out
 }
@@ -305,8 +324,13 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' parameters, or a selection's survivors.
 #'
 #' @details
-#' The classification is by the term's class and by its penalty, not by its
-#' label, so a term given a name of its own is read the same way.
+#' The classification is by the term's class and by its penalties, not by its
+#' label, so a term given a name of its own is read the same way. The
+#' penalties are the ones the term declares through
+#' \code{\link[modelterms7]{term_penalties}}, so a term penalized over part of
+#' its parameters -- a segmented term's changes, a filter's deviations -- is
+#' read as penalized rather than as parametric, and is a selection when any
+#' of its penalties has a kink.
 #'
 #' @param term A built term.
 #'
@@ -315,11 +339,13 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #'
 #' @keywords internal
 term_block_kind <- function(term) {
-  pen <- modelterms7::term_penalty(term)
-  if (is.null(pen)) return("parametric")
+  ent <- modelterms7::term_penalties(term)
+  if (!length(ent)) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
   if (S7::S7_inherits(term, modelterms7::SmoothTerm)) return("smooth")
-  if (penalty_has_kink(pen)) return("selection")
+  if (any(vapply(ent, function(e) penalty_has_kink(e$penalty), logical(1)))) {
+    return("selection")
+  }
   "penalized"
 }
 
@@ -396,6 +422,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     n_obs = S7::class_numeric,
     tables = S7::class_list,
     edf = S7::class_any,
+    structural = S7::class_any,
     loglik = S7::class_numeric,
     df = S7::class_numeric,
     aic = S7::class_numeric,
@@ -458,6 +485,12 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @param object A \code{\link{StatmodFit}}.
 #' @param level The confidence level.
 #' @param type Which variance matrix: passed to \code{\link{vcov.StatmodFit}}.
+#' @param correct Whether the degrees of freedom carry what the estimation
+#'   of the hyperparameters cost. The ordinary count reads them as known,
+#'   and they were chosen from the same data, so a criterion built on it is
+#'   too generous. See \code{\link{statmod_edf_correction}}. Defaults to
+#'   \code{FALSE} because it changes a number a reader may be comparing with
+#'   an earlier fit; it is zero where no hyperparameter was estimated.
 #' @param ... Passed to \code{\link{vcov.StatmodFit}}.
 #' @return A \code{\link{StatmodSummary}}.
 #' @seealso \code{\link{vcov.StatmodFit}}, \code{\link{confint.StatmodFit}}
@@ -469,7 +502,8 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'                 distributions7::gaussian1_distrib(), dd))
 #' @keywords internal
 summary.StatmodFit <- function(object, level = 0.95,
-                               type = c("bayesian", "frequentist"), ...) {
+                               type = c("bayesian", "frequentist"),
+                               correct = FALSE, ...) {
   type <- match.arg(type)
   ci <- confint(object, level = level, type = type, ...)
   spec <- object@spec
@@ -485,6 +519,26 @@ summary.StatmodFit <- function(object, level = 0.95,
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
   notes <- character(0)
+
+  # The count above reads the hyperparameters as though they were known,
+  # and they were estimated from the same data. Adding what that costs is
+  # off by default because it changes a number a reader may be comparing
+  # with an earlier fit.
+  corr <- 0
+  if (isTRUE(correct)) {
+    cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
+                                          object@hyper, design,
+                                          object@methods$outer),
+                   error = function(e) list(total = 0, per = numeric(0)))
+    corr <- cc$total
+    df <- df + corr
+    notes <- c(notes, if (corr > 0) sprintf(paste0(
+      "The degrees of freedom carry %.3f for the hyperparameters, which ",
+      "were\n  estimated rather than given. Without it the criteria are ",
+      "too generous."), corr) else paste0(
+      "No hyperparameter here was estimated by a marginal criterion, so ",
+      "there is\n  nothing for the correction to propagate and it is zero."))
+  }
   if (any(lab$penalized)) {
     notes <- c(notes, if (is.null(object@methods$outer)) paste0(
       "A hyperparameter is held at the value it was given, not estimated, so ",
@@ -511,9 +565,21 @@ summary.StatmodFit <- function(object, level = 0.95,
       "\n  is not a maximum."))
   }
 
+  # A structural term contributes no columns, so nothing above can report
+  # it and its parameters were reachable only through fit@structural.
+  strc <- tryCatch(statmod_structural_table(object, level),
+                   error = function(e) NULL)
+  if (!is.null(strc) && any(strc$held)) {
+    notes <- c(notes, paste0(
+      "A level marked held is carried by an intercept in the same equation ",
+      "and is\n  not estimated: the two are exactly confounded, so only one ",
+      "of them can be."))
+  }
+
   StatmodSummary(
     call = object@call, distrib_name = spec@distrib@distrib_name,
     n_obs = spec@n_obs, tables = tables, edf = object@edf,
+    structural = strc,
     loglik = object@loglik, df = df,
     aic = -2 * object@loglik + 2 * df,
     bic = -2 * object@loglik + log(spec@n_obs) * df,
@@ -563,18 +629,35 @@ summary_blocks <- function(fit, spec, design, p, ci) {
   # estimated by a marginal criterion is not this Hessian's to give, and an
   # interval here would be invented rather than computed
   outer_ran <- !is.null(fit@methods$outer)
+  # A term may carry more than one penalty, each filed under a key of its
+  # own, so the rows of a term are those of every key belonging to it. Where
+  # there are several the hyperparameter is named for the penalty as well:
+  # two lambdas in one block, one on the slope changes and one on the jumps,
+  # are not the same number and cannot appear under the same name.
   hyper_rows <- function(nm) {
-    th <- fit@hyper[[p]][[nm]]
-    if (is.null(th) || !length(th)) return(empty)
-    u <- statmod_unit(spec, statmod_design(spec), p, nm)
-    if (is.null(u)) return(empty)
-    role <- if (outer_ran && !penalty_has_kink(u$penalty)) "estimated" else
-      "fixed"
-    out <- data.frame(name = names(th), estimate = as.numeric(th),
+    ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
+    if (!length(ent)) return(empty)
+    des <- statmod_design(spec)
+    out <- lapply(ent, function(e) {
+      key <- statmod_entry_key(nm, ent, e)
+      th <- fit@hyper[[p]][[key]]
+      if (is.null(th) || !length(th)) return(empty)
+      u <- statmod_unit(spec, des, p, key)
+      if (is.null(u)) return(empty)
+      role <- if (outer_ran && !penalty_has_kink(u$penalty)) "estimated" else
+        "fixed"
+      lab <- if (length(ent) > 1L && nzchar(e$name)) {
+        paste(e$name, names(th), sep = ".")
+      } else {
+        names(th)
+      }
+      r <- data.frame(name = lab, estimate = as.numeric(th),
                       se = NA_real_, statistic = NA_real_, p_value = NA_real_,
                       lower = NA_real_, upper = NA_real_, role = role,
                       stringsAsFactors = FALSE)
-    stats::setNames(out, cols)
+      stats::setNames(r, cols)
+    })
+    do.call(rbind, out)
   }
   term_edf <- function(nm) {
     if (is.null(fit@edf)) return(NA_real_)
@@ -649,10 +732,33 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
       next
     }
     for (b in blocks) print_block(b, digits)
+
+    # a structural term of this equation: no columns, so no block above
+    st <- x@structural
+    if (!is.null(st) && any(st$parameter == p)) {
+      for (tn in unique(st$term[st$parameter == p])) {
+        r <- st[st$parameter == p & st$term == tn, , drop = FALSE]
+        cat(sprintf("\n  %s   (structural: no design columns)\n", tn))
+        tb <- data.frame(estimate = r$estimate, se = r$se,
+                         lower = r$lower, upper = r$upper,
+                         row.names = ifelse(r$held, paste0(r$name, " (held)"),
+                                            r$name))
+        print(format(tb, digits = digits))
+      }
+    }
   }
 
   cat(sprintf("\n%.0f%% intervals, %s variance\n", 100 * x@level, x@type))
-  cat(sprintf("log-likelihood %.6f    df %.2f    AIC %.3f    BIC %.3f\n",
+  # WHICH log-likelihood and WHICH degrees of freedom, because the pairing
+  # is what makes the criterion mean anything and the two conventions in
+  # common use are not comparable. This one is conditional: the likelihood
+  # is read at the fitted coefficients, a penalized coefficient among them,
+  # and the count is the effective degrees of freedom. A mixed-model package
+  # reporting a MARGINAL likelihood integrates its random effects out and
+  # counts variance components instead, and its AIC is a different number
+  # answering a different question (Vaida and Blanchard, 2005).
+  cat(sprintf(paste0("conditional log-likelihood %.6f    effective df %.2f",
+                     "\ncAIC %.3f    cBIC %.3f\n"),
               x@loglik, x@df, x@aic, x@bic))
   cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))

@@ -274,15 +274,42 @@ statmod_penalty_keys <- function(spec) {
       ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
       if (!length(ent)) next
       for (e in ent) {
-        key <- if (length(ent) > 1L && nzchar(e$name))
-          paste0(nm, "::", e$name) else nm
         out[[length(out) + 1L]] <- list(
-          param = p, term = nm, key = key, within = e$index,
-          penalty = e$penalty)
+          param = p, term = nm, key = statmod_entry_key(nm, ent, e),
+          within = e$index, penalty = e$penalty)
       }
     }
   }
   out
+}
+
+
+#' The Key of One of a Term's Penalties
+#'
+#' @description
+#' What a hyperparameter row is filed under: the term's name where the term
+#' carries one penalty, and \code{term::entry} where it carries several.
+#'
+#' @details
+#' The composition is written once because two callers reading a
+#' hyperparameter by a key they each compose would agree only by accident. A
+#' term carrying one penalty keys as it always did, so a formula of ordinary
+#' terms is unaffected by the entry names the terms now supply.
+#'
+#' @param term The term's name in the formula.
+#' @param entries The term's entries, as
+#'   \code{\link[modelterms7]{term_penalties}} returns them.
+#' @param entry One of them.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+statmod_entry_key <- function(term, entries, entry) {
+  if (length(entries) > 1L && nzchar(entry$name)) {
+    paste0(term, "::", entry$name)
+  } else {
+    term
+  }
 }
 
 

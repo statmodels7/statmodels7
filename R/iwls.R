@@ -194,7 +194,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   if (!(method@decomposition %in% c("qr", "svd"))) return(assembled())
   th <- statmod_eta(spec, design, coef)$theta
   L <- chol_blocks(info_blocks(spec, th, expected, method@approx))
-  R <- sqrt_design(design, L)
+  R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
   if (is.null(R) || is.null(C)) return(assembled())
   list(R = R, C = C, A = NULL)
@@ -287,8 +287,19 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
       iteration = it, objective = vnew, score = score, step = step_used,
       rank = sol$rank, route = sol$route
     )
+    # A step accepted for a decrease below the rounding of the objective has
+    # not moved it, and the sufficient-decrease test cannot tell the two
+    # apart: with a step of 1e-9 the decrease it asks for is of that order,
+    # which any point satisfies. The run then spends its budget standing
+    # still, which is what a term whose gradient belongs to a working model
+    # rather than to the objective produces at its own fixed point.
+    stalled <- value - vnew <= 1e-12 * max(1, abs(value))
     beta <- cand
     value <- vnew
+    if (stalled) {
+      note <- paste0("the objective stopped moving at iteration ", it)
+      break
+    }
   }
   # the rule is asked once more at the point reached, so that a run which
   # could not move is still converged when the POINT says so

@@ -8,6 +8,7 @@
 StatmodFit(
   spec = NULL,
   coefficients = list(),
+  structural = list(),
   hyper = list(),
   loglik = integer(0),
   objective = integer(0),
