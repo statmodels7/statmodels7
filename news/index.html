@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,121 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.22.0" id="statmodels7-0220">statmodels7 0.22.0<a class="anchor" aria-label="anchor" href="#statmodels7-0220"></a></h2>
+<ul><li>
+<p>A term’s effective degrees of freedom are its share of the WHOLE model’s smoother matrix, which is the definition, rather than a block-wise approximation to it.</p>
+<p><code><a href="../reference/statmod_edf.html">statmod_edf()</a></code> computed <code>tr[(H_bb + S_b)^-1 H_bb]</code> from each term’s own block, dropping every coupling between that block and the rest of the model. The definition is <code>F = (H + S)^-1 H</code> over the stacked coefficients of every equation, with a term taking the trace of its diagonal block; the matrix is now formed once per call and every term reads its share off it.</p>
+<p>It was found verifying the counts on parameters other than the mean. Measured on a gaussian with a smooth in each equation, the two totals were 16.98939 and 16.98885, and the whole of the gap sat on the MU smooth while sigma’s agreed exactly: the Demmler-Reinsch basis is orthogonalized against the constant in the UNWEIGHTED metric, and the mean’s information carries weights <code>1/sigma^2</code> that vary as soon as the scale is modelled, so the orthogonality the construction arranged does not survive the weighting. The gap is small wherever the blocks are nearly orthogonal and is not bounded in general.</p>
+<p>Now exact against the full-model trace, per term and in total, on a gaussian with smooths in both equations, on a gumbel, whose location and scale are NOT information-orthogonal, and on a gamma with its dispersion modelled. A kinked penalty keeps its own count, the number of coefficients away from the kink, since the curvature the smoother matrix is built from does not exist at a coefficient sitting on one.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.21.0" id="statmodels7-0210">statmodels7 0.21.0<a class="anchor" aria-label="anchor" href="#statmodels7-0210"></a></h2>
+<ul><li>
+<p><code>summary(fit, correct = TRUE)</code> carries what estimating the hyperparameters cost into the degrees of freedom.</p>
+<p>The ordinary effective degrees of freedom read the smoothing parameters as though they were known, and they were chosen from the same data, so every criterion built on the count is too generous. <code><a href="../reference/statmod_edf_correction.html">statmod_edf_correction()</a></code> propagates their uncertainty into the coefficients by the implicit function theorem: with <code>J = -(H+S)^-1 d2rho/dbeta dtheta</code> from penalties7’s <code>penalty_cross()</code> and <code>V_theta</code> the inverse of the outer criterion’s own Hessian, the corrected count is <code>tr[(V_b + J V_theta J') H]</code>.</p>
+<p>It is the first of the two terms mgcv sums into <code>edf2</code>, and it reproduces mgcv’s to 3.0e-04, 4.7e-04 and 2.6e-05 at n = 200, 400 and 2000 on a univariate smooth. mgcv’s second term corrects for the Gaussian scale, which it profiles out of the fit; here every distribution parameter carries its own equation and its own coefficients, so that uncertainty is already inside the information.</p>
+<p>Nothing in it is smooth-specific: it enumerates penalties, so a <code>random()</code> effect is corrected by the same code path with no branch. Where no hyperparameter was estimated by a marginal criterion – a kinked penalty, whose lambda <code><a href="../reference/outer_hyper_index.html">outer_hyper_index()</a></code> skips by construction, or a held one – the correction is exactly zero and says so. That is a refusal rather than an approximation: the map from the hyperparameter to the penalized mode turns a corner whenever a coefficient joins or leaves the active set, and a delta method needs a derivative that does not exist there.</p>
+<p>It is off by default because it changes a number a reader may be comparing with an earlier fit.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.20.0" id="statmodels7-0200">statmodels7 0.20.0<a class="anchor" aria-label="anchor" href="#statmodels7-0200"></a></h2>
+<ul><li>
+<p>A structural term’s own parameters are COUNTED and REPORTED.</p>
+<p>A term that rewrites the predictor contributes no design columns, and the degrees of freedom were read off the columns, so <code>gas(1, 1)</code> was counted as ZERO and a model carrying four parameters reported two. Every criterion built on the total was that much too generous. What such a term spends is its own parameters, one apiece, less any level an intercept in the same equation already carries – which is held rather than estimated and is not paid for twice.</p>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> now prints them with standard errors and intervals from the joint observed information, which spans the coefficients AND the term’s parameters and was already being computed for <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>. Each interval is built on the unconstrained scale and mapped back, so a persistence stays inside <code>(-1, 1)</code> and a gap stays positive; the standard error on the parameter scale is the delta method and is reported for reading. A held level is shown as held, with no standard error rather than a zero one.</p>
+</li>
+<li>
+<p><code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> says which likelihood it is, and the other one is reachable.</p>
+<p>What it returns is the CONDITIONAL log-likelihood – the density at the fitted coefficients, a penalized coefficient among them – paired with the effective degrees of freedom. A criterion built on that pair is the conditional AIC, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> now labels it as such rather than printing a bare <code>AIC</code>. A mixed-model package reports the MARGINAL likelihood instead, integrating its random effects away and counting variance components, and its AIC is a different number answering a different question (Vaida and Blanchard, 2005). The two are not comparable and mixing their halves is what neither convention allows.</p>
+<p><code>logLik(fit, type = "marginal")</code> returns the value <code><a href="../reference/reml.html">ml()</a></code> or <code><a href="../reference/reml.html">reml()</a></code> optimized while choosing the hyperparameters, with the estimated parameters as its degrees of freedom. On a random intercept at 3000 observations it is -4372.79 on 4 degrees of freedom against lmer’s -4371.71 on 4. Where no marginal criterion ran it is an error rather than a number that would look like one.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.19.0" id="statmodels7-0190">statmodels7 0.19.0<a class="anchor" aria-label="anchor" href="#statmodels7-0190"></a></h2>
+<ul><li>
+<p>A structural term’s callbacks go through <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_kernel.html" class="external-link">distributions7::distrib_kernel()</a></code> rather than through the derivative generics. A filter calls them once per time step, and each call was validating its arguments, aligning theta by name, dispatching, and assembling every component of its order to keep one of them.</p>
+<p>Measured on a gas(1,1) scale equation at 2000 observations, against rugarch on the same data: 123 seconds before this and the two changes below it, 17.7 after, with the log-likelihood identical to the digit at every size tried. <code>regime()</code> shares the callbacks and its standard errors are unchanged to the digit.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.18.0" id="statmodels7-0180">statmodels7 0.18.0<a class="anchor" aria-label="anchor" href="#statmodels7-0180"></a></h2>
+<ul><li>
+<p>The callbacks a structural filter runs do their fixed work once instead of once per time step. <code><a href="../reference/structural_callbacks.html">structural_callbacks()</a></code> recycled every distribution parameter to the sample length inside the closure and rebuilt the second-derivative component key with <code><a href="https://rdrr.io/r/base/match.html" class="external-link">match()</a></code> and <code><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste()</a></code>, both on every step of every filter pass. Worth about 12 per cent of a gas fit.</p>
+<p>It is not a change of order: <code><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep_len()</a></code> on a vector already of the right length returns it untouched, so the old form was linear in the number of observations like this one. What remains is the two generic calls per step, which is where the rest of the time is.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.17.0" id="statmodels7-0170">statmodels7 0.17.0<a class="anchor" aria-label="anchor" href="#statmodels7-0170"></a></h2>
+<ul><li><p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> on a model carrying a <code>regime()</code> term reports the OBSERVED information. What it inverted before was the complete-data information, the ordinary one averaged over the smoothed states, which is the matrix a scoring step inverts and is not the information the fit carries: the two differ by the conditional variance of the complete-data score, so the complete-data one is the larger and every standard error read off it is too small. Measured on a two-regime gaussian at 300 observations, the matrices differ by 25 per cent and the worst standard error is understated by 30 per cent where the regimes overlap; the gap closes as they separate and the states become known, which is what the missing-information principle says it should do.</p></li>
+<li>
+<p><code><a href="../reference/statmod_regime_information.html">statmod_regime_information()</a></code> supplies the model’s side of <code><a href="https://statmodels7.github.io/modelterms7/reference/term_hessian.html" class="external-link">modelterms7::term_hessian()</a></code>: how each equation’s unknowns reach each predictor, and the family’s first and second derivatives at the predictor each regime shifts to. Unlike a filter’s, those cannot be looked up from one evaluation, so the family is evaluated once per regime, vectorized over observations.</p>
+<p>As for a filter, the matrix spans the coefficients AND the term’s own parameters, and the coefficient block of the joint inverse is what is reported; a level an intercept already carries is dropped rather than estimated. Checked against <code>numDeriv</code> on the exact gradient away from the optimum, where a wrong Hessian and a right one differ.</p>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.16.0" id="statmodels7-0160">statmodels7 0.16.0<a class="anchor" aria-label="anchor" href="#statmodels7-0160"></a></h2>
+<ul><li>
+<p><code><a href="../reference/statmod.html">statmod()</a></code> fits <code>regime()</code>, which is the last term modelterms7 defines. Every one of them is now fittable.</p>
+<p>A term of that shape does not report a predictor: its contribution is a likelihood mixed over latent states, so <code><a href="../reference/statmod_loglik_at.html">statmod_loglik_at()</a></code> takes the term’s own and not the density at any single point. Everything else follows from Fisher’s identity – the derivative of that likelihood in ANY predictor is the posterior-weighted derivative of the ordinary one – so the score differentiates the log-density once per state, vectorized, and weights by <code><a href="https://statmodels7.github.io/modelterms7/reference/term_posterior.html" class="external-link">modelterms7::term_posterior()</a></code>. Against <code>numDeriv</code>: 1.8e-07 in the coefficients on a scale of 246, and 6.0e-09 in the term’s own parameters. On 600 observations simulated from the model the fit returns levels (-0.033, 3.057) against a truth of (0, 3) with the scale at 0.973.</p>
+<p>The matrix the scoring step inverts there is the COMPLETE-DATA information, the ordinary one averaged over the smoothed states, which is what an EM step inverts. It is positive definite and it is not the observed information of the mixture, which needs Louis’s identity; with an exact gradient a scoring matrix has only to be positive definite.</p>
+</li>
+<li>
+<p>Where a structural term’s level and a linear intercept are both present, THE LINEAR INTERCEPT WINS and the term’s level is held at zero. The two are exactly confounded – shifting the intercept by <code>c</code> and the level by <code>-c(1 - sum b)</code> leaves every predictor unchanged – and a fit reached that ridge reporting convergence, the score being small because the surface is flat. <code>y ~ x + gas(...)</code> and <code>y ~ x + regime(...)</code> are ordinary things to write again, and nothing is lost: what a constant cannot express is the dynamics, or the difference between one regime and another.</p>
+<p>Which parameter is the level is the term’s own answer, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_level_param.html" class="external-link">modelterms7::term_level_param()</a></code>; which one is dropped is this layer’s, since only it knows what else the equation carries. The question is asked of the SPAN of the equation’s design and not of a column named <code>"(Intercept)"</code>, a factor coded without one summing to the constant just as well. The held parameter leaves the information as well as the fit, its row and column dropped from the joint matrix.</p>
+<p>Measured, and this is what says the two parametrizations are one model: with the level held and with it free the fits reach the same maximum (-553.793723 against -553.7937276) and the fitted intercept, 0.952936, is the other fit’s stationary level <code>omega/(1 - b)</code>, 0.95295.</p>
+</li>
+<li><p><code>fit@structural</code> carries <code>held</code>, the parameters an intercept is carrying instead.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.15.0" id="statmodels7-0150">statmodels7 0.15.0<a class="anchor" aria-label="anchor" href="#statmodels7-0150"></a></h2>
+<ul><li>
+<p>The observed information of a model carrying a filter is exact. <code><a href="../reference/statmod_full_information.html">statmod_full_information()</a></code> assembles</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="sc">-</span>d2l<span class="sc">/</span>du2 <span class="ot">=</span> <span class="sc">-</span>sum_t w_t sum_{q,r} l_qr,t V_q,t<span class="st">' V_r,t</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="st">           - sum_t w_t l_p,t E_t</span></span></code></pre></div>
+<p>over the coefficients of every equation AND the term’s own parameters, with <code>E</code>, the second derivative of the predictor through the recursion, from <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>. Only the filter’s equation has a <code>V</code> that is not its own design; the third derivatives the second sum needs are distributions7’s, in closed form for every family.</p>
+<p>What it replaces is the naive <code>X'WX</code>, which the scoring step still uses and is right to – with an exact gradient any positive definite matrix converges to the right point – but which is not the information. Measured against numDeriv on the exact gradient, AWAY from the optimum, where a wrong and a right Hessian are told apart: 4.3e-11 relative. The naive curvature differs from the exact one by 17.5 per cent of the coefficient block on a one-equation model and 35.3 per cent on a two-equation one, the second larger because the cross-equation feedback contributes there too.</p>
+</li>
+<li><p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> inverts the joint matrix and takes the coefficient block, rather than inverting the coefficient block alone. The two differ wherever the coefficients and the filter’s parameters are correlated, which is the situation the filter creates; the joint route is what accounts for having estimated the term’s parameters rather than known them.</p></li>
+<li>
+<p>A filter’s level and a constant in its own equation are rejected. They are EXACTLY confounded: shifting an intercept by <code>c</code> and the level by <code>-c(1 - sum b)</code> leaves every predictor unchanged, the recursion being affine in the level given the score path and the score path depending on the predictor alone. The fit reached that ridge reporting convergence and only the information saw it, so <code>reject_confounded_level()</code> asks at design time, where the terms can be named.</p>
+<p>It asks whether the CONSTANT LIES IN THE SPAN of the equation’s design and not whether a column is called <code>"(Intercept)"</code>: a factor coded without one still sums to the constant, and the span test rejects it where a name test would not.</p>
+</li>
+<li><p>No compiled code for any of it, and the measurement is the reason. One curvature costs 1.4 filter runs and is FLAT in the number of unknowns – five against fourteen changes nothing – so the matrix arithmetic is not where the time is; the family’s third derivatives cost 0.0000 s. What it is spent on is the per-observation callbacks, and there the win was in R: a curvature runs at a point already reached, so the score and the curvature of the density can be computed vectorized once and looked up, where the filter must evaluate them at a predictor it has just produced. That change took the curvature from 10.83 s to 3.95 s at n = 8000, a factor of 2.7, and the answer is bit-identical.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.14.0" id="statmodels7-0140">statmodels7 0.14.0<a class="anchor" aria-label="anchor" href="#statmodels7-0140"></a></h2>
+<ul><li>
+<p><code><a href="../reference/statmod.html">statmod()</a></code> fits the terms whose block depends on their own coefficients: <code>seg()</code>, <code>jump()</code>, <code>jseg()</code> and <code>nl()</code>. They were rejected before, because assembling such a block once and solving for the coefficients estimates something else and reports convergence.</p>
+<p>The block is refreshed at the coefficients inside the objective, and the predictor takes the term’s CONTRIBUTION rather than the block times the coefficients. Writing the difference as a per-observation adjustment leaves every crossprod reading the block as it did, and makes the scoring step’s increment the Gauss-Newton one. Measured against modelterms7’s own iteration, which shares no code with the fitting layer: the break-point agrees to 0.01 and is the same from every start tried, and <code>nl()</code> agrees with <code><a href="https://rdrr.io/r/stats/nls.html" class="external-link">nls()</a></code> to its own tolerance.</p>
+<p>The refresh is committed once per sweep and not once per objective evaluation, since the rescaling factor of a discontinuous term is a state of the iteration rather than a function of the point: a schedule advancing at the speed of a line search is not the one the construction was designed with, and one that never advanced would solve a permanently smoothed problem.</p>
+<p>The verdict on such a fit is the objective’s and the term’s own, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_converged.html" class="external-link">modelterms7::term_converged()</a></code>, not the inner score’s. Where the block is a working linearization with a frozen weight the score belongs to that working model: measured on <code>jump()</code>, the fit reaches the break-point and the jump size to three figures and the score stays at 0.176 forever.</p>
+</li>
+<li>
+<p><code><a href="../reference/statmod.html">statmod()</a></code> fits a structural term of the FILTER shape, which is <code>gas()</code>. The term contributes no columns; its level is added to the predictor of the equation it sits in, and its own parameters are estimated on the unconstrained scale of <code>term_links()</code> by a general optimizer with an exact gradient, alternating with the coefficients.</p>
+<p>What makes the answer right is the gradient. The level was driven by scores read at predictors the coefficients also enter, so the derivative of the objective in a coefficient is not the block times the score; <code><a href="https://statmodels7.github.io/modelterms7/reference/term_adjoint.html" class="external-link">modelterms7::term_adjoint()</a></code> supplies the correction and the layer chains it with its own mixed second derivatives, which reaches the coefficients of the OTHER equations too. Against <code>numDeriv</code> the whole gradient agrees to 2e-8, and the naive one is out by 9.7. On 2000 observations simulated from the model the fit returns (0.299, 0.440, 0.732) against a truth of (0.3, 0.4, 0.7), with the scale at 0.998 against 1.</p>
+<p><code>fit@structural</code> carries each term’s estimated parameters, on their own scale and on the unconstrained one.</p>
+</li>
+<li><p><code>regime()</code> is still rejected, and the message now says what the layer is missing – the derivative of a likelihood mixed over latent states in the predictor it is handed – rather than naming an internal generic.</p></li>
+<li><p>A formula carrying more than one structural term is rejected, whatever equations they sit in. Each rewrites the predictor or the likelihood the others would be read at, so the pair is one recursion written as two and neither term implements it.</p></li>
+<li><p>An accepted step that moves the objective by less than its own rounding ends the scoring run. The sufficient-decrease test cannot tell such a step from no step – at a step of 1e-9 the decrease it asks for is of that order – so the run spent its budget standing still, which is what a term whose gradient belongs to a working model produces at its own fixed point.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.13.0" id="statmodels7-0130">statmodels7 0.13.0<a class="anchor" aria-label="anchor" href="#statmodels7-0130"></a></h2>
+<ul><li>
+<p>A term carrying more than one penalty is fitted, counted and reported per penalty. <code><a href="../reference/statmod_penalized.html">statmod_penalized()</a></code> already enumerated them, so the fitting core was right; what still read one penalty per term were the three places that report a fit.</p>
+<ul><li>
+<code><a href="../reference/statmod_edf.html">statmod_edf()</a></code> hands <code><a href="https://statmodels7.github.io/modelterms7/reference/edf.html" class="external-link">modelterms7::edf()</a></code> the hyperparameters of every penalty the term carries, keyed by the penalty names, which is the shape that function reads them in. It asked for <code>term_penalty()</code> before, so a term whose penalty covers part of its parameters was counted as unpenalized – its coefficient count – and a term carrying two had the hyperparameters of neither.</li>
+<li>
+<code><a href="../reference/term_block_kind.html">term_block_kind()</a></code> reads the same enumeration, so a term penalized over part of itself is a penalized block, and a selection where any of its penalties has a kink, rather than a parametric one.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> shows one hyperparameter row per penalty. Where a term carries several the name carries the penalty as well (<code>delta.lambda</code>), two hyperparameters in one block not being the same number.</li>
+</ul><p>The row of the degrees of freedom stays per TERM, which is the granularity a table of terms wants.</p>
+</li>
+<li><p><code><a href="../reference/statmod_entry_key.html">statmod_entry_key()</a></code> composes the key – the term’s name, with the entry’s after <code>::</code> where a term carries several – in one place. Two callers composing it apart would agree by accident.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.0" id="statmodels7-0120">statmodels7 0.12.0<a class="anchor" aria-label="anchor" href="#statmodels7-0120"></a></h2>
 <ul><li>

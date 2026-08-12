@@ -11,6 +11,7 @@ hyperparameters it reached, and the record of how it got there.
 StatmodFit(
   spec = NULL,
   coefficients = list(),
+  structural = list(),
   hyper = list(),
   loglik = integer(0),
   objective = integer(0),

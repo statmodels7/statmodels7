@@ -23,5 +23,10 @@ One of `"parametric"`, `"smooth"`, `"random"`, `"selection"`,
 
 ## Details
 
-The classification is by the term's class and by its penalty, not by its
-label, so a term given a name of its own is read the same way.
+The classification is by the term's class and by its penalties, not by
+its label, so a term given a name of its own is read the same way. The
+penalties are the ones the term declares through
+[`term_penalties`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html),
+so a term penalized over part of its parameters – a segmented term's
+changes, a filter's deviations – is read as penalized rather than as
+parametric, and is a selection when any of its penalties has a kink.

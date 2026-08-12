@@ -126,6 +126,8 @@ exported, and none is needed to use the package.
   : The Name of a Third-Derivative Component
 - [`d4_key()`](https://statmodels7.github.io/statmodels7/reference/d4_key.md)
   : The Name of a Fourth-Derivative Component
+- [`deriv3_key()`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
+  : The Name of a Third-Derivative Component
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -243,6 +245,8 @@ exported, and none is needed to use the package.
   : Print One Block of a Summary
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
   : Does a Term Recompute Its Own Block?
+- [`reject_incompatible()`](https://statmodels7.github.io/statmodels7/reference/reject_incompatible.md)
+  : Combinations of Terms That Are Not a Model
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term the Fitting Scheme Does Not Cover
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
@@ -261,10 +265,32 @@ exported, and none is needed to use the package.
   : The Alternation Between the Smooth Block and the Rest
 - [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
   : Split a Specification's Terms Into the Smooth Block and the Rest
+- [`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
+  : Advance the Refresh State
+- [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
+  : The Design at Given Coefficients
+- [`statmod_design_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_blocks.md)
+  : The Blocks of a Design
 - [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
   : Effective Degrees of Freedom, Per Term
+- [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
+  : The Smoothing-Parameter Correction to the Effective Degrees of
+  Freedom
+- [`statmod_entry_key()`](https://statmodels7.github.io/statmodels7/reference/statmod_entry_key.md)
+  : The Key of One of a Term's Penalties
 - [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   : The Linear Predictors and the Parameters They Give
+- [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
+  : Run the Structural Terms at the Current Parameters
+- [`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md)
+  : Fit the Structural Terms' Own Parameters
+- [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
+  : The Terms as the Fit Left Them
+- [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  : The Observed Information Over the Coefficients and a Filter's
+  Parameters
+- [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
+  : Which Structural Levels a Linear Intercept Already Carries
 - [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
   : Override the Starting Hyperparameters
 - [`statmod_hyper_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.md)
@@ -296,6 +322,14 @@ exported, and none is needed to use the package.
   : The Penalty of a Specification at Given Coefficients
 - [`statmod_penalty_keys()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.md)
   : Every Penalty in a Model, Without the Design
+- [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
+  : Have the Refreshable Terms Settled?
+- [`statmod_refreshable()`](https://statmodels7.github.io/statmodels7/reference/statmod_refreshable.md)
+  : Which Terms Recompute Their Own Block
+- [`statmod_regime_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_at.md)
+  : Run the Structural Terms at the Current Parameters
+- [`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)
+  : The Observed Information of a Model Carrying a Regime Term
 - [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
   : The Same Model Read on Other Rows
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
@@ -304,8 +338,20 @@ exported, and none is needed to use the package.
   : Estimate the Hyperparameters, by Whichever Route Each One Admits
 - [`statmod_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_start.md)
   : Starting Coefficients
+- [`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
+  : Which Terms Rewrite the Likelihood
+- [`statmod_structural_par()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.md)
+  : The Structural Terms' Estimated Parameters
+- [`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md)
+  : The Score in a Structural Term's Own Parameters
+- [`statmod_structural_state()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_state.md)
+  : The State of the Structural Terms
+- [`statmod_structural_table()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_table.md)
+  : A Structural Term's Parameters, With Standard Errors
 - [`statmod_terms()`](https://statmodels7.github.io/statmodels7/reference/statmod_terms.md)
   : Interpret and Build Each Parameter's Terms
+- [`statmod_theta_shifted()`](https://statmodels7.github.io/statmodels7/reference/statmod_theta_shifted.md)
+  : The Parameters Under One Regime
 - [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
   : One Penalized Unit, by Parameter and Key
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
@@ -315,6 +361,14 @@ exported, and none is needed to use the package.
   : Attach the Member Packages
 - [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)
   : The Body of the Attach Message
+- [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
+  : The Score and Curvature a Filter Is Driven By
+- [`structural_kind()`](https://statmodels7.github.io/statmodels7/reference/structural_kind.md)
+  : Which Shape of the Structural Contract a Term Implements
+- [`structural_psi()`](https://statmodels7.github.io/statmodels7/reference/structural_psi.md)
+  : From the Unconstrained Scale to the Term's Parameters
+- [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
+  : The Parameters a Structural Term Starts From
 - [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
   : Summarize a Fitted Model
 - [`summary_blocks()`](https://statmodels7.github.io/statmodels7/reference/summary_blocks.md)

@@ -9,7 +9,13 @@ carry.
 
 ``` r
 # S3 method for class 'StatmodFit'
-summary(object, level = 0.95, type = c("bayesian", "frequentist"), ...)
+summary(
+  object,
+  level = 0.95,
+  type = c("bayesian", "frequentist"),
+  correct = FALSE,
+  ...
+)
 ```
 
 ## Arguments
@@ -27,6 +33,17 @@ summary(object, level = 0.95, type = c("bayesian", "frequentist"), ...)
 
   Which variance matrix: passed to
   [`vcov.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+
+- correct:
+
+  Whether the degrees of freedom carry what the estimation of the
+  hyperparameters cost. The ordinary count reads them as known, and they
+  were chosen from the same data, so a criterion built on it is too
+  generous. See
+  [`statmod_edf_correction`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md).
+  Defaults to `FALSE` because it changes a number a reader may be
+  comparing with an earlier fit; it is zero where no hyperparameter was
+  estimated.
 
 - ...:
 
@@ -129,6 +146,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> x             0.0216 0.2389  0.09041     0.928 -0.4466  0.4898
 #> 
 #> 95% intervals, bayesian variance
-#> log-likelihood -55.844138    df 4.00    AIC 119.688    BIC 130.838
-#> fitted in 33 ms, converged
+#> conditional log-likelihood -55.844138    effective df 4.00
+#> cAIC 119.688    cBIC 130.838
+#> fitted in 32 ms, converged
 ```

@@ -24,27 +24,22 @@ reject_unfittable(terms)
 
 ## Details
 
-Two shapes are outside that assembly, and both are read off the term
-rather than from a list of class names, so a term written later is
-covered without an edit here.
+One shape is outside that assembly, and it is read off the term rather
+than from a list of class names, so a term written later is covered
+without an edit here.
 
 A **structural** term rewrites the likelihood instead of contributing a
 predictor, so it has no design block at all and answers neither
 `term_matrix()` nor `term_npar()`. Reaching it through the design
 produced an error naming one of those generics, which says nothing about
 the cause.
+[`statmod_structural`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
+routes those, and what remains here is the term class that is structural
+and implements neither shape of the contract.
 
-A term whose block **depends on its own coefficients** registers a
-[`term_refresh`](https://statmodels7.github.io/modelterms7/reference/term_refresh.html)
-method of its own, the base method on `model_term` being the identity;
-the class a method was registered on is `attr(m, "signature")[[1]]`. For
-those the block is a Jacobian and the working solution is an increment,
-so assembling it once and solving for the coefficients estimates
-something else while reporting convergence: measured on `seg()`, the
-break-point stays at its starting value and the fitted mean of a
-continuous construction carries a step. Rejecting them is what keeps
-that out of a returned object until the alternation refreshes a block
-between inner fits.
+A term whose block depends on its own coefficients was rejected here too
+until the alternation learned to refresh one; it is fitted now, by
+[`statmod_design_at`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md).
 
 Every equation is examined before the error is raised, so a model
 carrying one such term in the mean and another in the scale reports both

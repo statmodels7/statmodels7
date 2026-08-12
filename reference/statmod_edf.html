@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,13 @@ block, so it needs the unpenalized curvature there and not only its
 coefficients and its hyperparameters. That block is cut out of the
 likelihood's information, which is computed once for every term rather than
 per term.</p>
+<p>A term may carry more than one penalty, over different parameters of its
+own, and each has hyperparameters of its own filed under a key of its own.
+The row stays per term, which is the granularity a table of terms wants,
+and the hyperparameters are handed over keyed by the penalty names
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_penalties.html" class="external-link">term_penalties</a></code> gives, which is the shape
+<code>edf()</code> reads them in. Passing the hyperparameters of one penalty for
+a term carrying two would count the whole block against it.</p>
 <p>The arguments are passed BY NAME. <code>edf()</code>'s third argument is the
 curvature and its fourth the hyperparameters, and a positional call put the
 hyperparameters where the curvature belongs: every smooth term then reported
