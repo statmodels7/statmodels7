@@ -62,9 +62,18 @@ test_that("a term's two penalties get a key each", {
 })
 
 test_that("the two are estimated apart and counted together", {
+  # The budget is raised above its default rather than the flag being
+  # weakened. The alternation stops on a relative change, whose attainable
+  # floor is platform arithmetic: at the default macOS reported
+  # converged = FALSE where the other four platforms reported TRUE, with the
+  # same hyperparameters and the same degrees of freedom to the digit, so what
+  # differed was how close to the floor the run had to get and not the answer.
   fit <- statmod(fml, distributions7::gaussian1_distrib(), dd,
+                 inner_method = iwls(maxit = 500L),
                  outer_method = reml())
-  expect_true(fit@converged)
+  expect_true(fit@converged,
+              info = sprintf("criterion %.6g, objective %.10g",
+                             fit@criterion, fit@objective))
   h <- fit@hyper$mu
   expect_true(all(paste0(tn, c("::lo", "::hi")) %in% names(h)))
   # the half that carries no signal is shrunk harder, which is the whole

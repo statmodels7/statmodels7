@@ -114,7 +114,14 @@ test_that("a response that is not gaussian rebuilds the working quadratic", {
   cd <- sparse_fit(obj, b0, blocks$sparse[[1L]], hy, spec = spec,
                    design = design)
   px <- sparse_fit(obj, b0, blocks$sparse[[1L]], hy)
-  expect_equal(cd$par, px$par, tolerance = 1e-7)
+  # Looser on the coefficients than the gaussian case above, and the reason is
+  # in the subject of the test: here the working quadratic is rebuilt, so the
+  # two routes' difference compounds over the passes rather than being bounded
+  # by one solve. macOS disagreed at 3e-6 relative on the smallest
+  # coefficients where the other four platforms were inside 1e-7. The
+  # objective, which both routes minimize, is held to 1e-9, and a rebuilt
+  # quadratic that was actually wrong moves the coefficients by percents.
+  expect_equal(cd$par, px$par, tolerance = 1e-5)
   expect_equal(cd$value, px$value, tolerance = 1e-9)
 })
 
