@@ -347,6 +347,30 @@ deriv3_key <- function(params, a, b, c) {
 }
 
 
+#' The Name of a Fourth-Derivative Component
+#'
+#' @description
+#' Locates the \eqn{(a, b, c, d)} entry of a distribution's fourth-derivative
+#' list, built the same way \code{\link{deriv3_key}} builds its own.
+#'
+#' @details
+#' The fourth order is wanted where a filter's third derivative is: each
+#' order of differentiating the predictor through the recursion pulls in one
+#' more order of the family, the score the recursion is driven by being read
+#' at the predictor it produces. Every family of \pkg{distributions7} carries
+#' it in closed form.
+#'
+#' @param params The parameter names, in the family's order.
+#' @param a,b,c,d Indices into \code{params}.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+deriv4_key <- function(params, a, b, c, d) {
+  paste(params[sort(c(a, b, c, d))], collapse = "_")
+}
+
+
 #' The Observed Information Over the Coefficients and a Filter's Parameters
 #'
 #' @description
@@ -416,10 +440,23 @@ statmod_full_information <- function(spec, coef,
   m <- nb + np
 
   # one row per observation, each equation's design placed in its own
-  # columns and zero elsewhere, the term's block included
+  # columns and zero elsewhere, the term's block included.
+  #
+  # as_dense() on the block, and the reason is not cosmetic: an equation
+  # carrying a random effect has a SPARSE design, and writing a dgCMatrix
+  # into a slice of a base matrix is a length error rather than a
+  # conversion -- `y ~ x + random(~1|id) + gas(...)` stopped here with
+  # "number of items to replace is not a multiple of replacement length".
+  # The densification is LOCAL and buys back nothing sparsity was keeping:
+  # this matrix is one column per unknown with a single block filled, it is
+  # read one ROW at a time by the callback below (the access a
+  # compressed-column matrix is worst at), and the fit, the penalties and
+  # the solve all go on seeing the sparse design.
   Vs <- lapply(seq_along(params), function(a) {
     M <- matrix(0, n, m)
-    if (npar[a] > 0L) M[, offs[a] + seq_len(npar[a])] <- design[[params[a]]]$X
+    if (npar[a] > 0L) {
+      M[, offs[a] + seq_len(npar[a])] <- as_dense(design[[params[a]]]$X)
+    }
     M
   })
 
@@ -429,36 +466,17 @@ statmod_full_information <- function(spec, coef,
                                        scale = "link")
   D3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, ev$theta,
                                        scale = "link")
-  at <- function(x, i) rep_len(x, n)[i]
 
   # The derivatives are read at the FITTED predictor, which the recursion
   # inside term_curvature() reproduces exactly: it runs at the same
   # parameters over the same static predictor, so the two agree by
   # construction and the callback need not evaluate the family again.
-  # The pieces are built on the ACTIVE SET the term asks for -- with a panel
-  # that is the coefficients, the population parameters and one group's
-  # deviations -- so the outer products here are of the same size whatever
-  # the number of groups. Building them over every unknown and letting the
-  # term subset would put the quadratic cost back exactly where the
-  # restriction removes it.
-  blocks <- function(e, i, D, act = NULL) {
-    if (is.null(act)) act <- seq_len(m)
-    mk <- length(act)
-    cross <- numeric(mk)
-    for (q in seq_along(params)) {
-      if (q == ap) next
-      cross <- cross + at(H[[hess_key(params, ap, q)]], i) * Vs[[q]][i, act]
-    }
-    M <- matrix(0, mk, mk)
-    for (r in seq_along(params)) {
-      vr <- if (r == ap) D else Vs[[r]][i, act]
-      for (r2 in seq_along(params)) {
-        vr2 <- if (r2 == ap) D else Vs[[r2]][i, act]
-        M <- M + at(D3[[deriv3_key(params, ap, r, r2)]], i) * outer(vr, vr2)
-      }
-    }
-    list(cross = cross, M = M)
-  }
+  #
+  # The assembly itself is written once, in .structural_blocks(): the exact
+  # gradient needs the same cross and M at one order higher, and two copies
+  # would drift the moment either was touched. Given no direction it returns
+  # exactly these two pieces and never looks at a fourth derivative.
+  blocks <- .structural_blocks(params, ap, Vs, H, D3, NULL, n)(NULL)
 
   # The recursion is re-run here at parameters it has already been run at,
   # so the predictor it reaches is the one the derivatives above were read

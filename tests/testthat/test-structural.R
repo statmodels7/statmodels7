@@ -19,6 +19,62 @@ sim_gas <- function(n, omega, alpha1, b1, sd = 1, seed = 21) {
   data.frame(t = seq_len(n), y = y, f = f)
 }
 
+test_that("a filter beside a random effect meets a SPARSE design", {
+  # statmod_full_information() lays each equation's design into its own
+  # columns of a row spanning every unknown. An equation carrying a random
+  # effect has a sparse design, and writing a dgCMatrix into a slice of a
+  # base matrix is a LENGTH ERROR rather than a conversion, so
+  # `y ~ x + random(~1|id) + gas(...)` stopped with "number of items to
+  # replace is not a multiple of replacement length" -- in the joint inner
+  # step, before any criterion was evaluated.
+  #
+  # The random effect is over a SECOND grouping, not over the panel unit.
+  # Two random intercepts over the same grouping -- one inside the filter's
+  # level and one beside it -- model the same thing and compete, and at a
+  # small panel the inner fit cannot reach a mode at the starting
+  # hyperparameters at all. That is a property of the model and not of the
+  # assembly this test exists for, which is a SPARSE design meeting the
+  # joint information.
+  skip_on_cran()
+  set.seed(21)
+  g <- 6L; per <- 30L
+  dd <- data.frame(id = factor(rep(seq_len(g), each = per)),
+                   t = rep(seq_len(per), g))
+  n <- nrow(dd)
+  dd$grp <- factor(rep(rep(seq_len(5L), each = 6L), g))
+  dd$x <- stats::rnorm(n)
+  dd$y <- 0.5 * dd$x + stats::rnorm(n)
+  f <- y ~ x + random(~1 | grp) +
+    gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
+  spec <- statmod_spec(f, distributions7::gaussian1_distrib(), dd)
+  design <- statmod_design(spec)
+  # the precondition: the design really is sparse, or the test asserts
+  # nothing about the case it exists for
+  expect_true(design_sparse(design))
+
+  # The assembly ITSELF, which is where the length error was. Fitting would
+  # test it too and would drag in the outer search's own fragility on a
+  # small panel and the positive-definiteness of the penalized information
+  # at a probe hyperparameter -- neither of which is this defect, and both
+  # of which made earlier versions of this test fail for the wrong reason.
+  hyper <- statmod_hyper_start(spec, design)
+  obj <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
+  beta <- statmod_start(spec, design, obj, NULL)
+  K <- statmod_full_information(spec, obj$split(beta), design)
+  nb <- sum(vapply(design, function(d) d$npar, integer(1)))
+  st <- statmod_structural_state(design)
+  key <- names(st$zeta)[[1L]]
+  nfree <- length(setdiff(names(st$zeta[[key]]), st$held[[key]]))
+  expect_identical(dim(K), c(nb + nfree, nb + nfree))
+  expect_true(all(is.finite(K)))
+  expect_equal(K, t(K), tolerance = 1e-12)
+
+  # and the fit runs end to end, which is what a user does
+  fit <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = NULL)
+  expect_true(is.finite(as.numeric(logLik(fit))))
+})
+
 test_that("a structural term is left out of the design and routed", {
   dd <- sim_gas(80, 0.3, 0.4, 0.7)
   dd$x <- stats::rnorm(80)
@@ -697,10 +753,18 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
     determinant(M, logarithm = TRUE)$modulus[[1L]] / 2
   expect_equal(got$m$value, as.numeric(by_hand), tolerance = 1e-5)
 
-  # the exact-gradient route refuses here rather than returning the wrong
-  # derivative: it reads how the determinant moves with the mode through a
-  # contraction that assumes the predictor is X beta
-  expect_false(outer_gradient_ok(spec, design, idx, reml(), 1L))
+  # The exact-gradient route is TAKEN here. It used to refuse, the
+  # contraction that reads how the determinant moves with the mode having
+  # assumed the predictor is X beta; a filter's level is a recursion of the
+  # term's parameters, and the missing piece was its third derivative,
+  # contracted in the one direction the mode moves in
+  # (modelterms7::term_third).
+  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 1L))
+  # the criterion's own SECOND derivative would ask for a fourth order
+  # through the recursion, which is not written
+  expect_false(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
+  # and the expected information rejects for its own reason, unchanged
+  expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
 })
 
 test_that("the criterion prefers shrinkage where the groups do not differ", {

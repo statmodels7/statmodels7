@@ -1,3 +1,94 @@
+# statmodels7 0.32.0
+
+* The exact gradient of the marginal criterion reaches a penalty over a
+  STRUCTURAL term's own parameters. `outer_gradient_ok()` no longer refuses
+  `isTRUE(u$structural)`; it asks whether the term answers
+  `modelterms7::term_third()`, read from the class the method is registered
+  on, so a term written later is covered without a list of class names here.
+  `reml()`/`ml()` on a score-driven panel therefore run `lbfgs()` on an exact
+  derivative where they ran `nelder_mead()` on values.
+
+  Where a filter is present the determinant spans the term's parameters too,
+  so `K` carries `-sum_t w_t l_p E_t` and differentiating it along the
+  direction the mode moves in gives three contributions instead of one:
+  `u_vector()`'s formula with V in place of X (direction-free, computed
+  once), the derivative of `V_p` itself, which is `E_t v`, and the derivative
+  of `l_p E_t`, whose second half is the term's third derivative. The full
+  third derivative is never formed -- it is contracted in one direction, so
+  the cost is O(n m^2) per hyperparameter rather than O(n m^3) once.
+
+  Validated against numDeriv on the criterion with the mode REFITTED at
+  every hyperparameter: 2.7e-09 to 2.7e-07 relative under `reml()`, 3.3e-06
+  under `ml()`, 6.3e-06 with a smooth beside it, and 1.2e-07 at ten and at
+  twenty groups. The control, an ordinary smooth, sits at 3.9e-07 on the
+  same harness.
+
+  Measured in evaluations of the criterion, each a whole inner fit, against
+  `nelder_mead()`, all three reaching the same criterion and the same prior
+  scale to the printed digit:
+
+        3 groups x 40      6 against 59      4.1 s against 14.8 s
+        8 groups x 80     10 against 27     18.7 s against 33.2 s
+       20 groups x 60      9 against 41     88.0 s against 88.9 s
+
+  The last row is worth reading as it is: the evaluation count is what the
+  exact route buys and it is 4.6x there, while the WALL TIME is a wash,
+  because each exact evaluation also pays for the gradient (one
+  `term_third()` and one extra `term_curvature()` per hyperparameter) and
+  one point on that path is still unavailable and costs a long inner fit
+  that does not converge.
+
+* An outer step the search TAKES BACK now leaves no trace, where until now
+  only half of it did. The coefficients were already protected --
+  `state$beta` is written after a point is known to be usable -- but a
+  structural term's own parameters live in the design's structural state,
+  which is an environment the inner fit writes into as it goes, and
+  `statmod_fit_structural()` stores its optimizer's last point whether that
+  optimizer converged or not. An unavailable point therefore MOVED the
+  filter's parameters, and the next evaluation started from wherever the
+  failure had left them.
+
+  It ratchets, and the exact gradient is what made it reachable: with a
+  derivative-free search the steps are small and the state never leaves the
+  basin, while `lbfgs()` takes its first step as the full gradient, which on
+  a panel of twenty groups is -12.3 on a log-scale hyperparameter (the
+  criterion's derivative grows with the number of penalized coordinates), so
+  the first trial prior scale is 4.6e-06. Measured before the fix: the
+  search then reported THIRTY consecutive unavailable points as the line
+  search halved eta back to 1e-08, including points beside a start that had
+  converged at the first evaluation, and gave up at 620 s with no fit. After
+  it: nine recorded evaluations (ten attempts, the one unavailable point
+  recovered from), and the same answer `nelder_mead()` reaches in 41 --
+  prior scale 0.3783702 against 0.37837, criterion -1696.89343 both.
+
+  ⚠️ Two explanations were measured and refused before this one. The
+  criterion is NOT noisy here: repeated at one hyperparameter from a running
+  warm start, and arrived at from eight different previous hyperparameters
+  as far as six units away, its spread is exactly zero. And the warm start
+  is not poisoned by VISITING the degenerate point: stepping to eta = -12.3
+  and back returns the identical criterion. What ratchets is the structural
+  state left behind by a failed inner search, which no snapshot protected.
+
+* A filter beside a RANDOM EFFECT fits. `statmod_full_information()` lays
+  each equation's design into its own columns of a row spanning every
+  unknown, and an equation carrying a random effect has a sparse design:
+  writing a `dgCMatrix` into a slice of a base matrix is a LENGTH ERROR
+  rather than a conversion, so `y ~ x + random(~1|id) + gas(...)` stopped
+  with "number of items to replace is not a multiple of replacement length".
+  It is the sixth round of the shape the sparse conversion keeps taking, and
+  it was NOT reached by the exact gradient -- the failure is in the joint
+  inner step, which has called that assembly since 0.23.0, so the
+  combination has never fitted. The block is densified at that one
+  assignment and nowhere else: the matrix is one column per unknown with a
+  single block filled, it is read one ROW at a time by the callback beneath
+  it (the access a compressed-column matrix is worst at), and the fit, the
+  penalties and the solve all go on seeing the sparse design.
+
+* `deriv4_key()`, `joint_design_rows()`, `structural_joint_basis()`. The last
+  is written once and used by both `statmod_marginal_full()` and the
+  gradient: two callers composing the integrated subspace separately would
+  agree only by accident.
+
 # statmodels7 0.31.0
 
 * `reml()` and `ml()` default to the OBSERVED information (Giovanni). That is

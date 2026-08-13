@@ -474,13 +474,9 @@ statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
   S[!is.finite(S)] <- 0
   M <- K + S
   if (is.null(basis)) return(M)
-
-  cols <- structural_range_cols(spec, design, key, free)
-  A <- matrix(0, nrow(M), ncol(basis) + length(cols))
-  A[seq_len(nrow(basis)), seq_len(ncol(basis))] <- basis
-  if (length(cols)) {
-    A[cbind(nb + cols, ncol(basis) + seq_along(cols))] <- 1
-  }
+  # the same subspace the gradient projects onto, composed once: two callers
+  # building it separately would agree only by accident
+  A <- structural_joint_basis(spec, design, key, free, nb, basis)
   crossprod(A, M %*% A)
 }
 
@@ -661,6 +657,20 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     g <- NULL
     Hm <- NULL
     err <- NULL
+    # A step the search takes back must leave NO TRACE, and until now only
+    # half of it did. The coefficients are protected -- `state$beta` is
+    # written below, after the point is known to be usable -- but a
+    # structural term's own parameters live in the design's structural state,
+    # which is an ENVIRONMENT the inner fit writes into as it goes, and
+    # `statmod_fit_structural()` stores its optimizer's last point whether
+    # that optimizer converged or not. So an unavailable point moved the
+    # filter's parameters and the next evaluation started from wherever the
+    # failure had left them, which ratchets: measured on a panel of twenty
+    # groups, the search took one long first step, and then every one of the
+    # thirty backtracked points was unavailable, including points beside the
+    # start that had converged at the first evaluation.
+    sst <- statmod_structural_state(design)
+    z_save <- if (is.null(sst)) NULL else sst$zeta
     body <- function() {
       res <<- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
                                 state$beta, expected, approx, maxit, tol,
@@ -710,6 +720,13 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
     state$evals <- state$evals + 1L
     if (is.null(m)) {
+      # the half that was missing: put the structural parameters back where
+      # the last USABLE point left them, as the coefficients already are
+      if (!is.null(sst) && !is.null(z_save)) {
+        sst$zeta <- z_save
+        sst$key <- NULL
+        sst$value <- NULL
+      }
       if (vb$outer) {
         cat(sprintf("     outer %-4d unavailable at %s%s\n",
                     state$evals, paste(signif(eta, 4), collapse = ", "),
