@@ -144,7 +144,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     cur[block$index] <- out$beta
     if (moved < tol) break
   }
-  list(par = cur, value = obj$fn(cur), converged = TRUE, iterations = sweeps)
+  list(par = cur, value = obj$fn(cur), converged = TRUE,
+       iterations = sweeps, method = "coordinate descent")
 }
 
 

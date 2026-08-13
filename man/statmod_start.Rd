@@ -13,7 +13,8 @@ statmod_start(spec, design, obj, start = NULL)
 
 \item{obj}{The objective.}
 
-\item{start}{Optional user starting values, a named list.}
+\item{start}{Optional user starting values (a named list), or a
+\code{\link{start_strategy}}.}
 }
 \value{
 A stacked numeric vector.
@@ -40,5 +41,11 @@ reached a variance of \eqn{10^7}.
 A start that cannot be obtained is not an error: the fit still runs, from a
 worse place. What would be an error is not noticing, which is why the two
 routes are tried in order rather than one being assumed to work.
+
+\code{start} is either a named list of values, a
+\code{\link{start_strategy}} --- which is asked ONCE, here, before the
+alternation between the coefficients and the hyperparameters begins --- or
+\code{NULL} for \code{\link{start_intercepts}}, which is what this function
+did before strategies existed and still does.
 }
 \keyword{internal}

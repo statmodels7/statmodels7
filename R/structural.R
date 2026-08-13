@@ -729,8 +729,8 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
     its <- its + res@iterations
     ok <- ok && isTRUE(res@converged)
     if (verbose) {
-      cat(sprintf("  %s: %d iterations, converged %s\n", key,
-                  as.integer(res@iterations), res@converged))
+      vb_say("%s: %d iterations, converged %s", short_keys(key),
+             as.integer(res@iterations), res@converged)
     }
   }
   list(value = obj$fn(beta), converged = ok, iterations = its)
@@ -873,9 +873,9 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   res <- optimizers7::minimize(optimizer, fn, u0, gr = gr, he = he)
   setz(res@par[ix])
   if (verbose) {
-    cat(sprintf("  joint: %d coefficients, %d parameters of %s, %d iterations, converged %s\n",
-                nb, length(free), key, as.integer(res@iterations),
-                res@converged))
+    vb_say("%d coefficients and %d parameters of %s: %d iterations, converged %s",
+           nb, length(free), short_keys(key), as.integer(res@iterations),
+           res@converged)
   }
   list(par = res@par[seq_len(nb)], value = res@value,
        converged = isTRUE(res@converged), iterations = res@iterations)

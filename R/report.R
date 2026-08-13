@@ -392,3 +392,128 @@ fitted_ranges <- function(x) {
   }, character(1))
   paste0("  the parameters it reached:\n", paste(rows, collapse = "\n"), "\n")
 }
+
+
+#' A Term Key Shortened for Display
+#'
+#' @description
+#' The key with the arguments of its leading call reduced to the first one,
+#' so that a trace line names the term instead of repeating its whole
+#' specification.
+#'
+#' @details
+#' A key is the call that produced the term, and for a penalty over a
+#' sub-term it is that call followed by \code{::parameter::sub-term}. The
+#' call is what grows: printed in full, one line of an outer trace carried
+#' the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
+#' list(...))} three times over, which is a line no reader can use. Only the
+#' leading call is shortened, and only past its first argument, so
+#' \code{s(x, k = 20)} and \code{s(z, k = 8)} stay apart; everything after
+#' \code{::} is kept whole, that being what distinguishes one entry of a term
+#' from another.
+#'
+#' Where shortening would make two labels the same the FULL ones are
+#' returned, all of them: a shorter label that is ambiguous is worse than a
+#' long one, and deciding per label would leave a reader unable to tell which
+#' convention a given line follows.
+#'
+#' @param x A character vector of keys.
+#'
+#' @return A character vector the same length.
+#'
+#' @keywords internal
+short_keys <- function(x) {
+  one <- function(k) {
+    parts <- strsplit(k, "::", fixed = TRUE)[[1L]]
+    call <- parts[1L]
+    op <- regexpr("(", call, fixed = TRUE)
+    if (op < 1L || !endsWith(call, ")")) return(k)
+    head_ <- substr(call, 1L, op)
+    args <- substr(call, op + 1L, nchar(call) - 1L)
+    if (!nzchar(args)) return(k)
+    # the first argument, found by scanning for a comma at nesting depth zero
+    depth <- 0L
+    cut <- nchar(args) + 1L
+    ch <- strsplit(args, "", fixed = TRUE)[[1L]]
+    for (i in seq_along(ch)) {
+      c_ <- ch[i]
+      if (c_ %in% c("(", "[", "{")) depth <- depth + 1L
+      else if (c_ %in% c(")", "]", "}")) depth <- depth - 1L
+      else if (c_ == "," && depth == 0L) { cut <- i; break }
+    }
+    if (cut > nchar(args)) return(k)
+    parts[1L] <- paste0(head_, substr(args, 1L, cut - 1L), ", ...)")
+    paste(parts, collapse = "::")
+  }
+  out <- vapply(x, one, character(1), USE.NAMES = FALSE)
+  if (anyDuplicated(out) && !anyDuplicated(x)) x else out
+}
+
+
+#' A Titled Rule for a Verbose Trace
+#'
+#' @description
+#' One blank line, then a titled rule with the method that will do the work
+#' named on the right, so that a reader of a running fit can see where one
+#' step ends and the next begins.
+#'
+#' @details
+#' The trace has three nested things to say -- which outer step, which sweep
+#' of the alternation inside it, and what each block did -- and printed as
+#' undifferentiated lines they are unreadable, which is what a panel fit with
+#' three hyperparameters and 130 outer evaluations demonstrated. Naming the
+#' method on every rule answers the question a reader of a slow fit actually
+#' has, which is what is running now.
+#'
+#' @param title The step, e.g. \code{"outer 3"}.
+#' @param method What runs it, or \code{NULL}.
+#' @param indent How far in, in spaces.
+#' @param char The rule's character.
+#'
+#' @return Invisibly \code{NULL}; prints.
+#'
+#' @keywords internal
+vb_rule <- function(title, method = NULL, indent = 0L, char = "-") {
+  pad <- strrep(" ", indent)
+  left <- paste0(pad, strrep(char, 2L), " ", title, " ")
+  right <- if (is.null(method) || !nzchar(method)) "" else
+    paste0(" [", method, "]")
+  fill <- max(0L, 72L - nchar(left) - nchar(right))
+  cat("\n", left, strrep(char, fill), right, "\n", sep = "")
+  invisible(NULL)
+}
+
+#' A Detail Line of a Verbose Trace
+#'
+#' @param ... Passed to \code{sprintf}.
+#' @param indent How far in, in spaces.
+#'
+#' @return Invisibly \code{NULL}; prints.
+#'
+#' @keywords internal
+vb_say <- function(..., indent = 5L) {
+  cat(strrep(" ", indent), sprintf(...), "\n", sep = "")
+  invisible(NULL)
+}
+
+#' The Name of Whatever Is About to Run
+#'
+#' @description
+#' An optimizer's own name, a criterion's kind, or a short description of a
+#' step that is not an optimizer.
+#'
+#' @param x An optimizer, a criterion, or \code{NULL}.
+#' @param default What to say when there is no object to ask.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+vb_name <- function(x, default = "") {
+  if (is.null(x)) return(default)
+  if (S7::S7_inherits(x) && "name" %in% names(S7::props(x))) return(x@name)
+  if (S7::S7_inherits(x, Iwls)) return("iwls")
+  if (S7::S7_inherits(x) && "kind" %in% names(S7::props(x))) {
+    return(toupper(x@kind))
+  }
+  default
+}

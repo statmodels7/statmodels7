@@ -1,3 +1,102 @@
+# statmodels7 0.31.0
+
+* `reml()` and `ml()` default to the OBSERVED information (Giovanni). That is
+  what turns on the exact outer gradient and Hessian, so the search becomes
+  `newton()` instead of `nelder_mead()`. Measured in evaluations of the
+  criterion, each a whole inner fit: 19 against 31 with one hyperparameter --
+  where it does not pay, a simplex needing no derivative in one dimension --
+  then 126 against 35 with a smooth and a random effect, 133 against 32 with
+  two smooths, and 166 against 6 with a modelled scale, the criterion
+  agreeing to four decimals throughout.
+
+  ⚠️ It has a cost, and it is on the criterion's PLATEAU. Once the penalty
+  dominates the information the criterion is flat -- its kept normalizing
+  constant cancels the Laplace determinant -- and with the exact Hessian
+  Newton walks the whole of it: on a response scaled by 1e4 the smoothing
+  parameter reaches 9.5e-20 where the simplex stopped at 3.2e-8, the fitted
+  function identical to five decimals. The fit is unharmed, the reported
+  hyperparameter is not meaningful there, and `modelterms7::edf()`'s plain
+  `solve()` cannot invert `H + S` that far out. Three tests now ask for
+  `reml("expected")` where what they check is their own reference or the
+  inner rule rather than the outer surface.
+
+  This does not reach a penalty over a STRUCTURAL term's own parameters,
+  where the exact-gradient route rejects for its own documented reason: the
+  contraction assumes the predictor is `X beta` and a filter's level is a
+  recursion. Such a search is derivative-free whatever the information.
+
+* The verbose trace is formatted. The method that will do the work is named
+  on the right of every rule, blocks are separated by blank lines, and the
+  hyperparameters' names -- which are long, a term's key being the call that
+  produced it -- are said ONCE in a legend while the lines carry the values.
+  A sparse block's line names the route that actually ran, coordinate
+  descent or proximal gradient, rather than one guessed at beforehand:
+  whether the compiled descent applies depends on the operator being
+  admissible at the step the fit takes.
+
+* An outer point where the criterion is unavailable is now a FINITE barrier,
+  strictly worse than everything seen, instead of an infinity. The
+  difference matters to a search that differences its own gradient: the
+  probe lands in the unavailable region, the difference comes back
+  non-finite, the direction is meaningless and the line search stops.
+  Measured on a panel with a ridge over a filter's own parameters, the outer
+  BFGS died at its 73rd evaluation with the criterion still improving; it
+  now runs past it to 132, carrying the hyperparameters from (1, 1, 1) to
+  (2.07, 1.44, 1.30) and the criterion from -1459.13 to -1423.0.
+
+* The trace names a term instead of repeating its whole specification.
+  A key is the call that produced the term, and one line of an outer trace
+  carried a deparsed `gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
+  list(...))` three times over. `short_keys()` keeps the leading call's
+  first argument -- so `s(x, k = 20)` and `s(z, k = 8)` stay apart -- and
+  everything after `::`, which is what distinguishes one entry of a term
+  from another; where shortening would make two labels the same, none is
+  shortened. The columns of `history$outer` keep the full key, where it has
+  to stay unique and reconstructible.
+
+* A fit records the optimizer that searched over its hyperparameters, in
+  `methods$search`, the caller's where one was given and otherwise the one
+  chosen from what the criterion can supply. A fit says what fitted it
+  rather than leaving a reader to reconstruct the default.
+
+* `statmod(start =)` takes a STRATEGY as well as a list of values:
+  `start_intercepts()` (the default, now sayable by name), `start_zeros()`,
+  `start_random()` and `start_search()`. A strategy answers the generic
+  `start_at()` and is asked ONCE, before the alternation between the
+  coefficients and the hyperparameters begins. That is the whole reason it
+  is an argument of its own rather than an optimizer: handed to
+  `inner_optimizer` as `chain(sa(), iwls())`, a search would rerun at every
+  hyperparameter the outer criterion tried -- 46 times on an ordinary fit,
+  the folds times the path inside `cv()` -- returning the same answer each
+  time. `start = NULL` and a list of values are unchanged to the bit, which
+  a test asserts.
+
+* `start_search()` runs a global search on the LIKELIHOOD ALONE, penalties
+  off: what a starting value has to get right is the basin, which the fit
+  will not correct by itself, while the penalties enter when their
+  hyperparameters are estimated and at the probe values represent nobody's
+  choice. It searches only where the problem is not convex -- a structural
+  term's own parameters, the blocks of terms that recompute their own design
+  (`nl`, `seg` and the break-point terms), and each equation's intercept --
+  because a smooth or a random effect is a convex block the scoring step
+  reaches from anywhere, and searching over a thousand random-effect
+  coefficients would spend the budget where it buys nothing. Kinked
+  penalties are never searched: their hyperparameter has a known upper end
+  and is swept by a warm-started path, which a random jump would both fail
+  to improve on and destroy. A structural term's parameters do not live in
+  the coefficient vector, so the search sets them into the design's
+  structural state and leaves its best there.
+
+  ⚠️ Measured, on every model tried it changes NOTHING, and that is the
+  honest report rather than an omission: `nl()` reaches `nls()`'s answer
+  from both a poor start and a good one, `jseg()` reaches the same
+  likelihood from three starting positions, and a filter's fit is
+  unchanged. The toolkit's structured initializations -- the intercept-only
+  MLE, `term_start()`, the break-point grid -- already arrive. What the
+  tests pin is therefore that it is SAFE (a convex fit is unchanged to
+  1e-10) and that it reaches the coordinates it claims to; it is an escape
+  hatch for a model where the default fails, not a routine improvement.
+
 # statmodels7 0.30.0
 
 * `iwls()` takes a `criterion`. A scoring step is not an optimizer and

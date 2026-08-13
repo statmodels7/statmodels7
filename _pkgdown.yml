@@ -35,6 +35,20 @@ reference:
   - cv
   - rstatmod
 
+- title: Where a fit begins
+  desc: >
+    A starting value as a strategy rather than a vector of numbers, asked once
+    before the fit alternates. The default is the intercept-only fit; what the
+    others offer is a procedure, from a random perturbation to a global search
+    of the likelihood.
+  contents:
+  - start_strategy
+  - start_at
+  - start_intercepts
+  - start_origin
+  - start_random
+  - start_search
+
 - title: Reading a fit
   desc: >
     The model as a function of parameters and data, any parameter or moment

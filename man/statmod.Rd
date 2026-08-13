@@ -54,7 +54,13 @@ estimating away a value the caller wrote would answer a question nobody
 asked. Naming a criterion explicitly overrides that, and \code{hyper} is
 then where its search starts.}
 
-\item{start}{Optional starting coefficients, a named list.}
+\item{start}{Where the fit begins: a named list of coefficients, a
+\code{\link{start_strategy}} such as \code{\link{start_search}}, or
+\code{NULL} for \code{\link{start_intercepts}}. A strategy is asked once,
+before the alternation between the coefficients and the hyperparameters
+begins, which is why a global search belongs here and not in
+\code{inner_optimizer}: there it would rerun at every hyperparameter the
+outer search tried.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
 }

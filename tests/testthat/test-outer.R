@@ -56,7 +56,11 @@ test_that("REML is Wood's criterion, reached by the other route", {
   r <- penalties7::penalty_rank(pen)
   p_tot <- length(unlist(fit@coefficients[spec@distrib@params]))
 
-  m <- statmod_marginal(spec, design, fit@coefficients, fit@hyper, reml())
+  # the EXPECTED information on both sides: the criterion is asked for the
+  # one the reference below builds, rather than the default, which is the
+  # observed one since it buys the exact outer gradient
+  m <- statmod_marginal(spec, design, fit@coefficients, fit@hyper,
+                        reml("expected"))
   H <- statmod_information_at(spec, fit@coefficients, design, TRUE)
   S <- statmod_penalty_at(spec, fit@coefficients, fit@hyper, design, "hessian")
   logdet <- determinant(H + S, logarithm = TRUE)$modulus[[1L]]
@@ -218,4 +222,67 @@ test_that("verbose names the outer loop among its switches", {
   expect_true(verbosity(c(outer = TRUE))$outer)
   expect_false(verbosity(c(outer = TRUE))$blocks)
   expect_error(verbosity(c(wrong = TRUE)), "'outer'", fixed = TRUE)
+})
+
+
+test_that("an unavailable point is a barrier the search steps back from", {
+  # It must be FINITE. An infinite one is useless to a method that
+  # differences its own gradient -- the probe lands in the unavailable
+  # region, the difference is non-finite and the search stops -- which is
+  # what ended a panel fit at its 73rd evaluation with the criterion still
+  # improving.
+  set.seed(41)
+  n <- 300
+  dv <- data.frame(x = stats::runif(n, -2, 2))
+  dv$y <- sin(1.5 * dv$x) + stats::rnorm(n, sd = 0.3)
+  spec <- statmod_spec(y ~ s(x, k = 10), distributions7::gaussian1_distrib(),
+                       dv)
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  hyper <- statmod_hyper_start(spec)
+  obj <- statmod_objective(spec, hyper, design)
+  beta <- statmodels7:::statmod_start(spec, design, obj, NULL)
+
+  res <- statmodels7:::outer_fit(spec, design, blocks, hyper, iwls(),
+                                 reml(), NULL, beta, "bartlett", 100L, 1e-6,
+                                 statmodels7:::verbosity(0))
+  expect_true(is.finite(res$criterion))
+  # the search reports which optimizer ran, defaults included
+  expect_true(S7::S7_inherits(res$optimizer, optimizers7::optimizer))
+})
+
+test_that("the outer search uses the optimizer it was given", {
+  set.seed(42)
+  n <- 300
+  dv <- data.frame(x = stats::runif(n, -2, 2))
+  dv$y <- sin(1.5 * dv$x) + stats::rnorm(n, sd = 0.3)
+  fml <- y ~ s(x, k = 8)
+  for (o in list(optimizers7::nelder_mead(), optimizers7::bfgs(),
+                 optimizers7::lbfgs())) {
+    f <- statmod(fml, distributions7::gaussian1_distrib(), dv,
+                 outer_optimizer = o)
+    expect_identical(f@methods$search@name, o@name)
+  }
+  # and with none given it records the one it chose, which is the question a
+  # reader of a fit asks
+  f0 <- statmod(fml, distributions7::gaussian1_distrib(), dv)
+  expect_true(S7::S7_inherits(f0@methods$search, optimizers7::optimizer))
+})
+
+test_that("a trace names the term without repeating its specification", {
+  long <- paste0("gas(p = 1, q = 1, time = t, by = ~ridge(~id), links = ",
+                 "list(omega = identity_link()))::omega::ridge(~id)")
+  short <- statmodels7:::short_keys(long)
+  expect_lt(nchar(short), nchar(long) / 2)
+  # what distinguishes one entry of a term from another is kept whole
+  expect_true(endsWith(short, "::omega::ridge(~id)"))
+  expect_true(startsWith(short, "gas(p = 1, ...)"))
+  # the first argument survives, so two smooths stay apart
+  expect_identical(statmodels7:::short_keys(c("s(x, k = 20)", "s(z, k = 8)")),
+                   c("s(x, ...)", "s(z, ...)"))
+  # and where shortening would collide, nothing is shortened
+  expect_identical(statmodels7:::short_keys(c("s(x, k = 20)", "s(x, k = 8)")),
+                   c("s(x, k = 20)", "s(x, k = 8)"))
+  # a call with one argument is already short
+  expect_identical(statmodels7:::short_keys("random(~1 | g)"), "random(~1 | g)")
 })

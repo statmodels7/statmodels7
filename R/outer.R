@@ -189,14 +189,14 @@ outer_path_defaults <- function() {
 #'         outer_criterion = reml())
 #'
 #' @export
-reml <- function(hessian = c("expected", "observed")) {
+reml <- function(hessian = c("observed", "expected")) {
   do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
                              k = NA_real_), outer_path_defaults()))
 }
 
 #' @rdname reml
 #' @export
-ml <- function(hessian = c("expected", "observed")) {
+ml <- function(hessian = c("observed", "expected")) {
   do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
                              k = NA_real_), outer_path_defaults()))
 }
@@ -615,6 +615,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   expected <- identical(method@hessian, "expected")
   basis <- integrated_basis(spec, design, method@kind)
   labels <- paste(idx$parameter, idx$term, idx$name, sep = "/")
+  # what the TRACE prints. The full label names the column of hist_outer,
+  # where it has to stay unique and reconstructible; a reader of a running
+  # fit needs the term and not its whole specification.
+  shown <- paste(idx$parameter, short_keys(idx$term), idx$name, sep = "/")
   pe <- outer_minimize(method)
   basis <- if (pe) NULL else basis
   exact <- outer_gradient_ok(spec, design, idx, method, 1L)
@@ -624,12 +628,20 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       if (exact) optimizers7::lbfgs() else optimizers7::nelder_mead()
   }
 
+  # the search minimizes; a marginal likelihood is maximized and goes in with
+  # its sign turned, a prediction-error criterion as it is. The method says
+  # which it is rather than the search assuming.
+  sgn <- if (pe) 1 else -1
+
   state <- new.env(parent = emptyenv())
   state$beta <- beta
   state$inner <- NULL
   state$rows <- list()
   state$evals <- 0L
   state$key <- NULL
+  # the worst value seen ON THE SEARCH'S OWN SCALE, which is what an
+  # unavailable point is made worse than
+  state$worst <- NA_real_
 
   # one inner fit serves the value and the gradient: an optimizer asks for
   # both at the same point, and refitting for the second would double the cost
@@ -699,7 +711,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     state$evals <- state$evals + 1L
     if (is.null(m)) {
       if (vb$outer) {
-        cat(sprintf("[outer %3d] criterion unavailable at %s%s\n",
+        cat(sprintf("     outer %-4d unavailable at %s%s\n",
                     state$evals, paste(signif(eta, 4), collapse = ", "),
                     if (is.null(err)) "" else paste0(": ", err)))
       }
@@ -730,9 +742,19 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                     "coefficients."), call. = FALSE)
       }
       nh <- nrow(idx)
-      # a value the search will move away from, whichever direction it
-      # improves in
-      out <- list(value = if (pe) Inf else -Inf, grad = rep(0, nh),
+      # A value the search moves away from, and it has to be FINITE. An
+      # infinite one is worse than useless to a method that differences its
+      # own gradient: the probe lands in the unavailable region, the
+      # difference comes back non-finite, the direction is meaningless and the
+      # line search stops -- measured on a panel whose outer bfgs, having no
+      # analytic gradient over a structural penalty, died at its 73rd
+      # evaluation with the search still improving. A barrier strictly worse
+      # than everything seen keeps the objective's own scale, so a difference
+      # taken across it points back into the feasible region and the step is
+      # simply rejected.
+      w <- if (is.finite(state$worst)) state$worst else 1
+      bar <- w + abs(w) + 1
+      out <- list(value = sgn * bar, grad = rep(0, nh),
                   hess = if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL)
       state$key <- key
       state$last <- out
@@ -741,6 +763,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     state$beta <- res$par
     state$inner <- res
     state$hyper <- hy
+    vfn <- sgn * m$value
+    if (is.finite(vfn)) {
+      state$worst <- if (is.finite(state$worst)) max(state$worst, vfn) else vfn
+    }
     row <- data.frame(evaluation = state$evals, criterion = m$value,
                       loglik = m$loglik, penalty = m$penalty)
     for (j in seq_along(labels)) {
@@ -748,8 +774,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
     state$rows[[length(state$rows) + 1L]] <- row
     if (vb$outer) {
-      cat(sprintf("[outer %3d] %s = %s    %s %.6f\n", state$evals,
-                  paste(labels, collapse = ", "),
+      cat(sprintf("     outer %-4d %s = %s    %s %.6f\n", state$evals,
+                  if (length(shown) == 1L) "h" else
+                    paste0("h1..h", length(shown)),
                   paste(signif(vapply(seq_along(labels), function(j)
                     hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", "),
                   toupper(method@kind), m$value))
@@ -762,10 +789,6 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     out
   }
 
-  # the search minimizes; a marginal likelihood is maximized and goes in with
-  # its sign turned, a prediction-error criterion as it is. The method says
-  # which it is rather than the search assuming.
-  sgn <- if (pe) 1 else -1
   fn <- function(eta) sgn * evaluate(eta)$value
   gr <- function(eta) sgn * evaluate(eta)$grad
   he <- function(eta) sgn * evaluate(eta)$hess
@@ -781,6 +804,20 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     old_check <- getOption("optimizers7.check_gradient")
     options(optimizers7.check_gradient = FALSE)
     on.exit(options(optimizers7.check_gradient = old_check), add = TRUE)
+  }
+
+  # The legend, printed ONCE. The names are what identify a hyperparameter and
+  # they are long -- a term's key is the call that produced it -- so repeating
+  # them on every evaluation is what made a trace of 130 evaluations
+  # unreadable. Here they are said once and the lines below carry the values.
+  if (vb$outer) {
+    vb_rule(sprintf("outer search: %s over %d hyperparameter%s",
+                    toupper(method@kind), length(shown),
+                    if (length(shown) == 1L) "" else "s"),
+            vb_name(optimizer), indent = 2L)
+    for (j in seq_along(shown)) {
+      vb_say("h%-3d %s", j, shown[j], indent = 5L)
+    }
   }
 
   eta0 <- hyper_to_eta(hyper, idx)
@@ -809,7 +846,12 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
        iterations = res@iterations, evaluations = state$evals,
-       exact_gradient = exact, exact_hessian = exact2)
+       exact_gradient = exact, exact_hessian = exact2,
+       # the optimizer that actually searched, which is the caller's where
+       # one was given and otherwise the one chosen from what the criterion
+       # can supply: a fit says what fitted it rather than leaving a reader
+       # to reconstruct the default
+       optimizer = optimizer)
 }
 
 

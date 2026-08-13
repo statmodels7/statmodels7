@@ -13,3 +13,4 @@ docs/
 # directory it was run from, and R CMD check reports it as a non-standard
 # top-level file
 Rplots.pdf
+tests/testthat/_problems/

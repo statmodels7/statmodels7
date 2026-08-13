@@ -242,9 +242,18 @@ test_that("the stopping rule is dimensionless in the response", {
   n <- 300
   dS <- data.frame(z = runif(n, -2, 2))
   base_y <- 2 + sin(1.5 * dS$z) + rnorm(n, sd = 0.3)
+  # The criterion is asked for the EXPECTED information here, not because the
+  # rule under test needs it but because the default's is the observed one and
+  # its plateau is what would be under test instead: at y * 1e4 the criterion
+  # is flat from the optimum at 3.2e-8 down to 1e-19, Newton walks the whole
+  # of it, and the fitted function is the same to five decimals while the
+  # smoothing parameter reported is twelve decades past the optimum. That is a
+  # property of the criterion's surface and is recorded as an open item; what
+  # this test is about is the INNER rule surviving a rescaling of the response.
   fits <- lapply(c(1e-3, 1, 1e4), function(sc) {
     dS$y <- base_y * sc
-    statmod(y ~ s(z, k = 10), distributions7::gaussian1_distrib(), dS)
+    statmod(y ~ s(z, k = 10), distributions7::gaussian1_distrib(), dS,
+            outer_criterion = reml("expected"))
   })
   for (f in fits) expect_true(f@converged)
   # the same fit at every scale where the outer search starts near its

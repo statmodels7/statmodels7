@@ -150,7 +150,13 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   estimating away a value the caller wrote would answer a question nobody
 #'   asked. Naming a criterion explicitly overrides that, and \code{hyper} is
 #'   then where its search starts.
-#' @param start Optional starting coefficients, a named list.
+#' @param start Where the fit begins: a named list of coefficients, a
+#'   \code{\link{start_strategy}} such as \code{\link{start_search}}, or
+#'   \code{NULL} for \code{\link{start_intercepts}}. A strategy is asked once,
+#'   before the alternation between the coefficients and the hyperparameters
+#'   begins, which is why a global search belongs here and not in
+#'   \code{inner_optimizer}: there it would rerun at every hyperparameter the
+#'   outer search tried.
 #' @param verbose A level from 0 to 3, or a named logical vector.
 #'
 #' @return An object of class \code{\link{StatmodFit}}.
@@ -193,6 +199,20 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   approx <- cfg$approx
   obj <- statmod_objective(spec, hyper, design, expected, approx)
   beta <- statmod_start(spec, design, obj, start)
+
+  if (vb$blocks || vb$outer) {
+    vb_rule(sprintf("%s, %d observations", spec@distrib@distrib_name,
+                    spec@n_obs), char = "=")
+    vb_say("inner    %s", vb_name(inner_optimizer, "iwls"), indent = 5L)
+    vb_say("outer    %s", if (is.null(outer_criterion)) "held" else
+      paste0(toupper(outer_criterion@kind), " (",
+             outer_criterion@hessian, " information)"), indent = 5L)
+    if (!is.null(start)) {
+      vb_say("start    %s",
+             if (S7::S7_inherits(start, start_strategy_class())) start@label
+             else "supplied values", indent = 5L)
+    }
+  }
 
   # A hyperparameter left where it started is a placeholder and not a choice,
   # so the criterion ESTIMATES by default: a model carrying a smooth, a ridge
@@ -310,6 +330,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         else NULL
     ),
     methods = list(smooth = inner_optimizer, outer = outer_criterion,
+                   search = res$optimizer,
                    sparse = vapply(blocks$sparse, function(b)
                      paste(b$param, b$term, sep = "/"), character(1))),
     call = cl
@@ -373,7 +394,10 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     before <- value
 
     if (joint) {
-      if (vb$blocks) cat(sprintf("[sweep %d] joint system\n", sweep))
+      if (vb$blocks) {
+        vb_rule(sprintf("inner sweep %d: joint system", sweep),
+                vb_name(inner_optimizer, "newton"), indent = 2L)
+      }
       # the caller's optimizer, where they named one. `iwls()` is a scoring
       # iteration over a design block and has no meaning over a filter's own
       # parameters, so it is what asks for the joint step's own default
@@ -399,8 +423,9 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     # the smooth block, all of it at once
     if (!joint && length(blocks$smooth)) {
       if (vb$blocks) {
-        cat(sprintf("[sweep %d] smooth block: %d coefficients\n", sweep,
-                    length(blocks$smooth)))
+        vb_rule(sprintf("inner sweep %d: smooth block, %d coefficients",
+                        sweep, length(blocks$smooth)),
+                vb_name(inner_optimizer, "iwls"), indent = 2L)
       }
       res <- fit_smooth(obj, beta, blocks$smooth, spec, design, hyper,
                         inner_optimizer, vb)
@@ -424,7 +449,10 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     # smooth block left them
     if (has_structural && !joint) {
       v0 <- value
-      if (vb$blocks) cat(sprintf("[sweep %d] structural terms\n", sweep))
+      if (vb$blocks) {
+        vb_rule(sprintf("inner sweep %d: structural terms", sweep),
+                "newton", indent = 2L)
+      }
       res <- statmod_fit_structural(spec, design, obj, beta, hyper, NULL,
                                     verbose = vb$blocks)
       value <- res$value
@@ -440,12 +468,23 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     for (bl in blocks$sparse) {
       v0 <- value
       if (vb$blocks) {
-        cat(sprintf("[sweep %d] %s in %s: %d coefficients\n", sweep,
-                    bl$term, bl$param, length(bl$index)))
+        vb_rule(sprintf("inner sweep %d: %s in %s, %d coefficients", sweep,
+                        short_keys(bl$term), bl$param, length(bl$index)),
+                indent = 2L)
       }
       res <- sparse_fit(obj, beta, bl, hyper, verbose = vb$optimizer,
                         spec = spec, design = design, expected = expected,
                         approx = approx)
+      # WHICH route ran is reported by the route itself rather than guessed
+      # beforehand: whether the compiled coordinate descent applies depends on
+      # the penalty's operator being admissible AT THE STEP the fit takes, and
+      # a header that asked the question at a probe step of 1 would repeat the
+      # defect statmodels7 0.27.0 fixed.
+      if (vb$blocks) {
+        vb_say("%s: %d iterations, converged %s",
+               if (is.null(res$method)) "sparse fit" else res$method,
+               as.integer(res$iterations), isTRUE(res$converged), indent = 5L)
+      }
       beta <- res$par
       value <- res$value
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
@@ -468,8 +507,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 
     rel <- abs(before - value) / max(1, abs(value))
     if (vb$blocks) {
-      cat(sprintf("[sweep %d] objective %.8f, relative change %.3e\n",
-                  sweep, value, rel))
+      vb_say("sweep %d done: objective %.8f, relative change %.3e",
+             sweep, value, rel, indent = 2L)
     }
     # With nothing to alternate WITH, the sweep is the inner fit and the
     # verdict is the inner fit's. This line used to set converged
@@ -691,31 +730,41 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' worse place. What would be an error is not noticing, which is why the two
 #' routes are tried in order rather than one being assumed to work.
 #'
+#' \code{start} is either a named list of values, a
+#' \code{\link{start_strategy}} --- which is asked ONCE, here, before the
+#' alternation between the coefficients and the hyperparameters begins --- or
+#' \code{NULL} for \code{\link{start_intercepts}}, which is what this function
+#' did before strategies existed and still does.
+#'
 #' @param spec The specification.
 #' @param design The design.
 #' @param obj The objective.
-#' @param start Optional user starting values, a named list.
+#' @param start Optional user starting values (a named list), or a
+#'   \code{\link{start_strategy}}.
 #'
 #' @return A stacked numeric vector.
 #'
 #' @keywords internal
 statmod_start <- function(spec, design, obj, start = NULL) {
   params <- spec@distrib@params
-  zero <- lapply(design, function(d) numeric(d$npar))
-  names(zero) <- params
-
-  eta0 <- statmod_intercepts(spec)
-  out <- zero
-  for (p in params) {
-    if (design[[p]]$npar == 0L) next
-    v <- eta0[[p]]
-    if (is.null(v) || !is.finite(v)) next
-    # the intercept carries the whole of it when there is one
-    if (identical(design[[p]]$coef_names[1L], "(Intercept)") ||
-        grepl("\\(Intercept\\)$", design[[p]]$coef_names[1L])) {
-      out[[p]][1L] <- v
+  if (S7::S7_inherits(start, start_strategy_class())) {
+    out <- start_at(start, spec, design, obj)
+    if (!is.list(out) || !setequal(names(out), params)) {
+      stop("a start strategy must return one vector per distribution ",
+           "parameter.", call. = FALSE)
     }
+    for (p in params) {
+      if (length(out[[p]]) != design[[p]]$npar || !is.numeric(out[[p]]) ||
+          anyNA(out[[p]])) {
+        stop(sprintf(paste0("the start strategy returned %d values for '%s'",
+                            ", which has %d coefficients."),
+                     length(out[[p]]), p, design[[p]]$npar), call. = FALSE)
+      }
+    }
+    return(obj$stack(out[params]))
   }
+
+  out <- start_at(start_intercepts(), spec, design, obj)
   # Damping the intercepts and letting the objective pick among the results
   # was tried and measured: on the Student t of the report it changed nothing
   # for the better, the model's own flatness deciding where the run ends

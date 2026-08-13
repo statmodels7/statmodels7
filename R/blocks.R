@@ -202,6 +202,7 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
+       method = "proximal gradient",
        iterations = res@iterations)
 }
 

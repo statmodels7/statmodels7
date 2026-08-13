@@ -5,9 +5,9 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("expected", "observed"))
+reml(hessian = c("observed", "expected"))
 
-ml(hessian = c("expected", "observed"))
+ml(hessian = c("observed", "expected"))
 }
 \arguments{
 \item{hessian}{Which information enters the determinant: \code{"expected"}

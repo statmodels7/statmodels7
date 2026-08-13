@@ -62,9 +62,14 @@ test_that("a term's two penalties get a key each", {
 })
 
 test_that("the two are estimated apart and counted together", {
+  # the EXPECTED information, so that the half carrying no signal is shrunk
+  # to 4e-6 rather than to the 1e-47 the observed criterion's plateau lets
+  # Newton reach: the reference below is modelterms7::edf(), whose plain
+  # solve() cannot invert H + S there, and what is under test is the routing
+  # of two hyperparameters rather than how far a flat direction is walked
   fit <- statmod(fml, distributions7::gaussian1_distrib(), dd,
                  inner_optimizer = iwls(maxit = 500L),
-                 outer_criterion = reml())
+                 outer_criterion = reml("expected"))
   # The convergence flag is NOT asserted here, and the reason is measured
   # rather than assumed. On macOS the inner alternation does not settle for
   # this term at a budget of 500 -- five times the default, so it is not the
