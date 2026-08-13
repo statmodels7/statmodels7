@@ -28,6 +28,19 @@ using namespace Rcpp;
 //               large next to the number of live coordinates, which is the
 //               regime a kinked penalty is used in, and pays for it in the
 //               memory the cached columns take.
+//
+// DENSE AND SPARSE SHARE THIS ALGORITHM. Every access to the design is a walk
+// over one column, so the two differ only in what that walk visits: every row
+// for a dense block, the stored nonzeros for a compressed-column one. The
+// algorithm is written once against an accessor and instantiated twice, which
+// is what keeps the two from drifting apart. A coordinate update on a sparse
+// column touching only its nonzeros is not an optimization bolted on: it is
+// the algorithm this method has always been, read on the storage it is given.
+//
+// The two paths agree BIT FOR BIT and not merely to a tolerance, which is a
+// property of the arithmetic rather than luck: skipping a structural zero
+// omits `s += w[i] * 0.0 * y[i]`, and adding zero to a running sum is exact.
+// The tests assert identity, so a reordering would fail them.
 
 static inline double apply_table(double u, int j, const NumericMatrix& cut,
                                  const NumericMatrix& slope,
@@ -41,32 +54,64 @@ static inline double apply_table(double u, int j, const NumericMatrix& cut,
   return u < 0 ? -val : val;
 }
 
-// [[Rcpp::export]]
-List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
-                   NumericVector beta0, NumericMatrix cut, NumericMatrix slope,
-                   NumericMatrix icept, IntegerVector screen, int maxit,
-                   double tol, bool covariance) {
-  int n = X.nrow(), p = X.ncol(), m = screen.size();
+// --- the two ways to walk a column ------------------------------------------
+
+struct DenseCols {
+  const double* X;
+  int n, p;
+  DenseCols(const NumericMatrix& M)
+    : X(M.begin()), n(M.nrow()), p(M.ncol()) {}
+  template <class F> inline void each(int j, F f) const {
+    const double* xj = X + (std::size_t) j * (std::size_t) n;
+    for (int i = 0; i < n; i++) f(i, xj[i]);
+  }
+};
+
+// A dgCMatrix is compressed by column, so column j's stored entries are
+// Ax[Ap[j] .. Ap[j+1]-1] at rows Ai[..] -- exactly the walk this kernel
+// wants, and the reason no conversion to a dense buffer is needed anywhere.
+struct SparseCols {
+  const int* Ai;
+  const int* Ap;
+  const double* Ax;
+  int n, p;
+  SparseCols(const IntegerVector& i, const IntegerVector& pp,
+             const NumericVector& x, int nrow, int ncol)
+    : Ai(i.begin()), Ap(pp.begin()), Ax(x.begin()), n(nrow), p(ncol) {}
+  template <class F> inline void each(int j, F f) const {
+    for (int k = Ap[j]; k < Ap[j + 1]; k++) f(Ai[k], Ax[k]);
+  }
+};
+
+// --- the algorithm, written once --------------------------------------------
+
+template <class ACC>
+List coord_run(const ACC& A, NumericVector z, NumericVector w,
+               NumericVector beta0, NumericMatrix cut, NumericMatrix slope,
+               NumericMatrix icept, IntegerVector screen, int maxit,
+               double tol, bool covariance) {
+  const int n = A.n, p = A.p, m = screen.size();
   NumericVector beta = clone(beta0);
   std::vector<double> v(p, 0.0);
 
   for (int a = 0; a < m; a++) {
     int j = screen[a];
     double s = 0.0;
-    if (n > 0) {
-      const double* xj = &X(0, j);
-      for (int i = 0; i < n; i++) s += w[i] * xj[i] * xj[i];
-    }
+    A.each(j, [&](int i, double x) { s += w[i] * x * x; });
     v[j] = s;
   }
 
   std::vector<double> r(n), g(m, 0.0);
   std::vector< std::vector<double> > gram(m);   // lazily filled, over screen
+  // a scatter buffer for the gram entries: one column is written into it and
+  // the other walked against it, so a sparse pair costs its own nonzeros
+  // rather than n. Cleared through the same walk that filled it.
+  std::vector<double> work(covariance ? n : 0, 0.0);
+
   if (covariance) {
     for (int a = 0; a < m; a++) {
-      const double* xa = &X(0, screen[a]);
       double s = 0.0;
-      for (int i = 0; i < n; i++) s += w[i] * xa[i] * z[i];
+      A.each(screen[a], [&](int i, double x) { s += w[i] * x * z[i]; });
       g[a] = s;
     }
     for (int b = 0; b < m; b++) {
@@ -74,21 +119,22 @@ List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
       if (bk == 0.0) continue;
       if (gram[b].empty()) {
         gram[b].resize(m);
-        const double* xb = &X(0, screen[b]);
+        A.each(screen[b], [&](int i, double x) { work[i] = x; });
         for (int a = 0; a < m; a++) {
-          const double* xa = &X(0, screen[a]);
           double s = 0.0;
-          for (int i = 0; i < n; i++) s += w[i] * xa[i] * xb[i];
+          A.each(screen[a], [&](int i, double x) { s += w[i] * x * work[i]; });
           gram[b][a] = s;
         }
+        A.each(screen[b], [&](int i, double) { work[i] = 0.0; });
       }
       for (int a = 0; a < m; a++) g[a] -= gram[b][a] * bk;
     }
   } else {
-    for (int i = 0; i < n; i++) {
-      double e = 0.0;
-      for (int j = 0; j < p; j++) e += X(i, j) * beta[j];
-      r[i] = z[i] - e;
+    for (int i = 0; i < n; i++) r[i] = z[i];
+    for (int j = 0; j < p; j++) {
+      double bj = beta[j];
+      if (bj == 0.0) continue;
+      A.each(j, [&](int i, double x) { r[i] -= x * bj; });
     }
   }
 
@@ -107,9 +153,8 @@ List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
       if (covariance) {
         gj = g[a];
       } else {
-        const double* xj = &X(0, j);
         gj = 0.0;
-        for (int i = 0; i < n; i++) gj += w[i] * xj[i] * r[i];
+        A.each(j, [&](int i, double x) { gj += w[i] * x * r[i]; });
       }
       double u = beta[j] + gj / v[j];
       double nb = apply_table(u, a, cut, slope, icept);
@@ -118,18 +163,19 @@ List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
         if (covariance) {
           if (gram[a].empty()) {
             gram[a].resize(m);
-            const double* xa = &X(0, j);
+            A.each(j, [&](int i, double x) { work[i] = x; });
             for (int b = 0; b < m; b++) {
-              const double* xb = &X(0, screen[b]);
               double s = 0.0;
-              for (int i = 0; i < n; i++) s += w[i] * xb[i] * xa[i];
+              A.each(screen[b], [&](int i, double x) {
+                s += w[i] * x * work[i];
+              });
               gram[a][b] = s;
             }
+            A.each(j, [&](int i, double) { work[i] = 0.0; });
           }
           for (int b = 0; b < m; b++) g[b] -= gram[a][b] * d;
         } else {
-          const double* xj = &X(0, j);
-          for (int i = 0; i < n; i++) r[i] -= xj[i] * d;
+          A.each(j, [&](int i, double x) { r[i] -= x * d; });
         }
         beta[j] = nb;
         double ad = std::abs(d);
@@ -158,19 +204,43 @@ List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
   NumericVector grad(p);
   if (m < p) {
     std::vector<double> res(n);
-    for (int i = 0; i < n; i++) {
-      double e = 0.0;
-      for (int j = 0; j < p; j++) e += X(i, j) * beta[j];
-      res[i] = z[i] - e;
+    for (int i = 0; i < n; i++) res[i] = z[i];
+    for (int j = 0; j < p; j++) {
+      double bj = beta[j];
+      if (bj == 0.0) continue;
+      A.each(j, [&](int i, double x) { res[i] -= x * bj; });
     }
     for (int j = 0; j < p; j++) {
-      const double* xj = &X(0, j);
       double s = 0.0;
-      for (int i = 0; i < n; i++) s += w[i] * xj[i] * res[i];
+      A.each(j, [&](int i, double x) { s += w[i] * x * res[i]; });
       grad[j] = s;
     }
   }
 
   return List::create(_["beta"] = beta, _["sweeps"] = sweeps,
                       _["grad"] = grad);
+}
+
+// [[Rcpp::export]]
+List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
+                   NumericVector beta0, NumericMatrix cut, NumericMatrix slope,
+                   NumericMatrix icept, IntegerVector screen, int maxit,
+                   double tol, bool covariance) {
+  return coord_run(DenseCols(X), z, w, beta0, cut, slope, icept, screen,
+                   maxit, tol, covariance);
+}
+
+// The slots of a dgCMatrix, passed as they are stored. Taking the S4 object
+// apart in R rather than here keeps this file free of any dependency on the
+// Matrix package's C API.
+// [[Rcpp::export]]
+List coord_descent_sparse(IntegerVector Ai, IntegerVector Ap,
+                          NumericVector Ax, int nrow, int ncol,
+                          NumericVector z, NumericVector w,
+                          NumericVector beta0, NumericMatrix cut,
+                          NumericMatrix slope, NumericMatrix icept,
+                          IntegerVector screen, int maxit, double tol,
+                          bool covariance) {
+  return coord_run(SparseCols(Ai, Ap, Ax, nrow, ncol), z, w, beta0, cut,
+                   slope, icept, screen, maxit, tol, covariance);
 }

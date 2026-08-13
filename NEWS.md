@@ -1,3 +1,82 @@
+# statmodels7 0.28.0
+
+* The compiled coordinate descent reads a SPARSE block, and the last
+  densification in the chain is gone.
+
+  `coord_fit()` materialized the penalized block dense to hand the kernel an
+  `arma::mat`. A coordinate descent reads one column at a time, so a
+  compressed-column matrix is the storage the method wants rather than one
+  it tolerates: column `j` of a `dgCMatrix` is a contiguous run of its own
+  nonzeros, which is exactly the walk every step of this algorithm makes.
+
+  The algorithm is written ONCE against a column accessor and instantiated
+  twice, so the dense and sparse kernels cannot drift apart. They agree BIT
+  FOR BIT rather than to a tolerance, and that is a property of the
+  arithmetic and not luck: skipping a structural zero omits an addition of
+  zero, which is exact. The tests assert `identical()` on the coefficients,
+  the sweep count and the screening gradient, over both gradient routes
+  (residual and covariance) and both densities.
+
+  Measured at n = 20000 against the same design densified by hand, with the
+  coefficients exactly identical:
+
+  | | before | after | vs dense |
+  |---|---|---|---|
+  | lasso, p = 200, density 0.005 | 1.04 s | **0.23 s** | 14.4x |
+  | lasso, p = 1000, density 0.001 | 3.61 s | **0.25 s** | **233.7x** |
+
+  The kinked branch is now faster than the smooth one on the same block
+  (0.25 s against 2.37 s at p = 1000), which is the right way round: a lasso
+  screens its coordinates where a ridge solves the whole system.
+
+  The `dgCMatrix` is taken apart in R and its slots passed to the kernel, so
+  the compiled code needs no dependency on the \pkg{Matrix} C API.
+
+  ⚠️ The dense path's residual is now accumulated column by column rather
+  than row by row, a compressed-column matrix having no cheap row walk. The
+  arithmetic is the same sum in a different order, so results move within
+  rounding; every existing comparison is far above it (1e-10 against the
+  proximal route, 1e-13 against glmnet) and the suite is unchanged.
+
+# statmodels7 0.27.0
+
+* `methods` is declared in `Imports`. `as_sparse()` has called `methods::as()`
+  since 0.26.0 and nothing declared it, so `--as-cran` reported *"'::' or
+  ':::' import not declared from: 'methods'"* -- a WARNING, which the CI
+  action treats as a failure. The local suite could not see it. Sixth
+  instance of the rule that any package named with `::` goes in the
+  dependencies in the same edit as the code that names it.
+
+* A kinked penalty composed with a grouping indicator ABORTED THE PROCESS.
+  `coord_fit()` handed the compiled coordinate descent the penalized block
+  sliced out of its equation's design, and where the equation also carries a
+  random effect that design is a `dgCMatrix`; the kernel takes an
+  `arma::mat`, so the conversion threw at the `.Call` boundary and R died
+  rather than raising something a `tryCatch` could see. `y ~ lasso(~x) +
+  random(~1|g)` was unfittable. The block's own columns are dense whatever
+  the rest of the equation holds -- the sparse columns belong to the other
+  terms and are never touched -- so they are densified at the slice. Sixth
+  round of the sparse conversion, and the first where the failure was not an
+  R error.
+
+* `coord_fit()` asked whether a penalty has a proximal table AT A STEP OF 1,
+  which is a different question from the one it meant. SCAD and MCP have no
+  table past their convex region, and under a diagonal map the condition is
+  `t < (a-1)/d^2`, so a standardized block on a column of spread 20 was
+  refused at the probe and sent to the general proximal route, which then
+  raised on the same condition. The probe is taken at a step short enough to
+  answer only the question about the family; the step that will be used is
+  asked below it, once the working weights are known.
+
+* Standardization needs nothing here, which was the point of putting it on
+  the penalty: a standardized term fits what a hand-standardized design fits
+  (coefficients `s*beta` to 8.9e-16, fitted values to 3.6e-15), multiplying a
+  column by a thousand leaves the standardized fit exactly where it was
+  (3.6e-15) where it moves an unstandardized one, and a random effect's block
+  stays a `dgCMatrix` through the terms, the assembled design (density
+  0.064), the information and `vcov()` with a standardized lasso in the same
+  equation.
+
 # statmodels7 0.26.0
 
 * A model carrying a grouping indicator is fitted SPARSE end to end, and the

@@ -5,3 +5,7 @@ coord_descent <- function(X, z, w, beta0, cut, slope, icept, screen, maxit, tol,
     .Call(`_statmodels7_coord_descent`, X, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance)
 }
 
+coord_descent_sparse <- function(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance) {
+    .Call(`_statmodels7_coord_descent_sparse`, Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance)
+}
+

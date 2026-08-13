@@ -31,9 +31,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// coord_descent_sparse
+List coord_descent_sparse(IntegerVector Ai, IntegerVector Ap, NumericVector Ax, int nrow, int ncol, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance);
+RcppExport SEXP _statmodels7_coord_descent_sparse(SEXP AiSEXP, SEXP ApSEXP, SEXP AxSEXP, SEXP nrowSEXP, SEXP ncolSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type Ai(AiSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type Ap(ApSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Ax(AxSEXP);
+    Rcpp::traits::input_parameter< int >::type nrow(nrowSEXP);
+    Rcpp::traits::input_parameter< int >::type ncol(ncolSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type z(zSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type beta0(beta0SEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type cut(cutSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type slope(slopeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type icept(iceptSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type screen(screenSEXP);
+    Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< bool >::type covariance(covarianceSEXP);
+    rcpp_result_gen = Rcpp::wrap(coord_descent_sparse(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
+    {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
     {NULL, NULL, 0}
 };
 

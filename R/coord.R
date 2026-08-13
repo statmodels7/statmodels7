@@ -87,10 +87,22 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   d <- design[[p]]
   th <- as.list(hyper[[p]][[block$term]])
   cols <- block$cols
-  X <- d$X[, cols, drop = FALSE]
+  # The block is kept in whatever storage it arrived in. A coordinate
+  # descent reads one column at a time, so a compressed-column matrix is the
+  # storage the method wants rather than one it tolerates, and the kernel
+  # walks the stored nonzeros; densifying here was the last densification in
+  # the chain and it is gone.
+  X <- coord_block(d$X, cols)
   if (!ncol(X)) return(NULL)
   other <- setdiff(seq_len(d$npar), cols)
-  step0 <- rep(1, ncol(X))
+  # Does this penalty have a table AT ALL? That is a question about the
+  # family, and it is asked at a step short enough not to answer a different
+  # one: SCAD and MCP have no table past their convex region, the condition
+  # being t < (a-1)/d^2 and t < gamma/d^2 under a diagonal map, so a probe at
+  # t = 1 rejects a standardized penalty whose real steps are 1/sum(w x^2)
+  # and orders of magnitude shorter. The step that will actually be used is
+  # asked below, once the working weights are known.
+  step0 <- rep(1e-10, ncol(X))
   if (is.null(penalties7::penalty_prox_spec(block$penalty, th, step0))) {
     return(NULL)
   }
@@ -116,9 +128,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     repeat {
       tab <- penalties7::penalty_prox_spec(block$penalty, th, 1 / v[keep])
       if (is.null(tab)) return(NULL)
-      out <- coord_descent(X, z, wq$w, b0, tab$cut, tab$slope, tab$icept,
-                           as.integer(keep - 1L), 500L, tol,
-                           coord_covariance(n, length(keep)))
+      out <- coord_call(X, z, wq$w, b0, tab, as.integer(keep - 1L), tol,
+                        coord_covariance(n, length(keep)))
       sweeps <- sweeps + as.integer(out$sweeps)
       # a strong rule is a heuristic: a coordinate it discarded whose gradient
       # exceeds the kink belongs in the fit, and only this comparison makes
@@ -177,6 +188,76 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev) {
   keep <- which(g >= 2 * s_now - s_prev | beta != 0)
   if (!length(keep)) keep <- which.max(g)
   keep
+}
+
+
+#' The Penalized Block, in the Storage It Arrived In
+#'
+#' @description
+#' Slices a penalized term's columns out of its equation's design without
+#' densifying a sparse one, and normalizes a \pkg{Matrix} to the
+#' compressed-column class the kernel reads.
+#'
+#' @details
+#' A dense slice of a base matrix is returned as it is. Any \pkg{Matrix} is
+#' carried to \code{dgCMatrix}: the general compressed-column form is the
+#' one whose slots the kernel walks, and a symmetric or triangular
+#' compression would describe the same entries differently. A dense
+#' \pkg{Matrix} class is materialized as a base matrix instead, there being
+#' nothing to save.
+#'
+#' @param X The equation's design.
+#' @param cols The term's column positions.
+#'
+#' @return A numeric matrix or a \code{dgCMatrix}.
+#'
+#' @seealso \code{\link{coord_call}}, \code{\link{coord_fit}}
+#'
+#' @keywords internal
+coord_block <- function(X, cols) {
+  B <- X[, cols, drop = FALSE]
+  if (!isS4(B)) return(B)
+  if (methods::is(B, "sparseMatrix")) {
+    return(methods::as(methods::as(B, "generalMatrix"), "CsparseMatrix"))
+  }
+  as.matrix(B)
+}
+
+#' Run the Compiled Coordinate Descent on Either Storage
+#'
+#' @description
+#' Sends the block to the dense kernel or to the sparse one, taking a
+#' \code{dgCMatrix} apart into the slots the second reads.
+#'
+#' @details
+#' The two kernels are one algorithm instantiated twice over a column
+#' accessor, so they agree BIT FOR BIT rather than to a tolerance: skipping
+#' a structural zero omits an addition of zero, which is exact. The
+#' \code{dgCMatrix} is decomposed here rather than in C++ so that the
+#' compiled code needs no dependency on the \pkg{Matrix} package's C API.
+#'
+#' @param X The block, dense or \code{dgCMatrix}.
+#' @param z,w The working response and weights.
+#' @param b0 The starting coefficients.
+#' @param tab The proximal table, from
+#'   \code{\link[penalties7]{penalty_prox_spec}}.
+#' @param screen The zero-based positions the strong rule kept.
+#' @param tol The stopping tolerance on the coefficient change.
+#' @param covariance Whether to hold the gradient rather than the residual.
+#'
+#' @return The kernel's list: \code{beta}, \code{sweeps}, \code{grad}.
+#'
+#' @seealso \code{\link{coord_block}}
+#'
+#' @keywords internal
+coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
+  if (isS4(X)) {
+    return(coord_descent_sparse(X@i, X@p, X@x, nrow(X), ncol(X), z, w, b0,
+                                tab$cut, tab$slope, tab$icept, screen, 500L,
+                                tol, covariance))
+  }
+  coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, screen, 500L,
+                tol, covariance)
 }
 
 
