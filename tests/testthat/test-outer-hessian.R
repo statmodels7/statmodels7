@@ -15,11 +15,12 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
   # The reference differentiates a gradient read at the penalized MODE, so
   # whatever the inner fit leaves short of stationarity is noise the numerical
   # derivative amplifies, and that sets how tightly the two can be compared.
-  # Asking the inner fit for 1e-12 makes it WORSE rather than better: the
-  # tolerance is unreachable, the run always spends its budget, and where it
-  # stops then varies with the hyperparameter -- which is a rougher function
-  # of it than the one the default produces. Measured, five of these
-  # comparisons went from agreeing to disagreeing.
+  # Asking the inner fit for more is NOT the remedy: the stall guard on the
+  # objective (a decrease under 1e-12 of its own magnitude is rounding, not
+  # progress) fires before a tighter score rule can, so a tighter tolerance
+  # only makes where the run stops vary with the hyperparameter -- measured
+  # twice, at 1e-12 under the absolute rule and again at 1e-8 under a
+  # dimensionless one.
   inner <- iwls()
   fit0 <- statmod(formula, distrib, data, inner_optimizer = inner)
   spec <- fit0@spec

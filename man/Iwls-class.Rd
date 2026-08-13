@@ -11,6 +11,7 @@ Iwls(
   decomposition = character(0),
   maxit = integer(0),
   tol = integer(0),
+  criterion = NULL,
   step_halving = integer(0)
 )
 }
@@ -27,6 +28,9 @@ where the family has no closed form.}
 \item{maxit}{The iteration budget.}
 
 \item{tol}{The stopping tolerance on the scaled score.}
+
+\item{criterion}{An \pkg{optimizers7} \code{criterion} driving the loop
+in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
 \item{step_halving}{The number of halvings allowed before a step is
 abandoned.}

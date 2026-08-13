@@ -94,20 +94,18 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #' The Parameters a Structural Term Starts From
 #'
 #' @description
-#' Zero on the unconstrained scale of every one of the term's parameters,
-#' which for a score-driven filter is a level of zero, no loading on the
-#' score and no persistence: the term contributes nothing until the fit
-#' moves it, so the run starts from the model without it.
+#' What the term itself declares through
+#' \code{\link[modelterms7]{term_start}}: as near the model without the
+#' term as its charts allow, which only the term can say -- a score
+#' loading on the log chart has no coordinate for zero, and starts at a
+#' weak response instead.
 #'
 #' @param term A built structural term.
 #'
 #' @return A named numeric vector.
 #'
 #' @keywords internal
-structural_zeta_start <- function(term) {
-  stats::setNames(numeric(length(modelterms7::term_params(term))),
-                  modelterms7::term_params(term))
-}
+structural_zeta_start <- function(term) modelterms7::term_start(term)
 
 
 #' From the Unconstrained Scale to the Term's Parameters

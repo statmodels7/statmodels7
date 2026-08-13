@@ -381,6 +381,19 @@ reject_unfittable <- function(terms) {
 #' Which parameter is the level is the term's own answer, through
 #' \code{\link[modelterms7]{term_level_param}}.
 #'
+#' \strong{A developed level asks the same question of a subspace.} With
+#' \code{omega ~ Z gamma} the confounding is no longer with one constant
+#' but with whatever \code{span(Z)} shares with the span of the equation's
+#' design. The constant coordinates are the term's own answer, held as
+#' above. For the rest, an unpenalized coordinate whose column lies in the
+#' equation's span is flagged with a warning rather than held: holding it
+#' would change the model where the confounding is not exact (a
+#' time-varying shared column is exactly flat only when its lags stay in
+#' the development's span, which depends on \eqn{q} and on the column),
+#' while a penalized coordinate is identified by its penalty, exactly as a
+#' deviation is. Where the direction really is flat, the variance matrix
+#' names it.
+#'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param design The design.
 #'
@@ -396,13 +409,37 @@ statmod_held_levels <- function(spec, design) {
   n <- spec@n_obs
   for (u in su) {
     out[[u$term]] <- character(0)
-    lvl <- modelterms7::term_level_param(spec@terms[[u$param]][[u$term]])
-    if (!length(lvl)) next
+    tm <- spec@terms[[u$param]][[u$term]]
+    lvl <- modelterms7::term_level_param(tm)
     X <- design[[u$param]]$X
     if (is.null(X) || !ncol(X)) next
+    qrX <- qr(X)
     # the constant lies in the span exactly when regressing it on the design
     # leaves nothing behind
-    if (max(abs(qr.resid(qr(X), rep(1, n)))) < 1e-8) out[[u$term]] <- lvl
+    if (length(lvl) && max(abs(qr.resid(qrX, rep(1, n)))) < 1e-8) {
+      out[[u$term]] <- lvl
+    }
+    # the subspace half of the question, for a developed level: an
+    # unpenalized coordinate whose column the equation already spans
+    Zl <- modelterms7::term_level_design(tm)
+    if (is.null(Zl)) next
+    pen_idx <- unlist(lapply(modelterms7::term_penalties(tm),
+                             function(e) e$index))
+    nm_all <- modelterms7::term_params(tm)
+    for (k in seq_len(ncol(Zl))) {
+      cnm <- colnames(Zl)[k]
+      if (cnm %in% out[[u$term]]) next
+      if (match(cnm, nm_all) %in% pen_idx) next
+      col <- Zl[, k]
+      if (max(abs(qr.resid(qrX, col))) < 1e-8 * max(abs(col), 1)) {
+        warning(sprintf(
+          paste("the development of the level of '%s' carries '%s', whose",
+                "column the design of '%s' already spans; the two may be",
+                "confounded, and the coordinate carries no penalty to",
+                "identify it."),
+          u$term, cnm, u$param), call. = FALSE)
+      }
+    }
   }
   out
 }
@@ -632,6 +669,39 @@ statmod_design <- function(spec) {
     # asked once the blocks exist, since what it compares is the equation's
     # column space against the constant
     sst$held <- statmod_held_levels(spec, out)
+    # An UNHELD level starts at the equation's own data-based intercept
+    # rather than at zero -- the mirror of "the intercept wins": held, the
+    # intercept carries the response's scale and zero is the right start;
+    # unheld, which is the volatility spelling `sigma ~ gas(...) - 1`, the
+    # level itself must absorb it, and a filter started at zero on a
+    # response of another scale reads a score of y^2/sigma^2 at its first
+    # step and leaves the representable range before the search's guard
+    # can step back (measured: sigma = NaN at y scaled by 100, where the
+    # intercept spelling of the same model fits). Only a FRESH start is
+    # touched: a specification a fit has been through keeps the parameters
+    # it arrived at.
+    fresh <- vapply(su, function(u) is.null(spec@structural[[u$term]]),
+                    logical(1))
+    lvl_all <- lapply(su, function(u)
+      modelterms7::term_level_param(spec@terms[[u$param]][[u$term]]))
+    need <- vapply(seq_along(su), function(i) {
+      fresh[i] && length(lvl_all[[i]]) &&
+        !all(lvl_all[[i]] %in% sst$held[[su[[i]]$term]])
+    }, logical(1))
+    if (any(need)) {
+      eta0 <- statmod_intercepts(spec)
+      for (i in which(need)) {
+        u <- su[[i]]
+        v <- eta0[[u$param]]
+        if (is.null(v) || !is.finite(v)) next
+        tm <- spec@terms[[u$param]][[u$term]]
+        lvl <- setdiff(lvl_all[[i]], sst$held[[u$term]])[1L]
+        lk <- modelterms7::term_links(tm)[[lvl]]
+        z <- tryCatch(linkfunctions7::linkfun(lk, v),
+                      error = function(e) NA_real_)
+        if (is.finite(z)) sst$zeta[[u$term]][[lvl]] <- z
+      }
+    }
   }
   rf <- statmod_refreshable(spec)
   if (length(rf)) {

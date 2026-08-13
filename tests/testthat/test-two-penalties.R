@@ -109,12 +109,15 @@ test_that("the two are estimated apart and counted together", {
   # moves the count by far more than that.
   expect_equal(row$edf, ref, tolerance = 1e-3)
 
-  # and exactly, against the definition: the trace of this term's diagonal
-  # block of (H + S)^-1 H over the coefficients of every equation
+  # and against the definition: the trace of this term's diagonal block of
+  # (H + S)^-1 H over the coefficients of every equation. The fit computes
+  # the inverse through the eigendecomposition and this reference through
+  # LAPACK's solve -- two routes to one number, a rounding apart, so the
+  # comparison carries a tolerance rather than asking for the bit
   S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
                           "hessian")
   S[!is.finite(S)] <- 0
-  expect_equal(row$edf, sum(diag(solve(H + S, H))[cols]), tolerance = 1e-10)
+  expect_equal(row$edf, sum(diag(solve(H + S, H))[cols]), tolerance = 1e-6)
 })
 
 test_that("the summary shows a hyperparameter per penalty, named for it", {
@@ -138,7 +141,7 @@ test_that("a partially penalized term is not read as parametric", {
   # seg penalizes its changes and nothing else, so term_penalty() is NULL
   # while term_penalties() is not: reading the first would file the term
   # under the unpenalized ones
-  built <- modelterms7::term_build(modelterms7::seg(x, penalty = "lasso"), dx)
+  built <- modelterms7::term_build(modelterms7::seg(x, penalty = penalties7::lasso_penalty), dx)
   expect_null(modelterms7::term_penalty(built))
   expect_identical(term_block_kind(built), "selection")
   expect_identical(
@@ -146,5 +149,5 @@ test_that("a partially penalized term is not read as parametric", {
     "parametric")
   expect_identical(
     term_block_kind(modelterms7::term_build(
-      modelterms7::seg(x, penalty = "ridge"), dx)), "penalized")
+      modelterms7::seg(x, penalty = penalties7::ridge_penalty), dx)), "penalized")
 })

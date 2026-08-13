@@ -42,6 +42,19 @@ not of a column named \code{"(Intercept)"}: a factor coded without one,
 or any set of columns summing to a constant, spans it just as well.
 Which parameter is the level is the term's own answer, through
 \code{\link[modelterms7]{term_level_param}}.
+
+\strong{A developed level asks the same question of a subspace.} With
+\code{omega ~ Z gamma} the confounding is no longer with one constant
+but with whatever \code{span(Z)} shares with the span of the equation's
+design. The constant coordinates are the term's own answer, held as
+above. For the rest, an unpenalized coordinate whose column lies in the
+equation's span is flagged with a warning rather than held: holding it
+would change the model where the confounding is not exact (a
+time-varying shared column is exactly flat only when its lags stay in
+the development's span, which depends on \eqn{q} and on the column),
+while a penalized coordinate is identified by its penalty, exactly as a
+deviation is. Where the direction really is flat, the variance matrix
+names it.
 }
 \seealso{
 \code{\link{reject_incompatible}}

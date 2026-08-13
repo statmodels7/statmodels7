@@ -7,8 +7,15 @@ dc$y <- sin(1.4 * dc$x) + stats::rnorm(n, sd = 0.3)
 
 pe_handles <- function(formula, data, method) {
   distrib <- distributions7::gaussian1_distrib()
+  # The reference differentiates quantities read at the penalized MODE, so
+  # whatever the inner fit leaves short of stationarity is noise the
+  # numerical derivative amplifies; the default is the tightest usable
+  # setting, the stall guard on the objective firing first below it (see
+  # test-outer-hessian.R).
+  inner <- iwls()
   # the probe value, not the estimated optimum: see test-outer-gradient.R
-  fit0 <- statmod(formula, distrib, data, outer_criterion = NULL)
+  fit0 <- statmod(formula, distrib, data, outer_criterion = NULL,
+                  inner_optimizer = inner)
   spec <- fit0@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -17,7 +24,8 @@ pe_handles <- function(formula, data, method) {
     hl <- lapply(hy, function(pp)
       lapply(pp, function(v) stats::setNames(as.numeric(v), names(v))))
     hl <- hl[lengths(hl) > 0L]
-    list(hy = hy, fit = statmod(formula, distrib, data, hyper = hl))
+    list(hy = hy, fit = statmod(formula, distrib, data, hyper = hl,
+                                inner_optimizer = inner))
   }
   list(
     idx = idx,

@@ -644,8 +644,14 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       A <- if (is.null(p$A)) crossprod(p$R) + crossprod(p$C) else p$A
       list(R = NULL, C = NULL, A = A[idx, idx, drop = FALSE])
     }
+    # the equations' coordinate ranges, restated in the subset's own
+    # numbering: the stopping rule's scale is per equation, and the
+    # objective's split speaks the full vector's coordinates
+    gfull <- obj$split(seq_along(beta))
+    groups <- lapply(gfull, function(ix) match(intersect(ix, idx), idx))
+    groups <- Filter(length, groups)
     res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
-                    verbose = vb$inner)
+                    verbose = vb$inner, groups = groups)
     out <- beta
     out[idx] <- res$par
     return(list(par = out, value = obj$fn(out), converged = res$converged,
@@ -878,7 +884,15 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
       H <- statmod_information_at(spec, coef, design, expected, approx)
       S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
       S[!is.finite(S)] <- 0
-      diag(solve(H + S, H))
+      # through solve_pd's eigendecomposition, with the unpenalized
+      # information as the reference scale: a smoothing parameter a
+      # criterion sends to 1e15 separates the scales without flattening a
+      # direction, and LAPACK's solve on the assembled system reported it
+      # as "computationally singular" -- which left the fit standing with
+      # every edf missing
+      Hd <- as_dense(H)
+      diag(solve_pd(as_dense(H + S), "the penalized information",
+                    scale = max(abs(diag(Hd)))) %*% Hd)
     }, error = function(e) NULL)
   }
   for (a in seq_along(params)) {

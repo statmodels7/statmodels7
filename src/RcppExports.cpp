@@ -56,10 +56,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// chol_rcond_cpp
+double chol_rcond_cpp(NumericMatrix R, double anorm);
+RcppExport SEXP _statmodels7_chol_rcond_cpp(SEXP RSEXP, SEXP anormSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type R(RSEXP);
+    Rcpp::traits::input_parameter< double >::type anorm(anormSEXP);
+    rcpp_result_gen = Rcpp::wrap(chol_rcond_cpp(R, anorm));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
+    {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
     {NULL, NULL, 0}
 };
 

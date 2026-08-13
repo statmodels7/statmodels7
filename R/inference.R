@@ -37,6 +37,11 @@ coef_labels <- function(spec, design) {
     for (nm in names(d$blocks)) term[d$blocks[[nm]]] <- nm
     for (u in units) {
       if (!identical(u$param, p)) next
+      # a structural unit's penalty sits on the term's OWN parameters,
+      # which contribute no column: its cols index the term's parameter
+      # vector, and writing them here grew pen past the design and
+      # recycled the labels into duplicate rows
+      if (isTRUE(u$structural)) next
       pen[u$cols] <- TRUE
       kink[u$cols] <- penalty_has_kink(u$penalty)
     }
@@ -161,8 +166,14 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   if (!any(keep)) return(out)
   keep_full <- c(keep, rep(TRUE, nz))
   A <- (H + S)[keep_full, keep_full, drop = FALSE]
+  # the unpenalized information supplies the reference for what a SMALL
+  # eigenvalue means: a smoothing parameter at 1e15 separates the scales
+  # without flattening any direction, and against max(ev) alone that read
+  # as singularity
+  Hd <- diag(as_dense(H))[keep_full]
   Vb <- solve_pd(A, "the penalized information",
-                 c(nm[keep], rep("", nz)))
+                 c(nm[keep], rep("", nz)),
+                 scale = max(abs(Hd), na.rm = TRUE))
   V <- if (type == "bayesian") Vb else
     Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
   # the coefficient block of the joint inverse, which is not the inverse of
@@ -177,18 +188,35 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' Invert a Matrix That Ought to Be Positive Definite
 #'
 #' @description
-#' A Cholesky inverse, signalling an error naming the matrix when the factor
-#' does not exist.
+#' An inverse through the Cholesky factor, signalling an error naming the
+#' matrix when a direction is flat.
 #'
 #' @details
 #' A failure here is a statement about the fit rather than about the
 #' arithmetic: at a maximum the penalized information is positive definite, so
 #' a matrix that is not says something about where the run stopped. The test is
-#' \code{min(ev) > tol * max(ev)} on the eigenvalues rather than whether
+#' \code{lmin > tol * ref} on the smallest eigenvalue rather than whether
 #' \code{chol()} raised, because on an exactly singular matrix the latter is
-#' decided by rounding and differs between platforms.
-#' Returning a pseudo-inverse instead would give a standard error for a
-#' direction the data does not identify.
+#' decided by rounding and differs between platforms; \code{ref} is the
+#' matrix's own scale, or the scale of the unpenalized
+#' information where the caller holds it, which is what tells a flat
+#' direction from the scale separation a large smoothing parameter
+#' legitimately produces. Returning a pseudo-inverse instead would give a
+#' standard error for a direction the data does not identify.
+#'
+#' The smallest eigenvalue is ESTIMATED rather than computed, from LAPACK's
+#' condition estimator (\code{dpocon}) read on the Cholesky factor the
+#' inverse needs anyway: \code{rcond} is
+#' \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
+#' \code{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
+#' symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
+#' \eqn{\lambda_{\min}}. The estimate therefore errs on the SMALL side and
+#' the test is conservative by at most a factor \eqn{\sqrt{p}}, plus
+#' whatever the estimator's own slack is; the two cases it has to keep
+#' apart are separated by some fifty orders of magnitude, so neither
+#' reaches the other. It replaced a full eigendecomposition, which answers
+#' the same question exactly and costs O(p^3) with a large constant --
+#' measured at p = 1022, 1.18 s against the Cholesky's 0.25.
 #'
 #' The message names the directions rather than the causes. A first version
 #' offered two -- the run not having reached a maximum, or two columns of the
@@ -202,38 +230,64 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' @param A A square matrix.
 #' @param what What the matrix is, for the message.
 #' @param labels The names of the coefficients \code{A} is indexed by.
+#' @param scale An optional reference magnitude for the smallest
+#'   eigenvalue, usually the largest diagonal entry of the UNPENALIZED
+#'   information. Without it the reference is the matrix's own scale.
 #'
 #' @return The inverse.
 #'
 #' @keywords internal
-solve_pd <- function(A, what, labels = NULL) {
-  # The verdict comes from the eigenvalues and not from whether chol() raised.
-  # On a matrix with an exactly zero eigenvalue -- two columns of the design
-  # carrying the same information is the ordinary way to get one -- the pivot
-  # that should be zero comes out positive or negative according to rounding,
-  # so the same fit was refused on Windows and accepted on Linux and macOS.
-  # min(ev) > tol * max(ev) is a statement about the matrix instead, and the
-  # decomposition is what the message below already needs.
+solve_pd <- function(A, what, labels = NULL, scale = NULL) {
+  # The verdict comes from the smallest eigenvalue and not from whether
+  # chol() raised. On a matrix with an exactly zero eigenvalue -- two columns
+  # of the design carrying the same information is the ordinary way to get
+  # one -- the pivot that should be zero comes out positive or negative
+  # according to rounding, so the same fit was refused on Windows and
+  # accepted on Linux and macOS. Reading the condition estimate off the
+  # factor is a statement about the matrix instead: where the factorization
+  # succeeds on a singular matrix by luck, the estimate is at the rounding
+  # scale and the answer is the same on every platform.
+  #
+  # The REFERENCE distinguishes two situations one ratio conflated. A
+  # smoothing parameter a criterion legitimately sends to 1e15 puts
+  # min(ev)/max(ev) at the rounding scale while the small eigenvalue is
+  # ordinary curvature (measured: min 29.7 against max 6.4e15 on a poisson
+  # smooth over weak signal, the matrix strictly positive definite and the
+  # fit right); a FLAT direction is small against the unpenalized
+  # information's own scale either way. A caller holding that information
+  # passes its magnitude; the reference never exceeds the largest
+  # eigenvalue, so the test only ever relaxes towards it.
+  #
   # A non-finite entry is what a parameter run out of its range leaves behind,
-  # and it is not a matrix to decompose: eigen() raises its own error there,
-  # which would replace the message below with one naming neither the fit nor
-  # the direction. flat_directions() reports those rows instead.
-  # The eigenvalue test and the message's flat direction both need a dense
-  # matrix, and there is no cheap sparse eigendecomposition to replace them
-  # with. Densifying HERE is deliberate rather than a lapse: this runs once,
-  # at vcov(), on a p by p matrix, where the sparsity that matters is in the
-  # n by p design and the per-iteration products taken against it. The same
-  # judgement is recorded for the observed Hessian of a regime mixture, which
-  # is also computed once and left in R.
+  # and it is not a matrix to decompose: the factorization raises its own
+  # error there, which would replace the message below with one naming
+  # neither the fit nor the direction. flat_directions() reports those rows
+  # instead.
+  # The test and the message's flat direction both need a dense matrix, and
+  # there is no cheap sparse counterpart to replace them with. Densifying
+  # HERE is deliberate rather than a lapse: this runs once, at vcov(), on a
+  # p by p matrix, where the sparsity that matters is in the n by p design
+  # and the per-iteration products taken against it. The same judgement is
+  # recorded for the observed Hessian of a regime mixture, which is also
+  # computed once and left in R.
   A <- as_dense(A)
-  pd <- FALSE
-  if (all(is.finite(A))) {
-    ev <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
-    pd <- length(ev) > 0L && ev[1L] > 0 && min(ev) > 1e-12 * ev[1L]
-  }
-  if (pd) {
-    R <- tryCatch(chol(A), error = function(e) NULL)
-    if (!is.null(R)) return(chol2inv(R))
+  if (ncol(A) > 0L && all(is.finite(A))) {
+    ch <- tryCatch(chol(A), error = function(e) NULL)
+    if (!is.null(ch)) {
+      # the 1-norm, which is what the condition estimator is expressed in
+      anorm <- max(colSums(abs(A)))
+      rc <- chol_rcond_cpp(ch, anorm)
+      lmin <- if (is.na(rc)) 0 else rc * anorm
+      ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
+        else min(scale, anorm)
+      if (is.finite(lmin) && lmin > 1e-12 * ref) {
+        # Inverted through the factor already in hand. A condition number of
+        # 1e15 born of scale separation costs the well-determined directions
+        # nothing here and the shrunk ones simply report variances near zero.
+        out <- chol2inv(ch)
+        return((out + t(out)) / 2)
+      }
+    }
   }
   stop(sprintf(paste0("%s is not positive definite, so there is no variance",
                       "\n  matrix at this point.%s\n  A fit can reach such a",

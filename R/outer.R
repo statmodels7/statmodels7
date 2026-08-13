@@ -703,6 +703,32 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                     state$evals, paste(signif(eta, 4), collapse = ", "),
                     if (is.null(err)) "" else paste0(": ", err)))
       }
+      # The intent stated above, completed for the branch that does not
+      # raise: at the STARTING point an unavailable criterion is the
+      # caller's problem and is reported with its cause. Handing the
+      # optimizer a non-finite value instead has it stop with "the
+      # objective is not finite at the starting value", which names the
+      # point and not the reason -- measured on a gamma model whose inner
+      # fit CONVERGED to a degenerate parameter, so the penalized
+      # information had no Cholesky factor at any hyperparameter and the
+      # message pointed nowhere.
+      if (state$evals == 1L) {
+        cause <- if (!is.null(err)) {
+          paste0(": ", err)
+        } else if (!is.null(res) && !isTRUE(res$converged)) {
+          ": the inner fit did not converge there"
+        } else {
+          paste0(": the inner fit converged to a point where the ",
+                 "penalized information has no Cholesky factor, which is ",
+                 "what a degenerated parameter (a coordinate run to a ",
+                 "boundary, a direction the data do not identify) leaves ",
+                 "behind")
+        }
+        stop(paste0("the ", toupper(method@kind), " criterion is ",
+                    "unavailable at the starting hyperparameters", cause,
+                    ". Fit with outer_criterion = NULL and inspect the ",
+                    "coefficients."), call. = FALSE)
+      }
       nh <- nrow(idx)
       # a value the search will move away from, whichever direction it
       # improves in

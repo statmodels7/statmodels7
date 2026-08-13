@@ -78,6 +78,95 @@ test_that("the penalty's factor squares to its Hessian", {
   expect_null(statmodels7:::penalty_sqrt(diag(c(1, -1))))
 })
 
+test_that("a diagonal penalty is factored without a decomposition", {
+  # The eigenvalues of a diagonal matrix ARE its diagonal, so the two routes
+  # answer the same thing by construction and this pins them together. It is
+  # the common case rather than a curiosity: a ridge, a random effect and
+  # the Demmler-Reinsch penalty of s() are all diagonal.
+  eigen_route <- function(S) {
+    p <- ncol(S)
+    e <- eigen((S + t(S)) / 2, symmetric = TRUE)
+    tol <- p * .Machine$double.eps * max(abs(e$values))
+    keep <- e$values > tol
+    sqrt(e$values[keep]) * t(e$vectors[, keep, drop = FALSE])
+  }
+  for (d in list(c(1, 2, 3), c(0, 1, 1, 1), c(4, 0, 0, 9, 1e6))) {
+    S <- diag(d, nrow = length(d))
+    C <- statmodels7:::penalty_sqrt(S)
+    ref <- eigen_route(S)
+    expect_equal(crossprod(C), S, tolerance = 1e-12, ignore_attr = TRUE)
+    # the same rank, and the same matrix up to the rows' order
+    expect_identical(nrow(C), nrow(ref))
+    expect_equal(crossprod(C), crossprod(ref), tolerance = 1e-12,
+                 ignore_attr = TRUE)
+  }
+  # a negative entry makes it indefinite, and there is no factor either way
+  expect_null(statmodels7:::penalty_sqrt(diag(c(1, -1))))
+  # a sparse penalty keeps its class, since augmented_solve() routes on it
+  Sp <- Matrix::Diagonal(x = c(0, 2, 3))
+  Cp <- statmodels7:::penalty_sqrt(Sp)
+  expect_true(isS4(Cp))
+  expect_equal(as.matrix(crossprod(Cp)), as.matrix(Sp), tolerance = 1e-12,
+               ignore_attr = TRUE)
+  # and a penalty that is NOT diagonal still goes through the eigen route
+  Snd <- crossprod(diff(diag(6), differences = 2))
+  expect_false(Matrix::isDiagonal(Snd))
+  expect_equal(crossprod(statmodels7:::penalty_sqrt(Snd)), Snd,
+               tolerance = 1e-10, ignore_attr = TRUE)
+})
+
+test_that("a fit is the same whichever route factors its penalty", {
+  # the property that licenses the fast path at the level a user sees
+  set.seed(77)
+  dr <- data.frame(g = factor(rep(letters[1:8], each = 12)),
+                   x = runif(96))
+  dr$y <- 1 + dr$x + stats::rnorm(96, sd = 0.4)
+  fit <- statmod(y ~ x + random(~ 1 | g),
+                 distributions7::gaussian1_distrib(), dr)
+  des <- statmod_design(fit@spec)
+  S <- statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper, des,
+                          "hessian")
+  expect_true(Matrix::isDiagonal(S))
+  C <- statmodels7:::penalty_sqrt(S)
+  expect_equal(as.matrix(crossprod(C)), as.matrix(S), tolerance = 1e-12,
+               ignore_attr = TRUE)
+})
+
+test_that("the stopping rule may be the caller's", {
+  spec <- statmod_spec(y ~ x + g, distributions7::gaussian1_distrib(), dd)
+  # the state's gradient is the score PER OBSERVATION, which is what the
+  # built-in tol compares, so these two are the same rule and must produce
+  # the same run to the last digit
+  a <- fit_pieces(spec, iwls(tol = 1e-9))
+  b <- fit_pieces(spec, iwls(criterion = optimizers7::crit_grad(1e-9)))
+  expect_true(a$res$converged)
+  expect_true(b$res$converged)
+  expect_identical(a$res$iterations, b$res$iterations)
+  expect_equal(a$coef$mu, b$coef$mu, tolerance = 1e-14)
+
+  # a composite rule runs, and stops earlier than a gradient rule that tight
+  # would on its own
+  cc <- optimizers7::crit_any(optimizers7::crit_grad(1e-14),
+                              optimizers7::crit_rel_obj(1e-10))
+  d <- fit_pieces(spec, iwls(criterion = cc))
+  expect_true(d$res$converged)
+  expect_equal(d$coef$mu, a$coef$mu, tolerance = 1e-6)
+})
+
+test_that("a rule the step cannot evaluate is refused where it is written", {
+  # a scoring step computes a gradient and nothing else; a rule wanting a
+  # stationarity measure would sit there never firing
+  expect_error(iwls(criterion = optimizers7::crit_stationary(1e-6)),
+               "does not compute")
+  # and tol beside a criterion is an argument that would be read by nobody
+  expect_error(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)),
+               "both say when to stop")
+  expect_error(iwls(criterion = "grad"), "must be an optimizers7 criterion")
+  # the print says which rule is in force
+  expect_output(print(iwls(criterion = optimizers7::crit_grad(1e-8))),
+                "gradient")
+})
+
 test_that("the score and the information agree with numerical differentiation", {
   skip_if_not_installed("numDeriv")
   spec <- statmod_spec(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(),

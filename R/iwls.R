@@ -15,6 +15,8 @@ NULL
 #'   \code{"chol"} or \code{"chol_crossprod"}.
 #' @param maxit The iteration budget.
 #' @param tol The stopping tolerance on the scaled score.
+#' @param criterion An \pkg{optimizers7} \code{criterion} driving the loop
+#'   in place of \code{tol}, or \code{NULL} for the built-in rule.
 #' @param step_halving The number of halvings allowed before a step is
 #'   abandoned.
 #'
@@ -36,6 +38,7 @@ Iwls <- S7::new_class("Iwls",
     decomposition = S7::class_character,
     maxit = S7::class_numeric,
     tol = S7::class_numeric,
+    criterion = S7::class_any,
     step_halving = S7::class_numeric
   )
 )
@@ -79,21 +82,48 @@ Iwls <- S7::new_class("Iwls",
 #'     the choice is the user's.}
 #' }
 #'
+#' \strong{The stopping rule.} \code{iwls} is a scoring step and not an
+#' optimizer, so it carries its own loop, but the rule that ends it is the
+#' caller's to choose. With \code{criterion = NULL} the built-in rule
+#' applies: the score per observation \eqn{\max_j\lvert g_j\rvert / n}
+#' against \code{tol}, with the dimensionless reading of
+#' \code{\link{iwls_score}} arbitrating the final verdict. Any
+#' \pkg{optimizers7} \code{criterion} may drive the loop instead, and then
+#' \code{tol} is not read at all, so passing both is an error rather than a
+#' silent choice between them.
+#'
+#' What the rule is shown is the state \code{optimizers7::crit_met}
+#' documents, with two things worth knowing. Its \code{gradient} is the
+#' score PER OBSERVATION, the quantity the built-in rule compares, so
+#' \code{criterion = optimizers7::crit_grad(t)} is \code{tol = t} exactly and
+#' a threshold means the same at \eqn{n = 10} and at \eqn{n = 10^7}. Its
+#' objective is the penalized log-likelihood UNAVERAGED, which is the scale
+#' the penalty is added on, so a rule reading the objective's absolute value
+#' rather than its relative change carries the sample size with it. On the
+#' first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being
+#' no previous point, so a rule reading a change returns \code{FALSE} there
+#' by construction. A rule needing something the step does not compute -- a
+#' stationarity measure, which belongs to the derivative-free methods -- is
+#' rejected at construction rather than sitting there never firing.
+#'
 #' @inheritParams Iwls-class
 #'
 #' @return An object of class \code{\link{Iwls}}.
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso \code{\link{statmod}}, \code{\link{iwls_score}}
 #'
 #' @examples
 #' iwls()
 #' iwls(hessian = "observed", decomposition = "svd")
+#' iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
+#'                                        optimizers7::crit_rel_obj(1e-12)))
 #'
 #' @export
 iwls <- function(hessian = c("expected", "observed"),
                  approx = c("bartlett", "integrate", "mc", "opg"),
                  decomposition = c("qr", "svd", "chol", "chol_crossprod"),
-                 maxit = 100L, tol = 1e-6, step_halving = 30L) {
+                 maxit = 100L, tol = 1e-6, criterion = NULL,
+                 step_halving = 30L) {
   hessian <- match.arg(hessian)
   approx <- match.arg(approx)
   decomposition <- match.arg(decomposition)
@@ -103,8 +133,29 @@ iwls <- function(hessian = c("expected", "observed"),
   if (!is.numeric(tol) || length(tol) != 1L || tol <= 0) {
     stop("'tol' must be a single positive number.", call. = FALSE)
   }
+  if (!is.null(criterion)) {
+    if (!S7::S7_inherits(criterion, optimizers7::criterion)) {
+      stop("'criterion' must be an optimizers7 criterion, or NULL.",
+           call. = FALSE)
+    }
+    # the step computes a gradient and nothing else; a rule asking for more
+    # would never fire, which is what optimizers7's own check_criterion()
+    # refuses at construction for the same reason
+    missing_ <- setdiff(optimizers7::crit_needs(criterion), "gradient")
+    if (length(missing_)) {
+      stop(sprintf(paste0("The stopping rule needs %s, which a scoring step ",
+                          "does not compute.\n  Choose a rule it can ",
+                          "evaluate, or leave 'criterion' NULL."),
+                   paste(missing_, collapse = ", ")), call. = FALSE)
+    }
+    if (!missing(tol)) {
+      stop(paste0("'tol' and 'criterion' both say when to stop: pass one.\n",
+                  "  The rule reads the score per observation, so ",
+                  "crit_grad(tol) is what 'tol' means."), call. = FALSE)
+    }
+  }
   Iwls(hessian = hessian, approx = approx, decomposition = decomposition,
-       maxit = as.numeric(maxit), tol = tol,
+       maxit = as.numeric(maxit), tol = tol, criterion = criterion,
        step_halving = as.numeric(step_halving))
 }
 
@@ -114,7 +165,9 @@ iwls <- function(hessian = c("expected", "observed"),
 #' @rdname iwls
 print.Iwls <- function(x, ...) {
   cat(sprintf("iwls: %s information, %s\n", x@hessian, x@decomposition))
-  cat(sprintf("  maxit %d, tol %g\n", as.integer(x@maxit), x@tol))
+  cat(sprintf("  maxit %d, %s\n", as.integer(x@maxit),
+              if (is.null(x@criterion)) sprintf("tol %g", x@tol)
+              else x@criterion@label))
   invisible(x)
 }
 S7::method(print, Iwls) <- print.Iwls
@@ -216,7 +269,15 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' otherwise force one. And the stopping rule is read at the ITERATE, on a
 #' score scaled by the sample size, so that a threshold means the same thing
 #' at \eqn{n = 10} and at \eqn{n = 10^7} while the objective itself stays
-#' unaveraged.
+#' unaveraged. The final verdict adds a DIMENSIONLESS reading,
+#' \eqn{\max_j \lvert g_j\rvert / (n\,s_p)} with
+#' \eqn{s_p = \sqrt{\mathrm{median}_j H_{jj} / n}} over the equation the
+#' coordinate belongs to: the absolute score of a location equation
+#' carries the units \eqn{1/y}, so on a response three decades small its
+#' rounding floor sits above the threshold, and a run stalled at the
+#' optimum read as a failure. The dimensionless reading only relabels a
+#' run that has already stopped; driving the loop with it was tried and
+#' made the tolerance unreachable at the OTHER end of the scale.
 #'
 #' @param obj The objective, from \code{\link{statmod_objective}}.
 #' @param start The starting coefficients, stacked.
@@ -232,7 +293,8 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' @seealso \code{\link{iwls}}
 #'
 #' @keywords internal
-iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
+iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
+                     groups = NULL) {
   beta <- start
   value <- obj$fn(beta)
   hist <- list()
@@ -240,6 +302,15 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
   it <- 0L
   score <- Inf
   note <- NULL
+  # NULL until a step has been taken: a rule reading a change in the
+  # objective has nothing to read at the starting point, and says FALSE
+  # there rather than comparing a number with itself
+  f_old <- NULL
+  x_old <- NULL
+  # the equations' coordinate ranges, for the dimensionless reading of the
+  # final verdict; the caller says them where the coefficients it hands in
+  # are a subset, since the objective's own split maps the full vector
+  if (is.null(groups)) groups <- list(seq_along(beta))
 
   if (verbose) {
     cat(sprintf("  %-5s %14s %12s %10s\n", "iter", "objective", "score/n",
@@ -262,7 +333,9 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
       cat(sprintf("  %-5d %14.6f %12.3e %10s\n", it - 1L, value, score,
                   if (it == 1L) "-" else fmt_step(step_used)))
     }
-    if (score < method@tol) {
+    if (iwls_met(method, list(iter = it - 1L, f_new = value, f_old = f_old,
+                              x_new = beta, x_old = x_old, gradient = g / n,
+                              stationarity = NULL))) {
       converged <- TRUE
       break
     }
@@ -294,6 +367,8 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
     # still, which is what a term whose gradient belongs to a working model
     # rather than to the objective produces at its own fixed point.
     stalled <- value - vnew <= 1e-12 * max(1, abs(value))
+    x_old <- beta
+    f_old <- value
     beta <- cand
     value <- vnew
     if (stalled) {
@@ -301,12 +376,46 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
       break
     }
   }
-  # the rule is asked once more at the point reached, so that a run which
-  # could not move is still converged when the POINT says so
+  # The rule is asked once more at the point reached, so that a run which
+  # could not move is still converged when the POINT says so. Two readings,
+  # in order. The absolute score first, which is the rule that drove the
+  # loop. Where it fails, the DIMENSIONLESS score arbitrates: the absolute
+  # rule carries the units of the response (a location equation's score is
+  # 1/y), so on a response three decades small its rounding floor sits
+  # above the threshold and a run that stalled AT the optimum reads as a
+  # failure -- measured, 1.37e-6 against 1e-6 at y ~ 1e-3, the objective no
+  # longer moving and the fit right. The dimensionless reading, each
+  # equation's score against its own information scale, survives the units.
+  # It only ever RELABELS a run that has already stopped; it never stops
+  # one, so every trajectory is the absolute rule's -- the lesson of
+  # fit_distrib()'s dropped crit_rel_obj, and of a first version of this
+  # rule that drove the loop dimensionless and made the tolerance
+  # unreachable at y * 1e4, where the stall guard on the objective (whose
+  # magnitude grows with log y) fires before a rule 1/s_p stricter can.
+  # A caller's rule gets the same second reading and NOT the dimensionless
+  # relabel, which is the built-in rule's own repair of its own units.
   if (!converged) {
     gfin <- obj$gr(beta)
-    score <- if (all(is.finite(gfin))) max(abs(gfin)) / n else Inf
-    converged <- score < method@tol
+    if (all(is.finite(gfin))) {
+      score <- max(abs(gfin)) / n
+      converged <- iwls_met(method, list(iter = it, f_new = value,
+                                         f_old = f_old, x_new = beta,
+                                         x_old = x_old, gradient = gfin / n,
+                                         stationarity = NULL))
+      if (!converged && is.null(method@criterion)) {
+        hj <- iwls_info_diag(pieces_at(beta))
+        dimless <- iwls_score(gfin, hj, groups, n)
+        if (dimless < method@tol) {
+          converged <- TRUE
+          note <- paste0("converged by the dimensionless rule (score ",
+                         format(dimless, digits = 3), " against ",
+                         format(score, digits = 3),
+                         " absolute, the response's scale being the gap)")
+        }
+      }
+    } else {
+      score <- Inf
+    }
   }
   if (verbose) {
     cat(sprintf("  %-5s %14.6f %12.3e %10s\n", "end", value, score,
@@ -316,6 +425,100 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE) {
   list(par = beta, value = value, converged = converged,
        iterations = it, score = score, note = note,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
+}
+
+#' Has the Step's Stopping Rule Been Met?
+#'
+#' @description
+#' The built-in rule, the score per observation against \code{tol}, or the
+#' caller's \pkg{optimizers7} criterion read on the same state.
+#'
+#' @details
+#' The two routes are here rather than at the two places the loop asks, so
+#' that what a rule is shown is written once. \code{state$gradient} is
+#' already the score PER OBSERVATION, which is what makes
+#' \code{crit_grad(t)} and \code{tol = t} the same rule; the objective in
+#' the state is the penalized log-likelihood unaveraged, the scale the
+#' penalty is added on.
+#'
+#' @param method An \code{\link{Iwls}} object.
+#' @param state The iteration state, as \code{optimizers7::crit_met}
+#'   documents it.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+iwls_met <- function(method, state) {
+  if (is.null(method@criterion)) {
+    return(max(abs(state$gradient)) < method@tol)
+  }
+  isTRUE(optimizers7::crit_met(method@criterion, state))
+}
+
+#' The Dimensionless Reading of the Stopping Rule
+#'
+#' @description
+#' The absolute \eqn{\max\lvert g\rvert / n} read per equation against that
+#' equation's own information scale, \eqn{\max_j \lvert g_j\rvert /
+#' (n\,s_p)} with \eqn{s_p = \sqrt{\mathrm{median}_j H_{jj} / n}} over the
+#' equation's coordinates.
+#'
+#' @details
+#' The score of a location equation carries the units \eqn{1/y} and its
+#' curvature \eqn{1/y^2}, so the division survives any rescaling of the
+#' response, while changing nothing WITHIN an equation: a stiff, heavily
+#' penalized coordinate is held to the same rule as its neighbours, which
+#' is what the envelope identities the outer gradient rests on ask of the
+#' mode. It arbitrates the final verdict only. Two designs were tried and
+#' refused before this one: a per-coordinate normalization by
+#' \eqn{(H+S)_{jj}} let the penalized coordinates converge loosely at
+#' extreme shrinkage and moved every outer trajectory, and driving the
+#' LOOP with the per-equation form made the tolerance unreachable at
+#' \eqn{y \cdot 10^4}, where the stall guard on the objective, whose
+#' magnitude grows with \eqn{\log y}, fires before a rule \eqn{1/s_p}
+#' stricter can -- the inner then reported failure across the whole
+#' corridor of smoothing parameters between the plateau and the optimum,
+#' and the outer search, reading those points as unavailable, never
+#' crossed it (1482 evaluations, a fit at cor 0.82 where the absolute
+#' rule's run reaches 0.998).
+#'
+#' @param g The gradient at the point.
+#' @param hj The information's diagonal, from \code{\link{iwls_info_diag}}.
+#' @param groups The equations' coordinate index sets.
+#' @param n The number of observations.
+#'
+#' @return A single number.
+#'
+#' @keywords internal
+iwls_score <- function(g, hj, groups, n) {
+  out <- 0
+  for (idx in groups) {
+    if (!length(idx)) next
+    s <- sqrt(stats::median(hj[idx]) / n)
+    if (!is.finite(s) || s <= 0) s <- 1
+    out <- max(out, max(abs(g[idx])) / (n * s))
+  }
+  out
+}
+
+#' The Diagonal of the Information a Step Uses
+#'
+#' @description
+#' The crossprod diagonal of the square-root design, whose crossprod IS
+#' the unpenalized information, or the assembled matrix's own diagonal --
+#' which folds the penalty in, an acceptable normalizer on a route that is
+#' itself the fallback.
+#'
+#' @param pieces The pieces, as \code{\link{iwls_pieces}} builds them.
+#'
+#' @return A numeric vector.
+#'
+#' @keywords internal
+iwls_info_diag <- function(pieces) {
+  if (!is.null(pieces$R)) {
+    return(as.numeric(Matrix::colSums(pieces$R^2)))
+  }
+  as.numeric(diag(as_dense(pieces$A)))
 }
 
 

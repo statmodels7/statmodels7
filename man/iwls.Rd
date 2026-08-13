@@ -11,6 +11,7 @@ iwls(
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
   maxit = 100L,
   tol = 1e-06,
+  criterion = NULL,
   step_halving = 30L
 )
 
@@ -29,6 +30,9 @@ where the family has no closed form.}
 \item{maxit}{The iteration budget.}
 
 \item{tol}{The stopping tolerance on the scaled score.}
+
+\item{criterion}{An \pkg{optimizers7} \code{criterion} driving the loop
+in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
 \item{step_halving}{The number of halvings allowed before a step is
 abandoned.}
@@ -75,12 +79,38 @@ assembled without the augmentation.}
 The fastest per iteration and the worst conditioned; offered because
 the choice is the user's.}
 }
+
+\strong{The stopping rule.} \code{iwls} is a scoring step and not an
+optimizer, so it carries its own loop, but the rule that ends it is the
+caller's to choose. With \code{criterion = NULL} the built-in rule
+applies: the score per observation \eqn{\max_j\lvert g_j\rvert / n}
+against \code{tol}, with the dimensionless reading of
+\code{\link{iwls_score}} arbitrating the final verdict. Any
+\pkg{optimizers7} \code{criterion} may drive the loop instead, and then
+\code{tol} is not read at all, so passing both is an error rather than a
+silent choice between them.
+
+What the rule is shown is the state \code{optimizers7::crit_met}
+documents, with two things worth knowing. Its \code{gradient} is the
+score PER OBSERVATION, the quantity the built-in rule compares, so
+\code{criterion = optimizers7::crit_grad(t)} is \code{tol = t} exactly and
+a threshold means the same at \eqn{n = 10} and at \eqn{n = 10^7}. Its
+objective is the penalized log-likelihood UNAVERAGED, which is the scale
+the penalty is added on, so a rule reading the objective's absolute value
+rather than its relative change carries the sample size with it. On the
+first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being
+no previous point, so a rule reading a change returns \code{FALSE} there
+by construction. A rule needing something the step does not compute -- a
+stationarity measure, which belongs to the derivative-free methods -- is
+rejected at construction rather than sitting there never firing.
 }
 \examples{
 iwls()
 iwls(hessian = "observed", decomposition = "svd")
+iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
+                                       optimizers7::crit_rel_obj(1e-12)))
 
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link{statmod}}, \code{\link{iwls_score}}
 }

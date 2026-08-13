@@ -13,9 +13,10 @@ structural_zeta_start(term)
 A named numeric vector.
 }
 \description{
-Zero on the unconstrained scale of every one of the term's parameters,
-which for a score-driven filter is a level of zero, no loading on the
-score and no persistence: the term contributes nothing until the fit
-moves it, so the run starts from the model without it.
+What the term itself declares through
+\code{\link[modelterms7]{term_start}}: as near the model without the
+term as its charts allow, which only the term can say -- a score
+loading on the log chart has no coordinate for zero, and starts at a
+weak response instead.
 }
 \keyword{internal}

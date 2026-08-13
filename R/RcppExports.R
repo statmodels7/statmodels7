@@ -9,3 +9,7 @@ coord_descent_sparse <- function(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope
     .Call(`_statmodels7_coord_descent_sparse`, Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance)
 }
 
+chol_rcond_cpp <- function(R, anorm) {
+    .Call(`_statmodels7_chol_rcond_cpp`, R, anorm)
+}
+

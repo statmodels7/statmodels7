@@ -608,8 +608,9 @@ test_that("a filter is reported under the names its literature uses", {
 })
 
 
-# A panel: each group runs the same filter with a departure of its own, which
-# is what deviations are for, and the ridge over them is what identifies them.
+# A panel: each group runs the same filter with a departure of its own,
+# written as one development per parameter, and the random intercepts'
+# ridges are what identify the departures.
 sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) {
   set.seed(seed)
   out <- list()
@@ -627,8 +628,9 @@ sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) 
   do.call(rbind, out)
 }
 
-panel_fml <- y ~ gas(p = 1, q = 1, by = id, time = t, deviations = TRUE,
-                     penalty = "ridge") - 1
+panel_fml <- y ~ gas(p = 1, q = 1, omega ~ random(~1 | id),
+                     alpha1 ~ random(~1 | id), pacf1 ~ random(~1 | id),
+                     by = id, time = t) - 1
 
 # the criterion at a given hyperparameter, with the mode refitted there, which
 # is what outer_fit()'s own evaluation does
@@ -641,7 +643,8 @@ panel_at <- function(spec, design, blocks, hyper, beta, value, method,
   cf <- res$obj$split(res$par)
   m <- statmod_marginal(spec, design, cf, hy, method, "bartlett", basis)
   z <- statmod_structural_state(design)$zeta[[1L]]
-  list(m = m, coef = cf, hyper = hy, dev = as.numeric(z)[-seq_len(3L)])
+  list(m = m, coef = cf, hyper = hy,
+       dev = as.numeric(z[grepl(".random", names(z), fixed = TRUE)]))
 }
 
 test_that("a marginal criterion reaches a penalty on a filter's parameters", {

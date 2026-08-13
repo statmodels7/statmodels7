@@ -4,7 +4,7 @@
 \alias{solve_pd}
 \title{Invert a Matrix That Ought to Be Positive Definite}
 \usage{
-solve_pd(A, what, labels = NULL)
+solve_pd(A, what, labels = NULL, scale = NULL)
 }
 \arguments{
 \item{A}{A square matrix.}
@@ -12,23 +12,44 @@ solve_pd(A, what, labels = NULL)
 \item{what}{What the matrix is, for the message.}
 
 \item{labels}{The names of the coefficients \code{A} is indexed by.}
+
+\item{scale}{An optional reference magnitude for the smallest
+eigenvalue, usually the largest diagonal entry of the UNPENALIZED
+information. Without it the reference is the matrix's own scale.}
 }
 \value{
 The inverse.
 }
 \description{
-A Cholesky inverse, signalling an error naming the matrix when the factor
-does not exist.
+An inverse through the Cholesky factor, signalling an error naming the
+matrix when a direction is flat.
 }
 \details{
 A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite, so
 a matrix that is not says something about where the run stopped. The test is
-\code{min(ev) > tol * max(ev)} on the eigenvalues rather than whether
+\code{lmin > tol * ref} on the smallest eigenvalue rather than whether
 \code{chol()} raised, because on an exactly singular matrix the latter is
-decided by rounding and differs between platforms.
-Returning a pseudo-inverse instead would give a standard error for a
-direction the data does not identify.
+decided by rounding and differs between platforms; \code{ref} is the
+matrix's own scale, or the scale of the unpenalized
+information where the caller holds it, which is what tells a flat
+direction from the scale separation a large smoothing parameter
+legitimately produces. Returning a pseudo-inverse instead would give a
+standard error for a direction the data does not identify.
+
+The smallest eigenvalue is ESTIMATED rather than computed, from LAPACK's
+condition estimator (\code{dpocon}) read on the Cholesky factor the
+inverse needs anyway: \code{rcond} is
+\eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
+\code{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
+symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
+\eqn{\lambda_{\min}}. The estimate therefore errs on the SMALL side and
+the test is conservative by at most a factor \eqn{\sqrt{p}}, plus
+whatever the estimator's own slack is; the two cases it has to keep
+apart are separated by some fifty orders of magnitude, so neither
+reaches the other. It replaced a full eigendecomposition, which answers
+the same question exactly and costs O(p^3) with a large constant --
+measured at p = 1022, 1.18 s against the Cholesky's 0.25.
 
 The message names the directions rather than the causes. A first version
 offered two -- the run not having reached a maximum, or two columns of the
