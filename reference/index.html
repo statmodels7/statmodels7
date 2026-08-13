@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.31.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,6 +142,57 @@
         </dt>
         <dd>Simulate a Response From a Written Model</dd>
       </dl></div><div class="section level2">
+      <h2 id="where-a-fit-begins">Where a fit begins<a class="anchor" aria-label="anchor" href="#where-a-fit-begins"></a></h2>
+
+      <div class="section-desc"><p>A starting value as a strategy rather than a vector of numbers, asked once before the fit alternates. The default is the intercept-only fit; what the others offer is a procedure, from a random perturbation to a global search of the likelihood.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="start_strategy.html">start_strategy()</a></code>
+
+        </dt>
+        <dd>S7 Class for a Starting-Value Strategy</dd>
+
+        <dt>
+
+          <code><a href="start_at.html">start_at()</a></code>
+
+        </dt>
+        <dd>Where a Fit Begins</dd>
+
+        <dt>
+
+          <code><a href="start_intercepts.html">start_intercepts()</a></code>
+
+        </dt>
+        <dd>Start at the Intercept-Only Fit</dd>
+
+        <dt>
+
+          <code><a href="start_origin.html">start_origin()</a></code>
+
+        </dt>
+        <dd>Start at the Origin</dd>
+
+        <dt>
+
+          <code><a href="start_random.html">start_random()</a></code>
+
+        </dt>
+        <dd>Start From a Random Draw</dd>
+
+        <dt>
+
+          <code><a href="start_search.html">start_search()</a></code>
+
+        </dt>
+        <dd>Search the Likelihood for a Starting Point</dd>
+      </dl></div><div class="section level2">
       <h2 id="reading-a-fit">Reading a fit<a class="anchor" aria-label="anchor" href="#reading-a-fit"></a></h2>
 
       <div class="section-desc"><p>The model as a function of parameters and data, any parameter or moment predicted at new data, what the fit says about its own uncertainty, and the elapsed time in the unit it deserves.</p></div>
@@ -203,6 +254,13 @@
 
         </dt>
         <dd>How the Hyperparameters Are Estimated</dd>
+
+        <dt>
+
+          <code><a href="StartIntercepts-class.html">StartIntercepts()</a></code> <code><a href="StartIntercepts-class.html">StartOrigin()</a></code> <code><a href="StartIntercepts-class.html">StartRandom()</a></code> <code><a href="StartIntercepts-class.html">StartSearch()</a></code>
+
+        </dt>
+        <dd>S7 Classes for the Shipped Strategies</dd>
 
         <dt>
 
@@ -822,6 +880,13 @@
 
         <dt>
 
+          <code><a href="print.start_strategy.html">print.start_strategy</a></code>
+
+        </dt>
+        <dd>Print a Starting-Value Strategy</dd>
+
+        <dt>
+
           <code><a href="print_block.html">print_block()</a></code>
 
         </dt>
@@ -847,6 +912,20 @@
 
         </dt>
         <dd>Reject a Term the Fitting Scheme Does Not Cover</dd>
+
+        <dt>
+
+          <code><a href="search_coords.html">search_coords()</a></code>
+
+        </dt>
+        <dd>Which Coefficients a Search Should Cover</dd>
+
+        <dt>
+
+          <code><a href="short_keys.html">short_keys()</a></code>
+
+        </dt>
+        <dd>A Term Key Shortened for Display</dd>
 
         <dt>
 
@@ -889,6 +968,41 @@
 
         </dt>
         <dd>The Square-Root Design</dd>
+
+        <dt>
+
+          <code><a href="start_at.StartIntercepts.html">start_at.StartIntercepts</a></code>
+
+        </dt>
+        <dd>Starting Values From the Intercept-Only Fit</dd>
+
+        <dt>
+
+          <code><a href="start_at.StartOrigin.html">start_at.StartOrigin</a></code>
+
+        </dt>
+        <dd>Starting Values at Zero</dd>
+
+        <dt>
+
+          <code><a href="start_at.StartRandom.html">start_at.StartRandom</a></code>
+
+        </dt>
+        <dd>Starting Values From a Random Draw</dd>
+
+        <dt>
+
+          <code><a href="start_at.StartSearch.html">start_at.StartSearch</a></code>
+
+        </dt>
+        <dd>Starting Values From a Global Search</dd>
+
+        <dt>
+
+          <code><a href="start_strategy_class.html">start_strategy_class()</a></code>
+
+        </dt>
+        <dd>The start_strategy Class Object</dd>
 
         <dt>
 
@@ -1358,6 +1472,27 @@
 
         </dt>
         <dd>The Verbosity of an Inner Fit Inside the Outer Search</dd>
+
+        <dt>
+
+          <code><a href="vb_name.html">vb_name()</a></code>
+
+        </dt>
+        <dd>The Name of Whatever Is About to Run</dd>
+
+        <dt>
+
+          <code><a href="vb_rule.html">vb_rule()</a></code>
+
+        </dt>
+        <dd>A Titled Rule for a Verbose Trace</dd>
+
+        <dt>
+
+          <code><a href="vb_say.html">vb_say()</a></code>
+
+        </dt>
+        <dd>A Detail Line of a Verbose Trace</dd>
 
         <dt>
 

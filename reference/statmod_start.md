@@ -25,7 +25,8 @@ statmod_start(spec, design, obj, start = NULL)
 
 - start:
 
-  Optional user starting values, a named list.
+  Optional user starting values (a named list), or a
+  [`start_strategy`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
 
 ## Value
 
@@ -50,3 +51,11 @@ how a Student t fitted to iris reached a variance of \\10^7\\.
 A start that cannot be obtained is not an error: the fit still runs,
 from a worse place. What would be an error is not noticing, which is why
 the two routes are tried in order rather than one being assumed to work.
+
+`start` is either a named list of values, a
+[`start_strategy`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
+— which is asked ONCE, here, before the alternation between the
+coefficients and the hyperparameters begins — or `NULL` for
+[`start_intercepts`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
+which is what this function did before strategies existed and still
+does.

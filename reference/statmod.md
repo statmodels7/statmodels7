@@ -88,7 +88,16 @@ statmod(
 
 - start:
 
-  Optional starting coefficients, a named list.
+  Where the fit begins: a named list of coefficients, a
+  [`start_strategy`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
+  such as
+  [`start_search`](https://statmodels7.github.io/statmodels7/reference/start_search.md),
+  or `NULL` for
+  [`start_intercepts`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md).
+  A strategy is asked once, before the alternation between the
+  coefficients and the hyperparameters begins, which is why a global
+  search belongs here and not in `inner_optimizer`: there it would rerun
+  at every hyperparameter the outer search tried.
 
 - verbose:
 
@@ -202,7 +211,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 21 ms, converged
+#> fitted in 27 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)

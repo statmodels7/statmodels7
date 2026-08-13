@@ -46,6 +46,26 @@ alternated around them.
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   : Simulate a Response From a Written Model
 
+## Where a fit begins
+
+A starting value as a strategy rather than a vector of numbers, asked
+once before the fit alternates. The default is the intercept-only fit;
+what the others offer is a procedure, from a random perturbation to a
+global search of the likelihood.
+
+- [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
+  : S7 Class for a Starting-Value Strategy
+- [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md)
+  : Where a Fit Begins
+- [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
+  : Start at the Intercept-Only Fit
+- [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md)
+  : Start at the Origin
+- [`start_random()`](https://statmodels7.github.io/statmodels7/reference/start_random.md)
+  : Start From a Random Draw
+- [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
+  : Search the Likelihood for a Starting Point
+
 ## Reading a fit
 
 The model as a function of parameters and data, any parameter or moment
@@ -76,6 +96,11 @@ exported, and none is needed to use the package.
   : The Iterated Weighted Least Squares Method
 - [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
   : How the Hyperparameters Are Estimated
+- [`StartIntercepts()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
+  [`StartOrigin()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
+  [`StartRandom()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
+  [`StartSearch()`](https://statmodels7.github.io/statmodels7/reference/StartIntercepts-class.md)
+  : S7 Classes for the Shipped Strategies
 - [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   : A Fitted Model
 - [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
@@ -260,6 +285,8 @@ exported, and none is needed to use the package.
   : Print a Fitted Model
 - [`print(`*`<StatmodSummary>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
   : Print a Model Summary
+- [`print.start_strategy`](https://statmodels7.github.io/statmodels7/reference/print.start_strategy.md)
+  : Print a Starting-Value Strategy
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
   : Print One Block of a Summary
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
@@ -268,6 +295,10 @@ exported, and none is needed to use the package.
   : Combinations of Terms That Are Not a Model
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term the Fitting Scheme Does Not Cover
+- [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
+  : Which Coefficients a Search Should Cover
+- [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
+  : A Term Key Shortened for Display
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   : Which Coefficients of a Smooth Are the Linear Part
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
@@ -280,6 +311,16 @@ exported, and none is needed to use the package.
   : Rebuild a Specification Against New Data
 - [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
   : The Square-Root Design
+- [`start_at.StartIntercepts`](https://statmodels7.github.io/statmodels7/reference/start_at.StartIntercepts.md)
+  : Starting Values From the Intercept-Only Fit
+- [`start_at.StartOrigin`](https://statmodels7.github.io/statmodels7/reference/start_at.StartOrigin.md)
+  : Starting Values at Zero
+- [`start_at.StartRandom`](https://statmodels7.github.io/statmodels7/reference/start_at.StartRandom.md)
+  : Starting Values From a Random Draw
+- [`start_at.StartSearch`](https://statmodels7.github.io/statmodels7/reference/start_at.StartSearch.md)
+  : Starting Values From a Global Search
+- [`start_strategy_class()`](https://statmodels7.github.io/statmodels7/reference/start_strategy_class.md)
+  : The start_strategy Class Object
 - [`statmod_active()`](https://statmodels7.github.io/statmodels7/reference/statmod_active.md)
   : Which Coefficients Are Not Sitting at a Kink
 - [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
@@ -419,6 +460,12 @@ exported, and none is needed to use the package.
   : The Message for an Unrecognized Prediction Target
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)
   : The Verbosity of an Inner Fit Inside the Outer Search
+- [`vb_name()`](https://statmodels7.github.io/statmodels7/reference/vb_name.md)
+  : The Name of Whatever Is About to Run
+- [`vb_rule()`](https://statmodels7.github.io/statmodels7/reference/vb_rule.md)
+  : A Titled Rule for a Verbose Trace
+- [`vb_say()`](https://statmodels7.github.io/statmodels7/reference/vb_say.md)
+  : A Detail Line of a Verbose Trace
 - [`vcov(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
   : The Variance Matrix of a Fit
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)

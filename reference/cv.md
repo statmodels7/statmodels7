@@ -135,6 +135,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> fitted in 798 ms, converged
+#> fitted in 818 ms, converged
 #> 1 sweeps over 2 block(s)
 ```

@@ -9,7 +9,7 @@ coefficient at zero."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.31.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ coefficient at zero.</p>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>Optional user starting values, a named list.</p></dd>
+<dd><p>Optional user starting values (a named list), or a
+<code><a href="start_strategy.html">start_strategy</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -85,6 +86,11 @@ reached a variance of \(10^7\).</p>
 <p>A start that cannot be obtained is not an error: the fit still runs, from a
 worse place. What would be an error is not noticing, which is why the two
 routes are tried in order rather than one being assumed to work.</p>
+<p><code>start</code> is either a named list of values, a
+<code><a href="start_strategy.html">start_strategy</a></code> — which is asked ONCE, here, before the
+alternation between the coefficients and the hyperparameters begins — or
+<code>NULL</code> for <code><a href="start_intercepts.html">start_intercepts</a></code>, which is what this function
+did before strategies existed and still does.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

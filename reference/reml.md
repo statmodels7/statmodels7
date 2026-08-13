@@ -7,9 +7,9 @@ directions and profiles the rest.
 ## Usage
 
 ``` r
-reml(hessian = c("expected", "observed"))
+reml(hessian = c("observed", "expected"))
 
-ml(hessian = c("expected", "observed"))
+ml(hessian = c("observed", "expected"))
 ```
 
 ## Arguments
@@ -114,7 +114,7 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #>   sigma      ~ 1
 #>                linpar           1 coef
 #> 
-#> log-likelihood -35.406015    objective 40.891614
-#> REML -55.814255 over 25 hyperparameter evaluation(s)
-#> fitted in 318 ms, converged
+#> log-likelihood -35.407348    objective 40.890371
+#> REML -55.808442 over 31 hyperparameter evaluation(s)
+#> fitted in 597 ms, converged
 ```

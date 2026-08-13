@@ -80,7 +80,7 @@ An object of class `OuterMethod`.
 
 ``` r
 reml()
-#> <REML>  expected information
+#> <REML>  observed information
 ml(hessian = "observed")
 #> <ML>  observed information
 aic()
