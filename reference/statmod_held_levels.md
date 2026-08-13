@@ -50,6 +50,18 @@ set of columns summing to a constant, spans it just as well. Which
 parameter is the level is the term's own answer, through
 [`term_level_param`](https://statmodels7.github.io/modelterms7/reference/term_level_param.html).
 
+**A developed level asks the same question of a subspace.** With
+`omega ~ Z gamma` the confounding is no longer with one constant but
+with whatever `span(Z)` shares with the span of the equation's design.
+The constant coordinates are the term's own answer, held as above. For
+the rest, an unpenalized coordinate whose column lies in the equation's
+span is flagged with a warning rather than held: holding it would change
+the model where the confounding is not exact (a time-varying shared
+column is exactly flat only when its lags stay in the development's
+span, which depends on \\q\\ and on the column), while a penalized
+coordinate is identified by its penalty, exactly as a deviation is.
+Where the direction really is flat, the variance matrix names it.
+
 ## See also
 
 [`reject_incompatible`](https://statmodels7.github.io/statmodels7/reference/reject_incompatible.md)

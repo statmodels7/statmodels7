@@ -9,7 +9,7 @@ left to the caller."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@ left to the caller.</p>
 <span>  decomposition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qr"</span>, <span class="st">"svd"</span>, <span class="st">"chol"</span>, <span class="st">"chol_crossprod"</span><span class="op">)</span>,</span>
 <span>  maxit <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">1e-06</span>,</span>
+<span>  criterion <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  step_halving <span class="op">=</span> <span class="fl">30L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -79,6 +80,11 @@ where the family has no closed form.</p></dd>
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
 <dd><p>The stopping tolerance on the scaled score.</p></dd>
+
+
+<dt id="arg-criterion">criterion<a class="anchor" aria-label="anchor" href="#arg-criterion"></a></dt>
+<dd><p>An <span class="pkg">optimizers7</span> <code>criterion</code> driving the loop
+in place of <code>tol</code>, or <code>NULL</code> for the built-in rule.</p></dd>
 
 
 <dt id="arg-step-halving">step_halving<a class="anchor" aria-label="anchor" href="#arg-step-halving"></a></dt>
@@ -134,10 +140,32 @@ The fastest per iteration and the worst conditioned; offered because
 the choice is the user's.</p></dd>
 
 
-</dl></div>
+</dl><p><strong>The stopping rule.</strong> <code>iwls</code> is a scoring step and not an
+optimizer, so it carries its own loop, but the rule that ends it is the
+caller's to choose. With <code>criterion = NULL</code> the built-in rule
+applies: the score per observation \(\max_j\lvert g_j\rvert / n\)
+against <code>tol</code>, with the dimensionless reading of
+<code><a href="iwls_score.html">iwls_score</a></code> arbitrating the final verdict. Any
+<span class="pkg">optimizers7</span> <code>criterion</code> may drive the loop instead, and then
+<code>tol</code> is not read at all, so passing both is an error rather than a
+silent choice between them.</p>
+<p>What the rule is shown is the state <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_met.html" class="external-link">optimizers7::crit_met</a></code>
+documents, with two things worth knowing. Its <code>gradient</code> is the
+score PER OBSERVATION, the quantity the built-in rule compares, so
+<code>criterion = optimizers7::crit_grad(t)</code> is <code>tol = t</code> exactly and
+a threshold means the same at \(n = 10\) and at \(n = 10^7\). Its
+objective is the penalized log-likelihood UNAVERAGED, which is the scale
+the penalty is added on, so a rule reading the objective's absolute value
+rather than its relative change carries the sample size with it. On the
+first iteration <code>f_old</code> and <code>x_old</code> are <code>NULL</code>, there being
+no previous point, so a rule reading a change returns <code>FALSE</code> there
+by construction. A rule needing something the step does not compute – a
+stationarity measure, which belongs to the derivative-free methods – is
+rejected at construction rather than sitting there never firing.</p>
+    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod.html">statmod</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod.html">statmod</a></code>, <code><a href="iwls_score.html">iwls_score</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -148,6 +176,10 @@ the choice is the user's.</p></dd>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>hessian <span class="op">=</span> <span class="st">"observed"</span>, decomposition <span class="op">=</span> <span class="st">"svd"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: observed information, svd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, tol 1e-06</span>
+<span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_any.html" class="external-link">crit_any</a></span><span class="op">(</span><span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                                       <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_rel_obj.html" class="external-link">crit_rel_obj</a></span><span class="op">(</span><span class="fl">1e-12</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iwls: expected information, qr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, gradient (max-norm) &lt; 1e-08 or |df| &lt; 1e-12 (relative)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

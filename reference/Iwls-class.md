@@ -14,6 +14,7 @@ Iwls(
   decomposition = character(0),
   maxit = integer(0),
   tol = integer(0),
+  criterion = NULL,
   step_halving = integer(0)
 )
 ```
@@ -42,6 +43,11 @@ Iwls(
 - tol:
 
   The stopping tolerance on the scaled score.
+
+- criterion:
+
+  An optimizers7 `criterion` driving the loop in place of `tol`, or
+  `NULL` for the built-in rule.
 
 - step_halving:
 

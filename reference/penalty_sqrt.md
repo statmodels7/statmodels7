@@ -27,3 +27,16 @@ comes from an eigendecomposition with the non-positive eigenvalues
 dropped, rather than from a Cholesky, which would fail there. A
 non-convex penalty, whose Hessian is indefinite, has no such factor and
 the caller falls back.
+
+A DIAGONAL penalty is factored by taking the square root of its
+diagonal, which is the same answer the eigendecomposition returns – the
+eigenvalues of a diagonal matrix are its diagonal, so the two routes
+agree by construction and a test pins them together. It is not a special
+case worth having for its own sake but for how often it is the one that
+arises: a ridge, a random effect and the Demmler-Reinsch penalty of
+`s()`, which is \\\mathrm{diag}(0, 1, \ldots, 1)\\ exactly, are all
+diagonal, and so is any block-diagonal assembly of them. The factor is
+recomputed at every iteration of the scoring loop, so the cost is the
+decomposition's times the iteration count: measured on a random
+intercept over 1000 groups, one dense eigendecomposition of the 1003 by
+1003 penalty costs 0.63 s and was 83 per cent of the whole fit.

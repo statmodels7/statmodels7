@@ -11,7 +11,7 @@ they would shift it by."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,6 +85,18 @@ not of a column named <code>"(Intercept)"</code>: a factor coded without one,
 or any set of columns summing to a constant, spans it just as well.
 Which parameter is the level is the term's own answer, through
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_level_param.html" class="external-link">term_level_param</a></code>.</p>
+<p><strong>A developed level asks the same question of a subspace.</strong> With
+<code>omega ~ Z gamma</code> the confounding is no longer with one constant
+but with whatever <code>span(Z)</code> shares with the span of the equation's
+design. The constant coordinates are the term's own answer, held as
+above. For the rest, an unpenalized coordinate whose column lies in the
+equation's span is flagged with a warning rather than held: holding it
+would change the model where the confounding is not exact (a
+time-varying shared column is exactly flat only when its lags stay in
+the development's span, which depends on \(q\) and on the column),
+while a penalized coordinate is identified by its penalty, exactly as a
+deviation is. Where the direction really is flat, the variance matrix
+names it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

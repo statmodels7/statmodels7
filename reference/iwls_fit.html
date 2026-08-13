@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ coefficients and the history of the run.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_fit</span><span class="op">(</span><span class="va">obj</span>, <span class="va">start</span>, <span class="va">method</span>, <span class="va">n</span>, <span class="va">pieces_at</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_fit</span><span class="op">(</span><span class="va">obj</span>, <span class="va">start</span>, <span class="va">method</span>, <span class="va">n</span>, <span class="va">pieces_at</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, groups <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -90,7 +90,15 @@ eigenvalues rather than abandoning the start, since <code><a href="https://rdrr.
 otherwise force one. And the stopping rule is read at the ITERATE, on a
 score scaled by the sample size, so that a threshold means the same thing
 at \(n = 10\) and at \(n = 10^7\) while the objective itself stays
-unaveraged.</p>
+unaveraged. The final verdict adds a DIMENSIONLESS reading,
+\(\max_j \lvert g_j\rvert / (n\,s_p)\) with
+\(s_p = \sqrt{\mathrm{median}_j H_{jj} / n}\) over the equation the
+coordinate belongs to: the absolute score of a location equation
+carries the units \(1/y\), so on a response three decades small its
+rounding floor sits above the threshold, and a run stalled at the
+optimum read as a failure. The dimensionless reading only relabels a
+run that has already stopped; driving the loop with it was tried and
+made the tolerance unreachable at the OTHER end of the scale.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -12,6 +12,7 @@ iwls(
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
   maxit = 100L,
   tol = 1e-06,
+  criterion = NULL,
   step_halving = 30L
 )
 
@@ -43,6 +44,11 @@ print(x, ...)
 - tol:
 
   The stopping tolerance on the scaled score.
+
+- criterion:
+
+  An optimizers7 `criterion` driving the loop in place of `tol`, or
+  `NULL` for the built-in rule.
 
 - step_halving:
 
@@ -102,9 +108,35 @@ S\beta\\, and how depends on this argument.
   the same, forming \\X'WX\\ explicitly. The fastest per iteration and
   the worst conditioned; offered because the choice is the user's.
 
+**The stopping rule.** `iwls` is a scoring step and not an optimizer, so
+it carries its own loop, but the rule that ends it is the caller's to
+choose. With `criterion = NULL` the built-in rule applies: the score per
+observation \\\max_j\lvert g_j\rvert / n\\ against `tol`, with the
+dimensionless reading of
+[`iwls_score`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md)
+arbitrating the final verdict. Any optimizers7 `criterion` may drive the
+loop instead, and then `tol` is not read at all, so passing both is an
+error rather than a silent choice between them.
+
+What the rule is shown is the state
+[`optimizers7::crit_met`](https://statmodels7.github.io/optimizers7/reference/crit_met.html)
+documents, with two things worth knowing. Its `gradient` is the score
+PER OBSERVATION, the quantity the built-in rule compares, so
+`criterion = optimizers7::crit_grad(t)` is `tol = t` exactly and a
+threshold means the same at \\n = 10\\ and at \\n = 10^7\\. Its
+objective is the penalized log-likelihood UNAVERAGED, which is the scale
+the penalty is added on, so a rule reading the objective's absolute
+value rather than its relative change carries the sample size with it.
+On the first iteration `f_old` and `x_old` are `NULL`, there being no
+previous point, so a rule reading a change returns `FALSE` there by
+construction. A rule needing something the step does not compute – a
+stationarity measure, which belongs to the derivative-free methods – is
+rejected at construction rather than sitting there never firing.
+
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+[`iwls_score`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md)
 
 ## Examples
 
@@ -115,4 +147,8 @@ iwls()
 iwls(hessian = "observed", decomposition = "svd")
 #> iwls: observed information, svd
 #>   maxit 100, tol 1e-06
+iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
+                                       optimizers7::crit_rel_obj(1e-12)))
+#> iwls: expected information, qr
+#>   maxit 100, gradient (max-norm) < 1e-08 or |df| < 1e-12 (relative)
 ```

@@ -8,7 +8,7 @@ the run.
 ## Usage
 
 ``` r
-iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE)
+iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
 ```
 
 ## Arguments
@@ -58,7 +58,15 @@ its eigenvalues rather than abandoning the start, since
 [`solve()`](https://rdrr.io/r/base/solve.html) would otherwise force
 one. And the stopping rule is read at the ITERATE, on a score scaled by
 the sample size, so that a threshold means the same thing at \\n = 10\\
-and at \\n = 10^7\\ while the objective itself stays unaveraged.
+and at \\n = 10^7\\ while the objective itself stays unaveraged. The
+final verdict adds a DIMENSIONLESS reading, \\\max_j \lvert g_j\rvert /
+(n\\s_p)\\ with \\s_p = \sqrt{\mathrm{median}\_j H\_{jj} / n}\\ over the
+equation the coordinate belongs to: the absolute score of a location
+equation carries the units \\1/y\\, so on a response three decades small
+its rounding floor sits above the threshold, and a run stalled at the
+optimum read as a failure. The dimensionless reading only relabels a run
+that has already stopped; driving the loop with it was tried and made
+the tolerance unreachable at the OTHER end of the scale.
 
 ## See also
 

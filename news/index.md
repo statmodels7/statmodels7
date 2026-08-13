@@ -1,5 +1,165 @@
 # Changelog
 
+## statmodels7 0.30.0
+
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  takes a `criterion`. A scoring step is not an optimizer and carries
+  its own loop, but the rule that ends it is the caller’s to choose: any
+  `optimizers7` criterion drives the loop, `NULL` keeps the built-in
+  rule. The state the rule reads carries the score PER OBSERVATION as
+  its gradient, so `crit_grad(t)` and `tol = t` are the same rule and a
+  threshold means the same at n = 10 and at n = 1e7 – asserted by a test
+  running both and comparing the iteration count and the coefficients.
+  Passing `tol` beside a `criterion` is an error rather than a silent
+  choice between them, and a rule needing a stationarity measure – which
+  a scoring step does not compute – is rejected at construction, as
+  [`optimizers7::check_criterion()`](https://statmodels7.github.io/optimizers7/reference/check_criterion.html)
+  rejects it for a derivative-free method.
+
+- [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  estimates the smallest eigenvalue from LAPACK’s condition estimator
+  read on the Cholesky factor it needs anyway, instead of computing the
+  whole spectrum: `rcond` is 1/(\|\|A\|\|\_1 \|\|A^-1\|\|\_1), so
+  `rcond * ||A||_1` is 1/\|\|A^-1\|\|\_1, which for a symmetric matrix
+  lies between lambda_min/sqrt(p) and lambda_min. The estimate therefore
+  errs on the SMALL side – the verdict is conservative and can never
+  accept a matrix the exact test would refuse – and by a bounded factor:
+  measured over dimensions 5 to 300 and condition numbers 1e2 to 1e15
+  the ratio to the true smallest eigenvalue stays between 0.29 and 0.75,
+  where the two cases the test must keep apart are separated by some
+  fifty orders of magnitude. Both sides are unchanged and still
+  asserted: a smoothing parameter at 6e15 is accepted, two identical
+  columns refused. Measured at p = 1022: **4.5x** on the operation (1.40
+  s to 0.31 s) and a fit carrying a random effect over 1000 groups from
+  4.00 s to 2.78 s. `src/lapack_rcond.cpp` is the wrapper and
+  `src/Makevars` links R’s own LAPACK and BLAS.
+
+- The penalty’s square-root factor is taken from the diagonal where the
+  penalty is diagonal, instead of from a dense eigendecomposition. The
+  eigenvalues of a diagonal matrix are its diagonal, so the two routes
+  agree by construction and a test pins them together; what makes it
+  worth having is how often the case arises, a ridge, a random effect
+  and the Demmler-Reinsch penalty of `s()` all being diagonal, and that
+  the factor is recomputed at every iteration of the scoring loop.
+  Measured on a random intercept over 1000 groups at n = 20000: one
+  factorization went from 0.63 s to under a millisecond and the fit from
+  6.52 s to 1.97 s, **3.3x**, with the objective and every coefficient
+  identical. With a smooth beside the random effect, 3.0x. A
+  non-diagonal penalty – a tensor’s, an anisotropic sum – still goes
+  through the eigen route, and a test asserts that it does.
+
+## statmodels7 0.29.0
+
+- [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  inverts through the eigendecomposition it already computes for its
+  test, and the test takes an optional reference scale: a smoothing
+  parameter a criterion legitimately sends to 6.4e15 separates the
+  eigenvalues (min 29.7, max 6.4e15, the matrix strictly positive
+  definite) without flattening a direction, and against `max(ev)` alone
+  that read as singularity –
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html) and every `edf`
+  refused a CORRECT fit on a poisson smooth over weak signal.
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
+  [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)’s
+  whole-model smoother pass the unpenalized information’s diagonal as
+  the scale; a genuinely flat direction (two identical columns) is still
+  refused, being small against that scale too, and a test asserts both
+  sides. The eigen-inverse also removes the Cholesky that could fail
+  outright at such conditioning, each eigenvalue inverted exactly and
+  the shrunk directions simply reporting variances near zero.
+
+- The inner stopping rule keeps its absolute form through the loop and
+  adds a DIMENSIONLESS reading to the final verdict: max_j \|g_j\|/(n
+  s_p) with s_p = sqrt(median H_jj / n) per equation. A location
+  equation’s score carries the units 1/y, so on a response scaled by
+  1e-3 the absolute rule’s floor sat at 1.37e-6 against the 1e-6
+  threshold and a run stalled AT the optimum reported failure; the
+  dimensionless reading relabels exactly that run and never stops one,
+  so every trajectory is unchanged. Two stronger designs were tried and
+  REFUSED by measurement: a per-coordinate normalization by (H+S)\_jj
+  let penalized coordinates converge loosely at extreme shrinkage and
+  moved every outer trajectory, and driving the loop with the
+  per-equation form made the tolerance unreachable at y\*1e4 – the stall
+  guard on the objective, whose magnitude grows with log y, fires before
+  a rule 1/s_p stricter can, the inner reported failure across the whole
+  corridor of smoothing parameters between the plateau and the optimum,
+  and the outer search, reading those points as unavailable, never
+  crossed it (1482 evaluations, cor 0.82 against the truth where the
+  shipped design reaches 0.998 at every scale from 1e-3 to 1e4).
+
+- An UNHELD structural level starts at the equation’s own data-based
+  intercept rather than at zero – the mirror of “the intercept wins”:
+  held, the intercept carries the response’s scale; unheld, which is the
+  volatility spelling `sigma ~ gas(...) - 1`, the level itself must
+  absorb it. Started at zero on a response of another scale, the filter
+  reads a score of y^(2/sigma)2 at its first step and leaves the
+  representable range before the search’s guard can step back: measured,
+  `sigma = NaN` at y scaled by 100, where the intercept spelling of the
+  same model fits. With the start from
+  [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md),
+  the same volatility model now fits identically at y, 100 y and 10^4 y
+  (persistence 0.813 at every scale). Only a fresh start is touched; a
+  specification a fit has been through keeps the parameters it arrived
+  at.
+
+- An outer criterion that is unavailable at the STARTING hyperparameters
+  is reported with its cause instead of dying inside the optimizer.
+  `evaluate()`’s own comment already stated the intent – a failure at
+  the start is the caller’s and is raised – but implemented it only for
+  the branch that raises; the branch where the inner fit CONVERGES to a
+  point whose penalized information has no Cholesky factor (a
+  degenerated parameter, measured on a gamma model whose nl rate ran to
+  exp(31) with `converged = TRUE`) fell through to a non-finite value
+  and the optimizer stopped with “the objective is not finite at the
+  starting value”, naming the point and not the reason. The error now
+  says what is unavailable and why, and points at
+  `outer_criterion = NULL` for inspection.
+
+- The subformulas of a term’s own parameters (modelterms7 0.27.0) fit
+  end to end, and the layer needed almost nothing: the penalty
+  enumeration of 0.12.0 and the marginal route of 0.24.0 already reach a
+  sub-term’s hyperparameter under the key `term::parameter::subterm`.
+  Measured, not presumed: before modelterms7 retired the shorthand,
+  `gas(omega ~ random(~1 | id), by = id)` was pinned against
+  `deviations = "omega"` with a ridge EXACTLY – the REML hyperparameter
+  to the printed digit (0.3668324), the coordinates one for one, the
+  log-likelihood to 4 decimals – and `nl(a ~ ridge(~g))` and
+  `seg(x, psi ~ id)` fit with their hyperparameters estimated and the
+  truth recovered. All of it is pinned in `test-submodels.R`, the panel
+  case against a per-group recursion written by hand.
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) died on duplicate
+  row names for ANY fit whose penalty sits on a structural term’s own
+  parameters – the shorthand `gas(deviations =, penalty =)` of 0.24.0
+  included, exposed only now because nothing called
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) on such a fit.
+  [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
+  wrote a structural unit’s `cols`, which index the term’s parameter
+  vector, into the per-column flags of an equation design that has no
+  such columns; R grew the vector past the design and recycled the
+  labels into duplicate rows. A structural unit is skipped there now,
+  and both routes are asserted.
+
+- The level’s confounding question generalizes from a name to a
+  subspace. With `omega ~ Z gamma` the constant coordinates of the
+  development are held exactly as the scalar level was
+  (`term_level_param()` names them, and the intercept then carries the
+  stationary level, with its standard error). For the rest, an
+  UNPENALIZED coordinate whose column the equation’s design already
+  spans is flagged with a warning through the new
+  [`modelterms7::term_level_design()`](https://statmodels7.github.io/modelterms7/reference/term_level_design.html):
+  holding it would change the model where the confounding is not exact,
+  while a penalized coordinate is identified by its penalty, exactly as
+  a deviation is.
+
+- A structural term’s starting values come from the term itself,
+  [`modelterms7::term_start()`](https://statmodels7.github.io/modelterms7/reference/term_start.html):
+  zero on the unconstrained scale is no longer “the model without the
+  term” for a loading on the log chart, whose natural point is a loading
+  of ONE.
+
 ## statmodels7 0.28.0
 
 - The compiled coordinate descent reads a SPARSE block, and the last
