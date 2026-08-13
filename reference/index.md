@@ -84,6 +84,8 @@ exported, and none is needed to use the package.
   : A Summary of a Fitted Model
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
+- [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
+  : Bind a Model's Term Blocks Side by Side
 - [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
   : The Predictors a Coefficient Direction Induces
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
@@ -106,6 +108,10 @@ exported, and none is needed to use the package.
   : The Third Derivative of the Objective Contracted Once
 - [`contract4()`](https://statmodels7.github.io/statmodels7/reference/contract4.md)
   : The Fourth Derivative of the Objective Contracted Twice
+- [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
+  : The Penalized Block, in the Storage It Arrived In
+- [`coord_call()`](https://statmodels7.github.io/statmodels7/reference/coord_call.md)
+  : Run the Compiled Coordinate Descent on Either Storage
 - [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
   : Which Way of Holding the Gradient Is Cheaper
 - [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
@@ -128,6 +134,11 @@ exported, and none is needed to use the package.
   : The Name of a Fourth-Derivative Component
 - [`deriv3_key()`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
   : The Name of a Third-Derivative Component
+- [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  : Is a Design Sparse, and the Zero Matrix to Accumulate It Into
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -253,6 +264,8 @@ exported, and none is needed to use the package.
   : Which Coefficients of a Smooth Are the Linear Part
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   : Invert a Matrix That Ought to Be Positive Definite
+- [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md)
+  : Solve a Scoring Step From a Sparse Square-Root Design
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
   : Fit One Non-Smooth Block, the Others Held Fixed
 - [`spec_at()`](https://statmodels7.github.io/statmodels7/reference/spec_at.md)
@@ -282,6 +295,8 @@ exported, and none is needed to use the package.
   : The Linear Predictors and the Parameters They Give
 - [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
   : Run the Structural Terms at the Current Parameters
+- [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
+  : Fit the Coefficients and a Filter's Parameters in One System
 - [`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md)
   : Fit the Structural Terms' Own Parameters
 - [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
@@ -303,6 +318,9 @@ exported, and none is needed to use the package.
   : The Weighted Log-Likelihood of a Specification at Given Coefficients
 - [`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md)
   : The Marginal Criterion at Given Coefficients and Hyperparameters
+- [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  : The Penalized Curvature Over the Coefficients and a Filter's
+  Parameters
 - [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
   : The Exact Gradient of the Marginal Criterion
 - [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
@@ -342,6 +360,8 @@ exported, and none is needed to use the package.
   : Which Terms Rewrite the Likelihood
 - [`statmod_structural_par()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.md)
   : The Structural Terms' Estimated Parameters
+- [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
+  : The Penalty Over a Structural Term's Own Parameters
 - [`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md)
   : The Score in a Structural Term's Own Parameters
 - [`statmod_structural_state()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_state.md)
@@ -365,8 +385,14 @@ exported, and none is needed to use the package.
   : The Score and Curvature a Filter Is Driven By
 - [`structural_kind()`](https://statmodels7.github.io/statmodels7/reference/structural_kind.md)
   : Which Shape of the Structural Contract a Term Implements
+- [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)
+  : Does a Structural Term Carry a Penalty of Its Own?
+- [`structural_penalty_block()`](https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.md)
+  : The Penalty Over a Structural Term's Free Parameters, as a Block
 - [`structural_psi()`](https://statmodels7.github.io/statmodels7/reference/structural_psi.md)
   : From the Unconstrained Scale to the Term's Parameters
+- [`structural_range_cols()`](https://statmodels7.github.io/statmodels7/reference/structural_range_cols.md)
+  : Which of a Structural Term's Free Parameters a Penalty Covers
 - [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
   : The Parameters a Structural Term Starts From
 - [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)

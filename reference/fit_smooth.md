@@ -1,7 +1,7 @@
 # Fit the Smooth Block
 
-Runs `inner_method` on the jointly fitted coefficients, the others held
-fixed.
+Runs `inner_optimizer` on the jointly fitted coefficients, the others
+held fixed.
 
 ## Usage
 

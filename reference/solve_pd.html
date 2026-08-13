@@ -9,7 +9,7 @@ does not exist."><meta property="og:image" content="https://statmodels7.github.i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,10 @@ does not exist.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite, so
-a factor that does not exist says something about where the run stopped.
+a matrix that is not says something about where the run stopped. The test is
+<code>min(ev) &gt; tol * max(ev)</code> on the eigenvalues rather than whether
+<code><a href="https://rdrr.io/r/base/chol.html" class="external-link">chol()</a></code> raised, because on an exactly singular matrix the latter is
+decided by rounding and differs between platforms.
 Returning a pseudo-inverse instead would give a standard error for a
 direction the data does not identify.</p>
 <p>The message names the directions rather than the causes. A first version

@@ -11,7 +11,7 @@ outer_fit(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -40,7 +40,7 @@ outer_fit(
 
   The starting hyperparameters.
 
-- inner_method:
+- inner_optimizer:
 
   How the smooth block is fitted.
 

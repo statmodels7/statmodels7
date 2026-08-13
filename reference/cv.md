@@ -11,7 +11,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 0.001,
+  min_ratio = 1e-04,
   over = NULL
 )
 ```
@@ -116,14 +116,14 @@ set.seed(1)
 dd <- data.frame(y = rnorm(60))
 dd$x <- matrix(rnorm(60 * 5), 60, 5)
 statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-        outer_method = cv(nfolds = 3, n_values = 6))
+        outer_criterion = cv(nfolds = 3, n_values = 6))
 #> Warning: The path for 'lasso(x)' in 'mu' stopped at its sparse end (lambda = 15.48).
 #>   The criterion was still falling there, so widen the path with min_ratio
 #>   or set the value yourself.
 #> A statmod fit
 #> 
 #> Call:  statmod(formula = y ~ lasso(x), distrib = distributions7::gaussian1_distrib(), 
-#>             data = dd, outer_method = cv(nfolds = 3, n_values = 6))
+#>             data = dd, outer_criterion = cv(nfolds = 3, n_values = 6))
 #> 
 #> Distribution: gaussian1
 #> Observations: 60
@@ -135,7 +135,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> CV 2.532049 over 6 hyperparameter evaluation(s)
-#> fitted in 883 ms, converged
+#> fitted in 937 ms, converged
 #> 1 sweeps over 2 block(s)
 ```

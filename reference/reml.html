@@ -11,7 +11,7 @@ penalized directions and profiles the rest."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,11 +126,11 @@ likelihood estimation of semiparametric generalized linear models.
 <span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">1.4</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, sd <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span>,</span></span>
-<span class="r-in"><span>        outer_method <span class="op">=</span> <span class="fu">reml</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>        outer_criterion <span class="op">=</span> <span class="fu">reml</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> A statmod fit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Call:  statmod(formula = y ~ s(x, k = 10), distrib = distributions7::gaussian1_distrib(), </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             data = dd, outer_method = reml())</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             data = dd, outer_criterion = reml())</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Distribution: gaussian1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Observations: 200</span>
@@ -143,7 +143,7 @@ likelihood estimation of semiparametric generalized linear models.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -35.406015    objective 40.891614</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> REML -55.814255 over 25 hyperparameter evaluation(s)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 449 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 445 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

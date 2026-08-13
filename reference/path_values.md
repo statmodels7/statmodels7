@@ -6,7 +6,7 @@ to `min_ratio` of it, carried back onto the hyperparameter.
 ## Usage
 
 ``` r
-path_values(pen, theta, name, s_max, n_values = 40L, min_ratio = 0.001)
+path_values(pen, theta, name, s_max, n_values = 40L, min_ratio = 1e-04)
 ```
 
 ## Arguments

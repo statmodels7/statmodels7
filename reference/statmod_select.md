@@ -13,7 +13,7 @@ statmod_select(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -23,7 +23,8 @@ statmod_select(
   vb,
   data,
   weights,
-  offsets
+  offsets,
+  sparse_method = NULL
 )
 ```
 
@@ -46,7 +47,7 @@ statmod_select(
 
   The hyperparameters.
 
-- inner_method:
+- inner_optimizer:
 
   The inner method.
 

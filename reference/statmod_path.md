@@ -11,7 +11,7 @@ statmod_path(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   method,
   optimizer,
   beta,
@@ -23,7 +23,8 @@ statmod_path(
   weights,
   offsets,
   rows,
-  sweeps = 2L
+  sweeps = 2L,
+  nested_method = NULL
 )
 ```
 
@@ -46,7 +47,7 @@ statmod_path(
 
   The hyperparameters.
 
-- inner_method:
+- inner_optimizer:
 
   The inner method.
 

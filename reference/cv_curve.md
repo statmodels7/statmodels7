@@ -7,7 +7,7 @@ its standard error across folds.
 ## Usage
 
 ``` r
-cv_curve(spec, data, weights, offsets, inner_method, hypers, folds)
+cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
 ```
 
 ## Arguments
@@ -27,7 +27,7 @@ cv_curve(spec, data, weights, offsets, inner_method, hypers, folds)
   [`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   received them.
 
-- inner_method:
+- inner_optimizer:
 
   The inner method.
 

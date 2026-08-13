@@ -12,7 +12,7 @@ statmod_alternate(
   design,
   blocks,
   hyper,
-  inner_method,
+  inner_optimizer,
   beta,
   expected,
   approx,
@@ -40,7 +40,7 @@ statmod_alternate(
 
   The hyperparameters.
 
-- inner_method:
+- inner_optimizer:
 
   How the smooth block is fitted.
 

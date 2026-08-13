@@ -31,9 +31,12 @@ The inverse.
 
 A failure here is a statement about the fit rather than about the
 arithmetic: at a maximum the penalized information is positive definite,
-so a factor that does not exist says something about where the run
-stopped. Returning a pseudo-inverse instead would give a standard error
-for a direction the data does not identify.
+so a matrix that is not says something about where the run stopped. The
+test is `min(ev) > tol * max(ev)` on the eigenvalues rather than whether
+[`chol()`](https://rdrr.io/r/base/chol.html) raised, because on an
+exactly singular matrix the latter is decided by rounding and differs
+between platforms. Returning a pseudo-inverse instead would give a
+standard error for a direction the data does not identify.
 
 The message names the directions rather than the causes. A first version
 offered two – the run not having reached a maximum, or two columns of

@@ -12,8 +12,9 @@ statmod(
   data,
   weights = NULL,
   offsets = NULL,
-  inner_method = iwls(),
-  outer_method = NULL,
+  inner_optimizer = iwls(),
+  outer_criterion = reml(),
+  sparse_criterion = bic(),
   outer_optimizer = NULL,
   hyper = NULL,
   start = NULL,
@@ -43,18 +44,33 @@ statmod(
 
   Optional named list of offsets, one per parameter.
 
-- inner_method:
+- inner_optimizer:
 
   How the smooth block is fitted:
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   or an optimizers7 optimizer.
 
-- outer_method:
+- outer_criterion:
 
-  How the hyperparameters are estimated:
-  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  How the SMOOTH hyperparameters are estimated:
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  (the default),
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
-  or `NULL` to hold them.
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+  or `NULL` to hold them where they are.
+
+- sparse_criterion:
+
+  How the hyperparameter of a KINKED penalty – lasso, scad, mcp – is
+  chosen:
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  (the default),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+  or `NULL` to hold it. A marginal criterion is rejected here, being
+  read at a mode that sits on the kink.
 
 - outer_optimizer:
 
@@ -65,7 +81,10 @@ statmod(
 
   Optional hyperparameters, a named list of named lists as
   `list(mu = list(lasso = c(lambda = 5)))`. They are held at these
-  values.
+  values: supplying them steps the default criterion aside, since
+  estimating away a value the caller wrote would answer a question
+  nobody asked. Naming a criterion explicitly overrides that, and
+  `hyper` is then where its search starts.
 
 - start:
 
@@ -94,7 +113,7 @@ whose recovery is not the obvious one.
 **The fitting scheme.** The terms split in two by a property each one
 already reports. Every term whose penalty is twice differentiable in its
 coefficients – an unpenalized block, a ridge, a spline, a random effect
-– is estimated in ONE system by `inner_method`, because their joint
+– is estimated in ONE system by `inner_optimizer`, because their joint
 curvature exists and using it is what makes a fit converge in a handful
 of iterations. A term whose penalty has a kink – lasso, scad, mcp – is
 estimated by a method of its own with everything else held fixed. The
@@ -108,7 +127,7 @@ stopping rule, so that a threshold means the same thing at \\n = 10\\
 and at \\n = 10^7\\.
 
 **The budget and the stopping rule belong to the method.** There is no
-`maxit` and no `tol` here: they are set on `inner_method`, which is
+`maxit` and no `tol` here: they are set on `inner_optimizer`, which is
 [`iwls`](https://statmodels7.github.io/statmodels7/reference/iwls.md)`(maxit =, tol =)`
 or an optimizer with its own `maxit` and `criterion`, and the
 alternation reads them from there (see
@@ -116,17 +135,37 @@ alternation reads them from there (see
 Carrying a second copy would let a caller set both and be obeyed by
 neither.
 
-**The hyperparameters.** With `outer_method = NULL`, the default, each
-one sits where `hyper` put it, or at the probe value of its bounds
-otherwise – a placeholder rather than a choice, and it matters, since a
-lasso at \\\lambda = 1\\ against an unaveraged log-likelihood of a few
-hundred observations selects nothing at all. With
-`outer_method = `[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-they are estimated by a marginal criterion, `outer_optimizer` searching
-over them and the coefficients being refitted at each. Only a twice
-differentiable penalty takes part: a lasso, a SCAD or an MCP keeps the
-value it was given.
+**The hyperparameters are ESTIMATED by default**, by
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+with `outer_optimizer` searching over them and the coefficients refitted
+at each. A hyperparameter left where it started is a placeholder and not
+a choice, and a model carrying a smooth, a ridge or a random effect is
+one whose author wants them chosen from the data.
+
+A KINKED penalty is a different instrument and has its own argument.
+`sparse_criterion`,
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) by
+default, sweeps it along a PATH of its own values – from the kink that
+empties the block down to `min_ratio` of it – because the penalized mode
+is only piecewise smooth in that hyperparameter, turning a corner
+whenever a coefficient joins the active set or leaves it, so a criterion
+read there inherits the corners and a gradient search reads a slope
+about to change. Where a model carries both kinds the path is outside
+and the marginal criterion is estimated inside each of its points, so a
+smoothing parameter can come from REML and a lasso's \\\lambda\\ from
+BIC in the same fit.
+
+The top of that path is DATA-DEPENDENT and depends on the rest of the
+model: it is the kink that empties the block, found at the coefficients
+in hand rather than at a refitted null, so the other terms' fits enter
+it.
+
+It comes into play IF AND ONLY IF the model carries a smooth penalty.
+Where nothing is estimable – an ordinary `y ~ x`, or a model whose only
+penalty is kinked – it is simply not run, and that is a property of the
+model rather than of how the argument was written, so typing the default
+changes nothing. `outer_criterion = NULL` holds every hyperparameter
+where `hyper` put it.
 
 **Verbosity** has three levels, naming the loops rather than counting
 them: `1` the outer search and the alternation, `2` the inner method's
@@ -163,7 +202,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 28 ms, converged
+#> fitted in 27 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -181,5 +220,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 39 ms, converged
+#> fitted in 37 ms, converged
 ```

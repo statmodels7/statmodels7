@@ -1,5 +1,345 @@
 # Changelog
 
+## statmodels7 0.28.0
+
+- The compiled coordinate descent reads a SPARSE block, and the last
+  densification in the chain is gone.
+
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  materialized the penalized block dense to hand the kernel an
+  `arma::mat`. A coordinate descent reads one column at a time, so a
+  compressed-column matrix is the storage the method wants rather than
+  one it tolerates: column `j` of a `dgCMatrix` is a contiguous run of
+  its own nonzeros, which is exactly the walk every step of this
+  algorithm makes.
+
+  The algorithm is written ONCE against a column accessor and
+  instantiated twice, so the dense and sparse kernels cannot drift
+  apart. They agree BIT FOR BIT rather than to a tolerance, and that is
+  a property of the arithmetic and not luck: skipping a structural zero
+  omits an addition of zero, which is exact. The tests assert
+  [`identical()`](https://rdrr.io/r/base/identical.html) on the
+  coefficients, the sweep count and the screening gradient, over both
+  gradient routes (residual and covariance) and both densities.
+
+  Measured at n = 20000 against the same design densified by hand, with
+  the coefficients exactly identical:
+
+  |                                | before | after      | vs dense   |
+  |--------------------------------|--------|------------|------------|
+  | lasso, p = 200, density 0.005  | 1.04 s | **0.23 s** | 14.4x      |
+  | lasso, p = 1000, density 0.001 | 3.61 s | **0.25 s** | **233.7x** |
+
+  The kinked branch is now faster than the smooth one on the same block
+  (0.25 s against 2.37 s at p = 1000), which is the right way round: a
+  lasso screens its coordinates where a ridge solves the whole system.
+
+  The `dgCMatrix` is taken apart in R and its slots passed to the
+  kernel, so the compiled code needs no dependency on the C API.
+
+  ⚠️ The dense path’s residual is now accumulated column by column
+  rather than row by row, a compressed-column matrix having no cheap row
+  walk. The arithmetic is the same sum in a different order, so results
+  move within rounding; every existing comparison is far above it (1e-10
+  against the proximal route, 1e-13 against glmnet) and the suite is
+  unchanged.
+
+## statmodels7 0.27.0
+
+- `methods` is declared in `Imports`.
+  [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  has called [`methods::as()`](https://rdrr.io/r/methods/as.html) since
+  0.26.0 and nothing declared it, so `--as-cran` reported *“‘::’ or
+  ‘:::’ import not declared from: ‘methods’”* – a WARNING, which the CI
+  action treats as a failure. The local suite could not see it. Sixth
+  instance of the rule that any package named with `::` goes in the
+  dependencies in the same edit as the code that names it.
+
+- A kinked penalty composed with a grouping indicator ABORTED THE
+  PROCESS.
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  handed the compiled coordinate descent the penalized block sliced out
+  of its equation’s design, and where the equation also carries a random
+  effect that design is a `dgCMatrix`; the kernel takes an `arma::mat`,
+  so the conversion threw at the `.Call` boundary and R died rather than
+  raising something a `tryCatch` could see.
+  `y ~ lasso(~x) + random(~1|g)` was unfittable. The block’s own columns
+  are dense whatever the rest of the equation holds – the sparse columns
+  belong to the other terms and are never touched – so they are
+  densified at the slice. Sixth round of the sparse conversion, and the
+  first where the failure was not an R error.
+
+- [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  asked whether a penalty has a proximal table AT A STEP OF 1, which is
+  a different question from the one it meant. SCAD and MCP have no table
+  past their convex region, and under a diagonal map the condition is
+  `t < (a-1)/d^2`, so a standardized block on a column of spread 20 was
+  refused at the probe and sent to the general proximal route, which
+  then raised on the same condition. The probe is taken at a step short
+  enough to answer only the question about the family; the step that
+  will be used is asked below it, once the working weights are known.
+
+- Standardization needs nothing here, which was the point of putting it
+  on the penalty: a standardized term fits what a hand-standardized
+  design fits (coefficients `s*beta` to 8.9e-16, fitted values to
+  3.6e-15), multiplying a column by a thousand leaves the standardized
+  fit exactly where it was (3.6e-15) where it moves an unstandardized
+  one, and a random effect’s block stays a `dgCMatrix` through the
+  terms, the assembled design (density 0.064), the information and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) with a standardized
+  lasso in the same equation.
+
+## statmodels7 0.26.0
+
+- A model carrying a grouping indicator is fitted SPARSE end to end, and
+  the gain is an order of magnitude:
+
+  | n    | groups | before  | after  | speedup   |
+  |------|--------|---------|--------|-----------|
+  | 2000 | 50     | 1.38 s  | 1.29 s | 1.1x      |
+  | 4000 | 100    | 3.45 s  | 0.70 s | 4.9x      |
+  | 6000 | 200    | 15.13 s | 0.86 s | 17.6x     |
+  | 8000 | 400    | 92.81 s | 3.31 s | **28.0x** |
+
+  The shape changes and not only the constant: 3.45, 15.13, 92.81 was
+  accelerating, and 0.70, 0.86, 3.31 is nearly flat. The log-likelihood
+  is identical to the last printed digit at every size and the fixed
+  effects agree with `lmer` to 2.0e-05.
+
+  It took two steps and the first alone was not enough. With the block
+  sparse the fit was 0.9x to 1.4x: `crossprod` left the profile
+  entirely, and `.Fortran` ROSE from 57.9 to 72.6 per cent, because
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  still ran a dense QR. **A profile share is not a speedup: removing the
+  cheaper half leaves the dearer one.**
+  [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
+  now keeps sparsity, where it assembled dense zero blocks per pair per
+  iteration, and
+  [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
+  reaches
+  [`Matrix::qr()`](https://rdrr.io/pkg/Matrix/man/qr-methods.html): 695x
+  at 100 groups and 75475x at 1000 on the augmented design alone.
+
+  A sparse QR is a QR, so the conditioning property the augmented route
+  exists for is kept exactly, and the choice against a Cholesky of the
+  normal equations – which times the same and squares the conditioning –
+  does not arise.
+
+  ⚠️ `Matrix`’s generics must be IMPORTED: a package that only depends
+  on it gets base [`t()`](https://rdrr.io/r/base/t.html), which reaches
+  [`t.default()`](https://rdrr.io/r/base/t.html) and reports that its
+  argument is not a matrix, from inside the assembly.
+  [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md),
+  [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md),
+  [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  and
+  [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
+  are where the two kinds meet; the full-inverse sites densify
+  deliberately, the inverse of a sparse matrix being dense.
+
+- `inner_method` is `inner_optimizer` and `outer_method` is
+  `outer_criterion`. The first takes optimizers, like `outer_optimizer`;
+  the second takes criteria.
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  stays a statmodels7 object rather than an optimizers7 one for the
+  reason coordinate descent does: it needs the model, not `fn` and `gr`.
+
+  The joint step passed `optimizer = NULL` unconditionally, so
+  `inner_optimizer` was ACCEPTED AND IGNORED for exactly the models it
+  matters most for. Measured now that it is honoured: `lbfgs` is 2x on a
+  three-parameter filter (5.08 s against 9.95) and `newton` is 2.8x on a
+  33-parameter panel (4.58 s against 12.97, 14 iterations against 130),
+  the log-likelihood identical throughout. The default stays Newton,
+  which wins where the parameters are many.
+
+- The hyperparameters are ESTIMATED by default. `outer_criterion` is
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  and it applies to the SMOOTH penalties and comes into play if and only
+  if the model carries one – a property of the model and not of how the
+  argument was written, so typing the default changes nothing. A model
+  with no penalty, or one whose only penalty is kinked, leaves it
+  unused. On a smooth the difference is real: the effective degrees of
+  freedom go from 9.01, which is no penalization at all, to 7.81.
+
+  `hyper` still means HELD AT THESE VALUES and steps the default aside.
+
+- `sparse_criterion`,
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  by default, chooses the hyperparameter of a kinked penalty along a
+  path over its own values. Where a model carries both kinds the path is
+  outside and the marginal criterion is estimated inside each of its
+  points, so a smoothing parameter comes from REML and a lasso’s lambda
+  from BIC in one fit – which one argument could not express.
+
+  A prediction-error criterion for the smooth penalties nested inside
+  that path is REJECTED: it scores the same quantity at two levels, and
+  measured, every point of the path came back NA, so the path had
+  nothing to choose between and the hyperparameter kept its starting
+  value while the fit reported success.
+
+- The top of a path now empties the block. The documentation described a
+  check – “a top whose fit is not empty is doubled until it is” – that
+  was not implemented, so the grid covered a nearly flat stretch of the
+  criterion and the choice fell on its edge: on eight coefficients of
+  which three carried real signal the top read 26.5 where the block
+  first empties near
+
+  500. `min_ratio` is 1e-4, which is glmnet’s own ratio now that the top
+       is comparable to its `lambda.max`.
+
+  ⚠️ The warning that reports a choice at an end fired on the INDEX
+  alone while its text claimed the criterion was still falling. With the
+  top now emptying the block the criterion is FLAT across that stretch,
+  so index one is a legitimate minimum and the message was naming a
+  cause that was not the real one. It compares against the neighbouring
+  point now, and the two warnings the suite carried were both of that
+  kind.
+
+## statmodels7 0.25.0
+
+- A structural term is reported under the names its literature uses, and
+  under the quantities rather than the coordinates. For a score-driven
+  term that is `omega`, `alpha1` and `beta1`: the last is the
+  AUTOREGRESSIVE COEFFICIENT, taken through the Levinson-Durbin
+  recursion, where the free coordinate is a partial autocorrelation and
+  above `q = 1` a different number.
+
+  The standard error is the delta method over the JOINT variance,
+  `sqrt(J V J')` with `J` from
+  [`modelterms7::term_readable()`](https://statmodels7.github.io/modelterms7/reference/term_readable.html),
+  not one entry of a diagonal: a coefficient reads the whole chart, so
+  the covariance between its coordinates enters. The interval is built
+  on the scale that keeps each quantity in its own set and mapped back,
+  as every interval in the toolkit is, and a quantity that reads a held
+  parameter is reported without one rather than with the variance of the
+  rest.
+
+  Nothing else moved: for a term whose coordinates are already its
+  quantities the base method reports them on the parameter scale with
+  the diagonal Jacobian of their links, which is what this function did
+  before.
+
+## statmodels7 0.24.0
+
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  reach a penalty over a structural term’s own parameters, where they
+  used to return a criterion that did not move.
+
+  A marginal criterion integrates the quantities its penalty shrinks.
+  Where that penalty is a term’s own – the deviations of a panel – those
+  quantities are not coefficients, so a determinant taken over the
+  coefficients alone does not depend on the hyperparameter at all and
+  the criterion is the penalized likelihood, whose maximum in a
+  shrinkage parameter is at no shrinkage.
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  spans the coefficients AND the term’s free parameters, which is the
+  order
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  already carries them in, with the penalty’s own Hessian in the tail.
+  Nothing was derived: both pieces existed.
+
+  Measured on a panel of three groups, a ridge on every deviation, the
+  mode refitted at each value: the criterion moves from -157.361 at a
+  prior scale of 0.01 through a maximum of -157.347 at 0.05 to -189.023
+  at 50, and the deviations follow, sd 0.0008 to 0.148. Against a
+  Laplace formula assembled by `numDeriv` over the same unknowns it
+  agrees to 1e-5.
+
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  integrates the penalized coordinates alone, through the penalty’s own
+  range basis, so a population value the penalty does not cover is
+  profiled rather than integrated, exactly as an unpenalized coefficient
+  is.
+
+  The EXACT gradient rejects here and the search stays derivative-free.
+  That route reads how the determinant moves with the mode through a
+  contraction of the family’s third derivative against the design
+  blocks, an assembly that assumes the predictor is `X beta`; a filter’s
+  level is a recursion of the term’s parameters and the same contraction
+  is not the derivative there.
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html) and the summary’s
+  structural table report a term whose own parameters carry a penalty.
+
+  Both inverted the unpenalized information, on the comment that a
+  term’s parameters carry no penalty. That is not a conservative choice:
+  the deviations of a panel are identified by their penalty and by
+  nothing else, a constant added to a population value and taken off
+  every deviation leaving the filter exactly unchanged, so the matrix is
+  singular along that direction. The table reported a missing standard
+  error for every parameter of the term.
+  [`structural_penalty_block()`](https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.md)
+  places the penalty in the tail, written once because the fit, the
+  variance matrix and the criterion all need it and a block each of them
+  placed for itself would agree only by accident.
+
+- A panel with deviations fits again.
+  [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
+  reaches
+  [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
+  which rejected deviations, so every such model – with or without a
+  penalty – signalled an error rather than fitting. It needs
+  `modelterms7` 0.21.0.
+
+## statmodels7 0.23.0
+
+- A structural term of the filter shape is fitted in the SAME system as
+  the coefficients rather than alternated with them.
+
+  The alternation was never a statement about the model: the exact
+  gradient of both blocks and the exact observed information over both
+  together were already available, the second as
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md),
+  which was built for [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
+  discarded for the fit. What it cost is filter runs. Each sweep handed
+  the term’s parameters to an optimizer of their own – and always
+  `lbfgs()`, whatever the caller asked for – whose every iteration
+  re-ran the recursion and its adjoint with the coefficients held at a
+  point that was about to move.
+
+  [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
+  runs one Newton step over the stacked coefficients and the term’s free
+  parameters. The unknowns are ordered as the information orders them,
+  so no permutation is needed, and a level an intercept in the same
+  equation carries is held and leaves the system exactly as it leaves
+  the information. Measured on a panel of 25 groups and 750
+  observations: 16.91 s to 3.21 s, a factor of 5.3, at a slightly higher
+  maximum (-1248.7824347 against -1248.7825410). A term of the
+  likelihood shape – `regime()` – keeps the alternation, its information
+  being assembled by a different route.
+
+- A penalty over a structural term’s own parameters is read from the
+  term’s own vector.
+
+  [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+  looked its positions up in the design, which a structural term does
+  not have: `blocks[[term]]` was NULL and the positions then indexed the
+  equation’s coefficients, 25 of them where the equation has one. The
+  penalty was evaluated at `NA`, and everything built on it followed –
+  an objective that was not finite, an outer criterion reported as
+  unavailable, and an inner run that spent its whole budget.
+
+  Such a unit is now marked as structural and evaluated from the term’s
+  state, and
+  [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
+  returns its derivative and its Hessian in the term’s own parameters.
+  The gradient of the structural block adds that derivative, which its
+  objective had been including all along: two functions differing by a
+  penalty are not each other’s gradient, and optimizers7’s own check had
+  been saying so. Verified against `numDeriv` at three points, agreeing
+  to the reference’s own accuracy.
+
+- The per-observation callbacks a filter runs reuse one buffer instead
+  of rebuilding a list of scalars on every call. Worth 1.09x on its own;
+  the number of filter runs, which the joint step addresses, is where
+  the time actually was.
+
+- [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  decides positive definiteness from the eigenvalues rather than from
+  whether [`chol()`](https://rdrr.io/r/base/chol.html) raised.
+
 ## statmodels7 0.22.0
 
 - A term’s effective degrees of freedom are its share of the WHOLE

@@ -9,7 +9,7 @@ terms it names into a penalized likelihood, and fits it."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,8 +47,9 @@ terms it names into a penalized likelihood, and fits it.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  offsets <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  inner_method <span class="op">=</span> <span class="fu"><a href="iwls.html">iwls</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  outer_method <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inner_optimizer <span class="op">=</span> <span class="fu"><a href="iwls.html">iwls</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  outer_criterion <span class="op">=</span> <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  sparse_criterion <span class="op">=</span> <span class="fu"><a href="aic.html">bic</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  outer_optimizer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hyper <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -80,14 +81,24 @@ terms it names into a penalized likelihood, and fits it.</p>
 <dd><p>Optional named list of offsets, one per parameter.</p></dd>
 
 
-<dt id="arg-inner-method">inner_method<a class="anchor" aria-label="anchor" href="#arg-inner-method"></a></dt>
+<dt id="arg-inner-optimizer">inner_optimizer<a class="anchor" aria-label="anchor" href="#arg-inner-optimizer"></a></dt>
 <dd><p>How the smooth block is fitted: <code><a href="iwls.html">iwls()</a></code> or
 an <span class="pkg">optimizers7</span> optimizer.</p></dd>
 
 
-<dt id="arg-outer-method">outer_method<a class="anchor" aria-label="anchor" href="#arg-outer-method"></a></dt>
-<dd><p>How the hyperparameters are estimated:
-<code><a href="reml.html">reml()</a></code>, <code><a href="reml.html">ml()</a></code>, or <code>NULL</code> to hold them.</p></dd>
+<dt id="arg-outer-criterion">outer_criterion<a class="anchor" aria-label="anchor" href="#arg-outer-criterion"></a></dt>
+<dd><p>How the SMOOTH hyperparameters are estimated:
+<code><a href="reml.html">reml()</a></code> (the default), <code><a href="reml.html">ml()</a></code>,
+<code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code>, <code><a href="cv.html">cv()</a></code>, or
+<code>NULL</code> to hold them where they are.</p></dd>
+
+
+<dt id="arg-sparse-criterion">sparse_criterion<a class="anchor" aria-label="anchor" href="#arg-sparse-criterion"></a></dt>
+<dd><p>How the hyperparameter of a KINKED penalty –
+lasso, scad, mcp – is chosen: <code><a href="aic.html">bic()</a></code> (the default),
+<code><a href="aic.html">aic()</a></code>, <code><a href="cv.html">cv()</a></code>, or <code>NULL</code> to hold it.
+A marginal criterion is rejected here, being read at a mode that sits on
+the kink.</p></dd>
 
 
 <dt id="arg-outer-optimizer">outer_optimizer<a class="anchor" aria-label="anchor" href="#arg-outer-optimizer"></a></dt>
@@ -98,7 +109,10 @@ an <span class="pkg">optimizers7</span> optimizer.</p></dd>
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
 <dd><p>Optional hyperparameters, a named list of named lists as
 <code>list(mu = list(lasso = c(lambda = 5)))</code>. They are held at these
-values.</p></dd>
+values: supplying them steps the default criterion aside, since
+estimating away a value the caller wrote would answer a question nobody
+asked. Naming a criterion explicitly overrides that, and <code>hyper</code> is
+then where its search starts.</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
@@ -121,7 +135,7 @@ separated by <code>|</code>, the first carrying the response:</p><div class="sou
 <p><strong>The fitting scheme.</strong> The terms split in two by a property each one
 already reports. Every term whose penalty is twice differentiable in its
 coefficients – an unpenalized block, a ridge, a spline, a random effect –
-is estimated in ONE system by <code>inner_method</code>, because their joint
+is estimated in ONE system by <code>inner_optimizer</code>, because their joint
 curvature exists and using it is what makes a fit converge in a handful of
 iterations. A term whose penalty has a kink – lasso, scad, mcp – is
 estimated by a method of its own with everything else held fixed. The fit
@@ -132,20 +146,35 @@ and a posterior adds the two at full size. What is scaled instead is the
 stopping rule, so that a threshold means the same thing at \(n = 10\) and
 at \(n = 10^7\).</p>
 <p><strong>The budget and the stopping rule belong to the method.</strong> There is no
-<code>maxit</code> and no <code>tol</code> here: they are set on <code>inner_method</code>,
+<code>maxit</code> and no <code>tol</code> here: they are set on <code>inner_optimizer</code>,
 which is <code><a href="iwls.html">iwls</a>(maxit =, tol =)</code> or an optimizer with its own
 <code>maxit</code> and <code>criterion</code>, and the alternation reads them from there
 (see <code><a href="method_budget.html">method_budget</a></code>). Carrying a second copy would let a caller
 set both and be obeyed by neither.</p>
-<p><strong>The hyperparameters.</strong> With <code>outer_method = NULL</code>, the default,
-each one sits where <code>hyper</code> put it, or at the probe value of its bounds
-otherwise – a placeholder rather than a choice, and it matters, since a
-lasso at \(\lambda = 1\) against an unaveraged log-likelihood of a few
-hundred observations selects nothing at all. With
-<code>outer_method = <a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> they are estimated
-by a marginal criterion, <code>outer_optimizer</code> searching over them and the
-coefficients being refitted at each. Only a twice differentiable penalty
-takes part: a lasso, a SCAD or an MCP keeps the value it was given.</p>
+<p><strong>The hyperparameters are ESTIMATED by default</strong>, by
+<code><a href="reml.html">reml()</a></code>, with <code>outer_optimizer</code> searching over them and
+the coefficients refitted at each. A hyperparameter left where it started
+is a placeholder and not a choice, and a model carrying a smooth, a ridge
+or a random effect is one whose author wants them chosen from the data.</p>
+<p>A KINKED penalty is a different instrument and has its own
+argument. <code>sparse_criterion</code>, <code><a href="aic.html">bic()</a></code> by default, sweeps
+it along a PATH of its own values – from the kink that empties the block
+down to <code>min_ratio</code> of it – because the penalized mode is only
+piecewise smooth in that hyperparameter, turning a corner whenever a
+coefficient joins the active set or leaves it, so a criterion read there
+inherits the corners and a gradient search reads a slope about to change.
+Where a model carries both kinds the path is outside and the marginal
+criterion is estimated inside each of its points, so a smoothing parameter
+can come from REML and a lasso's \(\lambda\) from BIC in the same fit.</p>
+<p>The top of that path is DATA-DEPENDENT and depends on the rest of the
+model: it is the kink that empties the block, found at the coefficients in
+hand rather than at a refitted null, so the other terms' fits enter it.</p>
+<p>It comes into play IF AND ONLY IF the model carries a smooth penalty.
+Where nothing is estimable – an ordinary <code>y ~ x</code>, or a model whose
+only penalty is kinked – it is simply not run, and that is a property of
+the model rather than of how the argument was written, so typing the
+default changes nothing. <code>outer_criterion = NULL</code> holds every
+hyperparameter where <code>hyper</code> put it.</p>
 <p><strong>Verbosity</strong> has three levels, naming the loops rather than counting
 them: <code>1</code> the outer search and the alternation, <code>2</code> the inner
 method's own iterations, <code>3</code> the optimizers' traces as well. A named
@@ -180,7 +209,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -34.947195    objective 34.947195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 28 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 27 ms, converged</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># every parameter can be modelled</span></span></span>
 <span class="r-in"><span><span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
@@ -198,7 +227,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 39 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 37 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

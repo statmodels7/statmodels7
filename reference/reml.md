@@ -99,11 +99,11 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-        outer_method = reml())
+        outer_criterion = reml())
 #> A statmod fit
 #> 
 #> Call:  statmod(formula = y ~ s(x, k = 10), distrib = distributions7::gaussian1_distrib(), 
-#>             data = dd, outer_method = reml())
+#>             data = dd, outer_criterion = reml())
 #> 
 #> Distribution: gaussian1
 #> Observations: 200
@@ -116,5 +116,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -35.406015    objective 40.891614
 #> REML -55.814255 over 25 hyperparameter evaluation(s)
-#> fitted in 449 ms, converged
+#> fitted in 445 ms, converged
 ```

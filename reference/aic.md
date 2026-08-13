@@ -82,11 +82,11 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-        outer_method = aic())
+        outer_criterion = aic())
 #> A statmod fit
 #> 
 #> Call:  statmod(formula = y ~ s(x, k = 10), distrib = distributions7::gaussian1_distrib(), 
-#>             data = dd, outer_method = aic())
+#>             data = dd, outer_criterion = aic())
 #> 
 #> Distribution: gaussian1
 #> Observations: 200
@@ -99,7 +99,7 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -33.778803    objective 44.595422
 #> AIC 87.385999 over 38 hyperparameter evaluation(s)
-#> fitted in 1.02 s, DID NOT CONVERGE
+#> fitted in 1.16 s, DID NOT CONVERGE
 #>   the parameters it reached:
 #>   mu         -1.049 to 0.9735
 #>   sigma      0.2865
