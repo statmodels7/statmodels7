@@ -107,6 +107,8 @@ exported, and none is needed to use the package.
   : The Specification of a Model, Before It Is Fitted
 - [`StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md)
   : A Summary of a Fitted Model
+- [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
+  : Does a Term Supply Its Third Derivative?
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
@@ -159,6 +161,8 @@ exported, and none is needed to use the package.
   : The Name of a Fourth-Derivative Component
 - [`deriv3_key()`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
   : The Name of a Third-Derivative Component
+- [`deriv4_key()`](https://statmodels7.github.io/statmodels7/reference/deriv4_key.md)
+  : The Name of a Fourth-Derivative Component
 - [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
@@ -166,6 +170,8 @@ exported, and none is needed to use the package.
   : Is a Design Sparse, and the Zero Matrix to Accumulate It Into
 - [`diagonal_sqrt()`](https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.md)
   : The Factor of a Diagonal Penalty
+- [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md)
+  : The Model's Derivative Pieces for a Filter's Recursion
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
@@ -217,6 +223,8 @@ exported, and none is needed to use the package.
   : The Dimensionless Reading of the Stopping Rule
 - [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   : Solve One Weighted Least Squares Step
+- [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
+  : The Rows of the Joint Predictor Derivative
 - [`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
   : Which Hyperparameters Set the Size of the Kink
 - [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md)
@@ -407,6 +415,8 @@ exported, and none is needed to use the package.
   : Starting Coefficients
 - [`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
   : Which Terms Rewrite the Likelihood
+- [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
+  : The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 - [`statmod_structural_par()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.md)
   : The Structural Terms' Estimated Parameters
 - [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
@@ -432,6 +442,12 @@ exported, and none is needed to use the package.
   : The Body of the Attach Message
 - [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
   : The Score and Curvature a Filter Is Driven By
+- [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
+  : The Two Pieces of the Chain Term That Read the Direction
+- [`structural_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
+  : What the Joint Chain Term Needs Before a Direction Is Known
+- [`structural_joint_basis()`](https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.md)
+  : The Subspace a Marginal Criterion Integrates Over, Jointly
 - [`structural_kind()`](https://statmodels7.github.io/statmodels7/reference/structural_kind.md)
   : Which Shape of the Structural Contract a Term Implements
 - [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)

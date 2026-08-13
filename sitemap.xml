@@ -12,6 +12,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bind_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_predictors.html</loc></url>
@@ -39,8 +40,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d4_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv3_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/deriv4_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_sparse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/draw_coefficients.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
@@ -68,6 +71,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solve.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/joint_design_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_hypers.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_solve.html</loc></url>
@@ -172,6 +176,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_spec.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.html</loc></url>
@@ -188,6 +193,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_update.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_callbacks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalized.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.html</loc></url>
