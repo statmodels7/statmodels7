@@ -85,8 +85,10 @@ test_that("the two are estimated apart and counted together", {
   expect_true(all(paste0(tn, c("::lo", "::hi")) %in% names(h)))
   # the half that carries no signal is shrunk harder, which is the whole
   # point of giving the two halves a hyperparameter each
-  expect_lt(h[[paste0(tn, "::hi")]][["sigma"]],
-            h[[paste0(tn, "::lo")]][["sigma"]])
+  # the block with signal is shrunk LESS, which on the precision scale is
+  # a smaller lambda
+  expect_lt(h[[paste0(tn, "::lo")]][["lambda"]],
+            h[[paste0(tn, "::hi")]][["lambda"]])
 
   # one row per term, and the count is between the null space and the rank
   e <- fit@edf
@@ -135,7 +137,7 @@ test_that("the summary shows a hyperparameter per penalty, named for it", {
   nms <- blk[[1L]]$table[[1L]]
   # two hyperparameters in one block are not the same number and cannot
   # appear under the same name
-  expect_true(all(c("lo.sigma", "hi.sigma") %in% nms))
+  expect_true(all(c("lo.lambda", "hi.lambda") %in% nms))
   expect_output(print(sm), "twopen")
 })
 

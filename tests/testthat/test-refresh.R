@@ -149,7 +149,7 @@ test_that("a break-point term composes with a penalized one", {
                tolerance = 0.3)
   # the hyperparameter of the ridge is still estimated, and the term with
   # the signal is not shrunk away
-  expect_true(is.finite(fit@hyper$mu[["ridge(~z1 + z2)"]][["sigma"]]))
+  expect_true(is.finite(fit@hyper$mu[["ridge(~z1 + z2)"]][["lambda"]]))
   des <- statmod_design(fit@spec)
   cols <- des$mu$blocks[["ridge(~z1 + z2)"]]
   z1 <- fit@coefficients$mu[cols][grep("z1", des$mu$coef_names[cols])]

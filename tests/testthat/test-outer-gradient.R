@@ -326,8 +326,8 @@ test_that("an outer step the search takes back moves nothing", {
                   outer_optimizer = optimizers7::nelder_mead())
   expect_true(fast@converged)
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
-  expect_equal(fast@hyper$mu[[1L]][["sigma"]],
-               slow@hyper$mu[[1L]][["sigma"]], tolerance = 1e-3)
+  expect_equal(fast@hyper$mu[[1L]][["lambda"]],
+               slow@hyper$mu[[1L]][["lambda"]], tolerance = 1e-3)
   expect_lt(nrow(fast@history$outer), nrow(slow@history$outer))
 })
 

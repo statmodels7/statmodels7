@@ -251,7 +251,7 @@ test_that("the path carries the previous kink onto the blocks", {
                               hy0)$sparse[[1L]]$prev_kink, 1e-300)
   spec2 <- statmod_spec(y ~ ridge(x), distributions7::gaussian1_distrib(), dc)
   pen <- modelterms7::term_penalty(spec2@terms$mu[["ridge(x)"]])
-  expect_equal(kink_scale(pen, list(sigma = 1)), 0)
+  expect_equal(kink_scale(pen, list(lambda = 1)), 0)
 })
 
 test_that("screening along a path does not change where the path lands", {

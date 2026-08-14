@@ -334,7 +334,7 @@ test_that("a held hyperparameter travels through a subformula", {
   dd2 <- data.frame(x = stats::runif(n2, 0, 10),
                     id = factor(rep(1:5, each = n2 / 5)))
   dd2$y <- 1 + 0.5 * dd2$x + stats::rnorm(n2, sd = 0.4)
-  fit <- statmod(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ id, sigma = 0.7),
+  fit <- statmod(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ id, lambda = 0.7),
                         start = list(a = 1, r = 0.2)),
                  distributions7::gaussian1_distrib(), dd2)
   th <- unlist(fit@hyper$mu, use.names = TRUE)

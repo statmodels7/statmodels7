@@ -24,7 +24,7 @@ test_that("the size of the kink is read from the penalty", {
                           c(lambda = 2.5, alpha = 0.4)), 1, tolerance = 1e-7)
   # a penalty with no kink has none to measure
   expect_equal(kink_scale(penalties7::ridge_penalty(n_coef = 5L),
-                          c(sigma = 1)), 0)
+                          c(lambda = 1)), 0)
 })
 
 test_that("only the hyperparameters that set the kink are swept", {

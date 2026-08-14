@@ -778,8 +778,10 @@ test_that("the criterion prefers shrinkage where the groups do not differ", {
   obj0 <- statmod_objective(spec, hyper, design, FALSE, "bartlett")
   beta <- statmod_start(spec, design, obj0, NULL)
 
-  tight <- panel_at(spec, design, blocks, hyper, beta, 0.02, reml())
-  loose <- panel_at(spec, design, blocks, hyper, beta, 2, reml())
+  # the ridge is written by its precision, so a tight prior is a LARGE
+  # value and a loose one a small one
+  tight <- panel_at(spec, design, blocks, hyper, beta, 2500, reml())
+  loose <- panel_at(spec, design, blocks, hyper, beta, 0.25, reml())
   expect_gt(tight$m$value, loose$m$value)
   # and the penalty is doing the shrinking, not the criterion alone
   expect_lt(max(abs(tight$dev)), max(abs(loose$dev)))
