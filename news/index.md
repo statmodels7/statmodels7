@@ -1,5 +1,128 @@
 # Changelog
 
+## statmodels7 0.43.0
+
+- A hyperparameter the readable block does not DESCRIBE keeps its own
+  row. The quantities of a multivariate Student t prior are the standard
+  deviations and the correlations of its scale matrix, and its degrees
+  of freedom are none of those, so replacing the coordinate rows
+  wholesale dropped `nu` from the summary. The question is put to the
+  Jacobian – a column that is zero throughout is a coordinate no
+  quantity depends on – so a family that declares more later is covered
+  without an edit.
+
+- Measured across effect distributions that carry a shape: `skewnormal1`
+  reports `sigma` and `alpha` with standard errors and intervals,
+  `student_t1` reports `sigma` and `nu`, and a log-transformed gamma
+  reports the variance of the gamma underneath at 0.2202 (se 0.0396,
+  interval 0.155 to 0.313) against the 1/a = 0.25 the effects were drawn
+  from. Where an interval is absent the cause is the point and not a
+  missing derivative: a shape escaping towards a limit leaves an outer
+  curvature of the wrong sign, and no interval follows from it.
+
+## statmodels7 0.42.0
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) reports a
+  correlated random effect by the quantities it is about. Where a
+  penalty answers
+  [`penalties7::penalty_readable()`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html)
+  the coordinate rows are replaced by the standard deviations and
+  correlations of the effects, with a standard error from the delta
+  method – composing the penalty’s Jacobian with the link’s, the
+  variance matrix being on the free scale the criterion was maximized on
+  – and each interval built on the scale the quantity declares and
+  mapped back: log for a standard deviation, Fisher’s z for a
+  correlation. A standard deviation therefore cannot be given a negative
+  lower end and a correlation cannot be given one that leaves (-1, 1),
+  which is the rule every other interval in the toolkit follows. No test
+  is printed, the null a z would report on being that the quantity is
+  zero, which for a standard deviation is the edge of its range.
+
+- Measured against `lme4` on random slopes over 40 groups, the effects’
+  standard deviations and correlation are (1.2370, 0.4820, -0.1399)
+  against (1.2395, 0.4898, -0.1373).
+
+## statmodels7 0.41.0
+
+- Nothing in the fitting layer changed: a random effect whose prior is
+  read blockwise is one penalty entry like any other, and one per
+  within-group column is the enumeration this layer has run on since
+  0.12.0. What changed is what a fit reports – the hyperparameter of a
+  gaussian random effect is now the standard deviation of the effects
+  rather than a precision, so the tests that constructed or interpreted
+  its value were turned round with it.
+
+- Measured against `lme4` on a random intercept over 40 groups: the
+  fixed effects agree to 1.3e-05 and the standard deviation of the
+  effects is 1.14197 against 1.143856. With random slopes the fixed
+  effects agree to 1.0e-03 and the effects’ standard deviations and
+  correlation are (1.239, 0.568, 0.448) against (1.242, 0.575, 0.442).
+
+## statmodels7 0.40.0
+
+- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  take `search`. A term carrying several hyperparameters with a kink has
+  every combination of them visited under `"grid"`, the default, and one
+  swept at a time under `"cyclic"`. Between two terms the search
+  alternates either way, so `y ~ lasso(X) + enet(R)` costs the two
+  blocks added and not multiplied, and two elastic nets in one formula
+  are 100 + 100 points rather than 10^4.
+
+- The product is the default because a cyclic sweep traverses a cross
+  through the point in hand and can stop where each coordinate is
+  separately best without being jointly so. It costs
+  `n_lambda * n_alpha` fits against `n_lambda + n_alpha` per pass; with
+  three or more estimated it grows exponentially, which is what
+  `"cyclic"` is for.
+
+- The grid is not a rectangle, and each axis is built at the settings of
+  the axes outside it rather than fixed in advance. For the elastic net
+  the kink is `lambda*alpha`, so every alpha carries its own lambda axis
+  descending from its own `lambda_max = kink/alpha`; for SCAD and MCP
+  the shape leaves the kink alone, so `lambda_max` is one number
+  whatever the shape and those two axes really are a rectangle. Both
+  follow from carrying the size of the kink back onto the hyperparameter
+  where it stands, and a test pins the second, which is the controproof
+  against writing the elastic net’s relation for a family that does not
+  obey it.
+
+- A hyperparameter a term wrote out as a vector is visited as it stands.
+  The value emptying the block does not cap it and `min_ratio` does not
+  extend it, both of those being ways to build a grid, and the order it
+  is walked in is the penalty’s – from the emptiest fit towards the
+  fullest – so the warm starts run as they do on a built grid.
+
+- A shape parameter is swept above the smallest value at which the block
+  can be FITTED. SCAD’s proximal operator needs `t < a - 1` and MCP’s
+  `t < gamma`, tightened to `t*d^2` under standardization’s diagonal
+  map, and `t = 1/sum(w x^2)` is a property of the data: measured, a
+  standardized penalty on a column of spread 20 needs `a > 3` where
+  SCAD’s own bound is 2, and a Poisson block whose fitted means are near
+  1e-3 needs `a > 11`. The limit is asked of the penalty and bisected
+  rather than written out, so neither constant appears in the path.
+
+- The size of the kink is inverted in closed form. Measured over four
+  decades, it is exactly a power of each hyperparameter – one for the
+  lasso and for the elastic net in both of its own, minus one for a
+  Laplace prior written by its scale, zero for the shapes of SCAD and
+  MCP – with a spread of at most 5.6e-16, so the exponent is read once
+  per grid and every value follows. The relation is measured and then
+  checked at the values it produced, and a penalty that does not obey
+  one falls back to bracketing. Measured, a bracketing solve cost 4.18
+  ms against a fit’s 62.5 ms, so a path of twenty-five points spent 6.7
+  per cent of itself locating the values it would visit.
+
+- A pass that would visit the points just scored is not run. The top of
+  the path is refreshed between passes because the rest of the model
+  moves, and where it has not the grid is the one already in hand.
+
+- `history$outer` gains `setting`, the rest of the combination each
+  point belongs to. One row is still one point, and `name` and `value`
+  still carry the axis the path descends.
+
 ## statmodels7 0.39.0
 
 - The top of a path is read again at every sweep. It is the size of the

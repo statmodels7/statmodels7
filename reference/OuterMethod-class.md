@@ -18,6 +18,7 @@ OuterMethod(
   min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
+  search = character(0),
   folds = integer(0)
 )
 ```
@@ -53,6 +54,10 @@ OuterMethod(
 - rule:
 
   `"min"` or `"1se"`.
+
+- search:
+
+  `"grid"` or `"cyclic"`, over a term's own hyperparameters.
 
 - folds:
 

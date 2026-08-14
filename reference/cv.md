@@ -11,7 +11,8 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04
+  min_ratio = 1e-04,
+  search = c("grid", "cyclic")
 )
 ```
 
@@ -39,6 +40,12 @@ cv(
 
   The smallest kink the path reaches, as a fraction of the one that
   empties the block.
+
+- search:
+
+  How a term's own hyperparameters are covered when it has several with
+  a kink: `"grid"`, the default, takes every combination of them, and
+  `"cyclic"` sweeps one at a time holding the others.
 
 ## Value
 
@@ -73,20 +80,49 @@ in the size of the kink, from the value that leaves the block empty down
 to `min_ratio` of it, and every fit starts from the previous one's
 coefficients.
 
-**Which hyperparameters.** Those whose value sets the size of the kink,
-read from the penalty by probing the subdifferential rather than taken
-from a list of families: \\\lambda\\ for the lasso, SCAD and MCP, and
-the elastic net's \\\lambda\\ with \\\alpha\\ held, as glmnet holds it
-and ncvreg holds \\\gamma\\. Name others in `over` to sweep them too.
+**Which hyperparameters** is the TERM's answer: every one of its
+penalty's that the constructor did not hold at a number. What the
+criterion decides is how they are covered.
 
-**The cost** is `nfolds * n_values` fits per hyperparameter. The warm
-starts are worth 1.8 times, and building each fold's design once rather
-than once per point another 4 per cent, but what remains is the proximal
-iteration: measured at 200 observations and 20 columns, 0.88 seconds a
-fit, against `cv.glmnet`'s 0.03 seconds for its whole path of 100 values
-on five folds. That distance is the reason `n_values` is 25 here and 100
-there, and closing it needs the compiled coordinate descent that a
-separable penalty on a linear predictor admits.
+**A product within a term, an alternation between terms.** With
+`search = "grid"`, the default, a term carrying several kinked
+hyperparameters has every combination of them visited; with `"cyclic"`,
+one is swept at a time with the others held, and the passes repeat.
+Between two terms the search alternates whichever is chosen, so
+`y ~ lasso(X) + enet(R)` costs the two blocks added and not multiplied.
+
+The product is the default because the cyclic sweep traverses a cross
+through the point in hand and can stop where each coordinate is
+separately best without being jointly so. Its cost is the product of the
+grids where the cyclic sweep's is their sum, which at two
+hyperparameters is `n_lambda * n_alpha` fits against
+`n_lambda + n_alpha` per pass; with three or more estimated it grows
+exponentially, and `"cyclic"` is there for that.
+
+`n_values` is the length of the path over the SIZE OF THE KINK, which
+spans four decades at the default `min_ratio`. An axis beside it spans
+one bounded interval and takes a fifth as many points unless the term
+says otherwise, so the shipped product is 25 by 5 rather than 25 by 25.
+
+**The grid is not a rectangle**, and for two different reasons. The
+elastic net's kink is \\\lambda\alpha\\, so the value emptying the block
+is \\\lambda\_{\max} = \kappa/\alpha\\ and every \\\alpha\\ carries its
+own \\\lambda\\ axis, descending from its own top. The shapes of SCAD
+and MCP leave the kink alone, so there \\\lambda\_{\max}\\ is one number
+whatever the shape and the two axes really are a rectangle. Each axis is
+built at the settings of the axes outside it, which covers both without
+a rule about families.
+
+**The cost** is `nfolds` fits per point of the path, and the path is
+`n_values` points for a term with one kinked hyperparameter and the
+product of its axes for a term with several. The warm starts are worth
+1.8 times, and building each fold's design once rather than once per
+point another 4 per cent, but what remains is the proximal iteration:
+measured at 200 observations and 20 columns, 0.88 seconds a fit, against
+`cv.glmnet`'s 0.03 seconds for its whole path of 100 values on five
+folds. That distance is the reason `n_values` is 25 here and 100 there,
+and closing it needs the compiled coordinate descent that a separable
+penalty on a linear predictor admits.
 
 ## References
 
@@ -129,6 +165,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> fitted in 959 ms, converged
+#> fitted in 1.13 s, converged
 #> 1 pass(es) over 2 block(s)
 ```

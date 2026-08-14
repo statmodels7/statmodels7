@@ -7,7 +7,16 @@ its standard error across folds.
 ## Usage
 
 ``` r
-cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
+cv_curve(
+  spec,
+  data,
+  weights,
+  offsets,
+  inner_optimizer,
+  hypers,
+  folds,
+  run = NULL
+)
 ```
 
 ## Arguments
@@ -38,6 +47,12 @@ cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
 - folds:
 
   A fold number per observation.
+
+- run:
+
+  Which combination of the outer axes each point belongs to. The warm
+  start begins again at the head of each, the kink jumping back up
+  there. `NULL` treats the whole list as one run.
 
 ## Value
 

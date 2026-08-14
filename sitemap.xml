@@ -72,7 +72,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_design_rows.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/kink_by_power.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_hypers.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/kink_power.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.html</loc></url>
@@ -92,10 +94,13 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_bounded.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_by_kink.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_forced.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_grid.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_n_other.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_null_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_pick.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_rows.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_steps.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_values.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_logdet.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_repair.html</loc></url>
@@ -111,6 +116,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.start_strategy.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print_block.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/readable_hyper_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_incompatible.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_unfittable.html</loc></url>
@@ -118,6 +124,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/search_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/seg_grid_start.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/shape_floor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
@@ -195,6 +202,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_terms.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_theta_shifted.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_unit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_values.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7-package.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_attach.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.html</loc></url>

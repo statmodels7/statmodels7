@@ -225,8 +225,12 @@ exported, and none is needed to use the package.
   : Solve One Weighted Least Squares Step
 - [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
   : The Rows of the Joint Predictor Derivative
+- [`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
+  : Invert the Size of the Kink Through a Power Law
 - [`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
   : Which Hyperparameters Set the Size of the Kink
+- [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
+  : How the Size of the Kink Scales With a Hyperparameter
 - [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md)
   : The Size of a Penalty's Kink
 - [`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
@@ -267,14 +271,20 @@ exported, and none is needed to use the package.
   : Is a Hyperparameter Bounded Above?
 - [`path_by_kink()`](https://statmodels7.github.io/statmodels7/reference/path_by_kink.md)
   : Is a Hyperparameter Swept by the Size of Its Kink?
+- [`path_forced()`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)
+  : The Values a Caller Wrote Out
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
   : The Values a Path Visits Over a Bounded Hyperparameter
+- [`path_n_other()`](https://statmodels7.github.io/statmodels7/reference/path_n_other.md)
+  : How Many Points an Axis Beside the Path Gets
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
   : The Largest Score a Kinked Block Has to Beat
 - [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)
   : Choose a Point of the Path
 - [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)
   : Which Hyperparameters a Path Has to Select
+- [`path_steps()`](https://statmodels7.github.io/statmodels7/reference/path_steps.md)
+  : The Step a Coordinate Descent Would Take on a Block
 - [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
   : The Values a Path Visits
 - [`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
@@ -305,6 +315,8 @@ exported, and none is needed to use the package.
   : Print a Starting-Value Strategy
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
   : Print One Block of a Summary
+- [`readable_hyper_rows()`](https://statmodels7.github.io/statmodels7/reference/readable_hyper_rows.md)
+  : The Quantities a Penalty's Hyperparameters Are About
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
   : Does a Term Recompute Its Own Block?
 - [`reject_incompatible()`](https://statmodels7.github.io/statmodels7/reference/reject_incompatible.md)
@@ -315,6 +327,8 @@ exported, and none is needed to use the package.
   : Which Coefficients a Search Should Cover
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   : Choose a Break-Point Term's Starting Positions on a Grid
+- [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
+  : The Smallest Admissible Value of a Shape Parameter
 - [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
   : A Term Key Shortened for Display
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
@@ -453,6 +467,8 @@ exported, and none is needed to use the package.
   : The Parameters Under One Regime
 - [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
   : One Penalized Unit, by Parameter and Key
+- [`statmod_values()`](https://statmodels7.github.io/statmodels7/reference/statmod_values.md)
+  : The Values a Term Wrote Out for One Hyperparameter
 - [`statmodels7`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   [`statmodels7-package`](https://statmodels7.github.io/statmodels7/reference/statmodels7-package.md)
   : statmodels7: The S7 Toolkit for Statistical Modeling

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.39.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.43.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_grid</span><span class="op">(</span><span class="va">pen</span>, <span class="va">name</span>, n_values <span class="op">=</span> <span class="fl">25L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_grid</span><span class="op">(</span><span class="va">pen</span>, <span class="va">theta</span>, <span class="va">name</span>, n_values <span class="op">=</span> <span class="fl">25L</span>, steps <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -49,12 +49,20 @@
 <dd><p>A <span class="pkg">penalties7</span> penalty.</p></dd>
 
 
+<dt id="arg-theta">theta<a class="anchor" aria-label="anchor" href="#arg-theta"></a></dt>
+<dd><p>The hyperparameters in force.</p></dd>
+
+
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Which hyperparameter the path varies.</p></dd>
 
 
 <dt id="arg-n-values">n_values<a class="anchor" aria-label="anchor" href="#arg-n-values"></a></dt>
 <dd><p>How many points.</p></dd>
+
+
+<dt id="arg-steps">steps<a class="anchor" aria-label="anchor" href="#arg-steps"></a></dt>
+<dd><p>What <code><a href="path_steps.html">path_steps</a></code> returned, or <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -74,10 +82,19 @@ at a time, the kink still moves through \(\lambda\).</p>
 <p>The endpoints are excluded because the bounds are open: the elastic net at
 \(\alpha = 0\) has no kink at all, and the path would be scoring a
 penalty of another kind.</p>
+<p>A shape parameter is swept above the smallest value at which the block can
+be FITTED, which <code><a href="shape_floor.html">shape_floor</a></code> derives from the proximal
+condition at the steps the block's coordinate descent will take, rather
+than above the constant the penalty is defined over. The two coincide on an
+ordinary well-conditioned block and differ where the steps are long: with a
+standardized penalty on a column of spread 20 the floor is 3 where SCAD's
+own bound is 2, so a quarter of the old grid named shapes no fit could
+reach.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="path_values.html">path_values</a></code>, <code><a href="path_bounded.html">path_bounded</a></code></p></div>
+    <div class="dont-index"><p><code><a href="path_values.html">path_values</a></code>, <code><a href="path_bounded.html">path_bounded</a></code>,
+<code><a href="shape_floor.html">shape_floor</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

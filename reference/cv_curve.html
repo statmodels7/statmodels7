@@ -11,7 +11,7 @@ standard error across folds."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.39.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.43.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,16 @@ standard error across folds.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cv_curve</span><span class="op">(</span><span class="va">spec</span>, <span class="va">data</span>, <span class="va">weights</span>, <span class="va">offsets</span>, <span class="va">inner_optimizer</span>, <span class="va">hypers</span>, <span class="va">folds</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cv_curve</span><span class="op">(</span></span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">data</span>,</span>
+<span>  <span class="va">weights</span>,</span>
+<span>  <span class="va">offsets</span>,</span>
+<span>  <span class="va">inner_optimizer</span>,</span>
+<span>  <span class="va">hypers</span>,</span>
+<span>  <span class="va">folds</span>,</span>
+<span>  run <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,6 +82,12 @@ standard error across folds.</p>
 
 <dt id="arg-folds">folds<a class="anchor" aria-label="anchor" href="#arg-folds"></a></dt>
 <dd><p>A fold number per observation.</p></dd>
+
+
+<dt id="arg-run">run<a class="anchor" aria-label="anchor" href="#arg-run"></a></dt>
+<dd><p>Which combination of the outer axes each point belongs to. The
+warm start begins again at the head of each, the kink jumping back up
+there. <code>NULL</code> treats the whole list as one run.</p></dd>
 
 </dl></div>
     <div class="section level2">

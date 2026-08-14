@@ -6,7 +6,7 @@ interval.
 ## Usage
 
 ``` r
-path_grid(pen, name, n_values = 25L)
+path_grid(pen, theta, name, n_values = 25L, steps = NULL)
 ```
 
 ## Arguments
@@ -15,6 +15,10 @@ path_grid(pen, name, n_values = 25L)
 
   A penalties7 penalty.
 
+- theta:
+
+  The hyperparameters in force.
+
 - name:
 
   Which hyperparameter the path varies.
@@ -22,6 +26,12 @@ path_grid(pen, name, n_values = 25L)
 - n_values:
 
   How many points.
+
+- steps:
+
+  What
+  [`path_steps`](https://statmodels7.github.io/statmodels7/reference/path_steps.md)
+  returned, or `NULL`.
 
 ## Value
 
@@ -43,7 +53,18 @@ The endpoints are excluded because the bounds are open: the elastic net
 at \\\alpha = 0\\ has no kink at all, and the path would be scoring a
 penalty of another kind.
 
+A shape parameter is swept above the smallest value at which the block
+can be FITTED, which
+[`shape_floor`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
+derives from the proximal condition at the steps the block's coordinate
+descent will take, rather than above the constant the penalty is defined
+over. The two coincide on an ordinary well-conditioned block and differ
+where the steps are long: with a standardized penalty on a column of
+spread 20 the floor is 3 where SCAD's own bound is 2, so a quarter of
+the old grid named shapes no fit could reach.
+
 ## See also
 
 [`path_values`](https://statmodels7.github.io/statmodels7/reference/path_values.md),
-[`path_bounded`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md)
+[`path_bounded`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md),
+[`shape_floor`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)

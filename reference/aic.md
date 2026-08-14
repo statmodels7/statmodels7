@@ -6,9 +6,9 @@ prediction error rather than by a marginal likelihood.
 ## Usage
 
 ``` r
-aic(k = 2, hessian = c("observed", "expected"))
+aic(k = 2, hessian = c("observed", "expected"), search = c("grid", "cyclic"))
 
-bic(hessian = c("observed", "expected"))
+bic(hessian = c("observed", "expected"), search = c("grid", "cyclic"))
 ```
 
 ## Arguments
@@ -22,6 +22,12 @@ bic(hessian = c("observed", "expected"))
 
   Which information is used, `"expected"` or `"observed"`. The exact
   derivatives need the observed one.
+
+- search:
+
+  How a term's own hyperparameters are covered when it has several with
+  a kink: `"grid"`, the default, takes every combination of them, and
+  `"cyclic"` sweeps one at a time holding the others.
 
 ## Value
 
@@ -64,6 +70,12 @@ the fitted mean is a different and well-defined object; it needs the
 derivative of that mean in the parameters, which is not one of
 distributions7's generics.
 
+**Over a penalty with a kink** these criteria sweep a path rather than
+differentiate, and `search` says how a term carrying more than one such
+hyperparameter is covered. See
+[`cv`](https://statmodels7.github.io/statmodels7/reference/cv.md) for
+what the two settings do and what each costs.
+
 ## References
 
 Wood, S. N. (2008). Fast stable direct fitting and smoothness selection
@@ -99,7 +111,7 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -33.778803    objective 44.595422
 #> AIC 87.385999 over 38 hyperparameter evaluation(s)
-#> fitted in 1.17 s, DID NOT CONVERGE
+#> fitted in 841 ms, DID NOT CONVERGE
 #>   the parameters it reached:
 #>   mu         -1.049 to 0.9735
 #>   sigma      0.2865
