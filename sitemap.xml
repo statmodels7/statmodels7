@@ -114,6 +114,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reml.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/search_coords.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/seg_grid_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
@@ -153,6 +154,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>

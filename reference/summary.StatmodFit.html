@@ -11,7 +11,7 @@ the information criteria and the qualifications the numbers carry."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.34.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,11 +117,17 @@ The ones set exactly to zero are counted, not listed.</p></dd>
 interpretable under a ridge, together with its hyperparameters.</p></dd>
 
 
-</dl><p><strong>A hyperparameter carries no standard error yet.</strong> It is held at the
-value it was given rather than estimated, so the row reports the value and
-marks it fixed; inventing an interval for a number nothing estimated would
-be worse than the empty column. Estimating them by an outer criterion is
-what fills those rows in.</p>
+</dl><p><strong>A hyperparameter is the first row of its block</strong>, since it governs
+every coefficient under it, and the cell where its standard error would be
+says what put the value there. One estimated by <code><a href="reml.html">reml()</a></code> or
+<code><a href="reml.html">ml()</a></code> maximizes a twice differentiable criterion, so it carries
+a standard error and an interval, both read on the free scale its link
+defines and mapped back (<code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov</a></code>). One chosen by
+<code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> or <code><a href="cv.html">cv()</a></code> over a kinked
+penalty is the argument of a minimum over a grid, so the row names the
+criterion and leaves the remaining columns empty: there is no curvature at
+such a point to read a standard error from. One the caller set is marked
+fixed.</p>
 <p><strong>What a Wald p-value means here depends on the row</strong>, and the summary
 says which is which rather than printing one column and leaving it at that.
 For an unpenalized coefficient it is the usual thing. For a coefficient in a
@@ -170,7 +176,7 @@ columns it has. The information criteria are built on that count.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.844138    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.688    cBIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 39 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 32 ms, converged</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

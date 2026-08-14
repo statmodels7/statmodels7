@@ -1,5 +1,93 @@
 # Changelog
 
+## statmodels7 0.34.0
+
+- A hyperparameter chosen by `sparse_criterion` is reported as estimated
+  by the criterion that chose it.
+  [`summary()`](https://rdrr.io/r/base/summary.html) asked
+  `methods$outer`, which carries the marginal criterion alone, so a
+  lambda a path had selected was printed `(fixed)` beside a note saying
+  it was held at the value it was given – of a number the caller had
+  never seen. The fit now records which criterion swept the kinked
+  penalties and exactly which hyperparameters it reached, and the cell
+  says `(bic)`, `(cv)` or `(fixed)` accordingly.
+
+- The hyperparameters come first in every penalized block. They govern
+  every coefficient under them, and a table opening with a hundred
+  selected coefficients buried the one number that produced the
+  selection.
+
+- A hyperparameter estimated by
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  carries a standard error and an interval. It maximizes a criterion
+  that is twice differentiable in it, so its variance is the inverse of
+  the negative of that criterion’s Hessian at the point reached, which
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  already computed exactly;
+  [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  returns it. The interval is built on the free scale its link defines
+  and mapped back, as every other interval in the toolkit is, so a
+  positive hyperparameter keeps a positive lower end. No test is printed
+  beside it: the null a `z` would report on is that the hyperparameter
+  is zero, which is the edge of its range rather than an interior
+  hypothesis. Validated against the criterion itself, refitted at each
+  probe and differenced twice on the free scale.
+
+  A hyperparameter chosen by a path –
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  over a kinked penalty – still carries none, and that is a refusal
+  rather than an omission: it is the argument of a minimum over a grid,
+  not the root of a derivative, so there is no curvature to read and its
+  uncertainty is a resampling question.
+
+- A path that cannot score a single point signals an error instead of
+  keeping the hyperparameter it came in with.
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  refits on each fold, and a term built from a matrix that lives in the
+  calling environment rather than in `data` cannot be re-evaluated on a
+  subset of it, so every fold failed, every deviance came back `NA`,
+  nothing was selected, and the fit returned the DEFAULT hyperparameter
+  reporting success – a lasso at `lambda = 1` selecting every column.
+  The error carries the message the refit failed with. A marginal
+  criterion reaching a kinked row is unaffected: it scores nothing by
+  construction, and the hyperparameter keeping its given value is the
+  documented answer there.
+
+## statmodels7 0.33.0
+
+- A break-point term has a section of its own in
+  [`summary()`](https://rdrr.io/r/base/summary.html), beside the
+  smooths, the random effects and the penalized blocks, and it reports
+  the quantities of the model rather than the coefficients of the
+  working block: the linear effect, the changes, and the break-points
+  under the name `psi`. The standard error of a position comes from
+  [`modelterms7::term_readable()`](https://statmodels7.github.io/modelterms7/reference/term_readable.html)’s
+  Jacobian by the delta method.
+
+  A break-point gets an estimate, a standard error and an interval, and
+  no test. The null a `z` of estimate over standard error reports on is
+  that the position is zero, which is not a hypothesis anyone holds; the
+  one a reader wants is that there is no break-point at all, and under
+  it the position is a nuisance parameter that vanishes, so the
+  classical p-value is wrong by a factor of three to five. `segmented`
+  prints the estimate and the standard error alone for the same reason.
+
+- The default start asks each term where its own block begins, through
+  [`modelterms7::term_coef_start()`](https://statmodels7.github.io/modelterms7/reference/term_coef_start.html).
+  It used to put every coefficient at zero except an equation’s
+  intercept, and for a term that recomputes its block from its
+  coefficients zero is a singular point rather than a neutral one:
+  `y ~ jump(x, npsi = 3)` returned every coefficient exactly zero and
+  reported failure, the three break-points having collapsed onto one
+  clamped position. A term asking for zeros is left alone, so an
+  ordinary block is unchanged, and
+  [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md)
+  still means the origin.
+
 ## statmodels7 0.32.0
 
 - The exact gradient of the marginal criterion reaches a penalty over a

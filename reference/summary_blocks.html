@@ -9,7 +9,7 @@ parametric terms together, and one block per penalized term."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.34.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ parametric terms together, and one block per penalized term.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">p</span>, <span class="va">ci</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">p</span>, <span class="va">ci</span>, level <span class="op">=</span> <span class="fl">0.95</span>, V <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,6 +67,18 @@ parametric terms together, and one block per penalized term.</p>
 <dt id="arg-ci">ci<a class="anchor" aria-label="anchor" href="#arg-ci"></a></dt>
 <dd><p>The flat interval table, as <code><a href="confint.StatmodFit.html">confint.StatmodFit</a></code>
 returns it with the statistic and the p-value added.</p></dd>
+
+
+<dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
+<dd><p>The confidence level the intervals are built at.</p></dd>
+
+
+<dt id="arg-v">V<a class="anchor" aria-label="anchor" href="#arg-v"></a></dt>
+<dd><p>The variance matrix over the stacked coefficients, or
+<code>NULL</code>. It is needed only by a term reported through
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">term_readable</a></code>, whose quantities are
+functions of several coefficients at once and whose standard errors
+are therefore the delta method rather than a diagonal entry.</p></dd>
 
 </dl></div>
     <div class="section level2">

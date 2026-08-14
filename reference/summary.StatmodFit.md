@@ -91,11 +91,23 @@ quantities anybody reads. The blocks are
   its coefficients, which stay interpretable under a ridge, together
   with its hyperparameters.
 
-**A hyperparameter carries no standard error yet.** It is held at the
-value it was given rather than estimated, so the row reports the value
-and marks it fixed; inventing an interval for a number nothing estimated
-would be worse than the empty column. Estimating them by an outer
-criterion is what fills those rows in.
+**A hyperparameter is the first row of its block**, since it governs
+every coefficient under it, and the cell where its standard error would
+be says what put the value there. One estimated by
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+maximizes a twice differentiable criterion, so it carries a standard
+error and an interval, both read on the free scale its link defines and
+mapped back
+([`statmod_hyper_vcov`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)).
+One chosen by
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) over
+a kinked penalty is the argument of a minimum over a grid, so the row
+names the criterion and leaves the remaining columns empty: there is no
+curvature at such a point to read a standard error from. One the caller
+set is marked fixed.
 
 **What a Wald p-value means here depends on the row**, and the summary
 says which is which rather than printing one column and leaving it at
@@ -148,5 +160,5 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 39 ms, converged
+#> fitted in 32 ms, converged
 ```

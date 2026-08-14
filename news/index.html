@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.34.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,24 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.34.0" id="statmodels7-0340">statmodels7 0.34.0<a class="anchor" aria-label="anchor" href="#statmodels7-0340"></a></h2>
+<ul><li><p>A hyperparameter chosen by <code>sparse_criterion</code> is reported as estimated by the criterion that chose it. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> asked <code>methods$outer</code>, which carries the marginal criterion alone, so a lambda a path had selected was printed <code>(fixed)</code> beside a note saying it was held at the value it was given – of a number the caller had never seen. The fit now records which criterion swept the kinked penalties and exactly which hyperparameters it reached, and the cell says <code>(bic)</code>, <code>(cv)</code> or <code>(fixed)</code> accordingly.</p></li>
+<li><p>The hyperparameters come first in every penalized block. They govern every coefficient under them, and a table opening with a hundred selected coefficients buried the one number that produced the selection.</p></li>
+<li>
+<p>A hyperparameter estimated by <code><a href="../reference/reml.html">reml()</a></code> or <code><a href="../reference/reml.html">ml()</a></code> carries a standard error and an interval. It maximizes a criterion that is twice differentiable in it, so its variance is the inverse of the negative of that criterion’s Hessian at the point reached, which <code><a href="../reference/statmod_marginal_hess.html">statmod_marginal_hess()</a></code> already computed exactly; <code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> returns it. The interval is built on the free scale its link defines and mapped back, as every other interval in the toolkit is, so a positive hyperparameter keeps a positive lower end. No test is printed beside it: the null a <code>z</code> would report on is that the hyperparameter is zero, which is the edge of its range rather than an interior hypothesis. Validated against the criterion itself, refitted at each probe and differenced twice on the free scale.</p>
+<p>A hyperparameter chosen by a path – <code><a href="../reference/aic.html">aic()</a></code>, <code><a href="../reference/aic.html">bic()</a></code>, <code><a href="../reference/cv.html">cv()</a></code> over a kinked penalty – still carries none, and that is a refusal rather than an omission: it is the argument of a minimum over a grid, not the root of a derivative, so there is no curvature to read and its uncertainty is a resampling question.</p>
+</li>
+<li><p>A path that cannot score a single point signals an error instead of keeping the hyperparameter it came in with. <code><a href="../reference/cv.html">cv()</a></code> refits on each fold, and a term built from a matrix that lives in the calling environment rather than in <code>data</code> cannot be re-evaluated on a subset of it, so every fold failed, every deviance came back <code>NA</code>, nothing was selected, and the fit returned the DEFAULT hyperparameter reporting success – a lasso at <code>lambda = 1</code> selecting every column. The error carries the message the refit failed with. A marginal criterion reaching a kinked row is unaffected: it scores nothing by construction, and the hyperparameter keeping its given value is the documented answer there.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.33.0" id="statmodels7-0330">statmodels7 0.33.0<a class="anchor" aria-label="anchor" href="#statmodels7-0330"></a></h2>
+<ul><li>
+<p>A break-point term has a section of its own in <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, beside the smooths, the random effects and the penalized blocks, and it reports the quantities of the model rather than the coefficients of the working block: the linear effect, the changes, and the break-points under the name <code>psi</code>. The standard error of a position comes from <code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>’s Jacobian by the delta method.</p>
+<p>A break-point gets an estimate, a standard error and an interval, and no test. The null a <code>z</code> of estimate over standard error reports on is that the position is zero, which is not a hypothesis anyone holds; the one a reader wants is that there is no break-point at all, and under it the position is a nuisance parameter that vanishes, so the classical p-value is wrong by a factor of three to five. <code>segmented</code> prints the estimate and the standard error alone for the same reason.</p>
+</li>
+<li><p>The default start asks each term where its own block begins, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_coef_start.html" class="external-link">modelterms7::term_coef_start()</a></code>. It used to put every coefficient at zero except an equation’s intercept, and for a term that recomputes its block from its coefficients zero is a singular point rather than a neutral one: <code>y ~ jump(x, npsi = 3)</code> returned every coefficient exactly zero and reported failure, the three break-points having collapsed onto one clamped position. A term asking for zeros is left alone, so an ordinary block is unchanged, and <code><a href="../reference/start_origin.html">start_origin()</a></code> still means the origin.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.32.0" id="statmodels7-0320">statmodels7 0.32.0<a class="anchor" aria-label="anchor" href="#statmodels7-0320"></a></h2>
 <ul><li>

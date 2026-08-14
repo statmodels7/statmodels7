@@ -307,6 +307,8 @@ exported, and none is needed to use the package.
   : Reject a Term the Fitting Scheme Does Not Cover
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
+- [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
+  : Choose a Break-Point Term's Starting Positions on a Grid
 - [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
   : A Term Key Shortened for Display
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
@@ -369,6 +371,8 @@ exported, and none is needed to use the package.
   : Override the Starting Hyperparameters
 - [`statmod_hyper_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.md)
   : The Hyperparameters a Specification Starts From
+- [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  : The Variance of the Hyperparameters a Marginal Criterion Estimated
 - [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
   : The Information of the Weighted Log-Likelihood
 - [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
