@@ -287,3 +287,59 @@ test_that("the grid over a bounded hyperparameter excludes its endpoints", {
   expect_length(g, 6L)
   expect_true(all(g > 1))
 })
+
+test_that("the path visits as many values as the term asked for", {
+  set.seed(71)
+  n2 <- 120
+  Z <- matrix(stats::rbinom(n2 * 6, 1, 0.3), n2, 6)
+  colnames(Z) <- paste0("z", 1:6)
+  dg <- data.frame(y = as.numeric(Z %*% c(0, 0, 1.5, -1, 2, 0)) +
+                     stats::rnorm(n2))
+  dg$Z <- Z
+  n_of <- function(f) nrow(f@history$outer)
+
+  for (k in c(5L, 12L)) {
+    f <- suppressWarnings(statmod(y ~ lasso(Z, n_lambda = k),
+                                  distributions7::gaussian1_distrib(), dg,
+                                  sparse_criterion = bic()))
+    expect_identical(n_of(f), k)
+  }
+  # where the term says nothing the criterion's default stands
+  d <- suppressWarnings(statmod(y ~ lasso(Z),
+                                distributions7::gaussian1_distrib(), dg,
+                                sparse_criterion = bic()))
+  expect_identical(n_of(d), as.integer(bic()@n_values))
+
+  # and it is PER HYPERPARAMETER: the elastic net sweeps each cyclically
+  e <- suppressWarnings(statmod(y ~ enet(Z, n_lambda = 8, n_alpha = 4),
+                                distributions7::gaussian1_distrib(), dg,
+                                sparse_criterion = bic()))
+  tb <- table(e@history$outer$name)
+  expect_identical(unname(tb[["lambda"]] %% 8L), 0L)
+  expect_identical(unname(tb[["alpha"]] %% 4L), 0L)
+})
+
+test_that("the path reaches as far down as the term asked", {
+  set.seed(72)
+  n2 <- 120
+  Z <- matrix(stats::rbinom(n2 * 6, 1, 0.3), n2, 6)
+  colnames(Z) <- paste0("z", 1:6)
+  dm <- data.frame(y = as.numeric(Z %*% c(0, 0, 1.5, -1, 2, 0)) +
+                     stats::rnorm(n2))
+  dm$Z <- Z
+  ratio <- function(f) {
+    v <- f@history$outer$value
+    min(v) / max(v)
+  }
+  for (mr in c(1e-1, 1e-6)) {
+    f <- suppressWarnings(statmod(y ~ lasso(Z, n_lambda = 8, min_ratio = mr),
+                                  distributions7::gaussian1_distrib(), dm,
+                                  sparse_criterion = bic()))
+    expect_equal(ratio(f), mr, tolerance = 1e-8)
+  }
+  # the criterion's own depth stands where the term named none
+  d <- suppressWarnings(statmod(y ~ lasso(Z, n_lambda = 8),
+                                distributions7::gaussian1_distrib(), dm,
+                                sparse_criterion = bic()))
+  expect_equal(ratio(d), bic()@min_ratio, tolerance = 1e-8)
+})

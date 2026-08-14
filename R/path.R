@@ -718,12 +718,18 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # has no upper bound; everything else is swept over a grid of its own
       bounded <- !path_by_kink(b$penalty, cur[[row$parameter]][[row$term]],
                                row$name)
+      # HOW FINELY is the term's answer where it gave one: a block of four
+      # columns and one of four hundred want different grids, and the
+      # criterion applies to every term at once and cannot know which it is
+      # looking at. Where the term says nothing the criterion's default
+      # stands.
+      nv <- statmod_grid_size(spec, row, as.integer(method@n_values))
+      mr <- statmod_min_ratio(spec, row, method@min_ratio)
       vals <- if (bounded) {
-        path_grid(b$penalty, row$name, as.integer(method@n_values))
+        path_grid(b$penalty, row$name, nv)
       } else {
         path_values(b$penalty, cur[[row$parameter]][[row$term]],
-                    row$name, top[[i]], as.integer(method@n_values),
-                    method@min_ratio)
+                    row$name, top[[i]], nv, mr)
       }
       if (!length(vals)) next
       hys <- lapply(vals, function(v) hyper_set(cur, row, v))

@@ -288,9 +288,13 @@ statmod_penalty_keys <- function(spec) {
         out[[length(out) + 1L]] <- list(
           param = p, term = nm, key = statmod_entry_key(nm, ent, e),
           within = e$index, penalty = e$penalty,
-          # what the TERM holds: the entry carries it, so a penalty
-          # reached through a sub-term of a structural one carries it too
-          fixed = if (is.null(e$fixed)) list() else e$fixed)
+          # what the TERM holds and how finely it wants each swept: the
+          # entry carries both, so a penalty reached through a sub-term of
+          # a structural one carries them too
+          fixed = if (is.null(e$fixed)) list() else e$fixed,
+          n_values = if (is.null(e$n_values)) list() else e$n_values,
+          min_ratio = if (is.null(e$min_ratio)) numeric(0) else
+            as.numeric(e$min_ratio))
       }
     }
   }
@@ -386,4 +390,83 @@ statmod_unit <- function(spec, design, param, key) {
     if (identical(u$param, param) && identical(u$key, key)) return(u)
   }
   NULL
+}
+
+
+#' How Many Values a Path Visits for One Hyperparameter
+#'
+#' @description
+#' The grid size the TERM asked for, or the criterion's default where it
+#' asked for nothing.
+#'
+#' @details
+#' How finely a hyperparameter is swept is a property of the term for the
+#' same reason as whether it is swept at all: a penalized block of four
+#' columns and one of four hundred want different grids, and a criterion
+#' applies to every term of the model at once and cannot know which it is
+#' looking at. \code{\link[modelterms7]{term_grid}} is where a term says so,
+#' and the value travels with the penalty's entry, so one reached through a
+#' sub-term of a structural term carries it too.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param default The criterion's own number of values.
+#'
+#' @return A single integer.
+#'
+#' @seealso \code{\link{statmod_held}}, \code{\link{path_values}}
+#'
+#' @keywords internal
+statmod_grid_size <- function(spec, row, default) {
+  statmod_path_setting(spec, row, "n_values", default, row$name)
+}
+
+
+#' How Far Down the Path Reaches for One Term
+#'
+#' @description
+#' The depth the TERM asked for, or the criterion's default where it asked
+#' for nothing.
+#'
+#' @details
+#' One number per term rather than one per hyperparameter, because only the
+#' sweep by kink size uses it: a bounded hyperparameter is swept over its own
+#' interval and a shape that does not move the kink over a geometric grid
+#' above its lower bound.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param default The criterion's own ratio.
+#'
+#' @return A single number.
+#'
+#' @seealso \code{\link{statmod_grid_size}}, \code{\link{path_values}}
+#'
+#' @keywords internal
+statmod_min_ratio <- function(spec, row, default) {
+  statmod_path_setting(spec, row, "min_ratio", default, NULL)
+}
+
+
+#' One Setting of the Path, Read From the Term
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param field Which field of the penalty's entry to read.
+#' @param default What the criterion asks for.
+#' @param name The hyperparameter's name, or \code{NULL} where the setting
+#'   is one per term.
+#'
+#' @return A single number.
+#'
+#' @keywords internal
+statmod_path_setting <- function(spec, row, field, default, name = NULL) {
+  for (u in statmod_penalty_keys(spec)) {
+    if (!identical(u$param, row$parameter) ||
+        !identical(u$key, row$term)) next
+    v <- u[[field]]
+    n <- if (is.null(name)) v else v[[name]]
+    if (!is.null(n) && length(n) && is.finite(n)) return(n)
+  }
+  default
 }
