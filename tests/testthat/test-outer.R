@@ -123,10 +123,10 @@ test_that("ML puts less variance on a random effect than REML", {
   l <- statmod(y ~ x + random(~ 1 | g),
                distributions7::gaussian1_distrib(), dv, outer_criterion = ml())
   nm <- "random(~1 | g)"
-  # the effects' penalty carries the PRECISION, so the variance component
-  # a reader wants is 1/sqrt(lambda) 
-  sd_r <- 1 / sqrt(r@hyper$mu[[nm]][[1L]]) 
-  sd_l <- 1 / sqrt(l@hyper$mu[[nm]][[1L]])
+  # the effects are gaussian and the hyperparameter IS their standard
+  # deviation, so the variance component a reader wants needs no translation
+  sd_r <- r@hyper$mu[[nm]][["sigma"]]
+  sd_l <- l@hyper$mu[[nm]][["sigma"]]
 
   expect_lt(sd_l, sd_r)
   # both near the 0.8 they were drawn from

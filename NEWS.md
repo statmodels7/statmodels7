@@ -1,3 +1,56 @@
+# statmodels7 0.43.0
+
+* A hyperparameter the readable block does not DESCRIBE keeps its own row.
+  The quantities of a multivariate Student t prior are the standard
+  deviations and the correlations of its scale matrix, and its degrees of
+  freedom are none of those, so replacing the coordinate rows wholesale
+  dropped `nu` from the summary. The question is put to the Jacobian -- a
+  column that is zero throughout is a coordinate no quantity depends on --
+  so a family that declares more later is covered without an edit.
+
+* Measured across effect distributions that carry a shape: `skewnormal1`
+  reports `sigma` and `alpha` with standard errors and intervals,
+  `student_t1` reports `sigma` and `nu`, and a log-transformed gamma reports
+  the variance of the gamma underneath at 0.2202 (se 0.0396, interval
+  0.155 to 0.313) against the 1/a = 0.25 the effects were drawn from. Where
+  an interval is absent the cause is the point and not a missing derivative:
+  a shape escaping towards a limit leaves an outer curvature of the wrong
+  sign, and no interval follows from it.
+
+# statmodels7 0.42.0
+
+* `summary()` reports a correlated random effect by the quantities it is
+  about. Where a penalty answers `penalties7::penalty_readable()` the
+  coordinate rows are replaced by the standard deviations and correlations of
+  the effects, with a standard error from the delta method -- composing the
+  penalty's Jacobian with the link's, the variance matrix being on the free
+  scale the criterion was maximized on -- and each interval built on the scale
+  the quantity declares and mapped back: log for a standard deviation,
+  Fisher's z for a correlation. A standard deviation therefore cannot be given
+  a negative lower end and a correlation cannot be given one that leaves
+  (-1, 1), which is the rule every other interval in the toolkit follows.
+  No test is printed, the null a z would report on being that the quantity is
+  zero, which for a standard deviation is the edge of its range.
+
+* Measured against `lme4` on random slopes over 40 groups, the effects'
+  standard deviations and correlation are (1.2370, 0.4820, -0.1399) against
+  (1.2395, 0.4898, -0.1373).
+
+# statmodels7 0.41.0
+
+* Nothing in the fitting layer changed: a random effect whose prior is read
+  blockwise is one penalty entry like any other, and one per within-group
+  column is the enumeration this layer has run on since 0.12.0. What changed
+  is what a fit reports -- the hyperparameter of a gaussian random effect is
+  now the standard deviation of the effects rather than a precision, so the
+  tests that constructed or interpreted its value were turned round with it.
+
+* Measured against `lme4` on a random intercept over 40 groups: the fixed
+  effects agree to 1.3e-05 and the standard deviation of the effects is
+  1.14197 against 1.143856. With random slopes the fixed effects agree to
+  1.0e-03 and the effects' standard deviations and correlation are
+  (1.239, 0.568, 0.448) against (1.242, 0.575, 0.442).
+
 # statmodels7 0.40.0
 
 * `aic()`, `bic()` and `cv()` take `search`. A term carrying several

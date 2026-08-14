@@ -235,3 +235,140 @@ test_that("a fit whose information is singular says so rather than guessing", {
     vcov(statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim)),
     "not positive definite")
 })
+
+
+test_that("a correlated random effect reports variance components", {
+  # its hyperparameters are the free values of a matrix parameter, and nobody
+  # reads the logarithm of a Cholesky diagonal: what the prior is ABOUT is the
+  # standard deviations and the correlation of the effects
+  skip_on_cran()
+  set.seed(202)
+  m <- 40L
+  ni <- 12L
+  g <- factor(rep(seq_len(m), each = ni))
+  x <- stats::rnorm(m * ni)
+  sd1 <- 1.2
+  sd2 <- 0.6
+  b1 <- stats::rnorm(m, 0, sd1)
+  b2 <- stats::rnorm(m, 0, sd2)
+  dd <- data.frame(
+    y = 2 + 0.7 * x + b1[as.integer(g)] + b2[as.integer(g)] * x +
+      stats::rnorm(m * ni, 0, 0.8),
+    x = x, g = g)
+
+  fit <- statmod(y ~ x + random(~ x | g),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+  s <- summary(fit)
+  tb <- s@tables$mu[[2L]]$table
+  expect_identical(tb$name[1:3], c("sd_v1", "sd_v2", "cor_v1_v2"))
+
+  # the quantities, against the covariance the coordinates imply, computed
+  # apart from the summary
+  eta <- unlist(fit@hyper$mu[[1L]])
+  sig <- parameters7::param_value(
+    parameters7::log_cholesky(2, role = "covariance"), eta)
+  expect_equal(tb$estimate[1L], sqrt(sig[1, 1]), tolerance = 1e-8)
+  expect_equal(tb$estimate[2L], sqrt(sig[2, 2]), tolerance = 1e-8)
+  expect_equal(tb$estimate[3L], sig[1, 2] / sqrt(sig[1, 1] * sig[2, 2]),
+               tolerance = 1e-8)
+  # and near the truth they were drawn from
+  expect_gt(tb$estimate[1L], 0.8)
+  expect_lt(tb$estimate[1L], 1.7)
+  expect_gt(tb$estimate[2L], 0.3)
+  expect_lt(tb$estimate[2L], 1.0)
+
+  # each interval is built where the quantity ranges and mapped back, so a
+  # standard deviation cannot be given a negative lower end and a correlation
+  # cannot be given one that leaves (-1, 1)
+  expect_true(all(is.finite(tb$se[1:3])))
+  expect_gt(tb$lower[1L], 0)
+  expect_gt(tb$lower[2L], 0)
+  expect_gt(tb$lower[3L], -1)
+  expect_lt(tb$upper[3L], 1)
+  expect_true(all(tb$lower[1:3] < tb$estimate[1:3]))
+  expect_true(all(tb$upper[1:3] > tb$estimate[1:3]))
+  # no test is printed: the null a z would report on is that a standard
+  # deviation is zero, which is the edge of its range
+  expect_true(all(is.na(tb$statistic[1:3])))
+})
+
+
+test_that("a hyperparameter that IS its quantity is reported as it stands", {
+  # the one-column case has a standard deviation for a hyperparameter, so
+  # there is nothing to translate and the row keeps its own name
+  skip_on_cran()
+  set.seed(7)
+  g <- factor(rep(seq_len(20), each = 10))
+  x <- stats::rnorm(200)
+  u <- stats::rnorm(20, 0, 0.9)
+  dd <- data.frame(y = 1 + 2 * x + u[as.integer(g)] + stats::rnorm(200, 0, 0.5),
+                   x = x, g = g)
+  fit <- statmod(y ~ x + random(~ 1 | g),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+  tb <- summary(fit)@tables$mu[[2L]]$table
+  expect_identical(tb$name[1L], "sigma")
+  expect_equal(tb$estimate[1L], fit@hyper$mu[[1L]][["sigma"]])
+})
+
+
+test_that("a hyperparameter the readable block does not describe keeps its row", {
+  # a multivariate Student t is ABOUT the standard deviations and the
+  # correlations of its scale matrix, and its degrees of freedom are none of
+  # those: replacing the coordinate rows wholesale dropped nu from the summary
+  skip_on_cran()
+  set.seed(78)
+  m <- 40L
+  ni <- 12L
+  g <- factor(rep(seq_len(m), each = ni))
+  x <- stats::rnorm(m * ni)
+  b <- matrix(stats::rnorm(2 * m, 0, 0.9), ncol = 2L)
+  dd <- data.frame(
+    y = 1 + 0.8 * x + b[as.integer(g), 1L] + b[as.integer(g), 2L] * x +
+      stats::rnorm(m * ni, 0, 0.7), x = x, g = g)
+  mvt <- do.call(distributions7::fixed,
+                 list(distributions7::mvstudent_t_distrib(2),
+                      mu1 = 0, mu2 = 0))
+  fit <- statmod(y ~ x + random(~ x | g, distrib = mvt),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+  tb <- summary(fit)@tables$mu[[2L]]$table
+  expect_identical(tb$name[1:4],
+                   c("scale_sd_v1", "scale_sd_v2", "cor_v1_v2", "nu"))
+  expect_equal(tb$estimate[4L], fit@hyper$mu[[1L]][["nu"]])
+})
+
+
+test_that("a shape parameter is reported with a standard error and interval", {
+  # the question is whether EVERY estimated hyperparameter carries one, not
+  # only a scale: this prior is a log-transformed gamma, whose free parameter
+  # is the variance of the gamma underneath, and the effects are drawn from it
+  skip_on_cran()
+  set.seed(80)
+  m <- 60L
+  ni <- 12L
+  a <- 4
+  g <- factor(rep(seq_len(m), each = ni))
+  x <- stats::rnorm(m * ni)
+  u <- log(stats::rgamma(m, shape = a, rate = a))
+  dd <- data.frame(y = 1.5 + 0.8 * x + u[as.integer(g)] +
+                     stats::rnorm(m * ni, 0, 0.7), x = x, g = g)
+  # the mean is held at ONE, which is what centers the logarithm: the prior's
+  # own mean is digamma(a) - log(a), within sigma2/2 of zero
+  lg <- distributions7::fixed(
+    distributions7::transformation(distributions7::gamma2_distrib(),
+                                   distributions7::log_transform()), mu = 1)
+  fit <- statmod(y ~ x + random(~ 1 | g, distrib = lg),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+  tb <- summary(fit)@tables$mu[[2L]]$table
+  expect_identical(tb$name[1L], "sigma2")
+  expect_true(is.finite(tb$se[1L]))
+  expect_lt(tb$lower[1L], tb$estimate[1L])
+  expect_gt(tb$upper[1L], tb$estimate[1L])
+  expect_gt(tb$lower[1L], 0)
+  # and near the 1/a it was drawn from
+  expect_gt(tb$estimate[1L], 0.1)
+  expect_lt(tb$estimate[1L], 0.5)
+})

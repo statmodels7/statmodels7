@@ -794,6 +794,82 @@ summary.StatmodFit <- function(object, level = 0.95,
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
 
+#' The Quantities a Penalty's Hyperparameters Are About
+#'
+#' @description
+#' Replaces the coordinate rows of a penalty whose hyperparameters are a chart
+#' with the quantities it declares through
+#' \code{\link[penalties7]{penalty_readable}}: the standard deviations and
+#' correlations of a correlated random effect, rather than the logarithms of a
+#' Cholesky diagonal and the entries below it.
+#'
+#' @details
+#' The standard error is the delta method, and it composes two Jacobians: the
+#' penalty's, which is in the parameter scale of its hyperparameters, and the
+#' link's, the variance matrix being on the free scale the outer criterion was
+#' maximized on. Each interval is built on the scale the quantity declares --
+#' log for a standard deviation, Fisher's z for a correlation -- and mapped
+#' back, so a standard deviation cannot be given a negative lower end and a
+#' correlation cannot be given an interval that leaves \eqn{(-1, 1)}. That is
+#' the rule every other interval in the toolkit follows.
+#'
+#' No test is printed, for the reason the coordinate rows print none: the null
+#' a \eqn{z} of value over standard error reports on is that the quantity is
+#' zero, which for a standard deviation is the edge of its range.
+#'
+#' @param rd The result of \code{\link[penalties7]{penalty_readable}}.
+#' @param th The penalty's hyperparameters, as fitted.
+#' @param Vh The hyperparameter variance matrix, or \code{NULL}.
+#' @param p The parameter the term sits in.
+#' @param key The penalty's key.
+#' @param level The confidence level.
+#' @param role,src What the coordinate rows reported.
+#' @param cols The column names of a summary block.
+#'
+#' @return A data frame of rows, in the shape of a summary block.
+#'
+#' @keywords internal
+readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
+  nm <- names(th)
+  k <- length(rd$value)
+  se <- rep(NA_real_, k)
+  if (!is.null(Vh)) {
+    j <- match(paste(p, key, nm, sep = "\r"), rownames(Vh))
+    if (!anyNA(j)) {
+      vb <- as.matrix(Vh[j, j, drop = FALSE])
+      lk <- attr(attr(Vh, "idx"), "links")[j]
+      d <- vapply(seq_along(nm), function(i) {
+        eta <- linkfunctions7::linkfun(lk[[i]], th[[i]])
+        linkfunctions7::dlinkinv(lk[[i]], eta)
+      }, 0)
+      jac <- rd$jacobian * rep(d, each = k)
+      if (all(is.finite(vb)) && all(is.finite(jac))) {
+        se <- sqrt(pmax(diag(jac %*% vb %*% t(jac)), 0))
+      }
+    }
+  }
+  z <- stats::qnorm(1 - (1 - level) / 2)
+  v <- as.numeric(rd$value)
+  tr <- as.character(rd$transform)
+  lo <- hi <- rep(NA_real_, k)
+  for (i in seq_len(k)) {
+    if (!is.finite(se[i])) next
+    ends <- switch(tr[i],
+      log = exp(log(v[i]) + c(-1, 1) * z * se[i] / v[i]),
+      atanh = tanh(atanh(v[i]) + c(-1, 1) * z * se[i] / (1 - v[i]^2)),
+      v[i] + c(-1, 1) * z * se[i])
+    ends <- sort(ends)
+    lo[i] <- ends[[1L]]
+    hi[i] <- ends[[2L]]
+  }
+  out <- data.frame(name = names(rd$value), estimate = v, se = se,
+                    statistic = NA_real_, p_value = NA_real_,
+                    lower = lo, upper = hi,
+                    role = rep(role[[1L]], k), source = rep(src[[1L]], k),
+                    stringsAsFactors = FALSE)
+  stats::setNames(out, c(cols, "source"))
+}
+
 #' The Blocks of One Distribution Parameter
 #'
 #' @description
@@ -916,6 +992,30 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
           r$lower[[i]] <- ends[[1L]]
           r$upper[[i]] <- ends[[2L]]
         }
+      }
+      # WHERE THE HYPERPARAMETERS ARE A CHART and not the quantities, the
+      # quantities are reported instead: a correlated random effect is about
+      # the standard deviations and correlations of its effects, and the
+      # logarithms of a Cholesky diagonal are the coordinates that produce
+      # them. The penalty declares which case it is; every other branch
+      # answers NULL and its rows stand.
+      rd <- tryCatch(penalties7::penalty_readable(u$penalty, th),
+                     error = function(e) NULL)
+      if (!is.null(rd) && length(rd$value)) {
+        rr <- readable_hyper_rows(rd, th, if (marginal) Vh else NULL, p, key,
+                                  level, role, src, cols)
+        # A hyperparameter the readable block does not DESCRIBE keeps its own
+        # row: a multivariate Student t is about the standard deviations and
+        # the correlations of its scale matrix, and its degrees of freedom are
+        # none of those. The question is asked of the Jacobian -- a column that
+        # is zero throughout is a coordinate no quantity depends on -- so a
+        # family that declares more later is covered without an edit.
+        keep <- apply(rd$jacobian, 2L, function(z) all(z == 0))
+        if (any(keep)) {
+          rr <- rbind(rr, stats::setNames(r[keep, , drop = FALSE],
+                                          c(cols, "source")))
+        }
+        return(rr)
       }
       stats::setNames(r, c(cols, "source"))
     })

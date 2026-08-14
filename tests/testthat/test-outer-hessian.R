@@ -123,7 +123,7 @@ test_that("a variance component is covered, penalty and all", {
   expect_equal(h$gr(eta), numDeriv::grad(function(e) {
     # the criterion itself, differenced, as an independent check that the
     # gradient this Hessian is built on is the right one for THIS penalty
-    a <- statmod(y ~ x + random(~ 1 | g, hyper = c(lambda = exp(e))),
+    a <- statmod(y ~ x + random(~ 1 | g, hyper = c(sigma = exp(e))),
                  distributions7::gaussian1_distrib(), dr)
     statmod_marginal(a@spec, statmod_design(a@spec), a@coefficients,
                      a@hyper, reml(hessian = "observed"))$value

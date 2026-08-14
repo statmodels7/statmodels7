@@ -96,8 +96,10 @@ whatever the shape and the two axes really are a rectangle. Each axis is
 built at the settings of the axes outside it, which covers both without a
 rule about families.
 
-\strong{The cost} is \code{nfolds * n_values} fits per hyperparameter. The
-warm starts are worth 1.8 times, and building each fold's design once rather
+\strong{The cost} is \code{nfolds} fits per point of the path, and the path
+is \code{n_values} points for a term with one kinked hyperparameter and the
+product of its axes for a term with several. The warm starts are worth 1.8
+times, and building each fold's design once rather
 than once per point another 4 per cent, but what remains is the proximal
 iteration: measured at 200 observations and 20 columns, 0.88 seconds a fit,
 against \code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values on
