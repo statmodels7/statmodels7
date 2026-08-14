@@ -1,7 +1,7 @@
 # The Alternation Between the Smooth Block and the Rest
 
 Fits the terms whose penalties are twice differentiable in one system
-and each remaining block by a method of its own, sweeping until the
+and each remaining block by a method of its own, alternating until the
 objective stops moving.
 
 ## Usage

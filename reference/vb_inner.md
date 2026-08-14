@@ -1,6 +1,6 @@
 # The Verbosity of an Inner Fit Inside the Outer Search
 
-The same switches with the block trace off, since one line per sweep per
+The same switches with the block trace off, since one line per pass per
 hyperparameter tried is not a trace anybody reads.
 
 ## Usage

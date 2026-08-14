@@ -34,7 +34,7 @@ Invisibly `NULL`; prints.
 
 ## Details
 
-The trace has three nested things to say – which outer step, which sweep
+The trace has three nested things to say – which outer step, which pass
 of the alternation inside it, and what each block did – and printed as
 undifferentiated lines they are unreadable, which is what a panel fit
 with three hyperparameters and 130 outer evaluations demonstrated.

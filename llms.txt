@@ -374,6 +374,8 @@ exported, and none is needed to use the package.
   : Which Hyperparameters a Path Has to Select
 - [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
   : The Values a Path Visits
+- [`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
+  : The Log-Determinant of a Penalized Information, Robustly
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
 - [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
