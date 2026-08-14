@@ -11,8 +11,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04,
-  over = NULL
+  min_ratio = 1e-04
 )
 ```
 
@@ -40,11 +39,6 @@ cv(
 
   The smallest kink the path reaches, as a fraction of the one that
   empties the block.
-
-- over:
-
-  Which hyperparameters to sweep. Defaults to the ones that set the size
-  of the kink.
 
 ## Value
 
@@ -135,6 +129,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> fitted in 928 ms, converged
+#> fitted in 974 ms, converged
 #> 1 pass(es) over 2 block(s)
 ```

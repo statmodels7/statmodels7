@@ -1,5 +1,38 @@
 # Changelog
 
+## statmodels7 0.36.0
+
+- Which hyperparameters are estimated is said by the TERMS, and by
+  nothing else. Every one is estimated unless the term that carries the
+  penalty holds it: `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`,
+  `enet(x, alpha = 0.5)`, `scad(x, a = 3.7)`, `s(x, lambda = 2)`,
+  `te(x, z, lambda = c(1, 5))`,
+  `random(~1 | g, hyper = c(sigma = 0.4))`. The term is where the
+  penalty is named, so it is where that belongs.
+
+- `statmod(hyper = )` is REMOVED, and so is `over` on
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md).
+  Both said the same thing as the terms, and whichever of the two a
+  reader believed, the other was read by nobody when they disagreed.
+  Passing `hyper` now signals an error naming the spelling that works.
+
+- A hyperparameter no path could reach is swept over a grid of its own.
+  The elastic net’s `alpha` scales the kink and is bounded by one, so no
+  admissible value of it empties the block; the shape of SCAD and MCP
+  has no upper bound and does not move the kink at all. Neither is
+  reachable by the geometric path over kink sizes, and leaving them out
+  was how `alpha` stayed at 0.5 while the summary said a criterion had
+  chosen it. A bounded one is swept over its interval and an unbounded
+  shape over a geometric grid above its lower bound, which spans the
+  values the literature uses (3.7 for the SCAD of Fan and Li, 3 for the
+  MCP of Zhang).
+
+- The summary reads what was held from the terms, so a hyperparameter is
+  marked fixed if and only if a term fixed it.
+
 ## statmodels7 0.35.0
 
 - A bounded hyperparameter is reported as held, not as chosen.

@@ -368,6 +368,8 @@ exported, and none is needed to use the package.
   : The Block a Path Row Belongs To
 - [`path_bounded()`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md)
   : Is a Hyperparameter Bounded Above?
+- [`path_by_kink()`](https://statmodels7.github.io/statmodels7/reference/path_by_kink.md)
+  : Is a Hyperparameter Swept by the Size of Its Kink?
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
   : The Values a Path Visits Over a Bounded Hyperparameter
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
@@ -472,6 +474,8 @@ exported, and none is needed to use the package.
 - [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
   : The Observed Information Over the Coefficients and a Filter's
   Parameters
+- [`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
+  : Which Hyperparameters the Terms Hold
 - [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
   : Which Structural Levels a Linear Intercept Already Carries
 - [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)

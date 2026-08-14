@@ -6,9 +6,9 @@ prediction error rather than by a marginal likelihood.
 ## Usage
 
 ``` r
-aic(k = 2, hessian = c("observed", "expected"), over = NULL)
+aic(k = 2, hessian = c("observed", "expected"))
 
-bic(hessian = c("observed", "expected"), over = NULL)
+bic(hessian = c("observed", "expected"))
 ```
 
 ## Arguments
@@ -22,16 +22,6 @@ bic(hessian = c("observed", "expected"), over = NULL)
 
   Which information is used, `"expected"` or `"observed"`. The exact
   derivatives need the observed one.
-
-- over:
-
-  Which hyperparameters of a KINKED penalty the path varies, as
-  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-  takes it. The default sweeps those with no upper bound, which for an
-  elastic net is \\\lambda\\ alone: a bounded shape – \\\alpha\\ here,
-  \\\gamma\\ for SCAD and MCP – is held, as glmnet and ncvreg hold
-  theirs. Naming it here sweeps it too, the coordinates cyclically
-  rather than on a product grid.
 
 ## Value
 
@@ -109,7 +99,7 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -33.778803    objective 44.595422
 #> AIC 87.385999 over 38 hyperparameter evaluation(s)
-#> fitted in 1.18 s, DID NOT CONVERGE
+#> fitted in 1.15 s, DID NOT CONVERGE
 #>   the parameters it reached:
 #>   mu         -1.049 to 0.9735
 #>   sigma      0.2865

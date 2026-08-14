@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.35.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.36.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.36.0" id="statmodels7-0360">statmodels7 0.36.0<a class="anchor" aria-label="anchor" href="#statmodels7-0360"></a></h2>
+<ul><li><p>Which hyperparameters are estimated is said by the TERMS, and by nothing else. Every one is estimated unless the term that carries the penalty holds it: <code>lasso(x, lambda = 3)</code>, <code>ridge(x, sigma = 0.5)</code>, <code>enet(x, alpha = 0.5)</code>, <code>scad(x, a = 3.7)</code>, <code>s(x, lambda = 2)</code>, <code>te(x, z, lambda = c(1, 5))</code>, <code>random(~1 | g, hyper = c(sigma = 0.4))</code>. The term is where the penalty is named, so it is where that belongs.</p></li>
+<li><p><code>statmod(hyper = )</code> is REMOVED, and so is <code>over</code> on <code><a href="../reference/aic.html">aic()</a></code>, <code><a href="../reference/aic.html">bic()</a></code> and <code><a href="../reference/cv.html">cv()</a></code>. Both said the same thing as the terms, and whichever of the two a reader believed, the other was read by nobody when they disagreed. Passing <code>hyper</code> now signals an error naming the spelling that works.</p></li>
+<li><p>A hyperparameter no path could reach is swept over a grid of its own. The elastic net’s <code>alpha</code> scales the kink and is bounded by one, so no admissible value of it empties the block; the shape of SCAD and MCP has no upper bound and does not move the kink at all. Neither is reachable by the geometric path over kink sizes, and leaving them out was how <code>alpha</code> stayed at 0.5 while the summary said a criterion had chosen it. A bounded one is swept over its interval and an unbounded shape over a geometric grid above its lower bound, which spans the values the literature uses (3.7 for the SCAD of Fan and Li, 3 for the MCP of Zhang).</p></li>
+<li><p>The summary reads what was held from the terms, so a hyperparameter is marked fixed if and only if a term fixed it.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.35.0" id="statmodels7-0350">statmodels7 0.35.0<a class="anchor" aria-label="anchor" href="#statmodels7-0350"></a></h2>
 <ul><li><p>A bounded hyperparameter is reported as held, not as chosen. <code><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse()</a></code> returns a result the length of its TEST, and the test was a scalar, so a penalty carrying two hyperparameters got one answer recycled over both: the elastic net’s <code>alpha</code>, which no path varies, was marked as chosen by the criterion that had chosen its <code>lambda</code>.</p></li>

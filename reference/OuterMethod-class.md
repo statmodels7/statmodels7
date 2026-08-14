@@ -18,8 +18,7 @@ OuterMethod(
   min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
-  folds = integer(0),
-  over = character(0)
+  folds = integer(0)
 )
 ```
 
@@ -58,11 +57,6 @@ OuterMethod(
 - folds:
 
   A fold number per observation, or `integer(0)`.
-
-- over:
-
-  Which hyperparameters a path varies, or `character(0)` for the ones
-  that set the size of the kink.
 
 ## Value
 

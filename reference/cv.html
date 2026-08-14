@@ -9,7 +9,7 @@ fit assigns to observations it was not fitted on."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.35.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.36.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,8 +46,7 @@ fit assigns to observations it was not fitted on.</p>
 <span>  folds <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"min"</span>, <span class="st">"1se"</span><span class="op">)</span>,</span>
 <span>  n_values <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>  min_ratio <span class="op">=</span> <span class="fl">1e-04</span>,</span>
-<span>  over <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  min_ratio <span class="op">=</span> <span class="fl">1e-04</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -76,11 +75,6 @@ sparsest fit within one standard error of it.</p></dd>
 <dt id="arg-min-ratio">min_ratio<a class="anchor" aria-label="anchor" href="#arg-min-ratio"></a></dt>
 <dd><p>The smallest kink the path reaches, as a fraction of the
 one that empties the block.</p></dd>
-
-
-<dt id="arg-over">over<a class="anchor" aria-label="anchor" href="#arg-over"></a></dt>
-<dd><p>Which hyperparameters to sweep. Defaults to the ones that set
-the size of the kink.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -163,7 +157,7 @@ Statistical Software</em> 33(1), 1–22.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -75.244717    objective 65.014193</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 928 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 974 ms, converged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 pass(es) over 2 block(s)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

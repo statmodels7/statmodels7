@@ -9,7 +9,7 @@ terms it names into a penalized likelihood, and fits it."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.35.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.36.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,9 +51,9 @@ terms it names into a penalized likelihood, and fits it.</p>
 <span>  outer_criterion <span class="op">=</span> <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sparse_criterion <span class="op">=</span> <span class="fu"><a href="aic.html">bic</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  outer_optimizer <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  hyper <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="fl">0</span></span>
+<span>  verbose <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,15 +106,6 @@ the kink.</p></dd>
 <code>NULL</code> to let the availability of the exact gradient decide.</p></dd>
 
 
-<dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
-<dd><p>Optional hyperparameters, a named list of named lists as
-<code>list(mu = list(lasso = c(lambda = 5)))</code>. They are held at these
-values: supplying them steps the default criterion aside, since
-estimating away a value the caller wrote would answer a question nobody
-asked. Naming a criterion explicitly overrides that, and <code>hyper</code> is
-then where its search starts.</p></dd>
-
-
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
 <dd><p>Where the fit begins: a named list of coefficients, a
 <code><a href="start_strategy.html">start_strategy</a></code> such as <code><a href="start_search.html">start_search</a></code>, or
@@ -127,6 +118,13 @@ outer search tried.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>A level from 0 to 3, or a named logical vector.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Not used, and reported. <code>hyper</code> was removed from here: a
+hyperparameter is held in the term that carries the penalty, and a
+second place to say so would be read by nobody whenever the two
+disagreed.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -157,11 +155,16 @@ which is <code><a href="iwls.html">iwls</a>(maxit =, tol =)</code> or an optimiz
 <code>maxit</code> and <code>criterion</code>, and the alternation reads them from there
 (see <code><a href="method_budget.html">method_budget</a></code>). Carrying a second copy would let a caller
 set both and be obeyed by neither.</p>
-<p><strong>The hyperparameters are ESTIMATED by default</strong>, by
-<code><a href="reml.html">reml()</a></code>, with <code>outer_optimizer</code> searching over them and
-the coefficients refitted at each. A hyperparameter left where it started
-is a placeholder and not a choice, and a model carrying a smooth, a ridge
-or a random effect is one whose author wants them chosen from the data.</p>
+<p><strong>Every hyperparameter is ESTIMATED unless its own term holds it.</strong>
+Which ones are held is said by the TERM that carries the penalty –
+<code>lasso(x, lambda = 3)</code>, <code>ridge(x, sigma = 0.5)</code>,
+<code>s(x, lambda = 2)</code>, <code>enet(x, alpha = 0.5)</code> – and everything
+left <code>NULL</code>, which is the default, is chosen from the data. The term
+is where the penalty is named and so where that belongs; an argument here
+saying the same thing would be read by nobody whenever the two disagreed.
+<code><a href="reml.html">reml()</a></code> estimates the smooth ones, with
+<code>outer_optimizer</code> searching over them and the coefficients refitted
+at each.</p>
 <p>A KINKED penalty is a different instrument and has its own
 argument. <code>sparse_criterion</code>, <code><a href="aic.html">bic()</a></code> by default, sweeps
 it along a PATH of its own values – from the kink that empties the block
@@ -179,8 +182,8 @@ hand rather than at a refitted null, so the other terms' fits enter it.</p>
 Where nothing is estimable – an ordinary <code>y ~ x</code>, or a model whose
 only penalty is kinked – it is simply not run, and that is a property of
 the model rather than of how the argument was written, so typing the
-default changes nothing. <code>outer_criterion = NULL</code> holds every
-hyperparameter where <code>hyper</code> put it.</p>
+default changes nothing. <code>outer_criterion = NULL</code> holds every smooth
+hyperparameter where its term left it.</p>
 <p><strong>Verbosity</strong> has three levels, naming the loops rather than counting
 them: <code>1</code> the outer search and the alternation, <code>2</code> the inner
 method's own iterations, <code>3</code> the optimizers' traces as well. A named
@@ -233,7 +236,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 37 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 38 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

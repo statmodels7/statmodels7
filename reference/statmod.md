@@ -16,9 +16,9 @@ statmod(
   outer_criterion = reml(),
   sparse_criterion = bic(),
   outer_optimizer = NULL,
-  hyper = NULL,
   start = NULL,
-  verbose = 0
+  verbose = 0,
+  ...
 )
 ```
 
@@ -77,15 +77,6 @@ statmod(
   The optimizer that searches over them, or `NULL` to let the
   availability of the exact gradient decide.
 
-- hyper:
-
-  Optional hyperparameters, a named list of named lists as
-  `list(mu = list(lasso = c(lambda = 5)))`. They are held at these
-  values: supplying them steps the default criterion aside, since
-  estimating away a value the caller wrote would answer a question
-  nobody asked. Naming a criterion explicitly overrides that, and
-  `hyper` is then where its search starts.
-
 - start:
 
   Where the fit begins: a named list of coefficients, a
@@ -102,6 +93,13 @@ statmod(
 - verbose:
 
   A level from 0 to 3, or a named logical vector.
+
+- ...:
+
+  Not used, and reported. `hyper` was removed from here: a
+  hyperparameter is held in the term that carries the penalty, and a
+  second place to say so would be read by nobody whenever the two
+  disagreed.
 
 ## Value
 
@@ -144,12 +142,16 @@ alternation reads them from there (see
 Carrying a second copy would let a caller set both and be obeyed by
 neither.
 
-**The hyperparameters are ESTIMATED by default**, by
-[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
-with `outer_optimizer` searching over them and the coefficients refitted
-at each. A hyperparameter left where it started is a placeholder and not
-a choice, and a model carrying a smooth, a ridge or a random effect is
-one whose author wants them chosen from the data.
+**Every hyperparameter is ESTIMATED unless its own term holds it.**
+Which ones are held is said by the TERM that carries the penalty –
+`lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, lambda = 2)`,
+`enet(x, alpha = 0.5)` – and everything left `NULL`, which is the
+default, is chosen from the data. The term is where the penalty is named
+and so where that belongs; an argument here saying the same thing would
+be read by nobody whenever the two disagreed.
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+estimates the smooth ones, with `outer_optimizer` searching over them
+and the coefficients refitted at each.
 
 A KINKED penalty is a different instrument and has its own argument.
 `sparse_criterion`,
@@ -173,8 +175,8 @@ It comes into play IF AND ONLY IF the model carries a smooth penalty.
 Where nothing is estimable – an ordinary `y ~ x`, or a model whose only
 penalty is kinked – it is simply not run, and that is a property of the
 model rather than of how the argument was written, so typing the default
-changes nothing. `outer_criterion = NULL` holds every hyperparameter
-where `hyper` put it.
+changes nothing. `outer_criterion = NULL` holds every smooth
+hyperparameter where its term left it.
 
 **Verbosity** has three levels, naming the loops rather than counting
 them: `1` the outer search and the alternation, `2` the inner method's
@@ -229,5 +231,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 37 ms, converged
+#> fitted in 38 ms, converged
 ```
