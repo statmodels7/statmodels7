@@ -4,7 +4,7 @@
 \alias{summary_blocks}
 \title{The Blocks of One Distribution Parameter}
 \usage{
-summary_blocks(fit, spec, design, p, ci)
+summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL)
 }
 \arguments{
 \item{fit}{A \code{\link{StatmodFit}}.}
@@ -17,6 +17,14 @@ summary_blocks(fit, spec, design, p, ci)
 
 \item{ci}{The flat interval table, as \code{\link{confint.StatmodFit}}
 returns it with the statistic and the p-value added.}
+
+\item{level}{The confidence level the intervals are built at.}
+
+\item{V}{The variance matrix over the stacked coefficients, or
+\code{NULL}. It is needed only by a term reported through
+\code{\link[modelterms7]{term_readable}}, whose quantities are
+functions of several coefficients at once and whose standard errors
+are therefore the delta method rather than a diagonal entry.}
 }
 \value{
 A list of block records, each with \code{kind}, \code{label},

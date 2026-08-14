@@ -517,3 +517,66 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   total <- sum((J %*% Vth %*% t(J)) * t(H))
   list(total = total, per = per)
 }
+
+
+#' The Variance of the Hyperparameters a Marginal Criterion Estimated
+#'
+#' @description
+#' The asymptotic variance matrix of the estimated hyperparameters, on the free
+#' scale their links carry them onto.
+#'
+#' @details
+#' A hyperparameter estimated by \code{\link{reml}()} or \code{\link{ml}()} is
+#' the maximizer of a criterion that is twice differentiable in it, so it has a
+#' variance like any other maximum-likelihood estimate: the inverse of the
+#' negative Hessian of that criterion at the point reached, which
+#' \code{\link{statmod_marginal_hess}} already computes exactly. It is read on
+#' the free scale because that is where the criterion was maximized and where
+#' the quadratic approximation behind it is reasonable; a variance for a
+#' smoothing parameter on its own scale, where the estimate is often several
+#' orders of magnitude from zero and the criterion far from symmetric, would
+#' describe a shape the criterion does not have.
+#'
+#' \strong{Where it does not apply.} A hyperparameter chosen by a path --
+#' \code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()} over a kinked
+#' penalty -- is the argument of a minimum over a grid, not the root of a
+#' derivative, so there is no Hessian to invert and no standard error to
+#' report. Its uncertainty is a resampling question and \code{NULL} is
+#' returned rather than a number of another kind.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param coef The coefficients at the penalized mode.
+#' @param hyper The hyperparameters.
+#' @param method The outer method that estimated them, or \code{NULL}.
+#'
+#' @return A square matrix, one row per estimated hyperparameter, whose
+#'   dimnames join the distribution parameter, the term and the
+#'   hyperparameter's own name with a carriage return -- a character no
+#'   name can contain, so the three are recoverable from the key -- and
+#'   which carries the index as the attribute \code{"idx"}; \code{NULL}
+#'   where there is nothing to report.
+#'
+#' @seealso \code{\link{statmod_marginal_hess}}, \code{\link{summary.StatmodFit}}
+#'
+#' @keywords internal
+statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {
+  if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
+  blocks <- statmod_blocks(spec, design)
+  idx <- outer_hyper_index(spec, blocks)
+  if (!nrow(idx)) return(NULL)
+  basis <- integrated_basis(spec, design, method@kind)
+  Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method, idx,
+                                       basis),
+                 error = function(e) NULL)
+  if (is.null(Ho)) return(NULL)
+  # the criterion is a maximand, so its Hessian is negative definite at the
+  # optimum and the variance is the inverse of its negative. A hyperparameter
+  # driven to the edge of its range leaves a curvature that is zero or of the
+  # wrong sign there, and no interval follows from it.
+  V <- tryCatch(solve(-as.matrix(Ho)), error = function(e) NULL)
+  if (is.null(V) || any(!is.finite(V)) || any(diag(V) <= 0)) return(NULL)
+  k <- paste(idx$parameter, idx$term, idx$name, sep = "\r")
+  dimnames(V) <- list(k, k)
+  structure(V, idx = idx)
+}

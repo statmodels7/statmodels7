@@ -1,3 +1,46 @@
+# statmodels7 0.34.0
+
+* A hyperparameter chosen by `sparse_criterion` is reported as estimated by
+  the criterion that chose it. `summary()` asked `methods$outer`, which
+  carries the marginal criterion alone, so a lambda a path had selected was
+  printed `(fixed)` beside a note saying it was held at the value it was
+  given -- of a number the caller had never seen. The fit now records which
+  criterion swept the kinked penalties and exactly which hyperparameters it
+  reached, and the cell says `(bic)`, `(cv)` or `(fixed)` accordingly.
+
+* The hyperparameters come first in every penalized block. They govern
+  every coefficient under them, and a table opening with a hundred selected
+  coefficients buried the one number that produced the selection.
+
+* A hyperparameter estimated by `reml()` or `ml()` carries a standard error
+  and an interval. It maximizes a criterion that is twice differentiable in
+  it, so its variance is the inverse of the negative of that criterion's
+  Hessian at the point reached, which `statmod_marginal_hess()` already
+  computed exactly; `statmod_hyper_vcov()` returns it. The interval is
+  built on the free scale its link defines and mapped back, as every other
+  interval in the toolkit is, so a positive hyperparameter keeps a positive
+  lower end. No test is printed beside it: the null a `z` would report on
+  is that the hyperparameter is zero, which is the edge of its range rather
+  than an interior hypothesis. Validated against the criterion itself,
+  refitted at each probe and differenced twice on the free scale.
+
+  A hyperparameter chosen by a path -- `aic()`, `bic()`, `cv()` over a
+  kinked penalty -- still carries none, and that is a refusal rather than
+  an omission: it is the argument of a minimum over a grid, not the root of
+  a derivative, so there is no curvature to read and its uncertainty is a
+  resampling question.
+
+* A path that cannot score a single point signals an error instead of
+  keeping the hyperparameter it came in with. `cv()` refits on each fold,
+  and a term built from a matrix that lives in the calling environment
+  rather than in `data` cannot be re-evaluated on a subset of it, so every
+  fold failed, every deviance came back `NA`, nothing was selected, and the
+  fit returned the DEFAULT hyperparameter reporting success -- a lasso at
+  `lambda = 1` selecting every column. The error carries the message the
+  refit failed with. A marginal criterion reaching a kinked row is
+  unaffected: it scores nothing by construction, and the hyperparameter
+  keeping its given value is the documented answer there.
+
 # statmodels7 0.33.0
 
 * A break-point term has a section of its own in `summary()`, beside the

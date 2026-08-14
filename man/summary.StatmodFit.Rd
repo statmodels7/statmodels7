@@ -58,11 +58,17 @@ The ones set exactly to zero are counted, not listed.}
 interpretable under a ridge, together with its hyperparameters.}
 }
 
-\strong{A hyperparameter carries no standard error yet.} It is held at the
-value it was given rather than estimated, so the row reports the value and
-marks it fixed; inventing an interval for a number nothing estimated would
-be worse than the empty column. Estimating them by an outer criterion is
-what fills those rows in.
+\strong{A hyperparameter is the first row of its block}, since it governs
+every coefficient under it, and the cell where its standard error would be
+says what put the value there. One estimated by \code{\link{reml}()} or
+\code{\link{ml}()} maximizes a twice differentiable criterion, so it carries
+a standard error and an interval, both read on the free scale its link
+defines and mapped back (\code{\link{statmod_hyper_vcov}}). One chosen by
+\code{\link{aic}()}, \code{\link{bic}()} or \code{\link{cv}()} over a kinked
+penalty is the argument of a minimum over a grid, so the row names the
+criterion and leaves the remaining columns empty: there is no curvature at
+such a point to read a standard error from. One the caller set is marked
+fixed.
 
 \strong{What a Wald p-value means here depends on the row}, and the summary
 says which is which rather than printing one column and leaving it at that.

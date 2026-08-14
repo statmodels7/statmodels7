@@ -507,6 +507,11 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #'
 #' @keywords internal
 term_block_kind <- function(term) {
+  # a break-point term is asked about FIRST, before its penalties are
+  # looked at: its block is a working linearization whose coefficients are
+  # not the quantities of the model, so it wants a section of its own
+  # whether or not a development of its coefficients carries a penalty
+  if (S7::S7_inherits(term, modelterms7::SegTerm)) return("breakpoint")
   ent <- modelterms7::term_penalties(term)
   if (!length(ent)) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
@@ -632,11 +637,17 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'     interpretable under a ridge, together with its hyperparameters.}
 #' }
 #'
-#' \strong{A hyperparameter carries no standard error yet.} It is held at the
-#' value it was given rather than estimated, so the row reports the value and
-#' marks it fixed; inventing an interval for a number nothing estimated would
-#' be worse than the empty column. Estimating them by an outer criterion is
-#' what fills those rows in.
+#' \strong{A hyperparameter is the first row of its block}, since it governs
+#' every coefficient under it, and the cell where its standard error would be
+#' says what put the value there. One estimated by \code{\link{reml}()} or
+#' \code{\link{ml}()} maximizes a twice differentiable criterion, so it carries
+#' a standard error and an interval, both read on the free scale its link
+#' defines and mapped back (\code{\link{statmod_hyper_vcov}}). One chosen by
+#' \code{\link{aic}()}, \code{\link{bic}()} or \code{\link{cv}()} over a kinked
+#' penalty is the argument of a minimum over a grid, so the row names the
+#' criterion and leaves the remaining columns empty: there is no curvature at
+#' such a point to read a standard error from. One the caller set is marked
+#' fixed.
 #'
 #' \strong{What a Wald p-value means here depends on the row}, and the summary
 #' says which is which rather than printing one column and leaving it at that.
@@ -680,8 +691,11 @@ summary.StatmodFit <- function(object, level = 0.95,
   ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
   lab <- coef_labels(spec, design)
 
+  # one variance matrix for every block that needs one: a term reported by
+  # the quantities it is about carries them across by the delta method
+  V <- tryCatch(vcov(object, type = type, ...), error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
-    summary_blocks(object, spec, design, p, ci))
+    summary_blocks(object, spec, design, p, ci, level, V))
   names(tables) <- spec@distrib@params
 
   ll <- logLik.StatmodFit(object)
@@ -708,14 +722,37 @@ summary.StatmodFit <- function(object, level = 0.95,
       "there is\n  nothing for the correction to propagate and it is zero."))
   }
   if (any(lab$penalized)) {
-    notes <- c(notes, if (is.null(object@methods$outer)) paste0(
-      "A hyperparameter is held at the value it was given, not estimated, so ",
-      "it has\n  no standard error and every interval beside it is ",
-      "conditional on it.") else sprintf(paste0(
-      "A hyperparameter marked estimated was found by %s and still carries no",
-      "\n  standard error: its uncertainty is not this Hessian's to give, and",
-      " every\n  interval beside it is conditional on the value reached."),
-      toupper(object@methods$outer@kind)))
+    # WHICH criteria were in force, so a reader knows whether the number at
+    # the head of a penalized block was chosen or given. The two kinds carry
+    # different guarantees and are named separately.
+    src <- unique(unlist(lapply(tables, function(bl)
+      unlist(lapply(bl, function(b) b$table$source[b$table$role %in%
+                                                     c("fixed", "estimated")]),
+             use.names = FALSE)), use.names = FALSE))
+    marg <- setdiff(intersect(src, c("reml", "ml")), NA)
+    path <- setdiff(intersect(src, c("aic", "bic", "cv")), NA)
+    if (length(marg)) {
+      notes <- c(notes, sprintf(paste0(
+        "A hyperparameter marked %s was estimated by that criterion, and its",
+        " standard\n  error and interval are read on the free scale its link ",
+        "defines and mapped\n  back. Every coefficient beside it is still ",
+        "conditional on the value reached."),
+        paste(toupper(marg), collapse = " or ")))
+    }
+    if (length(path)) {
+      notes <- c(notes, sprintf(paste0(
+        "A hyperparameter marked %s was chosen by a path over its own values,",
+        " not held.\n  It is the argument of a minimum over a grid rather ",
+        "than the root of a\n  derivative, so no standard error follows from ",
+        "it; its uncertainty is a\n  resampling question."),
+        paste(toupper(path), collapse = " or ")))
+    }
+    if ("fixed" %in% src) {
+      notes <- c(notes, paste0(
+        "A hyperparameter marked fixed is held at the value it was given, not",
+        " estimated,\n  so it has no standard error and every interval beside",
+        " it is conditional on it."))
+    }
   }
   if (any(lab$kinked)) {
     nz <- sum(lab$kinked &
@@ -769,19 +806,29 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' @param p The distribution parameter.
 #' @param ci The flat interval table, as \code{\link{confint.StatmodFit}}
 #'   returns it with the statistic and the p-value added.
+#' @param level The confidence level the intervals are built at.
+#' @param V The variance matrix over the stacked coefficients, or
+#'   \code{NULL}. It is needed only by a term reported through
+#'   \code{\link[modelterms7]{term_readable}}, whose quantities are
+#'   functions of several coefficients at once and whose standard errors
+#'   are therefore the delta method rather than a diagonal entry.
 #'
 #' @return A list of block records, each with \code{kind}, \code{label},
 #'   \code{n_coef}, \code{edf}, \code{n_zero} and \code{table}.
 #'
 #' @keywords internal
-summary_blocks <- function(fit, spec, design, p, ci) {
+summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
+                           V = NULL) {
   rows <- ci[ci$parameter == p, , drop = FALSE]
   cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
             "upper", "role")
+  # `source` says what put the number there -- a criterion by name, or the
+  # caller -- which `role` alone cannot, every criterion answering "estimated"
+  all_cols <- c(cols, "source")
   empty <- stats::setNames(
     data.frame(character(0), numeric(0), numeric(0), numeric(0), numeric(0),
-               numeric(0), numeric(0), character(0),
-               stringsAsFactors = FALSE), cols)
+               numeric(0), numeric(0), character(0), character(0),
+               stringsAsFactors = FALSE), all_cols)
 
   coef_rows <- function(nm) {
     r <- rows[rows$term == nm, , drop = FALSE]
@@ -789,14 +836,23 @@ summary_blocks <- function(fit, spec, design, p, ci) {
     out <- data.frame(name = r$coefficient, estimate = r$estimate, se = r$se,
                       statistic = r$statistic, p_value = r$p_value,
                       lower = r$lower, upper = r$upper, role = "coefficient",
-                      stringsAsFactors = FALSE)
-    stats::setNames(out, cols)
+                      source = "", stringsAsFactors = FALSE)
+    stats::setNames(out, all_cols)
   }
-  # a hyperparameter has an estimate and nothing else, whether an outer
-  # criterion found it or the caller set it: the variance of a hyperparameter
-  # estimated by a marginal criterion is not this Hessian's to give, and an
-  # interval here would be invented rather than computed
+  # WHICH hyperparameter was estimated and by what. A marginal criterion --
+  # reml(), ml() -- maximizes a twice differentiable function of it, so it
+  # carries a standard error and an interval, both read on the free scale its
+  # link defines and mapped back (statmod_hyper_vcov). A path -- aic(), bic(),
+  # cv() over a kinked penalty -- chooses the argument of a minimum over a
+  # grid, so there is no curvature to read and the row reports the value and
+  # the criterion that chose it. Only a value the caller set is held.
   outer_ran <- !is.null(fit@methods$outer)
+  Vh <- if (outer_ran) tryCatch(
+    statmod_hyper_vcov(spec, design, fit@coefficients, fit@hyper,
+                       fit@methods$outer), error = function(e) NULL) else NULL
+  spc <- fit@methods$sparse_criterion
+  spc_keys <- fit@methods$sparse_hyper
+  if (is.null(spc_keys)) spc_keys <- character(0)
   # A term may carry more than one penalty, each filed under a key of its
   # own, so the rows of a term are those of every key belonging to it. Where
   # there are several the hyperparameter is named for the penalty as well:
@@ -812,20 +868,92 @@ summary_blocks <- function(fit, spec, design, p, ci) {
       if (is.null(th) || !length(th)) return(empty)
       u <- statmod_unit(spec, des, p, key)
       if (is.null(u)) return(empty)
-      role <- if (outer_ran && !penalty_has_kink(u$penalty)) "estimated" else
-        "fixed"
       lab <- if (length(ent) > 1L && nzchar(e$name)) {
         paste(e$name, names(th), sep = ".")
       } else {
         names(th)
       }
+      marginal <- outer_ran && !penalty_has_kink(u$penalty)
+      hk <- paste(p, key, names(th), sep = "\r")
+      role <- ifelse(marginal, "estimated",
+                     ifelse(hk %in% spc_keys, "estimated", "fixed"))
+      src <- ifelse(role == "fixed", "fixed",
+                    if (marginal) fit@methods$outer@kind else
+                      if (is.null(spc)) "estimated" else spc@kind)
       r <- data.frame(name = lab, estimate = as.numeric(th),
                       se = NA_real_, statistic = NA_real_, p_value = NA_real_,
                       lower = NA_real_, upper = NA_real_, role = role,
-                      stringsAsFactors = FALSE)
-      stats::setNames(r, cols)
+                      source = src, stringsAsFactors = FALSE)
+      # the interval is built where the criterion was maximized and mapped
+      # back, as every other interval in the toolkit is, so a positive
+      # hyperparameter cannot be given a negative lower end; the standard
+      # error printed beside it is the delta method onto its own scale. No
+      # test accompanies it: the null a z of value/se reports on is that the
+      # hyperparameter is zero, which for a smoothing parameter is the edge
+      # of its range and not an interior hypothesis.
+      if (!is.null(Vh) && marginal) {
+        z <- stats::qnorm(1 - (1 - level) / 2)
+        lk <- attr(Vh, "idx")
+        for (i in seq_along(th)) {
+          k <- paste(p, key, names(th)[[i]], sep = "\r")
+          j <- match(k, rownames(Vh))
+          if (is.na(j)) next
+          link <- attr(lk, "links")[[j]]
+          se_eta <- sqrt(Vh[j, j])
+          eta <- linkfunctions7::linkfun(link, r$estimate[[i]])
+          r$se[[i]] <- abs(linkfunctions7::dlinkinv(link, eta)) * se_eta
+          ends <- sort(c(linkfunctions7::linkinv(link, eta - z * se_eta),
+                         linkfunctions7::linkinv(link, eta + z * se_eta)))
+          r$lower[[i]] <- ends[[1L]]
+          r$upper[[i]] <- ends[[2L]]
+        }
+      }
+      stats::setNames(r, c(cols, "source"))
     })
     do.call(rbind, out)
+  }
+  # A term whose block is a working linearization is reported by what it is
+  # ABOUT and not by the coefficients it is fitted through: a break-point
+  # term's auxiliary pair carries the position as -g/delta, which is a
+  # number no reader wants to compute. term_readable() gives the quantities
+  # and the Jacobian from the coefficients, so the variance comes across by
+  # the delta method -- the same route segmented reports a break-point's
+  # standard error by. A term that answers NULL, which is what a developed
+  # one does, falls back to its coefficients.
+  readable_rows <- function(nm) {
+    term <- spec@terms[[p]][[nm]]
+    idx <- design[[p]]$blocks[[nm]]
+    rd <- tryCatch(modelterms7::term_readable(term, fit@coefficients[[p]][idx]),
+                   error = function(e) NULL)
+    if (is.null(rd) || !length(rd$name)) return(NULL)
+    # V is indexed by NAME rather than by position: coef_labels() skips a
+    # parameter with no coefficients, so a stacked offset computed here
+    # would not be the one the matrix was built with
+    key <- paste(p, design[[p]]$coef_names[idx], sep = ":")
+    se <- rep(NA_real_, length(rd$name))
+    if (!is.null(V) && all(key %in% rownames(V))) {
+      Vb <- as.matrix(V[key, key, drop = FALSE])
+      if (all(is.finite(Vb))) {
+        se <- sqrt(pmax(diag(rd$jacobian %*% Vb %*% t(rd$jacobian)), 0))
+      }
+    }
+    z <- stats::qnorm(1 - (1 - level) / 2)
+    st <- rd$value / se
+    # A break-point gets an estimate and an interval and NO test. The null
+    # a z of value/se would report on is that the position is zero, which
+    # is not a hypothesis anyone holds; the one a reader wants is that
+    # there is no break-point at all, and under it the position is a
+    # nuisance parameter that vanishes, so the classical p-value is wrong
+    # by a factor of three to five (Davies' problem). segmented prints the
+    # estimate and the standard error alone for the same reason.
+    pos <- grepl("^psi[0-9]*$", rd$name)
+    st[pos] <- NA_real_
+    out <- data.frame(name = rd$name, estimate = rd$value, se = se,
+                      statistic = st, p_value = 2 * stats::pnorm(-abs(st)),
+                      lower = rd$value - z * se, upper = rd$value + z * se,
+                      role = "coefficient", source = "",
+                      stringsAsFactors = FALSE)
+    stats::setNames(out, all_cols)
   }
   term_edf <- function(nm) {
     if (is.null(fit@edf)) return(NA_real_)
@@ -861,11 +989,21 @@ summary_blocks <- function(fit, spec, design, p, ci) {
       selection = cr$estimate != 0,
       rep(TRUE, nrow(cr)))
     if (identical(kind, "random")) keep <- rep(FALSE, nrow(cr))
-    tb <- rbind(cr[keep, , drop = FALSE], hyper_rows(nm))
+    body <- if (identical(kind, "breakpoint")) {
+      rr <- readable_rows(nm)
+      if (is.null(rr)) cr else rr
+    } else {
+      cr[keep, , drop = FALSE]
+    }
+    # the hyperparameters come FIRST in every penalized block: they govern
+    # everything below them, and a table that opens with a hundred selected
+    # coefficients buries the one number that produced that selection
+    tb <- rbind(hyper_rows(nm), body)
     blocks[[length(blocks) + 1L]] <- list(
       kind = kind,
       label = switch(kind, smooth = "Smooth", random = "Random effect",
-                     selection = "Selection", "Penalized"),
+                     selection = "Selection", breakpoint = "Break-points",
+                     "Penalized"),
       term = nm, n_coef = k, edf = term_edf(nm),
       n_zero = if (identical(kind, "selection")) sum(cr$estimate == 0) else 0L,
       table = tb)
@@ -975,7 +1113,12 @@ print_block <- function(b, digits = 4L) {
     cat("  (nothing to report on its own)\n")
     return(invisible(NULL))
   }
-  fixed <- tb$role %in% c("fixed", "estimated")
+  # a hyperparameter row prints numbers where there are any: one estimated by
+  # a marginal criterion carries a standard error and an interval. Where there
+  # is none the columns are blanked and the cell where the standard error
+  # would have been says what put the value there instead
+  hyp <- tb$role %in% c("fixed", "estimated")
+  fixed <- hyp & !is.finite(tb$se)
   num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
   out <- data.frame(
     estimate = format(signif(tb$estimate, digits)),
@@ -988,8 +1131,14 @@ print_block <- function(b, digits = 4L) {
     check.names = FALSE, stringsAsFactors = FALSE)
   # said once, in the column where a standard error would have been, rather
   # than four times across a row that has nothing else in it
-  out$se[fixed] <- paste0("(", tb$role[fixed], ")")
+  src <- if (is.null(tb$source)) tb$role else
+    ifelse(nzchar(tb$source), tb$source, tb$role)
+  out$se[fixed] <- paste0("(", src[fixed], ")")
   out[fixed, c("z", "p", "lower", "upper")] <- ""
+  # an estimated one that does carry an interval still has no test: the null
+  # a z would report on is that the hyperparameter is zero, the edge of its
+  # range rather than an interior hypothesis
+  out[hyp & !fixed, c("z", "p")] <- ""
   rownames(out) <- tb$name
   print(out)
   invisible(NULL)

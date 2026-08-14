@@ -173,12 +173,12 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   expect_gt(b$n_coef, 4)
   expect_identical(nrow(b$table), 2L)
   expect_lt(nrow(b$table), b$n_coef)
-  expect_identical(b$table$name, c("s(x).lin", "lambda"))
-  expect_identical(b$table$role, c("coefficient", "fixed"))
-  expect_equal(b$table$estimate[2L], 5)
+  expect_identical(b$table$name, c("lambda", "s(x).lin"))
+  expect_identical(b$table$role, c("fixed", "coefficient"))
+  expect_equal(b$table$estimate[1L], 5)
   expect_true(is.finite(b$edf) && b$edf > 1 && b$edf < b$n_coef)
   # the linear component IS an ordinary coefficient and carries inference
-  expect_true(is.finite(b$table$se[1L]))
+  expect_true(is.finite(b$table$se[2L]))
 
   expect_output(print(s), "Smooth")
   expect_output(print(s), "edf")

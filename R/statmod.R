@@ -332,7 +332,16 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     methods = list(smooth = inner_optimizer, outer = outer_criterion,
                    search = res$optimizer,
                    sparse = vapply(blocks$sparse, function(b)
-                     paste(b$param, b$term, sep = "/"), character(1))),
+                     paste(b$param, b$term, sep = "/"), character(1)),
+                   # which criterion swept the kinked penalties, and exactly
+                   # which of their hyperparameters it reached: a summary
+                   # cannot otherwise tell a value the path chose from one
+                   # the caller held, and reported both as held
+                   sparse_criterion = sparse_criterion,
+                   sparse_hyper = if (is.null(sparse_criterion)) character(0)
+                     else with(path_rows(spec, blocks, hyper,
+                                         sparse_criterion),
+                               paste(parameter, term, name, sep = "\r"))),
     call = cl
   )
 }

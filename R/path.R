@@ -392,6 +392,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
   nf <- max(folds)
   m <- length(hypers)
   dev <- matrix(NA_real_, nf, m)
+  err <- NULL
   for (f in seq_len(nf)) {
     keep <- folds != f
     train <- data[keep, , drop = FALSE]
@@ -404,8 +405,16 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     # columns a cross-validated path costs 0.88 seconds a fit and almost all of
     # it is the proximal iteration.
     ts <- tryCatch(statmod_spec(spec@formula, spec@distrib, train, w, off),
-                   error = function(e) NULL)
-    if (is.null(ts)) next
+                   error = function(e) conditionMessage(e))
+    if (is.character(ts)) {
+      # a fold that cannot be rebuilt is a configuration error and not a
+      # numerical one -- a term whose input is not in `data` cannot be
+      # re-evaluated on a subset of it -- so the message is carried out
+      # rather than dropped: every fold fails for the same reason, and the
+      # path would otherwise score NA everywhere and keep its starting value
+      err <- ts
+      next
+    }
     td <- statmod_design(ts)
     tb <- statmod_blocks(ts, td)
     hs <- statmod_respec(ts, test)
@@ -432,7 +441,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
   cvm <- apply(dev, 2L, mean, na.rm = TRUE)
   cvse <- apply(dev, 2L, stats::sd, na.rm = TRUE) / sqrt(pmax(ok, 1))
   cvm[ok == 0L] <- NA_real_
-  list(cvm = cvm, cvse = cvse, n_fail = nf - ok)
+  list(cvm = cvm, cvse = cvse, n_fail = nf - ok, error = err)
 }
 
 
@@ -604,11 +613,13 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
       if (!length(vals)) next
       hys <- lapply(vals, function(v) hyper_set(cur, row, v))
 
+      cv_err <- NULL
       if (is_cv) {
         folds <- cv_folds(spec@n_obs, method@nfolds, method@folds)
         cc <- cv_curve(spec, data, weights, offsets, inner_optimizer, hys, folds)
         value <- cc$cvm
         se <- cc$cvse
+        cv_err <- cc$error
       } else {
         warm <- beta
         value <- rep(NA_real_, length(hys))
@@ -631,6 +642,30 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
         name = row$name, value = vals, criterion = value,
         se = if (is.null(se)) NA_real_ else se, stringsAsFactors = FALSE)
 
+      # NOT A POINT OF THE PATH WAS SCORED. Skipping quietly leaves the
+      # hyperparameter at whatever it came in with -- its default, where the
+      # caller asked for it to be chosen -- and the fit then reports success
+      # at a value nothing selected, which is the failure this refuses to
+      # produce. Where the criterion said why, it says so here.
+      # ... and only where the criterion is one that selects. A marginal
+      # criterion reaching a kinked row scores nothing BY CONSTRUCTION -- the
+      # Laplace expansion it is has no second derivative at the kink -- and
+      # the hyperparameter keeping the value it was given is the documented
+      # answer there, not a failure.
+      if (method@kind %in% c("aic", "bic", "cv") && !any(is.finite(value))) {
+        stop(sprintf(paste0(
+          "%s() could not score a single point of the path for '%s' in '%s',",
+          " so\n  %s was not chosen and would have kept the value it came in",
+          " with.%s"),
+          method@kind, row$term, row$parameter, row$name,
+          if (!is.null(cv_err))
+            paste0("\n  Every fold failed to rebuild the model: ", cv_err,
+                   "\n  A term's input must be a column of 'data', or it",
+                   " cannot be re-evaluated on\n  a subset of it.")
+          else paste0("\n  No fit along it converged, or the criterion was",
+                      " not defined at any of them.")),
+          call. = FALSE)
+      }
       j <- path_pick(value, se, method@rule)
       if (is.na(j)) next
       # A choice at either end MAY be the grid's rather than the criterion's,

@@ -211,7 +211,11 @@ test_that("the summary marks an estimated hyperparameter as estimated", {
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "smooth")]]
   expect_identical(b$table$role[b$table$name == "lambda"], "estimated")
-  expect_output(print(s), "(estimated)", fixed = TRUE)
+  # and it now carries a standard error and an interval, so what says the
+  # criterion estimated it is the note rather than a mark in the cell
+  r <- b$table[b$table$name == "lambda", , drop = FALSE]
+  expect_identical(r$source, "reml")
+  expect_true(is.finite(r$se))
   expect_true(any(grepl("REML", s@notes)))
   expect_output(print(fit), "REML")
 })
@@ -285,4 +289,116 @@ test_that("a trace names the term without repeating its specification", {
                    c("s(x, k = 20)", "s(x, k = 8)"))
   # a call with one argument is already short
   expect_identical(statmodels7:::short_keys("random(~1 | g)"), "random(~1 | g)")
+})
+
+test_that("a hyperparameter chosen by a path is marked estimated, not held", {
+  # THE DEFECT: the summary asked `methods$outer`, which carries the MARGINAL
+  # criterion alone, so a lambda a path had chosen was reported as held at a
+  # value the caller had given -- of a number the caller never saw.
+  set.seed(41)
+  n2 <- 300
+  ds <- data.frame(x = runif(n2))
+  for (j in 1:6) ds[[paste0("n", j)]] <- stats::rnorm(n2)
+  ds$y <- 1 + 2 * ds$x + 1.5 * ds$n1 + stats::rnorm(n2, sd = 0.4)
+  fit <- statmod(y ~ x + lasso(~ n1 + n2 + n3 + n4 + n5 + n6),
+                 distributions7::gaussian1_distrib(), ds,
+                 sparse_criterion = bic())
+  s <- summary(fit)
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  b <- s@tables$mu[[which(kinds == "selection")]]
+  r <- b$table[b$table$name == "lambda", , drop = FALSE]
+  expect_identical(r$role, "estimated")
+  expect_identical(r$source, "bic")
+  # and it is not the value it came in with
+  expect_false(isTRUE(all.equal(r$estimate, 1)))
+  expect_output(print(s), "(bic)", fixed = TRUE)
+  expect_false(any(grepl("held at the value", s@notes)))
+})
+
+test_that("the hyperparameters head their block", {
+  set.seed(42)
+  n2 <- 200
+  ds <- data.frame(x = runif(n2))
+  ds$y <- sin(4 * ds$x) + stats::rnorm(n2, sd = 0.3)
+  s <- summary(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+                       ds, outer_criterion = reml()))
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  b <- s@tables$mu[[which(kinds == "smooth")]]
+  expect_identical(b$table$name[[1L]], "lambda")
+})
+
+test_that("a hyperparameter estimated by REML carries a standard error", {
+  set.seed(43)
+  n2 <- 200
+  ds <- data.frame(x = runif(n2))
+  ds$y <- sin(6 * ds$x) + stats::rnorm(n2, sd = 0.3)
+  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+                 outer_criterion = reml())
+  sp <- fit@spec
+  de <- statmod_design(sp)
+  V <- statmod_hyper_vcov(sp, de, fit@coefficients, fit@hyper,
+                          fit@methods$outer)
+  expect_false(is.null(V))
+  se_eta <- sqrt(diag(as.matrix(V)))
+  expect_true(all(is.finite(se_eta) & se_eta > 0))
+
+  # the reference shares no arithmetic with the exact Hessian: the criterion
+  # itself, the mode refitted at each probe, differenced twice on the free
+  # scale. The step is 0.05 because a second difference amplifies the
+  # criterion's own rounding by h^-2 -- at 1e-3 the same comparison reads
+  # 0.40 against 0.59 and measures the arithmetic rather than the curvature.
+  blk <- statmod_blocks(sp, de)
+  idx <- outer_hyper_index(sp, blk)
+  eta0 <- hyper_to_eta(fit@hyper, idx)
+  basis <- integrated_basis(sp, de, "reml")
+  crit <- function(e) {
+    hy <- eta_to_hyper(e, idx, fit@hyper)
+    r <- statmod_alternate(sp, de, blk, hy, iwls(),
+                           unlist(fit@coefficients, use.names = FALSE),
+                           TRUE, "bartlett", 200L, 1e-6, verbosity(0))
+    statmod_marginal(sp, de, r$obj$split(r$par), hy, fit@methods$outer,
+                     "bartlett", basis)$value
+  }
+  h <- 0.05
+  H <- (crit(eta0 - h) - 2 * crit(eta0) + crit(eta0 + h)) / h^2
+  expect_equal(se_eta[[1L]], sqrt(-1 / H), tolerance = 1e-3)
+
+  # and the summary reports it beside the estimate, with the interval built
+  # on that scale and mapped back, so a positive quantity keeps a positive
+  # lower end and no test is printed
+  s <- summary(fit)
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  b <- s@tables$mu[[which(kinds == "smooth")]]
+  r <- b$table[b$table$name == "lambda", , drop = FALSE]
+  expect_true(is.finite(r$se) && r$se > 0)
+  expect_gt(r$lower, 0)
+  expect_lt(r$lower, r$estimate)
+  expect_gt(r$upper, r$estimate)
+  expect_true(is.na(r$statistic))
+  expect_identical(r$source, "reml")
+})
+
+test_that("a path that cannot score a single point says so", {
+  # the matrix a penalized term is built from lives in the calling
+  # environment rather than in `data`, so no fold can be rebuilt. Every
+  # deviance came back NA, the path chose nothing, and the fit returned the
+  # DEFAULT hyperparameter reporting success.
+  set.seed(44)
+  n2 <- 120
+  Z <- matrix(stats::rnorm(n2 * 5), n2, 5)
+  colnames(Z) <- paste0("z", 1:5)
+  ds <- data.frame(Z = Z, y = as.numeric(Z %*% c(2, 0, 0, 1, 0)) +
+                     stats::rnorm(n2, sd = 0.4))
+  expect_error(
+    statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds,
+            sparse_criterion = cv()),
+    "could not score a single point")
+
+  # the same model with the matrix as a column of `data` fits and chooses
+  ds2 <- data.frame(y = ds$y)
+  ds2$Z <- Z
+  fit <- statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds2,
+                 sparse_criterion = cv())
+  expect_false(isTRUE(all.equal(
+    unname(fit@hyper$mu[["lasso(Z)"]][["lambda"]]), 1)))
 })
