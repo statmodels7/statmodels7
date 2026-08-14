@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.38.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.39.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.39.0" id="statmodels7-0390">statmodels7 0.39.0<a class="anchor" aria-label="anchor" href="#statmodels7-0390"></a></h2>
+<ul><li>
+<p>The top of a path is read again at every sweep. It is the size of the kink that empties the block, taken from the score at the coefficients in hand, so it moves with the rest of the model: a smooth beside a kinked term has its own smoothing parameter estimated INSIDE each point of the path, and every such fit changes the score it is read from. Reading it once left the path anchored to the state the search began in. Measured on an elastic net, the largest lambda of the path moves from 37.0307 to 46.2884 between the first sweep and the second.</p>
+<p>It bites where there is more than one sweep, which today means more than one hyperparameter under estimation; a single kinked hyperparameter still makes one pass and reads the top once.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.38.0" id="statmodels7-0380">statmodels7 0.38.0<a class="anchor" aria-label="anchor" href="#statmodels7-0380"></a></h2>
 <ul><li><p>The path visits as many values as the TERM asked for, per hyperparameter: <code>lasso(~x, n_lambda = 50)</code>, <code>enet(~x, n_lambda = 40, n_alpha = 12)</code>. How finely a hyperparameter is swept is a property of the term for the same reason as whether it is swept at all, and the criterion applies to every term of the model at once and cannot know which it is looking at. <code><a href="../reference/statmod_grid_size.html">statmod_grid_size()</a></code> reads it from the penalty’s entry and falls back to the criterion’s <code>n_values</code> where the term said nothing.</p></li>
