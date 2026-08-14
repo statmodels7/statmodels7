@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.36.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.38.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.38.0" id="statmodels7-0380">statmodels7 0.38.0<a class="anchor" aria-label="anchor" href="#statmodels7-0380"></a></h2>
+<ul><li><p>The path visits as many values as the TERM asked for, per hyperparameter: <code>lasso(~x, n_lambda = 50)</code>, <code>enet(~x, n_lambda = 40, n_alpha = 12)</code>. How finely a hyperparameter is swept is a property of the term for the same reason as whether it is swept at all, and the criterion applies to every term of the model at once and cannot know which it is looking at. <code><a href="../reference/statmod_grid_size.html">statmod_grid_size()</a></code> reads it from the penalty’s entry and falls back to the criterion’s <code>n_values</code> where the term said nothing.</p></li>
+<li><p>And as far DOWN as it asked: <code>lasso(~x, min_ratio = 1e-6)</code> sets the fraction of the emptying kink the path descends to. One number per term, since only the sweep by kink size uses it. <code><a href="../reference/statmod_min_ratio.html">statmod_min_ratio()</a></code> reads it and falls back to the criterion’s.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.36.0" id="statmodels7-0360">statmodels7 0.36.0<a class="anchor" aria-label="anchor" href="#statmodels7-0360"></a></h2>
 <ul><li><p>Which hyperparameters are estimated is said by the TERMS, and by nothing else. Every one is estimated unless the term that carries the penalty holds it: <code>lasso(x, lambda = 3)</code>, <code>ridge(x, sigma = 0.5)</code>, <code>enet(x, alpha = 0.5)</code>, <code>scad(x, a = 3.7)</code>, <code>s(x, lambda = 2)</code>, <code>te(x, z, lambda = c(1, 5))</code>, <code>random(~1 | g, hyper = c(sigma = 0.4))</code>. The term is where the penalty is named, so it is where that belongs.</p></li>

@@ -371,6 +371,8 @@ exported, and none is needed to use the package.
 - [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
   : The Observed Information Over the Coefficients and a Filter's
   Parameters
+- [`statmod_grid_size()`](https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.md)
+  : How Many Values a Path Visits for One Hyperparameter
 - [`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
   : Which Hyperparameters the Terms Hold
 - [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
@@ -396,10 +398,14 @@ exported, and none is needed to use the package.
   : The Exact Gradient of the Marginal Criterion
 - [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
   : The Exact Hessian of the Marginal Criterion
+- [`statmod_min_ratio()`](https://statmodels7.github.io/statmodels7/reference/statmod_min_ratio.md)
+  : How Far Down the Path Reaches for One Term
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
 - [`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
   : Select the Hyperparameters of a Kinked Penalty Along a Path
+- [`statmod_path_setting()`](https://statmodels7.github.io/statmodels7/reference/statmod_path_setting.md)
+  : One Setting of the Path, Read From the Term
 - [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
   : A Prediction-Error Criterion at Given Coefficients and
   Hyperparameters

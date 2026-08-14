@@ -1,5 +1,23 @@
 # Changelog
 
+## statmodels7 0.38.0
+
+- The path visits as many values as the TERM asked for, per
+  hyperparameter: `lasso(~x, n_lambda = 50)`,
+  `enet(~x, n_lambda = 40, n_alpha = 12)`. How finely a hyperparameter
+  is swept is a property of the term for the same reason as whether it
+  is swept at all, and the criterion applies to every term of the model
+  at once and cannot know which it is looking at.
+  [`statmod_grid_size()`](https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.md)
+  reads it from the penalty’s entry and falls back to the criterion’s
+  `n_values` where the term said nothing.
+
+- And as far DOWN as it asked: `lasso(~x, min_ratio = 1e-6)` sets the
+  fraction of the emptying kink the path descends to. One number per
+  term, since only the sweep by kink size uses it.
+  [`statmod_min_ratio()`](https://statmodels7.github.io/statmodels7/reference/statmod_min_ratio.md)
+  reads it and falls back to the criterion’s.
+
 ## statmodels7 0.36.0
 
 - Which hyperparameters are estimated is said by the TERMS, and by
