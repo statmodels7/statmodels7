@@ -9,7 +9,8 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04
+  min_ratio = 1e-04,
+  search = c("grid", "cyclic")
 )
 }
 \arguments{
@@ -25,6 +26,10 @@ sparsest fit within one standard error of it.}
 
 \item{min_ratio}{The smallest kink the path reaches, as a fraction of the
 one that empties the block.}
+
+\item{search}{How a term's own hyperparameters are covered when it has
+several with a kink: \code{"grid"}, the default, takes every combination
+of them, and \code{"cyclic"} sweeps one at a time holding the others.}
 }
 \value{
 An \code{\link{OuterMethod}}.
@@ -58,12 +63,38 @@ rather than searched by slope. The grid is geometric in the size of the
 kink, from the value that leaves the block empty down to \code{min_ratio} of
 it, and every fit starts from the previous one's coefficients.
 
-\strong{Which hyperparameters.} Those whose value sets the size of the kink,
-read from the penalty by probing the subdifferential rather than taken from
-a list of families: \eqn{\lambda} for the lasso, SCAD and MCP, and the
-elastic net's \eqn{\lambda} with \eqn{\alpha} held, as \pkg{glmnet} holds it
-and \pkg{ncvreg} holds \eqn{\gamma}. Name others in \code{over} to sweep
-them too.
+\strong{Which hyperparameters} is the TERM's answer: every one of its
+penalty's that the constructor did not hold at a number. What the criterion
+decides is how they are covered.
+
+\strong{A product within a term, an alternation between terms.} With
+\code{search = "grid"}, the default, a term carrying several kinked
+hyperparameters has every combination of them visited; with
+\code{"cyclic"}, one is swept at a time with the others held, and the passes
+repeat. Between two terms the search alternates whichever is chosen, so
+\code{y ~ lasso(X) + enet(R)} costs the two blocks added and not multiplied.
+
+The product is the default because the cyclic sweep traverses a cross
+through the point in hand and can stop where each coordinate is separately
+best without being jointly so. Its cost is the product of the grids where
+the cyclic sweep's is their sum, which at two hyperparameters is
+\code{n_lambda * n_alpha} fits against \code{n_lambda + n_alpha} per pass;
+with three or more estimated it grows exponentially, and \code{"cyclic"} is
+there for that.
+
+\code{n_values} is the length of the path over the SIZE OF THE KINK, which
+spans four decades at the default \code{min_ratio}. An axis beside it spans
+one bounded interval and takes a fifth as many points unless the term says
+otherwise, so the shipped product is 25 by 5 rather than 25 by 25.
+
+\strong{The grid is not a rectangle}, and for two different reasons. The
+elastic net's kink is \eqn{\lambda\alpha}, so the value emptying the block
+is \eqn{\lambda_{\max} = \kappa/\alpha} and every \eqn{\alpha} carries its
+own \eqn{\lambda} axis, descending from its own top. The shapes of SCAD and
+MCP leave the kink alone, so there \eqn{\lambda_{\max}} is one number
+whatever the shape and the two axes really are a rectangle. Each axis is
+built at the settings of the axes outside it, which covers both without a
+rule about families.
 
 \strong{The cost} is \code{nfolds * n_values} fits per hyperparameter. The
 warm starts are worth 1.8 times, and building each fold's design once rather

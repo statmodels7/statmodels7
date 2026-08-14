@@ -266,12 +266,15 @@ test_that("a bounded hyperparameter is swept over its own interval", {
   # a sweep over more values cannot end above the criterion of a sweep over
   # fewer, the held setting being one of the points it visits
   expect_lte(both@criterion, held@criterion)
-  expect_true("alpha" %in% both@history$outer$name)
+  # under the product alpha is the outer axis, so it names the combination
+  # each point belongs to rather than the axis the path descends
+  expect_true(any(grepl("alpha=", both@history$outer$setting, fixed = TRUE)))
+  expect_identical(unique(both@history$outer$name), "lambda")
 })
 
 test_that("the grid over a bounded hyperparameter excludes its endpoints", {
   pen <- penalties7::elasticnet_penalty(4)
-  v <- path_grid(pen, "alpha", 5L)
+  v <- path_grid(pen, list(lambda = 1, alpha = 0.5), "alpha", 5L)
   expect_length(v, 5L)
   expect_true(all(v > 0 & v < 1))
   expect_true(!is.unsorted(v))
@@ -283,7 +286,7 @@ test_that("the grid over a bounded hyperparameter excludes its endpoints", {
   expect_false(path_by_kink(pen, list(lambda = 1, alpha = 0.5), "alpha"))
   mc <- penalties7::mcp_penalty(4)
   expect_false(path_by_kink(mc, list(lambda = 1, gamma = 3), "gamma"))
-  g <- path_grid(mc, "gamma", 6L)
+  g <- path_grid(mc, list(lambda = 1, gamma = 3), "gamma", 6L)
   expect_length(g, 6L)
   expect_true(all(g > 1))
 })
@@ -310,13 +313,25 @@ test_that("the path visits as many values as the term asked for", {
                                 sparse_criterion = bic()))
   expect_identical(n_of(d), as.integer(bic()@n_values))
 
-  # and it is PER HYPERPARAMETER: the elastic net sweeps each cyclically
+  # and it is PER HYPERPARAMETER. The product visits every combination, so
+  # the elastic net costs exactly n_lambda * n_alpha points
   e <- suppressWarnings(statmod(y ~ enet(Z, n_lambda = 8, n_alpha = 4),
                                 distributions7::gaussian1_distrib(), dg,
                                 sparse_criterion = bic()))
-  tb <- table(e@history$outer$name)
+  expect_identical(nrow(e@history$outer), 8L * 4L)
+  # one row per point: `name` and `value` carry the axis the path descends
+  # and `setting` the rest of the combination
+  expect_identical(unique(e@history$outer$name), "lambda")
+  expect_length(unique(e@history$outer$setting), 4L)
+
+  # the cyclic sweep costs the sum instead, once per pass
+  cy <- suppressWarnings(statmod(y ~ enet(Z, n_lambda = 8, n_alpha = 4),
+                                 distributions7::gaussian1_distrib(), dg,
+                                 sparse_criterion = bic(search = "cyclic")))
+  tb <- table(cy@history$outer$name)
   expect_identical(unname(tb[["lambda"]] %% 8L), 0L)
   expect_identical(unname(tb[["alpha"]] %% 4L), 0L)
+  expect_lt(nrow(cy@history$outer), 8L * 4L)
 })
 
 test_that("the path reaches as far down as the term asked", {
@@ -342,4 +357,159 @@ test_that("the path reaches as far down as the term asked", {
                                 distributions7::gaussian1_distrib(), dm,
                                 sparse_criterion = bic()))
   expect_equal(ratio(d), bic()@min_ratio, tolerance = 1e-8)
+})
+
+test_that("the product visits every combination and each row has its own top", {
+  # THE GRID IS NOT A RECTANGLE for the elastic net: the kink is lambda*alpha,
+  # so the value emptying the block is kink/alpha and every alpha carries its
+  # own lambda axis. The kink itself is a property of the data and does not
+  # move, which is what the product of the two must reproduce.
+  set.seed(81)
+  n2 <- 130
+  Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  dd <- data.frame(y = as.numeric(Z %*% c(1.6, -1.2, 0.9, rep(0, 5))) +
+                     stats::rnorm(n2))
+  dd$Z <- Z
+
+  f <- suppressWarnings(statmod(y ~ enet(Z, n_lambda = 6, n_alpha = 3),
+                                distributions7::gaussian1_distrib(), dd,
+                                sparse_criterion = bic()))
+  h <- f@history$outer
+  expect_identical(nrow(h), 6L * 3L)
+  tops <- tapply(h$value, h$setting, max)
+  al <- as.numeric(sub("alpha=", "", names(tops)))
+  expect_length(tops, 3L)
+  # lambda_max * alpha is the kink that empties the block, one number
+  expect_equal(as.numeric(tops * al), rep(as.numeric(tops * al)[[1L]], 3L),
+               tolerance = 1e-6)
+  # and the three lambda_max really are different, so the test is not
+  # satisfied by a rectangle
+  expect_gt(max(tops) / min(tops), 1.5)
+})
+
+test_that("scad and mcp keep ONE lambda_max whatever the shape", {
+  # the controproof against writing the elastic net's relation for them: the
+  # shape does NOT scale the kink -- the half-width of the subdifferential at
+  # zero is lambda and nothing else -- so lambda_max cannot depend on it
+  set.seed(82)
+  n2 <- 130
+  Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  dd <- data.frame(y = as.numeric(Z %*% c(1.6, -1.2, 0.9, rep(0, 5))) +
+                     stats::rnorm(n2))
+  dd$Z <- Z
+
+  for (call in c("scad(Z, n_lambda = 5, n_a = 3)",
+                 "mcp(Z, n_lambda = 5, n_gamma = 3)")) {
+    f <- suppressWarnings(statmod(
+      stats::as.formula(paste("y ~", call)),
+      distributions7::gaussian1_distrib(), dd, sparse_criterion = bic()))
+    h <- f@history$outer
+    expect_identical(nrow(h), 5L * 3L)
+    tops <- tapply(h$value, h$setting, max)
+    expect_length(tops, 3L)
+    expect_equal(as.numeric(tops), rep(as.numeric(tops)[[1L]], 3L))
+  }
+})
+
+test_that("a written-out grid is visited as it stands", {
+  set.seed(83)
+  n2 <- 130
+  Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  dd <- data.frame(y = as.numeric(Z %*% c(1.6, -1.2, 0.9, rep(0, 5))) +
+                     stats::rnorm(n2))
+  dd$Z <- Z
+
+  v <- c(0.03, 0.11, 0.4, 1.5, 5.5)
+  f <- suppressWarnings(statmod(y ~ lasso(Z, lambda = v),
+                                distributions7::gaussian1_distrib(), dd,
+                                sparse_criterion = bic()))
+  h <- f@history$outer
+  expect_equal(sort(h$value), sort(v))
+  # walked from the emptiest fit towards the fullest, which for a lasso is
+  # downwards -- the order the warm starts need
+  expect_true(!is.unsorted(rev(h$value)))
+  expect_true(f@hyper$mu[[1L]][["lambda"]] %in% v)
+  # ESTIMATED, not held: the caller fixed where to look and not the answer
+  s <- summary(f)
+  k <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  tb <- s@tables$mu[[which(k == "selection")]]$table
+  expect_identical(tb$role[tb$name == "lambda"], "estimated")
+
+  # per hyperparameter, and NOT rescaled by the other: the elastic net's
+  # lambda_max would divide by alpha, and a written-out grid is not built
+  f2 <- suppressWarnings(statmod(y ~ enet(Z, lambda = v, n_alpha = 3),
+                                 distributions7::gaussian1_distrib(), dd,
+                                 sparse_criterion = bic()))
+  h2 <- f2@history$outer
+  expect_identical(nrow(h2), length(v) * 3L)
+  expect_equal(sort(unique(h2$value)), sort(v))
+})
+
+test_that("the shape's floor comes from the step, not from the constant", {
+  # SCAD's proximal operator needs t < a - 1, and t = 1/sum(w x^2) under a
+  # diagonal map becomes t d^2 -- so which shapes the block can be FITTED at
+  # is a property of the data. A grid starting just above the penalty's own
+  # bound of 2 names shapes no fit could reach.
+  pen <- penalties7::scad_penalty(n_coef = 5L)
+  th <- list(lambda = 1, a = 3)
+  # short steps: the penalty's own bound binds and nothing is raised
+  expect_equal(shape_floor(pen, th, "a", rep(0.005, 5)), 2)
+  # long steps: the condition binds and the floor is 1 + t
+  expect_equal(shape_floor(pen, th, "a", rep(3, 5)), 4)
+  expect_equal(shape_floor(pen, th, "a", rep(10, 5)), 11)
+  # and it is asked of the PENALTY, so MCP's own condition, t < gamma, comes
+  # out without either constant being written here
+  mc <- penalties7::mcp_penalty(n_coef = 5L)
+  expect_equal(shape_floor(mc, list(lambda = 1, gamma = 3), "gamma",
+                           rep(3, 5)), 3)
+  expect_equal(shape_floor(mc, list(lambda = 1, gamma = 3), "gamma",
+                           rep(0.005, 5)), 1)
+  # with no steps to read there is nothing to raise it above
+  expect_equal(shape_floor(pen, th, "a", NULL), 2)
+
+  # the grid starts above whatever the floor is, and every point of it
+  # admits the operator -- which the old grid, pinned at the constant, did
+  # not: 2.25 with a step of 3 is a shape no fit could use
+  g <- path_grid(pen, th, "a", 6L, rep(3, 5))
+  expect_true(all(g > 4))
+  expect_true(all(vapply(g, function(a) !is.null(penalties7::penalty_prox_spec(
+    pen, list(lambda = 1, a = a), rep(3, 5))), logical(1))))
+})
+
+test_that("the size of the kink is inverted in closed form", {
+  # measured, the size is exactly a power of each hyperparameter -- one for
+  # the lasso and for the elastic net in both of its own, minus one for a
+  # Laplace prior written by its scale -- so the value giving a target size
+  # is closed and uniroot is not run
+  lp <- penalties7::distrib_penalty(
+    distributions7::fixed(distributions7::laplace_distrib(), mu = 0),
+    n_coef = 5L, kinks = 0)
+  expect_equal(kink_power(penalties7::lasso_penalty(n_coef = 4L),
+                          list(lambda = 3), "lambda")$k, 1)
+  expect_equal(kink_power(penalties7::elasticnet_penalty(n_coef = 4L),
+                          list(lambda = 3, alpha = 0.5), "alpha")$k, 1)
+  expect_equal(kink_power(lp, list(sigma = 0.5), "sigma")$k, -1,
+               tolerance = 1e-6)
+  # a hyperparameter the kink does not depend on has no exponent to read
+  expect_null(kink_power(penalties7::scad_penalty(n_coef = 4L),
+                         list(lambda = 3, a = 3.7), "a"))
+
+  # and the closed answer is the one the search would have found
+  pen <- penalties7::elasticnet_penalty(n_coef = 4L)
+  th <- list(lambda = 3, alpha = 0.5)
+  for (target in c(0.25, 2, 17)) {
+    expect_equal(kink_solve(pen, th, "lambda", target), target / 0.5,
+                 tolerance = 1e-10)
+    expect_equal(kink_scale(pen, utils::modifyList(
+      th, list(lambda = kink_solve(pen, th, "lambda", target)))), target,
+      tolerance = 1e-10)
+  }
+  # the whole grid through one exponent agrees with solving each target
+  v <- path_values(pen, th, "lambda", 20, 7L, 1e-3)
+  one <- vapply(exp(seq(log(20), log(0.02), length.out = 7L)),
+                function(t) kink_solve(pen, th, "lambda", t), numeric(1))
+  expect_equal(v, one, tolerance = 1e-10)
 })

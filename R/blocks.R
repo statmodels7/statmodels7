@@ -293,6 +293,7 @@ statmod_penalty_keys <- function(spec) {
           # a structural one carries them too
           fixed = if (is.null(e$fixed)) list() else e$fixed,
           n_values = if (is.null(e$n_values)) list() else e$n_values,
+          values = if (is.null(e$values)) list() else e$values,
           min_ratio = if (is.null(e$min_ratio)) numeric(0) else
             as.numeric(e$min_ratio))
       }
@@ -445,6 +446,37 @@ statmod_grid_size <- function(spec, row, default) {
 #' @keywords internal
 statmod_min_ratio <- function(spec, row, default) {
   statmod_path_setting(spec, row, "min_ratio", default, NULL)
+}
+
+
+#' The Values a Term Wrote Out for One Hyperparameter
+#'
+#' @description
+#' The grid the TERM named, or \code{NULL} where it left the path to build
+#' one.
+#'
+#' @details
+#' The third state of a hyperparameter's argument, beside holding it at one
+#' number and leaving it to be estimated over a grid the path constructs. It
+#' travels with the penalty's entry like the grid size and the depth, so a
+#' penalty reached through a sub-term of a structural term carries it too.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param row One row of \code{\link{path_rows}}'s index.
+#'
+#' @return A numeric vector, or \code{NULL}.
+#'
+#' @seealso \code{\link[modelterms7]{term_values}}, \code{\link{path_forced}}
+#'
+#' @keywords internal
+statmod_values <- function(spec, row) {
+  for (u in statmod_penalty_keys(spec)) {
+    if (!identical(u$param, row$parameter) ||
+        !identical(u$key, row$term)) next
+    v <- u$values[[row$name]]
+    if (!is.null(v) && length(v)) return(as.numeric(v))
+  }
+  NULL
 }
 
 

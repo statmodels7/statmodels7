@@ -13,6 +13,7 @@ OuterMethod(
   min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
+  search = character(0),
   folds = integer(0)
 )
 }
@@ -33,6 +34,9 @@ that empties the block.}
 \item{nfolds}{How many folds cross-validation uses.}
 
 \item{rule}{\code{"min"} or \code{"1se"}.}
+
+\item{search}{\code{"grid"} or \code{"cyclic"}, over a term's own
+hyperparameters.}
 
 \item{folds}{A fold number per observation, or \code{integer(0)}.}
 }

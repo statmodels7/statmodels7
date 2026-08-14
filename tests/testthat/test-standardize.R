@@ -145,19 +145,21 @@ test_that("a sparse equation fits under every penalized term", {
   dr$v1 <- rnorm(nrow(dr))
   dr$v2 <- rnorm(nrow(dr)) * 20
   dr$y <- rnorm(nrow(dr), 1 + 0.5 * dr$v1)
+  # the hyperparameters are HELD, which is what this test is about: whether a
+  # standardized penalty reaches a sparse block at all, not how its
+  # hyperparameters are chosen. Left free they are selected along a path --
+  # under the product, 125 fits per term for an answer nothing here reads.
+  # The selection is covered in test-path.R.
   cases <- list(
-    ridge = list(t = quote(ridge(~ v1 + v2, standardize = TRUE)),
-                 h = list(ridge = list(sigma = 1))),
-    lasso = list(t = quote(lasso(~ v1 + v2, standardize = TRUE)),
-                 h = list(lasso = list(lambda = 1))),
-    scad  = list(t = quote(scad(~ v1 + v2, standardize = TRUE)),
-                 h = list(scad = list(lambda = 1, a = 3.7))),
-    mcp   = list(t = quote(mcp(~ v1 + v2, standardize = TRUE)),
-                 h = list(mcp = list(lambda = 1, gamma = 3)))
+    ridge = quote(ridge(~ v1 + v2, standardize = TRUE, lambda = 1)),
+    lasso = quote(lasso(~ v1 + v2, standardize = TRUE, lambda = 1)),
+    scad  = quote(scad(~ v1 + v2, standardize = TRUE, lambda = 1, a = 3.7)),
+    mcp   = quote(mcp(~ v1 + v2, standardize = TRUE, lambda = 1, gamma = 3))
   )
   for (nm in names(cases)) {
-    fml <- stats::as.formula(sprintf("y ~ %s + random(~ 1 | g)",
-                                     deparse(cases[[nm]]$t)))
+    fml <- stats::as.formula(sprintf(
+      "y ~ %s + random(~ 1 | g)",
+      paste(deparse(cases[[nm]]), collapse = "")))
     fit <- statmod(fml, distributions7::gaussian1_distrib(), dr)
     expect_true(fit@converged, label = nm)
     expect_true(all(is.finite(unlist(coef(fit)))), label = nm)

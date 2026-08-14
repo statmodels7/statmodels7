@@ -4,14 +4,18 @@
 \alias{path_grid}
 \title{The Values a Path Visits Over a Bounded Hyperparameter}
 \usage{
-path_grid(pen, name, n_values = 25L)
+path_grid(pen, theta, name, n_values = 25L, steps = NULL)
 }
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty.}
 
+\item{theta}{The hyperparameters in force.}
+
 \item{name}{Which hyperparameter the path varies.}
 
 \item{n_values}{How many points.}
+
+\item{steps}{What \code{\link{path_steps}} returned, or \code{NULL}.}
 }
 \value{
 A numeric vector of values for \code{name}.
@@ -32,8 +36,18 @@ at a time, the kink still moves through \eqn{\lambda}.
 The endpoints are excluded because the bounds are open: the elastic net at
 \eqn{\alpha = 0} has no kink at all, and the path would be scoring a
 penalty of another kind.
+
+A shape parameter is swept above the smallest value at which the block can
+be FITTED, which \code{\link{shape_floor}} derives from the proximal
+condition at the steps the block's coordinate descent will take, rather
+than above the constant the penalty is defined over. The two coincide on an
+ordinary well-conditioned block and differ where the steps are long: with a
+standardized penalty on a column of spread 20 the floor is 3 where SCAD's
+own bound is 2, so a quarter of the old grid named shapes no fit could
+reach.
 }
 \seealso{
-\code{\link{path_values}}, \code{\link{path_bounded}}
+\code{\link{path_values}}, \code{\link{path_bounded}},
+\code{\link{shape_floor}}
 }
 \keyword{internal}

@@ -37,6 +37,8 @@ NULL
 #'   that empties the block.
 #' @param nfolds How many folds cross-validation uses.
 #' @param rule \code{"min"} or \code{"1se"}.
+#' @param search \code{"grid"} or \code{"cyclic"}, over a term's own
+#'   hyperparameters.
 #' @param folds A fold number per observation, or \code{integer(0)}.
 #'
 #' @return An object of class \code{OuterMethod}.
@@ -63,6 +65,7 @@ OuterMethod <- S7::new_class("OuterMethod",
     min_ratio = S7::class_numeric,
     nfolds = S7::class_numeric,
     rule = S7::class_character,
+    search = S7::class_character,
     folds = S7::class_numeric
   ),
   validator = function(self) {
@@ -78,6 +81,10 @@ OuterMethod <- S7::new_class("OuterMethod",
     if (!identical(length(self@rule), 1L) ||
         !self@rule %in% c("min", "1se")) {
       return("Property 'rule' must be \"min\" or \"1se\".")
+    }
+    if (!identical(length(self@search), 1L) ||
+        !self@search %in% c("grid", "cyclic")) {
+      return("Property 'search' must be \"grid\" or \"cyclic\".")
     }
     if (length(self@n_values) != 1L || self@n_values < 2) {
       return("Property 'n_values' must be a single number, at least 2.")
@@ -105,7 +112,7 @@ OuterMethod <- S7::new_class("OuterMethod",
 #' @keywords internal
 outer_path_defaults <- function() {
   list(n_values = 25, min_ratio = 1e-4, nfolds = 10, rule = "min",
-       folds = numeric(0))
+       search = "grid", folds = numeric(0))
 }
 
 

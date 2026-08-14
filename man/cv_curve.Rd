@@ -4,7 +4,16 @@
 \alias{cv_curve}
 \title{The Held-Out Deviance of Every Point of a Path}
 \usage{
-cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
+cv_curve(
+  spec,
+  data,
+  weights,
+  offsets,
+  inner_optimizer,
+  hypers,
+  folds,
+  run = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -18,6 +27,10 @@ cv_curve(spec, data, weights, offsets, inner_optimizer, hypers, folds)
 \item{hypers}{A list of hyperparameter settings, one per path point.}
 
 \item{folds}{A fold number per observation.}
+
+\item{run}{Which combination of the outer axes each point belongs to. The
+warm start begins again at the head of each, the kink jumping back up
+there. \code{NULL} treats the whole list as one run.}
 }
 \value{
 A list with \code{cvm}, \code{cvse} and \code{n_fail}.

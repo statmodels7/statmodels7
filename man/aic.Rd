@@ -5,9 +5,9 @@
 \alias{bic}
 \title{Prediction-Error Criteria for the Hyperparameters}
 \usage{
-aic(k = 2, hessian = c("observed", "expected"))
+aic(k = 2, hessian = c("observed", "expected"), search = c("grid", "cyclic"))
 
-bic(hessian = c("observed", "expected"))
+bic(hessian = c("observed", "expected"), search = c("grid", "cyclic"))
 }
 \arguments{
 \item{k}{The price of one degree of freedom. Defaults to 2; \code{bic()}
@@ -15,6 +15,10 @@ uses \eqn{\log n}, resolved when the model is fitted.}
 
 \item{hessian}{Which information is used, \code{"expected"} or
 \code{"observed"}. The exact derivatives need the observed one.}
+
+\item{search}{How a term's own hyperparameters are covered when it has
+several with a kink: \code{"grid"}, the default, takes every combination
+of them, and \code{"cyclic"} sweeps one at a time holding the others.}
 }
 \value{
 An \code{\link{OuterMethod}}.
@@ -55,6 +59,11 @@ to is \code{aic()} -- the substitution Wood (2008) makes in the other
 direction when the scale is known. A GCV on the squared error of the fitted
 mean is a different and well-defined object; it needs the derivative of that
 mean in the parameters, which is not one of \pkg{distributions7}'s generics.
+
+\strong{Over a penalty with a kink} these criteria sweep a path rather than
+differentiate, and \code{search} says how a term carrying more than one such
+hyperparameter is covered. See \code{\link{cv}} for what the two settings
+do and what each costs.
 }
 \examples{
 set.seed(1)

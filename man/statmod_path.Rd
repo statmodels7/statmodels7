@@ -59,8 +59,8 @@ cross-validation needs in order to refit on part of it.}
 The same list \code{\link{outer_fit}} returns.
 }
 \description{
-Sweeps each of them over a grid of kink sizes, holding the others, and keeps
-the setting the criterion prefers.
+Sweeps them over grids of kink sizes and keeps the setting the criterion
+prefers.
 }
 \details{
 The grid runs from the kink that empties the block down to \code{min_ratio}
@@ -69,9 +69,18 @@ fit starts from the previous one's coefficients. Where the top of the grid
 does not empty the block it is doubled until it does, the starting value
 being computed at the coefficients in hand rather than at a refitted null.
 
-With several such hyperparameters the sweeps are cyclic, one coordinate at a
-time, which is what keeps the cost linear in their number where a full grid
-would be exponential in it.
+A term carrying several of them has every combination visited where the
+method asks for \code{search = "grid"} and one coordinate at a time where it
+asks for \code{"cyclic"}. Between terms the alternation is cyclic either
+way, so the cost is the product WITHIN a term and the sum ACROSS them. Each
+axis is built at the settings of the axes outside it, which is what makes
+the elastic net's grid a family of \eqn{\lambda} axes rather than one, and
+the axis swept by kink size is put innermost so that the warm starts walk
+along it.
+
+A pass that would visit the points the last one scored is not run. The top
+of the path is read again at every pass because the rest of the model moves,
+and where it has not the grid is the one already in hand.
 
 Where the model also carries hyperparameters that are twice differentiable,
 those are estimated by \code{\link{outer_fit}} inside each point of the
