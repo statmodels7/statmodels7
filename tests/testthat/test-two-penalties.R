@@ -149,11 +149,26 @@ test_that("a partially penalized term is not read as parametric", {
   built <- modelterms7::term_build(
     modelterms7::seg(x, gamma ~ 0 + modelterms7::lasso(~1)), dx)
   expect_null(modelterms7::term_penalty(built))
-  expect_identical(term_block_kind(built), "selection")
+  # A break-point term is filed under its own kind whatever its
+  # coefficients carry, because its block is a working linearization and
+  # the coefficients are not the quantities of the model: it is reported
+  # by term_readable() and not column by column.
+  expect_identical(term_block_kind(built), "breakpoint")
   expect_identical(
     term_block_kind(modelterms7::term_build(modelterms7::seg(x), dx)),
-    "parametric")
+    "breakpoint")
   expect_identical(
     term_block_kind(modelterms7::term_build(
-      modelterms7::seg(x, gamma ~ 0 + modelterms7::ridge(~1)), dx)), "penalized")
+      modelterms7::seg(x, gamma ~ 0 + modelterms7::ridge(~1)), dx)),
+    "breakpoint")
+  # and an ordinary penalized block is unaffected
+  expect_identical(
+    term_block_kind(modelterms7::term_build(modelterms7::lasso(~x), dx)),
+    "selection")
+  expect_identical(
+    term_block_kind(modelterms7::term_build(modelterms7::ridge(~x), dx)),
+    "penalized")
+  expect_identical(
+    term_block_kind(modelterms7::term_build(modelterms7::linpar(~x), dx)),
+    "parametric")
 })

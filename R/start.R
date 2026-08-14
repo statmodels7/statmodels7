@@ -319,6 +319,30 @@ S7::method(start_at, StartIntercepts) <-
         out[[p]][1L] <- v
       }
     }
+    # and each term says where its own block begins. The base method of
+    # term_coef_start() is zero everywhere, so an ordinary block is
+    # unchanged; a term that recomputes its design from its coefficients
+    # answers with the start it built itself, because zero is degenerate
+    # there rather than neutral. A jump reads its break-point off
+    # -g_k/delta_k, which at zero puts every break-point at the same
+    # clamped position and leaves the block singular, and nothing in a
+    # scoring step moves it off that point.
+    for (p in params) {
+      if (design[[p]]$npar == 0L) next
+      for (nm in names(spec@terms[[p]])) {
+        idx <- design[[p]]$blocks[[nm]]
+        if (is.null(idx) || !length(idx)) next
+        v <- tryCatch(modelterms7::term_coef_start(spec@terms[[p]][[nm]]),
+                      error = function(e) NULL)
+        if (is.null(v) || length(v) != length(idx) || !all(is.finite(v))) next
+        # A term asking for zeros is asking for nothing, and writing them
+        # would undo the intercept set above: the intercept is a column of
+        # the parametric block, whose start is zero everywhere by the base
+        # method. Only a term that wants something says so.
+        if (all(v == 0)) next
+        out[[p]][idx] <- as.numeric(v)
+      }
+    }
     out
   }
 

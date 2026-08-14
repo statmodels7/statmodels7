@@ -129,11 +129,18 @@ test_that("a fit that did not converge says where its parameters ended up", {
 
 test_that("an unavailable criterion at the start names its cause", {
   # A gamma model whose nl term sits inside the log link, so the fitted
-  # mean is exp(a exp(-r x)): the rate degenerates, the inner fit
-  # CONVERGES on the flat ridge, the penalized information has no
+  # mean is exp(a exp(-r x)): started at a = 0 the Jacobian column of the
+  # rate is -a x exp(-r x) and vanishes identically, the inner fit
+  # CONVERGES on that flat ridge, the penalized information has no
   # Cholesky factor at any hyperparameter, and the outer search used to
   # die inside the optimizer with "the objective is not finite at the
   # starting value", which names the point and not the cause.
+  #
+  # The zero start is asked for EXPLICITLY here. It used to be the default
+  # and is not one any more -- a term that recomputes its block says where
+  # its coefficients begin, through term_coef_start() -- so the same model
+  # at the start its own `start =` names is an ordinary fit. What is
+  # pinned is the message, not the old default.
   set.seed(8)
   n <- 300
   dd <- data.frame(x = runif(n, 0, 3),
@@ -144,7 +151,8 @@ test_that("an unavailable criterion at the start names its cause", {
   fml <- y ~ nl(~ a * exp(-r * x), a ~ ridge(~g),
                 links = list(r = linkfunctions7::log_link()),
                 start = list(a = 2, r = 1)) - 1
-  expect_error(statmod(fml, distributions7::gamma1_distrib(), dd),
+  expect_error(statmod(fml, distributions7::gamma1_distrib(), dd,
+                       start = start_origin()),
                "unavailable at the starting hyperparameters")
   # held, the same model fits and reports where its parameters ended up
   f0 <- suppressWarnings(statmod(fml, distributions7::gamma1_distrib(), dd,

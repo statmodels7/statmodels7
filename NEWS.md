@@ -1,3 +1,30 @@
+# statmodels7 0.33.0
+
+* A break-point term has a section of its own in `summary()`, beside the
+  smooths, the random effects and the penalized blocks, and it reports the
+  quantities of the model rather than the coefficients of the working
+  block: the linear effect, the changes, and the break-points under the
+  name `psi`. The standard error of a position comes from
+  `modelterms7::term_readable()`'s Jacobian by the delta method.
+
+  A break-point gets an estimate, a standard error and an interval, and no
+  test. The null a `z` of estimate over standard error reports on is that
+  the position is zero, which is not a hypothesis anyone holds; the one a
+  reader wants is that there is no break-point at all, and under it the
+  position is a nuisance parameter that vanishes, so the classical p-value
+  is wrong by a factor of three to five. `segmented` prints the estimate
+  and the standard error alone for the same reason.
+
+* The default start asks each term where its own block begins, through
+  `modelterms7::term_coef_start()`. It used to put every coefficient at
+  zero except an equation's intercept, and for a term that recomputes its
+  block from its coefficients zero is a singular point rather than a
+  neutral one: `y ~ jump(x, npsi = 3)` returned every coefficient exactly
+  zero and reported failure, the three break-points having collapsed onto
+  one clamped position. A term asking for zeros is left alone, so an
+  ordinary block is unchanged, and `start_origin()` still means the
+  origin.
+
 # statmodels7 0.32.0
 
 * The exact gradient of the marginal criterion reaches a penalty over a

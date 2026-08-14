@@ -4,7 +4,7 @@
 \alias{statmod_terms}
 \title{Interpret and Build Each Parameter's Terms}
 \usage{
-statmod_terms(equations, data, env)
+statmod_terms(equations, data, env, response = NULL)
 }
 \arguments{
 \item{equations}{A named list of one-sided formulas.}
@@ -12,6 +12,8 @@ statmod_terms(equations, data, env)
 \item{data}{A data frame.}
 
 \item{env}{The environment the original formula carried.}
+
+\item{response}{The evaluated left-hand side, or \code{NULL}.}
 }
 \value{
 A list with \code{terms} (a named list per parameter) and
@@ -27,5 +29,9 @@ of the search path, so that \code{s()} means ours whatever the user has
 attached. A factor covariate needs no special handling: the interpreter
 collects bare covariates into one \code{linpar()}, whose block comes from
 \code{model.matrix} and therefore carries the contrasts.
+
+A break-point term whose starting positions the caller did not name has
+them chosen on a grid rather than left at the interior quantiles of the
+covariate; see \code{\link{seg_grid_start}}.
 }
 \keyword{internal}
