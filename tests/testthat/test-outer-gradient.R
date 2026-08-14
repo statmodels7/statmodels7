@@ -309,21 +309,16 @@ test_that("an outer step the search takes back moves nothing", {
   # coordinates, so it lands far out where a simplex never goes. Measured
   # before the fix, a panel of twenty groups reported thirty consecutive
   # unavailable points and no fit; after it, ten evaluations.
-  # ⚠️ WHAT THIS DOES NOT ASSERT, and the reason is measured. The restore
-  # fixed the panel it was found on -- twenty groups, thirty consecutive
-  # unavailable points and no fit before it, nine evaluations and the
-  # derivative-free answer after -- and it did NOT make the exact route
-  # reliable in general: on twelve groups of fifty from this same
-  # generator, the search still reports no progress at all (criterion NA,
-  # the hyperparameter still at its start) while nelder_mead fits. The
-  # restore was necessary and is not sufficient; the remaining cause is
-  # lbfgs taking its first step as the WHOLE gradient, which grows with the
-  # number of penalized coordinates. That is section 8's open item, and a
-  # test asserting convergence here would be asserting something known to
-  # be false.
-  #
-  # What IS asserted is the part that holds: where the exact route reaches
-  # a fit, it reaches the derivative-free one's, in fewer evaluations.
+  # Two things had to be right before this holds, and both were found here.
+  # The restore stopped the ratchet: without it the search lost every
+  # backtracked point -- thirty consecutive unavailable ones and no fit at
+  # twenty groups. It was not sufficient, because bfgs and lbfgs took their
+  # FIRST direction as the raw gradient, which on this criterion grows with
+  # the number of penalized coordinates, so the first trial point was an
+  # arbitrary distance out; optimizers7 0.3.0 scales it to a step of order
+  # one in the parameters. Measured after both, on panels of 3, 8, 12 and 20
+  # groups: 8, 6, 7 and 5 evaluations against 33, 55, 23 and 41, the
+  # criterion agreeing to the printed digit every time.
   skip_on_cran()
   dp <- sim_gas_panel(7, 4L, 45L)
   form <- y ~ x +
@@ -333,8 +328,7 @@ test_that("an outer step the search takes back moves nothing", {
   slow <- statmod(form, distributions7::gaussian1_distrib(), dp,
                   outer_criterion = reml(hessian = "observed"),
                   outer_optimizer = optimizers7::nelder_mead())
-  skip_if(!isTRUE(fast@converged),
-          "the exact outer search did not converge on this panel")
+  expect_true(fast@converged)
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-5)
   expect_equal(fast@hyper$mu[[1L]][["sigma"]],
                slow@hyper$mu[[1L]][["sigma"]], tolerance = 1e-3)
