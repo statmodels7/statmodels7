@@ -342,7 +342,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #'
 #' @description
 #' Fits the terms whose penalties are twice differentiable in one system and
-#' each remaining block by a method of its own, sweeping until the objective
+#' each remaining block by a method of its own, alternating until the objective
 #' stops moving.
 #'
 #' @details
@@ -383,19 +383,19 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   # A structural term of the FILTER shape is fitted in the same system as the
   # coefficients rather than alternated with them: the joint gradient and the
   # joint observed information both exist, and the alternation was paying for
-  # one optimizer per sweep whose every iteration re-ran the recursion. A term
+  # one optimizer per pass whose every iteration re-ran the recursion. A term
   # of the likelihood shape -- a regime -- keeps the alternation, its
   # information being assembled by a different route.
   joint <- has_structural && length(blocks$smooth) &&
     all(vapply(attr(design, "structural"),
                function(u) identical(u$kind, "filter"), logical(1)))
 
-  for (sweep in seq_len(as.integer(maxit))) {
+  for (pass in seq_len(as.integer(maxit))) {
     before <- value
 
     if (joint) {
       if (vb$blocks) {
-        vb_rule(sprintf("inner sweep %d: joint system", sweep),
+        vb_rule(sprintf("inner pass %d: joint system", pass),
                 vb_name(inner_optimizer, "newton"), indent = 2L)
       }
       # the caller's optimizer, where they named one. `iwls()` is a scoring
@@ -414,7 +414,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       smooth_ok <- isTRUE(res$converged)
       struct_ok <- smooth_ok
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
-        sweep = sweep, block = "joint", objective = value,
+        pass = pass, block = "joint", objective = value,
         change = before - value, iterations = res$iterations,
         converged = res$converged
       )
@@ -423,8 +423,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     # the smooth block, all of it at once
     if (!joint && length(blocks$smooth)) {
       if (vb$blocks) {
-        vb_rule(sprintf("inner sweep %d: smooth block, %d coefficients",
-                        sweep, length(blocks$smooth)),
+        vb_rule(sprintf("inner pass %d: smooth block, %d coefficients",
+                        pass, length(blocks$smooth)),
                 vb_name(inner_optimizer, "iwls"), indent = 2L)
       }
       res <- fit_smooth(obj, beta, blocks$smooth, spec, design, hyper,
@@ -434,12 +434,12 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       smooth_ok <- isTRUE(res$converged)
       smooth_note <- res$note
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
-        sweep = sweep, block = "smooth", objective = value,
+        pass = pass, block = "smooth", objective = value,
         change = before - value, iterations = res$iterations,
         converged = res$converged
       )
       if (!is.null(res$history)) {
-        res$history$sweep <- sweep
+        res$history$pass <- pass
         res$history$block <- "smooth"
         hist_inner[[length(hist_inner) + 1L]] <- res$history
       }
@@ -450,7 +450,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     if (has_structural && !joint) {
       v0 <- value
       if (vb$blocks) {
-        vb_rule(sprintf("inner sweep %d: structural terms", sweep),
+        vb_rule(sprintf("inner pass %d: structural terms", pass),
                 "newton", indent = 2L)
       }
       res <- statmod_fit_structural(spec, design, obj, beta, hyper, NULL,
@@ -458,7 +458,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       value <- res$value
       struct_ok <- isTRUE(res$converged)
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
-        sweep = sweep, block = "structural", objective = value,
+        pass = pass, block = "structural", objective = value,
         change = v0 - value, iterations = res$iterations,
         converged = res$converged
       )
@@ -468,7 +468,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     for (bl in blocks$sparse) {
       v0 <- value
       if (vb$blocks) {
-        vb_rule(sprintf("inner sweep %d: %s in %s, %d coefficients", sweep,
+        vb_rule(sprintf("inner pass %d: %s in %s, %d coefficients", pass,
                         short_keys(bl$term), bl$param, length(bl$index)),
                 indent = 2L)
       }
@@ -488,7 +488,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       beta <- res$par
       value <- res$value
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
-        sweep = sweep, block = paste(bl$param, bl$term, sep = "/"),
+        pass = pass, block = paste(bl$param, bl$term, sep = "/"),
         objective = value, change = v0 - value,
         iterations = res$iterations, converged = res$converged
       )
@@ -507,16 +507,27 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 
     rel <- abs(before - value) / max(1, abs(value))
     if (vb$blocks) {
-      vb_say("sweep %d done: objective %.8f, relative change %.3e",
-             sweep, value, rel, indent = 2L)
+      vb_say("pass %d done: objective %.8f, relative change %.3e",
+             pass, value, rel, indent = 2L)
     }
-    # With nothing to alternate WITH, the sweep is the inner fit and the
+    # With nothing to alternate WITH, the pass is the inner fit and the
     # verdict is the inner fit's. This line used to set converged
     # unconditionally in that case, so every model without a kinked penalty
     # reported success whatever the inner method had done -- including a run
     # that stopped on a non-finite score.
-    if (!length(blocks$sparse) && !has_refresh && !has_structural) {
-      converged <- isTRUE(smooth_ok)
+    #
+    # A JOINTLY fitted structural term is that same case and was excluded
+    # from it: the coefficients and the term's own parameters are solved in
+    # one system, so there is no second block for a second pass to move.
+    # Every such fit therefore paid one extra pass to discover a relative
+    # change of exactly zero -- visible in the trace as a second pass of one
+    # iteration. The alternation is still entered where a term of the
+    # LIKELIHOOD shape (a regime) is present, or a sparse block, or a term
+    # that recomputes its own design, because those really do alternate.
+    lone <- !length(blocks$sparse) && !has_refresh &&
+      (!has_structural || isTRUE(joint))
+    if (lone) {
+      converged <- isTRUE(smooth_ok) && isTRUE(struct_ok)
       break
     }
     if (rel < tol) {
@@ -527,7 +538,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       # structural term it is the objective's and the structural block's,
       # for the other half of the same reason: the smooth block is fitted
       # with the term's parameters held, so asking its score to reach the
-      # tolerance at every sweep asks each conditional optimum to be
+      # tolerance at every pass asks each conditional optimum to be
       # located to a precision the joint answer does not need.
       converged <- TRUE
       if (has_refresh) converged <- isTRUE(terms_ok)

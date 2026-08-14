@@ -13,7 +13,7 @@ vb_inner(vb)
 A list of switches.
 }
 \description{
-The same switches with the block trace off, since one line per sweep per
+The same switches with the block trace off, since one line per pass per
 hyperparameter tried is not a trace anybody reads.
 }
 \keyword{internal}

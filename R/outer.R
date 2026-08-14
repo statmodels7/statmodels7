@@ -541,13 +541,23 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     M <- H + S
     if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
   }
-  R <- tryCatch(chol(M), error = function(e) NULL)
   # a determinant that does not exist is a hyperparameter the search should
   # step away from, not an error: at a far-out value the penalized information
-  # can lose definiteness while the fit itself is sound
-  if (is.null(R)) return(NULL)
+  # can lose definiteness while the fit itself is sound.
+  #
+  # It must be a statement about the MATRIX, though, and reading whether
+  # chol() raised is not one. Measured on a hierarchical score-driven panel,
+  # K+S reaches a condition number of 8.0e15 while still being positive
+  # definite, and there whether the factorization succeeds is decided by
+  # rounding: the outer search saw a dozen consecutive points as unavailable
+  # while backtracking towards one that had been available a moment before,
+  # which is a hole in the domain that is not there. pd_logdet() keeps the
+  # cheap route where it is safe and pays for the eigendecomposition only
+  # where the condition estimate says the cheap one cannot be trusted.
+  ld <- pd_logdet(M)
+  if (!isTRUE(ld$ok)) return(NULL)
   q <- nrow(M)
-  logdet <- 2 * sum(log(diag(R)))
+  logdet <- ld$logdet
   list(value = ll - rho + q / 2 * log(2 * pi) - logdet / 2,
        loglik = ll, penalty = rho, logdet = logdet, q = q)
 }
@@ -728,9 +738,14 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         sst$value <- NULL
       }
       if (vb$outer) {
-        cat(sprintf("     outer %-4d unavailable at %s%s\n",
-                    state$evals, paste(signif(eta, 4), collapse = ", "),
-                    if (is.null(err)) "" else paste0(": ", err)))
+        # the PARAMETER scale, as the accepted line uses: printing eta here
+        # made a prior scale look negative
+        hv <- tryCatch(paste(signif(vapply(seq_along(labels), function(j)
+          hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", "),
+          error = function(e) paste(signif(eta, 5), collapse = ", "))
+        cat(sprintf("  %6d %16s %12s   %s%s\n", state$evals, "unavailable",
+                    "--", hv,
+                    if (is.null(err)) "" else paste0("  [", err, "]")))
       }
       # The intent stated above, completed for the branch that does not
       # raise: at the STARTING point an unavailable criterion is the
@@ -791,12 +806,16 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
     state$rows[[length(state$rows) + 1L]] <- row
     if (vb$outer) {
-      cat(sprintf("     outer %-4d %s = %s    %s %.6f\n", state$evals,
-                  if (length(shown) == 1L) "h" else
-                    paste0("h1..h", length(shown)),
+      # the same columns the inner optimizer prints, and the hyperparameters
+      # on ONE scale: the PARAMETER scale, which is what a reader of a fit
+      # wants and what the returned object carries. The unavailable line used
+      # to print the free scale instead, so a prior scale read as negative --
+      # it was log(sigma) under a heading that looked like sigma.
+      gmax <- if (exact && !is.null(g) && all(is.finite(g)))
+        sprintf("%12.4g", max(abs(g))) else sprintf("%12s", "--")
+      cat(sprintf("  %6d %16.6f %s   %s\n", state$evals, m$value, gmax,
                   paste(signif(vapply(seq_along(labels), function(j)
-                    hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", "),
-                  toupper(method@kind), m$value))
+                    hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", ")))
     }
     out <- list(value = m$value,
                 grad = if (is.null(g)) rep(0, nrow(idx)) else g,
@@ -835,6 +854,14 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     for (j in seq_along(shown)) {
       vb_say("h%-3d %s", j, shown[j], indent = 5L)
     }
+    # the column header the evaluation lines below fill, in the shape the
+    # inner optimizer prints its own. `criterion` is what the search
+    # maximizes and `|grad|max` its exact gradient where there is one; the
+    # hyperparameters are on the PARAMETER scale throughout.
+    cat(sprintf("  %6s %16s %12s   %s\n", "eval", toupper(method@kind),
+                "|grad|max",
+                if (length(shown) == 1L) "h" else
+                  paste0("h1..h", length(shown))))
   }
 
   eta0 <- hyper_to_eta(hyper, idx)
@@ -892,7 +919,7 @@ hyper_value <- function(hyper, idx, j) {
 #' The Verbosity of an Inner Fit Inside the Outer Search
 #'
 #' @description
-#' The same switches with the block trace off, since one line per sweep per
+#' The same switches with the block trace off, since one line per pass per
 #' hyperparameter tried is not a trace anybody reads.
 #'
 #' @param vb The resolved verbosity.

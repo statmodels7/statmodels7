@@ -57,8 +57,8 @@ test_that("every parameter can be modelled", {
 test_that("a differentiable penalty joins the smooth block", {
   fit <- statmod(y ~ x + ridge(R), distributions7::gaussian1_distrib(), dd)
   expect_true(fit@converged)
-  # one block, so one sweep and no alternation
-  expect_identical(max(fit@history$blocks$sweep), 1L)
+  # one block, so one pass and no alternation
+  expect_identical(max(fit@history$blocks$pass), 1L)
   expect_identical(unique(fit@history$blocks$block), "smooth")
   # and the penalized coefficients are smaller than the unpenalized fit's
   unpen <- unname(stats::coef(stats::lm(y ~ x + R, dd)))[3:5]
@@ -72,7 +72,7 @@ test_that("a penalty with a kink is fitted apart, and the fit alternates", {
   expect_true(fit@converged)
   h <- fit@history$blocks
   expect_true(all(c("smooth", "mu/lasso(L)") %in% h$block))
-  expect_gt(max(h$sweep), 1L)
+  expect_gt(max(h$pass), 1L)
   # the alternation descends: every block leaves the objective no higher
   expect_true(all(h$change > -1e-8))
   # and the objective at the end is the one the fit reports
@@ -123,7 +123,7 @@ test_that("verbosity names the loops", {
   expect_error(statmodels7:::verbosity("loud"), "number from 0 to 3")
   # and it actually prints
   expect_output(statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                        verbose = 1), "sweep 1")
+                        verbose = 1), "pass 1")
 })
 
 test_that("print says what the fit is", {
@@ -277,12 +277,12 @@ test_that("the alternation obeys the method's budget", {
                  distributions7::gaussian1_distrib(), dl,
                  inner_optimizer = iwls(maxit = 1L),
                  hyper = list(mu = list(lasso = c(lambda = 5))))
-  expect_identical(max(one@history$blocks$sweep), 1L)
+  expect_identical(max(one@history$blocks$pass), 1L)
   expect_false(one@converged)
 
   many <- statmod(y ~ x + lasso(~ noise),
                   distributions7::gaussian1_distrib(), dl,
                   hyper = list(mu = list(lasso = c(lambda = 5))))
   expect_true(many@converged)
-  expect_gt(max(many@history$blocks$sweep), 1L)
+  expect_gt(max(many@history$blocks$pass), 1L)
 })

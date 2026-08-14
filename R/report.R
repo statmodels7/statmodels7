@@ -96,8 +96,8 @@ print.StatmodFit <- function(x, ...) {
               if (x@converged) "converged" else "DID NOT CONVERGE"))
   if (!x@converged) cat(fitted_ranges(x))
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {
-    cat(sprintf("%d sweeps over %d block(s)\n",
-                max(x@history$blocks$sweep),
+    cat(sprintf("%d pass(es) over %d block(s)\n",
+                max(x@history$blocks$pass),
                 length(unique(x@history$blocks$block))))
   }
   invisible(x)
@@ -458,7 +458,7 @@ short_keys <- function(x) {
 #' step ends and the next begins.
 #'
 #' @details
-#' The trace has three nested things to say -- which outer step, which sweep
+#' The trace has three nested things to say -- which outer step, which pass
 #' of the alternation inside it, and what each block did -- and printed as
 #' undifferentiated lines they are unreadable, which is what a panel fit with
 #' three hyperparameters and 130 outer evaluations demonstrated. Naming the

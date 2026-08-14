@@ -146,7 +146,8 @@ test_that("a partially penalized term is not read as parametric", {
   # seg penalizes its changes and nothing else, so term_penalty() is NULL
   # while term_penalties() is not: reading the first would file the term
   # under the unpenalized ones
-  built <- modelterms7::term_build(modelterms7::seg(x, penalty = penalties7::lasso_penalty), dx)
+  built <- modelterms7::term_build(
+    modelterms7::seg(x, gamma ~ 0 + modelterms7::lasso(~1)), dx)
   expect_null(modelterms7::term_penalty(built))
   expect_identical(term_block_kind(built), "selection")
   expect_identical(
@@ -154,5 +155,5 @@ test_that("a partially penalized term is not read as parametric", {
     "parametric")
   expect_identical(
     term_block_kind(modelterms7::term_build(
-      modelterms7::seg(x, penalty = penalties7::ridge_penalty), dx)), "penalized")
+      modelterms7::seg(x, gamma ~ 0 + modelterms7::ridge(~1)), dx)), "penalized")
 })

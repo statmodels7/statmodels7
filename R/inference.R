@@ -301,6 +301,85 @@ solve_pd <- function(A, what, labels = NULL, scale = NULL) {
 }
 
 
+#' The Log-Determinant of a Penalized Information, Robustly
+#'
+#' @description
+#' \eqn{\log|M|} for a matrix a Laplace approximation needs to be positive
+#' definite, by the cheap route where that is safe and a costlier one where
+#' it is not.
+#'
+#' @details
+#' \strong{Why not \code{chol()} alone.} A marginal criterion read the
+#' determinant off \code{chol(M)} and reported the criterion as NONEXISTENT
+#' whenever the factorization raised. At a condition number near the rounding
+#' floor whether it raises is decided by arithmetic and not by the matrix:
+#' measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
+#' eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
+#' search then backtracked through a dozen points reported unavailable towards
+#' one that had been available a moment earlier. The same doubt this package
+#' already records for \code{\link{solve_pd}} and for basis7's rank tests.
+#'
+#' \strong{The three routes.} The factorization is tried first, being O(p^3/3)
+#' and the common case. Where it succeeds, LAPACK's condition estimator reads
+#' the smallest eigenvalue off the factor already in hand for O(p^2), and a
+#' matrix comfortably away from the floor is accepted with the determinant the
+#' factor gives. Only where that test is inconclusive -- or the factorization
+#' raised at all -- is the eigendecomposition computed, which costs more and
+#' answers about the MATRIX: a factorization that failed by rounding luck on a
+#' matrix that is in fact positive definite is recovered there, and one that
+#' is genuinely rank deficient is refused deterministically rather than
+#' according to the platform.
+#'
+#' @param M A symmetric matrix.
+#' @param scale A reference magnitude, as \code{\link{solve_pd}} takes: the
+#'   unpenalized information's own scale, so that a hyperparameter legitimately
+#'   sent to 1e15 is told apart from a flat direction.
+#'
+#' @return A list with \code{logdet} and \code{ok}, or \code{ok = FALSE} where
+#'   the matrix is not positive definite.
+#'
+#' @seealso \code{\link{solve_pd}}, \code{\link{statmod_marginal}}
+#'
+#' @keywords internal
+pd_logdet <- function(M, scale = NULL) {
+  M <- as_dense(M)
+  if (!ncol(M) || !all(is.finite(M))) return(list(logdet = NA_real_, ok = FALSE))
+  anorm <- max(colSums(abs(M)))
+  ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
+         else min(scale, anorm)
+  # ⚠️ The two thresholds are NOT solve_pd()'s, and the difference is the
+  # quantity. Inverting a matrix at a condition number of 1e14 loses most of
+  # the answer, so solve_pd() refuses there; a log-DETERMINANT is a sum of
+  # logarithms and survives it -- measured, chol and eigen agree to six
+  # significant figures at 1e14 (-644.725631 against -644.725128). What
+  # matters here is only that every eigenvalue is genuinely POSITIVE, and an
+  # eigenvalue below eps times the largest is not distinguishable from zero
+  # in double precision whatever the factorization reports.
+  ch <- tryCatch(chol(M), error = function(e) NULL)
+  if (!is.null(ch)) {
+    rc <- tryCatch(chol_rcond_cpp(ch, anorm), error = function(e) NA_real_)
+    lmin <- if (is.na(rc)) 0 else rc * anorm
+    # comfortably clear of the floor: chol's answer is its own evidence, and
+    # this is the common case, so the eigendecomposition is never computed
+    if (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref) {
+      return(list(logdet = 2 * sum(log(diag(ch))), ok = TRUE))
+    }
+  }
+  # inconclusive or refused: ask the MATRIX rather than the arithmetic
+  ev <- tryCatch(eigen(M, symmetric = TRUE, only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (is.null(ev) || !all(is.finite(ev))) {
+    return(list(logdet = NA_real_, ok = FALSE))
+  }
+  if (min(ev) > .Machine$double.eps * max(ev)) {
+    return(list(logdet = sum(log(ev)), ok = TRUE))
+  }
+  list(logdet = NA_real_, ok = FALSE, min_ev = min(ev), max_ev = max(ev))
+}
+
+
+
+
 #' Which Coefficients a Singular Curvature Is Flat In
 #'
 #' @description

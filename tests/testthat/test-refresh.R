@@ -85,7 +85,7 @@ test_that("a discontinuous term is fitted and stopped on its own rule", {
   dj$y <- 3 * (dj$x > 6.5) + stats::rnorm(400, sd = 0.4)
   got <- list()
   for (p0 in c(3, 5, 8)) {
-    fm <- stats::as.formula(sprintf("y ~ jump(x, psi = %g, linear = FALSE)",
+    fm <- stats::as.formula(sprintf("y ~ jump(x, psi = %g)",
                                     p0))
     fit <- statmod(fm, distributions7::gaussian1_distrib(), dj)
     expect_true(fit@converged)
@@ -101,7 +101,7 @@ test_that("a discontinuous term is fitted and stopped on its own rule", {
   # construction is a linearization with a frozen weight, so the gradient it
   # gives belongs to the working model: at the answer it sits at 0.18 per
   # observation and never vanishes, while the break-point has stopped moving
-  fit <- statmod(y ~ jump(x, psi = 5, linear = FALSE),
+  fit <- statmod(y ~ jump(x, psi = 5),
                  distributions7::gaussian1_distrib(), dj)
   expect_true(modelterms7::term_converged(fitted_term(fit, "jump(")))
   expect_true(modelterms7::term_converged(

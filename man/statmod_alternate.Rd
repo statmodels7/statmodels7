@@ -45,7 +45,7 @@ A list with \code{par}, \code{value}, \code{converged}, \code{obj},
 }
 \description{
 Fits the terms whose penalties are twice differentiable in one system and
-each remaining block by a method of its own, sweeping until the objective
+each remaining block by a method of its own, alternating until the objective
 stops moving.
 }
 \details{
