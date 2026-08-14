@@ -1,3 +1,18 @@
+# statmodels7 0.39.0
+
+* The top of a path is read again at every sweep. It is the size of the
+  kink that empties the block, taken from the score at the coefficients in
+  hand, so it moves with the rest of the model: a smooth beside a kinked
+  term has its own smoothing parameter estimated INSIDE each point of the
+  path, and every such fit changes the score it is read from. Reading it
+  once left the path anchored to the state the search began in. Measured on
+  an elastic net, the largest lambda of the path moves from 37.0307 to
+  46.2884 between the first sweep and the second.
+
+  It bites where there is more than one sweep, which today means more than
+  one hyperparameter under estimation; a single kinked hyperparameter still
+  makes one pass and reads the top once.
+
 # statmodels7 0.38.0
 
 * The path visits as many values as the TERM asked for, per

@@ -673,44 +673,55 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
 
   # the top of the path: the kink that leaves every coefficient of the block
   # at zero
-  top <- stats::setNames(numeric(nrow(rows)), rownames(rows))
-  for (i in seq_len(nrow(rows))) {
-    b <- path_block(blocks, rows[i, ])
-    top[[i]] <- path_null_score(obj0, beta, b, hyper)
-  }
-
-  # path_null_score() reads the score with the OTHER coefficients where the
-  # caller left them rather than at their optimum with this block zeroed, so
-  # it is a starting point and not a boundary -- and measured, it can be an
-  # order of magnitude short: on eight coefficients of which three carried
-  # real signal it returned 26.5 where the block first empties near 500, so
-  # the path covered a nearly flat stretch of the criterion and every fit
-  # chose its sparse end. Doubling until the fit really is empty is the check
-  # the documentation already described, and it costs a handful of fits.
-  for (i in seq_len(nrow(rows))) {
-    row <- rows[i, ]
-    b <- path_block(blocks, row)
-    # a hyperparameter that does not scale the kink has no top of this kind:
-    # no value of it empties the block
-    if (!path_by_kink(b$penalty, hyper[[row$parameter]][[row$term]],
-                      row$name)) next
-    for (step in seq_len(24L)) {
-      v <- kink_solve(b$penalty, hyper[[row$parameter]][[row$term]],
-                      row$name, top[[i]])
-      if (!is.finite(v) || v <= 0) break
-      r <- tryCatch(fit_at(hyper_set(hyper, row, v), beta),
-                    error = function(e) NULL)
-      if (is.null(r)) break
-      if (max(abs(r$par[b$index])) <= 1e-8) break
-      top[[i]] <- top[[i]] * 2
+  # THE TOP OF THE PATH IS NOT A CONSTANT. It is the size of the kink that
+  # empties the block, read from the score at the coefficients in hand, so
+  # it moves with the rest of the model: a smooth beside this term has its
+  # own smoothing parameter estimated INSIDE each point of the path, and
+  # every such fit changes the score this is read from. Reading it once at
+  # the start left the path anchored to the state the search began in.
+  path_top <- function(hy, at) {
+    tp <- stats::setNames(numeric(nrow(rows)), rownames(rows))
+    for (i in seq_len(nrow(rows))) {
+      row <- rows[i, ]
+      b <- path_block(blocks, row)
+      ob <- statmod_objective(spec, hy, design, expected, approx)
+      tp[[i]] <- path_null_score(ob, at, b, hy)
+      # a hyperparameter that does not scale the kink has no top of this
+      # kind: no value of it empties the block
+      if (!path_by_kink(b$penalty, hy[[row$parameter]][[row$term]],
+                        row$name)) next
+      # path_null_score() reads the score with the OTHER coefficients where
+      # the fit left them rather than at their optimum with this block
+      # zeroed, so it is a starting point and not a boundary -- and
+      # measured, it can be an order of magnitude short: on eight
+      # coefficients of which three carried real signal it returned 26.5
+      # where the block first empties near 500, so the path covered a nearly
+      # flat stretch of the criterion and every fit chose its sparse end.
+      # Doubling until the fit really is empty is the check the
+      # documentation already described, and it costs a handful of fits.
+      for (step in seq_len(24L)) {
+        v <- kink_solve(b$penalty, hy[[row$parameter]][[row$term]],
+                        row$name, tp[[i]])
+        if (!is.finite(v) || v <= 0) break
+        r <- tryCatch(fit_at(hyper_set(hy, row, v), at),
+                      error = function(e) NULL)
+        if (is.null(r)) break
+        if (max(abs(r$par[b$index])) <= 1e-8) break
+        tp[[i]] <- tp[[i]] * 2
+      }
     }
+    tp
   }
+  top <- path_top(hyper, beta)
 
   cur <- hyper
   hist <- list()
   best <- list(value = Inf, hyper = cur, fit = NULL)
   for (s in seq_len(if (nrow(rows) > 1L) sweeps else 1L)) {
     moved <- FALSE
+    # ... and again here, at the coefficients and hyperparameters this sweep
+    # starts from, which the previous sweep moved
+    if (s > 1L) top <- path_top(cur, beta)
     for (i in seq_len(nrow(rows))) {
       row <- rows[i, ]
       b <- path_block(blocks, row)
