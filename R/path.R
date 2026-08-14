@@ -247,6 +247,56 @@ path_values <- function(pen, theta, name, s_max, n_values = 40L,
 }
 
 
+#' The Values a Path Visits Over a Bounded Hyperparameter
+#'
+#' @description
+#' An equally spaced grid strictly inside the hyperparameter's own interval.
+#'
+#' @details
+#' \code{\link{path_values}} walks the SIZE OF THE KINK, from the value that
+#' empties the block down, and a bounded hyperparameter cannot reach that end:
+#' the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
+#' no admissible \eqn{\alpha} empties the block and every point of such a path
+#' is dropped. The interval itself is what a bounded shape is swept over
+#' instead -- \eqn{\alpha} between the ridge and the lasso, SCAD's and MCP's
+#' shape between their limits -- and the sweeps being cyclic, one coordinate
+#' at a time, the kink still moves through \eqn{\lambda}.
+#'
+#' The endpoints are excluded because the bounds are open: the elastic net at
+#' \eqn{\alpha = 0} has no kink at all, and the path would be scoring a
+#' penalty of another kind.
+#'
+#' @param pen A \pkg{penalties7} penalty.
+#' @param name Which hyperparameter the path varies.
+#' @param n_values How many points.
+#'
+#' @return A numeric vector of values for \code{name}.
+#'
+#' @seealso \code{\link{path_values}}, \code{\link{path_bounded}}
+#'
+#' @keywords internal
+path_grid <- function(pen, name, n_values = 25L) {
+  b <- pen@params_bounds[[name]]
+  if (is.null(b) || !all(is.finite(b)) || b[2L] <= b[1L]) return(numeric(0))
+  n <- max(2L, as.integer(n_values))
+  seq(b[1L], b[2L], length.out = n + 2L)[seq_len(n) + 1L]
+}
+
+
+#' Is a Hyperparameter Bounded Above?
+#'
+#' @param pen A \pkg{penalties7} penalty.
+#' @param name Which hyperparameter.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+path_bounded <- function(pen, name) {
+  b <- pen@params_bounds[[name]]
+  !is.null(b) && is.finite(b[2L])
+}
+
+
 #' Which Hyperparameters a Path Has to Select
 #'
 #' @description
@@ -587,6 +637,9 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   for (i in seq_len(nrow(rows))) {
     row <- rows[i, ]
     b <- path_block(blocks, row)
+    # a bounded hyperparameter is swept over its own interval and has no top
+    # of this kind: no admissible value of it empties the block
+    if (path_bounded(b$penalty, row$name)) next
     for (step in seq_len(24L)) {
       v <- kink_solve(b$penalty, hyper[[row$parameter]][[row$term]],
                       row$name, top[[i]])
@@ -607,9 +660,14 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
     for (i in seq_len(nrow(rows))) {
       row <- rows[i, ]
       b <- path_block(blocks, row)
-      vals <- path_values(b$penalty, cur[[row$parameter]][[row$term]],
-                          row$name, top[[i]], as.integer(method@n_values),
-                          method@min_ratio)
+      bounded <- path_bounded(b$penalty, row$name)
+      vals <- if (bounded) {
+        path_grid(b$penalty, row$name, as.integer(method@n_values))
+      } else {
+        path_values(b$penalty, cur[[row$parameter]][[row$term]],
+                    row$name, top[[i]], as.integer(method@n_values),
+                    method@min_ratio)
+      }
       if (!length(vals)) next
       hys <- lapply(vals, function(v) hyper_set(cur, row, v))
 
@@ -684,8 +742,11 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
         if (!all(is.finite(v))) return(FALSE)
         v[1L] < v[2L] - 1e-8 * max(1, abs(v[2L]))
       }
-      if (identical(method@rule, "min") && j %in% c(1L, length(value)) &&
-          falling(j)) {
+      # ... and only for a hyperparameter swept by kink size. A bounded one
+      # is swept over the whole of its own interval, so an answer at either
+      # end is the interval's and there is nothing to widen.
+      if (!bounded && identical(method@rule, "min") &&
+          j %in% c(1L, length(value)) && falling(j)) {
         warning(sprintf(paste0("The path for '%s' in '%s' stopped at its %s ",
                                "end (%s = %s).\n  The criterion was still ",
                                "falling there, so widen the path with ",

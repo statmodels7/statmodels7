@@ -203,3 +203,73 @@ test_that("cv and its method print what they are", {
   expect_error(cv(nfolds = 1), "at least 2")
   expect_error(cv(min_ratio = 2), "in \\(0, 1\\)")
 })
+
+test_that("a bounded hyperparameter is held unless the criterion is asked", {
+  # THE DEFECT the label exposed: `ifelse` returns a result the length of its
+  # TEST, so a scalar test answered once for a penalty carrying two
+  # hyperparameters and the elastic net's alpha, which no path had varied,
+  # was reported as chosen by the criterion that had chosen its lambda.
+  set.seed(51)
+  n2 <- 150
+  Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  de <- data.frame(y = as.numeric(Z %*% c(2, -1.5, 1, rep(0, 5))) +
+                     stats::rnorm(n2, sd = 0.5))
+  de$Z <- Z
+
+  fit <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
+                 sparse_criterion = bic())
+  s <- summary(fit)
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  tb <- s@tables$mu[[which(kinds == "selection")]]$table
+  lam <- tb[tb$name == "lambda", , drop = FALSE]
+  alp <- tb[tb$name == "alpha", , drop = FALSE]
+  expect_identical(lam$role, "estimated")
+  expect_identical(lam$source, "bic")
+  # alpha is bounded, so the default sweeps it no more than glmnet does, and
+  # the row says held rather than borrowing lambda's criterion
+  expect_identical(alp$role, "fixed")
+  expect_identical(alp$source, "fixed")
+  expect_equal(alp$estimate, 0.5)
+  expect_output(print(s), "(fixed)", fixed = TRUE)
+})
+
+test_that("`over` sweeps a bounded hyperparameter over its own interval", {
+  # it used to be accepted and ignored: the sweep walks the SIZE OF THE KINK,
+  # which for the elastic net is lambda*alpha, and no admissible alpha empties
+  # the block, so every point of that path was dropped and alpha came back at
+  # its default marked as though a criterion had chosen it
+  set.seed(52)
+  n2 <- 150
+  Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  de <- data.frame(y = as.numeric(Z %*% c(2, -1.5, 1, rep(0, 5))) +
+                     stats::rnorm(n2, sd = 0.5))
+  de$Z <- Z
+
+  held <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
+                  sparse_criterion = bic())
+  both <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
+                  sparse_criterion = bic(over = c("lambda", "alpha")))
+  a <- both@hyper$mu[["enet(Z)"]][["alpha"]]
+  expect_false(isTRUE(all.equal(a, 0.5)))
+  # strictly inside its own bounds: at alpha = 0 there is no kink at all
+  expect_gt(a, 0)
+  expect_lt(a, 1)
+  # a sweep over more values cannot end above the criterion of a sweep over
+  # fewer, the held setting being one of the points it visits
+  expect_lte(both@criterion, held@criterion)
+  expect_true("alpha" %in% both@history$outer$name)
+})
+
+test_that("the grid over a bounded hyperparameter excludes its endpoints", {
+  pen <- penalties7::elasticnet_penalty(4)
+  v <- path_grid(pen, "alpha", 5L)
+  expect_length(v, 5L)
+  expect_true(all(v > 0 & v < 1))
+  expect_true(!is.unsorted(v))
+  expect_true(path_bounded(pen, "alpha"))
+  expect_false(path_bounded(pen, "lambda"))
+  # an unbounded one has no such grid to give
+  expect_length(path_grid(pen, "lambda", 5L), 0L)
+})

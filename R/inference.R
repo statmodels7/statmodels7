@@ -875,11 +875,16 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       }
       marginal <- outer_ran && !penalty_has_kink(u$penalty)
       hk <- paste(p, key, names(th), sep = "\r")
-      role <- ifelse(marginal, "estimated",
-                     ifelse(hk %in% spc_keys, "estimated", "fixed"))
-      src <- ifelse(role == "fixed", "fixed",
-                    if (marginal) fit@methods$outer@kind else
-                      if (is.null(spc)) "estimated" else spc@kind)
+      # PER HYPERPARAMETER, and the test has to be the vector one: `ifelse`
+      # returns a result the length of its TEST, so a scalar `marginal`
+      # returned one answer and recycled it over a penalty carrying two
+      # hyperparameters -- the elastic net's alpha, which no path varies,
+      # was reported as chosen by the criterion that had chosen its lambda
+      chosen <- rep(marginal, length(hk)) | hk %in% spc_keys
+      role <- ifelse(chosen, "estimated", "fixed")
+      by <- if (marginal) fit@methods$outer@kind else
+        if (is.null(spc)) "estimated" else spc@kind
+      src <- ifelse(chosen, by, "fixed")
       r <- data.frame(name = lab, estimate = as.numeric(th),
                       se = NA_real_, statistic = NA_real_, p_value = NA_real_,
                       lower = NA_real_, upper = NA_real_, role = role,

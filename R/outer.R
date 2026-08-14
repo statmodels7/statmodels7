@@ -106,9 +106,10 @@ OuterMethod <- S7::new_class("OuterMethod",
 #' @return A named list.
 #'
 #' @keywords internal
-outer_path_defaults <- function() {
+outer_path_defaults <- function(over = NULL) {
   list(n_values = 25, min_ratio = 1e-4, nfolds = 10, rule = "min",
-       folds = numeric(0), over = character(0))
+       folds = numeric(0),
+       over = if (is.null(over)) character(0) else as.character(over))
 }
 
 
