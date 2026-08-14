@@ -5,9 +5,9 @@
 \alias{bic}
 \title{Prediction-Error Criteria for the Hyperparameters}
 \usage{
-aic(k = 2, hessian = c("observed", "expected"), over = NULL)
+aic(k = 2, hessian = c("observed", "expected"))
 
-bic(hessian = c("observed", "expected"), over = NULL)
+bic(hessian = c("observed", "expected"))
 }
 \arguments{
 \item{k}{The price of one degree of freedom. Defaults to 2; \code{bic()}
@@ -15,13 +15,6 @@ uses \eqn{\log n}, resolved when the model is fitted.}
 
 \item{hessian}{Which information is used, \code{"expected"} or
 \code{"observed"}. The exact derivatives need the observed one.}
-
-\item{over}{Which hyperparameters of a KINKED penalty the path varies, as
-\code{\link{cv}()} takes it. The default sweeps those with no upper
-bound, which for an elastic net is \eqn{\lambda} alone: a bounded shape
--- \eqn{\alpha} here, \eqn{\gamma} for SCAD and MCP -- is held, as
-\pkg{glmnet} and \pkg{ncvreg} hold theirs. Naming it here sweeps it
-too, the coordinates cyclically rather than on a product grid.}
 }
 \value{
 An \code{\link{OuterMethod}}.

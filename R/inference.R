@@ -853,6 +853,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   spc <- fit@methods$sparse_criterion
   spc_keys <- fit@methods$sparse_hyper
   if (is.null(spc_keys)) spc_keys <- character(0)
+  # WHAT WAS HELD is the terms' answer and nobody else's: a hyperparameter
+  # a term fixed is fixed whatever criterion ran beside it.
+  held <- tryCatch(statmod_held(spec, design), error = function(e) character(0))
   # A term may carry more than one penalty, each filed under a key of its
   # own, so the rows of a term are those of every key belonging to it. Where
   # there are several the hyperparameter is named for the penalty as well:
@@ -880,7 +883,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       # returned one answer and recycled it over a penalty carrying two
       # hyperparameters -- the elastic net's alpha, which no path varies,
       # was reported as chosen by the criterion that had chosen its lambda
-      chosen <- rep(marginal, length(hk)) | hk %in% spc_keys
+      chosen <- (rep(marginal, length(hk)) | hk %in% spc_keys) &
+        !(hk %in% held)
       role <- ifelse(chosen, "estimated", "fixed")
       by <- if (marginal) fit@methods$outer@kind else
         if (is.null(spc)) "estimated" else spc@kind

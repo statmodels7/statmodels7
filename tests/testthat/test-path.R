@@ -66,8 +66,8 @@ test_that("the effective degrees of freedom count what survived", {
   # this design it reads 14 at every lambda.
   full <- numeric(0)
   for (lam in c(2, 8, 25)) {
-    fit <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-                   hyper = list(mu = list("lasso(x)" = c(lambda = lam))))
+    fit <- statmod(y ~ lasso(x, lambda = lam),
+                   distributions7::gaussian1_distrib(), dp)
     spec <- fit@spec
     design <- statmod_design(spec)
     blocks <- statmod_blocks(spec, design)
@@ -87,9 +87,8 @@ test_that("the effective degrees of freedom count what survived", {
 
 test_that("the elastic net spends less than its count, the ridge part shrinking", {
   taus <- vapply(c(0.9, 0.5, 0.1), function(al) {
-    fit <- statmod(y ~ enet(x), distributions7::gaussian1_distrib(), dp,
-                   hyper = list(mu = list("enet(x)" = c(lambda = 6,
-                                                        alpha = al))))
+    fit <- statmod(y ~ enet(x, lambda = 6, alpha = al),
+                   distributions7::gaussian1_distrib(), dp)
     spec <- fit@spec
     design <- statmod_design(spec)
     blocks <- statmod_blocks(spec, design)
@@ -204,11 +203,10 @@ test_that("cv and its method print what they are", {
   expect_error(cv(min_ratio = 2), "in \\(0, 1\\)")
 })
 
-test_that("a bounded hyperparameter is held unless the criterion is asked", {
-  # THE DEFECT the label exposed: `ifelse` returns a result the length of its
-  # TEST, so a scalar test answered once for a penalty carrying two
-  # hyperparameters and the elastic net's alpha, which no path had varied,
-  # was reported as chosen by the criterion that had chosen its lambda.
+test_that("a bounded hyperparameter is estimated unless the term holds it", {
+  # WHICH hyperparameters are estimated is the term's answer. The default is
+  # to estimate every one of them, and the elastic net's alpha is bounded,
+  # which is a fact about how it is SWEPT and not about whether it is.
   set.seed(51)
   n2 <- 150
   Z <- matrix(stats::rnorm(n2 * 8), n2, 8)
@@ -217,24 +215,32 @@ test_that("a bounded hyperparameter is held unless the criterion is asked", {
                      stats::rnorm(n2, sd = 0.5))
   de$Z <- Z
 
-  fit <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
-                 sparse_criterion = bic())
-  s <- summary(fit)
-  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
-  tb <- s@tables$mu[[which(kinds == "selection")]]$table
-  lam <- tb[tb$name == "lambda", , drop = FALSE]
-  alp <- tb[tb$name == "alpha", , drop = FALSE]
-  expect_identical(lam$role, "estimated")
-  expect_identical(lam$source, "bic")
-  # alpha is bounded, so the default sweeps it no more than glmnet does, and
-  # the row says held rather than borrowing lambda's criterion
-  expect_identical(alp$role, "fixed")
-  expect_identical(alp$source, "fixed")
-  expect_equal(alp$estimate, 0.5)
-  expect_output(print(s), "(fixed)", fixed = TRUE)
+  free <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
+                  sparse_criterion = bic())
+  tb <- function(f) {
+    s <- summary(f)
+    k <- vapply(s@tables$mu, `[[`, character(1), "kind")
+    s@tables$mu[[which(k == "selection")]]$table
+  }
+  a <- tb(free)
+  expect_identical(a$role[a$name == "alpha"], "estimated")
+  expect_identical(a$source[a$name == "alpha"], "bic")
+  expect_identical(a$role[a$name == "lambda"], "estimated")
+
+  # and the term holding it is what makes it held, whatever criterion runs
+  held <- statmod(y ~ enet(Z, alpha = 0.5),
+                  distributions7::gaussian1_distrib(), de,
+                  sparse_criterion = bic())
+  b <- tb(held)
+  expect_identical(b$role[b$name == "alpha"], "fixed")
+  expect_identical(b$source[b$name == "alpha"], "fixed")
+  expect_equal(b$estimate[b$name == "alpha"], 0.5)
+  # while its lambda is still chosen
+  expect_identical(b$role[b$name == "lambda"], "estimated")
+  expect_output(print(summary(held)), "(fixed)", fixed = TRUE)
 })
 
-test_that("`over` sweeps a bounded hyperparameter over its own interval", {
+test_that("a bounded hyperparameter is swept over its own interval", {
   # it used to be accepted and ignored: the sweep walks the SIZE OF THE KINK,
   # which for the elastic net is lambda*alpha, and no admissible alpha empties
   # the block, so every point of that path was dropped and alpha came back at
@@ -247,10 +253,11 @@ test_that("`over` sweeps a bounded hyperparameter over its own interval", {
                      stats::rnorm(n2, sd = 0.5))
   de$Z <- Z
 
-  held <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
+  held <- statmod(y ~ enet(Z, alpha = 0.5),
+                  distributions7::gaussian1_distrib(), de,
                   sparse_criterion = bic())
   both <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de,
-                  sparse_criterion = bic(over = c("lambda", "alpha")))
+                  sparse_criterion = bic())
   a <- both@hyper$mu[["enet(Z)"]][["alpha"]]
   expect_false(isTRUE(all.equal(a, 0.5)))
   # strictly inside its own bounds: at alpha = 0 there is no kink at all
@@ -270,6 +277,13 @@ test_that("the grid over a bounded hyperparameter excludes its endpoints", {
   expect_true(!is.unsorted(v))
   expect_true(path_bounded(pen, "alpha"))
   expect_false(path_bounded(pen, "lambda"))
-  # an unbounded one has no such grid to give
-  expect_length(path_grid(pen, "lambda", 5L), 0L)
+  # an unbounded one that SCALES the kink is swept by kink size instead, and
+  # the geometric grid is what serves a shape that does neither
+  expect_true(path_by_kink(pen, list(lambda = 1, alpha = 0.5), "lambda"))
+  expect_false(path_by_kink(pen, list(lambda = 1, alpha = 0.5), "alpha"))
+  mc <- penalties7::mcp_penalty(4)
+  expect_false(path_by_kink(mc, list(lambda = 1, gamma = 3), "gamma"))
+  g <- path_grid(mc, "gamma", 6L)
+  expect_length(g, 6L)
+  expect_true(all(g > 1))
 })

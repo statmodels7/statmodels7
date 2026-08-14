@@ -66,12 +66,6 @@ NULL
 #'   uses \eqn{\log n}, resolved when the model is fitted.
 #' @param hessian Which information is used, \code{"expected"} or
 #'   \code{"observed"}. The exact derivatives need the observed one.
-#' @param over Which hyperparameters of a KINKED penalty the path varies, as
-#'   \code{\link{cv}()} takes it. The default sweeps those with no upper
-#'   bound, which for an elastic net is \eqn{\lambda} alone: a bounded shape
-#'   -- \eqn{\alpha} here, \eqn{\gamma} for SCAD and MCP -- is held, as
-#'   \pkg{glmnet} and \pkg{ncvreg} hold theirs. Naming it here sweeps it
-#'   too, the coordinates cyclically rather than on a product grid.
 #'
 #' @return An \code{\link{OuterMethod}}.
 #'
@@ -90,20 +84,19 @@ NULL
 #'         outer_criterion = aic())
 #'
 #' @export
-aic <- function(k = 2, hessian = c("observed", "expected"), over = NULL) {
+aic <- function(k = 2, hessian = c("observed", "expected")) {
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0) {
     stop("'k' must be a single non-negative number.", call. = FALSE)
   }
   do.call(OuterMethod, c(list(kind = "aic", hessian = match.arg(hessian),
-                             k = as.numeric(k)),
-                         outer_path_defaults(over)))
+                             k = as.numeric(k)), outer_path_defaults()))
 }
 
 #' @rdname aic
 #' @export
-bic <- function(hessian = c("observed", "expected"), over = NULL) {
+bic <- function(hessian = c("observed", "expected")) {
   do.call(OuterMethod, c(list(kind = "bic", hessian = match.arg(hessian),
-                             k = NA_real_), outer_path_defaults(over)))
+                             k = NA_real_), outer_path_defaults()))
 }
 
 

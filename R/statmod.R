@@ -91,11 +91,16 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 #' set both and be obeyed by neither.
 #'
-#' \strong{The hyperparameters are ESTIMATED by default}, by
-#' \code{\link{reml}()}, with \code{outer_optimizer} searching over them and
-#' the coefficients refitted at each. A hyperparameter left where it started
-#' is a placeholder and not a choice, and a model carrying a smooth, a ridge
-#' or a random effect is one whose author wants them chosen from the data.
+#' \strong{Every hyperparameter is ESTIMATED unless its own term holds it.}
+#' Which ones are held is said by the TERM that carries the penalty --
+#' \code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)},
+#' \code{s(x, lambda = 2)}, \code{enet(x, alpha = 0.5)} -- and everything
+#' left \code{NULL}, which is the default, is chosen from the data. The term
+#' is where the penalty is named and so where that belongs; an argument here
+#' saying the same thing would be read by nobody whenever the two disagreed.
+#' \code{\link{reml}()} estimates the smooth ones, with
+#' \code{outer_optimizer} searching over them and the coefficients refitted
+#' at each.
 #'
 #' A KINKED penalty is a different instrument and has its own
 #' argument. \code{sparse_criterion}, \code{\link{bic}()} by default, sweeps
@@ -116,8 +121,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' Where nothing is estimable -- an ordinary \code{y ~ x}, or a model whose
 #' only penalty is kinked -- it is simply not run, and that is a property of
 #' the model rather than of how the argument was written, so typing the
-#' default changes nothing. \code{outer_criterion = NULL} holds every
-#' hyperparameter where \code{hyper} put it.
+#' default changes nothing. \code{outer_criterion = NULL} holds every smooth
+#' hyperparameter where its term left it.
 #'
 #' \strong{Verbosity} has three levels, naming the loops rather than counting
 #' them: \code{1} the outer search and the alternation, \code{2} the inner
@@ -144,12 +149,6 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   the kink.
 #' @param outer_optimizer The optimizer that searches over them, or
 #'   \code{NULL} to let the availability of the exact gradient decide.
-#' @param hyper Optional hyperparameters, a named list of named lists as
-#'   \code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
-#'   values: supplying them steps the default criterion aside, since
-#'   estimating away a value the caller wrote would answer a question nobody
-#'   asked. Naming a criterion explicitly overrides that, and \code{hyper} is
-#'   then where its search starts.
 #' @param start Where the fit begins: a named list of coefficients, a
 #'   \code{\link{start_strategy}} such as \code{\link{start_search}}, or
 #'   \code{NULL} for \code{\link{start_intercepts}}. A strategy is asked once,
@@ -158,6 +157,10 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   \code{inner_optimizer}: there it would rerun at every hyperparameter the
 #'   outer search tried.
 #' @param verbose A level from 0 to 3, or a named logical vector.
+#' @param ... Not used, and reported. `hyper` was removed from here: a
+#'   hyperparameter is held in the term that carries the penalty, and a
+#'   second place to say so would be read by nobody whenever the two
+#'   disagreed.
 #'
 #' @return An object of class \code{\link{StatmodFit}}.
 #'
@@ -178,7 +181,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     inner_optimizer = iwls(), outer_criterion = reml(),
                     sparse_criterion = bic(), outer_optimizer = NULL,
-                    hyper = NULL, start = NULL, verbose = 0) {
+                    start = NULL, verbose = 0, ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   asked <- !missing(outer_criterion)
@@ -188,10 +191,24 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   maxit <- budget$maxit
   tol <- budget$tol
 
+  # WHICH hyperparameters are held is said by the terms, and by nothing
+  # else. An argument here saying the same thing would be read by nobody
+  # whenever the two disagreed.
+  if (...length()) {
+    nm <- ...names()
+    if (length(nm) && any(nm == "hyper")) {
+      stop(paste0("'hyper' has been removed. A hyperparameter is held in",
+                  " the term that\n  carries the penalty --",
+                  " lasso(x, lambda = 3), ridge(x, sigma = 0.5),\n",
+                  "  s(x, lambda = 2), enet(x, alpha = 0.5) -- and every",
+                  " one left NULL,\n  which is the default, is",
+                  " estimated."), call. = FALSE)
+    }
+    stop(sprintf("unused argument (%s)", nm[[1L]]), call. = FALSE)
+  }
   spec <- statmod_spec(formula, distrib, data, weights, offsets)
   design <- statmod_design(spec)
-  user_hyper <- hyper
-  hyper <- statmod_hyper_merge(spec, statmod_hyper_start(spec), hyper)
+  hyper <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)
 
   cfg <- inner_settings(inner_optimizer)
@@ -268,9 +285,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # carrying no penalized term at all.
   if (!is.null(outer_criterion)) {
     nothing <- !nrow(outer_hyper_index(spec, blocks))
-    if (nothing || (!asked && !is.null(user_hyper))) outer_criterion <- NULL
+    if (nothing) outer_criterion <- NULL
   }
-  if (!is.null(user_hyper) && !asked_sparse) sparse_criterion <- NULL
 
   # A prediction-error criterion for the SMOOTH penalties cannot be nested
   # inside a path over the kinked ones: it scores the same quantity at two

@@ -166,13 +166,13 @@ test_that("the lasso agrees with glmnet on the objective they share", {
 })
 
 test_that("a whole fit goes through the compiled route and still converges", {
-  fit <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dc,
-                 hyper = list(mu = list("lasso(x)" = c(lambda = 8))))
+  fit <- statmod(y ~ lasso(x, lambda = 8),
+                 distributions7::gaussian1_distrib(), dc)
   expect_true(fit@converged)
   expect_lt(sum(abs(fit@coefficients$mu[-1L]) > 1e-8), pc)
   # and the selection still answers the smoothing parameter
-  hi <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dc,
-                hyper = list(mu = list("lasso(x)" = c(lambda = 200))))
+  hi <- statmod(y ~ lasso(x, lambda = 200),
+                distributions7::gaussian1_distrib(), dc)
   expect_lt(sum(abs(hi@coefficients$mu[-1L]) > 1e-8),
             sum(abs(fit@coefficients$mu[-1L]) > 1e-8))
 })

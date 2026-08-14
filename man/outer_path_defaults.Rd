@@ -4,7 +4,7 @@
 \alias{outer_path_defaults}
 \title{The Defaults a Path Carries}
 \usage{
-outer_path_defaults(over = NULL)
+outer_path_defaults()
 }
 \value{
 A named list.

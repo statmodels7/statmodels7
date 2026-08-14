@@ -14,9 +14,9 @@ statmod(
   outer_criterion = reml(),
   sparse_criterion = bic(),
   outer_optimizer = NULL,
-  hyper = NULL,
   start = NULL,
-  verbose = 0
+  verbose = 0,
+  ...
 )
 }
 \arguments{
@@ -47,13 +47,6 @@ the kink.}
 \item{outer_optimizer}{The optimizer that searches over them, or
 \code{NULL} to let the availability of the exact gradient decide.}
 
-\item{hyper}{Optional hyperparameters, a named list of named lists as
-\code{list(mu = list(lasso = c(lambda = 5)))}. They are held at these
-values: supplying them steps the default criterion aside, since
-estimating away a value the caller wrote would answer a question nobody
-asked. Naming a criterion explicitly overrides that, and \code{hyper} is
-then where its search starts.}
-
 \item{start}{Where the fit begins: a named list of coefficients, a
 \code{\link{start_strategy}} such as \code{\link{start_search}}, or
 \code{NULL} for \code{\link{start_intercepts}}. A strategy is asked once,
@@ -63,6 +56,11 @@ begins, which is why a global search belongs here and not in
 outer search tried.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
+
+\item{...}{Not used, and reported. \code{hyper} was removed from here: a
+hyperparameter is held in the term that carries the penalty, and a
+second place to say so would be read by nobody whenever the two
+disagreed.}
 }
 \value{
 An object of class \code{\link{StatmodFit}}.
@@ -100,11 +98,16 @@ which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
 (see \code{\link{method_budget}}). Carrying a second copy would let a caller
 set both and be obeyed by neither.
 
-\strong{The hyperparameters are ESTIMATED by default}, by
-\code{\link{reml}()}, with \code{outer_optimizer} searching over them and
-the coefficients refitted at each. A hyperparameter left where it started
-is a placeholder and not a choice, and a model carrying a smooth, a ridge
-or a random effect is one whose author wants them chosen from the data.
+\strong{Every hyperparameter is ESTIMATED unless its own term holds it.}
+Which ones are held is said by the TERM that carries the penalty --
+\code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)},
+\code{s(x, lambda = 2)}, \code{enet(x, alpha = 0.5)} -- and everything
+left \code{NULL}, which is the default, is chosen from the data. The term
+is where the penalty is named and so where that belongs; an argument here
+saying the same thing would be read by nobody whenever the two disagreed.
+\code{\link{reml}()} estimates the smooth ones, with
+\code{outer_optimizer} searching over them and the coefficients refitted
+at each.
 
 A KINKED penalty is a different instrument and has its own
 argument. \code{sparse_criterion}, \code{\link{bic}()} by default, sweeps
@@ -125,8 +128,8 @@ It comes into play IF AND ONLY IF the model carries a smooth penalty.
 Where nothing is estimable -- an ordinary \code{y ~ x}, or a model whose
 only penalty is kinked -- it is simply not run, and that is a property of
 the model rather than of how the argument was written, so typing the
-default changes nothing. \code{outer_criterion = NULL} holds every
-hyperparameter where \code{hyper} put it.
+default changes nothing. \code{outer_criterion = NULL} holds every smooth
+hyperparameter where its term left it.
 
 \strong{Verbosity} has three levels, naming the loops rather than counting
 them: \code{1} the outer search and the alternation, \code{2} the inner

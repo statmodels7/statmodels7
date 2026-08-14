@@ -102,9 +102,8 @@ test_that("a coefficient a lasso set to zero has no variance", {
   sim$y <- 1 + 2 * dd$x + stats::rnorm(n, sd = 0.4)
   sim$noise1 <- stats::runif(n)
   sim$noise2 <- stats::runif(n)
-  fit <- statmod(y ~ x + lasso(~ noise1 + noise2),
-                 distributions7::gaussian1_distrib(), sim,
-                 hyper = list(mu = list(lasso = c(lambda = 200))))
+  fit <- statmod(y ~ x + lasso(~ noise1 + noise2, lambda = 200),
+                 distributions7::gaussian1_distrib(), sim)
   b <- fit@coefficients$mu
   V <- vcov(fit)
   zero <- which(b == 0)
@@ -161,8 +160,8 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   n2 <- 400
   ds <- data.frame(x = runif(n2, -2, 2))
   ds$y <- sin(1.4 * ds$x) + stats::rnorm(n2, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                 hyper = list(mu = list(`s(x)` = c(lambda = 5))))
+  fit <- statmod(y ~ s(x, k = 10, lambda = 5),
+                 distributions7::gaussian1_distrib(), ds)
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "smooth")]]
@@ -212,9 +211,8 @@ test_that("a selection lists the survivors and counts the zeros", {
   ds <- data.frame(x = runif(n2))
   for (j in 1:5) ds[[paste0("n", j)]] <- stats::rnorm(n2)
   ds$y <- 1 + 2 * ds$x + stats::rnorm(n2, sd = 0.4)
-  fit <- statmod(y ~ x + lasso(~ n1 + n2 + n3 + n4 + n5),
-                 distributions7::gaussian1_distrib(), ds,
-                 hyper = list(mu = list(lasso = c(lambda = 200))))
+  fit <- statmod(y ~ x + lasso(~ n1 + n2 + n3 + n4 + n5, lambda = 200),
+                 distributions7::gaussian1_distrib(), ds)
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "selection")]]

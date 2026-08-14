@@ -162,48 +162,46 @@ test_that("coef names the coefficients", {
   expect_identical(names(cf$mu)[1L], "(Intercept)")
 })
 
-test_that("hyper sets a hyperparameter by key or by label", {
-  # a term is keyed by its call as written, which is what keeps two lassos on
-  # different covariates apart, and named by its label, which is what anybody
-  # would type
-  f <- y ~ x + lasso(~ z)
-  fit_key <- statmod(f, distributions7::gaussian1_distrib(), dd,
-                     hyper = list(mu = list(`lasso(~z)` = c(lambda = 50))))
-  fit_lab <- statmod(f, distributions7::gaussian1_distrib(), dd,
-                     hyper = list(mu = list(lasso = c(lambda = 50))))
-  expect_equal(fit_key@coefficients$mu, fit_lab@coefficients$mu,
-               tolerance = 1e-12)
-  expect_equal(unname(fit_lab@hyper$mu[[1L]][["lambda"]]), 50)
+test_that("a term holds its own hyperparameter, and it reaches the fit", {
+  # WHICH hyperparameters are held is said where the penalty is named. There
+  # is no second place to say it, so there is no key to get right and no
+  # ambiguity between two terms sharing a label.
+  fit <- statmod(y ~ x + lasso(~ z, lambda = 50),
+                 distributions7::gaussian1_distrib(), dd)
+  expect_equal(unname(fit@hyper$mu[[1L]][["lambda"]]), 50)
 
   # a larger penalty shrinks harder, which is the property a hyperparameter is
   # for and the cheapest evidence that the value reached the penalty at all
-  weak <- statmod(f, distributions7::gaussian1_distrib(), dd,
-                  hyper = list(mu = list(lasso = c(lambda = 1))))
-  strong <- statmod(f, distributions7::gaussian1_distrib(), dd,
-                    hyper = list(mu = list(lasso = c(lambda = 500))))
+  weak <- statmod(y ~ x + lasso(~ z, lambda = 1),
+                  distributions7::gaussian1_distrib(), dd)
+  strong <- statmod(y ~ x + lasso(~ z, lambda = 500),
+                    distributions7::gaussian1_distrib(), dd)
   expect_lt(abs(strong@coefficients$mu[3L]), abs(weak@coefficients$mu[3L]))
+
+  # two terms of the same label are two terms with their own values, which the
+  # old keying could not express without asking which was which
+  two <- statmod(y ~ lasso(~ x, lambda = 1) + lasso(~ z, lambda = 500),
+                 distributions7::gaussian1_distrib(), dd)
+  expect_length(two@hyper$mu, 2L)
+  expect_equal(unname(unlist(lapply(two@hyper$mu, `[[`, "lambda"))),
+               c(1, 500))
 })
 
-test_that("hyper is validated and says what is available", {
-  f <- y ~ x + lasso(~ z)
-  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
-                       hyper = list(wrong = list(lasso = 1))),
-               "not a parameter")
-  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
-                       hyper = list(mu = list(ridge = 1))),
-               "names no penalized term")
-  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
-                       hyper = list(mu = list(lasso = c(nu = 1)))),
-               "hyperparameters are")
-  expect_error(statmod(f, distributions7::gaussian1_distrib(), dd,
-                       hyper = list(mu = list(lasso = c(1, 2)))),
-               "has length 2")
-  # two terms sharing a label is ambiguous, and guessing would set the
-  # hyperparameter on the wrong block
-  expect_error(statmod(y ~ lasso(~ x) + lasso(~ z),
+test_that("hyper is gone from statmod() and says where to write it", {
+  # two arguments saying the same thing, one of them read by nobody whenever
+  # they disagreed
+  expect_error(statmod(y ~ x + lasso(~ z),
                        distributions7::gaussian1_distrib(), dd,
                        hyper = list(mu = list(lasso = c(lambda = 5)))),
-               "ambiguous")
+               "has been removed")
+  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                       nonsense = 1), "unused argument")
+  # and the message names the spelling that works
+  msg <- tryCatch(statmod(y ~ x + lasso(~ z),
+                          distributions7::gaussian1_distrib(), dd,
+                          hyper = list(mu = list(lasso = 1))),
+                  error = function(e) conditionMessage(e))
+  expect_match(msg, "lambda = 3", fixed = TRUE)
 })
 
 
@@ -228,8 +226,8 @@ test_that("a smooth term reports an edf between its null space and its rank", {
   expect_lt(sm$edf, sm$coefficients + 1e-8)
 
   # a heavier penalty spends less, which is what the number is for
-  hard <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-                  hyper = list(mu = list(`s(x)` = c(lambda = 1e6))))
+  hard <- statmod(y ~ s(x, k = 10, lambda = 1e6),
+                  distributions7::gaussian1_distrib(), ds)
   hs <- hard@edf
   expect_lt(hs$edf[hs$term != "linpar" & hs$parameter == "mu"], sm$edf)
 
@@ -273,16 +271,72 @@ test_that("the alternation obeys the method's budget", {
   # a budget of one must come back not converged rather than claiming it
   dl <- dd
   dl$noise <- stats::rnorm(nrow(dl))
-  one <- statmod(y ~ x + lasso(~ noise),
+  one <- statmod(y ~ x + lasso(~ noise, lambda = 5),
                  distributions7::gaussian1_distrib(), dl,
-                 inner_optimizer = iwls(maxit = 1L),
-                 hyper = list(mu = list(lasso = c(lambda = 5))))
+                 inner_optimizer = iwls(maxit = 1L))
   expect_identical(max(one@history$blocks$pass), 1L)
   expect_false(one@converged)
 
-  many <- statmod(y ~ x + lasso(~ noise),
-                  distributions7::gaussian1_distrib(), dl,
-                  hyper = list(mu = list(lasso = c(lambda = 5))))
+  many <- statmod(y ~ x + lasso(~ noise, lambda = 5),
+                  distributions7::gaussian1_distrib(), dl)
   expect_true(many@converged)
   expect_gt(max(many@history$blocks$pass), 1L)
+})
+
+test_that("the term decides which hyperparameters are estimated", {
+  # THE RULE: NULL, the default, means estimated; a value means held. It is
+  # the term's answer because the term is where the penalty is named.
+  set.seed(61)
+  n2 <- 150
+  Z <- matrix(stats::rnorm(n2 * 6), n2, 6)
+  colnames(Z) <- paste0("z", 1:6)
+  de <- data.frame(y = as.numeric(Z %*% c(2, -1.5, rep(0, 4))) +
+                     stats::rnorm(n2, sd = 0.5))
+  de$Z <- Z
+  hy <- function(f) unlist(f@hyper$mu[[1L]])
+
+  # both estimated, neither at the value it started from
+  free <- statmod(y ~ enet(Z), distributions7::gaussian1_distrib(), de)
+  expect_false(isTRUE(all.equal(unname(hy(free)[["alpha"]]), 0.5)))
+
+  # one held, one estimated
+  half <- statmod(y ~ enet(Z, alpha = 0.5),
+                  distributions7::gaussian1_distrib(), de)
+  expect_equal(unname(hy(half)[["alpha"]]), 0.5)
+  expect_false(isTRUE(all.equal(unname(hy(half)[["lambda"]]), 1)))
+
+  # both held, and the fit reports exactly what was written
+  both <- statmod(y ~ enet(Z, lambda = 3, alpha = 0.25),
+                  distributions7::gaussian1_distrib(), de)
+  expect_equal(unname(hy(both)[["lambda"]]), 3)
+  expect_equal(unname(hy(both)[["alpha"]]), 0.25)
+
+  # a smooth answers the same way, through a criterion of the other kind
+  ds <- data.frame(x = stats::runif(200))
+  ds$y <- sin(6 * ds$x) + stats::rnorm(200, sd = 0.3)
+  est <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+  hel <- statmod(y ~ s(x, k = 10, lambda = 5),
+                 distributions7::gaussian1_distrib(), ds)
+  expect_equal(unname(unlist(hel@hyper$mu[[1L]])), 5)
+  expect_false(isTRUE(all.equal(unname(unlist(est@hyper$mu[[1L]])), 5)))
+  # and holding it is what the summary says
+  s <- summary(hel)
+  k <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  tb <- s@tables$mu[[which(k == "smooth")]]$table
+  expect_identical(tb$source[tb$name == "lambda"], "fixed")
+})
+
+test_that("a held hyperparameter travels through a subformula", {
+  # the value is written in a sub-term of another term's formula, and the
+  # entry carries it out to the fit
+  set.seed(62)
+  n2 <- 200
+  dd2 <- data.frame(x = stats::runif(n2, 0, 10),
+                    id = factor(rep(1:5, each = n2 / 5)))
+  dd2$y <- 1 + 0.5 * dd2$x + stats::rnorm(n2, sd = 0.4)
+  fit <- statmod(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ id, sigma = 0.7),
+                        start = list(a = 1, r = 0.2)),
+                 distributions7::gaussian1_distrib(), dd2)
+  th <- unlist(fit@hyper$mu, use.names = TRUE)
+  expect_true(any(abs(th - 0.7) < 1e-12))
 })

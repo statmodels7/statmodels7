@@ -9,8 +9,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04,
-  over = NULL
+  min_ratio = 1e-04
 )
 }
 \arguments{
@@ -26,9 +25,6 @@ sparsest fit within one standard error of it.}
 
 \item{min_ratio}{The smallest kink the path reaches, as a fraction of the
 one that empties the block.}
-
-\item{over}{Which hyperparameters to sweep. Defaults to the ones that set
-the size of the kink.}
 }
 \value{
 An \code{\link{OuterMethod}}.

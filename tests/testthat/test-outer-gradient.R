@@ -9,13 +9,13 @@ dg$y <- sin(1.4 * dg$x) + stats::rnorm(n, sd = 0.3)
 # coefficients at each: this is what the outer search minimizes, and
 # differentiating it numerically shares no arithmetic with the assembly the
 # gradient uses.
-crit_of_eta <- function(formula, data, method, hyper0 = NULL) {
+crit_of_eta <- function(formula, data, method) {
   # the base point is the PROBE value, not the estimated optimum: this
   # differentiates the criterion at a point where its gradient is not zero,
   # which is the only place a relative comparison against numDeriv means
   # anything
   fit0 <- statmod(formula, distributions7::gaussian1_distrib(), data,
-                  hyper = hyper0, outer_criterion = NULL)
+                  outer_criterion = NULL)
   spec <- fit0@spec
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
@@ -25,17 +25,15 @@ crit_of_eta <- function(formula, data, method, hyper0 = NULL) {
     idx = idx,
     fn = function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
-      f <- statmod(formula, distributions7::gaussian1_distrib(), data,
-                   hyper = as_hyper_list(hy))
-      statmod_marginal(spec, design, f@coefficients, hy, method,
-                       basis = basis)$value
+      cf <- fit_at_hyper(formula, distributions7::gaussian1_distrib(),
+                         data, hy)$coefficients
+      statmod_marginal(spec, design, cf, hy, method, basis = basis)$value
     },
     gr = function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
-      f <- statmod(formula, distributions7::gaussian1_distrib(), data,
-                   hyper = as_hyper_list(hy))
-      statmod_marginal_grad(spec, design, f@coefficients, hy, method, idx,
-                            basis)
+      cf <- fit_at_hyper(formula, distributions7::gaussian1_distrib(),
+                         data, hy)$coefficients
+      statmod_marginal_grad(spec, design, cf, hy, method, idx, basis)
     },
     eta0 = hyper_to_eta(fit0@hyper, idx)
   )
@@ -210,21 +208,19 @@ struct_harness <- function(form, data, method) {
                                           statmod_design(fit0@spec)))
   refit <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
-    f <- statmod(form, distributions7::gaussian1_distrib(), data,
-                 hyper = as_hyper_list(hy), outer_criterion = NULL)
-    d <- statmod_design(f@spec)
-    list(f = f, d = d, hy = hy,
-         basis = integrated_basis(f@spec, d, method@kind))
+    a <- fit_at_hyper(form, distributions7::gaussian1_distrib(), data, hy)
+    list(f = a, d = a$design, hy = hy,
+         basis = integrated_basis(a$spec, a$design, method@kind))
   }
   list(idx = idx, fit0 = fit0, eta0 = hyper_to_eta(fit0@hyper, idx),
        fn = function(eta) {
          r <- refit(eta)
-         statmod_marginal(r$f@spec, r$d, r$f@coefficients, r$hy, method,
+         statmod_marginal(r$f$spec, r$d, r$f$coefficients, r$hy, method,
                           basis = r$basis)$value
        },
        gr = function(eta) {
          r <- refit(eta)
-         statmod_marginal_grad(r$f@spec, r$d, r$f@coefficients, r$hy, method,
+         statmod_marginal_grad(r$f$spec, r$d, r$f$coefficients, r$hy, method,
                                idx, r$basis)
        })
 }

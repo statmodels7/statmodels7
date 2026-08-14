@@ -515,7 +515,13 @@ statmod_hyper_start <- function(spec, design = NULL) {
   if (is.null(design)) design <- statmod_design(spec)
   out <- stats::setNames(lapply(params, function(p) list()), params)
   for (u in statmod_penalized(spec, design)) {
-    out[[u$param]][[u$key]] <- penalty_theta_start(u$penalty)
+    th <- penalty_theta_start(u$penalty)
+    # A HELD value is not a start, it is the answer: the term said so, and
+    # nothing below estimates it away. A hyperparameter the term did not
+    # name keeps the probe value, which is a placeholder until a criterion
+    # reaches it.
+    for (h in names(u$fixed)) th[[h]] <- as.numeric(u$fixed[[h]])
+    out[[u$param]][[u$key]] <- th
   }
   out
 }

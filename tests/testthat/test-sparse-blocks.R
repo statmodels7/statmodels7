@@ -62,13 +62,12 @@ test_that("scad and mcp reach a point that satisfies the KKT conditions", {
   # penalty's kink opens
   lam <- 4
   cases <- list(
-    list(f = y ~ scad(x), nm = "scad(x)", d = scad_deriv,
-         th = c(lambda = lam, a = 3.7)),
-    list(f = y ~ mcp(x), nm = "mcp(x)", d = mcp_deriv,
-         th = c(lambda = lam, gamma = 3)))
+    list(f = y ~ scad(x, lambda = lam, a = 3.7), nm = "scad(x)",
+         d = scad_deriv, th = c(lambda = lam, a = 3.7)),
+    list(f = y ~ mcp(x, lambda = lam, gamma = 3), nm = "mcp(x)",
+         d = mcp_deriv, th = c(lambda = lam, gamma = 3)))
   for (cs in cases) {
-    hy <- list(mu = stats::setNames(list(cs$th), cs$nm))
-    fit <- statmod(cs$f, distributions7::gaussian1_distrib(), ds, hyper = hy)
+    fit <- statmod(cs$f, distributions7::gaussian1_distrib(), ds)
     expect_true(fit@converged)
     b <- fit@coefficients$mu
     s <- exp(fit@coefficients$sigma[1L])
@@ -86,9 +85,8 @@ test_that("scad and mcp reach a point that satisfies the KKT conditions", {
 test_that("the shrinkage answers the smoothing parameter", {
   # measured on this design: 17, 9, 0 surviving columns
   keep <- vapply(c(1, 5, 20), function(lam) {
-    fit <- statmod(y ~ scad(x), distributions7::gaussian1_distrib(), ds,
-                   hyper = list(mu = list("scad(x)" = c(lambda = lam,
-                                                        a = 3.7))))
+    fit <- statmod(y ~ scad(x, lambda = lam, a = 3.7),
+                   distributions7::gaussian1_distrib(), ds)
     sum(abs(fit@coefficients$mu[-1L]) > 1e-8)
   }, integer(1))
   expect_true(all(diff(keep) < 0))
@@ -111,10 +109,11 @@ test_that("the point beats ncvreg's on the objective they share", {
   for (cs in list(list(nm = "scad", sh = 3.7, key = "a"),
                   list(nm = "mcp", sh = 3, key = "gamma"))) {
     th <- stats::setNames(c(lam, cs$sh), c("lambda", cs$key))
-    tn <- sprintf("%s(x)", cs$nm)
-    f <- stats::as.formula(sprintf("y ~ %s(x) - 1 | sigma ~ 1", cs$nm))
-    fit <- statmod(f, distributions7::gaussian1_distrib(), dc,
-                   hyper = list(mu = stats::setNames(list(th), tn)))
+    tn <- NULL  # read off the fitted spec: the call carries the values now
+    f <- stats::as.formula(sprintf("y ~ %s(x, lambda = %s, %s = %s) - 1 |
+                                     sigma ~ 1", cs$nm, lam, cs$key, cs$sh))
+    fit <- statmod(f, distributions7::gaussian1_distrib(), dc)
+    tn <- grep(cs$nm, names(fit@spec@terms$mu), fixed = TRUE, value = TRUE)[1L]
     b <- fit@coefficients$mu
     s <- exp(fit@coefficients$sigma[1L])
     pen <- modelterms7::term_penalty(fit@spec@terms$mu[[tn]])

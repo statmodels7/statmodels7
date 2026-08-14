@@ -13,8 +13,7 @@ OuterMethod(
   min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
-  folds = integer(0),
-  over = character(0)
+  folds = integer(0)
 )
 }
 \arguments{
@@ -36,9 +35,6 @@ that empties the block.}
 \item{rule}{\code{"min"} or \code{"1se"}.}
 
 \item{folds}{A fold number per observation, or \code{integer(0)}.}
-
-\item{over}{Which hyperparameters a path varies, or \code{character(0)} for
-the ones that set the size of the kink.}
 }
 \value{
 An object of class \code{OuterMethod}.

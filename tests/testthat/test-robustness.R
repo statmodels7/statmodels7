@@ -111,9 +111,8 @@ test_that("a fit that did not converge says where its parameters ended up", {
   y <- as.numeric(X %*% c(rep(2, 5), rep(0, p - 5))) + stats::rnorm(n)
   dd <- data.frame(y = y - mean(y))
   dd$x <- X
-  fit <- statmod(y ~ lasso(x) - 1 | sigma ~ 1,
-                 distributions7::gaussian1_distrib(), dd,
-                 hyper = list(mu = list("lasso(x)" = c(lambda = 12))))
+  fit <- statmod(y ~ lasso(x, lambda = 12) - 1 | sigma ~ 1,
+                 distributions7::gaussian1_distrib(), dd)
   skip_if(fit@converged, "the runaway did not happen on this platform")
   out <- paste(utils::capture.output(print(fit)), collapse = "\n")
   expect_match(out, "DID NOT CONVERGE")

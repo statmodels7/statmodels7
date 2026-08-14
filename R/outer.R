@@ -38,8 +38,6 @@ NULL
 #' @param nfolds How many folds cross-validation uses.
 #' @param rule \code{"min"} or \code{"1se"}.
 #' @param folds A fold number per observation, or \code{integer(0)}.
-#' @param over Which hyperparameters a path varies, or \code{character(0)} for
-#'   the ones that set the size of the kink.
 #'
 #' @return An object of class \code{OuterMethod}.
 #'
@@ -65,8 +63,7 @@ OuterMethod <- S7::new_class("OuterMethod",
     min_ratio = S7::class_numeric,
     nfolds = S7::class_numeric,
     rule = S7::class_character,
-    folds = S7::class_numeric,
-    over = S7::class_character
+    folds = S7::class_numeric
   ),
   validator = function(self) {
     if (!identical(length(self@kind), 1L) ||
@@ -106,10 +103,9 @@ OuterMethod <- S7::new_class("OuterMethod",
 #' @return A named list.
 #'
 #' @keywords internal
-outer_path_defaults <- function(over = NULL) {
+outer_path_defaults <- function() {
   list(n_values = 25, min_ratio = 1e-4, nfolds = 10, rule = "min",
-       folds = numeric(0),
-       over = if (is.null(over)) character(0) else as.character(over))
+       folds = numeric(0))
 }
 
 
@@ -251,6 +247,9 @@ outer_hyper_index <- function(spec, blocks) {
   for (u in statmod_penalty_keys(spec)) {
     if (paste(u$param, u$key, sep = "\r") %in% kinked) next
     for (h in u$penalty@params) {
+      # HELD by the term, so there is nothing here to estimate. The term is
+      # where the penalty is named and where the caller says so.
+      if (h %in% names(u$fixed)) next
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = u$param, term = u$key, name = h,
         stringsAsFactors = FALSE)

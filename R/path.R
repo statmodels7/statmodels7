@@ -277,9 +277,19 @@ path_values <- function(pen, theta, name, s_max, n_values = 40L,
 #' @keywords internal
 path_grid <- function(pen, name, n_values = 25L) {
   b <- pen@params_bounds[[name]]
-  if (is.null(b) || !all(is.finite(b)) || b[2L] <= b[1L]) return(numeric(0))
+  if (is.null(b) || b[2L] <= b[1L]) return(numeric(0))
   n <- max(2L, as.integer(n_values))
-  seq(b[1L], b[2L], length.out = n + 2L)[seq_len(n) + 1L]
+  if (is.finite(b[2L])) {
+    return(seq(b[1L], b[2L], length.out = n + 2L)[seq_len(n) + 1L])
+  }
+  # No upper bound and no effect on the kink: this is the SHAPE of SCAD and
+  # MCP, which govern how fast the penalty flattens beyond the kink. Neither
+  # route above reaches it -- the kink-size path cannot move a value the kink
+  # does not depend on, and there is no interval to span -- so the grid is
+  # geometric above the lower bound. It spans the values the literature uses,
+  # 3.7 for the SCAD of Fan and Li and 3 for the MCP of Zhang, and cannot
+  # reach the bound itself, where neither penalty is defined.
+  b[1L] + exp(seq(log(0.25), log(25), length.out = n))
 }
 
 
@@ -294,6 +304,36 @@ path_grid <- function(pen, name, n_values = 25L) {
 path_bounded <- function(pen, name) {
   b <- pen@params_bounds[[name]]
   !is.null(b) && is.finite(b[2L])
+}
+
+
+#' Is a Hyperparameter Swept by the Size of Its Kink?
+#'
+#' @description
+#' TRUE where the geometric path of path_values() reaches it: the
+#' hyperparameter scales the kink and has no upper bound, so the value that
+#' empties the block is admissible.
+#'
+#' @details
+#' The two conditions fail in different ways and both have to hold. The
+#' elastic net's alpha scales the kink and is bounded by one, so no
+#' admissible value of it empties the block at a given lambda; the shape of
+#' SCAD and MCP has no upper bound and does not move the kink at all, so the
+#' solve has nothing to solve. Either way the sweep is
+#' \code{\link{path_grid}}.
+#'
+#' @param pen A \pkg{penalties7} penalty.
+#' @param theta The hyperparameters in force.
+#' @param name Which hyperparameter.
+#'
+#' @return A single logical.
+#'
+#' @seealso \code{\link{path_values}}, \code{\link{path_grid}}
+#'
+#' @keywords internal
+path_by_kink <- function(pen, theta, name) {
+  !path_bounded(pen, name) &&
+    name %in% kink_hypers(pen, theta, unbounded = FALSE)
 }
 
 
@@ -324,10 +364,23 @@ path_bounded <- function(pen, name) {
 #' @keywords internal
 path_rows <- function(spec, blocks, hyper, method) {
   rows <- list()
+  held <- statmod_held(spec)
   for (b in blocks$sparse) {
     th <- as.list(hyper[[b$param]][[b$term]])
-    want <- if (length(method@over)) intersect(method@over, b$penalty@params)
-      else kink_hypers(b$penalty, th)
+    # EVERY hyperparameter of the penalty, less the ones the term holds.
+    # What is estimated is what the caller did not fix, and a shape that no
+    # longer scales the kink is swept over a grid of its own rather than
+    # left out for want of one.
+    # matched LITERALLY: a term's name is its call deparsed, so it carries
+    # parentheses and dots, and a regex over it silently matches nothing --
+    # which is a held hyperparameter swept anyway, the defect this exists to
+    # prevent
+    parts <- strsplit(held, "\r", fixed = TRUE)
+    mine <- vapply(parts, function(q)
+      length(q) == 3L && identical(q[[1L]], b$param) &&
+        identical(q[[2L]], b$term), logical(1))
+    want <- setdiff(b$penalty@params,
+                    vapply(parts[mine], `[[`, character(1), 3L))
     for (h in want) {
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = b$param, term = b$term, name = h,
@@ -637,9 +690,10 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   for (i in seq_len(nrow(rows))) {
     row <- rows[i, ]
     b <- path_block(blocks, row)
-    # a bounded hyperparameter is swept over its own interval and has no top
-    # of this kind: no admissible value of it empties the block
-    if (path_bounded(b$penalty, row$name)) next
+    # a hyperparameter that does not scale the kink has no top of this kind:
+    # no value of it empties the block
+    if (!path_by_kink(b$penalty, hyper[[row$parameter]][[row$term]],
+                      row$name)) next
     for (step in seq_len(24L)) {
       v <- kink_solve(b$penalty, hyper[[row$parameter]][[row$term]],
                       row$name, top[[i]])
@@ -660,7 +714,10 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
     for (i in seq_len(nrow(rows))) {
       row <- rows[i, ]
       b <- path_block(blocks, row)
-      bounded <- path_bounded(b$penalty, row$name)
+      # the kink-size path is for a hyperparameter that SCALES the kink and
+      # has no upper bound; everything else is swept over a grid of its own
+      bounded <- !path_by_kink(b$penalty, cur[[row$parameter]][[row$term]],
+                               row$name)
       vals <- if (bounded) {
         path_grid(b$penalty, row$name, as.integer(method@n_values))
       } else {
@@ -855,8 +912,6 @@ path_block <- function(blocks, row) {
 #' @param n_values How many points the path visits.
 #' @param min_ratio The smallest kink the path reaches, as a fraction of the
 #'   one that empties the block.
-#' @param over Which hyperparameters to sweep. Defaults to the ones that set
-#'   the size of the kink.
 #'
 #' @return An \code{\link{OuterMethod}}.
 #'
@@ -879,13 +934,12 @@ path_block <- function(blocks, row) {
 #'
 #' @export
 cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se"),
-               n_values = 25, min_ratio = 1e-4, over = NULL) {
+               n_values = 25, min_ratio = 1e-4) {
   OuterMethod(kind = "cv", hessian = "observed", k = NA_real_,
               n_values = as.numeric(n_values),
               min_ratio = as.numeric(min_ratio),
               nfolds = as.numeric(nfolds), rule = match.arg(rule),
-              folds = if (is.null(folds)) numeric(0) else as.numeric(folds),
-              over = if (is.null(over)) character(0) else as.character(over))
+              folds = if (is.null(folds)) numeric(0) else as.numeric(folds))
 }
 
 

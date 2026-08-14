@@ -21,27 +21,23 @@ pe_handles <- function(formula, data, method) {
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
-    hl <- lapply(hy, function(pp)
-      lapply(pp, function(v) stats::setNames(as.numeric(v), names(v))))
-    hl <- hl[lengths(hl) > 0L]
-    list(hy = hy, fit = statmod(formula, distrib, data, hyper = hl,
-                                inner_optimizer = inner))
+    list(hy = hy, fit = fit_at_hyper(formula, distrib, data, hy, inner))
   }
   list(
     idx = idx,
     eta0 = hyper_to_eta(fit0@hyper, idx),
     fn = function(eta) {
       a <- at(eta)
-      statmod_pe(spec, design, a$fit@coefficients, a$hy, method)$value
+      statmod_pe(spec, design, a$fit$coefficients, a$hy, method)$value
     },
     gr = function(eta) {
       a <- at(eta)
-      statmod_pe_derivs(spec, design, a$fit@coefficients, a$hy, method, idx,
+      statmod_pe_derivs(spec, design, a$fit$coefficients, a$hy, method, idx,
                         1L)$grad
     },
     he = function(eta) {
       a <- at(eta)
-      statmod_pe_derivs(spec, design, a$fit@coefficients, a$hy, method, idx,
+      statmod_pe_derivs(spec, design, a$fit$coefficients, a$hy, method, idx,
                         2L)$hess
     })
 }
@@ -165,9 +161,10 @@ test_that("the search minimizes a prediction-error criterion", {
   design <- statmod_design(spec)
   nm <- "s(x, k = 10)"
   at <- function(v) {
-    f <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
-                 hyper = list(mu = stats::setNames(list(c(lambda = v)), nm)))
-    statmod_pe(spec, design, f@coefficients, f@hyper, aic())$value
+    f <- statmod(y ~ s(x, k = 10, lambda = v),
+                 distributions7::gaussian1_distrib(), dc)
+    statmod_pe(f@spec, statmod_design(f@spec), f@coefficients, f@hyper,
+               aic())$value
   }
   lam <- fit@hyper$mu[[nm]][["lambda"]]
   expect_lt(fit@criterion, at(lam * 3))
@@ -282,8 +279,8 @@ test_that("the edf correction is zero where nothing was estimated", {
   X <- matrix(stats::rnorm(150 * p), 150, p)
   dd <- data.frame(y = X[, 1] * 2 - X[, 2] * 1.5 + stats::rnorm(150),
                    X = I(X))
-  u <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), dd,
-               hyper = list(mu = list("lasso(X)" = c(lambda = 20))))
+  u <- statmod(y ~ lasso(X, lambda = 20),
+               distributions7::gaussian1_distrib(), dd)
   expect_equal(summary(u, correct = TRUE)@df, summary(u)@df)
   expect_true(any(grepl("nothing for the correction",
                         summary(u, correct = TRUE)@notes)))
@@ -383,8 +380,8 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
   X <- matrix(stats::rnorm(150 * p), 150, p)
   d3 <- data.frame(y = X[, 1] * 2 - X[, 2] * 1.5 + stats::rnorm(150),
                    X = I(X))
-  f3 <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), d3,
-                hyper = list(mu = list("lasso(X)" = c(lambda = 20))))
-  row <- f3@edf[f3@edf$term == "lasso(X)", ]
+  f3 <- statmod(y ~ lasso(X, lambda = 20),
+                distributions7::gaussian1_distrib(), d3)
+  row <- f3@edf[startsWith(f3@edf$term, "lasso("), ]
   expect_equal(row$edf, sum(coef(f3)$mu[-1] != 0))
 })

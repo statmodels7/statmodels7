@@ -29,23 +29,19 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
   basis <- integrated_basis(spec, design, method@kind)
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
-    hl <- lapply(hy, function(pp)
-      lapply(pp, function(v) stats::setNames(as.numeric(v), names(v))))
-    hl <- hl[lengths(hl) > 0L]
-    list(hy = hy, fit = statmod(formula, distrib, data, hyper = hl,
-                                inner_optimizer = inner))
+    list(hy = hy, fit = fit_at_hyper(formula, distrib, data, hy, inner))
   }
   list(
     idx = idx,
     eta0 = hyper_to_eta(fit0@hyper, idx),
     gr = function(eta) {
       a <- at(eta)
-      statmod_marginal_grad(spec, design, a$fit@coefficients, a$hy, method,
+      statmod_marginal_grad(spec, design, a$fit$coefficients, a$hy, method,
                             idx, basis)
     },
     he = function(eta) {
       a <- at(eta)
-      statmod_marginal_hess(spec, design, a$fit@coefficients, a$hy, method,
+      statmod_marginal_hess(spec, design, a$fit$coefficients, a$hy, method,
                             idx, basis)
     })
 }
@@ -128,10 +124,8 @@ test_that("a variance component is covered, penalty and all", {
   expect_equal(h$gr(eta), numDeriv::grad(function(e) {
     # the criterion itself, differenced, as an independent check that the
     # gradient this Hessian is built on is the right one for THIS penalty
-    a <- statmod(y ~ x + random(~ 1 | g),
-                 distributions7::gaussian1_distrib(), dr,
-                 hyper = list(mu = list(`random(~1 | g)` =
-                   c(sigma = exp(e)))))
+    a <- statmod(y ~ x + random(~ 1 | g, hyper = c(sigma = exp(e))),
+                 distributions7::gaussian1_distrib(), dr)
     statmod_marginal(a@spec, statmod_design(a@spec), a@coefficients,
                      a@hyper, reml(hessian = "observed"))$value
   }, eta), tolerance = 1e-5)
@@ -152,9 +146,8 @@ test_that("a Newton step on the exact pair lands where the search does", {
 
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, ref@hyper)
-    f <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dh,
-                 hyper = list(mu = list(`s(x, k = 10)` =
-                   c(lambda = exp(eta)))))
+    f <- statmod(y ~ s(x, k = 10, lambda = exp(eta)),
+                 distributions7::gaussian1_distrib(), dh)
     list(g = statmod_marginal_grad(spec, design, f@coefficients, hy, method,
                                    idx),
          H = statmod_marginal_hess(spec, design, f@coefficients, hy, method,

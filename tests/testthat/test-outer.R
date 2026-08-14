@@ -80,8 +80,8 @@ test_that("the reported hyperparameter is where the criterion is best", {
   at <- function(v) {
     h <- fit@hyper
     h$mu[[nm]][["lambda"]] <- v
-    statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
-            hyper = list(mu = stats::setNames(list(c(lambda = v)), nm)))
+    statmod(y ~ s(x, k = 10, lambda = v),
+            distributions7::gaussian1_distrib(), ds)
   }
   crit <- function(f) {
     statmod_marginal(f@spec, statmod_design(f@spec), f@coefficients,
@@ -140,11 +140,11 @@ test_that("a kinked penalty keeps the hyperparameter it was given", {
   set.seed(23)
   dl <- ds
   for (j in 1:3) dl[[paste0("n", j)]] <- stats::rnorm(n)
-  fit <- statmod(y ~ s(x, k = 10) + lasso(~ n1 + n2 + n3),
+  fit <- statmod(y ~ s(x, k = 10) + lasso(~ n1 + n2 + n3, lambda = 40),
                  distributions7::gaussian1_distrib(), dl,
-                 hyper = list(mu = list(lasso = c(lambda = 40))),
                  outer_criterion = reml())
-  expect_equal(unname(fit@hyper$mu[["lasso(~n1 + n2 + n3)"]][["lambda"]]), 40)
+  ln <- grep("^lasso", names(fit@hyper$mu), value = TRUE)
+  expect_equal(unname(fit@hyper$mu[[ln]][["lambda"]]), 40)
   # while the smooth's did move
   expect_false(isTRUE(all.equal(
     unname(fit@hyper$mu[["s(x, k = 10)"]][["lambda"]]), 1)))

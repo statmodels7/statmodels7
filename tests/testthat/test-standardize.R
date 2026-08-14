@@ -9,19 +9,18 @@ n <- 200
 sd_dat <- data.frame(
   x1 = rnorm(n), x2 = rnorm(n) * 100, x3 = rnorm(n) / 100, x4 = rnorm(n))
 sd_dat$y <- with(sd_dat, 1 + 1.5 * x1 + 0.02 * x2 + rnorm(n))
-sd_hyper <- list(mu = list(lasso = list(lambda = 2)))
+# the hyperparameter is held IN THE TERM now, so every fit below writes it
 sd_cols <- c("x1", "x2", "x3", "x4")
 
 test_that("a standardized term fits what a hand-standardized design fits", {
-  f_std <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4, standardize = TRUE),
-                   distributions7::gaussian1_distrib(), sd_dat,
-                   hyper = sd_hyper)
+  f_std <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4, standardize = TRUE,
+                             lambda = 2),
+                   distributions7::gaussian1_distrib(), sd_dat)
   s <- vapply(sd_dat[sd_cols], stats::sd, numeric(1))
   dz <- data.frame(y = sd_dat$y, z1 = sd_dat$x1 / s[1], z2 = sd_dat$x2 / s[2],
                    z3 = sd_dat$x3 / s[3], z4 = sd_dat$x4 / s[4])
-  f_man <- statmod(y ~ lasso(~ z1 + z2 + z3 + z4),
-                   distributions7::gaussian1_distrib(), dz,
-                   hyper = sd_hyper)
+  f_man <- statmod(y ~ lasso(~ z1 + z2 + z3 + z4, lambda = 2),
+                   distributions7::gaussian1_distrib(), dz)
   # the coefficients are compared BY POSITION: the intercept is first and the
   # four slopes follow in the order the formula names them
   bx <- unname(coef(f_std)[[1L]])
@@ -39,8 +38,8 @@ test_that("standardizing makes the fit independent of a column's units", {
   scaled <- sd_dat
   scaled$x1 <- sd_dat$x1 * 1000
   fit <- function(dat, std) {
-    statmod(y ~ lasso(~ x1 + x2 + x3 + x4, standardize = std),
-            distributions7::gaussian1_distrib(), dat, hyper = sd_hyper)
+    statmod(y ~ lasso(~ x1 + x2 + x3 + x4, standardize = std, lambda = 2),
+            distributions7::gaussian1_distrib(), dat)
   }
   a <- fit(sd_dat, TRUE)
   b <- fit(scaled, TRUE)
@@ -77,8 +76,13 @@ test_that("a sparse block survives a standardized penalty in the same equation",
   # and the fit runs on it: the compiled coordinate descent takes an
   # arma::mat, so a sparse block reaching the .Call aborted the process
   # rather than raising, which is why this is asserted end to end
-  fit <- statmod(fml, distributions7::gaussian1_distrib(), dr,
-                 hyper = list(mu = list(lasso = list(lambda = 1))))
+  # the lambda is HELD here, and that is the point rather than a detail: with
+  # it estimated the criterion zeroes a column, and a coefficient at the kink
+  # has no variance to report, so the finiteness below would fail for a
+  # reason that has nothing to do with sparsity
+  fml2 <- y ~ lasso(~ v1 + v2, standardize = TRUE, lambda = 1) +
+    random(~ 1 | g)
+  fit <- statmod(fml2, distributions7::gaussian1_distrib(), dr)
   expect_true(fit@converged)
   expect_s4_class(statmod_information_at(spec, fit@coefficients, design,
                                          FALSE, "bartlett"), "dgCMatrix")
@@ -154,8 +158,7 @@ test_that("a sparse equation fits under every penalized term", {
   for (nm in names(cases)) {
     fml <- stats::as.formula(sprintf("y ~ %s + random(~ 1 | g)",
                                      deparse(cases[[nm]]$t)))
-    fit <- statmod(fml, distributions7::gaussian1_distrib(), dr,
-                   hyper = list(mu = cases[[nm]]$h))
+    fit <- statmod(fml, distributions7::gaussian1_distrib(), dr)
     expect_true(fit@converged, label = nm)
     expect_true(all(is.finite(unlist(coef(fit)))), label = nm)
   }

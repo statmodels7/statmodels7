@@ -287,8 +287,45 @@ statmod_penalty_keys <- function(spec) {
       for (e in ent) {
         out[[length(out) + 1L]] <- list(
           param = p, term = nm, key = statmod_entry_key(nm, ent, e),
-          within = e$index, penalty = e$penalty)
+          within = e$index, penalty = e$penalty,
+          # what the TERM holds: the entry carries it, so a penalty
+          # reached through a sub-term of a structural one carries it too
+          fixed = if (is.null(e$fixed)) list() else e$fixed)
       }
+    }
+  }
+  out
+}
+
+
+#' Which Hyperparameters the Terms Hold
+#'
+#' @description
+#' One key per hyperparameter a term fixed in its constructor, as
+#' \code{parameter}, the penalty's key and its name joined by a carriage
+#' return.
+#'
+#' @details
+#' WHICH hyperparameters are estimated is a property of the terms, not of the
+#' criterion: the term is where the penalty is named, and a criterion argument
+#' saying otherwise was read by nothing when the two disagreed. Everything
+#' here consults this one enumeration -- the outer index, the path, and the
+#' summary's account of what was estimated and what was given.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#'
+#' @return A character vector, possibly empty.
+#'
+#' @seealso \code{\link[modelterms7]{term_hyper}}, \code{\link{outer_hyper_index}}
+#'
+#' @keywords internal
+statmod_held <- function(spec, design = NULL) {
+  if (is.null(design)) design <- statmod_design(spec)
+  out <- character(0)
+  for (u in statmod_penalized(spec, design)) {
+    for (h in names(u$fixed)) {
+      out <- c(out, paste(u$param, u$key, h, sep = "\r"))
     }
   }
   out
