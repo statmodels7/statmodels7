@@ -366,6 +366,10 @@ exported, and none is needed to use the package.
   : Resolve a Parameter Structure
 - [`path_block()`](https://statmodels7.github.io/statmodels7/reference/path_block.md)
   : The Block a Path Row Belongs To
+- [`path_bounded()`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md)
+  : Is a Hyperparameter Bounded Above?
+- [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
+  : The Values a Path Visits Over a Bounded Hyperparameter
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
   : The Largest Score a Kinked Block Has to Beat
 - [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)

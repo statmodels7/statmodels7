@@ -1,5 +1,36 @@
 # Changelog
 
+## statmodels7 0.35.0
+
+- A bounded hyperparameter is reported as held, not as chosen.
+  [`ifelse()`](https://rdrr.io/r/base/ifelse.html) returns a result the
+  length of its TEST, and the test was a scalar, so a penalty carrying
+  two hyperparameters got one answer recycled over both: the elastic
+  net’s `alpha`, which no path varies, was marked as chosen by the
+  criterion that had chosen its `lambda`.
+
+- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  take `over`, as
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  already did, and a bounded hyperparameter named there is now really
+  swept. It used to be accepted and ignored: a path walks the SIZE OF
+  THE KINK, from the value that empties the block down, and no
+  admissible `alpha` empties it at a given `lambda`, so every point was
+  dropped and `alpha` came back at its default. A bounded hyperparameter
+  is swept over its own interval instead, the endpoints excluded because
+  the bounds are open – an elastic net at `alpha = 0` has no kink at all
+  – and the sweeps being cyclic, the kink still moves through `lambda`.
+  Measured on ten columns of which seven carried signal,
+  `bic(over = c("lambda", "alpha"))` moves alpha off 0.5 to 0.615 and
+  the criterion from 322.46 to 320.38.
+
+  The default still holds it, as `glmnet` holds its `alpha` and `ncvreg`
+  its `gamma`, and the end-of-path warning is not raised for such a
+  sweep: the grid covers the whole interval, so an answer at either end
+  is the interval’s and there is nothing to widen.
+
 ## statmodels7 0.34.0
 
 - A hyperparameter chosen by `sparse_criterion` is reported as estimated

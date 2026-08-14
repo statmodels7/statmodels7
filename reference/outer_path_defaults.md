@@ -8,7 +8,7 @@ criterion.
 ## Usage
 
 ``` r
-outer_path_defaults()
+outer_path_defaults(over = NULL)
 ```
 
 ## Value

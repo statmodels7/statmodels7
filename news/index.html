@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.34.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.35.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.35.0" id="statmodels7-0350">statmodels7 0.35.0<a class="anchor" aria-label="anchor" href="#statmodels7-0350"></a></h2>
+<ul><li><p>A bounded hyperparameter is reported as held, not as chosen. <code><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse()</a></code> returns a result the length of its TEST, and the test was a scalar, so a penalty carrying two hyperparameters got one answer recycled over both: the elastic net’s <code>alpha</code>, which no path varies, was marked as chosen by the criterion that had chosen its <code>lambda</code>.</p></li>
+<li>
+<p><code><a href="../reference/aic.html">aic()</a></code> and <code><a href="../reference/aic.html">bic()</a></code> take <code>over</code>, as <code><a href="../reference/cv.html">cv()</a></code> already did, and a bounded hyperparameter named there is now really swept. It used to be accepted and ignored: a path walks the SIZE OF THE KINK, from the value that empties the block down, and no admissible <code>alpha</code> empties it at a given <code>lambda</code>, so every point was dropped and <code>alpha</code> came back at its default. A bounded hyperparameter is swept over its own interval instead, the endpoints excluded because the bounds are open – an elastic net at <code>alpha = 0</code> has no kink at all – and the sweeps being cyclic, the kink still moves through <code>lambda</code>. Measured on ten columns of which seven carried signal, <code>bic(over = c("lambda", "alpha"))</code> moves alpha off 0.5 to 0.615 and the criterion from 322.46 to 320.38.</p>
+<p>The default still holds it, as <code>glmnet</code> holds its <code>alpha</code> and <code>ncvreg</code> its <code>gamma</code>, and the end-of-path warning is not raised for such a sweep: the grid covers the whole interval, so an answer at either end is the interval’s and there is nothing to widen.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.34.0" id="statmodels7-0340">statmodels7 0.34.0<a class="anchor" aria-label="anchor" href="#statmodels7-0340"></a></h2>
 <ul><li><p>A hyperparameter chosen by <code>sparse_criterion</code> is reported as estimated by the criterion that chose it. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> asked <code>methods$outer</code>, which carries the marginal criterion alone, so a lambda a path had selected was printed <code>(fixed)</code> beside a note saying it was held at the value it was given – of a number the caller had never seen. The fit now records which criterion swept the kinked penalties and exactly which hyperparameters it reached, and the cell says <code>(bic)</code>, <code>(cv)</code> or <code>(fixed)</code> accordingly.</p></li>
