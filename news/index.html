@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.51.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,42 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.51.0" id="statmodels7-0510">statmodels7 0.51.0<a class="anchor" aria-label="anchor" href="#statmodels7-0510"></a></h2>
+<ul><li>
+<p>The leverage diagonal is read in whichever order gives the SMALLER intermediate, and the mirror block is not computed twice. <code>x_ai' M_ab x_bi</code> is a scalar, so the <code>(b, a)</code> block is the same number as the <code>(a, b)</code> one; and the dense route’s intermediate is <code>n x p_b</code> written one way round and <code>n x p_a</code> the other, for the same answer.</p>
+<p>Both mattered on a mixed model. Fitting <code>y ~ x + random(~1|g)</code> over 500 levels, the scale’s equation carries ONE column and the mean’s 502, so the <code>(sigma, mu)</code> block was materializing a dense 20000 x 502 product – 80 MB – to keep 20000 numbers out of it. <code><a href="../reference/block_leverage.html">block_leverage()</a></code> was still 41 per cent of that fit after the sparse route of 0.50.0; it is 2.7 per cent now, and the fit goes from 3.700 s to 2.420 s.</p>
+</li>
+<li>
+<p>Where the four shapes stand against the release that began this work:</p>
+<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th></th>
+<th>before</th>
+<th>now</th>
+<th></th>
+<th>mgcv</th>
+</tr></thead><tbody><tr><td>one smooth, gaussian, n = 8000</td>
+<td>0.603 s</td>
+<td>0.268 s</td>
+<td>2.25x</td>
+<td>4.2x faster than us</td>
+</tr><tr><td>one smooth, Gamma, n = 8000</td>
+<td>1.670 s</td>
+<td>0.980 s</td>
+<td>1.70x</td>
+<td>4.9x faster than us</td>
+</tr><tr><td>three smooths + random(40)</td>
+<td>14.700 s</td>
+<td>2.910 s</td>
+<td>5.05x</td>
+<td>1.4x faster than us</td>
+</tr><tr><td>random(500), n = 20000</td>
+<td>24.310 s</td>
+<td>2.420 s</td>
+<td><strong>10.05x</strong></td>
+<td><strong>we are 70.4x faster</strong></td>
+</tr></tbody></table><p>On the mixed model the fitted quantities agree with <code>lme4::lmer</code> as they did before: sd 0.558434 against 0.558939, fixed effects to five figures.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.50.0" id="statmodels7-0500">statmodels7 0.50.0<a class="anchor" aria-label="anchor" href="#statmodels7-0500"></a></h2>
 <ul><li>

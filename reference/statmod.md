@@ -227,7 +227,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 28 ms, converged
+#> fitted in 30 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -245,5 +245,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 43 ms, converged
+#> fitted in 46 ms, converged
 ```
