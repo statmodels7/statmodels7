@@ -14,8 +14,6 @@ OuterMethod(
   kind = character(0),
   hessian = character(0),
   k = integer(0),
-  n_values = integer(0),
-  min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
   folds = integer(0)
@@ -36,15 +34,6 @@ OuterMethod(
 
   The price of one degree of freedom, for a prediction-error criterion.
   `NA` where the method resolves it against the sample size.
-
-- n_values:
-
-  How many points a path over a kinked hyperparameter visits.
-
-- min_ratio:
-
-  The smallest kink a path reaches, as a fraction of the one that
-  empties the block.
 
 - nfolds:
 
@@ -80,5 +69,5 @@ ml(hessian = "observed")
 aic()
 #> <AIC>  observed information
 cv(nfolds = 5)
-#> <CV>  5 folds, 25 values, rule "min"
+#> <CV>  5 folds, rule "min"
 ```

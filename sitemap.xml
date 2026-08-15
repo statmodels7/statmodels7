@@ -35,6 +35,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_working.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/criterion_tol.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_curve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_folds.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
@@ -77,6 +78,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_power.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_solve.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/linpar_options.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/loglik.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/method_budget.html</loc></url>
@@ -94,9 +96,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_bounded.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_by_kink.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_fallbacks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_forced.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_grid.html</loc></url>
-<url><loc>https://statmodels7.github.io/statmodels7/reference/path_n_other.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_null_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_pick.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_rows.html</loc></url>

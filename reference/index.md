@@ -32,6 +32,8 @@ alternated around them.
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   : Fit a Model
+- [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  : Options for the Unpenalized Parametric Block
 - [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   [`print(`*`<Iwls>`*`)`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   : Iterated Weighted Least Squares
@@ -151,6 +153,8 @@ exported, and none is needed to use the package.
   : The Working Response and Weights of One Equation
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
+- [`cv_bind_inputs()`](https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.md)
+  : Carry a Term's Matrix Input Onto a Subset of the Rows
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
   : The Held-Out Deviance of Every Point of a Path
 - [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
@@ -256,7 +260,7 @@ exported, and none is needed to use the package.
 - [`outer_minimize()`](https://statmodels7.github.io/statmodels7/reference/outer_minimize.md)
   : Is a Criterion Minimized?
 - [`outer_path_defaults()`](https://statmodels7.github.io/statmodels7/reference/outer_path_defaults.md)
-  : The Defaults a Path Carries
+  : The Properties Every Criterion Carries
 - [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
   : The Per-Hyperparameter Pieces of the Outer Derivatives
 - [`outer_tau()`](https://statmodels7.github.io/statmodels7/reference/outer_tau.md)
@@ -271,12 +275,12 @@ exported, and none is needed to use the package.
   : Is a Hyperparameter Bounded Above?
 - [`path_by_kink()`](https://statmodels7.github.io/statmodels7/reference/path_by_kink.md)
   : Is a Hyperparameter Swept by the Size of Its Kink?
+- [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
+  : What a Path Does Where the Term Says Nothing
 - [`path_forced()`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)
   : The Values a Caller Wrote Out
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
   : The Values a Path Visits Over a Bounded Hyperparameter
-- [`path_n_other()`](https://statmodels7.github.io/statmodels7/reference/path_n_other.md)
-  : How Many Points an Axis Beside the Path Gets
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
   : The Largest Score a Kinked Block Has to Beat
 - [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)

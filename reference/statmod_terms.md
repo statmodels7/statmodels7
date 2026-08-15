@@ -6,7 +6,7 @@ names against the data.
 ## Usage
 
 ``` r
-statmod_terms(equations, data, env, response = NULL)
+statmod_terms(equations, data, env, response = NULL, linpar = list())
 ```
 
 ## Arguments

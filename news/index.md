@@ -1,5 +1,99 @@
 # Changelog
 
+## statmodels7 0.47.0
+
+- [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  takes `linpar_control`, as
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  returns it: `sparse` for the storage of the unpenalized parametric
+  block and `contrasts` for the coding of its factors. It reaches the
+  IMPLICIT `linpar()` term, the one the bare covariates collapse into
+  and which a caller never writes; a `linpar()` written out takes them
+  directly.
+
+- The specification CARRIES them, so a rebuild reproduces the storage: a
+  fold of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  that built a dense design where the fit built a sparse one would be
+  paying for a storage the model did not ask for.
+
+- Measured on 150 groups, the parametric block goes from 1.54 MB to 0.12
+  MB with an identical log-likelihood and identical coefficients, and
+  the fit is faster rather than slower.
+
+- There is NO rescaling among the options, and that is measured rather
+  than omitted. Scaling the columns and carrying the coefficients back
+  is the remedy for a conditioning that squares, which is what forming
+  `X'X` does;
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  fits through a QR and never forms it. On columns spanning fifteen
+  decades the raw fit and the scaled one converge in the same number of
+  iterations and both agree with
+  [`lm()`](https://rdrr.io/r/stats/lm.html) to 1e-14. What moves is the
+  SCORE the fit reports, 1.5e+02 against 9.2e-05, and the final verdict
+  already arbitrates that on a dimensionless scale – so the argument
+  would have changed a printed number and not an answer.
+
+- The argument and the function are named differently on purpose. With
+  one name for both, the argument’s default
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  resolves to the argument’s own promise and R reports “promise already
+  under evaluation” – the shape section 7 records for an argument named
+  after a class, met here for one named after a function.
+  `glm(control = glm.control())` keeps them apart for the same reason.
+
+## statmodels7 0.46.0
+
+- A fold of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  carries a term’s matrix input onto its own rows.
+  `data.frame(X = X, y = y)` SPLITS a matrix into `X.x1 ... X.xp`,
+  leaving no column `X`, so `lasso(X)` reaches past the data to the
+  matrix in the calling environment – `interpret_formula()` evaluates
+  the call as `eval(call, data, env)` and looks a name up in the data
+  first, in the formula’s environment after. The fit was right, the
+  matrix being captured once, and every fold then failed to rebuild
+  because the name still resolved to all the rows.
+
+- The matrix is already on the built term, and `term_build()` checked at
+  the full fit that it has one row per observation, so a fold’s rows are
+  the same rows by position.
+  [`cv_bind_inputs()`](https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.md)
+  binds the subset as a column of the fold, which builds for the fold
+  the spelling the documentation asks the caller for. Measured, the two
+  spellings now give identical coefficients, an identical criterion and
+  an identical lambda on the same folds.
+
+- Nothing is relearned that should be. A matrix carries no knots, no
+  contrasts and no levels, so subsetting it and re-evaluating it give
+  the same block; a FORMULA input is untouched and keeps being rebuilt
+  on the fold’s own rows, which is what that rule exists for. A sparse
+  input stays sparse – the column the fold is given is still a
+  `dgCMatrix`, not its densification.
+
+- The test fold is bound too: `term_predict()` evaluates a matrix
+  input’s expression in the new data with
+  [`baseenv()`](https://rdrr.io/r/base/environment.html) as its
+  enclosure, so a name that is not a column there is not found at all.
+
+## statmodels7 0.45.0
+
+- `n_values` and `min_ratio` leave
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  and `OuterMethod`, as `search` did: what a PATH does is not the
+  criterion’s business. The same criterion is put to every
+  hyperparameter of a model, and a smooth one is read at the mode rather
+  than swept, so three of the criterion’s arguments described something
+  most of what it was asked about does not have.
+
+- They live on the term’s own signature, where a reader can see the
+  number: `lasso(x, n_lambda = 25, min_ratio = 1e-4)`,
+  `enet(x, n_lambda = 25, n_alpha = 5)`.
+  [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
+  is what remains here, and it is reached only by a term that declares a
+  kinked penalty without offering an argument for the grid – `random()`
+  under a Laplace prior is the case.
+
 ## statmodels7 0.44.0
 
 - `search` leaves

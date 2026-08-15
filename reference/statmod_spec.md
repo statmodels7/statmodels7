@@ -12,7 +12,8 @@ statmod_spec(
   data,
   weights = NULL,
   offsets = NULL,
-  need_response = TRUE
+  need_response = TRUE,
+  linpar = list()
 )
 ```
 
@@ -42,6 +43,14 @@ statmod_spec(
 
   Whether the left-hand side must evaluate. A likelihood needs it; a
   prediction does not, and new data routinely has no response column.
+
+- linpar:
+
+  How the IMPLICIT parametric block is built, as
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  returns it. It is kept on the specification, so a rebuild – a fold of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) –
+  reproduces the storage rather than quietly densifying.
 
 ## Value
 

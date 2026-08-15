@@ -9,7 +9,7 @@ terms it names into a penalized likelihood, and fits it."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.44.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.47.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +52,7 @@ terms it names into a penalized likelihood, and fits it.</p>
 <span>  sparse_criterion <span class="op">=</span> <span class="fu"><a href="aic.html">bic</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  outer_optimizer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  linpar_control <span class="op">=</span> <span class="fu"><a href="linpar_options.html">linpar_options</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -114,6 +115,17 @@ before the alternation between the coefficients and the hyperparameters
 begins, which is why a global search belongs here and not in
 <code>inner_optimizer</code>: there it would rerun at every hyperparameter the
 outer search tried.</p></dd>
+
+
+<dt id="arg-linpar-control">linpar_control<a class="anchor" aria-label="anchor" href="#arg-linpar-control"></a></dt>
+<dd><p>How the unpenalized parametric block is built, as
+<code><a href="linpar_options.html">linpar_options()</a></code> returns it: the storage and the contrasts
+for its factors. It reaches the IMPLICIT term, the one the bare
+covariates collapse into and which a caller never writes; a
+<code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">linpar()</a></code> written out takes them directly.
+The argument and the function are named differently on purpose, as
+<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></code>'s <code>control</code> and
+<code><a href="https://rdrr.io/r/stats/glm.control.html" class="external-link">glm.control</a></code> are.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -218,7 +230,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -34.947195    objective 34.947195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 30 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 26 ms, converged</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># every parameter can be modelled</span></span></span>
 <span class="r-in"><span><span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
@@ -236,7 +248,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 41 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 35 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

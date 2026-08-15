@@ -1,7 +1,7 @@
 # How Far Down the Path Reaches for One Term
 
-The depth the TERM asked for, or the criterion's default where it asked
-for nothing.
+The depth the TERM asked for, or the layer's fallback where it asked for
+nothing.
 
 ## Usage
 
@@ -24,7 +24,8 @@ statmod_min_ratio(spec, row, default)
 
 - default:
 
-  The criterion's own ratio.
+  [`path_fallbacks`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)'s,
+  for a term that named none.
 
 ## Value
 

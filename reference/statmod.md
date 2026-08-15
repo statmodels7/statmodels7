@@ -17,6 +17,7 @@ statmod(
   sparse_criterion = bic(),
   outer_optimizer = NULL,
   start = NULL,
+  linpar_control = linpar_options(),
   verbose = 0,
   ...
 )
@@ -89,6 +90,19 @@ statmod(
   coefficients and the hyperparameters begins, which is why a global
   search belongs here and not in `inner_optimizer`: there it would rerun
   at every hyperparameter the outer search tried.
+
+- linpar_control:
+
+  How the unpenalized parametric block is built, as
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  returns it: the storage and the contrasts for its factors. It reaches
+  the IMPLICIT term, the one the bare covariates collapse into and which
+  a caller never writes; a
+  [`linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
+  written out takes them directly. The argument and the function are
+  named differently on purpose, as
+  [`glm`](https://rdrr.io/r/stats/glm.html)'s `control` and
+  [`glm.control`](https://rdrr.io/r/stats/glm.control.html) are.
 
 - verbose:
 
@@ -213,7 +227,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 30 ms, converged
+#> fitted in 26 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -231,5 +245,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 41 ms, converged
+#> fitted in 35 ms, converged
 ```

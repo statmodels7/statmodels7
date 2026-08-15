@@ -6,13 +6,7 @@ fit assigns to observations it was not fitted on.
 ## Usage
 
 ``` r
-cv(
-  nfolds = 10,
-  folds = NULL,
-  rule = c("min", "1se"),
-  n_values = 25,
-  min_ratio = 1e-04
-)
+cv(nfolds = 10, folds = NULL, rule = c("min", "1se"))
 ```
 
 ## Arguments
@@ -30,15 +24,6 @@ cv(
 
   `"min"` for the best criterion, `"1se"` for the sparsest fit within
   one standard error of it.
-
-- n_values:
-
-  How many points the path visits.
-
-- min_ratio:
-
-  The smallest kink the path reaches, as a fraction of the one that
-  empties the block.
 
 ## Value
 
@@ -98,10 +83,13 @@ at two hyperparameters is `n_lambda * n_alpha` fits against
 `n_lambda + n_alpha` per pass; with three or more estimated it grows
 exponentially, and `"cyclic"` is there for that.
 
-`n_values` is the length of the path over the SIZE OF THE KINK, which
-spans four decades at the default `min_ratio`. An axis beside it spans
-one bounded interval and takes a fifth as many points unless the term
-says otherwise, so the shipped product is 25 by 5 rather than 25 by 25.
+**How long the path is, and how far down it reaches**, are the term's
+too, and are on its own signature where a reader can see them:
+`lasso(x, n_lambda = 25, min_ratio = 1e-4)`,
+`enet(x, n_lambda = 25, n_alpha = 5)`. The two numbers differ because
+the axes do – \\\lambda\\ descends the size of the kink over four
+decades and \\\alpha\\ spans one bounded interval – so the shipped
+product is 25 by 5.
 
 **The grid is not a rectangle**, and for two different reasons. The
 elastic net's kink is \\\lambda\alpha\\, so the value emptying the block
@@ -112,16 +100,16 @@ whatever the shape and the two axes really are a rectangle. Each axis is
 built at the settings of the axes outside it, which covers both without
 a rule about families.
 
-**The cost** is `nfolds` fits per point of the path, and the path is
-`n_values` points for a term with one kinked hyperparameter and the
-product of its axes for a term with several. The warm starts are worth
-1.8 times, and building each fold's design once rather than once per
-point another 4 per cent, but what remains is the proximal iteration:
-measured at 200 observations and 20 columns, 0.88 seconds a fit, against
-`cv.glmnet`'s 0.03 seconds for its whole path of 100 values on five
-folds. That distance is the reason `n_values` is 25 here and 100 there,
-and closing it needs the compiled coordinate descent that a separable
-penalty on a linear predictor admits.
+**The cost** is `nfolds` fits per point of the path, and how many points
+there are is the term's `n_lambda` for one kinked hyperparameter and the
+product of its axes for several. The warm starts are worth 1.8 times,
+and building each fold's design once rather than once per point another
+4 per cent, but what remains is the proximal iteration: measured at 200
+observations and 20 columns, 0.88 seconds a fit, against `cv.glmnet`'s
+0.03 seconds for its whole path of 100 values on five folds. That
+distance is the reason `n_lambda` is 25 here and 100 there, and closing
+it needs the compiled coordinate descent that a separable penalty on a
+linear predictor admits.
 
 ## References
 
@@ -144,26 +132,26 @@ Statistical Software* 33(1), 1–22.
 set.seed(1)
 dd <- data.frame(y = rnorm(60))
 dd$x <- matrix(rnorm(60 * 5), 60, 5)
-statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-        outer_criterion = cv(nfolds = 3, n_values = 6))
-#> Warning: The path for 'lasso(x)' in 'mu' stopped at its sparse end (lambda = 15.48).
+statmod(y ~ lasso(x, n_lambda = 6), distributions7::gaussian1_distrib(), dd,
+        outer_criterion = cv(nfolds = 3))
+#> Warning: The path for 'lasso(x, n_lambda = 6)' in 'mu' stopped at its sparse end (lambda = 15.48).
 #>   The criterion was still falling there, so widen the path with min_ratio
 #>   or set the value yourself.
 #> A statmod fit
 #> 
-#> Call:  statmod(formula = y ~ lasso(x), distrib = distributions7::gaussian1_distrib(), 
-#>             data = dd, outer_criterion = cv(nfolds = 3, n_values = 6))
+#> Call:  statmod(formula = y ~ lasso(x, n_lambda = 6), distrib = distributions7::gaussian1_distrib(), 
+#>             data = dd, outer_criterion = cv(nfolds = 3))
 #> 
 #> Distribution: gaussian1
 #> Observations: 60
 #> 
-#>   mu         ~ lasso(x)
+#>   mu         ~ lasso(x, n_lambda = 6)
 #>                linpar           1 coef
-#>                lasso(x)         5 coef, edf 0.00
+#>                lasso(x, n_lambda = 6)   5 coef, edf 0.00
 #>   sigma      ~ 1
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> fitted in 1.14 s, converged
+#> fitted in 346 ms, converged
 #> 1 pass(es) over 2 block(s)
 ```

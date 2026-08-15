@@ -9,7 +9,7 @@ each with modelterms7 and builds its terms against the data."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.44.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.47.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,8 @@ each with <span class="pkg">modelterms7</span> and builds its terms against the 
 <span>  <span class="va">data</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  offsets <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  need_response <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  need_response <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  linpar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,6 +80,13 @@ each with <span class="pkg">modelterms7</span> and builds its terms against the 
 <dd><p>Whether the left-hand side must evaluate. A likelihood
 needs it; a prediction does not, and new data routinely has no response
 column.</p></dd>
+
+
+<dt id="arg-linpar">linpar<a class="anchor" aria-label="anchor" href="#arg-linpar"></a></dt>
+<dd><p>How the IMPLICIT parametric block is built, as
+<code><a href="linpar_options.html">linpar_options()</a></code> returns it. It is kept on the
+specification, so a rebuild – a fold of <code><a href="cv.html">cv()</a></code> – reproduces
+the storage rather than quietly densifying.</p></dd>
 
 </dl></div>
     <div class="section level2">
