@@ -257,6 +257,8 @@ exported, and none is needed to use the package.
   : The Size of a Penalty's Kink
 - [`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
   : The Hyperparameter That Gives the Kink a Chosen Size
+- [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
+  : The Leverage Diagonal Over the Nonzeros of Two Rows
 - [`logLik(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
   : The Maximized Log-Likelihood of a Fit
 - [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
@@ -347,6 +349,8 @@ exported, and none is needed to use the package.
   : Combinations of Terms That Are Not a Model
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term the Fitting Scheme Does Not Cover
+- [`row_nonzeros()`](https://statmodels7.github.io/statmodels7/reference/row_nonzeros.md)
+  : A Design's Nonzeros, Ordered by Row
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)

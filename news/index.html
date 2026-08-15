@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.49.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,118 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.50.0" id="statmodels7-0500">statmodels7 0.50.0<a class="anchor" aria-label="anchor" href="#statmodels7-0500"></a></h2>
+<ul><li>
+<p>The inner optimizer is offered the objective’s EXACT second derivative – the information plus the penalty’s Hessian – which it was not being given. <code>minimize()</code> was called with <code>fn</code> and <code>gr</code> alone, so <code>newton()</code> built a numerical Hessian by differencing the gradient once per coordinate. It is passed to every method, as the gradient is; whether it is read is the method’s business and a closure costs nothing until it is called.</p>
+<p>The gradient count is the tell, and the answers are identical throughout:</p>
+<table class="table"><thead><tr><th></th>
+<th><code>fn</code></th>
+<th><code>gr</code></th>
+<th><code>he</code></th>
+<th>time</th>
+<th></th>
+</tr></thead><tbody><tr><td>one smooth, <code>newton()</code> before</td>
+<td>44</td>
+<td>234</td>
+<td>0</td>
+<td>0.520 s</td>
+<td></td>
+</tr><tr><td>one smooth, <code>newton()</code> after</td>
+<td>44</td>
+<td>14</td>
+<td>10</td>
+<td>0.210 s</td>
+<td>2.48x</td>
+</tr><tr><td>three smooths + random, before</td>
+<td>78</td>
+<td>3484</td>
+<td>0</td>
+<td>9.360 s</td>
+<td></td>
+</tr><tr><td>three smooths + random, after</td>
+<td>76</td>
+<td>34</td>
+<td>25</td>
+<td>1.690 s</td>
+<td><strong>5.54x</strong></td>
+</tr></tbody></table><p><code><a href="../reference/iwls.html">iwls()</a></code>, <code>bfgs()</code> and <code>lbfgs()</code> are unchanged to the millisecond, none of them reading a Hessian, which is the control. With the exact one <code>newton()</code> becomes the fastest inner method: 0.210 s against <code><a href="../reference/iwls.html">iwls()</a></code>’s 0.280 on the first shape and 1.690 against 2.960 on the second.</p>
+<p><strong>The default was never affected</strong>: <code><a href="../reference/iwls.html">iwls()</a></code> fits through <code><a href="../reference/iwls_pieces.html">iwls_pieces()</a></code> and has always used the exact expected or observed information. The gap was reachable only by naming an optimizer.</p>
+</li>
+<li>
+<p>The leverage diagonal <code>(X_a M_ab X_b')_ii</code>, which every trace against <code>M</code> reduces to, is computed over the NONZEROS of each row where the design is sparse. A grouping indicator puts one nonzero per block in a row, so the quantity is a quadratic form over a handful of entries where the dense route computed <code>p_a p_b</code> of them per observation to keep one.</p>
+<p>The gate is measured, not assumed: 14.2x on the operation at a combined density of 3.6e-05, 50x SLOWER at 0.18 and again on a dense block, R’s per-element indexing being far dearer than a BLAS flop. Interpolating puts the crossover near 1.1e-03, which is the threshold, with an absolute cap on the number of pairs besides – the density gate bounds the ratio of work and says nothing about its size.</p>
+<p>End to end at 20000 observations with a random intercept, the two routes forced either way: 1.17x at 200 levels, 1.89x at 500, 1.26x at 1000 and 1.11x at 2000. The win peaks and falls back, which says where the bottleneck moves: past about a thousand levels the dense <code>O(p^3)</code> inverse takes over, and at 503 coefficients it had been 4.4 per cent of the fit.</p>
+</li>
+<li>
+<p>The exact gradient and the exact Hessian are computed WHEN THE SEARCH ASKS FOR THEM, not whenever the criterion could supply them. Which of the two a search reads varies – <code>nelder_mead()</code> reads neither, <code>lbfgs()</code> and <code>bfgs()</code> read the gradient and never the Hessian, <code>newton()</code> reads both – and a line search evaluates the objective at many trial points where it wants no derivative at all. Measured on the counts, the inner objective is asked for a value three to four times more often than for a gradient.</p>
+<p>This needs no predicate about the optimizer and follows what it does rather than what its class declares. Measured, with every fit landing on the same answer:</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th></th>
+<th>before</th>
+<th>after</th>
+<th></th>
+</tr></thead><tbody><tr><td>one smooth, <code>newton()</code>
+</td>
+<td>0.350 s</td>
+<td>0.260 s</td>
+<td>1.35x</td>
+</tr><tr><td>one smooth, <code>lbfgs()</code>
+</td>
+<td>0.230 s</td>
+<td>0.170 s</td>
+<td>1.35x</td>
+</tr><tr><td>one smooth, <code>nelder_mead()</code>
+</td>
+<td>0.720 s</td>
+<td>0.420 s</td>
+<td>1.71x</td>
+</tr><tr><td>three smooths + random, <code>newton()</code>
+</td>
+<td>4.790 s</td>
+<td>2.580 s</td>
+<td>1.86x</td>
+</tr><tr><td>three smooths + random, <code>lbfgs()</code>
+</td>
+<td>9.440 s</td>
+<td>3.290 s</td>
+<td>2.87x</td>
+</tr><tr><td>three smooths + random, <code>nelder_mead()</code>
+</td>
+<td>116.420 s</td>
+<td>38.140 s</td>
+<td>3.05x</td>
+</tr></tbody></table></li>
+<li>
+<p>Where the four shapes stand against the release that started this work, and against mgcv fitting the same model with the same basis and the same criterion:</p>
+<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th></th>
+<th>before</th>
+<th>now</th>
+<th></th>
+<th>mgcv</th>
+</tr></thead><tbody><tr><td>one smooth, gaussian, n = 8000</td>
+<td>0.603 s</td>
+<td>0.280 s</td>
+<td>2.15x</td>
+<td>4.4x faster than us</td>
+</tr><tr><td>one smooth, Gamma, n = 8000</td>
+<td>1.670 s</td>
+<td>0.995 s</td>
+<td>1.68x</td>
+<td>4.9x faster than us</td>
+</tr><tr><td>three smooths + random(40)</td>
+<td>14.700 s</td>
+<td>3.000 s</td>
+<td>4.90x</td>
+<td>1.4x faster than us</td>
+</tr><tr><td>random(500), n = 20000</td>
+<td>24.310 s</td>
+<td>3.700 s</td>
+<td>6.57x</td>
+<td><strong>we are 46.1x faster</strong></td>
+</tr></tbody></table></li>
+<li><p>An INNER context was measured and NOT built. The objective’s <code>fn</code>, <code>gr</code> and <code>he</code> are already separate closures, so an optimizer that reads no Hessian never pays for one – measured, <code>he</code> is asked for zero times per fit under every inner method. What they do repeat at one point is the linear predictors, and that is 15 to 16 per cent of one <code>fn</code> plus <code>gr</code>; since a value is asked for three to four times more often than a gradient, most evaluations have no partner to share with, and the whole saving is about 7 per cent of the inner objective. It does not pay for the machinery.</p></li>
+<li><p>The criterion, the gradient, the effective degrees of freedom and every fitted quantity are unchanged throughout: bit for bit on all four shapes at both a fitted and an off-optimum point, the Hessian to 2.2e-14 from the change of summation order in 0.49.0.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.49.0" id="statmodels7-0490">statmodels7 0.49.0<a class="anchor" aria-label="anchor" href="#statmodels7-0490"></a></h2>
 <ul><li><p>The marginal criterion, its exact gradient and its exact Hessian read ONE evaluation context per point instead of each rebuilding what it needs. The information used to be assembled three times at one point and the penalized matrix factorized twice, and the Hessian additionally called the gradient, which repeated the whole of it a fourth time – measured by <code>Rprof</code>’s <code>by.total</code> on a random intercept over 500 levels, the gradient and the Hessian together accounted for 128 per cent of the fit, the overlap being exactly that repetition.</p></li>
