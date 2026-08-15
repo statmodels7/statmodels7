@@ -546,6 +546,8 @@ exported, and none is needed to use the package.
   : The Same Model Read on Other Rows
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
   : The Score of the Weighted Log-Likelihood
+- [`statmod_search()`](https://statmodels7.github.io/statmodels7/reference/statmod_search.md)
+  : How a Term Covers Its Own Hyperparameters
 - [`statmod_select()`](https://statmodels7.github.io/statmodels7/reference/statmod_select.md)
   : Estimate the Hyperparameters, by Whichever Route Each One Admits
 - [`statmod_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_start.md)

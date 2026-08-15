@@ -11,8 +11,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04,
-  search = c("grid", "cyclic")
+  min_ratio = 1e-04
 )
 ```
 
@@ -40,12 +39,6 @@ cv(
 
   The smallest kink the path reaches, as a fraction of the one that
   empties the block.
-
-- search:
-
-  How a term's own hyperparameters are covered when it has several with
-  a kink: `"grid"`, the default, takes every combination of them, and
-  `"cyclic"` sweeps one at a time holding the others.
 
 ## Value
 
@@ -84,18 +77,24 @@ coefficients.
 penalty's that the constructor did not hold at a number. What the
 criterion decides is how they are covered.
 
-**A product within a term, an alternation between terms.** With
-`search = "grid"`, the default, a term carrying several kinked
-hyperparameters has every combination of them visited; with `"cyclic"`,
-one is swept at a time with the others held, and the passes repeat.
-Between two terms the search alternates whichever is chosen, so
-`y ~ lasso(X) + enet(R)` costs the two blocks added and not multiplied.
+**A product within a term, an alternation between terms.** A term
+carrying several kinked hyperparameters has every combination of them
+visited under `search = "grid"` and one swept at a time under
+`"cyclic"`. The choice is the TERM's – `enet(X, search =)`,
+[`term_search`](https://statmodels7.github.io/modelterms7/reference/term_search.html)
+– and not this criterion's, since the same criterion is put to the
+smooth hyperparameters of the model, which are read at the mode rather
+than swept, so most of what it is asked about could not use such an
+argument. Between two terms the sweep alternates whichever each one
+named, so `y ~ lasso(X) + enet(R)` costs the two blocks added and not
+multiplied, and one term asking for a product does not make the other
+pay for it.
 
-The product is the default because the cyclic sweep traverses a cross
-through the point in hand and can stop where each coordinate is
-separately best without being jointly so. Its cost is the product of the
-grids where the cyclic sweep's is their sum, which at two
-hyperparameters is `n_lambda * n_alpha` fits against
+A term that names neither gets the product, because the cyclic sweep
+traverses a cross through the point in hand and can stop where each
+coordinate is separately best without being jointly so. Its cost is the
+product of the term's grids where the cyclic sweep's is their sum, which
+at two hyperparameters is `n_lambda * n_alpha` fits against
 `n_lambda + n_alpha` per pass; with three or more estimated it grows
 exponentially, and `"cyclic"` is there for that.
 
@@ -165,6 +164,6 @@ statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -75.244717    objective 65.014193
-#> fitted in 1.13 s, converged
+#> fitted in 1.14 s, converged
 #> 1 pass(es) over 2 block(s)
 ```

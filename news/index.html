@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.43.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.44.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.44.0" id="statmodels7-0440">statmodels7 0.44.0<a class="anchor" aria-label="anchor" href="#statmodels7-0440"></a></h2>
+<ul><li><p><code>search</code> leaves <code><a href="../reference/aic.html">aic()</a></code>, <code><a href="../reference/aic.html">bic()</a></code> and <code><a href="../reference/cv.html">cv()</a></code>. Whether a term’s own kinked hyperparameters are covered by a product or one at a time is the TERM’s, <code>enet(X, search = "cyclic")</code>, for the reason the whole enumeration is: a criterion is put to every hyperparameter of the model, and a smooth one is read at the mode rather than swept, so most of what it was asked about could not use the argument. <code><a href="../reference/statmod_search.html">statmod_search()</a></code> reads it, beside <code><a href="../reference/statmod_grid_size.html">statmod_grid_size()</a></code> and <code><a href="../reference/statmod_min_ratio.html">statmod_min_ratio()</a></code>.</p></li>
+<li><p>Per term is also what keeps one term’s choice off another’s: <code>y ~ lasso(X) + enet(R, search = "cyclic")</code> sweeps the elastic net one coordinate at a time and leaves the lasso alone.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.43.0" id="statmodels7-0430">statmodels7 0.43.0<a class="anchor" aria-label="anchor" href="#statmodels7-0430"></a></h2>
 <ul><li><p>A hyperparameter the readable block does not DESCRIBE keeps its own row. The quantities of a multivariate Student t prior are the standard deviations and the correlations of its scale matrix, and its degrees of freedom are none of those, so replacing the coordinate rows wholesale dropped <code>nu</code> from the summary. The question is put to the Jacobian – a column that is zero throughout is a coordinate no quantity depends on – so a family that declares more later is covered without an edit.</p></li>
