@@ -522,7 +522,7 @@ structural_range_cols <- function(spec, design, key, free) {
 #'
 #' @keywords internal
 statmod_marginal <- function(spec, design, coef, hyper, method,
-                             approx = "bartlett", basis = NULL) {
+                             approx = "bartlett", basis = NULL, ctx = NULL) {
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")
@@ -530,9 +530,8 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     M <- statmod_marginal_full(spec, design, coef, hyper, basis)
     if (is.null(M)) return(NULL)
   } else {
-    H <- statmod_information_at(spec, coef, design, expected, approx)
-    S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-    S[!is.finite(S)] <- 0
+    H <- ctx_information(ctx, spec, design, coef, hyper, expected, approx)
+    S <- ctx_penalty(ctx, spec, design, coef, hyper)
     M <- H + S
     if (!is.null(basis)) M <- crossprod(basis, M %*% basis)
   }
@@ -694,9 +693,13 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         m <<- NULL
         return(invisible(NULL))
       }
+      # one context per point: the criterion, the gradient and the Hessian
+      # read the same information, the same penalty and the same factorization
+      # instead of each assembling its own
+      cx <- outer_context(spec, design, cf, hy, approx)
       m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx,
                                statmod_active(spec, blocks, res$par, hy)) else
-        statmod_marginal(spec, design, cf, hy, method, approx, basis)
+        statmod_marginal(spec, design, cf, hy, method, approx, basis, cx)
       if (is.null(m)) return(invisible(NULL))
       if (exact && pe) {
         d <- statmod_pe_derivs(spec, design, cf, hy, method, idx,
@@ -705,11 +708,12 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         Hm <<- d$hess
       } else {
         if (exact) {
-          g <<- statmod_marginal_grad(spec, design, cf, hy, method, idx, basis)
+          g <<- statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
+                                      ctx = cx)
         }
         if (exact2) {
           Hm <<- statmod_marginal_hess(spec, design, cf, hy, method, idx,
-                                       basis)
+                                       basis, ctx = cx)
         }
       }
       invisible(NULL)

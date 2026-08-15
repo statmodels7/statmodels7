@@ -1,3 +1,47 @@
+# statmodels7 0.49.0
+
+* The marginal criterion, its exact gradient and its exact Hessian read ONE
+  evaluation context per point instead of each rebuilding what it needs. The
+  information used to be assembled three times at one point and the penalized
+  matrix factorized twice, and the Hessian additionally called the gradient,
+  which repeated the whole of it a fourth time -- measured by `Rprof`'s
+  `by.total` on a random intercept over 500 levels, the gradient and the
+  Hessian together accounted for 128 per cent of the fit, the overlap being
+  exactly that repetition.
+
+* A contraction of a third or fourth derivative is never assembled where it is
+  only traced against `M`. `tr(M X'WX)` is a weighted sum of the
+  per-observation diagonal of `X M X'`, which the gradient already computes,
+  so `contract4` and the per-pair `contract3` leave the Hessian's pair loop
+  entirely. Measured on the operation at 8000 observations and 69
+  coefficients, forming the matrix and tracing costs 25.5 ms where the sum
+  costs 0.031 ms; at 20000 and 503, 3480 ms against 0.066.
+
+* Measured end to end, with the criterion, the gradient, the Hessian, the edf
+  and every fitted quantity unchanged (the criterion, the gradient and the
+  edf bit for bit, the Hessian to 2.2e-14 relative, the summation order having
+  moved):
+
+  | | before | after | |
+  |---|---|---|---|
+  | one smooth, gaussian, n = 8000 | 0.603 s | 0.380 s | 1.59x |
+  | one smooth, Gamma, n = 8000 | 1.670 s | 1.080 s | 1.55x |
+  | three smooths + random(40), n = 8000 | 14.700 s | 5.220 s | 2.82x |
+  | random(500), gaussian, n = 20000 | 24.310 s | 10.320 s | 2.36x |
+
+* Two changes were measured and NOT made. Carrying a block-supported quantity
+  without its surrounding zeros is worth 0.023 ms a call at 69 coefficients,
+  which is 5 ms of a 14.7 s fit, and at 503 the subsetting is 0.4x -- slower
+  than the full product -- because the penalty covers 500 of the 503 columns.
+  And computing `tr(M K_l M K_m)` through `Z = X U'` measured 0.8x and 0.5x:
+  forming `Z` costs `O(np^2)` just as forming one `X'WX` does, and with one to
+  ten pairs there is nothing to amortize it over.
+
+* `aic()`, `bic()` and `cv()` are untouched, and deliberately: in
+  `statmod_pe_derivs()` the same contractions enter genuine matrix products
+  (`A_ml %*% PH`, `PA_m %*% (P %*% B_l)`) and not only traces, so the assembly
+  is doing work there rather than being discarded.
+
 # statmodels7 0.48.0
 
 * A penalty may now answer with a sparse Hessian -- a smooth repeated over

@@ -4,7 +4,16 @@
 \alias{statmod_marginal_hess}
 \title{The Exact Hessian of the Marginal Criterion}
 \usage{
-statmod_marginal_hess(spec, design, coef, hyper, method, idx, basis = NULL)
+statmod_marginal_hess(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  idx,
+  basis = NULL,
+  ctx = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
