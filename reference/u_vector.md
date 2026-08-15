@@ -6,7 +6,7 @@ crossprod per distribution parameter.
 ## Usage
 
 ``` r
-u_vector(spec, design, coef, M, params, npar, offs, total)
+u_vector(spec, design, coef, M, params, npar, offs, total, d3 = NULL, G = NULL)
 ```
 
 ## Arguments

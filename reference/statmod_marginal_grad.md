@@ -14,7 +14,8 @@ statmod_marginal_grad(
   method,
   idx,
   basis = NULL,
-  free = TRUE
+  free = TRUE,
+  ctx = NULL
 )
 ```
 

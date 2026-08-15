@@ -6,7 +6,16 @@ scale of the hyperparameters under estimation.
 ## Usage
 
 ``` r
-statmod_marginal_hess(spec, design, coef, hyper, method, idx, basis = NULL)
+statmod_marginal_hess(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  idx,
+  basis = NULL,
+  ctx = NULL
+)
 ```
 
 ## Arguments

@@ -13,7 +13,8 @@ statmod_marginal(
   hyper,
   method,
   approx = "bartlett",
-  basis = NULL
+  basis = NULL,
+  ctx = NULL
 )
 ```
 

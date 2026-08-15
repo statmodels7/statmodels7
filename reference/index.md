@@ -115,6 +115,8 @@ exported, and none is needed to use the package.
   : Solve a Scoring Step From the Square-Root Design
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
   : Bind a Model's Term Blocks Side by Side
+- [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
+  : The Per-Observation Diagonal of Each Block of a Matrix
 - [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
   : The Predictors a Coefficient Direction Induces
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
@@ -153,6 +155,22 @@ exported, and none is needed to use the package.
   : The Working Response and Weights of One Equation
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
+- [`ctx_deriv()`](https://statmodels7.github.io/statmodels7/reference/ctx_deriv.md)
+  : A Higher Derivative of the Log-Density at the Context's Point
+- [`ctx_information()`](https://statmodels7.github.io/statmodels7/reference/ctx_information.md)
+  : The Information at the Context's Point
+- [`ctx_leverage()`](https://statmodels7.github.io/statmodels7/reference/ctx_leverage.md)
+  : The Per-Observation Diagonals at the Context's Point
+- [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
+  : The Penalized Matrix and Its Inverse
+- [`ctx_penalty()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalty.md)
+  : The Penalty's Hessian at the Context's Point
+- [`ctx_theta()`](https://statmodels7.github.io/statmodels7/reference/ctx_theta.md)
+  : The Linear Predictors' Parameters at the Context's Point
+- [`ctx_trace_matrix()`](https://statmodels7.github.io/statmodels7/reference/ctx_trace_matrix.md)
+  : The Matrix the Traces Are Taken Against
+- [`ctx_usable()`](https://statmodels7.github.io/statmodels7/reference/ctx_usable.md)
+  : Refuse a Context That Belongs Somewhere Else
 - [`cv_bind_inputs()`](https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.md)
   : Carry a Term's Matrix Input Onto a Subset of the Rows
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
@@ -249,6 +267,8 @@ exported, and none is needed to use the package.
   : The Budget and the Stopping Rule of the Alternation
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
+- [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
+  : One Evaluation Point, Shared
 - [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
   : Estimate the Hyperparameters
 - [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
@@ -510,6 +530,8 @@ exported, and none is needed to use the package.
   : What Kind of Block a Term Reports As
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
+- [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
+  : The Trace Against a Contraction, Without Forming It
 - [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
   : The Trace of the Determinant's Movement With the Coefficients
 - [`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
