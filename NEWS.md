@@ -1,3 +1,17 @@
+# statmodels7 0.44.0
+
+* `search` leaves `aic()`, `bic()` and `cv()`. Whether a term's own kinked
+  hyperparameters are covered by a product or one at a time is the TERM's,
+  `enet(X, search = "cyclic")`, for the reason the whole enumeration is: a
+  criterion is put to every hyperparameter of the model, and a smooth one is
+  read at the mode rather than swept, so most of what it was asked about
+  could not use the argument. `statmod_search()` reads it, beside
+  `statmod_grid_size()` and `statmod_min_ratio()`.
+
+* Per term is also what keeps one term's choice off another's:
+  `y ~ lasso(X) + enet(R, search = "cyclic")` sweeps the elastic net one
+  coordinate at a time and leaves the lasso alone.
+
 # statmodels7 0.43.0
 
 * A hyperparameter the readable block does not DESCRIBE keeps its own row.

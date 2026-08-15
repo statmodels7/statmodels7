@@ -9,8 +9,7 @@ cv(
   folds = NULL,
   rule = c("min", "1se"),
   n_values = 25,
-  min_ratio = 1e-04,
-  search = c("grid", "cyclic")
+  min_ratio = 1e-04
 )
 }
 \arguments{
@@ -26,10 +25,6 @@ sparsest fit within one standard error of it.}
 
 \item{min_ratio}{The smallest kink the path reaches, as a fraction of the
 one that empties the block.}
-
-\item{search}{How a term's own hyperparameters are covered when it has
-several with a kink: \code{"grid"}, the default, takes every combination
-of them, and \code{"cyclic"} sweeps one at a time holding the others.}
 }
 \value{
 An \code{\link{OuterMethod}}.
@@ -67,20 +62,25 @@ it, and every fit starts from the previous one's coefficients.
 penalty's that the constructor did not hold at a number. What the criterion
 decides is how they are covered.
 
-\strong{A product within a term, an alternation between terms.} With
-\code{search = "grid"}, the default, a term carrying several kinked
-hyperparameters has every combination of them visited; with
-\code{"cyclic"}, one is swept at a time with the others held, and the passes
-repeat. Between two terms the search alternates whichever is chosen, so
-\code{y ~ lasso(X) + enet(R)} costs the two blocks added and not multiplied.
+\strong{A product within a term, an alternation between terms.} A term
+carrying several kinked hyperparameters has every combination of them
+visited under \code{search = "grid"} and one swept at a time under
+\code{"cyclic"}. The choice is the TERM's -- \code{enet(X, search =)},
+\code{\link[modelterms7]{term_search}} -- and not this criterion's, since
+the same criterion is put to the smooth hyperparameters of the model, which
+are read at the mode rather than swept, so most of what it is asked about
+could not use such an argument. Between two terms the sweep alternates
+whichever each one named, so \code{y ~ lasso(X) + enet(R)} costs the two
+blocks added and not multiplied, and one term asking for a product does not
+make the other pay for it.
 
-The product is the default because the cyclic sweep traverses a cross
-through the point in hand and can stop where each coordinate is separately
-best without being jointly so. Its cost is the product of the grids where
-the cyclic sweep's is their sum, which at two hyperparameters is
-\code{n_lambda * n_alpha} fits against \code{n_lambda + n_alpha} per pass;
-with three or more estimated it grows exponentially, and \code{"cyclic"} is
-there for that.
+A term that names neither gets the product, because the cyclic sweep
+traverses a cross through the point in hand and can stop where each
+coordinate is separately best without being jointly so. Its cost is the
+product of the term's grids where the cyclic sweep's is their sum, which at
+two hyperparameters is \code{n_lambda * n_alpha} fits against
+\code{n_lambda + n_alpha} per pass; with three or more estimated it grows
+exponentially, and \code{"cyclic"} is there for that.
 
 \code{n_values} is the length of the path over the SIZE OF THE KINK, which
 spans four decades at the default \code{min_ratio}. An axis beside it spans

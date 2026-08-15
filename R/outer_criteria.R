@@ -63,17 +63,15 @@ NULL
 #' mean in the parameters, which is not one of \pkg{distributions7}'s generics.
 #'
 #' \strong{Over a penalty with a kink} these criteria sweep a path rather than
-#' differentiate, and \code{search} says how a term carrying more than one such
-#' hyperparameter is covered. See \code{\link{cv}} for what the two settings
-#' do and what each costs.
+#' differentiate. How that path covers a term carrying more than one such
+#' hyperparameter is the TERM's own, \code{\link[modelterms7]{term_search}},
+#' since the same criterion is asked of the smooth hyperparameters of the
+#' model as well and those are not swept at all.
 #'
 #' @param k The price of one degree of freedom. Defaults to 2; \code{bic()}
 #'   uses \eqn{\log n}, resolved when the model is fitted.
 #' @param hessian Which information is used, \code{"expected"} or
 #'   \code{"observed"}. The exact derivatives need the observed one.
-#' @param search How a term's own hyperparameters are covered when it has
-#'   several with a kink: \code{"grid"}, the default, takes every combination
-#'   of them, and \code{"cyclic"} sweeps one at a time holding the others.
 #'
 #' @return An \code{\link{OuterMethod}}.
 #'
@@ -92,25 +90,19 @@ NULL
 #'         outer_criterion = aic())
 #'
 #' @export
-aic <- function(k = 2, hessian = c("observed", "expected"),
-                search = c("grid", "cyclic")) {
+aic <- function(k = 2, hessian = c("observed", "expected")) {
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0) {
     stop("'k' must be a single non-negative number.", call. = FALSE)
   }
-  d <- outer_path_defaults()
-  d$search <- match.arg(search)
   do.call(OuterMethod, c(list(kind = "aic", hessian = match.arg(hessian),
-                             k = as.numeric(k)), d))
+                             k = as.numeric(k)), outer_path_defaults()))
 }
 
 #' @rdname aic
 #' @export
-bic <- function(hessian = c("observed", "expected"),
-                search = c("grid", "cyclic")) {
-  d <- outer_path_defaults()
-  d$search <- match.arg(search)
+bic <- function(hessian = c("observed", "expected")) {
   do.call(OuterMethod, c(list(kind = "bic", hessian = match.arg(hessian),
-                             k = NA_real_), d))
+                             k = NA_real_), outer_path_defaults()))
 }
 
 

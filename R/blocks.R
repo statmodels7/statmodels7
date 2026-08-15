@@ -295,7 +295,9 @@ statmod_penalty_keys <- function(spec) {
           n_values = if (is.null(e$n_values)) list() else e$n_values,
           values = if (is.null(e$values)) list() else e$values,
           min_ratio = if (is.null(e$min_ratio)) numeric(0) else
-            as.numeric(e$min_ratio))
+            as.numeric(e$min_ratio),
+          search = if (is.null(e$search)) character(0) else
+            as.character(e$search))
       }
     }
   }
@@ -446,6 +448,45 @@ statmod_grid_size <- function(spec, row, default) {
 #' @keywords internal
 statmod_min_ratio <- function(spec, row, default) {
   statmod_path_setting(spec, row, "min_ratio", default, NULL)
+}
+
+
+#' How a Term Covers Its Own Hyperparameters
+#'
+#' @description
+#' \code{"grid"} for every combination of the term's kinked hyperparameters,
+#' \code{"cyclic"} for one at a time, or the default where the term named
+#' neither.
+#'
+#' @details
+#' It belongs to the TERM and not to the criterion, for the reason the whole
+#' enumeration does: a criterion is asked of every hyperparameter of the
+#' model, and a smooth one is read at the mode rather than swept, so most of
+#' what it is asked about could not answer. A penalty with a kink is fitted
+#' by a scheme of its own, and how that scheme covers the term's own
+#' hyperparameters is part of the scheme.
+#'
+#' Being per term is also what keeps one term's choice off another's:
+#' \code{y ~ lasso(X) + enet(R, search = "cyclic")} sweeps the elastic net
+#' one coordinate at a time and leaves the lasso alone.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param default What to use where the term named nothing.
+#'
+#' @return \code{"grid"} or \code{"cyclic"}.
+#'
+#' @seealso \code{\link[modelterms7]{term_search}}, \code{\link{statmod_path}}
+#'
+#' @keywords internal
+statmod_search <- function(spec, row, default = "grid") {
+  for (u in statmod_penalty_keys(spec)) {
+    if (!identical(u$param, row$parameter) ||
+        !identical(u$key, row$term)) next
+    v <- u$search
+    if (!is.null(v) && length(v) && nzchar(v)) return(as.character(v)[[1L]])
+  }
+  default
 }
 
 

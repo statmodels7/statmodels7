@@ -324,10 +324,12 @@ test_that("the path visits as many values as the term asked for", {
   expect_identical(unique(e@history$outer$name), "lambda")
   expect_length(unique(e@history$outer$setting), 4L)
 
-  # the cyclic sweep costs the sum instead, once per pass
-  cy <- suppressWarnings(statmod(y ~ enet(Z, n_lambda = 8, n_alpha = 4),
-                                 distributions7::gaussian1_distrib(), dg,
-                                 sparse_criterion = bic(search = "cyclic")))
+  # the cyclic sweep costs the sum instead, once per pass, and the TERM is
+  # what asks for it: the criterion is put to the smooth hyperparameters of
+  # the model as well, which are read at the mode rather than swept
+  cy <- suppressWarnings(statmod(
+    y ~ enet(Z, n_lambda = 8, n_alpha = 4, search = "cyclic"),
+    distributions7::gaussian1_distrib(), dg, sparse_criterion = bic()))
   tb <- table(cy@history$outer$name)
   expect_identical(unname(tb[["lambda"]] %% 8L), 0L)
   expect_identical(unname(tb[["alpha"]] %% 4L), 0L)

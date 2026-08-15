@@ -70,7 +70,7 @@ does not empty the block it is doubled until it does, the starting value
 being computed at the coefficients in hand rather than at a refitted null.
 
 A term carrying several of them has every combination visited where the
-method asks for \code{search = "grid"} and one coordinate at a time where it
+term asks for \code{search = "grid"} and one coordinate at a time where it
 asks for \code{"cyclic"}. Between terms the alternation is cyclic either
 way, so the cost is the product WITHIN a term and the sum ACROSS them. Each
 axis is built at the settings of the axes outside it, which is what makes
