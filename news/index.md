@@ -1,5 +1,29 @@
 # Changelog
 
+## statmodels7 0.48.0
+
+- A penalty may now answer with a sparse Hessian – a smooth repeated
+  over the levels of a factor does – and the coercion is written ONCE,
+  where the two kinds meet in
+  [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md),
+  rather than at each of the eighteen places that read its result and
+  the four that read `penalty_dhessian()`.
+
+- The accumulator stays a base matrix, which is measured rather than
+  timid. Making it the design’s own kind saved 0.8x end to end (17.0x
+  against 16.2x), and it would have put twenty-two consumers on a
+  contract only the two a sparse design happens to exercise are covered
+  by. What the blocked penalty buys is its CONSTRUCTION and its own
+  storage, and neither passes through this accumulator.
+
+- Measured end to end on 120 levels and 3000 rows,
+  `s(x, by = g, sparse = TRUE)` against the dense spelling: 26.17 s
+  against 424.86 s and 0.55 MB against 20.44, with the log-likelihood
+  identical to ten digits, the same lambda, the same effective degrees
+  of freedom, [`vcov()`](https://rdrr.io/r/stats/vcov.html) agreeing
+  exactly and [`predict()`](https://rdrr.io/r/stats/predict.html) to
+  2.2e-16.
+
 ## statmodels7 0.47.0
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)

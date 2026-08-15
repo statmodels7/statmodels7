@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.47.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.48.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.48.0" id="statmodels7-0480">statmodels7 0.48.0<a class="anchor" aria-label="anchor" href="#statmodels7-0480"></a></h2>
+<ul><li><p>A penalty may now answer with a sparse Hessian – a smooth repeated over the levels of a factor does – and the coercion is written ONCE, where the two kinds meet in <code><a href="../reference/statmod_penalty_at.html">statmod_penalty_at()</a></code>, rather than at each of the eighteen places that read its result and the four that read <code>penalty_dhessian()</code>.</p></li>
+<li><p>The accumulator stays a base matrix, which is measured rather than timid. Making it the design’s own kind saved 0.8x end to end (17.0x against 16.2x), and it would have put twenty-two consumers on a contract only the two a sparse design happens to exercise are covered by. What the blocked penalty buys is its CONSTRUCTION and its own storage, and neither passes through this accumulator.</p></li>
+<li><p>Measured end to end on 120 levels and 3000 rows, <code>s(x, by = g, sparse = TRUE)</code> against the dense spelling: 26.17 s against 424.86 s and 0.55 MB against 20.44, with the log-likelihood identical to ten digits, the same lambda, the same effective degrees of freedom, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> agreeing exactly and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> to 2.2e-16.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.47.0" id="statmodels7-0470">statmodels7 0.47.0<a class="anchor" aria-label="anchor" href="#statmodels7-0470"></a></h2>
 <ul><li><p><code><a href="../reference/statmod.html">statmod()</a></code> takes <code>linpar_control</code>, as <code><a href="../reference/linpar_options.html">linpar_options()</a></code> returns it: <code>sparse</code> for the storage of the unpenalized parametric block and <code>contrasts</code> for the coding of its factors. It reaches the IMPLICIT <code>linpar()</code> term, the one the bare covariates collapse into and which a caller never writes; a <code>linpar()</code> written out takes them directly.</p></li>
