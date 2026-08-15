@@ -724,6 +724,17 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     v[idx] <- b
     obj$gr(v)[idx]
   }
+  # The objective carries an EXACT second derivative -- the information plus
+  # the penalty's Hessian -- and it was not being offered, so an optimizer
+  # that wanted one differenced the gradient instead: newton() without 'he'
+  # builds a numerical Hessian at 2p gradient evaluations an iteration. It is
+  # passed to every method, as the gradient is; whether it is read is the
+  # method's business, and a closure costs nothing until it is called.
+  he <- function(b) {
+    v <- beta
+    v[idx] <- b
+    as_dense(obj$he(v))[idx, idx, drop = FALSE]
+  }
 
   if (S7::S7_inherits(method, Iwls)) {
     sub <- list(fn = fn, gr = gr, npar = length(idx),
@@ -752,7 +763,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
                 iterations = res$iterations, history = res$history))
   }
 
-  res <- optimizers7::minimize(method, fn, beta[idx], gr = gr)
+  res <- optimizers7::minimize(method, fn, beta[idx], gr = gr, he = he)
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,

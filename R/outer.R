@@ -627,6 +627,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     optimizer <- if (exact2) optimizers7::newton() else
       if (exact) optimizers7::lbfgs() else optimizers7::nelder_mead()
   }
+  # Whether the TRACE prints a gradient. It reports what the search is using,
+  # so where the search uses none there is none to report, and asking would
+  # compute the quantity the laziness below exists to avoid.
+  trace_grad <- exact &&
+    "gradient" %in% optimizers7::optimizer_provides(optimizer)
 
   # the search minimizes; a marginal likelihood is maximized and goes in with
   # its sign turned, a prediction-error criterion as it is. The method says
@@ -658,8 +663,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     m <- NULL
     res <- NULL
     cf <- NULL
-    g <- NULL
-    Hm <- NULL
+    ctx <- NULL
     err <- NULL
     # A step the search takes back must leave NO TRACE, and until now only
     # half of it did. The coefficients are protected -- `state$beta` is
@@ -696,26 +700,19 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # one context per point: the criterion, the gradient and the Hessian
       # read the same information, the same penalty and the same factorization
       # instead of each assembling its own
-      cx <- outer_context(spec, design, cf, hy, approx)
+      ctx <<- outer_context(spec, design, cf, hy, approx)
       m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx,
                                statmod_active(spec, blocks, res$par, hy)) else
-        statmod_marginal(spec, design, cf, hy, method, approx, basis, cx)
+        statmod_marginal(spec, design, cf, hy, method, approx, basis, ctx)
       if (is.null(m)) return(invisible(NULL))
-      if (exact && pe) {
-        d <- statmod_pe_derivs(spec, design, cf, hy, method, idx,
-                               if (exact2) 2L else 1L)
-        g <<- d$grad
-        Hm <<- d$hess
-      } else {
-        if (exact) {
-          g <<- statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
-                                      ctx = cx)
-        }
-        if (exact2) {
-          Hm <<- statmod_marginal_hess(spec, design, cf, hy, method, idx,
-                                       basis, ctx = cx)
-        }
-      }
+      # The derivatives are NOT computed here. Which of them the search reads
+      # is the OPTIMIZER's business and it varies: nelder_mead reads neither,
+      # lbfgs and bfgs read the gradient and never the Hessian, newton reads
+      # both. Computing them because the criterion COULD supply them paid for
+      # the dearest quantity in the fit -- the Hessian is 49 to 78 per cent of
+      # it -- and threw it away. They are produced on demand instead, which
+      # needs no predicate about the optimizer and follows what it actually
+      # does rather than what its class declares.
       invisible(NULL)
     }
     if (state$evals == 0L) {
@@ -786,7 +783,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       w <- if (is.finite(state$worst)) state$worst else 1
       bar <- w + abs(w) + 1
       out <- list(value = sgn * bar, grad = rep(0, nh),
-                  hess = if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL)
+                  hess = if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL,
+                  ok = FALSE)
       state$key <- key
       state$last <- out
       return(out)
@@ -810,23 +808,61 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # wants and what the returned object carries. The unavailable line used
       # to print the free scale instead, so a prior scale read as negative --
       # it was log(sigma) under a heading that looked like sigma.
-      gmax <- if (exact && !is.null(g) && all(is.finite(g)))
-        sprintf("%12.4g", max(abs(g))) else sprintf("%12s", "--")
+      # the trace reports the gradient the search is using, so it asks for one
+      # only where the search has one to use: printing it under a
+      # derivative-free method would compute the very quantity nobody wants.
+      gv <- if (exact && trace_grad) derivs(1L) else NULL
+      gmax <- if (!is.null(gv) && all(is.finite(gv)))
+        sprintf("%12.4g", max(abs(gv))) else sprintf("%12s", "--")
       cat(sprintf("  %6d %16.6f %s   %s\n", state$evals, m$value, gmax,
                   paste(signif(vapply(seq_along(labels), function(j)
                     hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", ")))
     }
-    out <- list(value = m$value,
-                grad = if (is.null(g)) rep(0, nrow(idx)) else g,
-                hess = Hm)
+    out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy)
     state$key <- key
     state$last <- out
     out
   }
 
+  # The derivatives, produced when the search asks and cached beside the point
+  # they belong to. `order` is 1 for the gradient and 2 for the Hessian.
+  derivs <- function(order) {
+    st <- state$last
+    nh <- nrow(idx)
+    slot <- if (order == 1L) "grad" else "hess"
+    if (!is.null(st[[slot]])) return(st[[slot]])
+    if (!isTRUE(st$ok)) {
+      # an unavailable point keeps the barrier's own answers
+      return(if (order == 1L) rep(0, nh) else
+        if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL)
+    }
+    fallback <- function(o) if (o == 1L) rep(0, nh) else
+      diag(if (pe) 1 else -1, nh, nh)
+    if (pe) {
+      # the prediction-error route computes the gradient on the way to the
+      # Hessian, so both are kept rather than the second order being asked for
+      # twice
+      d <- statmod_pe_derivs(spec, design, st$cf, st$hy, method, idx, order)
+      if (is.null(st$grad)) {
+        st$grad <- if (is.null(d$grad)) fallback(1L) else d$grad
+      }
+      if (order >= 2L) st$hess <- if (is.null(d$hess)) fallback(2L) else d$hess
+    } else if (order == 1L) {
+      v <- statmod_marginal_grad(spec, design, st$cf, st$hy, method, idx,
+                                 basis, ctx = st$ctx)
+      st$grad <- if (is.null(v)) fallback(1L) else v
+    } else {
+      v <- statmod_marginal_hess(spec, design, st$cf, st$hy, method, idx,
+                                 basis, ctx = st$ctx)
+      st$hess <- if (is.null(v)) fallback(2L) else v
+    }
+    state$last <- st
+    st[[slot]]
+  }
+
   fn <- function(eta) sgn * evaluate(eta)$value
-  gr <- function(eta) sgn * evaluate(eta)$grad
-  he <- function(eta) sgn * evaluate(eta)$hess
+  gr <- function(eta) { evaluate(eta); sgn * derivs(1L) }
+  he <- function(eta) { evaluate(eta); sgn * derivs(2L) }
 
   # optimizers7 checks a caller-supplied gradient against a directional
   # difference of the objective, and on a criterion this curved the step it

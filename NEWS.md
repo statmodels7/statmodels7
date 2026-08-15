@@ -1,3 +1,95 @@
+# statmodels7 0.50.0
+
+* The inner optimizer is offered the objective's EXACT second derivative --
+  the information plus the penalty's Hessian -- which it was not being given.
+  `minimize()` was called with `fn` and `gr` alone, so `newton()` built a
+  numerical Hessian by differencing the gradient once per coordinate. It is
+  passed to every method, as the gradient is; whether it is read is the
+  method's business and a closure costs nothing until it is called.
+
+  The gradient count is the tell, and the answers are identical throughout:
+
+  | | `fn` | `gr` | `he` | time | |
+  |---|---|---|---|---|---|
+  | one smooth, `newton()` before | 44 | 234 | 0 | 0.520 s | |
+  | one smooth, `newton()` after | 44 | 14 | 10 | 0.210 s | 2.48x |
+  | three smooths + random, before | 78 | 3484 | 0 | 9.360 s | |
+  | three smooths + random, after | 76 | 34 | 25 | 1.690 s | **5.54x** |
+
+  `iwls()`, `bfgs()` and `lbfgs()` are unchanged to the millisecond, none of
+  them reading a Hessian, which is the control. With the exact one
+  `newton()` becomes the fastest inner method: 0.210 s against `iwls()`'s
+  0.280 on the first shape and 1.690 against 2.960 on the second.
+
+  **The default was never affected**: `iwls()` fits through `iwls_pieces()`
+  and has always used the exact expected or observed information. The gap was
+  reachable only by naming an optimizer.
+
+* The leverage diagonal `(X_a M_ab X_b')_ii`, which every trace against `M`
+  reduces to, is computed over the NONZEROS of each row where the design is
+  sparse. A grouping indicator puts one nonzero per block in a row, so the
+  quantity is a quadratic form over a handful of entries where the dense
+  route computed `p_a p_b` of them per observation to keep one.
+
+  The gate is measured, not assumed: 14.2x on the operation at a combined
+  density of 3.6e-05, 50x SLOWER at 0.18 and again on a dense block, R's
+  per-element indexing being far dearer than a BLAS flop. Interpolating puts
+  the crossover near 1.1e-03, which is the threshold, with an absolute cap on
+  the number of pairs besides -- the density gate bounds the ratio of work and
+  says nothing about its size.
+
+  End to end at 20000 observations with a random intercept, the two routes
+  forced either way: 1.17x at 200 levels, 1.89x at 500, 1.26x at 1000 and
+  1.11x at 2000. The win peaks and falls back, which says where the
+  bottleneck moves: past about a thousand levels the dense `O(p^3)` inverse
+  takes over, and at 503 coefficients it had been 4.4 per cent of the fit.
+
+* The exact gradient and the exact Hessian are computed WHEN THE SEARCH ASKS
+  FOR THEM, not whenever the criterion could supply them. Which of the two a
+  search reads varies -- `nelder_mead()` reads neither, `lbfgs()` and `bfgs()`
+  read the gradient and never the Hessian, `newton()` reads both -- and a line
+  search evaluates the objective at many trial points where it wants no
+  derivative at all. Measured on the counts, the inner objective is asked for
+  a value three to four times more often than for a gradient.
+
+  This needs no predicate about the optimizer and follows what it does rather
+  than what its class declares. Measured, with every fit landing on the same
+  answer:
+
+  | | before | after | |
+  |---|---|---|---|
+  | one smooth, `newton()` | 0.350 s | 0.260 s | 1.35x |
+  | one smooth, `lbfgs()` | 0.230 s | 0.170 s | 1.35x |
+  | one smooth, `nelder_mead()` | 0.720 s | 0.420 s | 1.71x |
+  | three smooths + random, `newton()` | 4.790 s | 2.580 s | 1.86x |
+  | three smooths + random, `lbfgs()` | 9.440 s | 3.290 s | 2.87x |
+  | three smooths + random, `nelder_mead()` | 116.420 s | 38.140 s | 3.05x |
+
+* Where the four shapes stand against the release that started this work, and
+  against mgcv fitting the same model with the same basis and the same
+  criterion:
+
+  | | before | now | | mgcv |
+  |---|---|---|---|---|
+  | one smooth, gaussian, n = 8000 | 0.603 s | 0.280 s | 2.15x | 4.4x faster than us |
+  | one smooth, Gamma, n = 8000 | 1.670 s | 0.995 s | 1.68x | 4.9x faster than us |
+  | three smooths + random(40) | 14.700 s | 3.000 s | 4.90x | 1.4x faster than us |
+  | random(500), n = 20000 | 24.310 s | 3.700 s | 6.57x | **we are 46.1x faster** |
+
+* An INNER context was measured and NOT built. The objective's `fn`, `gr` and
+  `he` are already separate closures, so an optimizer that reads no Hessian
+  never pays for one -- measured, `he` is asked for zero times per fit under
+  every inner method. What they do repeat at one point is the linear
+  predictors, and that is 15 to 16 per cent of one `fn` plus `gr`; since a
+  value is asked for three to four times more often than a gradient, most
+  evaluations have no partner to share with, and the whole saving is about 7
+  per cent of the inner objective. It does not pay for the machinery.
+
+* The criterion, the gradient, the effective degrees of freedom and every
+  fitted quantity are unchanged throughout: bit for bit on all four shapes at
+  both a fitted and an off-optimum point, the Hessian to 2.2e-14 from the
+  change of summation order in 0.49.0.
+
 # statmodels7 0.49.0
 
 * The marginal criterion, its exact gradient and its exact Hessian read ONE

@@ -775,19 +775,106 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #'
 #' @keywords internal
 block_leverage <- function(design, M, params, npar, offs) {
-  G <- vector("list", length(params))
-  for (a in seq_along(params)) {
-    G[[a]] <- vector("list", length(params))
+  np <- length(params)
+  dens <- rep(1, np)
+  tri <- vector("list", np)
+  for (a in seq_len(np)) {
+    if (npar[a] == 0L) next
+    X <- design[[params[a]]]$X
+    if (methods::is(X, "sparseMatrix")) {
+      dens[a] <- Matrix::nnzero(X) / max(1, prod(dim(X)))
+      tri[[a]] <- row_nonzeros(X)
+    }
+  }
+  G <- vector("list", np)
+  for (a in seq_len(np)) {
+    G[[a]] <- vector("list", np)
     if (npar[a] == 0L) next
     Xa <- design[[params[a]]]$X
-    for (b in seq_along(params)) {
+    for (b in seq_len(np)) {
       if (npar[b] == 0L) next
       Mab <- M[offs[a] + seq_len(npar[a]), offs[b] + seq_len(npar[b]),
                drop = FALSE]
-      G[[a]][[b]] <- rowSums((Xa %*% Mab) * design[[params[b]]]$X)
+      # The density gate bounds the RATIO of work and says nothing about its
+      # size, and the expansion is materialized: a design carrying many dense
+      # columns beside its indicators can pass the ratio and still ask for
+      # hundreds of megabytes of pairs. The cap is on the absolute count.
+      pairs <- if (is.null(tri[[a]]) || is.null(tri[[b]])) Inf else
+        length(tri[[a]]$i) / nrow(Xa) * length(tri[[b]]$i)
+      G[[a]][[b]] <-
+        if (!is.null(tri[[a]]) && !is.null(tri[[b]]) && is.matrix(Mab) &&
+            dens[a] * dens[b] < 1e-3 && pairs < 2e7) {
+          leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa))
+        } else {
+          rowSums((Xa %*% Mab) * design[[params[b]]]$X)
+        }
     }
   }
   G
+}
+
+
+#' A Design's Nonzeros, Ordered by Row
+#'
+#' @param X A sparse design block.
+#'
+#' @return A list with \code{i}, \code{j} and \code{v}, sorted by row.
+#'
+#' @seealso \code{\link{leverage_pairs}}
+#'
+#' @keywords internal
+row_nonzeros <- function(X) {
+  tt <- methods::as(X, "TsparseMatrix")
+  o <- order(tt@i)
+  list(i = tt@i[o] + 1L, j = tt@j[o] + 1L, v = tt@x[o])
+}
+
+
+#' The Leverage Diagonal Over the Nonzeros of Two Rows
+#'
+#' @description
+#' \eqn{G_i = \sum_{j\in J_i}\sum_{k\in K_i} X_a[i,j]X_b[i,k]M_{ab}[j,k]}, the
+#' same quantity \code{\link{block_leverage}} otherwise reads off a dense
+#' \eqn{n\times p_b} product.
+#'
+#' @details
+#' Where a design is built from grouping indicators a row has one nonzero per
+#' block, so the quadratic form is over a handful of entries and the dense
+#' product computes \eqn{p_a p_b} of them per row to keep one. The pairs are
+#' expanded once and the whole sum is vectorized.
+#'
+#' \strong{It is taken only where it wins}, and the threshold is measured
+#' rather than assumed. At a combined density of 3.6e-05 (a random intercept
+#' over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
+#' and a random effect) it is 50 times SLOWER, R's per-element indexing being
+#' far dearer than a BLAS flop, and at a dense block 50 times slower again.
+#' Interpolating the two measurements puts the crossover at a combined density
+#' near 1.1e-03, which is the gate: below it the route is taken, at it the two
+#' cost the same, and above it the dense product stands.
+#'
+#' @param ta,tb The two designs' nonzeros, from \code{\link{row_nonzeros}}.
+#' @param Mab The block of \eqn{M}.
+#' @param n The number of observations.
+#'
+#' @return A numeric vector as long as the sample.
+#'
+#' @seealso \code{\link{block_leverage}}
+#'
+#' @keywords internal
+leverage_pairs <- function(ta, tb, Mab, n) {
+  nb <- tabulate(tb$i, n)
+  cnt <- nb[ta$i]
+  ii <- rep.int(ta$i, cnt)
+  if (!length(ii)) return(numeric(n))
+  ja <- rep.int(ta$j, cnt)
+  va <- rep.int(ta$v, cnt)
+  # where row r's nonzeros start in tb, which is ordered by row
+  start <- c(0L, cumsum(nb)[-n])
+  idx <- sequence(cnt, start[ta$i] + 1L)
+  out <- numeric(n)
+  s <- rowsum(va * tb$v[idx] * Mab[cbind(ja, tb$j[idx])], ii)
+  out[as.integer(rownames(s))] <- s[, 1L]
+  out
 }
 
 
