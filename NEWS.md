@@ -1,3 +1,30 @@
+# statmodels7 0.51.0
+
+* The leverage diagonal is read in whichever order gives the SMALLER
+  intermediate, and the mirror block is not computed twice. `x_ai' M_ab x_bi`
+  is a scalar, so the `(b, a)` block is the same number as the `(a, b)` one;
+  and the dense route's intermediate is `n x p_b` written one way round and
+  `n x p_a` the other, for the same answer.
+
+  Both mattered on a mixed model. Fitting `y ~ x + random(~1|g)` over 500
+  levels, the scale's equation carries ONE column and the mean's 502, so the
+  `(sigma, mu)` block was materializing a dense 20000 x 502 product -- 80 MB
+  -- to keep 20000 numbers out of it. `block_leverage()` was still 41 per cent
+  of that fit after the sparse route of 0.50.0; it is 2.7 per cent now, and
+  the fit goes from 3.700 s to 2.420 s.
+
+* Where the four shapes stand against the release that began this work:
+
+  | | before | now | | mgcv |
+  |---|---|---|---|---|
+  | one smooth, gaussian, n = 8000 | 0.603 s | 0.268 s | 2.25x | 4.2x faster than us |
+  | one smooth, Gamma, n = 8000 | 1.670 s | 0.980 s | 1.70x | 4.9x faster than us |
+  | three smooths + random(40) | 14.700 s | 2.910 s | 5.05x | 1.4x faster than us |
+  | random(500), n = 20000 | 24.310 s | 2.420 s | **10.05x** | **we are 70.4x faster** |
+
+  On the mixed model the fitted quantities agree with `lme4::lmer` as they
+  did before: sd 0.558434 against 0.558939, fixed effects to five figures.
+
 # statmodels7 0.50.0
 
 * The inner optimizer is offered the objective's EXACT second derivative --

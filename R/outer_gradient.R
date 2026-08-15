@@ -787,12 +787,16 @@ block_leverage <- function(design, M, params, npar, offs) {
     }
   }
   G <- vector("list", np)
+  for (a in seq_len(np)) G[[a]] <- vector("list", np)
   for (a in seq_len(np)) {
-    G[[a]] <- vector("list", np)
     if (npar[a] == 0L) next
     Xa <- design[[params[a]]]$X
-    for (b in seq_len(np)) {
+    # x_ai' M_ab x_bi is a SCALAR, so the (b, a) block is the same number: it
+    # is mirrored rather than computed twice, which used to double the work on
+    # every off-diagonal pair.
+    for (b in a:np) {
       if (npar[b] == 0L) next
+      Xb <- design[[params[b]]]$X
       Mab <- M[offs[a] + seq_len(npar[a]), offs[b] + seq_len(npar[b]),
                drop = FALSE]
       # The density gate bounds the RATIO of work and says nothing about its
@@ -801,13 +805,20 @@ block_leverage <- function(design, M, params, npar, offs) {
       # hundreds of megabytes of pairs. The cap is on the absolute count.
       pairs <- if (is.null(tri[[a]]) || is.null(tri[[b]])) Inf else
         length(tri[[a]]$i) / nrow(Xa) * length(tri[[b]]$i)
-      G[[a]][[b]] <-
-        if (!is.null(tri[[a]]) && !is.null(tri[[b]]) && is.matrix(Mab) &&
-            dens[a] * dens[b] < 1e-3 && pairs < 2e7) {
-          leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa))
-        } else {
-          rowSums((Xa %*% Mab) * design[[params[b]]]$X)
-        }
+      v <- if (!is.null(tri[[a]]) && !is.null(tri[[b]]) && is.matrix(Mab) &&
+               dens[a] * dens[b] < 1e-3 && pairs < 2e7) {
+        leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa))
+      } else if (npar[a] <= npar[b]) {
+        # the intermediate is n x npar[a] this way round and n x npar[b] the
+        # other, and the two give the same diagonal. Read the cheaper one: a
+        # one-column block beside a five-hundred-column one was materializing
+        # a dense n x 500 product to keep n numbers out of it.
+        rowSums(Xa * (Xb %*% t(Mab)))
+      } else {
+        rowSums((Xa %*% Mab) * Xb)
+      }
+      G[[a]][[b]] <- v
+      if (a != b) G[[b]][[a]] <- v
     }
   }
   G
