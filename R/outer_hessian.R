@@ -203,7 +203,7 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     rows <- which(idx$parameter == p & idx$term == nm)
     for (r in rows) {
       Sm[[r]] <- matrix(0, total, total)
-      Sm[[r]][pos, pos] <- dS[[idx$name[r]]]
+      Sm[[r]][pos, pos] <- as_dense(dS[[idx$name[r]]])
       cm[[r]] <- numeric(total)
       cm[[r]][pos] <- as.numeric(cr[[idx$name[r]]])
     }

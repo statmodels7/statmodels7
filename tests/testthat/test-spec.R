@@ -275,3 +275,45 @@ test_that("a sparse parametric block fits to the same answer", {
                        linpar_control = "sparse"),
                "linpar_options()", fixed = TRUE)
 })
+
+test_that("a smooth per level fits the same model in either storage", {
+  # the storage is a storage, and the penalty that avoids assembling
+  # I (x) P is the same penalty: everything a reader looks at must agree
+  skip_on_cran()
+  set.seed(71)
+  n <- 800L
+  m <- 25L
+  d <- data.frame(x = stats::runif(n), g = factor(sample.int(m, n, TRUE)))
+  b <- stats::rnorm(m, sd = 0.5)
+  d$y <- b[as.integer(d$g)] + sin(3 * d$x) + stats::rnorm(n, sd = 0.4)
+
+  a <- statmod(y ~ s(x, k = 8, by = g),
+               distributions7::gaussian1_distrib(), d)
+  s <- statmod(y ~ s(x, k = 8, by = g, sparse = TRUE),
+               distributions7::gaussian1_distrib(), d)
+
+  expect_true(methods::is(statmod_design(s@spec)$mu$X, "sparseMatrix"))
+  expect_true(is.matrix(statmod_design(a@spec)$mu$X))
+  expect_equal(s@loglik, a@loglik)
+  expect_equal(s@hyper$mu[[1L]][[1L]], a@hyper$mu[[1L]][[1L]])
+  expect_equal(s@edf$edf, a@edf$edf)
+  expect_equal(unname(unlist(s@coefficients)), unname(unlist(a@coefficients)))
+  expect_equal(sqrt(diag(as.matrix(vcov(s)))),
+               sqrt(diag(as.matrix(vcov(a)))))
+  expect_equal(unlist(predict(s)), unlist(predict(a)))
+
+  # the penalty is sparse and was NEVER assembled, yet its rank is the rank
+  # the assembled matrix has -- which is the claim the shortcut rests on
+  # the smooth, not the intercept's linpar, which comes first
+  tm <- Filter(function(z) S7::S7_inherits(z, modelterms7::SmoothTerm),
+               s@spec@terms$mu)[[1L]]
+  pen <- modelterms7::term_penalty(tm)
+  npar <- modelterms7::term_npar(tm)
+  S <- penalties7::penalty_hessian(pen, numeric(npar), list(lambda = 1))
+  expect_true(methods::is(S, "sparseMatrix"))
+  ev <- eigen(as.matrix(S), symmetric = TRUE, only.values = TRUE)$values
+  expect_identical(penalties7::penalty_rank(pen),
+                   sum(ev > 1e-10 * max(ev)))
+  # m times the block's, the eigenvalues of I (x) P being P's repeated
+  expect_identical(penalties7::penalty_rank(pen) %% m, 0L)
+})

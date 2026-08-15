@@ -257,7 +257,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
         c_m[pos] <- as.numeric(cr[[h]])
         v <- -as.numeric(Kinv %*% c_m)
         dS_m <- matrix(0, total, total)
-        dS_m[pos, pos] <- dS[[h]]
+        dS_m[pos, pos] <- as_dense(dS[[h]])
         dtheta <- -as.numeric(gt[[h]]) -
           (sum(M * dS_m) + sum(u * v)) / 2
         # and onto the free scale the search runs on
@@ -509,7 +509,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     c_m[pos] <- as.numeric(cr[[h]])
     v <- -as.numeric(Kinv %*% c_m)
     dS_m <- matrix(0, length(keep), length(keep))
-    dS_m[pos, pos] <- dS[[h]]
+    dS_m[pos, pos] <- as_dense(dS[[h]])
     chain <- sum(st$u * v) + structural_chain_extra(spec, design, jd, M, st, v)
     dtheta <- -as.numeric(gt[[h]]) - (sum(M * dS_m) + chain) / 2
     out[r] <- if (!free) dtheta else {
