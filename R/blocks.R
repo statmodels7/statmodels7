@@ -399,21 +399,22 @@ statmod_unit <- function(spec, design, param, key) {
 #' How Many Values a Path Visits for One Hyperparameter
 #'
 #' @description
-#' The grid size the TERM asked for, or the criterion's default where it
-#' asked for nothing.
+#' The grid size the TERM asked for, or the layer's fallback where it asked
+#' for nothing.
 #'
 #' @details
 #' How finely a hyperparameter is swept is a property of the term for the
 #' same reason as whether it is swept at all: a penalized block of four
 #' columns and one of four hundred want different grids, and a criterion
-#' applies to every term of the model at once and cannot know which it is
-#' looking at. \code{\link[modelterms7]{term_grid}} is where a term says so,
-#' and the value travels with the penalty's entry, so one reached through a
-#' sub-term of a structural term carries it too.
+#' applies to every hyperparameter of the model at once -- the smooth ones
+#' included, which are read at the mode and not swept -- so it cannot know
+#' which it is looking at. \code{\link[modelterms7]{term_grid}} is where a
+#' term says so, and the value travels with the penalty's entry, so one
+#' reached through a sub-term of a structural term carries it too.
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param row One row of \code{\link{path_rows}}'s index.
-#' @param default The criterion's own number of values.
+#' @param default \code{\link{path_fallbacks}}'s, for a term that named none.
 #'
 #' @return A single integer.
 #'
@@ -428,8 +429,8 @@ statmod_grid_size <- function(spec, row, default) {
 #' How Far Down the Path Reaches for One Term
 #'
 #' @description
-#' The depth the TERM asked for, or the criterion's default where it asked
-#' for nothing.
+#' The depth the TERM asked for, or the layer's fallback where it asked for
+#' nothing.
 #'
 #' @details
 #' One number per term rather than one per hyperparameter, because only the
@@ -439,7 +440,7 @@ statmod_grid_size <- function(spec, row, default) {
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param row One row of \code{\link{path_rows}}'s index.
-#' @param default The criterion's own ratio.
+#' @param default \code{\link{path_fallbacks}}'s, for a term that named none.
 #'
 #' @return A single number.
 #'

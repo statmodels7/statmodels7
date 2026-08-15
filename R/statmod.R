@@ -156,6 +156,14 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   begins, which is why a global search belongs here and not in
 #'   \code{inner_optimizer}: there it would rerun at every hyperparameter the
 #'   outer search tried.
+#' @param linpar_control How the unpenalized parametric block is built, as
+#'   \code{\link{linpar_options}()} returns it: the storage and the contrasts
+#'   for its factors. It reaches the IMPLICIT term, the one the bare
+#'   covariates collapse into and which a caller never writes; a
+#'   \code{\link[modelterms7]{linpar}()} written out takes them directly.
+#'   The argument and the function are named differently on purpose, as
+#'   \code{\link[stats]{glm}}'s \code{control} and
+#'   \code{\link[stats]{glm.control}} are.
 #' @param verbose A level from 0 to 3, or a named logical vector.
 #' @param ... Not used, and reported. `hyper` was removed from here: a
 #'   hyperparameter is held in the term that carries the penalty, and a
@@ -181,7 +189,13 @@ StatmodFit <- S7::new_class("StatmodFit",
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     inner_optimizer = iwls(), outer_criterion = reml(),
                     sparse_criterion = bic(), outer_optimizer = NULL,
-                    start = NULL, verbose = 0, ...) {
+                    # the ARGUMENT and the FUNCTION are deliberately named
+                    # differently, as `glm(control = glm.control())` is: with
+                    # one name for both, the default resolves to the
+                    # argument's own promise and R reports "promise already
+                    # under evaluation"
+                    start = NULL, linpar_control = linpar_options(),
+                    verbose = 0, ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
   asked <- !missing(outer_criterion)
@@ -206,7 +220,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     }
     stop(sprintf("unused argument (%s)", nm[[1L]]), call. = FALSE)
   }
-  spec <- statmod_spec(formula, distrib, data, weights, offsets)
+  if (!is.list(linpar_control)) {
+    stop("'linpar_control' must be the list linpar_options() returns.",
+         call. = FALSE)
+  }
+  spec <- statmod_spec(formula, distrib, data, weights, offsets,
+                       linpar = linpar_control)
   design <- statmod_design(spec)
   hyper <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)

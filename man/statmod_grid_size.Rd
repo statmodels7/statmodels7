@@ -11,23 +11,24 @@ statmod_grid_size(spec, row, default)
 
 \item{row}{One row of \code{\link{path_rows}}'s index.}
 
-\item{default}{The criterion's own number of values.}
+\item{default}{\code{\link{path_fallbacks}}'s, for a term that named none.}
 }
 \value{
 A single integer.
 }
 \description{
-The grid size the TERM asked for, or the criterion's default where it
-asked for nothing.
+The grid size the TERM asked for, or the layer's fallback where it asked
+for nothing.
 }
 \details{
 How finely a hyperparameter is swept is a property of the term for the
 same reason as whether it is swept at all: a penalized block of four
 columns and one of four hundred want different grids, and a criterion
-applies to every term of the model at once and cannot know which it is
-looking at. \code{\link[modelterms7]{term_grid}} is where a term says so,
-and the value travels with the penalty's entry, so one reached through a
-sub-term of a structural term carries it too.
+applies to every hyperparameter of the model at once -- the smooth ones
+included, which are read at the mode and not swept -- so it cannot know
+which it is looking at. \code{\link[modelterms7]{term_grid}} is where a
+term says so, and the value travels with the penalty's entry, so one
+reached through a sub-term of a structural term carries it too.
 }
 \seealso{
 \code{\link{statmod_held}}, \code{\link{path_values}}

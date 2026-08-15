@@ -32,9 +32,6 @@ NULL
 #' @param hessian \code{"expected"} or \code{"observed"}.
 #' @param k The price of one degree of freedom, for a prediction-error
 #'   criterion. \code{NA} where the method resolves it against the sample size.
-#' @param n_values How many points a path over a kinked hyperparameter visits.
-#' @param min_ratio The smallest kink a path reaches, as a fraction of the one
-#'   that empties the block.
 #' @param nfolds How many folds cross-validation uses.
 #' @param rule \code{"min"} or \code{"1se"}.
 #' @param folds A fold number per observation, or \code{integer(0)}.
@@ -59,8 +56,6 @@ OuterMethod <- S7::new_class("OuterMethod",
     kind = S7::class_character,
     hessian = S7::class_character,
     k = S7::class_numeric,
-    n_values = S7::class_numeric,
-    min_ratio = S7::class_numeric,
     nfolds = S7::class_numeric,
     rule = S7::class_character,
     folds = S7::class_numeric
@@ -79,13 +74,6 @@ OuterMethod <- S7::new_class("OuterMethod",
         !self@rule %in% c("min", "1se")) {
       return("Property 'rule' must be \"min\" or \"1se\".")
     }
-    if (length(self@n_values) != 1L || self@n_values < 2) {
-      return("Property 'n_values' must be a single number, at least 2.")
-    }
-    if (length(self@min_ratio) != 1L || self@min_ratio <= 0 ||
-        self@min_ratio >= 1) {
-      return("Property 'min_ratio' must be a single number in (0, 1).")
-    }
     if (length(self@nfolds) != 1L || self@nfolds < 2) {
       return("Property 'nfolds' must be a single number, at least 2.")
     }
@@ -94,18 +82,26 @@ OuterMethod <- S7::new_class("OuterMethod",
 )
 
 
-#' The Defaults a Path Carries
+#' The Properties Every Criterion Carries
 #'
 #' @description
-#' The properties every \code{\link{OuterMethod}} needs whether or not it uses
-#' them, so that one class serves every criterion.
+#' The ones \code{\link{OuterMethod}} needs whether or not a given criterion
+#' uses them, so that one class serves every criterion.
+#'
+#' @details
+#' What a PATH does is not among them. How many values it visits, how far
+#' down it reaches and whether a term's own hyperparameters are combined or
+#' swept one at a time all belong to the term, since the same criterion is
+#' put to the smooth hyperparameters of the model as well and those are read
+#' at the mode rather than swept.
 #'
 #' @return A named list.
 #'
+#' @seealso \code{\link{path_fallbacks}}
+#'
 #' @keywords internal
 outer_path_defaults <- function() {
-  list(n_values = 25, min_ratio = 1e-4, nfolds = 10, rule = "min",
-       folds = numeric(0))
+  list(nfolds = 10, rule = "min", folds = numeric(0))
 }
 
 
@@ -209,9 +205,8 @@ ml <- function(hessian = c("observed", "expected")) {
 #' @keywords internal
 print.OuterMethod <- function(x, ...) {
   if (identical(x@kind, "cv")) {
-    cat(sprintf("<CV>  %s folds, %d values, rule \"%s\"\n",
-                if (length(x@folds)) "given" else format(x@nfolds),
-                as.integer(x@n_values), x@rule))
+    cat(sprintf("<CV>  %s folds, rule \"%s\"\n",
+                if (length(x@folds)) "given" else format(x@nfolds), x@rule))
     return(invisible(x))
   }
   cat(sprintf("<%s>  %s information\n", toupper(x@kind), x@hessian))

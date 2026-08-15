@@ -212,3 +212,66 @@ test_that("the predicate reads the method's owner, not a list of classes", {
   expect_false(statmodels7:::refreshes_own_block(built(ridge(R))))
   expect_false(statmodels7:::refreshes_own_block(built(random(~ 1 | g))))
 })
+
+test_that("linpar_options reaches the implicit parametric block", {
+  # the IMPLICIT linpar -- the bare covariates collapsed into one term -- is
+  # never written by the caller, so this is the only place its arguments can
+  # come from
+  set.seed(61)
+  n <- 400L
+  m <- 60L
+  d <- data.frame(g = factor(sample.int(m, n, TRUE)), z = stats::rnorm(n))
+  d$y <- stats::rnorm(n)
+
+  dense <- statmod_spec(y ~ 0 + g + z, distributions7::gaussian1_distrib(),
+                        d, NULL, NULL)
+  sp <- statmod_spec(y ~ 0 + g + z, distributions7::gaussian1_distrib(),
+                     d, NULL, NULL, linpar = linpar_options(sparse = TRUE))
+  Xd <- statmod_design(dense)$mu$X
+  Xs <- statmod_design(sp)$mu$X
+  expect_true(is.matrix(Xd))
+  expect_true(methods::is(Xs, "sparseMatrix"))
+  # the same design, only stored differently
+  expect_equal(unname(as.matrix(Xs)), unname(as.matrix(Xd)))
+  expect_lt(as.numeric(utils::object.size(Xs)),
+            as.numeric(utils::object.size(Xd)) / 3)
+
+  # and the SPECIFICATION carries it, which is what lets a rebuild reproduce
+  # the storage rather than quietly densifying
+  expect_true(isTRUE(sp@linpar$sparse))
+  fold <- statmod_spec(sp@formula, sp@distrib, d[1:200, , drop = FALSE],
+                       NULL, NULL, linpar = sp@linpar)
+  expect_true(methods::is(statmod_design(fold)$mu$X, "sparseMatrix"))
+
+  # the contrasts reach it too, and are a different coding of the same model
+  ct <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), d, NULL, NULL,
+                     linpar = linpar_options(contrasts = list(g = "contr.sum")))
+  pl <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), d, NULL, NULL)
+  Xc <- statmod_design(ct)$mu$X
+  Xp <- statmod_design(pl)$mu$X
+  expect_identical(ncol(Xc), ncol(Xp))
+  expect_false(isTRUE(all.equal(unname(Xc), unname(Xp))))
+
+  expect_error(linpar_options(sparse = 1), "TRUE or FALSE")
+  expect_error(linpar_options(contrasts = "contr.sum"), "named list")
+})
+
+test_that("a sparse parametric block fits to the same answer", {
+  set.seed(62)
+  n <- 500L
+  m <- 80L
+  d <- data.frame(g = factor(sample.int(m, n, TRUE)), z = stats::rnorm(n))
+  b <- stats::rnorm(m, sd = 0.6)
+  d$y <- b[as.integer(d$g)] + 0.8 * d$z + stats::rnorm(n, sd = 0.5)
+
+  a <- statmod(y ~ 0 + g + z, distributions7::gaussian1_distrib(), d)
+  s <- statmod(y ~ 0 + g + z, distributions7::gaussian1_distrib(), d,
+               linpar_control = linpar_options(sparse = TRUE))
+  # the storage is a storage: the fit is the same model, to the digit
+  expect_equal(a@loglik, s@loglik)
+  expect_equal(unname(unlist(a@coefficients)), unname(unlist(s@coefficients)))
+  expect_true(methods::is(statmod_design(s@spec)$mu$X, "sparseMatrix"))
+  expect_error(statmod(y ~ z, distributions7::gaussian1_distrib(), d,
+                       linpar_control = "sparse"),
+               "linpar_options()", fixed = TRUE)
+})

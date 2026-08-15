@@ -566,34 +566,36 @@ shape_floor <- function(pen, theta, name, steps = NULL) {
 }
 
 
-#' How Many Points an Axis Beside the Path Gets
+#' What a Path Does Where the Term Says Nothing
 #'
 #' @description
-#' The default number of values for a hyperparameter that is NOT swept by the
-#' size of its kink, which is one fifth of \code{n_values} and at least two.
+#' The number of values and the depth used for a kinked hyperparameter whose
+#' term named neither.
 #'
 #' @details
-#' \code{n_values} is the length of the path over the size of the kink, which
-#' runs geometrically over \code{1/min_ratio} -- four decades at the defaults
-#' -- and wants that many points to be smooth in. An axis beside it spans one
-#' bounded interval, \eqn{\alpha} between the ridge and the lasso or a shape
-#' over its useful range, and does not.
+#' The five penalized constructors carry these on their own signatures, where
+#' a reader can see them -- \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
+#' \code{enet(x, n_lambda = 25, n_alpha = 5)} -- so nothing here is reached
+#' for them. What reaches it is a term that declares a kinked penalty without
+#' offering an argument for the grid: \code{\link[modelterms7]{random}} under
+#' a Laplace prior is the case, its hyperparameters being whatever the
+#' effects' distribution happens to carry.
 #'
-#' The ratio is a DEFAULT and not a derivation: with a product every extra
-#' point on this axis multiplies the fits, so one fifth is what keeps
-#' \code{search = "grid"} affordable at the shipped \code{n_values}, 25 by 5
-#' rather than 25 by 25. A term that wants otherwise says so --
-#' \code{enet(x, n_alpha = 12)}, \code{scad(x, n_a = 8)} -- and is obeyed.
+#' \code{kink} is the length of the path over the SIZE OF THE KINK, which
+#' runs geometrically over \code{1/min_ratio} -- four decades -- and wants
+#' that many points to be smooth in. \code{other} serves an axis that spans
+#' one bounded interval instead, \eqn{\alpha} between the ridge and the lasso
+#' or a shape over its useful range, and needs fewer; with a product every
+#' extra point there multiplies the fits.
 #'
-#' @param method An \code{\link{OuterMethod}}.
+#' @return A named list of \code{kink}, \code{other} and \code{min_ratio}.
 #'
-#' @return A single integer.
-#'
-#' @seealso \code{\link{path_grid}}, \code{\link{statmod_grid_size}}
+#' @seealso \code{\link{path_grid}}, \code{\link{statmod_grid_size}},
+#'   \code{\link[modelterms7]{term_grid}}
 #'
 #' @keywords internal
-path_n_other <- function(method) {
-  max(2L, as.integer(round(method@n_values / 5)))
+path_fallbacks <- function() {
+  list(kink = 25L, other = 5L, min_ratio = 1e-4)
 }
 
 
@@ -768,6 +770,74 @@ hyper_set <- function(hyper, row, value) {
 }
 
 
+#' Carry a Term's Matrix Input Onto a Subset of the Rows
+#'
+#' @description
+#' Adds each matrix a term was given as a column of the subset, so that
+#' rebuilding the model on those rows finds it there.
+#'
+#' @details
+#' \code{interpret_formula()} evaluates a term's call as
+#' \code{eval(call, data, env)}, so a name is looked up in \code{data} first
+#' and in the formula's environment after. \code{data.frame(X = X, y = y)}
+#' SPLITS a matrix into \code{X.x1 ... X.xp}, leaving no column \code{X}, so
+#' \code{lasso(X)} reaches past the data to the matrix in the calling
+#' environment. The fit is right -- the matrix is captured once and the
+#' coefficients are identical to the other spelling -- but the fold cannot
+#' rebuild: the name still resolves to all the rows.
+#'
+#' The matrix is already on the built term, and \code{term_build()} checked at
+#' the full fit that it has one row per observation, so the rows of a fold are
+#' the same rows by position. Binding the subset here builds, for the fold,
+#' the spelling the documentation asks the caller for.
+#'
+#' Nothing is relearned that should be: a matrix carries no knots, no
+#' contrasts and no levels, so subsetting it and re-evaluating it give the
+#' same block. A FORMULA input is untouched and keeps being rebuilt on the
+#' fold's own rows, which is what that rule exists for.
+#'
+#' It applies where \code{input_expr} is a plain symbol, which is the case the
+#' name can be bound for. A call -- \code{lasso(scale(X))} -- keeps only its
+#' own value on the term and not the \code{X} its re-evaluation would need, so
+#' it is left to the error that names it.
+#'
+#' @param spec A \code{\link{StatmodSpec}} whose terms are built.
+#' @param sub The subset of the data, already taken.
+#' @param i The rows it was taken with.
+#' @param n The number of rows the fit was built on.
+#'
+#' @return \code{sub}, with a column per matrix input the terms carry.
+#'
+#' @seealso \code{\link{cv_curve}}
+#'
+#' @keywords internal
+cv_bind_inputs <- function(spec, sub, i, n) {
+  for (p in spec@distrib@params) {
+    for (tm in spec@terms[[p]]) {
+      pn <- tryCatch(S7::prop_names(tm), error = function(e) character(0))
+      if (!all(c("input", "input_expr") %in% pn)) next
+      ex <- tm@input_expr
+      if (!is.symbol(ex)) next
+      nm <- as.character(ex)
+      # already a column of the data: the caller wrote it the other way and
+      # the subset carries it
+      if (nm %in% names(sub)) next
+      x <- tm@input
+      if (inherits(x, "formula") || is.null(dim(x)) || nrow(x) != n) next
+      ok <- tryCatch({
+        sub[[nm]] <- x[i, , drop = FALSE]
+        TRUE
+      }, error = function(e) FALSE)
+      # a storage a data frame will not hold as one column is left to the
+      # error, which says what to write; it is not worth densifying here,
+      # which is what the sparse input was passed to avoid
+      if (!ok) next
+    }
+  }
+  sub
+}
+
+
 #' The Held-Out Deviance of Every Point of a Path
 #'
 #' @description
@@ -805,8 +875,11 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
   err <- NULL
   for (f in seq_len(nf)) {
     keep <- folds != f
-    train <- data[keep, , drop = FALSE]
-    test <- data[!keep, , drop = FALSE]
+    # the TEST fold needs them too: term_predict() evaluates a matrix input's
+    # expression in the new data with baseenv() as its enclosure, so a name
+    # that is not a column there is not found at all
+    train <- cv_bind_inputs(spec, data[keep, , drop = FALSE], keep, nrow(data))
+    test <- cv_bind_inputs(spec, data[!keep, , drop = FALSE], !keep, nrow(data))
     w <- if (is.null(weights)) NULL else weights[keep]
     off <- if (is.null(offsets)) NULL else lapply(offsets, function(o) o[keep])
     # the design depends on the fold and not on the path, so it is built once
@@ -814,7 +887,11 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     # and not the most of it, which was the guess: at 200 observations and 20
     # columns a cross-validated path costs 0.88 seconds a fit and almost all of
     # it is the proximal iteration.
-    ts <- tryCatch(statmod_spec(spec@formula, spec@distrib, train, w, off),
+    # the fold is rebuilt with the SAME linpar options: one that built a
+    # dense design where the fit built a sparse one would be paying for a
+    # storage the model did not ask for
+    ts <- tryCatch(statmod_spec(spec@formula, spec@distrib, train, w, off,
+                                linpar = spec@linpar),
                    error = function(e) conditionMessage(e))
     if (is.character(ts)) {
       # a fold that cannot be rebuilt is a configuration error and not a
@@ -1091,22 +1168,22 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
       return(list(vals = path_forced(b$penalty, thb, row$name, forced),
                   kink = FALSE))
     }
-    # HOW FINELY is the term's answer where it gave one: a block of four
-    # columns and one of four hundred want different grids, and the
-    # criterion applies to every term at once and cannot know which it is
-    # looking at. Where the term says nothing the criterion's default
-    # stands, and which default that is depends on the axis: the path over
-    # the size of the kink spans four decades and the one beside it spans a
-    # bounded interval.
+    # HOW FINELY is the TERM's answer, and it is on the term's own
+    # signature: a block of four columns and one of four hundred want
+    # different grids, and a criterion is put to every hyperparameter of the
+    # model, the smooth ones included, so it cannot know which it is looking
+    # at. `path_fallbacks()` is reached only by a term that declares a
+    # kinked penalty without offering an argument for the grid.
+    fb <- path_fallbacks()
     if (!path_by_kink(b$penalty, thb, row$name)) {
-      nv <- statmod_grid_size(spec, row, path_n_other(method))
+      nv <- statmod_grid_size(spec, row, fb$other)
       return(list(vals = path_grid(b$penalty, thb, row$name, nv,
                                    path_steps(spec, design, b, beta,
                                               obj0$split)),
                   kink = FALSE))
     }
-    nv <- statmod_grid_size(spec, row, as.integer(method@n_values))
-    mr <- statmod_min_ratio(spec, row, method@min_ratio)
+    nv <- statmod_grid_size(spec, row, fb$kink)
+    mr <- statmod_min_ratio(spec, row, fb$min_ratio)
     list(vals = path_values(b$penalty, thb, row$name, top[[i]], nv, mr),
          kink = TRUE)
   }
@@ -1402,10 +1479,13 @@ path_block <- function(blocks, row) {
 #' \code{n_lambda + n_alpha} per pass; with three or more estimated it grows
 #' exponentially, and \code{"cyclic"} is there for that.
 #'
-#' \code{n_values} is the length of the path over the SIZE OF THE KINK, which
-#' spans four decades at the default \code{min_ratio}. An axis beside it spans
-#' one bounded interval and takes a fifth as many points unless the term says
-#' otherwise, so the shipped product is 25 by 5 rather than 25 by 25.
+#' \strong{How long the path is, and how far down it reaches}, are the term's
+#' too, and are on its own signature where a reader can see them:
+#' \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
+#' \code{enet(x, n_lambda = 25, n_alpha = 5)}. The two numbers differ because
+#' the axes do -- \eqn{\lambda} descends the size of the kink over four
+#' decades and \eqn{\alpha} spans one bounded interval -- so the shipped
+#' product is 25 by 5.
 #'
 #' \strong{The grid is not a rectangle}, and for two different reasons. The
 #' elastic net's kink is \eqn{\lambda\alpha}, so the value emptying the block
@@ -1417,14 +1497,14 @@ path_block <- function(blocks, row) {
 #' rule about families.
 #'
 
-#' \strong{The cost} is \code{nfolds} fits per point of the path, and the path
-#' is \code{n_values} points for a term with one kinked hyperparameter and the
-#' product of its axes for a term with several. The warm starts are worth 1.8
-#' times, and building each fold's design once rather
-#' than once per point another 4 per cent, but what remains is the proximal
-#' iteration: measured at 200 observations and 20 columns, 0.88 seconds a fit,
-#' against \code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values on
-#' five folds. That distance is the reason \code{n_values} is 25 here and 100
+#' \strong{The cost} is \code{nfolds} fits per point of the path, and how many
+#' points there are is the term's \code{n_lambda} for one kinked
+#' hyperparameter and the product of its axes for several. The warm starts are
+#' worth 1.8 times, and building each fold's design once rather than once per
+#' point another 4 per cent, but what remains is the proximal iteration:
+#' measured at 200 observations and 20 columns, 0.88 seconds a fit, against
+#' \code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values on five
+#' folds. That distance is the reason \code{n_lambda} is 25 here and 100
 #' there, and closing it needs the compiled coordinate descent that a separable
 #' penalty on a linear predictor admits.
 #'
@@ -1433,9 +1513,6 @@ path_block <- function(blocks, row) {
 #'   to compare two criteria on the same one.
 #' @param rule \code{"min"} for the best criterion, \code{"1se"} for the
 #'   sparsest fit within one standard error of it.
-#' @param n_values How many points the path visits.
-#' @param min_ratio The smallest kink the path reaches, as a fraction of the
-#'   one that empties the block.
 
 #' @return An \code{\link{OuterMethod}}.
 #'
@@ -1453,15 +1530,12 @@ path_block <- function(blocks, row) {
 #' set.seed(1)
 #' dd <- data.frame(y = rnorm(60))
 #' dd$x <- matrix(rnorm(60 * 5), 60, 5)
-#' statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-#'         outer_criterion = cv(nfolds = 3, n_values = 6))
+#' statmod(y ~ lasso(x, n_lambda = 6), distributions7::gaussian1_distrib(), dd,
+#'         outer_criterion = cv(nfolds = 3))
 #'
 #' @export
-cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se"),
-               n_values = 25, min_ratio = 1e-4) {
+cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se")) {
   OuterMethod(kind = "cv", hessian = "observed", k = NA_real_,
-              n_values = as.numeric(n_values),
-              min_ratio = as.numeric(min_ratio),
               nfolds = as.numeric(nfolds), rule = match.arg(rule),
               folds = if (is.null(folds)) numeric(0) else as.numeric(folds))
 }

@@ -381,10 +381,11 @@ test_that("a hyperparameter estimated by REML carries a standard error", {
 })
 
 test_that("a path that cannot score a single point says so", {
-  # the matrix a penalized term is built from lives in the calling
-  # environment rather than in `data`, so no fold can be rebuilt. Every
-  # deviance came back NA, the path chose nothing, and the fit returned the
-  # DEFAULT hyperparameter reporting success.
+  # A path that scores nothing must RAISE, not keep the hyperparameter it came
+  # in with while reporting success. What cannot be rebuilt on a fold is an
+  # input the fold cannot evaluate: a CALL keeps only its own value on the
+  # term and not the matrix its re-evaluation would need, so there is no name
+  # to bind and no way to subset it.
   set.seed(44)
   n2 <- 120
   Z <- matrix(stats::rnorm(n2 * 5), n2, 5)
@@ -392,15 +393,24 @@ test_that("a path that cannot score a single point says so", {
   ds <- data.frame(Z = Z, y = as.numeric(Z %*% c(2, 0, 0, 1, 0)) +
                      stats::rnorm(n2, sd = 0.4))
   expect_error(
-    statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds,
+    statmod(y ~ 1 + lasso(scale(Z)), distributions7::gaussian1_distrib(), ds,
             sparse_criterion = cv()),
     "could not score a single point")
 
-  # the same model with the matrix as a column of `data` fits and chooses
+  # a SYMBOL is bound onto the fold's own rows, so the spelling that splits
+  # the matrix -- data.frame(Z = Z, y = y) leaves no column Z -- fits and
+  # chooses exactly as the spelling that keeps it as a column does
   ds2 <- data.frame(y = ds$y)
   ds2$Z <- Z
-  fit <- statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds2,
-                 sparse_criterion = cv())
+  fo <- rep_len(1:5, n2)
+  a <- statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds,
+               sparse_criterion = cv(folds = fo))
+  b <- statmod(y ~ 1 + lasso(Z), distributions7::gaussian1_distrib(), ds2,
+               sparse_criterion = cv(folds = fo))
+  expect_equal(a@hyper$mu[["lasso(Z)"]][["lambda"]],
+               b@hyper$mu[["lasso(Z)"]][["lambda"]])
+  expect_equal(a@criterion, b@criterion)
+  # and the value was CHOSEN rather than left at what it came in with
   expect_false(isTRUE(all.equal(
-    unname(fit@hyper$mu[["lasso(Z)"]][["lambda"]]), 1)))
+    unname(b@hyper$mu[["lasso(Z)"]][["lambda"]]), 1)))
 })

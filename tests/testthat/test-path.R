@@ -130,15 +130,15 @@ test_that("a criterion selects a lasso, and the true predictors survive", {
 test_that("cross-validation selects, and its one-standard-error rule is sparser", {
   skip_on_cran()
   f <- function(rule) {
-    statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-            sparse_criterion = cv(nfolds = 5, n_values = 12, rule = rule))
+    statmod(y ~ lasso(x, n_lambda = 12), distributions7::gaussian1_distrib(),
+            dp, sparse_criterion = cv(nfolds = 5, rule = rule))
   }
   m <- f("min")
   s <- f("1se")
   expect_true(all(1:3 %in% which(abs(m@coefficients$mu[-1L]) > 1e-8)))
   expect_true(all(1:3 %in% which(abs(s@coefficients$mu[-1L]) > 1e-8)))
-  expect_gte(s@hyper$mu[["lasso(x)"]][["lambda"]],
-             m@hyper$mu[["lasso(x)"]][["lambda"]])
+  expect_gte(s@hyper$mu[["lasso(x, n_lambda = 12)"]][["lambda"]],
+             m@hyper$mu[["lasso(x, n_lambda = 12)"]][["lambda"]])
   # the criterion is a deviance per observation, so it is of the order the
   # gaussian's own is: 2*log(2*pi*sigma^2)/2 + 1 near 2.9 here
   expect_true(m@criterion > 2 && m@criterion < 4)
@@ -148,12 +148,12 @@ test_that("cross-validation selects, and its one-standard-error rule is sparser"
 test_that("the folds are the caller's when the caller gives them", {
   skip_on_cran()
   fo <- rep_len(1:4, np)
-  a <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               sparse_criterion = cv(folds = fo, n_values = 8))
-  b <- statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
-               sparse_criterion = cv(folds = fo, n_values = 8))
-  expect_equal(a@hyper$mu[["lasso(x)"]][["lambda"]],
-               b@hyper$mu[["lasso(x)"]][["lambda"]])
+  a <- statmod(y ~ lasso(x, n_lambda = 8), distributions7::gaussian1_distrib(),
+               dp, sparse_criterion = cv(folds = fo))
+  b <- statmod(y ~ lasso(x, n_lambda = 8), distributions7::gaussian1_distrib(),
+               dp, sparse_criterion = cv(folds = fo))
+  expect_equal(a@hyper$mu[["lasso(x, n_lambda = 8)"]][["lambda"]],
+               b@hyper$mu[["lasso(x, n_lambda = 8)"]][["lambda"]])
   expect_equal(a@criterion, b@criterion)
   expect_error(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dp,
                        sparse_criterion = cv(folds = 1:3)),
@@ -182,11 +182,9 @@ test_that("the selection is stated where the path ran out", {
   expect_warning(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(),
                          dp, sparse_criterion = aic(k = 2)) -> wide,
                  NA)
-  narrow <- aic()
-  narrow@n_values <- 2
-  narrow@min_ratio <- 0.9
-  expect_warning(statmod(y ~ lasso(x), distributions7::gaussian1_distrib(),
-                         dp, sparse_criterion = narrow),
+  expect_warning(statmod(y ~ lasso(x, n_lambda = 2, min_ratio = 0.9),
+                         distributions7::gaussian1_distrib(), dp,
+                         sparse_criterion = aic()),
                  "stopped at its")
   # and the interior choice of the wide path is not at either end
   lam <- wide@hyper$mu[["lasso(x)"]][["lambda"]]
@@ -200,7 +198,14 @@ test_that("cv and its method print what they are", {
   expect_output(print(cv(nfolds = 5, rule = "1se")), "1se")
   expect_error(cv(rule = "best"), "arg")
   expect_error(cv(nfolds = 1), "at least 2")
-  expect_error(cv(min_ratio = 2), "in \\(0, 1\\)")
+  # what a PATH does is not the criterion's: the same criterion is put to the
+  # smooth hyperparameters of a model, which are read at the mode rather than
+  # swept, so it carries neither the length of a grid nor its depth
+  expect_error(cv(n_values = 12), "unused argument")
+  expect_error(cv(min_ratio = 0.1), "unused argument")
+  expect_error(bic(search = "cyclic"), "unused argument")
+  expect_false("n_values" %in% names(S7::props(bic())))
+  expect_false("min_ratio" %in% names(S7::props(bic())))
 })
 
 test_that("a bounded hyperparameter is estimated unless the term holds it", {
@@ -307,11 +312,12 @@ test_that("the path visits as many values as the term asked for", {
                                   sparse_criterion = bic()))
     expect_identical(n_of(f), k)
   }
-  # where the term says nothing the criterion's default stands
+  # and the term's own default is a number on its own signature, not a
+  # criterion's that nothing prints
   d <- suppressWarnings(statmod(y ~ lasso(Z),
                                 distributions7::gaussian1_distrib(), dg,
                                 sparse_criterion = bic()))
-  expect_identical(n_of(d), as.integer(bic()@n_values))
+  expect_identical(n_of(d), as.integer(eval(formals(lasso)$n_lambda)))
 
   # and it is PER HYPERPARAMETER. The product visits every combination, so
   # the elastic net costs exactly n_lambda * n_alpha points
@@ -354,11 +360,11 @@ test_that("the path reaches as far down as the term asked", {
                                   sparse_criterion = bic()))
     expect_equal(ratio(f), mr, tolerance = 1e-8)
   }
-  # the criterion's own depth stands where the term named none
+  # ... and the term's own default where it named none
   d <- suppressWarnings(statmod(y ~ lasso(Z, n_lambda = 8),
                                 distributions7::gaussian1_distrib(), dm,
                                 sparse_criterion = bic()))
-  expect_equal(ratio(d), bic()@min_ratio, tolerance = 1e-8)
+  expect_equal(ratio(d), eval(formals(lasso)$min_ratio), tolerance = 1e-8)
 })
 
 test_that("the product visits every combination and each row has its own top", {
@@ -514,4 +520,65 @@ test_that("the size of the kink is inverted in closed form", {
   one <- vapply(exp(seq(log(20), log(0.02), length.out = 7L)),
                 function(t) kink_solve(pen, th, "lambda", t), numeric(1))
   expect_equal(v, one, tolerance = 1e-10)
+})
+
+test_that("a fold carries a term's matrix input onto its own rows", {
+  # data.frame(X = X, y = y) SPLITS the matrix into X.x1 ... X.xp, leaving no
+  # column X, so lasso(X) reaches past the data to the matrix in the calling
+  # environment: interpret_formula evaluates the call as eval(call, data, env)
+  # and the name is looked up in data first, in env after. The fit is right --
+  # the matrix is captured once -- but the fold could not rebuild, the name
+  # still resolving to all the rows.
+  skip_on_cran()
+  set.seed(91)
+  n2 <- 100L
+  Z <- matrix(stats::rbinom(n2 * 8, 1, 0.25), n2, 8)
+  colnames(Z) <- paste0("z", 1:8)
+  yy <- as.numeric(Z %*% c(0, 0, 1.5, -1, 2, 0, 0, 0)) + stats::rnorm(n2)
+
+  split <- data.frame(Z = Z, y = yy)          # no column 'Z'
+  col <- data.frame(y = yy); col$Z <- Z       # the documented spelling
+  expect_false("Z" %in% names(split))
+  expect_true("Z" %in% names(col))
+
+  fo <- rep_len(1:5, n2)                      # the SAME folds on both sides
+  f <- function(dd) {
+    suppressWarnings(statmod(y ~ 1 + lasso(Z, n_lambda = 8),
+                             distributions7::gaussian1_distrib(), dd,
+                             sparse_criterion = cv(folds = fo)))
+  }
+  a <- f(split)
+  b <- f(col)
+  # the two spellings are the same model, so the fold must make them the same
+  # answer: not merely both finite
+  expect_equal(a@hyper$mu[[1L]][["lambda"]], b@hyper$mu[[1L]][["lambda"]])
+  expect_equal(a@criterion, b@criterion)
+  expect_equal(unname(unlist(a@coefficients)), unname(unlist(b@coefficients)))
+})
+
+test_that("carrying a matrix onto a fold keeps it in its own storage", {
+  # a sparse input is passed to avoid the memory a dense one costs, so the
+  # column the fold is given must not be the densification of it
+  set.seed(92)
+  n2 <- 60L
+  Z <- Matrix::Matrix(matrix(stats::rbinom(n2 * 6, 1, 0.2), n2, 6),
+                      sparse = TRUE)
+  colnames(Z) <- paste0("z", 1:6)
+  dd <- data.frame(y = stats::rnorm(n2))
+  spec <- statmod_spec(y ~ lasso(Z, n_lambda = 4),
+                       distributions7::gaussian1_distrib(), dd, NULL, NULL)
+  keep <- rep(c(TRUE, FALSE), each = n2 / 2)
+  sub <- cv_bind_inputs(spec, dd[keep, , drop = FALSE], keep, n2)
+  expect_true("Z" %in% names(sub))
+  expect_true(methods::is(sub[["Z"]], "Matrix"))
+  expect_identical(nrow(sub[["Z"]]), sum(keep))
+
+  # a term whose input the data already carries is left alone, and so is a
+  # FORMULA input, which keeps being rebuilt on the fold's own rows
+  df <- data.frame(y = stats::rnorm(n2), z = stats::rnorm(n2))
+  sp2 <- statmod_spec(y ~ lasso(~z, n_lambda = 4),
+                      distributions7::gaussian1_distrib(), df, NULL, NULL)
+  expect_identical(names(cv_bind_inputs(sp2, df[keep, , drop = FALSE], keep,
+                                        n2)),
+                   names(df))
 })

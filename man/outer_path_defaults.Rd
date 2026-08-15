@@ -2,7 +2,7 @@
 % Please edit documentation in R/outer.R
 \name{outer_path_defaults}
 \alias{outer_path_defaults}
-\title{The Defaults a Path Carries}
+\title{The Properties Every Criterion Carries}
 \usage{
 outer_path_defaults()
 }
@@ -10,7 +10,17 @@ outer_path_defaults()
 A named list.
 }
 \description{
-The properties every \code{\link{OuterMethod}} needs whether or not it uses
-them, so that one class serves every criterion.
+The ones \code{\link{OuterMethod}} needs whether or not a given criterion
+uses them, so that one class serves every criterion.
+}
+\details{
+What a PATH does is not among them. How many values it visits, how far
+down it reaches and whether a term's own hyperparameters are combined or
+swept one at a time all belong to the term, since the same criterion is
+put to the smooth hyperparameters of the model as well and those are read
+at the mode rather than swept.
+}
+\seealso{
+\code{\link{path_fallbacks}}
 }
 \keyword{internal}

@@ -10,7 +10,8 @@ statmod_spec(
   data,
   weights = NULL,
   offsets = NULL,
-  need_response = TRUE
+  need_response = TRUE,
+  linpar = list()
 )
 }
 \arguments{
@@ -27,6 +28,11 @@ statmod_spec(
 \item{need_response}{Whether the left-hand side must evaluate. A likelihood
 needs it; a prediction does not, and new data routinely has no response
 column.}
+
+\item{linpar}{How the IMPLICIT parametric block is built, as
+\code{\link{linpar_options}()} returns it. It is kept on the
+specification, so a rebuild -- a fold of \code{\link{cv}()} -- reproduces
+the storage rather than quietly densifying.}
 }
 \value{
 An object of class \code{\link{StatmodSpec}}.

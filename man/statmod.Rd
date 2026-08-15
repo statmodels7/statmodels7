@@ -15,6 +15,7 @@ statmod(
   sparse_criterion = bic(),
   outer_optimizer = NULL,
   start = NULL,
+  linpar_control = linpar_options(),
   verbose = 0,
   ...
 )
@@ -54,6 +55,15 @@ before the alternation between the coefficients and the hyperparameters
 begins, which is why a global search belongs here and not in
 \code{inner_optimizer}: there it would rerun at every hyperparameter the
 outer search tried.}
+
+\item{linpar_control}{How the unpenalized parametric block is built, as
+\code{\link{linpar_options}()} returns it: the storage and the contrasts
+for its factors. It reaches the IMPLICIT term, the one the bare
+covariates collapse into and which a caller never writes; a
+\code{\link[modelterms7]{linpar}()} written out takes them directly.
+The argument and the function are named differently on purpose, as
+\code{\link[stats]{glm}}'s \code{control} and
+\code{\link[stats]{glm.control}} are.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
 

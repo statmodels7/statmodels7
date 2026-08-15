@@ -4,13 +4,7 @@
 \alias{cv}
 \title{Choose the Hyperparameters by Cross-Validation}
 \usage{
-cv(
-  nfolds = 10,
-  folds = NULL,
-  rule = c("min", "1se"),
-  n_values = 25,
-  min_ratio = 1e-04
-)
+cv(nfolds = 10, folds = NULL, rule = c("min", "1se"))
 }
 \arguments{
 \item{nfolds}{How many folds. Ignored when \code{folds} is given.}
@@ -20,11 +14,6 @@ to compare two criteria on the same one.}
 
 \item{rule}{\code{"min"} for the best criterion, \code{"1se"} for the
 sparsest fit within one standard error of it.}
-
-\item{n_values}{How many points the path visits.}
-
-\item{min_ratio}{The smallest kink the path reaches, as a fraction of the
-one that empties the block.}
 }
 \value{
 An \code{\link{OuterMethod}}.
@@ -82,10 +71,13 @@ two hyperparameters is \code{n_lambda * n_alpha} fits against
 \code{n_lambda + n_alpha} per pass; with three or more estimated it grows
 exponentially, and \code{"cyclic"} is there for that.
 
-\code{n_values} is the length of the path over the SIZE OF THE KINK, which
-spans four decades at the default \code{min_ratio}. An axis beside it spans
-one bounded interval and takes a fifth as many points unless the term says
-otherwise, so the shipped product is 25 by 5 rather than 25 by 25.
+\strong{How long the path is, and how far down it reaches}, are the term's
+too, and are on its own signature where a reader can see them:
+\code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
+\code{enet(x, n_lambda = 25, n_alpha = 5)}. The two numbers differ because
+the axes do -- \eqn{\lambda} descends the size of the kink over four
+decades and \eqn{\alpha} spans one bounded interval -- so the shipped
+product is 25 by 5.
 
 \strong{The grid is not a rectangle}, and for two different reasons. The
 elastic net's kink is \eqn{\lambda\alpha}, so the value emptying the block
@@ -96,14 +88,14 @@ whatever the shape and the two axes really are a rectangle. Each axis is
 built at the settings of the axes outside it, which covers both without a
 rule about families.
 
-\strong{The cost} is \code{nfolds} fits per point of the path, and the path
-is \code{n_values} points for a term with one kinked hyperparameter and the
-product of its axes for a term with several. The warm starts are worth 1.8
-times, and building each fold's design once rather
-than once per point another 4 per cent, but what remains is the proximal
-iteration: measured at 200 observations and 20 columns, 0.88 seconds a fit,
-against \code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values on
-five folds. That distance is the reason \code{n_values} is 25 here and 100
+\strong{The cost} is \code{nfolds} fits per point of the path, and how many
+points there are is the term's \code{n_lambda} for one kinked
+hyperparameter and the product of its axes for several. The warm starts are
+worth 1.8 times, and building each fold's design once rather than once per
+point another 4 per cent, but what remains is the proximal iteration:
+measured at 200 observations and 20 columns, 0.88 seconds a fit, against
+\code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values on five
+folds. That distance is the reason \code{n_lambda} is 25 here and 100
 there, and closing it needs the compiled coordinate descent that a separable
 penalty on a linear predictor admits.
 }
@@ -111,8 +103,8 @@ penalty on a linear predictor admits.
 set.seed(1)
 dd <- data.frame(y = rnorm(60))
 dd$x <- matrix(rnorm(60 * 5), 60, 5)
-statmod(y ~ lasso(x), distributions7::gaussian1_distrib(), dd,
-        outer_criterion = cv(nfolds = 3, n_values = 6))
+statmod(y ~ lasso(x, n_lambda = 6), distributions7::gaussian1_distrib(), dd,
+        outer_criterion = cv(nfolds = 3))
 
 }
 \references{

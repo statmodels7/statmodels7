@@ -29,6 +29,7 @@ reference:
     around them.
   contents:
   - statmod
+  - linpar_options
   - iwls
   - reml
   - aic

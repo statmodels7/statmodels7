@@ -9,8 +9,6 @@ OuterMethod(
   kind = character(0),
   hessian = character(0),
   k = integer(0),
-  n_values = integer(0),
-  min_ratio = integer(0),
   nfolds = integer(0),
   rule = character(0),
   folds = integer(0)
@@ -24,11 +22,6 @@ OuterMethod(
 
 \item{k}{The price of one degree of freedom, for a prediction-error
 criterion. \code{NA} where the method resolves it against the sample size.}
-
-\item{n_values}{How many points a path over a kinked hyperparameter visits.}
-
-\item{min_ratio}{The smallest kink a path reaches, as a fraction of the one
-that empties the block.}
 
 \item{nfolds}{How many folds cross-validation uses.}
 

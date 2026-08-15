@@ -11,14 +11,14 @@ statmod_min_ratio(spec, row, default)
 
 \item{row}{One row of \code{\link{path_rows}}'s index.}
 
-\item{default}{The criterion's own ratio.}
+\item{default}{\code{\link{path_fallbacks}}'s, for a term that named none.}
 }
 \value{
 A single number.
 }
 \description{
-The depth the TERM asked for, or the criterion's default where it asked
-for nothing.
+The depth the TERM asked for, or the layer's fallback where it asked for
+nothing.
 }
 \details{
 One number per term rather than one per hyperparameter, because only the

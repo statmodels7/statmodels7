@@ -16,7 +16,8 @@ StatmodSpec(
   offsets = list(),
   intercepts = logical(0),
   newdata = NULL,
-  structural = list()
+  structural = list(),
+  linpar = list()
 )
 }
 \arguments{

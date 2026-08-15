@@ -4,7 +4,7 @@
 \alias{statmod_terms}
 \title{Interpret and Build Each Parameter's Terms}
 \usage{
-statmod_terms(equations, data, env, response = NULL)
+statmod_terms(equations, data, env, response = NULL, linpar = list())
 }
 \arguments{
 \item{equations}{A named list of one-sided formulas.}
