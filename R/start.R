@@ -313,6 +313,20 @@ S7::method(start_at, StartIntercepts) <-
       if (design[[p]]$npar == 0L) next
       v <- eta0[[p]]
       if (is.null(v) || !is.finite(v)) next
+      # AN OFFSET IS PART OF THE PREDICTOR AND THE INTERCEPT-ONLY FIT DOES NOT
+      # SEE IT. statmod_intercepts() fits the distribution to the response
+      # alone, so it answers with the predictor the model should have on
+      # average; the intercept has to carry that MINUS what the offset already
+      # contributes, or the run starts wherever the offset happens to sit.
+      # On a count model over person-years the offset averages 7.56, so an
+      # uncorrected intercept put the starting mean at exp(7.47) = 1750 where
+      # the data average 0.92 -- out by a factor of nineteen hundred, and the
+      # scoring iteration spent its budget crawling back.
+      off <- spec@offsets[[p]]
+      if (!is.null(off)) {
+        m <- mean(off)
+        if (is.finite(m)) v <- v - m
+      }
       # the intercept carries the whole of it when there is one
       if (identical(design[[p]]$coef_names[1L], "(Intercept)") ||
           grepl("\\(Intercept\\)$", design[[p]]$coef_names[1L])) {

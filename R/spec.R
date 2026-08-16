@@ -68,6 +68,223 @@ as_sparse <- function(A) {
   if (isS4(A)) A else methods::as(methods::as(A, "denseMatrix"), "CsparseMatrix")
 }
 
+#' Take the Offsets Out of an Equation
+#'
+#' @description
+#' Splits a one-sided formula into the \code{offset()} terms it names and
+#' whatever is left, which is what the interpreter is given.
+#'
+#' @details
+#' An offset is a column of the linear predictor whose coefficient is known to
+#' be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
+#' Without this the term reached \code{model.matrix} through
+#' \code{\link[modelterms7]{linpar}}, where \code{terms()} marks it in the
+#' \code{"offset"} attribute and the design EXCLUDES it: the term contributed
+#' no column, no offset and no message, and the model fitted was the one
+#' without it. On a count model over person-years that moved the intercept
+#' from -7.5 to -0.6, which is the difference between a log rate and a log
+#' count.
+#'
+#' Only a top-level additive term is taken, which is where R recognizes one
+#' too; \code{stats::offset(x)} is recognized beside \code{offset(x)}. Several
+#' are summed, as \code{\link[stats]{glm}} sums them.
+#'
+#' @param eq A one-sided formula.
+#'
+#' @return A list with \code{formula}, the equation with the offsets removed,
+#'   and \code{offsets}, a list of the expressions taken out.
+#'
+#' @seealso \code{\link{statmod_spec}}, \code{\link{eval_offsets}}
+#'
+#' @keywords internal
+split_offsets <- function(eq) {
+  is_offset <- function(e) {
+    if (!is.call(e) || length(e) != 2L) return(FALSE)
+    f <- e[[1L]]
+    if (is.name(f)) return(identical(as.character(f), "offset"))
+    # stats::offset(x) and stats:::offset(x)
+    is.call(f) && length(f) == 3L &&
+      as.character(f[[1L]]) %in% c("::", ":::") &&
+      identical(as.character(f[[3L]]), "offset")
+  }
+  found <- list()
+  strip <- function(e) {
+    if (is.call(e) && length(e) == 3L && identical(e[[1L]], quote(`+`))) {
+      a <- strip(e[[2L]])
+      b <- strip(e[[3L]])
+      if (is.null(a)) return(b)
+      if (is.null(b)) return(a)
+      return(call("+", a, b))
+    }
+    if (is_offset(e)) {
+      found[[length(found) + 1L]] <<- e[[2L]]
+      return(NULL)
+    }
+    e
+  }
+  kept <- strip(eq[[length(eq)]])
+  # an equation that was nothing but an offset keeps its intercept, which is
+  # what `y ~ offset(x)` means in R
+  if (is.null(kept)) kept <- quote(1)
+  out <- eq
+  out[[length(out)]] <- kept
+  list(formula = out, offsets = found)
+}
+
+
+#' Reject an Offset Buried Inside a Term
+#'
+#' @description
+#' Stops where \code{offset()} appears anywhere other than as a term of the
+#' equation itself.
+#'
+#' @details
+#' \code{\link{split_offsets}} takes the top-level additive terms, which is
+#' where R recognizes an offset. One written inside another term's formula --
+#' \code{ridge(~ z + offset(o))}, \code{random(~ 1 + offset(o) | g)},
+#' \code{nl(a ~ 0 + ridge(~ g + offset(o)))} -- reaches that term's own
+#' \code{model.matrix}, where it is dropped exactly as it used to be dropped
+#' at the equation level: measured, the fit ran, the block had the columns of
+#' the model WITHOUT it, and the intercept came back at 1.33 against the
+#' -5.01 the offset gives, a factor of 566.
+#'
+#' It is REFUSED rather than routed up, and the reason is that the meaning
+#' differs by where it sits. In a penalized term's formula an offset would be
+#' a contribution to the equation's predictor, which is what writing it at the
+#' equation level already says. In a SUBFORMULA it would be a contribution to
+#' that parameter's own chart, which is a different quantity. Rather than pick
+#' one reading and apply it everywhere, the construct is rejected with the
+#' place it belongs named, which costs a user one edit and cannot silently
+#' fit the wrong model.
+#'
+#' @param eq A one-sided formula, with the equation's own offsets already
+#'   taken out.
+#' @param param The parameter the equation belongs to, for the message.
+#'
+#' @return \code{NULL}, invisibly; an error where one is found.
+#'
+#' @seealso \code{\link{split_offsets}}
+#'
+#' @keywords internal
+reject_nested_offsets <- function(eq, param) {
+  found <- NULL
+  walk <- function(e) {
+    if (!is.call(e) || !is.null(found)) return(invisible(NULL))
+    f <- e[[1L]]
+    nm <- if (is.name(f)) as.character(f) else
+      if (is.call(f) && length(f) == 3L &&
+          as.character(f[[1L]]) %in% c("::", ":::")) as.character(f[[3L]]) else ""
+    if (identical(nm, "offset") && length(e) == 2L) {
+      found <<- e
+      return(invisible(NULL))
+    }
+    for (i in seq_along(e)[-1L]) {
+      ei <- e[[i]]
+      # an omitted argument -- the blank in `x[, 1]` -- is an empty symbol,
+      # and recursing into it errors. missing() does not answer this: it is
+      # about a formal argument of a function, not about a call's slot.
+      if (is.symbol(ei) && !nzchar(as.character(ei))) next
+      walk(ei)
+    }
+    invisible(NULL)
+  }
+  walk(eq[[length(eq)]])
+  if (!is.null(found)) {
+    stop(sprintf(paste0("'%s' in the equation for '%s' is inside another",
+                        " term, where it\n  is not an offset: a term builds",
+                        " its own block and drops it, so the\n  model would",
+                        " be fitted without it.\n  Write it as a term of the",
+                        " equation instead -- '... + %s' -- which is\n  where",
+                        " R recognizes an offset and where it enters the",
+                        " linear\n  predictor."),
+                 deparse(found), param, deparse(found)), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+
+#' Evaluate the Offsets a Formula Names
+#'
+#' @description
+#' The offset per distribution parameter, evaluated in the data.
+#'
+#' @details
+#' The expressions are re-evaluated rather than carried as numbers, which is
+#' what lets an offset survive prediction: \code{\link{statmod_respec}} calls
+#' this against the new data, where a vector supplied through the
+#' \code{offsets} argument at fitting time has the wrong length and cannot be
+#' reused.
+#'
+#' @param formula The model formula, before the offsets are stripped.
+#' @param params The distribution's parameter names.
+#' @param data A data frame.
+#' @param env The environment the formula carried.
+#' @param n The number of observations.
+#'
+#' @return A named list, one entry per parameter, \code{NULL} where the
+#'   equation names no offset.
+#'
+#' @seealso \code{\link{split_offsets}}
+#'
+#' @keywords internal
+eval_offsets <- function(formula, params, data, env, n) {
+  out <- stats::setNames(vector("list", length(params)), params)
+  eqs <- statmod_equations(formula, params)$equations
+  for (p in names(eqs)) {
+    ex <- split_offsets(eqs[[p]])$offsets
+    if (!length(ex)) next
+    total <- numeric(n)
+    for (e in ex) {
+      v <- tryCatch(eval(e, data, env), error = function(err)
+        stop(sprintf("The offset '%s' in the equation for '%s' could not be\n  evaluated: %s",
+                     deparse(e), p, conditionMessage(err)), call. = FALSE))
+      if (!is.numeric(v) || !length(v) %in% c(1L, n)) {
+        stop(sprintf(paste0("The offset '%s' in the equation for '%s' must be",
+                            " numeric of\n  length 1 or %d, and it is %s of",
+                            " length %d."),
+                     deparse(e), p, n, class(v)[1L], length(v)),
+             call. = FALSE)
+      }
+      if (anyNA(v) || !all(is.finite(v))) {
+        stop(sprintf(paste0("The offset '%s' in the equation for '%s' is not",
+                            " finite everywhere.\n  An offset enters the",
+                            " linear predictor as it stands, so a missing or",
+                            "\n  infinite value has no fitted answer."),
+                     deparse(e), p), call. = FALSE)
+      }
+      total <- total + rep_len(as.numeric(v), n)
+    }
+    out[[p]] <- total
+  }
+  out
+}
+
+
+#' Add Two Sets of Offsets
+#'
+#' @description
+#' Combines the offsets a formula names with those the \code{offsets} argument
+#' supplies, per parameter.
+#'
+#' @details
+#' They are SUMMED where both are given, which is what
+#' \code{\link[stats]{glm}} does with a formula offset and an \code{offset}
+#' argument together.
+#'
+#' @param a,b Two named lists of offsets, either entry possibly \code{NULL}.
+#'
+#' @return A named list.
+#'
+#' @keywords internal
+add_offsets <- function(a, b) {
+  for (p in names(a)) {
+    if (is.null(b[[p]])) next
+    a[[p]] <- if (is.null(a[[p]])) b[[p]] else a[[p]] + b[[p]]
+  }
+  a
+}
+
+
 #' Zero the Non-Finite Entries of a Penalty's Hessian
 #'
 #' @description
@@ -301,16 +518,24 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
 
-  built <- statmod_terms(split$equations, data, env, response, linpar)
+  # the offsets come out of the equations before the interpreter sees them:
+  # left in, model.matrix() drops them and the model silently loses them
+  stripped <- lapply(split$equations, function(eq) split_offsets(eq)$formula)
+  # what is left cannot name an offset: it would be inside another term, and
+  # that term's own model.matrix would drop it without a word
+  for (p in names(stripped)) reject_nested_offsets(stripped[[p]], p)
+  from_formula <- eval_offsets(formula, params, data, env, n)
+
+  built <- statmod_terms(stripped, data, env, response, linpar)
   terms_by_param <- built$terms
   intercepts <- built$intercepts
 
   weights <- check_weights(weights, n)
-  offsets <- check_offsets(offsets, params, n)
+  offsets <- add_offsets(from_formula, check_offsets(offsets, params, n))
 
   StatmodSpec(
     formula = formula, distrib = distrib,
-    equations = split$equations, terms = terms_by_param,
+    equations = stripped, terms = terms_by_param,
     response = response, n_obs = as.integer(n),
     weights = weights, offsets = offsets, intercepts = intercepts,
     newdata = NULL, linpar = linpar
@@ -356,9 +581,15 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   if (is.null(response)) response <- rep(NA_real_, nrow(data))
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
+  # An offset the FORMULA names is re-evaluated here, which is the whole
+  # reason the expressions are not carried as numbers: a vector supplied
+  # through the `offsets` argument at fitting time has the length of the
+  # fitting data and cannot be reused, so prediction used to drop the offset
+  # and return the predictor of a model without one.
   S7::set_props(spec, response = response, n_obs = as.integer(n),
                 weights = rep(1, n),
-                offsets = check_offsets(NULL, spec@distrib@params, n),
+                offsets = eval_offsets(spec@formula, spec@distrib@params,
+                                       data, env, n),
                 newdata = data)
 }
 

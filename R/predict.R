@@ -224,8 +224,11 @@ rstatmod <- function(formula, distrib, data, par = NULL, sd = 1,
   if (is.null(env)) env <- baseenv()
 
   # the response does not exist yet, which is the point, so the terms are
-  # built from the covariates alone
-  built <- statmod_terms(split$equations, data, env)
+  # built from the covariates alone; the offsets come out of the equations
+  # first, as they do when a spec is built
+  stripped <- lapply(split$equations, function(eq) split_offsets(eq)$formula)
+  for (p in names(stripped)) reject_nested_offsets(stripped[[p]], p)
+  built <- statmod_terms(stripped, data, env)
   n <- nrow(data)
   design <- lapply(built$terms, function(tms) {
     if (!length(tms)) {
@@ -242,7 +245,8 @@ rstatmod <- function(formula, distrib, data, par = NULL, sd = 1,
 
   coef <- draw_coefficients(design, params, par, sd)
 
-  off <- check_offsets(offsets, params, n)
+  off <- add_offsets(eval_offsets(formula, params, data, env, n),
+                     check_offsets(offsets, params, n))
   links <- distrib@link_params
   theta <- stats::setNames(vector("list", length(params)), params)
   for (p in params) {
