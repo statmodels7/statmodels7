@@ -1,5 +1,55 @@
 # Changelog
 
+## statmodels7 0.54.0
+
+- [`offset()`](https://rdrr.io/r/stats/offset.html) written in the
+  formula is an offset. It was SILENTLY DROPPED:
+  [`terms()`](https://rdrr.io/r/stats/terms.html) marks such a term in
+  the `"offset"` attribute and
+  [`model.matrix()`](https://rdrr.io/r/stats/model.matrix.html) excludes
+  it from the design, so the term contributed no column, no offset and
+  no message, and the model fitted was the one without it. On a count
+  model over person-years – 64800 observations, a negative binomial with
+  a random effect in both equations – that moved the intercept from
+  -7.51 to -0.65, which is the difference between a log rate and a log
+  count, and left the random effect absorbing the offset (sigma 1.21
+  against 0.20).
+
+  The offsets come out of each equation before the interpreter sees it.
+  Any equation may carry one (`sigma ~ offset(s)`), several are summed
+  as [`glm()`](https://rdrr.io/r/stats/glm.html) sums them, and one
+  given through the `offsets` argument as well is added to it.
+
+- The offset survives prediction, which the `offsets` argument never
+  did. The EXPRESSIONS are kept rather than the numbers, so
+  [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+  re-evaluates them against the new data; a vector supplied at fitting
+  time has the length of the fitting data and cannot be reused, and
+  prediction used to return the predictor of a model with no offset at
+  all.
+
+- An [`offset()`](https://rdrr.io/r/stats/offset.html) buried inside
+  another term’s formula is REFUSED, naming the place it belongs.
+  `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)`,
+  `linpar(~ x + offset(o))` and a subformula’s own
+  `ridge(~ g + offset(o))` all used to fit, each dropping the offset in
+  that term’s own `model.matrix` – the same defect one level down, and
+  just as quiet. It is refused rather than routed up because the meaning
+  differs by where it sits: in a penalized term’s formula it would be a
+  contribution to the equation’s predictor, and in a subformula a
+  contribution to that parameter’s own chart.
+
+- The starting values account for the offset.
+  [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
+  fits the distribution to the response ALONE, so its answer is the
+  predictor the model should have on average and the intercept has to
+  carry that minus what the offset already contributes. Without the
+  correction the run began wherever the offset happened to sit: measured
+  on a count model whose offset averages 6.744, the starting mean was
+  exp(7.64) = 2080 against a sample mean of 2.45, and the same fit took
+  **4.9 s** corrected against more than 25 minutes uncorrected, at 9
+  scoring iterations.
+
 ## statmodels7 0.53.0
 
 - The penalty’s Hessian is accumulated in the storage the DESIGN calls

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.53.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.54.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,16 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.54.0" id="statmodels7-0540">statmodels7 0.54.0<a class="anchor" aria-label="anchor" href="#statmodels7-0540"></a></h2>
+<ul><li>
+<p><code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code> written in the formula is an offset. It was SILENTLY DROPPED: <code><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms()</a></code> marks such a term in the <code>"offset"</code> attribute and <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code> excludes it from the design, so the term contributed no column, no offset and no message, and the model fitted was the one without it. On a count model over person-years – 64800 observations, a negative binomial with a random effect in both equations – that moved the intercept from -7.51 to -0.65, which is the difference between a log rate and a log count, and left the random effect absorbing the offset (sigma 1.21 against 0.20).</p>
+<p>The offsets come out of each equation before the interpreter sees it. Any equation may carry one (<code>sigma ~ offset(s)</code>), several are summed as <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> sums them, and one given through the <code>offsets</code> argument as well is added to it.</p>
+</li>
+<li><p>The offset survives prediction, which the <code>offsets</code> argument never did. The EXPRESSIONS are kept rather than the numbers, so <code><a href="../reference/statmod_respec.html">statmod_respec()</a></code> re-evaluates them against the new data; a vector supplied at fitting time has the length of the fitting data and cannot be reused, and prediction used to return the predictor of a model with no offset at all.</p></li>
+<li><p>An <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code> buried inside another term’s formula is REFUSED, naming the place it belongs. <code>ridge(~ z + offset(o))</code>, <code>random(~ 1 + offset(o) | g)</code>, <code>linpar(~ x + offset(o))</code> and a subformula’s own <code>ridge(~ g + offset(o))</code> all used to fit, each dropping the offset in that term’s own <code>model.matrix</code> – the same defect one level down, and just as quiet. It is refused rather than routed up because the meaning differs by where it sits: in a penalized term’s formula it would be a contribution to the equation’s predictor, and in a subformula a contribution to that parameter’s own chart.</p></li>
+<li><p>The starting values account for the offset. <code><a href="../reference/statmod_intercepts.html">statmod_intercepts()</a></code> fits the distribution to the response ALONE, so its answer is the predictor the model should have on average and the intercept has to carry that minus what the offset already contributes. Without the correction the run began wherever the offset happened to sit: measured on a count model whose offset averages 6.744, the starting mean was exp(7.64) = 2080 against a sample mean of 2.45, and the same fit took <strong>4.9 s</strong> corrected against more than 25 minutes uncorrected, at 9 scoring iterations.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.53.0" id="statmodels7-0530">statmodels7 0.53.0<a class="anchor" aria-label="anchor" href="#statmodels7-0530"></a></h2>
 <ul><li>

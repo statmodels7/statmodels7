@@ -109,6 +109,8 @@ exported, and none is needed to use the package.
   : The Specification of a Model, Before It Is Fitted
 - [`StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md)
   : A Summary of a Fitted Model
+- [`add_offsets()`](https://statmodels7.github.io/statmodels7/reference/add_offsets.md)
+  : Add Two Sets of Offsets
 - [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
   : Does a Term Supply Its Third Derivative?
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
@@ -196,6 +198,8 @@ exported, and none is needed to use the package.
   : The Model's Derivative Pieces for a Filter's Recursion
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
+- [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
+  : Evaluate the Offsets a Formula Names
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
   : Which Information Matrix a Fit Used
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
@@ -351,6 +355,8 @@ exported, and none is needed to use the package.
   : Does a Term Recompute Its Own Block?
 - [`reject_incompatible()`](https://statmodels7.github.io/statmodels7/reference/reject_incompatible.md)
   : Combinations of Terms That Are Not a Model
+- [`reject_nested_offsets()`](https://statmodels7.github.io/statmodels7/reference/reject_nested_offsets.md)
+  : Reject an Offset Buried Inside a Term
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term the Fitting Scheme Does Not Cover
 - [`row_nonzeros()`](https://statmodels7.github.io/statmodels7/reference/row_nonzeros.md)
@@ -375,6 +381,8 @@ exported, and none is needed to use the package.
   : The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 - [`spec_at()`](https://statmodels7.github.io/statmodels7/reference/spec_at.md)
   : Rebuild a Specification Against New Data
+- [`split_offsets()`](https://statmodels7.github.io/statmodels7/reference/split_offsets.md)
+  : Take the Offsets Out of an Equation
 - [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
   : The Square-Root Design
 - [`start_at.StartIntercepts`](https://statmodels7.github.io/statmodels7/reference/start_at.StartIntercepts.md)
