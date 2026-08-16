@@ -115,7 +115,9 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_steps.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_values.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/pd_factor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_logdet.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/pd_logdet_dense.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/pd_repair.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_answers.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.html</loc></url>
@@ -144,6 +146,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_lmin.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/spec_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sqrt_design.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/start_at.StartIntercepts.html</loc></url>
@@ -249,5 +252,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_say.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/verbosity.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/worth_sparse.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.html</loc></url>
 </urlset>
 

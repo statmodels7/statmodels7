@@ -313,8 +313,12 @@ exported, and none is needed to use the package.
   : The Step a Coordinate Descent Would Take on a Block
 - [`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
   : The Values a Path Visits
+- [`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
+  : Factorize a Penalized Information Once
 - [`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
   : The Log-Determinant of a Penalized Information, Robustly
+- [`pd_logdet_dense()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet_dense.md)
+  : The Dense Route of pd_logdet
 - [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
   : Floor the Eigenvalues of a Curvature Matrix
 - [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
@@ -367,6 +371,8 @@ exported, and none is needed to use the package.
   : Solve a Scoring Step From a Sparse Square-Root Design
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
   : Fit One Non-Smooth Block, the Others Held Fixed
+- [`sparse_lmin()`](https://statmodels7.github.io/statmodels7/reference/sparse_lmin.md)
+  : The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 - [`spec_at()`](https://statmodels7.github.io/statmodels7/reference/spec_at.md)
   : Rebuild a Specification Against New Data
 - [`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
@@ -554,3 +560,7 @@ exported, and none is needed to use the package.
   : The Variance Matrix of a Fit
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting
+- [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
+  : Is a Matrix Worth Factorizing Sparsely?
+- [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
+  : Zero the Non-Finite Entries of a Penalty's Hessian

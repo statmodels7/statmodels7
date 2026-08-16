@@ -1,5 +1,120 @@
 # Changelog
 
+## statmodels7 0.53.0
+
+- The penalty’s Hessian is accumulated in the storage the DESIGN calls
+  for, by
+  [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)’s
+  own rule, so it is stored the way the information it is added to
+  already is. It was dense until now on the argument that eighteen
+  places read it and only the two a sparse design exercises would be
+  caught by the suite.
+
+  What settled it is a number that argument did not have: `random(~1|g)`
+  over 1000 levels is 6.620 s against 2.867 s, **2.31x**, and over 500
+  1.24x, with the matrix identical to the last bit, `logLik` and `edf`
+  identical, and 2.02 MB becoming 0.010 MB. The dense shapes are unmoved
+  (0.98x, 1.05x, 1.02x).
+
+- The win is NOT the allocation, which is 0.229 ms of a 0.992 ms call
+  and would have capped the whole thing at four per cent. It is that a
+  sparse `S` stays sparse downstream:
+  [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
+  returns a factor of 0.010 MB where it returned 2.0 MB, and
+  [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
+  no longer converts it. Measuring the accumulator alone would have
+  refused a change worth 2.31x.
+
+- [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
+  replaces the seven copies of `S[!is.finite(S)] <- 0`. That expression
+  is correct on a base matrix and a trap on a sparse one – the logical
+  index is a dense p by p matrix, so the storage would have been thrown
+  away at the first consumer. On a sparse matrix only the stored values
+  can be non-finite, so the same answer costs O(nnz).
+
+- Two sites assemble a matrix spanning the coefficients AND a structural
+  term’s own parameters, which is dense by construction, and now densify
+  the penalty explicitly before writing it into a slice. One of them
+  failed loudly in the suite – a filter beside a random effect – and the
+  other, its twin in the marginal criterion, did not fire only because
+  no test puts those two terms in one formula. Seventh round of this
+  conversion, and the first where the sweep for the shape found the
+  second site before it was reached.
+
+## statmodels7 0.52.0
+
+- The penalized information is factorized in the storage the MATRIX
+  calls for. `H` is already sparse wherever the design is, and
+  [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
+  was densifying the sum only because the penalty’s accumulator is a
+  base matrix. Where the sum is large enough and sparse enough to be
+  worth it
+  ([`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md),
+  whose two thresholds are the measured crossover), it is kept sparse
+  and factorized as such, and the log-determinant and the full inverse
+  are read off that factor.
+
+  Measured on the penalized information of a random intercept over 500
+  levels, p = 503 at a density of 0.014, each route timed with its own
+  factorization: the factorization and its log-determinant cost 0.102 ms
+  against 10.811 ms, and the full inverse 3.280 ms against 25.000 ms.
+  End to end the fit goes 1.25x at 500 levels and **2.01x at 1000**, the
+  gap between the operation and the fit being the lesson this file
+  records three times over – removing the dearer half leaves the cheaper
+  one.
+
+  ⚠️ Those are the figures with `Matrix`’s factorization CACHE defeated.
+  [`Matrix::Cholesky`](https://rdrr.io/pkg/Matrix/man/Cholesky-methods.html)
+  stores its result in the matrix’s `factors` slot, so a benchmark
+  refactorizing the same object measures a cache hit – 0.004 ms rather
+  than 0.102 – and an earlier draft of this entry quoted 0.030 ms and a
+  ratio of 414x on that basis. A fit never gets the hit, the penalized
+  matrix being a new one at every point, so the end-to-end numbers were
+  never affected.
+
+- Below the crossover the sparse route LOSES, so the gate is what makes
+  the change safe rather than an optimization with a tail of
+  regressions: 0.13x on the inverse at p = 23, 0.33x at p = 53, and
+  0.01x on the fully dense penalized information of a single smooth. The
+  three dense shapes of the battery are bit-identical to the previous
+  release.
+
+- [`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
+  is now the one place a penalized matrix is factorized, and
+  [`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
+  is it with the factor dropped, so the verdict on positive definiteness
+  is written once for both storages. The sparse route carries its own
+  condition estimate
+  ([`sparse_lmin()`](https://statmodels7.github.io/statmodels7/reference/sparse_lmin.md),
+  Higham’s one-norm estimator against the factor’s solves):
+  [`Matrix::rcond`](https://rdrr.io/pkg/Matrix/man/rcond-methods.html)
+  costs 10.3 ms at p = 503 and 500 ms at p = 2003, more than the
+  factorization it would be guarding, where the estimator is 0.58 ms to
+  0.80 ms and nearly flat. As on the dense route, the verdict never
+  turns on whether a factorization raised.
+
+- The route is a property of the matrix and not of the term that built
+  it, which is checked rather than asserted. With every design built the
+  same way it is worth 1.38x on `0 + g + s(x)` over 400 levels, 1.33x on
+  `random(~1|g)` over 500 and 1.07x on `s(x, by = g)` over 60 – an
+  unpenalized indicator block, a random effect and a factor-`by` smooth,
+  gaining together and in the order their sizes predict. It also
+  survives the prior changing: with
+  `random(~1|g, distrib = fixed(student_t1_distrib(), mu = 0))`, whose
+  penalty is separable and moves with the coefficients at every inner
+  iteration and whose `nu` is estimated, the same route is taken and is
+  worth 1.24x against the Gaussian prior’s 1.45x on the same data.
+
+- Sharing that factorization with the criterion was MEASURED AND NOT
+  TAKEN. Where the criterion’s matrix is the one
+  [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
+  holds, the same matrix is factorized twice at one point – 12.4 ms
+  spent twice at p = 503 – and reading the determinant from the context
+  removes one of them. End to end it is worth nothing: 1.01x at p = 503,
+  and 0.92x to 1.04x over the four shapes. The criterion is evaluated at
+  many points the gradient never reaches, every trial point of a line
+  search among them, and there is nothing to share at those.
+
 ## statmodels7 0.51.0
 
 - The leverage diagonal is read in whichever order gives the SMALLER
