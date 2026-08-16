@@ -878,8 +878,14 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
     cf <- obj$split(b)
     H <- statmod_full_information(spec, cf, design)
     P <- matrix(0, nrow(H), ncol(H))
+    # as_dense() for the reason statmod_full_information() records: this
+    # matrix spans the coefficients AND the term's own parameters, so it is
+    # dense by construction, and writing a sparse block into a slice of a
+    # dense one signals that the number of items to replace is not a multiple
+    # of the replacement length -- from inside the objective, naming nothing
+    # a caller wrote.
     P[seq_len(nb), seq_len(nb)] <-
-      statmod_penalty_at(spec, cf, hyper, design, "hessian")
+      as_dense(statmod_penalty_at(spec, cf, hyper, design, "hessian"))
     ph <- statmod_structural_penalty(spec, design, hyper, "hessian")
     if (!is.null(ph[[key]])) P[ix, ix] <- ph[[key]][free, free, drop = FALSE]
     H + P

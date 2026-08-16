@@ -998,7 +998,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
     smoother <- tryCatch({
       H <- statmod_information_at(spec, coef, design, expected, approx)
       S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-      S[!is.finite(S)] <- 0
+      S <- zap_nonfinite(S)
       # through solve_pd's eigendecomposition, with the unpenalized
       # information as the reference scale: a smoothing parameter a
       # criterion sends to 1e15 separates the scales without flattening a

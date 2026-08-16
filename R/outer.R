@@ -462,11 +462,17 @@ statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
                 error = function(e) NULL)
   if (is.null(K) || nrow(K) != nb + length(free)) return(NULL)
   S <- matrix(0, nrow(K), ncol(K))
+  # as_dense() for the same reason the joint objective's own Hessian gives:
+  # this matrix spans the coefficients AND the structural term's parameters
+  # and is dense by construction, so a sparse block cannot be written into a
+  # slice of it. This site is the twin of the one in statmod_fit_joint(), and
+  # only that one failed when the penalty's accumulator followed the design --
+  # a formula carrying both a filter and a random effect is what reaches it.
   S[seq_len(nb), seq_len(nb)] <-
-    statmod_penalty_at(spec, coef, hyper, design, "hessian")
+    as_dense(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   ps <- structural_penalty_block(spec, design, hyper, length(free))
   if (!is.null(ps)) S[ix, ix] <- ps
-  S[!is.finite(S)] <- 0
+  S <- zap_nonfinite(S)
   M <- K + S
   if (is.null(basis)) return(M)
   # the same subspace the gradient projects onto, composed once: two callers
@@ -530,6 +536,16 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
     M <- statmod_marginal_full(spec, design, coef, hyper, basis)
     if (is.null(M)) return(NULL)
   } else {
+    # ⚠️ Sharing the factorization with ctx_penalized() was MEASURED AND NOT
+    # TAKEN. Where the criterion's matrix is the one that context holds -- the
+    # observed information, nothing projected away -- the same matrix is
+    # factorized here and there, which at p = 503 is 12.4 ms spent twice, and
+    # reading the determinant from the context removes one of them. End to
+    # end it is worth nothing: 1.01x at p = 503 and 0.92x to 1.04x over the
+    # four shapes, because the criterion is evaluated at many points the
+    # gradient never reaches (every trial point of a line search) and there
+    # is nothing to share at those. The cheap route below is sparse where the
+    # matrix is, which serves the criterion-only points as well.
     H <- ctx_information(ctx, spec, design, coef, hyper, expected, approx)
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     M <- H + S

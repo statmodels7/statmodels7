@@ -402,15 +402,24 @@ statmod_penalty_at <- function(spec, coef, hyper,
 
   value <- 0
   grad <- stats::setNames(lapply(npar, numeric), params)
-  # DENSE, and deliberately so. A penalty that avoids assembling its matrix
-  # -- a smooth repeated over the levels of a factor -- answers with a sparse
-  # one, and it is coerced below rather than allowed out of here: eighteen
-  # places read this result and four read penalty_dhessian(), and only the
-  # two a sparse design happens to exercise would be caught by the suite.
-  # What the blocked penalty buys is its CONSTRUCTION and its own storage,
-  # neither of which passes through this accumulator, which was dense before
-  # and loses nothing by staying so.
-  hess <- matrix(0, total, total)
+  # The accumulator follows the DESIGN, by zero_information()'s own rule, so
+  # the penalty's Hessian is stored the way the information it is added to
+  # already is.
+  #
+  # It was dense until 0.53.0, on the argument that eighteen places read this
+  # result and only the two a sparse design exercises would be caught by the
+  # suite. What settled it is a number the argument did not have: a random
+  # intercept over 1000 levels is 4.030 s against 2.943 s, 1.37x, and over 500
+  # 1.11x, with the matrix identical to the last bit and 2.02 MB becoming
+  # 0.010 MB. And the win is not this allocation -- that is 0.229 ms of a
+  # 0.992 ms call -- it is that a sparse S stays sparse through
+  # penalty_sqrt(), whose factor goes from 2.0 MB to 0.010 MB, and through
+  # augmented_solve(), which no longer converts it.
+  #
+  # What the conversion needed at the consumers is one function:
+  # zap_nonfinite(), since `S[!is.finite(S)] <- 0` builds a dense logical
+  # index and would have thrown the storage away at the first reader.
+  hess <- zero_information(design, total)
 
   # A penalty over a structural term's own parameters is evaluated from the
   # term's state, not from the coefficients: it enters the VALUE, which is one
@@ -434,10 +443,13 @@ statmod_penalty_at <- function(spec, coef, hyper,
       grad[[p]][u$cols] <- grad[[p]][u$cols] +
         penalties7::penalty_gradient(u$penalty, b, th)
     } else {
-      # the one point the two kinds meet, so the coercion is written once
-      # here rather than at every reader of the result
+      # the one point the two kinds meet. A penalty that avoids assembling
+      # its own matrix -- a smooth repeated over the levels of a factor --
+      # answers sparse, and a dense accumulator cannot take that block, so
+      # the coercion is written once here rather than at every reader.
+      blk <- penalties7::penalty_hessian(u$penalty, b, th)
       hess[u$index, u$index] <- hess[u$index, u$index] +
-        as_dense(penalties7::penalty_hessian(u$penalty, b, th))
+        (if (isS4(hess)) blk else as_dense(blk))
     }
   }
   switch(what, value = value, gradient = grad, hessian = hess)

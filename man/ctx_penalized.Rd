@@ -12,15 +12,45 @@ ctx_penalized(ctx, spec, design, coef, hyper)
 \item{spec, design, coef, hyper}{The fallback arguments.}
 }
 \value{
-A list with \code{K} and \code{inv}, or \code{NULL}.
+A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
 }
 \description{
-\eqn{K = H + S} with the OBSERVED information, its Cholesky factor and its
-inverse, which the gradient and the Hessian both read.
+\eqn{K = H + S} with the OBSERVED information, and its inverse, which the
+gradient and the Hessian both read.
 }
 \details{
-The inverse of a sparse matrix is dense, so densifying costs nothing
-sparsity could have kept. \code{NULL} is returned where the factorization
-fails, which is the answer both callers already gave there.
+\strong{The storage is the matrix's own.} \eqn{H} is already sparse
+wherever the design is -- a grouping indicator, a factor \code{by}, a
+\code{linpar} over many levels -- and it was being densified here only
+because the penalty's accumulator is a base matrix. Where the sum is large
+enough and sparse enough to be worth it (\code{\link{worth_sparse}}) it is
+kept sparse and factorized as such: measured on a random intercept over 500
+levels, p = 503 at a density of 0.014, the factorization and its
+log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
+3.280 ms against 25.000 ms, each route timed WITH its own factorization.
+End to end that is 1.25x at 500 levels and 2.01x at 1000, the difference
+between the operation and the fit being the lesson this package records
+three times over: removing the dearer half leaves the cheaper one. Nothing
+here asks which term produced the matrix; both quantities are read off the
+matrix.
+
+⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
+CACHE defeated. \code{Matrix::Cholesky} stores its result in the matrix's
+\code{factors} slot, so a benchmark that refactorizes the same object
+measures a cache hit -- 0.004 ms rather than 0.102 -- and reports the
+sparse route as three times better than it is. A fit never gets that hit,
+the penalized matrix being a new one at every point.
+
+\strong{The inverse stays dense whatever the factor is.} Its readers take
+full matrix products against it -- \code{\link{block_leverage}} and the
+Hessian's pair loop -- so the inverse of a sparse matrix being dense costs
+nothing sparsity could have kept. What the sparse factor buys is the cost
+of producing it.
+
+\code{NULL} is returned where the matrix is not positive definite, which is
+the answer both callers already gave there.
+}
+\seealso{
+\code{\link{pd_factor}}
 }
 \keyword{internal}

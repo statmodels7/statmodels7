@@ -213,7 +213,7 @@ statmod_pe <- function(spec, design, coef, hyper, method,
   ll <- statmod_loglik_at(spec, coef, design)
   H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  S[!is.finite(S)] <- 0
+  S <- zap_nonfinite(S)
   tau <- outer_tau(H + S, H, active)
   if (!is.finite(tau)) return(NULL)
   k <- outer_k(method, spec@n_obs)
@@ -264,7 +264,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
 
   H <- statmod_information_at(spec, coef, design, expected = FALSE)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  S[!is.finite(S)] <- 0
+  S <- zap_nonfinite(S)
   # The routes below form a FULL inverse, and the inverse of a sparse matrix
   # is dense, so densifying here gives up nothing sparsity could have kept.
   J <- as_dense(H + S)

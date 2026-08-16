@@ -144,6 +144,10 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
   if (nz > 0L) {
+    # A structural term's own information is assembled dense, so the padded
+    # penalty is dense too rather than a sum of two kinds whose result would
+    # depend on which side of the bind it arrived on.
+    S <- as_dense(S)
     S <- rbind(cbind(S, matrix(0, total, nz)),
                matrix(0, nz, total + nz))
     # A penalty over the term's OWN parameters belongs in that tail. Leaving
@@ -160,7 +164,7 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   keep[lab$kinked & beta == 0] <- FALSE
   # a kinked penalty contributes no curvature away from its kink either, and
   # any non-finite entry would be the kink itself reached by a hair
-  S[!is.finite(S)] <- 0
+  S <- zap_nonfinite(S)
 
   out <- matrix(NA_real_, total, total, dimnames = list(nm, nm))
   if (!any(keep)) return(out)
@@ -301,6 +305,206 @@ solve_pd <- function(A, what, labels = NULL, scale = NULL) {
 }
 
 
+#' Is a Matrix Worth Factorizing Sparsely?
+#'
+#' @description
+#' Whether a symmetric matrix is large enough and sparse enough that a sparse
+#' Cholesky beats a dense one, asked of the MATRIX and of nothing else.
+#'
+#' @details
+#' The two conditions are the measured crossover and not a preference. On the
+#' penalized information of a random intercept over \eqn{m} levels at 20000
+#' observations, the sparse route against the dense one -- coercion,
+#' factorization, log-determinant and full inverse, each timed with the
+#' repetition loop sized by elapsed time:
+#'
+#' \tabular{rrrrr}{
+#'   \strong{m} \tab \strong{p} \tab \strong{density} \tab \strong{whole route}
+#'     \tab \strong{inverse} \cr
+#'   20 \tab 23 \tab 0.282 \tab 1.08x \tab \strong{0.13x} \cr
+#'   50 \tab 53 \tab 0.128 \tab 1.06x \tab \strong{0.33x} \cr
+#'   100 \tab 103 \tab 0.067 \tab 1.18x \tab 1.14x \cr
+#'   200 \tab 203 \tab 0.034 \tab 1.74x \tab 2.9x \cr
+#'   500 \tab 503 \tab 0.014 \tab 5.28x \tab 7.6x \cr
+#'   1000 \tab 1003 \tab 0.007 \tab 2.50x \tab 11.2x \cr
+#'   2000 \tab 2003 \tab 0.003 \tab 4.20x \tab 7.0x
+#' }
+#'
+#' The whole-route column builds the matrix afresh on each repetition and is
+#' the one the thresholds are read from. The inverse column is the like-for-
+#' like comparison, each route carrying its own factorization; an earlier
+#' version of it timed the sparse solves against a factor built once outside
+#' the loop, which flattered the sparse side without changing where it loses.
+#'
+#' Below about a hundred coefficients the sparse route LOSES, and loses badly:
+#' its fixed cost is the coercion and the S4 dispatch around it, which does not
+#' shrink with the matrix. On the fully dense penalized information of a single
+#' smooth (p = 16, density 1) it measures 0.01x, a hundred times slower, which
+#' is what the size condition is there to prevent.
+#'
+#' \strong{Both quantities are read off the matrix, and the first one is its
+#' STORAGE.} A matrix held as a base matrix is refused whatever its zeros,
+#' which reads like a test of the container rather than of the mathematics, so
+#' it is worth saying why it is neither an oversight nor a term test.
+#' \code{\link{statmod_information_at}} accumulates into the design's own kind,
+#' so the penalized matrix is stored sparsely exactly when the design is, and
+#' \pkg{modelterms7} builds a block sparse only when asked
+#' (\code{sparse = TRUE}, whose default is \code{FALSE}). Measured on
+#' \code{y ~ 0 + g + s(x)} over 400 levels at 20000 observations, whose
+#' penalized matrix is 5 per cent nonzero either way: built dense the fit takes
+#' 104.24 s and this factorization is \strong{0.16 per cent} of it, the time
+#' being in the \eqn{O(np^2)} products against a dense design
+#' (\code{statmod_information_at} 48.8 per cent, \code{crossprod} 57.2 per cent
+#' of self time); built sparse the same fit takes 2.19 s. So where the storage
+#' is dense the factorization is not what a fit is spending its time on, and
+#' coercing a dense \eqn{p \times p} matrix here to save a share of that size
+#' would cost more than it returns.
+#'
+#' \strong{The like-for-like comparison is the one that says this is not a term
+#' test}, and it is the check \code{piano_lme4.txt} section 5 asks for. With
+#' every design built the same way, this route is worth 1.38x on
+#' \code{0 + g + s(x)} over 400 levels, 1.33x on \code{random(~1|g)} over 500
+#' and 1.07x on \code{s(x, by = g)} over 60 -- an unpenalized indicator block,
+#' a random effect and a factor-\code{by} smooth, gaining together and in the
+#' order their sizes predict. Nothing here asks which term or which family
+#' produced the matrix.
+#'
+#' @param M A symmetric matrix.
+#' @param min_dim The smallest order worth the fixed cost.
+#' @param max_density The largest fraction of nonzeros worth it.
+#'
+#' @return A single logical.
+#'
+#' @seealso \code{\link{pd_factor}}
+#'
+#' @keywords internal
+worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
+  if (!isS4(M)) return(FALSE)
+  p <- ncol(M)
+  if (!length(p) || p < min_dim) return(FALSE)
+  nz <- tryCatch(length(M@x), error = function(e) NA_integer_)
+  if (is.na(nz)) return(FALSE)
+  nz / (as.numeric(p) * p) <= max_density
+}
+
+
+#' The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
+#'
+#' @description
+#' \eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, which is the
+#' quantity LAPACK's \code{dpocon} produces from a dense one.
+#'
+#' @details
+#' The sparse route needs a condition estimate OF ITS OWN, and it cannot
+#' borrow the dense one: \code{chol_rcond_cpp} reads a dense triangular
+#' factor. \code{Matrix::rcond} is not the answer either -- measured, it costs
+#' 10.3 ms at p = 503 and 500 ms at p = 2003, more than the dense
+#' factorization the sparse route exists to replace. Higham's one-norm
+#' estimator applied to the factor's own solves costs 0.58 ms at p = 53 and
+#' 0.80 ms at p = 1003, nearly flat, because it is a handful of triangular
+#' solves and an R loop around them.
+#'
+#' For a symmetric matrix \eqn{\lVert A^{-1}\rVert_1 \ge \lVert
+#' A^{-1}\rVert_2 = 1/\lambda_{\min}}, so the quantity returned is at or below
+#' the smallest eigenvalue, and the estimator's own error is a further
+#' underestimate of the norm in the other direction. It is used exactly as the
+#' dense estimate is: to separate a matrix comfortably positive definite from
+#' one that is not, two situations that differ by some fifteen orders of
+#' magnitude here (measured on a design with two identical columns, 1.4e-14
+#' relative to the matrix's scale, against 1.5e3 for a hyperparameter driven
+#' to 1e15). A factor of two either way cannot move that verdict, which is the
+#' argument already recorded for the dense estimator.
+#'
+#' @param L A \code{CHMfactor}.
+#' @param p The order of the matrix.
+#'
+#' @return A single number, or \code{NA_real_} where the estimate failed.
+#'
+#' @seealso \code{\link{pd_factor}}, \code{\link{pd_logdet}}
+#'
+#' @keywords internal
+sparse_lmin <- function(L, p) {
+  ax <- function(x) as.matrix(Matrix::solve(L, as.matrix(x)))
+  est <- tryCatch(
+    Matrix::onenormest(A.x = ax, At.x = ax, n = p, t = 1, silent = TRUE)$est,
+    error = function(e) NA_real_)
+  if (!is.finite(est) || est <= 0) return(NA_real_)
+  1 / est
+}
+
+
+#' Factorize a Penalized Information Once
+#'
+#' @description
+#' The Cholesky factor of a matrix a Laplace approximation needs positive
+#' definite, together with its log-determinant, in whichever storage the
+#' matrix itself calls for.
+#'
+#' @details
+#' This is the one place the penalized matrix is factorized. The criterion
+#' wants its log-determinant, the gradient wants the mode's movement and the
+#' Hessian wants both plus the inverse; before this existed the criterion and
+#' \code{\link{ctx_penalized}} each factorized the SAME matrix at the same
+#' point, which at p = 503 was 12.4 ms spent twice.
+#'
+#' \strong{The verdict is unchanged and so is its property.} Whether the
+#' matrix is accepted never turns on whether a factorization raised: where the
+#' cheap test is inconclusive the eigendecomposition answers about the matrix.
+#' The sparse route carries its own condition estimate
+#' (\code{\link{sparse_lmin}}) rather than the dense one, and falls back to
+#' the dense route where that estimate cannot be formed, so a refusal is
+#' reached by the same reasoning on either storage.
+#'
+#' @param M A symmetric matrix, sparse or dense.
+#' @param scale A reference magnitude, as \code{\link{pd_logdet}} takes.
+#'
+#' @return A list with \code{logdet}, \code{ok}, \code{factor} and
+#'   \code{sparse}. The factor is \code{NULL} where the answer came from the
+#'   eigendecomposition.
+#'
+#' @seealso \code{\link{pd_logdet}}, \code{\link{ctx_penalized}}
+#'
+#' @keywords internal
+pd_factor <- function(M, scale = NULL) {
+  no <- function() list(logdet = NA_real_, ok = FALSE, factor = NULL,
+                        sparse = FALSE)
+  if (!length(ncol(M)) || !ncol(M)) return(no())
+
+  if (worth_sparse(M)) {
+    p <- ncol(M)
+    if (!all(is.finite(M@x))) return(no())
+    anorm <- max(Matrix::colSums(abs(M)))
+    ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
+           else min(scale, anorm)
+    Ms <- tryCatch(Matrix::forceSymmetric(M), error = function(e) NULL)
+    # CHOLMOD reports a matrix it cannot factorize as a WARNING and not as an
+    # error, where the dense route raises and is caught. A hyperparameter the
+    # search should step away from is not something to warn a caller about --
+    # the criterion returns NULL there and the search backtracks -- so the
+    # warning is suppressed and the verdict is read off the return value, as
+    # it is on the dense route.
+    L <- if (is.null(Ms)) NULL else
+      suppressWarnings(tryCatch(Matrix::Cholesky(Ms, LDL = FALSE, super = NA),
+                                error = function(e) NULL))
+    if (!is.null(L)) {
+      lmin <- sparse_lmin(L, p)
+      if (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref) {
+        ld <- tryCatch(2 * as.numeric(Matrix::determinant(
+          L, logarithm = TRUE, sqrt = TRUE)$modulus),
+          error = function(e) NA_real_)
+        if (is.finite(ld)) {
+          return(list(logdet = ld, ok = TRUE, factor = L, sparse = TRUE))
+        }
+      }
+    }
+    # inconclusive: the dense route asks the matrix, which is what settles it
+  }
+
+  d <- pd_logdet_dense(as_dense(M), scale)
+  c(d, list(sparse = FALSE))
+}
+
+
 #' The Log-Determinant of a Penalized Information, Robustly
 #'
 #' @description
@@ -342,7 +546,33 @@ solve_pd <- function(A, what, labels = NULL, scale = NULL) {
 #'
 #' @keywords internal
 pd_logdet <- function(M, scale = NULL) {
-  M <- as_dense(M)
+  r <- pd_factor(M, scale)
+  r$factor <- NULL
+  r$sparse <- NULL
+  r
+}
+
+
+#' The Dense Route of pd_logdet
+#'
+#' @description
+#' The three routes described at \code{\link{pd_logdet}}, on a dense matrix.
+#'
+#' @details
+#' Split out so that \code{\link{pd_factor}} can reach it as the fallback of
+#' the sparse route without restating the verdict: there is one place that
+#' decides whether a matrix is positive definite, and one set of thresholds.
+#'
+#' @param M A dense symmetric matrix.
+#' @param scale A reference magnitude.
+#'
+#' @return A list with \code{logdet}, \code{ok} and, on a refusal reached
+#'   through the eigendecomposition, \code{min_ev} and \code{max_ev}.
+#'
+#' @seealso \code{\link{pd_logdet}}
+#'
+#' @keywords internal
+pd_logdet_dense <- function(M, scale = NULL) {
   if (!ncol(M) || !all(is.finite(M))) return(list(logdet = NA_real_, ok = FALSE))
   anorm <- max(colSums(abs(M)))
   ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
@@ -362,7 +592,9 @@ pd_logdet <- function(M, scale = NULL) {
     # comfortably clear of the floor: chol's answer is its own evidence, and
     # this is the common case, so the eigendecomposition is never computed
     if (is.finite(lmin) && lmin > sqrt(.Machine$double.eps) * ref) {
-      return(list(logdet = 2 * sum(log(diag(ch))), ok = TRUE))
+      # the factor travels with the answer so that a caller wanting the
+      # inverse as well does not compute a second one of the same matrix
+      return(list(logdet = 2 * sum(log(diag(ch))), ok = TRUE, factor = ch))
     }
   }
   # inconclusive or refused: ask the MATRIX rather than the arithmetic

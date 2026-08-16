@@ -471,7 +471,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 
   H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  S[!is.finite(S)] <- 0
+  S <- zap_nonfinite(S)
   Vb <- tryCatch(solve(H + S), error = function(e) NULL)
   if (is.null(Vb)) return(zero)
 
