@@ -1,5 +1,67 @@
 # Changelog
 
+## statmodels7 0.61.0
+
+- **The outer Hessian reads a block that moves with its coefficients.**
+  `nl()`, `seg()`, `jump()` and `jseg()` build their block as the
+  Jacobian at the current coefficients, so `dX/dbeta` enters the
+  criterion’s second derivative in three places – the matrix `dK/dt`,
+  its trace against `M`, and the twice-contracted fourth derivative –
+  and none of them had it. The derivative is asked of the term through
+  [`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
+  and never differenced here.
+
+- **And the mode moves by the penalized likelihood’s own curvature, not
+  by `K`**, which is the same pair of matrices
+  [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+  already keeps apart through
+  [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md).
+  Differenced against two refits of the mode on a weakly identified
+  `nl`, `b_m` read off `K` is `6.6e-01` wrong and `5.2e-05` read off
+  `K + Dm`; everything downstream inherits it, which is why the three
+  corrections above moved the Hessian by nothing until this was written
+  with them.
+
+- Measured against a central difference of the exact gradient with the
+  mode refitted, over the dimensionless nonlinearity `r * x_max` of
+  `a * exp(-r x)`:
+
+  | `r * x_max` | before   | after    | standard error        |
+  |-------------|----------|----------|-----------------------|
+  | 0.5         | 2.10e-01 | 3.54e-03 | 1.25e-01 -\> 1.77e-03 |
+  | 1.0         | 3.20e-02 | 9.51e-04 | 1.64e-02 -\> 4.76e-04 |
+  | 2.0         | 1.96e-03 | 1.42e-04 | 9.80e-04 -\> 7.09e-05 |
+  | 4.0         | 1.84e-05 | 1.49e-05 |                       |
+  | 7.0         | 5.97e-05 | 1.56e-05 |                       |
+  | 12.0        | 5.69e-04 | 3.27e-05 |                       |
+
+  The error is largest where the model is NEARLY LINEAR and the
+  parameters are weakly identified, which is the regime in which a
+  standard error is read to decide whether a parameter is estimable at
+  all. `seg()` goes from `1.59e-07` to `9.35e-08`.
+
+- On a BILINEAR `f`, where the term’s own third derivative is exactly
+  zero and the one omitted piece therefore vanishes, the corrected
+  Hessian reaches the reference’s own floor: `1.33e-05` to `2.14e-07`,
+  and the residual GROWS as the step shrinks (`2.14e-07`, `9.73e-07`,
+  `4.88e-06` at `h` of `1e-3`, `1e-4`, `1e-5`), which is the mode’s
+  location and not a missing term.
+
+- What is NOT computed is `d2X/dbeta2`, the term’s own third derivative,
+  for which no contract exists. It is what keeps the weakly identified
+  cell at `3.5e-03` rather than at the floor.
+
+- A model with no refreshable term is untouched bit for bit – the
+  criterion, the gradient, the Hessian, the effective degrees of freedom
+  and the coefficients all `0.0e+00` against the stored twin on four
+  shapes – and the corrections there are the zero matrix and the number
+  zero rather than small numbers.
+
+- [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  and
+  [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
+  read that Hessian, so both follow with no change of their own.
+
 ## statmodels7 0.60.0
 
 - **A kinked penalty on a block that MOVES with its coefficients is

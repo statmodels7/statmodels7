@@ -116,5 +116,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -35.407348    objective 40.890371
 #> REML -55.808442 over 5 hyperparameter evaluation(s)
-#> fitted in 201 ms, converged
+#> fitted in 206 ms, converged
 ```

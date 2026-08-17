@@ -139,6 +139,8 @@ exported, and none is needed to use the package.
   : Confidence Intervals for a Fit
 - [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
   : The Third Derivative of the Objective Contracted Once
+- [`contract3_refresh()`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md)
+  : How a Moving Block Enters the Contracted Third Derivative
 - [`contract4()`](https://statmodels7.github.io/statmodels7/reference/contract4.md)
   : The Fourth Derivative of the Objective Contracted Twice
 - [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
@@ -185,6 +187,8 @@ exported, and none is needed to use the package.
   : The Held-Out Deviance of Every Point of a Path
 - [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
   : Assign the Observations to Folds
+- [`d3_direction()`](https://statmodels7.github.io/statmodels7/reference/d3_direction.md)
+  : The Third Derivative Already Contracted in One Direction
 - [`d3_key()`](https://statmodels7.github.io/statmodels7/reference/d3_key.md)
   : The Name of a Third-Derivative Component
 - [`d4_key()`](https://statmodels7.github.io/statmodels7/reference/d4_key.md)
@@ -361,6 +365,16 @@ exported, and none is needed to use the package.
   : Print One Block of a Summary
 - [`readable_hyper_rows()`](https://statmodels7.github.io/statmodels7/reference/readable_hyper_rows.md)
   : The Quantities a Penalty's Hyperparameters Are About
+- [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
+  : The Weight a Refreshable Block Is Contracted Against
+- [`refresh_dblock()`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock.md)
+  : A Refreshable Block's Derivative Along One Direction
+- [`refresh_direction()`](https://statmodels7.github.io/statmodels7/reference/refresh_direction.md)
+  : What One Direction Costs a Moving Block
+- [`refresh_hessian()`](https://statmodels7.github.io/statmodels7/reference/refresh_hessian.md)
+  : The Log-Density's Curvature the Refresh Corrections Read
+- [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
+  : The Terms Whose Block Moves With Their Coefficients
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
   : Does a Term Recompute Its Own Block?
 - [`reject_incompatible()`](https://statmodels7.github.io/statmodels7/reference/reject_incompatible.md)
@@ -560,6 +574,8 @@ exported, and none is needed to use the package.
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
   : The Trace Against a Contraction, Without Forming It
+- [`trace_refresh4()`](https://statmodels7.github.io/statmodels7/reference/trace_refresh4.md)
+  : How a Moving Block Enters the Twice-Contracted Fourth Derivative
 - [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
   : How the Determinant Reads a Block That Moves With the Coefficients
 - [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)

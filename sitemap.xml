@@ -27,6 +27,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract3.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/contract3_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract4.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_call.html</loc></url>
@@ -51,6 +52,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_curve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_folds.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/d3_direction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d4_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv3_key.html</loc></url>
@@ -139,6 +141,11 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.start_strategy.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/readable_hyper_rows.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_amat.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_dblock.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_direction.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_hessian.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/refresh_units.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_incompatible.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_nested_offsets.html</loc></url>
@@ -252,6 +259,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/trace_design_form.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/trace_refresh4.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unfittable_reason.html</loc></url>

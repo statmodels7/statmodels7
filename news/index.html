@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.60.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.61.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,47 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.61.0" id="statmodels7-0610">statmodels7 0.61.0<a class="anchor" aria-label="anchor" href="#statmodels7-0610"></a></h2>
+<ul><li><p><strong>The outer Hessian reads a block that moves with its coefficients.</strong> <code>nl()</code>, <code>seg()</code>, <code>jump()</code> and <code>jseg()</code> build their block as the Jacobian at the current coefficients, so <code>dX/dbeta</code> enters the criterion’s second derivative in three places – the matrix <code>dK/dt</code>, its trace against <code>M</code>, and the twice-contracted fourth derivative – and none of them had it. The derivative is asked of the term through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html" class="external-link">modelterms7::term_block_deriv()</a></code> and never differenced here.</p></li>
+<li><p><strong>And the mode moves by the penalized likelihood’s own curvature, not by <code>K</code></strong>, which is the same pair of matrices <code><a href="../reference/statmod_marginal_grad.html">statmod_marginal_grad()</a></code> already keeps apart through <code><a href="../reference/mode_curvature.html">mode_curvature()</a></code>. Differenced against two refits of the mode on a weakly identified <code>nl</code>, <code>b_m</code> read off <code>K</code> is <code>6.6e-01</code> wrong and <code>5.2e-05</code> read off <code>K + Dm</code>; everything downstream inherits it, which is why the three corrections above moved the Hessian by nothing until this was written with them.</p></li>
+<li>
+<p>Measured against a central difference of the exact gradient with the mode refitted, over the dimensionless nonlinearity <code>r * x_max</code> of <code>a * exp(-r x)</code>:</p>
+<table class="table"><thead><tr><th><code>r * x_max</code></th>
+<th>before</th>
+<th>after</th>
+<th>standard error</th>
+</tr></thead><tbody><tr><td>0.5</td>
+<td>2.10e-01</td>
+<td>3.54e-03</td>
+<td>1.25e-01 -&gt; 1.77e-03</td>
+</tr><tr><td>1.0</td>
+<td>3.20e-02</td>
+<td>9.51e-04</td>
+<td>1.64e-02 -&gt; 4.76e-04</td>
+</tr><tr><td>2.0</td>
+<td>1.96e-03</td>
+<td>1.42e-04</td>
+<td>9.80e-04 -&gt; 7.09e-05</td>
+</tr><tr><td>4.0</td>
+<td>1.84e-05</td>
+<td>1.49e-05</td>
+<td></td>
+</tr><tr><td>7.0</td>
+<td>5.97e-05</td>
+<td>1.56e-05</td>
+<td></td>
+</tr><tr><td>12.0</td>
+<td>5.69e-04</td>
+<td>3.27e-05</td>
+<td></td>
+</tr></tbody></table><p>The error is largest where the model is NEARLY LINEAR and the parameters are weakly identified, which is the regime in which a standard error is read to decide whether a parameter is estimable at all. <code>seg()</code> goes from <code>1.59e-07</code> to <code>9.35e-08</code>.</p>
+</li>
+<li><p>On a BILINEAR <code>f</code>, where the term’s own third derivative is exactly zero and the one omitted piece therefore vanishes, the corrected Hessian reaches the reference’s own floor: <code>1.33e-05</code> to <code>2.14e-07</code>, and the residual GROWS as the step shrinks (<code>2.14e-07</code>, <code>9.73e-07</code>, <code>4.88e-06</code> at <code>h</code> of <code>1e-3</code>, <code>1e-4</code>, <code>1e-5</code>), which is the mode’s location and not a missing term.</p></li>
+<li><p>What is NOT computed is <code>d2X/dbeta2</code>, the term’s own third derivative, for which no contract exists. It is what keeps the weakly identified cell at <code>3.5e-03</code> rather than at the floor.</p></li>
+<li><p>A model with no refreshable term is untouched bit for bit – the criterion, the gradient, the Hessian, the effective degrees of freedom and the coefficients all <code>0.0e+00</code> against the stored twin on four shapes – and the corrections there are the zero matrix and the number zero rather than small numbers.</p></li>
+<li><p><code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> and <code><a href="../reference/statmod_edf_correction.html">statmod_edf_correction()</a></code> read that Hessian, so both follow with no change of their own.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.60.0" id="statmodels7-0600">statmodels7 0.60.0<a class="anchor" aria-label="anchor" href="#statmodels7-0600"></a></h2>
 <ul><li><p><strong>A kinked penalty on a block that MOVES with its coefficients is fitted rather than refused.</strong> <code><a href="../reference/coord_fit.html">coord_fit()</a></code> read the block as it arrived and solved against the linear predictor <code>X beta</code>, and a term registering <code>term_refresh()</code> has neither property: its block is the Jacobian at the current coefficients, and what it contributes is <code>X beta + adj</code>. The sweep therefore updated the working residual of a different model.</p></li>

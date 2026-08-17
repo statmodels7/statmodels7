@@ -18,7 +18,9 @@ u_refresh(
   offs,
   total,
   expected = FALSE,
-  approx = "bartlett"
+  approx = "bartlett",
+  units = NULL,
+  Hl = NULL
 )
 ```
 
@@ -53,6 +55,18 @@ u_refresh(
 
   The approximation for the expected information.
 
+- units:
+
+  The refreshable terms, from
+  [`refresh_units`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md),
+  or `NULL` to resolve them here.
+
+- Hl:
+
+  The link-scale curvature, from
+  [`refresh_hessian`](https://statmodels7.github.io/statmodels7/reference/refresh_hessian.md),
+  or `NULL` to compute it here.
+
 ## Value
 
 A numeric vector as long as the stacked coefficients.
@@ -80,4 +94,5 @@ zeros, which is exactly right for a fixed design.
 ## See also
 
 [`u_vector`](https://statmodels7.github.io/statmodels7/reference/u_vector.md),
+[`refresh_amat`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md),
 [`term_block_contract`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)
