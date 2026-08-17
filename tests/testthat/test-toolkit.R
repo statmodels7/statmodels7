@@ -13,6 +13,10 @@ test_that("the members are the ones DESCRIPTION imports", {
   path <- system.file("DESCRIPTION", package = "statmodels7")
   imports <- read.dcf(path, fields = "Imports")[[1L]]
   declared <- trimws(unlist(strsplit(imports, "[,\n]")))
+  # a version constraint is part of the FIELD and not of the name, and this
+  # second parser has to say so as the first one does -- an entry written
+  # `distributions7 (>= 0.24.0)` is the same member as `distributions7`
+  declared <- trimws(sub("\\(.*", "", declared))
   declared <- declared[nzchar(declared)]
   expect_true(all(pkgs %in% declared))
 

@@ -257,10 +257,19 @@ test_that("the stopping rule is dimensionless in the response", {
   # smoothing parameter reported is twelve decades past the optimum. That is a
   # property of the criterion's surface and is recorded as an open item; what
   # this test is about is the INNER rule surviving a rescaling of the response.
+  # ⚠️ The outer optimizer is PINNED, and for the same reason the criterion is:
+  # reml("expected") acquired an exact gradient, so its default search is
+  # lbfgs rather than a simplex, and a quasi-Newton walks this plateau exactly
+  # as the observed route's Newton does. Measured at all three scales, the two
+  # searches reach the SAME fit -- lambda to five significant figures, the
+  # correlation with the truth to five decimals, the criterion to the printed
+  # digit -- and differ only in the flag, which is the outer surface and not
+  # the inner rule this test is about.
   fits <- lapply(c(1e-3, 1, 1e4), function(sc) {
     dS$y <- base_y * sc
     statmod(y ~ s(z, k = 10), distributions7::gaussian1_distrib(), dS,
-            outer_criterion = reml("expected"))
+            outer_criterion = reml("expected"),
+            outer_optimizer = optimizers7::nelder_mead())
   })
   for (f in fits) expect_true(f@converged)
   # the same fit at every scale where the outer search starts near its

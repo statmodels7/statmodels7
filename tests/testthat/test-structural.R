@@ -763,7 +763,10 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
   # the criterion's own SECOND derivative would ask for a fourth order
   # through the recursion, which is not written
   expect_false(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
-  # and the expected information rejects for its own reason, unchanged
+  # and the expected information rejects here even though the FAMILY answers
+  # distrib_dexpected_hessian(): statmod_marginal_full() assembles the joint
+  # curvature from term_curvature(), which is the observed one, so this branch
+  # has no expected criterion to differentiate in the first place
   expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
 })
 

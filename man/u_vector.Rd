@@ -4,7 +4,19 @@
 \alias{u_vector}
 \title{The Trace of the Determinant's Movement With the Coefficients}
 \usage{
-u_vector(spec, design, coef, M, params, npar, offs, total, d3 = NULL, G = NULL)
+u_vector(
+  spec,
+  design,
+  coef,
+  M,
+  params,
+  npar,
+  offs,
+  total,
+  d3 = NULL,
+  G = NULL,
+  key = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}

@@ -1,3 +1,124 @@
+# statmodels7 0.55.0
+
+* `reml("expected")` and `ml("expected")` carry an EXACT GRADIENT. The
+  contraction is the one the observed route already performed -- one crossprod
+  per distribution parameter against the same leverage diagonal -- with
+  `distributions7::distrib_dexpected_hessian()` in place of the third
+  derivative and its own key builder, the expected array being symmetric in
+  its first two indices only. Measured against a central difference of the
+  criterion with the mode refitted from a fixed start: 1.8e-08 on a gamma
+  smooth, 4.3e-08 with a second penalized equation, and 1.2e-04 to 5.0e-04 at
+  3000 observations across gamma, beta and a negative binomial with random
+  effects in both equations.
+
+* What it buys is the evaluation count of a search that had none, and it is
+  concentrated where the hyperparameters are many or the family is dear.
+  Against the derivative-free numbers on identical data: three smooths and a
+  random effect go from 965 evaluations and 481.0 s to 121 and 18.0
+  (**26.7x**), and a negative binomial with random effects in both equations,
+  which had not finished after 94 minutes, fits in 88 evaluations and 34.3 s.
+  On a single smoothing parameter it is a wash (0.8x to 1.3x), a simplex being
+  efficient in one dimension.
+
+* ⚠️ **The mode's movement is read off the penalized likelihood, not off the
+  criterion.** `v = db/dt` solves `(H_obs + S) v = -d2rho/dbeta dt` whatever
+  matrix the determinant is of, which is what this file's own derivation says;
+  the code used the criterion's `K` for both, and the two coincide only on the
+  observed route. It was therefore invisible until the expected route existed,
+  and there it is a systematic error shrinking with n exactly as the observed
+  information approaches the expected one: measured on a gamma smooth at 300,
+  1000 and 3000 observations, 1.9e-03, 1.4e-03 and 1.1e-04, and FLAT in the
+  inner tolerance while the mode's score fell two decades -- which is what said
+  a reference was not the weak side. Corrected, the same comparison is
+  1.8e-08. The observed route is bit-identical throughout.
+
+* **The exact gradient is exact where the block MOVES with the coefficients.**
+  `nl()`'s block is the Jacobian, so a penalty on a nonlinear parameter -- a
+  ridge or a random effect over its groups -- used to be differentiated as
+  though the design were fixed. Two pieces were missing and both are now asked
+  of the TERM, through the new
+  `modelterms7::term_block_contract()`: `dX/dbeta` enters `dK/dbeta`
+  (`u_refresh()`), and the mode's own curvature, `l_a d2eta_a/dbeta2`, is what
+  separates the true Hessian from the Gauss-Newton matrix the design gives
+  (`mode_curvature()`). Against a finite difference of the criterion with the
+  mode refitted from a fixed start: **4.6e-03 to 4.0e-09** on the observed
+  route and **1.1e-09** on the expected one.
+
+* ⚠️ **The derivative is asked of the term and never differenced here.** A
+  break-point column is a step function in its break-point, so a difference
+  quotient of it diverges as the step shrinks -- measured at h, h/4 and h/16:
+  3.6e4, 1.4e5, 5.8e5, against `nl`'s 0.6038 throughout. A term that has not
+  written the contraction inherits zeros, which is exactly right for a fixed
+  design and leaves `seg()`, `jump()` and `jseg()` where they were.
+
+* ⚠️ **A penalty with a kink on a block that moves is REJECTED** rather than
+  fitted wrongly. `coord_fit()` reads the block as it arrives and solves
+  against `X beta`; a refreshable term has neither property, its block being
+  the Jacobian and its contribution `X beta + adj`. Measured on
+  `nl(~ a * exp(-r * x), a ~ 0 + lasso(~grp))` at a HELD lambda of 0.01, where
+  a lasso and a ridge must nearly agree because neither shrinks: the
+  log-likelihood was -40.41 against the ridge's 226.88 and the rate came back
+  0.885 against 0.712, with `converged = TRUE`. The same lasso on a linear
+  model is exact, which is what says it is the moving block. The message names
+  the term and the way out; `piano_kink_blocco_mobile.txt` is how the rejection
+  is lifted.
+
+* ⚠️ **The exact gradient reads the design block AT THE MODE.** It was handed
+  the design as it arrived, which for a term registering
+  `modelterms7::term_refresh()` -- `nl()`, `seg()`, `jump()`, `jseg()` -- is the
+  block built at the coefficients the fit STARTED from, while
+  `statmod_information_at()` refreshes internally so `K`, and therefore `M`,
+  were assembled on the refreshed one. The two agree for every fixed design,
+  which is why it surfaced only when a penalty was put INSIDE such a term.
+  Measured on `nl(a ~ 0 + ridge(~grp))` the two blocks differ by 2.07 and
+  `u = tr(M dK/dbeta)` was wrong by 110 -- including on the SIGMA rows, an
+  equation carrying no refreshable term at all, because the leverage diagonal
+  reads the mu block whatever row is being formed. Against a direct numerical
+  `tr(M dK/dbeta)`, that row goes from -131.982189 to -21.902535 against
+  -21.902535, and every row of an equation with no refreshable term is now
+  exact. End to end the gradient on that model goes from 4.6e-03 to 1.4e-03.
+  The same fix is applied in `statmod_marginal_hess()`.
+
+* What remains there is the term's own SECOND derivative: with `X = X(beta)`,
+  `dK/dbeta` gains everything coming from `dX/dbeta`, and the criterion's own
+  second derivative asks for the third. The layer cannot difference the block
+  to get them -- measured at h, h/4 and h/16, `nl`'s converges (0.6038
+  throughout) and `seg`'s break-point column diverges as 1/h (3.6e4, 1.4e5,
+  5.8e5), being a step function in psi -- so the term has to supply them.
+  Designed in `piano_nl_derivate.txt`; the gradient is left admitted meanwhile,
+  the search reaching the same hyperparameter to 0.01-0.14 per cent while
+  refusing would cost 1.3x on those models and 3.6x to 7.4x beside a smooth.
+
+* `ctx_penalized()` takes the criterion's own information rather than assuming
+  the observed one, and caches the two separately. It was hard-coded, correctly,
+  while the exact gradient ran on no other route. `ctx_trace_matrix()` is keyed
+  the same way: the projection is of THAT matrix, so one cache entry cannot
+  serve both. Nothing reaches it today, a search holding one `OuterMethod`
+  throughout, but it is the twin of a defect that was unreachable in exactly
+  the same way until it was not.
+
+* `ml("expected")` holds as well as `reml("expected")`, which is where the two
+  matrices are most easily confused: `ml()` projects the determinant's matrix
+  onto the range basis while the MODE goes on moving in the full space.
+  Measured against numDeriv, 1.0e-07 on one hyperparameter and 2.6e-08 /
+  2.7e-07 on two, the same quality as `ml("observed")`; and the canonical-link
+  identity under `ml()` is exact to 3.5e-14.
+
+* The route is refused at order 2, the criterion's own second derivative
+  wanting the next order of the same object, and where a penalty covers a
+  STRUCTURAL term's own parameters, `statmod_marginal_full()` assembling the
+  joint curvature from `term_curvature()` -- the observed one -- so that branch
+  has no expected criterion for a gradient to be the derivative of.
+
+* ⚠️ Consequence to know: a fit that reported `converged = TRUE` under the
+  derivative-free search may now report FALSE, on three of six shapes measured.
+  The fits are the same -- lambda to five significant figures, the correlation
+  with the truth to five decimals, the criterion to the printed digit -- and
+  the cause is the optimizer's ORDER: the default becomes `lbfgs()` where the
+  observed route uses `newton()`, and `newton()` differencing this gradient
+  converges on the same shapes. It is the flag item this project already has
+  open, reached from a new direction rather than a new defect.
+
 # statmodels7 0.54.0
 
 * `offset()` written in the formula is an offset. It was SILENTLY DROPPED:

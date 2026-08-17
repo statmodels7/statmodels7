@@ -35,9 +35,34 @@ statmod_blocks <- function(spec, design) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   sparse <- list()
   taken <- integer(0)
+  rf <- attr(design, "refresh")
+  moving <- if (is.null(rf)) character(0) else
+    vapply(rf, function(r) paste(r$param, r$term, sep = "\r"), character(1))
   for (u in statmod_penalized(spec, design)) {
     if (!penalty_has_kink(u$penalty,
                           sprintf("The penalty of %s", u$key))) next
+    # ⚠️ A kinked penalty is fitted by coord_fit(), which reads the design's
+    # block AS IT ARRIVES and solves against the linear predictor X beta. A
+    # term registering term_refresh() has neither property: its block is the
+    # Jacobian at the current coefficients and what it contributes is
+    # X beta + adj, so the sweep would solve a different problem and report
+    # convergence. Measured on nl(~ a * exp(-r * x), a ~ 0 + lasso(~grp)) at a
+    # HELD lambda of 0.01, where a lasso and a ridge must agree because
+    # neither shrinks: the log-likelihood is -40.41 against the ridge's 226.88
+    # and the rate comes back 0.885 against 0.712. The same lasso on a linear
+    # model is exact, which is what says it is the moving block and not the
+    # penalty.
+    if (paste(u$param, u$term, sep = "\r") %in% moving) {
+      stop(sprintf(paste0(
+        "'%s' carries a penalty with a kink -- a lasso, an elastic net, a",
+        " scad, an mcp\n  or a Laplace prior -- and its block moves with its",
+        " coefficients, which the\n  coordinate descent that fits a kinked",
+        " penalty does not handle: it would\n  report a converged fit of a",
+        " different model. Use a penalty that is twice\n  differentiable",
+        " there -- ridge(), or random() with its gaussian default -- or",
+        "\n  penalize a term whose design is fixed."), u$key),
+        call. = FALSE)
+    }
     sparse[[length(sparse) + 1L]] <- list(
       param = u$param, term = u$key, cols = u$cols, index = u$index,
       penalty = u$penalty)

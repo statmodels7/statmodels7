@@ -70,6 +70,11 @@ NULL
 #' @keywords internal
 statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
                                   basis = NULL, ctx = NULL) {
+  # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
+  # leverage diagonal and the contractions must read the same block K was
+  # assembled on, and for a refreshable term the design as it arrives is the
+  # one built at the starting coefficients
+  design <- statmod_design_at(spec, coef, design)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -78,11 +83,16 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 
   # one assembly and one factorization for the criterion, this Hessian and the
   # gradient it reads at the end, where there used to be three and two
-  pen <- ctx_penalized(ctx, spec, design, coef, hyper)
+  # order 2 is refused on the expected route by outer_gradient_ok(), so this
+  # reads the observed matrix; it is passed rather than assumed so that a
+  # caller reaching here directly gets the criterion's own.
+  pen <- ctx_penalized(ctx, spec, design, coef, hyper,
+                       identical(method@hessian, "expected"))
   if (is.null(pen)) return(NULL)
   K <- pen$K
   Kinv <- pen$inv
-  M <- ctx_trace_matrix(ctx, pen, basis)
+  M <- ctx_trace_matrix(ctx, pen, basis,
+                        identical(method@hessian, "expected"))
   if (is.null(M)) return(NULL)
 
   d3 <- ctx_deriv(ctx, spec, design, coef, hyper, 3L)

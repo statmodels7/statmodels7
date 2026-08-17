@@ -136,8 +136,15 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' The Penalized Matrix and Its Inverse
 #'
 #' @description
-#' \eqn{K = H + S} with the OBSERVED information, and its inverse, which the
-#' gradient and the Hessian both read.
+#' \eqn{K = H + S} with the criterion's own information, and its inverse, which
+#' the gradient and the Hessian both read.
+#'
+#' @param expected Whether \eqn{H} is the expected information, which is what
+#'   the criterion carries under \code{reml(hessian = "expected")}. It used to
+#'   be hard-coded to the observed one, correctly, because the exact gradient
+#'   ran on no other route; admitting the expected route makes the criterion's
+#'   determinant a different matrix, and reading the wrong one would be a
+#'   gradient of the wrong function.
 #'
 #' @details
 #' \strong{The storage is the matrix's own.} \eqn{H} is already sparse
@@ -179,9 +186,10 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' @seealso \code{\link{pd_factor}}
 #'
 #' @keywords internal
-ctx_penalized <- function(ctx, spec, design, coef, hyper) {
+ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
   build <- function() {
-    H <- ctx_information(ctx, spec, design, coef, hyper, FALSE)
+    H <- ctx_information(ctx, spec, design, coef, hyper, expected,
+                         ctx_approx(ctx))
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
     fac <- pd_factor(K)
@@ -203,12 +211,16 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper) {
     list(K = K, inv = inv, logdet = fac$logdet)
   }
   if (!ctx_usable(ctx, coef, hyper)) return(build())
-  if (is.null(ctx$penalized)) {
+  # the two informations give two different matrices, so they are two cache
+  # entries: a criterion reading the expected one must not be handed the
+  # observed one's factorization because a previous reader asked for it first
+  slot <- if (expected) "penalized_expected" else "penalized_observed"
+  if (is.null(ctx[[slot]])) {
     # the miss is recorded so a second reader does not retry a factorization
     # that has already failed
-    ctx$penalized <- list(value = build())
+    assign(slot, list(value = build()), envir = ctx)
   }
-  ctx$penalized$value
+  ctx[[slot]]$value
 }
 
 
@@ -221,11 +233,17 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper) {
 #' @param ctx A context, or \code{NULL}.
 #' @param pen The result of \code{\link{ctx_penalized}}.
 #' @param basis The integrated subspace, or \code{NULL}.
+#' @param expected Which information \code{pen} was built with, which is the
+#'   cache's key: the projection is of THAT matrix, so one entry cannot serve
+#'   both. Nothing reaches it today, a search holding one
+#'   \code{\link{OuterMethod}} throughout, but the slot is keyed rather than
+#'   shared because the twin defect in \code{\link{ctx_penalized}} was
+#'   unreachable in exactly the same way until it was not.
 #'
 #' @return A square matrix, or \code{NULL}.
 #'
 #' @keywords internal
-ctx_trace_matrix <- function(ctx, pen, basis) {
+ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
   if (is.null(basis)) return(pen$inv)
   build <- function() {
     # K may now be sparse, and the projection onto a dense basis is dense
@@ -239,8 +257,9 @@ ctx_trace_matrix <- function(ctx, pen, basis) {
     basis %*% inner %*% t(basis)
   }
   if (is.null(ctx)) return(build())
-  if (is.null(ctx$trace_matrix)) ctx$trace_matrix <- list(value = build())
-  ctx$trace_matrix$value
+  slot <- if (expected) "trace_expected" else "trace_observed"
+  if (is.null(ctx[[slot]])) assign(slot, list(value = build()), envir = ctx)
+  ctx[[slot]]$value
 }
 
 
@@ -283,6 +302,74 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs) {
     ctx$leverage <- block_leverage(design, M, params, npar, offs)
   }
   ctx$leverage
+}
+
+
+#' How the Penalized Matrix Moves With the Coefficients
+#'
+#' @description
+#' The array \code{\link{u_vector}} contracts against the leverage diagonal,
+#' together with the builder that reads it: the third derivative of the
+#' log-density where the criterion uses the observed information, and the
+#' derivative of the expected information where it uses the expected one.
+#'
+#' @details
+#' \eqn{K} enters the criterion through its determinant, so the gradient needs
+#' \eqn{\partial K/\partial\beta}. With the observed information that is
+#' \eqn{-\ell'''}, which every family carries in closed form. With the expected
+#' one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is NOT
+#' \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
+#' as well as the integrand, and the missing piece
+#' \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity
+#' isolates -- the third ties the symmetrized sum, not the single term.
+#'
+#' \pkg{distributions7} supplies it as
+#' \code{\link[distributions7]{distrib_dexpected_hessian}}. The two arrays are
+#' keyed differently, the observed one being symmetric in all three indices and
+#' the expected one in its first two only, so the key builder travels with the
+#' array rather than being assumed by the consumer.
+#'
+#' @param ctx A context, or \code{NULL}.
+#' @param spec,design,coef,hyper The fallback arguments.
+#' @param method An \code{\link{OuterMethod}}.
+#'
+#' @return A list with \code{deriv} and \code{key}.
+#'
+#' @seealso \code{\link{u_vector}}, \code{\link{outer_gradient_ok}}
+#'
+#' @keywords internal
+ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
+  params <- spec@distrib@params
+  if (!identical(method@hessian, "expected")) {
+    d3 <- ctx_deriv(ctx, spec, design, coef, hyper, 3L)
+    keys <- names(d3)
+    return(list(deriv = d3,
+                key = function(a, b, k) d3_key(params, a, b, k, keys)))
+  }
+  build <- function() {
+    th <- ctx_theta(ctx, spec, design, coef, hyper)
+    distributions7::distrib_dexpected_hessian(spec@distrib, spec@response, th,
+                                              scale = "link",
+                                              approx = ctx_approx(ctx))
+  }
+  v <- if (ctx_usable(ctx, coef, hyper)) {
+    if (is.null(ctx$dexp)) ctx$dexp <- build()
+    ctx$dexp
+  } else build()
+  list(deriv = v,
+       key = function(a, b, k) distributions7::dexpected_key(params, a, b, k))
+}
+
+
+#' The Approximation a Context Was Built With
+#'
+#' @param ctx A context, or \code{NULL}.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+ctx_approx <- function(ctx) {
+  if (is.null(ctx) || is.null(ctx$approx)) "bartlett" else ctx$approx
 }
 
 

@@ -4,19 +4,26 @@
 \alias{ctx_penalized}
 \title{The Penalized Matrix and Its Inverse}
 \usage{
-ctx_penalized(ctx, spec, design, coef, hyper)
+ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
 }
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}
 
 \item{spec, design, coef, hyper}{The fallback arguments.}
+
+\item{expected}{Whether \eqn{H} is the expected information, which is what
+the criterion carries under \code{reml(hessian = "expected")}. It used to
+be hard-coded to the observed one, correctly, because the exact gradient
+ran on no other route; admitting the expected route makes the criterion's
+determinant a different matrix, and reading the wrong one would be a
+gradient of the wrong function.}
 }
 \value{
 A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
 }
 \description{
-\eqn{K = H + S} with the OBSERVED information, and its inverse, which the
-gradient and the Hessian both read.
+\eqn{K = H + S} with the criterion's own information, and its inverse, which
+the gradient and the Hessian both read.
 }
 \details{
 \strong{The storage is the matrix's own.} \eqn{H} is already sparse

@@ -184,8 +184,11 @@ test_that("the exact route now covers the penalties it used to refuse", {
   # both available where the old test of linearity said they were not
   expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 1L))
   expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
-  # the expected information still is not, for the reason it never was
-  expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
+  # the expected information carries the GRADIENT now, through
+  # distrib_dexpected_hessian(), and not the Hessian: order 2 would ask for
+  # the next order of dE[l'']/deta
+  expect_true(outer_gradient_ok(spec, design, idx, reml("expected"), 1L))
+  expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 2L))
 })
 
 test_that("a variance component's Hessian is exact now, not differenced", {

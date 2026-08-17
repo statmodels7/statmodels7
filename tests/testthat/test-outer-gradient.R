@@ -104,6 +104,67 @@ test_that("the gradient vanishes at the reported optimum", {
   expect_lt(max(abs(g)), 1e-4)
 })
 
+test_that("the gradient is exact where the block moves with the coefficients", {
+  skip_if_not_installed("numDeriv")
+  # nl()'s block is the Jacobian, so it moves, and two pieces the layer used to
+  # miss are supplied by the TERM rather than differenced here:
+  # term_block_contract() gives dX/dbeta, which enters dK/dbeta (u_refresh) and
+  # the mode's own curvature (mode_curvature). Measured against a finite
+  # difference of the criterion with the mode refitted, this went 4.6e-03 ->
+  # 1.4e-03 (the stale block) -> 1.5e-04 (dK/dbeta) -> 4.0e-09 (the mode).
+  set.seed(9)
+  np <- 40; m <- 8
+  dn <- data.frame(x = rep(seq(0.2, 4, length.out = np), m),
+                   grp = factor(rep(sprintf("g%d", seq_len(m)), each = np)))
+  a_g <- 3 + stats::rnorm(m, sd = 0.4)
+  dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
+  f <- y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp))
+  for (hh in c("observed", "expected")) {
+    h <- crit_of_eta(f, dn, reml(hessian = hh))
+    eta <- h$eta0 + 0.35
+    # the reference refits the mode at the inner default, so it carries that
+    # tolerance; the gradient itself measures 4.0e-09 against a mode located
+    # to 1e-10
+    expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-4)
+  }
+})
+
+test_that("a penalty inside a refreshable term reaches the same optimum", {
+  # ⚠️ KNOWN LIMITATION, pinned by its CONSEQUENCE rather than by its size.
+  # nl(), seg(), jump() and jseg() register term_refresh(), so their design
+  # block moves with the coefficients; u_vector() assembles tr(M dK/dbeta) as
+  # though X were constant, and with X = X(beta) there is a second
+  # contribution through dX/dbeta that nothing computes. Measured on
+  # nl(a ~ 0 + ridge(~grp)), the exact gradient disagrees with a finite
+  # difference of its own criterion by 5.3e-03 at n = 320 and 3.9e-04 at
+  # n = 960 -- FLAT in the inner tolerance across three decades while the
+  # mode's score fell an order, and the SAME ridge on a fixed block agrees to
+  # 3.6e-08, which is what localizes it.
+  #
+  # It is left in place because the consequence is small and refusing it would
+  # cost more than it saves: the search reaches the same hyperparameter in a
+  # third of the evaluations. This test guards THAT, so a gap that grew would
+  # fail here even though the gradient's own error is not asserted.
+  set.seed(9)
+  np <- 40; m <- 8
+  dn <- data.frame(x = rep(seq(0.2, 4, length.out = np), m),
+                   grp = factor(rep(sprintf("g%d", seq_len(m)), each = np)))
+  a_g <- 3 + stats::rnorm(m, sd = 0.4)
+  dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
+  f <- y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp))
+  fe <- statmod(f, distributions7::gaussian1_distrib(), dn,
+                outer_criterion = reml("observed"))
+  fd <- statmod(f, distributions7::gaussian1_distrib(), dn,
+                outer_criterion = reml("observed"),
+                outer_optimizer = optimizers7::nelder_mead())
+  expect_equal(unlist(lapply(fe@hyper, unlist)),
+               unlist(lapply(fd@hyper, unlist)), tolerance = 5e-3)
+  expect_equal(as.numeric(logLik(fe)), as.numeric(logLik(fd)),
+               tolerance = 1e-6)
+  # and the exact route is what it is for: fewer evaluations
+  expect_lt(nrow(fe@history$outer), nrow(fd@history$outer))
+})
+
 test_that("the penalty is asked, not measured", {
   # the first version of this decided what a penalty was by testing whether
   # its Hessian happened to be linear in the hyperparameters, which excluded
@@ -128,9 +189,14 @@ test_that("the exact route is taken only where it applies", {
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   expect_true(outer_gradient_ok(spec, design, idx, reml("observed")))
-  # the expected information would need the derivative in beta of -E[l''],
-  # which is not -E[l'''] and is not a generic of distributions7
-  expect_false(outer_gradient_ok(spec, design, idx, reml("expected")))
+  # The expected information needs the derivative in beta of -E[l''], which is
+  # NOT -E[l''']: differentiating an expectation moves the measure as well as
+  # the integrand. distributions7 carries it as distrib_dexpected_hessian()
+  # and the route is available wherever the family answers -- a gaussian does.
+  expect_true(outer_gradient_ok(spec, design, idx, reml("expected")))
+  # but only at order 1: the criterion's own second derivative would want the
+  # next order of the same object
+  expect_false(outer_gradient_ok(spec, design, idx, reml("expected"), 2L))
 
   # a random effect's penalty is built from a density, and it is covered: its
   # derivatives come from penalties7's generics, which read the parent's

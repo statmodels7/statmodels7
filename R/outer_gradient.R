@@ -67,8 +67,27 @@ NULL
 #'
 #' @keywords internal
 outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
-  if (!identical(method@hessian, "observed")) return(FALSE)
   if (!nrow(idx)) return(FALSE)
+  if (!identical(method@hessian, "observed")) {
+    # The expected route asks for the same object in the same place -- the
+    # movement of K with the coefficients -- but that object is
+    # dE[l'']/deta rather than l''', because differentiating an expectation
+    # moves the measure as well as the integrand. distributions7 supplies it
+    # wherever the family writes its expected information out and refuses
+    # elsewhere, so the family is ASKED rather than tested.
+    #
+    # Order 2 is not extended: the criterion's own second derivative would
+    # want the next order of the same object, and lbfgs on the exact gradient
+    # already buys most of what newton would -- which is the same judgement
+    # the structural branch below records.
+    if (order >= 2L) return(FALSE)
+    if (!expected_deriv_ok(spec@distrib)) return(FALSE)
+    # and not where a structural term is penalized: there the criterion is
+    # statmod_marginal_full(), which assembles the joint curvature from
+    # term_curvature() -- the OBSERVED one -- so that branch has no expected
+    # criterion for this to be the derivative of.
+    if (structural_penalized(spec, design)) return(FALSE)
+  }
   seen <- unique(paste(idx$parameter, idx$term, sep = "\r"))
   for (s in seen) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
@@ -85,6 +104,21 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # The order-2 route is NOT extended: the criterion's own second derivative
   # would ask for a fourth order through the recursion, and lbfgs on the exact
   # gradient already buys most of what newton would.
+  # ⚠️ A block that MOVES with the coefficients -- nl(), seg(), jump(), jseg()
+  # -- is covered at NEITHER order, and this does not refuse it. dK/dbeta gains
+  # everything coming from dX/dbeta, which is the term's own SECOND derivative,
+  # and the criterion's own second derivative asks for the third. The layer
+  # cannot difference the block to get them: measured at h, h/4 and h/16, nl's
+  # converges (0.6038 throughout) and seg's break-point column diverges as 1/h
+  # (3.6e4, 1.4e5, 5.8e5), being a step function in psi. The term has to supply
+  # them, which is piano_nl_derivate.txt.
+  #
+  # It is left admitted because the measured consequence is small and refusing
+  # is not free: the gradient is out by 1.4e-03 (nl) and 1.1e-02 (seg) and the
+  # search still reaches the same hyperparameter to 0.01-0.14 per cent, while
+  # refusing costs 1.3x on those models alone and 3.6x to 7.4x beside a smooth
+  # -- the refusal being model-wide, u is shared by every hyperparameter, so
+  # the smooth would lose its gradient too.
   if (structural_penalized(spec, design)) {
     if (order >= 2L) return(FALSE)
     for (u in statmod_penalized(spec, design)) {
@@ -93,6 +127,44 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     }
   }
   TRUE
+}
+
+
+#' Does the Family Supply the Expected Information's Derivative?
+#'
+#' @description
+#' Whether \code{\link[distributions7]{distrib_dexpected_hessian}} answers for
+#' this family, asked at a probe rather than inferred from its class.
+#'
+#' @details
+#' The default route in \pkg{distributions7} is one central difference of the
+#' family's own expected information, which is a single stencil on an analytic
+#' quantity wherever that information is a written-out formula and refuses
+#' where it is itself an integral. Six of forty univariate families refuse, and
+#' the reason is cost rather than accuracy: measured at 100 observations they
+#' cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
+#' of those calls per criterion evaluation is not a slower route but an
+#' unusable one.
+#'
+#' @param distrib A \pkg{distributions7} distribution.
+#'
+#' @return A single logical.
+#'
+#' @seealso \code{\link{outer_gradient_ok}}
+#'
+#' @keywords internal
+expected_deriv_ok <- function(distrib) {
+  th <- tryCatch(distributions7::generate_random_theta(distrib),
+                 error = function(e) NULL)
+  if (is.null(th)) return(FALSE)
+  y <- tryCatch(distributions7::distrib_rng(distrib, 1L, th),
+                error = function(e) NULL)
+  if (is.null(y)) return(FALSE)
+  ok <- tryCatch({
+    distributions7::distrib_dexpected_hessian(distrib, y, th, scale = "link")
+    TRUE
+  }, error = function(e) FALSE)
+  isTRUE(ok)
 }
 
 
@@ -208,6 +280,19 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     return(statmod_structural_grad(spec, design, coef, hyper, method, idx,
                                    basis, free))
   }
+  # ⚠️ THE BLOCK AT THE MODE, not the block as it was built.
+  # statmod_information_at() refreshes internally, so K -- and therefore M --
+  # is assembled on the refreshed block; block_leverage() and u_vector()'s
+  # final crossprod were handed this design as it arrived, which for a term
+  # registering term_refresh() is the block at the coefficients the fit
+  # STARTED from. The two agree for every fixed design, which is why nothing
+  # showed until a penalty was put inside nl() or seg(): measured on
+  # nl(a ~ 0 + ridge(~grp)), the two blocks differ by 2.07 and u is wrong by
+  # 110 -- on the SIGMA row among others, an equation carrying no refreshable
+  # term at all, because G_ab reads the mu block whatever row is being formed.
+  # Refreshed, that row is -21.902535 against a direct numerical
+  # tr(M dK/dbeta) of -21.902535.
+  design <- statmod_design_at(spec, coef, design)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -216,15 +301,54 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # the information, the penalty, K = H + S and its inverse come from the
   # context when there is one, so a criterion, a gradient and a Hessian read
   # at the same point assemble them once between them
-  pen <- ctx_penalized(ctx, spec, design, coef, hyper)
+  expected <- identical(method@hessian, "expected")
+  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected)
   if (is.null(pen)) return(NULL)
-  Kinv <- pen$inv
-  M <- ctx_trace_matrix(ctx, pen, basis)
+  # ⚠️ TWO different matrices, and they coincide only on the observed route.
+  # The determinant is of the CRITERION's K, so M and u are read off that one;
+  # but the mode is where the penalized LIKELIHOOD's score vanishes, so how it
+  # moves is governed by H_obs + S whatever the criterion's own matrix is --
+  # which is what the derivation at the top of this file already writes down.
+  # Using one for both was invisible while the criterion was always the
+  # observed one, and on the expected route it is a systematic error that
+  # shrinks with n exactly as H_obs approaches H_exp: measured on a gamma
+  # smooth at 300, 1000 and 3000 observations, 1.9e-03, 1.4e-03 and 1.1e-04
+  # against a finite difference of the criterion, and FLAT in the inner
+  # tolerance, which is what said it was not the mode's location.
+  mode_pen <- if (!expected) pen else
+    ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
+  if (is.null(mode_pen)) return(NULL)
+  # how the mode moves: the penalized likelihood's own curvature, which for a
+  # refreshable block is not the Gauss-Newton matrix the design gives
+  Dm <- mode_curvature(spec, design, coef, params, npar, offs, total)
+  msolve <- NULL
+  if (any(Dm != 0)) {
+    Km <- as_dense(mode_pen$K) + Dm
+    fac <- tryCatch(chol(Km), error = function(e) NULL)
+    # the TRUE Hessian may lose definiteness where Gauss-Newton cannot, and a
+    # mode's movement is worth having approximately rather than not at all
+    if (!is.null(fac)) {
+      msolve <- function(z) backsolve(fac, forwardsolve(t(fac), z))
+    }
+  }
+  if (is.null(msolve)) {
+    Kinv <- mode_pen$inv
+    msolve <- function(z) as.numeric(Kinv %*% z)
+  }
+  M <- ctx_trace_matrix(ctx, pen, basis, expected)
   if (is.null(M)) return(NULL)
 
+  # dK/dbeta is the third derivative of the log-likelihood on the observed
+  # route and the derivative of the expected information on the expected one.
+  # The contraction is the same in both -- one crossprod per distribution
+  # parameter against the same leverage diagonal -- so only the array and the
+  # key it is read by change.
+  km <- ctx_kmove(ctx, spec, design, coef, hyper, method)
   u <- u_vector(spec, design, coef, M, params, npar, offs, total,
-                d3 = ctx_deriv(ctx, spec, design, coef, hyper, 3L),
-                G = ctx_leverage(ctx, design, M, params, npar, offs))
+                d3 = km$deriv, key = km$key,
+                G = ctx_leverage(ctx, design, M, params, npar, offs)) +
+    u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
+              ctx_approx(ctx))
 
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
@@ -246,10 +370,11 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       dS <- penalties7::penalty_dhessian(pen, bt, th)
       for (r in rows[idx$term[rows] == nm]) {
         h <- idx$name[r]
-        # the mode moves by -(H+S)^-1 d2rho/dbeta dtheta
+        # the mode moves by -(H+S)^-1 d2rho/dbeta dtheta, with H the penalized
+        # LIKELIHOOD's own curvature -- see mode_curvature()
         c_m <- numeric(total)
         c_m[pos] <- as.numeric(cr[[h]])
-        v <- -as.numeric(Kinv %*% c_m)
+        v <- -as.numeric(msolve(c_m))
         dS_m <- matrix(0, total, total)
         dS_m[pos, pos] <- as_dense(dS[[h]])
         dtheta <- -as.numeric(gt[[h]]) -
@@ -283,7 +408,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 #'
 #' @keywords internal
 u_vector <- function(spec, design, coef, M, params, npar, offs, total,
-                     d3 = NULL, G = NULL) {
+                     d3 = NULL, G = NULL, key = NULL) {
   n <- spec@n_obs
   if (is.null(d3)) {
     th <- statmod_eta(spec, design, coef)$theta
@@ -291,6 +416,10 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
                                          scale = "link")
   }
   keys <- names(d3)
+  # the observed route's array is symmetric in all three indices and keyed by
+  # the sorted triple; the expected route's is symmetric in (a, b) only, the
+  # measure's own derivative not being, so it carries its own builder
+  if (is.null(key)) key <- function(a, b, k) d3_key(params, a, b, k, keys)
   if (is.null(G)) G <- block_leverage(design, M, params, npar, offs)
 
   out <- numeric(total)
@@ -301,13 +430,186 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
       if (npar[a] == 0L) next
       for (b in seq_along(params)) {
         if (npar[b] == 0L) next
-        s <- s + rep_len(d3[[d3_key(params, a, b, k, keys)]], n) * G[[a]][[b]]
+        s <- s + rep_len(d3[[key(a, b, k)]], n) * G[[a]][[b]]
       }
     }
     out[offs[k] + seq_len(npar[k])] <-
       -as.numeric(crossprod(design[[params[k]]]$X, spec@weights * s))
   }
   out
+}
+
+
+#' How the Determinant Reads a Block That Moves With the Coefficients
+#'
+#' @description
+#' The part of \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} that
+#' \code{\link{u_vector}} does not compute: everything coming from
+#' \eqn{\partial X/\partial\beta} where a term's block depends on its own
+#' coefficients.
+#'
+#' @details
+#' With \eqn{H_{(a,j),(b,k)} = -\sum_i w_i \ell_{ab,i}X_a[i,j]X_b[i,k]} and a
+#' block that moves, differentiating in \eqn{\beta_c} gives three
+#' contributions and \code{\link{u_vector}} computes one. The other two are
+#' transposes under the trace, so with
+#' \eqn{R_{ab}[i,j] = \sum_k M_{(a,j),(b,k)}X_b[i,k]} and
+#' \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
+#' \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
+#'
+#' \strong{The derivative is asked of the TERM}, through
+#' \code{\link[modelterms7]{term_block_contract}}, and never differenced here.
+#' Two reasons, both measured: a term knows its own chain rule -- the links on
+#' its parameters and a subformula's design -- and a break-point column is a
+#' step function in its break-point, so a difference quotient of it diverges as
+#' the step shrinks rather than converging. A term that does not implement the
+#' contraction inherits zeros, which is exactly right for a fixed design.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design, already refreshed at \code{coef}.
+#' @param coef The coefficients at the penalized mode.
+#' @param M The matrix the trace is taken against.
+#' @param params,npar,offs,total The block bookkeeping.
+#' @param expected Whether the criterion carries the expected information.
+#' @param approx The approximation for the expected information.
+#'
+#' @return A numeric vector as long as the stacked coefficients.
+#'
+#' @seealso \code{\link{u_vector}},
+#'   \code{\link[modelterms7]{term_block_contract}}
+#'
+#' @keywords internal
+u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
+                      expected = FALSE, approx = "bartlett") {
+  out <- numeric(total)
+  rf <- attr(design, "refresh")
+  if (is.null(rf) || !length(rf)) return(out)
+  st <- attr(design, "state")
+  if (is.null(st)) return(out)
+  n <- spec@n_obs
+  w <- spec@weights
+  th <- statmod_eta(spec, design, coef)$theta
+  Hl <- if (expected) {
+    distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
+                                             scale = "link", approx = approx)
+  } else {
+    distributions7::distrib_hessian(spec@distrib, spec@response, th,
+                                    scale = "link")
+  }
+  for (r in rf) {
+    p <- r$param
+    a <- match(p, params)
+    if (is.na(a) || npar[a] == 0L) next
+    cols <- design[[p]]$blocks[[r$term]]
+    if (!length(cols)) next
+    ra <- offs[a] + cols
+    A <- matrix(0, n, length(cols))
+    for (b in seq_along(params)) {
+      if (npar[b] == 0L) next
+      rb <- offs[b] + seq_len(npar[b])
+      Mab <- as_dense(M[ra, rb, drop = FALSE])
+      A <- A + rep_len(Hl[[hess_key(params, a, b)]], n) *
+        as_dense(design[[params[b]]]$X %*% t(Mab))
+    }
+    A <- A * w
+    tm <- st$terms[[p]][[r$term]]
+    if (is.null(tm)) next
+    bt <- coef[[p]][cols]
+    # NOT wrapped in a tryCatch: a term that has not written the contraction
+    # inherits the base method and gets zeros, which is a legitimate answer and
+    # not an error, so anything raised here is a defect and must be seen. A
+    # catch-all put around it swallowed "not an exported object" and reported a
+    # correction of exactly zero, which reads as "nothing to correct".
+    dc <- modelterms7::term_block_contract(
+      modelterms7::term_refresh(tm, bt), coef = bt, A = A)
+    if (length(dc) != length(cols)) {
+      stop(sprintf(paste("term_block_contract() returned %d values for a block",
+                         "of %d columns\n  in '%s'."),
+                   length(dc), length(cols), r$term), call. = FALSE)
+    }
+    out[ra] <- -2 * as.numeric(dc)
+  }
+  out
+}
+
+
+#' The Curvature the Mode Actually Moves By
+#'
+#' @description
+#' What separates the true Hessian of the penalized log-likelihood from the
+#' Gauss-Newton matrix \code{\link{statmod_information_at}} returns, where a
+#' term's block moves with its coefficients.
+#'
+#' @details
+#' \eqn{v = \partial\hat\beta/\partial\theta} solves
+#' \eqn{(\partial^2\rho/\partial\beta^2 - \partial^2\ell/\partial\beta^2)v =
+#' \partial^2\rho/\partial\beta\partial\theta}, and
+#' \eqn{\partial^2\ell/\partial\beta^2} is the TRUE second derivative:
+#' \deqn{\sum_i\sum_{a,b}\ell_{ab}\frac{\partial\eta_a}{\partial\beta}
+#'   \frac{\partial\eta_b}{\partial\beta}
+#'   + \sum_i\sum_a \ell_a\frac{\partial^2\eta_a}{\partial\beta^2}.}
+#' The first sum is what the design gives; the second is zero for every fixed
+#' block and is not for a refreshable one, where \eqn{X} is the Jacobian and so
+#' \eqn{\partial^2\eta_i/\partial\beta_c\partial\beta_d =
+#' \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
+#' which is what keeps this cheap: one call of
+#' \code{\link[modelterms7]{term_block_contract}} per column, weighted by the
+#' SCORE where \code{\link{u_refresh}} weights by \eqn{M}.
+#'
+#' ⚠️ It is the mode's matrix and NOT the criterion's. The determinant is of
+#' whatever \code{\link{statmod_information_at}} assembles, and its derivative
+#' reads that one; how the mode MOVES is a fact about the penalized likelihood
+#' and reads this one. Confusing the two is the defect this file already
+#' records for the expected information, in a second place.
+#'
+#' Measured on \code{nl(a ~ 0 + ridge(~grp))} against a finite difference of
+#' the criterion with the mode refitted: the gradient goes from 1.5e-04 to
+#' 8.8e-09 at 320 observations and from 1.6e-05 to 1.6e-09 at 960, on the
+#' observed route and the expected one alike.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design, already refreshed at \code{coef}.
+#' @param coef The coefficients at the penalized mode.
+#' @param params,npar,offs,total The block bookkeeping.
+#'
+#' @return A square matrix, zero everywhere no refreshable term reaches.
+#'
+#' @seealso \code{\link{u_refresh}},
+#'   \code{\link[modelterms7]{term_block_contract}}
+#'
+#' @keywords internal
+mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
+  D <- matrix(0, total, total)
+  rf <- attr(design, "refresh")
+  st <- attr(design, "state")
+  if (is.null(rf) || !length(rf) || is.null(st)) return(D)
+  n <- spec@n_obs
+  w <- spec@weights
+  th <- statmod_eta(spec, design, coef)$theta
+  gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
+                                         scale = "link")
+  for (r in rf) {
+    p <- r$param
+    a <- match(p, params)
+    if (is.na(a) || npar[a] == 0L) next
+    cols <- design[[p]]$blocks[[r$term]]
+    if (!length(cols)) next
+    ra <- offs[a] + cols
+    bt <- coef[[p]][cols]
+    tm <- modelterms7::term_refresh(st$terms[[p]][[r$term]], bt)
+    sc <- w * rep_len(gl[[p]], n)
+    for (dd in seq_along(cols)) {
+      A <- matrix(0, n, length(cols))
+      A[, dd] <- sc
+      D[ra, ra[dd]] <- -as.numeric(
+        modelterms7::term_block_contract(tm, coef = bt, A = A))
+    }
+  }
+  # symmetric in (c, d) as a second derivative, and symmetrized explicitly:
+  # the two orders collect the same terms in a different one, and this file
+  # already records that "symmetric by construction" is not a property
+  # floating-point addition has
+  (D + t(D)) / 2
 }
 
 
