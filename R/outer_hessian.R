@@ -101,11 +101,13 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 
   # ⚠️ dX/dbeta reaches this assembly in THREE places -- the matrix dK/dt_m
   # below, the trace of dK_m/dt_l against M, and the twice-contracted fourth
-  # derivative -- and correcting one alone is worse than correcting none:
-  # measured, a weakly identified nl went from 2.02e-01 to 6.35e+02 with a
-  # standard error of NaN when only the first was written. The three are
-  # resolved from ONE list of units so they cannot disagree about which blocks
-  # move; an empty list leaves every expression below untouched.
+  # derivative -- and correcting one alone is measurably worse than correcting
+  # none: a weakly identified nl went from 2.02e-01 to 6.35e+02 with a standard
+  # error of NaN when only the first was written, because a corrected dK/dt was
+  # then contracted against a direction the next comment shows is 66 per cent
+  # wrong and mixed with two uncorrected traces. The three are resolved from ONE
+  # list of units so they cannot disagree about which blocks move; an empty list
+  # leaves every expression below untouched.
   units <- refresh_units(spec, design, coef, params, npar, offs)
   Hl <- if (length(units)) {
     refresh_hessian(spec, design, coef, identical(method@hessian, "expected"),
@@ -139,7 +141,9 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
     # mode's movement is worth having approximately rather than not at all
     if (!is.null(fac)) {
       Jmat <- Jt
-      msolve <- function(z) backsolve(fac, forwardsolve(t(fac), z))
+      # as.numeric because one caller passes the result of a `%*%`, which would
+      # otherwise carry a one-column matrix through every consumer below
+      msolve <- function(z) as.numeric(backsolve(fac, forwardsolve(t(fac), z)))
     }
   }
 
