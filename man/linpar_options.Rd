@@ -4,10 +4,12 @@
 \alias{linpar_options}
 \title{Options for the Unpenalized Parametric Block}
 \usage{
-linpar_options(sparse = FALSE, contrasts = NULL)
+linpar_options(sparse = NULL, contrasts = NULL)
 }
 \arguments{
-\item{sparse}{Whether the block is a \code{dgCMatrix}.}
+\item{sparse}{Whether the block is a \code{dgCMatrix}. \code{NULL}, the
+default, leaves it to \code{\link[modelterms7]{linpar}}, which settles it
+at build from the size of the design.}
 
 \item{contrasts}{The contrasts for the block's factors, as a named list of
 the kind \code{\link[stats]{model.matrix}}'s \code{contrasts.arg} takes,

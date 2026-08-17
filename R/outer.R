@@ -639,7 +639,12 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   basis <- if (pe) NULL else basis
   exact <- outer_gradient_ok(spec, design, idx, method, 1L)
   exact2 <- exact && outer_gradient_ok(spec, design, idx, method, 2L)
-  if (is.null(optimizer)) {
+  # whether the STOPPING RULE is this package's business too. An optimizer
+  # given by name comes with its own rule and keeps it; one chosen here is
+  # chosen whole, the rule included, because only this package knows what the
+  # criterion it is being pointed at can resolve.
+  chose_optimizer <- is.null(optimizer)
+  if (chose_optimizer) {
     optimizer <- if (exact2) optimizers7::newton() else
       if (exact) optimizers7::lbfgs() else optimizers7::nelder_mead()
   }
@@ -663,6 +668,26 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the worst value seen ON THE SEARCH'S OWN SCALE, which is what an
   # unavailable point is made worse than
   state$worst <- NA_real_
+  # What the criterion could resolve at the best-located mode seen so far. It
+  # is a RUNNING MINIMUM rather than the latest reading, and the asymmetry of
+  # the two failures is what chooses that: a resolution smaller than the truth
+  # leaves the search where it was, while one larger stops a healthy search
+  # short. A minimum can only shrink, so it can only become more conservative.
+  state$resolution <- NA_real_
+
+  # WHICH criterion this search is running, written once. A prediction-error
+  # method and a marginal one are read by different functions and only one of
+  # them takes the integrated basis, so a second reader that picked for itself
+  # would answer for the wrong quantity -- which is what
+  # criterion_resolution() did on an aic() fit before this existed.
+  criterion_at <- function(cf, hy, par, ctx = NULL) {
+    if (pe) {
+      statmod_pe(spec, design, cf, hy, method, approx,
+                 statmod_active(spec, blocks, par, hy))
+    } else {
+      statmod_marginal(spec, design, cf, hy, method, approx, basis, ctx)
+    }
+  }
 
   # one inner fit serves the value and the gradient: an optimizer asks for
   # both at the same point, and refitting for the second would double the cost
@@ -717,9 +742,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # read the same information, the same penalty and the same factorization
       # instead of each assembling its own
       ctx <<- outer_context(spec, design, cf, hy, approx)
-      m <<- if (pe) statmod_pe(spec, design, cf, hy, method, approx,
-                               statmod_active(spec, blocks, res$par, hy)) else
-        statmod_marginal(spec, design, cf, hy, method, approx, basis, ctx)
+      m <<- criterion_at(cf, hy, res$par, ctx)
       if (is.null(m)) return(invisible(NULL))
       # The derivatives are NOT computed here. Which of them the search reads
       # is the OPTIMIZER's business and it varies: nelder_mead reads neither,
@@ -834,9 +857,27 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                   paste(signif(vapply(seq_along(labels), function(j)
                     hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", ")))
     }
-    out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy)
+    # `par`, `split` and `score` are carried for criterion_resolution(), which
+    # needs the mode the criterion was read at and the score the inner fit
+    # stopped short by. The score costs one gradient of the inner objective
+    # against a whole inner fit, so it is not worth deferring.
+    out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy,
+                par = res$par, split = res$obj$split,
+                score = res$obj$gr(res$par))
     state$key <- key
     state$last <- out
+    # RECOMPUTED AT EVERY USABLE POINT rather than once at the start. The mode
+    # is least well located at the first evaluation, which is a cold start, so
+    # a reading taken there is the worst of the run and governs every step
+    # after it. One criterion assembly per evaluation against a whole inner
+    # fit is what it costs.
+    if (chose_optimizer) {
+      r <- criterion_resolution(out, spec, design, method, criterion_at)
+      if (is.finite(r) && r > 0) {
+        state$resolution <- if (is.finite(state$resolution))
+          min(state$resolution, r) else r
+      }
+    }
     out
   }
 
@@ -916,6 +957,77 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   }
 
   eta0 <- hyper_to_eta(hyper, idx)
+
+  # THE CRITERION HAS A RESOLUTION AND THE STOPPING RULE HAS TO KNOW IT.
+  # Every evaluation refits the coefficients from the RUNNING warm start, so
+  # the value at one hyperparameter depends on the path taken to it, and a
+  # line search cannot verify a decrease smaller than that. Both halves of an
+  # optimizer's default rule are then unreachable: `crit_grad()` asks 1e-6 of
+  # a gradient that bottoms out where the decrease stops being verifiable, and
+  # `crit_rel_obj()` asks 1e-12 of a value of order 1e4, which is an absolute
+  # 1e-8. The run reports failure at a point it does not leave -- measured on
+  # a t-prior random effect, three consecutive evaluations identical to seven
+  # digits with the flag FALSE, while the inner fit at those hyperparameters
+  # converges and the log-likelihood agrees to nine digits.
+  #
+  # The resolution is COMPUTED at this fit rather than declared from the inner
+  # tolerance, and the difference is not one of accuracy. Declared as the
+  # criterion's scale times the tolerance it cannot be both safe and useful:
+  # measured, the resolution divided by that scale ranges over 140 times across
+  # shapes at ONE tolerance, so a bound covering a random intercept over 500
+  # levels is four orders too large for a gaussian smooth, where it stops the
+  # search with the outer gradient still 1.8e-2. `criterion_resolution()`
+  # displaces the mode by the error the inner fit's own score implies and reads
+  # how far the criterion moves, which costs one assembly and no refit; see
+  # there for what it was measured against.
+  #
+  # It is ADDED to the optimizer's own rule rather than replacing it, so the
+  # run can only stop earlier and never later, and it goes to the LINE SEARCH
+  # as well, the two covering different exits. The rule is read between
+  # iterations; a search that exhausts its backtracking budget never gets
+  # there, the loop asking the rule with no previous iterate, where anything
+  # reading a CHANGE in the objective returns FALSE by construction. Told what
+  # the criterion can resolve, the search returns at the first step whose
+  # predicted improvement is below it instead of paying for thirty trials,
+  # each of them a whole inner fit.
+  if (chose_optimizer) {
+    fn(eta0)
+    resolution <- state$resolution
+    if (is.finite(resolution) && resolution > 0) {
+      # the RULE keeps the reading from the starting point, being a property of
+      # the optimizer object and settled before the run; only the line search,
+      # which is asked again at every iteration, follows the running minimum
+      optimizer <- S7::set_props(
+        optimizer,
+        criterion = optimizers7::crit_any(
+          optimizer@criterion, optimizers7::crit_abs_obj(resolution)))
+      # ⚠️ THE LINE SEARCH IS GIVEN A TENTH OF IT, and the two reasons both
+      # point the same way. What is computed here is the spread between
+      # evaluations reached from DIFFERENT warm starts, while a line search
+      # compares trials taken one after another from nearly the same state,
+      # where the criterion is far more reproducible -- repeated at one
+      # hyperparameter from a running warm start its spread is exactly zero.
+      # And the reading is the more aggressive consumer, ending a whole
+      # iteration rather than one comparison. Measured at the full number on a
+      # gaussian smooth: the search stops after 3 evaluations against 29 and
+      # gives up 3.2e-06 of criterion against a resolution of 9.7e-07, so it
+      # stops just before it has to; at a tenth it reaches the same optimum as
+      # a search that was told nothing.
+      #
+      # a derivative-free search has no line search, so the property is asked
+      # for rather than assumed. It is given a CLOSURE, so the number it reads
+      # is the running minimum as the search has refined it and not the reading
+      # from the cold start.
+      if ("line_search" %in% S7::prop_names(optimizer)) {
+        optimizer <- S7::set_props(
+          optimizer,
+          line_search = S7::set_props(
+            optimizer@line_search,
+            resolution = function() state$resolution / 10))
+      }
+    }
+  }
+
   res <- if (exact2) {
     optimizers7::minimize(optimizer, fn, eta0, gr = gr, he = he)
   } else if (exact) {

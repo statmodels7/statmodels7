@@ -252,7 +252,10 @@ test_that("linpar_options reaches the implicit parametric block", {
   expect_identical(ncol(Xc), ncol(Xp))
   expect_false(isTRUE(all.equal(unname(Xc), unname(Xp))))
 
-  expect_error(linpar_options(sparse = 1), "TRUE or FALSE")
+  expect_error(linpar_options(sparse = 1), "TRUE, FALSE, or NULL")
+  # NULL is the default and reaches linpar(), which settles the storage from
+  # the size of the design rather than being told
+  expect_null(linpar_options()$sparse)
   expect_error(linpar_options(contrasts = "contr.sum"), "named list")
 })
 
@@ -287,7 +290,10 @@ test_that("a smooth per level fits the same model in either storage", {
   b <- stats::rnorm(m, sd = 0.5)
   d$y <- b[as.integer(d$g)] + sin(3 * d$x) + stats::rnorm(n, sd = 0.4)
 
-  a <- statmod(y ~ s(x, k = 8, by = g),
+  # the dense side is asked for EXPLICITLY: left NULL the storage is settled
+  # from the size of the block, and 800 rows by 25 levels by a basis of eight
+  # is 160000 cells, past the threshold, so the default settles sparse here
+  a <- statmod(y ~ s(x, k = 8, by = g, sparse = FALSE),
                distributions7::gaussian1_distrib(), d)
   s <- statmod(y ~ s(x, k = 8, by = g, sparse = TRUE),
                distributions7::gaussian1_distrib(), d)

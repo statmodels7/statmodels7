@@ -418,7 +418,9 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 #' answer: the final verdict is already arbitrated on a dimensionless scale.
 #'
-#' @param sparse Whether the block is a \code{dgCMatrix}.
+#' @param sparse Whether the block is a \code{dgCMatrix}. \code{NULL}, the
+#'   default, leaves it to \code{\link[modelterms7]{linpar}}, which settles it
+#'   at build from the size of the design.
 #' @param contrasts The contrasts for the block's factors, as a named list of
 #'   the kind \code{\link[stats]{model.matrix}}'s \code{contrasts.arg} takes,
 #'   or \code{NULL} for the session's \code{options("contrasts")}.
@@ -435,9 +437,11 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' linpar_options(sparse = TRUE)
 #'
 #' @export
-linpar_options <- function(sparse = FALSE, contrasts = NULL) {
-  if (!is.logical(sparse) || length(sparse) != 1L || is.na(sparse)) {
-    stop("'sparse' must be TRUE or FALSE.", call. = FALSE)
+linpar_options <- function(sparse = NULL, contrasts = NULL) {
+  if (!is.null(sparse) &&
+      (!is.logical(sparse) || length(sparse) != 1L || is.na(sparse))) {
+    stop(paste0("'sparse' must be TRUE, FALSE, or NULL to settle it from",
+                " the design."), call. = FALSE)
   }
   if (!is.null(contrasts) && !is.list(contrasts)) {
     stop(paste0("'contrasts' must be a named list, one entry per factor,",

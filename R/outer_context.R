@@ -224,6 +224,84 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 }
 
 
+#' What the Marginal Criterion Can Resolve at This Fit
+#'
+#' @description
+#' The size of the difference in the criterion that carries no information,
+#' measured at the point rather than assumed.
+#'
+#' @details
+#' The criterion is read at the penalized mode, and the inner fit stops short
+#' of that mode by whatever its rule allows. Writing \eqn{g} for the score it
+#' stopped at and \eqn{K = H + S} for the penalized information, the mode is
+#' out by \eqn{\delta\beta = K^{-1} g}, and the criterion read at
+#' \eqn{\hat\beta - \delta\beta} instead of at \eqn{\hat\beta} differs by an
+#' amount that is exactly what an evaluation from a different warm start would
+#' differ by. One assembly of the criterion at given coefficients answers it,
+#' with no refit.
+#'
+#' \strong{The quadratic form alone is not enough}, and the reason is
+#' structural rather than a matter of accuracy: the criterion carries
+#' \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is NOT stationary in
+#' \eqn{\beta}, so a mode error enters it at FIRST order. Measured,
+#' \eqn{\tfrac{1}{2} g' K^{-1} g} is right to one per cent at an inner
+#' tolerance of \code{1e-4}, where the second-order term dominates, and
+#' undershoots by 50 to 1000 times at \code{1e-6} and below, where the first
+#' order does.
+#'
+#' Measured against the spread of the criterion at one hyperparameter reached
+#' from six different warm starts, over four shapes and five inner tolerances,
+#' the displaced reading tracks it across six orders of magnitude -- from
+#' \code{8.6e-2} down to \code{2.2e-7} -- at a ratio between 0.05 and 0.99, and
+#' separates shapes that a formula cannot: at an inner tolerance of \code{1e-6}
+#' it reads \code{1.7e-4} on a random intercept over 500 levels against
+#' \code{7.9e-8} on a gaussian smooth.
+#'
+#' It reads LOW by two to three times, the spread being a range over six paths
+#' where this is one deviation, and that is the side to err on. A resolution
+#' smaller than the truth leaves the search where it was; one larger stops a
+#' healthy search short.
+#'
+#' @param st An evaluation's stored state, carrying \code{par}, \code{split},
+#'   \code{score}, \code{cf}, \code{hy}, \code{ctx} and \code{value}.
+#' @param spec The specification.
+#' @param design The design.
+#' @param method An \code{\link{OuterMethod}}.
+#' @param criterion_at A function of \code{(cf, hy, par, ctx)} returning what
+#'   THIS search is running, which is a prediction-error criterion or a
+#'   marginal one. It is passed in rather than chosen here: reading the
+#'   marginal criterion of a fit whose search is \code{\link{aic}} answers for
+#'   a quantity the search never sees, and the number that comes back stopped
+#'   two such fits short of their own optimum.
+#'
+#' @return A single positive number, or \code{NA_real_} where the pieces are
+#'   not available.
+#'
+#' @seealso \code{\link{outer_fit}}, \code{\link[optimizers7]{armijo}}
+#'
+#' @keywords internal
+criterion_resolution <- function(st, spec, design, method, criterion_at) {
+  if (!isTRUE(st$ok) || is.null(st$score) || is.null(st$split)) {
+    return(NA_real_)
+  }
+  if (!all(is.finite(st$score))) return(NA_real_)
+  expected <- identical(method@hessian, "expected")
+  pen <- ctx_penalized(st$ctx, spec, design, st$cf, st$hy, expected)
+  if (is.null(pen)) return(NA_real_)
+  db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% st$score),
+                 error = function(e) NULL)
+  if (is.null(db) || !all(is.finite(db))) return(NA_real_)
+  par2 <- st$par - db
+  # a FRESH context, the displaced coefficients not being the ones the cached
+  # information, penalty and factorization were built at
+  m2 <- tryCatch(criterion_at(st$split(par2), st$hy, par2, NULL),
+                 error = function(e) NULL)
+  if (is.null(m2) || !is.finite(m2$value)) return(NA_real_)
+  out <- abs(m2$value - st$value)
+  if (!is.finite(out) || out <= 0) NA_real_ else out
+}
+
+
 #' The Matrix the Traces Are Taken Against
 #'
 #' @description
