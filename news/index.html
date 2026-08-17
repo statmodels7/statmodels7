@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.59.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.60.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.60.0" id="statmodels7-0600">statmodels7 0.60.0<a class="anchor" aria-label="anchor" href="#statmodels7-0600"></a></h2>
+<ul><li><p><strong>A kinked penalty on a block that MOVES with its coefficients is fitted rather than refused.</strong> <code><a href="../reference/coord_fit.html">coord_fit()</a></code> read the block as it arrived and solved against the linear predictor <code>X beta</code>, and a term registering <code>term_refresh()</code> has neither property: its block is the Jacobian at the current coefficients, and what it contributes is <code>X beta + adj</code>. The sweep therefore updated the working residual of a different model.</p></li>
+<li><p>Measured on <code>nl(~ a * exp(-r * x), a ~ 0 + lasso(~grp))</code> over 300 observations and ten groups, at a HELD lambda small enough that neither a lasso nor a ridge shrinks: the log-likelihood was <code>-339.74</code> against the ridge control’s <code>+155.45</code>, with the rate at <code>0.22</code> against a truth of <code>0.70</code>, and the fit reported success. It is now <code>155.4618</code> against <code>155.4548</code>, with the rate at <code>0.7360</code> against <code>0.7377</code>.</p></li>
+<li><p>The block is read at the current coefficients and <code>adj</code> is subtracted from the working response, once per SWEEP and never per coordinate: the compiled descent exists because the design stands still while it walks the columns, and the refresh state advances where the alternation commits it. A model with no refreshable term is untouched, the question being asked only where something moves.</p></li>
+<li><p>The KKT conditions at the point reached, differentiated numerically so that the check shares no arithmetic with the proximal sweep: the gradient on the active coordinates is <code>2.6e-10</code> to <code>1.5e-13</code> across lambda, and where every coefficient is shrunk to zero they all sit inside the interval the kink opens.</p></li>
+<li><p>⚠️ What remains, and it is not this route’s: the alternation between a moving block and the free coordinates converges LINEARLY and can stop short. On this model the amplitudes and the rate are strongly coupled through <code>a * exp(-r x)</code>, so it takes 36 passes and stops with the rate <code>4e-4</code> from its optimum; at <code>iwls(tol = 1e-12)</code> the free gradient falls from <code>9.0e-01</code> to <code>8.4e-04</code>. The ridge control does it in one pass because it has no second block to alternate with.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.59.0" id="statmodels7-0590">statmodels7 0.59.0<a class="anchor" aria-label="anchor" href="#statmodels7-0590"></a></h2>
 <ul><li><p><strong>The criterion’s resolution is COMPUTED at the fit instead of declared.</strong> <code><a href="../reference/criterion_resolution.html">criterion_resolution()</a></code> displaces the coefficients by the mode error the inner fit’s own score implies, <code>K^-1 g</code>, and reads how far the criterion moves. It costs one assembly of the criterion at given coefficients and no refit.</p></li>
