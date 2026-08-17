@@ -472,62 +472,45 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #' @param params,npar,offs,total The block bookkeeping.
 #' @param expected Whether the criterion carries the expected information.
 #' @param approx The approximation for the expected information.
+#' @param units The refreshable terms, from \code{\link{refresh_units}}, or
+#'   \code{NULL} to resolve them here.
+#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}, or
+#'   \code{NULL} to compute it here.
 #'
 #' @return A numeric vector as long as the stacked coefficients.
 #'
-#' @seealso \code{\link{u_vector}},
+#' @seealso \code{\link{u_vector}}, \code{\link{refresh_amat}},
 #'   \code{\link[modelterms7]{term_block_contract}}
 #'
 #' @keywords internal
 u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
-                      expected = FALSE, approx = "bartlett") {
+                      expected = FALSE, approx = "bartlett", units = NULL,
+                      Hl = NULL) {
   out <- numeric(total)
-  rf <- attr(design, "refresh")
-  if (is.null(rf) || !length(rf)) return(out)
-  st <- attr(design, "state")
-  if (is.null(st)) return(out)
-  n <- spec@n_obs
-  w <- spec@weights
-  th <- statmod_eta(spec, design, coef)$theta
-  Hl <- if (expected) {
-    distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
-                                             scale = "link", approx = approx)
-  } else {
-    distributions7::distrib_hessian(spec@distrib, spec@response, th,
-                                    scale = "link")
+  if (is.null(units)) {
+    units <- refresh_units(spec, design, coef, params, npar, offs)
   }
-  for (r in rf) {
-    p <- r$param
-    a <- match(p, params)
-    if (is.na(a) || npar[a] == 0L) next
-    cols <- design[[p]]$blocks[[r$term]]
-    if (!length(cols)) next
-    ra <- offs[a] + cols
-    A <- matrix(0, n, length(cols))
+  if (!length(units)) return(out)
+  if (is.null(Hl)) Hl <- refresh_hessian(spec, design, coef, expected, approx)
+  for (un in units) {
+    cw <- vector("list", length(params))
     for (b in seq_along(params)) {
       if (npar[b] == 0L) next
-      rb <- offs[b] + seq_len(npar[b])
-      Mab <- as_dense(M[ra, rb, drop = FALSE])
-      A <- A + rep_len(Hl[[hess_key(params, a, b)]], n) *
-        as_dense(design[[params[b]]]$X %*% t(Mab))
+      cw[[b]] <- Hl[[hess_key(params, un$a, b)]]
     }
-    A <- A * w
-    tm <- st$terms[[p]][[r$term]]
-    if (is.null(tm)) next
-    bt <- coef[[p]][cols]
+    A <- refresh_amat(spec, design, M, params, npar, offs, un$ra, cw)
     # NOT wrapped in a tryCatch: a term that has not written the contraction
     # inherits the base method and gets zeros, which is a legitimate answer and
     # not an error, so anything raised here is a defect and must be seen. A
     # catch-all put around it swallowed "not an exported object" and reported a
     # correction of exactly zero, which reads as "nothing to correct".
-    dc <- modelterms7::term_block_contract(
-      modelterms7::term_refresh(tm, bt), coef = bt, A = A)
-    if (length(dc) != length(cols)) {
+    dc <- modelterms7::term_block_contract(un$built, coef = un$bt, A = A)
+    if (length(dc) != length(un$cols)) {
       stop(sprintf(paste("term_block_contract() returned %d values for a block",
                          "of %d columns\n  in '%s'."),
-                   length(dc), length(cols), r$term), call. = FALSE)
+                   length(dc), length(un$cols), un$term), call. = FALSE)
     }
-    out[ra] <- -2 * as.numeric(dc)
+    out[un$ra] <- -2 * as.numeric(dc)
   }
   out
 }

@@ -14,7 +14,9 @@ u_refresh(
   offs,
   total,
   expected = FALSE,
-  approx = "bartlett"
+  approx = "bartlett",
+  units = NULL,
+  Hl = NULL
 )
 }
 \arguments{
@@ -31,6 +33,12 @@ u_refresh(
 \item{expected}{Whether the criterion carries the expected information.}
 
 \item{approx}{The approximation for the expected information.}
+
+\item{units}{The refreshable terms, from \code{\link{refresh_units}}, or
+\code{NULL} to resolve them here.}
+
+\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}, or
+\code{NULL} to compute it here.}
 }
 \value{
 A numeric vector as long as the stacked coefficients.
@@ -59,7 +67,7 @@ the step shrinks rather than converging. A term that does not implement the
 contraction inherits zeros, which is exactly right for a fixed design.
 }
 \seealso{
-\code{\link{u_vector}},
+\code{\link{u_vector}}, \code{\link{refresh_amat}},
 \code{\link[modelterms7]{term_block_contract}}
 }
 \keyword{internal}

@@ -1,4 +1,4 @@
-#' @include outer_gradient.R
+#' @include outer_refresh.R
 NULL
 
 # The exact Hessian of the marginal criterion.
@@ -99,24 +99,70 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   d4 <- ctx_deriv(ctx, spec, design, coef, hyper, 4L)
   G <- ctx_leverage(ctx, design, M, params, npar, offs)
 
+  # ⚠️ dX/dbeta reaches this assembly in THREE places -- the matrix dK/dt_m
+  # below, the trace of dK_m/dt_l against M, and the twice-contracted fourth
+  # derivative -- and correcting one alone is worse than correcting none:
+  # measured, a weakly identified nl went from 2.02e-01 to 6.35e+02 with a
+  # standard error of NaN when only the first was written. The three are
+  # resolved from ONE list of units so they cannot disagree about which blocks
+  # move; an empty list leaves every expression below untouched.
+  units <- refresh_units(spec, design, coef, params, npar, offs)
+  Hl <- if (length(units)) {
+    refresh_hessian(spec, design, coef, identical(method@hessian, "expected"),
+                    ctx_approx(ctx))
+  } else NULL
+  # the trace of the refresh part of T[v] against M is v'u, with u the same
+  # contraction the gradient already forms: term_block_contract() is the
+  # adjoint of term_block_deriv(), so no second route to it is needed
+  uref <- if (length(units)) {
+    u_refresh(spec, design, coef, M, params, npar, offs, total,
+              identical(method@hessian, "expected"), ctx_approx(ctx),
+              units = units, Hl = Hl)
+  } else NULL
+
+  # ⚠️ HOW THE MODE MOVES is governed by the penalized LIKELIHOOD's own
+  # curvature, which for a block that moves with its coefficients is not the
+  # matrix the determinant is of -- the two that statmod_marginal_grad() keeps
+  # apart through mode_curvature(), and that this assembly did not. Measured on
+  # a weakly identified nl against two refits of the mode, b_m read off K is
+  # 6.6e-01 wrong and 5.2e-05 read off K + Dm; everything below inherits it,
+  # which is why correcting dK/dbeta alone moved the Hessian by nothing.
+  Dm <- if (length(units)) {
+    mode_curvature(spec, design, coef, params, npar, offs, total)
+  } else NULL
+  Jmat <- K
+  msolve <- function(z) as.numeric(Kinv %*% z)
+  if (!is.null(Dm) && any(Dm != 0)) {
+    Jt <- as_dense(K) + Dm
+    fac <- tryCatch(chol(Jt), error = function(e) NULL)
+    # the true Hessian may lose definiteness where Gauss-Newton cannot, and a
+    # mode's movement is worth having approximately rather than not at all
+    if (!is.null(fac)) {
+      Jmat <- Jt
+      msolve <- function(z) backsolve(fac, forwardsolve(t(fac), z))
+    }
+  }
+
   # the pieces each hyperparameter owns, in the stacked coefficient space
   pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total)
-  bhat <- lapply(seq_len(nh), function(m) -as.numeric(Kinv %*% pieces$c[[m]]))
+  bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
   tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
                                                  v))
-  # ⚠️ dK/dt_m through the mode's movement, and it is INCOMPLETE where a term's
-  # block moves with its coefficients: the third derivative of the
-  # log-likelihood is one of three contributions and the other two come from
-  # dX/dbeta, which `u_refresh()` supplies to the gradient and nothing supplies
-  # here. Correcting THIS line alone was tried and is worse than leaving it:
-  # the assembly below then mixes a corrected dK/dt with the two traces of
-  # `tr_dKm`, which are not corrected, and a weakly identified nl went from
-  # 2.02e-01 to 6.35e+02 with a standard error of NaN. The correction has to
-  # reach all three at once, and the d4 trace additionally carries the cross
-  # terms of dX/dbeta with itself. See `modelterms7::term_block_deriv()`, which
-  # is the piece it would be built from.
-  Tm <- lapply(tv, function(t) contract3(spec, design, d3, params, npar, offs,
-                                         total, t))
+  # what each direction costs a moving block, once per hyperparameter: both
+  # quantities depend on ONE direction, so building them inside the pair loop
+  # would repeat an O(np^2) product for every pair
+  dref <- if (length(units)) {
+    lapply(seq_len(nh), function(m)
+      refresh_direction(spec, design, M, params, npar, offs, d3, tv[[m]],
+                        bhat[[m]], units))
+  } else NULL
+  Tm <- lapply(seq_len(nh), function(m) {
+    Tb <- contract3(spec, design, d3, params, npar, offs, total, tv[[m]])
+    if (!length(units)) return(Tb)
+    R <- contract3_refresh(spec, design, params, npar, offs, total, dref[[m]],
+                           Hl, units)
+    Tb + R + t(R)
+  })
   Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
 
   out <- matrix(0, nh, nh)
@@ -127,7 +173,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       cml <- pieces$c2[[key]]
       rhs <- (pieces$S[[l]] + Tm[[l]]) %*% bhat[[m]] +
         pieces$S[[m]] %*% bhat[[l]] + cml
-      bml <- -as.numeric(Kinv %*% rhs)
+      bml <- -msolve(rhs)
       # dK_m/dt_l enters ONLY through its trace against M, so the two
       # contractions are never assembled: tr(M X'WX) is a weighted sum of the
       # per-observation diagonal G. Measured at 8000 observations and 69
@@ -137,8 +183,12 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
         trace_design_form(spec, G, d4, params, npar, tv[[l]], tv[[m]]) +
         trace_design_form(spec, G, d3, params, npar,
                           block_predictors(design, params, npar, offs, bml))
+      if (length(units)) {
+        tr_dKm <- tr_dKm + sum(uref * bml) +
+          trace_refresh4(spec, M, params, Hl, dref[[l]], dref[[m]], units)
+      }
       v <- -pieces$rho2[m, l] +
-        sum(bhat[[m]] * as.numeric(K %*% bhat[[l]])) +
+        sum(bhat[[m]] * as.numeric(Jmat %*% bhat[[l]])) +
         sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -
         tr_dKm / 2
       out[m, l] <- v

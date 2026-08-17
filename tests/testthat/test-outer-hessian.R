@@ -216,3 +216,122 @@ test_that("a variance component's Hessian is exact now, not differenced", {
   expect_true(is.finite(f@criterion))
   expect_gt(f@hyper$mu[["random(~1 | g)"]][[1L]], 0.3)
 })
+
+
+# --- a block that moves with its coefficients -------------------------------
+
+# The pieces the refresh corrections are assembled from, at one point, so that
+# each can be asked its own question rather than only the Hessian's.
+refresh_bits <- function(formula, data, shift = 0.3) {
+  inner <- iwls()
+  fit0 <- statmod(formula, distributions7::gaussian1_distrib(), data,
+                  inner_optimizer = inner,
+                  outer_criterion = reml(hessian = "observed"))
+  spec <- fit0@spec
+  design0 <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design0))
+  hy <- eta_to_hyper(hyper_to_eta(fit0@hyper, idx) + shift, idx, fit0@hyper)
+  cf <- fit_at_hyper(formula, distributions7::gaussian1_distrib(), data, hy,
+                     inner)$coefficients
+  design <- statmod_design_at(spec, cf, design0)
+  params <- spec@distrib@params
+  npar <- vapply(design, function(z) z$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  total <- sum(npar)
+  pen <- ctx_penalized(NULL, spec, design, cf, hy, FALSE)
+  M <- ctx_trace_matrix(NULL, pen, integrated_basis(spec, design, "reml"),
+                        FALSE)
+  list(spec = spec, design = design, coef = cf, hyper = hy, M = M,
+       params = params, npar = npar, offs = offs, total = total,
+       d3 = ctx_deriv(NULL, spec, design, cf, hy, 3L),
+       Hl = refresh_hessian(spec, design, cf, FALSE, "bartlett"),
+       units = refresh_units(spec, design, cf, params, npar, offs))
+}
+
+test_that("the Hessian covers a block that moves with its coefficients", {
+  skip_if_not_installed("numDeriv")
+  # nl()'s block is the Jacobian, so dX/dbeta reaches the assembly in three
+  # places -- the matrix dK/dt, the trace of dK_m/dt_l against M, and the
+  # twice-contracted fourth derivative -- and the mode moves by the penalized
+  # likelihood's own curvature rather than by K. Measured against a central
+  # difference of the exact gradient with the mode refitted, the four together
+  # take a*exp(-r x) from 2.17e-04 to 2.26e-05 and a weakly identified one
+  # (r*x_max = 0.5, where the curve is nearly straight and the criterion flat)
+  # from 2.10e-01 to 3.54e-03, its hyperparameter's standard error from
+  # 1.25e-01 to 1.77e-03.
+  set.seed(9)
+  np <- 40; m <- 8
+  dn <- data.frame(x = rep(seq(0.2, 4, length.out = np), m),
+                   grp = factor(rep(sprintf("g%d", seq_len(m)), each = np)))
+  a_g <- 3 + stats::rnorm(m, sd = 0.4)
+  dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
+  h <- outer_handles(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn,
+                     reml(hessian = "observed"))
+  eta <- h$eta0 + 0.35
+  expect_equal(as.numeric(h$he(eta)),
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
+})
+
+test_that("a break-point term's Hessian is covered too", {
+  skip_if_not_installed("numDeriv")
+  # seg()'s block is the Jacobian of a CONTINUOUS construction, so it carries
+  # term_block_deriv() and the same four corrections apply; jump() and jseg()
+  # answer zeros, their position being read off a product of coefficients.
+  set.seed(12)
+  ns <- 300
+  ds <- data.frame(x = runif(ns, 0, 10),
+                   id = factor(rep(seq_len(6), length.out = ns)))
+  ds$y <- 1 + 0.3 * ds$x + 1.5 * pmax(ds$x - 5, 0) + stats::rnorm(ns, sd = 0.4)
+  h <- outer_handles(y ~ seg(x, gamma1 ~ 0 + ridge(~ id)), ds,
+                     reml(hessian = "observed"))
+  eta <- h$eta0 + 0.3
+  expect_equal(as.numeric(h$he(eta)),
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)
+})
+
+test_that("a fixed design gets exactly zero from every refresh correction", {
+  # the negative control, and it is what says the four corrections cannot move
+  # a model with no block that moves: they are not small there, they are the
+  # zero matrix and the number zero.
+  b <- refresh_bits(y ~ s(x, k = 8), dh)
+  expect_length(b$units, 0L)
+  R <- contract3_refresh(b$spec, b$design, b$params, b$npar, b$offs, b$total,
+                         list(), b$Hl, b$units)
+  expect_true(all(as.matrix(R) == 0))
+  expect_identical(trace_refresh4(b$spec, b$M, b$params, b$Hl, list(), list(),
+                                  b$units), 0)
+  expect_true(all(u_refresh(b$spec, b$design, b$coef, b$M, b$params, b$npar,
+                            b$offs, b$total, units = b$units) == 0))
+})
+
+test_that("the trace of the refresh correction is read off the adjoint", {
+  # tr(M (R + R')) is v'u with u the contraction the GRADIENT already forms,
+  # because term_block_contract() is the adjoint of term_block_deriv(). The
+  # Hessian uses that shortcut for one of its three places; here it is checked
+  # against the matrix assembled and traced, which shares none of its
+  # arithmetic. A term whose block does not move would satisfy this with zeros
+  # on both sides, so the nl term is asked and its own correction is required
+  # to be non-trivial.
+  set.seed(9)
+  np <- 30; m <- 6
+  dn <- data.frame(x = rep(seq(0.2, 4, length.out = np), m),
+                   grp = factor(rep(sprintf("g%d", seq_len(m)), each = np)))
+  a_g <- 3 + stats::rnorm(m, sd = 0.4)
+  dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
+  b <- refresh_bits(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn)
+  expect_length(b$units, 1L)
+  set.seed(4)
+  v <- stats::rnorm(b$total)
+  uref <- u_refresh(b$spec, b$design, b$coef, b$M, b$params, b$npar, b$offs,
+                    b$total, units = b$units, Hl = b$Hl)
+  dir <- refresh_direction(b$spec, b$design, b$M, b$params, b$npar, b$offs,
+                           b$d3,
+                           block_predictors(b$design, b$params, b$npar,
+                                            b$offs, v),
+                           v, b$units)
+  R <- contract3_refresh(b$spec, b$design, b$params, b$npar, b$offs, b$total,
+                         dir, b$Hl, b$units)
+  direct <- sum(as.matrix(b$M) * as.matrix(R + t(R)))
+  expect_gt(abs(direct), 1e-8)
+  expect_equal(sum(uref * v), direct, tolerance = 1e-10)
+})
