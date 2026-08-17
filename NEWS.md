@@ -1,3 +1,40 @@
+# statmodels7 0.60.0
+
+* **A kinked penalty on a block that MOVES with its coefficients is fitted
+  rather than refused.** `coord_fit()` read the block as it arrived and solved
+  against the linear predictor `X beta`, and a term registering
+  `term_refresh()` has neither property: its block is the Jacobian at the
+  current coefficients, and what it contributes is `X beta + adj`. The sweep
+  therefore updated the working residual of a different model.
+
+* Measured on `nl(~ a * exp(-r * x), a ~ 0 + lasso(~grp))` over 300
+  observations and ten groups, at a HELD lambda small enough that neither a
+  lasso nor a ridge shrinks: the log-likelihood was `-339.74` against the ridge
+  control's `+155.45`, with the rate at `0.22` against a truth of `0.70`, and
+  the fit reported success. It is now `155.4618` against `155.4548`, with the
+  rate at `0.7360` against `0.7377`.
+
+* The block is read at the current coefficients and `adj` is subtracted from
+  the working response, once per SWEEP and never per coordinate: the compiled
+  descent exists because the design stands still while it walks the columns,
+  and the refresh state advances where the alternation commits it. A model
+  with no refreshable term is untouched, the question being asked only where
+  something moves.
+
+* The KKT conditions at the point reached, differentiated numerically so that
+  the check shares no arithmetic with the proximal sweep: the gradient on the
+  active coordinates is `2.6e-10` to `1.5e-13` across lambda, and where every
+  coefficient is shrunk to zero they all sit inside the interval the kink
+  opens.
+
+* ⚠️ What remains, and it is not this route's: the alternation between a
+  moving block and the free coordinates converges LINEARLY and can stop short.
+  On this model the amplitudes and the rate are strongly coupled through
+  `a * exp(-r x)`, so it takes 36 passes and stops with the rate `4e-4` from
+  its optimum; at `iwls(tol = 1e-12)` the free gradient falls from `9.0e-01`
+  to `8.4e-04`. The ridge control does it in one pass because it has no second
+  block to alternate with.
+
 # statmodels7 0.59.0
 
 * **The criterion's resolution is COMPUTED at the fit instead of declared.**

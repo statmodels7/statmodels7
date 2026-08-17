@@ -92,9 +92,17 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   # storage the method wants rather than one it tolerates, and the kernel
   # walks the stored nonzeros; densifying here was the last densification in
   # the chain and it is gone.
+  # the built block, which answers the two questions asked before the loop --
+  # how many columns there are, and whether this penalty has a table at all.
+  # Inside the loop it is read again at the current coefficients.
   X <- coord_block(d$X, cols)
   if (!ncol(X)) return(NULL)
   other <- setdiff(seq_len(d$npar), cols)
+  # whether anything in this model recomputes its own block as the
+  # coefficients move, which is what makes the loop below read the design
+  # again rather than the block it was handed
+  rf <- attr(design, "refresh")
+  moves <- !is.null(rf) && length(rf) > 0L
   # Does this penalty have a table AT ALL? That is a question about the
   # family, and it is asked at a step short enough not to answer a different
   # one: SCAD and MCP have no table past their convex region, the condition
@@ -112,13 +120,38 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   sweeps <- 0L
   for (it in seq_len(maxit)) {
     coef <- obj$split(cur)
+    # THE BLOCK AT THE CURRENT COEFFICIENTS, not the block as it was built.
+    # A term registering term_refresh() has neither property this route was
+    # written for: its block is the Jacobian at the coefficients, so it moves
+    # as they do, and what it contributes is X beta + adj rather than X beta.
+    # Reading the block as it arrived and dropping adj solves a different
+    # model and converges to a point that is not the mode -- measured on
+    # nl(~ a * exp(-r * x), a ~ 0 + lasso(~grp)) at a held lambda small enough
+    # that neither a lasso nor a ridge shrinks, log-likelihood -339.74 against
+    # the ridge control's +155.45 and a rate of 0.22 against a truth of 0.70.
+    #
+    # It is refreshed once per SWEEP of this loop and never per coordinate:
+    # the compiled descent exists because the design stands still while it
+    # walks the columns, and statmod_design_at() chains from the state the
+    # alternation commits, so the rescaling schedule of a break-point term
+    # advances at the speed of the fit rather than of this loop. The result is
+    # memoized on the coefficients, so statmod_eta() below reuses it.
+    # asked only where something moves: with no refreshable term
+    # statmod_design_at() returns the design it was given, and re-subsetting
+    # the same columns every sweep would cost a copy of the block for nothing
+    dd <- if (moves) statmod_design_at(spec, coef, design)[[p]] else d
+    if (moves) X <- coord_block(dd$X, cols)
     ep <- statmod_eta(spec, design, coef)
     wq <- coord_working(spec, ep, coef, design, p, expected, approx)
     if (is.null(wq)) return(NULL)
     off <- if (length(other))
-      as.numeric(d$X[, other, drop = FALSE] %*% coef[[p]][other]) else
+      as.numeric(dd$X[, other, drop = FALSE] %*% coef[[p]][other]) else
       rep(0, n)
-    z <- wq$z - off - coord_offset(spec, p, n)
+    # everything the working response carries that these columns do not: the
+    # other columns, the equation's offset, and what the term contributes
+    # beyond its block, which statmod_eta() has already put into `z`
+    adj <- if (is.null(dd$adj)) 0 else dd$adj
+    z <- wq$z - off - coord_offset(spec, p, n) - adj
     v <- as.numeric(crossprod(wq$w, X^2))
     if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
     b0 <- coef[[p]][cols]
