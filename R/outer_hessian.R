@@ -104,6 +104,17 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   bhat <- lapply(seq_len(nh), function(m) -as.numeric(Kinv %*% pieces$c[[m]]))
   tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
                                                  v))
+  # ⚠️ dK/dt_m through the mode's movement, and it is INCOMPLETE where a term's
+  # block moves with its coefficients: the third derivative of the
+  # log-likelihood is one of three contributions and the other two come from
+  # dX/dbeta, which `u_refresh()` supplies to the gradient and nothing supplies
+  # here. Correcting THIS line alone was tried and is worse than leaving it:
+  # the assembly below then mixes a corrected dK/dt with the two traces of
+  # `tr_dKm`, which are not corrected, and a weakly identified nl went from
+  # 2.02e-01 to 6.35e+02 with a standard error of NaN. The correction has to
+  # reach all three at once, and the d4 trace additionally carries the cross
+  # terms of dX/dbeta with itself. See `modelterms7::term_block_deriv()`, which
+  # is the piece it would be built from.
   Tm <- lapply(tv, function(t) contract3(spec, design, d3, params, npar, offs,
                                          total, t))
   Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
