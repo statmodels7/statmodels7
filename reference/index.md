@@ -157,10 +157,14 @@ exported, and none is needed to use the package.
   : The Working Response and Weights of One Equation
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
+- [`ctx_approx()`](https://statmodels7.github.io/statmodels7/reference/ctx_approx.md)
+  : The Approximation a Context Was Built With
 - [`ctx_deriv()`](https://statmodels7.github.io/statmodels7/reference/ctx_deriv.md)
   : A Higher Derivative of the Log-Density at the Context's Point
 - [`ctx_information()`](https://statmodels7.github.io/statmodels7/reference/ctx_information.md)
   : The Information at the Context's Point
+- [`ctx_kmove()`](https://statmodels7.github.io/statmodels7/reference/ctx_kmove.md)
+  : How the Penalized Matrix Moves With the Coefficients
 - [`ctx_leverage()`](https://statmodels7.github.io/statmodels7/reference/ctx_leverage.md)
   : The Per-Observation Diagonals at the Context's Point
 - [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
@@ -200,6 +204,8 @@ exported, and none is needed to use the package.
   : Draw or Validate the Coefficients of a Simulation
 - [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
   : Evaluate the Offsets a Formula Names
+- [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
+  : Does the Family Supply the Expected Information's Derivative?
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
   : Which Information Matrix a Fit Used
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
@@ -271,6 +277,8 @@ exported, and none is needed to use the package.
   : The Model as a Function of Parameters and Data
 - [`method_budget()`](https://statmodels7.github.io/statmodels7/reference/method_budget.md)
   : The Budget and the Stopping Rule of the Alternation
+- [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md)
+  : The Curvature the Mode Actually Moves By
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
 - [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
@@ -550,6 +558,8 @@ exported, and none is needed to use the package.
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
   : The Trace Against a Contraction, Without Forming It
+- [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
+  : How the Determinant Reads a Block That Moves With the Coefficients
 - [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
   : The Trace of the Determinant's Movement With the Coefficients
 - [`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)

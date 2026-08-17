@@ -6,7 +6,7 @@ projected inverse otherwise.
 ## Usage
 
 ``` r
-ctx_trace_matrix(ctx, pen, basis)
+ctx_trace_matrix(ctx, pen, basis, expected = FALSE)
 ```
 
 ## Arguments
@@ -23,6 +23,17 @@ ctx_trace_matrix(ctx, pen, basis)
 - basis:
 
   The integrated subspace, or `NULL`.
+
+- expected:
+
+  Which information `pen` was built with, which is the cache's key: the
+  projection is of THAT matrix, so one entry cannot serve both. Nothing
+  reaches it today, a search holding one
+  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
+  throughout, but the slot is keyed rather than shared because the twin
+  defect in
+  [`ctx_penalized`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
+  was unreachable in exactly the same way until it was not.
 
 ## Value
 

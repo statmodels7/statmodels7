@@ -36,8 +36,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_screen.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_working.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/criterion_tol.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_approx.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_deriv.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_information.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_kmove.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_leverage.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_penalized.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/ctx_penalty.html</loc></url>
@@ -57,6 +59,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/draw_coefficients.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/eval_offsets.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.html</loc></url>
@@ -94,6 +97,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/loglik.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/method_budget.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/mode_curvature.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_context.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_fit.html</loc></url>
@@ -247,6 +251,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/trace_design_form.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/u_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unfittable_reason.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>

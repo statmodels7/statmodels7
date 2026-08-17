@@ -1,12 +1,12 @@
 # The Penalized Matrix and Its Inverse
 
-\\K = H + S\\ with the OBSERVED information, and its inverse, which the
-gradient and the Hessian both read.
+\\K = H + S\\ with the criterion's own information, and its inverse,
+which the gradient and the Hessian both read.
 
 ## Usage
 
 ``` r
-ctx_penalized(ctx, spec, design, coef, hyper)
+ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
 ```
 
 ## Arguments
@@ -18,6 +18,15 @@ ctx_penalized(ctx, spec, design, coef, hyper)
 - spec, design, coef, hyper:
 
   The fallback arguments.
+
+- expected:
+
+  Whether \\H\\ is the expected information, which is what the criterion
+  carries under `reml(hessian = "expected")`. It used to be hard-coded
+  to the observed one, correctly, because the exact gradient ran on no
+  other route; admitting the expected route makes the criterion's
+  determinant a different matrix, and reading the wrong one would be a
+  gradient of the wrong function.
 
 ## Value
 
