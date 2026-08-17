@@ -1,5 +1,147 @@
 # Changelog
 
+## statmodels7 0.59.0
+
+- **The criterion’s resolution is COMPUTED at the fit instead of
+  declared.**
+  [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+  displaces the coefficients by the mode error the inner fit’s own score
+  implies, `K^-1 g`, and reads how far the criterion moves. It costs one
+  assembly of the criterion at given coefficients and no refit.
+
+- The quadratic form `0.5 * g' K^-1 g` alone is not enough, for a
+  structural reason: the criterion carries `-0.5*log|K(beta)|`, which is
+  NOT stationary in `beta`, so a mode error enters there at FIRST order.
+  Measured, it is right to one per cent at an inner tolerance of `1e-4`,
+  where the second-order term dominates, and undershoots by 50 to 1000
+  times at `1e-6` and below.
+
+- Measured against the spread of the criterion at one hyperparameter
+  reached from six different warm starts, over four shapes and five
+  inner tolerances, the displaced reading tracks it across SIX ORDERS OF
+  MAGNITUDE – `8.6e-2` down to `2.2e-7` – at a ratio between 0.05 and
+  0.99, and separates shapes a formula cannot: at one inner tolerance it
+  reads `1.7e-4` on a random intercept over 500 levels against `7.9e-8`
+  on a gaussian smooth, where the declared `|f| * tol` of 0.57.0 was 100
+  to 16000 times off.
+
+- ⚠️ It is read off the criterion the SEARCH runs, passed in as a
+  function rather than chosen inside. Reading the marginal criterion of
+  a fit whose search is
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  answers for a quantity that search never sees, and the number that
+  came back stopped two such fits short of their own optimum. A test
+  pins it.
+
+- The line search is given a TENTH of it. What is computed is the spread
+  between evaluations reached from different warm starts, while a line
+  search compares trials taken one after another from nearly the same
+  state, where the criterion is far more reproducible; and it is the
+  more aggressive consumer, ending a whole iteration rather than one
+  comparison. Measured at the full number on a gaussian smooth the
+  search stops after 3 evaluations against 29 and gives up `3.2e-06` of
+  criterion against a resolution of `9.7e-07`, so it stops just before
+  it has to; at a tenth it reaches the same optimum as a search that was
+  told nothing.
+
+- It is RECOMPUTED at every usable point rather than once at the start,
+  and reaches the line search as a closure over the running minimum. The
+  first evaluation is a cold start, where the mode is least well
+  located, so a reading taken there is the worst of the run and would
+  govern every step after it: measured on a penalized smooth, the
+  cold-start reading is 14 to 22 times the best later one. The minimum
+  rather than the latest, because a resolution smaller than the truth
+  leaves the search where it was while one larger stops a healthy search
+  short.
+
+- **The four reference shapes reach the same answer for a third of the
+  evaluations.** Against the same model fitted with a fresh optimizer of
+  the same class, which carries no resolution: 6 evaluations against 22
+  on a gaussian smooth, 6 against 19 on a Gamma one, 7 against 25 on
+  three smooths with a random effect, and 31 against 31 on a random
+  intercept over 500 levels. The log-likelihood is identical in all four
+  and the effective degrees of freedom agree to `1.2e-05` or better. A
+  t-prior random effect goes from 43 evaluations reporting failure to 10
+  reporting success.
+
+## statmodels7 0.57.0
+
+- **The outer criterion has a RESOLUTION and the stopping rule is now
+  told it.** Every evaluation refits the coefficients from the running
+  warm start, so the value at one hyperparameter depends on the path
+  taken to it, and a line search cannot verify a decrease smaller than
+  that. Both halves of an optimizer’s default rule are then unreachable:
+  `crit_grad()` asks `1e-6` of a gradient that bottoms out where the
+  decrease stops being verifiable, and `crit_rel_obj()` asks `1e-12` of
+  a value of order `1e4`, which is an absolute `1e-8`. A run then
+  reports failure at a point it does not leave.
+
+- The resolution is DECLARED rather than discovered, as the criterion’s
+  own scale times the INNER tolerance, so the two move together and
+  tightening `iwls(tol =)` buys both a better-located mode and a finer
+  rule. Measured directly – the spread of the criterion at one
+  hyperparameter reached from six different warm starts, over four
+  shapes and five inner tolerances from `1e-4` to `1e-8` – it is an
+  envelope on all twenty cells, with a margin of 2.6 at the loosest
+  tolerance and never below. The relation is not a clean power, the
+  spread falling roughly as `tol^0.7` to `tol^0.8` and depending on the
+  shape as well, so nothing tighter is claimed than the measurements
+  support.
+
+- It is ADDED to the chosen optimizer’s own rule rather than replacing
+  it, so a run can only stop earlier and never later, and only where
+  this package CHOSE the optimizer: one given by name comes with its own
+  rule and keeps it.
+
+- **It is inert on a healthy fit and that is the point.** On the four
+  reference shapes the log-likelihood, the effective degrees of freedom,
+  the hyperparameters and the evaluation counts are identical to the
+  previous rule, the gradient still firing first. Where the resolution
+  is the binding constraint it is not: a t-prior random effect goes from
+  43 evaluations reporting failure to 9 reporting success, at the same
+  answer.
+
+- Known and not covered: a search that exhausts its line search instead
+  of meeting a rule. `descent.cpp` asks the criterion there with
+  `have_old = FALSE`, where a rule reading a CHANGE in the objective
+  cannot fire by construction, so the backstop does not reach that path.
+
+- ⚠️ `optimizers7` 0.4.0 gives its line searches a `resolution` for
+  exactly that exit, and this package does NOT set it, which is a
+  measurement and not an omission. The resolution was measured directly
+  as the spread of the criterion at one hyperparameter reached from six
+  different warm starts, and at ONE inner tolerance it ranges over 140
+  times across shapes after dividing by the criterion’s own scale –
+  `6.2e-11` of it on a gaussian smooth against `8.6e-9` on a random
+  intercept over 500 levels. A bound loose enough to cover the second is
+  four orders too large for the first, where it fires while the outer
+  gradient is still `1.8e-2` and a stationary point was within reach;
+  six tests asserting stationarity said so. What the layer would need is
+  the resolution of THIS fit, computable from the score the inner fit
+  stopped at and the penalized information
+  [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
+  already holds factorized.
+
+## statmodels7 0.56.0
+
+- `linpar_options(sparse = NULL)` is the default, so the IMPLICIT
+  parametric block settles its own storage through
+  [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
+  instead of being built dense unless asked. A model carrying a factor
+  of many levels is then fitted sparse without the caller knowing the
+  argument exists: measured on `y ~ 0 + g + s(x)` at 20000 observations,
+  103.690 s against 2.370 s at four hundred levels and 5.160 s against
+  0.900 s at a hundred, with the log-likelihood identical.
+
+- The storage is a storage and nothing else moves. On three shapes whose
+  settled storage FLIPS under the new default – a parametric block of
+  indicators, a smooth under a factor `by`, and a penalized formula
+  route – the fit against the same model built explicitly dense agrees
+  on the log-likelihood exactly, on the coefficients to 1.2e-16, on the
+  effective degrees of freedom to 3.3e-14, on the hyperparameters to
+  1.5e-13, on the standard errors to 7.3e-14 and on the predictions to
+  4.8e-16.
+
 ## statmodels7 0.55.0
 
 - `reml("expected")` and `ml("expected")` carry an EXACT GRADIENT. The

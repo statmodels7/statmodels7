@@ -115,6 +115,6 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #>                linpar           1 coef
 #> 
 #> log-likelihood -35.407348    objective 40.890371
-#> REML -55.808442 over 30 hyperparameter evaluation(s)
-#> fitted in 342 ms, converged
+#> REML -55.808442 over 5 hyperparameter evaluation(s)
+#> fitted in 299 ms, converged
 ```

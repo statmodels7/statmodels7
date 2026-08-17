@@ -258,6 +258,8 @@ exported, and none is needed to use the package.
   : Which Coordinates a Path Point Has to Visit
 - [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
   : The Working Response and Weights of One Equation
+- [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+  : What the Marginal Criterion Can Resolve at This Fit
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
   : The Tolerance a Criterion Asks For
 - [`ctx_approx()`](https://statmodels7.github.io/statmodels7/reference/ctx_approx.md)

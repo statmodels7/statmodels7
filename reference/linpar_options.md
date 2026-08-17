@@ -6,14 +6,16 @@ storage, and the contrasts for its factors.
 ## Usage
 
 ``` r
-linpar_options(sparse = FALSE, contrasts = NULL)
+linpar_options(sparse = NULL, contrasts = NULL)
 ```
 
 ## Arguments
 
 - sparse:
 
-  Whether the block is a `dgCMatrix`.
+  Whether the block is a `dgCMatrix`. `NULL`, the default, leaves it to
+  [`linpar`](https://statmodels7.github.io/modelterms7/reference/linpar.html),
+  which settles it at build from the size of the design.
 
 - contrasts:
 

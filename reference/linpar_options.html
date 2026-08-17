@@ -9,7 +9,7 @@ storage, and the contrasts for its factors."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.55.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.59.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ storage, and the contrasts for its factors.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">linpar_options</span><span class="op">(</span>sparse <span class="op">=</span> <span class="cn">FALSE</span>, contrasts <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">linpar_options</span><span class="op">(</span>sparse <span class="op">=</span> <span class="cn">NULL</span>, contrasts <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -49,7 +49,9 @@ storage, and the contrasts for its factors.</p>
 
 
 <dl><dt id="arg-sparse">sparse<a class="anchor" aria-label="anchor" href="#arg-sparse"></a></dt>
-<dd><p>Whether the block is a <code>dgCMatrix</code>.</p></dd>
+<dd><p>Whether the block is a <code>dgCMatrix</code>. <code>NULL</code>, the
+default, leaves it to <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">linpar</a></code>, which settles it
+at build from the size of the design.</p></dd>
 
 
 <dt id="arg-contrasts">contrasts<a class="anchor" aria-label="anchor" href="#arg-contrasts"></a></dt>
