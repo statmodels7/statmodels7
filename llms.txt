@@ -288,8 +288,6 @@ exported, and none is needed to use the package.
   : Carry a Term's Matrix Input Onto a Subset of the Rows
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
   : The Held-Out Deviance of Every Point of a Path
-- [`cv_fold_rows()`](https://statmodels7.github.io/statmodels7/reference/cv_fold_rows.md)
-  : Run the Folds, in This Process or Over Workers
 - [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
   : Assign the Observations to Folds
 - [`d3_direction()`](https://statmodels7.github.io/statmodels7/reference/d3_direction.md)
@@ -713,6 +711,8 @@ exported, and none is needed to use the package.
   : Resolve the Verbosity Setting
 - [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
   : The Weighted Cross Product of the Assembly
+- [`worker_map()`](https://statmodels7.github.io/statmodels7/reference/worker_map.md)
+  : Run Independent Units, in This Process or Over Workers
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
   : Is a Matrix Worth Factorizing Sparsely?
 - [`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.68.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.69.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.69.0" id="statmodels7-0690">statmodels7 0.69.0<a class="anchor" aria-label="anchor" href="#statmodels7-0690"></a></h2>
+<ul><li>The COMBINATIONS of a kinked path’s product grid run over the worker processes of <code>n_threads(workers =)</code>, through the same machinery as the cross-validation folds (<code>cv_fold_rows()</code> generalized to <code><a href="../reference/worker_map.html">worker_map()</a></code>). Each combination restarts its warm chain from the sweep’s own starting coefficients and <code>cur</code> moves only after every one is scored, so the combinations are independent by construction and the result is identical at any worker count – the same bodies in the same order. The points WITHIN one chain stay sequential, and the reason is measured rather than argued (voce 8 of piano_parallel.txt): a path point paid cold costs 2.2-3.2x the warm chain (lasso 400x30, lasso 8000x200, scad 2000x100), so splitting a chain either slows the single-process default by that factor or makes the result depend on the count. The continuation worry – that a cold SCAD point lands on a different local optimum – was measured and refuted: 5 points of 128 differ by at most 1.4e-4, convergence tolerance and not another optimum.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.68.0" id="statmodels7-0680">statmodels7 0.68.0<a class="anchor" aria-label="anchor" href="#statmodels7-0680"></a></h2>
 <ul><li>The exact gradient’s reverse pass rides the fast route too: <code>term_adjoint()</code> receives the filter’s fast context and the thread count, so at every gradient evaluation its forward pass runs without R callbacks where the registries cover the family and the link, and its reverse pass reads the curvature sequence that pass returns.</li>

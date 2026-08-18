@@ -118,13 +118,18 @@ statmod(
   per-observation kernels of the family and the dense assembly products
   as an argument; below a kernel's measured internal threshold it stays
   sequential whatever the count says, and a sparse design keeps its
-  Matrix route. The object's `workers` fans the independent fits of a
-  cross-validation's folds out over separate R processes, each fold
-  fitting sequentially, so the two levels never nest. The result does
-  not depend on either count, bit for bit: every parallel region
-  decomposes its work over the elements of its output and never splits a
-  reduction, and the folds are seeded per fold and collected in fold
-  order.
+  Matrix route. The object's `workers` fans the units that are
+  independent by construction out over separate R processes – the folds
+  of a cross-validation, and the combinations of a kinked path's product
+  grid, each of which restarts its warm chain from the sweep's own
+  starting coefficients – each unit fitting sequentially, so the two
+  levels never nest. The points WITHIN one chain stay sequential:
+  measured, a point paid cold costs 2.2-3.2 times the warm chain, so
+  splitting a chain would slow the single-process default or make the
+  result depend on the count. The result does not depend on either
+  count, bit for bit: every parallel region decomposes its work over the
+  elements of its output and never splits a reduction, and the folds are
+  seeded per fold and collected in fold order.
 
 - ...:
 
@@ -245,7 +250,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 31 ms, converged
+#> fitted in 26 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -263,5 +268,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 44 ms, converged
+#> fitted in 40 ms, converged
 ```

@@ -9,7 +9,7 @@ terms it names into a penalized likelihood, and fits it."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.68.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.69.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,9 +141,15 @@ code path. A larger count reaches the compiled per-observation kernels
 of the family and the dense assembly products as an argument; below a
 kernel's measured internal threshold it stays sequential whatever the
 count says, and a sparse design keeps its <span class="pkg">Matrix</span> route. The
-object's <code>workers</code> fans the independent fits of a
-cross-validation's folds out over separate R processes, each fold
-fitting sequentially, so the two levels never nest. The result does
+object's <code>workers</code> fans the units that are independent by
+construction out over separate R processes – the folds of a
+cross-validation, and the combinations of a kinked path's product
+grid, each of which restarts its warm chain from the sweep's own
+starting coefficients – each unit fitting sequentially, so the two
+levels never nest. The points WITHIN one chain stay sequential:
+measured, a point paid cold costs 2.2-3.2 times the warm chain, so
+splitting a chain would slow the single-process default or make the
+result depend on the count. The result does
 not depend on either count, bit for bit: every parallel region
 decomposes its work over the elements of its output and never splits
 a reduction, and the folds are seeded per fold and collected in fold
@@ -248,7 +254,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -34.947195    objective 34.947195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 31 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 26 ms, converged</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># every parameter can be modelled</span></span></span>
 <span class="r-in"><span><span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
@@ -266,7 +272,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 44 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 40 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -51,7 +51,6 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_curve.html</loc></url>
-<url><loc>https://statmodels7.github.io/statmodels7/reference/cv_fold_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_folds.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_direction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
@@ -276,6 +275,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/verbosity.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/wcrossprod.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/worker_map.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worth_sparse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/xtv.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/xtx.html</loc></url>
