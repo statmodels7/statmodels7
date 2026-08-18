@@ -328,10 +328,8 @@ S7::method(start_at, StartIntercepts) <-
         if (is.finite(m)) v <- v - m
       }
       # the intercept carries the whole of it when there is one
-      if (identical(design[[p]]$coef_names[1L], "(Intercept)") ||
-          grepl("\\(Intercept\\)$", design[[p]]$coef_names[1L])) {
-        out[[p]][1L] <- v
-      }
+      ii <- parametric_intercept(spec, design, p)
+      if (!is.na(ii)) out[[p]][ii] <- v
     }
     # and each term says where its own block begins. The base method of
     # term_coef_start() is zero everywhere, so an ordinary block is
@@ -343,10 +341,19 @@ S7::method(start_at, StartIntercepts) <-
     # scoring step moves it off that point.
     for (p in params) {
       if (design[[p]]$npar == 0L) next
+      # THE RESPONSE ON THE SCALE OF THE PREDICTOR, which is what a term with
+      # parameters of its own needs to estimate them and the one thing it
+      # cannot work out: the term knows its formula and its charts, the layer
+      # knows the distribution, the link and the equation. It exists only
+      # where the response reads the parameter directly -- a mean or a
+      # location -- and a term in a scale's equation is handed nothing rather
+      # than a quantity invented for it.
+      tg <- predictor_target(spec, p)
       for (nm in names(spec@terms[[p]])) {
         idx <- design[[p]]$blocks[[nm]]
         if (is.null(idx) || !length(idx)) next
-        v <- tryCatch(modelterms7::term_coef_start(spec@terms[[p]][[nm]]),
+        v <- tryCatch(modelterms7::term_coef_start(spec@terms[[p]][[nm]],
+                                                   target = tg),
                       error = function(e) NULL)
         if (is.null(v) || length(v) != length(idx) || !all(is.finite(v))) next
         # A term asking for zeros is asking for nothing, and writing them
@@ -359,6 +366,113 @@ S7::method(start_at, StartIntercepts) <-
     }
     out
   }
+
+#' @title Where an Equation's Intercept Is
+#' @name parametric_intercept
+#'
+#' @description
+#' The position of the intercept of one equation's PARAMETRIC block, or
+#' \code{NA} where it has none.
+#'
+#' @details
+#' It is a column of the parametric block and not merely a coefficient whose
+#' name ends in \code{(Intercept)}. \code{\link[modelterms7]{nl}} names the
+#' intercept of each of its own parameters the same way, and those live on
+#' those parameters' charts rather than on the predictor's, so a model
+#' written \code{y ~ 0 + nl(...)} puts one of them first. Writing the
+#' intercept-only fit there sets the parameter to \code{linkinv} of a value
+#' that was never on its scale: measured on a logistic growth curve whose
+#' asymptote rides a log link, \code{mean(y) = 23.9} became a starting
+#' \eqn{\phi} of \code{2.5e10}, an objective of \code{7.0e20} and a gradient
+#' of \code{1.4e21}, on data whose every scale is ordinary. The lasso path
+#' built at those coefficients then spanned \code{2.8e15} to \code{2.8e19}
+#' where the block empties at about 300, so all of its points were the same
+#' empty fit and every subject deviation was estimated as exactly zero.
+#'
+#' @param spec The specification.
+#' @param design The design.
+#' @param p The distribution parameter naming the equation.
+#'
+#' @return An integer position into the equation's coefficient vector, or
+#'   \code{NA_integer_}.
+#'
+#' @seealso \code{\link{start_at}}, \code{\link{statmod_intercepts}}
+#' @keywords internal
+parametric_intercept <- function(spec, design, p) {
+  for (nm in names(spec@terms[[p]])) {
+    tm <- spec@terms[[p]][[nm]]
+    if (!S7::S7_inherits(tm, modelterms7::LinparTerm)) next
+    idx <- design[[p]]$blocks[[nm]]
+    if (is.null(idx) || !length(idx)) next
+    cn <- tryCatch(modelterms7::term_coef_names(tm), error = function(e) NULL)
+    if (is.null(cn) || length(cn) != length(idx)) next
+    j <- which(cn == "(Intercept)" | grepl("\\.\\(Intercept\\)$", cn))
+    if (length(j)) return(as.integer(idx[j[1L]]))
+  }
+  NA_integer_
+}
+
+#' @title The Response on the Scale of a Predictor
+#' @name predictor_target
+#'
+#' @description
+#' The response carried onto the scale of one equation's linear predictor,
+#' which is what \code{\link[modelterms7]{term_coef_start}} needs to estimate
+#' a term's own parameters from the data.
+#'
+#' @details
+#' It exists only where the response reads the parameter directly, which
+#' \code{params_interpretation} says: a mean or a location. For a scale or a
+#' shape there is no per-observation reading of the parameter, and
+#' \code{NULL} is returned rather than a quantity invented for the occasion.
+#'
+#' The scale matters and is not a detail. Measured on a Poisson whose
+#' predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
+#' the raw response estimated \eqn{\phi} between 52.7 and 54.8 over five
+#' samples, and one handed \eqn{g(y)} estimated it between 4.03 and 4.07.
+#' What does NOT matter, measured on the same shape beside another term, is
+#' the other terms' contribution: subtracting it moved the estimate from
+#' 39.68 to 39.87 against a truth of 40, so the response is passed as it
+#' stands and nothing is residualized.
+#'
+#' A response on a bound of the parameter's own domain is moved half way to
+#' the nearest admissible value, since a link is not defined at its bound --
+#' for counts under a log link that is the classical half.
+#'
+#' @param spec The specification.
+#' @param p The distribution parameter naming the equation.
+#'
+#' @return A numeric vector, one value per observation, or \code{NULL}.
+#'
+#' @seealso \code{\link{start_at}},
+#'   \code{\link[modelterms7]{term_coef_start}}
+#' @keywords internal
+predictor_target <- function(spec, p) {
+  d <- spec@distrib
+  if (!("params_interpretation" %in% S7::prop_names(d))) return(NULL)
+  ip <- d@params_interpretation[[p]]
+  if (is.null(ip) || !ip %in% c("mean", "location")) return(NULL)
+  y <- suppressWarnings(as.numeric(spec@response))
+  if (!length(y) || length(y) != spec@n_obs) return(NULL)
+  lk <- d@link_params[[p]]
+  if (is.null(lk)) return(NULL)
+  b <- lk@link_bounds
+  inside <- is.finite(y) & y > b[1L] & y < b[2L]
+  if (!any(inside)) return(NULL)
+  if (is.finite(b[1L])) {
+    lo <- b[1L] + (min(y[inside]) - b[1L]) / 2
+    y[is.finite(y) & y <= b[1L]] <- lo
+  }
+  if (is.finite(b[2L])) {
+    hi <- b[2L] - (b[2L] - max(y[inside])) / 2
+    y[is.finite(y) & y >= b[2L]] <- hi
+  }
+  tg <- suppressWarnings(linkfunctions7::linkfun(lk, y))
+  if (!any(is.finite(tg))) return(NULL)
+  off <- spec@offsets[[p]]
+  if (!is.null(off) && length(off) == length(tg)) tg <- tg - off
+  tg
+}
 
 #' @title Starting Values at Zero
 #' @name start_at.StartOrigin
