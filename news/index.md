@@ -1,5 +1,51 @@
 # Changelog
 
+## statmodels7 0.62.0
+
+- **The intercept-only fit is written to a PARAMETRIC intercept and to
+  nothing else.**
+  [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
+  recognized an equation’s intercept by a coefficient name ending in
+  `(Intercept)`, and `nl()` names the intercept of each of its own
+  parameters the same way. Those live on those parameters’ own charts
+  rather than on the predictor’s, so `y ~ 0 + nl(...)`, which puts one
+  of them first, had `mean(y)` written into it: on a logistic growth
+  curve whose asymptote rides a log link, `mean(y) = 23.94` started
+  `phi` at `exp(23.94) = 2.5e10`, with an objective of 7.0e20 and a
+  gradient of 1.4e21 on data whose every scale is ordinary.
+
+  Nothing reported it. The lasso path built at those coefficients
+  spanned 2.8e15 to 2.8e19 where the block empties at about 300, so all
+  25 of its points were the same empty fit, BIC reported that the
+  criterion was still falling at the sparse end, and the model came back
+  converged with every one of its 150 subject deviations estimated as
+  exactly zero.
+  [`parametric_intercept()`](https://statmodels7.github.io/statmodels7/reference/parametric_intercept.md)
+  asks which term is the parametric block instead of asking a name.
+
+- **A term with parameters of its own is handed the response on the
+  scale of the predictor**,
+  [`predictor_target()`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md),
+  which
+  [`modelterms7::term_coef_start()`](https://statmodels7.github.io/modelterms7/reference/term_coef_start.html)
+  takes as its new `target`. It exists only where the response reads the
+  parameter directly – a mean or a location, which
+  `params_interpretation` says – and a term in a scale’s equation is
+  handed nothing rather than a quantity invented for it. The scale is
+  not a detail: measured on a Poisson whose predictor is a logistic
+  curve with `phi = 4`, a term handed the raw response estimated `phi`
+  between 52.7 and 54.8 over five samples and one handed `g(y)` between
+  4.03 and 4.07. What does NOT matter is the other terms’ contribution –
+  subtracting it moved the estimate from 39.68 to 39.87 against a truth
+  of 40 – so nothing is residualized.
+
+- Together these make a nonlinear mixed model fit as written. The model
+  of the report,
+  `y ~ 0 + nl(~ phi/(1 + exp(-(time - theta)/sigma)), phi ~ 1 + lasso(~id), ...)`
+  over 50 individuals, went from a population-only fit with every
+  deviation at zero to recovering them, at no cost the user has to know
+  about.
+
 ## statmodels7 0.61.0
 
 - **The outer Hessian reads a block that moves with its coefficients.**

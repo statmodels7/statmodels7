@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.61.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.62.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,15 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.62.0" id="statmodels7-0620">statmodels7 0.62.0<a class="anchor" aria-label="anchor" href="#statmodels7-0620"></a></h2>
+<ul><li>
+<p><strong>The intercept-only fit is written to a PARAMETRIC intercept and to nothing else.</strong> <code><a href="../reference/start_intercepts.html">start_intercepts()</a></code> recognized an equation’s intercept by a coefficient name ending in <code>(Intercept)</code>, and <code>nl()</code> names the intercept of each of its own parameters the same way. Those live on those parameters’ own charts rather than on the predictor’s, so <code>y ~ 0 + nl(...)</code>, which puts one of them first, had <code>mean(y)</code> written into it: on a logistic growth curve whose asymptote rides a log link, <code>mean(y) = 23.94</code> started <code>phi</code> at <code>exp(23.94) = 2.5e10</code>, with an objective of 7.0e20 and a gradient of 1.4e21 on data whose every scale is ordinary.</p>
+<p>Nothing reported it. The lasso path built at those coefficients spanned 2.8e15 to 2.8e19 where the block empties at about 300, so all 25 of its points were the same empty fit, BIC reported that the criterion was still falling at the sparse end, and the model came back converged with every one of its 150 subject deviations estimated as exactly zero. <code><a href="../reference/parametric_intercept.html">parametric_intercept()</a></code> asks which term is the parametric block instead of asking a name.</p>
+</li>
+<li><p><strong>A term with parameters of its own is handed the response on the scale of the predictor</strong>, <code><a href="../reference/predictor_target.html">predictor_target()</a></code>, which <code><a href="https://statmodels7.github.io/modelterms7/reference/term_coef_start.html" class="external-link">modelterms7::term_coef_start()</a></code> takes as its new <code>target</code>. It exists only where the response reads the parameter directly – a mean or a location, which <code>params_interpretation</code> says – and a term in a scale’s equation is handed nothing rather than a quantity invented for it. The scale is not a detail: measured on a Poisson whose predictor is a logistic curve with <code>phi = 4</code>, a term handed the raw response estimated <code>phi</code> between 52.7 and 54.8 over five samples and one handed <code>g(y)</code> between 4.03 and 4.07. What does NOT matter is the other terms’ contribution – subtracting it moved the estimate from 39.68 to 39.87 against a truth of 40 – so nothing is residualized.</p></li>
+<li><p>Together these make a nonlinear mixed model fit as written. The model of the report, <code>y ~ 0 + nl(~ phi/(1 + exp(-(time - theta)/sigma)), phi ~ 1 + lasso(~id), ...)</code> over 50 individuals, went from a population-only fit with every deviation at zero to recovering them, at no cost the user has to know about.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.61.0" id="statmodels7-0610">statmodels7 0.61.0<a class="anchor" aria-label="anchor" href="#statmodels7-0610"></a></h2>
 <ul><li><p><strong>The outer Hessian reads a block that moves with its coefficients.</strong> <code>nl()</code>, <code>seg()</code>, <code>jump()</code> and <code>jseg()</code> build their block as the Jacobian at the current coefficients, so <code>dX/dbeta</code> enters the criterion’s second derivative in three places – the matrix <code>dK/dt</code>, its trace against <code>M</code>, and the twice-contracted fourth derivative – and none of them had it. The derivative is asked of the term through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html" class="external-link">modelterms7::term_block_deriv()</a></code> and never differenced here.</p></li>

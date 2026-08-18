@@ -412,6 +412,8 @@ exported, and none is needed to use the package.
   : The Key of a Hyperparameter Pair
 - [`par_at()`](https://statmodels7.github.io/statmodels7/reference/par_at.md)
   : Resolve a Parameter Structure
+- [`parametric_intercept()`](https://statmodels7.github.io/statmodels7/reference/parametric_intercept.md)
+  : Where an Equation's Intercept Is
 - [`path_block()`](https://statmodels7.github.io/statmodels7/reference/path_block.md)
   : The Block a Path Row Belongs To
 - [`path_bounded()`](https://statmodels7.github.io/statmodels7/reference/path_bounded.md)
@@ -456,6 +458,8 @@ exported, and none is needed to use the package.
   : Predict From a Fitted Model
 - [`predict_moments()`](https://statmodels7.github.io/statmodels7/reference/predict_moments.md)
   : The Quantities a Fit Can Predict
+- [`predictor_target()`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md)
+  : The Response on the Scale of a Predictor
 - [`print(`*`<OuterMethod>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.OuterMethod.md)
   : Print an Outer Method
 - [`print(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md)
