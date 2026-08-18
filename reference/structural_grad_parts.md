@@ -10,6 +10,8 @@ diagonal of \\M\\ and the contraction \\u\\.
 
 ``` r
 structural_grad_parts(spec, design, coef, jd, M)
+
+structural_grad_parts_impl(spec, design, coef, jd, M)
 ```
 
 ## Arguments

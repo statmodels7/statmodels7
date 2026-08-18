@@ -8,6 +8,8 @@ recursion's own curvature in it.
 
 ``` r
 statmod_full_information(spec, coef, design = statmod_design(spec))
+
+statmod_full_information_impl(spec, coef, design, params, ev)
 ```
 
 ## Arguments
@@ -24,6 +26,11 @@ statmod_full_information(spec, coef, design = statmod_design(spec))
 - design:
 
   The design.
+
+- params, ev:
+
+  The parameter names and the evaluated predictors, already in hand at
+  the caller.
 
 ## Value
 

@@ -51,6 +51,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_curve.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/cv_fold_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/cv_folds.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_direction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/d3_key.html</loc></url>
@@ -246,11 +247,13 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_update.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_callbacks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_kind.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_memo.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalized.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_psi.html</loc></url>
@@ -272,7 +275,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_say.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/verbosity.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/wcrossprod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worth_sparse.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/xtv.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/xtx.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.html</loc></url>
 </urlset>
 

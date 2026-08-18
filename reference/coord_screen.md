@@ -7,7 +7,7 @@ sweeps.
 ## Usage
 
 ``` r
-coord_screen(X, w, z, beta, s_now, s_prev)
+coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
 ```
 
 ## Arguments
@@ -35,6 +35,10 @@ coord_screen(X, w, z, beta, s_now, s_prev)
 - s_prev:
 
   The size of the kink at the previous point, or `NULL`.
+
+- threads:
+
+  The thread count the gradient read may use.
 
 ## Value
 

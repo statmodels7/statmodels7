@@ -9,7 +9,7 @@ point of the path is below \(2s_k - s_{k-1}\) is left out of the sweeps."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.62.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.68.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ point of the path is below \(2s_k - s_{k-1}\) is left out of the sweeps.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_screen</span><span class="op">(</span><span class="va">X</span>, <span class="va">w</span>, <span class="va">z</span>, <span class="va">beta</span>, <span class="va">s_now</span>, <span class="va">s_prev</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_screen</span><span class="op">(</span><span class="va">X</span>, <span class="va">w</span>, <span class="va">z</span>, <span class="va">beta</span>, <span class="va">s_now</span>, <span class="va">s_prev</span>, threads <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,6 +70,10 @@ point of the path is below \(2s_k - s_{k-1}\) is left out of the sweeps.</p>
 
 <dt id="arg-s-prev">s_prev<a class="anchor" aria-label="anchor" href="#arg-s-prev"></a></dt>
 <dd><p>The size of the kink at the previous point, or <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>The thread count the gradient read may use.</p></dd>
 
 </dl></div>
     <div class="section level2">

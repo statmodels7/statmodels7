@@ -9,7 +9,7 @@ terms it names into a penalized likelihood, and fits it."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.62.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.68.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,6 +54,7 @@ terms it names into a penalized likelihood, and fits it.</p>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  linpar_control <span class="op">=</span> <span class="fu"><a href="linpar_options.html">linpar_options</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fu">numericals7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/numericals7/reference/n_threads.html" class="external-link">n_threads</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -130,6 +131,23 @@ The argument and the function are named differently on purpose, as
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>A level from 0 to 3, or a named logical vector.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>How many threads the fit may use, as
+<code><a href="https://statmodels7.github.io/numericals7/reference/n_threads.html" class="external-link">n_threads</a></code> constructs it. The default,
+<code>n_threads(1)</code>, is sequential and takes exactly the sequential
+code path. A larger count reaches the compiled per-observation kernels
+of the family and the dense assembly products as an argument; below a
+kernel's measured internal threshold it stays sequential whatever the
+count says, and a sparse design keeps its <span class="pkg">Matrix</span> route. The
+object's <code>workers</code> fans the independent fits of a
+cross-validation's folds out over separate R processes, each fold
+fitting sequentially, so the two levels never nest. The result does
+not depend on either count, bit for bit: every parallel region
+decomposes its work over the elements of its output and never splits
+a reduction, and the folds are seeded per fold and collected in fold
+order.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -230,7 +248,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           1 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -34.947195    objective 34.947195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 26 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 31 ms, converged</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># every parameter can be modelled</span></span></span>
 <span class="r-in"><span><span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
@@ -248,7 +266,7 @@ optimizer is the common case.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                linpar           2 coef</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> log-likelihood -33.446455    objective 33.446455</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 31 ms, converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 44 ms, converged</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

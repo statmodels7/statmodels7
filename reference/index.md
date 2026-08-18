@@ -185,6 +185,8 @@ exported, and none is needed to use the package.
   : Carry a Term's Matrix Input Onto a Subset of the Rows
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
   : The Held-Out Deviance of Every Point of a Path
+- [`cv_fold_rows()`](https://statmodels7.github.io/statmodels7/reference/cv_fold_rows.md)
+  : Run the Folds, in This Process or Over Workers
 - [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
   : Assign the Observations to Folds
 - [`d3_direction()`](https://statmodels7.github.io/statmodels7/reference/d3_direction.md)
@@ -453,6 +455,7 @@ exported, and none is needed to use the package.
 - [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
   : The Terms as the Fit Left Them
 - [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  [`statmod_full_information_impl()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
   : The Observed Information Over the Coefficients and a Filter's
   Parameters
 - [`statmod_grid_size()`](https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.md)
@@ -548,16 +551,21 @@ exported, and none is needed to use the package.
   : Attach the Member Packages
 - [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)
   : The Body of the Attach Message
+- [`structural_blocks_data()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.md)
+  : The Same Pieces as Data for the Compiled Recursion
 - [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
   : The Score and Curvature a Filter Is Driven By
 - [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
   : The Two Pieces of the Chain Term That Read the Direction
 - [`structural_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
+  [`structural_grad_parts_impl()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
   : What the Joint Chain Term Needs Before a Direction Is Known
 - [`structural_joint_basis()`](https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.md)
   : The Subspace a Marginal Criterion Integrates Over, Jointly
 - [`structural_kind()`](https://statmodels7.github.io/statmodels7/reference/structural_kind.md)
   : Which Shape of the Structural Contract a Term Implements
+- [`structural_memo()`](https://statmodels7.github.io/statmodels7/reference/structural_memo.md)
+  : Reuse a Structural Quantity Computed at the Same Point
 - [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)
   : Does a Structural Term Carry a Penalty of Its Own?
 - [`structural_penalty_block()`](https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.md)
@@ -600,7 +608,14 @@ exported, and none is needed to use the package.
   : The Variance Matrix of a Fit
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting
+- [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
+  : The Weighted Cross Product of the Assembly
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
   : Is a Matrix Worth Factorizing Sparsely?
+- [`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
+  [`wxsq()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
+  : The Two Vector Products of the Coordinate-Descent Loop
+- [`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md)
+  : The Unweighted Cross Product of a Square-Root Design
 - [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
   : Zero the Non-Finite Entries of a Penalty's Hessian

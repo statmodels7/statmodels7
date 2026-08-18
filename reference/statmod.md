@@ -19,6 +19,7 @@ statmod(
   start = NULL,
   linpar_control = linpar_options(),
   verbose = 0,
+  threads = numericals7::n_threads(),
   ...
 )
 ```
@@ -107,6 +108,23 @@ statmod(
 - verbose:
 
   A level from 0 to 3, or a named logical vector.
+
+- threads:
+
+  How many threads the fit may use, as
+  [`n_threads`](https://statmodels7.github.io/numericals7/reference/n_threads.html)
+  constructs it. The default, `n_threads(1)`, is sequential and takes
+  exactly the sequential code path. A larger count reaches the compiled
+  per-observation kernels of the family and the dense assembly products
+  as an argument; below a kernel's measured internal threshold it stays
+  sequential whatever the count says, and a sparse design keeps its
+  Matrix route. The object's `workers` fans the independent fits of a
+  cross-validation's folds out over separate R processes, each fold
+  fitting sequentially, so the two levels never nest. The result does
+  not depend on either count, bit for bit: every parallel region
+  decomposes its work over the elements of its output and never splits a
+  reduction, and the folds are seeded per fold and collected in fold
+  order.
 
 - ...:
 
@@ -227,7 +245,7 @@ fit
 #>                linpar           1 coef
 #> 
 #> log-likelihood -34.947195    objective 34.947195
-#> fitted in 26 ms, converged
+#> fitted in 31 ms, converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -245,5 +263,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>                linpar           2 coef
 #> 
 #> log-likelihood -33.446455    objective 33.446455
-#> fitted in 31 ms, converged
+#> fitted in 44 ms, converged
 ```

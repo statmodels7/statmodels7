@@ -1,5 +1,121 @@
 # Changelog
 
+## statmodels7 0.68.0
+
+- The exact gradient’s reverse pass rides the fast route too:
+  `term_adjoint()` receives the filter’s fast context and the thread
+  count, so at every gradient evaluation its forward pass runs without R
+  callbacks where the registries cover the family and the link, and its
+  reverse pass reads the curvature sequence that pass returns.
+
+## statmodels7 0.67.0
+
+- The three second-order structural call sites (the joint information,
+  the exact outer gradient’s shared parts, and the re-weighted pass of
+  the chain term) hand
+  [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
+  the score and the curvature as LOOKUPS and the blocks callback’s
+  pieces as DATA
+  ([`structural_blocks_data()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.md)),
+  so an eligible subformula filter runs its second-order recursion
+  compiled with the panel’s groups over `spec@threads`. The callback
+  stays beside the data for the cases the kernel declines (a developed
+  autoregressive chart, the third order).
+
+## statmodels7 0.66.0
+
+- A score-driven filter runs on the C-callable fast route where the
+  registries cover its family and its link (gaussian1 and gamma1,
+  identity and log, for now):
+  [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
+  hands the filter a fast context beside the callbacks, and
+  modelterms7’s kernel reads the score and the curvature through the
+  scalar entry points of distributions7 and linkfunctions7 instead of
+  calling back into R at every step of the recursion. Bit-identical to
+  the callback route by construction and by twin test; an uncovered pair
+  leaves the context inert. With no R in the loop the panel’s groups run
+  over threads (`statmod(threads = n_threads(k))`), each group writing
+  its own rows, so the result does not depend on the count, bit for bit.
+
+## statmodels7 0.65.0
+
+- A structural fit no longer recomputes the curvature recursion at a
+  point it has already read. Measured on the gas panel at 60 groups, 62
+  of the 154 recursions of one fit revisited a point – the criterion,
+  its exact gradient and the joint step’s information all read the same
+  mode, up to five times each, and the recursion is 35 per cent of the
+  fit at 226 ms a call.
+  [`structural_memo()`](https://statmodels7.github.io/statmodels7/reference/structural_memo.md)
+  is a depth-one exact memo on the design’s structural state (the same
+  environment that carries zeta), keyed with
+  [`identical()`](https://rdrr.io/r/base/identical.html) on the full
+  inputs and shared across the call sites, so a hit returns the
+  previously computed object itself and is bit-identical by
+  construction; coefficients, criterion and vcov are
+  [`identical()`](https://rdrr.io/r/base/identical.html) across the
+  change. It stands aside where the design carries refreshable terms,
+  whose blocks advance a schedule the key cannot see. The recursions of
+  the 60-group fit fall from 154 to 117; what remains of that fit’s
+  curvature cost is the R recursion itself, whose C++ port (licensed by
+  its callbacks being lookups, with per-group contributions summed in
+  group order for the thread stage) is the next piece of
+  piano_parallel.txt’s voce 5.
+
+## statmodels7 0.64.0
+
+- The folds of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  run over worker processes:
+  `statmod(threads = n_threads(workers = 4))`. Each fold is a complete,
+  independent refit, so they go by PROCESSES with the safeguards
+  [`optimizers7::multistart`](https://statmodels7.github.io/optimizers7/reference/multistart.html)
+  records (sequential under pkgload, sequential with a warning where a
+  cluster cannot start or load the package), and a fit inside a worker
+  takes a fresh specification and is sequential by construction – the
+  two levels of parallelism never nest. Each fold now draws from its own
+  seed, taken once in the parent and applied whether the fold runs here
+  or in a worker, and results are collected in fold order, so the answer
+  does not depend on `workers`, bit for bit; the caller’s own random
+  stream is saved and restored around the folds, so what a session draws
+  after a cross-validation no longer depends on whether a fold’s fit
+  happened to consume random numbers.
+
+## statmodels7 0.63.0
+
+- `statmod(threads = numericals7::n_threads())` accepts the toolkit’s
+  thread policy. The count is validated once, travels on the
+  specification (`spec@threads`), and reaches the family’s compiled
+  per-observation kernels and the dense assembly products as an
+  argument; the process-level RcppParallel setting is sized at the fit’s
+  entry and restored on exit. At the default the code takes exactly the
+  sequential path, and a fold of
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) or
+  a respec stays sequential by construction.
+- The dense weighted cross product of the assembly, `X' diag(w) X`, runs
+  through a threaded kernel
+  ([`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md))
+  decomposed over the ELEMENTS of the output, each dot product
+  accumulated in full by one thread in the sequential order: the result
+  does not depend on the thread count, bit for bit, which a test asserts
+  with [`identical()`](https://rdrr.io/r/base/identical.html) on a whole
+  fit at 1 and 2 threads. Only base dense blocks above a measured work
+  threshold are eligible; a sparse design keeps its Matrix route, where
+  a threaded dense kernel would do nothing.
+- [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md)
+  recycles the family’s derivative components ONCE, outside its
+  per-observation closure. The first version read them through
+  `rep_len(x, n)[i]` – an n-long allocation, and a sort-and-paste key
+  rebuild, per observation per parameter pair, O(n^2) against a total of
+  O(n), measured at 17.5% of a panel fit at 60 groups and growing with
+  the groups. Same hoist
+  [`structural_callbacks()`](https://statmodels7.github.io/statmodels7/reference/structural_callbacks.md)
+  received in 0.18.0; results are bit-identical (coefficients, criterion
+  and vcov compared with
+  [`identical()`](https://rdrr.io/r/base/identical.html) across the
+  change). What remains on top of that fit’s profile is the filter’s
+  per-step scalar callbacks (`distrib_kernel`), which is the C-callable
+  item of piano_parallel.txt, not this one.
+
 ## statmodels7 0.62.0
 
 - **The intercept-only fit is written to a PARAMETRIC intercept and to
