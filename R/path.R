@@ -940,7 +940,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     }
     list(dev = dev_f, err = NULL)
   }
-  rows <- cv_fold_rows(spec, nf, one_fold)
+  rows <- worker_map(spec, nf, one_fold)
   dev <- do.call(rbind, lapply(rows, `[[`, "dev"))
   errs <- unlist(lapply(rows, `[[`, "err"))
   err <- if (length(errs)) errs[[1L]] else NULL
@@ -952,23 +952,24 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
 }
 
 
-#' Run the Folds, in This Process or Over Workers
+#' Run Independent Units, in This Process or Over Workers
 #'
 #' @description
-#' Applies the fold body to every fold, over the worker processes the
-#' specification asks for (\code{spec@workers}, from
-#' \code{\link[numericals7]{n_threads}(workers =)}) and in this process
-#' otherwise. Results come back in fold order whatever the number of
-#' workers, which together with the per-fold seeds of
-#' \code{\link{cv_curve}} is what makes the answer independent of the
-#' count, bit for bit.
+#' Applies a body to each of \code{n} independent units -- a
+#' cross-validation fold, a combination of a path's product grid -- over
+#' the worker processes the specification asks for (\code{spec@workers},
+#' from \code{\link[numericals7]{n_threads}(workers =)}) and in this
+#' process otherwise. Results come back in unit order whatever the number
+#' of workers, which is what makes the answer independent of the count:
+#' the units share nothing, so the same bodies run either way.
 #'
 #' @details
-#' The folds are independent by construction -- each is a complete refit on
-#' its own rows -- so they go by PROCESSES, with the safeguards
-#' \code{optimizers7::multistart} records: under \code{pkgload} the run
-#' stays sequential, because a worker loads the installed copy and S7
-#' objects built in the development namespace do not dispatch correctly
+#' The units are independent BY CONSTRUCTION -- a fold is a complete refit
+#' on its own rows, a path combination restarts its warm chain from the
+#' sweep's own starting coefficients -- so they go by PROCESSES, with the
+#' safeguards \code{optimizers7::multistart} records: under \code{pkgload}
+#' the run stays sequential, because a worker loads the installed copy and
+#' S7 objects built in the development namespace do not dispatch correctly
 #' against it; a cluster that cannot start, or workers that cannot load
 #' the package, fall back to sequential with a warning rather than fail
 #' the fit. A fit inside a worker takes a fresh specification and is
@@ -976,17 +977,18 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
 #' not nest.
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
-#' @param nf How many folds.
-#' @param one_fold The fold body, a function of the fold index.
+#' @param n How many units.
+#' @param body The unit's body, a function of the unit index.
+#' @param what The unit's name, for the warnings.
 #'
-#' @return A list of the fold bodies' results, in fold order.
+#' @return A list of the bodies' results, in unit order.
 #'
-#' @seealso \code{\link{cv_curve}}
+#' @seealso \code{\link{cv_curve}}, \code{\link{statmod_path}}
 #'
 #' @keywords internal
-cv_fold_rows <- function(spec, nf, one_fold) {
-  workers <- min(spec@workers, nf)
-  sequential <- function() lapply(seq_len(nf), one_fold)
+worker_map <- function(spec, n, body, what = "folds") {
+  workers <- min(spec@workers, n)
+  sequential <- function() lapply(seq_len(n), body)
   if (workers <= 1L) return(sequential())
   if (isNamespaceLoaded("statmodels7") &&
       exists(".__DEVTOOLS__", asNamespace("statmodels7"), inherits = FALSE)) {
@@ -995,20 +997,20 @@ cv_fold_rows <- function(spec, nf, one_fold) {
   cl <- try(parallel::makePSOCKcluster(workers), silent = TRUE)
   if (inherits(cl, "try-error")) {
     warning("Could not start ", workers, " worker processes; running the ",
-            "folds sequentially.", call. = FALSE)
+            what, " sequentially.", call. = FALSE)
     return(sequential())
   }
   on.exit(parallel::stopCluster(cl), add = TRUE)
   have <- try(parallel::clusterEvalQ(
     cl, requireNamespace("statmodels7", quietly = TRUE)), silent = TRUE)
   if (inherits(have, "try-error") || !all(unlist(have))) {
-    warning("The worker processes could not load statmodels7, so the folds ",
-            "were run\n  sequentially. They are separate R sessions and an ",
+    warning("The worker processes could not load statmodels7, so the ", what,
+            " were run\n  sequentially. They are separate R sessions and an ",
             "uninstalled or\n  differently-located copy is invisible to ",
             "them.", call. = FALSE)
     return(sequential())
   }
-  parallel::parLapply(cl, seq_len(nf), one_fold)
+  parallel::parLapply(cl, seq_len(n), body)
 }
 
 
@@ -1350,25 +1352,43 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
           se <- cc$cvse
           cv_err <- cc$error
         } else {
-          warm <- beta
-          value <- rep(NA_real_, length(hys))
-          # the point just fitted is what the next one screens against: the
-          # grid runs from the emptiest fit towards the fullest, so the kink
-          # shrinks and the strong rule has a previous size to compare with.
-          # At the head of a new combination the kink jumps back up, so the
-          # screening starts again from the whole block.
-          bk <- blocks
-          for (j in seq_along(hys)) {
-            if (j > 1L && pl$run[[j]] != pl$run[[j - 1L]]) {
-              warm <- beta
-              bk <- blocks
+          # THE COMBINATIONS ARE INDEPENDENT BY CONSTRUCTION: each run of
+          # the product restarts its warm chain from `beta` with the full
+          # blocks, and `cur` moves only after every run is scored, so the
+          # runs share nothing and go through worker_map() -- the same
+          # bodies in the same order whatever the count. What is NOT
+          # parallelized is the points WITHIN a run: measured
+          # (piano_parallel.txt, voce 8), a point paid cold costs 2.2-3.2x
+          # the warm chain, so splitting a chain either slows the
+          # single-process default by that factor or makes the result
+          # depend on the worker count.
+          #
+          # Within a run, the point just fitted is what the next one
+          # screens against: the grid runs from the emptiest fit towards
+          # the fullest, so the kink shrinks and the strong rule has a
+          # previous size to compare with. At the head of a combination
+          # the kink jumps back up, so the screening starts again from the
+          # whole block.
+          runs <- split(seq_along(hys), factor(pl$run, levels = unique(pl$run)))
+          one_run <- function(ri) {
+            idxs <- runs[[ri]]
+            warm <- beta
+            bk <- blocks
+            out <- rep(NA_real_, length(idxs))
+            for (k in seq_along(idxs)) {
+              j <- idxs[[k]]
+              r <- fit_at(hys[[j]], warm, bk)
+              bk <- blocks_at_kink(blocks, hys[[j]])
+              if (!isTRUE(r$converged)) next
+              warm <- r$par
+              out[[k]] <- score_at(r, r$hyper)
             }
-            r <- fit_at(hys[[j]], warm, bk)
-            bk <- blocks_at_kink(blocks, hys[[j]])
-            if (!isTRUE(r$converged)) next
-            warm <- r$par
-            value[[j]] <- score_at(r, r$hyper)
+            out
           }
+          got <- worker_map(spec, length(runs), one_run,
+                            what = "path combinations")
+          value <- rep(NA_real_, length(hys))
+          for (ri in seq_along(runs)) value[runs[[ri]]] <- got[[ri]]
           se <- NULL
         }
 

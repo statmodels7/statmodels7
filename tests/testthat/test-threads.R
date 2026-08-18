@@ -88,6 +88,29 @@ test_that("a cross-validated fit does not depend on workers, bit for bit", {
   expect_identical(f1@hyper, f2@hyper)
 })
 
+test_that("a product-grid path does not depend on workers, bit for bit", {
+  skip_on_cran()   # spawns worker processes; the sequential twin is covered
+  # the combinations of the product are the independent unit: each restarts
+  # its warm chain from the sweep's starting coefficients, so the same
+  # bodies run whatever the count -- scad's grid is n_lambda x n_a runs
+  set.seed(9)
+  n <- 300; p <- 15
+  X <- matrix(rnorm(n * p), n, p)
+  b <- c(1.2, -0.9, 0.6, numeric(p - 3))
+  d <- data.frame(y = as.numeric(X %*% b) + rnorm(n))
+  d$X <- X
+  f1 <- statmod(y ~ scad(X, n_lambda = 6, n_a = 3),
+                distributions7::gaussian1_distrib(), d,
+                sparse_criterion = bic())
+  f2 <- statmod(y ~ scad(X, n_lambda = 6, n_a = 3),
+                distributions7::gaussian1_distrib(), d,
+                sparse_criterion = bic(),
+                threads = numericals7::n_threads(1, workers = 2))
+  expect_identical(f1@coefficients, f2@coefficients)
+  expect_identical(f1@hyper, f2@hyper)
+  expect_identical(f1@criterion, f2@criterion)
+})
+
 test_that("threads must be the n_threads() object, and the setting is restored", {
   d <- data.frame(x = rnorm(60))
   d$y <- 1 + d$x + rnorm(60)

@@ -75,9 +75,15 @@ code path. A larger count reaches the compiled per-observation kernels
 of the family and the dense assembly products as an argument; below a
 kernel's measured internal threshold it stays sequential whatever the
 count says, and a sparse design keeps its \pkg{Matrix} route. The
-object's \code{workers} fans the independent fits of a
-cross-validation's folds out over separate R processes, each fold
-fitting sequentially, so the two levels never nest. The result does
+object's \code{workers} fans the units that are independent by
+construction out over separate R processes -- the folds of a
+cross-validation, and the combinations of a kinked path's product
+grid, each of which restarts its warm chain from the sweep's own
+starting coefficients -- each unit fitting sequentially, so the two
+levels never nest. The points WITHIN one chain stay sequential:
+measured, a point paid cold costs 2.2-3.2 times the warm chain, so
+splitting a chain would slow the single-process default or make the
+result depend on the count. The result does
 not depend on either count, bit for bit: every parallel region
 decomposes its work over the elements of its output and never splits
 a reduction, and the folds are seeded per fold and collected in fold

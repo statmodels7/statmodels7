@@ -1,3 +1,22 @@
+# statmodels7 0.69.0
+
+* The COMBINATIONS of a kinked path's product grid run over the worker
+  processes of `n_threads(workers =)`, through the same machinery as the
+  cross-validation folds (`cv_fold_rows()` generalized to
+  `worker_map()`). Each combination restarts its warm chain from the
+  sweep's own starting coefficients and `cur` moves only after every one
+  is scored, so the combinations are independent by construction and the
+  result is identical at any worker count -- the same bodies in the same
+  order. The points WITHIN one chain stay sequential, and the reason is
+  measured rather than argued (voce 8 of piano_parallel.txt): a path
+  point paid cold costs 2.2-3.2x the warm chain (lasso 400x30, lasso
+  8000x200, scad 2000x100), so splitting a chain either slows the
+  single-process default by that factor or makes the result depend on
+  the count. The continuation worry -- that a cold SCAD point lands on a
+  different local optimum -- was measured and refuted: 5 points of 128
+  differ by at most 1.4e-4, convergence tolerance and not another
+  optimum.
+
 # statmodels7 0.68.0
 
 * The exact gradient's reverse pass rides the fast route too:
