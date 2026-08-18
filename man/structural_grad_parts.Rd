@@ -2,9 +2,12 @@
 % Please edit documentation in R/outer_gradient.R
 \name{structural_grad_parts}
 \alias{structural_grad_parts}
+\alias{structural_grad_parts_impl}
 \title{What the Joint Chain Term Needs Before a Direction Is Known}
 \usage{
 structural_grad_parts(spec, design, coef, jd, M)
+
+structural_grad_parts_impl(spec, design, coef, jd, M)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}

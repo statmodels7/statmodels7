@@ -17,6 +17,7 @@ statmod(
   start = NULL,
   linpar_control = linpar_options(),
   verbose = 0,
+  threads = numericals7::n_threads(),
   ...
 )
 }
@@ -66,6 +67,21 @@ The argument and the function are named differently on purpose, as
 \code{\link[stats]{glm.control}} are.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
+
+\item{threads}{How many threads the fit may use, as
+\code{\link[numericals7]{n_threads}} constructs it. The default,
+\code{n_threads(1)}, is sequential and takes exactly the sequential
+code path. A larger count reaches the compiled per-observation kernels
+of the family and the dense assembly products as an argument; below a
+kernel's measured internal threshold it stays sequential whatever the
+count says, and a sparse design keeps its \pkg{Matrix} route. The
+object's \code{workers} fans the independent fits of a
+cross-validation's folds out over separate R processes, each fold
+fitting sequentially, so the two levels never nest. The result does
+not depend on either count, bit for bit: every parallel region
+decomposes its work over the elements of its output and never splits
+a reduction, and the folds are seeded per fold and collected in fold
+order.}
 
 \item{...}{Not used, and reported. \code{hyper} was removed from here: a
 hyperparameter is held in the term that carries the penalty, and a

@@ -84,10 +84,10 @@ refresh_hessian <- function(spec, design, coef, expected = FALSE,
   th <- statmod_eta(spec, design, coef)$theta
   if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
-                                             scale = "link", approx = approx)
+                                             scale = "link", approx = approx, threads = spec@threads)
   } else {
     distributions7::distrib_hessian(spec@distrib, spec@response, th,
-                                    scale = "link")
+                                    scale = "link", threads = spec@threads)
   }
 }
 

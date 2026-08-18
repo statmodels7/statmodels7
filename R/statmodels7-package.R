@@ -4,6 +4,7 @@
 ## usethis namespace: start
 #' @useDynLib statmodels7, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
+#' @importFrom RcppParallel RcppParallelLibs
 ## usethis namespace: end
 NULL
 

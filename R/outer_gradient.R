@@ -413,7 +413,7 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
   if (is.null(d3)) {
     th <- statmod_eta(spec, design, coef)$theta
     d3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
-                                         scale = "link")
+                                         scale = "link", threads = spec@threads)
   }
   keys <- names(d3)
   # the observed route's array is symmetric in all three indices and keyed by
@@ -570,7 +570,7 @@ mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
   w <- spec@weights
   th <- statmod_eta(spec, design, coef)$theta
   gl <- distributions7::distrib_gradient(spec@distrib, spec@response, th,
-                                         scale = "link")
+                                         scale = "link", threads = spec@threads)
   for (r in rf) {
     p <- r$param
     a <- match(p, params)
@@ -813,6 +813,22 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
 #'
 #' @keywords internal
 structural_grad_parts <- function(spec, design, coef, jd, M) {
+  # an outer search evaluates the criterion and its gradient at the same
+  # mode more than once, and everything here depends only on the point and
+  # on M; the memo returns the stored object itself, so a hit is
+  # bit-identical to recomputing
+  sst <- statmod_structural_state(design)
+  structural_memo(design, "grad_parts",
+                  list(coef = coef,
+                       zeta = if (is.null(sst)) NULL else sst$zeta,
+                       M = M), function() {
+    structural_grad_parts_impl(spec, design, coef, jd, M)
+  })
+}
+
+#' @rdname structural_grad_parts
+#' @keywords internal
+structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
   params <- jd$params
   n <- jd$n
   w <- spec@weights
@@ -822,10 +838,14 @@ structural_grad_parts <- function(spec, design, coef, jd, M) {
   f <- jd$f
   d <- spec@distrib
   y <- spec@response
-  gl <- distributions7::distrib_gradient(d, y, ev$theta, scale = "link")
-  H <- distributions7::distrib_hessian(d, y, ev$theta, scale = "link")
-  D3 <- distributions7::distrib_deriv3(d, y, ev$theta, scale = "link")
-  D4 <- distributions7::distrib_deriv4(d, y, ev$theta, scale = "link")
+  gl <- distributions7::distrib_gradient(d, y, ev$theta, scale = "link",
+                                         threads = spec@threads)
+  H <- distributions7::distrib_hessian(d, y, ev$theta, scale = "link",
+                                       threads = spec@threads)
+  D3 <- distributions7::distrib_deriv3(d, y, ev$theta, scale = "link",
+                                       threads = spec@threads)
+  D4 <- distributions7::distrib_deriv4(d, y, ev$theta, scale = "link",
+                                       threads = spec@threads)
   s_at <- rep_len(gl[[f$param]], n)
   c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
 
@@ -835,9 +855,19 @@ structural_grad_parts <- function(spec, design, coef, jd, M) {
   # asking the family again -- the same bargain the information makes.
   seed <- jd$V[[ap]]
   mk_blocks <- .structural_blocks(params, ap, jd$V, H, D3, D4, n)
-  cv <- modelterms7::term_curvature(
-    f$tm, f$eta_static, y, function(e, i) s_at[i], function(e, i) c_at[i],
-    f$psi, w * s_at, seed, mk_blocks(NULL))
+  bd_data <- structural_blocks_data(params, ap, jd$V, H, D3, n)
+  # the joint information reads the same recursion at the same point (its
+  # blocks callback carries D4 as well, which the second order never
+  # touches), so the memo's slot is shared with it, the seed in the key
+  cv <- structural_memo(design, "curv",
+                        list(zeta = f$psi, eta = f$eta_static,
+                             g = w * s_at, seed = seed), function() {
+    modelterms7::term_curvature(
+      f$tm, f$eta_static, y, function(e, i) s_at[i], function(e, i) c_at[i],
+      f$psi, w * s_at, seed, mk_blocks(NULL),
+      score_values = s_at, curvature_values = c_at,
+      blocks_data = bd_data, threads = spec@threads)
+  })
   V <- jd$V
   V[[ap]] <- cv$jacobian
   Vk <- lapply(V, function(x) x[, keep, drop = FALSE])
@@ -859,7 +889,8 @@ structural_grad_parts <- function(spec, design, coef, jd, M) {
     u <- u - as.numeric(crossprod(Vk[[k]], w * s))
   }
   list(u = u, V = V, Vk = Vk, VM = VM, H = H, D3 = D3, D4 = D4,
-       s_at = s_at, c_at = c_at, seed = seed, blocks = mk_blocks, w = w)
+       s_at = s_at, c_at = c_at, seed = seed, blocks = mk_blocks,
+       blocks_data = bd_data, w = w)
 }
 
 
@@ -911,7 +942,9 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
   cvk <- modelterms7::term_curvature(
     f$tm, f$eta_static, spec@response,
     function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
-    w * kappa, st$seed, st$blocks(NULL))
+    w * kappa, st$seed, st$blocks(NULL),
+    score_values = st$s_at, curvature_values = st$c_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
   Wk <- cvk$curvature[keep, keep, drop = FALSE]
 
   # (ii) V_p itself moves, by E_t v, and it enters through every l_pb. The
@@ -951,7 +984,39 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #'
 #' @keywords internal
 .structural_blocks <- function(params, ap, Vs, H, D3, D4, n) {
-  at <- function(x, i) rep_len(x, n)[i]
+  # The components are recycled ONCE, out here, and their keys built once
+  # with them. The first version read them through
+  # at <- function(x, i) rep_len(x, n)[i] inside the closure below, which
+  # allocates an n-long vector -- and rebuilds a sort + paste key -- per
+  # observation per parameter pair: O(n^2) work against a total of O(n),
+  # and measured at 17.5% of a panel fit at 60 groups, growing with the
+  # groups. The same hoist structural_callbacks() received in 0.18.0.
+  np <- length(params)
+  Hr <- vector("list", np)
+  for (q in seq_len(np)) {
+    if (q != ap) Hr[[q]] <- rep_len(H[[hess_key(params, ap, q)]], n)
+  }
+  D3r <- vector("list", np)
+  for (r in seq_len(np)) {
+    D3r[[r]] <- vector("list", np)
+    for (r2 in seq_len(np)) {
+      D3r[[r]][[r2]] <- rep_len(D3[[deriv3_key(params, ap, r, r2)]], n)
+    }
+  }
+  D4r <- NULL
+  if (!is.null(D4)) {
+    D4r <- vector("list", np)
+    for (r in seq_len(np)) {
+      D4r[[r]] <- vector("list", np)
+      for (r2 in seq_len(np)) {
+        D4r[[r]][[r2]] <- vector("list", np)
+        for (r3 in seq_len(np)) {
+          D4r[[r]][[r2]][[r3]] <-
+            rep_len(D4[[deriv4_key(params, ap, r, r2, r3)]], n)
+        }
+      }
+    }
+  }
   function(vfull) {
     third <- !is.null(vfull)
     function(e, i, D, act = NULL) {
@@ -960,15 +1025,14 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
       cross <- numeric(mk)
       for (q in seq_along(params)) {
         if (q == ap) next
-        cross <- cross + at(H[[hess_key(params, ap, q)]], i) * Vs[[q]][i, act]
+        cross <- cross + Hr[[q]][i] * Vs[[q]][i, act]
       }
       vr <- lapply(seq_along(params), function(r)
         if (r == ap) D else Vs[[r]][i, act])
       M <- matrix(0, mk, mk)
       for (r in seq_along(params)) {
         for (r2 in seq_along(params)) {
-          M <- M + at(D3[[deriv3_key(params, ap, r, r2)]], i) *
-            outer(vr[[r]], vr[[r2]])
+          M <- M + D3r[[r]][[r2]][i] * outer(vr[[r]], vr[[r2]])
         }
       }
       if (!third) return(list(cross = cross, M = M))
@@ -979,14 +1043,14 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
                    numeric(1))
       dcurv <- numeric(mk)
       for (r in seq_along(params)) {
-        dcurv <- dcurv + at(D3[[deriv3_key(params, ap, ap, r)]], i) * vr[[r]]
+        dcurv <- dcurv + D3r[[ap]][[r]][i] * vr[[r]]
       }
       N <- matrix(0, mk, mk)
       for (r in seq_along(params)) {
         for (r2 in seq_along(params)) {
           co <- 0
           for (r3 in seq_along(params)) {
-            co <- co + at(D4[[deriv4_key(params, ap, r, r2, r3)]], i) * dv[r3]
+            co <- co + D4r[[r]][[r2]][[r3]][i] * dv[r3]
           }
           if (co != 0) N <- N + co * outer(vr[[r]], vr[[r2]])
         }
@@ -994,6 +1058,44 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
       list(cross = cross, M = M, dcurv = dcurv, N = N)
     }
   }
+}
+
+#' The Same Pieces as Data for the Compiled Recursion
+#'
+#' @description
+#' The quantities the callback of \code{.structural_blocks()} reads, laid out
+#' as matrices so \code{modelterms7}'s compiled second-order route can read
+#' them without calling back into R: the mixed second derivatives one column
+#' per distribution parameter (the filter's own column zero, the loop skips
+#' it), the third derivatives one column per parameter pair with pair
+#' \eqn{(r, r_2)} at column \eqn{(r-1)\,n_p + r_2}, the static jacobian rows
+#' densified, and the filter's parameter index.
+#'
+#' @param params The distribution's parameter names.
+#' @param ap Which of them carries the filter.
+#' @param Vs The static rows.
+#' @param H,D3 The family's derivatives at the fitted predictors.
+#' @param n The number of observations.
+#'
+#' @return A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}.
+#'
+#' @keywords internal
+structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
+  np <- length(params)
+  Hc <- matrix(0, n, np)
+  for (q in seq_len(np)) {
+    if (q != ap) Hc[, q] <- rep_len(H[[hess_key(params, ap, q)]], n)
+  }
+  D3m <- matrix(0, n, np * np)
+  for (r in seq_len(np)) {
+    for (r2 in seq_len(np)) {
+      D3m[, (r - 1L) * np + r2] <-
+        rep_len(D3[[deriv3_key(params, ap, r, r2)]], n)
+    }
+  }
+  list(H = Hc, D3 = D3m,
+       Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
+       ap = ap)
 }
 
 

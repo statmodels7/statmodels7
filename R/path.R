@@ -506,7 +506,7 @@ path_steps <- function(spec, design, block, beta, split) {
     ep <- statmod_eta(spec, design, coef)
     wq <- coord_working(spec, ep, coef, design, block$param, FALSE, "bartlett")
     if (is.null(wq)) return(NULL)
-    v <- as.numeric(crossprod(wq$w, X^2))
+    v <- wxsq(X, wq$w, spec@threads)
     if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
     1 / v
   }, error = function(e) NULL)
@@ -871,9 +871,20 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
                      folds, run = NULL) {
   nf <- max(folds)
   m <- length(hypers)
-  dev <- matrix(NA_real_, nf, m)
-  err <- NULL
-  for (f in seq_len(nf)) {
+  # One seed per fold, drawn HERE: a fold's fit is then a deterministic
+  # function of the fold whether it runs in this process or in a worker,
+  # which is what lets the result be independent of `workers` bit for bit
+  # even where a family's starting values draw at random. The caller's own
+  # stream is put back afterwards, so a fold cannot shift what the session
+  # draws next.
+  seeds <- sample.int(.Machine$integer.max, nf)
+  one_fold <- function(f) {
+    if (exists(".Random.seed", globalenv(), inherits = FALSE)) {
+      old_seed <- get(".Random.seed", globalenv())
+      on.exit(assign(".Random.seed", old_seed, globalenv()), add = TRUE)
+    }
+    set.seed(seeds[f])
+    dev_f <- rep(NA_real_, m)
     keep <- folds != f
     # the TEST fold needs them too: term_predict() evaluates a matrix input's
     # expression in the new data with baseenv() as its enclosure, so a name
@@ -899,8 +910,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       # re-evaluated on a subset of it -- so the message is carried out
       # rather than dropped: every fold fails for the same reason, and the
       # path would otherwise score NA everywhere and keep its starting value
-      err <- ts
-      next
+      return(list(dev = dev_f, err = ts))
     }
     td <- statmod_design(ts)
     tb <- statmod_blocks(ts, td)
@@ -926,14 +936,79 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       cf <- r$obj$split(r$par)
       d <- tryCatch(-2 * statmod_loglik_at(hs, cf, hd),
                     error = function(e) NA_real_)
-      if (is.finite(d)) dev[f, j] <- d / nrow(test)
+      if (is.finite(d)) dev_f[j] <- d / nrow(test)
     }
+    list(dev = dev_f, err = NULL)
   }
+  rows <- cv_fold_rows(spec, nf, one_fold)
+  dev <- do.call(rbind, lapply(rows, `[[`, "dev"))
+  errs <- unlist(lapply(rows, `[[`, "err"))
+  err <- if (length(errs)) errs[[1L]] else NULL
   ok <- colSums(is.finite(dev))
   cvm <- apply(dev, 2L, mean, na.rm = TRUE)
   cvse <- apply(dev, 2L, stats::sd, na.rm = TRUE) / sqrt(pmax(ok, 1))
   cvm[ok == 0L] <- NA_real_
   list(cvm = cvm, cvse = cvse, n_fail = nf - ok, error = err)
+}
+
+
+#' Run the Folds, in This Process or Over Workers
+#'
+#' @description
+#' Applies the fold body to every fold, over the worker processes the
+#' specification asks for (\code{spec@workers}, from
+#' \code{\link[numericals7]{n_threads}(workers =)}) and in this process
+#' otherwise. Results come back in fold order whatever the number of
+#' workers, which together with the per-fold seeds of
+#' \code{\link{cv_curve}} is what makes the answer independent of the
+#' count, bit for bit.
+#'
+#' @details
+#' The folds are independent by construction -- each is a complete refit on
+#' its own rows -- so they go by PROCESSES, with the safeguards
+#' \code{optimizers7::multistart} records: under \code{pkgload} the run
+#' stays sequential, because a worker loads the installed copy and S7
+#' objects built in the development namespace do not dispatch correctly
+#' against it; a cluster that cannot start, or workers that cannot load
+#' the package, fall back to sequential with a warning rather than fail
+#' the fit. A fit inside a worker takes a fresh specification and is
+#' therefore sequential by construction: the two levels of parallelism do
+#' not nest.
+#'
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param nf How many folds.
+#' @param one_fold The fold body, a function of the fold index.
+#'
+#' @return A list of the fold bodies' results, in fold order.
+#'
+#' @seealso \code{\link{cv_curve}}
+#'
+#' @keywords internal
+cv_fold_rows <- function(spec, nf, one_fold) {
+  workers <- min(spec@workers, nf)
+  sequential <- function() lapply(seq_len(nf), one_fold)
+  if (workers <= 1L) return(sequential())
+  if (isNamespaceLoaded("statmodels7") &&
+      exists(".__DEVTOOLS__", asNamespace("statmodels7"), inherits = FALSE)) {
+    return(sequential())
+  }
+  cl <- try(parallel::makePSOCKcluster(workers), silent = TRUE)
+  if (inherits(cl, "try-error")) {
+    warning("Could not start ", workers, " worker processes; running the ",
+            "folds sequentially.", call. = FALSE)
+    return(sequential())
+  }
+  on.exit(parallel::stopCluster(cl), add = TRUE)
+  have <- try(parallel::clusterEvalQ(
+    cl, requireNamespace("statmodels7", quietly = TRUE)), silent = TRUE)
+  if (inherits(have, "try-error") || !all(unlist(have))) {
+    warning("The worker processes could not load statmodels7, so the folds ",
+            "were run\n  sequentially. They are separate R sessions and an ",
+            "uninstalled or\n  differently-located copy is invisible to ",
+            "them.", call. = FALSE)
+    return(sequential())
+  }
+  parallel::parLapply(cl, seq_len(nf), one_fold)
 }
 
 

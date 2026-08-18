@@ -165,6 +165,20 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   \code{\link[stats]{glm}}'s \code{control} and
 #'   \code{\link[stats]{glm.control}} are.
 #' @param verbose A level from 0 to 3, or a named logical vector.
+#' @param threads How many threads the fit may use, as
+#'   \code{\link[numericals7]{n_threads}} constructs it. The default,
+#'   \code{n_threads(1)}, is sequential and takes exactly the sequential
+#'   code path. A larger count reaches the compiled per-observation kernels
+#'   of the family and the dense assembly products as an argument; below a
+#'   kernel's measured internal threshold it stays sequential whatever the
+#'   count says, and a sparse design keeps its \pkg{Matrix} route. The
+#'   object's \code{workers} fans the independent fits of a
+#'   cross-validation's folds out over separate R processes, each fold
+#'   fitting sequentially, so the two levels never nest. The result does
+#'   not depend on either count, bit for bit: every parallel region
+#'   decomposes its work over the elements of its output and never splits
+#'   a reduction, and the folds are seeded per fold and collected in fold
+#'   order.
 #' @param ... Not used, and reported. `hyper` was removed from here: a
 #'   hyperparameter is held in the term that carries the penalty, and a
 #'   second place to say so would be read by nobody whenever the two
@@ -195,9 +209,16 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     # argument's own promise and R reports "promise already
                     # under evaluation"
                     start = NULL, linpar_control = linpar_options(),
-                    verbose = 0, ...) {
+                    verbose = 0, threads = numericals7::n_threads(), ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
+  # The count is validated once and travels DOWN on the specification; the
+  # process-level RcppParallel setting is sized here and restored when this
+  # frame exits, so a fit never leaves it moved for the code that runs
+  # after it. At the default n_threads(1) neither call touches anything and
+  # every kernel takes exactly the sequential path.
+  n_thr <- numericals7::thread_count(threads)
+  numericals7::local_threads(threads)
   asked <- !missing(outer_criterion)
   asked_sparse <- !missing(sparse_criterion)
   vb <- verbosity(verbose)
@@ -226,6 +247,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
   spec <- statmod_spec(formula, distrib, data, weights, offsets,
                        linpar = linpar_control)
+  spec@threads <- n_thr
+  spec@workers <- numericals7::worker_count(threads)
   design <- statmod_design(spec)
   hyper <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)
@@ -745,8 +768,12 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       p <- iwls_pieces(spec, design, obj$split(v), hyper, method)
       if (whole) return(p)
       # a subset of the coefficients takes the corresponding submatrix; the
-      # square-root routes need the whole design, so the assembled one is used
-      A <- if (is.null(p$A)) crossprod(p$R) + crossprod(p$C) else p$A
+      # square-root routes need the whole design, so the assembled one is
+      # used. This crossprod is the one the profile of the dense lasso path
+      # puts at 49 per cent of the whole fit (one X'X per scoring iteration
+      # per alternation round per path point), which is why it reads the
+      # thread count.
+      A <- if (is.null(p$A)) xtx(p$R, spec@threads) + crossprod(p$C) else p$A
       list(R = NULL, C = NULL, A = A[idx, idx, drop = FALSE])
     }
     # the equations' coordinate ranges, restated in the subset's own

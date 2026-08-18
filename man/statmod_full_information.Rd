@@ -2,9 +2,12 @@
 % Please edit documentation in R/structural.R
 \name{statmod_full_information}
 \alias{statmod_full_information}
+\alias{statmod_full_information_impl}
 \title{The Observed Information Over the Coefficients and a Filter's Parameters}
 \usage{
 statmod_full_information(spec, coef, design = statmod_design(spec))
+
+statmod_full_information_impl(spec, coef, design, params, ev)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -12,6 +15,9 @@ statmod_full_information(spec, coef, design = statmod_design(spec))
 \item{coef}{A named list of coefficient vectors.}
 
 \item{design}{The design.}
+
+\item{params, ev}{The parameter names and the evaluated predictors,
+already in hand at the caller.}
 }
 \value{
 A square matrix over the coefficients and the term's parameters,

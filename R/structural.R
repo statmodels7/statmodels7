@@ -91,6 +91,53 @@ structural_kind <- function(term) {
 statmod_structural_state <- function(design) attr(design, "structure")
 
 
+#' Reuse a Structural Quantity Computed at the Same Point
+#'
+#' @description
+#' A depth-one exact memo on the design's structural state: where the last
+#' call's key is \code{identical()} to this one's, the stored value is
+#' returned; otherwise \code{compute()} runs and replaces it.
+#'
+#' @details
+#' Measured on the gas panel at 60 groups, 62 of the 154 curvature
+#' recursions of one fit recompute a point already visited -- the same
+#' coefficients and the same term parameters, up to five times each,
+#' because the criterion, its gradient and the joint step's curvature all
+#' read the same mode -- and the recursion is 35 per cent of the fit. The
+#' cache returns the previously computed object itself, so a hit is
+#' bit-identical to recomputing by construction, and the key is compared
+#' with \code{identical()} on the full numeric inputs, so a collision
+#' cannot happen.
+#'
+#' It stands aside where the design carries REFRESHABLE terms: a
+#' break-point block advances its rescaling schedule as the alternation
+#' commits, so the same coefficients do not imply the same design there,
+#' and a key that cannot see the schedule must not answer.
+#'
+#' @param design The design whose structural state holds the slots.
+#' @param slot A short name, one cache per slot.
+#' @param key The exact inputs the value depends on.
+#' @param compute A function of no arguments.
+#'
+#' @return \code{compute()}'s value, possibly from the cache.
+#'
+#' @keywords internal
+structural_memo <- function(design, slot, key, compute) {
+  sst <- statmod_structural_state(design)
+  if (is.null(sst) || !is.null(attr(design, "refresh"))) return(compute())
+  k_slot <- paste0(slot, "_key")
+  v_slot <- paste0(slot, "_value")
+  k <- if (exists(k_slot, envir = sst, inherits = FALSE)) {
+    get(k_slot, envir = sst)
+  } else NULL
+  if (!is.null(k) && identical(k, key)) return(get(v_slot, envir = sst))
+  val <- compute()
+  assign(k_slot, key, envir = sst)
+  assign(v_slot, val, envir = sst)
+  val
+}
+
+
 #' The Parameters a Structural Term Starts From
 #'
 #' @description
@@ -216,7 +263,23 @@ structural_callbacks <- function(spec, theta, p) {
   list(
     score = function(e, i) as.numeric(k$score(y[i], at(i), e)),
     curvature = function(e, i) as.numeric(k$curvature(y[i], at(i), e)),
-    logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e))
+    logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e)),
+    # the fast context of piano_parallel.txt section 2a: where the C
+    # registries of distributions7 and linkfunctions7 cover this family
+    # and this link, the filter's kernel reads the score and the
+    # curvature through their scalar entry points instead of calling back
+    # into R -- the same composition, bit-identical, held to that by
+    # modelterms7's twin test -- and an uncovered pair leaves the context
+    # inert, the callbacks above running as before
+    fast = if (!S7::S7_inherits(d, distributions7::multivariate_distrib) &&
+               !is.matrix(y)) {
+      list(family = attr(S7::S7_class(d), "name"),
+           link = lk@link_name,
+           k = match(p, params),
+           bounds = as.numeric(lk@link_bounds),
+           y = as.numeric(y),
+           theta = theta_n)
+    } else NULL
   )
 }
 
@@ -424,6 +487,20 @@ statmod_full_information <- function(spec, coef,
   if (!length(ev$filters) && !length(ev$regimes)) {
     return(statmod_information_at(spec, coef, design, expected = FALSE))
   }
+  # the criterion, its gradient and the joint step all read this matrix at
+  # the mode they share, so the same point is asked for several times over
+  sst <- statmod_structural_state(design)
+  structural_memo(design, "info",
+                  list(coef = coef, zeta = sst$zeta), function() {
+    statmod_full_information_impl(spec, coef, design, params, ev)
+  })
+}
+
+#' @rdname statmod_full_information
+#' @param params,ev The parameter names and the evaluated predictors,
+#'   already in hand at the caller.
+#' @keywords internal
+statmod_full_information_impl <- function(spec, coef, design, params, ev) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   nb <- sum(npar)
@@ -461,11 +538,11 @@ statmod_full_information <- function(spec, coef,
   })
 
   gl <- distributions7::distrib_gradient(spec@distrib, spec@response,
-                                         ev$theta, scale = "link")
+                                         ev$theta, scale = "link", threads = spec@threads)
   H <- distributions7::distrib_hessian(spec@distrib, spec@response, ev$theta,
-                                       scale = "link")
+                                       scale = "link", threads = spec@threads)
   D3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, ev$theta,
-                                       scale = "link")
+                                       scale = "link", threads = spec@threads)
 
   # The derivatives are read at the FITTED predictor, which the recursion
   # inside term_curvature() reproduces exactly: it runs at the same
@@ -486,17 +563,32 @@ statmod_full_information <- function(spec, coef,
   # cannot be known in advance: measured, it is where the time goes.
   s_at <- rep_len(gl[[f$param]], n)
   c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
-  cv <- modelterms7::term_curvature(
-    f$tm, f$eta_static, spec@response,
-    function(e, i) s_at[i], function(e, i) c_at[i], f$psi,
-    w * s_at, Vs[[ap]], blocks)
+  # the same recursion at the same point is asked for by the exact
+  # gradient's shared parts too, so the memo sits on THIS call and both
+  # read one computation; the seed is part of the key, so a caller whose
+  # layout differed would miss the cache rather than take the wrong shape
+  # the same pieces as DATA beside the callback: with them (and the score
+  # and curvature as lookups) an eligible term runs its second-order
+  # recursion compiled, with the callback kept for the cases the kernel
+  # declines (a developed autoregressive chart, the third order)
+  bd_data <- structural_blocks_data(params, ap, Vs, H, D3, n)
+  cv <- structural_memo(design, "curv",
+                        list(zeta = f$psi, eta = f$eta_static,
+                             g = w * s_at, seed = Vs[[ap]]), function() {
+    modelterms7::term_curvature(
+      f$tm, f$eta_static, spec@response,
+      function(e, i) s_at[i], function(e, i) c_at[i], f$psi,
+      w * s_at, Vs[[ap]], blocks,
+      score_values = s_at, curvature_values = c_at,
+      blocks_data = bd_data, threads = spec@threads)
+  })
   Vs[[ap]] <- cv$jacobian
 
   out <- matrix(0, m, m)
   for (a in seq_along(params)) {
     for (b in seq_along(params)) {
       wv <- w * rep_len(H[[hess_key(params, a, b)]], n)
-      out <- out + crossprod(Vs[[a]] * wv, Vs[[b]])
+      out <- out + wcrossprod(Vs[[a]], wv, Vs[[b]], spec@threads)
     }
   }
   # the (a, b) and (b, a) terms are transposes of one another and are formed
@@ -591,12 +683,12 @@ statmod_regime_information <- function(spec, ev, design, npar, offs, nb, n,
   }
   gr <- function(e, i) {
     g <- distributions7::distrib_gradient(spec@distrib, yof(i),
-                                          theta_at(e, i), scale = "link")
+                                          theta_at(e, i), scale = "link", threads = spec@threads)
     vapply(params, function(q) rep_len(g[[q]], length(i)), numeric(length(i)))
   }
   he <- function(e, i) {
     H <- distributions7::distrib_hessian(spec@distrib, yof(i),
-                                         theta_at(e, i), scale = "link")
+                                         theta_at(e, i), scale = "link", threads = spec@threads)
     out <- array(0, c(length(i), length(params), length(params)))
     for (a in seq_along(params)) {
       for (b in seq_along(params)) {
@@ -940,7 +1032,8 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
     cb <- structural_callbacks(spec, theta_static, u$param)
     psi <- structural_psi(tm, st$zeta[[u$term]])
     f <- modelterms7::term_filter(tm, eta_static[[u$param]], spec@response,
-                                  cb$score, cb$curvature, psi)
+                                  cb$score, cb$curvature, psi,
+                                  fast = cb$fast, threads = spec@threads)
     out[[u$term]] <- list(param = u$param, term = u$term, tm = tm,
                           eta = f$eta, jacobian = f$jacobian,
                           psi = psi, cb = cb,

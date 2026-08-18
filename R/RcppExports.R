@@ -13,3 +13,19 @@ chol_rcond_cpp <- function(R, anorm) {
     .Call(`_statmodels7_chol_rcond_cpp`, R, anorm)
 }
 
+xtv_cpp <- function(X, v, threads) {
+    .Call(`_statmodels7_xtv_cpp`, X, v, threads)
+}
+
+wxsq_cpp <- function(X, w, threads) {
+    .Call(`_statmodels7_wxsq_cpp`, X, w, threads)
+}
+
+xtx_cpp <- function(A, threads) {
+    .Call(`_statmodels7_xtx_cpp`, A, threads)
+}
+
+wcrossprod_cpp <- function(A, w, B, threads) {
+    .Call(`_statmodels7_wcrossprod_cpp`, A, w, B, threads)
+}
+

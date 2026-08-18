@@ -17,7 +17,9 @@ StatmodSpec(
   intercepts = logical(0),
   newdata = NULL,
   structural = list(),
-  linpar = list()
+  linpar = list(),
+  threads = 1L,
+  workers = 1L
 )
 }
 \arguments{

@@ -68,11 +68,67 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// xtv_cpp
+NumericVector xtv_cpp(NumericMatrix X, NumericVector v, int threads);
+RcppExport SEXP _statmodels7_xtv_cpp(SEXP XSEXP, SEXP vSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(xtv_cpp(X, v, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// wxsq_cpp
+NumericVector wxsq_cpp(NumericMatrix X, NumericVector w, int threads);
+RcppExport SEXP _statmodels7_wxsq_cpp(SEXP XSEXP, SEXP wSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(wxsq_cpp(X, w, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// xtx_cpp
+NumericMatrix xtx_cpp(NumericMatrix A, int threads);
+RcppExport SEXP _statmodels7_xtx_cpp(SEXP ASEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(xtx_cpp(A, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// wcrossprod_cpp
+NumericMatrix wcrossprod_cpp(NumericMatrix A, NumericVector w, NumericMatrix B, int threads);
+RcppExport SEXP _statmodels7_wcrossprod_cpp(SEXP ASEXP, SEXP wSEXP, SEXP BSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type B(BSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(wcrossprod_cpp(A, w, B, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
     {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
+    {"_statmodels7_xtv_cpp", (DL_FUNC) &_statmodels7_xtv_cpp, 3},
+    {"_statmodels7_wxsq_cpp", (DL_FUNC) &_statmodels7_wxsq_cpp, 3},
+    {"_statmodels7_xtx_cpp", (DL_FUNC) &_statmodels7_xtx_cpp, 2},
+    {"_statmodels7_wcrossprod_cpp", (DL_FUNC) &_statmodels7_wcrossprod_cpp, 4},
     {NULL, NULL, 0}
 };
 

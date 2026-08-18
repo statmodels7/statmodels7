@@ -391,8 +391,8 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
         if (npar[k] == 0L) next
         w <- w + rep_len(d3[[d3_key(params, a, b, k, keys)]], n) * tv[[k]]
       }
-      blk <- -crossprod(design[[params[a]]]$X * (spec@weights * w),
-                        design[[params[b]]]$X)
+      blk <- -wcrossprod(design[[params[a]]]$X, spec@weights * w,
+                         design[[params[b]]]$X, spec@threads)
       ra <- offs[a] + seq_len(npar[a])
       rb <- offs[b] + seq_len(npar[b])
       out[ra, rb] <- blk
@@ -435,8 +435,8 @@ contract4 <- function(spec, design, d4, params, npar, offs, total, tv, tu) {
             tv[[k]] * tu[[q]]
         }
       }
-      blk <- -crossprod(design[[params[a]]]$X * (spec@weights * w),
-                        design[[params[b]]]$X)
+      blk <- -wcrossprod(design[[params[a]]]$X, spec@weights * w,
+                         design[[params[b]]]$X, spec@threads)
       ra <- offs[a] + seq_len(npar[a])
       rb <- offs[b] + seq_len(npar[b])
       out[ra, rb] <- blk

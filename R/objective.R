@@ -142,7 +142,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
     for (k in seq_along(r$mu)) {
       thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
       gk <- distributions7::distrib_gradient(spec@distrib, spec@response, thk,
-                                             scale = "link")
+                                             scale = "link", threads = spec@threads)
       for (p in params) {
         gv[[p]] <- gv[[p]] + r$gamma[, k] * spec@weights * rep_len(gk[[p]], n)
       }
@@ -155,7 +155,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
   }
 
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
-                                        scale = "link")
+                                        scale = "link", threads = spec@threads)
   gv <- stats::setNames(lapply(params, function(p)
     spec@weights * rep_len(g[[p]], n)), params)
 
@@ -169,9 +169,10 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
   for (f in ev$filters) {
     ad <- modelterms7::term_adjoint(f$tm, f$eta_static, spec@response,
                                     f$cb$score, f$cb$curvature, f$psi,
-                                    g = gv[[f$param]])
+                                    g = gv[[f$param]],
+                                    fast = f$cb$fast, threads = spec@threads)
     H <- distributions7::distrib_hessian(spec@distrib, spec@response,
-                                         ev$theta, scale = "link")
+                                         ev$theta, scale = "link", threads = spec@threads)
     a <- match(f$param, params)
     add <- stats::setNames(lapply(params, function(q) {
       ad$dscore * rep_len(H[[hess_key(params, a, match(q, params))]], n)
@@ -232,7 +233,7 @@ statmod_structural_score <- function(spec, coef,
   }
   if (!length(ev$filters)) return(list())
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
-                                        scale = "link")
+                                        scale = "link", threads = spec@threads)
   n <- spec@n_obs
   out <- list()
   for (f in ev$filters) {
@@ -296,10 +297,10 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
       Hk <- if (expected) {
         distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                                  thk, scale = "link",
-                                                 approx = approx)
+                                                 approx = approx, threads = spec@threads)
       } else {
         distributions7::distrib_hessian(spec@distrib, spec@response, thk,
-                                        scale = "link")
+                                        scale = "link", threads = spec@threads)
       }
       for (a in seq_along(params)) {
         if (npar[a] == 0L) next
@@ -307,7 +308,8 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
           if (npar[b] == 0L || b < a) next
           wv <- spec@weights * r$gamma[, k] *
             rep_len(Hk[[hess_key(params, a, b)]], spec@n_obs)
-          blk <- crossprod(design[[params[a]]]$X * wv, design[[params[b]]]$X)
+          blk <- wcrossprod(design[[params[a]]]$X, wv,
+                        design[[params[b]]]$X, spec@threads)
           ra <- offs[a] + seq_len(npar[a])
           rb <- offs[b] + seq_len(npar[b])
           out[ra, rb] <- out[ra, rb] + blk
@@ -320,10 +322,10 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 
   H <- if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
-                                             scale = "link", approx = approx)
+                                             scale = "link", approx = approx, threads = spec@threads)
   } else {
     distributions7::distrib_hessian(spec@distrib, spec@response, th,
-                                    scale = "link")
+                                    scale = "link", threads = spec@threads)
   }
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -335,7 +337,8 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
       if (npar[b] == 0L || b < a) next
       key <- hess_key(params, a, b)
       wv <- spec@weights * rep_len(H[[key]], spec@n_obs)
-      blk <- crossprod(design[[params[a]]]$X * wv, design[[params[b]]]$X)
+      blk <- wcrossprod(design[[params[a]]]$X, wv,
+                        design[[params[b]]]$X, spec@threads)
       ra <- offs[a] + seq_len(npar[a])
       rb <- offs[b] + seq_len(npar[b])
       out[ra, rb] <- blk

@@ -85,10 +85,10 @@ info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
   H <- if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                              theta, scale = "link",
-                                             approx = approx)
+                                             approx = approx, threads = spec@threads)
   } else {
     distributions7::distrib_hessian(spec@distrib, spec@response, theta,
-                                    scale = "link")
+                                    scale = "link", threads = spec@threads)
   }
   Om <- array(0, dim = c(n, K, K))
   for (a in seq_len(K)) {

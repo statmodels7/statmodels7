@@ -4,7 +4,7 @@
 \alias{coord_screen}
 \title{Which Coordinates a Path Point Has to Visit}
 \usage{
-coord_screen(X, w, z, beta, s_now, s_prev)
+coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
 }
 \arguments{
 \item{X}{The block's columns.}
@@ -18,6 +18,8 @@ coord_screen(X, w, z, beta, s_now, s_prev)
 \item{s_now}{The size of the kink here.}
 
 \item{s_prev}{The size of the kink at the previous point, or \code{NULL}.}
+
+\item{threads}{The thread count the gradient read may use.}
 }
 \value{
 An integer vector of column indices, never empty.

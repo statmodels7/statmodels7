@@ -380,7 +380,17 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # specification because a rebuild has to reproduce it: a fold of cv()
     # that built a dense design where the fit built a sparse one would be
     # fitting a different model's storage, and paying for it.
-    linpar = S7::new_property(S7::class_list, default = quote(list()))
+    linpar = S7::new_property(S7::class_list, default = quote(list())),
+    # the thread count statmod(threads =) was given, carried here because
+    # the specification is what every consumer of the assembly already
+    # holds. The default keeps every other constructor -- a respec, a fold
+    # of cv() -- on the sequential path.
+    threads = S7::new_property(S7::class_integer, default = 1L),
+    # the worker-process count for the independent fits of a
+    # cross-validation's folds. A fold's own spec is built fresh and takes
+    # the defaults, which is what keeps the two levels from nesting: a fit
+    # inside a worker is sequential by construction.
+    workers = S7::new_property(S7::class_integer, default = 1L)
   )
 )
 

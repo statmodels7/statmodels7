@@ -469,10 +469,10 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
   build <- function() {
     if (order == 3L) {
       distributions7::distrib_deriv3(spec@distrib, spec@response, th,
-                                     scale = "link")
+                                     scale = "link", threads = spec@threads)
     } else {
       distributions7::distrib_deriv4(spec@distrib, spec@response, th,
-                                     scale = "link")
+                                     scale = "link", threads = spec@threads)
     }
   }
   if (!ctx_usable(ctx, coef, hyper)) return(build())

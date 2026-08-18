@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.62.0
+Version: 0.68.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Installs and attaches the packages of the statmodels7 toolkit,
@@ -20,21 +20,25 @@ Depends:
     R (>= 4.1.0)
 Imports:
     basis7,
-    distributions7 (>= 0.24.0),
+    distributions7 (>= 0.26.0),
     linkfunctions7,
     Matrix (>= 1.6.2),
     methods,
-    modelterms7 (>= 0.46.0),
-    numericals7,
+    modelterms7 (>= 0.51.0),
+    numericals7 (>= 0.9.0),
     optimizers7,
+    parallel,
     parameters7,
     penalties7,
     Rcpp,
+    RcppParallel,
     S7,
     stats,
     utils
 LinkingTo:
-    Rcpp
+    Rcpp,
+    RcppParallel
+SystemRequirements: GNU make
 Suggests:
     glmnet,
     mgcv,
@@ -82,4 +86,5 @@ Collate:
     'start.R'
     'statmodels7-package.R'
     'structural.R'
+    'threads.R'
     'update.R'

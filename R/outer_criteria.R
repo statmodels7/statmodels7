@@ -274,10 +274,10 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
 
   th <- statmod_eta(spec, design, coef)$theta
   d3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
-                                       scale = "link")
+                                       scale = "link", threads = spec@threads)
   d4 <- if (order >= 2L) {
     distributions7::distrib_deriv4(spec@distrib, spec@response, th,
-                                   scale = "link")
+                                   scale = "link", threads = spec@threads)
   } else NULL
 
   pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total, order)

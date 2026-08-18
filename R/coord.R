@@ -152,11 +152,11 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # beyond its block, which statmod_eta() has already put into `z`
     adj <- if (is.null(dd$adj)) 0 else dd$adj
     z <- wq$z - off - coord_offset(spec, p, n) - adj
-    v <- as.numeric(crossprod(wq$w, X^2))
+    v <- wxsq(X, wq$w, spec@threads)
     if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
     b0 <- coef[[p]][cols]
     s_now <- kink_scale(block$penalty, th)
-    keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink)
+    keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink, spec@threads)
 
     repeat {
       tab <- penalties7::penalty_prox_spec(block$penalty, th, 1 / v[keep])
@@ -200,13 +200,14 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' @param beta The coefficients at the previous point.
 #' @param s_now The size of the kink here.
 #' @param s_prev The size of the kink at the previous point, or \code{NULL}.
+#' @param threads The thread count the gradient read may use.
 #'
 #' @return An integer vector of column indices, never empty.
 #'
 #' @seealso \code{\link{coord_fit}}
 #'
 #' @keywords internal
-coord_screen <- function(X, w, z, beta, s_now, s_prev) {
+coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
   p <- ncol(X)
   # With no previous point there is nothing to screen against, and the rule in
   # its global form -- the reference being the kink that empties the block --
@@ -218,7 +219,7 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev) {
     return(seq_len(p))
   }
   r <- z - as.numeric(X %*% beta)
-  g <- abs(as.numeric(crossprod(X, w * r)))
+  g <- abs(xtv(X, w * r, threads))
   keep <- which(g >= 2 * s_now - s_prev | beta != 0)
   if (!length(keep)) keep <- which.max(g)
   keep
@@ -376,7 +377,7 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
   params <- spec@distrib@params
   a <- match(p, params)
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ep$theta,
-                                        scale = "link")
+                                        scale = "link", threads = spec@threads)
   s <- spec@weights * rep_len(g[[p]], n)
   Om <- info_blocks(spec, ep$theta, expected, approx)
   h <- Om[, a, a]
