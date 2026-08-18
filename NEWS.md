@@ -1,3 +1,75 @@
+# statmodels7 0.70.0
+
+* `solve_pd()` tests and inverts on the JACOBI-EQUILIBRATED matrix
+  (unit diagonal), which tells a flat direction from scale separation
+  whatever produced the separation, and the caller-supplied reference
+  scale is gone. The reference covered one source only: a smoothing
+  parameter at 1e15 was forgiven, but a break-point term's committed
+  working block carries auxiliary columns near 1/(2cd) -- 1e16 on the
+  information's diagonal at the annealed floor -- so the DESIGN set the
+  reference and ordinary curvature at 242 in the ordinary-scale
+  directions read as flat: `summary()` on a converged three-break-point
+  jseg refused its own variance matrix. Per-direction scaling forgives
+  both sources; an exact collinearity stays exactly singular.
+
+* An outer criterion, a path and a fold all HOLD a frozen break-point
+  block at its committed positions (`statmod_alternate(hold_refresh =)`),
+  and the positions are refined once, by a full alternation at the chosen
+  hyperparameters before the restarts. Running the working phase inside
+  every criterion evaluation had two costs measured together: a
+  three-break-point fit beside an estimated smooth took 136 s and
+  reported FALSE at the right answer -- the break-point moving between
+  evaluations makes the criterion path-dependent, and the phase's cycling
+  flags read as unavailable points to the search -- where the held route
+  takes 1.1 s and reports TRUE. Measured across the combination battery:
+  jseg beside a random intercept under REML goes 6.2 s FALSE to 2.9 s
+  TRUE, beside a lasso swept by BIC 110 s to 2.9 s, with the break-points,
+  the BLUPs and the selection unchanged; a per-group `by` development and
+  a jump in the SCALE equation fit as they did.
+
+* A break-point term whose block is a working linearization -- `jump()`
+  and `jseg()`, read off `term_jacobian_block()` -- is fitted by its own
+  construction's scheme (`fit_working()`): the smooth block is fitted
+  exactly at the frozen block, the break-points are read off the fitted
+  coefficients and committed, and the two alternate until the read-off
+  settles or the working objective stalls, which is what `segmented`
+  does. The previous embedding refreshed the read-off inside the inner
+  optimizer's objective, whose line search then rejected the fixed-point
+  iteration's own steps -- measured on a three-break-point jseg at
+  n = 10000, the fit from the TRUE break-points ended at an rss worse
+  than the mean-only fit and reported `DID NOT CONVERGE` in 3 passes,
+  where the working-fit phase recovers psi = (-0.500, -0.000, 0.500)
+  against a truth of (-0.5, 0, 0.5). Two bookkeeping defects went with
+  it: a jseg's quadratic read-off is incremental in the committed
+  position, so the pass-level commit took a hidden extra step that
+  changed the objective at unchanged coefficients (measured at 0.71 per
+  observation, exactly zero for `jump`), and the alternation's
+  relative-change rule read that jump as its own progress measure.
+  `statmod_commit_refresh()` now takes `which` and returns the committed
+  coefficients, `seg()`'s Gauss-Newton embedding is unchanged.
+
+* Bootstrap restarting (Wood 2001), the device `segmented` runs by
+  default, with the observation that makes it cheap: the non-convexity of
+  a break-point model lives entirely in the positions, so a proposal is a
+  configuration of positions and two configurations are compared on the
+  EXACT PROFILE -- least squares at fixed positions, one linear fit each
+  -- rather than by refitting the model. Three proposal kinds: the
+  deterministic sweep of `modelterms7::seg_polish()` first, each
+  break-point descended over the profile with the others held, which
+  walks straight to a feature the iteration pressed a break-point away
+  from; then, alternating, the same sweep on a bootstrap resample's
+  profile (the multinomial counts as weights) and from random positions
+  over the confinement interval. Only a proposal the profile prefers
+  earns a refit, accepted on the true objective; four consecutive dry
+  proposals end the loop. Measured on three evident break-points at
+  n = 10000: the default fit recovers the truth in 7.6 s where refitting
+  every proposal took 945 s, a dry proposal costing half a second of
+  linear fits instead of a 5 to 15 s refit. The random proposals exist
+  because a resample's perturbation is of order 1/sqrt(n) and stops
+  escaping a deep basin as the sample grows; the count is declared by the
+  break-point terms (`n_boot`, default 10, 0 disables), and the loop runs
+  once at the top level, never inside an outer criterion's search.
+
 # statmodels7 0.69.0
 
 * The COMBINATIONS of a kinked path's product grid run over the worker

@@ -170,14 +170,12 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   if (!any(keep)) return(out)
   keep_full <- c(keep, rep(TRUE, nz))
   A <- (H + S)[keep_full, keep_full, drop = FALSE]
-  # the unpenalized information supplies the reference for what a SMALL
-  # eigenvalue means: a smoothing parameter at 1e15 separates the scales
-  # without flattening any direction, and against max(ev) alone that read
-  # as singularity
-  Hd <- diag(as_dense(H))[keep_full]
+  # what a SMALL eigenvalue means is decided inside solve_pd(), on the
+  # equilibrated matrix: a smoothing parameter at 1e15 and a break-point
+  # term's annealed working columns both separate the scales without
+  # flattening any direction, and per-direction scaling forgives both
   Vb <- solve_pd(A, "the penalized information",
-                 c(nm[keep], rep("", nz)),
-                 scale = max(abs(Hd), na.rm = TRUE))
+                 c(nm[keep], rep("", nz)))
   V <- if (type == "bayesian") Vb else
     Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
   # the coefficient block of the joint inverse, which is not the inverse of
@@ -234,14 +232,11 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' @param A A square matrix.
 #' @param what What the matrix is, for the message.
 #' @param labels The names of the coefficients \code{A} is indexed by.
-#' @param scale An optional reference magnitude for the smallest
-#'   eigenvalue, usually the largest diagonal entry of the UNPENALIZED
-#'   information. Without it the reference is the matrix's own scale.
 #'
 #' @return The inverse.
 #'
 #' @keywords internal
-solve_pd <- function(A, what, labels = NULL, scale = NULL) {
+solve_pd <- function(A, what, labels = NULL) {
   # The verdict comes from the smallest eigenvalue and not from whether
   # chol() raised. On a matrix with an exactly zero eigenvalue -- two columns
   # of the design carrying the same information is the ordinary way to get
@@ -252,16 +247,24 @@ solve_pd <- function(A, what, labels = NULL, scale = NULL) {
   # succeeds on a singular matrix by luck, the estimate is at the rounding
   # scale and the answer is the same on every platform.
   #
-  # The REFERENCE distinguishes two situations one ratio conflated. A
-  # smoothing parameter a criterion legitimately sends to 1e15 puts
-  # min(ev)/max(ev) at the rounding scale while the small eigenvalue is
-  # ordinary curvature (measured: min 29.7 against max 6.4e15 on a poisson
-  # smooth over weak signal, the matrix strictly positive definite and the
-  # fit right); a FLAT direction is small against the unpenalized
-  # information's own scale either way. A caller holding that information
-  # passes its magnitude; the reference never exceeds the largest
-  # eigenvalue, so the test only ever relaxes towards it.
+  # The test runs on the JACOBI-EQUILIBRATED matrix, D^-1/2 A D^-1/2 with
+  # D its diagonal, which is what tells a flat direction from scale
+  # separation whatever produced the separation. A reference scale passed
+  # by the caller (the unpenalized information's largest diagonal) used to
+  # do that, and it covered one source only: a smoothing parameter at 1e15
+  # separates the scales and the reference forgave it, but the committed
+  # working block of a break-point term carries auxiliary columns near
+  # 1/(2 c d) -- 1e8 at the annealed floor, 1e16 on the information's
+  # diagonal -- so the DESIGN itself set the reference and ordinary
+  # curvature at 242 in the ordinary-scale directions read as flat
+  # (measured, on the flagship jseg's own summary). Equilibration makes
+  # the test per-direction: unit diagonal, so the smallest eigenvalue is
+  # small only where a direction is flat AGAINST ITS OWN SCALE, and an
+  # exact collinearity stays exactly singular. The inverse is recovered
+  # through the same scaling, D^-1/2 (D^-1/2 A D^-1/2)^-1 D^-1/2.
   #
+  # A non-positive diagonal entry means that coordinate carries no
+  # information at all, which is the flat case stated directly.
   # A non-finite entry is what a parameter run out of its range leaves behind,
   # and it is not a matrix to decompose: the factorization raises its own
   # error there, which would replace the message below with one naming
@@ -275,20 +278,20 @@ solve_pd <- function(A, what, labels = NULL, scale = NULL) {
   # recorded for the observed Hessian of a regime mixture, which is also
   # computed once and left in R.
   A <- as_dense(A)
-  if (ncol(A) > 0L && all(is.finite(A))) {
-    ch <- tryCatch(chol(A), error = function(e) NULL)
+  if (ncol(A) > 0L && all(is.finite(A)) && all(diag(A) > 0)) {
+    s <- 1 / sqrt(diag(A))
+    Ae <- A * tcrossprod(s)
+    ch <- tryCatch(chol(Ae), error = function(e) NULL)
     if (!is.null(ch)) {
       # the 1-norm, which is what the condition estimator is expressed in
-      anorm <- max(colSums(abs(A)))
+      anorm <- max(colSums(abs(Ae)))
       rc <- chol_rcond_cpp(ch, anorm)
       lmin <- if (is.na(rc)) 0 else rc * anorm
-      ref <- if (is.null(scale) || !is.finite(scale) || scale <= 0) anorm
-        else min(scale, anorm)
-      if (is.finite(lmin) && lmin > 1e-12 * ref) {
+      if (is.finite(lmin) && lmin > 1e-12 * anorm) {
         # Inverted through the factor already in hand. A condition number of
         # 1e15 born of scale separation costs the well-determined directions
         # nothing here and the shrunk ones simply report variances near zero.
-        out <- chol2inv(ch)
+        out <- chol2inv(ch) * tcrossprod(s)
         return((out + t(out)) / 2)
       }
     }

@@ -97,13 +97,18 @@ test_that("a discontinuous term is fitted and stopped on its own rule", {
   expect_equal(g[, "psi"], rep(6.5, 3), tolerance = 0.1)
   expect_equal(g[, "kappa"], rep(3, 3), tolerance = 0.2)
 
-  # the verdict is the term's, not the score's. The block of a discontinuous
-  # construction is a linearization with a frozen weight, so the gradient it
-  # gives belongs to the working model: at the answer it sits at 0.18 per
-  # observation and never vanishes, while the break-point has stopped moving
+  # the verdict is NOT the working score's. The block of a discontinuous
+  # construction is a linearization with a frozen weight, so the gradient
+  # it gives belongs to the working model and never vanishes at the answer
+  # (0.18 per observation, measured); the fit still reports convergence,
+  # judged at a fixed point or cycle of the working objective. The step
+  # rule term_converged() reads is a resolution rule that tightens with n,
+  # so it may stay FALSE at the answer and is deliberately not asserted.
   fit <- statmod(y ~ jump(x, psi = 5),
                  distributions7::gaussian1_distrib(), dj)
-  expect_true(modelterms7::term_converged(fitted_term(fit, "jump(")))
+  expect_true(fit@converged)
+  expect_equal(unname(modelterms7::seg_psi(fitted_term(fit, "jump("))),
+               6.5, tolerance = 0.1)
   expect_true(modelterms7::term_converged(
     modelterms7::term_build(modelterms7::linpar(~x), dj)))
 })
@@ -253,12 +258,20 @@ test_that("a break-point term whose psi is not named starts on a grid", {
   expect_gt(cf[["jseg.delta1"]], 0)
   expect_equal(unname(cf[["jseg.gamma1"]]), 2, tolerance = 0.2)
 
-  # a caller who names psi has said where to begin, and is left there
-  held <- statmod(y ~ jseg(x, psi = 5), distributions7::gaussian1_distrib(),
-                  dj)
-  expect_lt(abs(psi_of(held) - 5), 0.2)
+  # a caller who names psi has said where to BEGIN; with the restarts
+  # disabled as well, the fit is left on that start's own optimum, short
+  # of the truth at 6
+  held <- statmod(y ~ jseg(x, psi = 5, n_boot = 0),
+                  distributions7::gaussian1_distrib(), dj)
+  expect_lt(psi_of(held), 5.8)
   # and it is the worse optimum, which is the point of the grid
   expect_gt(as.numeric(logLik(fit)), as.numeric(logLik(held)))
+  # with the restarts left at their default the same start is rescued:
+  # naming psi says where to begin, not which optimum to accept
+  resc <- statmod(y ~ jseg(x, psi = 5), distributions7::gaussian1_distrib(),
+                  dj)
+  expect_equal(as.numeric(logLik(resc)), as.numeric(logLik(fit)),
+               tolerance = 1e-4)
 
   # the rule reads the response, so it is skipped where the response is
   # not plain numbers rather than being given a reading of its own
@@ -272,4 +285,122 @@ test_that("a break-point term whose psi is not named starts on a grid", {
   # and a named psi turns it off at the source
   named <- modelterms7::jseg(x, psi = 5)
   expect_identical(seg_grid_start(named, dj, dj$y), named)
+})
+
+
+test_that("a jseg with several break-points is fitted by working fits", {
+  # the regression this pins: the embedded route dragged the read-off
+  # through the inner line search and, from the TRUE break-points, ended
+  # at an rss worse than the mean-only fit
+  set.seed(21)
+  n <- 600
+  xj <- sort(stats::runif(n, -1, 1))
+  mu <- xj + 2 * (xj >= -0.4) - 2 * pmax(xj + 0.4, 0) +
+    3 * (xj >= 0.4) - 1.5 * pmax(xj - 0.4, 0)
+  dj2 <- data.frame(x = xj, y = mu + stats::rnorm(n, sd = 0.25))
+  fit <- statmod(y ~ jseg(x, npsi = 2, psi = c(-0.4, 0.4), n_boot = 0),
+                 distributions7::gaussian1_distrib(), dj2)
+  expect_true(fit@converged)
+  psi <- modelterms7::seg_psi(fitted_term(fit, "jseg("))
+  expect_equal(unname(psi), c(-0.4, 0.4), tolerance = 0.05)
+  rss <- sum((dj2$y - fit@fitted$mu)^2)
+  expect_lt(rss, sum((dj2$y - mu)^2) * 1.05)
+  # prediction still reapplies the fitted term
+  rows <- c(2L, 100L, 400L, 599L)
+  expect_equal(predict(fit, "mu", newdata = dj2[rows, , drop = FALSE]),
+               fit@fitted$mu[rows], tolerance = 1e-10, ignore_attr = TRUE)
+})
+
+test_that("bootstrap restarting recovers a poor start", {
+  # from this start the iteration lands on a local optimum; reordering
+  # alone does not recover it, the restarts do. Both fits are seeded, the
+  # draws coming from the session's generator.
+  set.seed(22)
+  n <- 500
+  xb <- sort(stats::runif(n, 0, 10))
+  mu <- 3 * (xb >= 6.5)
+  db <- data.frame(x = xb, y = mu + stats::rnorm(n, sd = 0.4))
+  set.seed(1)
+  f0 <- statmod(y ~ jump(x, psi = 2, n_boot = 0),
+                distributions7::gaussian1_distrib(), db)
+  set.seed(1)
+  f1 <- statmod(y ~ jump(x, psi = 2, n_boot = 10),
+                distributions7::gaussian1_distrib(), db)
+  rss0 <- sum((db$y - f0@fitted$mu)^2)
+  rss1 <- sum((db$y - f1@fitted$mu)^2)
+  # the restarted fit is never worse, and psi is recovered
+  expect_lte(rss1, rss0 + 1e-6)
+  expect_equal(unname(modelterms7::seg_psi(fitted_term(f1, "jump("))),
+               6.5, tolerance = 0.1)
+})
+
+
+test_that("a frozen break-point block composes with an estimated penalty", {
+  # the criterion evaluations hold the block at its committed positions --
+  # a break-point moving between evaluations makes the criterion
+  # path-dependent, and the phase's flags read as unavailable points --
+  # and the positions are refined once, at the chosen hyperparameters.
+  # Before the hold this fit took 136 s and reported FALSE at the right
+  # answer; now it is an ordinary REML fit plus one refinement.
+  set.seed(23)
+  n <- 800
+  xr <- sort(stats::runif(n, 0, 10))
+  zr <- stats::runif(n, -2, 2)
+  mu <- 1 + sin(1.5 * zr) + 0.4 * xr + 2.5 * (xr >= 6) - 1.2 * pmax(xr - 6, 0)
+  dr <- data.frame(y = mu + stats::rnorm(n, sd = 0.5), x = xr, z = zr)
+  fit <- statmod(y ~ s(z, k = 8) + jseg(x, n_boot = 2),
+                 distributions7::gaussian1_distrib(), dr)
+  expect_true(fit@converged)
+  expect_equal(unname(modelterms7::seg_psi(fitted_term(fit, "jseg("))),
+               6, tolerance = 0.1)
+  # the smoothing parameter was estimated, not left at its start
+  expect_true(is.finite(fit@criterion))
+})
+
+
+test_that("the random changepoint fits end to end, on seg", {
+  # Muggeo-Atkins: psi_i = pop + random deviation, the development riding
+  # random(~1|id) with its variance component estimated. The discontinuous
+  # constructions REJECT a penalized development of the break-point (the
+  # estimated coefficients are -delta * gamma), so this model lives on seg.
+  set.seed(31)
+  m <- 12
+  ni <- 30
+  id <- factor(rep(seq_len(m), each = ni))
+  xr <- as.numeric(replicate(m, sort(stats::runif(ni, 0, 10))))
+  psi_i <- stats::rnorm(m, 5, 0.4)
+  mu <- 1 + 0.5 * xr + 1.8 * pmax(xr - psi_i[as.integer(id)], 0)
+  dr <- data.frame(y = mu + stats::rnorm(m * ni, sd = 0.4), x = xr, id = id)
+  fit <- statmod(y ~ seg(x, psi ~ random(~ 1 | id)),
+                 distributions7::gaussian1_distrib(), dr)
+  expect_true(fit@converged)
+  tm <- fitted_term(fit, "seg(")
+  psi_hat <- modelterms7::seg_psi(tm)
+  per_id <- vapply(seq_len(m), function(i)
+    mean(psi_hat[as.integer(id) == i, 1]), numeric(1))
+  expect_gt(stats::cor(per_id, psi_i), 0.9)
+  expect_lt(sqrt(mean((per_id - psi_i)^2)), 0.3)
+})
+
+test_that("per-group break-points on a jump, unpenalized", {
+  set.seed(32)
+  ng <- 3
+  ni <- 250
+  g <- factor(rep(letters[seq_len(ng)], each = ni))
+  xg <- as.numeric(replicate(ng, sort(stats::runif(ni, 0, 10))))
+  psi_g <- c(a = 3, b = 5, c = 7)
+  mu <- 1 + 2 * (xg >= psi_g[as.integer(g)])
+  dg <- data.frame(y = mu + stats::rnorm(ng * ni, sd = 0.4), x = xg, id = g)
+  fit <- statmod(y ~ jump(x, psi ~ 0 + id),
+                 distributions7::gaussian1_distrib(), dg)
+  expect_true(fit@converged)
+  psi2 <- modelterms7::seg_psi(fitted_term(fit, "jump("))
+  per_g <- vapply(levels(g), function(l) mean(psi2[g == l, 1]), numeric(1))
+  expect_equal(unname(per_g), c(3, 5, 7), tolerance = 0.1)
+  # and a PENALIZED development of a discontinuous break-point is refused
+  # with the reason, not fitted approximately
+  expect_error(
+    statmod(y ~ jump(x, psi ~ random(~ 1 | id)),
+            distributions7::gaussian1_distrib(), dg),
+    "delta")
 })

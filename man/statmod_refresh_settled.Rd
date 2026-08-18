@@ -4,12 +4,15 @@
 \alias{statmod_refresh_settled}
 \title{Have the Refreshable Terms Settled?}
 \usage{
-statmod_refresh_settled(spec, design)
+statmod_refresh_settled(spec, design, which = "all")
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
 
 \item{design}{The design.}
+
+\item{which}{Which refresh entries to ask: \code{"all"},
+\code{"jacobian"} or \code{"frozen"}.}
 }
 \value{
 A single logical; \code{TRUE} when there is nothing to ask.

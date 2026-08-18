@@ -370,6 +370,34 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                           tol, vb, data, weights, offsets, sparse_criterion)
     hyper <- res$hyper
     crit <- res$criterion
+    # Everything inside the selection held the frozen break-point blocks at
+    # their committed positions -- a break-point moving between criterion
+    # evaluations makes the criterion path-dependent, and the phase's own
+    # flags read as unavailable points to the search -- so the positions are
+    # refined here, once, at the chosen hyperparameters.
+    frozen <- any(vapply(attr(design, "refresh"),
+                         function(r) isTRUE(r$frozen), logical(1)))
+    if (frozen) {
+      ro <- tryCatch(
+        statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+                          res$par, expected, approx, maxit, tol, vb),
+        error = function(e) NULL)
+      if (!is.null(ro) && is.finite(ro$value)) {
+        res[c("par", "value", "converged", "obj",
+              "hist_blocks", "hist_inner")] <-
+          ro[c("par", "value", "converged", "obj",
+               "hist_blocks", "hist_inner")]
+      }
+    }
+  }
+
+  # The bootstrap restarting the break-point terms declare, run ONCE at the
+  # top level -- inside an outer search it would multiply by the number of
+  # criterion evaluations -- and at the hyperparameters the fit ended at.
+  nb <- seg_boot_total(spec)
+  if (nb > 0L && length(attr(design, "refresh"))) {
+    res <- statmod_boot_restart(spec, design, blocks, hyper, inner_optimizer,
+                                res, expected, approx, maxit, tol, vb, nb)
   }
 
   coef <- res$obj$split(res$par)
@@ -432,6 +460,19 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @param approx The approximation for the expected information.
 #' @param maxit,tol The budget and the tolerance.
 #' @param vb The resolved verbosity.
+#' @param working_budget How many working fits \code{\link{fit_working}} may
+#'   take. The bootstrap excursions of \code{\link{statmod_boot_restart}}
+#'   pass a short one: an excursion needs to travel, not to converge.
+#' @param hold_refresh \code{TRUE} holds every FROZEN break-point block at
+#'   its committed positions: the fit is then an ordinary smooth fit, no
+#'   read-off runs and no schedule advances. The outer machinery passes it
+#'   at every criterion evaluation, path point and fold, for two reasons
+#'   measured together: the working phase inside each of dozens of
+#'   evaluations multiplied a fit's cost by twenty, and a break-point
+#'   moving between evaluations makes the criterion path-dependent while
+#'   its cycling flags read as unavailable points to the search. The
+#'   positions are refined ONCE, by the full alternation \code{statmod()}
+#'   runs at the chosen hyperparameters before the restarts.
 #'
 #' @return A list with \code{par}, \code{value}, \code{converged}, \code{obj},
 #'   \code{hist_blocks} and \code{hist_inner}.
@@ -440,7 +481,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #'
 #' @keywords internal
 statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta,
-                              expected, approx, maxit, tol, vb) {
+                              expected, approx, maxit, tol, vb,
+                              working_budget = 500L, hold_refresh = FALSE) {
   obj <- statmod_objective(spec, hyper, design, expected, approx)
   value <- obj$fn(beta)
   hist_blocks <- list()
@@ -449,8 +491,12 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   smooth_ok <- TRUE
   smooth_note <- NULL
   has_refresh <- length(attr(design, "refresh")) > 0L
+  has_frozen <- !isTRUE(hold_refresh) &&
+    any(vapply(attr(design, "refresh"),
+               function(r) isTRUE(r$frozen), logical(1)))
   has_structural <- length(attr(design, "structural")) > 0L
   terms_ok <- TRUE
+  frozen_ok <- TRUE
   struct_ok <- TRUE
 
   # A structural term of the FILTER shape is fitted in the same system as the
@@ -493,21 +539,35 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       )
     }
 
-    # the smooth block, all of it at once
+    # the smooth block, all of it at once; where a term carries a FROZEN
+    # working linearization the fit is the alternation of exact working
+    # fits and read-offs instead, which is the construction's own scheme
     if (!joint && length(blocks$smooth)) {
-      if (vb$blocks) {
-        vb_rule(sprintf("inner pass %d: smooth block, %d coefficients",
-                        pass, length(blocks$smooth)),
-                vb_name(inner_optimizer, "iwls"), indent = 2L)
+      if (has_frozen) {
+        if (vb$blocks) {
+          vb_rule(sprintf(
+            "inner pass %d: working fits over a frozen break-point block",
+            pass), vb_name(inner_optimizer, "iwls"), indent = 2L)
+        }
+        res <- fit_working(obj, beta, blocks$smooth, spec, design, hyper,
+                           inner_optimizer, vb, tol, budget = working_budget)
+        frozen_ok <- isTRUE(res$converged)
+      } else {
+        if (vb$blocks) {
+          vb_rule(sprintf("inner pass %d: smooth block, %d coefficients",
+                          pass, length(blocks$smooth)),
+                  vb_name(inner_optimizer, "iwls"), indent = 2L)
+        }
+        res <- fit_smooth(obj, beta, blocks$smooth, spec, design, hyper,
+                          inner_optimizer, vb)
       }
-      res <- fit_smooth(obj, beta, blocks$smooth, spec, design, hyper,
-                        inner_optimizer, vb)
       beta <- res$par
       value <- res$value
       smooth_ok <- isTRUE(res$converged)
       smooth_note <- res$note
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
-        pass = pass, block = "smooth", objective = value,
+        pass = pass, block = if (has_frozen) "working" else "smooth",
+        objective = value,
         change = before - value, iterations = res$iterations,
         converged = res$converged
       )
@@ -567,15 +627,20 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       )
     }
 
-    # A term whose block depends on its own coefficients has its refresh
+    # A term whose block is a JACOBIAN of its contribution has its refresh
     # committed once here, not once per objective evaluation: what advances
-    # is the rescaling schedule of a discontinuous break-point term, which is
-    # a state of the iteration, and a schedule advancing at the speed of a
-    # line search is not the one the construction was designed with.
+    # is a state of the iteration, and a schedule advancing at the speed of
+    # a line search is not the one the construction was designed with. The
+    # frozen working blocks were committed by fit_working() at exactly
+    # these coefficients, and a second commit is not free for them: a
+    # jseg's incremental read-off would take a further step and its step
+    # measure would read zero, which seg_converged() reads as settled.
     if (has_refresh) {
-      statmod_commit_refresh(spec, obj$split(beta), design)
+      cf <- statmod_commit_refresh(spec, obj$split(beta), design,
+                                   which = "jacobian")
+      beta <- obj$stack(cf)
       value <- obj$fn(beta)
-      terms_ok <- statmod_refresh_settled(spec, design)
+      terms_ok <- statmod_refresh_settled(spec, design, which = "jacobian")
     }
 
     rel <- abs(before - value) / max(1, abs(value))
@@ -614,7 +679,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       # tolerance at every pass asks each conditional optimum to be
       # located to a precision the joint answer does not need.
       converged <- TRUE
-      if (has_refresh) converged <- isTRUE(terms_ok)
+      if (has_refresh) converged <- isTRUE(terms_ok) && isTRUE(frozen_ok)
       else if (!length(blocks$sparse) && !has_structural) {
         converged <- isTRUE(smooth_ok)
       }
@@ -801,6 +866,174 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
        iterations = res@iterations, history = NULL)
+}
+
+
+#' Fit the Smooth Block Around a Frozen Working Linearization
+#'
+#' @description
+#' The iteration of \cite{fasola2018} for a term whose block is a working
+#' linearization with a frozen weight -- \code{\link[modelterms7]{jump}} and
+#' \code{\link[modelterms7]{jseg}}: the smooth block is fitted EXACTLY at
+#' the committed block, the break-points are read off the fitted
+#' coefficients and committed, and the two alternate until the read-off
+#' settles or the working objective stops moving.
+#'
+#' @details
+#' The sequencing is the whole of the difference from
+#' \code{\link{fit_smooth}}, and it is what \code{segmented} does. The
+#' fixed-point iteration these constructions belong to is not a descent
+#' method on the model's objective -- its early steps under a large scaling
+#' factor move uphill on purpose, which is how it leaves a spurious optimum
+#' -- so embedding the read-off inside the inner optimizer's objective put a
+#' sufficient-decrease line search in its way and stalled it: measured on a
+#' three-break-point jseg, the embedded route ended at an rss worse than the
+#' mean-only fit FROM THE TRUE BREAK-POINTS, while this iteration recovers
+#' them from the same start. During the working fit the frozen blocks
+#' contribute \eqn{X\beta} and nothing else (\code{st$working}), which makes
+#' the inner fit the plain penalized working fit of the papers; the commit
+#' then advances the read-off, the scaling schedule and any relabeling of
+#' crossed break-point lineages, once per working fit.
+#'
+#' Any inner method serves: the working fit goes through
+#' \code{\link{fit_smooth}}, which takes \code{\link{iwls}()} or any
+#' \pkg{optimizers7} optimizer, and the read-off never moves inside
+#' anyone's objective. What differs is the price. Each working fit is
+#' solved afresh at a frozen block, so a method carrying exact curvature
+#' closes it in a step or two while a quasi-Newton method rebuilds its own
+#' from nothing every time: measured on three break-points at
+#' \eqn{n = 10000}, the same answer to the digit costs 6.9 s under
+#' \code{iwls()}, 9.2 s under \code{newton()} and 140 s under
+#' \code{lbfgs()}.
+#'
+#' The exit is at a fixed point of the iteration or in the cycle it settles
+#' into, judged on the WORKING objective: the read-off settled
+#' (\code{\link[modelterms7]{term_converged}}) with the objective stalled,
+#' the objective stalled three times in a row, or the objective equal to
+#' two iterations back twice -- the period-two cycle of the break-point
+#' Muggeo documents, which a consecutive-change rule never sees. Only at a
+#' fixed point does the working objective coincide with the model's, which
+#' is why no best-so-far iterate is kept: mid-travel the committed
+#' contribution of a good working value can sit orders of magnitude off
+#' the data. Running out of the budget reports \code{FALSE}.
+#'
+#' @param obj The objective.
+#' @param beta The current stacked coefficients.
+#' @param idx The smooth block's indices.
+#' @param spec The specification.
+#' @param design The design.
+#' @param hyper The hyperparameters.
+#' @param method \code{\link{iwls}()} or an optimizer.
+#' @param vb The resolved verbosity.
+#' @param tol The alternation's tolerance, read for the objective-stall rule.
+#' @param budget How many working fits at most. The default covers the
+#'   measured runs (69 to 165 iterations on three break-points) with room.
+#'
+#' @return As \code{\link{fit_smooth}}, plus \code{fasola}, the number of
+#'   working fits taken.
+#'
+#' @references
+#' Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
+#' iterative algorithm for change-point detection in abrupt change
+#' models. \emph{Computational Statistics}, 33, 997--1015.
+#'
+#' @seealso \code{\link{fit_smooth}}, \code{\link{statmod_commit_refresh}}
+#'
+#' @keywords internal
+fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
+                        budget = 500L) {
+  st <- attr(design, "state")
+  rf <- attr(design, "refresh")
+  # The working fit covers the EQUATIONS that carry a frozen block and
+  # nothing else, the other equations refitted after each commit on the
+  # true objective. Fitting them jointly instead put a scale equation
+  # inside the working fit's warm start: a commit moves the frozen columns,
+  # the stale coefficients against the new block leave residuals orders of
+  # magnitude off, and the JOINT scoring step's line search then halves the
+  # exact mu-solve along with the diverging scale step until the stall
+  # guard fires -- measured, the working objective jumped to 9.4e5 and
+  # every later working fit bailed after one iteration, so the read-offs
+  # were taken from unsolved fits. Alone, an identity-link working fit's
+  # first full step IS the exact linear solve of the papers whatever the
+  # warm start.
+  fparams <- unique(vapply(Filter(function(r) isTRUE(r$frozen), rf),
+                           function(r) r$param, character(1)))
+  eq <- obj$split(seq_along(beta))
+  idx_a <- intersect(idx, unlist(eq[fparams], use.names = FALSE))
+  idx_b <- setdiff(idx, idx_a)
+  if (!length(idx_a)) {
+    # every column of the frozen equations sits outside the smooth block;
+    # nothing to iterate over, so the ordinary fit is the whole answer
+    res <- fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
+    res$fasola <- 0L
+    return(res)
+  }
+  conv <- FALSE
+  w_prev <- Inf
+  w_prev2 <- Inf
+  stall <- 0L
+  cyc <- 0L
+  it_total <- 0L
+  it <- 0L
+  for (it in seq_len(budget)) {
+    st$working <- TRUE
+    st$key <- NULL
+    st$value <- NULL
+    res <- fit_smooth(obj, beta, idx_a, spec, design, hyper, method, vb)
+    st$working <- FALSE
+    st$key <- NULL
+    st$value <- NULL
+    it_total <- it_total + as.integer(res$iterations)
+    # the commit is where the break-points move: read off the fitted
+    # coefficients, schedule advanced, crossed lineages relabeled -- and
+    # the coefficients continue from what the terms stored, which is what
+    # makes the relabeling invisible to the caller
+    cf <- statmod_commit_refresh(spec, obj$split(res$par), design,
+                                 which = "frozen")
+    beta <- obj$stack(cf)
+    # The exit is at a FIXED POINT of the iteration or in the cycle it
+    # settles into, never mid-travel: only at a fixed point does the
+    # working objective coincide with the model's, so an iterate kept
+    # anywhere else -- a best-so-far, an early no-improvement stop -- is a
+    # linearization whose committed contribution can sit orders of
+    # magnitude off the data (measured: a working value of 1073 whose true
+    # objective read 1.6e6). Three rules, each a measured failure of the
+    # previous draft:
+    # - the read-off settled AND the working objective stalled: the step
+    #   rule alone fires during the annealing tail and handed the pass
+    #   loop one Fasola step per pass, 427 passes;
+    # - the objective stalled three times in a row: cycling in place;
+    # - the objective equal to TWO ITERATIONS BACK, twice: the period-two
+    #   cycle of the break-point Muggeo documents, which keeps a
+    #   consecutive-change rule from ever firing -- measured, two passes
+    #   of 500 working fits each.
+    w <- res$value
+    settled <- statmod_refresh_settled(spec, design, which = "frozen")
+    near <- function(a, b) is.finite(a) && is.finite(b) &&
+      abs(a - b) < tol * (abs(b) + 1)
+    stall <- if (near(w, w_prev)) stall + 1L else 0L
+    cyc <- if (near(w, w_prev2)) cyc + 1L else 0L
+    if ((settled && stall >= 1L) || stall >= 3L || cyc >= 2L) {
+      conv <- TRUE
+      break
+    }
+    w_prev2 <- w_prev
+    w_prev <- w
+  }
+  # the other equations, once, at the committed blocks and on the true
+  # objective: inside the loop they were held, a scale riding along in the
+  # working fit being what made a post-commit warm start explode
+  if (length(idx_b)) {
+    resb <- fit_smooth(obj, beta, idx_b, spec, design, hyper, method, vb)
+    beta <- resb$par
+    it_total <- it_total + as.integer(resb$iterations)
+  }
+  if (vb$blocks) {
+    vb_say("%d working fits, %s", it,
+           if (conv) "settled" else "budget exhausted", indent = 5L)
+  }
+  list(par = beta, value = obj$fn(beta), converged = conv,
+       iterations = it_total, history = NULL, note = NULL, fasola = it)
 }
 
 
@@ -1032,15 +1265,14 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
       H <- statmod_information_at(spec, coef, design, expected, approx)
       S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
       S <- zap_nonfinite(S)
-      # through solve_pd's eigendecomposition, with the unpenalized
-      # information as the reference scale: a smoothing parameter a
-      # criterion sends to 1e15 separates the scales without flattening a
+      # through solve_pd, whose equilibrated test forgives scale
+      # separation from any source: a smoothing parameter a criterion
+      # sends to 1e15 separates the scales without flattening a
       # direction, and LAPACK's solve on the assembled system reported it
       # as "computationally singular" -- which left the fit standing with
       # every edf missing
       Hd <- as_dense(H)
-      diag(solve_pd(as_dense(H + S), "the penalized information",
-                    scale = max(abs(diag(Hd)))) %*% Hd)
+      diag(solve_pd(as_dense(H + S), "the penalized information") %*% Hd)
     }, error = function(e) NULL)
   }
   for (a in seq_along(params)) {

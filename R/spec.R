@@ -1118,11 +1118,24 @@ statmod_design <- function(spec) {
   }
   rf <- statmod_refreshable(spec)
   if (length(rf)) {
+    # whether a term's block is the Jacobian of its contribution decides how
+    # the objective may read it: a Jacobian block is recomputed at every
+    # trial point and a scoring step on it is Gauss-Newton, while a frozen
+    # working linearization (jump, jseg) is read as the fit last committed
+    # it and moves only through statmod_commit_refresh() -- the fixed-point
+    # iteration it belongs to is not a descent method on the objective, so
+    # dragging its read-off through a line search stalls both
+    rf <- lapply(rf, function(r) {
+      r$frozen <- !isTRUE(modelterms7::term_jacobian_block(
+        spec@terms[[r$param]][[r$term]]))
+      r
+    })
     # the terms a refresh chains from, and the cache of the last point they
     # were refreshed at; an environment because a design is copied by value
     # and the state has to be the same one wherever it is read
     st <- new.env(parent = emptyenv())
     st$terms <- spec@terms
+    st$working <- FALSE
     st$key <- NULL
     st$value <- NULL
     attr(out, "refresh") <- rf

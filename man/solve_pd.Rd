@@ -4,7 +4,7 @@
 \alias{solve_pd}
 \title{Invert a Matrix That Ought to Be Positive Definite}
 \usage{
-solve_pd(A, what, labels = NULL, scale = NULL)
+solve_pd(A, what, labels = NULL)
 }
 \arguments{
 \item{A}{A square matrix.}
@@ -12,10 +12,6 @@ solve_pd(A, what, labels = NULL, scale = NULL)
 \item{what}{What the matrix is, for the message.}
 
 \item{labels}{The names of the coefficients \code{A} is indexed by.}
-
-\item{scale}{An optional reference magnitude for the smallest
-eigenvalue, usually the largest diagonal entry of the UNPENALIZED
-information. Without it the reference is the matrix's own scale.}
 }
 \value{
 The inverse.

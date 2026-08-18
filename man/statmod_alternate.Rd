@@ -15,7 +15,9 @@ statmod_alternate(
   approx,
   maxit,
   tol,
-  vb
+  vb,
+  working_budget = 500L,
+  hold_refresh = FALSE
 )
 }
 \arguments{
@@ -38,6 +40,21 @@ statmod_alternate(
 \item{maxit, tol}{The budget and the tolerance.}
 
 \item{vb}{The resolved verbosity.}
+
+\item{working_budget}{How many working fits \code{\link{fit_working}} may
+take. The bootstrap excursions of \code{\link{statmod_boot_restart}}
+pass a short one: an excursion needs to travel, not to converge.}
+
+\item{hold_refresh}{\code{TRUE} holds every FROZEN break-point block at
+its committed positions: the fit is then an ordinary smooth fit, no
+read-off runs and no schedule advances. The outer machinery passes it
+at every criterion evaluation, path point and fold, for two reasons
+measured together: the working phase inside each of dozens of
+evaluations multiplied a fit's cost by twenty, and a break-point
+moving between evaluations makes the criterion path-dependent while
+its cycling flags read as unavailable points to the search. The
+positions are refined ONCE, by the full alternation \code{statmod()}
+runs at the chosen hyperparameters before the restarts.}
 }
 \value{
 A list with \code{par}, \code{value}, \code{converged}, \code{obj},

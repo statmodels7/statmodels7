@@ -723,7 +723,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     body <- function() {
       res <<- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
                                 state$beta, expected, approx, maxit, tol,
-                                vb_inner(vb))
+                                vb_inner(vb), hold_refresh = TRUE)
       cf <<- res$obj$split(res$par)
       # Both criteria are read AT THE MODE -- a Laplace approximation there,
       # or a log-likelihood and an edf there -- so where the inner fit did not
@@ -1040,7 +1040,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the reported point rather than at whatever was tried last
   hy <- eta_to_hyper(res@par, idx, hyper)
   inner <- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
-                             state$beta, expected, approx, maxit, tol, vb)
+                             state$beta, expected, approx, maxit, tol, vb,
+                             hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
   m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx,
                           statmod_active(spec, blocks, inner$par, hy)) else

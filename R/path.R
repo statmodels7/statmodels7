@@ -928,7 +928,8 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       }
       r <- tryCatch(statmod_alternate(ts, td, tbj, hypers[[j]], inner_optimizer,
                                       warm, cfgs$expected, cfgs$approx,
-                                      cfgs$maxit, cfgs$tol, verbosity(0)),
+                                      cfgs$maxit, cfgs$tol, verbosity(0),
+                                      hold_refresh = TRUE),
                     error = function(e) NULL)
       tbj <- blocks_at_kink(tb, hypers[[j]])
       if (is.null(r) || !isTRUE(r$converged)) next
@@ -1123,7 +1124,8 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
       if (!is.null(r)) return(r)
     }
     r <- statmod_alternate(spec, design, bk, hy, inner_optimizer, warm,
-                           expected, approx, maxit, tol, vb_inner(vb))
+                           expected, approx, maxit, tol, vb_inner(vb),
+                           hold_refresh = TRUE)
     r$hyper <- hy
     r$criterion <- NA_real_
     r
@@ -1668,9 +1670,12 @@ statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
   rows <- path_rows(spec, blocks, hyper, sm)
   if (!nrow(rows)) {
     if (is.null(method)) {
+      # held here too: statmod() runs the full alternation, phase on, at
+      # whatever the selection ends with, so every select route refines the
+      # break-points exactly once
       return(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
                                beta, identical(sm@hessian, "expected"),
-                               approx, maxit, tol, vb))
+                               approx, maxit, tol, vb, hold_refresh = TRUE))
     }
     if (identical(method@kind, "cv")) {
       stop(paste0("cv() has nothing to select: no term here carries a penalty",

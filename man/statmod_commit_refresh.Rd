@@ -4,7 +4,7 @@
 \alias{statmod_commit_refresh}
 \title{Advance the Refresh State}
 \usage{
-statmod_commit_refresh(spec, coef, design)
+statmod_commit_refresh(spec, coef, design, which = "all")
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
@@ -12,9 +12,15 @@ statmod_commit_refresh(spec, coef, design)
 \item{coef}{A named list of coefficient vectors.}
 
 \item{design}{The design.}
+
+\item{which}{Which refresh entries to commit: \code{"all"},
+\code{"jacobian"} (the default at the alternation's pass level, where
+the frozen ones are already committed by their own phase) or
+\code{"frozen"}.}
 }
 \value{
-\code{TRUE} when there was something to commit, invisibly.
+The coefficient list, with each committed term's stretch replaced
+by the coefficients the term stored, invisibly.
 }
 \description{
 Replaces the terms the design refreshes from by the ones they refresh to
@@ -29,11 +35,19 @@ anneal at the speed of the line search rather than at the speed of the
 fit, and one that never advanced would solve a permanently smoothed
 problem, whose fixed point is not the model's.
 
-The value a term reports is unchanged by the schedule -- a break-point is
-read off the coefficients and the rescaling reaches only the columns -- so
-committing does not move the objective at the same coefficients.
+For a term whose block is a Jacobian the value it reports is unchanged by
+the schedule -- a break-point is read off the coefficients and the
+rescaling reaches only the columns -- so committing does not move the
+objective at the same coefficients. For a FROZEN working block that
+sentence is false in two ways, which is why those terms are committed by
+\code{\link{fit_working}} and skipped here: a jseg's quadratic read-off
+is incremental in the committed position, so a second commit at the same
+coefficients takes a second step, and a refresh may relabel crossed
+break-point lineages, after which the caller's coefficients are stale.
+The relabeling is why the COMMITTED coefficients are returned: a caller
+continues from what the terms stored, not from what it passed in.
 }
 \seealso{
-\code{\link{statmod_design_at}}
+\code{\link{statmod_design_at}}, \code{\link{fit_working}}
 }
 \keyword{internal}

@@ -78,7 +78,8 @@ statmod_design_at <- function(spec, coef, design) {
   rf <- attr(design, "refresh")
   if (is.null(rf) || !length(rf)) return(design)
   st <- attr(design, "state")
-  key <- unlist(coef, use.names = FALSE)
+  key <- c(unlist(coef, use.names = FALSE),
+           as.numeric(isTRUE(st$working)))
   if (!is.null(st$key) && identical(st$key, key)) return(st$value)
 
   out <- design
@@ -96,6 +97,40 @@ statmod_design_at <- function(spec, coef, design) {
     cols <- design[[p]]$blocks[[r$term]]
     b <- coef[[p]][cols]
     tm <- st$terms[[p]][[r$term]]
+    if (isTRUE(r$frozen)) {
+      # A FROZEN working block is read as the fit last committed it and is
+      # never refreshed at a trial point. Reading it chained instead made
+      # the objective a moving target with a step at every data point the
+      # implied break-point crosses: the line search inside the inner
+      # optimizer then rejected the fixed-point iteration's own steps
+      # (measured, a jseg fitted from the TRUE break-points landed at an
+      # rss worse than the mean-only fit), and for a jseg the incremental
+      # quadratic read-off took a further hidden step at every commit, so
+      # the objective changed at unchanged coefficients. During the
+      # working fit of fit_working() the block IS the model (eta = X beta,
+      # no adjustment, the plain linear fit of Fasola et al.); everywhere
+      # else the term contributes its committed value, which is what
+      # "held fixed while another block moves" means for it.
+      if (is.null(nd)) {
+        Xt <- modelterms7::term_matrix(tm)
+        out[[p]]$X[, cols] <- Xt
+        val <- as.numeric(modelterms7::term_value(tm))
+      } else {
+        Xt <- design[[p]]$X[, cols, drop = FALSE]
+        val <- as.numeric(modelterms7::term_value(tm, coef = b, newdata = nd))
+      }
+      if (!isTRUE(st$working)) {
+        # anchored at the coefficients the term was COMMITTED at, so eta
+        # stays linear in the current ones through the frozen block: at the
+        # committed point the two coincide and eta is the contribution
+        # exactly, while a b-dependent adjustment would make eta constant
+        # in these columns and flat to anything that moves them
+        bc <- tryCatch(tm@blueprint$coef, error = function(e) NULL)
+        if (is.null(bc) || length(bc) != length(b)) bc <- b
+        out[[p]]$adj <- out[[p]]$adj + (val - as.numeric(Xt %*% bc))
+      }
+      next
+    }
     if (is.null(nd)) {
       tm <- modelterms7::term_refresh(tm, b)
       Xt <- modelterms7::term_matrix(tm)
@@ -128,32 +163,51 @@ statmod_design_at <- function(spec, coef, design) {
 #' fit, and one that never advanced would solve a permanently smoothed
 #' problem, whose fixed point is not the model's.
 #'
-#' The value a term reports is unchanged by the schedule -- a break-point is
-#' read off the coefficients and the rescaling reaches only the columns -- so
-#' committing does not move the objective at the same coefficients.
+#' For a term whose block is a Jacobian the value it reports is unchanged by
+#' the schedule -- a break-point is read off the coefficients and the
+#' rescaling reaches only the columns -- so committing does not move the
+#' objective at the same coefficients. For a FROZEN working block that
+#' sentence is false in two ways, which is why those terms are committed by
+#' \code{\link{fit_working}} and skipped here: a jseg's quadratic read-off
+#' is incremental in the committed position, so a second commit at the same
+#' coefficients takes a second step, and a refresh may relabel crossed
+#' break-point lineages, after which the caller's coefficients are stale.
+#' The relabeling is why the COMMITTED coefficients are returned: a caller
+#' continues from what the terms stored, not from what it passed in.
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
+#' @param which Which refresh entries to commit: \code{"all"},
+#'   \code{"jacobian"} (the default at the alternation's pass level, where
+#'   the frozen ones are already committed by their own phase) or
+#'   \code{"frozen"}.
 #'
-#' @return \code{TRUE} when there was something to commit, invisibly.
+#' @return The coefficient list, with each committed term's stretch replaced
+#'   by the coefficients the term stored, invisibly.
 #'
-#' @seealso \code{\link{statmod_design_at}}
+#' @seealso \code{\link{statmod_design_at}}, \code{\link{fit_working}}
 #'
 #' @keywords internal
-statmod_commit_refresh <- function(spec, coef, design) {
+statmod_commit_refresh <- function(spec, coef, design, which = "all") {
   rf <- attr(design, "refresh")
-  if (is.null(rf) || !length(rf)) return(invisible(FALSE))
+  if (is.null(rf) || !length(rf)) return(invisible(coef))
   st <- attr(design, "state")
   for (r in rf) {
+    if (identical(which, "jacobian") && isTRUE(r$frozen)) next
+    if (identical(which, "frozen") && !isTRUE(r$frozen)) next
     cols <- design[[r$param]]$blocks[[r$term]]
-    st$terms[[r$param]][[r$term]] <-
-      modelterms7::term_refresh(st$terms[[r$param]][[r$term]],
-                                coef[[r$param]][cols])
+    tm <- modelterms7::term_refresh(st$terms[[r$param]][[r$term]],
+                                    coef[[r$param]][cols])
+    st$terms[[r$param]][[r$term]] <- tm
+    bc <- tryCatch(tm@blueprint$coef, error = function(e) NULL)
+    if (!is.null(bc) && length(bc) == length(cols)) {
+      coef[[r$param]][cols] <- as.numeric(bc)
+    }
   }
   st$key <- NULL
   st$value <- NULL
-  invisible(TRUE)
+  invisible(coef)
 }
 
 
@@ -178,17 +232,21 @@ statmod_commit_refresh <- function(spec, coef, design) {
 #'
 #' @param spec A \code{\link{StatmodSpec}}.
 #' @param design The design.
+#' @param which Which refresh entries to ask: \code{"all"},
+#'   \code{"jacobian"} or \code{"frozen"}.
 #'
 #' @return A single logical; \code{TRUE} when there is nothing to ask.
 #'
 #' @seealso \code{\link{statmod_design_at}}
 #'
 #' @keywords internal
-statmod_refresh_settled <- function(spec, design) {
+statmod_refresh_settled <- function(spec, design, which = "all") {
   rf <- attr(design, "refresh")
   if (is.null(rf) || !length(rf)) return(TRUE)
   st <- attr(design, "state")
   for (r in rf) {
+    if (identical(which, "jacobian") && isTRUE(r$frozen)) next
+    if (identical(which, "frozen") && !isTRUE(r$frozen)) next
     if (!isTRUE(modelterms7::term_converged(st$terms[[r$param]][[r$term]]))) {
       return(FALSE)
     }
@@ -219,7 +277,11 @@ statmod_fitted_spec <- function(spec, coef, design) {
   if (!is.null(sst)) spec@structural <- sst$zeta
   rf <- attr(design, "refresh")
   if (is.null(rf) || !length(rf)) return(spec)
-  statmod_commit_refresh(spec, coef, design)
+  # jacobian entries only: a frozen term was committed by its own phase at
+  # exactly these coefficients, and committing a jseg again at the same
+  # point takes a further step of its incremental read-off, so the reported
+  # break-points would not be the fitted ones
+  statmod_commit_refresh(spec, coef, design, which = "jacobian")
   st <- attr(design, "state")
   tms <- spec@terms
   for (r in rf) {
