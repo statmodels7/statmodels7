@@ -11,7 +11,7 @@ stops moving."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.69.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.70.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,9 @@ stops moving.</p>
 <span>  <span class="va">approx</span>,</span>
 <span>  <span class="va">maxit</span>,</span>
 <span>  <span class="va">tol</span>,</span>
-<span>  <span class="va">vb</span></span>
+<span>  <span class="va">vb</span>,</span>
+<span>  working_budget <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  hold_refresh <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -101,6 +103,25 @@ stops moving.</p>
 
 <dt id="arg-vb">vb<a class="anchor" aria-label="anchor" href="#arg-vb"></a></dt>
 <dd><p>The resolved verbosity.</p></dd>
+
+
+<dt id="arg-working-budget">working_budget<a class="anchor" aria-label="anchor" href="#arg-working-budget"></a></dt>
+<dd><p>How many working fits <code><a href="fit_working.html">fit_working</a></code> may
+take. The bootstrap excursions of <code><a href="statmod_boot_restart.html">statmod_boot_restart</a></code>
+pass a short one: an excursion needs to travel, not to converge.</p></dd>
+
+
+<dt id="arg-hold-refresh">hold_refresh<a class="anchor" aria-label="anchor" href="#arg-hold-refresh"></a></dt>
+<dd><p><code>TRUE</code> holds every FROZEN break-point block at
+its committed positions: the fit is then an ordinary smooth fit, no
+read-off runs and no schedule advances. The outer machinery passes it
+at every criterion evaluation, path point and fold, for two reasons
+measured together: the working phase inside each of dozens of
+evaluations multiplied a fit's cost by twenty, and a break-point
+moving between evaluations makes the criterion path-dependent while
+its cycling flags read as unavailable points to the search. The
+positions are refined ONCE, by the full alternation <code><a href="statmod.html">statmod()</a></code>
+runs at the chosen hyperparameters before the restarts.</p></dd>
 
 </dl></div>
     <div class="section level2">

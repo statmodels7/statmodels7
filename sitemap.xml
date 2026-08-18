@@ -65,6 +65,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_expected.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fit_smooth.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/fit_working.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/fitted_ranges.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/flat_directions.html</loc></url>
@@ -156,6 +157,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/row_nonzeros.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/search_coords.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/seg_boot_total.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/seg_grid_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shape_floor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
@@ -182,6 +184,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_active.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_alternate.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_design.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_design_at.html</loc></url>

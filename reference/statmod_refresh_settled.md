@@ -6,7 +6,7 @@ own iteration has nothing further to say.
 ## Usage
 
 ``` r
-statmod_refresh_settled(spec, design)
+statmod_refresh_settled(spec, design, which = "all")
 ```
 
 ## Arguments
@@ -19,6 +19,10 @@ statmod_refresh_settled(spec, design)
 - design:
 
   The design.
+
+- which:
+
+  Which refresh entries to ask: `"all"`, `"jacobian"` or `"frozen"`.
 
 ## Value
 

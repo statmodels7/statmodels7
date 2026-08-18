@@ -216,6 +216,8 @@ exported, and none is needed to use the package.
   : Which Information Matrix a Fit Used
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   : Fit the Smooth Block
+- [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+  : Fit the Smooth Block Around a Frozen Working Linearization
 - [`fitted(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
   : The Fitted Values of a Model
 - [`fitted_ranges()`](https://statmodels7.github.io/statmodels7/reference/fitted_ranges.md)
@@ -391,6 +393,8 @@ exported, and none is needed to use the package.
   : A Design's Nonzeros, Ordered by Row
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
+- [`seg_boot_total()`](https://statmodels7.github.io/statmodels7/reference/seg_boot_total.md)
+  : How Many Restarts the Terms Ask For
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   : Choose a Break-Point Term's Starting Positions on a Grid
 - [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
@@ -429,6 +433,8 @@ exported, and none is needed to use the package.
   : The Alternation Between the Smooth Block and the Rest
 - [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
   : Split a Specification's Terms Into the Smooth Block and the Rest
+- [`statmod_boot_restart()`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md)
+  : Restarting Around a Fitted Model, Screened on the Exact Profile
 - [`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
   : Advance the Refresh State
 - [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)

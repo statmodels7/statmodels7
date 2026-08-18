@@ -18,7 +18,9 @@ statmod_alternate(
   approx,
   maxit,
   tol,
-  vb
+  vb,
+  working_budget = 500L,
+  hold_refresh = FALSE
 )
 ```
 
@@ -63,6 +65,28 @@ statmod_alternate(
 - vb:
 
   The resolved verbosity.
+
+- working_budget:
+
+  How many working fits
+  [`fit_working`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+  may take. The bootstrap excursions of
+  [`statmod_boot_restart`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md)
+  pass a short one: an excursion needs to travel, not to converge.
+
+- hold_refresh:
+
+  `TRUE` holds every FROZEN break-point block at its committed
+  positions: the fit is then an ordinary smooth fit, no read-off runs
+  and no schedule advances. The outer machinery passes it at every
+  criterion evaluation, path point and fold, for two reasons measured
+  together: the working phase inside each of dozens of evaluations
+  multiplied a fit's cost by twenty, and a break-point moving between
+  evaluations makes the criterion path-dependent while its cycling flags
+  read as unavailable points to the search. The positions are refined
+  ONCE, by the full alternation
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  runs at the chosen hyperparameters before the restarts.
 
 ## Value
 

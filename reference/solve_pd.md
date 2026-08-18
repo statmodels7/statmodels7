@@ -6,7 +6,7 @@ matrix when a direction is flat.
 ## Usage
 
 ``` r
-solve_pd(A, what, labels = NULL, scale = NULL)
+solve_pd(A, what, labels = NULL)
 ```
 
 ## Arguments
@@ -22,12 +22,6 @@ solve_pd(A, what, labels = NULL, scale = NULL)
 - labels:
 
   The names of the coefficients `A` is indexed by.
-
-- scale:
-
-  An optional reference magnitude for the smallest eigenvalue, usually
-  the largest diagonal entry of the UNPENALIZED information. Without it
-  the reference is the matrix's own scale.
 
 ## Value
 
