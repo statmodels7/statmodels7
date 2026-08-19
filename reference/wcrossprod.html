@@ -13,7 +13,7 @@ everywhere else."><meta property="og:image" content="https://statmodels7.github.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,13 +74,15 @@ everywhere else.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The kernel decomposes over the ELEMENTS of the output, each dot product
 accumulated in full by one thread in ascending row order with the weight
-multiplied onto <code>A</code>'s entry first, which is the same arithmetic in
-the same order as the sequential product: the result does not depend on
-the thread count, bit for bit. Only base dense matrices with a
-full-length weight are eligible; a sparse design keeps its
-<span class="pkg">Matrix</span> route, where a threaded dense kernel would do nothing
-(piano_parallel.txt: the threshold is on the work, p and the density,
-not on n alone).</p>
+multiplied onto <code>A</code>'s entry first: the kernel's result does not
+depend on the thread count, bit for bit. Engaging the kernel replaces the
+BLAS expression, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
+accumulations, so the two implementations coincide to the last bit only
+on the reference BLAS and to the rounding of one dot product elsewhere.
+Only base dense matrices with a full-length weight are eligible; a sparse
+design keeps its <span class="pkg">Matrix</span> route, where a threaded dense kernel would
+do nothing (piano_parallel.txt: the threshold is on the work, p and the
+density, not on n alone).</p>
 <p>The threshold is internal and measured, not an argument: the crossover
 where the cost of opening the region meets its gain sits near <code>9e4</code>
 multiply-adds on this machine's grid (0.94x at 8e4, 1.7x at 1e5, 10x at

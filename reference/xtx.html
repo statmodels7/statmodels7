@@ -13,7 +13,7 @@ every scoring iteration."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,11 +69,12 @@ every scoring iteration.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Element \((j, k)\) is one dot product accumulated in full by one
-thread in ascending row order – the same order as the reference
-<code>dsyrk</code> behind <code>crossprod</code> – and elements \((j, k)\) and
+thread in ascending row order, and elements \((j, k)\) and
 \((k, j)\) are the same products summed in the same order, so the
-result is exactly symmetric and does not depend on the thread count,
-bit for bit.</p>
+result is exactly symmetric and the kernel does not depend on the thread
+count, bit for bit. The reference <code>dsyrk</code> behind <code>crossprod</code>
+accumulates in the same order; an optimized BLAS does not, and agrees to
+the rounding of one dot product.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

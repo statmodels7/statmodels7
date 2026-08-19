@@ -39,7 +39,9 @@ A numeric vector of length `ncol(X)`.
 Each output element is accumulated in full by one thread in ascending
 row order, with any elementwise product rounded exactly as the replaced
 expression rounds it (`v` arrives precomputed; the square is taken
-before the weight multiplies it), so the result does not depend on the
-thread count, bit for bit. These are the per-sweep reads the plan's
-section 0quinquies classifies as reductions: they are parallel over the
-OUTPUT elements, never over a split of one accumulation.
+before the weight multiplies it), so the kernel's result does not depend
+on the thread count, bit for bit; against an optimized BLAS's own
+accumulation order it agrees to the rounding of one dot product. These
+are the per-sweep reads the plan's section 0quinquies classifies as
+reductions: they are parallel over the OUTPUT elements, never over a
+split of one accumulation.

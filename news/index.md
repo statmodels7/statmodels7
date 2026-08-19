@@ -1,5 +1,19 @@
 # Changelog
 
+## statmodels7 0.72.1
+
+- The thread twins separate the two claims they were conflating: the
+  kernel’s count-invariance is asserted
+  [`identical()`](https://rdrr.io/r/base/identical.html) kernel against
+  kernel, and the comparison against the BLAS expression a kernel
+  replaces carries a tolerance – OpenBLAS on the CI’s Linux runners and
+  Accelerate on macOS block their accumulations, so
+  [`identical()`](https://rdrr.io/r/base/identical.html) there asserted
+  a property of the reference BLAS and reddened four of the five
+  platforms. The
+  [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)/[`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)/[`wxsq()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)/[`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md)
+  pages state the same distinction.
+
 ## statmodels7 0.72.0
 
 - The marginal break-point terms fit end to end:
@@ -33,6 +47,16 @@
 - New `statmod_latent(fit)`: the posterior mean and standard deviation
   of each group’s latent break-points, from the same decomposition the
   likelihood is computed on.
+
+- The step kind’s marginal runs on the side chain’s forward recursion
+  (modelterms7 0.56.0), so several break-points stopped being
+  exponential in the sample: measured through
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  at identical estimates, K = 2 goes 13.2 s to 2.5 s, K = 3 goes 721 s
+  to 8.8 s, and K = 5 – beyond the old cap of three – fits in 94 s with
+  every population position within 0.05 of the truth and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) finite from the
+  propagated Hessian.
 
 - Measured (the numbers are in `piano_marginal.txt`): on the 5b design
   the marginal jump reproduces the standalone reference to the third

@@ -33,12 +33,15 @@ A `pa x pb` matrix.
 
 The kernel decomposes over the ELEMENTS of the output, each dot product
 accumulated in full by one thread in ascending row order with the weight
-multiplied onto `A`'s entry first, which is the same arithmetic in the
-same order as the sequential product: the result does not depend on the
-thread count, bit for bit. Only base dense matrices with a full-length
-weight are eligible; a sparse design keeps its Matrix route, where a
-threaded dense kernel would do nothing (piano_parallel.txt: the
-threshold is on the work, p and the density, not on n alone).
+multiplied onto `A`'s entry first: the kernel's result does not depend
+on the thread count, bit for bit. Engaging the kernel replaces the BLAS
+expression, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
+accumulations, so the two implementations coincide to the last bit only
+on the reference BLAS and to the rounding of one dot product elsewhere.
+Only base dense matrices with a full-length weight are eligible; a
+sparse design keeps its Matrix route, where a threaded dense kernel
+would do nothing (piano_parallel.txt: the threshold is on the work, p
+and the density, not on n alone).
 
 The threshold is internal and measured, not an argument: the crossover
 where the cost of opening the region meets its gain sits near `9e4`
