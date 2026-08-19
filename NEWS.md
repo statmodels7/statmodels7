@@ -1,3 +1,14 @@
+# statmodels7 0.72.1
+
+* The thread twins separate the two claims they were conflating: the
+  kernel's count-invariance is asserted `identical()` kernel against
+  kernel, and the comparison against the BLAS expression a kernel replaces
+  carries a tolerance -- OpenBLAS on the CI's Linux runners and Accelerate
+  on macOS block their accumulations, so `identical()` there asserted a
+  property of the reference BLAS and reddened four of the five platforms.
+  The `wcrossprod()`/`xtv()`/`wxsq()`/`xtx()` pages state the same
+  distinction.
+
 # statmodels7 0.72.0
 
 * The marginal break-point terms fit end to end:

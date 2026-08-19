@@ -22,10 +22,11 @@ every scoring iteration.
 }
 \details{
 Element \eqn{(j, k)} is one dot product accumulated in full by one
-thread in ascending row order -- the same order as the reference
-\code{dsyrk} behind \code{crossprod} -- and elements \eqn{(j, k)} and
+thread in ascending row order, and elements \eqn{(j, k)} and
 \eqn{(k, j)} are the same products summed in the same order, so the
-result is exactly symmetric and does not depend on the thread count,
-bit for bit.
+result is exactly symmetric and the kernel does not depend on the thread
+count, bit for bit. The reference \code{dsyrk} behind \code{crossprod}
+accumulates in the same order; an optimized BLAS does not, and agrees to
+the rounding of one dot product.
 }
 \keyword{internal}

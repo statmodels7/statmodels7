@@ -13,13 +13,15 @@
 #' @details
 #' The kernel decomposes over the ELEMENTS of the output, each dot product
 #' accumulated in full by one thread in ascending row order with the weight
-#' multiplied onto \code{A}'s entry first, which is the same arithmetic in
-#' the same order as the sequential product: the result does not depend on
-#' the thread count, bit for bit. Only base dense matrices with a
-#' full-length weight are eligible; a sparse design keeps its
-#' \pkg{Matrix} route, where a threaded dense kernel would do nothing
-#' (piano_parallel.txt: the threshold is on the work, p and the density,
-#' not on n alone).
+#' multiplied onto \code{A}'s entry first: the kernel's result does not
+#' depend on the thread count, bit for bit. Engaging the kernel replaces the
+#' BLAS expression, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
+#' accumulations, so the two implementations coincide to the last bit only
+#' on the reference BLAS and to the rounding of one dot product elsewhere.
+#' Only base dense matrices with a full-length weight are eligible; a sparse
+#' design keeps its \pkg{Matrix} route, where a threaded dense kernel would
+#' do nothing (piano_parallel.txt: the threshold is on the work, p and the
+#' density, not on n alone).
 #'
 #' The threshold is internal and measured, not an argument: the crossover
 #' where the cost of opening the region meets its gain sits near \code{9e4}
@@ -61,8 +63,10 @@ wcrossprod <- function(A, w, B, threads = 1L) {
 #' Each output element is accumulated in full by one thread in ascending row
 #' order, with any elementwise product rounded exactly as the replaced
 #' expression rounds it (\code{v} arrives precomputed; the square is taken
-#' before the weight multiplies it), so the result does not depend on the
-#' thread count, bit for bit. These are the per-sweep reads the plan's
+#' before the weight multiplies it), so the kernel's result does not depend
+#' on the thread count, bit for bit; against an optimized BLAS's own
+#' accumulation order it agrees to the rounding of one dot product. These
+#' are the per-sweep reads the plan's
 #' section 0quinquies classifies as reductions: they are parallel over the
 #' OUTPUT elements, never over a split of one accumulation.
 #'
@@ -100,11 +104,12 @@ wxsq <- function(X, w, threads = 1L) {
 #'
 #' @details
 #' Element \eqn{(j, k)} is one dot product accumulated in full by one
-#' thread in ascending row order -- the same order as the reference
-#' \code{dsyrk} behind \code{crossprod} -- and elements \eqn{(j, k)} and
+#' thread in ascending row order, and elements \eqn{(j, k)} and
 #' \eqn{(k, j)} are the same products summed in the same order, so the
-#' result is exactly symmetric and does not depend on the thread count,
-#' bit for bit.
+#' result is exactly symmetric and the kernel does not depend on the thread
+#' count, bit for bit. The reference \code{dsyrk} behind \code{crossprod}
+#' accumulates in the same order; an optimized BLAS does not, and agrees to
+#' the rounding of one dot product.
 #'
 #' @param A A dense design block, \code{n x p}.
 #' @param threads The thread count, a plain integer.

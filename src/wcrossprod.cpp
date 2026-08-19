@@ -5,11 +5,14 @@ using namespace Rcpp;
 // The weighted cross product of the assembly, C = A' diag(w) B, decomposed
 // over the ELEMENTS of C: element (j, k) is one dot product, accumulated in
 // full by one thread in ascending row order with the weight multiplied onto
-// A's entry first -- the same operations in the same order as
-// crossprod(A * w, B) against the reference BLAS, whose dgemm accumulates a
-// scalar in ascending order too. That is what licenses the bit-identity
-// guarantee of n_threads(): no reduction is split across threads
-// (piano_parallel.txt, section 0, measured difference exactly zero).
+// A's entry first. No reduction is split across threads, so the KERNEL's
+// result does not depend on the count, bit for bit -- which is the
+// n_threads() guarantee (piano_parallel.txt, section 0). Against the BLAS
+// expression it replaces the agreement is bit-exact only on the reference
+// BLAS, whose dgemm accumulates in the same ascending order; an optimized
+// BLAS (OpenBLAS, Accelerate) blocks the accumulation and lands within the
+// rounding of one dot product, which is why the cross-implementation twin
+// in the tests carries a tolerance while the count twin does not.
 //
 // The R wrapper (wcrossprod) holds the gate: only base dense matrices with
 // a full-length weight reach this, and only above the measured work
