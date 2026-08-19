@@ -27,6 +27,14 @@
   each group's latent break-points, from the same decomposition the
   likelihood is computed on.
 
+* The step kind's marginal runs on the side chain's forward recursion
+  (modelterms7 0.56.0), so several break-points stopped being exponential
+  in the sample: measured through `statmod()` at identical estimates,
+  K = 2 goes 13.2 s to 2.5 s, K = 3 goes 721 s to 8.8 s, and K = 5 --
+  beyond the old cap of three -- fits in 94 s with every population
+  position within 0.05 of the truth and `vcov()` finite from the
+  propagated Hessian.
+
 * Measured (the numbers are in `piano_marginal.txt`): on the 5b design the
   marginal jump reproduces the standalone reference to the third digit
   (m 4.898, tau 0.518, cor 0.877, rmse 0.292) and over five seeds
