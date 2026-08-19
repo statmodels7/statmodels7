@@ -1005,6 +1005,14 @@ summary.StatmodFit <- function(object, level = 0.95,
       "\n  is not a maximum."))
   }
 
+  # A smoothed break-point term: the smoother and its width are part of the
+  # model -- the transition's width, the bent-cable reading -- so they are
+  # reported; and where a break-point carries a random development, a
+  # smoother declaring a scale correction (the probit's convolution
+  # identity) gets the corrected scale printed beside the apparent one.
+  notes <- c(notes, tryCatch(smoothed_notes(spec, object),
+                             error = function(e) character(0)))
+
   # A structural term contributes no columns, so nothing above can report
   # it and its parameters were reachable only through fit@structural.
   strc <- tryCatch(statmod_structural_table(object, level),
@@ -1355,6 +1363,94 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   blocks
 }
 
+
+#' The Notes a Smoothed Break-Point Term Adds to a Summary
+#'
+#' @description
+#' One note per smoothed term, naming the smoother and the width the build
+#' resolved -- the width of the transition, which is part of the model and
+#' not a detail -- and, where a break-point carries a random development
+#' under a Gaussian precision and the smoother declares a scale correction,
+#' the corrected scale beside the apparent one.
+#'
+#' @details
+#' The correction is the smoother's own: the probit satisfies the exact
+#' convolution identity \eqn{\tau^2_{\mathrm{apparent}} = \tau^2 + h^2}, so
+#' the corrected scale is \eqn{\sqrt{\tau^2 - h^2}}; a smoother declaring
+#' none (the hyperbolic, the quintic) gets the apparent scale alone, which
+#' the random effect's own block already reports. The apparent scale is
+#' read off the ridge precision as \eqn{1/\sqrt{\lambda}}, which is only a
+#' scale where the penalty is the quadratic branch with that
+#' hyperparameter; any other development is left without the note rather
+#' than given a number of the wrong meaning.
+#'
+#' @param spec The fitted specification, whose terms are the ones the fit
+#'   left.
+#' @param object The fit.
+#'
+#' @return A character vector, possibly empty.
+#'
+#' @seealso \code{\link[penalties7]{abs_smoother}}
+#'
+#' @keywords internal
+smoothed_notes <- function(spec, object) {
+  out <- character(0)
+  for (p in names(spec@terms)) {
+    for (nm in names(spec@terms[[p]])) {
+      tm <- spec@terms[[p]][[nm]]
+      if (!S7::S7_inherits(tm, modelterms7::SegTerm)) next
+      bp <- tryCatch(tm@blueprint, error = function(e) NULL)
+      smx <- if (is.list(bp)) bp$smooth else NULL
+      if (is.null(smx)) next
+      sm <- smx$sm
+      out <- c(out, sprintf(paste0(
+        "'%s' in '%s' is smoothed (%s, %s = %s%s): its break-points are ",
+        "ordinary\n  parameters and that is the width of the transition, ",
+        "so its rows are the\n  smoothed model's."),
+        nm, p, sm@smoother_name, sm@width_name,
+        format(smx$width, digits = 3),
+        if (!is.null(smx$w_group)) ", per group" else ""))
+      if (is.null(sm@tau_correction)) next
+      ent <- tryCatch(modelterms7::term_penalties(tm),
+                      error = function(e) list())
+      for (e in ent) {
+        if (!grepl("^psi", e$name)) next
+        pen <- e$penalty
+        key <- statmod_entry_key(nm, ent, e)
+        th <- tryCatch(object@hyper[[p]][[key]], error = function(err) NULL)
+        if (is.null(th)) next
+        # The apparent scale of the break-point deviations. A gaussian
+        # prior written by its scale carries it as sigma, which is what
+        # random() declares; the quadratic ridge carries the precision, so
+        # the scale is 1/sqrt(lambda). Any other prior is left without the
+        # note rather than given a number of the wrong meaning: the
+        # convolution identity composes GAUSSIAN variances.
+        tau <- NULL
+        if ("sigma" %in% pen@params &&
+            grepl("gaussian", pen@penalty_name, fixed = TRUE)) {
+          tau <- suppressWarnings(as.numeric(th[["sigma"]]))
+        } else if (identical(pen@params, "lambda") &&
+                   isTRUE(tryCatch(penalties7::is_quadratic(pen),
+                                   error = function(err) FALSE))) {
+          lam <- suppressWarnings(as.numeric(th[["lambda"]]))
+          if (length(lam) == 1L && is.finite(lam) && lam > 0) {
+            tau <- 1 / sqrt(lam)
+          }
+        }
+        if (!is.numeric(tau) || length(tau) != 1L || !is.finite(tau) ||
+            tau <= 0) next
+        tauc <- sm@tau_correction(tau, smx$width)
+        out <- c(out, sprintf(paste0(
+          "The scale of the random break-points of '%s' composes with the ",
+          "smoothing\n  width: apparent tau %s, corrected ",
+          "sqrt(tau^2 - %s^2) = %s."),
+          nm, format(tau, digits = 4), sm@width_name,
+          format(tauc, digits = 4)))
+      }
+    }
+  }
+  out
+}
 
 #' @title Print a Model Summary
 #' @name print.StatmodSummary

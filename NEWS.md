@@ -1,3 +1,20 @@
+# statmodels7 0.71.0
+
+* A SMOOTHED break-point term (`seg`/`jump`/`jseg` with `smoothed =` a
+  `penalties7` `abs_smoother`, modelterms7 0.55.0) is routed as what it is:
+  a Jacobian block. `term_jacobian_block()` answers `TRUE` for it, so it
+  takes the Gauss-Newton embedding of `seg()` -- no working-fit phase, no
+  holding -- and a random or penalized development of its break-points fits
+  through the machinery the random-changepoint model already uses. The
+  layer needed no routing edit for that, which is what the predicate of
+  0.70.0 was for.
+
+* `summary()` reports a smoothed term's smoother and width -- the width of
+  the transition, the bent-cable reading -- and, for random break-points
+  under the probit smoother, the corrected scale beside the apparent one:
+  the convolution identity `tau_apparent^2 = tau^2 + h^2` is the
+  smoother's own declaration, read through its `tau_correction`.
+
 # statmodels7 0.70.0
 
 * `solve_pd()` tests and inverts on the JACOBI-EQUILIBRATED matrix

@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.70.0
+Version: 0.71.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Installs and attaches the packages of the statmodels7 toolkit,
@@ -24,7 +24,7 @@ Imports:
     linkfunctions7,
     Matrix (>= 1.6.2),
     methods,
-    modelterms7 (>= 0.54.0),
+    modelterms7 (>= 0.55.0),
     numericals7 (>= 0.9.0),
     optimizers7,
     parallel,
