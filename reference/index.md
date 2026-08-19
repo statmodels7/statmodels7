@@ -78,6 +78,8 @@ the elapsed time in the unit it deserves.
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   : The Model as a Function of Parameters and Data
+- [`statmod_latent()`](https://statmodels7.github.io/statmodels7/reference/statmod_latent.md)
+  : The Posterior Break-Points of a Marginal Term
 - [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)
   : Format a Duration in the Unit It Deserves
 
@@ -135,6 +137,10 @@ exported, and none is needed to use the package.
   : The Coefficients of a Fit
 - [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
   : Where Each Stacked Coefficient Comes From
+- [`component_count()`](https://statmodels7.github.io/statmodels7/reference/component_count.md)
+  : How Many Mixture Components a Term Reports
+- [`component_shift()`](https://statmodels7.github.io/statmodels7/reference/component_shift.md)
+  : The Shift of One Mixture Component
 - [`confint(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   : Confidence Intervals for a Fit
 - [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
@@ -403,6 +409,8 @@ exported, and none is needed to use the package.
   : A Term Key Shortened for Display
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   : Which Coefficients of a Smooth Are the Linear Part
+- [`smoothed_notes()`](https://statmodels7.github.io/statmodels7/reference/smoothed_notes.md)
+  : The Notes a Smoothed Break-Point Term Adds to a Summary
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   : Invert a Matrix That Ought to Be Positive Definite
 - [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md)

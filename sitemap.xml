@@ -25,6 +25,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/chol_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/component_count.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/component_shift.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract3.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract3_refresh.html</loc></url>
@@ -162,6 +164,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/shape_floor.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/short_keys.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/smoothed_notes.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
@@ -207,6 +210,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_latent.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.html</loc></url>

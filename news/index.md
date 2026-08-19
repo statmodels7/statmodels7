@@ -1,5 +1,72 @@
 # Changelog
 
+## statmodels7 0.72.0
+
+- The marginal break-point terms fit end to end:
+  `y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE)` – and `seg`,
+  `jseg`, several break-points, an explicit prior – route through the
+  existing likelihood-shape branch (the one `regime()` rides), so the
+  coefficients are fitted by Fisher’s identity with the term’s posterior
+  component weights, the term’s own parameters by `lbfgs()` on the exact
+  jacobian, and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html)/[`summary()`](https://rdrr.io/r/base/summary.html)
+  invert the exact joint observed Hessian from `term_hessian()`, the
+  prior scales’ intervals built on the log scale. Everything is plain
+  maximum likelihood: the prior is part of the likelihood and no outer
+  criterion is involved.
+
+- What the branch needed was the levels generalized, not a route:
+  [`statmod_regime_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_at.md)
+  reads the mixture shifts off the new
+  [`modelterms7::term_levels()`](https://statmodels7.github.io/modelterms7/reference/term_levels.html),
+  which may answer with a per-observation matrix (the quadrature nodes
+  of a marginal `seg`/`jseg` shift each observation by its own hinge
+  value), and the component loops of the score and the information read
+  a column where a regime reads a number. A structural term’s fresh
+  start receives the equation’s
+  [`predictor_target()`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md),
+  off which the marginal term reads its exact two-stage profile – the
+  multimodality in the positions does not go away under the marginal,
+  and a fit started conventionally was measured converging on a local
+  optimum 33 log-likelihood units under the truth.
+
+- New `statmod_latent(fit)`: the posterior mean and standard deviation
+  of each group’s latent break-points, from the same decomposition the
+  likelihood is computed on.
+
+- Measured (the numbers are in `piano_marginal.txt`): on the 5b design
+  the marginal jump reproduces the standalone reference to the third
+  digit (m 4.898, tau 0.518, cor 0.877, rmse 0.292) and over five seeds
+  converges 5/5 in 2-4 s where the production smoothed probit converges
+  2/5, with tau always the closest to 0.5; a marginal `seg` recovers
+  exactly what the native random-changepoint fit does (cor 0.984 both,
+  rmse 0.088 against 0.086) at 47 times the cost, so the native route
+  remains the recommended one there; a marginal `jseg` on a Poisson
+  panel recovers the positions (cor 0.71, log-likelihood above the
+  truth-started point) where the mode-based routes lose them; a t prior
+  on contaminated positions beats the gaussian on the inliers (rmse
+  0.173 against 0.241); and a lasso fits beside the marginal term with
+  its selection intact, which is the composition `piano_marginal.txt` F4
+  asked to be measured rather than promised.
+
+## statmodels7 0.71.0
+
+- A SMOOTHED break-point term (`seg`/`jump`/`jseg` with `smoothed =` a
+  `penalties7` `abs_smoother`, modelterms7 0.55.0) is routed as what it
+  is: a Jacobian block. `term_jacobian_block()` answers `TRUE` for it,
+  so it takes the Gauss-Newton embedding of `seg()` – no working-fit
+  phase, no holding – and a random or penalized development of its
+  break-points fits through the machinery the random-changepoint model
+  already uses. The layer needed no routing edit for that, which is what
+  the predicate of 0.70.0 was for.
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) reports a smoothed
+  term’s smoother and width – the width of the transition, the
+  bent-cable reading – and, for random break-points under the probit
+  smoother, the corrected scale beside the apparent one: the convolution
+  identity `tau_apparent^2 = tau^2 + h^2` is the smoother’s own
+  declaration, read through its `tau_correction`.
+
 ## statmodels7 0.70.0
 
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)

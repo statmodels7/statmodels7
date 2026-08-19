@@ -9,7 +9,7 @@ zero, and starts at a weak response instead.
 ## Usage
 
 ``` r
-structural_zeta_start(term)
+structural_zeta_start(term, target = NULL)
 ```
 
 ## Arguments
@@ -17,6 +17,14 @@ structural_zeta_start(term)
 - term:
 
   A built structural term.
+
+- target:
+
+  The response on the scale of the term's equation, from
+  [`predictor_target`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md),
+  or `NULL`. A term whose start is read off the data – the marginal
+  break-point term's exact profile – consumes it; every other method
+  ignores it through the dots.
 
 ## Value
 
