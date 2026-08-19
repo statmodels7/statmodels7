@@ -139,8 +139,9 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
   if (length(ev$regimes)) {
     r <- ev$regimes[[1L]]
     gv <- stats::setNames(lapply(params, function(p) numeric(n)), params)
-    for (k in seq_along(r$mu)) {
-      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
+    for (k in seq_len(component_count(r$mu))) {
+      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
+                                   component_shift(r$mu, k))
       gk <- distributions7::distrib_gradient(spec@distrib, spec@response, thk,
                                              scale = "link", threads = spec@threads)
       for (p in params) {
@@ -292,8 +293,9 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
     offs <- cumsum(npar) - npar
     total <- sum(npar)
     out <- zero_information(design, total)
-    for (k in seq_along(r$mu)) {
-      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param, r$mu[[k]])
+    for (k in seq_len(component_count(r$mu))) {
+      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
+                                   component_shift(r$mu, k))
       Hk <- if (expected) {
         distributions7::distrib_expected_hessian(spec@distrib, spec@response,
                                                  thk, scale = "link",

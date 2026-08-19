@@ -57,6 +57,7 @@ reference:
     elapsed time in the unit it deserves.
   contents:
   - loglik
+  - statmod_latent
   - format_duration
 
 - title: Installing and updating

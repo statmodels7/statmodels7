@@ -1071,8 +1071,13 @@ statmod_design <- function(spec) {
     sst$zeta <- stats::setNames(
       lapply(su, function(u) {
         z <- spec@structural[[u$term]]
-        if (is.null(z)) structural_zeta_start(spec@terms[[u$param]][[u$term]])
-        else z
+        # a fresh start may read the data: the marginal break-point term's is
+        # the exact per-group profile of the target, without which the fit
+        # begins on a surface that is flat in the prior's own parameters
+        if (is.null(z)) {
+          structural_zeta_start(spec@terms[[u$param]][[u$term]],
+                                target = predictor_target(spec, u$param))
+        } else z
       }),
       vapply(su, function(u) u$term, character(1)))
     sst$key <- NULL

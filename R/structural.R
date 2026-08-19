@@ -148,11 +148,17 @@ structural_memo <- function(design, slot, key, compute) {
 #' weak response instead.
 #'
 #' @param term A built structural term.
+#' @param target The response on the scale of the term's equation, from
+#'   \code{\link{predictor_target}}, or \code{NULL}. A term whose start is
+#'   read off the data -- the marginal break-point term's exact profile --
+#'   consumes it; every other method ignores it through the dots.
 #'
 #' @return A named numeric vector.
 #'
 #' @keywords internal
-structural_zeta_start <- function(term) modelterms7::term_start(term)
+structural_zeta_start <- function(term, target = NULL) {
+  modelterms7::term_start(term, target = target)
+}
 
 
 #' From the Unconstrained Scale to the Term's Parameters
@@ -344,22 +350,56 @@ statmod_regime_at <- function(spec, design, eta_static, theta_static) {
     if (!identical(u$kind, "loglik")) next
     tm <- spec@terms[[u$param]][[u$term]]
     psi <- structural_psi(tm, st$zeta[[u$term]])
-    nm <- modelterms7::term_params(tm)
-    v <- unlist(psi[nm])
-    k <- tm@k
-    mu <- cumsum(c(v[["level1"]],
-                   if (k > 1L) v[paste0("gap", seq.int(2L, k))]
-                   else numeric(0)))
     cb <- structural_callbacks(spec, theta_static, u$param)
+    # the shifts each mixture component adds to the predictor are the term's
+    # own answer, so a regime chain and a marginal break-point ride one
+    # route; a component whose shift varies by observation -- a quadrature
+    # node's hinge value -- comes back as a matrix, aligned with the
+    # posterior's columns, and the callbacks let the term rebuild its nodes
+    mu <- modelterms7::term_levels(tm, psi, eta = eta_static[[u$param]],
+                                   y = spec@response, logdens = cb$logdens)
     gam <- modelterms7::term_posterior(tm, eta_static[[u$param]],
                                        spec@response, cb$logdens, psi)
+    eta_bar <- if (is.matrix(mu)) {
+      rowSums(gam * mu) + eta_static[[u$param]]
+    } else {
+      as.numeric(gam %*% mu) + eta_static[[u$param]]
+    }
     out[[u$term]] <- list(param = u$param, term = u$term, tm = tm, psi = psi,
                           gamma = gam, mu = mu, cb = cb,
                           eta_static = eta_static[[u$param]],
-                          eta_bar = as.numeric(
-                            gam %*% mu) + eta_static[[u$param]])
+                          eta_bar = eta_bar)
   }
   out
+}
+
+
+#' The Shift of One Mixture Component
+#'
+#' @description
+#' The level a component adds to the predictor: one number for a regime or
+#' a side pattern, one value per observation for a quadrature node.
+#'
+#' @param mu What \code{\link[modelterms7]{term_levels}} returned.
+#' @param k The component.
+#'
+#' @return A single number or a vector over the observations.
+#'
+#' @keywords internal
+component_shift <- function(mu, k) {
+  if (is.matrix(mu)) mu[, k] else mu[[k]]
+}
+
+
+#' How Many Mixture Components a Term Reports
+#'
+#' @param mu What \code{\link[modelterms7]{term_levels}} returned.
+#'
+#' @return A single integer.
+#'
+#' @keywords internal
+component_count <- function(mu) {
+  if (is.matrix(mu)) ncol(mu) else length(mu)
 }
 
 
@@ -1148,4 +1188,54 @@ statmod_structural_table <- function(fit, level = 0.95) {
     }
   }
   do.call(rbind, rows)
+}
+
+
+#' The Posterior Break-Points of a Marginal Term
+#'
+#' @description
+#' The posterior mean and standard deviation of each group's latent
+#' break-points in a fitted model carrying a marginal break-point term
+#' (\code{\link[modelterms7]{jump}}, \code{\link[modelterms7]{seg}} or
+#' \code{\link[modelterms7]{jseg}} with \code{marginal = TRUE}).
+#'
+#' @details
+#' The quantities come from the same decomposition the marginal likelihood
+#' is computed on: the posterior over a group's intervals or quadrature
+#' nodes, with the within-interval moments those of the fitted prior
+#' truncated to it. The computation is
+#' \code{\link[modelterms7]{term_latent}}'s; this function supplies what
+#' the term cannot see, the fitted predictors and the model's log-density.
+#'
+#' @param fit A \code{\link{StatmodFit}} whose model carries a structural
+#'   term of the likelihood shape.
+#'
+#' @return A data frame with one row per group and break-point:
+#'   \code{group}, \code{psi}, \code{mean} and \code{sd}.
+#'
+#' @examples
+#' set.seed(1)
+#' dd <- data.frame(id = rep(1:4, each = 8), x = rep(1:8, 4))
+#' dd$psi <- 4.5 + rep(rnorm(4, 0, 0.4), each = 8)
+#' dd$y <- 1 + 2 * (dd$x >= dd$psi) + rnorm(32, 0, 0.3)
+#' fit <- statmod(y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE),
+#'                distributions7::gaussian1_distrib(), dd)
+#' statmod_latent(fit)
+#'
+#' @seealso \code{\link[modelterms7]{term_latent}},
+#'   \code{\link{statmod}}
+#'
+#' @export
+statmod_latent <- function(fit) {
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  ev <- statmod_eta(spec, design, fit@coefficients)
+  if (!length(ev$regimes)) {
+    stop(paste("the model carries no structural term of the likelihood",
+               "shape, so there is no latent variable to report."),
+         call. = FALSE)
+  }
+  r <- ev$regimes[[1L]]
+  modelterms7::term_latent(r$tm, r$eta_static, spec@response, r$cb$logdens,
+                           r$psi)
 }

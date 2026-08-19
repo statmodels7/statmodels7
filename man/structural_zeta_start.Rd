@@ -4,10 +4,15 @@
 \alias{structural_zeta_start}
 \title{The Parameters a Structural Term Starts From}
 \usage{
-structural_zeta_start(term)
+structural_zeta_start(term, target = NULL)
 }
 \arguments{
 \item{term}{A built structural term.}
+
+\item{target}{The response on the scale of the term's equation, from
+\code{\link{predictor_target}}, or \code{NULL}. A term whose start is
+read off the data -- the marginal break-point term's exact profile --
+consumes it; every other method ignores it through the dots.}
 }
 \value{
 A named numeric vector.
