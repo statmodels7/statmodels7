@@ -4,7 +4,7 @@
 \alias{start_search}
 \title{Search the Likelihood for a Starting Point}
 \usage{
-start_search(optimizer = optimizers7::sa(), over = NULL, hyper = FALSE)
+start_search(optimizer = optimizers7::sa(), over = NULL)
 }
 \arguments{
 \item{optimizer}{The optimizer to search with. Defaults to
@@ -12,9 +12,6 @@ start_search(optimizer = optimizers7::sa(), over = NULL, hyper = FALSE)
 
 \item{over}{Optional names of the coefficients to search over, overriding
 the choice described above.}
-
-\item{hyper}{Whether to search the smooth hyperparameters too. Defaults to
-\code{FALSE}.}
 }
 \value{
 A \code{\link{start_strategy}}.
@@ -48,16 +45,25 @@ break-point terms), and each equation's intercept. Everything else keeps
 the default: a smooth, a ridge or a random effect is a convex block whose
 optimum the scoring step reaches from anywhere, and searching over a
 thousand random-effect coefficients would spend the whole budget on the
-one part of the model that does not need it. \code{over} overrides the
-choice by name.
+one part of the model that does not need it. A penalized coordinate is
+excluded WHEREVER IT SITS, and in particular inside such a term: a
+sub-formula develops a break-point or a nonlinear parameter over groups,
+and those deviations are columns of the term's own block. They are the
+case the rule exists for --- on the likelihood alone nothing identifies
+them, the penalty being what does, so a search over them fits each group's
+own points and moves AWAY from the penalized mode. \code{over} overrides
+the choice by name.
 
-\strong{The hyperparameters} are left where they were unless
-\code{hyper = TRUE}, which extends the search to the smooth ones on their
-log scale. It is off by default because each of those coordinates costs a
-full refit at every proposal rather than one likelihood evaluation.
-Kinked penalties are never searched: their hyperparameter has a known
-upper end and is swept by a warm-started path, which a random jump would
-both fail to improve on and destroy.
+\strong{The hyperparameters are not searched, and cannot be from here.}
+The objective is the likelihood with the penalties off, in which a
+hyperparameter does not appear at all, so there is nothing for a proposal
+to change. A global search over them is a search over the OUTER criterion,
+where each proposal costs a full refit rather than one likelihood
+evaluation, and it is already available as
+\code{statmod(outer_optimizer = optimizers7::sa())}. Kinked penalties are
+outside that too: their hyperparameter has a known upper end and is swept
+by a warm-started path, which a random jump would both fail to improve on
+and destroy.
 }
 \examples{
 start_search()

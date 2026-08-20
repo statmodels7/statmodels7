@@ -202,8 +202,7 @@ start_random <- function(fn = stats::rnorm, ..., center = TRUE) {
 #' @rdname StartIntercepts-class
 #' @keywords internal
 StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
-  properties = list(optimizer = S7::class_any, over = S7::class_any,
-                    hyper = S7::class_logical))
+  properties = list(optimizer = S7::class_any, over = S7::class_any))
 
 
 #' @title Search the Likelihood for a Starting Point
@@ -237,23 +236,30 @@ StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
 #' the default: a smooth, a ridge or a random effect is a convex block whose
 #' optimum the scoring step reaches from anywhere, and searching over a
 #' thousand random-effect coefficients would spend the whole budget on the
-#' one part of the model that does not need it. \code{over} overrides the
-#' choice by name.
+#' one part of the model that does not need it. A penalized coordinate is
+#' excluded WHEREVER IT SITS, and in particular inside such a term: a
+#' sub-formula develops a break-point or a nonlinear parameter over groups,
+#' and those deviations are columns of the term's own block. They are the
+#' case the rule exists for --- on the likelihood alone nothing identifies
+#' them, the penalty being what does, so a search over them fits each group's
+#' own points and moves AWAY from the penalized mode. \code{over} overrides
+#' the choice by name.
 #'
-#' \strong{The hyperparameters} are left where they were unless
-#' \code{hyper = TRUE}, which extends the search to the smooth ones on their
-#' log scale. It is off by default because each of those coordinates costs a
-#' full refit at every proposal rather than one likelihood evaluation.
-#' Kinked penalties are never searched: their hyperparameter has a known
-#' upper end and is swept by a warm-started path, which a random jump would
-#' both fail to improve on and destroy.
+#' \strong{The hyperparameters are not searched, and cannot be from here.}
+#' The objective is the likelihood with the penalties off, in which a
+#' hyperparameter does not appear at all, so there is nothing for a proposal
+#' to change. A global search over them is a search over the OUTER criterion,
+#' where each proposal costs a full refit rather than one likelihood
+#' evaluation, and it is already available as
+#' \code{statmod(outer_optimizer = optimizers7::sa())}. Kinked penalties are
+#' outside that too: their hyperparameter has a known upper end and is swept
+#' by a warm-started path, which a random jump would both fail to improve on
+#' and destroy.
 #'
 #' @param optimizer The optimizer to search with. Defaults to
 #'   \code{optimizers7::sa()}.
 #' @param over Optional names of the coefficients to search over, overriding
 #'   the choice described above.
-#' @param hyper Whether to search the smooth hyperparameters too. Defaults to
-#'   \code{FALSE}.
 #'
 #' @return A \code{\link{start_strategy}}.
 #'
@@ -264,8 +270,7 @@ StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
 #' @seealso \code{\link{start_intercepts}},
 #'   \code{\link[optimizers7]{sa}}, \code{\link[optimizers7]{chain}}
 #' @export
-start_search <- function(optimizer = optimizers7::sa(), over = NULL,
-                         hyper = FALSE) {
+start_search <- function(optimizer = optimizers7::sa(), over = NULL) {
   if (!S7::S7_inherits(optimizer, optimizers7::optimizer)) {
     stop("'optimizer' must be an optimizers7 optimizer, e.g. sa().",
          call. = FALSE)
@@ -274,11 +279,8 @@ start_search <- function(optimizer = optimizers7::sa(), over = NULL,
     stop("'over' must be a character vector of coefficient names, or NULL.",
          call. = FALSE)
   }
-  if (length(hyper) != 1L || !is.logical(hyper) || is.na(hyper)) {
-    stop("'hyper' must be TRUE or FALSE.", call. = FALSE)
-  }
   StartSearch(label = paste0("search with ", optimizer@name),
-              optimizer = optimizer, over = over, hyper = hyper)
+              optimizer = optimizer, over = over)
 }
 
 
@@ -530,6 +532,11 @@ S7::method(start_at, StartRandom) <-
 #' rather than forgotten: the scoring step reaches its optimum from anywhere,
 #' and a search over it would spend the budget where it buys nothing.
 #'
+#' A penalized coordinate is then removed wherever it sits, which is not the
+#' same question as whether its term is convex: a penalty declared through a
+#' sub-formula of a break-point or nonlinear term covers columns of that
+#' term's block, and the loop takes the whole block.
+#'
 #' @param spec The specification.
 #' @param design The design.
 #'
@@ -554,7 +561,24 @@ search_coords <- function(spec, design) {
     }
     idx <- c(idx, offs[a] + sort(unique(hit)))
   }
-  sort(unique(idx))
+  idx <- sort(unique(idx))
+  # A PENALIZED COORDINATE IS LEFT OUT WHEREVER IT SITS, and asking whether
+  # its TERM is convex answers for the wrong thing: a random effect declared
+  # through a sub-formula of a break-point term is a column of that term's
+  # block, so the loop above takes it. Measured on a jseg over thirty groups
+  # whose seven own coefficients each carry `random(~1|id)`, that was 210 of
+  # 219 coordinates, and with a differenced gradient one iteration cost 2.3 s
+  # against the milliseconds of a scoring step. The budget is the smaller
+  # half of it: the search runs on the LIKELIHOOD ALONE, where a deviation
+  # is identified by nothing -- the penalty is what identifies it, exactly as
+  # for a filter's deviations -- so the search fits each group's own points
+  # and hands the fit a start further from the penalized mode than the one it
+  # began with. A structural term's penalty covers positions among the term's
+  # own parameters and indexes no column, so it removes nothing here.
+  pen <- unlist(lapply(statmod_penalized(spec, design), function(u) {
+    if (isTRUE(u$structural)) integer(0) else u$index
+  }), use.names = FALSE)
+  setdiff(idx, as.integer(pen))
 }
 
 

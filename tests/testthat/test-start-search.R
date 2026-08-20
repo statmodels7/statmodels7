@@ -106,9 +106,43 @@ test_that("a filter's own parameters are reachable by the search", {
                tolerance = 1e-4)
 })
 
+test_that("a penalty inside a refreshable term keeps its coordinates out", {
+  # The rule is about the COORDINATE and not about its term. A sub-formula
+  # develops each of the term's own coefficients over the groups, and those
+  # deviations are columns of the term's block, so the block-level rule takes
+  # them; on the likelihood alone nothing identifies them, the penalty being
+  # what does. Measured on this shape at thirty groups, they were 210 of 219
+  # coordinates and one differenced gradient cost 2.3 s.
+  set.seed(7)
+  m <- 8L
+  d3 <- data.frame(g = factor(rep(seq_len(m), each = 40)),
+                   x = stats::runif(40 * m, 0, 10))
+  d3$y <- 1 + 0.4 * d3$x + 3 * pmax(d3$x - 6, 0) + stats::rnorm(40 * m, sd = 0.4)
+  sp <- statmod_spec(y ~ seg(x, psi ~ random(~ 1 | g)) - 1,
+                     distributions7::gaussian1_distrib(), d3)
+  de <- statmod_design(sp)
+  nms <- unlist(lapply(sp@distrib@params, function(p) de[[p]]$coef_names),
+                use.names = FALSE)
+  picked <- nms[statmodels7:::search_coords(sp, de)]
+  # the term's unpenalized coefficients and the POPULATION break-point, and
+  # not one of the group deviations
+  expect_false(any(grepl("random", picked)))
+  expect_true("seg.psi1.(Intercept)" %in% picked)
+  expect_true(all(c("seg.beta", "seg.gamma1") %in% picked))
+  # and the deviations really are there to be excluded, so the check above
+  # cannot pass by the block being small
+  pen <- statmodels7:::statmod_penalized(sp, de)
+  expect_gte(length(unlist(lapply(pen, function(u) u$index))), m)
+})
+
 test_that("the constructor validates its arguments", {
   expect_error(start_search(optimizer = "sa"), "must be an optimizers7")
   expect_error(start_search(over = 1), "character vector")
-  expect_error(start_search(hyper = NA), "TRUE or FALSE")
+  # `hyper` was documented and never read: the search runs on the likelihood
+  # with the penalties off, where a hyperparameter does not appear, so there
+  # was nothing for it to change. An argument that errors is better than one
+  # accepted and ignored; the search over the outer criterion it named is
+  # statmod(outer_optimizer = sa()).
+  expect_error(start_search(hyper = TRUE), "unused argument")
   expect_output(print(start_search()), "search")
 })
