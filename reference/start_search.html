@@ -9,7 +9,7 @@ where the likelihood is not convex."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.73.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ where the likelihood is not convex.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">start_search</span><span class="op">(</span>optimizer <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/sa.html" class="external-link">sa</a></span><span class="op">(</span><span class="op">)</span>, over <span class="op">=</span> <span class="cn">NULL</span>, hyper <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">start_search</span><span class="op">(</span>optimizer <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/sa.html" class="external-link">sa</a></span><span class="op">(</span><span class="op">)</span>, over <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,11 +56,6 @@ where the likelihood is not convex.</p>
 <dt id="arg-over">over<a class="anchor" aria-label="anchor" href="#arg-over"></a></dt>
 <dd><p>Optional names of the coefficients to search over, overriding
 the choice described above.</p></dd>
-
-
-<dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
-<dd><p>Whether to search the smooth hyperparameters too. Defaults to
-<code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -91,15 +86,24 @@ break-point terms), and each equation's intercept. Everything else keeps
 the default: a smooth, a ridge or a random effect is a convex block whose
 optimum the scoring step reaches from anywhere, and searching over a
 thousand random-effect coefficients would spend the whole budget on the
-one part of the model that does not need it. <code>over</code> overrides the
-choice by name.</p>
-<p><strong>The hyperparameters</strong> are left where they were unless
-<code>hyper = TRUE</code>, which extends the search to the smooth ones on their
-log scale. It is off by default because each of those coordinates costs a
-full refit at every proposal rather than one likelihood evaluation.
-Kinked penalties are never searched: their hyperparameter has a known
-upper end and is swept by a warm-started path, which a random jump would
-both fail to improve on and destroy.</p>
+one part of the model that does not need it. A penalized coordinate is
+excluded WHEREVER IT SITS, and in particular inside such a term: a
+sub-formula develops a break-point or a nonlinear parameter over groups,
+and those deviations are columns of the term's own block. They are the
+case the rule exists for — on the likelihood alone nothing identifies
+them, the penalty being what does, so a search over them fits each group's
+own points and moves AWAY from the penalized mode. <code>over</code> overrides
+the choice by name.</p>
+<p><strong>The hyperparameters are not searched, and cannot be from here.</strong>
+The objective is the likelihood with the penalties off, in which a
+hyperparameter does not appear at all, so there is nothing for a proposal
+to change. A global search over them is a search over the OUTER criterion,
+where each proposal costs a full refit rather than one likelihood
+evaluation, and it is already available as
+<code>statmod(outer_optimizer = optimizers7::sa())</code>. Kinked penalties are
+outside that too: their hyperparameter has a known upper end and is swept
+by a warm-started path, which a random jump would both fail to improve on
+and destroy.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

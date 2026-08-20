@@ -34,3 +34,8 @@ uses, so a term written later is covered without an edit here. A convex
 block is left out deliberately rather than forgotten: the scoring step
 reaches its optimum from anywhere, and a search over it would spend the
 budget where it buys nothing.
+
+A penalized coordinate is then removed wherever it sits, which is not
+the same question as whether its term is convex: a penalty declared
+through a sub-formula of a break-point or nonlinear term covers columns
+of that term's block, and the loop takes the whole block.

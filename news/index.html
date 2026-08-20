@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.73.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.73.0" id="statmodels7-0730">statmodels7 0.73.0<a class="anchor" aria-label="anchor" href="#statmodels7-0730"></a></h2>
+<ul><li><p><code><a href="../reference/start_search.html">start_search()</a></code> leaves a PENALIZED coordinate out wherever it sits. The rule was applied per term – a convex block is not searched – and a penalty declared through a sub-formula covers columns of a refreshable term’s own block, which the term-level rule takes whole. On <code>y ~ jseg(x, npsi = 2, by = ~random(~1 | id))</code> over thirty groups that was 210 of 219 coordinates, and with no analytic gradient the optimizer differences centrally, so one iteration cost 2.3 s against the milliseconds of a scoring step (measured: 13.06 s against 0.55 s for <code>lbfgs(maxit = 5)</code>, 24x). The budget was the smaller half: the search runs on the likelihood with the penalties off, where a deviation is identified by nothing at all, so it fitted each group’s own points and returned a start further from the penalized mode than the one it began with.</p></li>
+<li><p><code>start_search(hyper =)</code> is removed. It was documented and never read by <code><a href="../reference/start_at.html">start_at()</a></code>, and could not have been: the search objective is the likelihood with the penalties off, in which a hyperparameter does not appear, so no proposal could change one. A global search over the hyperparameters is a search over the outer criterion and is available as <code>statmod(outer_optimizer = optimizers7::sa())</code>; the page says so.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.72.1" id="statmodels7-0721">statmodels7 0.72.1<a class="anchor" aria-label="anchor" href="#statmodels7-0721"></a></h2>
 <ul><li>The thread twins separate the two claims they were conflating: the kernel’s count-invariance is asserted <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> kernel against kernel, and the comparison against the BLAS expression a kernel replaces carries a tolerance – OpenBLAS on the CI’s Linux runners and Accelerate on macOS block their accumulations, so <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> there asserted a property of the reference BLAS and reddened four of the five platforms. The <code><a href="../reference/wcrossprod.html">wcrossprod()</a></code>/<code><a href="../reference/xtv.html">xtv()</a></code>/<code><a href="../reference/xtv.html">wxsq()</a></code>/<code><a href="../reference/xtx.html">xtx()</a></code> pages state the same distinction.</li>

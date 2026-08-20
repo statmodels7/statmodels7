@@ -11,7 +11,7 @@ the terms that recompute their own design."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.72.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.73.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,10 @@ one <code><a href="unfittable_reason.html">unfittable_reason</a></code> uses, so
 covered without an edit here. A convex block is left out deliberately
 rather than forgotten: the scoring step reaches its optimum from anywhere,
 and a search over it would spend the budget where it buys nothing.</p>
+<p>A penalized coordinate is then removed wherever it sits, which is not the
+same question as whether its term is convex: a penalty declared through a
+sub-formula of a break-point or nonlinear term covers columns of that
+term's block, and the loop takes the whole block.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

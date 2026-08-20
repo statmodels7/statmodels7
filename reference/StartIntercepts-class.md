@@ -16,12 +16,7 @@ StartRandom(
   center = logical(0)
 )
 
-StartSearch(
-  label = character(0),
-  optimizer = NULL,
-  over = NULL,
-  hyper = logical(0)
-)
+StartSearch(label = character(0), optimizer = NULL, over = NULL)
 ```
 
 ## Arguments

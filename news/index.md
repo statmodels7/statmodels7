@@ -1,5 +1,31 @@
 # Changelog
 
+## statmodels7 0.73.0
+
+- [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
+  leaves a PENALIZED coordinate out wherever it sits. The rule was
+  applied per term – a convex block is not searched – and a penalty
+  declared through a sub-formula covers columns of a refreshable term’s
+  own block, which the term-level rule takes whole. On
+  `y ~ jseg(x, npsi = 2, by = ~random(~1 | id))` over thirty groups that
+  was 210 of 219 coordinates, and with no analytic gradient the
+  optimizer differences centrally, so one iteration cost 2.3 s against
+  the milliseconds of a scoring step (measured: 13.06 s against 0.55 s
+  for `lbfgs(maxit = 5)`, 24x). The budget was the smaller half: the
+  search runs on the likelihood with the penalties off, where a
+  deviation is identified by nothing at all, so it fitted each group’s
+  own points and returned a start further from the penalized mode than
+  the one it began with.
+
+- `start_search(hyper =)` is removed. It was documented and never read
+  by
+  [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md),
+  and could not have been: the search objective is the likelihood with
+  the penalties off, in which a hyperparameter does not appear, so no
+  proposal could change one. A global search over the hyperparameters is
+  a search over the outer criterion and is available as
+  `statmod(outer_optimizer = optimizers7::sa())`; the page says so.
+
 ## statmodels7 0.72.1
 
 - The thread twins separate the two claims they were conflating: the
