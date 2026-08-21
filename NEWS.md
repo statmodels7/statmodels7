@@ -1,3 +1,43 @@
+# statmodels7 0.76.0
+
+* `statmod_certificate()` reads three things AT THE REPORTED POINT, so what a
+  fit says about itself is a property of the point rather than of the search:
+  the outer criterion's gradient, how far the coefficients sit above the
+  penalized mode (`g'K^-1 g / 2`, in log-likelihood units), and which
+  hyperparameters have run to a boundary. Four states: `converged`,
+  `boundary`, `not converged`, and `unknown` where there is nothing to read.
+
+* Why not the convergence flag. It says whether a search stopped on its own
+  rule, and measured across shapes it does not order fits by quality: on one
+  model the default reported success at a criterion of -1783.47 while the same
+  data under `lbfgs()` reached -1664.43 and reported failure.
+
+* ⚠️ The state comes from the gradient and the mode error is reported BESIDE
+  it, not folded into it. Measured at the reported point over six shapes, the
+  gradient separates by five orders -- 4.7e-07, 7.8e-07, 5.8e-05, 7.7e-05 and
+  3.0e-04 on fits that are right against 28.8 on one that is not -- while the
+  mode error does not: 1.8e-16 to 6.1e-12 on four of them, 22.8 on the failing
+  one, and 0.114 on a random-changepoint `seg` whose answer is right to a
+  correlation of 0.9932. A number that does not separate cannot decide a
+  state, and a certificate that says how far from the mode is worth more than
+  a boolean that hides it. That `seg` fit certifies as converged and carries
+  the 0.114 as a line of its own.
+
+* `tol` is 1e-2 rather than the geometric middle of the two groups because the
+  two ways of being wrong are not symmetric: a certificate that says NOT
+  CONVERGED at a good point is visible and checkable, one that certifies a bad
+  point is the failure it exists to remove.
+
+* It costs one outer gradient and one solve, once, and refits nothing. The
+  criterion reconstructed from `fit@spec` equals the one the fit reports
+  EXACTLY on every shape measured, so the reading is of the fitted model.
+  A form with no exact outer gradient, or a fit with no marginal criterion,
+  leaves the gradient `NA` and the state `unknown` rather than differencing it
+  at 2p refits.
+
+* `summary()` carries it and prints it, boundary coordinates by name and the
+  reasons in full. A quantity no view displays is a quantity nothing checks.
+
 # statmodels7 0.75.0
 
 * `criterion_resolution()` refuses to report a resolution where the inner fit

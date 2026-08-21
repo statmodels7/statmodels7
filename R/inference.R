@@ -839,7 +839,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     elapsed = S7::class_numeric,
     level = S7::class_numeric,
     type = S7::class_character,
-    notes = S7::class_character
+    notes = S7::class_character,
+    # the reading of statmod_certificate(), or NULL where it could not be
+    # taken. A list rather than columns: its four readings are of different
+    # kinds and one of them is a set of names.
+    certificate = S7::new_property(S7::class_any, default = NULL)
   )
 )
 
@@ -1032,7 +1036,13 @@ summary.StatmodFit <- function(object, level = 0.95,
     aic = -2 * object@loglik + 2 * df,
     bic = -2 * object@loglik + log(spec@n_obs) * df,
     converged = object@converged, elapsed = object@elapsed,
-    level = level, type = type, notes = notes)
+    level = level, type = type, notes = notes,
+    # read HERE and not in statmod(): it costs one outer gradient and one
+    # solve, which is nothing beside a summary that already inverts the
+    # penalized information, and a fold of cv() or a path point that never
+    # prints itself pays nothing at all.
+    certificate = tryCatch(statmod_certificate(object),
+                           error = function(e) NULL))
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
@@ -1508,6 +1518,26 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
               x@loglik, x@df, x@aic, x@bic))
   cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
+  # THE CERTIFICATE, which is a property of the POINT where the line above is
+  # a property of the search. The two disagree exactly where it matters: a
+  # search can stop on its own rule far from an optimum, and a search that
+  # kept going can end at one. See statmod_certificate().
+  if (!is.null(x@certificate)) {
+    ct <- x@certificate
+    cat(sprintf("certificate: %s", toupper(ct$state)))
+    if (is.finite(ct$gradient)) {
+      cat(sprintf("   outer gradient %.3g", ct$gradient))
+    }
+    if (is.finite(ct$mode_error)) {
+      cat(sprintf("   %.3g above the mode", ct$mode_error))
+    }
+    cat("\n")
+    if (length(ct$boundary)) {
+      cat("  at a boundary: ", paste(ct$boundary, collapse = ", "), "\n",
+          sep = "")
+    }
+    for (r in ct$reason) cat("  ", r, "\n", sep = "")
+  }
   if (length(x@notes)) {
     cat("\n")
     for (n in x@notes) cat("  ", n, "\n", sep = "")
@@ -1582,4 +1612,156 @@ print_block <- function(b, digits = 4L) {
   rownames(out) <- tb$name
   print(out)
   invisible(NULL)
+}
+
+
+#' What the Fit Certifies About the Point It Reports
+#'
+#' @description
+#' Three readings taken AT THE REPORTED POINT and independent of the path the
+#' search took: the outer criterion's gradient, how far the coefficients sit
+#' above the penalized mode, and which hyperparameters have run to a boundary.
+#'
+#' @details
+#' \strong{Why a certificate rather than the optimizer's flag.} The flag says
+#' whether a search stopped on its own rule, which is a statement about the
+#' search. Measured across shapes, it does not order fits by quality: on one
+#' model the default reported success at a criterion of -1783.47 while the same
+#' data under \code{\link[optimizers7]{lbfgs}} reached -1664.43 and reported
+#' failure. What a reader wants is a property of the point.
+#'
+#' \strong{The state comes from the gradient and the mode error is reported
+#' beside it, not folded into it.} Measured at the reported point over six
+#' shapes, the outer gradient separates by five orders -- 4.7e-07, 7.8e-07,
+#' 5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
+#' that is not -- while the mode error does not: it reads 1.8e-16 to 6.1e-12 on
+#' four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
+#' \code{seg} whose answer is right to a correlation of 0.9932. A number that
+#' does not separate cannot decide a state, and a certificate that says how far
+#' from the mode is worth more than a boolean that hides it.
+#'
+#' \code{tol} is 1e-2 rather than the geometric middle of the two groups: the
+#' two ways of being wrong are not symmetric, and a certificate that says NOT
+#' CONVERGED at a good point is visible and checkable where one that certifies
+#' a bad point is the failure this exists to remove.
+#'
+#' \strong{What it costs} is one outer gradient and one solve, once, at a point
+#' the fit already holds. Nothing is refitted: measured, the criterion
+#' reconstructed from \code{fit@spec} equals the one the fit reports EXACTLY on
+#' every shape, so the reading is of the fitted model and not of another one.
+#'
+#' \strong{Where it cannot read.} A form whose criterion has no exact gradient
+#' (\code{\link{outer_gradient_ok}}), or a fit with no marginal criterion at
+#' all, leaves the gradient \code{NA} and the state \code{"unknown"} rather
+#' than approximated -- 2p refits to difference it would cost more than the
+#' fit.
+#'
+#' @param fit A \code{\link{StatmodFit}}.
+#' @param tol The largest outer gradient a certified point may carry.
+#'
+#' @return A list with \code{state} (\code{"converged"}, \code{"boundary"},
+#'   \code{"not converged"} or \code{"unknown"}), \code{gradient},
+#'   \code{mode_error}, \code{boundary} and \code{reason}.
+#'
+#' @seealso \code{\link{statmod}}, \code{\link{mode_error_limit}},
+#'   \code{\link{criterion_resolution}}
+#'
+#' @examples
+#' dd <- data.frame(x = runif(120))
+#' dd$y <- sin(4 * dd$x) + rnorm(120, 0, 0.3)
+#' statmod_certificate(statmod(y ~ s(x, k = 8),
+#'                             distributions7::gaussian1_distrib(), dd))$state
+#'
+#' @export
+statmod_certificate <- function(fit, tol = 1e-2) {
+  out <- list(state = "unknown", gradient = NA_real_, mode_error = NA_real_,
+              boundary = character(0), reason = character(0))
+  method <- fit@methods$outer
+  spec <- fit@spec
+  design <- tryCatch(statmod_design(spec), error = function(e) NULL)
+  if (is.null(design)) {
+    out$reason <- "the design could not be rebuilt from the fit"
+    return(out)
+  }
+  cf <- fit@coefficients
+  hy <- fit@hyper
+  ctx <- tryCatch(outer_context(spec, design, cf, hy, "bartlett"),
+                  error = function(e) NULL)
+
+  # HOW FAR ABOVE THE MODE, in log-likelihood units: the decrease the mode's
+  # own Newton correction predicts. Reported whether or not a criterion ran.
+  if (!is.null(ctx)) {
+    pen <- tryCatch(ctx_penalized(ctx, spec, design, cf, hy, FALSE),
+                    error = function(e) NULL)
+    if (!is.null(pen)) {
+      obj <- tryCatch(statmod_objective(spec, hy, design, FALSE, "bartlett"),
+                      error = function(e) NULL)
+      sc <- if (is.null(obj)) NULL else
+        tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
+      if (!is.null(sc) && all(is.finite(sc))) {
+        db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% sc),
+                       error = function(e) NULL)
+        if (!is.null(db) && all(is.finite(db))) {
+          out$mode_error <- 0.5 * sum(sc * db)
+        }
+      }
+    }
+  }
+
+  if (is.null(method) || !method@kind %in% c("ml", "reml")) {
+    out$reason <- "no marginal criterion was estimated, so there is no outer gradient to read"
+    return(out)
+  }
+  blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
+  idx <- if (is.null(blocks)) NULL else outer_hyper_index(spec, blocks)
+  if (is.null(idx) || !nrow(idx)) {
+    out$reason <- "no hyperparameter was estimated by a marginal criterion"
+    return(out)
+  }
+  if (!outer_gradient_ok(spec, design, idx, method, 1L)) {
+    out$reason <- "this form has no exact outer gradient, and differencing it would cost more than the fit"
+    return(out)
+  }
+  basis <- integrated_basis(spec, design, method@kind)
+  g <- tryCatch(statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
+                                      ctx = ctx),
+                error = function(e) NULL)
+  if (is.null(g) || !all(is.finite(g))) {
+    out$reason <- "the outer gradient is not finite at the reported point"
+    out$state <- "not converged"
+    return(out)
+  }
+  # A COORDINATE AT A BOUNDARY is one whose criterion has stopped moving in it
+  # while its value has run far from where it started. Both halves are needed:
+  # a small gradient component alone is what convergence looks like, and a
+  # large value alone is an ordinary answer on a wide scale. Measured, the
+  # coordinates that ran to an edge sit at |eta| of 9.3, 10.5 and 20.6 -- a
+  # smoothing parameter of 9.2e+08 on pure noise, prior scales of 9.2e-05 and
+  # 2.8e-05 -- against 0.13, 0.30 and 2.01 for the ones that did not. The
+  # threshold only decides the LABEL and never whether the point is certified.
+  eta <- hyper_to_eta(hy, idx)
+  edge <- which(abs(eta) > 8 & abs(g) <= tol)
+  if (length(edge)) {
+    out$boundary <- vapply(edge, function(k)
+      paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
+      character(1))
+  }
+  interior <- setdiff(seq_along(g), edge)
+  out$gradient <- if (length(interior)) max(abs(g[interior])) else 0
+  if (out$gradient <= tol) {
+    out$state <- if (length(edge)) "boundary" else "converged"
+  } else {
+    out$state <- "not converged"
+    out$reason <- sprintf(
+      "the outer criterion's gradient is %.4g at the reported point, against %g",
+      out$gradient, tol)
+  }
+  if (is.finite(out$mode_error) && out$mode_error > mode_error_limit()) {
+    out$reason <- c(out$reason, sprintf(
+      paste0("the coefficients sit %.4g log-likelihood units above the",
+             " penalized mode, so everything read there -- the criterion,",
+             " its gradient, vcov() -- carries that"),
+      out$mode_error))
+  }
+  out
 }

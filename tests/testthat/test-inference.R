@@ -372,3 +372,74 @@ test_that("a shape parameter is reported with a standard error and interval", {
   expect_gt(tb$estimate[1L], 0.1)
   expect_lt(tb$estimate[1L], 0.5)
 })
+
+
+test_that("the certificate is a property of the point, not of the search", {
+  # WHY IT EXISTS. The convergence flag says whether a search stopped on its
+  # own rule, which is a statement about the search, and measured across
+  # shapes it does not order fits by quality: on one model the default
+  # reported success at a criterion of -1783.47 while the same data under
+  # lbfgs() reached -1664.43 and reported failure. The certificate is read at
+  # the reported point instead.
+  set.seed(41)
+  n <- 300
+  d <- data.frame(x = runif(n))
+  d$y <- sin(5 * d$x) + rnorm(n, 0, 0.3)
+
+  fit <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  ct <- statmod_certificate(fit)
+  expect_identical(ct$state, "converged")
+  expect_lt(ct$gradient, 1e-2)
+  expect_true(is.finite(ct$mode_error))
+  expect_length(ct$boundary, 0L)
+  expect_length(ct$reason, 0L)
+
+  # IT MUST BE ABLE TO REFUSE, or "converged" says nothing. The same fit
+  # against a tolerance below the gradient it actually carries.
+  strict <- statmod_certificate(fit, tol = ct$gradient / 10)
+  expect_identical(strict$state, "not converged")
+  expect_match(strict$reason[1], "gradient")
+})
+
+
+test_that("the certificate declares a boundary and refuses where it cannot read", {
+  # A SMOOTH ON PURE NOISE is the boundary case that is a right answer: REML
+  # penalizes the wiggle away and the smoothing parameter runs to the edge.
+  # The certificate says so by name rather than reporting an ordinary fit.
+  set.seed(42)
+  n <- 300
+  d <- data.frame(x = runif(n), y = rnorm(300))
+  noise <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), d,
+                   outer_criterion = reml())
+  cn <- statmod_certificate(noise)
+  expect_identical(cn$state, "boundary")
+  expect_gt(length(cn$boundary), 0L)
+
+  # AND WHERE THERE IS NOTHING TO READ IT SAYS SO. A fit with no marginal
+  # criterion has no outer gradient, and 2p refits to difference one would
+  # cost more than the fit: the state is "unknown" with the reason, never a
+  # number of another kind.
+  plain <- statmod(y ~ x, gaussian1_distrib(), d, outer_criterion = NULL)
+  cp <- statmod_certificate(plain)
+  expect_identical(cp$state, "unknown")
+  expect_true(is.na(cp$gradient))
+  expect_match(cp$reason[1], "no marginal criterion")
+  # the mode error is still read: it needs no criterion
+  expect_true(is.finite(cp$mode_error))
+})
+
+
+test_that("summary carries the certificate and prints it", {
+  set.seed(43)
+  n <- 200
+  d <- data.frame(x = runif(n))
+  d$y <- sin(4 * d$x) + rnorm(n, 0, 0.3)
+  s <- summary(statmod(y ~ s(x, k = 8), gaussian1_distrib(), d,
+                       outer_criterion = reml()))
+  expect_false(is.null(s@certificate))
+  expect_true(s@certificate$state %in%
+                c("converged", "boundary", "not converged", "unknown"))
+  out <- utils::capture.output(print(s))
+  expect_true(any(grepl("certificate:", out, fixed = TRUE)))
+})

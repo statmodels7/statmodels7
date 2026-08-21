@@ -57,6 +57,7 @@ reference:
     elapsed time in the unit it deserves.
   contents:
   - loglik
+  - statmod_certificate
   - statmod_latent
   - format_duration
 
