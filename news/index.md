@@ -1,5 +1,23 @@
 # Changelog
 
+## statmodels7 0.80.1
+
+- The column norms of the equilibrated sparse rank test come from
+  `colSums(A^2)` rather than `colSums(A * A)`. The second is a binary
+  operation between two sparse matrices and intersects their index sets;
+  the first acts on the `x` slot with the pattern untouched, and the two
+  return the same numbers to the bit. The line arrived with the rank
+  test in 0.79.0 and cost 20 to 31 ms at every inner iteration: measured
+  on the three shapes a penalized fit meets here, 50.00 ms against 1.74,
+  26.56 against 0.76 and 19.69 against 0.64, which is 29x to 35x, and on
+  those shapes the norms were 70 to 74 per cent of the whole augmented
+  solve against a QR of 21.25, 9.53 and 7.50 ms. End to end, with the
+  log-likelihood, the effective degrees of freedom and every coefficient
+  identical: 1.29x on a gaussian smooth with a random effect over 500
+  levels, 1.18x over 1000, 1.31x on the poisson, and 1.09x and 1.07x on
+  the two shapes whose cost sits in the criterion rather than in the
+  refits.
+
 ## statmodels7 0.80.0
 
 - The leverage diagonal over the nonzeros of two sparse designs is a
