@@ -291,6 +291,40 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
   db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% st$score),
                  error = function(e) NULL)
   if (is.null(db) || !all(is.finite(db))) return(NA_real_)
+  # ⚠️ A RESOLUTION IS A CORRECTION'S WORTH OF CRITERION, AND ONLY WHERE THE
+  # CORRECTION IS SMALL. What is computed below is how far the criterion moves
+  # when the coefficients are displaced by the mode error the inner score
+  # implies, and that reading is a resolution only while the inner fit is AT a
+  # mode. Where it is not, the same arithmetic returns something much larger,
+  # and handing THAT to `crit_abs_obj()` converts a badly located mode into a
+  # declaration of convergence.
+  #
+  # Measured on a hierarchical break-point model: the inner fit reports
+  # convergence with a score of 247.8 -- against 3.6e-04 on a smooth and
+  # 8.2e-06 on a random intercept -- the implied displacement is 20 in
+  # coefficient units, and the criterion duly moves by 28, which is MORE THAN
+  # THE WHOLE MOVEMENT OF THE CRITERION over the search (18.31) and four
+  # orders above the 1.6e-03 the criterion's reproducibility measures
+  # directly. Told that, lbfgs stopped after TWO evaluations reporting success
+  # a hundred REML units short of what the same search reaches when it is told
+  # nothing.
+  #
+  # The test is the displacement's own predicted decrease, `g'K^-1 g / 2`,
+  # which is the amount by which the inner objective sits above its minimum
+  # and is therefore in log-likelihood units rather than in the coefficients'.
+  # It separates the two situations by nine orders: measured over whole fits
+  # it reaches 2.8e-08 on a smooth and 1.4e-10 on a random intercept against
+  # 20.9 to 22.9 on the break-point model, so the limit's exact value is not
+  # what decides anything -- 1e-03 has five orders of room on either side.
+  #
+  # Refusing is NOT masking the inner fit's failure: the fit still reports
+  # what it reports, the criterion is still read there, and what stops is
+  # only the conversion of an unlocated mode into a stopping tolerance. The
+  # reason is carried on the returned NA so that the trace can say it.
+  quad <- tryCatch(0.5 * sum(st$score * db), error = function(e) NA_real_)
+  if (!is.finite(quad) || quad > mode_error_limit()) {
+    return(structure(NA_real_, mode_error = quad))
+  }
   par2 <- st$par - db
   # a FRESH context, the displaced coefficients not being the ones the cached
   # information, penalty and factorization were built at
@@ -484,3 +518,34 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
   }
   v
 }
+
+
+#' How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution
+#'
+#' @description
+#' The limit \code{\link{criterion_resolution}} puts on \eqn{g'K^{-1}g/2}, the
+#' decrease the mode's own Newton correction predicts, before it refuses to
+#' report a resolution at all.
+#'
+#' @details
+#' The resolution is read by displacing the coefficients to where the inner
+#' score says the mode is and asking how far the criterion moved. That is a
+#' resolution while the displacement is a correction and something else
+#' entirely once it is not: an inner fit that stopped far from a mode produces
+#' a large displacement, a large movement, and a number that
+#' \code{\link[optimizers7]{crit_abs_obj}} would read as licence to stop.
+#'
+#' The quantity tested is in log-likelihood units rather than in the
+#' coefficients', so one limit serves every shape. Measured over whole fits it
+#' reaches 2.8e-08 on a smooth and 1.4e-10 on a random intercept, against 20.9
+#' to 22.9 on a hierarchical break-point model whose inner fit reports
+#' convergence at a score of 247.8. Nine orders separate them, so the value
+#' below has five orders of room on either side and is not what decides
+#' anything.
+#'
+#' @return A single number.
+#'
+#' @seealso \code{\link{criterion_resolution}}
+#'
+#' @keywords internal
+mode_error_limit <- function() 1e-3

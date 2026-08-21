@@ -644,10 +644,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # chosen whole, the rule included, because only this package knows what the
   # criterion it is being pointed at can resolve.
   chose_optimizer <- is.null(optimizer)
-  if (chose_optimizer) {
-    optimizer <- if (exact2) optimizers7::newton() else
-      if (exact) optimizers7::lbfgs() else optimizers7::nelder_mead()
-  }
+  if (chose_optimizer) optimizer <- outer_default_optimizer(exact, exact2)
   # Whether the TRACE prints a gradient. It reports what the search is using,
   # so where the search uses none there is none to report, and asking would
   # compute the quantity the laziness below exists to avoid.
@@ -876,6 +873,18 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       if (is.finite(r) && r > 0) {
         state$resolution <- if (is.finite(state$resolution))
           min(state$resolution, r) else r
+      } else if (!is.null(attr(r, "mode_error"))) {
+        # REFUSED because the inner fit is not at a mode, and that is worth
+        # saying: the search then runs with no resolution at all, which is
+        # what it did before one existed, and the reason is a property of the
+        # fit rather than of the search. Said ONCE -- it is the same fit
+        # every evaluation and a line per evaluation would be noise.
+        if (vb$outer && !isTRUE(state$said_mode_error)) {
+          state$said_mode_error <- TRUE
+          vb_say(paste0("no resolution: the inner fit sits %.3g above its own",
+                        " minimum, so the displacement it implies is not a",
+                        " correction"), attr(r, "mode_error"), indent = 5L)
+        }
       }
     }
     out
@@ -1001,30 +1010,88 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         optimizer,
         criterion = optimizers7::crit_any(
           optimizer@criterion, optimizers7::crit_abs_obj(resolution)))
-      # ⚠️ THE LINE SEARCH IS GIVEN A TENTH OF IT, and the two reasons both
-      # point the same way. What is computed here is the spread between
-      # evaluations reached from DIFFERENT warm starts, while a line search
-      # compares trials taken one after another from nearly the same state,
-      # where the criterion is far more reproducible -- repeated at one
-      # hyperparameter from a running warm start its spread is exactly zero.
-      # And the reading is the more aggressive consumer, ending a whole
-      # iteration rather than one comparison. Measured at the full number on a
-      # gaussian smooth: the search stops after 3 evaluations against 29 and
-      # gives up 3.2e-06 of criterion against a resolution of 9.7e-07, so it
-      # stops just before it has to; at a tenth it reaches the same optimum as
-      # a search that was told nothing.
-      #
-      # a derivative-free search has no line search, so the property is asked
-      # for rather than assumed. It is given a CLOSURE, so the number it reads
-      # is the running minimum as the search has refined it and not the reading
-      # from the cold start.
-      if ("line_search" %in% S7::prop_names(optimizer)) {
-        optimizer <- S7::set_props(
-          optimizer,
-          line_search = S7::set_props(
-            optimizer@line_search,
-            resolution = function() state$resolution / 10))
-      }
+    }
+    # ⚠️ THE LINE SEARCH IS GIVEN A TENTH OF IT, and the two reasons both point
+    # the same way. What is computed is the spread between evaluations reached
+    # from DIFFERENT warm starts, while a line search compares trials taken one
+    # after another from nearly the same state, where the criterion is far more
+    # reproducible -- repeated at one hyperparameter from a running warm start
+    # its spread is exactly zero. And the reading is the more aggressive
+    # consumer, ending a whole iteration rather than one comparison. Measured
+    # at the full number on a gaussian smooth: the search stops after 3
+    # evaluations against 29 and gives up 3.2e-06 of criterion against a
+    # resolution of 9.7e-07, so it stops just before it has to; at a tenth it
+    # reaches the same optimum as a search that was told nothing.
+    #
+    # A derivative-free search has no line search, so the property is asked for
+    # rather than assumed.
+    #
+    # ⚠️ AND IT IS GIVEN ITS CLOSURE WHETHER OR NOT THE FIRST READING WAS
+    # USABLE, which is the whole difference between the two consumers.
+    # The criterion's rule is a number settled before the run, so it can only
+    # be built from the reading at the starting point -- a cold start, the
+    # worst-located mode of the whole fit. The line search reads a CLOSURE over
+    # the running minimum, so it needs no reading now and picks up whatever the
+    # search refines later.
+    #
+    # Nesting it inside the test above threw that away: measured on
+    # `seg(x, psi ~ random(~1|id))`, whose first reading is refused because the
+    # cold-started mode sits 0.046 above its own minimum while the RUNNING
+    # MINIMUM is 3.1e-11, the fit went from 5 evaluations to 18 and from
+    # converged to not -- at an identical answer, cor 0.9932 and rmse 0.0674
+    # either way. Outside the test the closure serves that fit from the good
+    # readings that follow.
+    #
+    # Where no reading is ever usable the closure returns NA, which
+    # optimizers7 reads as no resolution at all -- which is the answer for a
+    # fit whose mode is never located.
+    if ("line_search" %in% S7::prop_names(optimizer)) {
+      optimizer <- S7::set_props(
+        optimizer,
+        line_search = S7::set_props(
+          optimizer@line_search,
+          resolution = function() state$resolution / 10))
+    }
+    # THE BACKTRACKING BUDGET, and it is a COST decision rather than a
+    # numerical one, which is why it sits outside the resolution's block and
+    # is set whether or not one could be computed.
+    #
+    # optimizers7 defaults to 30 backtracks, which is right for an objective
+    # costing microseconds. Here a trial is a penalized refit, and a line
+    # search that is going to fail spends the whole budget discovering it --
+    # the traces that started this work show two blocks of 31 identical
+    # evaluations, which is that budget burned twice.
+    #
+    # ⚠️ WHAT IT BUYS IS SMALLER THAN THE EVALUATION COUNT SUGGESTS, and the
+    # reason is in evaluate() above: `state$beta` is written only after a
+    # point is known usable, so every trial of a line search warm-starts from
+    # the last ACCEPTED point, and as the step shrinks the trial begins at
+    # very nearly its own answer. Measured, removing 22 of 38 evaluations
+    # removed 2.8 s of 30.8 -- 0.13 s each against an average evaluation's
+    # 0.81. An evaluation count is not a cost here.
+    #
+    # ⚠️ AND IT MUST BE MEASURED ON THIS PATH AND NOT ANOTHER. Swept with the
+    # optimizer NAMED -- which turns the resolution above off -- a short budget
+    # flips the convergence flag from TRUE to FALSE on healthy shapes, and that
+    # would have been a bad trade. It does not happen here: measured at 30, 12
+    # and 8 backtracks on a smooth, two smooths with a random effect, and a
+    # random intercept, all three are unchanged in evaluations, criterion to
+    # six decimals, effective degrees of freedom and flag, the resolution rule
+    # stopping the search before the budget is ever reached. What moves is the
+    # expensive shape: a hierarchical break-point model goes from 31
+    # evaluations and 25.6 s to 13 and 20.3, with the criterion 1.3e-04 BETTER
+    # and the edf identical.
+    #
+    # 12 rather than 8 because 12 takes 5.3 s of the 6.6 available and 8 takes
+    # the rest at a criterion the named-optimizer sweep shows starting to
+    # degrade: against a budget of 30 the criterion given up there is 4.8e-05
+    # at 12, 7.8e-04 at 8 and 3.3e-03 at 6, and the last is past the 1.6e-03
+    # that criterion can resolve.
+    if ("line_search" %in% S7::prop_names(optimizer)) {
+      optimizer <- S7::set_props(
+        optimizer,
+        line_search = S7::set_props(optimizer@line_search,
+                                    max_step = outer_backtracks()))
     }
   }
 
@@ -1094,4 +1161,68 @@ hyper_value <- function(hyper, idx, j) {
 vb_inner <- function(vb) {
   vb$blocks <- vb$blocks && vb$inner
   vb
+}
+
+
+#' The Outer Line Search's Backtracking Budget
+#'
+#' @description
+#' How many backtracks a line search inside \code{\link{outer_fit}} may take
+#' before it gives up, where the optimizer is the one this package chose.
+#'
+#' @details
+#' \pkg{optimizers7} defaults to 30, which suits an objective costing
+#' microseconds. Every trial here is a penalized refit, and a line search that
+#' is going to fail spends its whole budget finding that out.
+#'
+#' The saving is smaller than the evaluation count implies. Every trial
+#' warm-starts from the last accepted point, so as the step shrinks the refit
+#' begins at nearly its own answer: measured, removing 22 evaluations of 38
+#' removed 2.8 seconds of 30.8, which is 0.13 seconds each against an average
+#' evaluation's 0.81.
+#'
+#' What it costs is nothing on the shapes where nothing was wrong. Measured at
+#' 30, 12 and 8 backtracks on a smooth, on two smooths with a random effect and
+#' on a random intercept, all three are unchanged in evaluations, in criterion
+#' to six decimals, in effective degrees of freedom and in the convergence
+#' flag: the resolution \code{\link{criterion_resolution}} supplies stops the
+#' search before the budget is ever reached. A hierarchical break-point model
+#' goes from 31 evaluations and 25.6 seconds to 13 and 20.3, with the criterion
+#' 1.3e-04 better and the same degrees of freedom.
+#'
+#' The value is 12 rather than 8 because 12 takes 5.3 seconds of the 6.6 there
+#' are to take, and because the criterion 8 gives up is larger: swept with the
+#' optimizer named, so that the resolution does not mask it, the criterion lost
+#' against a budget of 30 is 4.8e-05 at 12, 7.8e-04 at 8 and 3.3e-03 at 6, the
+#' last being past the 1.6e-03 that criterion can resolve.
+#'
+#' An optimizer the caller named keeps its own budget, as it keeps its own
+#' stopping rule.
+#'
+#' @return A single number.
+#'
+#' @seealso \code{\link{outer_fit}}, \code{\link{criterion_resolution}}
+#'
+#' @keywords internal
+outer_backtracks <- function() 12
+
+
+#' Which Optimizer the Outer Search Uses When the Caller Names None
+#'
+#' @description
+#' The choice is made from what the criterion can supply: its exact Hessian,
+#' its exact gradient, or neither.
+#'
+#' @param exact Whether the criterion has an exact gradient.
+#' @param exact2 Whether it has an exact Hessian as well.
+#'
+#' @return An \pkg{optimizers7} optimizer.
+#'
+#' @seealso \code{\link{outer_fit}}, \code{\link{outer_gradient_ok}}
+#'
+#' @keywords internal
+outer_default_optimizer <- function(exact, exact2) {
+  if (exact2) return(optimizers7::newton())
+  if (exact) return(optimizers7::lbfgs())
+  optimizers7::nelder_mead()
 }

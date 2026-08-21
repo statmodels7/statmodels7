@@ -1,3 +1,79 @@
+# statmodels7 0.75.0
+
+* `criterion_resolution()` refuses to report a resolution where the inner fit
+  is not at a mode. The reading displaces the coefficients to where the inner
+  score says the mode is and asks how far the criterion moved, which is a
+  resolution while that displacement is a CORRECTION and something else once
+  it is not. The test is the displacement's own predicted decrease,
+  `g'K^-1 g / 2`, in log-likelihood units rather than the coefficients', so
+  one limit (`mode_error_limit()`, 1e-3) serves every shape.
+
+* ⚠️ It was not the estimate that was wrong. Measured on a hierarchical
+  break-point model, the inner fit reports convergence with a score of
+  **247.8** -- against 3.6e-04 on a smooth and 8.2e-06 on a random intercept
+  -- and given a mode located that badly the criterion genuinely is uncertain
+  by 28, which is more than its whole movement over the search (18.31) and
+  four orders above the 1.6e-03 its reproducibility measures directly. The
+  arithmetic was right and the point was not, so what is refused is the
+  conversion of an unlocated mode into a stopping tolerance, not the reading.
+  **The inner fit's convergence claim at a score of 247.8 is a separate and
+  larger defect**, recorded in `piano_stabilita.txt`.
+
+* Measured, and it does what it should and nothing else. A smooth, two smooths
+  with a random effect and a random intercept are unchanged under both
+  optimizers -- identical evaluation counts (4, 18, 7, 27, 9, 23) and criteria
+  agreeing to 4e-07, which is their own reproducibility. On the break-point
+  model `lbfgs` goes from **2 evaluations, -1764.283 and `converged = TRUE`**
+  to **20 evaluations and -1664.434**, a gain of **99.85 REML units**;
+  `newton()` is unchanged at -1815.372, stopping for another reason.
+
+* The trace says when a resolution was refused and what the inner fit's excess
+  was, once per fit rather than once per evaluation.
+
+* ⚠️ The guard alone was not enough, and one test said so. The rule the
+  criterion carries is a NUMBER settled before the run, so it can only be
+  built from the reading at the starting point -- a cold start, the
+  worst-located mode of the whole fit -- while the line search reads a CLOSURE
+  over the running minimum. Nesting the line search inside the test for a
+  usable first reading threw that away: `seg(x, psi ~ random(~1|id))`, whose
+  first reading is refused because its cold mode sits 0.046 above its own
+  minimum while the RUNNING MINIMUM is 3.1e-11, went from 5 evaluations to 18
+  and from converged to not, at an identical answer -- cor 0.9932 and rmse
+  0.0674 either way. The closure is now given whether or not the first reading
+  was usable, and that fit is back to 6 evaluations and `TRUE`.
+
+* `outer_default_optimizer()` is the policy `exact2 -> newton()`, extracted so
+  that it can be read, pinned and swept. Behaviour is unchanged.
+
+# statmodels7 0.74.0
+
+* The outer line search gets a backtracking budget of 12 rather than
+  `optimizers7`'s default of 30, on the optimizer this package CHOOSES and on
+  no other: an optimizer the caller named keeps its own budget as it keeps its
+  own stopping rule. 30 suits an objective costing microseconds, and here every
+  trial is a penalized refit.
+
+* It costs nothing where nothing was wrong. Measured at 30, 12 and 8 backtracks
+  on a smooth, on two smooths with a random effect and on a random intercept,
+  all three are unchanged in evaluations, in criterion to six decimals, in
+  effective degrees of freedom and in the convergence flag -- the resolution
+  `criterion_resolution()` supplies ends the search before the budget is ever
+  reached. A hierarchical break-point model goes from 31 evaluations and
+  25.6 s to 13 and 20.3, with the criterion 1.3e-04 better and the same
+  degrees of freedom.
+
+* ⚠️ What it buys is smaller than the evaluation count implies, and the reason
+  is that every trial warm-starts from the last ACCEPTED point: as the step
+  shrinks the refit begins at nearly its own answer, so removing 22 evaluations
+  of 38 removed 2.8 s of 30.8, which is 0.13 s each against an average
+  evaluation's 0.81.
+
+* 12 rather than 8 because 12 takes 5.3 s of the 6.6 there are to take, and
+  because swept with the optimizer named -- where the resolution does not mask
+  it -- the criterion given up against a budget of 30 is 4.8e-05 at 12,
+  7.8e-04 at 8 and 3.3e-03 at 6, the last being past the 1.6e-03 that
+  criterion can resolve.
+
 # statmodels7 0.73.0
 
 * `start_search()` leaves a PENALIZED coordinate out wherever it sits. The

@@ -414,3 +414,138 @@ test_that("a path that cannot score a single point says so", {
   expect_false(isTRUE(all.equal(
     unname(b@hyper$mu[["lasso(Z)"]][["lambda"]]), 1)))
 })
+
+
+test_that("the outer line search gets a short backtracking budget", {
+  # optimizers7 defaults to 30 backtracks, which suits an objective costing
+  # microseconds; here a trial is a penalized refit. The budget is set on the
+  # optimizer THIS PACKAGE CHOOSES and on no other, the rule that a named
+  # optimizer is the caller's applying to its budget as to its stopping rule.
+  expect_identical(outer_backtracks(), 12)
+
+  set.seed(11)
+  n <- 200
+  d <- data.frame(x = runif(n), g = factor(rep(1:20, each = 10)))
+  d$y <- sin(6 * d$x) + rnorm(20)[as.integer(d$g)] + rnorm(n, 0, 0.3)
+
+  fit <- statmod(y ~ s(x, k = 10) + random(~1 | g), gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  ls <- fit@methods$search@line_search
+  expect_identical(ls@max_step, 12)
+
+  # AND AN OPTIMIZER THE CALLER NAMED KEEPS ITS OWN, which is the half that
+  # makes the rule a rule rather than a global.
+  named <- statmod(y ~ s(x, k = 10) + random(~1 | g), gaussian1_distrib(), d,
+                   outer_criterion = reml(), outer_optimizer = newton())
+  expect_identical(named@methods$search@line_search@max_step, 30)
+})
+
+
+test_that("the short budget costs nothing where nothing was wrong", {
+  # THE CONTROL, and it is the reason the change is safe. Swept with the
+  # optimizer NAMED -- which turns the resolution off -- a short budget flips
+  # the convergence flag on healthy shapes. On the path the budget is actually
+  # set on it does not, because the resolution rule ends the search before the
+  # budget is reached: a fit run at 30 backtracks and at 12 agrees in its
+  # criterion, its coefficients, its degrees of freedom and its flag.
+  set.seed(12)
+  n <- 300
+  d <- data.frame(x = runif(n), g = factor(rep(1:30, each = 10)))
+  d$y <- sin(5 * d$x) + rnorm(30, 0, 0.5)[as.integer(d$g)] + rnorm(n, 0, 0.3)
+  form <- y ~ s(x, k = 12) + random(~1 | g)
+
+  at_budget <- function(k) {
+    old <- outer_backtracks
+    on.exit(assignInNamespace("outer_backtracks", old, ns = "statmodels7"))
+    assignInNamespace("outer_backtracks", function() k, ns = "statmodels7")
+    statmod(form, gaussian1_distrib(), d, outer_criterion = reml())
+  }
+  long <- at_budget(30L)
+  short <- at_budget(12L)
+
+  expect_identical(short@converged, long@converged)
+  expect_equal(short@criterion, long@criterion, tolerance = 1e-8)
+  expect_equal(sum(short@edf$edf), sum(long@edf$edf), tolerance = 1e-6)
+  expect_equal(unlist(short@coefficients), unlist(long@coefficients),
+               tolerance = 1e-6)
+  expect_identical(max(short@history$outer$evaluation),
+                   max(long@history$outer$evaluation))
+})
+
+
+test_that("the default optimizer is chosen from what the criterion supplies", {
+  # The policy has a name so that it can be read, pinned and swept. It was
+  # inline until 2026-08-20, when FASE 2e of piano_stabilita.txt needed to
+  # compare the two choices ON THE DEFAULT PATH -- naming an optimizer turns
+  # off both the resolution and the short backtracking budget, so a comparison
+  # made that way compares two different things.
+  expect_s3_class(outer_default_optimizer(TRUE, TRUE), "optimizers7::Newton")
+  expect_s3_class(outer_default_optimizer(TRUE, FALSE), "optimizers7::Lbfgs")
+  expect_s3_class(outer_default_optimizer(FALSE, FALSE),
+                  "optimizers7::NelderMead")
+})
+
+
+test_that("a resolution is refused where the inner fit is not at a mode", {
+  # The resolution is read by displacing the coefficients to where the inner
+  # score says the mode is, and asking how far the criterion moved. That is a
+  # resolution while the displacement is a CORRECTION and something else once
+  # it is not -- and handing that to crit_abs_obj() turns a badly located mode
+  # into a declaration of convergence. Measured on a hierarchical break-point
+  # model whose inner fit reports convergence at a score of 247.8: the
+  # estimate came back 54.7, more than the whole movement of the criterion
+  # over the search, and lbfgs stopped after TWO evaluations reporting success
+  # a hundred REML units short.
+  expect_identical(mode_error_limit(), 1e-3)
+
+  set.seed(5)
+  n <- 150
+  d <- data.frame(x = runif(n), g = factor(rep(1:15, each = 10)))
+  d$y <- 1 + 2 * d$x + rnorm(15, 0, 0.5)[as.integer(d$g)] + rnorm(n, 0, 0.3)
+
+  spec <- statmod_spec(y ~ x + random(~1 | g), gaussian1_distrib(), d, NULL,
+                       NULL, linpar = linpar_options())
+  design <- statmod_design(spec)
+  hyper  <- statmod_hyper_start(spec, design)
+  blocks <- statmod_blocks(spec, design)
+  io     <- iwls(); cfg <- inner_settings(io); bud <- method_budget(io)
+  method <- reml()
+  basis  <- integrated_basis(spec, design, method@kind)
+  obj0   <- statmod_objective(spec, hyper, design, cfg$expected, cfg$approx)
+  b0     <- statmod_start(spec, design, obj0, NULL)
+  res    <- statmod_alternate(spec, design, blocks, hyper, io, b0,
+                              cfg$expected, cfg$approx, bud$maxit, bud$tol,
+                              verbosity(0), hold_refresh = TRUE)
+  cf  <- res$obj$split(res$par)
+  ctx <- outer_context(spec, design, cf, hyper, cfg$approx)
+  m   <- statmod_marginal(spec, design, cf, hyper, method, cfg$approx, basis,
+                          ctx)
+  crit_at <- function(cff, hy, par, cx = NULL) {
+    statmod_marginal(spec, design, cff, hy, method, cfg$approx, basis, cx)
+  }
+  st <- list(ok = TRUE, ctx = ctx, cf = cf, hy = hyper, par = res$par,
+             split = res$obj$split, score = res$obj$gr(res$par),
+             value = m$value)
+
+  # a located mode reports a resolution, as it always did
+  r <- criterion_resolution(st, spec, design, method, crit_at)
+  expect_true(is.finite(r) && r > 0)
+  expect_null(attr(r, "mode_error"))
+
+  # INJECTION: the same point with a score five orders larger. The predicted
+  # decrease goes as the SQUARE of the score, so this is ten orders on the
+  # quantity tested, and it must be refused with the reason attached.
+  st2 <- st
+  st2$score <- st$score * 1e5
+  r2 <- criterion_resolution(st2, spec, design, method, crit_at)
+  expect_true(is.na(r2))
+  expect_gt(attr(r2, "mode_error"), mode_error_limit())
+
+  # and the refusal is the ONLY thing that changed: a score small enough for
+  # the displacement to be a correction still reports, so the guard cannot be
+  # satisfied by refusing everything
+  st3 <- st
+  st3$score <- st$score * 1e-3
+  r3 <- criterion_resolution(st3, spec, design, method, crit_at)
+  expect_true(is.finite(r3) && r3 > 0)
+})
