@@ -60,11 +60,25 @@ reconstructed from `fit@spec` equals the one the fit reports EXACTLY on
 every shape, so the reading is of the fitted model and not of another
 one.
 
-**Where it cannot read.** A form whose criterion has no exact gradient
-([`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)),
-or a fit with no marginal criterion at all, leaves the gradient `NA` and
-the state `"unknown"` rather than approximated – 2p refits to difference
-it would cost more than the fit.
+**Where there is no outer gradient there are two cases, and they get
+different answers.** A model with NO PENALTY – `linpar`, `nl`, `seg`,
+`jump`, `jseg` – has no hyperparameter for a gradient to be about, so
+the only question left is whether the inner fit reached its mode, and
+the mode error answers it: measured over the reference battery it reads
+5.2e-11 to 7.9e-05 on fits that are right against 1.215 on a `jump`
+fitted to data carrying a slope and a slope change it has no term for. A
+model whose only hyperparameters are KINKED – `lasso`, `scad`, `mcp`,
+swept along a path because a Laplace approximation at a mode sitting on
+the kink has no meaning – gets neither reading and stays `"unknown"`: at
+a coefficient the penalty has set to zero the score does not vanish but
+lies in the subdifferential, so the mode error is not a statement about
+being at a mode. Measured on a lasso, its 4.7e-03 is carried by a
+coordinate whose coefficient is exactly 0 and whose score is -0.715.
+
+A form whose criterion has no EXACT gradient
+([`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md))
+is also `"unknown"` rather than approximated: 2p refits to difference it
+would cost more than the fit.
 
 ## See also
 

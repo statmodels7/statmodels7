@@ -1,5 +1,43 @@
 # Changelog
 
+## statmodels7 0.77.0
+
+- [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  tells apart the TWO ways a fit can have no outer gradient, which it
+  used to lump into one `"unknown"`.
+
+  A model with NO PENALTY – `linpar`, `nl`, `seg`, `jump`, `jseg` – has
+  no hyperparameter for a gradient to be about, so the only question
+  left is whether the inner fit reached its mode, and the mode error
+  answers it. Those now carry a state.
+
+  A model whose only hyperparameters are KINKED – `lasso`, `scad`, `mcp`
+  – has one, but it is the argmin over a path rather than the root of a
+  derivative, a Laplace approximation at a mode sitting on the kink
+  having no meaning. It stays `"unknown"`, and the reason now says which
+  of the two it is. ⚠️ The mode error is not a reading there either: at
+  a coefficient the penalty has set to zero the score does not vanish
+  but lies in the subdifferential. Measured on a lasso, its 4.7e-03 is
+  carried by a coordinate whose coefficient is exactly 0 and whose score
+  is -0.715.
+
+- Measured on the reference battery, the certificate now reads 28 cases
+  of 29 where it read 22, and the share passing goes from **62.1% to
+  79.3%**. The disagreement between the convergence flag and the
+  certificate falls from 11 cases to 6.
+
+- ⚠️ `jump` certifies as NOT CONVERGED on that battery and the reading
+  is right. Three explanations were tested and two refuted: it is not
+  that a frozen working block’s score fails to vanish (`jseg` sharp is
+  frozen too and reads 2.0e-06), and it is not arithmetic (equilibrating
+  K leaves the reading identical to every printed digit). It is
+  misspecification: `jump()` is a pure step model with no linear term
+  and that truth carries a slope and a slope change, so its break-point
+  iteration never settles, its annealing runs to the floor, and its
+  block reaches 3.0e+13 on the information’s diagonal against 5.4e+05.
+  On data where the jump IS the truth the same term reads 4.2e-04 and
+  cond(K) falls from 6.25e+13 to 1.14e+06.
+
 ## statmodels7 0.76.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
