@@ -160,5 +160,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 27 ms, converged
+#> fitted in 31 ms, converged
+#> certificate: UNKNOWN   2.21e-11 above the mode
+#>   no marginal criterion was estimated, so there is no outer gradient to read
 ```

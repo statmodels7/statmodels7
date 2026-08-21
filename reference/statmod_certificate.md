@@ -1,0 +1,83 @@
+# What the Fit Certifies About the Point It Reports
+
+Three readings taken AT THE REPORTED POINT and independent of the path
+the search took: the outer criterion's gradient, how far the
+coefficients sit above the penalized mode, and which hyperparameters
+have run to a boundary.
+
+## Usage
+
+``` r
+statmod_certificate(fit, tol = 0.01)
+```
+
+## Arguments
+
+- fit:
+
+  A
+  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+
+- tol:
+
+  The largest outer gradient a certified point may carry.
+
+## Value
+
+A list with `state` (`"converged"`, `"boundary"`, `"not converged"` or
+`"unknown"`), `gradient`, `mode_error`, `boundary` and `reason`.
+
+## Details
+
+**Why a certificate rather than the optimizer's flag.** The flag says
+whether a search stopped on its own rule, which is a statement about the
+search. Measured across shapes, it does not order fits by quality: on
+one model the default reported success at a criterion of -1783.47 while
+the same data under
+[`lbfgs`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
+reached -1664.43 and reported failure. What a reader wants is a property
+of the point.
+
+**The state comes from the gradient and the mode error is reported
+beside it, not folded into it.** Measured at the reported point over six
+shapes, the outer gradient separates by five orders – 4.7e-07, 7.8e-07,
+5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
+that is not – while the mode error does not: it reads 1.8e-16 to 6.1e-12
+on four of them, 22.8 on the failing one, and 0.114 on a
+random-changepoint `seg` whose answer is right to a correlation of
+0.9932. A number that does not separate cannot decide a state, and a
+certificate that says how far from the mode is worth more than a boolean
+that hides it.
+
+`tol` is 1e-2 rather than the geometric middle of the two groups: the
+two ways of being wrong are not symmetric, and a certificate that says
+NOT CONVERGED at a good point is visible and checkable where one that
+certifies a bad point is the failure this exists to remove.
+
+**What it costs** is one outer gradient and one solve, once, at a point
+the fit already holds. Nothing is refitted: measured, the criterion
+reconstructed from `fit@spec` equals the one the fit reports EXACTLY on
+every shape, so the reading is of the fitted model and not of another
+one.
+
+**Where it cannot read.** A form whose criterion has no exact gradient
+([`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)),
+or a fit with no marginal criterion at all, leaves the gradient `NA` and
+the state `"unknown"` rather than approximated – 2p refits to difference
+it would cost more than the fit.
+
+## See also
+
+[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+[`mode_error_limit`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
+[`criterion_resolution`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+
+## Examples
+
+``` r
+dd <- data.frame(x = runif(120))
+dd$y <- sin(4 * dd$x) + rnorm(120, 0, 0.3)
+statmod_certificate(statmod(y ~ s(x, k = 8),
+                            distributions7::gaussian1_distrib(), dd))$state
+#> [1] "converged"
+```

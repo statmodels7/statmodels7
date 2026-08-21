@@ -78,6 +78,8 @@ the elapsed time in the unit it deserves.
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   : The Model as a Function of Parameters and Data
+- [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  : What the Fit Certifies About the Point It Reports
 - [`statmod_latent()`](https://statmodels7.github.io/statmodels7/reference/statmod_latent.md)
   : The Posterior Break-Points of a Marginal Term
 - [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)

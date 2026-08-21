@@ -24,7 +24,8 @@ StatmodSummary(
   elapsed = integer(0),
   level = integer(0),
   type = character(0),
-  notes = character(0)
+  notes = character(0),
+  certificate = NULL
 )
 ```
 
