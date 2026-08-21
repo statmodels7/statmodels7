@@ -13,6 +13,10 @@ chol_rcond_cpp <- function(R, anorm) {
     .Call(`_statmodels7_chol_rcond_cpp`, R, anorm)
 }
 
+leverage_pairs_cpp <- function(astart, acnt, aj, av, bstart, bcnt, bj, bv, M, n, threads) {
+    .Call(`_statmodels7_leverage_pairs_cpp`, astart, acnt, aj, av, bstart, bcnt, bj, bv, M, n, threads)
+}
+
 qr_factor_cpp <- function(A, threads) {
     .Call(`_statmodels7_qr_factor_cpp`, A, threads)
 }

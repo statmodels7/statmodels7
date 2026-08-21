@@ -4,7 +4,7 @@
 \alias{block_leverage}
 \title{The Per-Observation Diagonal of Each Block of a Matrix}
 \usage{
-block_leverage(design, M, params, npar, offs)
+block_leverage(design, M, params, npar, offs, threads = 1L)
 }
 \arguments{
 \item{design}{The design.}
@@ -14,6 +14,8 @@ block_leverage(design, M, params, npar, offs)
 \item{params}{The distribution's parameter names.}
 
 \item{npar, offs}{The block sizes and their offsets.}
+
+\item{threads}{How many threads the sparse route's kernel may use.}
 }
 \value{
 A list of lists, \code{G[[a]][[b]]} a vector as long as the sample.

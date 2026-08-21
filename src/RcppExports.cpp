@@ -68,6 +68,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// leverage_pairs_cpp
+NumericVector leverage_pairs_cpp(IntegerVector astart, IntegerVector acnt, IntegerVector aj, NumericVector av, IntegerVector bstart, IntegerVector bcnt, IntegerVector bj, NumericVector bv, NumericMatrix M, int n, int threads);
+RcppExport SEXP _statmodels7_leverage_pairs_cpp(SEXP astartSEXP, SEXP acntSEXP, SEXP ajSEXP, SEXP avSEXP, SEXP bstartSEXP, SEXP bcntSEXP, SEXP bjSEXP, SEXP bvSEXP, SEXP MSEXP, SEXP nSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type astart(astartSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type acnt(acntSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type aj(ajSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type av(avSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type bstart(bstartSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type bcnt(bcntSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type bj(bjSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type bv(bvSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(leverage_pairs_cpp(astart, acnt, aj, av, bstart, bcnt, bj, bv, M, n, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // qr_factor_cpp
 NumericMatrix qr_factor_cpp(NumericMatrix A, int threads);
 RcppExport SEXP _statmodels7_qr_factor_cpp(SEXP ASEXP, SEXP threadsSEXP) {
@@ -137,6 +158,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
     {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
+    {"_statmodels7_leverage_pairs_cpp", (DL_FUNC) &_statmodels7_leverage_pairs_cpp, 11},
     {"_statmodels7_qr_factor_cpp", (DL_FUNC) &_statmodels7_qr_factor_cpp, 2},
     {"_statmodels7_xtv_cpp", (DL_FUNC) &_statmodels7_xtv_cpp, 3},
     {"_statmodels7_wxsq_cpp", (DL_FUNC) &_statmodels7_wxsq_cpp, 3},

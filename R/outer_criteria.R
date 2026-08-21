@@ -292,12 +292,28 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   Am <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Bm[[m]])
   PH <- P %*% H
 
+  # one per hyperparameter, and the gradient and the Hessian both read them
+  PA <- lapply(Am, function(A) P %*% A)
+
   g <- numeric(nh)
   for (m in seq_len(nh)) {
-    tau_m <- sum(P * t(Bm[[m]])) - sum((P %*% Am[[m]]) * t(PH))
+    tau_m <- sum(P * t(Bm[[m]])) - sum(PA[[m]] * t(PH))
     g[m] <- -2 * sum(grho * bhat[[m]]) + kap * tau_m
   }
   if (order < 2L) return(list(grad = free_scale(g, hyper, idx)))
+
+  # These depend on ONE hyperparameter and were formed inside the PAIR loop,
+  # so each dense p by p product was taken nh + 1 times over: measured, 6
+  # against 2 at two hyperparameters and 12 against 3 at three. It is the
+  # hoist statmod_marginal_hess received in 0.49.0 -- "the two expensive
+  # quantities each depend on ONE direction and not on a pair, so they are
+  # built once per hyperparameter" -- which the prediction-error route never
+  # got, that release having deliberately left aic(), bic() and cv() alone.
+  # Nothing about the arithmetic changes: the same product is taken once
+  # instead of many times, so the answer is identical to the bit.
+  PAPH <- lapply(PA, function(M) M %*% PH)
+  PB <- lapply(Bm, function(B) P %*% B)
+  Hb <- lapply(bhat, function(v) as.numeric(H %*% v))
 
   Hm <- matrix(0, nh, nh)
   for (m in seq_len(nh)) {
@@ -316,14 +332,11 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
       # -2 l(b(t)) : the second derivative carries the curvature of the
       # log-likelihood along the two directions and the mode's own second
       # movement, the score at the mode being drho/dbeta
-      ll_ml <- -sum(bhat[[l]] * as.numeric(H %*% bhat[[m]])) +
-        sum(grho * bml)
+      ll_ml <- -sum(bhat[[l]] * Hb[[m]]) + sum(grho * bml)
 
-      PAm <- P %*% Am[[m]]
-      PAl <- P %*% Am[[l]]
-      tau_ml <- sum(PAl * t(PAm %*% PH)) - sum(P * t(Aml %*% PH)) +
-        sum(PAm * t(PAl %*% PH)) - sum(PAm * t(P %*% Bm[[l]])) -
-        sum(PAl * t(P %*% Bm[[m]])) + sum(P * t(Bml))
+      tau_ml <- sum(PA[[l]] * t(PAPH[[m]])) - sum(P * t(Aml %*% PH)) +
+        sum(PA[[m]] * t(PAPH[[l]])) - sum(PA[[m]] * t(PB[[l]])) -
+        sum(PA[[l]] * t(PB[[m]])) + sum(P * t(Bml))
 
       v <- -2 * ll_ml + kap * tau_ml
       Hm[m, l] <- v

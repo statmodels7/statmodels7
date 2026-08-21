@@ -404,14 +404,17 @@ ctx_theta <- function(ctx, spec, design, coef, hyper) {
 #' @param design The design.
 #' @param M The matrix the traces are taken against.
 #' @param params,npar,offs The block bookkeeping.
+#' @param threads How many threads the sparse route's kernel may use.
 #'
 #' @return A list of lists of vectors.
 #'
 #' @keywords internal
-ctx_leverage <- function(ctx, design, M, params, npar, offs) {
-  if (is.null(ctx)) return(block_leverage(design, M, params, npar, offs))
+ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
+  if (is.null(ctx)) {
+    return(block_leverage(design, M, params, npar, offs, threads))
+  }
   if (is.null(ctx$leverage)) {
-    ctx$leverage <- block_leverage(design, M, params, npar, offs)
+    ctx$leverage <- block_leverage(design, M, params, npar, offs, threads)
   }
   ctx$leverage
 }

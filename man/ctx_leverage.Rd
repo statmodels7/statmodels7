@@ -4,7 +4,7 @@
 \alias{ctx_leverage}
 \title{The Per-Observation Diagonals at the Context's Point}
 \usage{
-ctx_leverage(ctx, design, M, params, npar, offs)
+ctx_leverage(ctx, design, M, params, npar, offs, threads = 1L)
 }
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}
@@ -14,6 +14,8 @@ ctx_leverage(ctx, design, M, params, npar, offs)
 \item{M}{The matrix the traces are taken against.}
 
 \item{params, npar, offs}{The block bookkeeping.}
+
+\item{threads}{How many threads the sparse route's kernel may use.}
 }
 \value{
 A list of lists of vectors.

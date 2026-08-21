@@ -228,3 +228,57 @@ test_that("a dense penalized fit does not depend on the thread count", {
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
                tolerance = 1e-8)
 })
+
+# The leverage diagonal over the nonzeros of two sparse designs. The R form
+# it replaces built seven vectors as long as the PAIR count -- about 190 MB
+# at the 3.38 million pairs a REML fit over 500 random-effect levels reaches,
+# where it was measured at 31.6 per cent of the fit -- while the quantity is
+# a short double loop per observation. Row i is written in full by one
+# thread, so the answer does not depend on the count.
+#
+# The reference is the DENSE route the same function takes when the density
+# gate refuses the sparse one: it shares no arithmetic with the kernel, which
+# is what makes it a check rather than the same sum twice.
+test_that("the leverage kernel agrees with the dense route", {
+  skip_if_not_installed("Matrix")
+  set.seed(51)
+  for (cs in list(c(n = 4000, la = 100, lb = 100), c(n = 4000, la = 40, lb = 6),
+                  c(n = 1500, la = 3, lb = 3))) {
+    n <- cs[["n"]]
+    ga <- factor(sample(cs[["la"]], n, TRUE))
+    gb <- factor(sample(cs[["lb"]], n, TRUE))
+    Xa <- Matrix::sparse.model.matrix(~ 0 + ga)
+    Xb <- Matrix::sparse.model.matrix(~ 0 + gb)
+    # a second nonzero on some rows, so the double loop is exercised rather
+    # than every row carrying exactly one
+    Xa[cbind(sample(n, n %/% 10), sample(cs[["la"]], n %/% 10, TRUE))] <- 0.7
+    Mab <- matrix(rnorm(ncol(Xa) * ncol(Xb)), ncol(Xa), ncol(Xb))
+    ta <- row_nonzeros(Xa); tb <- row_nonzeros(Xb)
+    # rowSums() carries the design's row names and the kernel returns a bare
+    # vector, as the R form it replaces also did: the two branches of
+    # block_leverage() have always differed in that attribute and every
+    # consumer reads the values positionally
+    dense <- unname(rowSums(as.matrix(Xa * (Xb %*% t(Mab)))))
+    got <- leverage_pairs(ta, tb, Mab, n, 1L)
+    expect_equal(got, dense, tolerance = 1e-12)
+    for (k in c(2L, 3L, 5L)) {
+      expect_identical(leverage_pairs(ta, tb, Mab, n, k), got)
+    }
+  }
+})
+
+test_that("a fit through the leverage kernel does not depend on threads", {
+  set.seed(52)
+  n <- 4000
+  x <- runif(n, -3, 3)
+  g <- factor(sample(120, n, TRUE))
+  d <- data.frame(x = x, g = g, y = 1 + sin(x) + rnorm(n, 0, 0.4))
+  f1 <- statmod(y ~ s(x, k = 10) + random(~1 | g),
+                distributions7::gaussian1_distrib(), d)
+  f2 <- statmod(y ~ s(x, k = 10) + random(~1 | g),
+                distributions7::gaussian1_distrib(), d,
+                threads = numericals7::n_threads(2))
+  expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
+  expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
+               tolerance = 1e-8)
+})

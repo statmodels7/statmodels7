@@ -346,7 +346,8 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   km <- ctx_kmove(ctx, spec, design, coef, hyper, method)
   u <- u_vector(spec, design, coef, M, params, npar, offs, total,
                 d3 = km$deriv, key = km$key,
-                G = ctx_leverage(ctx, design, M, params, npar, offs)) +
+                G = ctx_leverage(ctx, design, M, params, npar, offs,
+                                 spec@threads)) +
     u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
               ctx_approx(ctx))
 
@@ -420,7 +421,8 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
   # the sorted triple; the expected route's is symmetric in (a, b) only, the
   # measure's own derivative not being, so it carries its own builder
   if (is.null(key)) key <- function(a, b, k) d3_key(params, a, b, k, keys)
-  if (is.null(G)) G <- block_leverage(design, M, params, npar, offs)
+  if (is.null(G)) G <- block_leverage(design, M, params, npar, offs,
+                                      spec@threads)
 
   out <- numeric(total)
   for (k in seq_along(params)) {
@@ -1155,13 +1157,14 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #' @param M The matrix the traces are taken against.
 #' @param params The distribution's parameter names.
 #' @param npar,offs The block sizes and their offsets.
+#' @param threads How many threads the sparse route's kernel may use.
 #'
 #' @return A list of lists, \code{G[[a]][[b]]} a vector as long as the sample.
 #'
 #' @seealso \code{\link{u_vector}}, \code{\link{trace_design_form}}
 #'
 #' @keywords internal
-block_leverage <- function(design, M, params, npar, offs) {
+block_leverage <- function(design, M, params, npar, offs, threads = 1L) {
   np <- length(params)
   dens <- rep(1, np)
   tri <- vector("list", np)
@@ -1194,7 +1197,7 @@ block_leverage <- function(design, M, params, npar, offs) {
         length(tri[[a]]$i) / nrow(Xa) * length(tri[[b]]$i)
       v <- if (!is.null(tri[[a]]) && !is.null(tri[[b]]) && is.matrix(Mab) &&
                dens[a] * dens[b] < 1e-3 && pairs < 2e7) {
-        leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa))
+        leverage_pairs(tri[[a]], tri[[b]], Mab, nrow(Xa), threads)
       } else if (npar[a] <= npar[b]) {
         # the intermediate is n x npar[a] this way round and n x npar[b] the
         # other, and the two give the same diagonal. Read the cheaper one: a
@@ -1253,26 +1256,29 @@ row_nonzeros <- function(X) {
 #' @param ta,tb The two designs' nonzeros, from \code{\link{row_nonzeros}}.
 #' @param Mab The block of \eqn{M}.
 #' @param n The number of observations.
+#' @param threads How many threads the kernel may use.
 #'
 #' @return A numeric vector as long as the sample.
 #'
 #' @seealso \code{\link{block_leverage}}
 #'
 #' @keywords internal
-leverage_pairs <- function(ta, tb, Mab, n) {
+leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
+  na <- tabulate(ta$i, n)
   nb <- tabulate(tb$i, n)
-  cnt <- nb[ta$i]
-  ii <- rep.int(ta$i, cnt)
-  if (!length(ii)) return(numeric(n))
-  ja <- rep.int(ta$j, cnt)
-  va <- rep.int(ta$v, cnt)
-  # where row r's nonzeros start in tb, which is ordered by row
-  start <- c(0L, cumsum(nb)[-n])
-  idx <- sequence(cnt, start[ta$i] + 1L)
-  out <- numeric(n)
-  s <- rowsum(va * tb$v[idx] * Mab[cbind(ja, tb$j[idx])], ii)
-  out[as.integer(rownames(s))] <- s[, 1L]
-  out
+  if (!length(ta$i) || !length(tb$i)) return(numeric(n))
+  # The expansion this used to build -- seven vectors as long as the PAIR
+  # count, about 190 MB at the 3.38 million pairs a fit over 500 random-effect
+  # levels reaches -- is what the kernel replaces: both designs arrive ordered
+  # by row, so a row's two ranges are contiguous and the sum is a short double
+  # loop per observation. Row i is written in full by one thread.
+  astart <- if (n > 1L) c(0L, cumsum(na)[-n]) else 0L
+  bstart <- if (n > 1L) c(0L, cumsum(nb)[-n]) else 0L
+  leverage_pairs_cpp(as.integer(astart), as.integer(na),
+                     as.integer(ta$j), as.numeric(ta$v),
+                     as.integer(bstart), as.integer(nb),
+                     as.integer(tb$j), as.numeric(tb$v),
+                     Mab, as.integer(n), as.integer(threads))
 }
 
 

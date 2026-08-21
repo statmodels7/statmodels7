@@ -4,7 +4,7 @@
 \alias{leverage_pairs}
 \title{The Leverage Diagonal Over the Nonzeros of Two Rows}
 \usage{
-leverage_pairs(ta, tb, Mab, n)
+leverage_pairs(ta, tb, Mab, n, threads = 1L)
 }
 \arguments{
 \item{ta, tb}{The two designs' nonzeros, from \code{\link{row_nonzeros}}.}
@@ -12,6 +12,8 @@ leverage_pairs(ta, tb, Mab, n)
 \item{Mab}{The block of \eqn{M}.}
 
 \item{n}{The number of observations.}
+
+\item{threads}{How many threads the kernel may use.}
 }
 \value{
 A numeric vector as long as the sample.

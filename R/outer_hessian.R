@@ -97,7 +97,7 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 
   d3 <- ctx_deriv(ctx, spec, design, coef, hyper, 3L)
   d4 <- ctx_deriv(ctx, spec, design, coef, hyper, 4L)
-  G <- ctx_leverage(ctx, design, M, params, npar, offs)
+  G <- ctx_leverage(ctx, design, M, params, npar, offs, spec@threads)
 
   # ⚠️ dX/dbeta reaches this assembly in THREE places -- the matrix dK/dt_m
   # below, the trace of dK_m/dt_l against M, and the twice-contracted fourth
