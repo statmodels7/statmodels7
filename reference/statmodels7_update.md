@@ -53,7 +53,7 @@ statmodels7_update()
 #>   linkfunctions7   0.2.0
 #>   modelterms7      0.56.1
 #>   numericals7      0.9.2
-#>   optimizers7      0.4.0
+#>   optimizers7      0.5.0
 #>   parameters7      0.11.0
 #>   penalties7       0.16.0
 #> 

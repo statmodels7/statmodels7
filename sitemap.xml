@@ -104,8 +104,11 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/loglik.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/method_budget.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/mode_curvature.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/mode_error_limit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_backtracks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_context.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.html</loc></url>

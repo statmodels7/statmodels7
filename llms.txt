@@ -396,10 +396,17 @@ exported, and none is needed to use the package.
   : The Budget and the Stopping Rule of the Alternation
 - [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md)
   : The Curvature the Mode Actually Moves By
+- [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+  : How Far Above Its Minimum an Inner Fit May Sit and Still Report a
+  Resolution
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
+- [`outer_backtracks()`](https://statmodels7.github.io/statmodels7/reference/outer_backtracks.md)
+  : The Outer Line Search's Backtracking Budget
 - [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
   : One Evaluation Point, Shared
+- [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
+  : Which Optimizer the Outer Search Uses When the Caller Names None
 - [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
   : Estimate the Hyperparameters
 - [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
