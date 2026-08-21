@@ -1,5 +1,36 @@
 # Changelog
 
+## statmodels7 0.80.0
+
+- The leverage diagonal over the nonzeros of two sparse designs is a
+  kernel.
+  [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
+  built seven vectors as long as the PAIR count – about 190 MB at the
+  3.38 million pairs a REML fit over 500 random-effect levels reaches –
+  for a quantity that is a short double loop per observation. Measured
+  there, it was **31.6 per cent of the fit** at 262 ms a call. The
+  kernel decomposes over the rows, so row `i` is written in full by one
+  thread and the answer does not depend on the count. End to end, with
+  the fit identical to the bit: **1.95x** over 500 levels (12.52 s to
+  6.42) and 1.35x over 1000. Against the dense route the same function
+  takes when the density gate refuses the sparse one – a computation
+  sharing no arithmetic with it – the agreement is exact.
+
+- [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
+  forms `P Am`, `P Am PH` and `P Bm` once per hyperparameter rather than
+  inside the loop over PAIRS, where each was taken `nh + 1` times over.
+  It is the hoist
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  received in 0.49.0, which the prediction-error route never got, that
+  release having deliberately left
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  alone. The saving grows as `p^3 nh^2`, so it is invisible where p is
+  small and not where it is not: measured, 1.03x at p = 213 and **1.23x
+  at p = 512** (28.94 s to 23.50), with the answer identical.
+
 ## statmodels7 0.79.0
 
 - The rank of a penalized augmented matrix is read off the JACOBI-

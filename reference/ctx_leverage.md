@@ -7,7 +7,7 @@ of the Hessian.
 ## Usage
 
 ``` r
-ctx_leverage(ctx, design, M, params, npar, offs)
+ctx_leverage(ctx, design, M, params, npar, offs, threads = 1L)
 ```
 
 ## Arguments
@@ -27,6 +27,10 @@ ctx_leverage(ctx, design, M, params, npar, offs)
 - params, npar, offs:
 
   The block bookkeeping.
+
+- threads:
+
+  How many threads the sparse route's kernel may use.
 
 ## Value
 

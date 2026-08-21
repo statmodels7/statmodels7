@@ -6,7 +6,7 @@ M\_{ab} X_b'\\ taken one observation at a time.
 ## Usage
 
 ``` r
-block_leverage(design, M, params, npar, offs)
+block_leverage(design, M, params, npar, offs, threads = 1L)
 ```
 
 ## Arguments
@@ -26,6 +26,10 @@ block_leverage(design, M, params, npar, offs)
 - npar, offs:
 
   The block sizes and their offsets.
+
+- threads:
+
+  How many threads the sparse route's kernel may use.
 
 ## Value
 

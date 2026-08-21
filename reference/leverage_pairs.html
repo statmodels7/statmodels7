@@ -11,7 +11,7 @@ same quantity block_leverage otherwise reads off a dense
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.79.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.80.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ same quantity <code><a href="block_leverage.html">block_leverage</a></code> othe
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">leverage_pairs</span><span class="op">(</span><span class="va">ta</span>, <span class="va">tb</span>, <span class="va">Mab</span>, <span class="va">n</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">leverage_pairs</span><span class="op">(</span><span class="va">ta</span>, <span class="va">tb</span>, <span class="va">Mab</span>, <span class="va">n</span>, threads <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -61,6 +61,10 @@ same quantity <code><a href="block_leverage.html">block_leverage</a></code> othe
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>The number of observations.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>How many threads the kernel may use.</p></dd>
 
 </dl></div>
     <div class="section level2">

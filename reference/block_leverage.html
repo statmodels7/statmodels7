@@ -9,7 +9,7 @@ X_b'\) taken one observation at a time."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.79.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.80.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ X_b'\) taken one observation at a time.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">block_leverage</span><span class="op">(</span><span class="va">design</span>, <span class="va">M</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">block_leverage</span><span class="op">(</span><span class="va">design</span>, <span class="va">M</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span>, threads <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,6 +62,10 @@ X_b'\) taken one observation at a time.</p>
 
 <dt id="arg-npar-offs">npar, offs<a class="anchor" aria-label="anchor" href="#arg-npar-offs"></a></dt>
 <dd><p>The block sizes and their offsets.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>How many threads the sparse route's kernel may use.</p></dd>
 
 </dl></div>
     <div class="section level2">

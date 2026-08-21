@@ -8,7 +8,7 @@ otherwise reads off a dense \\n\times p_b\\ product.
 ## Usage
 
 ``` r
-leverage_pairs(ta, tb, Mab, n)
+leverage_pairs(ta, tb, Mab, n, threads = 1L)
 ```
 
 ## Arguments
@@ -25,6 +25,10 @@ leverage_pairs(ta, tb, Mab, n)
 - n:
 
   The number of observations.
+
+- threads:
+
+  How many threads the kernel may use.
 
 ## Value
 
