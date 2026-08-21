@@ -731,14 +731,40 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # back. Once the inner fit stopped raising and started returning its
       # last usable point, the criterion at that point looked ordinary and the
       # search walked to a smoothing parameter of 1.8e308.
-      if (!isTRUE(res$converged)) {
-        m <<- NULL
-        return(invisible(NULL))
-      }
       # one context per point: the criterion, the gradient and the Hessian
       # read the same information, the same penalty and the same factorization
-      # instead of each assembling its own
+      # instead of each assembling its own. It is built BEFORE the point is
+      # judged, because what judges it reads that same factorization.
       ctx <<- outer_context(spec, design, cf, hy, approx)
+      # ⚠️ AND THE FLAG IS NOT WHAT DECIDES, because it answers another
+      # question. The flag says whether the inner stopping rule fired;
+      # availability asks whether the criterion, a Laplace expansion AT THE
+      # MODE, is valid here. Measured on `y ~ s(x) | sigma ~ s(z)`, of 38
+      # inner fits in one search 38 are at their mode by the second reading
+      # -- 1e-09 to 3e-09 against a limit of 1e-03 -- and FOUR by the first.
+      # The other 34 stopped on the objective-stall guard with the objective
+      # already fixed to twelve significant digits and the score oscillating
+      # between 2.5e-06 and 3.3e-06, just above its absolute tolerance of
+      # 1e-06. Read as unavailable, they made this line search backtrack
+      # eleven times an iteration and accept a step of 0.0026 where the
+      # Newton step is 1.4, so the search moved 0.005 in eta over 38
+      # evaluations and stopped 4.0 criterion units short of the optimum its
+      # own gradient was correctly pointing at.
+      #
+      # The rule ADDS points and never removes one -- a converged run stays
+      # usable whatever the mode error reads -- so no model that fitted
+      # before can stop fitting. Making the flag STRICTER is the other
+      # direction, and piano_stabilita.txt 13d measured it and withdrew it:
+      # it cost a false negative on a good fit.
+      if (!isTRUE(res$converged)) {
+        q <- inner_mode_error(ctx, spec, design, cf, hy,
+                              tryCatch(res$obj$gr(res$par),
+                                       error = function(e) NULL), expected)
+        if (!is.finite(q) || q > mode_error_limit()) {
+          m <<- NULL
+          return(invisible(NULL))
+        }
+      }
       m <<- criterion_at(cf, hy, res$par, ctx)
       if (is.null(m)) return(invisible(NULL))
       # The derivatives are NOT computed here. Which of them the search reads

@@ -552,3 +552,67 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #'
 #' @keywords internal
 mode_error_limit <- function() 1e-3
+
+
+#' How Far Above Its Mode the Inner Fit Stopped
+#'
+#' @description
+#' \eqn{\tfrac12 g'K^{-1}g}, the decrease the penalized likelihood's own
+#' Newton correction predicts at the point the inner fit returned: how much
+#' log-likelihood is still on the table there.
+#'
+#' @details
+#' It answers the question AVAILABILITY asks, which is not the question the
+#' inner optimizer's flag answers. The flag says whether a stopping rule
+#' fired; availability asks whether the criterion -- a Laplace expansion AT
+#' THE MODE -- is valid at this point. The second is a matter of distance and
+#' has a natural scale, log-likelihood units, where the first is a boolean
+#' about a threshold on a score whose size depends on the model.
+#'
+#' The two come apart, and measured on \code{y ~ s(x) | sigma ~ s(z)} they
+#' come apart on nearly every point: of 38 inner fits during one search, 38
+#' are at their mode by this reading -- between 1e-09 and 3e-09 against a
+#' limit of 1e-03, six orders of margin -- and FOUR report convergence. The
+#' other 34 stopped on the objective-stall guard with the objective already
+#' fixed to twelve significant digits and a score oscillating between 2.5e-06
+#' and 3.3e-06, just above the absolute tolerance of 1e-06. Read as
+#' unavailable, they made the outer line search backtrack eleven times per
+#' iteration and accept a step of 0.0026 where the Newton step is 1.4, so the
+#' search moved 0.005 in eta over 38 evaluations and stopped 4.0 criterion
+#' units below the optimum its own gradient was correctly pointing at.
+#'
+#' It is used to ADD points and never to remove one: a run whose flag says
+#' converged stays usable whatever this reads, so no model that fitted before
+#' can stop fitting. That is also why it is not folded into the flag itself,
+#' which \code{piano_stabilita.txt} section 13 measured and withdrew -- there
+#' the flag was made STRICTER, and it cost a false negative on a good fit.
+#'
+#' @param ctx The evaluation context, so the penalized factorization is the
+#'   one the criterion will read rather than a second copy.
+#' @param spec A \code{\link{StatmodSpec}}.
+#' @param design The design.
+#' @param coef The coefficients the inner fit returned.
+#' @param hyper The hyperparameters.
+#' @param score The inner objective's gradient at those coefficients.
+#' @param expected Whether the penalized information is the expected one.
+#'
+#' @return A single number, or \code{NA} where the penalized system could not
+#'   be read there -- which is itself a reason to call the point unavailable.
+#'
+#' @seealso \code{\link{mode_error_limit}}, \code{\link{criterion_resolution}}
+#'
+#' @keywords internal
+inner_mode_error <- function(ctx, spec, design, coef, hyper, score,
+                             expected = FALSE) {
+  if (is.null(score) || !length(score) || !all(is.finite(score))) {
+    return(NA_real_)
+  }
+  pen <- tryCatch(ctx_penalized(ctx, spec, design, coef, hyper, expected),
+                  error = function(e) NULL)
+  if (is.null(pen)) return(NA_real_)
+  db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% score),
+                 error = function(e) NULL)
+  if (is.null(db) || !all(is.finite(db))) return(NA_real_)
+  v <- 0.5 * sum(score * db)
+  if (is.finite(v)) v else NA_real_
+}

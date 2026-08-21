@@ -1,3 +1,48 @@
+# statmodels7 0.81.0
+
+* Whether a hyperparameter is AVAILABLE to the outer search is decided by how
+  far above its mode the inner fit stopped, and not by the inner optimizer's
+  convergence flag.  The two answer different questions: the flag says whether
+  a stopping rule fired, while availability asks whether the criterion -- a
+  Laplace expansion AT THE MODE -- is valid at that point, which is a matter
+  of distance and has a natural scale in log-likelihood units.
+
+  Measured on `y ~ s(x, k = 15) | sigma ~ s(z, k = 10)`, a gaussian with a
+  smooth in each equation and nothing else: of the 38 inner fits one search
+  performs, **38 are at their mode** by the second reading -- between 1e-09
+  and 3e-09 against `mode_error_limit()` of 1e-03, six orders of margin --
+  and **four** report convergence.  The other 34 stopped on the
+  objective-stall guard with the objective already fixed to twelve
+  significant digits and the score oscillating between 2.5e-06 and 3.3e-06,
+  just above its absolute tolerance of 1e-06.
+
+  Read as unavailable, those points made the outer line search backtrack
+  eleven times per iteration and accept a step of 0.0026 where the Newton
+  step is 1.4, so the search moved 0.005 in eta over 38 evaluations and
+  stopped 4.0 criterion units short of the optimum.  That the optimum was
+  really there, and that the exact gradient was correctly pointing at it, is
+  established three ways: a grid of the criterion with the hyperparameters
+  held peaks at eta = (0, 2) with -1558.698 against the -1562.696 reached; a
+  central difference of the criterion gives (-0.360, 2.721) at h = 0.2 and
+  (-0.344, 2.723) at h = 0.05 against the exact (-0.343, 2.720); and all four
+  routes -- default, `lbfgs()`, `newton()` and `nelder_mead()` -- stop at the
+  same place, which a simplex could not do if the neighbouring points were
+  merely worse.
+
+  End to end the model now reaches **-1558.352**, 4.33 better, and its
+  certificate goes from `not converged` to `converged`.  The rule ADDS points
+  and never removes one -- a run whose flag says converged stays usable
+  whatever the mode error reads -- so no model that fitted before can stop
+  fitting: a single smooth, a smooth with a random effect, two smooths with a
+  random effect, and a smooth on pure noise whose smoothing parameter runs to
+  its boundary are all **identical to the printed digit** in criterion,
+  certificate, flag, effective degrees of freedom and hyperparameters.
+
+  Making the flag STRICTER is the other direction, and `piano_stabilita.txt`
+  13d measured it and withdrew it: it cost a false negative on a good fit.
+  `inner_mode_error()` is the new reader, sharing the evaluation context's
+  own factorization rather than assembling a second one.
+
 # statmodels7 0.80.1
 
 * The column norms of the equilibrated sparse rank test come from
