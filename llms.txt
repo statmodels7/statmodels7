@@ -358,6 +358,8 @@ exported, and none is needed to use the package.
   : One Hyperparameter of an Index
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
+- [`inner_mode_error()`](https://statmodels7.github.io/statmodels7/reference/inner_mode_error.md)
+  : How Far Above Its Mode the Inner Fit Stopped
 - [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md)
   : What the Inner Method Says About How to Fit
 - [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)

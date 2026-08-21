@@ -106,5 +106,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> 
 #> log-likelihood -33.778973    objective 44.594796
 #> AIC 87.386042 over 5 hyperparameter evaluation(s)
-#> fitted in 749 ms, converged
+#> fitted in 760 ms, converged
 ```
