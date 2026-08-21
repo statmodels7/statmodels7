@@ -13,6 +13,10 @@ chol_rcond_cpp <- function(R, anorm) {
     .Call(`_statmodels7_chol_rcond_cpp`, R, anorm)
 }
 
+qr_factor_cpp <- function(A, threads) {
+    .Call(`_statmodels7_qr_factor_cpp`, A, threads)
+}
+
 xtv_cpp <- function(X, v, threads) {
     .Call(`_statmodels7_xtv_cpp`, X, v, threads)
 }

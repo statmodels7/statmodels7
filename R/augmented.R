@@ -256,11 +256,12 @@ diagonal_sqrt <- function(S, p) {
 #' @param C The penalty's factor.
 #' @param u The right-hand side.
 #' @param how Either \code{"qr"} or \code{"svd"}.
+#' @param threads How many threads the triangular factor may use.
 #'
 #' @return A list with \code{delta} and \code{rank}.
 #'
 #' @keywords internal
-augmented_solve <- function(R, C, u, how) {
+augmented_solve <- function(R, C, u, how, threads = 1L) {
   if (isS4(R) || isS4(C)) {
     out <- sparse_augmented_solve(R, C, u, how)
     if (!is.null(out)) return(out)
@@ -279,6 +280,36 @@ augmented_solve <- function(R, C, u, how) {
     return(list(delta = as.numeric(s$v %*% (dinv * crossprod(s$v, u))),
                 rank = sum(keep)))
   }
+  # THE THREADED FACTOR. Only the triangular factor is ever read here, so a
+  # kernel that produces it and never accumulates Q does the whole job: the
+  # trailing columns of each Householder step are independent and each is
+  # written in full by one thread, so the factor is bit-identical at any
+  # count. It is engaged above a measured gate and only where the matrix is
+  # comfortably of full rank on the JACOBI-EQUILIBRATED diagonal, at the
+  # tolerance dqrdc2 itself uses, so anything the pivoted route would call
+  # deficient still goes there and is reported with its rank. Measured
+  # against qr() at n = 40000 with column scales spread over 1e8: 2.6x at
+  # p = 51 and 3.8x at p = 145 to 600 on eight threads, with the increment
+  # agreeing to 1.6e-16.
+  fast <- NULL
+  if (threads > 1L && how == "qr" &&
+      as.double(nrow(A)) * ncol(A) * ncol(A) >= 5e7) {
+    cn <- sqrt(colSums(A * A))
+    if (all(is.finite(cn)) && all(cn > 0)) {
+      Rt <- qr_factor_cpp(A, threads)
+      dg <- abs(diag(Rt))
+      eq <- dg / cn
+      if (all(is.finite(eq)) && max(eq) > 0 && min(eq) > 1e-7 * max(eq)) {
+        d <- tryCatch(backsolve(Rt, forwardsolve(t(Rt), u)),
+                      error = function(e) NULL)
+        if (!is.null(d) && all(is.finite(d))) {
+          fast <- list(delta = as.numeric(d), rank = ncol(A))
+        }
+      }
+    }
+  }
+  if (!is.null(fast)) return(fast)
+
   qrA <- qr(A)
   # (A'A)^-1 u from the R factor alone: A'A = R_qr' R_qr
   Rf <- qr.R(qrA)[seq_len(qrA$rank), seq_len(qrA$rank), drop = FALSE]
@@ -344,10 +375,29 @@ sparse_augmented_solve <- function(R, C, u, how) {
   if (is.null(Rf) || nrow(Rf) != ncol(A)) return(NULL)
   dg <- abs(Matrix::diag(Rf))
   if (!length(dg) || !all(is.finite(dg)) || max(dg) == 0) return(NULL)
-  if (min(dg) <= ncol(A) * .Machine$double.eps * max(dg)) return(NULL)
   # the columns in the order the decomposition put them
   q <- qrA@q
   ord <- if (length(q)) q + 1L else seq_len(ncol(A))
+  # The rank is read off the JACOBI-EQUILIBRATED diagonal, which is the same
+  # correction solve_pd() took in 0.70.0 and which was not propagated here.
+  # Since R'R = A'A, scaling A's columns by their norms scales that diagonal
+  # by the same factors, so |R_jj| / ||a_j|| is the diagonal of the
+  # decomposition of a matrix with unit column norms: per-direction scaling
+  # forgives separation from any source, while an exact collinearity stays
+  # exactly singular. Without it a penalized augmented matrix was rejected
+  # for having columns of different SIZE -- a large smoothing parameter
+  # makes the penalty rows of its own block enormous beside an unpenalized
+  # one -- and every such solve fell through to a dense QR of the whole
+  # thing. Measured on `s(x) + random(~1|g)`, 87 of 127 solves were rejected
+  # and the dense route found full rank in all 127; equilibrated, the ratio
+  # runs from 0.445 to 1.000 where the raw one reached 7.4e-30.
+  cn <- sqrt(Matrix::colSums(A * A))[ord]
+  if (length(cn) != length(dg) || !all(is.finite(cn)) || any(cn == 0)) {
+    return(NULL)
+  }
+  eq <- dg / cn
+  if (!all(is.finite(eq)) || max(eq) == 0) return(NULL)
+  if (min(eq) <= ncol(A) * .Machine$double.eps * max(eq)) return(NULL)
   d <- tryCatch({
     z <- Matrix::solve(Matrix::t(Rf), u[ord])
     as.numeric(Matrix::solve(Rf, z))

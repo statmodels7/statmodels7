@@ -4,7 +4,7 @@
 \alias{augmented_solve}
 \title{Solve a Scoring Step From the Square-Root Design}
 \usage{
-augmented_solve(R, C, u, how)
+augmented_solve(R, C, u, how, threads = 1L)
 }
 \arguments{
 \item{R}{The square-root design.}
@@ -14,6 +14,8 @@ augmented_solve(R, C, u, how)
 \item{u}{The right-hand side.}
 
 \item{how}{Either \code{"qr"} or \code{"svd"}.}
+
+\item{threads}{How many threads the triangular factor may use.}
 }
 \value{
 A list with \code{delta} and \code{rank}.

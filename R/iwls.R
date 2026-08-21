@@ -203,7 +203,9 @@ S7::method(print, Iwls) <- print.Iwls
 #' @keywords internal
 iwls_solve <- function(pieces, u, how) {
   if (how %in% c("qr", "svd") && !is.null(pieces$R) && !is.null(pieces$C)) {
-    out <- augmented_solve(pieces$R, pieces$C, u, how)
+    out <- augmented_solve(pieces$R, pieces$C, u, how,
+                           threads = if (is.null(pieces$threads)) 1L
+                                     else pieces$threads)
     out$route <- how
     return(out)
   }
@@ -250,7 +252,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
   R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
   if (is.null(R) || is.null(C)) return(assembled())
-  list(R = R, C = C, A = NULL)
+  list(R = R, C = C, A = NULL, threads = spec@threads)
 }
 
 

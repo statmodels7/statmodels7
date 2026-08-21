@@ -108,7 +108,7 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
     return(sum(spec@weights * ll))
   }
   ll <- distributions7::distrib_pdf(spec@distrib, spec@response, ev$theta,
-                                    log = TRUE)
+                                    log = TRUE, threads = spec@threads)
   sum(spec@weights * ll)
 }
 

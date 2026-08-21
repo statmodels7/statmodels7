@@ -719,7 +719,7 @@ statmod_regime_information <- function(spec, ev, design, npar, offs, nb, n,
 
   ld <- function(e, i) {
     distributions7::distrib_pdf(spec@distrib, yof(i), theta_at(e, i),
-                                log = TRUE)
+                                log = TRUE, threads = spec@threads)
   }
   gr <- function(e, i) {
     g <- distributions7::distrib_gradient(spec@distrib, yof(i),

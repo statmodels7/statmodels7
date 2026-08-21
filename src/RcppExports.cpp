@@ -68,6 +68,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// qr_factor_cpp
+NumericMatrix qr_factor_cpp(NumericMatrix A, int threads);
+RcppExport SEXP _statmodels7_qr_factor_cpp(SEXP ASEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(qr_factor_cpp(A, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // xtv_cpp
 NumericVector xtv_cpp(NumericMatrix X, NumericVector v, int threads);
 RcppExport SEXP _statmodels7_xtv_cpp(SEXP XSEXP, SEXP vSEXP, SEXP threadsSEXP) {
@@ -125,6 +137,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
     {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
     {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
+    {"_statmodels7_qr_factor_cpp", (DL_FUNC) &_statmodels7_qr_factor_cpp, 2},
     {"_statmodels7_xtv_cpp", (DL_FUNC) &_statmodels7_xtv_cpp, 3},
     {"_statmodels7_wxsq_cpp", (DL_FUNC) &_statmodels7_wxsq_cpp, 3},
     {"_statmodels7_xtx_cpp", (DL_FUNC) &_statmodels7_xtx_cpp, 2},

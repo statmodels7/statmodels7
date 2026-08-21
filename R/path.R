@@ -904,6 +904,19 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     ts <- tryCatch(statmod_spec(spec@formula, spec@distrib, train, w, off,
                                 linpar = spec@linpar),
                    error = function(e) conditionMessage(e))
+    # statmod_spec() builds a FRESH specification, so the thread count does
+    # not travel with it as it does through statmod_respec(), which starts
+    # from the one it is given: until 2026-08-21 a fold fell back to the
+    # class default of 1 and a cross-validated path was single-threaded
+    # whatever statmod(threads =) asked for. Measured on a lasso over a
+    # gamma response, bic() gained 1.85x from eight threads where cv()
+    # gained 1.06x. The two levels still do not nest -- where the folds
+    # themselves run in worker PROCESSES each one fits on one thread, which
+    # is what numericals7::n_threads() documents -- so the count is passed
+    # on only when this process is running them.
+    if (!is.character(ts)) {
+      ts@threads <- if (spec@workers > 1L) 1L else spec@threads
+    }
     if (is.character(ts)) {
       # a fold that cannot be rebuilt is a configuration error and not a
       # numerical one -- a term whose input is not in `data` cannot be
@@ -1116,14 +1129,19 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
 
   # one fit at one setting, warm-started, with the differentiable
   # hyperparameters estimated inside it where there are any
-  fit_at <- function(hy, warm, bk = blocks) {
+  # `sp` is the specification a fit runs under, and it is an argument
+  # because one caller needs a different one: a run dispatched to a worker
+  # PROCESS must fit on a single thread, the two levels of
+  # numericals7::n_threads() not nesting, while every other call here runs
+  # in this process and uses the count the caller asked for.
+  fit_at <- function(hy, warm, bk = blocks, sp = spec) {
     if (nested) {
-      r <- tryCatch(outer_fit(spec, design, bk, hy, inner_optimizer,
+      r <- tryCatch(outer_fit(sp, design, bk, hy, inner_optimizer,
                               inner_crit, optimizer, warm, approx, maxit, tol,
                               vb_inner(vb)), error = function(e) NULL)
       if (!is.null(r)) return(r)
     }
-    r <- statmod_alternate(spec, design, bk, hy, inner_optimizer, warm,
+    r <- statmod_alternate(sp, design, bk, hy, inner_optimizer, warm,
                            expected, approx, maxit, tol, vb_inner(vb),
                            hold_refresh = TRUE)
     r$hyper <- hy
@@ -1372,6 +1390,11 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
           # the kink jumps back up, so the screening starts again from the
           # whole block.
           runs <- split(seq_along(hys), factor(pl$run, levels = unique(pl$run)))
+          # where the runs go to worker processes each one fits on a single
+          # thread; where worker_map() keeps them here they use the count
+          # the caller asked for
+          run_spec <- spec
+          if (spec@workers > 1L) run_spec@threads <- 1L
           one_run <- function(ri) {
             idxs <- runs[[ri]]
             warm <- beta
@@ -1379,7 +1402,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
             out <- rep(NA_real_, length(idxs))
             for (k in seq_along(idxs)) {
               j <- idxs[[k]]
-              r <- fit_at(hys[[j]], warm, bk)
+              r <- fit_at(hys[[j]], warm, bk, sp = run_spec)
               bk <- blocks_at_kink(blocks, hys[[j]])
               if (!isTRUE(r$converged)) next
               warm <- r$par

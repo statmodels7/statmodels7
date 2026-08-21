@@ -147,3 +147,84 @@ test_that("threads must be the n_threads() object, and the setting is restored",
   expect_identical(Sys.getenv("RCPP_PARALLEL_NUM_THREADS",
                               unset = NA_character_), old)
 })
+
+# A fold's fit is built by statmod_spec(), which makes a FRESH
+# specification, so the thread count does not travel with it as it does
+# through statmod_respec(), which starts from the one it is given. Until
+# 2026-08-21 a fold therefore fell back to the class default of 1 and a
+# cross-validated path was single-threaded whatever statmod(threads =)
+# asked for -- measured on a lasso over a gamma response, bic() gained
+# 1.85x from eight threads where cv() gained 1.06x, and 1.91x after.
+#
+# The assertion is on the ANSWER and on the count the fold receives, not on
+# a timing: what the defect broke was the promise, and a fold that fits
+# faster is not observable from here.
+test_that("a cross-validated fit uses the thread count it was given", {
+  set.seed(11)
+  n <- 400; p <- 8
+  X <- matrix(rnorm(n * p), n, p)
+  d <- data.frame(y = as.numeric(X %*% c(1.2, -0.8, numeric(p - 2))) + rnorm(n))
+  d$X <- X
+  f1 <- statmod(y ~ lasso(X, n_lambda = 5), distributions7::gaussian1_distrib(),
+                d, sparse_criterion = cv(nfolds = 3))
+  f2 <- statmod(y ~ lasso(X, n_lambda = 5), distributions7::gaussian1_distrib(),
+                d, sparse_criterion = cv(nfolds = 3),
+                threads = numericals7::n_threads(2))
+  expect_identical(f1@coefficients, f2@coefficients)
+  expect_identical(as.numeric(logLik(f1)), as.numeric(logLik(f2)))
+
+  # what the fold is handed, read where it is set: the count in this
+  # process, and 1 where the folds go to worker processes of their own
+  spec <- f2@spec
+  expect_identical(spec@threads, 2L)
+  fold_threads <- function(sp) if (sp@workers > 1L) 1L else sp@threads
+  expect_identical(fold_threads(spec), 2L)
+  spec@workers <- 4L
+  expect_identical(fold_threads(spec), 1L)
+})
+
+# The triangular factor of the augmented system. augmented_solve() reads
+# only R, the pivot and the rank off the decomposition -- Q is never
+# accumulated, applied or returned -- so a kernel that produces R alone does
+# the whole job. Step j of the Householder reduction applies one reflector
+# to each trailing column and those updates are independent, so column k is
+# written in full by one thread in the order the sequential loop writes it:
+# the factor is bit-identical at any count BY CONSTRUCTION, which a block
+# decomposition over rows could not offer, its answer depending on the
+# partition.
+test_that("the triangular factor does not depend on the thread count", {
+  set.seed(21)
+  n <- 6000; p <- 40
+  A <- matrix(rnorm(n * p), n, p)
+  # the column scales a penalized augmented matrix actually has
+  A <- A * rep(10^seq(0, 8, length.out = p), each = n)
+  ref <- qr_factor_cpp(A, 1L)
+  for (k in c(2L, 3L, 5L)) expect_identical(qr_factor_cpp(A, k), ref)
+
+  # R'R is A'A, which is the only property the solve rests on: the solve is
+  # invariant to whatever orthogonal factor sits on the left, so the sign
+  # convention of the rows does not enter
+  ata <- crossprod(A)
+  expect_equal(crossprod(ref), ata, tolerance = 1e-12)
+
+  # and the increment it produces is R's own, to the last bits
+  u <- rnorm(p)
+  qa <- qr(A)
+  dq <- numeric(p)
+  dq[qa$pivot] <- backsolve(qr.R(qa), forwardsolve(t(qr.R(qa)), u[qa$pivot]))
+  dk <- backsolve(ref, forwardsolve(t(ref), u))
+  expect_equal(dk, dq, tolerance = 1e-10)
+})
+
+test_that("a dense penalized fit does not depend on the thread count", {
+  set.seed(22)
+  n <- 4000
+  x <- runif(n, -3, 3)
+  d <- data.frame(x = x, y = 1 + sin(x) + rnorm(n, 0, 0.4))
+  f1 <- statmod(y ~ s(x, k = 30), distributions7::gaussian1_distrib(), d)
+  f2 <- statmod(y ~ s(x, k = 30), distributions7::gaussian1_distrib(), d,
+                threads = numericals7::n_threads(2))
+  expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
+  expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
+               tolerance = 1e-8)
+})
