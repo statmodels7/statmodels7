@@ -49,10 +49,10 @@ be requested explicitly.
 statmodels7_update()
 #> statmodels7 toolkit, installed versions:
 #>   basis7           0.4.1
-#>   distributions7   0.27.4
+#>   distributions7   0.30.0
 #>   linkfunctions7   0.2.0
-#>   modelterms7      0.56.1
-#>   numericals7      0.9.2
+#>   modelterms7      0.57.0
+#>   numericals7      0.10.0
 #>   optimizers7      0.5.0
 #>   parameters7      0.11.0
 #>   penalties7       0.16.0

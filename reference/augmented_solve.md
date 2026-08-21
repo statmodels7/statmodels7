@@ -7,7 +7,7 @@ C'C)\delta = u\\.
 ## Usage
 
 ``` r
-augmented_solve(R, C, u, how)
+augmented_solve(R, C, u, how, threads = 1L)
 ```
 
 ## Arguments
@@ -27,6 +27,10 @@ augmented_solve(R, C, u, how)
 - how:
 
   Either `"qr"` or `"svd"`.
+
+- threads:
+
+  How many threads the triangular factor may use.
 
 ## Value
 

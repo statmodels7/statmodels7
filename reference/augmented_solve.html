@@ -11,7 +11,7 @@ penalized information, and returns the increment solving
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.77.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.79.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ penalized information, and returns the increment solving
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">augmented_solve</span><span class="op">(</span><span class="va">R</span>, <span class="va">C</span>, <span class="va">u</span>, <span class="va">how</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">augmented_solve</span><span class="op">(</span><span class="va">R</span>, <span class="va">C</span>, <span class="va">u</span>, <span class="va">how</span>, threads <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -65,6 +65,10 @@ penalized information, and returns the increment solving
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
 <dd><p>Either <code>"qr"</code> or <code>"svd"</code>.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>How many threads the triangular factor may use.</p></dd>
 
 </dl></div>
     <div class="section level2">

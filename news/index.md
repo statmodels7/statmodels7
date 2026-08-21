@@ -1,5 +1,82 @@
 # Changelog
 
+## statmodels7 0.79.0
+
+- The rank of a penalized augmented matrix is read off the JACOBI-
+  EQUILIBRATED diagonal of its triangular factor, which is the
+  correction
+  [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  took in 0.70.0 and which had not been propagated to
+  [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md).
+  Since `R'R = A'A`, scaling A’s columns by their norms scales that
+  diagonal by the same factors, so `|R_jj| / ||a_j||` is the diagonal of
+  a decomposition with unit column norms: per-direction scaling forgives
+  separation from any source while an exact collinearity stays exactly
+  singular. Without it a matrix was called deficient for having columns
+  of different SIZE – a large smoothing parameter makes the penalty rows
+  of its own block enormous beside an unpenalized one – and every such
+  solve fell through to a dense QR of the whole thing. Measured on
+  `y ~ s(x) + random(~1|g)` at n = 20000 over 200 levels, **87 of 127
+  solves were rejected and the dense route found full rank in all 127**;
+  equilibrated, the ratio runs from 0.445 to 1.000 where the raw one
+  reached 7.4e-30. The fit goes from 34.1 s to 3.9 s, and against the
+  dense route forced on the same data it is 20.9x on a gaussian and
+  14.4x on a poisson, agreeing on the coefficients to 1.4e-06 and on the
+  effective degrees of freedom to four decimals.
+
+- A dense penalized system takes its triangular factor from a threaded
+  kernel.
+  [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
+  reads only R, the pivot and the rank – Q is never accumulated, applied
+  or returned – so a kernel that produces R alone does the whole job,
+  and the trailing columns of each Householder step are independent:
+  column k is written in full by one thread in the order the sequential
+  loop writes it, so the factor is bit-identical at any count BY
+  CONSTRUCTION and no arithmetic is added over the sequential form. It
+  is engaged above a measured gate and only where the matrix is
+  comfortably of full rank on the equilibrated diagonal, at the
+  tolerance `dqrdc2` itself uses, so anything the pivoted route would
+  call deficient still goes there. Measured end to end at eight threads:
+  `s(x, k = 50)` 2.07x, `te(x, z)` 2.82x, `ridge(X)` at p = 300
+  **2.89x** (164 s to 57), with the log-likelihood identical to the bit
+  in two of the three.
+
+- The count reaches `distrib_pdf()`, which no call site had ever passed
+  it.
+
+## statmodels7 0.78.0
+
+- A cross-validation fold fits with the thread count
+  `statmod(threads =)` was given. A fold’s specification is built by
+  [`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md),
+  which makes a fresh one, so the count did not travel with it as it
+  does through
+  [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md),
+  and every fold fell back to the class default of 1: measured on a
+  lasso over a gamma response at 20000 observations,
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  gained 1.85x from eight threads while
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  gained 1.06x, and now gains 1.91x at an identical answer. Where the
+  folds themselves run in worker processes each one still fits on a
+  single thread, the two levels of
+  [`numericals7::n_threads()`](https://statmodels7.github.io/numericals7/reference/n_threads.html)
+  not nesting; the same rule is applied to the runs of a product grid,
+  which reach `fit_at()` through a specification of their own.
+
+- `sm7::par_for()` takes the shape `distributions7`’s `d7::par_for()`
+  settled on: the worker’s loop is noinline and the sequential branch
+  runs through the worker, so both branches execute one compiled copy
+  rather than two the compiler may optimize apart, and the worker
+  installs the calling thread’s floating-point environment. Nothing in
+  these kernels calls an Rmath routine, so the second buys no
+  correctness today; what both buy is that the bit-identity the twins
+  assert holds by construction rather than by the optimizer’s leave.
+
+- `threads` is passed to `parallelFor()` instead of being left to
+  `RCPP_PARALLEL_NUM_THREADS`, so a kernel called outside a fit honours
+  the count it is given rather than using every core the machine has.
+
 ## statmodels7 0.77.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
