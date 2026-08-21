@@ -1650,11 +1650,25 @@ print_block <- function(b, digits = 4L) {
 #' reconstructed from \code{fit@spec} equals the one the fit reports EXACTLY on
 #' every shape, so the reading is of the fitted model and not of another one.
 #'
-#' \strong{Where it cannot read.} A form whose criterion has no exact gradient
-#' (\code{\link{outer_gradient_ok}}), or a fit with no marginal criterion at
-#' all, leaves the gradient \code{NA} and the state \code{"unknown"} rather
-#' than approximated -- 2p refits to difference it would cost more than the
-#' fit.
+#' \strong{Where there is no outer gradient there are two cases, and they get
+#' different answers.} A model with NO PENALTY -- \code{linpar}, \code{nl},
+#' \code{seg}, \code{jump}, \code{jseg} -- has no hyperparameter for a
+#' gradient to be about, so the only question left is whether the inner fit
+#' reached its mode, and the mode error answers it: measured over the
+#' reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
+#' against 1.215 on a \code{jump} fitted to data carrying a slope and a slope
+#' change it has no term for. A model whose only hyperparameters are KINKED --
+#' \code{lasso}, \code{scad}, \code{mcp}, swept along a path because a Laplace
+#' approximation at a mode sitting on the kink has no meaning -- gets neither
+#' reading and stays \code{"unknown"}: at a coefficient the penalty has set to
+#' zero the score does not vanish but lies in the subdifferential, so the mode
+#' error is not a statement about being at a mode. Measured on a lasso, its
+#' 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
+#' score is -0.715.
+#'
+#' A form whose criterion has no EXACT gradient
+#' (\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
+#' approximated: 2p refits to difference it would cost more than the fit.
 #'
 #' @param fit A \code{\link{StatmodFit}}.
 #' @param tol The largest outer gradient a certified point may carry.
@@ -1708,14 +1722,55 @@ statmod_certificate <- function(fit, tol = 1e-2) {
     }
   }
 
-  if (is.null(method) || !method@kind %in% c("ml", "reml")) {
-    out$reason <- "no marginal criterion was estimated, so there is no outer gradient to read"
-    return(out)
-  }
   blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
   idx <- if (is.null(blocks)) NULL else outer_hyper_index(spec, blocks)
-  if (is.null(idx) || !nrow(idx)) {
-    out$reason <- "no hyperparameter was estimated by a marginal criterion"
+  no_outer <- is.null(method) || !method@kind %in% c("ml", "reml") ||
+    is.null(idx) || !nrow(idx)
+  if (no_outer) {
+    # ⚠️ TWO QUITE DIFFERENT WAYS TO HAVE NO OUTER GRADIENT, and they call for
+    # different answers. Measured over the reference battery, seven cases of
+    # twenty-nine land here:
+    #
+    #   NO PENALTY AT ALL -- linpar, nl, seg, jump, jseg sharp and smoothed.
+    #     There is no hyperparameter to estimate, so there is nothing an outer
+    #     gradient could say, and the only question left is whether the inner
+    #     fit reached its mode. The mode error answers exactly that, and it
+    #     answers well: 5.2e-11, 1.5e-10, 1.9e-10, 2.0e-06 and 7.9e-05 on fits
+    #     that are right, against 1.215 on a `jump` fitted to data carrying a
+    #     slope and a slope change it has no term for -- misspecified, so its
+    #     break-point iteration never settles, its annealing runs to the floor
+    #     and its block reaches 3.0e+13 on the information's diagonal. On data
+    #     where the jump IS the truth the same term reads 4.2e-04.
+    #
+    #   A KINKED HYPERPARAMETER -- lasso, scad, mcp -- chosen by a PATH
+    #     because a Laplace approximation at a mode sitting on the kink is
+    #     arithmetic without a meaning. There is a hyperparameter, but it is
+    #     the argmin over a grid rather than the root of a derivative. AND THE
+    #     MODE ERROR IS NOT A READING HERE EITHER: at a coefficient the
+    #     penalty has set to zero the score does not vanish, it lies in the
+    #     subdifferential. Measured on a lasso, the mode error of 4.7e-03 is
+    #     carried by a coordinate whose coefficient is exactly 0 and whose
+    #     score is -0.715. So this stays unknown, and says why.
+    pen_units <- tryCatch(statmod_penalized(spec, design),
+                          error = function(e) list())
+    if (length(pen_units)) {
+      out$reason <- paste0(
+        "the only hyperparameters here belong to a penalty with a kink, ",
+        "chosen along a path rather than by a criterion with a derivative; ",
+        "and at a coefficient the penalty has set to zero the score does not ",
+        "vanish, so the mode error is not a reading either")
+      return(out)
+    }
+    if (!is.finite(out$mode_error)) {
+      out$reason <- "the model carries no penalty, and the mode error could not be read"
+      return(out)
+    }
+    out$state <- if (out$mode_error <= mode_error_limit()) "converged" else
+      "not converged"
+    out$reason <- sprintf(paste0(
+      "the model carries no penalty, so there is no outer gradient; the ",
+      "reading is the inner fit's own, %.4g log-likelihood units above its ",
+      "mode against %g"), out$mode_error, mode_error_limit())
     return(out)
   }
   if (!outer_gradient_ok(spec, design, idx, method, 1L)) {

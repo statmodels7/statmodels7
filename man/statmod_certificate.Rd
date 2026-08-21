@@ -49,11 +49,25 @@ the fit already holds. Nothing is refitted: measured, the criterion
 reconstructed from \code{fit@spec} equals the one the fit reports EXACTLY on
 every shape, so the reading is of the fitted model and not of another one.
 
-\strong{Where it cannot read.} A form whose criterion has no exact gradient
-(\code{\link{outer_gradient_ok}}), or a fit with no marginal criterion at
-all, leaves the gradient \code{NA} and the state \code{"unknown"} rather
-than approximated -- 2p refits to difference it would cost more than the
-fit.
+\strong{Where there is no outer gradient there are two cases, and they get
+different answers.} A model with NO PENALTY -- \code{linpar}, \code{nl},
+\code{seg}, \code{jump}, \code{jseg} -- has no hyperparameter for a
+gradient to be about, so the only question left is whether the inner fit
+reached its mode, and the mode error answers it: measured over the
+reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
+against 1.215 on a \code{jump} fitted to data carrying a slope and a slope
+change it has no term for. A model whose only hyperparameters are KINKED --
+\code{lasso}, \code{scad}, \code{mcp}, swept along a path because a Laplace
+approximation at a mode sitting on the kink has no meaning -- gets neither
+reading and stays \code{"unknown"}: at a coefficient the penalty has set to
+zero the score does not vanish but lies in the subdifferential, so the mode
+error is not a statement about being at a mode. Measured on a lasso, its
+4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
+score is -0.715.
+
+A form whose criterion has no EXACT gradient
+(\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
+approximated: 2p refits to difference it would cost more than the fit.
 }
 \examples{
 dd <- data.frame(x = runif(120))

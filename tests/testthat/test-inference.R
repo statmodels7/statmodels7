@@ -416,17 +416,15 @@ test_that("the certificate declares a boundary and refuses where it cannot read"
   expect_identical(cn$state, "boundary")
   expect_gt(length(cn$boundary), 0L)
 
-  # AND WHERE THERE IS NOTHING TO READ IT SAYS SO. A fit with no marginal
-  # criterion has no outer gradient, and 2p refits to difference one would
-  # cost more than the fit: the state is "unknown" with the reason, never a
-  # number of another kind.
+  # AND WHERE THERE IS NO OUTER GRADIENT THE GRADIENT IS NA, always: 2p refits
+  # to difference one would cost more than the fit. What the STATE is there
+  # depends on why, and that is the next two tests' subject -- a model with no
+  # penalty is certified by its own mode, a kinked one is refused.
   plain <- statmod(y ~ x, gaussian1_distrib(), d, outer_criterion = NULL)
   cp <- statmod_certificate(plain)
-  expect_identical(cp$state, "unknown")
   expect_true(is.na(cp$gradient))
-  expect_match(cp$reason[1], "no marginal criterion")
-  # the mode error is still read: it needs no criterion
   expect_true(is.finite(cp$mode_error))
+  expect_length(cp$boundary, 0L)
 })
 
 
@@ -442,4 +440,54 @@ test_that("summary carries the certificate and prints it", {
                 c("converged", "boundary", "not converged", "unknown"))
   out <- utils::capture.output(print(s))
   expect_true(any(grepl("certificate:", out, fixed = TRUE)))
+})
+
+
+test_that("a model with no penalty is certified by its own mode", {
+  # THE LARGEST GAP THE BATTERY FOUND: seven of twenty-nine cases had no outer
+  # gradient and so no state at all. Two quite different reasons hide there,
+  # and only one of them is a real refusal.
+  #
+  # NO PENALTY AT ALL -- linpar, nl, seg, jump, jseg -- means there is no
+  # hyperparameter for a gradient to be about, and the only question left is
+  # whether the inner fit reached its mode. The mode error answers it.
+  set.seed(51)
+  n <- 200
+  d <- data.frame(x = runif(n))
+  d$y <- 1 + 2 * d$x + rnorm(n, 0, 0.3)
+  fit <- statmod(y ~ x, gaussian1_distrib(), d, outer_criterion = NULL)
+  ct <- statmod_certificate(fit)
+  expect_identical(ct$state, "converged")
+  expect_true(is.na(ct$gradient))
+  expect_lt(ct$mode_error, mode_error_limit())
+  expect_match(ct$reason[1], "no penalty")
+
+  # AND IT MUST BE ABLE TO REFUSE HERE TOO. The limit is a property of the
+  # package, so the injection moves the reading rather than the limit: a fit
+  # whose mode error exceeds it is not certified. Measured, a `jump` fitted to
+  # data carrying a slope and a slope change it has no term for reads 1.215,
+  # against 4.2e-04 on data where the jump is the truth.
+  local_mocked_bindings(mode_error_limit = function() ct$mode_error / 10)
+  expect_identical(statmod_certificate(fit)$state, "not converged")
+})
+
+
+test_that("a kinked hyperparameter is refused rather than read", {
+  # A lasso's lambda is chosen along a PATH, being the argmin over a grid
+  # rather than the root of a derivative, so there is no outer gradient. And
+  # the mode error is not a reading either: at a coefficient the penalty has
+  # set to zero the score does not vanish but lies in the subdifferential --
+  # measured on a lasso, a mode error of 4.7e-03 carried by a coordinate whose
+  # coefficient is exactly 0 and whose score is -0.715.
+  set.seed(52)
+  n <- 200
+  X <- matrix(runif(n * 4), n, 4)
+  d <- data.frame(x1 = X[, 1], x2 = X[, 2], x3 = X[, 3], x4 = X[, 4])
+  d$y <- 2 * d$x1 + rnorm(n, 0, 0.3)
+  fit <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d)
+  ct <- statmod_certificate(fit)
+  expect_identical(ct$state, "unknown")
+  expect_match(ct$reason[1], "kink")
+  # the distinction is the point: this reason is NOT the no-penalty one
+  expect_false(grepl("no penalty", ct$reason[1], fixed = TRUE))
 })
