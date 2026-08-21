@@ -391,7 +391,13 @@ sparse_augmented_solve <- function(R, C, u, how) {
   # thing. Measured on `s(x) + random(~1|g)`, 87 of 127 solves were rejected
   # and the dense route found full rank in all 127; equilibrated, the ratio
   # runs from 0.445 to 1.000 where the raw one reached 7.4e-30.
-  cn <- sqrt(Matrix::colSums(A * A))[ord]
+  # `A^2` and NOT `A * A`: the second is a binary operation between two
+  # sparse matrices and intersects their index sets, where the first acts
+  # on the `x` slot with the pattern untouched.  Measured on the three
+  # shapes a penalized fit meets here, same values to the bit: 50.00 ms
+  # against 1.74, 26.56 against 0.76, 19.69 against 0.64 -- 29x to 35x,
+  # and the norms were 70 to 74 per cent of this solve.
+  cn <- sqrt(Matrix::colSums(A^2))[ord]
   if (length(cn) != length(dg) || !all(is.finite(cn)) || any(cn == 0)) {
     return(NULL)
   }
