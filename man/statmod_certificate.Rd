@@ -4,12 +4,16 @@
 \alias{statmod_certificate}
 \title{What the Fit Certifies About the Point It Reports}
 \usage{
-statmod_certificate(fit, tol = 0.01)
+statmod_certificate(fit, tol = 0.01, edge = 8)
 }
 \arguments{
 \item{fit}{A \code{\link{StatmodFit}}.}
 
 \item{tol}{The largest outer gradient a certified point may carry.}
+
+\item{edge}{The free value beyond which a hyperparameter whose gradient
+has already met \code{tol} is reported as sitting at a boundary. It
+decides the label alone and never the verdict; see the details.}
 }
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
@@ -68,6 +72,21 @@ score is -0.715.
 A form whose criterion has no EXACT gradient
 (\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
 approximated: 2p refits to difference it would cost more than the fit.
+
+\strong{The boundary label, and why its threshold needs no derivation.}
+A hyperparameter may run to an edge and belong there: on a covariate that
+is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
+genuinely flat, and calling that fit unconverged would be wrong. A
+coordinate is reported as sitting at a boundary when its free value
+exceeds \code{edge} AND its own gradient component has already met
+\code{tol}. Because of that second condition the threshold cannot change
+the verdict: a coordinate it moves out of the interior set had already
+passed the test, so the maximum that decides the state is unaffected, and
+both \code{"converged"} and \code{"boundary"} are certified. What
+\code{edge} decides is how the point is described. The default separates
+the measured cases with room on both sides: coordinates that ran to an
+edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
+2.01 for the ones that did not.
 }
 \examples{
 dd <- data.frame(x = runif(120))

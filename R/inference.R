@@ -1670,8 +1670,26 @@ print_block <- function(b, digits = 4L) {
 #' (\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
 #' approximated: 2p refits to difference it would cost more than the fit.
 #'
+#' \strong{The boundary label, and why its threshold needs no derivation.}
+#' A hyperparameter may run to an edge and belong there: on a covariate that
+#' is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
+#' genuinely flat, and calling that fit unconverged would be wrong. A
+#' coordinate is reported as sitting at a boundary when its free value
+#' exceeds \code{edge} AND its own gradient component has already met
+#' \code{tol}. Because of that second condition the threshold cannot change
+#' the verdict: a coordinate it moves out of the interior set had already
+#' passed the test, so the maximum that decides the state is unaffected, and
+#' both \code{"converged"} and \code{"boundary"} are certified. What
+#' \code{edge} decides is how the point is described. The default separates
+#' the measured cases with room on both sides: coordinates that ran to an
+#' edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
+#' 2.01 for the ones that did not.
+#'
 #' @param fit A \code{\link{StatmodFit}}.
 #' @param tol The largest outer gradient a certified point may carry.
+#' @param edge The free value beyond which a hyperparameter whose gradient
+#'   has already met \code{tol} is reported as sitting at a boundary. It
+#'   decides the label alone and never the verdict; see the details.
 #'
 #' @return A list with \code{state} (\code{"converged"}, \code{"boundary"},
 #'   \code{"not converged"} or \code{"unknown"}), \code{gradient},
@@ -1687,7 +1705,7 @@ print_block <- function(b, digits = 4L) {
 #'                             distributions7::gaussian1_distrib(), dd))$state
 #'
 #' @export
-statmod_certificate <- function(fit, tol = 1e-2) {
+statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   out <- list(state = "unknown", gradient = NA_real_, mode_error = NA_real_,
               boundary = character(0), reason = character(0))
   method <- fit@methods$outer
@@ -1821,22 +1839,34 @@ statmod_certificate <- function(fit, tol = 1e-2) {
   # A COORDINATE AT A BOUNDARY is one whose criterion has stopped moving in it
   # while its value has run far from where it started. Both halves are needed:
   # a small gradient component alone is what convergence looks like, and a
-  # large value alone is an ordinary answer on a wide scale. Measured, the
-  # coordinates that ran to an edge sit at |eta| of 9.3, 10.5 and 20.6 -- a
-  # smoothing parameter of 9.2e+08 on pure noise, prior scales of 9.2e-05 and
-  # 2.8e-05 -- against 0.13, 0.30 and 2.01 for the ones that did not. The
-  # threshold only decides the LABEL and never whether the point is certified.
+  # large value alone is an ordinary answer on a wide scale.
+  #
+  # `edge` IS NOT DERIVED FROM ANYTHING, and it does not have to be, because
+  # THE CONJUNCTION BELOW IS WHAT MAKES IT SAFE: a coordinate is called an
+  # edge only if it has ALREADY met `tol`, so removing it from `interior`
+  # cannot raise the maximum that decides the verdict. Move the threshold in
+  # either direction and the only thing that changes is whether the state
+  # reads `converged` or `boundary`, both of which are certified. Delete the
+  # `abs(g) <= tol` conjunct, however, and the threshold starts excusing
+  # coordinates from the gradient test, at which point this paragraph is
+  # false and the number needs an argument of its own.
+  #
+  # What the default separates, measured: the coordinates that ran to an edge
+  # sit at |eta| of 9.3, 10.5 and 20.6 -- a smoothing parameter of 9.2e+08 on
+  # pure noise, prior scales of 9.2e-05 and 2.8e-05 -- against 0.13, 0.30 and
+  # 2.01 for the ones that did not, so 8 sits in a wide gap rather than on a
+  # boundary of its own.
   eta <- hyper_to_eta(hy, idx)
-  edge <- which(abs(eta) > 8 & abs(g) <= tol)
-  if (length(edge)) {
-    out$boundary <- vapply(edge, function(k)
+  at_edge <- which(abs(eta) > edge & abs(g) <= tol)
+  if (length(at_edge)) {
+    out$boundary <- vapply(at_edge, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
       character(1))
   }
-  interior <- setdiff(seq_along(g), edge)
+  interior <- setdiff(seq_along(g), at_edge)
   out$gradient <- if (length(interior)) max(abs(g[interior])) else 0
   if (out$gradient <= tol) {
-    out$state <- if (length(edge)) "boundary" else "converged"
+    out$state <- if (length(at_edge)) "boundary" else "converged"
   } else {
     out$state <- "not converged"
     out$reason <- sprintf(

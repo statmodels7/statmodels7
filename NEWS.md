@@ -1,3 +1,18 @@
+# statmodels7 0.85.0
+
+* `statmod_certificate()` takes `edge`, the free value beyond which a
+  hyperparameter whose gradient has already met `tol` is reported as sitting at
+  a boundary. It was written inline as 8, and it belongs beside the tolerance
+  it works with, where the signature shows both rules rather than one.
+
+* The comment on that test now says why the threshold is safe rather than only
+  that it is: a coordinate is called an edge only if it has ALREADY met `tol`,
+  so removing it from the interior set cannot raise the maximum that decides
+  the verdict, and moving the threshold changes only whether the state reads
+  `converged` or `boundary`, both of which are certified. Delete the
+  `abs(g) <= tol` conjunct and that stops being true, which is the thing a
+  later reader needs told. The same explanation is on the page.
+
 # statmodels7 0.84.0
 
 * `statmod_certificate()` says WHICH coefficient is at a boundary where the
