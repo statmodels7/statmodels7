@@ -1,3 +1,69 @@
+# statmodels7 0.82.0
+
+* A coordinate at a boundary is one coordinate and no longer stops the
+  others. Where a parameter reaches the clamp its link keeps it strictly
+  inside, the family's curvature there is `NaN`, and one such entry was
+  enough to deny the whole system a solve and the whole criterion a Cholesky
+  factor. `iwls_solve()` holds those coordinates and solves the rest, which
+  is the active set the boundary defines, and `pin_boundary()` puts a unit
+  diagonal in their place wherever the penalized information is factorized.
+
+  The Student t of the reference battery is what this is measured on. Its
+  `nu` reaches `double.xmax`, and there:
+
+  ```
+                            before          after
+  score/n at the stop       6.2e-01        6.1e-08
+  score in sigma            -617.6           1.41
+  iterations                     2              7   (all at full step)
+  the fit                    ERROR      converged
+  ```
+
+  the run had been stopping with `sigma` -- an ordinary coordinate --
+  utterly non-stationary, because the zero step the failed solve returned
+  applied to every coordinate. `nu`'s own score there is exactly 0, which is
+  what says the point is a stationary point of the constrained problem
+  rather than a place the fit was stopped at.
+
+  End to end, `fam-studentt` goes from raising on all three routes to
+  fitting on all three, in 0.4 to 1.1 s. On the same data with the mean
+  correctly specified -- `y ~ s(x) + s(z) + random(~1|g)` -- it reaches a
+  log-likelihood of -869.40, against the -869.33 of a profile computed with
+  the mean HELD AT THE TRUTH, which is the independent check that the answer
+  is the right one.
+
+  ⚠️ **The dimension of the Laplace approximation drops with the held
+  coordinate.** A boundary coordinate is not one the criterion integrates
+  over, so it contributes neither a determinant term (`log 1 = 0`) nor a
+  `2*pi`. That is why a t at its clamp and a gaussian do NOT report the same
+  criterion on the same data, and their hyperparameters differ; what they
+  share is the predictor, which agrees to a correlation above 0.999.
+
+  ⚠️ **By the DIAGONAL and not by the column**, which is measured rather
+  than reasoned: a boundary coordinate makes its whole ROW non-finite, cross
+  terms included, so a column test marks its neighbours too. The first
+  version did, held `sigma` along with `nu`, and left the fit exactly where
+  it had been. The test pins the distinction.
+
+  The shape is preserved deliberately where the matrix is pinned rather than
+  reduced: some twenty consumers index into `K` and its inverse by position.
+
+* ⚠️ **What this does NOT repair, measured and stated.** There are two
+  regimes and only the first is covered. AT the clamp the curvature is
+  `NaN`, the solve dies for every coordinate, and that is what is fixed.
+  APPROACHING the clamp without reaching it -- `nu` = 9.1e+12, where the
+  information is `3.5/nu^4` = 5e-52 -- the curvature is finite, nothing is
+  held, and the step in that coordinate is astronomically long: the line
+  search shrinks the WHOLE step to keep it admissible (1, 0.125, 1.5e-05,
+  1.5e-08) and the run stalls with a score of 2.9e-02. That is one coordinate
+  holding the others hostage through a step length rather than through a
+  failed solve, and it needs the cap `optimizers7` 0.5.0 put on `newton()`
+  for the same reason, or a hold read off the curvature's scale rather than
+  its finiteness.
+
+* `iwls`'s inner history gains a `held` column, the number of coordinates
+  dropped from that iteration's system.
+
 # statmodels7 0.81.0
 
 * Whether a hyperparameter is AVAILABLE to the outer search is decided by how

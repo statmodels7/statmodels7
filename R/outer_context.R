@@ -192,6 +192,7 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
                          ctx_approx(ctx))
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
+    K <- pin_boundary(K)
     fac <- pd_factor(K)
     if (!isTRUE(fac$ok)) return(NULL)
     inv <- if (isTRUE(fac$sparse)) {
@@ -222,6 +223,52 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
   }
   ctx[[slot]]$value
 }
+
+
+#' Pin the Coordinates a Boundary Has Frozen
+#'
+#' @description
+#' Replaces the row and column of every coordinate whose curvature is not
+#' finite by the identity's, leaving the rest of the matrix alone.
+#'
+#' @details
+#' A parameter that has reached the clamp its link keeps it strictly inside
+#' leaves the family's curvature there at \code{NaN}, and one such entry is
+#' enough to deny the whole matrix a Cholesky factor. The coordinate is not
+#' one the criterion integrates over -- it is held at a boundary, where its
+#' own score is exactly zero -- so what the Laplace approximation wants from
+#' it is nothing, which is what a unit diagonal contributes:
+#' \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
+#' \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
+#'
+#' The shape is preserved deliberately. Dropping the coordinate would change
+#' the dimension of \code{K} and of its inverse, which some twenty consumers
+#' index into by position; pinning says the same thing and breaks none of
+#' them.
+#'
+#' @param K The penalized information.
+#'
+#' @return \code{K} with the frozen coordinates pinned, or \code{K} unchanged
+#'   where there are none.
+#'
+#' @seealso \code{\link{ctx_penalized}}, \code{\link{iwls_solve}}
+#'
+#' @keywords internal
+pin_boundary <- function(K) {
+  d <- as.numeric(Matrix::diag(K))
+  bad <- !is.finite(d)
+  if (!any(bad)) {
+    attr(K, "held") <- 0L
+    return(K)
+  }
+  j <- which(bad)
+  K[j, ] <- 0
+  K[, j] <- 0
+  K[cbind(j, j)] <- 1
+  attr(K, "held") <- length(j)
+  K
+}
+
 
 
 #' What the Marginal Criterion Can Resolve at This Fit

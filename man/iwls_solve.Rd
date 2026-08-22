@@ -12,10 +12,22 @@ iwls_solve(pieces, u, how)
 
 \item{u}{The right-hand side.}
 
-\item{how}{The decomposition.}
+\item{how}{The decomposition.
+
+\strong{A coordinate at a boundary is held.} Where a parameter has reached
+the clamp its link keeps it strictly inside, the family's curvature there
+is zero or \code{NaN} and no step can move that coordinate. Such
+coordinates are dropped from the system and the rest is solved, which is
+the active set the boundary defines; the step stays a descent step for the
+reduced problem. Holding them is what keeps one boundary coordinate from
+stopping the others: with a single \code{NaN} in the curvature the whole
+step came back zero, and a Student t whose \eqn{\nu} had reached
+\code{double.xmax} stopped with a score of -617.6 in \eqn{\sigma}, an
+ordinary coordinate, while \eqn{\nu}'s own was exactly 0.}
 }
 \value{
-A list with \code{delta}, \code{rank} and \code{route}.
+A list with \code{delta}, \code{rank}, \code{route} and
+\code{held}, the positions dropped from the system.
 }
 \description{
 Returns the increment \eqn{\delta} solving \eqn{(H + S)\delta = u} by the

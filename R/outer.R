@@ -564,9 +564,19 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
   # which is a hole in the domain that is not there. pd_logdet() keeps the
   # cheap route where it is safe and pays for the eigendecomposition only
   # where the condition estimate says the cheap one cannot be trusted.
+  # A COORDINATE AT A BOUNDARY IS NOT ONE THE LAPLACE APPROXIMATION INTEGRATES
+  # OVER. Its curvature there is NaN, which denies the whole matrix a
+  # factorization, and it is pinned to the identity instead: the determinant
+  # gains log(1) = 0 and the dimension q drops by one, so the coordinate
+  # contributes neither a determinant term nor a 2*pi. Measured on a Student
+  # t whose nu had reached double.xmax, the criterion went from unavailable
+  # -- which stopped the whole fit at its first evaluation -- to a finite
+  # value at a converged mode. See pin_boundary().
+  M <- pin_boundary(M)
+  held <- attr(M, "held")
   ld <- pd_logdet(M)
   if (!isTRUE(ld$ok)) return(NULL)
-  q <- nrow(M)
+  q <- nrow(M) - (if (is.null(held)) 0L else held)
   logdet <- ld$logdet
   list(value = ll - rho + q / 2 * log(2 * pi) - logdet / 2,
        loglik = ll, penalty = rho, logdet = logdet, q = q)

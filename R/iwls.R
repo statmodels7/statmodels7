@@ -198,27 +198,109 @@ S7::method(print, Iwls) <- print.Iwls
 #' @param u The right-hand side.
 #' @param how The decomposition.
 #'
-#' @return A list with \code{delta}, \code{rank} and \code{route}.
+#' \strong{A coordinate at a boundary is held.} Where a parameter has reached
+#' the clamp its link keeps it strictly inside, the family's curvature there
+#' is zero or \code{NaN} and no step can move that coordinate. Such
+#' coordinates are dropped from the system and the rest is solved, which is
+#' the active set the boundary defines; the step stays a descent step for the
+#' reduced problem. Holding them is what keeps one boundary coordinate from
+#' stopping the others: with a single \code{NaN} in the curvature the whole
+#' step came back zero, and a Student t whose \eqn{\nu} had reached
+#' \code{double.xmax} stopped with a score of -617.6 in \eqn{\sigma}, an
+#' ordinary coordinate, while \eqn{\nu}'s own was exactly 0.
+#'
+#' @return A list with \code{delta}, \code{rank}, \code{route} and
+#'   \code{held}, the positions dropped from the system.
 #'
 #' @keywords internal
 iwls_solve <- function(pieces, u, how) {
+  p <- length(u)
+  # A COORDINATE WHOSE CURVATURE IS NOT FINITE IS ONE COORDINATE, NOT THE
+  # WHOLE POINT. It happens where a parameter has reached the clamp its link
+  # keeps it strictly inside: the family's derivatives there are 0 or NaN,
+  # and the coordinate cannot move whatever is solved. Until 0.82.0 a single
+  # such entry made the whole system unusable and the step came back zero for
+  # EVERY coordinate, so a run stopped with the others far from stationary --
+  # measured on a Student t whose nu reached double.xmax, the score in sigma
+  # was -617.6 there while nu's was exactly 0. Those coordinates are held and
+  # the rest is solved, which is the active set a boundary defines: the step
+  # is a descent step for the reduced problem, and the held coordinate's own
+  # score being zero is what says it is a stationary point of the constrained
+  # problem rather than a place the fit was stopped at.
+  # `colSums(abs(.))` and not `is.finite()` over the whole matrix: a column
+  # sum keeps a sparse design sparse where an elementwise test would build a
+  # dense logical of its size, and `abs` cannot overflow into a false
+  # positive where a square could. A NaN or an infinity anywhere in the
+  # column reaches the sum.
+  bad_cols <- function(M) !is.finite(as.numeric(Matrix::colSums(abs(M))))
+  held <- integer(0)
   if (how %in% c("qr", "svd") && !is.null(pieces$R) && !is.null(pieces$C)) {
+    bad <- !is.finite(u) | bad_cols(pieces$R) | bad_cols(pieces$C)
+    if (any(bad)) {
+      held <- which(bad)
+      keep <- which(!bad)
+      if (!length(keep)) {
+        return(list(delta = numeric(p), rank = 0L, route = how, held = held))
+      }
+      out <- augmented_solve(pieces$R[, keep, drop = FALSE],
+                             pieces$C[, keep, drop = FALSE], u[keep], how,
+                             threads = if (is.null(pieces$threads)) 1L
+                                       else pieces$threads)
+      d <- numeric(p)
+      d[keep] <- out$delta
+      return(list(delta = d, rank = out$rank, route = how, held = held))
+    }
     out <- augmented_solve(pieces$R, pieces$C, u, how,
                            threads = if (is.null(pieces$threads)) 1L
                                      else pieces$threads)
     out$route <- how
+    out$held <- held
     return(out)
   }
-  A <- pd_repair(pieces$A)
   route <- if (how %in% c("qr", "svd")) paste0(how, "->chol") else how
-  # nothing can be solved at a point whose curvature is not finite; the caller
-  # reads a zero step as "this iterate is unusable" and keeps the last good one
+  A0 <- pieces$A
+  if (!is.null(A0)) {
+    # BY THE DIAGONAL AND NOT BY THE COLUMN. A boundary coordinate makes its
+    # whole ROW non-finite, cross terms included, so a column test marks its
+    # neighbours too: measured on the Student t, testing columns held sigma
+    # along with nu and left the fit exactly where it had been. The diagonal
+    # names the coordinate whose own curvature is gone; dropping its row and
+    # column then clears the cross terms, and the loop repeats in case the
+    # reduced matrix still carries one from another source.
+    bad <- !is.finite(u) | !is.finite(as.numeric(Matrix::diag(A0)))
+    repeat {
+      keep <- which(!bad)
+      if (!length(keep)) break
+      more <- bad_cols(A0[keep, keep, drop = FALSE])
+      if (!any(more)) break
+      bad[keep[more]] <- TRUE
+    }
+    if (any(bad)) {
+      held <- which(bad)
+      keep <- which(!bad)
+      if (!length(keep)) {
+        return(list(delta = numeric(p), rank = 0L, route = route, held = held))
+      }
+      A <- pd_repair(A0[keep, keep, drop = FALSE])
+      if (is.null(A)) {
+        return(list(delta = numeric(p), rank = 0L, route = route, held = held))
+      }
+      ch <- chol(A)
+      d <- numeric(p)
+      d[keep] <- as.numeric(backsolve(ch, forwardsolve(t(ch), u[keep])))
+      return(list(delta = d, rank = ncol(A), route = route, held = held))
+    }
+  }
+  A <- pd_repair(A0)
+  # nothing can be solved at a point whose curvature is not finite ANYWHERE;
+  # the caller reads a zero step as "this iterate is unusable" and keeps the
+  # last good one
   if (is.null(A)) {
-    return(list(delta = numeric(length(u)), rank = 0L, route = route))
+    return(list(delta = numeric(p), rank = 0L, route = route, held = held))
   }
   ch <- chol(A)
   list(delta = as.numeric(backsolve(ch, forwardsolve(t(ch), u))),
-       rank = ncol(A), route = route)
+       rank = ncol(A), route = route, held = held)
 }
 
 
@@ -360,7 +442,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     if (!ok) break
     hist[[length(hist) + 1L]] <- data.frame(
       iteration = it, objective = vnew, score = score, step = step_used,
-      rank = sol$rank, route = sol$route
+      rank = sol$rank, route = sol$route, held = length(sol$held)
     )
     # A step accepted for a decrease below the rounding of the objective has
     # not moved it, and the sufficient-decrease test cannot tell the two
