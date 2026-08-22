@@ -364,6 +364,8 @@ exported, and none is needed to use the package.
   : What the Inner Method Says About How to Fit
 - [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)
   : The Subspace a Marginal Criterion Integrates Over
+- [`iwls_escalate()`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md)
+  : Raise the Levenberg Damping
 - [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
   : Fit the Smooth Block by Iterated Weighted Least Squares
 - [`iwls_info_diag()`](https://statmodels7.github.io/statmodels7/reference/iwls_info_diag.md)
@@ -372,6 +374,8 @@ exported, and none is needed to use the package.
   : Has the Step's Stopping Rule Been Met?
 - [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
   : The Pieces One Scoring Step Needs
+- [`iwls_scale()`](https://statmodels7.github.io/statmodels7/reference/iwls_scale.md)
+  : The Curvature's Own Scale at One Point
 - [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md)
   : The Dimensionless Reading of the Stopping Rule
 - [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)

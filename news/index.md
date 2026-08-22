@@ -1,5 +1,65 @@
 # Changelog
 
+## statmodels7 0.83.0
+
+- The scoring step no longer deadlocks where one coordinate’s curvature
+  is orders below its neighbours’. This is the second of the two regimes
+  0.82.0 named: there the curvature was `NaN` and the solve died for
+  everyone, here it is finite but negligible, so nothing is held and the
+  step in that coordinate is astronomically long. Measured on a Student
+  t whose `nu` passes through 9.1e+12, where the information is
+  `3.5/nu^4` = 5e-52:
+
+      the step        -1790 in nu     against at most 3.9 in every mean coordinate
+      diag(K)        0.2357 in nu     against 2328
+      the observed    -175.3          i.e. of the WRONG SIGN
+      the search      1, 0.125, 1.5e-05, 1.5e-08
+      the run         stalled at a score of 2.9e-02
+
+  A scalar step length cannot treat one coordinate differently from the
+  others, which is why the line search shrinking to 1.5e-08 kept `nu`
+  admissible and stopped the mean moving at all. Levenberg’s can:
+  [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
+  gains a `damp` argument adding , which shortens a coordinate in
+  proportion to how little curvature it has – `(0.2357 + lambda)/0.2357`
+  against `(2328 + lambda)/2328` – and it is added to the augmented
+  design as further rows, so the QR route keeps its conditioning. The
+  identity and not `diag(K)`: a proportional damping shrinks every
+  coordinate alike and would leave the disparity where it was.
+
+  Measured on the case it exists for, the run goes from stalling at a
+  score of 2.9e-02 to converging at **1.45e-07**: the damping fires at
+  6e-06, the objective moves again, `nu` reaches its clamp and 0.82.0’s
+  hold takes it from there. The two repairs compose.
+
+- ⚠️ **It is raised ONLY where the step was shrunk to nothing**, and the
+  first version was not and broke four tests. `stalled` is not always
+  “stopped short”: a term whose block is a working linearization stalls
+  AT ITS OWN FIXED POINT with the full step taken, the gradient there
+  belonging to the working model rather than to the objective.
+  Escalating on every stall turned a converged break-point fit into a
+  non-converged one and moved three exact-gradient checks from machine
+  precision to 1e-3, the mode being left worse located. The deadlock’s
+  signature is the shrunken step, not the stall, and that is what the
+  condition reads.
+
+  The damping starts at zero, is raised only there, decays by a hundred
+  on every step that moves and is floored back to zero, so a run that
+  never stalls performs the plain scoring iteration and is unchanged.
+  Eleven control fits are identical to the printed digit and the suite’s
+  two warnings are the two it had.
+
+- [`iwls_scale()`](https://statmodels7.github.io/statmodels7/reference/iwls_scale.md)
+  reads the curvature’s largest diagonal off the pieces without
+  assembling it – column sums of squares on the augmented route, which
+  keeps a sparse design sparse – so
+  [`iwls_escalate()`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md)
+  carries no constant with units: the first is 1e-8 of that scale and
+  each further try multiplies by a hundred, eight tries spanning sixteen
+  orders.
+
+- `iwls`’s inner history gains a `damp` column.
+
 ## statmodels7 0.82.0
 
 - A coordinate at a boundary is one coordinate and no longer stops the

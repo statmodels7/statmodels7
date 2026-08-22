@@ -9,7 +9,7 @@ requested decomposition."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.82.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.83.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ requested decomposition.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span><span class="va">pieces</span>, <span class="va">u</span>, <span class="va">how</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span><span class="va">pieces</span>, <span class="va">u</span>, <span class="va">how</span>, damp <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,7 +58,12 @@ requested decomposition.</p>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
-<dd><p>The decomposition.</p>
+<dd><p>The decomposition.</p></dd>
+
+
+<dt id="arg-damp">damp<a class="anchor" aria-label="anchor" href="#arg-damp"></a></dt>
+<dd><p>The Levenberg damping \(\lambda\), zero for the plain
+scoring step.</p>
 <p><strong>A coordinate at a boundary is held.</strong> Where a parameter has reached
 the clamp its link keeps it strictly inside, the family's curvature there
 is zero or <code>NaN</code> and no step can move that coordinate. Such
@@ -89,6 +94,15 @@ reporting in <code>route</code> that it did.</p>
 <p><code>"chol"</code> and <code>"chol_crossprod"</code> factor the assembled information
 directly: faster per iteration and worse conditioned, which is the trade
 the caller is choosing.</p>
+<p><strong>The damping is Levenberg's and is zero unless a step has failed.</strong>
+<code>damp</code> adds \(\lambda I\) to the system, which shortens a coordinate
+in proportion to how little curvature it has: one with a diagonal of 0.24
+beside neighbours at 2328 is shortened by \((0.24+\lambda)/0.24\) while
+theirs move by \((2328+\lambda)/2328\), which is the differential shrink
+a scalar step length cannot give. It is added to the augmented design as
+further rows, so the QR route keeps its conditioning; the identity and not
+\(\mathrm{diag}(K)\), because a proportional damping shrinks every
+coordinate alike and would leave the disparity where it was.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

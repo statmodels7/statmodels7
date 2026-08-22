@@ -6,7 +6,7 @@ requested decomposition.
 ## Usage
 
 ``` r
-iwls_solve(pieces, u, how)
+iwls_solve(pieces, u, how, damp = 0)
 ```
 
 ## Arguments
@@ -24,6 +24,10 @@ iwls_solve(pieces, u, how)
 - how:
 
   The decomposition.
+
+- damp:
+
+  The Levenberg damping \\\lambda\\, zero for the plain scoring step.
 
   **A coordinate at a boundary is held.** Where a parameter has reached
   the clamp its link keeps it strictly inside, the family's curvature
@@ -55,3 +59,13 @@ floored, reporting in `route` that it did.
 `"chol"` and `"chol_crossprod"` factor the assembled information
 directly: faster per iteration and worse conditioned, which is the trade
 the caller is choosing.
+
+**The damping is Levenberg's and is zero unless a step has failed.**
+`damp` adds \\\lambda I\\ to the system, which shortens a coordinate in
+proportion to how little curvature it has: one with a diagonal of 0.24
+beside neighbours at 2328 is shortened by \\(0.24+\lambda)/0.24\\ while
+theirs move by \\(2328+\lambda)/2328\\, which is the differential shrink
+a scalar step length cannot give. It is added to the augmented design as
+further rows, so the QR route keeps its conditioning; the identity and
+not \\\mathrm{diag}(K)\\, because a proportional damping shrinks every
+coordinate alike and would leave the disparity where it was.

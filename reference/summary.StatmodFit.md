@@ -160,7 +160,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 30 ms, converged
+#> fitted in 33 ms, converged
 #> certificate: CONVERGED   2.21e-11 above the mode
 #>   the model carries no penalty, so there is no outer gradient; the reading is the inner fit's own, 2.208e-11 log-likelihood units above its mode against 0.001
 ```
