@@ -8,7 +8,7 @@ have run to a boundary.
 ## Usage
 
 ``` r
-statmod_certificate(fit, tol = 0.01)
+statmod_certificate(fit, tol = 0.01, edge = 8)
 ```
 
 ## Arguments
@@ -21,6 +21,12 @@ statmod_certificate(fit, tol = 0.01)
 - tol:
 
   The largest outer gradient a certified point may carry.
+
+- edge:
+
+  The free value beyond which a hyperparameter whose gradient has
+  already met `tol` is reported as sitting at a boundary. It decides the
+  label alone and never the verdict; see the details.
 
 ## Value
 
@@ -79,6 +85,21 @@ A form whose criterion has no EXACT gradient
 ([`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md))
 is also `"unknown"` rather than approximated: 2p refits to difference it
 would cost more than the fit.
+
+**The boundary label, and why its threshold needs no derivation.** A
+hyperparameter may run to an edge and belong there: on a covariate that
+is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
+genuinely flat, and calling that fit unconverged would be wrong. A
+coordinate is reported as sitting at a boundary when its free value
+exceeds `edge` AND its own gradient component has already met `tol`.
+Because of that second condition the threshold cannot change the
+verdict: a coordinate it moves out of the interior set had already
+passed the test, so the maximum that decides the state is unaffected,
+and both `"converged"` and `"boundary"` are certified. What `edge`
+decides is how the point is described. The default separates the
+measured cases with room on both sides: coordinates that ran to an edge
+sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and 2.01
+for the ones that did not.
 
 ## See also
 

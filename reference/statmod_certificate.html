@@ -11,7 +11,7 @@ above the penalized mode, and which hyperparameters have run to a boundary."><me
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.84.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.85.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ above the penalized mode, and which hyperparameters have run to a boundary.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_certificate</span><span class="op">(</span><span class="va">fit</span>, tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_certificate</span><span class="op">(</span><span class="va">fit</span>, tol <span class="op">=</span> <span class="fl">0.01</span>, edge <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -57,6 +57,12 @@ above the penalized mode, and which hyperparameters have run to a boundary.</p>
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
 <dd><p>The largest outer gradient a certified point may carry.</p></dd>
+
+
+<dt id="arg-edge">edge<a class="anchor" aria-label="anchor" href="#arg-edge"></a></dt>
+<dd><p>The free value beyond which a hyperparameter whose gradient
+has already met <code>tol</code> is reported as sitting at a boundary. It
+decides the label alone and never the verdict; see the details.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -108,6 +114,20 @@ score is -0.715.</p>
 <p>A form whose criterion has no EXACT gradient
 (<code><a href="outer_gradient_ok.html">outer_gradient_ok</a></code>) is also <code>"unknown"</code> rather than
 approximated: 2p refits to difference it would cost more than the fit.</p>
+<p><strong>The boundary label, and why its threshold needs no derivation.</strong>
+A hyperparameter may run to an edge and belong there: on a covariate that
+is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
+genuinely flat, and calling that fit unconverged would be wrong. A
+coordinate is reported as sitting at a boundary when its free value
+exceeds <code>edge</code> AND its own gradient component has already met
+<code>tol</code>. Because of that second condition the threshold cannot change
+the verdict: a coordinate it moves out of the interior set had already
+passed the test, so the maximum that decides the state is unaffected, and
+both <code>"converged"</code> and <code>"boundary"</code> are certified. What
+<code>edge</code> decides is how the point is described. The default separates
+the measured cases with room on both sides: coordinates that ran to an
+edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
+2.01 for the ones that did not.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

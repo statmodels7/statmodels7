@@ -24,11 +24,11 @@ member that is not installed.
 statmodels7_versions()
 #>          package version
 #> 1         basis7   0.4.1
-#> 2 distributions7  0.36.0
+#> 2 distributions7  0.37.1
 #> 3 linkfunctions7   0.2.0
 #> 4    modelterms7  0.57.0
 #> 5    numericals7  0.10.0
-#> 6    optimizers7   0.5.0
+#> 6    optimizers7   0.6.0
 #> 7    parameters7  0.11.0
 #> 8     penalties7  0.16.0
 ```
