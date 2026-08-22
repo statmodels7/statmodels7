@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.83.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.84.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,24 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.84.0" id="statmodels7-0840">statmodels7 0.84.0<a class="anchor" aria-label="anchor" href="#statmodels7-0840"></a></h2>
+<ul><li>
+<p><code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> says WHICH coefficient is at a boundary where the outer gradient cannot be read there, instead of reporting only that it is not finite. <code><a href="../reference/boundary_coords.html">boundary_coords()</a></code> names the coordinates whose curvature is gone – the diagonal and not the column, a frozen coordinate making its whole row non-finite – and the equation they belong to goes into <code>boundary</code> and into the reason beside the mode error.</p>
+<p>On the reference battery’s <code>fam-studentt</code> that turns</p>
+<pre><code>the outer gradient is not finite at the reported point</code></pre>
+<p>into a sentence naming <code>nu</code>, the bound its link keeps it inside, the fact that the family’s third and fourth derivatives are not finite there, and the 1.3e-10 log-likelihood units the fit sits above its own mode.</p>
+</li>
+<li>
+<p>⚠️ <strong>The state stays <code>not converged</code> and the reason is a measurement, not a convention.</strong> That fit reaches the best criterion of the three routes (gap 0.000e+00) and its mode is located to ten digits, so <code>boundary</code> is what it deserves – and certifying it would claim the hyperparameters had been verified when the gradient that verifies them cannot be computed there. What blocks it is upstream: the Student t’s THIRD and FOURTH derivatives are not finite at the <code>nu</code> its own chart can produce. Measured, the crossover is 1e150, which is <code>sqrt(double.xmax)</code> and so the signature of a product of two quantities of order <code>nu</code>:</p>
+<pre><code>nu          &lt;= 1e50   1e150   1e300   double.xmax
+d3, param        0       3       4        8
+d4, param        0       7      10       13
+d3, link         0       4       7       10
+d4, link         0      10      15       15</code></pre>
+<p>distributions7 0.31.0 made the score and the observed Hessian finite to <code>double.xmax</code> and did not reach orders three and four, which is the shape this toolkit records as <em>when a defect is a shape of mistake, grep for the shape</em>. The outer gradient reads exactly those two orders. Closing them takes the battery from 24 of 29 to 25.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.83.0" id="statmodels7-0830">statmodels7 0.83.0<a class="anchor" aria-label="anchor" href="#statmodels7-0830"></a></h2>
 <ul><li>
@@ -612,9 +630,9 @@ the fit                    ERROR      converged</code></pre>
 <p>Where a filter is present the determinant spans the term’s parameters too, so <code>K</code> carries <code>-sum_t w_t l_p E_t</code> and differentiating it along the direction the mode moves in gives three contributions instead of one: <code><a href="../reference/u_vector.html">u_vector()</a></code>’s formula with V in place of X (direction-free, computed once), the derivative of <code>V_p</code> itself, which is <code>E_t v</code>, and the derivative of <code>l_p E_t</code>, whose second half is the term’s third derivative. The full third derivative is never formed – it is contracted in one direction, so the cost is O(n m^2) per hyperparameter rather than O(n m^3) once.</p>
 <p>Validated against numDeriv on the criterion with the mode REFITTED at every hyperparameter: 2.7e-09 to 2.7e-07 relative under <code><a href="../reference/reml.html">reml()</a></code>, 3.3e-06 under <code><a href="../reference/reml.html">ml()</a></code>, 6.3e-06 with a smooth beside it, and 1.2e-07 at ten and at twenty groups. The control, an ordinary smooth, sits at 3.9e-07 on the same harness.</p>
 <p>Measured in evaluations of the criterion, each a whole inner fit, against <code>nelder_mead()</code>, all three reaching the same criterion and the same prior scale to the printed digit:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>  <span class="dv">3</span> groups x <span class="dv">40</span>      <span class="dv">6</span> against <span class="dv">59</span>      <span class="fl">4.1</span> s against <span class="fl">14.8</span> s</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="dv">8</span> groups x <span class="dv">80</span>     <span class="dv">10</span> against <span class="dv">27</span>     <span class="fl">18.7</span> s against <span class="fl">33.2</span> s</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a> <span class="dv">20</span> groups x <span class="dv">60</span>      <span class="dv">9</span> against <span class="dv">41</span>     <span class="fl">88.0</span> s against <span class="fl">88.9</span> s</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>  <span class="dv">3</span> groups x <span class="dv">40</span>      <span class="dv">6</span> against <span class="dv">59</span>      <span class="fl">4.1</span> s against <span class="fl">14.8</span> s</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dv">8</span> groups x <span class="dv">80</span>     <span class="dv">10</span> against <span class="dv">27</span>     <span class="fl">18.7</span> s against <span class="fl">33.2</span> s</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a> <span class="dv">20</span> groups x <span class="dv">60</span>      <span class="dv">9</span> against <span class="dv">41</span>     <span class="fl">88.0</span> s against <span class="fl">88.9</span> s</span></code></pre></div>
 <p>The last row is worth reading as it is: the evaluation count is what the exact route buys and it is 4.6x there, while the WALL TIME is a wash, because each exact evaluation also pays for the gradient (one <code>term_third()</code> and one extra <code>term_curvature()</code> per hyperparameter) and one point on that path is still unavailable and costs a long inner fit that does not converge.</p>
 </li>
 <li>
@@ -853,8 +871,8 @@ the fit                    ERROR      converged</code></pre>
 <h2 class="pkg-version" data-toc-text="0.15.0" id="statmodels7-0150">statmodels7 0.15.0<a class="anchor" aria-label="anchor" href="#statmodels7-0150"></a></h2>
 <ul><li>
 <p>The observed information of a model carrying a filter is exact. <code><a href="../reference/statmod_full_information.html">statmod_full_information()</a></code> assembles</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="sc">-</span>d2l<span class="sc">/</span>du2 <span class="ot">=</span> <span class="sc">-</span>sum_t w_t sum_{q,r} l_qr,t V_q,t<span class="st">' V_r,t</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="st">           - sum_t w_t l_p,t E_t</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="sc">-</span>d2l<span class="sc">/</span>du2 <span class="ot">=</span> <span class="sc">-</span>sum_t w_t sum_{q,r} l_qr,t V_q,t<span class="st">' V_r,t</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="st">           - sum_t w_t l_p,t E_t</span></span></code></pre></div>
 <p>over the coefficients of every equation AND the term’s own parameters, with <code>E</code>, the second derivative of the predictor through the recursion, from <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>. Only the filter’s equation has a <code>V</code> that is not its own design; the third derivatives the second sum needs are distributions7’s, in closed form for every family.</p>
 <p>What it replaces is the naive <code>X'WX</code>, which the scoring step still uses and is right to – with an exact gradient any positive definite matrix converges to the right point – but which is not the information. Measured against numDeriv on the exact gradient, AWAY from the optimum, where a wrong and a right Hessian are told apart: 4.3e-11 relative. The naive curvature differs from the exact one by 17.5 per cent of the coefficient block on a one-equation model and 35.3 per cent on a two-equation one, the second larger because the cross-equation feedback contributes there too.</p>
 </li>

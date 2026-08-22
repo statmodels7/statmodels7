@@ -127,6 +127,8 @@ exported, and none is needed to use the package.
   : The Predictors a Coefficient Direction Induces
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
   : Record Where a Path Has Just Been
+- [`boundary_coords()`](https://statmodels7.github.io/statmodels7/reference/boundary_coords.md)
+  : Which Coordinates a Boundary Has Frozen
 - [`bounded_bump()`](https://statmodels7.github.io/statmodels7/reference/bounded_bump.md)
   : Move a Hyperparameter Without Leaving Its Interval
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
