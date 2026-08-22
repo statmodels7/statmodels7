@@ -193,10 +193,22 @@ S7::method(print, Iwls) <- print.Iwls
 #' directly: faster per iteration and worse conditioned, which is the trade
 #' the caller is choosing.
 #'
+#' \strong{The damping is Levenberg's and is zero unless a step has failed.}
+#' \code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate
+#' in proportion to how little curvature it has: one with a diagonal of 0.24
+#' beside neighbours at 2328 is shortened by \eqn{(0.24+\lambda)/0.24} while
+#' theirs move by \eqn{(2328+\lambda)/2328}, which is the differential shrink
+#' a scalar step length cannot give. It is added to the augmented design as
+#' further rows, so the QR route keeps its conditioning; the identity and not
+#' \eqn{\mathrm{diag}(K)}, because a proportional damping shrinks every
+#' coordinate alike and would leave the disparity where it was.
+#'
 #' @param pieces A list with \code{R}, \code{C} and \code{A}, as
 #'   \code{\link{iwls_pieces}} builds it.
 #' @param u The right-hand side.
 #' @param how The decomposition.
+#' @param damp The Levenberg damping \eqn{\lambda}, zero for the plain
+#'   scoring step.
 #'
 #' \strong{A coordinate at a boundary is held.} Where a parameter has reached
 #' the clamp its link keeps it strictly inside, the family's curvature there
@@ -213,8 +225,16 @@ S7::method(print, Iwls) <- print.Iwls
 #'   \code{held}, the positions dropped from the system.
 #'
 #' @keywords internal
-iwls_solve <- function(pieces, u, how) {
+iwls_solve <- function(pieces, u, how, damp = 0) {
   p <- length(u)
+  # sqrt(lambda) I as further rows of the augmented design, which is how a
+  # ridge is added there: [R; C; sqrt(lambda) I] has cross-product
+  # K + lambda I and the route keeps its conditioning.
+  damp_rows <- function(C, k) {
+    if (!(damp > 0)) return(C)
+    D <- if (isS4(C)) Matrix::Diagonal(k, sqrt(damp)) else diag(sqrt(damp), k)
+    rbind(C, D)
+  }
   # A COORDINATE WHOSE CURVATURE IS NOT FINITE IS ONE COORDINATE, NOT THE
   # WHOLE POINT. It happens where a parameter has reached the clamp its link
   # keeps it strictly inside: the family's derivatives there are 0 or NaN,
@@ -243,14 +263,16 @@ iwls_solve <- function(pieces, u, how) {
         return(list(delta = numeric(p), rank = 0L, route = how, held = held))
       }
       out <- augmented_solve(pieces$R[, keep, drop = FALSE],
-                             pieces$C[, keep, drop = FALSE], u[keep], how,
+                             damp_rows(pieces$C[, keep, drop = FALSE],
+                                       length(keep)),
+                             u[keep], how,
                              threads = if (is.null(pieces$threads)) 1L
                                        else pieces$threads)
       d <- numeric(p)
       d[keep] <- out$delta
       return(list(delta = d, rank = out$rank, route = how, held = held))
     }
-    out <- augmented_solve(pieces$R, pieces$C, u, how,
+    out <- augmented_solve(pieces$R, damp_rows(pieces$C, p), u, how,
                            threads = if (is.null(pieces$threads)) 1L
                                      else pieces$threads)
     out$route <- how
@@ -285,6 +307,7 @@ iwls_solve <- function(pieces, u, how) {
       if (is.null(A)) {
         return(list(delta = numeric(p), rank = 0L, route = route, held = held))
       }
+      if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
       ch <- chol(A)
       d <- numeric(p)
       d[keep] <- as.numeric(backsolve(ch, forwardsolve(t(ch), u[keep])))
@@ -298,6 +321,7 @@ iwls_solve <- function(pieces, u, how) {
   if (is.null(A)) {
     return(list(delta = numeric(p), rank = 0L, route = route, held = held))
   }
+  if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
   ch <- chol(A)
   list(delta = as.numeric(backsolve(ch, forwardsolve(t(ch), u))),
        rank = ncol(A), route = route, held = held)
@@ -391,6 +415,10 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   # there rather than comparing a number with itself
   f_old <- NULL
   x_old <- NULL
+  # zero unless a step has failed, so the plain scoring iteration is what
+  # every run that does not stall performs
+  damp <- 0
+  damp_tries <- 0L
   # the equations' coordinate ranges, for the dimensionless reading of the
   # final verdict; the caller says them where the coefficients it hands in
   # are a subset, since the objective's own split maps the full vector
@@ -423,7 +451,8 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       converged <- TRUE
       break
     }
-    sol <- iwls_solve(pieces_at(beta), -g, method@decomposition)
+    pc <- pieces_at(beta)
+    sol <- iwls_solve(pc, -g, method@decomposition, damp)
     delta <- sol$delta
     delta[!is.finite(delta)] <- 0
 
@@ -442,7 +471,8 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     if (!ok) break
     hist[[length(hist) + 1L]] <- data.frame(
       iteration = it, objective = vnew, score = score, step = step_used,
-      rank = sol$rank, route = sol$route, held = length(sol$held)
+      rank = sol$rank, route = sol$route, held = length(sol$held),
+      damp = damp
     )
     # A step accepted for a decrease below the rounding of the objective has
     # not moved it, and the sufficient-decrease test cannot tell the two
@@ -455,9 +485,45 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     f_old <- value
     beta <- cand
     value <- vnew
+    # A STALL WITH THE SCORE STILL LARGE IS ONE COORDINATE HOLDING THE OTHERS,
+    # and a shorter step cannot cure it because the step length is scalar.
+    # Where a coordinate's curvature is orders below its neighbours' -- a
+    # shape approaching the clamp its link keeps it inside, whose information
+    # falls as nu^-4 -- the scoring step in it is astronomically long, and the
+    # line search shortens the WHOLE step to keep it admissible: measured on a
+    # Student t at nu = 9.1e+12, the step was -1790 in nu against at most 3.9
+    # in every mean coordinate, the search ran 1, 0.125, 1.5e-05, 1.5e-08 and
+    # the run stalled at a score of 2.9e-02 with the mean nowhere near
+    # stationary.
+    #
+    # Levenberg's lambda shortens that coordinate in proportion to how little
+    # curvature it has and leaves the others where they were, which is the
+    # differential shrink the step length cannot give. It is raised only
+    # HERE, where the loop used to give up, so a run that never stalls never
+    # sees it and is unchanged; it decays again on every step that moves.
+    #
+    # ⚠️ ONLY WHERE THE STEP WAS SHRUNK TO NOTHING, which is the signature of
+    # the deadlock and not of every stall. A term whose block is a working
+    # linearization stalls AT ITS OWN FIXED POINT with the full step taken --
+    # the gradient there belongs to the working model rather than to the
+    # objective -- and damping past it costs iterations and ends a run that
+    # had arrived: measured, escalating on every stall turned a converged
+    # break-point fit into a non-converged one and moved three exact-gradient
+    # checks from machine precision to 1e-3, the mode being left worse
+    # located. The deadlock is the case where the line search had to shrink
+    # the whole step by orders to keep one coordinate admissible.
     if (stalled) {
+      if (step_used < 1e-3 && damp_tries < 8L) {
+        damp <- iwls_escalate(damp, pc)
+        damp_tries <- damp_tries + 1L
+        next
+      }
       note <- paste0("the objective stopped moving at iteration ", it)
       break
+    }
+    if (damp > 0) {
+      damp <- damp / 100
+      if (damp < iwls_scale(pc) * 1e-12) damp <- 0
     }
   }
   # The rule is asked once more at the point reached, so that a run which
@@ -510,6 +576,69 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
        iterations = it, score = score, note = note,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
 }
+
+
+#' The Curvature's Own Scale at One Point
+#'
+#' @description
+#' The largest diagonal entry of the penalized information, read off the
+#' pieces without assembling it.
+#'
+#' @details
+#' It is what the Levenberg damping is measured against, so that
+#' \code{\link{iwls_escalate}} carries no constant with units. On the
+#' augmented route the diagonal of \eqn{K = R'R + C'C} is the column sums of
+#' the squares, which keeps a sparse design sparse; on the assembled route it
+#' is the diagonal itself.
+#'
+#' @param pieces What \code{\link{iwls_pieces}} built.
+#'
+#' @return A positive number, or 1 where the pieces say nothing.
+#'
+#' @keywords internal
+iwls_scale <- function(pieces) {
+  v <- if (!is.null(pieces$R)) {
+    as.numeric(Matrix::colSums(pieces$R^2)) +
+      if (is.null(pieces$C)) 0 else as.numeric(Matrix::colSums(pieces$C^2))
+  } else if (!is.null(pieces$A)) {
+    as.numeric(Matrix::diag(pieces$A))
+  } else {
+    return(1)
+  }
+  v <- v[is.finite(v)]
+  if (!length(v)) return(1)
+  m <- max(v)
+  if (is.finite(m) && m > 0) m else 1
+}
+
+
+#' Raise the Levenberg Damping
+#'
+#' @description
+#' The next \eqn{\lambda} to try after a step that failed or moved nothing.
+#'
+#' @details
+#' The first value is \eqn{10^{-8}} of the curvature's own scale, which is
+#' negligible against a well-curved coordinate and already large against one
+#' whose information has fallen by eight orders; each further try multiplies
+#' by a hundred, so eight tries span sixteen orders and reach a damping that
+#' dominates the largest diagonal. Measured on the case this exists for, the
+#' coordinate needed a \eqn{\lambda} of about 100 against a largest diagonal
+#' of 2328, which the sixth escalation passes.
+#'
+#' @param damp The current damping.
+#' @param pieces What \code{\link{iwls_pieces}} built, for the scale.
+#'
+#' @return The next damping.
+#'
+#' @seealso \code{\link{iwls_scale}}, \code{\link{iwls_solve}}
+#'
+#' @keywords internal
+iwls_escalate <- function(damp, pieces) {
+  if (damp > 0) return(damp * 100)
+  iwls_scale(pieces) * 1e-8
+}
+
 
 #' Has the Step's Stopping Rule Been Met?
 #'

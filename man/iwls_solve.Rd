@@ -4,7 +4,7 @@
 \alias{iwls_solve}
 \title{Solve One Weighted Least Squares Step}
 \usage{
-iwls_solve(pieces, u, how)
+iwls_solve(pieces, u, how, damp = 0)
 }
 \arguments{
 \item{pieces}{A list with \code{R}, \code{C} and \code{A}, as
@@ -12,7 +12,10 @@ iwls_solve(pieces, u, how)
 
 \item{u}{The right-hand side.}
 
-\item{how}{The decomposition.
+\item{how}{The decomposition.}
+
+\item{damp}{The Levenberg damping \eqn{\lambda}, zero for the plain
+scoring step.
 
 \strong{A coordinate at a boundary is held.} Where a parameter has reached
 the clamp its link keeps it strictly inside, the family's curvature there
@@ -46,5 +49,15 @@ reporting in \code{route} that it did.
 \code{"chol"} and \code{"chol_crossprod"} factor the assembled information
 directly: faster per iteration and worse conditioned, which is the trade
 the caller is choosing.
+
+\strong{The damping is Levenberg's and is zero unless a step has failed.}
+\code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate
+in proportion to how little curvature it has: one with a diagonal of 0.24
+beside neighbours at 2328 is shortened by \eqn{(0.24+\lambda)/0.24} while
+theirs move by \eqn{(2328+\lambda)/2328}, which is the differential shrink
+a scalar step length cannot give. It is added to the augmented design as
+further rows, so the QR route keeps its conditioning; the identity and not
+\eqn{\mathrm{diag}(K)}, because a proportional damping shrinks every
+coordinate alike and would leave the disparity where it was.
 }
 \keyword{internal}
