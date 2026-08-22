@@ -255,18 +255,43 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 #'
 #' @keywords internal
 pin_boundary <- function(K) {
-  d <- as.numeric(Matrix::diag(K))
-  bad <- !is.finite(d)
-  if (!any(bad)) {
+  j <- boundary_coords(K)
+  if (!length(j)) {
     attr(K, "held") <- 0L
     return(K)
   }
-  j <- which(bad)
   K[j, ] <- 0
   K[, j] <- 0
   K[cbind(j, j)] <- 1
   attr(K, "held") <- length(j)
   K
+}
+
+
+#' Which Coordinates a Boundary Has Frozen
+#'
+#' @description
+#' The positions whose curvature is not finite, which is what a parameter at
+#' the clamp its link keeps it strictly inside leaves behind.
+#'
+#' @details
+#' The DIAGONAL and not the column. A frozen coordinate makes its whole row
+#' non-finite, cross terms included, so a column test marks its neighbours
+#' too: measured on a Student t whose \eqn{\nu} had reached
+#' \code{double.xmax}, testing columns held \eqn{\sigma} along with \eqn{\nu}
+#' and left the fit exactly where it had been.
+#'
+#' @param K A square matrix, the information or the penalized information.
+#'
+#' @return An integer vector of positions, empty where there are none.
+#'
+#' @seealso \code{\link{pin_boundary}}, \code{\link{iwls_solve}}
+#'
+#' @keywords internal
+boundary_coords <- function(K) {
+  d <- tryCatch(as.numeric(Matrix::diag(K)), error = function(e) NULL)
+  if (is.null(d)) return(integer(0))
+  which(!is.finite(d))
 }
 
 

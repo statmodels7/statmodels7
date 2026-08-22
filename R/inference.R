@@ -1782,7 +1782,39 @@ statmod_certificate <- function(fit, tol = 1e-2) {
                                       ctx = ctx),
                 error = function(e) NULL)
   if (is.null(g) || !all(is.finite(g))) {
-    out$reason <- "the outer gradient is not finite at the reported point"
+    # ⚠️ A NON-FINITE OUTER GRADIENT AT A BOUNDARY IS NOT THE SAME COMPLAINT,
+    # and saying which it is costs one read. Where a coefficient sits at the
+    # clamp its link keeps it strictly inside, the family's THIRD and FOURTH
+    # derivatives there are not finite -- measured on the Student t, all ten
+    # components of the third go from nu = 1e150, which is sqrt(double.xmax)
+    # and so the signature of a product of two quantities of order nu -- and
+    # the outer gradient reads exactly those. The fit itself may be perfectly
+    # well located: on the reference battery's `fam-studentt` the mode error
+    # is 1.3e-10 against a limit of 1e-3 and the criterion is the best of the
+    # three routes, so what is missing is the reading and not the answer.
+    #
+    # The state stays `not converged` rather than `boundary`, deliberately:
+    # certifying a point whose hyperparameters were never verified would
+    # claim more than has been checked. What it can honestly do is name the
+    # coordinate, so the reader is not left with "not finite".
+    H0 <- tryCatch(ctx_information(ctx, spec, design, cf, hy, FALSE,
+                                   "bartlett"), error = function(e) NULL)
+    frozen <- if (is.null(H0)) integer(0) else boundary_coords(H0)
+    if (length(frozen)) {
+      npar <- vapply(design, function(d) d$npar, integer(1))
+      ends <- cumsum(npar)
+      who <- unique(names(npar)[vapply(frozen, function(j)
+        which(j <= ends)[1], integer(1))])
+      out$boundary <- who
+      out$reason <- sprintf(paste0(
+        "the outer gradient is not finite at the reported point, because a ",
+        "coefficient of %s sits at the bound its link keeps it strictly ",
+        "inside and the family's third and fourth derivatives are not finite ",
+        "there. The fit itself is %.4g log-likelihood units above its mode"),
+        paste(who, collapse = ", "), out$mode_error)
+    } else {
+      out$reason <- "the outer gradient is not finite at the reported point"
+    }
     out$state <- "not converged"
     return(out)
   }

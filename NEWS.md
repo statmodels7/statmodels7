@@ -1,3 +1,46 @@
+# statmodels7 0.84.0
+
+* `statmod_certificate()` says WHICH coefficient is at a boundary where the
+  outer gradient cannot be read there, instead of reporting only that it is
+  not finite. `boundary_coords()` names the coordinates whose curvature is
+  gone -- the diagonal and not the column, a frozen coordinate making its
+  whole row non-finite -- and the equation they belong to goes into
+  `boundary` and into the reason beside the mode error.
+
+  On the reference battery's `fam-studentt` that turns
+
+  ```
+  the outer gradient is not finite at the reported point
+  ```
+
+  into a sentence naming `nu`, the bound its link keeps it inside, the fact
+  that the family's third and fourth derivatives are not finite there, and
+  the 1.3e-10 log-likelihood units the fit sits above its own mode.
+
+* ⚠️ **The state stays `not converged` and the reason is a measurement, not
+  a convention.** That fit reaches the best criterion of the three routes
+  (gap 0.000e+00) and its mode is located to ten digits, so `boundary` is
+  what it deserves -- and certifying it would claim the hyperparameters had
+  been verified when the gradient that verifies them cannot be computed
+  there. What blocks it is upstream: the Student t's THIRD and FOURTH
+  derivatives are not finite at the `nu` its own chart can produce.
+  Measured, the crossover is 1e150, which is `sqrt(double.xmax)` and so the
+  signature of a product of two quantities of order `nu`:
+
+  ```
+  nu          <= 1e50   1e150   1e300   double.xmax
+  d3, param        0       3       4        8
+  d4, param        0       7      10       13
+  d3, link         0       4       7       10
+  d4, link         0      10      15       15
+  ```
+
+  distributions7 0.31.0 made the score and the observed Hessian finite to
+  `double.xmax` and did not reach orders three and four, which is the shape
+  this toolkit records as *when a defect is a shape of mistake, grep for the
+  shape*. The outer gradient reads exactly those two orders. Closing them
+  takes the battery from 24 of 29 to 25.
+
 # statmodels7 0.83.0
 
 * The scoring step no longer deadlocks where one coordinate's curvature is
