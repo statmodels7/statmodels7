@@ -9,7 +9,7 @@ requested decomposition."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.81.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.82.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,12 +58,23 @@ requested decomposition.</p>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
-<dd><p>The decomposition.</p></dd>
+<dd><p>The decomposition.</p>
+<p><strong>A coordinate at a boundary is held.</strong> Where a parameter has reached
+the clamp its link keeps it strictly inside, the family's curvature there
+is zero or <code>NaN</code> and no step can move that coordinate. Such
+coordinates are dropped from the system and the rest is solved, which is
+the active set the boundary defines; the step stays a descent step for the
+reduced problem. Holding them is what keeps one boundary coordinate from
+stopping the others: with a single <code>NaN</code> in the curvature the whole
+step came back zero, and a Student t whose \(\nu\) had reached
+<code>double.xmax</code> stopped with a score of -617.6 in \(\sigma\), an
+ordinary coordinate, while \(\nu\)'s own was exactly 0.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>delta</code>, <code>rank</code> and <code>route</code>.</p>
+    <p>A list with <code>delta</code>, <code>rank</code>, <code>route</code> and
+<code>held</code>, the positions dropped from the system.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

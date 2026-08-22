@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.81.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.82.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,25 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.82.0" id="statmodels7-0820">statmodels7 0.82.0<a class="anchor" aria-label="anchor" href="#statmodels7-0820"></a></h2>
+<ul><li>
+<p>A coordinate at a boundary is one coordinate and no longer stops the others. Where a parameter reaches the clamp its link keeps it strictly inside, the family’s curvature there is <code>NaN</code>, and one such entry was enough to deny the whole system a solve and the whole criterion a Cholesky factor. <code><a href="../reference/iwls_solve.html">iwls_solve()</a></code> holds those coordinates and solves the rest, which is the active set the boundary defines, and <code><a href="../reference/pin_boundary.html">pin_boundary()</a></code> puts a unit diagonal in their place wherever the penalized information is factorized.</p>
+<p>The Student t of the reference battery is what this is measured on. Its <code>nu</code> reaches <code>double.xmax</code>, and there:</p>
+<pre><code>                          before          after
+score/n at the stop       6.2e-01        6.1e-08
+score in sigma            -617.6           1.41
+iterations                     2              7   (all at full step)
+the fit                    ERROR      converged</code></pre>
+<p>the run had been stopping with <code>sigma</code> – an ordinary coordinate – utterly non-stationary, because the zero step the failed solve returned applied to every coordinate. <code>nu</code>’s own score there is exactly 0, which is what says the point is a stationary point of the constrained problem rather than a place the fit was stopped at.</p>
+<p>End to end, <code>fam-studentt</code> goes from raising on all three routes to fitting on all three, in 0.4 to 1.1 s. On the same data with the mean correctly specified – <code>y ~ s(x) + s(z) + random(~1|g)</code> – it reaches a log-likelihood of -869.40, against the -869.33 of a profile computed with the mean HELD AT THE TRUTH, which is the independent check that the answer is the right one.</p>
+<p>⚠️ <strong>The dimension of the Laplace approximation drops with the held coordinate.</strong> A boundary coordinate is not one the criterion integrates over, so it contributes neither a determinant term (<code>log 1 = 0</code>) nor a <code>2*pi</code>. That is why a t at its clamp and a gaussian do NOT report the same criterion on the same data, and their hyperparameters differ; what they share is the predictor, which agrees to a correlation above 0.999.</p>
+<p>⚠️ <strong>By the DIAGONAL and not by the column</strong>, which is measured rather than reasoned: a boundary coordinate makes its whole ROW non-finite, cross terms included, so a column test marks its neighbours too. The first version did, held <code>sigma</code> along with <code>nu</code>, and left the fit exactly where it had been. The test pins the distinction.</p>
+<p>The shape is preserved deliberately where the matrix is pinned rather than reduced: some twenty consumers index into <code>K</code> and its inverse by position.</p>
+</li>
+<li><p>⚠️ <strong>What this does NOT repair, measured and stated.</strong> There are two regimes and only the first is covered. AT the clamp the curvature is <code>NaN</code>, the solve dies for every coordinate, and that is what is fixed. APPROACHING the clamp without reaching it – <code>nu</code> = 9.1e+12, where the information is <code>3.5/nu^4</code> = 5e-52 – the curvature is finite, nothing is held, and the step in that coordinate is astronomically long: the line search shrinks the WHOLE step to keep it admissible (1, 0.125, 1.5e-05, 1.5e-08) and the run stalls with a score of 2.9e-02. That is one coordinate holding the others hostage through a step length rather than through a failed solve, and it needs the cap <code>optimizers7</code> 0.5.0 put on <code>newton()</code> for the same reason, or a hold read off the curvature’s scale rather than its finiteness.</p></li>
+<li><p><code>iwls</code>’s inner history gains a <code>held</code> column, the number of coordinates dropped from that iteration’s system.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.81.0" id="statmodels7-0810">statmodels7 0.81.0<a class="anchor" aria-label="anchor" href="#statmodels7-0810"></a></h2>
 <ul><li>
@@ -574,9 +593,9 @@
 <p>Where a filter is present the determinant spans the term’s parameters too, so <code>K</code> carries <code>-sum_t w_t l_p E_t</code> and differentiating it along the direction the mode moves in gives three contributions instead of one: <code><a href="../reference/u_vector.html">u_vector()</a></code>’s formula with V in place of X (direction-free, computed once), the derivative of <code>V_p</code> itself, which is <code>E_t v</code>, and the derivative of <code>l_p E_t</code>, whose second half is the term’s third derivative. The full third derivative is never formed – it is contracted in one direction, so the cost is O(n m^2) per hyperparameter rather than O(n m^3) once.</p>
 <p>Validated against numDeriv on the criterion with the mode REFITTED at every hyperparameter: 2.7e-09 to 2.7e-07 relative under <code><a href="../reference/reml.html">reml()</a></code>, 3.3e-06 under <code><a href="../reference/reml.html">ml()</a></code>, 6.3e-06 with a smooth beside it, and 1.2e-07 at ten and at twenty groups. The control, an ordinary smooth, sits at 3.9e-07 on the same harness.</p>
 <p>Measured in evaluations of the criterion, each a whole inner fit, against <code>nelder_mead()</code>, all three reaching the same criterion and the same prior scale to the printed digit:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>  <span class="dv">3</span> groups x <span class="dv">40</span>      <span class="dv">6</span> against <span class="dv">59</span>      <span class="fl">4.1</span> s against <span class="fl">14.8</span> s</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="dv">8</span> groups x <span class="dv">80</span>     <span class="dv">10</span> against <span class="dv">27</span>     <span class="fl">18.7</span> s against <span class="fl">33.2</span> s</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a> <span class="dv">20</span> groups x <span class="dv">60</span>      <span class="dv">9</span> against <span class="dv">41</span>     <span class="fl">88.0</span> s against <span class="fl">88.9</span> s</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>  <span class="dv">3</span> groups x <span class="dv">40</span>      <span class="dv">6</span> against <span class="dv">59</span>      <span class="fl">4.1</span> s against <span class="fl">14.8</span> s</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="dv">8</span> groups x <span class="dv">80</span>     <span class="dv">10</span> against <span class="dv">27</span>     <span class="fl">18.7</span> s against <span class="fl">33.2</span> s</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a> <span class="dv">20</span> groups x <span class="dv">60</span>      <span class="dv">9</span> against <span class="dv">41</span>     <span class="fl">88.0</span> s against <span class="fl">88.9</span> s</span></code></pre></div>
 <p>The last row is worth reading as it is: the evaluation count is what the exact route buys and it is 4.6x there, while the WALL TIME is a wash, because each exact evaluation also pays for the gradient (one <code>term_third()</code> and one extra <code>term_curvature()</code> per hyperparameter) and one point on that path is still unavailable and costs a long inner fit that does not converge.</p>
 </li>
 <li>
@@ -815,8 +834,8 @@
 <h2 class="pkg-version" data-toc-text="0.15.0" id="statmodels7-0150">statmodels7 0.15.0<a class="anchor" aria-label="anchor" href="#statmodels7-0150"></a></h2>
 <ul><li>
 <p>The observed information of a model carrying a filter is exact. <code><a href="../reference/statmod_full_information.html">statmod_full_information()</a></code> assembles</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="sc">-</span>d2l<span class="sc">/</span>du2 <span class="ot">=</span> <span class="sc">-</span>sum_t w_t sum_{q,r} l_qr,t V_q,t<span class="st">' V_r,t</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="st">           - sum_t w_t l_p,t E_t</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="sc">-</span>d2l<span class="sc">/</span>du2 <span class="ot">=</span> <span class="sc">-</span>sum_t w_t sum_{q,r} l_qr,t V_q,t<span class="st">' V_r,t</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="st">           - sum_t w_t l_p,t E_t</span></span></code></pre></div>
 <p>over the coefficients of every equation AND the term’s own parameters, with <code>E</code>, the second derivative of the predictor through the recursion, from <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>. Only the filter’s equation has a <code>V</code> that is not its own design; the third derivatives the second sum needs are distributions7’s, in closed form for every family.</p>
 <p>What it replaces is the naive <code>X'WX</code>, which the scoring step still uses and is right to – with an exact gradient any positive definite matrix converges to the right point – but which is not the information. Measured against numDeriv on the exact gradient, AWAY from the optimum, where a wrong and a right Hessian are told apart: 4.3e-11 relative. The naive curvature differs from the exact one by 17.5 per cent of the coefficient block on a one-equation model and 35.3 per cent on a two-equation one, the second larger because the cross-equation feedback contributes there too.</p>
 </li>

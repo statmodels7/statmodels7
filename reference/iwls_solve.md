@@ -25,9 +25,21 @@ iwls_solve(pieces, u, how)
 
   The decomposition.
 
+  **A coordinate at a boundary is held.** Where a parameter has reached
+  the clamp its link keeps it strictly inside, the family's curvature
+  there is zero or `NaN` and no step can move that coordinate. Such
+  coordinates are dropped from the system and the rest is solved, which
+  is the active set the boundary defines; the step stays a descent step
+  for the reduced problem. Holding them is what keeps one boundary
+  coordinate from stopping the others: with a single `NaN` in the
+  curvature the whole step came back zero, and a Student t whose \\\nu\\
+  had reached `double.xmax` stopped with a score of -617.6 in
+  \\\sigma\\, an ordinary coordinate, while \\\nu\\'s own was exactly 0.
+
 ## Value
 
-A list with `delta`, `rank` and `route`.
+A list with `delta`, `rank`, `route` and `held`, the positions dropped
+from the system.
 
 ## Details
 

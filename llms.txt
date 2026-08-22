@@ -473,6 +473,8 @@ exported, and none is needed to use the package.
   : A Square-Root Factor of the Penalty
 - [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
   : A Penalty's Starting Hyperparameters
+- [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)
+  : Pin the Coordinates a Boundary Has Frozen
 - [`predict(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
   : Predict From a Fitted Model
 - [`predict_moments()`](https://statmodels7.github.io/statmodels7/reference/predict_moments.md)
