@@ -105,5 +105,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #>                linpar         1 coef
 #> 
 #> AIC 87.386042 over 5 hyperparameter evaluation(s)
-#> fitted in 930 ms   search: converged
+#> fitted in 782 ms   search: converged
 ```

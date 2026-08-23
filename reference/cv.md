@@ -151,6 +151,6 @@ statmod(y ~ lasso(x, n_lambda = 6), distributions7::gaussian1_distrib(), dd,
 #>   sigma      ~ 1
 #>                linpar                   1 coef
 #> 
-#> fitted in 306 ms   search: converged
+#> fitted in 268 ms   search: converged
 #> 1 pass(es) over 2 block(s)
 ```

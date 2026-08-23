@@ -115,5 +115,5 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #>                linpar         1 coef
 #> 
 #> REML -55.808442 over 5 hyperparameter evaluation(s)
-#> fitted in 166 ms   search: converged
+#> fitted in 157 ms   search: converged
 ```

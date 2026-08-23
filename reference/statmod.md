@@ -249,7 +249,7 @@ fit
 #>   sigma      ~ 1
 #>                linpar   1 coef
 #> 
-#> fitted in 30 ms   search: converged
+#> fitted in 23 ms   search: converged
 
 # every parameter can be modelled
 statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
@@ -266,5 +266,5 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #>   sigma      ~ x
 #>                linpar   2 coef
 #> 
-#> fitted in 38 ms   search: converged
+#> fitted in 29 ms   search: converged
 ```
