@@ -293,6 +293,14 @@ readable_vcov <- function(spec, design, fit, V) {
   Vz <- V
   Vz[is.na(Vz)] <- 0
   out <- J %*% Vz %*% t(J)
+  # SYMMETRIZED, and not symmetric by construction. An entry and its
+  # transpose collect the same products in a different ORDER, and
+  # floating-point addition is not associative, so the two can differ
+  # in the last bit -- measured, they did on Linux and not on Windows
+  # or macOS, which is what a bit-for-bit assertion turns into a red
+  # job on one platform of five. A variance matrix is symmetric, so
+  # the halving is the contract rather than a repair.
+  out <- (out + t(out)) / 2
   out[bad, ] <- NA_real_
   out[, bad] <- NA_real_
   nm <- paste(rj$parameter, rj$name, sep = ":")

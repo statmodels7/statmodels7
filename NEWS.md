@@ -1,4 +1,12 @@
-# statmodels7 0.88.0
+# statmodels7 0.88.1
+
+* The readable variance matrix is SYMMETRIZED rather than left symmetric by
+  construction. The delta method's `J V J'` collects an entry and its
+  transpose in a different order, and floating-point addition is not
+  associative, so the two differed in the last bit -- on Linux and not on
+  Windows or macOS, which turned a bit-for-bit assertion into a red job on
+  one platform of five. A variance matrix is symmetric, so the halving is the
+  contract and not a repair.
 
 * `rstatmod(n_sim =)` draws several data sets in one call, and the truth is
   drawn ONCE and shared: what a study over replicates measures is the
