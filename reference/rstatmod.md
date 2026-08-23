@@ -1,13 +1,24 @@
 # Simulate a Response From a Written Model
 
-Takes a formula, a distribution and a data frame of covariates, and
-draws a response from that model – at coefficients the caller supplies,
-or at coefficients drawn at random.
+Takes a formula and a distribution, draws coefficients or uses the ones
+given, and returns the data drawn from that model together with the
+truth behind it.
 
 ## Usage
 
 ``` r
-rstatmod(formula, distrib, data, par = NULL, sd = 1, offsets = NULL)
+rstatmod(
+  formula,
+  distrib,
+  data = NULL,
+  n = NULL,
+  n_sim = 1,
+  par = NULL,
+  structural = NULL,
+  sd = 1,
+  offsets = NULL,
+  covariates = NULL
+)
 ```
 
 ## Arguments
@@ -24,11 +35,27 @@ rstatmod(formula, distrib, data, par = NULL, sd = 1, offsets = NULL)
 
 - data:
 
-  A data frame of covariates.
+  A data frame of covariates, or `NULL`.
+
+- n:
+
+  The number of observations, where `data` is `NULL`.
+
+- n_sim:
+
+  How many data sets to draw.
 
 - par:
 
-  Optional named list of coefficient vectors.
+  Optional named list, one entry per distribution parameter; see the
+  details.
+
+- structural:
+
+  Optional named list of a structural term's own parameters, on the
+  scale
+  [`term_params`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
+  names.
 
 - sd:
 
@@ -38,10 +65,20 @@ rstatmod(formula, distrib, data, par = NULL, sd = 1, offsets = NULL)
 
   Optional named list of offsets.
 
+- covariates:
+
+  Optional named list of functions of the observation count, one per
+  covariate, drawn afresh at every replicate.
+
 ## Value
 
-The data frame with the response added, carrying the attributes `"par"`
-(the coefficients used) and `"theta"` (the parameters they gave).
+An object of class `"StatmodSim"`: a list with `data`, the data frame
+with the response added; `par`, the coefficients used, drawn or given,
+named as the design names them; `theta`, the distribution's parameters
+at every observation; `latent`, what a term with state drew, or `NULL`;
+`structural`, such a term's own parameters, or `NULL`; `n_sim`; and
+`call`. With `n_sim > 1` the per-replicate fields are lists of that
+length.
 
 ## Details
 
@@ -52,23 +89,104 @@ own for a random draw, so the two names cannot be confused.
 The point of it is to have data whose truth is known: write the model,
 draw from it, fit it back, and see whether the fit recovers what was put
 in. A covariate needs no declaring – a factor becomes its contrasts and
-a numeric stays itself, because the design comes from the same
+a numeric stays itself – because the design comes from the same
 interpreter a fit uses.
 
-**The coefficients.** `par = NULL` draws them, each independently from
-`rnorm(1, 0, sd)`, which on the link scale gives predictors of order
-one. A named list fixes them instead, one vector per distribution
-parameter in the design's order; a parameter left out of that list is
-drawn. [`coef()`](https://rdrr.io/r/stats/coef.html) on the result
-reports what was used, drawn or given, so a simulation is reproducible
-from its own output.
+**The truth comes back beside the data, not attached to it.** What a
+simulation study compares against is the coefficients, the parameters
+they gave and whatever a term with state drew, so the result is a list
+holding all of them: `data`, `par`, `theta` and, where there is one,
+`latent`. They were attributes of the data frame until version 0.88.0,
+and that was worse than it looks – an attribute survives a row subset
+without being subset itself, so `sim[1:10, ]` kept a `theta` of the
+original length silently, and
+[`subset()`](https://rdrr.io/r/base/subset.html) and
+[`merge()`](https://rdrr.io/r/base/merge.html) dropped it altogether.
+Pass `sim$data` where a data frame is wanted.
 
-**The response's name** is the formula's left-hand side when it is a
-symbol, and `"y"` otherwise.
+**The predictor is assembled exactly as a fit assembles it**, through
+[`statmod_design_at`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md),
+which is what makes the simulated data come from the model that was
+written rather than from a linearization of it. A term whose block moves
+with its coefficients – `seg()`, `jseg()`, `nl()` – contributes
+`term_value()` at the coefficients supplied, not its block times them;
+the two differ by the whole nonlinearity, and the earlier version of
+this function used the second.
+
+**Data, or a row count.** `data` carries the covariates. A model with
+none – a pure time series, say – needs only `n`, and one of the two must
+be given. Where both are given they must agree.
+
+**The covariates may be drawn too, and the choice is not a detail.**
+`covariates` takes one function of the observation count per column, as
+`par` takes one per equation, and they are drawn AFRESH at every
+replicate. That is the difference between the two studies a caller might
+mean: with `data` the covariates are the same throughout, so what is
+measured is the estimator's behaviour CONDITIONAL on that design, and
+with `covariates` it is measured over the design as well. Neither is
+more correct, and a study should say which it ran.
+
+**Several replicates.** `n_sim` draws that many data sets. The truth is
+drawn ONCE and shared: what a study over replicates measures is the
+variability of an estimator at a set of parameters, so the replicates
+differ in what is random and not in what is being estimated. Varying the
+truth as well is a loop over calls, and reads differently. With
+`n_sim > 1` the fields that are per-replicate – `data`, `theta`,
+`latent` – come back as lists of that length, while `par` and
+`structural` stay single.
+
+**The coefficients.** `par = NULL` draws every one of them from
+`rnorm(1, 0, sd)`, which on the link scale gives predictors of order
+one. A named list fixes them instead, one entry per distribution
+parameter, and an entry may be
+
+- a numeric vector, as long as that equation has coefficients;
+
+- a single number, used for every coefficient of the equation;
+
+- a FUNCTION of the coefficient count, called once and returning that
+  many values.
+
+The function is what makes a structured truth expressible without a
+vocabulary for it: `function(k) rnorm(k, 0, 0.3)` is a random effect
+with its own standard deviation, and
+`function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a lasso to
+find. A parameter left out of the list is drawn.
+
+**A term with state** is simulated through
+[`term_simulate`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html),
+so the recursion that generates is the term's own. A score-driven term
+draws the response AS it runs, its level at one time being driven by the
+score at the time before; a latent chain draws its path from the
+stationary law the likelihood is written with; a marginal break-point
+term draws each group's positions from their prior. What each drew is
+returned in the `"latent"` attribute, which is what a recovery check
+compares against.
+
+Such a term's OWN parameters are not coefficients of any equation, so
+they are named through `structural` rather than through `par`, and on
+the scale
+[`term_params`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
+names – a loading is the loading and not its logarithm, a persistence is
+the partial autocorrelation the chart carries. There is at most one such
+term in a formula, so no key is needed. Left unnamed they take the
+term's own starting values, which are deliberately weak (a score-driven
+term starts at a loading of about 0.1) and make for a series with almost
+no dynamics: name them, or the simulation will be of a model near the
+one with no term at all.
+
+**The response's name** is the formula's left-hand side, which must be a
+symbol. `log(y) ~ x` is rejected rather than answered: the model
+generates values of `log(y)` and there is no column that could honestly
+be called either name. A censored response is rejected too, for the
+reason
+[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+rejects one.
 
 ## See also
 
 [`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+[`simulate.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/simulate.StatmodFit.md),
 [`predict.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
 
 ## Examples
@@ -79,33 +197,60 @@ dd <- data.frame(x = runif(50), g = factor(rep(c("a", "b"), 25)))
 
 # coefficients drawn
 sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
-attr(sim, "par")
+sim$par
 #> $mu
-#> (Intercept)           x          gb 
-#> -0.05612874 -0.15579551 -1.47075238 
+#>  (Intercept)            x           gb 
+#>  0.291446236 -0.443291873  0.001105352 
 #> 
 #> $sigma
 #> (Intercept) 
-#>  -0.4781501 
+#>  0.07434132 
 #> 
 
 # or given, and recovered by a fit
 sim2 <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                  par = list(mu = c(1, 2), sigma = log(0.3)))
-statmod(y ~ x, distributions7::gaussian1_distrib(), sim2)
-#> A statmod fit
+coef(statmod(y ~ x, distributions7::gaussian1_distrib(), sim2$data))
+#> $mu
+#> (Intercept)           x 
+#>    1.030843    1.935854 
 #> 
-#> Call:  statmod(formula = y ~ x, distrib = distributions7::gaussian1_distrib(), 
-#>             data = sim2)
+#> $sigma
+#> (Intercept) 
+#>   -1.165592 
 #> 
-#> Distribution: gaussian1
-#> Observations: 50
-#> 
-#>   mu         ~ x
-#>                linpar           2 coef
-#>   sigma      ~ 1
-#>                linpar           1 coef
-#> 
-#> log-likelihood 0.466254    objective -0.466254
-#> fitted in 29 ms, converged
+
+# a sparse truth, written as a function of the coefficient count
+dd2 <- as.data.frame(matrix(rnorm(50 * 6), 50, 6))
+sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
+                 distributions7::gaussian1_distrib(), dd2,
+                 par = list(mu = function(k) c(2, -1.5, rep(0, k - 2)),
+                            sigma = log(0.3)))
+head(sim3$data$y, 3)
+#> [1] 1.255760 3.065784 6.383685
+
+# a model with no covariates at all
+sim4 <- rstatmod(y ~ 1, distributions7::gaussian1_distrib(), n = 20)
+nrow(sim4$data)
+#> [1] 20
+
+# a study over replicates, the covariates drawn afresh at each one
+study <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), n = 80,
+                  n_sim = 5, par = list(mu = c(1, 2), sigma = log(0.5)),
+                  covariates = list(x = function(n) runif(n, -2, 2)))
+length(study$data)
+#> [1] 5
+vapply(study$data, function(d) coef(statmod(
+  y ~ x, distributions7::gaussian1_distrib(), d),
+  readable = FALSE)$mu[[2L]], numeric(1))
+#> [1] 2.026176 2.036889 2.078646 2.068472 2.041046
+
+# a score-driven series, its own parameters named
+sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
+                 distributions7::gaussian1_distrib(),
+                 data.frame(t = 1:100), par = list(sigma = 0),
+                 structural = list(omega = 0.4, alpha1 = 0.3,
+                                   pacf1 = 0.6))
+head(sim5$latent, 3)
+#> [1] 1.0000000 0.9164683 0.7841508
 ```

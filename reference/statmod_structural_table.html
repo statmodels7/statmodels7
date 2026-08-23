@@ -11,7 +11,7 @@ information."><meta property="og:image" content="https://statmodels7.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.86.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,10 @@ information.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per parameter of per structural term,
-or <code>NULL</code> where the model carries none.</p>
+carrying <code>component</code> and <code>position</code> – which of the term's
+own parameters the quantity belongs to and where in the parameter vector
+it sits, both read off the Jacobian's support – or <code>NULL</code> where
+the model carries none.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

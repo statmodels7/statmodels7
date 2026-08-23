@@ -9,7 +9,7 @@ parametric terms together, and one block per penalized term."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.86.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ parametric terms together, and one block per penalized term.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">p</span>, <span class="va">ci</span>, level <span class="op">=</span> <span class="fl">0.95</span>, V <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">p</span>, <span class="va">ci</span>, level <span class="op">=</span> <span class="fl">0.95</span>, V <span class="op">=</span> <span class="cn">NULL</span>, st <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -80,11 +80,22 @@ returns it with the statistic and the p-value added.</p></dd>
 functions of several coefficients at once and whose standard errors
 are therefore the delta method rather than a diagonal entry.</p></dd>
 
+
+<dt id="arg-st">st<a class="anchor" aria-label="anchor" href="#arg-st"></a></dt>
+<dd><p>The structural table, or <code>NULL</code>. A structural term has no
+design columns, so its block is built from what it reports rather than
+from a block of the design, and its hyperparameter is reported there
+rather than in a block of its own carrying nothing else.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of block records, each with <code>kind</code>, <code>label</code>,
-<code>n_coef</code>, <code>edf</code>, <code>n_zero</code> and <code>table</code>.</p>
+<code>n_coef</code>, <code>edf</code>, <code>n_zero</code> and <code>table</code>, together
+with <code>head</code> and <code>components</code>: a term written in parameters
+of its own that develops one of them over covariates reports that
+parameter as a compartment of its own, carrying its hyperparameter and
+its sub-terms' rows, and <code>table</code> keeps only what is left.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

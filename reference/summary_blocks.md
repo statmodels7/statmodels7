@@ -6,7 +6,7 @@ parametric terms together, and one block per penalized term.
 ## Usage
 
 ``` r
-summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL)
+summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 ```
 
 ## Arguments
@@ -47,7 +47,18 @@ summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL)
   whose standard errors are therefore the delta method rather than a
   diagonal entry.
 
+- st:
+
+  The structural table, or `NULL`. A structural term has no design
+  columns, so its block is built from what it reports rather than from a
+  block of the design, and its hyperparameter is reported there rather
+  than in a block of its own carrying nothing else.
+
 ## Value
 
 A list of block records, each with `kind`, `label`, `n_coef`, `edf`,
-`n_zero` and `table`.
+`n_zero` and `table`, together with `head` and `components`: a term
+written in parameters of its own that develops one of them over
+covariates reports that parameter as a compartment of its own, carrying
+its hyperparameter and its sub-terms' rows, and `table` keeps only what
+is left.

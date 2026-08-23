@@ -150,6 +150,8 @@ alternated around them.
   Choose the Hyperparameters by Cross-Validation
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   : Simulate a Response From a Written Model
+- [`print(`*`<StatmodSim>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSim.md)
+  : Printing a Simulation
 
 ## Where a fit begins
 
@@ -181,6 +183,8 @@ the elapsed time in the unit it deserves.
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   : The Model as a Function of Parameters and Data
+- [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
+  : The Hyperparameters of a Fitted Model
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
   : What the Fit Certifies About the Point It Reports
 - [`statmod_latent()`](https://statmodels7.github.io/statmodels7/reference/statmod_latent.md)
@@ -224,16 +228,22 @@ exported, and none is needed to use the package.
   : Solve a Scoring Step From the Square-Root Design
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
   : Bind a Model's Term Blocks Side by Side
+- [`block_label()`](https://statmodels7.github.io/statmodels7/reference/block_label.md)
+  : The Heading a Block of Each Kind Is Printed Under
 - [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
   : The Per-Observation Diagonal of Each Block of a Matrix
 - [`block_predictors()`](https://statmodels7.github.io/statmodels7/reference/block_predictors.md)
   : The Predictors a Coefficient Direction Induces
+- [`block_rows_shown()`](https://statmodels7.github.io/statmodels7/reference/block_rows_shown.md)
+  : Which Rows of a Table a Summary Prints
 - [`blocks_at_kink()`](https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.md)
   : Record Where a Path Has Just Been
 - [`boundary_coords()`](https://statmodels7.github.io/statmodels7/reference/boundary_coords.md)
   : Which Coordinates a Boundary Has Frozen
 - [`bounded_bump()`](https://statmodels7.github.io/statmodels7/reference/bounded_bump.md)
   : Move a Hyperparameter Without Leaving Its Interval
+- [`check_covariates()`](https://statmodels7.github.io/statmodels7/reference/check_covariates.md)
+  : The Covariate Generators of a Simulation
 - [`check_offsets()`](https://statmodels7.github.io/statmodels7/reference/check_offsets.md)
   : Validate Offsets
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
@@ -241,9 +251,13 @@ exported, and none is needed to use the package.
 - [`chol_blocks()`](https://statmodels7.github.io/statmodels7/reference/chol_blocks.md)
   : Cholesky Factors of Small Blocks, Vectorized Over Observations
 - [`coef(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
-  : The Coefficients of a Fit
+  : The Coefficients of a Fitted Model
 - [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
   : Where Each Stacked Coefficient Comes From
+- [`coef_readable()`](https://statmodels7.github.io/statmodels7/reference/coef_readable.md)
+  : The Quantities a Term Reports in Place of Its Coordinates
+- [`coef_structural()`](https://statmodels7.github.io/statmodels7/reference/coef_structural.md)
+  : What a Structural Term Contributes to the Coefficients
 - [`component_count()`](https://statmodels7.github.io/statmodels7/reference/component_count.md)
   : How Many Mixture Components a Term Reports
 - [`component_shift()`](https://statmodels7.github.io/statmodels7/reference/component_shift.md)
@@ -315,16 +329,24 @@ exported, and none is needed to use the package.
   [`as_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   : Is a Design Sparse, and the Zero Matrix to Accumulate It Into
+- [`df.residual(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md)
+  : What a Fit Leaves Unspent
 - [`diagonal_sqrt()`](https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.md)
   : The Factor of a Diagonal Penalty
 - [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md)
   : The Model's Derivative Pieces for a Filter's Recursion
 - [`draw_coefficients()`](https://statmodels7.github.io/statmodels7/reference/draw_coefficients.md)
   : Draw or Validate the Coefficients of a Simulation
+- [`draw_covariates()`](https://statmodels7.github.io/statmodels7/reference/draw_covariates.md)
+  : Draw One Replicate's Covariates
+- [`drop_common_prefix()`](https://statmodels7.github.io/statmodels7/reference/drop_common_prefix.md)
+  : Drop the Prefix a Set of Coefficient Names Share
 - [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
   : Evaluate the Offsets a Formula Names
 - [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
   : Does the Family Supply the Expected Information's Derivative?
+- [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
+  : The Distribution a Model Was Fitted With
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
   : Which Information Matrix a Fit Used
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
@@ -339,12 +361,20 @@ exported, and none is needed to use the package.
   : Which Coefficients a Singular Curvature Is Flat In
 - [`fmt_step()`](https://statmodels7.github.io/statmodels7/reference/fmt_step.md)
   : Format a Step Length
+- [`format_block_cells()`](https://statmodels7.github.io/statmodels7/reference/format_block_cells.md)
+  : The Rows of a Block Formatted for Printing
 - [`format_conflicts()`](https://statmodels7.github.io/statmodels7/reference/format_conflicts.md)
   : Render a Conflict Report
+- [`formula(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/formula.StatmodFit.md)
+  : The Formula a Model Was Written With
 - [`free_scale()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
   [`free_scale2()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
   [`link_slopes()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
   : Carry a Hyperparameter Derivative onto the Free Scale
+- [`frozen_block()`](https://statmodels7.github.io/statmodels7/reference/frozen_block.md)
+  : Which Coefficients Belong to a Block That Is Not a Jacobian
+- [`frozen_condition()`](https://statmodels7.github.io/statmodels7/reference/frozen_condition.md)
+  : The Condition a Frozen Block Raises
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
@@ -409,6 +439,10 @@ exported, and none is needed to use the package.
 - [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
   : How Far Above Its Minimum an Inner Fit May Sit and Still Report a
   Resolution
+- [`model.matrix(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/model.matrix.StatmodFit.md)
+  : The Design of One Equation
+- [`nobs(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.md)
+  : The Number of Observations a Model Was Fitted To
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
 - [`outer_backtracks()`](https://statmodels7.github.io/statmodels7/reference/outer_backtracks.md)
@@ -485,6 +519,8 @@ exported, and none is needed to use the package.
   : Predict From a Fitted Model
 - [`predict_moments()`](https://statmodels7.github.io/statmodels7/reference/predict_moments.md)
   : The Quantities a Fit Can Predict
+- [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md)
+  : The Uncertainty of a Predicted Predictor
 - [`predictor_target()`](https://statmodels7.github.io/statmodels7/reference/predictor_target.md)
   : The Response on the Scale of a Predictor
 - [`print(`*`<OuterMethod>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.OuterMethod.md)
@@ -496,9 +532,15 @@ exported, and none is needed to use the package.
 - [`print.start_strategy`](https://statmodels7.github.io/statmodels7/reference/print.start_strategy.md)
   : Print a Starting-Value Strategy
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
-  : Print One Block of a Summary
+  : Print One Block of a Model Summary
+- [`print_block_head()`](https://statmodels7.github.io/statmodels7/reference/print_block_head.md)
+  : The Term Read at a Glance
 - [`readable_hyper_rows()`](https://statmodels7.github.io/statmodels7/reference/readable_hyper_rows.md)
   : The Quantities a Penalty's Hyperparameters Are About
+- [`readable_joint()`](https://statmodels7.github.io/statmodels7/reference/readable_joint.md)
+  : The Quantities a Fit Reports, and the Map From Its Coordinates
+- [`readable_vcov()`](https://statmodels7.github.io/statmodels7/reference/readable_vcov.md)
+  : The Variance of the Quantities a Fit Reports
 - [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
   : The Weight a Refreshable Block Is Contracted Against
 - [`refresh_curv_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_curv_amat.md)
@@ -523,18 +565,36 @@ exported, and none is needed to use the package.
   : Reject an Offset Buried Inside a Term
 - [`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
   : Reject a Term the Fitting Scheme Does Not Cover
+- [`residuals(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
+  : The Residuals of a Fitted Model
 - [`row_nonzeros()`](https://statmodels7.github.io/statmodels7/reference/row_nonzeros.md)
   : A Design's Nonzeros, Ordered by Row
+- [`rstatmod_data()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_data.md)
+  : The Data Frame a Simulation Runs Against
+- [`rstatmod_eta()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_eta.md)
+  : The Predictor and Parameters of a Simulation
+- [`rstatmod_psi()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_psi.md)
+  : A Structural Term's Parameters for a Simulation
+- [`rstatmod_response_name()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_response_name.md)
+  : The Column a Simulated Response Is Written To
+- [`se_answer()`](https://statmodels7.github.io/statmodels7/reference/se_answer.md)
+  : The Shape a Prediction With Its Uncertainty Comes Back In
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
 - [`seg_boot_total()`](https://statmodels7.github.io/statmodels7/reference/seg_boot_total.md)
   : How Many Restarts the Terms Ask For
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   : Choose a Break-Point Term's Starting Positions on a Grid
+- [`select_parameter()`](https://statmodels7.github.io/statmodels7/reference/select_parameter.md)
+  : One Equation's Submatrix of a Variance Matrix
 - [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
   : The Smallest Admissible Value of a Shape Parameter
 - [`short_keys()`](https://statmodels7.github.io/statmodels7/reference/short_keys.md)
   : A Term Key Shortened for Display
+- [`sigma(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/sigma.StatmodFit.md)
+  : The Standard Deviation a Fitted Model Implies
+- [`simulate(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/simulate.StatmodFit.md)
+  : Draws from a Fitted Model
 - [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   : Which Coefficients of a Smooth Are the Linear Part
 - [`smoothed_notes()`](https://statmodels7.github.io/statmodels7/reference/smoothed_notes.md)
@@ -586,6 +646,8 @@ exported, and none is needed to use the package.
   : The Key of One of a Term's Penalties
 - [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   : The Linear Predictors and the Parameters They Give
+- [`statmod_eta_continued()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta_continued.md)
+  : Predictors at Rows That Continue the Series
 - [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
   : Run the Structural Terms at the Current Parameters
 - [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
@@ -648,12 +710,18 @@ exported, and none is needed to use the package.
   : Have the Refreshable Terms Settled?
 - [`statmod_refreshable()`](https://statmodels7.github.io/statmodels7/reference/statmod_refreshable.md)
   : Which Terms Recompute Their Own Block
+- [`terms(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
+  [`model.frame(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
+  [`anova(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
+  : What a Fit Does Not Answer
 - [`statmod_regime_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_at.md)
   : Run the Structural Terms at the Current Parameters
 - [`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)
   : The Observed Information of a Model Carrying a Regime Term
 - [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
   : The Same Model Read on Other Rows
+- [`statmod_response_known()`](https://statmodels7.github.io/statmodels7/reference/statmod_response_known.md)
+  : Whether New Rows Carry the Response
 - [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
   : The Score of the Weighted Log-Likelihood
 - [`statmod_search()`](https://statmodels7.github.io/statmodels7/reference/statmod_search.md)
@@ -714,6 +782,10 @@ exported, and none is needed to use the package.
   : From the Unconstrained Scale to the Term's Parameters
 - [`structural_range_cols()`](https://statmodels7.github.io/statmodels7/reference/structural_range_cols.md)
   : Which of a Structural Term's Free Parameters a Penalty Covers
+- [`structural_se_columns()`](https://statmodels7.github.io/statmodels7/reference/structural_se_columns.md)
+  : The Columns a Structural Term Adds to a Derivative Row
+- [`structural_tail_names()`](https://statmodels7.github.io/statmodels7/reference/structural_tail_names.md)
+  : The Names of the Structural Tail of the Joint Information
 - [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
   : The Parameters a Structural Term Starts From
 - [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
@@ -750,6 +822,8 @@ exported, and none is needed to use the package.
   : Resolve the Verbosity Setting
 - [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
   : The Weighted Cross Product of the Assembly
+- [`weights(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.md)
+  : The Prior Weights of a Fitted Model
 - [`worker_map()`](https://statmodels7.github.io/statmodels7/reference/worker_map.md)
   : Run Independent Units, in This Process or Over Workers
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)

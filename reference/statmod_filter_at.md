@@ -30,7 +30,9 @@ statmod_filter_at(spec, design, eta_static, theta_static)
 
 ## Value
 
-A named list, one entry per structural term.
+A named list, one entry per structural term, carrying its predictor, the
+derivative of that predictor in the term's own parameters, and the
+curvature the recursion read at each step.
 
 ## Details
 

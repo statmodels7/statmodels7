@@ -18,8 +18,8 @@ term_block_kind(term)
 
 ## Value
 
-One of `"parametric"`, `"smooth"`, `"random"`, `"selection"`,
-`"penalized"`.
+One of `"structural"`, `"breakpoint"`, `"parametric"`, `"smooth"`,
+`"random"`, `"selection"`, `"penalized"`.
 
 ## Details
 

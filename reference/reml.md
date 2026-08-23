@@ -109,12 +109,11 @@ statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 #> Observations: 200
 #> 
 #>   mu         ~ s(x, k = 10)
-#>                linpar           1 coef
-#>                s(x, k = 10)     9 coef, edf 6.59
+#>                linpar         1 coef
+#>                s(x, k = 10)   9 coef, edf 6.59
 #>   sigma      ~ 1
-#>                linpar           1 coef
+#>                linpar         1 coef
 #> 
-#> log-likelihood -35.407348    objective 40.890371
 #> REML -55.808442 over 5 hyperparameter evaluation(s)
-#> fitted in 221 ms, converged
+#> fitted in 166 ms   search: converged
 ```

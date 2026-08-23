@@ -7,7 +7,7 @@ freedom, the criteria and the notes.
 
 ``` r
 # S3 method for class 'StatmodSummary'
-print(x, digits = 4L, ...)
+print(x, digits = 4L, notes = FALSE, ...)
 ```
 
 ## Arguments
@@ -20,6 +20,13 @@ print(x, digits = 4L, ...)
 - digits:
 
   Significant digits in the tables.
+
+- notes:
+
+  Whether to print the qualifications the numbers carry. `FALSE` by
+  default, when the foot says how many there are: they state conventions
+  rather than facts of the fit, so they read the same under every model.
+  They are on the summary's `notes` property either way.
 
 - ...:
 

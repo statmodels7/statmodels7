@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.86.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,6 +148,13 @@
 
         </dt>
         <dd>Simulate a Response From a Written Model</dd>
+
+        <dt>
+
+          <code><a href="print.StatmodSim.html">print(<i>&lt;StatmodSim&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Printing a Simulation</dd>
       </dl></div><div class="section level2">
       <h2 id="where-a-fit-begins">Where a fit begins<a class="anchor" aria-label="anchor" href="#where-a-fit-begins"></a></h2>
 
@@ -215,6 +222,13 @@
 
         </dt>
         <dd>The Model as a Function of Parameters and Data</dd>
+
+        <dt>
+
+          <code><a href="hyper.html">hyper()</a></code>
+
+        </dt>
+        <dd>The Hyperparameters of a Fitted Model</dd>
 
         <dt>
 
@@ -334,6 +348,13 @@
 
         <dt>
 
+          <code><a href="block_label.html">block_label()</a></code>
+
+        </dt>
+        <dd>The Heading a Block of Each Kind Is Printed Under</dd>
+
+        <dt>
+
           <code><a href="block_leverage.html">block_leverage()</a></code>
 
         </dt>
@@ -345,6 +366,13 @@
 
         </dt>
         <dd>The Predictors a Coefficient Direction Induces</dd>
+
+        <dt>
+
+          <code><a href="block_rows_shown.html">block_rows_shown()</a></code>
+
+        </dt>
+        <dd>Which Rows of a Table a Summary Prints</dd>
 
         <dt>
 
@@ -366,6 +394,13 @@
 
         </dt>
         <dd>Move a Hyperparameter Without Leaving Its Interval</dd>
+
+        <dt>
+
+          <code><a href="check_covariates.html">check_covariates()</a></code>
+
+        </dt>
+        <dd>The Covariate Generators of a Simulation</dd>
 
         <dt>
 
@@ -393,7 +428,7 @@
           <code><a href="coef.StatmodFit.html">coef(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Coefficients of a Fit</dd>
+        <dd>The Coefficients of a Fitted Model</dd>
 
         <dt>
 
@@ -401,6 +436,20 @@
 
         </dt>
         <dd>Where Each Stacked Coefficient Comes From</dd>
+
+        <dt>
+
+          <code><a href="coef_readable.html">coef_readable()</a></code>
+
+        </dt>
+        <dd>The Quantities a Term Reports in Place of Its Coordinates</dd>
+
+        <dt>
+
+          <code><a href="coef_structural.html">coef_structural()</a></code>
+
+        </dt>
+        <dd>What a Structural Term Contributes to the Coefficients</dd>
 
         <dt>
 
@@ -642,6 +691,13 @@
 
         <dt>
 
+          <code><a href="df.residual.StatmodFit.html">df.residual(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>What a Fit Leaves Unspent</dd>
+
+        <dt>
+
           <code><a href="diagonal_sqrt.html">diagonal_sqrt()</a></code>
 
         </dt>
@@ -663,6 +719,20 @@
 
         <dt>
 
+          <code><a href="draw_covariates.html">draw_covariates()</a></code>
+
+        </dt>
+        <dd>Draw One Replicate's Covariates</dd>
+
+        <dt>
+
+          <code><a href="drop_common_prefix.html">drop_common_prefix()</a></code>
+
+        </dt>
+        <dd>Drop the Prefix a Set of Coefficient Names Share</dd>
+
+        <dt>
+
           <code><a href="eval_offsets.html">eval_offsets()</a></code>
 
         </dt>
@@ -674,6 +744,13 @@
 
         </dt>
         <dd>Does the Family Supply the Expected Information's Derivative?</dd>
+
+        <dt>
+
+          <code><a href="family.StatmodFit.html">family(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Distribution a Model Was Fitted With</dd>
 
         <dt>
 
@@ -726,6 +803,13 @@
 
         <dt>
 
+          <code><a href="format_block_cells.html">format_block_cells()</a></code>
+
+        </dt>
+        <dd>The Rows of a Block Formatted for Printing</dd>
+
+        <dt>
+
           <code><a href="format_conflicts.html">format_conflicts()</a></code>
 
         </dt>
@@ -733,10 +817,31 @@
 
         <dt>
 
+          <code><a href="formula.StatmodFit.html">formula(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Formula a Model Was Written With</dd>
+
+        <dt>
+
           <code><a href="free_scale.html">free_scale()</a></code> <code><a href="free_scale.html">free_scale2()</a></code> <code><a href="free_scale.html">link_slopes()</a></code>
 
         </dt>
         <dd>Carry a Hyperparameter Derivative onto the Free Scale</dd>
+
+        <dt>
+
+          <code><a href="frozen_block.html">frozen_block()</a></code>
+
+        </dt>
+        <dd>Which Coefficients Belong to a Block That Is Not a Jacobian</dd>
+
+        <dt>
+
+          <code><a href="frozen_condition.html">frozen_condition()</a></code>
+
+        </dt>
+        <dd>The Condition a Frozen Block Raises</dd>
 
         <dt>
 
@@ -947,6 +1052,20 @@
 
         </dt>
         <dd>How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution</dd>
+
+        <dt>
+
+          <code><a href="model.matrix.StatmodFit.html">model.matrix(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Design of One Equation</dd>
+
+        <dt>
+
+          <code><a href="nobs.StatmodFit.html">nobs(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Number of Observations a Model Was Fitted To</dd>
 
         <dt>
 
@@ -1216,6 +1335,13 @@
 
         <dt>
 
+          <code><a href="predict_se.html">predict_se()</a></code>
+
+        </dt>
+        <dd>The Uncertainty of a Predicted Predictor</dd>
+
+        <dt>
+
           <code><a href="predictor_target.html">predictor_target()</a></code>
 
         </dt>
@@ -1254,7 +1380,14 @@
           <code><a href="print_block.html">print_block()</a></code>
 
         </dt>
-        <dd>Print One Block of a Summary</dd>
+        <dd>Print One Block of a Model Summary</dd>
+
+        <dt>
+
+          <code><a href="print_block_head.html">print_block_head()</a></code>
+
+        </dt>
+        <dd>The Term Read at a Glance</dd>
 
         <dt>
 
@@ -1262,6 +1395,20 @@
 
         </dt>
         <dd>The Quantities a Penalty's Hyperparameters Are About</dd>
+
+        <dt>
+
+          <code><a href="readable_joint.html">readable_joint()</a></code>
+
+        </dt>
+        <dd>The Quantities a Fit Reports, and the Map From Its Coordinates</dd>
+
+        <dt>
+
+          <code><a href="readable_vcov.html">readable_vcov()</a></code>
+
+        </dt>
+        <dd>The Variance of the Quantities a Fit Reports</dd>
 
         <dt>
 
@@ -1349,10 +1496,52 @@
 
         <dt>
 
+          <code><a href="residuals.StatmodFit.html">residuals(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Residuals of a Fitted Model</dd>
+
+        <dt>
+
           <code><a href="row_nonzeros.html">row_nonzeros()</a></code>
 
         </dt>
         <dd>A Design's Nonzeros, Ordered by Row</dd>
+
+        <dt>
+
+          <code><a href="rstatmod_data.html">rstatmod_data()</a></code>
+
+        </dt>
+        <dd>The Data Frame a Simulation Runs Against</dd>
+
+        <dt>
+
+          <code><a href="rstatmod_eta.html">rstatmod_eta()</a></code>
+
+        </dt>
+        <dd>The Predictor and Parameters of a Simulation</dd>
+
+        <dt>
+
+          <code><a href="rstatmod_psi.html">rstatmod_psi()</a></code>
+
+        </dt>
+        <dd>A Structural Term's Parameters for a Simulation</dd>
+
+        <dt>
+
+          <code><a href="rstatmod_response_name.html">rstatmod_response_name()</a></code>
+
+        </dt>
+        <dd>The Column a Simulated Response Is Written To</dd>
+
+        <dt>
+
+          <code><a href="se_answer.html">se_answer()</a></code>
+
+        </dt>
+        <dd>The Shape a Prediction With Its Uncertainty Comes Back In</dd>
 
         <dt>
 
@@ -1377,6 +1566,13 @@
 
         <dt>
 
+          <code><a href="select_parameter.html">select_parameter()</a></code>
+
+        </dt>
+        <dd>One Equation's Submatrix of a Variance Matrix</dd>
+
+        <dt>
+
           <code><a href="shape_floor.html">shape_floor()</a></code>
 
         </dt>
@@ -1388,6 +1584,20 @@
 
         </dt>
         <dd>A Term Key Shortened for Display</dd>
+
+        <dt>
+
+          <code><a href="sigma.StatmodFit.html">sigma(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Standard Deviation a Fitted Model Implies</dd>
+
+        <dt>
+
+          <code><a href="simulate.StatmodFit.html">simulate(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Draws from a Fitted Model</dd>
 
         <dt>
 
@@ -1563,6 +1773,13 @@
 
         </dt>
         <dd>The Linear Predictors and the Parameters They Give</dd>
+
+        <dt>
+
+          <code><a href="statmod_eta_continued.html">statmod_eta_continued()</a></code>
+
+        </dt>
+        <dd>Predictors at Rows That Continue the Series</dd>
 
         <dt>
 
@@ -1769,6 +1986,13 @@
 
         <dt>
 
+          <code><a href="statmod_refusals.html">terms(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_refusals.html">model.frame(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_refusals.html">anova(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>What a Fit Does Not Answer</dd>
+
+        <dt>
+
           <code><a href="statmod_regime_at.html">statmod_regime_at()</a></code>
 
         </dt>
@@ -1787,6 +2011,13 @@
 
         </dt>
         <dd>The Same Model Read on Other Rows</dd>
+
+        <dt>
+
+          <code><a href="statmod_response_known.html">statmod_response_known()</a></code>
+
+        </dt>
+        <dd>Whether New Rows Carry the Response</dd>
 
         <dt>
 
@@ -1993,6 +2224,20 @@
 
         <dt>
 
+          <code><a href="structural_se_columns.html">structural_se_columns()</a></code>
+
+        </dt>
+        <dd>The Columns a Structural Term Adds to a Derivative Row</dd>
+
+        <dt>
+
+          <code><a href="structural_tail_names.html">structural_tail_names()</a></code>
+
+        </dt>
+        <dd>The Names of the Structural Tail of the Joint Information</dd>
+
+        <dt>
+
           <code><a href="structural_zeta_start.html">structural_zeta_start()</a></code>
 
         </dt>
@@ -2116,6 +2361,13 @@
 
         </dt>
         <dd>The Weighted Cross Product of the Assembly</dd>
+
+        <dt>
+
+          <code><a href="weights.StatmodFit.html">weights(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The Prior Weights of a Fitted Model</dd>
 
         <dt>
 

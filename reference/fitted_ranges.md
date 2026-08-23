@@ -18,7 +18,13 @@ fitted_ranges(x)
 
 ## Value
 
-A single string, empty when the parameters cannot be read.
+A single string, empty when the parameters cannot be read. It is a note
+of
+[`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+rather than a line of
+[`print.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md):
+it qualifies the fit rather than describing it, and it is read once when
+something looks wrong.
 
 ## Details
 

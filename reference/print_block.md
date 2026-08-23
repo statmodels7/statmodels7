@@ -1,6 +1,8 @@
-# Print One Block of a Summary
+# Print One Block of a Model Summary
 
-A header saying what the block is and what it spends, then its rows.
+The heading of a block, the term read at a glance where it is written in
+parameters of its own, its own coefficients, and one indented
+compartment per parameter developed over covariates.
 
 ## Usage
 
@@ -12,9 +14,8 @@ print_block(b, digits = 4L)
 
 - b:
 
-  A block record, as
-  [`summary_blocks`](https://statmodels7.github.io/statmodels7/reference/summary_blocks.md)
-  returns.
+  A block record from
+  [`summary_blocks`](https://statmodels7.github.io/statmodels7/reference/summary_blocks.md).
 
 - digits:
 
@@ -22,10 +23,18 @@ print_block(b, digits = 4L)
 
 ## Value
 
-`NULL`, invisibly.
+`NULL`, invisibly. Called for the printing.
 
 ## Details
 
-A row whose quantity was held fixed prints its value and blanks the
-rest, rather than showing `NA` four times over: what the columns say is
-that nothing estimated it, and the mark in the header says so once.
+A term that develops one of its own parameters carries columns that mean
+different things: a break-point's population value and its per-group
+deviations are not comparable quantities, and a table that stacks them
+reads as a list of numbers rather than as a model. Each developed
+parameter is therefore printed as a compartment of its own, headed by
+what develops it, opening with its hyperparameter under a name that says
+what the hyperparameter is, and rendering each sub-term the way a block
+of that kind is rendered at the top level. A random development reports
+the scale of its effects and one line saying how many predictions there
+are and how far they spread, the predictions themselves being in
+[`coef`](https://rdrr.io/r/stats/coef.html).

@@ -7,7 +7,14 @@ parameter's block at once.
 
 ``` r
 # S3 method for class 'StatmodFit'
-vcov(object, type = c("bayesian", "frequentist"), expected = NULL, ...)
+vcov(
+  object,
+  type = c("bayesian", "frequentist"),
+  expected = NULL,
+  readable = TRUE,
+  parameter = NULL,
+  ...
+)
 ```
 
 ## Arguments

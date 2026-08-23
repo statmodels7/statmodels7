@@ -143,24 +143,27 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> Distribution: gaussian1     Observations: 120
 #> 
-#> === mu
+#> === mu   [identity link]
 #> 
 #> Parametric terms
-#>             estimate      se     z       p  lower upper
-#> (Intercept)    1.063 0.07514 14.14 < 1e-16 0.9156 1.210
-#> x              1.903 0.13020 14.62 < 1e-16 1.6480 2.158
+#>                estimate      se     z       p  lower upper
+#>   (Intercept)     1.063 0.07514 14.14 < 1e-16 0.9156 1.210
+#>   x               1.903 0.13020 14.62 < 1e-16 1.6480 2.158
 #> 
-#> === sigma
+#> === sigma   [log link]
 #> 
 #> Parametric terms
-#>             estimate     se        z         p   lower   upper
-#> (Intercept)  -0.9647 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
-#> x             0.0216 0.2389  0.09041     0.928 -0.4466  0.4898
+#>                estimate     se        z         p   lower   upper
+#>   (Intercept)   -0.9647 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
+#>   x              0.0216 0.2389  0.09041     0.928 -0.4466  0.4898
 #> 
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 42 ms, converged
+#> fitted in 33 ms   search: converged
 #> certificate: CONVERGED   2.21e-11 above the mode
-#>   the model carries no penalty, so there is no outer gradient; the reading is the inner fit's own, 2.208e-11 log-likelihood units above its mode against 0.001
+#>   the model carries no penalty, so there is no outer gradient; the reading
+#>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode
+#>   against 0.001
+#> 
 ```

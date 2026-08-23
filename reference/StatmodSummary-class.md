@@ -14,6 +14,7 @@ StatmodSummary(
   distrib_name = character(0),
   n_obs = integer(0),
   tables = list(),
+  links = character(0),
   edf = NULL,
   structural = NULL,
   loglik = integer(0),

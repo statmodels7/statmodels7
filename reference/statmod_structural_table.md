@@ -23,8 +23,10 @@ statmod_structural_table(fit, level = 0.95)
 
 ## Value
 
-A data frame with one row per parameter of per structural term, or
-`NULL` where the model carries none.
+A data frame with one row per parameter of per structural term, carrying
+`component` and `position` – which of the term's own parameters the
+quantity belongs to and where in the parameter vector it sits, both read
+off the Jacobian's support – or `NULL` where the model carries none.
 
 ## Details
 
