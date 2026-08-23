@@ -11,7 +11,7 @@ coefficients contracted in two directions."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.85.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.86.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ coefficients contracted in two directions.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">trace_refresh4</span><span class="op">(</span><span class="va">spec</span>, <span class="va">M</span>, <span class="va">params</span>, <span class="va">Hl</span>, <span class="va">dv</span>, <span class="va">du</span>, <span class="va">units</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">trace_refresh4</span><span class="op">(</span><span class="va">spec</span>, <span class="va">M</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">Hl</span>, <span class="va">dv</span>, <span class="va">du</span>, <span class="va">units</span>, <span class="va">G</span>, <span class="va">d3</span>, <span class="va">v</span>, <span class="va">f2</span>, <span class="va">acurv</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,8 +59,8 @@ coefficients contracted in two directions.</p>
 <dd><p>The matrix the trace is taken against.</p></dd>
 
 
-<dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
-<dd><p>The parameter names.</p></dd>
+<dt id="arg-params-npar">params, npar<a class="anchor" aria-label="anchor" href="#arg-params-npar"></a></dt>
+<dd><p>The parameter names and block sizes.</p></dd>
 
 
 <dt id="arg-hl">Hl<a class="anchor" aria-label="anchor" href="#arg-hl"></a></dt>
@@ -74,6 +74,27 @@ coefficients contracted in two directions.</p>
 <dt id="arg-units">units<a class="anchor" aria-label="anchor" href="#arg-units"></a></dt>
 <dd><p>The refreshable terms, from <code><a href="refresh_units.html">refresh_units</a></code>.</p></dd>
 
+
+<dt id="arg-g">G<a class="anchor" aria-label="anchor" href="#arg-g"></a></dt>
+<dd><p>The leverage diagonal, from <code><a href="block_leverage.html">block_leverage</a></code>.</p></dd>
+
+
+<dt id="arg-d-">d3<a class="anchor" aria-label="anchor" href="#arg-d-"></a></dt>
+<dd><p>The third derivatives on the link scale.</p></dd>
+
+
+<dt id="arg-v">v<a class="anchor" aria-label="anchor" href="#arg-v"></a></dt>
+<dd><p>The first direction over the stacked coefficients.</p></dd>
+
+
+<dt id="arg-f-">f2<a class="anchor" aria-label="anchor" href="#arg-f-"></a></dt>
+<dd><p>The block's second derivative in the two directions, one matrix
+per unit, from <code><a href="refresh_dblock2.html">refresh_dblock2</a></code>.</p></dd>
+
+
+<dt id="arg-acurv">acurv<a class="anchor" aria-label="anchor" href="#arg-acurv"></a></dt>
+<dd><p>The curvature weights, from <code><a href="refresh_curv_amat.html">refresh_curv_amat</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -82,27 +103,44 @@ coefficients contracted in two directions.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Differentiating the three contributions of \(\partial K/\partial\beta\)
-once more leaves three further terms that read \(\partial X/\partial\beta\)
-and one that would read \(\partial^2X/\partial\beta^2\). Writing
-\(D_a = (\partial X_a/\partial\beta)v\) and
-\(E_a = (\partial X_a/\partial\beta)u\),
-$$N = N_1 + N_2 + N_3, \qquad
-  N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
+once more leaves FIVE terms. Writing \(D_a = (\partial X_a/\partial\beta)v\)
+and \(E_a = (\partial X_a/\partial\beta)u\), three of them read the first
+derivative alone,
+$$N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
     E_a[i,j]X_b[i,k],$$
 \(N_2\) the same with the two directions exchanged, and
 \(N_3[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}D_a[i,j]E_b[i,k]\), which is
-supported where BOTH blocks move. The correction is
-\(\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N\), and the first two pieces
-are read off <code><a href="refresh_amat.html">refresh_amat</a></code> with the third derivative in place of
-the curvature, so neither \(N\) nor any contraction is assembled.</p>
-<p><strong>The omitted term</strong> carries \(\partial^2X/\partial\beta^2\), the
-term's own third derivative, which no contract supplies. Measured on a
-bilinear \(f\), where it is exactly zero, the corrected Hessian reaches the
-reference's own floor.</p>
+supported where BOTH blocks move. A fourth reads the SECOND,
+\(N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]\) with
+\(F_a = (\partial^2X_a/\partial\beta^2)[v,u]\) from
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html" class="external-link">term_block_deriv2</a></code>. Those four enter as
+\(\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N\), and each is read off
+<code><a href="refresh_amat.html">refresh_amat</a></code> – with the third derivative for the first two and
+the curvature for the fourth – so neither \(N\) nor any contraction is
+assembled.</p>
+<p>The fifth is of another shape and is added separately. The
+third-derivative contraction carries the DIRECTION'S PREDICTOR
+\((X_mv_m)_i\), which where \(X_m\) is a Jacobian moves with
+\(\beta\) as everything else does, and differentiating it leaves
+$$-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
+  \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.$$
+That is the shape <code><a href="trace_design_form.html">trace_design_form</a></code> already computes, so the
+piece is one further call of it with \(\dot v\) in place of the
+predictors. \(\dot v\) is the predictor's own second derivative
+contracted in both directions and is therefore symmetric in them, which is
+a free check on the assembly.</p>
+<p><strong>Measured</strong>, against a mixed second difference of \(H\) that shares
+no arithmetic with any of this: on a bilinear \(f\), where the fourth
+term is exactly zero, the fifth is the whole of the gap and takes
+\(2.32\times10^{-2}\) to \(2.19\times10^{-8}\); on a curved one neither
+alone suffices – \(2.62\times10^{-2}\) today, \(2.88\times10^{-2}\)
+with the fifth alone, \(2.65\times10^{-3}\) with the fourth alone,
+\(5.19\times10^{-8}\) with both.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="trace_design_form.html">trace_design_form</a></code>, <code><a href="contract3_refresh.html">contract3_refresh</a></code></p></div>
+    <div class="dont-index"><p><code><a href="trace_design_form.html">trace_design_form</a></code>, <code><a href="contract3_refresh.html">contract3_refresh</a></code>,
+<code><a href="refresh_dblock2.html">refresh_dblock2</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

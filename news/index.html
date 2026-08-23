@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.85.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.86.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,47 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.86.0" id="statmodels7-0860">statmodels7 0.86.0<a class="anchor" aria-label="anchor" href="#statmodels7-0860"></a></h2>
+<ul><li><p>The exact Hessian of a marginal criterion is complete where a design block moves with its coefficients. Three quantities were missing, and they are added together because adding any one alone is not an improvement – measured on the twice-contracted fourth derivative of a curved <code>nl</code>, 2.62e-02 today, 2.88e-02 with one of them, 2.65e-03 with another, 5.19e-08 with both.</p></li>
+<li><p>Two of the three reach <code>tr(M dK_m/dt_l)</code>. One is the block’s SECOND derivative in the coefficients, which <code><a href="https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html" class="external-link">modelterms7::term_block_deriv2()</a></code> now supplies; the other reads only the FIRST and had been missing since these corrections were written. The third-derivative contraction carries the direction’s own predictor, and where the block is a Jacobian that predictor moves with the coefficients like everything else. On a bilinear <code>f</code>, where the block’s second derivative is exactly zero, it is the whole of the gap: 2.32e-02 against an arbitrary trace matrix, 2.19e-08 with it.</p></li>
+<li><p>The third reaches the mode’s SECOND movement. <code>b_ml</code> solves a system whose right-hand side carries the third derivative of the penalized OBJECTIVE, whose second derivative where a block moves is not <code>K</code> but <code>K + D</code> – the two <code><a href="../reference/statmod_marginal_grad.html">statmod_marginal_grad()</a></code> has kept apart through <code><a href="../reference/mode_curvature.html">mode_curvature()</a></code> since the gradient was written, and which this equation did not. Measured against the mode refitted at four hyperparameter values and differenced twice, <code>b_m</code> was already right to 3.8e-08 and <code>b_ml</code> was wrong by 7.6 to 9.0 per cent at every step tried; with <code>dD/dbeta</code> in, the gap is 1.8e-05, inside the spread between the reference’s own consecutive steps.</p></li>
+<li>
+<p>What it is worth, against a central difference of the exact gradient with the mode refitted warm, at an inner tolerance of 1e-10 and read against the same harness’s own floor of 2.3e-07 on a fixed design:</p>
+<table class="table"><thead><tr><th>model</th>
+<th>before</th>
+<th>after</th>
+</tr></thead><tbody><tr><td>
+<code>nl</code>, r*x_max = 1.50</td>
+<td>5.48e-04</td>
+<td>1.37e-07</td>
+</tr><tr><td>
+<code>nl</code>, r*x_max = 1.75</td>
+<td>2.28e-04</td>
+<td>1.57e-07</td>
+</tr><tr><td>
+<code>nl</code>, r*x_max = 7.00</td>
+<td>1.25e-04</td>
+<td>1.52e-07</td>
+</tr><tr><td>
+<code>nl</code>, r*x_max = 2.40</td>
+<td>2.15e-05</td>
+<td>1.63e-07</td>
+</tr><tr><td>
+<code>nl</code>, r*x_max = 3.00</td>
+<td>1.09e-05</td>
+<td>1.63e-07</td>
+</tr><tr><td><code>seg(gamma1 ~ 0 + ridge)</code></td>
+<td>1.46e-07</td>
+<td>1.62e-07</td>
+</tr><tr><td>
+<code>s(x, k = 8)</code>, no moving block</td>
+<td>2.29e-07</td>
+<td>2.29e-07</td>
+</tr></tbody></table><p>Every cell now reads the floor whatever the nonlinearity, where before the error rose as the curve straightened and again as it sharpened. The standard error of the hyperparameter on the nearly straight model goes from 2.74e-04 wrong to 6.85e-08.</p>
+</li>
+<li><p>Nothing else moves. A model with no block that moves is IDENTICAL TO THE BIT – coefficients, log-likelihood, criterion, effective degrees of freedom, outer gradient and outer Hessian – on a smooth, a smooth with a random effect and two smooths, because the corrections are not small there but exactly zero.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.85.0" id="statmodels7-0850">statmodels7 0.85.0<a class="anchor" aria-label="anchor" href="#statmodels7-0850"></a></h2>
 <ul><li><p><code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> takes <code>edge</code>, the free value beyond which a hyperparameter whose gradient has already met <code>tol</code> is reported as sitting at a boundary. It was written inline as 8, and it belongs beside the tolerance it works with, where the signature shows both rules rather than one.</p></li>

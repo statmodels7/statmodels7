@@ -501,12 +501,18 @@ exported, and none is needed to use the package.
   : The Quantities a Penalty's Hyperparameters Are About
 - [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
   : The Weight a Refreshable Block Is Contracted Against
+- [`refresh_curv_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_curv_amat.md)
+  : The Weight the Second Derivative of a Block Is Paired With
 - [`refresh_dblock()`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock.md)
   : A Refreshable Block's Derivative Along One Direction
+- [`refresh_dblock2()`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock2.md)
+  : A Refreshable Block's Second Derivative Along Two Directions
 - [`refresh_direction()`](https://statmodels7.github.io/statmodels7/reference/refresh_direction.md)
   : What One Direction Costs a Moving Block
 - [`refresh_hessian()`](https://statmodels7.github.io/statmodels7/reference/refresh_hessian.md)
   : The Log-Density's Curvature the Refresh Corrections Read
+- [`refresh_mode_third()`](https://statmodels7.github.io/statmodels7/reference/refresh_mode_third.md)
+  : How a Moving Block Enters the Mode's Second Movement
 - [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
   : The Terms Whose Block Moves With Their Coefficients
 - [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md)
