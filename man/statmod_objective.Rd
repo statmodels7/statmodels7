@@ -13,7 +13,7 @@ statmod_objective(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{hyper}{The hyperparameters.}
 
@@ -40,6 +40,6 @@ that depends on \eqn{n}. What is scaled instead is the stopping rule, in the
 one place it is read.
 }
 \seealso{
-\code{\link{iwls}}
+\code{\link[=iwls]{iwls()}}
 }
 \keyword{internal}

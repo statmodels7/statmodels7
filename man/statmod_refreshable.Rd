@@ -7,7 +7,7 @@
 statmod_refreshable(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A list of entries with \code{param} and \code{term}, possibly
@@ -18,6 +18,6 @@ The parameter and name of every term whose design block is a function of
 its own coefficients, in the order the design holds them.
 }
 \seealso{
-\code{\link{statmod_design_at}}, \code{\link{refreshes_own_block}}
+\code{\link[=statmod_design_at]{statmod_design_at()}}, \code{\link[=refreshes_own_block]{refreshes_own_block()}}
 }
 \keyword{internal}

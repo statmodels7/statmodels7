@@ -21,11 +21,11 @@ NULL
 #' Turns a coefficient structure into the per-observation parameters the
 #' distribution's generics take.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, as \code{\link{statmod_design}} returns it.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, as [statmod_design()] returns it.
 #' @param coef A named list of coefficient vectors, one per parameter.
 #'
-#' @return A list with \code{eta} and \code{theta}, both named lists.
+#' @return A list with `eta` and `theta`, both named lists.
 #'
 #' @keywords internal
 statmod_eta <- function(spec, design, coef) {
@@ -89,7 +89,7 @@ statmod_eta <- function(spec, design, coef) {
 #' @description
 #' \eqn{\sum_i w_i \log f(y_i; \theta_i)}, the weights entering as given.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design; recomputed when absent.
 #'
@@ -119,7 +119,7 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 #' One block per distribution parameter, \eqn{X_k'(w\,g_k)} with \eqn{g_k} the
 #' per-observation derivative of the log-density in the link-scale predictor.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
 #'
@@ -202,13 +202,13 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
 #' reverse pass answers is the other question, the derivative in the
 #' coefficients of the equations.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
 #'
 #' @return A named list of numeric vectors, one per structural term.
 #'
-#' @seealso \code{\link{statmod_filter_at}}
+#' @seealso [statmod_filter_at()]
 #'
 #' @keywords internal
 statmod_structural_score <- function(spec, coef,
@@ -261,7 +261,7 @@ statmod_structural_score <- function(spec, coef,
 #' scoring inverts; `approx` is passed to \pkg{distributions7} and read only
 #' where the family has no closed expected information.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
 #' @param expected Whether to use the expected information.
@@ -356,7 +356,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #'
 #' @description
 #' Locates the \eqn{(a, b)} entry of a distribution's Hessian list, which is
-#' keyed by \code{\link[distributions7]{hess_names}} and not by position.
+#' keyed by [distributions7::hess_names()] and not by position.
 #'
 #' @details
 #' The name is BUILT from the parameter names rather than parsed out of one,
@@ -364,7 +364,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #' contains the separator.
 #'
 #' @param params The parameter names, in the family's order.
-#' @param a,b Indices into \code{params}.
+#' @param a,b Indices into `params`.
 #'
 #' @return A single string.
 #'
@@ -383,15 +383,15 @@ hess_key <- function(params, a, b) {
 #' The Penalty of a Specification at Given Coefficients
 #'
 #' @description
-#' The sum of every penalized term's \code{penalty_value()}, with its gradient
+#' The sum of every penalized term's `penalty_value()`, with its gradient
 #' and Hessian placed in the columns that term owns.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param hyper A named list, one entry per parameter, each a named list of
 #'   hyperparameter vectors per penalized term.
 #' @param design The design.
-#' @param what One of \code{"value"}, \code{"gradient"}, \code{"hessian"}.
+#' @param what One of `"value"`, `"gradient"`, `"hessian"`.
 #'
 #' @return A number, a named list of vectors, or a square matrix.
 #'
@@ -469,9 +469,9 @@ statmod_penalty_at <- function(spec, coef, hyper,
 #'
 #' @details
 #' The objective of the structural block includes these penalties through
-#' \code{\link{statmod_penalty_at}}, so its gradient must include their
+#' [statmod_penalty_at()], so its gradient must include their
 #' derivative: without it the two describe different functions, an optimizer
-#' walks until its budget runs out, and \code{optimizers7}'s own check reports
+#' walks until its budget runs out, and `optimizers7`'s own check reports
 #' that the objective changes at a rate the gradient does not predict.
 #'
 #' The penalty is read on the UNCONSTRAINED scale, which is where the term
@@ -479,16 +479,16 @@ statmod_penalty_at <- function(spec, coef, hyper,
 #' defined; for a deviation, whose link is the identity, the two scales
 #' coincide.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param hyper The hyperparameters.
-#' @param what One of \code{"value"}, \code{"gradient"} or \code{"hessian"}.
+#' @param what One of `"value"`, `"gradient"` or `"hessian"`.
 #'
 #' @return A named list, one entry per structural term, each a numeric vector
 #'   or matrix over that term's parameters in their own order; empty when no
 #'   structural term carries a penalty.
 #'
-#' @seealso \code{\link{statmod_penalty_at}}
+#' @seealso [statmod_penalty_at()]
 #'
 #' @keywords internal
 statmod_structural_penalty <- function(spec, design, hyper,
@@ -532,7 +532,7 @@ statmod_structural_penalty <- function(spec, design, hyper,
 #' One entry per penalized term, at the midpoint of its bounds -- the probe
 #' rule \pkg{modelterms7} already uses when it reads a penalty's kinks.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
 #' @return A named list, one entry per parameter.
 #'
@@ -558,7 +558,7 @@ statmod_hyper_start <- function(spec, design = NULL) {
 #'
 #' @description
 #' Merges a caller's hyperparameters into the ones
-#' \code{\link{statmod_hyper_start}} computed, by parameter and by term.
+#' [statmod_hyper_start()] computed, by parameter and by term.
 #'
 #' @details
 #' Until a hyperparameter is estimated by an outer criterion it is held at the
@@ -567,17 +567,17 @@ statmod_hyper_start <- function(spec, design = NULL) {
 #' observations selects nothing. This is what lets a caller set it.
 #'
 #' A vector is matched by name against the penalty's own hyperparameters, so
-#' \code{c(lambda = 5)} sets that one and leaves the rest where they were; an
+#' `c(lambda = 5)` sets that one and leaves the rest where they were; an
 #' unnamed vector of the full length replaces them all.
 #'
 #' A term is named either by the key the specification holds it under, which is
-#' its call deparsed, or by its \code{label} -- \code{"lasso"} rather than
-#' \code{"lasso(~noise1 + noise2)"}. Two terms sharing a label are ambiguous
+#' its call deparsed, or by its `label` -- `"lasso"` rather than
+#' `"lasso(~noise1 + noise2)"`. Two terms sharing a label are ambiguous
 #' and the keys are asked for instead.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param start The hyperparameters as computed.
-#' @param user A named list of named lists, or \code{NULL}.
+#' @param user A named list of named lists, or `NULL`.
 #'
 #' @return The merged structure.
 #'
@@ -637,17 +637,17 @@ statmod_hyper_merge <- function(spec, start, user) {
 #'
 #' @description
 #' Turns the name a caller used into the key the specification holds the term
-#' under, accepting either that key or the term's \code{label}.
+#' under, accepting either that key or the term's `label`.
 #'
 #' @details
 #' A specification keys its terms by the call as written, so a lasso is
-#' \code{"lasso(~noise1 + noise2)"}. That is what makes two lassos on different
+#' `"lasso(~noise1 + noise2)"`. That is what makes two lassos on different
 #' covariates distinct, and it is not what anybody wants to type; the label the
 #' term constructor carries is. Where two terms share a label the request is
 #' ambiguous and the keys are asked for, since guessing would set a
 #' hyperparameter on the wrong block.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param start The hyperparameter structure, whose names are the keys.
 #' @param p The distribution parameter.
 #' @param name What the caller wrote.
@@ -716,17 +716,17 @@ penalty_theta_start <- function(pen) {
 #' that depends on \eqn{n}. What is scaled instead is the stopping rule, in the
 #' one place it is read.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param hyper The hyperparameters.
 #' @param design The design.
 #' @param expected Whether the information is the expected one.
 #' @param approx The approximation for the expected information.
 #'
-#' @return A list of functions \code{fn}, \code{gr} and \code{he} of the
-#'   stacked coefficient vector, plus \code{split} and \code{stack} to move
+#' @return A list of functions `fn`, `gr` and `he` of the
+#'   stacked coefficient vector, plus `split` and `stack` to move
 #'   between that vector and the per-parameter list.
 #'
-#' @seealso \code{\link{iwls}}
+#' @seealso [iwls()]
 #'
 #' @keywords internal
 statmod_objective <- function(spec, hyper, design = statmod_design(spec),

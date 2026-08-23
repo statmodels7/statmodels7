@@ -15,18 +15,18 @@ statmod_fit_structural(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
-\item{obj}{The objective, from \code{\link{statmod_objective}}.}
+\item{obj}{The objective, from \code{\link[=statmod_objective]{statmod_objective()}}.}
 
 \item{beta}{The stacked coefficients, held fixed.}
 
 \item{hyper}{The hyperparameters.}
 
 \item{optimizer}{An \pkg{optimizers7} optimizer, or \code{NULL} for
-\code{\link[optimizers7]{lbfgs}}.}
+\code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}}.}
 
 \item{verbose}{Whether to print a line per term.}
 }
@@ -35,18 +35,18 @@ A list with \code{value}, \code{converged} and \code{iterations}.
 }
 \description{
 Estimates each structural term's parameters on the unconstrained scale of
-\code{\link[modelterms7]{term_links}}, the coefficients held where they
+\code{\link[modelterms7:term_links]{modelterms7::term_links()}}, the coefficients held where they
 are, by a general optimizer with the exact gradient.
 }
 \details{
 It is a general optimizer and not the scoring step because these are not
 coefficients of a design block: there is no \eqn{X'WX} to invert, the
 predictor being a recursion rather than a product. The gradient is exact
--- \code{\link{statmod_structural_score}} chains the filter's own
+-- \code{\link[=statmod_structural_score]{statmod_structural_score()}} chains the filter's own
 jacobian, which is the total derivative of the predictor in those
 parameters -- so a quasi-Newton method has everything it needs.
 }
 \seealso{
-\code{\link{statmod_structural}}
+\code{\link[=statmod_structural]{statmod_structural()}}
 }
 \keyword{internal}

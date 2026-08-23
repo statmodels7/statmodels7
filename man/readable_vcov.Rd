@@ -20,7 +20,7 @@ The variance over the quantities.
 }
 \description{
 The delta method over the joint variance, with the Jacobian
-\code{\link{readable_joint}} supplies.
+\code{\link[=readable_joint]{readable_joint()}} supplies.
 }
 \details{
 A quantity that reads a coordinate whose variance is missing -- one a

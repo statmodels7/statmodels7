@@ -7,7 +7,7 @@
 statmodels7_attach_message(versions)
 }
 \arguments{
-\item{versions}{A data frame as \code{\link{statmodels7_versions}} returns.}
+\item{versions}{A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns.}
 }
 \value{
 A character vector, one element per row of the layout, empty when
@@ -26,6 +26,6 @@ complete toolkit. Plain ASCII throughout: a non-ASCII character in a
 package's own output is a portability risk taken for a decoration.
 }
 \seealso{
-\code{\link{statmodels7_versions}}
+\code{\link[=statmodels7_versions]{statmodels7_versions()}}
 }
 \keyword{internal}

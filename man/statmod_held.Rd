@@ -7,7 +7,7 @@
 statmod_held(spec, design = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 }
@@ -27,6 +27,6 @@ here consults this one enumeration -- the outer index, the path, and the
 summary's account of what was estimated and what was given.
 }
 \seealso{
-\code{\link[modelterms7]{term_hyper}}, \code{\link{outer_hyper_index}}
+\code{\link[modelterms7:term_hyper]{modelterms7::term_hyper()}}, \code{\link[=outer_hyper_index]{outer_hyper_index()}}
 }
 \keyword{internal}

@@ -10,7 +10,7 @@ NULL
 #' A grouping indicator is sparse by construction -- a row belongs to one
 #' group, so a random effect over \eqn{m} of them has density \eqn{1/m} --
 #' and \pkg{modelterms7} builds it that way. Binding it beside a dense block
-#' with \code{cbind()} does not work: base dispatch reads the sparse block as
+#' with `cbind()` does not work: base dispatch reads the sparse block as
 #' a vector and reports that the number of items to replace is not a multiple
 #' of the replacement length, three frames from anything a caller wrote.
 #'
@@ -36,12 +36,12 @@ bind_blocks <- function(mats, n) {
 #' Is a Design Sparse, and the Zero Matrix to Accumulate It Into
 #'
 #' @description
-#' \code{design_sparse()} reports whether any equation's block is sparse, and
-#' \code{zero_information()} gives the square zero matrix of the right kind to
+#' `design_sparse()` reports whether any equation's block is sparse, and
+#' `zero_information()` gives the square zero matrix of the right kind to
 #' accumulate the information into.
 #'
 #' @details
-#' The information is assembled one \code{crossprod} per parameter pair and
+#' The information is assembled one `crossprod` per parameter pair and
 #' placed into a square accumulator. With a sparse design each product is
 #' sparse, and placing it into a dense accumulator signals that the number of
 #' items to replace is not a multiple of the replacement length -- from
@@ -71,30 +71,30 @@ as_sparse <- function(A) {
 #' Take the Offsets Out of an Equation
 #'
 #' @description
-#' Splits a one-sided formula into the \code{offset()} terms it names and
+#' Splits a one-sided formula into the `offset()` terms it names and
 #' whatever is left, which is what the interpreter is given.
 #'
 #' @details
 #' An offset is a column of the linear predictor whose coefficient is known to
-#' be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
-#' Without this the term reached \code{model.matrix} through
-#' \code{\link[modelterms7]{linpar}}, where \code{terms()} marks it in the
-#' \code{"offset"} attribute and the design EXCLUDES it: the term contributed
+#' be one, and `y ~ x + offset(log_n)` is how R has always written it.
+#' Without this the term reached `model.matrix` through
+#' [modelterms7::linpar()], where `terms()` marks it in the
+#' `"offset"` attribute and the design EXCLUDES it: the term contributed
 #' no column, no offset and no message, and the model fitted was the one
 #' without it. On a count model over person-years that moved the intercept
 #' from -7.5 to -0.6, which is the difference between a log rate and a log
 #' count.
 #'
 #' Only a top-level additive term is taken, which is where R recognizes one
-#' too; \code{stats::offset(x)} is recognized beside \code{offset(x)}. Several
-#' are summed, as \code{\link[stats]{glm}} sums them.
+#' too; `stats::offset(x)` is recognized beside `offset(x)`. Several
+#' are summed, as [stats::glm()] sums them.
 #'
 #' @param eq A one-sided formula.
 #'
-#' @return A list with \code{formula}, the equation with the offsets removed,
-#'   and \code{offsets}, a list of the expressions taken out.
+#' @return A list with `formula`, the equation with the offsets removed,
+#'   and `offsets`, a list of the expressions taken out.
 #'
-#' @seealso \code{\link{statmod_spec}}, \code{\link{eval_offsets}}
+#' @seealso [statmod_spec()], [eval_offsets()]
 #'
 #' @keywords internal
 split_offsets <- function(eq) {
@@ -135,15 +135,15 @@ split_offsets <- function(eq) {
 #' Reject an Offset Buried Inside a Term
 #'
 #' @description
-#' Stops where \code{offset()} appears anywhere other than as a term of the
+#' Stops where `offset()` appears anywhere other than as a term of the
 #' equation itself.
 #'
 #' @details
-#' \code{\link{split_offsets}} takes the top-level additive terms, which is
+#' [split_offsets()] takes the top-level additive terms, which is
 #' where R recognizes an offset. One written inside another term's formula --
-#' \code{ridge(~ z + offset(o))}, \code{random(~ 1 + offset(o) | g)},
-#' \code{nl(a ~ 0 + ridge(~ g + offset(o)))} -- reaches that term's own
-#' \code{model.matrix}, where it is dropped exactly as it used to be dropped
+#' `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)`,
+#' `nl(a ~ 0 + ridge(~ g + offset(o)))` -- reaches that term's own
+#' `model.matrix`, where it is dropped exactly as it used to be dropped
 #' at the equation level: measured, the fit ran, the block had the columns of
 #' the model WITHOUT it, and the intercept came back at 1.33 against the
 #' -5.01 the offset gives, a factor of 566.
@@ -161,9 +161,9 @@ split_offsets <- function(eq) {
 #'   taken out.
 #' @param param The parameter the equation belongs to, for the message.
 #'
-#' @return \code{NULL}, invisibly; an error where one is found.
+#' @return `NULL`, invisibly; an error where one is found.
 #'
-#' @seealso \code{\link{split_offsets}}
+#' @seealso [split_offsets()]
 #'
 #' @keywords internal
 reject_nested_offsets <- function(eq, param) {
@@ -210,9 +210,9 @@ reject_nested_offsets <- function(eq, param) {
 #'
 #' @details
 #' The expressions are re-evaluated rather than carried as numbers, which is
-#' what lets an offset survive prediction: \code{\link{statmod_respec}} calls
+#' what lets an offset survive prediction: [statmod_respec()] calls
 #' this against the new data, where a vector supplied through the
-#' \code{offsets} argument at fitting time has the wrong length and cannot be
+#' `offsets` argument at fitting time has the wrong length and cannot be
 #' reused.
 #'
 #' @param formula The model formula, before the offsets are stripped.
@@ -221,10 +221,10 @@ reject_nested_offsets <- function(eq, param) {
 #' @param env The environment the formula carried.
 #' @param n The number of observations.
 #'
-#' @return A named list, one entry per parameter, \code{NULL} where the
+#' @return A named list, one entry per parameter, `NULL` where the
 #'   equation names no offset.
 #'
-#' @seealso \code{\link{split_offsets}}
+#' @seealso [split_offsets()]
 #'
 #' @keywords internal
 eval_offsets <- function(formula, params, data, env, n) {
@@ -263,15 +263,15 @@ eval_offsets <- function(formula, params, data, env, n) {
 #' Add Two Sets of Offsets
 #'
 #' @description
-#' Combines the offsets a formula names with those the \code{offsets} argument
+#' Combines the offsets a formula names with those the `offsets` argument
 #' supplies, per parameter.
 #'
 #' @details
 #' They are SUMMED where both are given, which is what
-#' \code{\link[stats]{glm}} does with a formula offset and an \code{offset}
+#' [stats::glm()] does with a formula offset and an `offset`
 #' argument together.
 #'
-#' @param a,b Two named lists of offsets, either entry possibly \code{NULL}.
+#' @param a,b Two named lists of offsets, either entry possibly `NULL`.
 #'
 #' @return A named list.
 #'
@@ -289,11 +289,11 @@ add_offsets <- function(a, b) {
 #'
 #' @description
 #' A penalty at a hyperparameter far enough out returns non-finite entries,
-#' and every consumer of \code{\link{statmod_penalty_at}} zeroes them before
+#' and every consumer of [statmod_penalty_at()] zeroes them before
 #' using the matrix.
 #'
 #' @details
-#' Seven places wrote \code{S[!is.finite(S)] <- 0}, which is correct on a base
+#' Seven places wrote `S[!is.finite(S)] <- 0`, which is correct on a base
 #' matrix and a trap on a sparse one: the logical index is a DENSE \eqn{p
 #' \times p} matrix, so the storage the accumulator exists to keep is thrown
 #' away at the first consumer. On a sparse matrix only the STORED values can
@@ -305,9 +305,9 @@ add_offsets <- function(a, b) {
 #'
 #' @param S A penalty's Hessian, sparse or dense.
 #'
-#' @return \code{S} with its non-finite entries replaced by zero.
+#' @return `S` with its non-finite entries replaced by zero.
 #'
-#' @seealso \code{\link{statmod_penalty_at}}
+#' @seealso [statmod_penalty_at()]
 #'
 #' @keywords internal
 zap_nonfinite <- function(S) {
@@ -347,12 +347,12 @@ zero_information <- function(design, total) {
 #' @param response The evaluated left-hand side.
 #' @param n_obs The number of observations.
 #' @param weights Prior weights, one per observation.
-#' @param offsets A named list of offsets, one per parameter or \code{NULL}.
+#' @param offsets A named list of offsets, one per parameter or `NULL`.
 #' @param intercepts A named logical, whether each equation carried one.
 #'
-#' @return An object of class \code{StatmodSpec}.
+#' @return An object of class `StatmodSpec`.
 #'
-#' @seealso \code{\link{statmod_spec}}
+#' @seealso [statmod_spec()]
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(10), x = runif(10))
@@ -402,46 +402,46 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' storage, and the contrasts for its factors.
 #'
 #' @details
-#' It governs the IMPLICIT \code{\link[modelterms7]{linpar}} term -- the one
+#' It governs the IMPLICIT [modelterms7::linpar()] term -- the one
 #' the bare covariates of a formula collapse into, which a caller never
 #' writes -- so this is the only place its arguments can be given. A
-#' \code{linpar()} written out takes them directly.
+#' `linpar()` written out takes them directly.
 #'
-#' \strong{Sparse storage.} \code{sparse = TRUE} builds the block through
-#' \code{\link[Matrix]{sparse.model.matrix}}, which BUILDS it sparse rather
+#' **Sparse storage.** `sparse = TRUE` builds the block through
+#' [Matrix::sparse.model.matrix()], which BUILDS it sparse rather
 #' than building a dense matrix and compressing it -- the second would cost
 #' the memory the choice exists to avoid. Measured at 20000 rows and a factor
-#' of 1000 levels, 0.002 s and 1.8 MB against \code{stats::model.matrix}'s
+#' of 1000 levels, 0.002 s and 1.8 MB against `stats::model.matrix`'s
 #' 0.100 s and 161.5 MB, the numbers identical; and a design that would be
 #' 32 GB dense builds in 0.02 s and 19 MB, which is what says there is no
 #' dense intermediate. It pays where the formula carries a factor of many
 #' levels and costs more than it saves on numeric covariates, whose block is
 #' dense whatever is asked for.
 #'
-#' \strong{There is no rescaling here, and that is measured rather than
-#' omitted.} Scaling the columns and carrying the coefficients back is the
+#' **There is no rescaling here, and that is measured rather than
+#' omitted.** Scaling the columns and carrying the coefficients back is the
 #' remedy for a conditioning that squares, which is what forming \eqn{X'X}
-#' does; \code{\link{iwls}} fits through a QR of the design and never forms
+#' does; [iwls()] fits through a QR of the design and never forms
 #' it. On columns spanning fifteen decades the raw fit and the scaled one
 #' converge in the same number of iterations, and both agree with
-#' \code{\link[stats]{lm}} to \eqn{10^{-14}}. What does move is the SCORE the
+#' [stats::lm()] to \eqn{10^{-14}}. What does move is the SCORE the
 #' fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 #' answer: the final verdict is already arbitrated on a dimensionless scale.
 #'
-#' @param sparse Whether the block is a \code{dgCMatrix}. \code{NULL}, the
-#'   default, leaves it to \code{\link[modelterms7]{linpar}}, which settles it
+#' @param sparse Whether the block is a `dgCMatrix`. `NULL`, the
+#'   default, leaves it to [modelterms7::linpar()], which settles it
 #'   at build from the size of the design.
 #' @param contrasts The contrasts for the block's factors, as a named list of
-#'   the kind \code{\link[stats]{model.matrix}}'s \code{contrasts.arg} takes,
-#'   or \code{NULL} for the session's \code{options("contrasts")}.
+#'   the kind [stats::model.matrix()]'s `contrasts.arg` takes,
+#'   or `NULL` for the session's `options("contrasts")`.
 #'
-#' @return A named list, for \code{\link{statmod}}'s \code{linpar_control}.
+#' @return A named list, for [statmod()]'s `linpar_control`.
 #'   The argument and this function are named differently on purpose: with
 #'   one name for both, the argument's default would resolve to its own
-#'   promise. \code{\link[stats]{glm}} and \code{\link[stats]{glm.control}}
+#'   promise. [stats::glm()] and [stats::glm.control()]
 #'   keep them apart for the same reason.
 #'
-#' @seealso \code{\link{statmod}}, \code{\link[modelterms7]{linpar}}
+#' @seealso [statmod()], [modelterms7::linpar()]
 #'
 #' @examples
 #' linpar_options(sparse = TRUE)
@@ -471,9 +471,9 @@ linpar_options <- function(sparse = NULL, contrasts = NULL) {
 #'
 #' @details
 #' The equations are interpreted in an environment where \pkg{modelterms7}'s
-#' term constructors shadow whatever the user has attached, so that \code{s()}
+#' term constructors shadow whatever the user has attached, so that `s()`
 #' means ours even with \pkg{mgcv} on the search path. See
-#' \code{\link{statmod_equations}} for the split itself, which is not the
+#' [statmod_equations()] for the split itself, which is not the
 #' obvious one.
 #'
 #' Prior weights enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are
@@ -491,13 +491,13 @@ linpar_options <- function(sparse = NULL, contrasts = NULL) {
 #'   needs it; a prediction does not, and new data routinely has no response
 #'   column.
 #' @param linpar How the IMPLICIT parametric block is built, as
-#'   \code{\link{linpar_options}()} returns it. It is kept on the
-#'   specification, so a rebuild -- a fold of \code{\link{cv}()} -- reproduces
+#'   [linpar_options()] returns it. It is kept on the
+#'   specification, so a rebuild -- a fold of [cv()] -- reproduces
 #'   the storage rather than quietly densifying.
 #'
-#' @return An object of class \code{\link{StatmodSpec}}.
+#' @return An object of class [StatmodSpec()].
 #'
-#' @seealso \code{\link{statmod_equations}}, \code{\link{statmod}}
+#' @seealso [statmod_equations()], [statmod()]
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(20), x = runif(20), z = runif(20))
@@ -585,21 +585,21 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' @details
 #' A term records how its block was made -- a factor's levels and contrasts, a
 #' spline's knots, a basis reparametrization -- and
-#' \code{\link[modelterms7]{term_predict}} reapplies that record. Rebuilding
+#' [modelterms7::term_predict()] reapplies that record. Rebuilding
 #' instead gives a block of the same shape, multiplying the same coefficients,
-#' that means something else: measured on \code{y ~ s(x, k = 10)} at 200
+#' that means something else: measured on `y ~ s(x, k = 10)` at 200
 #' observations, predicting on 40 of the rows the model was fitted to differed
 #' from the fitted values there by 0.237, and on the 51 rows with
 #' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. The whole
 #' data handed back agrees exactly, which is why nothing noticed.
 #'
-#' @param spec The fitted \code{\link{StatmodSpec}}.
+#' @param spec The fitted [StatmodSpec()].
 #' @param data The rows to read it on.
 #' @param need_response Whether the response has to be there.
 #'
-#' @return A \code{\link{StatmodSpec}} whose \code{newdata} is set.
+#' @return A [StatmodSpec()] whose `newdata` is set.
 #'
-#' @seealso \code{\link{statmod_design}}
+#' @seealso [statmod_design()]
 #'
 #' @keywords internal
 statmod_respec <- function(spec, data, need_response = TRUE) {
@@ -654,22 +654,22 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
 #'
 #' @details
 #' The equations are interpreted with \pkg{modelterms7}'s constructors in front
-#' of the search path, so that \code{s()} means ours whatever the user has
+#' of the search path, so that `s()` means ours whatever the user has
 #' attached. A factor covariate needs no special handling: the interpreter
-#' collects bare covariates into one \code{linpar()}, whose block comes from
-#' \code{model.matrix} and therefore carries the contrasts.
+#' collects bare covariates into one `linpar()`, whose block comes from
+#' `model.matrix` and therefore carries the contrasts.
 #'
 #' A break-point term whose starting positions the caller did not name has
 #' them chosen on a grid rather than left at the interior quantiles of the
-#' covariate; see \code{\link{seg_grid_start}}.
+#' covariate; see [seg_grid_start()].
 #'
 #' @param equations A named list of one-sided formulas.
 #' @param data A data frame.
 #' @param env The environment the original formula carried.
-#' @param response The evaluated left-hand side, or \code{NULL}.
+#' @param response The evaluated left-hand side, or `NULL`.
 #'
-#' @return A list with \code{terms} (a named list per parameter) and
-#'   \code{intercepts} (a named logical).
+#' @return A list with `terms` (a named list per parameter) and
+#'   `intercepts` (a named logical).
 #'
 #' @keywords internal
 statmod_terms <- function(equations, data, env, response = NULL,
@@ -695,9 +695,9 @@ statmod_terms <- function(equations, data, env, response = NULL,
 #' Choose a Break-Point Term's Starting Positions on a Grid
 #'
 #' @description
-#' Runs \code{\link[modelterms7]{seg_start}} on a
-#' \code{\link[modelterms7]{seg}}, \code{\link[modelterms7]{jump}} or
-#' \code{\link[modelterms7]{jseg}} term whose starting positions the caller
+#' Runs [modelterms7::seg_start()] on a
+#' [modelterms7::seg()], [modelterms7::jump()] or
+#' [modelterms7::jseg()] term whose starting positions the caller
 #' did not name, and returns the specification unchanged for anything else.
 #'
 #' @details
@@ -710,7 +710,7 @@ statmod_terms <- function(equations, data, env, response = NULL,
 #' start: the interior quantiles of the covariate, which look at the
 #' covariate and not at the response.
 #'
-#' The rule costs \code{k} linear fits and is exact for a gaussian
+#' The rule costs `k` linear fits and is exact for a gaussian
 #' response, so it places a starting value and does not fit. Two things
 #' are therefore not asked of it. It is applied whatever equation the term
 #' sits in, the response being what there is to score against even where
@@ -718,17 +718,17 @@ statmod_terms <- function(equations, data, env, response = NULL,
 #' plain numbers -- a censored one, or a matrix -- rather than being given
 #' a reading of its own.
 #'
-#' A caller who names \code{psi} has said where to begin and is left
+#' A caller who names `psi` has said where to begin and is left
 #' alone, which is also how the grid is turned off.
 #'
 #' @param tm One term specification.
 #' @param data The data frame the term is built against.
-#' @param response The evaluated left-hand side, or \code{NULL}.
+#' @param response The evaluated left-hand side, or `NULL`.
 #'
-#' @return The specification, with \code{psi} set where the rule applies.
+#' @return The specification, with `psi` set where the rule applies.
 #'
-#' @seealso \code{\link[modelterms7]{seg_start}},
-#'   \code{\link{statmod_terms}}
+#' @seealso [modelterms7::seg_start()],
+#'   [statmod_terms()]
 #'
 #' @keywords internal
 seg_grid_start <- function(tm, data, response) {
@@ -749,24 +749,24 @@ seg_grid_start <- function(tm, data, response) {
 #'
 #' @description
 #' Signals an error naming any term whose block is not a fixed design, which
-#' is what the alternation of \code{\link{statmod}} assembles.
+#' is what the alternation of [statmod()] assembles.
 #'
 #' @details
 #' One shape is outside that assembly, and it is read off the term rather than
 #' from a list of class names, so a term written later is covered without an
 #' edit here.
 #'
-#' A \strong{structural} term rewrites the likelihood instead of contributing a
+#' A **structural** term rewrites the likelihood instead of contributing a
 #' predictor, so it has no design block at all and answers neither
-#' \code{term_matrix()} nor \code{term_npar()}. Reaching it through the design
+#' `term_matrix()` nor `term_npar()`. Reaching it through the design
 #' produced an error naming one of those generics, which says nothing about the
-#' cause. \code{\link{statmod_structural}} routes those, and what remains here
+#' cause. [statmod_structural()] routes those, and what remains here
 #' is the term class that is structural and implements neither shape of the
 #' contract.
 #'
 #' A term whose block depends on its own coefficients was rejected here too
 #' until the alternation learned to refresh one; it is fitted now, by
-#' \code{\link{statmod_design_at}}.
+#' [statmod_design_at()].
 #'
 #' Every equation is examined before the error is raised, so a model carrying
 #' one such term in the mean and another in the scale reports both rather than
@@ -775,9 +775,9 @@ seg_grid_start <- function(tm, data, response) {
 #' @param terms The built terms, a named list of named lists, one per
 #'   distribution parameter.
 #'
-#' @return \code{NULL}, invisibly; called for the error.
+#' @return `NULL`, invisibly; called for the error.
 #'
-#' @seealso \code{\link{statmod_terms}}, \code{\link{statmod}}
+#' @seealso [statmod_terms()], [statmod()]
 #'
 #' @keywords internal
 reject_unfittable <- function(terms) {
@@ -819,22 +819,22 @@ reject_unfittable <- function(terms) {
 #' the ridge without failing -- the score is small because the surface is
 #' flat, not because it is a maximum.
 #'
-#' \strong{The linear intercept wins.} Where both are present the term's
+#' **The linear intercept wins.** Where both are present the term's
 #' level is held at zero and the coefficient carries it, which is what makes
-#' \code{y ~ x + gas(...)} an ordinary thing to write. Nothing about the
+#' `y ~ x + gas(...)` an ordinary thing to write. Nothing about the
 #' model is lost: what a constant cannot express is the dynamics, or the
 #' difference between one regime and another, and those are the parameters
 #' that remain free.
 #'
-#' The question is asked of the \strong{span} of the equation's design and
-#' not of a column named \code{"(Intercept)"}: a factor coded without one,
+#' The question is asked of the **span** of the equation's design and
+#' not of a column named `"(Intercept)"`: a factor coded without one,
 #' or any set of columns summing to a constant, spans it just as well.
 #' Which parameter is the level is the term's own answer, through
-#' \code{\link[modelterms7]{term_level_param}}.
+#' [modelterms7::term_level_param()].
 #'
-#' \strong{A developed level asks the same question of a subspace.} With
-#' \code{omega ~ Z gamma} the confounding is no longer with one constant
-#' but with whatever \code{span(Z)} shares with the span of the equation's
+#' **A developed level asks the same question of a subspace.** With
+#' `omega ~ Z gamma` the confounding is no longer with one constant
+#' but with whatever `span(Z)` shares with the span of the equation's
 #' design. The constant coordinates are the term's own answer, held as
 #' above. For the rest, an unpenalized coordinate whose column lies in the
 #' equation's span is flagged with a warning rather than held: holding it
@@ -845,12 +845,12 @@ reject_unfittable <- function(terms) {
 #' deviation is. Where the direction really is flat, the variance matrix
 #' names it.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #'
 #' @return A named list, one character vector per structural term.
 #'
-#' @seealso \code{\link{reject_incompatible}}
+#' @seealso [reject_incompatible()]
 #'
 #' @keywords internal
 statmod_held_levels <- function(spec, design) {
@@ -919,9 +919,9 @@ statmod_held_levels <- function(spec, design) {
 #'
 #' @param terms The built terms, a named list of named lists.
 #'
-#' @return \code{NULL}, invisibly; called for the error.
+#' @return `NULL`, invisibly; called for the error.
 #'
-#' @seealso \code{\link{reject_unfittable}}, \code{\link{statmod_structural}}
+#' @seealso [reject_unfittable()], [statmod_structural()]
 #'
 #' @keywords internal
 reject_incompatible <- function(terms) {
@@ -954,7 +954,7 @@ reject_incompatible <- function(terms) {
 #'
 #' @return A single string.
 #'
-#' @seealso \code{\link{reject_unfittable}}
+#' @seealso [reject_unfittable()]
 #'
 #' @keywords internal
 unfittable_reason <- function(term) {
@@ -973,13 +973,13 @@ unfittable_reason <- function(term) {
 #' Does a Term Recompute Its Own Block?
 #'
 #' @description
-#' \code{TRUE} when the term registers a
-#' \code{\link[modelterms7]{term_refresh}} method of its own rather than
-#' inheriting the identity registered on \code{model_term}.
+#' `TRUE` when the term registers a
+#' [modelterms7::term_refresh()] method of its own rather than
+#' inheriting the identity registered on `model_term`.
 #'
 #' @details
-#' The owning class of a method is \code{attr(m, "signature")[[1]]}, and it is
-#' compared by name and package rather than by \code{identical()}: an S7 class
+#' The owning class of a method is `attr(m, "signature")[[1]]`, and it is
+#' compared by name and package rather than by `identical()`: an S7 class
 #' re-created from the same definition is not identical to the original, which
 #' is what happens whenever a package's code is re-evaluated rather than
 #' loaded.
@@ -988,7 +988,7 @@ unfittable_reason <- function(term) {
 #'
 #' @return A single logical.
 #'
-#' @seealso \code{\link{unfittable_reason}}
+#' @seealso [unfittable_reason()]
 #'
 #' @keywords internal
 refreshes_own_block <- function(term) {
@@ -1015,10 +1015,10 @@ refreshes_own_block <- function(term) {
 #' shrink by \eqn{\sqrt{n}} and the information criteria would stop being
 #' comparable.
 #'
-#' @param weights The weights, or \code{NULL}.
+#' @param weights The weights, or `NULL`.
 #' @param n The number of observations.
 #'
-#' @return A numeric vector of length \code{n}.
+#' @return A numeric vector of length `n`.
 #'
 #' @keywords internal
 check_weights <- function(weights, n) {
@@ -1043,14 +1043,14 @@ check_weights <- function(weights, n) {
 #' Validate Offsets
 #'
 #' @description
-#' Returns a named list with one offset per parameter, \code{NULL} where none
+#' Returns a named list with one offset per parameter, `NULL` where none
 #' was given.
 #'
-#' @param offsets A named list, or \code{NULL}.
+#' @param offsets A named list, or `NULL`.
 #' @param params The parameter names.
 #' @param n The number of observations.
 #'
-#' @return A named list of length \code{length(params)}.
+#' @return A named list of length `length(params)`.
 #'
 #' @keywords internal
 check_offsets <- function(offsets, params, n) {
@@ -1084,13 +1084,13 @@ check_offsets <- function(offsets, params, n) {
 #' Returns, per parameter, the terms' blocks side by side and the names of the
 #' coefficients they carry.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
 #' @return A named list with one entry per parameter, each a list with
-#'   \code{X}, \code{coef_names}, \code{npar} and \code{blocks} (the column
+#'   `X`, `coef_names`, `npar` and `blocks` (the column
 #'   range each term occupies).
 #'
-#' @seealso \code{\link{statmod_spec}}
+#' @seealso [statmod_spec()]
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(20), x = runif(20))
@@ -1194,7 +1194,7 @@ statmod_design <- function(spec) {
 #' The per-parameter blocks, before any refreshable term is recomputed at
 #' coefficients.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
 #' @return A named list, one entry per distribution parameter.
 #'

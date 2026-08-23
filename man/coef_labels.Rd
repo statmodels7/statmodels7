@@ -7,7 +7,7 @@
 coef_labels(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 }

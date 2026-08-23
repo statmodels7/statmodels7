@@ -16,7 +16,7 @@ A single string.
 }
 \description{
 Locates the \eqn{(a, b, c, d)} entry of a distribution's fourth-derivative
-list, built the same way \code{\link{deriv3_key}} builds its own.
+list, built the same way \code{\link[=deriv3_key]{deriv3_key()}} builds its own.
 }
 \details{
 The fourth order is wanted where a filter's third derivative is: each

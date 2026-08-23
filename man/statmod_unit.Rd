@@ -7,7 +7,7 @@
 statmod_unit(spec, design, param, key)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -19,11 +19,11 @@ statmod_unit(spec, design, param, key)
 One entry, or \code{NULL}.
 }
 \description{
-The entry of \code{\link{statmod_penalized}} a hyperparameter row names, or
+The entry of \code{\link[=statmod_penalized]{statmod_penalized()}} a hyperparameter row names, or
 \code{NULL} where there is none.
 }
 \details{
-The places that read a penalty from a \code{(parameter, term)} pair used to
+The places that read a penalty from a \verb{(parameter, term)} pair used to
 fetch it with \code{term_penalty()} and take the term's whole block, which
 assumes one penalty per term. Looking it up here answers the same question
 where that holds and the right question where it does not.

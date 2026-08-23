@@ -7,7 +7,7 @@
 \method{print}{StatmodSummary}(x, digits = 4L, notes = FALSE, ...)
 }
 \arguments{
-\item{x}{A \code{\link{StatmodSummary}}.}
+\item{x}{A \code{\link[=StatmodSummary]{StatmodSummary()}}.}
 
 \item{digits}{Significant digits in the tables.}
 
@@ -27,6 +27,6 @@ The call, then each distribution parameter's blocks, then the degrees of
 freedom, the criteria and the notes.
 }
 \seealso{
-\code{\link{summary.StatmodFit}}
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 }
 \keyword{internal}

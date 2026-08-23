@@ -19,7 +19,7 @@ A single logical.
 can be, which is what puts its block outside the jointly fitted system.
 }
 \details{
-\code{\link[penalties7]{penalty_kinks}} is read at a probe value of the
+\code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is read at a probe value of the
 hyperparameters -- the midpoint of their bounds, the rule
 \pkg{modelterms7} already uses -- because whether a kink exists is a
 property of the family and not of a point.

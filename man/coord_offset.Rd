@@ -7,7 +7,7 @@
 coord_offset(spec, p, n)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{p}{Which distribution parameter.}
 

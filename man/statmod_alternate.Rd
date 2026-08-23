@@ -41,8 +41,8 @@ statmod_alternate(
 
 \item{vb}{The resolved verbosity.}
 
-\item{working_budget}{How many working fits \code{\link{fit_working}} may
-take. The bootstrap excursions of \code{\link{statmod_boot_restart}}
+\item{working_budget}{How many working fits \code{\link[=fit_working]{fit_working()}} may
+take. The bootstrap excursions of \code{\link[=statmod_boot_restart]{statmod_boot_restart()}}
 pass a short one: an excursion needs to travel, not to converge.}
 
 \item{hold_refresh}{\code{TRUE} holds every FROZEN break-point block at
@@ -70,6 +70,6 @@ It is a function of its own because the outer search calls it once per
 hyperparameter it tries, warm-started from the previous coefficients.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

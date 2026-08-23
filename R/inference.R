@@ -18,7 +18,7 @@ NULL
 #' and the coefficient, and saying whether the term carries a penalty and
 #' whether that penalty has a kink.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #'
 #' @return A data frame with as many rows as there are coefficients.
@@ -63,15 +63,15 @@ coef_labels <- function(spec, design) {
 #' Which Information Matrix a Fit Used
 #'
 #' @description
-#' \code{TRUE} when the fit inverted the expected information, which is what
-#' \code{\link{iwls}()} does unless asked otherwise.
+#' `TRUE` when the fit inverted the expected information, which is what
+#' [iwls()] does unless asked otherwise.
 #'
 #' @details
-#' The default of \code{\link{vcov.StatmodFit}} follows this rather than
+#' The default of [vcov.StatmodFit()] follows this rather than
 #' choosing for itself, so that a standard error comes from the same matrix the
 #' fit did, and a caller who wants the other one asks for it.
 #'
-#' @param object A \code{\link{StatmodFit}}.
+#' @param object A [StatmodFit()].
 #'
 #' @return A single logical.
 #'
@@ -88,7 +88,7 @@ fit_expected <- function(object) {
 #' The variance of the estimated coefficients, over every distribution
 #' parameter's block at once.
 #' @details
-#' \strong{Two matrices, and they differ only when something is penalized.}
+#' **Two matrices, and they differ only when something is penalized.**
 #' Writing \eqn{H} for the information of the log-likelihood and \eqn{S} for
 #' the second derivative of the penalty,
 #' \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.}
@@ -100,20 +100,20 @@ fit_expected <- function(object) {
 #' fixed penalty, which is smaller and covers less. With no penalty \eqn{S = 0}
 #' and both are \eqn{H^{-1}}.
 #'
-#' \strong{A coefficient a kinked penalty has set to zero has no row.} At zero
+#' **A coefficient a kinked penalty has set to zero has no row.** At zero
 #' the penalty is not twice differentiable, so \eqn{S} does not exist there and
-#' no curvature can be read; the entry is \code{NA}. The coefficients a lasso
+#' no curvature can be read; the entry is `NA`. The coefficients a lasso
 #' or an MCP left non-zero do get a variance, and it is conditional on that
-#' selection -- \code{\link{summary.StatmodFit}} says so in a note rather than
+#' selection -- [summary.StatmodFit()] says so in a note rather than
 #' leaving the reader to assume otherwise.
-#' @param object A \code{\link{StatmodFit}}.
-#' @param type \code{"bayesian"} or \code{"frequentist"}.
+#' @param object A [StatmodFit()].
+#' @param type `"bayesian"` or `"frequentist"`.
 #' @param expected Whether the expected information is used. Defaults to what
 #'   the fit itself inverted.
 #' @param ... Unused.
 #' @return A square matrix over the stacked coefficients, with dimnames
-#'   \code{parameter:coefficient}.
-#' @seealso \code{\link{confint.StatmodFit}}, \code{\link{summary.StatmodFit}}
+#'   `parameter:coefficient`.
+#' @seealso [confint.StatmodFit()], [summary.StatmodFit()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(80))
@@ -265,7 +265,7 @@ structural_tail_names <- function(spec, design) {
 #'
 #' @description
 #' The delta method over the joint variance, with the Jacobian
-#' \code{\link{readable_joint}} supplies.
+#' [readable_joint()] supplies.
 #'
 #' @details
 #' A quantity that reads a coordinate whose variance is missing -- one a
@@ -313,7 +313,7 @@ readable_vcov <- function(spec, design, fit, V) {
 #' @description
 #' The rows and columns of the named distribution parameters.
 #'
-#' @param V A variance matrix whose names are \code{parameter:name}.
+#' @param V A variance matrix whose names are `parameter:name`.
 #' @param parameter The distribution parameters to keep.
 #' @param spec The fitted specification, for the message.
 #'
@@ -341,12 +341,12 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #'
 #' @details
 #' This is the one place the readable view is built, so that
-#' \code{\link{coef.StatmodFit}}, \code{\link{vcov.StatmodFit}} and
-#' \code{\link{confint.StatmodFit}} cannot report a quantity under one name
+#' [coef.StatmodFit()], [vcov.StatmodFit()] and
+#' [confint.StatmodFit()] cannot report a quantity under one name
 #' and index it under another.
 #'
 #' A term says what it is about through
-#' \code{\link[modelterms7]{term_readable}}, which gives the quantities and
+#' [modelterms7::term_readable()], which gives the quantities and
 #' the Jacobian. The coordinates that Jacobian touches are replaced by the
 #' quantities; a coordinate no quantity reads stands where it is, with a unit
 #' row of its own. That is what leaves a developed parameter intact: its
@@ -364,13 +364,13 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' @param design The design.
 #' @param fit The fit.
 #'
-#' @return A list with \code{name}, \code{value}, \code{parameter},
-#'   \code{term}, \code{scale} (one link per quantity), \code{held} (whether
-#'   the quantity reads a parameter that is not estimated), \code{jacobian}
-#'   (quantities by joint coordinates) and \code{n_design}.
+#' @return A list with `name`, `value`, `parameter`,
+#'   `term`, `scale` (one link per quantity), `held` (whether
+#'   the quantity reads a parameter that is not estimated), `jacobian`
+#'   (quantities by joint coordinates) and `n_design`.
 #'
-#' @seealso \code{\link[modelterms7]{term_readable}},
-#'   \code{\link{statmod_structural_table}}
+#' @seealso [modelterms7::term_readable()],
+#'   [statmod_structural_table()]
 #'
 #' @keywords internal
 readable_joint <- function(spec, design, fit) {
@@ -507,9 +507,9 @@ readable_joint <- function(spec, design, fit) {
 #' A failure here is a statement about the fit rather than about the
 #' arithmetic: at a maximum the penalized information is positive definite, so
 #' a matrix that is not says something about where the run stopped. The test is
-#' \code{lmin > tol * ref} on the smallest eigenvalue rather than whether
-#' \code{chol()} raised, because on an exactly singular matrix the latter is
-#' decided by rounding and differs between platforms; \code{ref} is the
+#' `lmin > tol * ref` on the smallest eigenvalue rather than whether
+#' `chol()` raised, because on an exactly singular matrix the latter is
+#' decided by rounding and differs between platforms; `ref` is the
 #' matrix's own scale, or the scale of the unpenalized
 #' information where the caller holds it, which is what tells a flat
 #' direction from the scale separation a large smoothing parameter
@@ -517,10 +517,10 @@ readable_joint <- function(spec, design, fit) {
 #' standard error for a direction the data does not identify.
 #'
 #' The smallest eigenvalue is ESTIMATED rather than computed, from LAPACK's
-#' condition estimator (\code{dpocon}) read on the Cholesky factor the
-#' inverse needs anyway: \code{rcond} is
+#' condition estimator (`dpocon`) read on the Cholesky factor the
+#' inverse needs anyway: `rcond` is
 #' \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
-#' \code{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
+#' `rcond * ||A||_1` is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
 #' symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
 #' \eqn{\lambda_{\min}}. The estimate therefore errs on the SMALL side and
 #' the test is conservative by at most a factor \eqn{\sqrt{p}}, plus
@@ -541,7 +541,7 @@ readable_joint <- function(spec, design, fit) {
 #'
 #' @param A A square matrix.
 #' @param what What the matrix is, for the message.
-#' @param labels The names of the coefficients \code{A} is indexed by.
+#' @param labels The names of the coefficients `A` is indexed by.
 #'
 #' @return The inverse.
 #'
@@ -626,7 +626,7 @@ solve_pd <- function(A, what, labels = NULL) {
 #' its own channel can muffle it rather than repeat it.
 #'
 #' @details
-#' \code{\link{summary.StatmodFit}} calls \code{\link{vcov}} more than
+#' [summary.StatmodFit()] calls [vcov()] more than
 #' once and would raise the warning once per call; it says it once, as a
 #' note.
 #'
@@ -657,10 +657,10 @@ frozen_condition <- function(msg) {
 #' worse than a gap, so those coefficients are left missing.
 #'
 #' The question is asked of the term through
-#' \code{\link[modelterms7]{term_jacobian_block}} rather than of its class,
+#' [modelterms7::term_jacobian_block()] rather than of its class,
 #' so a construction whose block IS a Jacobian keeps its inference: a
-#' continuous \code{\link[modelterms7]{seg}}, and a discontinuous one
-#' smoothed by an \code{\link[penalties7]{abs_smoother}}, both answer yes.
+#' continuous [modelterms7::seg()], and a discontinuous one
+#' smoothed by an [penalties7::abs_smoother()], both answer yes.
 #'
 #' @param spec The fitted specification.
 #' @param lab The coefficient labels.
@@ -696,10 +696,10 @@ frozen_block <- function(spec, lab) {
 #' repetition loop sized by elapsed time:
 #'
 #' \tabular{rrrrr}{
-#'   \strong{m} \tab \strong{p} \tab \strong{density} \tab \strong{whole route}
-#'     \tab \strong{inverse} \cr
-#'   20 \tab 23 \tab 0.282 \tab 1.08x \tab \strong{0.13x} \cr
-#'   50 \tab 53 \tab 0.128 \tab 1.06x \tab \strong{0.33x} \cr
+#'   **m** \tab **p** \tab **density** \tab **whole route**
+#'     \tab **inverse** \cr
+#'   20 \tab 23 \tab 0.282 \tab 1.08x \tab **0.13x** \cr
+#'   50 \tab 53 \tab 0.128 \tab 1.06x \tab **0.33x** \cr
 #'   100 \tab 103 \tab 0.067 \tab 1.18x \tab 1.14x \cr
 #'   200 \tab 203 \tab 0.034 \tab 1.74x \tab 2.9x \cr
 #'   500 \tab 503 \tab 0.014 \tab 5.28x \tab 7.6x \cr
@@ -719,30 +719,30 @@ frozen_block <- function(spec, lab) {
 #' smooth (p = 16, density 1) it measures 0.01x, a hundred times slower, which
 #' is what the size condition is there to prevent.
 #'
-#' \strong{Both quantities are read off the matrix, and the first one is its
-#' STORAGE.} A matrix held as a base matrix is refused whatever its zeros,
+#' **Both quantities are read off the matrix, and the first one is its
+#' STORAGE.** A matrix held as a base matrix is refused whatever its zeros,
 #' which reads like a test of the container rather than of the mathematics, so
 #' it is worth saying why it is neither an oversight nor a term test.
-#' \code{\link{statmod_information_at}} accumulates into the design's own kind,
+#' [statmod_information_at()] accumulates into the design's own kind,
 #' so the penalized matrix is stored sparsely exactly when the design is, and
 #' \pkg{modelterms7} builds a block sparse only when asked
-#' (\code{sparse = TRUE}, whose default is \code{FALSE}). Measured on
-#' \code{y ~ 0 + g + s(x)} over 400 levels at 20000 observations, whose
+#' (`sparse = TRUE`, whose default is `FALSE`). Measured on
+#' `y ~ 0 + g + s(x)` over 400 levels at 20000 observations, whose
 #' penalized matrix is 5 per cent nonzero either way: built dense the fit takes
-#' 104.24 s and this factorization is \strong{0.16 per cent} of it, the time
+#' 104.24 s and this factorization is **0.16 per cent** of it, the time
 #' being in the \eqn{O(np^2)} products against a dense design
-#' (\code{statmod_information_at} 48.8 per cent, \code{crossprod} 57.2 per cent
+#' (`statmod_information_at` 48.8 per cent, `crossprod` 57.2 per cent
 #' of self time); built sparse the same fit takes 2.19 s. So where the storage
 #' is dense the factorization is not what a fit is spending its time on, and
 #' coercing a dense \eqn{p \times p} matrix here to save a share of that size
 #' would cost more than it returns.
 #'
-#' \strong{The like-for-like comparison is the one that says this is not a term
-#' test}, and it is the check \code{piano_lme4.txt} section 5 asks for. With
+#' **The like-for-like comparison is the one that says this is not a term
+#' test**, and it is the check `piano_lme4.txt` section 5 asks for. With
 #' every design built the same way, this route is worth 1.38x on
-#' \code{0 + g + s(x)} over 400 levels, 1.33x on \code{random(~1|g)} over 500
-#' and 1.07x on \code{s(x, by = g)} over 60 -- an unpenalized indicator block,
-#' a random effect and a factor-\code{by} smooth, gaining together and in the
+#' `0 + g + s(x)` over 400 levels, 1.33x on `random(~1|g)` over 500
+#' and 1.07x on `s(x, by = g)` over 60 -- an unpenalized indicator block,
+#' a random effect and a factor-`by` smooth, gaining together and in the
 #' order their sizes predict. Nothing here asks which term or which family
 #' produced the matrix.
 #'
@@ -752,7 +752,7 @@ frozen_block <- function(spec, lab) {
 #'
 #' @return A single logical.
 #'
-#' @seealso \code{\link{pd_factor}}
+#' @seealso [pd_factor()]
 #'
 #' @keywords internal
 worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
@@ -769,12 +769,12 @@ worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
 #'
 #' @description
 #' \eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, which is the
-#' quantity LAPACK's \code{dpocon} produces from a dense one.
+#' quantity LAPACK's `dpocon` produces from a dense one.
 #'
 #' @details
 #' The sparse route needs a condition estimate OF ITS OWN, and it cannot
-#' borrow the dense one: \code{chol_rcond_cpp} reads a dense triangular
-#' factor. \code{Matrix::rcond} is not the answer either -- measured, it costs
+#' borrow the dense one: `chol_rcond_cpp` reads a dense triangular
+#' factor. `Matrix::rcond` is not the answer either -- measured, it costs
 #' 10.3 ms at p = 503 and 500 ms at p = 2003, more than the dense
 #' factorization the sparse route exists to replace. Higham's one-norm
 #' estimator applied to the factor's own solves costs 0.58 ms at p = 53 and
@@ -792,12 +792,12 @@ worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
 #' to 1e15). A factor of two either way cannot move that verdict, which is the
 #' argument already recorded for the dense estimator.
 #'
-#' @param L A \code{CHMfactor}.
+#' @param L A `CHMfactor`.
 #' @param p The order of the matrix.
 #'
-#' @return A single number, or \code{NA_real_} where the estimate failed.
+#' @return A single number, or `NA_real_` where the estimate failed.
 #'
-#' @seealso \code{\link{pd_factor}}, \code{\link{pd_logdet}}
+#' @seealso [pd_factor()], [pd_logdet()]
 #'
 #' @keywords internal
 sparse_lmin <- function(L, p) {
@@ -821,25 +821,25 @@ sparse_lmin <- function(L, p) {
 #' This is the one place the penalized matrix is factorized. The criterion
 #' wants its log-determinant, the gradient wants the mode's movement and the
 #' Hessian wants both plus the inverse; before this existed the criterion and
-#' \code{\link{ctx_penalized}} each factorized the SAME matrix at the same
+#' [ctx_penalized()] each factorized the SAME matrix at the same
 #' point, which at p = 503 was 12.4 ms spent twice.
 #'
-#' \strong{The verdict is unchanged and so is its property.} Whether the
+#' **The verdict is unchanged and so is its property.** Whether the
 #' matrix is accepted never turns on whether a factorization raised: where the
 #' cheap test is inconclusive the eigendecomposition answers about the matrix.
 #' The sparse route carries its own condition estimate
-#' (\code{\link{sparse_lmin}}) rather than the dense one, and falls back to
+#' ([sparse_lmin()]) rather than the dense one, and falls back to
 #' the dense route where that estimate cannot be formed, so a refusal is
 #' reached by the same reasoning on either storage.
 #'
 #' @param M A symmetric matrix, sparse or dense.
-#' @param scale A reference magnitude, as \code{\link{pd_logdet}} takes.
+#' @param scale A reference magnitude, as [pd_logdet()] takes.
 #'
-#' @return A list with \code{logdet}, \code{ok}, \code{factor} and
-#'   \code{sparse}. The factor is \code{NULL} where the answer came from the
+#' @return A list with `logdet`, `ok`, `factor` and
+#'   `sparse`. The factor is `NULL` where the answer came from the
 #'   eigendecomposition.
 #'
-#' @seealso \code{\link{pd_logdet}}, \code{\link{ctx_penalized}}
+#' @seealso [pd_logdet()], [ctx_penalized()]
 #'
 #' @keywords internal
 pd_factor <- function(M, scale = NULL) {
@@ -890,17 +890,17 @@ pd_factor <- function(M, scale = NULL) {
 #' it is not.
 #'
 #' @details
-#' \strong{Why not \code{chol()} alone.} A marginal criterion read the
-#' determinant off \code{chol(M)} and reported the criterion as NONEXISTENT
+#' **Why not `chol()` alone.** A marginal criterion read the
+#' determinant off `chol(M)` and reported the criterion as NONEXISTENT
 #' whenever the factorization raised. At a condition number near the rounding
 #' floor whether it raises is decided by arithmetic and not by the matrix:
 #' measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
 #' eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
 #' search then backtracked through a dozen points reported unavailable towards
 #' one that had been available a moment earlier. The same doubt this package
-#' already records for \code{\link{solve_pd}} and for basis7's rank tests.
+#' already records for [solve_pd()] and for basis7's rank tests.
 #'
-#' \strong{The three routes.} The factorization is tried first, being O(p^3/3)
+#' **The three routes.** The factorization is tried first, being O(p^3/3)
 #' and the common case. Where it succeeds, LAPACK's condition estimator reads
 #' the smallest eigenvalue off the factor already in hand for O(p^2), and a
 #' matrix comfortably away from the floor is accepted with the determinant the
@@ -912,14 +912,14 @@ pd_factor <- function(M, scale = NULL) {
 #' according to the platform.
 #'
 #' @param M A symmetric matrix.
-#' @param scale A reference magnitude, as \code{\link{solve_pd}} takes: the
+#' @param scale A reference magnitude, as [solve_pd()] takes: the
 #'   unpenalized information's own scale, so that a hyperparameter legitimately
 #'   sent to 1e15 is told apart from a flat direction.
 #'
-#' @return A list with \code{logdet} and \code{ok}, or \code{ok = FALSE} where
+#' @return A list with `logdet` and `ok`, or `ok = FALSE` where
 #'   the matrix is not positive definite.
 #'
-#' @seealso \code{\link{solve_pd}}, \code{\link{statmod_marginal}}
+#' @seealso [solve_pd()], [statmod_marginal()]
 #'
 #' @keywords internal
 pd_logdet <- function(M, scale = NULL) {
@@ -933,20 +933,20 @@ pd_logdet <- function(M, scale = NULL) {
 #' The Dense Route of pd_logdet
 #'
 #' @description
-#' The three routes described at \code{\link{pd_logdet}}, on a dense matrix.
+#' The three routes described at [pd_logdet()], on a dense matrix.
 #'
 #' @details
-#' Split out so that \code{\link{pd_factor}} can reach it as the fallback of
+#' Split out so that [pd_factor()] can reach it as the fallback of
 #' the sparse route without restating the verdict: there is one place that
 #' decides whether a matrix is positive definite, and one set of thresholds.
 #'
 #' @param M A dense symmetric matrix.
 #' @param scale A reference magnitude.
 #'
-#' @return A list with \code{logdet}, \code{ok} and, on a refusal reached
-#'   through the eigendecomposition, \code{min_ev} and \code{max_ev}.
+#' @return A list with `logdet`, `ok` and, on a refusal reached
+#'   through the eigendecomposition, `min_ev` and `max_ev`.
 #'
-#' @seealso \code{\link{pd_logdet}}
+#' @seealso [pd_logdet()]
 #'
 #' @keywords internal
 pd_logdet_dense <- function(M, scale = NULL) {
@@ -1039,18 +1039,18 @@ flat_directions <- function(A, labels) {
 #' parameter itself; for that, map an interval for the predictor through the
 #' inverse link at the covariate values of interest.
 #'
-#' The variance comes from \code{\link{vcov.StatmodFit}}, so the same two
+#' The variance comes from [vcov.StatmodFit()], so the same two
 #' conventions apply, and a coefficient a kinked penalty set to zero has
-#' \code{NA} rather than an interval.
-#' @param object A \code{\link{StatmodFit}}.
+#' `NA` rather than an interval.
+#' @param object A [StatmodFit()].
 #' @param parm Which coefficients: a distribution parameter's name, a vector of
-#'   \code{parameter:coefficient} labels, or \code{NULL} for all of them.
+#'   `parameter:coefficient` labels, or `NULL` for all of them.
 #' @param level The confidence level.
-#' @param type Passed to \code{\link{vcov.StatmodFit}}.
-#' @param ... Passed to \code{\link{vcov.StatmodFit}}.
+#' @param type Passed to [vcov.StatmodFit()].
+#' @param ... Passed to [vcov.StatmodFit()].
 #' @return A data frame with the parameter, the term, the coefficient, the
 #'   estimate, its standard error and the two limits.
-#' @seealso \code{\link{vcov.StatmodFit}}, \code{\link{summary.StatmodFit}}
+#' @seealso [vcov.StatmodFit()], [summary.StatmodFit()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(80))
@@ -1142,16 +1142,16 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' The classification is by the term's class and by its penalties, not by its
 #' label, so a term given a name of its own is read the same way. The
 #' penalties are the ones the term declares through
-#' \code{\link[modelterms7]{term_penalties}}, so a term penalized over part of
+#' [modelterms7::term_penalties()], so a term penalized over part of
 #' its parameters -- a segmented term's changes, a filter's deviations -- is
 #' read as penalized rather than as parametric, and is a selection when any
 #' of its penalties has a kink.
 #'
 #' @param term A built term.
 #'
-#' @return One of \code{"structural"}, \code{"breakpoint"},
-#'   \code{"parametric"}, \code{"smooth"}, \code{"random"},
-#'   \code{"selection"}, \code{"penalized"}.
+#' @return One of `"structural"`, `"breakpoint"`,
+#'   `"parametric"`, `"smooth"`, `"random"`,
+#'   `"selection"`, `"penalized"`.
 #'
 #' @keywords internal
 term_block_kind <- function(term) {
@@ -1182,7 +1182,7 @@ term_block_kind <- function(term) {
 #' Which Coefficients of a Smooth Are the Linear Part
 #'
 #' @description
-#' \code{TRUE} for the columns a Demmler-Reinsch smooth carries its linear
+#' `TRUE` for the columns a Demmler-Reinsch smooth carries its linear
 #' effect in, which are the ones worth printing.
 #'
 #' @details
@@ -1190,14 +1190,14 @@ term_block_kind <- function(term) {
 #' wiggly part; individually they say nothing, and what they say jointly is the
 #' effective degrees of freedom, which the block header reports instead.
 #'
-#' The question is asked of the term's own specification (\code{spec$linear})
+#' The question is asked of the term's own specification (`spec$linear`)
 #' rather than of a suffix in a coefficient's name, since a name is a label and
 #' this is a fact about the construction.
 #'
 #' @param term A built smooth term.
 #' @param k The number of columns in its block.
 #'
-#' @return A logical vector of length \code{k}.
+#' @return A logical vector of length `k`.
 #'
 #' @keywords internal
 smooth_linear_cols <- function(term, k) {
@@ -1211,7 +1211,7 @@ smooth_linear_cols <- function(term, k) {
 #' A Summary of a Fitted Model
 #'
 #' @description
-#' What \code{\link{summary.StatmodFit}} returns: the blocks of each
+#' What [summary.StatmodFit()] returns: the blocks of each
 #' distribution parameter, the degrees of freedom, the information criteria and
 #' whatever has to be said about how the numbers should be read.
 #'
@@ -1230,9 +1230,9 @@ smooth_linear_cols <- function(term, k) {
 #' @param type Which variance convention was used.
 #' @param notes Character vector of things the reader has to know.
 #'
-#' @return An object of class \code{StatmodSummary}.
+#' @return An object of class `StatmodSummary`.
 #'
-#' @seealso \code{\link{summary.StatmodFit}}
+#' @seealso [summary.StatmodFit()]
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(30), x = runif(30))
@@ -1282,8 +1282,8 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' error, Wald statistic, p-value and interval -- with the degrees of freedom,
 #' the information criteria and the qualifications the numbers carry.
 #' @details
-#' \strong{Each distribution parameter is read as blocks, not as one list of
-#' coefficients}, because most of a fitted model's coefficients are not
+#' **Each distribution parameter is read as blocks, not as one list of
+#' coefficients**, because most of a fitted model's coefficients are not
 #' quantities anybody reads. The blocks are
 #' \describe{
 #'   \item{the parametric terms}{every unpenalized term together, one row per
@@ -1303,19 +1303,19 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'     interpretable under a ridge, together with its hyperparameters.}
 #' }
 #'
-#' \strong{A hyperparameter is the first row of its block}, since it governs
+#' **A hyperparameter is the first row of its block**, since it governs
 #' every coefficient under it, and the cell where its standard error would be
-#' says what put the value there. One estimated by \code{\link{reml}()} or
-#' \code{\link{ml}()} maximizes a twice differentiable criterion, so it carries
+#' says what put the value there. One estimated by [reml()] or
+#' [ml()] maximizes a twice differentiable criterion, so it carries
 #' a standard error and an interval, both read on the free scale its link
-#' defines and mapped back (\code{\link{statmod_hyper_vcov}}). One chosen by
-#' \code{\link{aic}()}, \code{\link{bic}()} or \code{\link{cv}()} over a kinked
+#' defines and mapped back ([statmod_hyper_vcov()]). One chosen by
+#' [aic()], [bic()] or [cv()] over a kinked
 #' penalty is the argument of a minimum over a grid, so the row names the
 #' criterion and leaves the remaining columns empty: there is no curvature at
 #' such a point to read a standard error from. One the caller set is marked
 #' fixed.
 #'
-#' \strong{What a Wald p-value means here depends on the row}, and the summary
+#' **What a Wald p-value means here depends on the row**, and the summary
 #' says which is which rather than printing one column and leaving it at that.
 #' For an unpenalized coefficient it is the usual thing. For a coefficient in a
 #' penalized block it is conditional on the smoothing parameter, which was not
@@ -1324,21 +1324,21 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' exists only because that coefficient survived the selection, and a naive
 #' interval there under-covers.
 #'
-#' \strong{The degrees of freedom} are the effective ones, summed over the
+#' **The degrees of freedom** are the effective ones, summed over the
 #' terms, so that a penalized term counts what it spends rather than how many
 #' columns it has. The information criteria are built on that count.
-#' @param object A \code{\link{StatmodFit}}.
+#' @param object A [StatmodFit()].
 #' @param level The confidence level.
-#' @param type Which variance matrix: passed to \code{\link{vcov.StatmodFit}}.
+#' @param type Which variance matrix: passed to [vcov.StatmodFit()].
 #' @param correct Whether the degrees of freedom carry what the estimation
 #'   of the hyperparameters cost. The ordinary count reads them as known,
 #'   and they were chosen from the same data, so a criterion built on it is
-#'   too generous. See \code{\link{statmod_edf_correction}}. Defaults to
-#'   \code{FALSE} because it changes a number a reader may be comparing with
+#'   too generous. See [statmod_edf_correction()]. Defaults to
+#'   `FALSE` because it changes a number a reader may be comparing with
 #'   an earlier fit; it is zero where no hyperparameter was estimated.
-#' @param ... Passed to \code{\link{vcov.StatmodFit}}.
-#' @return A \code{\link{StatmodSummary}}.
-#' @seealso \code{\link{vcov.StatmodFit}}, \code{\link{confint.StatmodFit}}
+#' @param ... Passed to [vcov.StatmodFit()].
+#' @return A [StatmodSummary()].
+#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(120))
@@ -1520,7 +1520,7 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' @description
 #' Replaces the coordinate rows of a penalty whose hyperparameters are a chart
 #' with the quantities it declares through
-#' \code{\link[penalties7]{penalty_readable}}: the standard deviations and
+#' [penalties7::penalty_readable()]: the standard deviations and
 #' correlations of a correlated random effect, rather than the logarithms of a
 #' Cholesky diagonal and the entries below it.
 #'
@@ -1538,9 +1538,9 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' a \eqn{z} of value over standard error reports on is that the quantity is
 #' zero, which for a standard deviation is the edge of its range.
 #'
-#' @param rd The result of \code{\link[penalties7]{penalty_readable}}.
+#' @param rd The result of [penalties7::penalty_readable()].
 #' @param th The penalty's hyperparameters, as fitted.
-#' @param Vh The hyperparameter variance matrix, or \code{NULL}.
+#' @param Vh The hyperparameter variance matrix, or `NULL`.
 #' @param p The parameter the term sits in.
 #' @param key The penalty's key.
 #' @param level The confidence level.
@@ -1597,27 +1597,27 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
 #' Groups a parameter's terms into the readings a summary prints: the
 #' parametric terms together, and one block per penalized term.
 #'
-#' @param fit A \code{\link{StatmodFit}}.
+#' @param fit A [StatmodFit()].
 #' @param spec The specification.
 #' @param design The design.
 #' @param p The distribution parameter.
-#' @param ci The flat interval table, as \code{\link{confint.StatmodFit}}
+#' @param ci The flat interval table, as [confint.StatmodFit()]
 #'   returns it with the statistic and the p-value added.
 #' @param level The confidence level the intervals are built at.
 #' @param V The variance matrix over the stacked coefficients, or
-#'   \code{NULL}. It is needed only by a term reported through
-#'   \code{\link[modelterms7]{term_readable}}, whose quantities are
+#'   `NULL`. It is needed only by a term reported through
+#'   [modelterms7::term_readable()], whose quantities are
 #'   functions of several coefficients at once and whose standard errors
 #'   are therefore the delta method rather than a diagonal entry.
 #'
-#' @return A list of block records, each with \code{kind}, \code{label},
-#'   \code{n_coef}, \code{edf}, \code{n_zero} and \code{table}, together
-#'   with \code{head} and \code{components}: a term written in parameters
+#' @return A list of block records, each with `kind`, `label`,
+#'   `n_coef`, `edf`, `n_zero` and `table`, together
+#'   with `head` and `components`: a term written in parameters
 #'   of its own that develops one of them over covariates reports that
 #'   parameter as a compartment of its own, carrying its hyperparameter and
-#'   its sub-terms' rows, and \code{table} keeps only what is left.
+#'   its sub-terms' rows, and `table` keeps only what is left.
 #'
-#' @param st The structural table, or \code{NULL}. A structural term has no
+#' @param st The structural table, or `NULL`. A structural term has no
 #'   design columns, so its block is built from what it reports rather than
 #'   from a block of the design, and its hyperparameter is reported there
 #'   rather than in a block of its own carrying nothing else.
@@ -2063,7 +2063,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
 #'
 #' @description
 #' The name a summary gives a block, from the kind
-#' \code{\link{term_block_kind}} answered with.
+#' [term_block_kind()] answered with.
 #'
 #' @param kind The kind of the block.
 #'
@@ -2104,7 +2104,7 @@ block_label <- function(kind) {
 #'
 #' @return A character vector, possibly empty.
 #'
-#' @seealso \code{\link[penalties7]{abs_smoother}}
+#' @seealso [penalties7::abs_smoother()]
 #'
 #' @keywords internal
 smoothed_notes <- function(spec, object) {
@@ -2171,16 +2171,16 @@ smoothed_notes <- function(spec, object) {
 #' @description
 #' The call, then each distribution parameter's blocks, then the degrees of
 #' freedom, the criteria and the notes.
-#' @param x A \code{\link{StatmodSummary}}.
+#' @param x A [StatmodSummary()].
 #' @param digits Significant digits in the tables.
 #' @param notes Whether to print the qualifications the numbers carry.
-#'   \code{FALSE} by default, when the foot says how many there are: they
+#'   `FALSE` by default, when the foot says how many there are: they
 #'   state conventions rather than facts of the fit, so they read the same
-#'   under every model. They are on the summary's \code{notes} property
+#'   under every model. They are on the summary's `notes` property
 #'   either way.
 #' @param ... Unused.
-#' @return \code{x}, invisibly.
-#' @seealso \code{\link{summary.StatmodFit}}
+#' @return `x`, invisibly.
+#' @seealso [summary.StatmodFit()]
 #' @keywords internal
 print.StatmodSummary <- function(x, digits = 4L, notes = FALSE, ...) {
   cat("A statmod fit\n\n")
@@ -2289,8 +2289,8 @@ S7::method(print, StatmodSummary) <- print.StatmodSummary
 #' @param tb A summary table.
 #' @param digits Significant digits.
 #'
-#' @return A list with \code{cells}, a character matrix of six columns, and
-#'   \code{name}, the row labels.
+#' @return A list with `cells`, a character matrix of six columns, and
+#'   `name`, the row labels.
 #'
 #' @keywords internal
 format_block_cells <- function(tb, digits = 4L) {
@@ -2327,7 +2327,7 @@ format_block_cells <- function(tb, digits = 4L) {
 #' A block of a few coefficients is printed whole: a threshold that cut it
 #' would hide the very numbers a reader opened the summary for. A block of
 #' many is a column of numbers nobody reads to the end, and what is dropped
-#' is still in \code{\link{coef}}. The hyperparameters are never dropped,
+#' is still in [coef()]. The hyperparameters are never dropped,
 #' whatever the length: they govern every coefficient under them.
 #'
 #' @param tb A summary table.
@@ -2361,12 +2361,12 @@ block_rows_shown <- function(tb, cap = 12L, show = 10L) {
 #' the hyperparameter is, and rendering each sub-term the way a block of that
 #' kind is rendered at the top level. A random development reports the scale
 #' of its effects and one line saying how many predictions there are and how
-#' far they spread, the predictions themselves being in \code{\link{coef}}.
+#' far they spread, the predictions themselves being in [coef()].
 #'
-#' @param b A block record from \code{\link{summary_blocks}}.
+#' @param b A block record from [summary_blocks()].
 #' @param digits Significant digits.
 #'
-#' @return \code{NULL}, invisibly. Called for the printing.
+#' @return `NULL`, invisibly. Called for the printing.
 #'
 #' @keywords internal
 print_block <- function(b, digits = 4L) {
@@ -2487,7 +2487,7 @@ print_block <- function(b, digits = 4L) {
 #' @param hd The head record of a block.
 #' @param digits Significant digits.
 #'
-#' @return \code{NULL}, invisibly. Called for the printing.
+#' @return `NULL`, invisibly. Called for the printing.
 #'
 #' @keywords internal
 print_block_head <- function(hd, digits = 4L) {
@@ -2516,13 +2516,13 @@ print_block_head <- function(hd, digits = 4L) {
 #' A term composes its coefficients' names from its own and its parameters',
 #' so inside the block of one term the leading piece repeats on every row
 #' and says what the heading has already said. It is dropped for the
-#' printing alone; \code{\link{coef}} and the summary's own tables keep the
+#' printing alone; [coef()] and the summary's own tables keep the
 #' names the fit was built with, which are the ones another call can be
 #' indexed by.
 #'
 #' ONE PIECE and not every piece they share: the term's own name is one, and
-#' a set of coefficients that happen to agree further along -- \code{r.1},
-#' \code{r.2} of a matrix column -- would otherwise be left as the bare
+#' a set of coefficients that happen to agree further along -- `r.1`,
+#' `r.2` of a matrix column -- would otherwise be left as the bare
 #' numbers.
 #'
 #' @param nms The names.
@@ -2550,80 +2550,80 @@ drop_common_prefix <- function(nms) {
 #' above the penalized mode, and which hyperparameters have run to a boundary.
 #'
 #' @details
-#' \strong{Why a certificate rather than the optimizer's flag.} The flag says
+#' **Why a certificate rather than the optimizer's flag.** The flag says
 #' whether a search stopped on its own rule, which is a statement about the
 #' search. Measured across shapes, it does not order fits by quality: on one
 #' model the default reported success at a criterion of -1783.47 while the same
-#' data under \code{\link[optimizers7]{lbfgs}} reached -1664.43 and reported
+#' data under [optimizers7::lbfgs()] reached -1664.43 and reported
 #' failure. What a reader wants is a property of the point.
 #'
-#' \strong{The state comes from the gradient and the mode error is reported
-#' beside it, not folded into it.} Measured at the reported point over six
+#' **The state comes from the gradient and the mode error is reported
+#' beside it, not folded into it.** Measured at the reported point over six
 #' shapes, the outer gradient separates by five orders -- 4.7e-07, 7.8e-07,
 #' 5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
 #' that is not -- while the mode error does not: it reads 1.8e-16 to 6.1e-12 on
 #' four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
-#' \code{seg} whose answer is right to a correlation of 0.9932. A number that
+#' `seg` whose answer is right to a correlation of 0.9932. A number that
 #' does not separate cannot decide a state, and a certificate that says how far
 #' from the mode is worth more than a boolean that hides it.
 #'
-#' \code{tol} is 1e-2 rather than the geometric middle of the two groups: the
+#' `tol` is 1e-2 rather than the geometric middle of the two groups: the
 #' two ways of being wrong are not symmetric, and a certificate that says NOT
 #' CONVERGED at a good point is visible and checkable where one that certifies
 #' a bad point is the failure this exists to remove.
 #'
-#' \strong{What it costs} is one outer gradient and one solve, once, at a point
+#' **What it costs** is one outer gradient and one solve, once, at a point
 #' the fit already holds. Nothing is refitted: measured, the criterion
-#' reconstructed from \code{fit@spec} equals the one the fit reports EXACTLY on
+#' reconstructed from `fit@spec` equals the one the fit reports EXACTLY on
 #' every shape, so the reading is of the fitted model and not of another one.
 #'
-#' \strong{Where there is no outer gradient there are two cases, and they get
-#' different answers.} A model with NO PENALTY -- \code{linpar}, \code{nl},
-#' \code{seg}, \code{jump}, \code{jseg} -- has no hyperparameter for a
+#' **Where there is no outer gradient there are two cases, and they get
+#' different answers.** A model with NO PENALTY -- `linpar`, `nl`,
+#' `seg`, `jump`, `jseg` -- has no hyperparameter for a
 #' gradient to be about, so the only question left is whether the inner fit
 #' reached its mode, and the mode error answers it: measured over the
 #' reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
-#' against 1.215 on a \code{jump} fitted to data carrying a slope and a slope
+#' against 1.215 on a `jump` fitted to data carrying a slope and a slope
 #' change it has no term for. A model whose only hyperparameters are KINKED --
-#' \code{lasso}, \code{scad}, \code{mcp}, swept along a path because a Laplace
+#' `lasso`, `scad`, `mcp`, swept along a path because a Laplace
 #' approximation at a mode sitting on the kink has no meaning -- gets neither
-#' reading and stays \code{"unknown"}: at a coefficient the penalty has set to
+#' reading and stays `"unknown"`: at a coefficient the penalty has set to
 #' zero the score does not vanish but lies in the subdifferential, so the mode
 #' error is not a statement about being at a mode. Measured on a lasso, its
 #' 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
 #' score is -0.715.
 #'
 #' A form whose criterion has no EXACT gradient
-#' (\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
+#' ([outer_gradient_ok()]) is also `"unknown"` rather than
 #' approximated: 2p refits to difference it would cost more than the fit.
 #'
-#' \strong{The boundary label, and why its threshold needs no derivation.}
+#' **The boundary label, and why its threshold needs no derivation.**
 #' A hyperparameter may run to an edge and belong there: on a covariate that
 #' is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 #' genuinely flat, and calling that fit unconverged would be wrong. A
 #' coordinate is reported as sitting at a boundary when its free value
-#' exceeds \code{edge} AND its own gradient component has already met
-#' \code{tol}. Because of that second condition the threshold cannot change
+#' exceeds `edge` AND its own gradient component has already met
+#' `tol`. Because of that second condition the threshold cannot change
 #' the verdict: a coordinate it moves out of the interior set had already
 #' passed the test, so the maximum that decides the state is unaffected, and
-#' both \code{"converged"} and \code{"boundary"} are certified. What
-#' \code{edge} decides is how the point is described. The default separates
+#' both `"converged"` and `"boundary"` are certified. What
+#' `edge` decides is how the point is described. The default separates
 #' the measured cases with room on both sides: coordinates that ran to an
 #' edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
 #' 2.01 for the ones that did not.
 #'
-#' @param fit A \code{\link{StatmodFit}}.
+#' @param fit A [StatmodFit()].
 #' @param tol The largest outer gradient a certified point may carry.
 #' @param edge The free value beyond which a hyperparameter whose gradient
-#'   has already met \code{tol} is reported as sitting at a boundary. It
+#'   has already met `tol` is reported as sitting at a boundary. It
 #'   decides the label alone and never the verdict; see the details.
 #'
-#' @return A list with \code{state} (\code{"converged"}, \code{"boundary"},
-#'   \code{"not converged"} or \code{"unknown"}), \code{gradient},
-#'   \code{mode_error}, \code{boundary} and \code{reason}.
+#' @return A list with `state` (`"converged"`, `"boundary"`,
+#'   `"not converged"` or `"unknown"`), `gradient`,
+#'   `mode_error`, `boundary` and `reason`.
 #'
-#' @seealso \code{\link{statmod}}, \code{\link{mode_error_limit}},
-#'   \code{\link{criterion_resolution}}
+#' @seealso [statmod()], [mode_error_limit()],
+#'   [criterion_resolution()]
 #'
 #' @examples
 #' dd <- data.frame(x = runif(120))

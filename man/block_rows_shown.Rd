@@ -24,7 +24,7 @@ together with the first few coefficients, the rest reported as a count.
 A block of a few coefficients is printed whole: a threshold that cut it
 would hide the very numbers a reader opened the summary for. A block of
 many is a column of numbers nobody reads to the end, and what is dropped
-is still in \code{\link{coef}}. The hyperparameters are never dropped,
+is still in \code{\link[=coef]{coef()}}. The hyperparameters are never dropped,
 whatever the length: they govern every coefficient under them.
 }
 \keyword{internal}

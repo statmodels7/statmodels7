@@ -18,5 +18,5 @@ statmodels7_versions()
 
 }
 \seealso{
-\code{\link{statmodels7_packages}}, \code{\link{statmodels7_update}}
+\code{\link[=statmodels7_packages]{statmodels7_packages()}}, \code{\link[=statmodels7_update]{statmodels7_update()}}
 }

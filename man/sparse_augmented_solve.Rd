@@ -20,7 +20,7 @@ counterpart and declines.}
 A list with \code{delta} and \code{rank}, or \code{NULL}.
 }
 \description{
-The same increment \code{\link{augmented_solve}} returns, taken through a
+The same increment \code{\link[=augmented_solve]{augmented_solve()}} returns, taken through a
 sparse QR of \eqn{[R;\ C]}.
 }
 \details{
@@ -48,6 +48,6 @@ and this route declines, leaving the caller its dense fallback, which can
 drop columns and say how many it kept.
 }
 \seealso{
-\code{\link{augmented_solve}}
+\code{\link[=augmented_solve]{augmented_solve()}}
 }
 \keyword{internal}

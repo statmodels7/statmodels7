@@ -26,7 +26,7 @@ statmod_path(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -36,7 +36,7 @@ statmod_path(
 
 \item{inner_optimizer}{The inner method.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{optimizer}{The optimizer for the differentiable hyperparameters.}
 
@@ -56,7 +56,7 @@ cross-validation needs in order to refit on part of it.}
 \item{sweeps}{How many cyclic passes.}
 }
 \value{
-The same list \code{\link{outer_fit}} returns.
+The same list \code{\link[=outer_fit]{outer_fit()}} returns.
 }
 \description{
 Sweeps them over grids of kink sizes and keeps the setting the criterion
@@ -83,10 +83,10 @@ of the path is read again at every pass because the rest of the model moves,
 and where it has not the grid is the one already in hand.
 
 Where the model also carries hyperparameters that are twice differentiable,
-those are estimated by \code{\link{outer_fit}} inside each point of the
+those are estimated by \code{\link[=outer_fit]{outer_fit()}} inside each point of the
 path, so the two kinds are not mixed into one search.
 }
 \seealso{
-\code{\link{cv}}, \code{\link{path_rows}}
+\code{\link[=cv]{cv()}}, \code{\link[=path_rows]{path_rows()}}
 }
 \keyword{internal}

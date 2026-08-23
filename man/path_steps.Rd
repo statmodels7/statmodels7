@@ -7,7 +7,7 @@
 path_steps(spec, design, block, beta, split)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -26,7 +26,7 @@ A numeric vector, one step per column, or \code{NULL}.
 coefficients in hand.
 }
 \details{
-This is the step the sweeps of \code{\link{coord_fit}} use, and it is what
+This is the step the sweeps of \code{\link[=coord_fit]{coord_fit()}} use, and it is what
 decides whether a shape parameter is admissible: SCAD's proximal operator
 needs \eqn{t < a - 1} and MCP's \eqn{t < \gamma}, tightened to
 \eqn{t d^2} under the diagonal map standardization applies. So the useful
@@ -42,6 +42,6 @@ working weights are not usable. A starting grid may be approximate; what
 it may not do is fail.
 }
 \seealso{
-\code{\link{shape_floor}}, \code{\link{coord_fit}}
+\code{\link[=shape_floor]{shape_floor()}}, \code{\link[=coord_fit]{coord_fit()}}
 }
 \keyword{internal}

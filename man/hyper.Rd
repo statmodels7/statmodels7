@@ -22,7 +22,7 @@ the penalty declares them or on the free scale its links define, with what
 put each value there.
 }
 \details{
-A hyperparameter is not a coefficient and is not in \code{\link{coef}}: it
+A hyperparameter is not a coefficient and is not in \code{\link[=coef]{coef()}}: it
 governs the coefficients under it rather than sitting beside them, and the
 two are estimated by different routes and reported with different
 qualifications. This is where they are read.
@@ -41,7 +41,7 @@ along a path over its own values reads the criterion that scored the path.
 A value chosen along a path is the argument of a minimum over a grid
 rather than the root of a derivative, so no standard error follows from
 it; one a marginal criterion reached carries one, and
-\code{\link{summary}} reports it.
+\code{\link[=summary]{summary()}} reports it.
 }
 \examples{
 set.seed(1)
@@ -53,6 +53,6 @@ hyper(fit, scale = "link")
 
 }
 \seealso{
-\code{\link{coef.StatmodFit}}, \code{\link{summary.StatmodFit}},
-\code{\link{statmod_held}}
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
+\code{\link[=statmod_held]{statmod_held()}}
 }

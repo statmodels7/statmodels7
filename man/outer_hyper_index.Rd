@@ -7,9 +7,9 @@
 outer_hyper_index(spec, blocks)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{blocks}{The block split, as \code{\link{statmod_blocks}} returns it.}
+\item{blocks}{The block split, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns it.}
 }
 \value{
 A data frame with \code{parameter}, \code{term} and \code{name}, and

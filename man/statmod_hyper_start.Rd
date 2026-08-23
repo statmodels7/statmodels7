@@ -7,7 +7,7 @@
 statmod_hyper_start(spec, design = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A named list, one entry per parameter.

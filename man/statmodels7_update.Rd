@@ -14,7 +14,7 @@ statmodels7_update(action = c("report", "install"), quiet = FALSE)
 }
 \value{
 For \code{"report"}, a data frame as
-\code{\link{statmodels7_versions}} returns, invisibly for
+\code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, invisibly for
 \code{"install"}. The report is printed as a side effect.
 }
 \description{
@@ -41,5 +41,5 @@ statmodels7_update("install")
 
 }
 \seealso{
-\code{\link{statmodels7_versions}}
+\code{\link[=statmodels7_versions]{statmodels7_versions()}}
 }

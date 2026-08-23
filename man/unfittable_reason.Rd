@@ -17,6 +17,6 @@ Returns the reason a term cannot be assembled as a fixed design block, or
 the empty string when it can.
 }
 \seealso{
-\code{\link{reject_unfittable}}
+\code{\link[=reject_unfittable]{reject_unfittable()}}
 }
 \keyword{internal}

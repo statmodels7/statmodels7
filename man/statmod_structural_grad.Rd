@@ -16,7 +16,7 @@ statmod_structural_grad(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -24,7 +24,7 @@ statmod_structural_grad(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{idx}{The outer index.}
 
@@ -37,7 +37,7 @@ A numeric vector, one entry per row of \code{idx}, or \code{NULL}
 where the determinant does not exist.
 }
 \description{
-\code{\link{statmod_marginal_grad}} over the joint vector of coefficients
+\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} over the joint vector of coefficients
 and a structural term's parameters, which is what the determinant spans
 there.
 }
@@ -51,7 +51,7 @@ three contributions instead of one:
 
 \enumerate{
 \item the family's third derivative against the per-observation diagonal
-of \eqn{M}, which is \code{\link{u_vector}}'s formula with \eqn{V} in
+of \eqn{M}, which is \code{\link[=u_vector]{u_vector()}}'s formula with \eqn{V} in
 place of \eqn{X};
 \item the derivative of \eqn{V_p} itself, which is \eqn{E_t v}, one row
 per observation, entering through every \eqn{\ell_{pb}};
@@ -65,7 +65,7 @@ along each hyperparameter's own direction, which is the trade that keeps
 the cost at \eqn{O(nm^2)} per hyperparameter instead of \eqn{O(nm^3)} once.
 }
 \seealso{
-\code{\link{statmod_marginal_grad}},
-\code{\link[modelterms7]{term_third}}
+\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},
+\code{\link[modelterms7:term_third]{modelterms7::term_third()}}
 }
 \keyword{internal}

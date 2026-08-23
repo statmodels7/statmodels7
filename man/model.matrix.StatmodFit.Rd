@@ -7,7 +7,7 @@
 \method{model.matrix}{StatmodFit}(object, what = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{what}{Which distribution parameter, or \code{NULL} for the first.}
 
@@ -22,13 +22,13 @@ The block of columns a distribution parameter's equation was fitted with.
 \details{
 A fit has one design per parameter, so which one is asked for is an
 argument rather than something to be guessed; \code{NULL} gives the first,
-as \code{\link{fitted.StatmodFit}} does. A term whose block moves with its
+as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block moves with its
 coefficients is returned AT the fitted ones, which is the block the fit
 ended on.
 
 A structural term contributes no columns at all, so an equation carrying
 one alone gives a matrix of no columns; what such a term contributes is a
-recursion, reported by \code{\link{predict.StatmodFit}}.
+recursion, reported by \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}.
 }
 \examples{
 set.seed(1)
@@ -39,6 +39,6 @@ dim(model.matrix(fit))
 colnames(model.matrix(fit, "sigma"))
 }
 \seealso{
-\code{\link{statmod_design}}, \code{\link{coef.StatmodFit}}
+\code{\link[=statmod_design]{statmod_design()}}, \code{\link[=coef.StatmodFit]{coef.StatmodFit()}}
 }
 \keyword{internal}

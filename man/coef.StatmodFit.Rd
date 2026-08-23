@@ -44,10 +44,10 @@ predictor is a score-driven filter answered \code{numeric(0)}.
 
 \code{readable = FALSE} is what a caller feeding a fit back needs: it is
 the vector the fit was estimated on, in the order and under the names
-\code{\link{vcov}} is indexed by, and a structural term's part of it is on
+\code{\link[=vcov]{vcov()}} is indexed by, and a structural term's part of it is on
 the unconstrained scale its charts define.
 
-Hyperparameters are not coefficients and are not here; \code{\link{hyper}}
+Hyperparameters are not coefficients and are not here; \code{\link[=hyper]{hyper()}}
 reports them.
 }
 \examples{
@@ -61,7 +61,7 @@ coef(fit, readable = FALSE)$mu
 
 }
 \seealso{
-\code{\link{hyper}}, \code{\link{summary.StatmodFit}},
-\code{\link[modelterms7]{term_readable}}
+\code{\link[=hyper]{hyper()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}
 }
 \keyword{internal}

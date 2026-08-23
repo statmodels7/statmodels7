@@ -10,7 +10,7 @@ predict_moments()
 A named list of functions.
 }
 \description{
-The moment names \code{\link{predict.StatmodFit}} understands, mapped to the
+The moment names \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} understands, mapped to the
 \pkg{distributions7} generic each one asks.
 }
 \keyword{internal}

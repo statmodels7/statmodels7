@@ -7,9 +7,9 @@
 statmod_active(spec, blocks, beta, hyper, tol = 1e-08)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{blocks}{The blocks, as \code{\link{statmod_blocks}} returns them.}
+\item{blocks}{The blocks, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns them.}
 
 \item{beta}{The stacked coefficients.}
 
@@ -25,18 +25,18 @@ A logical vector over the stacked coefficients, \code{FALSE} where one lies
 at a point its penalty is not differentiable at.
 }
 \details{
-The kink locations come from \code{\link[penalties7]{penalty_kinks}} read at
+The kink locations come from \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} read at
 the hyperparameters in force, and a coefficient is inactive when it sits at
 one of them. Everything outside a kinked block is active, having no kink to
 sit at.
 
 The map of a kinked penalty is the identity here: a separable penalty under
 a general map is the generalized-lasso problem, which
-\code{\link[penalties7]{penalty_prox}} rejects, so a block that reaches this
+\code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}} rejects, so a block that reaches this
 function penalizes its coefficients one at a time and a kink of the penalty
 is a kink in a coefficient.
 }
 \seealso{
-\code{\link{outer_tau}}
+\code{\link[=outer_tau]{outer_tau()}}
 }
 \keyword{internal}

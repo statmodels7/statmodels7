@@ -15,11 +15,11 @@ statmod_fit_joint(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
-\item{obj}{The objective, as \code{\link{statmod_objective}} returns it.}
+\item{obj}{The objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it.}
 
 \item{beta}{The coefficients to start from.}
 
@@ -42,8 +42,8 @@ alternating between the two blocks.
 \details{
 The alternation was not a statement about the model: the exact gradient of
 both blocks and the exact observed information over both together are
-already available, the second as \code{\link{statmod_full_information}},
-which was built for \code{\link{vcov.StatmodFit}} and discarded for the
+already available, the second as \code{\link[=statmod_full_information]{statmod_full_information()}},
+which was built for \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and discarded for the
 fit. What the alternation cost is filter runs -- each sweep handed the
 term's parameters to an optimizer of their own, and every one of ITS
 iterations ran the recursion and its adjoint again, with the coefficients
@@ -61,7 +61,7 @@ put it outside the region where its recursion is bounded, and the search
 must step back from it rather than abandon the run.
 }
 \seealso{
-\code{\link{statmod_fit_structural}}, which fits the term's
+\code{\link[=statmod_fit_structural]{statmod_fit_structural()}}, which fits the term's
 parameters alone and is what a term of the likelihood shape still uses.
 }
 \keyword{internal}

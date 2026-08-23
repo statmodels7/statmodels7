@@ -7,12 +7,12 @@
 xtx(A, threads = 1L)
 }
 \arguments{
-\item{A}{A dense design block, \code{n x p}.}
+\item{A}{A dense design block, \verb{n x p}.}
 
 \item{threads}{The thread count, a plain integer.}
 }
 \value{
-A \code{p x p} matrix.
+A \verb{p x p} matrix.
 }
 \description{
 \code{crossprod(A)} through the threaded kernel where the count and the

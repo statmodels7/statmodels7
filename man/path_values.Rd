@@ -38,11 +38,11 @@ through it, rather than each target bracketed on its own. Measured, a
 bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 twenty-five points spent 6.7 per cent of itself locating the values it
 would visit; through the exponent the whole grid costs four evaluations of
-the size. \code{\link{kink_by_power}} checks the relation before the values
+the size. \code{\link[=kink_by_power]{kink_by_power()}} checks the relation before the values
 are used and returns \code{NA} where it does not hold, and those fall back
-to \code{\link{kink_solve}} one at a time.
+to \code{\link[=kink_solve]{kink_solve()}} one at a time.
 }
 \seealso{
-\code{\link{kink_power}}, \code{\link{path_forced}}
+\code{\link[=kink_power]{kink_power()}}, \code{\link[=path_forced]{path_forced()}}
 }
 \keyword{internal}

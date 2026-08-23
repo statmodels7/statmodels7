@@ -23,7 +23,7 @@ The position of the intercept of one equation's PARAMETRIC block, or
 }
 \details{
 It is a column of the parametric block and not merely a coefficient whose
-name ends in \code{(Intercept)}. \code{\link[modelterms7]{nl}} names the
+name ends in \code{(Intercept)}. \code{\link[modelterms7:nl]{modelterms7::nl()}} names the
 intercept of each of its own parameters the same way, and those live on
 those parameters' charts rather than on the predictor's, so a model
 written \code{y ~ 0 + nl(...)} puts one of them first. Writing the
@@ -37,6 +37,6 @@ where the block empties at about 300, so all of its points were the same
 empty fit and every subject deviation was estimated as exactly zero.
 }
 \seealso{
-\code{\link{start_at}}, \code{\link{statmod_intercepts}}
+\code{\link[=start_at]{start_at()}}, \code{\link[=statmod_intercepts]{statmod_intercepts()}}
 }
 \keyword{internal}

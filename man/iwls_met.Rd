@@ -7,7 +7,7 @@
 iwls_met(method, state)
 }
 \arguments{
-\item{method}{An \code{\link{Iwls}} object.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{state}{The iteration state, as \code{optimizers7::crit_met}
 documents it.}

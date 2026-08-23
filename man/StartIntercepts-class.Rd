@@ -29,7 +29,7 @@ StartSearch(label = character(0), optimizer = NULL, over = NULL)
 \item{center}{Whether the draw is added to the intercept-only start.}
 }
 \value{
-An S7 object inheriting from \code{\link{start_strategy}}.
+An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 The classes the constructors below instantiate.

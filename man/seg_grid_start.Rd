@@ -17,9 +17,9 @@ seg_grid_start(tm, data, response)
 The specification, with \code{psi} set where the rule applies.
 }
 \description{
-Runs \code{\link[modelterms7]{seg_start}} on a
-\code{\link[modelterms7]{seg}}, \code{\link[modelterms7]{jump}} or
-\code{\link[modelterms7]{jseg}} term whose starting positions the caller
+Runs \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} on a
+\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}} term whose starting positions the caller
 did not name, and returns the specification unchanged for anything else.
 }
 \details{
@@ -44,7 +44,7 @@ A caller who names \code{psi} has said where to begin and is left
 alone, which is also how the grid is turned off.
 }
 \seealso{
-\code{\link[modelterms7]{seg_start}},
-\code{\link{statmod_terms}}
+\code{\link[modelterms7:seg_start]{modelterms7::seg_start()}},
+\code{\link[=statmod_terms]{statmod_terms()}}
 }
 \keyword{internal}

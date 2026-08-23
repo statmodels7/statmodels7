@@ -29,9 +29,9 @@ read off them 1.8e-05 against 0.090. A zero looks like a number and is
 worse than a gap, so those coefficients are left missing.
 
 The question is asked of the term through
-\code{\link[modelterms7]{term_jacobian_block}} rather than of its class,
+\code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} rather than of its class,
 so a construction whose block IS a Jacobian keeps its inference: a
-continuous \code{\link[modelterms7]{seg}}, and a discontinuous one
-smoothed by an \code{\link[penalties7]{abs_smoother}}, both answer yes.
+continuous \code{\link[modelterms7:seg]{modelterms7::seg()}}, and a discontinuous one
+smoothed by an \code{\link[penalties7:abs_smoother]{penalties7::abs_smoother()}}, both answer yes.
 }
 \keyword{internal}

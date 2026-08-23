@@ -24,7 +24,7 @@ statmod_select(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -34,7 +34,7 @@ statmod_select(
 
 \item{inner_optimizer}{The inner method.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{optimizer}{The optimizer for the differentiable hyperparameters.}
 
@@ -50,11 +50,11 @@ statmod_select(
 cross-validation needs in order to refit on part of it.}
 }
 \value{
-The list \code{\link{outer_fit}} returns.
+The list \code{\link[=outer_fit]{outer_fit()}} returns.
 }
 \description{
-Routes the twice differentiable hyperparameters to \code{\link{outer_fit}}
-and the rest to \code{\link{statmod_path}}.
+Routes the twice differentiable hyperparameters to \code{\link[=outer_fit]{outer_fit()}}
+and the rest to \code{\link[=statmod_path]{statmod_path()}}.
 }
 \details{
 The split is the same one that decides how the coefficients are fitted, so a
@@ -63,6 +63,6 @@ hyperparameters handled by methods that do not ask for a curvature it does
 not have.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

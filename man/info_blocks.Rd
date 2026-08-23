@@ -7,7 +7,7 @@
 info_blocks(spec, theta, expected = TRUE, approx = "bartlett")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{theta}{The per-observation parameters.}
 

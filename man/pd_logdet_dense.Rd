@@ -16,14 +16,14 @@ A list with \code{logdet}, \code{ok} and, on a refusal reached
 through the eigendecomposition, \code{min_ev} and \code{max_ev}.
 }
 \description{
-The three routes described at \code{\link{pd_logdet}}, on a dense matrix.
+The three routes described at \code{\link[=pd_logdet]{pd_logdet()}}, on a dense matrix.
 }
 \details{
-Split out so that \code{\link{pd_factor}} can reach it as the fallback of
+Split out so that \code{\link[=pd_factor]{pd_factor()}} can reach it as the fallback of
 the sparse route without restating the verdict: there is one place that
 decides whether a matrix is positive definite, and one set of thresholds.
 }
 \seealso{
-\code{\link{pd_logdet}}
+\code{\link[=pd_logdet]{pd_logdet()}}
 }
 \keyword{internal}

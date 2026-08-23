@@ -7,7 +7,7 @@
 statmod_held_levels(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 }
@@ -41,10 +41,10 @@ The question is asked of the \strong{span} of the equation's design and
 not of a column named \code{"(Intercept)"}: a factor coded without one,
 or any set of columns summing to a constant, spans it just as well.
 Which parameter is the level is the term's own answer, through
-\code{\link[modelterms7]{term_level_param}}.
+\code{\link[modelterms7:term_level_param]{modelterms7::term_level_param()}}.
 
 \strong{A developed level asks the same question of a subspace.} With
-\code{omega ~ Z gamma} the confounding is no longer with one constant
+\verb{omega ~ Z gamma} the confounding is no longer with one constant
 but with whatever \code{span(Z)} shares with the span of the equation's
 design. The constant coordinates are the term's own answer, held as
 above. For the rest, an unpenalized coordinate whose column lies in the
@@ -57,6 +57,6 @@ deviation is. Where the direction really is flat, the variance matrix
 names it.
 }
 \seealso{
-\code{\link{reject_incompatible}}
+\code{\link[=reject_incompatible]{reject_incompatible()}}
 }
 \keyword{internal}

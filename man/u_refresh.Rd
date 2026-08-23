@@ -20,7 +20,7 @@ u_refresh(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design, already refreshed at \code{coef}.}
 
@@ -34,10 +34,10 @@ u_refresh(
 
 \item{approx}{The approximation for the expected information.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}, or
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}, or
 \code{NULL} to resolve them here.}
 
-\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}, or
+\item{Hl}{The link-scale curvature, from \code{\link[=refresh_hessian]{refresh_hessian()}}, or
 \code{NULL} to compute it here.}
 }
 \value{
@@ -45,21 +45,21 @@ A numeric vector as long as the stacked coefficients.
 }
 \description{
 The part of \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} that
-\code{\link{u_vector}} does not compute: everything coming from
+\code{\link[=u_vector]{u_vector()}} does not compute: everything coming from
 \eqn{\partial X/\partial\beta} where a term's block depends on its own
 coefficients.
 }
 \details{
 With \eqn{H_{(a,j),(b,k)} = -\sum_i w_i \ell_{ab,i}X_a[i,j]X_b[i,k]} and a
 block that moves, differentiating in \eqn{\beta_c} gives three
-contributions and \code{\link{u_vector}} computes one. The other two are
+contributions and \code{\link[=u_vector]{u_vector()}} computes one. The other two are
 transposes under the trace, so with
 \eqn{R_{ab}[i,j] = \sum_k M_{(a,j),(b,k)}X_b[i,k]} and
 \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 
 \strong{The derivative is asked of the TERM}, through
-\code{\link[modelterms7]{term_block_contract}}, and never differenced here.
+\code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}, and never differenced here.
 Two reasons, both measured: a term knows its own chain rule -- the links on
 its parameters and a subformula's design -- and a break-point column is a
 step function in its break-point, so a difference quotient of it diverges as
@@ -67,7 +67,7 @@ the step shrinks rather than converging. A term that does not implement the
 contraction inherits zeros, which is exactly right for a fixed design.
 }
 \seealso{
-\code{\link{u_vector}}, \code{\link{refresh_amat}},
-\code{\link[modelterms7]{term_block_contract}}
+\code{\link[=u_vector]{u_vector()}}, \code{\link[=refresh_amat]{refresh_amat()}},
+\code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}
 }
 \keyword{internal}

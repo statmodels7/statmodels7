@@ -17,7 +17,7 @@ uses \eqn{\log n}, resolved when the model is fitted.}
 \code{"observed"}. The exact derivatives need the observed one.}
 }
 \value{
-An \code{\link{OuterMethod}}.
+An \code{\link[=OuterMethod]{OuterMethod()}}.
 }
 \description{
 \code{aic()} and \code{bic()} choose the hyperparameters by an estimate of
@@ -42,7 +42,7 @@ makes it computable is that at the mode \eqn{\partial\ell/\partial\beta} is
 
 \strong{Which \eqn{\tau}.} The trace is taken over the whole coefficient
 vector, so a term's contribution reads the full penalized information and
-not only its own block. \code{\link{statmod_edf}}'s per-term numbers invert
+not only its own block. \code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert
 the block instead, which is what a per-term reading has to do, and the two
 agree when the blocks are orthogonal and differ when they are not.
 
@@ -58,7 +58,7 @@ mean in the parameters, which is not one of \pkg{distributions7}'s generics.
 
 \strong{Over a penalty with a kink} these criteria sweep a path rather than
 differentiate. How that path covers a term carrying more than one such
-hyperparameter is the TERM's own, \code{\link[modelterms7]{term_search}},
+hyperparameter is the TERM's own, \code{\link[modelterms7:term_search]{modelterms7::term_search()}},
 since the same criterion is asked of the smooth hyperparameters of the
 model as well and those are not swept at all.
 }
@@ -76,5 +76,5 @@ generalized additive models. \emph{Journal of the Royal Statistical Society,
 Series B}, 70(3), 495--518.
 }
 \seealso{
-\code{\link{reml}}, \code{\link{statmod}}
+\code{\link[=reml]{reml()}}, \code{\link[=statmod]{statmod()}}
 }

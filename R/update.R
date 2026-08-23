@@ -10,20 +10,20 @@
 #' itself and installs only what is missing or out of date. The order of the
 #' names therefore does not matter.
 #'
-#' With \code{action = "report"}, the default, nothing is installed and the
+#' With `action = "report"`, the default, nothing is installed and the
 #' function returns the versions currently installed together with the call
 #' that would update them. Installing packages is a side effect that must
 #' be requested explicitly.
 #'
-#' @param action \code{"report"} to describe what is installed, or
-#'   \code{"install"} to install and update.
-#' @param quiet Passed to \pkg{pak}; suppresses its output when \code{TRUE}.
+#' @param action `"report"` to describe what is installed, or
+#'   `"install"` to install and update.
+#' @param quiet Passed to \pkg{pak}; suppresses its output when `TRUE`.
 #'
-#' @return For \code{"report"}, a data frame as
-#'   \code{\link{statmodels7_versions}} returns, invisibly for
-#'   \code{"install"}. The report is printed as a side effect.
+#' @return For `"report"`, a data frame as
+#'   [statmodels7_versions()] returns, invisibly for
+#'   `"install"`. The report is printed as a side effect.
 #'
-#' @seealso \code{\link{statmodels7_versions}}
+#' @seealso [statmodels7_versions()]
 #'
 #' @examples
 #' statmodels7_update()

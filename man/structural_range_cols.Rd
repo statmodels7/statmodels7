@@ -7,7 +7,7 @@
 structural_range_cols(spec, design, key, free)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -20,6 +20,6 @@ An integer vector.
 }
 \description{
 Positions among the term's free parameters that some penalty of the model
-shrinks, which are the directions \code{\link{ml}()} integrates over.
+shrinks, which are the directions \code{\link[=ml]{ml()}} integrates over.
 }
 \keyword{internal}

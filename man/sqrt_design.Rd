@@ -7,9 +7,9 @@
 sqrt_design(design, L)
 }
 \arguments{
-\item{design}{The design, as \code{\link{statmod_design}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 
-\item{L}{The Cholesky factors, from \code{\link{chol_blocks}}.}
+\item{L}{The Cholesky factors, from \code{\link[=chol_blocks]{chol_blocks()}}.}
 }
 \value{
 An \eqn{nK \times p} matrix, or \code{NULL} when a block was not

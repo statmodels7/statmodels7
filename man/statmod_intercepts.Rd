@@ -7,7 +7,7 @@
 statmod_intercepts(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A named list, one entry per distribution parameter, on the link
@@ -18,13 +18,13 @@ The intercept-only maximum likelihood estimate, where it can be had, and a
 draw from the parameter's domain otherwise.
 }
 \details{
-Two routes, tried in order. \code{\link[distributions7]{fit_distrib}} fits
+Two routes, tried in order. \code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} fits
 the distribution to the response with no covariates, which is the same model
 with every slope set to zero and therefore exactly where the fit should
 begin; its link-scale coefficients are the intercepts.
-\code{\link[distributions7]{distrib_start}} is the fallback, and its result
+\code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback, and its result
 is a list of starts, each keyed by parameter, so a value is reached at
-\code{[[1]][[p]]}.
+\verb{[[1]][[p]]}.
 
 \strong{The random stream is pinned and restored.} That intercept-only fit
 starts from draws over the parameters' domains, so it returns a different
@@ -42,6 +42,6 @@ the design \pkg{distributions7} already documents and which only its
 multivariate gaussian implements.
 }
 \seealso{
-\code{\link{statmod_start}}
+\code{\link[=statmod_start]{statmod_start()}}
 }
 \keyword{internal}

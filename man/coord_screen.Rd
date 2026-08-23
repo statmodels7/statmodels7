@@ -35,6 +35,6 @@ caller checks what it discarded. With no previous point there is nothing to
 screen against and every coordinate is visited.
 }
 \seealso{
-\code{\link{coord_fit}}
+\code{\link[=coord_fit]{coord_fit()}}
 }
 \keyword{internal}

@@ -16,7 +16,7 @@ A numeric vector, one value per observation, or \code{NULL}.
 }
 \description{
 The response carried onto the scale of one equation's linear predictor,
-which is what \code{\link[modelterms7]{term_coef_start}} needs to estimate
+which is what \code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} needs to estimate
 a term's own parameters from the data.
 }
 \details{
@@ -39,7 +39,7 @@ the nearest admissible value, since a link is not defined at its bound --
 for counts under a log link that is the classical half.
 }
 \seealso{
-\code{\link{start_at}},
-\code{\link[modelterms7]{term_coef_start}}
+\code{\link[=start_at]{start_at()}},
+\code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}}
 }
 \keyword{internal}

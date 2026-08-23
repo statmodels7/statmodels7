@@ -7,11 +7,11 @@
 statmod_design_at(spec, coef, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 
-\item{design}{The design, as \code{\link{statmod_design}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
 A design.
@@ -32,7 +32,7 @@ specification, because the rescaling factor of a discontinuous break-point
 term is a state of the iteration and not a function of the coefficients:
 it halves when the break-point reverses direction, which is a fact about
 the path and not about the point. The state advances only when
-\code{\link{statmod_commit_refresh}} is called, so the trial points of a
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} is called, so the trial points of a
 line search all see the same schedule and the schedule advances once per
 sweep.
 
@@ -40,6 +40,6 @@ The result is memoized on the coefficients, since the objective, its
 gradient and its curvature are asked for at the same point in turn.
 }
 \seealso{
-\code{\link{statmod_commit_refresh}}
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}}
 }
 \keyword{internal}

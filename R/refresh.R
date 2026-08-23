@@ -19,12 +19,12 @@ NULL
 #' The parameter and name of every term whose design block is a function of
 #' its own coefficients, in the order the design holds them.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
-#' @return A list of entries with \code{param} and \code{term}, possibly
+#' @return A list of entries with `param` and `term`, possibly
 #'   empty.
 #'
-#' @seealso \code{\link{statmod_design_at}}, \code{\link{refreshes_own_block}}
+#' @seealso [statmod_design_at()], [refreshes_own_block()]
 #'
 #' @keywords internal
 statmod_refreshable <- function(spec) {
@@ -58,20 +58,20 @@ statmod_refreshable <- function(spec) {
 #' term is a state of the iteration and not a function of the coefficients:
 #' it halves when the break-point reverses direction, which is a fact about
 #' the path and not about the point. The state advances only when
-#' \code{\link{statmod_commit_refresh}} is called, so the trial points of a
+#' [statmod_commit_refresh()] is called, so the trial points of a
 #' line search all see the same schedule and the schedule advances once per
 #' sweep.
 #'
 #' The result is memoized on the coefficients, since the objective, its
 #' gradient and its curvature are asked for at the same point in turn.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
-#' @param design The design, as \code{\link{statmod_design}} returns it.
+#' @param design The design, as [statmod_design()] returns it.
 #'
 #' @return A design.
 #'
-#' @seealso \code{\link{statmod_commit_refresh}}
+#' @seealso [statmod_commit_refresh()]
 #'
 #' @keywords internal
 statmod_design_at <- function(spec, coef, design) {
@@ -168,25 +168,25 @@ statmod_design_at <- function(spec, coef, design) {
 #' rescaling reaches only the columns -- so committing does not move the
 #' objective at the same coefficients. For a FROZEN working block that
 #' sentence is false in two ways, which is why those terms are committed by
-#' \code{\link{fit_working}} and skipped here: a jseg's quadratic read-off
+#' [fit_working()] and skipped here: a jseg's quadratic read-off
 #' is incremental in the committed position, so a second commit at the same
 #' coefficients takes a second step, and a refresh may relabel crossed
 #' break-point lineages, after which the caller's coefficients are stale.
 #' The relabeling is why the COMMITTED coefficients are returned: a caller
 #' continues from what the terms stored, not from what it passed in.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
-#' @param which Which refresh entries to commit: \code{"all"},
-#'   \code{"jacobian"} (the default at the alternation's pass level, where
+#' @param which Which refresh entries to commit: `"all"`,
+#'   `"jacobian"` (the default at the alternation's pass level, where
 #'   the frozen ones are already committed by their own phase) or
-#'   \code{"frozen"}.
+#'   `"frozen"`.
 #'
 #' @return The coefficient list, with each committed term's stretch replaced
 #'   by the coefficients the term stored, invisibly.
 #'
-#' @seealso \code{\link{statmod_design_at}}, \code{\link{fit_working}}
+#' @seealso [statmod_design_at()], [fit_working()]
 #'
 #' @keywords internal
 statmod_commit_refresh <- function(spec, coef, design, which = "all") {
@@ -214,7 +214,7 @@ statmod_commit_refresh <- function(spec, coef, design, which = "all") {
 #' Have the Refreshable Terms Settled?
 #'
 #' @description
-#' \code{TRUE} when every term that recomputes its own block reports that its
+#' `TRUE` when every term that recomputes its own block reports that its
 #' own iteration has nothing further to say.
 #'
 #' @details
@@ -224,20 +224,20 @@ statmod_commit_refresh <- function(spec, coef, design, which = "all") {
 #' linearization with a frozen weight, as in a discontinuous break-point
 #' term, it is not, and the profile objective there is a step function in the
 #' break-point with no gradient to vanish. Measured on
-#' \code{jump()}: the fit reaches the break-point and the jump size to three
+#' `jump()`: the fit reaches the break-point and the jump size to three
 #' figures, the objective stops moving at the twelfth digit, and the score of
 #' the working model stays at 0.176 forever.
-#' \code{\link[modelterms7]{term_converged}} is what each construction
+#' [modelterms7::term_converged()] is what each construction
 #' answers instead.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param which Which refresh entries to ask: \code{"all"},
-#'   \code{"jacobian"} or \code{"frozen"}.
+#' @param which Which refresh entries to ask: `"all"`,
+#'   `"jacobian"` or `"frozen"`.
 #'
-#' @return A single logical; \code{TRUE} when there is nothing to ask.
+#' @return A single logical; `TRUE` when there is nothing to ask.
 #'
-#' @seealso \code{\link{statmod_design_at}}
+#' @seealso [statmod_design_at()]
 #'
 #' @keywords internal
 statmod_refresh_settled <- function(spec, design, which = "all") {
@@ -263,13 +263,13 @@ statmod_refresh_settled <- function(spec, design, which = "all") {
 #' they imply are read off the fitted object rather than off the
 #' specification it started from.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
 #'
-#' @return A \code{\link{StatmodSpec}}.
+#' @return A [StatmodSpec()].
 #'
-#' @seealso \code{\link{statmod_commit_refresh}}
+#' @seealso [statmod_commit_refresh()]
 #'
 #' @keywords internal
 statmod_fitted_spec <- function(spec, coef, design) {

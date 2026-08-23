@@ -30,7 +30,7 @@ the gradient and the Hessian both read.
 wherever the design is -- a grouping indicator, a factor \code{by}, a
 \code{linpar} over many levels -- and it was being densified here only
 because the penalty's accumulator is a base matrix. Where the sum is large
-enough and sparse enough to be worth it (\code{\link{worth_sparse}}) it is
+enough and sparse enough to be worth it (\code{\link[=worth_sparse]{worth_sparse()}}) it is
 kept sparse and factorized as such: measured on a random intercept over 500
 levels, p = 503 at a density of 0.014, the factorization and its
 log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
@@ -49,7 +49,7 @@ sparse route as three times better than it is. A fit never gets that hit,
 the penalized matrix being a new one at every point.
 
 \strong{The inverse stays dense whatever the factor is.} Its readers take
-full matrix products against it -- \code{\link{block_leverage}} and the
+full matrix products against it -- \code{\link[=block_leverage]{block_leverage()}} and the
 Hessian's pair loop -- so the inverse of a sparse matrix being dense costs
 nothing sparsity could have kept. What the sparse factor buys is the cost
 of producing it.
@@ -58,6 +58,6 @@ of producing it.
 the answer both callers already gave there.
 }
 \seealso{
-\code{\link{pd_factor}}
+\code{\link[=pd_factor]{pd_factor()}}
 }
 \keyword{internal}

@@ -14,7 +14,7 @@ statmod_eta_continued(fit, spec, design)
 \item{design}{Its design.}
 }
 \value{
-A list shaped as \code{\link{statmod_eta}}'s, without the
+A list shaped as \code{\link[=statmod_eta]{statmod_eta()}}'s, without the
 memoized filter objects.
 }
 \description{
@@ -31,13 +31,13 @@ once at the observed rows to recover that state -- the level and the
 driving quantity at each of them, the level being the difference between
 the filtered predictor and the static one -- and the term is asked to
 continue from there through
-\code{\link[modelterms7]{term_continue}}.
+\code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
 
 WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
 times. New rows carrying the response are a re-reading: the filter is run
 over them from the term's own seed, which is what a caller means by
 predicting a model on another series, and is why
-\code{predict(fit, newdata = <the fitting data>)} returns the fitted
+\verb{predict(fit, newdata = <the fitting data>)} returns the fitted
 values. New rows without it are a continuation, and must come after the
 observed series. A frame with the response on some rows and not others is
 rejected: the two readings differ, and picking one would answer a question
@@ -48,6 +48,6 @@ rejected: what such a term reports at an observed row is a posterior over
 states, which past the data is a predictive distribution and not a value.
 }
 \seealso{
-\code{\link{predict.StatmodFit}}
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 }
 \keyword{internal}

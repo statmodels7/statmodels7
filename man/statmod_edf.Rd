@@ -36,7 +36,7 @@ A term may carry more than one penalty, over different parameters of its
 own, and each has hyperparameters of its own filed under a key of its own.
 The row stays per term, which is the granularity a table of terms wants,
 and the hyperparameters are handed over keyed by the penalty names
-\code{\link[modelterms7]{term_penalties}} gives, which is the shape
+\code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} gives, which is the shape
 \code{edf()} reads them in. Passing the hyperparameters of one penalty for
 a term carrying two would count the whole block against it.
 

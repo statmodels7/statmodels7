@@ -7,7 +7,7 @@
 start_intercepts()
 }
 \value{
-A \code{\link{start_strategy}}.
+A \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 The default: each equation's intercept at the maximum likelihood estimate
@@ -27,5 +27,5 @@ start_intercepts()
 
 }
 \seealso{
-\code{\link{start_origin}}, \code{\link{start_random}}
+\code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}}
 }

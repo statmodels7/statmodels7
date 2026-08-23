@@ -16,7 +16,7 @@
 \arguments{
 \item{...}{Unused.}
 
-\item{object, x, formula}{A \code{\link{StatmodFit}}.}
+\item{object, x, formula}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 }
 \value{
 Nothing; each method signals an error.
@@ -30,7 +30,7 @@ naming what to ask instead.
 per distribution parameter, and the formula it was written with is not a
 \code{terms} object -- the bars separating the equations are not
 \code{stats}' syntax. \code{formula()} gives what was written and
-\code{\link{statmod_design}} gives what it produced.
+\code{\link[=statmod_design]{statmod_design()}} gives what it produced.
 
 \code{model.frame()} would have to return the fitting data, which a fit
 does not keep: what it keeps is each term's blueprint, so that new data is
@@ -38,13 +38,13 @@ reapplied rather than relearned.
 
 \code{anova()} would have to compare models by a test, and a penalized fit
 whose hyperparameters were chosen from the same data has no null
-distribution to compare against. \code{\link{logLik.StatmodFit}},
+distribution to compare against. \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}},
 \code{AIC} and \code{BIC} are what this package reports, with the
 effective degrees of freedom corrected for the smoothing parameters
 having been estimated.
 }
 \seealso{
-\code{\link{formula.StatmodFit}},
-\code{\link{model.matrix.StatmodFit}}, \code{\link{logLik.StatmodFit}}
+\code{\link[=formula.StatmodFit]{formula.StatmodFit()}},
+\code{\link[=model.matrix.StatmodFit]{model.matrix.StatmodFit()}}, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}
 }
 \keyword{internal}

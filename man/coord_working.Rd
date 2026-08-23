@@ -7,10 +7,10 @@
 coord_working(spec, ep, coef, design, p, expected, approx)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{ep}{The linear predictors and parameters, from
-\code{\link{statmod_eta}}.}
+\code{\link[=statmod_eta]{statmod_eta()}}.}
 
 \item{coef}{The coefficients.}
 

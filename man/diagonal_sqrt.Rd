@@ -16,7 +16,7 @@ A matrix with \code{p} columns, or \code{NULL}.
 }
 \description{
 One row per coordinate the penalty reaches, carrying the square root of
-that coordinate's entry, which is \code{\link{penalty_sqrt}}'s answer
+that coordinate's entry, which is \code{\link[=penalty_sqrt]{penalty_sqrt()}}'s answer
 where the matrix is diagonal.
 }
 \details{
@@ -25,7 +25,7 @@ diagonal matrix IS its spectrum: a negative entry beyond the tolerance
 makes the penalty indefinite and there is no factor to return, and an
 entry at the tolerance is a null direction and contributes no row. The
 class of the result mirrors the argument's rather than being chosen:
-\code{\link{augmented_solve}} routes on whether either of the two factors
+\code{\link[=augmented_solve]{augmented_solve()}} routes on whether either of the two factors
 is sparse, so returning a sparse factor for a dense design would send a
 dense fit through the sparse route and a dense one through neither.
 }

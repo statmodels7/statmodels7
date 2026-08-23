@@ -24,7 +24,7 @@ at a glance, which a single unit cannot do.
 
 Zero is a reading and not the absence of one: on a coarse clock a fast fit
 measures exactly zero seconds, so it is reported as such rather than
-suppressed. A guard of the form \code{if (elapsed > 0)} would be a claim
+suppressed. A guard of the form \verb{if (elapsed > 0)} would be a claim
 that zero cannot be measured, and for a duration that claim is false.
 }
 \examples{

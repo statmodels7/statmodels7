@@ -12,7 +12,7 @@ eta_to_hyper(eta, idx, hyper)
 \arguments{
 \item{hyper}{The hyperparameter structure.}
 
-\item{idx}{The index, as \code{\link{outer_hyper_index}} returns it.}
+\item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it.}
 
 \item{eta}{A free vector.}
 }

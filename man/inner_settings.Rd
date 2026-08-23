@@ -7,7 +7,7 @@
 inner_settings(method)
 }
 \arguments{
-\item{method}{\code{\link{iwls}()} or an \pkg{optimizers7} optimizer.}
+\item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
 }
 \value{
 A list with \code{expected}, \code{approx}, \code{maxit} and
@@ -21,7 +21,7 @@ method in one place.
 Every route that fits the coefficients reads these, and reading them in one
 place is what keeps a refit inside a path or a fold on the same terms as the
 fit the caller asked for. Hard-coding them instead ran cross-validation at a
-tolerance a hundred times tighter than \code{\link{iwls}}'s own, which cost
+tolerance a hundred times tighter than \code{\link[=iwls]{iwls()}}'s own, which cost
 26 per cent in time and answered a question the caller had not asked.
 }
 \keyword{internal}

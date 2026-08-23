@@ -32,6 +32,6 @@ returned the right number of finite values, since a function that answers
 wrongly would otherwise be recycled into a different model.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

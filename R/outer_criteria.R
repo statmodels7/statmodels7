@@ -26,19 +26,19 @@ NULL
 #' Prediction-Error Criteria for the Hyperparameters
 #'
 #' @description
-#' \code{aic()} and \code{bic()} choose the hyperparameters by an estimate of
+#' `aic()` and `bic()` choose the hyperparameters by an estimate of
 #' prediction error rather than by a marginal likelihood.
 #'
 #' @details
-#' \strong{The criterion} is
+#' **The criterion** is
 #' \deqn{C(\theta) = -2\ell(\hat\beta(\theta)) + \kappa\,\tau(\theta),}
 #' with \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]} the effective degrees of freedom
-#' and \eqn{\kappa} the price of one of them: \eqn{2} for \code{aic()} and
-#' \eqn{\log n} for \code{bic()}, which is \code{aic()} with that
+#' and \eqn{\kappa} the price of one of them: \eqn{2} for `aic()` and
+#' \eqn{\log n} for `bic()`, which is `aic()` with that
 #' \eqn{\kappa} and is offered separately because it is what anybody would
 #' look for.
 #'
-#' \strong{Both derivatives are exact}, by the implicit function theorem, and
+#' **Both derivatives are exact**, by the implicit function theorem, and
 #' come from the same pieces the marginal criterion uses. One thing differs and
 #' it is what separates the two families: the envelope theorem does not apply
 #' here. \eqn{\ell} alone is not stationary at the penalized mode, so its
@@ -48,39 +48,39 @@ NULL
 #'
 #' \strong{Which \eqn{\tau}.} The trace is taken over the whole coefficient
 #' vector, so a term's contribution reads the full penalized information and
-#' not only its own block. \code{\link{statmod_edf}}'s per-term numbers invert
+#' not only its own block. [statmod_edf()]'s per-term numbers invert
 #' the block instead, which is what a per-term reading has to do, and the two
 #' agree when the blocks are orthogonal and differ when they are not.
 #'
-#' \strong{GCV is not among these}, and the reason is the framework rather
+#' **GCV is not among these**, and the reason is the framework rather
 #' than the work: classical GCV divides a residual sum of squares by
 #' \eqn{(n-\tau)^2}, which estimates an unknown scale. Here every distribution
 #' parameter has its own equation and nothing is profiled, so there is no
 #' unknown scale for that ratio to estimate, and the criterion it degenerates
-#' to is \code{aic()} -- the substitution Wood (2008) makes in the other
+#' to is `aic()` -- the substitution Wood (2008) makes in the other
 #' direction when the scale is known. A GCV on the squared error of the fitted
 #' mean is a different and well-defined object; it needs the derivative of that
 #' mean in the parameters, which is not one of \pkg{distributions7}'s generics.
 #'
-#' \strong{Over a penalty with a kink} these criteria sweep a path rather than
+#' **Over a penalty with a kink** these criteria sweep a path rather than
 #' differentiate. How that path covers a term carrying more than one such
-#' hyperparameter is the TERM's own, \code{\link[modelterms7]{term_search}},
+#' hyperparameter is the TERM's own, [modelterms7::term_search()],
 #' since the same criterion is asked of the smooth hyperparameters of the
 #' model as well and those are not swept at all.
 #'
-#' @param k The price of one degree of freedom. Defaults to 2; \code{bic()}
+#' @param k The price of one degree of freedom. Defaults to 2; `bic()`
 #'   uses \eqn{\log n}, resolved when the model is fitted.
-#' @param hessian Which information is used, \code{"expected"} or
-#'   \code{"observed"}. The exact derivatives need the observed one.
+#' @param hessian Which information is used, `"expected"` or
+#'   `"observed"`. The exact derivatives need the observed one.
 #'
-#' @return An \code{\link{OuterMethod}}.
+#' @return An [OuterMethod()].
 #'
 #' @references
 #' Wood, S. N. (2008). Fast stable direct fitting and smoothness selection for
-#' generalized additive models. \emph{Journal of the Royal Statistical Society,
-#' Series B}, 70(3), 495--518.
+#' generalized additive models. *Journal of the Royal Statistical Society,
+#' Series B*, 70(3), 495--518.
 #'
-#' @seealso \code{\link{reml}}, \code{\link{statmod}}
+#' @seealso [reml()], [statmod()]
 #'
 #' @examples
 #' set.seed(1)
@@ -109,7 +109,7 @@ bic <- function(hessian = c("observed", "expected")) {
 #' Is a Criterion Minimized?
 #'
 #' @description
-#' \code{TRUE} for a prediction-error criterion, \code{FALSE} for a marginal
+#' `TRUE` for a prediction-error criterion, `FALSE` for a marginal
 #' likelihood, which is maximized.
 #'
 #' @details
@@ -118,7 +118,7 @@ bic <- function(hessian = c("observed", "expected")) {
 #' written into the search, so a criterion added later declares its own
 #' orientation.
 #'
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #'
 #' @return A single logical.
 #'
@@ -134,7 +134,7 @@ outer_minimize <- function(method) {
 #' \eqn{\kappa}, resolved against the sample size where the method left it
 #' open.
 #'
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param n The number of observations.
 #'
 #' @return A single number.
@@ -163,13 +163,13 @@ outer_k <- function(method, n) {
 #' @param J The penalized information.
 #' @param H The likelihood's information.
 #' @param active A logical vector over the stacked coefficients, or
-#'   \code{NULL} for all of them.
+#'   `NULL` for all of them.
 #'
 #' @return A single number.
 #'
 #' @references
 #' Zou, H., Hastie, T. and Tibshirani, R. (2007). On the degrees of freedom of
-#' the lasso. \emph{The Annals of Statistics} 35(5), 2173--2192.
+#' the lasso. *The Annals of Statistics* 35(5), 2173--2192.
 #'
 #' @keywords internal
 outer_tau <- function(J, H, active = NULL) {
@@ -191,20 +191,20 @@ outer_tau <- function(J, H, active = NULL) {
 #' @description
 #' \eqn{-2\ell + \kappa\tau} at the penalized mode.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param approx The approximation for the expected information.
 #' @param active Which coefficients are away from a kink, as
-#'   \code{\link{statmod_active}} reports them, or \code{NULL} where no
+#'   [statmod_active()] reports them, or `NULL` where no
 #'   penalty has one.
 #'
-#' @return A list with \code{value}, \code{loglik}, \code{penalty} and
-#'   \code{edf}, or \code{NULL} where the information is not invertible.
+#' @return A list with `value`, `loglik`, `penalty` and
+#'   `edf`, or `NULL` where the information is not invertible.
 #'
-#' @seealso \code{\link{aic}}
+#' @seealso [aic()]
 #'
 #' @keywords internal
 statmod_pe <- function(spec, design, coef, hyper, method,
@@ -236,20 +236,20 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #' and the log-likelihood contributes \eqn{(\partial\rho/\partial\beta)'
 #' \hat\beta_m}. Differentiating once more brings in \eqn{A_{ml}}, \eqn{B_{ml}}
 #' and \eqn{\hat\beta_{ml}}, which are the quantities
-#' \code{\link{statmod_marginal_hess}} already assembles.
+#' [statmod_marginal_hess()] already assembles.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param idx The outer index.
-#' @param order \code{1} for the gradient alone, \code{2} for both.
+#' @param order `1` for the gradient alone, `2` for both.
 #'
-#' @return A list with \code{grad} and, at order 2, \code{hess}; or
-#'   \code{NULL} where the information is not invertible.
+#' @return A list with `grad` and, at order 2, `hess`; or
+#'   `NULL` where the information is not invertible.
 #'
-#' @seealso \code{\link{aic}}, \code{\link{statmod_marginal_grad}}
+#' @seealso [aic()], [statmod_marginal_grad()]
 #'
 #' @keywords internal
 statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,

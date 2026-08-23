@@ -7,7 +7,7 @@
 structural_joint_basis(spec, design, key, free, nb, basis)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -23,13 +23,13 @@ structural_joint_basis(spec, design, key, free, nb, basis)
 A matrix.
 }
 \description{
-The basis \code{\link{ml}()} projects the joint curvature onto: the
+The basis \code{\link[=ml]{ml()}} projects the joint curvature onto: the
 coefficients' own range basis, with one column per penalized parameter of
 the structural term appended.
 }
 \details{
-It is written once because \code{\link{statmod_marginal_full}} and
-\code{\link{statmod_structural_grad}} must project onto the SAME subspace,
+It is written once because \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
+\code{\link[=statmod_structural_grad]{statmod_structural_grad()}} must project onto the SAME subspace,
 and two callers composing it separately would agree only by accident.
 }
 \keyword{internal}

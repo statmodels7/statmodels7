@@ -38,6 +38,6 @@ It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.
 }
 \seealso{
-\code{\link{u_vector}}, \code{\link{trace_design_form}}
+\code{\link[=u_vector]{u_vector()}}, \code{\link[=trace_design_form]{trace_design_form()}}
 }
 \keyword{internal}

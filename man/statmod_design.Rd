@@ -7,7 +7,7 @@
 statmod_design(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A named list with one entry per parameter, each a list with
@@ -25,5 +25,5 @@ vapply(statmod_design(d), function(z) z$npar, integer(1))
 
 }
 \seealso{
-\code{\link{statmod_spec}}
+\code{\link[=statmod_spec]{statmod_spec()}}
 }

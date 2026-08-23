@@ -40,14 +40,14 @@ NULL
 #' and the Hessian's three corrections cannot disagree about which terms move
 #' or where their columns are.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, already refreshed at \code{coef}.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients.
 #' @param params,npar,offs The block bookkeeping.
 #'
 #' @return A list, empty where no block moves.
 #'
-#' @seealso \code{\link{u_refresh}}, \code{\link{contract3_refresh}}
+#' @seealso [u_refresh()], [contract3_refresh()]
 #'
 #' @keywords internal
 refresh_units <- function(spec, design, coef, params, npar, offs) {
@@ -79,7 +79,7 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 #' \eqn{\ell_{ab}} on the link scale, from whichever route the criterion's
 #' \eqn{K} was assembled on.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param expected Whether the information is the expected one.
@@ -113,13 +113,13 @@ refresh_hessian <- function(spec, design, coef, expected = FALSE,
 #' derivative already contracted in a direction for each of the two mixed terms
 #' of the Hessian.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param M The matrix the trace is taken against.
 #' @param params,npar,offs The block bookkeeping.
 #' @param ra The term's rows in the stacked coefficient vector.
 #' @param cw One length-\eqn{n} vector per distribution parameter, or
-#'   \code{NULL} where that parameter carries no coefficient.
+#'   `NULL` where that parameter carries no coefficient.
 #'
 #' @return A numeric matrix, one row per observation and one column per
 #'   coefficient of the term.
@@ -141,14 +141,14 @@ refresh_amat <- function(spec, design, M, params, npar, offs, ra, cw) {
 #' A Refreshable Block's Derivative Along One Direction
 #'
 #' @description
-#' \code{\link[modelterms7]{term_block_deriv}} on one unit, with the shape it
+#' [modelterms7::term_block_deriv()] on one unit, with the shape it
 #' returns checked rather than assumed.
 #'
-#' @param un One entry of \code{\link{refresh_units}}.
+#' @param un One entry of [refresh_units()].
 #' @param v The direction, as long as the term's coefficients.
 #' @param n The number of observations.
 #'
-#' @return A numeric matrix, \code{n} by the term's coefficient count.
+#' @return A numeric matrix, `n` by the term's coefficient count.
 #'
 #' @keywords internal
 refresh_dblock <- function(un, v, n) {
@@ -166,7 +166,7 @@ refresh_dblock <- function(un, v, n) {
 #' A Refreshable Block's Second Derivative Along Two Directions
 #'
 #' @description
-#' \code{\link[modelterms7]{term_block_deriv2}} on one unit, with the shape it
+#' [modelterms7::term_block_deriv2()] on one unit, with the shape it
 #' returns checked rather than assumed.
 #'
 #' @details
@@ -175,13 +175,13 @@ refresh_dblock <- function(un, v, n) {
 #' refusal for a block that is a working linearization rather than a Jacobian.
 #' Nothing is differenced here in either case.
 #'
-#' @param un One entry of \code{\link{refresh_units}}.
+#' @param un One entry of [refresh_units()].
 #' @param v,u The two directions, each as long as the term's coefficients.
 #' @param n The number of observations.
 #'
-#' @return A numeric matrix, \code{n} by the term's coefficient count.
+#' @return A numeric matrix, `n` by the term's coefficient count.
 #'
-#' @seealso \code{\link{refresh_dblock}}, \code{\link{trace_refresh4}}
+#' @seealso [refresh_dblock()], [trace_refresh4()]
 #'
 #' @keywords internal
 refresh_dblock2 <- function(un, v, u, n) {
@@ -200,23 +200,23 @@ refresh_dblock2 <- function(un, v, u, n) {
 #' The Weight the Second Derivative of a Block Is Paired With
 #'
 #' @description
-#' \code{\link{refresh_amat}} with the curvature, one matrix per unit.
+#' [refresh_amat()] with the curvature, one matrix per unit.
 #'
 #' @details
-#' It is the same weight \code{\link{u_refresh}} builds for the gradient, and
+#' It is the same weight [u_refresh()] builds for the gradient, and
 #' it depends on neither direction, so it is built once per Hessian rather
 #' than once per pair of hyperparameters.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param M The matrix the trace is taken against.
 #' @param params,npar,offs The block bookkeeping.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}.
-#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}.
+#' @param units The refreshable terms, from [refresh_units()].
+#' @param Hl The link-scale curvature, from [refresh_hessian()].
 #'
 #' @return A list of matrices, one per unit.
 #'
-#' @seealso \code{\link{trace_refresh4}}, \code{\link{u_refresh}}
+#' @seealso [trace_refresh4()], [u_refresh()]
 #'
 #' @keywords internal
 refresh_curv_amat <- function(spec, design, M, params, npar, offs, units, Hl) {
@@ -235,9 +235,9 @@ refresh_curv_amat <- function(spec, design, M, params, npar, offs, units, Hl) {
 #'
 #' @description
 #' \eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
-#' \code{\link{contract3}} builds for the \eqn{(a,b)} block.
+#' [contract3()] builds for the \eqn{(a,b)} block.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param d3 The third derivatives on the link scale.
 #' @param params,npar The parameter names and block sizes.
 #' @param a,b The block indices.
@@ -262,30 +262,30 @@ d3_direction <- function(spec, d3, params, npar, a, b, tv) {
 #'
 #' @description
 #' The part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
-#' \code{\link{contract3}} does not compute, as a matrix over the stacked
+#' [contract3()] does not compute, as a matrix over the stacked
 #' coefficients.
 #'
 #' @details
 #' Differentiating \eqn{H} in \eqn{\beta} and contracting with \eqn{v} leaves,
-#' beside the third derivative \code{\link{contract3}} carries, two terms in
+#' beside the third derivative [contract3()] carries, two terms in
 #' \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 #' \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 #' and the other is its transpose, so the correction is \eqn{R + R^\top}. The
 #' derivative is asked of the TERM through
-#' \code{\link[modelterms7]{term_block_deriv}} and never differenced here, for
-#' the reason \code{\link{u_refresh}} records: a break-point column is a step
+#' [modelterms7::term_block_deriv()] and never differenced here, for
+#' the reason [u_refresh()] records: a break-point column is a step
 #' function in its break-point.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param params,npar,offs,total The block bookkeeping.
-#' @param dir One entry per unit, from \code{\link{refresh_direction}}.
-#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}.
+#' @param dir One entry per unit, from [refresh_direction()].
+#' @param Hl The link-scale curvature, from [refresh_hessian()].
+#' @param units The refreshable terms, from [refresh_units()].
 #'
 #' @return A square matrix, whose transpose completes the correction.
 #'
-#' @seealso \code{\link{contract3}}, \code{\link{u_refresh}}
+#' @seealso [contract3()], [u_refresh()]
 #'
 #' @keywords internal
 contract3_refresh <- function(spec, design, params, npar, offs, total, dir, Hl,
@@ -321,18 +321,18 @@ contract3_refresh <- function(spec, design, params, npar, offs, total, dir, Hl,
 #' hyperparameter and combined in the Hessian's pair loop: computing them
 #' inside that loop would repeat an \eqn{O(np^2)} product for every pair.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param M The matrix the trace is taken against.
 #' @param params,npar,offs The block bookkeeping.
 #' @param d3 The third derivatives on the link scale.
 #' @param tv The predictors of the direction.
 #' @param v The direction, over the stacked coefficients.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}.
+#' @param units The refreshable terms, from [refresh_units()].
 #'
-#' @return A list, one entry per unit, with \code{D} and \code{A}.
+#' @return A list, one entry per unit, with `D` and `A`.
 #'
-#' @seealso \code{\link{contract3_refresh}}, \code{\link{trace_refresh4}}
+#' @seealso [contract3_refresh()], [trace_refresh4()]
 #'
 #' @keywords internal
 refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
@@ -352,7 +352,7 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' How a Moving Block Enters the Twice-Contracted Fourth Derivative
 #'
 #' @description
-#' The part of \eqn{\mathrm{tr}(M\,U[v,u])} that \code{\link{trace_design_form}}
+#' The part of \eqn{\mathrm{tr}(M\,U[v,u])} that [trace_design_form()]
 #' does not compute, where \eqn{U} is the second derivative of \eqn{K} in the
 #' coefficients contracted in two directions.
 #'
@@ -368,9 +368,9 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' supported where BOTH blocks move. A fourth reads the SECOND,
 #' \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
 #' \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
-#' \code{\link[modelterms7]{term_block_deriv2}}. Those four enter as
+#' [modelterms7::term_block_deriv2()]. Those four enter as
 #' \eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
-#' \code{\link{refresh_amat}} -- with the third derivative for the first two and
+#' [refresh_amat()] -- with the third derivative for the first two and
 #' the curvature for the fourth -- so neither \eqn{N} nor any contraction is
 #' assembled.
 #'
@@ -380,13 +380,13 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' \eqn{\beta} as everything else does, and differentiating it leaves
 #' \deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
 #'   \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.}
-#' That is the shape \code{\link{trace_design_form}} already computes, so the
+#' That is the shape [trace_design_form()] already computes, so the
 #' piece is one further call of it with \eqn{\dot v} in place of the
 #' predictors. \eqn{\dot v} is the predictor's own second derivative
 #' contracted in both directions and is therefore symmetric in them, which is
 #' a free check on the assembly.
 #'
-#' \strong{Measured}, against a mixed second difference of \eqn{H} that shares
+#' **Measured**, against a mixed second difference of \eqn{H} that shares
 #' no arithmetic with any of this: on a bilinear \eqn{f}, where the fourth
 #' term is exactly zero, the fifth is the whole of the gap and takes
 #' \eqn{2.32\times10^{-2}} to \eqn{2.19\times10^{-8}}; on a curved one neither
@@ -394,23 +394,23 @@ refresh_direction <- function(spec, design, M, params, npar, offs, d3, tv, v,
 #' with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
 #' \eqn{5.19\times10^{-8}} with both.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param M The matrix the trace is taken against.
 #' @param params,npar The parameter names and block sizes.
-#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}.
-#' @param dv,du The two directions, from \code{\link{refresh_direction}}.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}.
-#' @param G The leverage diagonal, from \code{\link{block_leverage}}.
+#' @param Hl The link-scale curvature, from [refresh_hessian()].
+#' @param dv,du The two directions, from [refresh_direction()].
+#' @param units The refreshable terms, from [refresh_units()].
+#' @param G The leverage diagonal, from [block_leverage()].
 #' @param d3 The third derivatives on the link scale.
 #' @param v The first direction over the stacked coefficients.
 #' @param f2 The block's second derivative in the two directions, one matrix
-#'   per unit, from \code{\link{refresh_dblock2}}.
-#' @param acurv The curvature weights, from \code{\link{refresh_curv_amat}}.
+#'   per unit, from [refresh_dblock2()].
+#' @param acurv The curvature weights, from [refresh_curv_amat()].
 #'
 #' @return A single number.
 #'
-#' @seealso \code{\link{trace_design_form}}, \code{\link{contract3_refresh}},
-#'   \code{\link{refresh_dblock2}}
+#' @seealso [trace_design_form()], [contract3_refresh()],
+#'   [refresh_dblock2()]
 #'
 #' @keywords internal
 trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
@@ -439,14 +439,14 @@ trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
 #'
 #' @description
 #' The part of \eqn{\partial^3L/\partial\beta^3[v,u]} that
-#' \code{\link{contract3}} and \code{\link{contract3_refresh}} do not carry,
+#' [contract3()] and [contract3_refresh()] do not carry,
 #' as a vector over the stacked coefficients.
 #'
 #' @details
 #' \eqn{b_{ml}} solves \eqn{J b_{ml} = -[(S_l + T[b_l])b_m + S_m b_l + c_{ml}]}
 #' with \eqn{T} the THIRD derivative of the penalized objective in \eqn{\beta}.
 #' Where a block moves, the objective's second derivative is not \eqn{K} but
-#' \eqn{K + D}, with \eqn{D} the term \code{\link{mode_curvature}} builds, so
+#' \eqn{K + D}, with \eqn{D} the term [mode_curvature()] builds, so
 #' its third derivative is not \eqn{\partial K/\partial\beta} either. What is
 #' missing is \eqn{\partial D/\partial\beta}, and differentiating
 #' \eqn{D_{cd} = -\sum_i w_i\ell_a\,\Xi_a[i,c,d]} once and contracting gives two
@@ -456,28 +456,28 @@ trace_refresh4 <- function(spec, M, params, npar, Hl, dv, du, units, G, d3,
 #'   \;-\;\sum_i w_i\,\ell_a(i)\,F_a[i,c],}
 #' the first reading the block's first derivative and the second its SECOND,
 #' \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both are one
-#' \code{crossprod} against a per-observation weight, so neither the
+#' `crossprod` against a per-observation weight, so neither the
 #' third-derivative array of the predictor nor any contraction of it is formed.
 #'
-#' \strong{Measured} against the mode refitted at four hyperparameter values
-#' and differenced twice, on \code{nl(a ~ 0 + ridge(~grp))}: \eqn{b_m} is right
+#' **Measured** against the mode refitted at four hyperparameter values
+#' and differenced twice, on `nl(a ~ 0 + ridge(~grp))`: \eqn{b_m} is right
 #' to 3.8e-08 without this and \eqn{b_{ml}} is wrong by 7.6 to 9.0 per cent at
 #' every step tried, a systematic error and not the reference's noise. With it
 #' the gap falls to 1.8e-05 at the reference's best step, which is inside the
 #' spread between the reference's own consecutive steps.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param params,npar,total The block bookkeeping.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}.
-#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}.
+#' @param units The refreshable terms, from [refresh_units()].
+#' @param Hl The link-scale curvature, from [refresh_hessian()].
 #' @param gl The link-scale score.
 #' @param tv The predictors of the first direction.
-#' @param du The second direction, from \code{\link{refresh_direction}}.
+#' @param du The second direction, from [refresh_direction()].
 #' @param f2 The block's second derivative, one matrix per unit.
 #'
 #' @return A numeric vector as long as the stacked coefficients.
 #'
-#' @seealso \code{\link{mode_curvature}}, \code{\link{trace_refresh4}}
+#' @seealso [mode_curvature()], [trace_refresh4()]
 #'
 #' @keywords internal
 refresh_mode_third <- function(spec, params, npar, units, Hl, gl, tv, du, f2,

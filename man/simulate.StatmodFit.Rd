@@ -7,11 +7,11 @@
 \method{simulate}{StatmodFit}(object, nsim = 1, seed = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{nsim}{How many replicates.}
 
-\item{seed}{Passed to \code{\link[base]{set.seed}} if given, the caller's
+\item{seed}{Passed to \code{\link[base:Random]{base::set.seed()}} if given, the caller's
 stream being restored afterwards.}
 
 \item{...}{Unused.}
@@ -39,6 +39,6 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 dim(simulate(fit, nsim = 3))
 }
 \seealso{
-\code{\link{rstatmod}}, \code{\link{predict.StatmodFit}}
+\code{\link[=rstatmod]{rstatmod()}}, \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 }
 \keyword{internal}

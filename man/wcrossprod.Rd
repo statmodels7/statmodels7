@@ -7,14 +7,14 @@
 wcrossprod(A, w, B, threads = 1L)
 }
 \arguments{
-\item{A, B}{Design blocks, \code{n x pa} and \code{n x pb}.}
+\item{A, B}{Design blocks, \verb{n x pa} and \verb{n x pb}.}
 
 \item{w}{The per-observation weights, length \code{n}.}
 
 \item{threads}{The thread count, a plain integer.}
 }
 \value{
-A \code{pa x pb} matrix.
+A \verb{pa x pb} matrix.
 }
 \description{
 \code{t(A) \%*\% (w * B)}, through the package's threaded kernel where the

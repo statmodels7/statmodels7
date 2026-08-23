@@ -7,14 +7,14 @@
 statmod_fitted_spec(spec, coef, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 
 \item{design}{The design.}
 }
 \value{
-A \code{\link{StatmodSpec}}.
+A \code{\link[=StatmodSpec]{StatmodSpec()}}.
 }
 \description{
 The specification with every refreshable term replaced by the one the fit
@@ -23,6 +23,6 @@ they imply are read off the fitted object rather than off the
 specification it started from.
 }
 \seealso{
-\code{\link{statmod_commit_refresh}}
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}}
 }
 \keyword{internal}

@@ -7,7 +7,7 @@
 statmod_hyper_vcov(spec, design, coef, hyper, method)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -30,11 +30,11 @@ The asymptotic variance matrix of the estimated hyperparameters, on the free
 scale their links carry them onto.
 }
 \details{
-A hyperparameter estimated by \code{\link{reml}()} or \code{\link{ml}()} is
+A hyperparameter estimated by \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} is
 the maximizer of a criterion that is twice differentiable in it, so it has a
 variance like any other maximum-likelihood estimate: the inverse of the
 negative Hessian of that criterion at the point reached, which
-\code{\link{statmod_marginal_hess}} already computes exactly. It is read on
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already computes exactly. It is read on
 the free scale because that is where the criterion was maximized and where
 the quadratic approximation behind it is reasonable; a variance for a
 smoothing parameter on its own scale, where the estimate is often several
@@ -42,13 +42,13 @@ orders of magnitude from zero and the criterion far from symmetric, would
 describe a shape the criterion does not have.
 
 \strong{Where it does not apply.} A hyperparameter chosen by a path --
-\code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()} over a kinked
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}, \code{\link[=cv]{cv()}} over a kinked
 penalty -- is the argument of a minimum over a grid, not the root of a
 derivative, so there is no Hessian to invert and no standard error to
 report. Its uncertainty is a resampling question and \code{NULL} is
 returned rather than a number of another kind.
 }
 \seealso{
-\code{\link{statmod_marginal_hess}}, \code{\link{summary.StatmodFit}}
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 }
 \keyword{internal}

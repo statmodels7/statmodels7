@@ -18,8 +18,8 @@
 #' The names come from each member's namespace rather than from its attached
 #' environment. The two agree for an installed package and do not under
 #' \pkg{pkgload}, which attaches a package's internal objects along with its
-#' exports and adds shims of its own (\code{system.file},
-#' \code{library.dynam.unload}); reading the attached environment reports those
+#' exports and adds shims of its own (`system.file`,
+#' `library.dynam.unload`); reading the attached environment reports those
 #' shims as a name every member exports, which is a conflict between packages
 #' that export no such thing.
 #'
@@ -27,7 +27,7 @@
 #'   the packages exporting it, most recently attached first. Empty when there
 #'   is nothing to report.
 #'
-#' @seealso \code{\link{statmodels7_packages}}
+#' @seealso [statmodels7_packages()]
 #'
 #' @examples
 #' statmodels7_conflicts()
@@ -60,10 +60,10 @@ statmodels7_conflicts <- function() {
 #' Render a Conflict Report
 #'
 #' @description
-#' Formats the result of \code{\link{statmodels7_conflicts}} as one line per
+#' Formats the result of [statmodels7_conflicts()] as one line per
 #' masked name.
 #'
-#' @param conflicts A list as returned by \code{\link{statmodels7_conflicts}}.
+#' @param conflicts A list as returned by [statmodels7_conflicts()].
 #'
 #' @return A character vector, one element per masked name.
 #'

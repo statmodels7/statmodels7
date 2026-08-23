@@ -8,32 +8,32 @@ NULL
 #' working quadratic of its own equation, the other blocks held fixed.
 #'
 #' @details
-#' \strong{Why not the proximal method.} A proximal gradient step reads the
+#' **Why not the proximal method.** A proximal gradient step reads the
 #' whole model: measured on 200 observations and 20 columns, one block fit made
 #' 88 evaluations of the objective, 75 of the gradient and 83 of the operator,
 #' each over every parameter of the distribution, and closed in 36 iterations
 #' at 0.17 seconds. A coordinate descent reads the block's own columns and the
 #' running residual instead and closes in six sweeps.
 #'
-#' \strong{The working quadratic.} With \eqn{\eta} the equation's linear
+#' **The working quadratic.** With \eqn{\eta} the equation's linear
 #' predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
 #' \eqn{-\ell} is \eqn{\frac12\sum_i h_i(z_i - \eta_i)^2} up to a constant with
 #' \eqn{z = \eta + s/h}, which is the weighted least squares problem of
-#' \code{\link{iwls}} restricted to one equation. The other columns of that
+#' [iwls()] restricted to one equation. The other columns of that
 #' equation enter as an offset. For a Gaussian response with an identity link
 #' the quadratic is exact and one pass is the answer; otherwise the weights are
 #' rebuilt and the sweeps repeated.
 #'
-#' \strong{The penalty arrives as a table.} The coordinate update is the
+#' **The penalty arrives as a table.** The coordinate update is the
 #' penalty's own proximal operator at the step \eqn{1/v_j}, with
 #' \eqn{v_j = \sum_i w_i x_{ij}^2}, and \eqn{v_j} does not move while the
 #' working weights are held. The whole table is therefore built once per
 #' weighted least squares iteration by
-#' \code{\link[penalties7]{penalty_prox_spec}} and the compiled sweeps read it,
+#' [penalties7::penalty_prox_spec()] and the compiled sweeps read it,
 #' so the kernel names no family and a penalty that describes its operator gets
 #' the compiled route without an edit here.
 #'
-#' \strong{Screening.} Passing from one point of a path to the next, a
+#' **Screening.** Passing from one point of a path to the next, a
 #' coordinate can be discarded when the gradient it had at the previous point
 #' is below \eqn{2s_k - s_{k-1}}, with \eqn{s} the size of the kink: the
 #' sequential strong rule of Tibshirani and others (2012), which assumes the
@@ -44,7 +44,7 @@ NULL
 #' gradient exceeds the kink is put back, and the fit is repeated. Without the
 #' check the route would be wrong now and then rather than slow.
 #'
-#' \strong{Which update.} The gradient is kept either as a residual, at
+#' **Which update.** The gradient is kept either as a residual, at
 #' \eqn{O(n)} a visit, or as itself through
 #' \eqn{g_j = (X'Wz)_j - \sum_k (X'WX)_{jk}\beta_k}, at \eqn{O(m)} a change
 #' with the Gram columns cached as coordinates come alive. The second wins when
@@ -53,32 +53,32 @@ NULL
 #'
 #' @param obj The full objective.
 #' @param beta The current stacked coefficients.
-#' @param block One entry of \code{statmod_blocks()$sparse}.
+#' @param block One entry of `statmod_blocks()$sparse`.
 #' @param hyper The hyperparameters.
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param expected Whether the information is the expected one.
 #' @param approx How the expected information is approximated.
 #' @param maxit The iteration budget.
 #' @param tol The stopping tolerance.
 #' @param prev_kink The size of the kink at the previous point of a path, or
-#'   \code{NULL} to cycle over every coordinate.
+#'   `NULL` to cycle over every coordinate.
 #'
-#' @return A list shaped like \code{\link{sparse_fit}}'s, or \code{NULL} where
+#' @return A list shaped like [sparse_fit()]'s, or `NULL` where
 #'   the route does not apply.
 #'
 #' @references
 #' Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for
-#' generalized linear models via coordinate descent. \emph{Journal of
-#' Statistical Software} 33(1), 1--22.
+#' generalized linear models via coordinate descent. *Journal of
+#' Statistical Software* 33(1), 1--22.
 #'
 #' Tibshirani, R., Bien, J., Friedman, J., Hastie, T., Simon, N., Taylor, J.
 #' and Tibshirani, R. J. (2012). Strong rules for discarding predictors in
-#' lasso-type problems. \emph{Journal of the Royal Statistical Society, Series
-#' B} 74(2), 245--266.
+#' lasso-type problems. *Journal of the Royal Statistical Society, Series
+#' B* 74(2), 245--266.
 #'
-#' @seealso \code{\link{sparse_fit}},
-#'   \code{\link[penalties7]{penalty_prox_spec}}
+#' @seealso [sparse_fit()],
+#'   [penalties7::penalty_prox_spec()]
 #'
 #' @keywords internal
 coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
@@ -199,12 +199,12 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' @param z The working response.
 #' @param beta The coefficients at the previous point.
 #' @param s_now The size of the kink here.
-#' @param s_prev The size of the kink at the previous point, or \code{NULL}.
+#' @param s_prev The size of the kink at the previous point, or `NULL`.
 #' @param threads The thread count the gradient read may use.
 #'
 #' @return An integer vector of column indices, never empty.
 #'
-#' @seealso \code{\link{coord_fit}}
+#' @seealso [coord_fit()]
 #'
 #' @keywords internal
 coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
@@ -235,7 +235,7 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
 #'
 #' @details
 #' A dense slice of a base matrix is returned as it is. Any \pkg{Matrix} is
-#' carried to \code{dgCMatrix}: the general compressed-column form is the
+#' carried to `dgCMatrix`: the general compressed-column form is the
 #' one whose slots the kernel walks, and a symmetric or triangular
 #' compression would describe the same entries differently. A dense
 #' \pkg{Matrix} class is materialized as a base matrix instead, there being
@@ -244,9 +244,9 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
 #' @param X The equation's design.
 #' @param cols The term's column positions.
 #'
-#' @return A numeric matrix or a \code{dgCMatrix}.
+#' @return A numeric matrix or a `dgCMatrix`.
 #'
-#' @seealso \code{\link{coord_call}}, \code{\link{coord_fit}}
+#' @seealso [coord_call()], [coord_fit()]
 #'
 #' @keywords internal
 coord_block <- function(X, cols) {
@@ -262,27 +262,27 @@ coord_block <- function(X, cols) {
 #'
 #' @description
 #' Sends the block to the dense kernel or to the sparse one, taking a
-#' \code{dgCMatrix} apart into the slots the second reads.
+#' `dgCMatrix` apart into the slots the second reads.
 #'
 #' @details
 #' The two kernels are one algorithm instantiated twice over a column
 #' accessor, so they agree BIT FOR BIT rather than to a tolerance: skipping
 #' a structural zero omits an addition of zero, which is exact. The
-#' \code{dgCMatrix} is decomposed here rather than in C++ so that the
+#' `dgCMatrix` is decomposed here rather than in C++ so that the
 #' compiled code needs no dependency on the \pkg{Matrix} package's C API.
 #'
-#' @param X The block, dense or \code{dgCMatrix}.
+#' @param X The block, dense or `dgCMatrix`.
 #' @param z,w The working response and weights.
 #' @param b0 The starting coefficients.
 #' @param tab The proximal table, from
-#'   \code{\link[penalties7]{penalty_prox_spec}}.
+#'   [penalties7::penalty_prox_spec()].
 #' @param screen The zero-based positions the strong rule kept.
 #' @param tol The stopping tolerance on the coefficient change.
 #' @param covariance Whether to hold the gradient rather than the residual.
 #'
-#' @return The kernel's list: \code{beta}, \code{sweeps}, \code{grad}.
+#' @return The kernel's list: `beta`, `sweeps`, `grad`.
 #'
-#' @seealso \code{\link{coord_block}}
+#' @seealso [coord_block()]
 #'
 #' @keywords internal
 coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
@@ -308,12 +308,12 @@ coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
 #' the block -- where its penalty was a moment ago -- and the path rebuilds the
 #' blocks at each point anyway.
 #'
-#' @param blocks The blocks, as \code{\link{statmod_blocks}} returns them.
+#' @param blocks The blocks, as [statmod_blocks()] returns them.
 #' @param hyper The hyperparameters at the point just fitted.
 #'
-#' @return The blocks, each sparse entry carrying \code{prev_kink}.
+#' @return The blocks, each sparse entry carrying `prev_kink`.
 #'
-#' @seealso \code{\link{coord_screen}}, \code{\link{statmod_path}}
+#' @seealso [coord_screen()], [statmod_path()]
 #'
 #' @keywords internal
 blocks_at_kink <- function(blocks, hyper) {
@@ -330,7 +330,7 @@ blocks_at_kink <- function(blocks, hyper) {
 #' Which Way of Holding the Gradient Is Cheaper
 #'
 #' @description
-#' \code{TRUE} for the covariance form, \code{FALSE} for the residual.
+#' `TRUE` for the covariance form, `FALSE` for the residual.
 #'
 #' @details
 #' The covariance form replaces an \eqn{O(n)} read with an \eqn{O(m)} one, and
@@ -359,16 +359,16 @@ coord_covariance <- function(n, m) {
 #' \eqn{h_i} and \eqn{z_i = \eta_i + s_i/h_i}, the weighted least squares
 #' problem the log-likelihood is locally.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param ep The linear predictors and parameters, from
-#'   \code{\link{statmod_eta}}.
+#'   [statmod_eta()].
 #' @param coef The coefficients.
 #' @param design The design.
 #' @param p Which distribution parameter.
 #' @param expected Whether the information is the expected one.
 #' @param approx How it is approximated.
 #'
-#' @return A list with \code{w} and \code{z}, or \code{NULL} where the
+#' @return A list with `w` and `z`, or `NULL` where the
 #'   curvature is not usable.
 #'
 #' @keywords internal
@@ -388,11 +388,11 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
 
 #' The Offset of One Equation
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param p Which distribution parameter.
 #' @param n The number of observations.
 #'
-#' @return A numeric vector of length \code{n}.
+#' @return A numeric vector of length `n`.
 #'
 #' @keywords internal
 coord_offset <- function(spec, p, n) {

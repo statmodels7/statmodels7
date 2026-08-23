@@ -26,12 +26,12 @@ from the coordinates those were estimated on.
 }
 \details{
 This is the one place the readable view is built, so that
-\code{\link{coef.StatmodFit}}, \code{\link{vcov.StatmodFit}} and
-\code{\link{confint.StatmodFit}} cannot report a quantity under one name
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}} cannot report a quantity under one name
 and index it under another.
 
 A term says what it is about through
-\code{\link[modelterms7]{term_readable}}, which gives the quantities and
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which gives the quantities and
 the Jacobian. The coordinates that Jacobian touches are replaced by the
 quantities; a coordinate no quantity reads stands where it is, with a unit
 row of its own. That is what leaves a developed parameter intact: its
@@ -46,7 +46,7 @@ parameter is marked: its value stands, and its variance would be that of
 the rest alone, so it is not reported.
 }
 \seealso{
-\code{\link[modelterms7]{term_readable}},
-\code{\link{statmod_structural_table}}
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}},
+\code{\link[=statmod_structural_table]{statmod_structural_table()}}
 }
 \keyword{internal}

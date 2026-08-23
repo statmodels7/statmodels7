@@ -7,7 +7,7 @@
 statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -16,7 +16,7 @@ statmod_marginal_full(spec, design, coef, hyper, basis = NULL)
 \item{hyper}{The hyperparameters.}
 
 \item{basis}{The integrated subspace over the coefficients, or \code{NULL}
-for \code{\link{reml}()}.}
+for \code{\link[=reml]{reml()}}.}
 }
 \value{
 A square matrix, or \code{NULL} where the term could not be run.
@@ -34,20 +34,20 @@ taken over the coefficients alone it does not depend on the hyperparameter
 at all, and the criterion is the penalized likelihood, whose maximum in a
 shrinkage parameter is at no shrinkage.
 
-Both pieces exist already. \code{\link{statmod_full_information}} spans the
+Both pieces exist already. \code{\link[=statmod_full_information]{statmod_full_information()}} spans the
 coefficients followed by the term's free parameters, which is the order the
-joint fit uses, and \code{\link{statmod_structural_penalty}} gives the
+joint fit uses, and \code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} gives the
 penalty's Hessian in those same parameters. The information here is the
 OBSERVED one whatever the method asks for: the expected information over a
 filter's own parameters is not one of the quantities the toolkit carries,
 the recursion's state entering the expectation.
 
-For \code{\link{ml}()} the tail is integrated over the penalized
+For \code{\link[=ml]{ml()}} the tail is integrated over the penalized
 coordinates alone, through the penalty's own range basis, so a parameter
 the penalty does not cover -- a population value -- is profiled rather than
 integrated, exactly as an unpenalized coefficient is.
 }
 \seealso{
-\code{\link{statmod_marginal}}
+\code{\link[=statmod_marginal]{statmod_marginal()}}
 }
 \keyword{internal}

@@ -10,7 +10,7 @@ xtv(X, v, threads = 1L)
 wxsq(X, w, threads = 1L)
 }
 \arguments{
-\item{X}{A design block, \code{n x p}.}
+\item{X}{A design block, \verb{n x p}.}
 
 \item{v, w}{Per-observation vectors of length \code{n}.}
 
@@ -23,8 +23,8 @@ A numeric vector of length \code{ncol(X)}.
 \code{xtv()} is \code{as.numeric(crossprod(X, v))}, one dot product per
 column; \code{wxsq()} is \code{as.numeric(crossprod(w, X^2))}, the column
 curvatures of a working model, computed without materializing the
-\code{n x p} square. Both run through the package's threaded kernels
-above the same measured work gate as \code{\link{wcrossprod}} and through
+\verb{n x p} square. Both run through the package's threaded kernels
+above the same measured work gate as \code{\link[=wcrossprod]{wcrossprod()}} and through
 the exact expressions they replace everywhere else.
 }
 \details{

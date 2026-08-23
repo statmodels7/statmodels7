@@ -9,7 +9,7 @@ pd_logdet(M, scale = NULL)
 \arguments{
 \item{M}{A symmetric matrix.}
 
-\item{scale}{A reference magnitude, as \code{\link{solve_pd}} takes: the
+\item{scale}{A reference magnitude, as \code{\link[=solve_pd]{solve_pd()}} takes: the
 unpenalized information's own scale, so that a hyperparameter legitimately
 sent to 1e15 is told apart from a flat direction.}
 }
@@ -31,7 +31,7 @@ measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
 eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
 search then backtracked through a dozen points reported unavailable towards
 one that had been available a moment earlier. The same doubt this package
-already records for \code{\link{solve_pd}} and for basis7's rank tests.
+already records for \code{\link[=solve_pd]{solve_pd()}} and for basis7's rank tests.
 
 \strong{The three routes.} The factorization is tried first, being O(p^3/3)
 and the common case. Where it succeeds, LAPACK's condition estimator reads
@@ -45,6 +45,6 @@ is genuinely rank deficient is refused deterministically rather than
 according to the platform.
 }
 \seealso{
-\code{\link{solve_pd}}, \code{\link{statmod_marginal}}
+\code{\link[=solve_pd]{solve_pd()}}, \code{\link[=statmod_marginal]{statmod_marginal()}}
 }
 \keyword{internal}

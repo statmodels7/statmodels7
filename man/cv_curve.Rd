@@ -16,11 +16,11 @@ cv_curve(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{data}{The data the fit was called on.}
 
-\item{weights, offsets}{As \code{\link{statmod}} received them.}
+\item{weights, offsets}{As \code{\link[=statmod]{statmod()}} received them.}
 
 \item{inner_optimizer}{The inner method.}
 
@@ -48,6 +48,6 @@ its own rows: a term is re-evaluated in the data it is fitted to, so a basis
 or a set of contrasts is not carried over from rows the fit did not see.
 }
 \seealso{
-\code{\link{cv}}
+\code{\link[=cv]{cv()}}
 }
 \keyword{internal}

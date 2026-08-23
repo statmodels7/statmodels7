@@ -7,7 +7,7 @@
 \method{nobs}{StatmodFit}(object, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -25,6 +25,6 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 nobs(fit)
 }
 \seealso{
-\code{\link{logLik.StatmodFit}}, \code{\link{statmod}}
+\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

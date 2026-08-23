@@ -9,7 +9,7 @@ iwls_escalate(damp, pieces)
 \arguments{
 \item{damp}{The current damping.}
 
-\item{pieces}{What \code{\link{iwls_pieces}} built, for the scale.}
+\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built, for the scale.}
 }
 \value{
 The next damping.
@@ -27,6 +27,6 @@ coordinate needed a \eqn{\lambda} of about 100 against a largest diagonal
 of 2328, which the sixth escalation passes.
 }
 \seealso{
-\code{\link{iwls_scale}}, \code{\link{iwls_solve}}
+\code{\link[=iwls_scale]{iwls_scale()}}, \code{\link[=iwls_solve]{iwls_solve()}}
 }
 \keyword{internal}

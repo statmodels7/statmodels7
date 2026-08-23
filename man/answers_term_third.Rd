@@ -13,7 +13,7 @@ answers_term_third(term)
 A single logical.
 }
 \description{
-Whether the term implements \code{\link[modelterms7]{term_third}}, read
+Whether the term implements \code{\link[modelterms7:term_third]{modelterms7::term_third()}}, read
 from the class the method is registered on rather than from a list of
 class names, so a term written later is covered without an edit here.
 }
@@ -24,6 +24,6 @@ right answer for a predictor that is a block of columns. The question is
 therefore whether the owning class is the refusing base.
 }
 \seealso{
-\code{\link{outer_gradient_ok}}
+\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}
 }
 \keyword{internal}

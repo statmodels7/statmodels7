@@ -7,14 +7,14 @@
 statmod_respec(spec, data, need_response = TRUE)
 }
 \arguments{
-\item{spec}{The fitted \code{\link{StatmodSpec}}.}
+\item{spec}{The fitted \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{data}{The rows to read it on.}
 
 \item{need_response}{Whether the response has to be there.}
 }
 \value{
-A \code{\link{StatmodSpec}} whose \code{newdata} is set.
+A \code{\link[=StatmodSpec]{StatmodSpec()}} whose \code{newdata} is set.
 }
 \description{
 A specification carrying the fitted terms and a new data frame, so that
@@ -23,7 +23,7 @@ every block is reapplied to those rows rather than rebuilt from them.
 \details{
 A term records how its block was made -- a factor's levels and contrasts, a
 spline's knots, a basis reparametrization -- and
-\code{\link[modelterms7]{term_predict}} reapplies that record. Rebuilding
+\code{\link[modelterms7:term_predict]{modelterms7::term_predict()}} reapplies that record. Rebuilding
 instead gives a block of the same shape, multiplying the same coefficients,
 that means something else: measured on \code{y ~ s(x, k = 10)} at 200
 observations, predicting on 40 of the rows the model was fitted to differed
@@ -32,6 +32,6 @@ from the fitted values there by 0.237, and on the 51 rows with
 data handed back agrees exactly, which is why nothing noticed.
 }
 \seealso{
-\code{\link{statmod_design}}
+\code{\link[=statmod_design]{statmod_design()}}
 }
 \keyword{internal}

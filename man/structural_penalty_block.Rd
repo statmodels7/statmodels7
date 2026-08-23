@@ -7,7 +7,7 @@
 structural_penalty_block(spec, design, hyper, nfree = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -22,7 +22,7 @@ A square matrix, or \code{NULL}.
 \description{
 The Hessian of whatever penalty covers a structural term's own parameters,
 over the FREE ones and in their order, which is the order the tail of
-\code{\link{statmod_full_information}} carries them in.
+\code{\link[=statmod_full_information]{statmod_full_information()}} carries them in.
 }
 \details{
 Written once because three readers need it and a block each of them placed
@@ -31,6 +31,6 @@ matrix, and the marginal criterion. Where no structural term carries a
 penalty the answer is \code{NULL}, and a caller pads with zeros as before.
 }
 \seealso{
-\code{\link{statmod_structural_penalty}}
+\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}}
 }
 \keyword{internal}

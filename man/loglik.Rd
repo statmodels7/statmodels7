@@ -16,7 +16,7 @@ gradient(object, par = NULL, data = NULL, ...)
 hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{par}{A named list of coefficient vectors, one per distribution
 parameter. Defaults to the fitted ones.}
@@ -59,6 +59,6 @@ loglik(fit, par = list(mu = c(0, 0), sigma = 0))
 
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

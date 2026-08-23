@@ -7,11 +7,11 @@
 statmod_min_ratio(spec, row, default)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
-\item{default}{\code{\link{path_fallbacks}}'s, for a term that named none.}
+\item{default}{\code{\link[=path_fallbacks]{path_fallbacks()}}'s, for a term that named none.}
 }
 \value{
 A single number.
@@ -27,6 +27,6 @@ interval and a shape that does not move the kink over a geometric grid
 above its lower bound.
 }
 \seealso{
-\code{\link{statmod_grid_size}}, \code{\link{path_values}}
+\code{\link[=statmod_grid_size]{statmod_grid_size()}}, \code{\link[=path_values]{path_values()}}
 }
 \keyword{internal}

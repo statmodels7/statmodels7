@@ -15,7 +15,7 @@ path_grid(pen, theta, name, n_values = 25L, steps = NULL)
 
 \item{n_values}{How many points.}
 
-\item{steps}{What \code{\link{path_steps}} returned, or \code{NULL}.}
+\item{steps}{What \code{\link[=path_steps]{path_steps()}} returned, or \code{NULL}.}
 }
 \value{
 A numeric vector of values for \code{name}.
@@ -24,7 +24,7 @@ A numeric vector of values for \code{name}.
 An equally spaced grid strictly inside the hyperparameter's own interval.
 }
 \details{
-\code{\link{path_values}} walks the SIZE OF THE KINK, from the value that
+\code{\link[=path_values]{path_values()}} walks the SIZE OF THE KINK, from the value that
 empties the block down, and a bounded hyperparameter cannot reach that end:
 the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
 no admissible \eqn{\alpha} empties the block and every point of such a path
@@ -38,7 +38,7 @@ The endpoints are excluded because the bounds are open: the elastic net at
 penalty of another kind.
 
 A shape parameter is swept above the smallest value at which the block can
-be FITTED, which \code{\link{shape_floor}} derives from the proximal
+be FITTED, which \code{\link[=shape_floor]{shape_floor()}} derives from the proximal
 condition at the steps the block's coordinate descent will take, rather
 than above the constant the penalty is defined over. The two coincide on an
 ordinary well-conditioned block and differ where the steps are long: with a
@@ -47,7 +47,7 @@ own bound is 2, so a quarter of the old grid named shapes no fit could
 reach.
 }
 \seealso{
-\code{\link{path_values}}, \code{\link{path_bounded}},
-\code{\link{shape_floor}}
+\code{\link[=path_values]{path_values()}}, \code{\link[=path_bounded]{path_bounded()}},
+\code{\link[=shape_floor]{shape_floor()}}
 }
 \keyword{internal}

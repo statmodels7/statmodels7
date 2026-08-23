@@ -26,12 +26,12 @@ The offset per distribution parameter, evaluated in the data.
 }
 \details{
 The expressions are re-evaluated rather than carried as numbers, which is
-what lets an offset survive prediction: \code{\link{statmod_respec}} calls
+what lets an offset survive prediction: \code{\link[=statmod_respec]{statmod_respec()}} calls
 this against the new data, where a vector supplied through the
 \code{offsets} argument at fitting time has the wrong length and cannot be
 reused.
 }
 \seealso{
-\code{\link{split_offsets}}
+\code{\link[=split_offsets]{split_offsets()}}
 }
 \keyword{internal}

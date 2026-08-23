@@ -23,6 +23,6 @@ function is rejected rather than recycled: a constant column is what
 covariates are drawn afresh at every replicate.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

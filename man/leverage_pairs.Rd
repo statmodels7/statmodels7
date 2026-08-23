@@ -7,7 +7,7 @@
 leverage_pairs(ta, tb, Mab, n, threads = 1L)
 }
 \arguments{
-\item{ta, tb}{The two designs' nonzeros, from \code{\link{row_nonzeros}}.}
+\item{ta, tb}{The two designs' nonzeros, from \code{\link[=row_nonzeros]{row_nonzeros()}}.}
 
 \item{Mab}{The block of \eqn{M}.}
 
@@ -20,7 +20,7 @@ A numeric vector as long as the sample.
 }
 \description{
 \eqn{G_i = \sum_{j\in J_i}\sum_{k\in K_i} X_a[i,j]X_b[i,k]M_{ab}[j,k]}, the
-same quantity \code{\link{block_leverage}} otherwise reads off a dense
+same quantity \code{\link[=block_leverage]{block_leverage()}} otherwise reads off a dense
 \eqn{n\times p_b} product.
 }
 \details{
@@ -39,6 +39,6 @@ near 1.1e-03, which is the gate: below it the route is taken, at it the two
 cost the same, and above it the dense product stands.
 }
 \seealso{
-\code{\link{block_leverage}}
+\code{\link[=block_leverage]{block_leverage()}}
 }
 \keyword{internal}

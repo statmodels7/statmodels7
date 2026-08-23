@@ -21,8 +21,8 @@
 A function of the direction returning a \code{blocks} callback.
 }
 \description{
-Builds the \code{blocks} callback \code{\link[modelterms7]{term_curvature}}
-and \code{\link[modelterms7]{term_third}} take, at a direction or without
+Builds the \code{blocks} callback \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}
+and \code{\link[modelterms7:term_third]{modelterms7::term_third()}} take, at a direction or without
 one.
 }
 \details{

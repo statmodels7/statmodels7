@@ -7,7 +7,7 @@
 component_shift(mu, k)
 }
 \arguments{
-\item{mu}{What \code{\link[modelterms7]{term_levels}} returned.}
+\item{mu}{What \code{\link[modelterms7:term_levels]{modelterms7::term_levels()}} returned.}
 
 \item{k}{The component.}
 }

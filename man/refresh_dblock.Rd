@@ -7,7 +7,7 @@
 refresh_dblock(un, v, n)
 }
 \arguments{
-\item{un}{One entry of \code{\link{refresh_units}}.}
+\item{un}{One entry of \code{\link[=refresh_units]{refresh_units()}}.}
 
 \item{v}{The direction, as long as the term's coefficients.}
 
@@ -17,7 +17,7 @@ refresh_dblock(un, v, n)
 A numeric matrix, \code{n} by the term's coefficient count.
 }
 \description{
-\code{\link[modelterms7]{term_block_deriv}} on one unit, with the shape it
+\code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} on one unit, with the shape it
 returns checked rather than assumed.
 }
 \keyword{internal}

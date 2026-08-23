@@ -7,7 +7,7 @@
 par_at(fit, par, design)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{par}{A named list or \code{NULL}.}
 

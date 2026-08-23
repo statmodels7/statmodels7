@@ -7,9 +7,9 @@
 statmod_values(spec, row)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 }
 \value{
 A numeric vector, or \code{NULL}.
@@ -25,6 +25,6 @@ travels with the penalty's entry like the grid size and the depth, so a
 penalty reached through a sub-term of a structural term carries it too.
 }
 \seealso{
-\code{\link[modelterms7]{term_values}}, \code{\link{path_forced}}
+\code{\link[modelterms7:term_values]{modelterms7::term_values()}}, \code{\link[=path_forced]{path_forced()}}
 }
 \keyword{internal}

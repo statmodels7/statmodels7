@@ -10,7 +10,7 @@ statmod_entry_key(term, entries, entry)
 \item{term}{The term's name in the formula.}
 
 \item{entries}{The term's entries, as
-\code{\link[modelterms7]{term_penalties}} returns them.}
+\code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} returns them.}
 
 \item{entry}{One of them.}
 }

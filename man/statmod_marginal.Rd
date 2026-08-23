@@ -16,7 +16,7 @@ statmod_marginal(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -24,11 +24,11 @@ statmod_marginal(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{approx}{The approximation for the expected information.}
 
-\item{basis}{The integrated subspace, from \code{\link{integrated_basis}}.}
+\item{basis}{The integrated subspace, from \code{\link[=integrated_basis]{integrated_basis()}}.}
 }
 \value{
 A list with \code{value}, \code{loglik}, \code{penalty},

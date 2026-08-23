@@ -13,7 +13,7 @@ shape_floor(pen, theta, name, steps = NULL)
 
 \item{name}{Which one is the shape.}
 
-\item{steps}{What \code{\link{path_steps}} returned, or \code{NULL}.}
+\item{steps}{What \code{\link[=path_steps]{path_steps()}} returned, or \code{NULL}.}
 }
 \value{
 A single number strictly above the penalty's lower bound.
@@ -33,6 +33,6 @@ which THAT block, with THOSE data, cannot be fitted by the only route a
 kinked penalty has.
 }
 \seealso{
-\code{\link{path_steps}}, \code{\link{path_grid}}
+\code{\link[=path_steps]{path_steps()}}, \code{\link[=path_grid]{path_grid()}}
 }
 \keyword{internal}

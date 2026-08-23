@@ -7,7 +7,7 @@
 statmod_penalty_keys(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A list of entries with \code{param}, \code{term}, \code{key},
@@ -15,11 +15,11 @@ A list of entries with \code{param}, \code{term}, \code{key},
 \code{penalty}.
 }
 \description{
-The same enumeration as \code{\link{statmod_penalized}} minus the column
+The same enumeration as \code{\link[=statmod_penalized]{statmod_penalized()}} minus the column
 positions, for the callers that need to know which penalties exist before a
 design has been built.
 }
 \seealso{
-\code{\link{statmod_penalized}}
+\code{\link[=statmod_penalized]{statmod_penalized()}}
 }
 \keyword{internal}

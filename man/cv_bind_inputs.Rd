@@ -7,7 +7,7 @@
 cv_bind_inputs(spec, sub, i, n)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}} whose terms are built.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}} whose terms are built.}
 
 \item{sub}{The subset of the data, already taken.}
 
@@ -26,7 +26,7 @@ rebuilding the model on those rows finds it there.
 \code{interpret_formula()} evaluates a term's call as
 \code{eval(call, data, env)}, so a name is looked up in \code{data} first
 and in the formula's environment after. \code{data.frame(X = X, y = y)}
-SPLITS a matrix into \code{X.x1 ... X.xp}, leaving no column \code{X}, so
+SPLITS a matrix into \verb{X.x1 ... X.xp}, leaving no column \code{X}, so
 \code{lasso(X)} reaches past the data to the matrix in the calling
 environment. The fit is right -- the matrix is captured once and the
 coefficients are identical to the other spelling -- but the fold cannot
@@ -48,6 +48,6 @@ own value on the term and not the \code{X} its re-evaluation would need, so
 it is left to the error that names it.
 }
 \seealso{
-\code{\link{cv_curve}}
+\code{\link[=cv_curve]{cv_curve()}}
 }
 \keyword{internal}

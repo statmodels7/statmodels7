@@ -7,7 +7,7 @@
 \method{formula}{StatmodFit}(x, ...)
 }
 \arguments{
-\item{x}{A \code{\link{StatmodFit}}.}
+\item{x}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -30,6 +30,6 @@ fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 formula(fit)
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

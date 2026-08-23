@@ -27,27 +27,27 @@ NULL
 #' Can the Exact Gradient Be Computed Here?
 #'
 #' @description
-#' \code{TRUE} when every hyperparameter under estimation belongs to a penalty
+#' `TRUE` when every hyperparameter under estimation belongs to a penalty
 #' whose second derivative in the coefficients is linear in the
 #' hyperparameters and free of the coefficients, and the criterion uses the
 #' observed information.
 #'
 #' @details
-#' \strong{Why the observed information.} \eqn{K} enters the criterion through
+#' **Why the observed information.** \eqn{K} enters the criterion through
 #' its determinant, so the gradient needs \eqn{\partial K/\partial\beta}. With
 #' the observed information that is the third derivative of the log-likelihood
 #' in the link-scale predictors, which every family of \pkg{distributions7}
 #' carries in closed form. With the expected information it would be the
 #' derivative in \eqn{\beta} of \eqn{-E[\ell'']}, which is not
 #' \eqn{-E[\ell''']} and is not one of that package's generics. So
-#' \code{reml(hessian = "observed")} is what the exact route asks for, and
-#' \code{"expected"} keeps the derivative-free search.
+#' `reml(hessian = "observed")` is what the exact route asks for, and
+#' `"expected"` keeps the derivative-free search.
 #'
-#' \strong{Why the penalty is asked.} \eqn{\partial S/\partial\theta} and its
+#' **Why the penalty is asked.** \eqn{\partial S/\partial\theta} and its
 #' second derivative are generics of \pkg{penalties7}
-#' (\code{\link[penalties7]{penalty_dhessian}},
-#' \code{\link[penalties7]{penalty_d2hessian}},
-#' \code{\link[penalties7]{penalty_dcross}}). A penalty that answers them is
+#' ([penalties7::penalty_dhessian()],
+#' [penalties7::penalty_d2hessian()],
+#' [penalties7::penalty_dcross()]). A penalty that answers them is
 #' estimable by a marginal criterion whatever its shape: the quadratic, the
 #' additive, the structured and the separable branches all do, so a ridge, a
 #' random effect and a heavy-tailed prior are covered as well as a spline. One
@@ -55,15 +55,15 @@ NULL
 #' search stays derivative-free. Nothing here tests a penalty's behaviour to
 #' find out what it is; it is asked.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param idx The outer index, from \code{\link{outer_hyper_index}}.
-#' @param method An \code{\link{OuterMethod}}.
-#' @param order \code{1} for the gradient, \code{2} for the Hessian as well.
+#' @param idx The outer index, from [outer_hyper_index()].
+#' @param method An [OuterMethod()].
+#' @param order `1` for the gradient, `2` for the Hessian as well.
 #'
-#' @return \code{TRUE} or \code{FALSE}.
+#' @return `TRUE` or `FALSE`.
 #'
-#' @seealso \code{\link{statmod_marginal_grad}}
+#' @seealso [statmod_marginal_grad()]
 #'
 #' @keywords internal
 outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
@@ -133,7 +133,7 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
 #' Does the Family Supply the Expected Information's Derivative?
 #'
 #' @description
-#' Whether \code{\link[distributions7]{distrib_dexpected_hessian}} answers for
+#' Whether [distributions7::distrib_dexpected_hessian()] answers for
 #' this family, asked at a probe rather than inferred from its class.
 #'
 #' @details
@@ -150,7 +150,7 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
 #'
 #' @return A single logical.
 #'
-#' @seealso \code{\link{outer_gradient_ok}}
+#' @seealso [outer_gradient_ok()]
 #'
 #' @keywords internal
 expected_deriv_ok <- function(distrib) {
@@ -171,7 +171,7 @@ expected_deriv_ok <- function(distrib) {
 #' Does a Term Supply Its Third Derivative?
 #'
 #' @description
-#' Whether the term implements \code{\link[modelterms7]{term_third}}, read
+#' Whether the term implements [modelterms7::term_third()], read
 #' from the class the method is registered on rather than from a list of
 #' class names, so a term written later is covered without an edit here.
 #'
@@ -185,7 +185,7 @@ expected_deriv_ok <- function(distrib) {
 #'
 #' @return A single logical.
 #'
-#' @seealso \code{\link{outer_gradient_ok}}
+#' @seealso [outer_gradient_ok()]
 #'
 #' @keywords internal
 answers_term_third <- function(term) {
@@ -207,12 +207,12 @@ answers_term_third <- function(term) {
 #'
 #' @details
 #' The order-2 route additionally requires the penalty to be quadratic in the
-#' coefficients (\code{\link[penalties7]{beta_quadratic}}), since otherwise the
+#' coefficients ([penalties7::beta_quadratic()]), since otherwise the
 #' third and fourth derivatives of the penalty in \eqn{\beta} enter the
 #' criterion's own second derivative and \pkg{penalties7} does not carry them.
 #'
 #' @param pen A \pkg{penalties7} penalty.
-#' @param order \code{1} or \code{2}.
+#' @param order `1` or `2`.
 #'
 #' @return A single logical.
 #'
@@ -257,21 +257,21 @@ penalty_answers <- function(pen, order = 1L) {
 #' \eqn{\ell'''_{abk}} is looked up by a name BUILT from the parameter names in
 #' the family's own order, never parsed out of one.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param idx The outer index.
-#' @param basis The integrated subspace, or \code{NULL}.
+#' @param basis The integrated subspace, or `NULL`.
 #' @param free Whether to carry the result onto the free scale. The Hessian
 #'   asks for the parameter scale, having its own second-order chain rule to
 #'   apply.
 #'
-#' @return A numeric vector, one entry per row of \code{idx}, or \code{NULL}
+#' @return A numeric vector, one entry per row of `idx`, or `NULL`
 #'   where the determinant does not exist.
 #'
-#' @seealso \code{\link{statmod_marginal}}, \code{\link{reml}}
+#' @seealso [statmod_marginal()], [reml()]
 #'
 #' @keywords internal
 statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
@@ -398,7 +398,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 #' \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)}, assembled one
 #' crossprod per distribution parameter.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param M The matrix the trace is taken against.
@@ -446,43 +446,43 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @description
 #' The part of \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)} that
-#' \code{\link{u_vector}} does not compute: everything coming from
+#' [u_vector()] does not compute: everything coming from
 #' \eqn{\partial X/\partial\beta} where a term's block depends on its own
 #' coefficients.
 #'
 #' @details
 #' With \eqn{H_{(a,j),(b,k)} = -\sum_i w_i \ell_{ab,i}X_a[i,j]X_b[i,k]} and a
 #' block that moves, differentiating in \eqn{\beta_c} gives three
-#' contributions and \code{\link{u_vector}} computes one. The other two are
+#' contributions and [u_vector()] computes one. The other two are
 #' transposes under the trace, so with
 #' \eqn{R_{ab}[i,j] = \sum_k M_{(a,j),(b,k)}X_b[i,k]} and
 #' \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 #' \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 #'
-#' \strong{The derivative is asked of the TERM}, through
-#' \code{\link[modelterms7]{term_block_contract}}, and never differenced here.
+#' **The derivative is asked of the TERM**, through
+#' [modelterms7::term_block_contract()], and never differenced here.
 #' Two reasons, both measured: a term knows its own chain rule -- the links on
 #' its parameters and a subformula's design -- and a break-point column is a
 #' step function in its break-point, so a difference quotient of it diverges as
 #' the step shrinks rather than converging. A term that does not implement the
 #' contraction inherits zeros, which is exactly right for a fixed design.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, already refreshed at \code{coef}.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
 #' @param M The matrix the trace is taken against.
 #' @param params,npar,offs,total The block bookkeeping.
 #' @param expected Whether the criterion carries the expected information.
 #' @param approx The approximation for the expected information.
-#' @param units The refreshable terms, from \code{\link{refresh_units}}, or
-#'   \code{NULL} to resolve them here.
-#' @param Hl The link-scale curvature, from \code{\link{refresh_hessian}}, or
-#'   \code{NULL} to compute it here.
+#' @param units The refreshable terms, from [refresh_units()], or
+#'   `NULL` to resolve them here.
+#' @param Hl The link-scale curvature, from [refresh_hessian()], or
+#'   `NULL` to compute it here.
 #'
 #' @return A numeric vector as long as the stacked coefficients.
 #'
-#' @seealso \code{\link{u_vector}}, \code{\link{refresh_amat}},
-#'   \code{\link[modelterms7]{term_block_contract}}
+#' @seealso [u_vector()], [refresh_amat()],
+#'   [modelterms7::term_block_contract()]
 #'
 #' @keywords internal
 u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
@@ -522,7 +522,7 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @description
 #' What separates the true Hessian of the penalized log-likelihood from the
-#' Gauss-Newton matrix \code{\link{statmod_information_at}} returns, where a
+#' Gauss-Newton matrix [statmod_information_at()] returns, where a
 #' term's block moves with its coefficients.
 #'
 #' @details
@@ -538,29 +538,29 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' \eqn{\partial^2\eta_i/\partial\beta_c\partial\beta_d =
 #' \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
 #' which is what keeps this cheap: one call of
-#' \code{\link[modelterms7]{term_block_contract}} per column, weighted by the
-#' SCORE where \code{\link{u_refresh}} weights by \eqn{M}.
+#' [modelterms7::term_block_contract()] per column, weighted by the
+#' SCORE where [u_refresh()] weights by \eqn{M}.
 #'
 #' ⚠️ It is the mode's matrix and NOT the criterion's. The determinant is of
-#' whatever \code{\link{statmod_information_at}} assembles, and its derivative
+#' whatever [statmod_information_at()] assembles, and its derivative
 #' reads that one; how the mode MOVES is a fact about the penalized likelihood
 #' and reads this one. Confusing the two is the defect this file already
 #' records for the expected information, in a second place.
 #'
-#' Measured on \code{nl(a ~ 0 + ridge(~grp))} against a finite difference of
+#' Measured on `nl(a ~ 0 + ridge(~grp))` against a finite difference of
 #' the criterion with the mode refitted: the gradient goes from 1.5e-04 to
 #' 8.8e-09 at 320 observations and from 1.6e-05 to 1.6e-09 at 960, on the
 #' observed route and the expected one alike.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, already refreshed at \code{coef}.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, already refreshed at `coef`.
 #' @param coef The coefficients at the penalized mode.
 #' @param params,npar,offs,total The block bookkeeping.
 #'
 #' @return A square matrix, zero everywhere no refreshable term reaches.
 #'
-#' @seealso \code{\link{u_refresh}},
-#'   \code{\link[modelterms7]{term_block_contract}}
+#' @seealso [u_refresh()],
+#'   [modelterms7::term_block_contract()]
 #'
 #' @keywords internal
 mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
@@ -610,7 +610,7 @@ mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
 #' then checked against the enumeration rather than trusted.
 #'
 #' @param params The parameter names, in the family's order.
-#' @param a,b,k Indices into \code{params}.
+#' @param a,b,k Indices into `params`.
 #' @param keys The names the derivative actually returned.
 #'
 #' @return A single string.
@@ -634,24 +634,24 @@ d3_key <- function(params, a, b, k, keys) {
 #' a filter the forward Jacobian of the recursion, which is dense.
 #'
 #' @details
-#' It exists so that the contraction \code{\link{u_vector}} performs is
+#' It exists so that the contraction [u_vector()] performs is
 #' written once. The formula there does not change where a filter is present;
 #' only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
 #' downstream -- the third derivative against the diagonal of \eqn{M}, the
 #' movement of the mode -- then reads the joint vector without a special case.
 #'
 #' The rows are returned at the FULL width, a held level included, and the
-#' caller drops it exactly as \code{\link{statmod_full_information}} does.
+#' caller drops it exactly as [statmod_full_information()] does.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #'
-#' @return A list with \code{V} (one matrix per distribution parameter),
-#'   \code{ap} (which equation carries the filter), \code{keep} (the columns
-#'   that survive a held level), \code{ev}, \code{f} and the sizes.
+#' @return A list with `V` (one matrix per distribution parameter),
+#'   `ap` (which equation carries the filter), `keep` (the columns
+#'   that survive a held level), `ev`, `f` and the sizes.
 #'
-#' @seealso \code{\link{u_vector}}, \code{\link{statmod_full_information}}
+#' @seealso [u_vector()], [statmod_full_information()]
 #'
 #' @keywords internal
 joint_design_rows <- function(spec, design, coef) {
@@ -688,7 +688,7 @@ joint_design_rows <- function(spec, design, coef) {
 #' The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 #'
 #' @description
-#' \code{\link{statmod_marginal_grad}} over the joint vector of coefficients
+#' [statmod_marginal_grad()] over the joint vector of coefficients
 #' and a structural term's parameters, which is what the determinant spans
 #' there.
 #'
@@ -702,7 +702,7 @@ joint_design_rows <- function(spec, design, coef) {
 #'
 #' \enumerate{
 #'   \item the family's third derivative against the per-observation diagonal
-#'     of \eqn{M}, which is \code{\link{u_vector}}'s formula with \eqn{V} in
+#'     of \eqn{M}, which is [u_vector()]'s formula with \eqn{V} in
 #'     place of \eqn{X};
 #'   \item the derivative of \eqn{V_p} itself, which is \eqn{E_t v}, one row
 #'     per observation, entering through every \eqn{\ell_{pb}};
@@ -715,20 +715,20 @@ joint_design_rows <- function(spec, design, coef) {
 #' along each hyperparameter's own direction, which is the trade that keeps
 #' the cost at \eqn{O(nm^2)} per hyperparameter instead of \eqn{O(nm^3)} once.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param idx The outer index.
-#' @param basis The integrated subspace, or \code{NULL}.
+#' @param basis The integrated subspace, or `NULL`.
 #' @param free Whether to carry the result onto the free scale.
 #'
-#' @return A numeric vector, one entry per row of \code{idx}, or \code{NULL}
+#' @return A numeric vector, one entry per row of `idx`, or `NULL`
 #'   where the determinant does not exist.
 #'
-#' @seealso \code{\link{statmod_marginal_grad}},
-#'   \code{\link[modelterms7]{term_third}}
+#' @seealso [statmod_marginal_grad()],
+#'   [modelterms7::term_third()]
 #'
 #' @keywords internal
 statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
@@ -795,7 +795,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
 #' What the Joint Chain Term Needs Before a Direction Is Known
 #'
 #' @description
-#' The quantities of \code{\link{statmod_structural_grad}} that do not depend
+#' The quantities of [statmod_structural_grad()] that do not depend
 #' on which hyperparameter is being differentiated: the family's derivatives,
 #' the filter's forward Jacobian, the per-observation diagonal of \eqn{M} and
 #' the contraction \eqn{u}.
@@ -805,10 +805,10 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
 #' affordable: only the two pieces that read the direction are repeated, and
 #' each of those is one pass of the recursion.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
-#' @param jd The joint rows, from \code{\link{joint_design_rows}}.
+#' @param jd The joint rows, from [joint_design_rows()].
 #' @param M The matrix the trace is taken against.
 #'
 #' @return A list of the shared quantities.
@@ -904,11 +904,11 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
 #' filter's own Jacobian, and the derivative of the term the level contributes
 #' to the information.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param jd The joint rows.
 #' @param M The matrix the trace is taken against.
-#' @param st The shared quantities, from \code{\link{structural_grad_parts}}.
+#' @param st The shared quantities, from [structural_grad_parts()].
 #' @param v The direction, over the estimated coordinates.
 #'
 #' @return A single number.
@@ -963,16 +963,16 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' The Model's Derivative Pieces for a Filter's Recursion
 #'
 #' @description
-#' Builds the \code{blocks} callback \code{\link[modelterms7]{term_curvature}}
-#' and \code{\link[modelterms7]{term_third}} take, at a direction or without
+#' Builds the `blocks` callback [modelterms7::term_curvature()]
+#' and [modelterms7::term_third()] take, at a direction or without
 #' one.
 #'
 #' @details
 #' The pieces are built on the ACTIVE SET the term asks for, so a panel's
 #' outer products are of the same size whatever the number of groups.
-#' \code{dcurv} serves twice, as the derivative of the curvature along the
+#' `dcurv` serves twice, as the derivative of the curvature along the
 #' direction and as the factor multiplying the movement of \eqn{V_p}, and
-#' \code{N} is where the family's fourth derivative enters: each order of
+#' `N` is where the family's fourth derivative enters: each order of
 #' differentiating the predictor through the recursion pulls in one more order
 #' of the family.
 #'
@@ -982,7 +982,7 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' @param H,D3,D4 The family's derivatives at the fitted predictors.
 #' @param n The number of observations.
 #'
-#' @return A function of the direction returning a \code{blocks} callback.
+#' @return A function of the direction returning a `blocks` callback.
 #'
 #' @keywords internal
 .structural_blocks <- function(params, ap, Vs, H, D3, D4, n) {
@@ -1065,8 +1065,8 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' The Same Pieces as Data for the Compiled Recursion
 #'
 #' @description
-#' The quantities the callback of \code{.structural_blocks()} reads, laid out
-#' as matrices so \code{modelterms7}'s compiled second-order route can read
+#' The quantities the callback of `.structural_blocks()` reads, laid out
+#' as matrices so `modelterms7`'s compiled second-order route can read
 #' them without calling back into R: the mixed second derivatives one column
 #' per distribution parameter (the filter's own column zero, the loop skips
 #' it), the third derivatives one column per parameter pair with pair
@@ -1079,7 +1079,7 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' @param H,D3 The family's derivatives at the fitted predictors.
 #' @param n The number of observations.
 #'
-#' @return A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}.
+#' @return A list with `H`, `D3`, `Vs` and `ap`.
 #'
 #' @keywords internal
 structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
@@ -1104,16 +1104,16 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
 #' The Subspace a Marginal Criterion Integrates Over, Jointly
 #'
 #' @description
-#' The basis \code{\link{ml}()} projects the joint curvature onto: the
+#' The basis [ml()] projects the joint curvature onto: the
 #' coefficients' own range basis, with one column per penalized parameter of
 #' the structural term appended.
 #'
 #' @details
-#' It is written once because \code{\link{statmod_marginal_full}} and
-#' \code{\link{statmod_structural_grad}} must project onto the SAME subspace,
+#' It is written once because [statmod_marginal_full()] and
+#' [statmod_structural_grad()] must project onto the SAME subspace,
 #' and two callers composing it separately would agree only by accident.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param key The structural term's name.
 #' @param free Its free parameters, in order.
@@ -1159,9 +1159,9 @@ structural_joint_basis <- function(spec, design, key, free, nb, basis) {
 #' @param npar,offs The block sizes and their offsets.
 #' @param threads How many threads the sparse route's kernel may use.
 #'
-#' @return A list of lists, \code{G[[a]][[b]]} a vector as long as the sample.
+#' @return A list of lists, `G[[a]][[b]]` a vector as long as the sample.
 #'
-#' @seealso \code{\link{u_vector}}, \code{\link{trace_design_form}}
+#' @seealso [u_vector()], [trace_design_form()]
 #'
 #' @keywords internal
 block_leverage <- function(design, M, params, npar, offs, threads = 1L) {
@@ -1219,9 +1219,9 @@ block_leverage <- function(design, M, params, npar, offs, threads = 1L) {
 #'
 #' @param X A sparse design block.
 #'
-#' @return A list with \code{i}, \code{j} and \code{v}, sorted by row.
+#' @return A list with `i`, `j` and `v`, sorted by row.
 #'
-#' @seealso \code{\link{leverage_pairs}}
+#' @seealso [leverage_pairs()]
 #'
 #' @keywords internal
 row_nonzeros <- function(X) {
@@ -1235,7 +1235,7 @@ row_nonzeros <- function(X) {
 #'
 #' @description
 #' \eqn{G_i = \sum_{j\in J_i}\sum_{k\in K_i} X_a[i,j]X_b[i,k]M_{ab}[j,k]}, the
-#' same quantity \code{\link{block_leverage}} otherwise reads off a dense
+#' same quantity [block_leverage()] otherwise reads off a dense
 #' \eqn{n\times p_b} product.
 #'
 #' @details
@@ -1244,7 +1244,7 @@ row_nonzeros <- function(X) {
 #' product computes \eqn{p_a p_b} of them per row to keep one. The pairs are
 #' expanded once and the whole sum is vectorized.
 #'
-#' \strong{It is taken only where it wins}, and the threshold is measured
+#' **It is taken only where it wins**, and the threshold is measured
 #' rather than assumed. At a combined density of 3.6e-05 (a random intercept
 #' over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
 #' and a random effect) it is 50 times SLOWER, R's per-element indexing being
@@ -1253,14 +1253,14 @@ row_nonzeros <- function(X) {
 #' near 1.1e-03, which is the gate: below it the route is taken, at it the two
 #' cost the same, and above it the dense product stands.
 #'
-#' @param ta,tb The two designs' nonzeros, from \code{\link{row_nonzeros}}.
+#' @param ta,tb The two designs' nonzeros, from [row_nonzeros()].
 #' @param Mab The block of \eqn{M}.
 #' @param n The number of observations.
 #' @param threads How many threads the kernel may use.
 #'
 #' @return A numeric vector as long as the sample.
 #'
-#' @seealso \code{\link{block_leverage}}
+#' @seealso [block_leverage()]
 #'
 #' @keywords internal
 leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
@@ -1289,7 +1289,7 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' penalized objective contracted once, or the fourth contracted twice.
 #'
 #' @details
-#' \code{\link{contract3}} and \code{\link{contract4}} assemble
+#' [contract3()] and [contract4()] assemble
 #' \eqn{-X_a'\,\mathrm{diag}(\omega_i w_i)\,X_b} block by block, and where the
 #' result is only ever traced against \eqn{M} the assembly is waste: the trace
 #' of that block against \eqn{M_{ab}} is \eqn{-\sum_i \omega_i w_i G_{ab,i}}.
@@ -1300,17 +1300,17 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' which is what keeps the two routes the same arithmetic in the same order
 #' where it matters.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param G The per-observation diagonals, from \code{\link{block_leverage}}.
+#' @param spec A [StatmodSpec()].
+#' @param G The per-observation diagonals, from [block_leverage()].
 #' @param deriv The third or fourth derivatives on the link scale.
 #' @param params,npar The parameter names and block sizes.
 #' @param tv The direction the derivative is contracted in.
-#' @param tu A second direction, for a fourth derivative; \code{NULL} for a
+#' @param tu A second direction, for a fourth derivative; `NULL` for a
 #'   third.
 #'
 #' @return A single number.
 #'
-#' @seealso \code{\link{contract3}}, \code{\link{contract4}}
+#' @seealso [contract3()], [contract4()]
 #'
 #' @keywords internal
 trace_design_form <- function(spec, G, deriv, params, npar, tv, tu = NULL) {

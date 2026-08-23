@@ -27,9 +27,9 @@ elastic net's alpha scales the kink and is bounded by one, so no
 admissible value of it empties the block at a given lambda; the shape of
 SCAD and MCP has no upper bound and does not move the kink at all, so the
 solve has nothing to solve. Either way the sweep is
-\code{\link{path_grid}}.
+\code{\link[=path_grid]{path_grid()}}.
 }
 \seealso{
-\code{\link{path_values}}, \code{\link{path_grid}}
+\code{\link[=path_values]{path_values()}}, \code{\link[=path_grid]{path_grid()}}
 }
 \keyword{internal}

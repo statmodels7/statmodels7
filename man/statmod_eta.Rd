@@ -7,9 +7,9 @@
 statmod_eta(spec, design, coef)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, as \code{\link{statmod_design}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 
 \item{coef}{A named list of coefficient vectors, one per parameter.}
 }

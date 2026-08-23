@@ -13,7 +13,7 @@ expected_deriv_ok(distrib)
 A single logical.
 }
 \description{
-Whether \code{\link[distributions7]{distrib_dexpected_hessian}} answers for
+Whether \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} answers for
 this family, asked at a probe rather than inferred from its class.
 }
 \details{
@@ -27,6 +27,6 @@ of those calls per criterion evaluation is not a slower route but an
 unusable one.
 }
 \seealso{
-\code{\link{outer_gradient_ok}}
+\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}
 }
 \keyword{internal}

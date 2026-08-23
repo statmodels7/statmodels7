@@ -17,7 +17,7 @@ A warning of its own class, so that a caller reporting the same thing in
 its own channel can muffle it rather than repeat it.
 }
 \details{
-\code{\link{summary.StatmodFit}} calls \code{\link{vcov}} more than
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} calls \code{\link[=vcov]{vcov()}} more than
 once and would raise the warning once per call; it says it once, as a
 note.
 }

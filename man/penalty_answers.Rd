@@ -20,7 +20,7 @@ hyperparameters, and reports whether it answered.
 }
 \details{
 The order-2 route additionally requires the penalty to be quadratic in the
-coefficients (\code{\link[penalties7]{beta_quadratic}}), since otherwise the
+coefficients (\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}}), since otherwise the
 third and fourth derivatives of the penalty in \eqn{\beta} enter the
 criterion's own second derivative and \pkg{penalties7} does not carry them.
 }

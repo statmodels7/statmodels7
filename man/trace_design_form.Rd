@@ -7,9 +7,9 @@
 trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{G}{The per-observation diagonals, from \code{\link{block_leverage}}.}
+\item{G}{The per-observation diagonals, from \code{\link[=block_leverage]{block_leverage()}}.}
 
 \item{deriv}{The third or fourth derivatives on the link scale.}
 
@@ -28,7 +28,7 @@ A single number.
 penalized objective contracted once, or the fourth contracted twice.
 }
 \details{
-\code{\link{contract3}} and \code{\link{contract4}} assemble
+\code{\link[=contract3]{contract3()}} and \code{\link[=contract4]{contract4()}} assemble
 \eqn{-X_a'\,\mathrm{diag}(\omega_i w_i)\,X_b} block by block, and where the
 result is only ever traced against \eqn{M} the assembly is waste: the trace
 of that block against \eqn{M_{ab}} is \eqn{-\sum_i \omega_i w_i G_{ab,i}}.
@@ -40,6 +40,6 @@ which is what keeps the two routes the same arithmetic in the same order
 where it matters.
 }
 \seealso{
-\code{\link{contract3}}, \code{\link{contract4}}
+\code{\link[=contract3]{contract3()}}, \code{\link[=contract4]{contract4()}}
 }
 \keyword{internal}

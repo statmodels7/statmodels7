@@ -7,16 +7,16 @@
 iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
 }
 \arguments{
-\item{obj}{The objective, from \code{\link{statmod_objective}}.}
+\item{obj}{The objective, from \code{\link[=statmod_objective]{statmod_objective()}}.}
 
 \item{start}{The starting coefficients, stacked.}
 
-\item{method}{An \code{\link{Iwls}} object.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{n}{The number of observations, for the scaled stopping rule.}
 
 \item{pieces_at}{A function of the stacked coefficients returning what
-\code{\link{iwls_solve}} needs, as \code{\link{iwls_pieces}} builds it.}
+\code{\link[=iwls_solve]{iwls_solve()}} needs, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.}
 
 \item{verbose}{Whether to print a line per iteration.}
 }
@@ -26,7 +26,7 @@ A list with \code{par}, \code{value}, \code{converged},
 }
 \description{
 Runs the scoring iteration on the objective of
-\code{\link{statmod_objective}} at fixed hyperparameters, returning the
+\code{\link[=statmod_objective]{statmod_objective()}} at fixed hyperparameters, returning the
 coefficients and the history of the run.
 }
 \details{
@@ -48,6 +48,6 @@ run that has already stopped; driving the loop with it was tried and
 made the tolerance unreachable at the OTHER end of the scale.
 }
 \seealso{
-\code{\link{iwls}}
+\code{\link[=iwls]{iwls()}}
 }
 \keyword{internal}

@@ -57,7 +57,7 @@ list of block records.}
 An object of class \code{StatmodSummary}.
 }
 \description{
-What \code{\link{summary.StatmodFit}} returns: the blocks of each
+What \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} returns: the blocks of each
 distribution parameter, the degrees of freedom, the information criteria and
 whatever has to be said about how the numbers should be read.
 }
@@ -69,6 +69,6 @@ S7::S7_inherits(summary(statmod(y ~ x,
 
 }
 \seealso{
-\code{\link{summary.StatmodFit}}
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 }
 \keyword{internal}

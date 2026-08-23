@@ -14,7 +14,7 @@ coord_call(X, z, w, b0, tab, screen, tol, covariance)
 \item{b0}{The starting coefficients.}
 
 \item{tab}{The proximal table, from
-\code{\link[penalties7]{penalty_prox_spec}}.}
+\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}}.}
 
 \item{screen}{The zero-based positions the strong rule kept.}
 
@@ -37,6 +37,6 @@ a structural zero omits an addition of zero, which is exact. The
 compiled code needs no dependency on the \pkg{Matrix} package's C API.
 }
 \seealso{
-\code{\link{coord_block}}
+\code{\link[=coord_block]{coord_block()}}
 }
 \keyword{internal}

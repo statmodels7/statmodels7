@@ -7,7 +7,7 @@
 start_origin()
 }
 \value{
-A \code{\link{start_strategy}}.
+A \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 Every coefficient at zero on the unconstrained scale, which for each
@@ -17,7 +17,7 @@ distribution parameter is the value its link maps zero to.
 The name is \code{start_origin} and not \code{start_zeros} because
 \pkg{optimizers7} already exports the second for the starting POINT of an
 optimizer, and the toolkit's members share no exported name --- a
-collision would be reported by \code{\link{statmodels7_conflicts}} and, far
+collision would be reported by \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} and, far
 worse, would mean that which function a user got depended on the order the
 packages were attached in.
 
@@ -33,5 +33,5 @@ start_origin()
 
 }
 \seealso{
-\code{\link{start_intercepts}}
+\code{\link[=start_intercepts]{start_intercepts()}}
 }

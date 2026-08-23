@@ -7,7 +7,7 @@
 blocks_at_kink(blocks, hyper)
 }
 \arguments{
-\item{blocks}{The blocks, as \code{\link{statmod_blocks}} returns them.}
+\item{blocks}{The blocks, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns them.}
 
 \item{hyper}{The hyperparameters at the point just fitted.}
 }
@@ -25,6 +25,6 @@ the block -- where its penalty was a moment ago -- and the path rebuilds the
 blocks at each point anyway.
 }
 \seealso{
-\code{\link{coord_screen}}, \code{\link{statmod_path}}
+\code{\link[=coord_screen]{coord_screen()}}, \code{\link[=statmod_path]{statmod_path()}}
 }
 \keyword{internal}

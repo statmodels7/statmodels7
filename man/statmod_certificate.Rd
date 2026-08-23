@@ -7,7 +7,7 @@
 statmod_certificate(fit, tol = 0.01, edge = 8)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{tol}{The largest outer gradient a certified point may carry.}
 
@@ -30,7 +30,7 @@ above the penalized mode, and which hyperparameters have run to a boundary.
 whether a search stopped on its own rule, which is a statement about the
 search. Measured across shapes, it does not order fits by quality: on one
 model the default reported success at a criterion of -1783.47 while the same
-data under \code{\link[optimizers7]{lbfgs}} reached -1664.43 and reported
+data under \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} reached -1664.43 and reported
 failure. What a reader wants is a property of the point.
 
 \strong{The state comes from the gradient and the mode error is reported
@@ -70,7 +70,7 @@ error is not a statement about being at a mode. Measured on a lasso, its
 score is -0.715.
 
 A form whose criterion has no EXACT gradient
-(\code{\link{outer_gradient_ok}}) is also \code{"unknown"} rather than
+(\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}) is also \code{"unknown"} rather than
 approximated: 2p refits to difference it would cost more than the fit.
 
 \strong{The boundary label, and why its threshold needs no derivation.}
@@ -96,6 +96,6 @@ statmod_certificate(statmod(y ~ s(x, k = 8),
 
 }
 \seealso{
-\code{\link{statmod}}, \code{\link{mode_error_limit}},
-\code{\link{criterion_resolution}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=mode_error_limit]{mode_error_limit()}},
+\code{\link[=criterion_resolution]{criterion_resolution()}}
 }

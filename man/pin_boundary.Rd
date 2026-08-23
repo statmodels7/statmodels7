@@ -33,6 +33,6 @@ index into by position; pinning says the same thing and breaks none of
 them.
 }
 \seealso{
-\code{\link{ctx_penalized}}, \code{\link{iwls_solve}}
+\code{\link[=ctx_penalized]{ctx_penalized()}}, \code{\link[=iwls_solve]{iwls_solve()}}
 }
 \keyword{internal}

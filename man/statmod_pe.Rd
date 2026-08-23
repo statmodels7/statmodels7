@@ -15,7 +15,7 @@ statmod_pe(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -23,12 +23,12 @@ statmod_pe(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{approx}{The approximation for the expected information.}
 
 \item{active}{Which coefficients are away from a kink, as
-\code{\link{statmod_active}} reports them, or \code{NULL} where no
+\code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} where no
 penalty has one.}
 }
 \value{
@@ -39,6 +39,6 @@ A list with \code{value}, \code{loglik}, \code{penalty} and
 \eqn{-2\ell + \kappa\tau} at the penalized mode.
 }
 \seealso{
-\code{\link{aic}}
+\code{\link[=aic]{aic()}}
 }
 \keyword{internal}

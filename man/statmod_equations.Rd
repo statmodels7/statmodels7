@@ -18,7 +18,7 @@ A list with \code{response} (the unevaluated left-hand side),
 actually supplied).
 }
 \description{
-Takes the single formula \code{\link{statmod}} accepts, in which the
+Takes the single formula \code{\link[=statmod]{statmod()}} accepts, in which the
 equations of the distribution's parameters are separated by \code{|}, and
 returns the response together with one one-sided formula per parameter.
 }
@@ -36,8 +36,7 @@ formula is \code{c} alone, and splitting it on \code{|} returns one piece
 and silently drops two equations. What the associativity calls for instead
 is a walk down the left spine of the nested \code{~} calls, collecting each
 level's right-hand side; the innermost left operand is the response, and
-each collected piece is either \code{<terms> | <name of the next
-parameter>} or, for the last, \code{<terms>} alone.
+each collected piece is either \verb{<terms> | <name of the next parameter>} or, for the last, \verb{<terms>} alone.
 
 A \code{|} inside a call is untouched, the walk descending only through
 \code{~} and the top-level \code{|}, so \code{random(1 | id)} and
@@ -48,5 +47,5 @@ statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
 
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }

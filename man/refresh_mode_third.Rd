@@ -7,19 +7,19 @@
 refresh_mode_third(spec, params, npar, units, Hl, gl, tv, du, f2, total)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{params, npar, total}{The block bookkeeping.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}.}
 
-\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}.}
+\item{Hl}{The link-scale curvature, from \code{\link[=refresh_hessian]{refresh_hessian()}}.}
 
 \item{gl}{The link-scale score.}
 
 \item{tv}{The predictors of the first direction.}
 
-\item{du}{The second direction, from \code{\link{refresh_direction}}.}
+\item{du}{The second direction, from \code{\link[=refresh_direction]{refresh_direction()}}.}
 
 \item{f2}{The block's second derivative, one matrix per unit.}
 }
@@ -28,14 +28,14 @@ A numeric vector as long as the stacked coefficients.
 }
 \description{
 The part of \eqn{\partial^3L/\partial\beta^3[v,u]} that
-\code{\link{contract3}} and \code{\link{contract3_refresh}} do not carry,
+\code{\link[=contract3]{contract3()}} and \code{\link[=contract3_refresh]{contract3_refresh()}} do not carry,
 as a vector over the stacked coefficients.
 }
 \details{
 \eqn{b_{ml}} solves \eqn{J b_{ml} = -[(S_l + T[b_l])b_m + S_m b_l + c_{ml}]}
 with \eqn{T} the THIRD derivative of the penalized objective in \eqn{\beta}.
 Where a block moves, the objective's second derivative is not \eqn{K} but
-\eqn{K + D}, with \eqn{D} the term \code{\link{mode_curvature}} builds, so
+\eqn{K + D}, with \eqn{D} the term \code{\link[=mode_curvature]{mode_curvature()}} builds, so
 its third derivative is not \eqn{\partial K/\partial\beta} either. What is
 missing is \eqn{\partial D/\partial\beta}, and differentiating
 \eqn{D_{cd} = -\sum_i w_i\ell_a\,\Xi_a[i,c,d]} once and contracting gives two
@@ -56,6 +56,6 @@ the gap falls to 1.8e-05 at the reference's best step, which is inside the
 spread between the reference's own consecutive steps.
 }
 \seealso{
-\code{\link{mode_curvature}}, \code{\link{trace_refresh4}}
+\code{\link[=mode_curvature]{mode_curvature()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}
 }
 \keyword{internal}

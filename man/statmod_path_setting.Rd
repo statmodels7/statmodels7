@@ -7,9 +7,9 @@
 statmod_path_setting(spec, row, field, default, name = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
 \item{field}{Which field of the penalty's entry to read.}
 

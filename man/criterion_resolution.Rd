@@ -14,12 +14,12 @@ criterion_resolution(st, spec, design, method, criterion_at)
 
 \item{design}{The design.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
-\item{criterion_at}{A function of \code{(cf, hy, par, ctx)} returning what
+\item{criterion_at}{A function of \verb{(cf, hy, par, ctx)} returning what
 THIS search is running, which is a prediction-error criterion or a
 marginal one. It is passed in rather than chosen here: reading the
-marginal criterion of a fit whose search is \code{\link{aic}} answers for
+marginal criterion of a fit whose search is \code{\link[=aic]{aic()}} answers for
 a quantity the search never sees, and the number that comes back stopped
 two such fits short of their own optimum.}
 }
@@ -64,6 +64,6 @@ smaller than the truth leaves the search where it was; one larger stops a
 healthy search short.
 }
 \seealso{
-\code{\link{outer_fit}}, \code{\link[optimizers7]{armijo}}
+\code{\link[=outer_fit]{outer_fit()}}, \code{\link[optimizers7:armijo]{optimizers7::armijo()}}
 }
 \keyword{internal}

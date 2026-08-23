@@ -7,7 +7,7 @@
 statmod_score_at(spec, coef, design = statmod_design(spec))
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 

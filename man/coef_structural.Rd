@@ -26,7 +26,7 @@ as the coordinates they were estimated on.
 \details{
 A structural term rewrites the likelihood rather than adding columns to a
 design, so its parameters are in no block and were in no reading of
-\code{\link{coef}}: a model whose whole predictor is a score-driven filter
+\code{\link[=coef]{coef()}}: a model whose whole predictor is a score-driven filter
 answered with an empty vector. They are named from the term's label as
 every other coefficient of the term is.
 

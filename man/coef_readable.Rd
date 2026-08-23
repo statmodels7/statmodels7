@@ -26,7 +26,7 @@ quantities put where the coordinates they are read from were.
 }
 \details{
 A term says what it is about through
-\code{\link[modelterms7]{term_readable}}, which gives the quantities and
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which gives the quantities and
 the Jacobian from the coefficients. The columns that Jacobian touches are
 the coordinates the quantities are read from, and they are the ones
 replaced; a coordinate no quantity reads stands where it is. That is what

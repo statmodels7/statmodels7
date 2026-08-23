@@ -42,6 +42,6 @@ extrapolation is exact for a penalty that is affine on each side of the
 kink, which the lasso, SCAD, MCP and the elastic net all are.
 }
 \seealso{
-\code{\link{kink_hypers}}, \code{\link{kink_solve}}
+\code{\link[=kink_hypers]{kink_hypers()}}, \code{\link[=kink_solve]{kink_solve()}}
 }
 \keyword{internal}

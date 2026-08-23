@@ -39,7 +39,7 @@ abandoned.}
 An object of class \code{Iwls}.
 }
 \description{
-The S7 class of the scoring step \code{\link{statmod}} uses for the smooth
+The S7 class of the scoring step \code{\link[=statmod]{statmod()}} uses for the smooth
 block, carrying its own choice of curvature and of decomposition.
 }
 \examples{
@@ -47,6 +47,6 @@ S7::S7_inherits(iwls(), Iwls)
 
 }
 \seealso{
-\code{\link{iwls}}
+\code{\link[=iwls]{iwls()}}
 }
 \keyword{internal}

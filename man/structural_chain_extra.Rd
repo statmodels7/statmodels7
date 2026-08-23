@@ -7,7 +7,7 @@
 structural_chain_extra(spec, design, jd, M, st, v)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -15,7 +15,7 @@ structural_chain_extra(spec, design, jd, M, st, v)
 
 \item{M}{The matrix the trace is taken against.}
 
-\item{st}{The shared quantities, from \code{\link{structural_grad_parts}}.}
+\item{st}{The shared quantities, from \code{\link[=structural_grad_parts]{structural_grad_parts()}}.}
 
 \item{v}{The direction, over the estimated coordinates.}
 }

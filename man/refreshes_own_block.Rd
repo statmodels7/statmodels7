@@ -14,7 +14,7 @@ A single logical.
 }
 \description{
 \code{TRUE} when the term registers a
-\code{\link[modelterms7]{term_refresh}} method of its own rather than
+\code{\link[modelterms7:term_refresh]{modelterms7::term_refresh()}} method of its own rather than
 inheriting the identity registered on \code{model_term}.
 }
 \details{
@@ -25,6 +25,6 @@ is what happens whenever a package's code is re-evaluated rather than
 loaded.
 }
 \seealso{
-\code{\link{unfittable_reason}}
+\code{\link[=unfittable_reason]{unfittable_reason()}}
 }
 \keyword{internal}

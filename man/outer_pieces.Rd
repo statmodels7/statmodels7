@@ -7,7 +7,7 @@
 outer_pieces(spec, design, coef, hyper, idx, offs, total, order = 2L)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 

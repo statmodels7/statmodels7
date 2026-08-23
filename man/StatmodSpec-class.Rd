@@ -58,6 +58,6 @@ S7::S7_inherits(statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd),
 
 }
 \seealso{
-\code{\link{statmod_spec}}
+\code{\link[=statmod_spec]{statmod_spec()}}
 }
 \keyword{internal}

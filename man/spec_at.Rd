@@ -7,7 +7,7 @@
 spec_at(fit, data, need_response = TRUE)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{data}{A data frame or \code{NULL}.}
 
@@ -15,7 +15,7 @@ spec_at(fit, data, need_response = TRUE)
 it; a prediction does not, and new data routinely has no response column.}
 }
 \value{
-A \code{\link{StatmodSpec}}.
+A \code{\link[=StatmodSpec]{StatmodSpec()}}.
 }
 \description{
 Returns the fit's specification when \code{data} is \code{NULL}, and one

@@ -27,7 +27,7 @@ coord_fit(
 
 \item{hyper}{The hyperparameters.}
 
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -43,7 +43,7 @@ coord_fit(
 \code{NULL} to cycle over every coordinate.}
 }
 \value{
-A list shaped like \code{\link{sparse_fit}}'s, or \code{NULL} where
+A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s, or \code{NULL} where
 the route does not apply.
 }
 \description{
@@ -62,7 +62,7 @@ running residual instead and closes in six sweeps.
 predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
 \eqn{-\ell} is \eqn{\frac12\sum_i h_i(z_i - \eta_i)^2} up to a constant with
 \eqn{z = \eta + s/h}, which is the weighted least squares problem of
-\code{\link{iwls}} restricted to one equation. The other columns of that
+\code{\link[=iwls]{iwls()}} restricted to one equation. The other columns of that
 equation enter as an offset. For a Gaussian response with an identity link
 the quadratic is exact and one pass is the answer; otherwise the weights are
 rebuilt and the sweeps repeated.
@@ -72,7 +72,7 @@ penalty's own proximal operator at the step \eqn{1/v_j}, with
 \eqn{v_j = \sum_i w_i x_{ij}^2}, and \eqn{v_j} does not move while the
 working weights are held. The whole table is therefore built once per
 weighted least squares iteration by
-\code{\link[penalties7]{penalty_prox_spec}} and the compiled sweeps read it,
+\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} and the compiled sweeps read it,
 so the kernel names no family and a penalty that describes its operator gets
 the compiled route without an edit here.
 
@@ -105,7 +105,7 @@ lasso-type problems. \emph{Journal of the Royal Statistical Society, Series
 B} 74(2), 245--266.
 }
 \seealso{
-\code{\link{sparse_fit}},
-\code{\link[penalties7]{penalty_prox_spec}}
+\code{\link[=sparse_fit]{sparse_fit()}},
+\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}}
 }
 \keyword{internal}

@@ -14,7 +14,7 @@
 )
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{type}{\code{"bayesian"} or \code{"frequentist"}.}
 
@@ -48,7 +48,7 @@ and both are \eqn{H^{-1}}.
 the penalty is not twice differentiable, so \eqn{S} does not exist there and
 no curvature can be read; the entry is \code{NA}. The coefficients a lasso
 or an MCP left non-zero do get a variance, and it is conditional on that
-selection -- \code{\link{summary.StatmodFit}} says so in a note rather than
+selection -- \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} says so in a note rather than
 leaving the reader to assume otherwise.
 }
 \examples{
@@ -59,6 +59,6 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 sqrt(diag(vcov(fit)))
 }
 \seealso{
-\code{\link{confint.StatmodFit}}, \code{\link{summary.StatmodFit}}
+\code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 }
 \keyword{internal}

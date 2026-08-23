@@ -37,7 +37,7 @@ The smallest eigenvalue is ESTIMATED rather than computed, from LAPACK's
 condition estimator (\code{dpocon}) read on the Cholesky factor the
 inverse needs anyway: \code{rcond} is
 \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
-\code{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
+\verb{rcond * ||A||_1} is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
 symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
 \eqn{\lambda_{\min}}. The estimate therefore errs on the SMALL side and
 the test is conservative by at most a factor \eqn{\sqrt{p}}, plus

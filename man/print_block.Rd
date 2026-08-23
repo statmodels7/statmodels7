@@ -7,7 +7,7 @@
 print_block(b, digits = 4L)
 }
 \arguments{
-\item{b}{A block record from \code{\link{summary_blocks}}.}
+\item{b}{A block record from \code{\link[=summary_blocks]{summary_blocks()}}.}
 
 \item{digits}{Significant digits.}
 }
@@ -29,6 +29,6 @@ develops it, opening with its hyperparameter under a name that says what
 the hyperparameter is, and rendering each sub-term the way a block of that
 kind is rendered at the top level. A random development reports the scale
 of its effects and one line saying how many predictions there are and how
-far they spread, the predictions themselves being in \code{\link{coef}}.
+far they spread, the predictions themselves being in \code{\link[=coef]{coef()}}.
 }
 \keyword{internal}

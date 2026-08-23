@@ -8,18 +8,18 @@ linpar_options(sparse = NULL, contrasts = NULL)
 }
 \arguments{
 \item{sparse}{Whether the block is a \code{dgCMatrix}. \code{NULL}, the
-default, leaves it to \code{\link[modelterms7]{linpar}}, which settles it
+default, leaves it to \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, which settles it
 at build from the size of the design.}
 
 \item{contrasts}{The contrasts for the block's factors, as a named list of
-the kind \code{\link[stats]{model.matrix}}'s \code{contrasts.arg} takes,
+the kind \code{\link[stats:model.matrix]{stats::model.matrix()}}'s \code{contrasts.arg} takes,
 or \code{NULL} for the session's \code{options("contrasts")}.}
 }
 \value{
-A named list, for \code{\link{statmod}}'s \code{linpar_control}.
+A named list, for \code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
 The argument and this function are named differently on purpose: with
 one name for both, the argument's default would resolve to its own
-promise. \code{\link[stats]{glm}} and \code{\link[stats]{glm.control}}
+promise. \code{\link[stats:glm]{stats::glm()}} and \code{\link[stats:glm.control]{stats::glm.control()}}
 keep them apart for the same reason.
 }
 \description{
@@ -27,13 +27,13 @@ How the design of the linear predictor's parametric part is built: the
 storage, and the contrasts for its factors.
 }
 \details{
-It governs the IMPLICIT \code{\link[modelterms7]{linpar}} term -- the one
+It governs the IMPLICIT \code{\link[modelterms7:linpar]{modelterms7::linpar()}} term -- the one
 the bare covariates of a formula collapse into, which a caller never
 writes -- so this is the only place its arguments can be given. A
 \code{linpar()} written out takes them directly.
 
 \strong{Sparse storage.} \code{sparse = TRUE} builds the block through
-\code{\link[Matrix]{sparse.model.matrix}}, which BUILDS it sparse rather
+\code{\link[Matrix:sparse.model.matrix]{Matrix::sparse.model.matrix()}}, which BUILDS it sparse rather
 than building a dense matrix and compressing it -- the second would cost
 the memory the choice exists to avoid. Measured at 20000 rows and a factor
 of 1000 levels, 0.002 s and 1.8 MB against \code{stats::model.matrix}'s
@@ -46,10 +46,10 @@ dense whatever is asked for.
 \strong{There is no rescaling here, and that is measured rather than
 omitted.} Scaling the columns and carrying the coefficients back is the
 remedy for a conditioning that squares, which is what forming \eqn{X'X}
-does; \code{\link{iwls}} fits through a QR of the design and never forms
+does; \code{\link[=iwls]{iwls()}} fits through a QR of the design and never forms
 it. On columns spanning fifteen decades the raw fit and the scaled one
 converge in the same number of iterations, and both agree with
-\code{\link[stats]{lm}} to \eqn{10^{-14}}. What does move is the SCORE the
+\code{\link[stats:lm]{stats::lm()}} to \eqn{10^{-14}}. What does move is the SCORE the
 fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 answer: the final verdict is already arbitrated on a dimensionless scale.
 }
@@ -58,5 +58,5 @@ linpar_options(sparse = TRUE)
 
 }
 \seealso{
-\code{\link{statmod}}, \code{\link[modelterms7]{linpar}}
+\code{\link[=statmod]{statmod()}}, \code{\link[modelterms7:linpar]{modelterms7::linpar()}}
 }

@@ -18,7 +18,7 @@ rstatmod(
 )
 }
 \arguments{
-\item{formula}{The model formula, as \code{\link{statmod}} takes it.}
+\item{formula}{The model formula, as \code{\link[=statmod]{statmod()}} takes it.}
 
 \item{distrib}{A \pkg{distributions7} distribution object.}
 
@@ -32,7 +32,7 @@ rstatmod(
 the details.}
 
 \item{structural}{Optional named list of a structural term's own
-parameters, on the scale \code{\link[modelterms7]{term_params}} names.}
+parameters, on the scale \code{\link[modelterms7:term_params]{modelterms7::term_params()}} names.}
 
 \item{sd}{The standard deviation of the drawn coefficients.}
 
@@ -56,7 +56,7 @@ given, and returns the data drawn from that model together with the truth
 behind it.
 }
 \details{
-This is not \code{\link[stats]{simulate}}, which draws from a model that
+This is not \code{\link[stats:simulate]{stats::simulate()}}, which draws from a model that
 has already been fitted. The \code{r} prefix is R's own for a random draw,
 so the two names cannot be confused.
 
@@ -78,7 +78,7 @@ subset without being subset itself, so \code{sim[1:10, ]} kept a
 frame is wanted.
 
 \strong{The predictor is assembled exactly as a fit assembles it}, through
-\code{\link{statmod_design_at}}, which is what makes the simulated data
+\code{\link[=statmod_design_at]{statmod_design_at()}}, which is what makes the simulated data
 come from the model that was written rather than from a linearization of
 it. A term whose block moves with its coefficients -- \code{seg()},
 \code{jseg()}, \code{nl()} -- contributes \code{term_value()} at the
@@ -125,7 +125,7 @@ with its own standard deviation, and
 to find. A parameter left out of the list is drawn.
 
 \strong{A term with state} is simulated through
-\code{\link[modelterms7]{term_simulate}}, so the recursion that generates
+\code{\link[modelterms7:term_simulate]{modelterms7::term_simulate()}}, so the recursion that generates
 is the term's own. A score-driven term draws the response AS it runs, its
 level at one time being driven by the score at the time before; a latent
 chain draws its path from the stationary law the likelihood is written
@@ -135,7 +135,7 @@ is what a recovery check compares against.
 
 Such a term's OWN parameters are not coefficients of any equation, so they
 are named through \code{structural} rather than through \code{par}, and
-on the scale \code{\link[modelterms7]{term_params}} names -- a loading is
+on the scale \code{\link[modelterms7:term_params]{modelterms7::term_params()}} names -- a loading is
 the loading and not its logarithm, a persistence is the partial
 autocorrelation the chart carries. There is at most one such term in a
 formula, so no key is needed. Left unnamed they take the term's own
@@ -148,7 +148,7 @@ at all.
 a symbol. \code{log(y) ~ x} is rejected rather than answered: the model
 generates values of \code{log(y)} and there is no column that could
 honestly be called either name. A censored response is rejected too, for
-the reason \code{\link{statmod}} rejects one.
+the reason \code{\link[=statmod]{statmod()}} rejects one.
 }
 \examples{
 set.seed(1)
@@ -194,6 +194,6 @@ head(sim5$latent, 3)
 
 }
 \seealso{
-\code{\link{statmod}}, \code{\link{simulate.StatmodFit}},
-\code{\link{predict.StatmodFit}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=simulate.StatmodFit]{simulate.StatmodFit()}},
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 }

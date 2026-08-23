@@ -16,7 +16,7 @@ statmod_marginal_hess(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -24,7 +24,7 @@ statmod_marginal_hess(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{idx}{The outer index.}
 
@@ -45,10 +45,10 @@ through the penalized curvature, and two contributions from the
 determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 
 \strong{Everything the penalty contributes is asked of the penalty}
-(\code{\link[penalties7]{penalty_hess_theta}},
-\code{\link[penalties7]{penalty_dhessian}},
-\code{\link[penalties7]{penalty_d2hessian}},
-\code{\link[penalties7]{penalty_dcross}}), so a penalty that is not
+(\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_hess_theta()}},
+\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
+\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}},
+\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}), so a penalty that is not
 quadratic in its hyperparameters -- a ridge, a random effect, a structured
 prior -- is covered by the same assembly with no branch here.
 
@@ -59,6 +59,6 @@ each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.}
 }
 \seealso{
-\code{\link{statmod_marginal_grad}}, \code{\link{reml}}
+\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}, \code{\link[=reml]{reml()}}
 }
 \keyword{internal}

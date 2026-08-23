@@ -7,9 +7,9 @@
 statmod_penalized(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, as \code{\link{statmod_design}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
 A list of entries, each with \code{param}, \code{term} (the name in
@@ -37,7 +37,7 @@ keys exactly as before, so nothing that reads a hyperparameter by term name
 changes.
 }
 \seealso{
-\code{\link{statmod_blocks}},
-\code{\link[modelterms7]{term_penalties}}
+\code{\link[=statmod_blocks]{statmod_blocks()}},
+\code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}}
 }
 \keyword{internal}

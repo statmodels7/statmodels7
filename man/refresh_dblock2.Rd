@@ -7,7 +7,7 @@
 refresh_dblock2(un, v, u, n)
 }
 \arguments{
-\item{un}{One entry of \code{\link{refresh_units}}.}
+\item{un}{One entry of \code{\link[=refresh_units]{refresh_units()}}.}
 
 \item{v, u}{The two directions, each as long as the term's coefficients.}
 
@@ -17,7 +17,7 @@ refresh_dblock2(un, v, u, n)
 A numeric matrix, \code{n} by the term's coefficient count.
 }
 \description{
-\code{\link[modelterms7]{term_block_deriv2}} on one unit, with the shape it
+\code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}} on one unit, with the shape it
 returns checked rather than assumed.
 }
 \details{
@@ -27,6 +27,6 @@ refusal for a block that is a working linearization rather than a Jacobian.
 Nothing is differenced here in either case.
 }
 \seealso{
-\code{\link{refresh_dblock}}, \code{\link{trace_refresh4}}
+\code{\link[=refresh_dblock]{refresh_dblock()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}
 }
 \keyword{internal}

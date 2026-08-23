@@ -11,7 +11,7 @@ structural_se_columns(spec, design, ep, p, X)
 
 \item{design}{Its design.}
 
-\item{ep}{The predictors, as \code{\link{statmod_eta}} returns them.}
+\item{ep}{The predictors, as \code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
 \item{p}{The distribution parameter whose equation is being read.}
 
@@ -29,7 +29,7 @@ variance matrix is indexed by.
 \details{
 A filter's level is a recursion, not a column, so it has no row of a
 design. What it has is the derivative the recursion propagates beside the
-state, which \code{\link[modelterms7]{term_filter}} returns on the
+state, which \code{\link[modelterms7:term_filter]{modelterms7::term_filter()}} returns on the
 parameter scale; multiplying by each parameter's own
 \eqn{h'(\zeta_j)} carries it to the unconstrained scale the joint
 matrix is written in, which is the chain the exact gradient already uses.
@@ -38,13 +38,13 @@ A parameter an intercept in the same equation holds is not estimated and
 is not in that matrix, so it is not here either.
 
 THE DESIGN'S OWN ROWS ARE CORRECTED at the same time, through
-\code{\link[modelterms7]{term_static_deriv}}: a coefficient of this
+\code{\link[modelterms7:term_static_deriv]{modelterms7::term_static_deriv()}}: a coefficient of this
 equation moves the level as well as the static part, because the scores
 driving the recursion are read at the predictor the recursion produces.
 Measured on a score-driven mean with one covariate beside it, leaving
 that out understates the standard error by about a quarter.
 }
 \seealso{
-\code{\link{predict_se}}, \code{\link{statmod_filter_at}}
+\code{\link[=predict_se]{predict_se()}}, \code{\link[=statmod_filter_at]{statmod_filter_at()}}
 }
 \keyword{internal}

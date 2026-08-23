@@ -20,7 +20,7 @@ Stops where \code{offset()} appears anywhere other than as a term of the
 equation itself.
 }
 \details{
-\code{\link{split_offsets}} takes the top-level additive terms, which is
+\code{\link[=split_offsets]{split_offsets()}} takes the top-level additive terms, which is
 where R recognizes an offset. One written inside another term's formula --
 \code{ridge(~ z + offset(o))}, \code{random(~ 1 + offset(o) | g)},
 \code{nl(a ~ 0 + ridge(~ g + offset(o)))} -- reaches that term's own
@@ -39,6 +39,6 @@ place it belongs named, which costs a user one edit and cannot silently
 fit the wrong model.
 }
 \seealso{
-\code{\link{split_offsets}}
+\code{\link[=split_offsets]{split_offsets()}}
 }
 \keyword{internal}

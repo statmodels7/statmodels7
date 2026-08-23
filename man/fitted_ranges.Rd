@@ -7,12 +7,12 @@
 fitted_ranges(x)
 }
 \arguments{
-\item{x}{A \code{\link{StatmodFit}}.}
+\item{x}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 }
 \value{
 A single string, empty when the parameters cannot be read. It is
-a note of \code{\link{summary.StatmodFit}} rather than a line of
-\code{\link{print.StatmodFit}}: it qualifies the fit rather than
+a note of \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} rather than a line of
+\code{\link[=print.StatmodFit]{print.StatmodFit()}}: it qualifies the fit rather than
 describing it, and it is read once when something looks wrong.
 }
 \description{
@@ -34,6 +34,6 @@ would mean picking a threshold for what counts as running away, and the same
 fit at 100 columns converges to a scale of 0.77 that is nothing of the kind.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

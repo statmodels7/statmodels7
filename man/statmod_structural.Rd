@@ -7,7 +7,7 @@
 statmod_structural(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A list of entries with \code{param}, \code{term} and \code{kind},
@@ -24,6 +24,6 @@ one whose contribution is a likelihood mixed over states and cannot be
 written as a predictor at all.
 }
 \seealso{
-\code{\link{statmod_filter_at}}
+\code{\link[=statmod_filter_at]{statmod_filter_at()}}
 }
 \keyword{internal}

@@ -4,18 +4,18 @@ NULL
 #' How Many Restarts the Terms Ask For
 #'
 #' @description
-#' The largest \code{n_boot} any break-point term of the specification
-#' declares, or zero. The value is declared on \code{\link[modelterms7]{seg}},
-#' \code{\link[modelterms7]{jump}} and \code{\link[modelterms7]{jseg}}, the
+#' The largest `n_boot` any break-point term of the specification
+#' declares, or zero. The value is declared on [modelterms7::seg()],
+#' [modelterms7::jump()] and [modelterms7::jseg()], the
 #' terms whose objective has the spurious local optima the device exists
 #' for; running the restarts is this layer's, the way a penalty's
 #' hyperparameters are declared by a term and estimated here.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
 #' @return A single non-negative integer.
 #'
-#' @seealso \code{\link{statmod_boot_restart}}
+#' @seealso [statmod_boot_restart()]
 #'
 #' @keywords internal
 seg_boot_total <- function(spec) {
@@ -48,7 +48,7 @@ seg_boot_total <- function(spec) {
 #' @details
 #' Three proposal kinds, in order. The first is deterministic: each
 #' break-point swept over the profile with the others held
-#' (\code{\link[modelterms7]{seg_polish}}), which walks straight to a
+#' ([modelterms7::seg_polish()]), which walks straight to a
 #' feature the iteration pressed a break-point away from. The stochastic
 #' ones alternate a BOOTSTRAP sweep -- the same descent on the profile of a
 #' resample, the multinomial counts entering as weights, which moves the
@@ -64,11 +64,11 @@ seg_boot_total <- function(spec) {
 #'
 #' The profile reads the response net of the other contributions in the
 #' term's equation, on the predictor scale: exact for an identity link, a
-#' proposal elsewhere -- the argument \code{\link[modelterms7]{seg_start}}
+#' proposal elsewhere -- the argument [modelterms7::seg_start()]
 #' already makes. The refreshable and structural state of the design is
 #' snapshotted at the incumbent and restored whenever a candidate loses,
 #' and the draws come from the session's generator, so a fit with restarts
-#' is reproducible under \code{set.seed()}.
+#' is reproducible under `set.seed()`.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -76,21 +76,21 @@ seg_boot_total <- function(spec) {
 #' @param hyper The hyperparameters the fit ended at.
 #' @param inner_optimizer How the smooth block is fitted.
 #' @param res The fitted result the restarts try to improve.
-#' @param expected,approx,maxit,tol As in \code{\link{statmod_alternate}}.
+#' @param expected,approx,maxit,tol As in [statmod_alternate()].
 #' @param vb The resolved verbosity.
 #' @param nb At most how many proposals.
 #'
-#' @return \code{res}, with \code{par}, \code{value}, \code{converged},
-#'   \code{obj} and the block histories replaced when a restart improved
+#' @return `res`, with `par`, `value`, `converged`,
+#'   `obj` and the block histories replaced when a restart improved
 #'   the fit; any other field -- an outer search's history, its optimizer
 #'   -- is kept.
 #'
 #' @references
 #' Wood, S. N. (2001). Minimizing model fitting objectives that contain
-#' spurious local minima by bootstrap restarting. \emph{Biometrics}, 57(1),
+#' spurious local minima by bootstrap restarting. *Biometrics*, 57(1),
 #' 240--244.
 #'
-#' @seealso \code{\link{seg_boot_total}}, \code{\link{statmod_alternate}}
+#' @seealso [seg_boot_total()], [statmod_alternate()]
 #'
 #' @keywords internal
 statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,

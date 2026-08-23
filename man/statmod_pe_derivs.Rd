@@ -7,7 +7,7 @@
 statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -15,7 +15,7 @@ statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{idx}{The outer index.}
 
@@ -36,9 +36,9 @@ T[\hat\beta_m]} and \eqn{B_m = \partial H/\partial\theta_m = T[\hat\beta_m]},
 and the log-likelihood contributes \eqn{(\partial\rho/\partial\beta)'
 \hat\beta_m}. Differentiating once more brings in \eqn{A_{ml}}, \eqn{B_{ml}}
 and \eqn{\hat\beta_{ml}}, which are the quantities
-\code{\link{statmod_marginal_hess}} already assembles.
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already assembles.
 }
 \seealso{
-\code{\link{aic}}, \code{\link{statmod_marginal_grad}}
+\code{\link[=aic]{aic()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}
 }
 \keyword{internal}

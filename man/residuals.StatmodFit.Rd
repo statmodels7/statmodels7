@@ -76,6 +76,6 @@ Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
 \emph{Journal of Computational and Graphical Statistics} 5(3), 236--244.
 }
 \seealso{
-\code{\link{fitted.StatmodFit}}, \code{\link{predict.StatmodFit}}
+\code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}}, \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 }
 \keyword{internal}

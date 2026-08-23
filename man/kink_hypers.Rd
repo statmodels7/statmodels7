@@ -17,7 +17,7 @@ kink_hypers(pen, theta, unbounded = TRUE)
 A character vector, possibly empty.
 }
 \description{
-The names whose value moves \code{\link{kink_scale}}, which are the ones a
+The names whose value moves \code{\link[=kink_scale]{kink_scale()}}, which are the ones a
 path over the penalty has to vary.
 }
 \details{
@@ -33,6 +33,6 @@ implementations do the same by convention -- \pkg{glmnet} holds
 shape is better swept by hand over a few values than searched.
 }
 \seealso{
-\code{\link{kink_scale}}
+\code{\link[=kink_scale]{kink_scale()}}
 }
 \keyword{internal}

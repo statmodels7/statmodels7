@@ -43,8 +43,8 @@ smooth part of the objective supplying the gradient and the penalty its
 proximal operator.
 }
 \details{
-The route is \code{\link[optimizers7]{prox_grad}} with
-\code{\link[penalties7]{penalty_prox}}, accelerated: measured, at a
+The route is \code{\link[optimizers7:prox_grad]{optimizers7::prox_grad()}} with
+\code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}}, accelerated: measured, at a
 condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
 iterations against 126, and at 480 the plain one does not converge in
 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
@@ -53,6 +53,6 @@ design and the running residual, so it belongs here and not behind an
 optimizer's interface.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

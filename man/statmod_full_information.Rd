@@ -10,7 +10,7 @@ statmod_full_information(spec, coef, design = statmod_design(spec))
 statmod_full_information_impl(spec, coef, design, params, ev)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 
@@ -30,7 +30,7 @@ recursion's own curvature in it.
 }
 \details{
 The gradient of such a model is exact already, through
-\code{\link[modelterms7]{term_adjoint}}. Its curvature is not: the matrix
+\code{\link[modelterms7:term_adjoint]{modelterms7::term_adjoint()}}. Its curvature is not: the matrix
 the scoring step inverts is assembled as though the level were an offset,
 which is a legitimate scoring matrix and is not the information. Writing
 \eqn{u} for the coefficients followed by the term's parameters on the
@@ -44,7 +44,7 @@ of the predictor the filter produces,
 
 Only the equation carrying the filter has a \eqn{V} that is not its own
 design: there it is the forward Jacobian of the recursion, which
-\code{\link[modelterms7]{term_curvature}} returns beside the contracted
+\code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns beside the contracted
 \eqn{E}. The third derivatives the second sum needs are
 \pkg{distributions7}'s, in closed form for every family.
 
@@ -52,12 +52,12 @@ The term's parameters are the LAST columns, which is the convention
 \code{term_curvature()} shares with its caller.
 
 A term that mixes over latent states rather than shifting the predictor
-is routed to \code{\link{statmod_regime_information}}, whose Hessian
+is routed to \code{\link[=statmod_regime_information]{statmod_regime_information()}}, whose Hessian
 comes from the same forward recursion the likelihood does; a model
 carrying neither gets the ordinary information.
 }
 \seealso{
-\code{\link{statmod_structural_score}},
-\code{\link{statmod_regime_information}}
+\code{\link[=statmod_structural_score]{statmod_structural_score()}},
+\code{\link[=statmod_regime_information]{statmod_regime_information()}}
 }
 \keyword{internal}

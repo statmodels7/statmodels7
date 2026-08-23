@@ -7,7 +7,7 @@
 d3_direction(spec, d3, params, npar, a, b, tv)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{d3}{The third derivatives on the link scale.}
 
@@ -22,6 +22,6 @@ A numeric vector as long as the sample.
 }
 \description{
 \eqn{\sum_k \ell_{abk}(X_k v_k)_i}, the per-observation weight
-\code{\link{contract3}} builds for the \eqn{(a,b)} block.
+\code{\link[=contract3]{contract3()}} builds for the \eqn{(a,b)} block.
 }
 \keyword{internal}

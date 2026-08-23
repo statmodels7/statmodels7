@@ -16,10 +16,10 @@ NULL
 #'
 #' @param label A short name, used when printing.
 #'
-#' @return An S7 object of class \code{start_strategy}.
+#' @return An S7 object of class `start_strategy`.
 #'
-#' @seealso \code{\link{start_intercepts}}, \code{\link{start_origin}},
-#'   \code{\link{start_random}}
+#' @seealso [start_intercepts()], [start_origin()],
+#'   [start_random()]
 #'
 #' @examples
 #' start_origin()
@@ -37,7 +37,7 @@ start_strategy <- S7::new_class(
 #' Fetched rather than captured, so that a test of membership cannot be fooled
 #' by the class being re-created --- which is what \pkg{covr} does.
 #'
-#' @return The \code{\link{start_strategy}} class object.
+#' @return The [start_strategy()] class object.
 #'
 #' @keywords internal
 start_strategy_class <- function() start_strategy
@@ -49,7 +49,7 @@ start_strategy_class <- function() start_strategy
 #' The one generic a starting-value strategy implements: given the model, it
 #' returns one starting vector per distribution parameter.
 #'
-#' @param strategy A \code{\link{start_strategy}}.
+#' @param strategy A [start_strategy()].
 #' @param spec The specification.
 #' @param design The design.
 #' @param obj The objective.
@@ -79,7 +79,7 @@ start_at <- S7::new_generic("start_at", "strategy",
 #' @param fn The generator a random start draws from.
 #' @param args Further arguments to it.
 #' @param center Whether the draw is added to the intercept-only start.
-#' @return An S7 object inheriting from \code{\link{start_strategy}}.
+#' @return An S7 object inheriting from [start_strategy()].
 #' @name StartIntercepts-class
 #' @aliases StartIntercepts StartOrigin StartRandom
 #' @keywords internal
@@ -107,16 +107,16 @@ StartRandom <- S7::new_class("StartRandom", parent = start_strategy,
 #' The model with no covariates is the same model with every slope set to
 #' zero, so it is exactly where the model with them should begin, and it costs
 #' one small fit. The penalized blocks start at zero, where their penalty is
-#' smallest. This is what \code{statmod()} does when \code{start} is
-#' \code{NULL}; the constructor exists so that the default can be named,
+#' smallest. This is what `statmod()` does when `start` is
+#' `NULL`; the constructor exists so that the default can be named,
 #' compared against and passed on.
 #'
-#' @return A \code{\link{start_strategy}}.
+#' @return A [start_strategy()].
 #'
 #' @examples
 #' start_intercepts()
 #'
-#' @seealso \code{\link{start_origin}}, \code{\link{start_random}}
+#' @seealso [start_origin()], [start_random()]
 #' @export
 start_intercepts <- function() {
   StartIntercepts(label = "intercept-only fit")
@@ -129,10 +129,10 @@ start_intercepts <- function() {
 #' distribution parameter is the value its link maps zero to.
 #'
 #' @details
-#' The name is \code{start_origin} and not \code{start_zeros} because
+#' The name is `start_origin` and not `start_zeros` because
 #' \pkg{optimizers7} already exports the second for the starting POINT of an
 #' optimizer, and the toolkit's members share no exported name --- a
-#' collision would be reported by \code{\link{statmodels7_conflicts}} and, far
+#' collision would be reported by [statmodels7_conflicts()] and, far
 #' worse, would mean that which function a user got depended on the order the
 #' packages were attached in.
 #'
@@ -143,12 +143,12 @@ start_intercepts <- function() {
 #' because a model whose equations are all on a log or logit link is not
 #' harmed by it.
 #'
-#' @return A \code{\link{start_strategy}}.
+#' @return A [start_strategy()].
 #'
 #' @examples
 #' start_origin()
 #'
-#' @seealso \code{\link{start_intercepts}}
+#' @seealso [start_intercepts()]
 #' @export
 start_origin <- function() {
   StartOrigin(label = "zero")
@@ -161,31 +161,31 @@ start_origin <- function() {
 #' intercept-only fit rather than replacing it.
 #'
 #' @details
-#' The draw is added to \code{\link{start_intercepts}}'s answer unless
-#' \code{center = FALSE}, and that is not a detail: a coefficient drawn from a
+#' The draw is added to [start_intercepts()]'s answer unless
+#' `center = FALSE`, and that is not a detail: a coefficient drawn from a
 #' standard normal is a sensible perturbation and a hopeless absolute value,
 #' since the intercept of a location equation is on the scale of the response.
 #' Centring keeps the scale and randomizes the direction, which is what a
 #' caller wanting several starts is after.
 #'
-#' The stream is the caller's, so \code{set.seed()} governs the result and a
+#' The stream is the caller's, so `set.seed()` governs the result and a
 #' fit begun this way is reproducible only alongside its seed.
 #'
-#' @param fn A generator called as \code{fn(n, ...)}, returning \code{n}
-#'   values. Defaults to \code{\link[stats]{rnorm}}.
-#' @param ... Further arguments to \code{fn}, such as \code{sd} or
-#'   \code{min} and \code{max}.
+#' @param fn A generator called as `fn(n, ...)`, returning `n`
+#'   values. Defaults to [stats::rnorm()].
+#' @param ... Further arguments to `fn`, such as `sd` or
+#'   `min` and `max`.
 #' @param center Whether to add the draw to the intercept-only start rather
-#'   than use it alone. Defaults to \code{TRUE}.
+#'   than use it alone. Defaults to `TRUE`.
 #'
-#' @return A \code{\link{start_strategy}}.
+#' @return A [start_strategy()].
 #'
 #' @examples
 #' start_random()
 #' start_random(stats::runif, min = -2, max = 2)
 #'
-#' @seealso \code{\link{start_intercepts}},
-#'   \code{\link[optimizers7]{multistart}}
+#' @seealso [start_intercepts()],
+#'   [optimizers7::multistart()]
 #' @export
 start_random <- function(fn = stats::rnorm, ..., center = TRUE) {
   if (!is.function(fn)) {
@@ -212,14 +212,14 @@ StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
 #' where the likelihood is not convex.
 #'
 #' @details
-#' \strong{Once, and not inside the fit.} A search belongs to the starting
-#' value and not to the scoring step. Handed to \code{inner_optimizer} instead
-#' --- as \code{chain(sa(), iwls())} --- it would rerun at every
+#' **Once, and not inside the fit.** A search belongs to the starting
+#' value and not to the scoring step. Handed to `inner_optimizer` instead
+#' --- as `chain(sa(), iwls())` --- it would rerun at every
 #' hyperparameter the outer criterion tried, which on an ordinary fit is 46
-#' times and inside \code{\link{cv}} is the folds times the path, each time
+#' times and inside [cv()] is the folds times the path, each time
 #' returning the same answer.
 #'
-#' \strong{On the likelihood alone.} The penalties are off. What a starting
+#' **On the likelihood alone.** The penalties are off. What a starting
 #' value has to get right is the BASIN of the likelihood, which is the one
 #' thing the fit will not correct by itself; the penalties enter afterwards,
 #' when their hyperparameters are estimated, and at the probe values they
@@ -227,11 +227,11 @@ StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
 #' unaveraged log-likelihood empties whole blocks and would search a different
 #' model.
 #'
-#' \strong{Over the coordinates where the problem is not convex}, which the
+#' **Over the coordinates where the problem is not convex**, which the
 #' toolkit already knows how to name. They are the parameters of a structural
-#' term (\code{\link[modelterms7]{gas}}, \code{\link[modelterms7]{regime}}),
+#' term ([modelterms7::gas()], [modelterms7::regime()]),
 #' the coefficients of a term that recomputes its own block
-#' (\code{\link[modelterms7]{nl}}, \code{\link[modelterms7]{seg}} and the
+#' ([modelterms7::nl()], [modelterms7::seg()] and the
 #' break-point terms), and each equation's intercept. Everything else keeps
 #' the default: a smooth, a ridge or a random effect is a convex block whose
 #' optimum the scoring step reaches from anywhere, and searching over a
@@ -242,33 +242,33 @@ StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
 #' and those deviations are columns of the term's own block. They are the
 #' case the rule exists for --- on the likelihood alone nothing identifies
 #' them, the penalty being what does, so a search over them fits each group's
-#' own points and moves AWAY from the penalized mode. \code{over} overrides
+#' own points and moves AWAY from the penalized mode. `over` overrides
 #' the choice by name.
 #'
-#' \strong{The hyperparameters are not searched, and cannot be from here.}
+#' **The hyperparameters are not searched, and cannot be from here.**
 #' The objective is the likelihood with the penalties off, in which a
 #' hyperparameter does not appear at all, so there is nothing for a proposal
 #' to change. A global search over them is a search over the OUTER criterion,
 #' where each proposal costs a full refit rather than one likelihood
 #' evaluation, and it is already available as
-#' \code{statmod(outer_optimizer = optimizers7::sa())}. Kinked penalties are
+#' `statmod(outer_optimizer = optimizers7::sa())`. Kinked penalties are
 #' outside that too: their hyperparameter has a known upper end and is swept
 #' by a warm-started path, which a random jump would both fail to improve on
 #' and destroy.
 #'
 #' @param optimizer The optimizer to search with. Defaults to
-#'   \code{optimizers7::sa()}.
+#'   `optimizers7::sa()`.
 #' @param over Optional names of the coefficients to search over, overriding
 #'   the choice described above.
 #'
-#' @return A \code{\link{start_strategy}}.
+#' @return A [start_strategy()].
 #'
 #' @examples
 #' start_search()
 #' start_search(optimizers7::sa(maxit = 20))
 #'
-#' @seealso \code{\link{start_intercepts}},
-#'   \code{\link[optimizers7]{sa}}, \code{\link[optimizers7]{chain}}
+#' @seealso [start_intercepts()],
+#'   [optimizers7::sa()], [optimizers7::chain()]
 #' @export
 start_search <- function(optimizer = optimizers7::sa(), over = NULL) {
   if (!S7::S7_inherits(optimizer, optimizers7::optimizer)) {
@@ -286,9 +286,9 @@ start_search <- function(optimizer = optimizers7::sa(), over = NULL) {
 
 #' @title Print a Starting-Value Strategy
 #' @name print.start_strategy
-#' @param x A \code{\link{start_strategy}}.
+#' @param x A [start_strategy()].
 #' @param ... Unused.
-#' @return \code{x}, invisibly.
+#' @return `x`, invisibly.
 #' @examples
 #' print(start_random())
 #' @keywords internal
@@ -301,8 +301,8 @@ S7::method(print, start_strategy) <- function(x, ...) {
 #' @title Starting Values From the Intercept-Only Fit
 #' @name start_at.StartIntercepts
 #' @description The default strategy's answer.
-#' @param strategy A \code{StartIntercepts} object.
-#' @param spec,design,obj,... As in \code{\link{start_at}}.
+#' @param strategy A `StartIntercepts` object.
+#' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
 #' @keywords internal
 S7::method(start_at, StartIntercepts) <-
@@ -374,20 +374,20 @@ S7::method(start_at, StartIntercepts) <-
 #'
 #' @description
 #' The position of the intercept of one equation's PARAMETRIC block, or
-#' \code{NA} where it has none.
+#' `NA` where it has none.
 #'
 #' @details
 #' It is a column of the parametric block and not merely a coefficient whose
-#' name ends in \code{(Intercept)}. \code{\link[modelterms7]{nl}} names the
+#' name ends in `(Intercept)`. [modelterms7::nl()] names the
 #' intercept of each of its own parameters the same way, and those live on
 #' those parameters' charts rather than on the predictor's, so a model
-#' written \code{y ~ 0 + nl(...)} puts one of them first. Writing the
-#' intercept-only fit there sets the parameter to \code{linkinv} of a value
+#' written `y ~ 0 + nl(...)` puts one of them first. Writing the
+#' intercept-only fit there sets the parameter to `linkinv` of a value
 #' that was never on its scale: measured on a logistic growth curve whose
-#' asymptote rides a log link, \code{mean(y) = 23.9} became a starting
-#' \eqn{\phi} of \code{2.5e10}, an objective of \code{7.0e20} and a gradient
-#' of \code{1.4e21}, on data whose every scale is ordinary. The lasso path
-#' built at those coefficients then spanned \code{2.8e15} to \code{2.8e19}
+#' asymptote rides a log link, `mean(y) = 23.9` became a starting
+#' \eqn{\phi} of `2.5e10`, an objective of `7.0e20` and a gradient
+#' of `1.4e21`, on data whose every scale is ordinary. The lasso path
+#' built at those coefficients then spanned `2.8e15` to `2.8e19`
 #' where the block empties at about 300, so all of its points were the same
 #' empty fit and every subject deviation was estimated as exactly zero.
 #'
@@ -396,9 +396,9 @@ S7::method(start_at, StartIntercepts) <-
 #' @param p The distribution parameter naming the equation.
 #'
 #' @return An integer position into the equation's coefficient vector, or
-#'   \code{NA_integer_}.
+#'   `NA_integer_`.
 #'
-#' @seealso \code{\link{start_at}}, \code{\link{statmod_intercepts}}
+#' @seealso [start_at()], [statmod_intercepts()]
 #' @keywords internal
 parametric_intercept <- function(spec, design, p) {
   for (nm in names(spec@terms[[p]])) {
@@ -419,14 +419,14 @@ parametric_intercept <- function(spec, design, p) {
 #'
 #' @description
 #' The response carried onto the scale of one equation's linear predictor,
-#' which is what \code{\link[modelterms7]{term_coef_start}} needs to estimate
+#' which is what [modelterms7::term_coef_start()] needs to estimate
 #' a term's own parameters from the data.
 #'
 #' @details
 #' It exists only where the response reads the parameter directly, which
-#' \code{params_interpretation} says: a mean or a location. For a scale or a
+#' `params_interpretation` says: a mean or a location. For a scale or a
 #' shape there is no per-observation reading of the parameter, and
-#' \code{NULL} is returned rather than a quantity invented for the occasion.
+#' `NULL` is returned rather than a quantity invented for the occasion.
 #'
 #' The scale matters and is not a detail. Measured on a Poisson whose
 #' predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
@@ -444,10 +444,10 @@ parametric_intercept <- function(spec, design, p) {
 #' @param spec The specification.
 #' @param p The distribution parameter naming the equation.
 #'
-#' @return A numeric vector, one value per observation, or \code{NULL}.
+#' @return A numeric vector, one value per observation, or `NULL`.
 #'
-#' @seealso \code{\link{start_at}},
-#'   \code{\link[modelterms7]{term_coef_start}}
+#' @seealso [start_at()],
+#'   [modelterms7::term_coef_start()]
 #' @keywords internal
 predictor_target <- function(spec, p) {
   d <- spec@distrib
@@ -486,8 +486,8 @@ predictor_target <- function(spec, p) {
 #' @title Starting Values at Zero
 #' @name start_at.StartOrigin
 #' @description Every coefficient at zero.
-#' @param strategy A \code{StartOrigin} object.
-#' @param spec,design,obj,... As in \code{\link{start_at}}.
+#' @param strategy A `StartOrigin` object.
+#' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
 #' @keywords internal
 S7::method(start_at, StartOrigin) <-
@@ -499,8 +499,8 @@ S7::method(start_at, StartOrigin) <-
 #' @title Starting Values From a Random Draw
 #' @name start_at.StartRandom
 #' @description The draw, added to the intercept-only fit unless told not to.
-#' @param strategy A \code{StartRandom} object.
-#' @param spec,design,obj,... As in \code{\link{start_at}}.
+#' @param strategy A `StartRandom` object.
+#' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
 #' @keywords internal
 S7::method(start_at, StartRandom) <-
@@ -533,8 +533,8 @@ S7::method(start_at, StartRandom) <-
 #' the terms that recompute their own design.
 #'
 #' @details
-#' The predicate for the second is \code{\link{refreshes_own_block}}, the same
-#' one \code{\link{unfittable_reason}} uses, so a term written later is
+#' The predicate for the second is [refreshes_own_block()], the same
+#' one [unfittable_reason()] uses, so a term written later is
 #' covered without an edit here. A convex block is left out deliberately
 #' rather than forgotten: the scoring step reaches its optimum from anywhere,
 #' and a search over it would spend the budget where it buys nothing.
@@ -598,12 +598,12 @@ search_coords <- function(spec, design) {
 #' A structural term's parameters do not live in the coefficient vector; they
 #' are held in the design's structural state, and the objective reads them
 #' from there. The search therefore sets them into that state and evaluates
-#' the likelihood, exactly as \code{statmod_fit_joint()} does, and leaves the
+#' the likelihood, exactly as `statmod_fit_joint()` does, and leaves the
 #' best it found in place --- which is how a strategy returning coefficients
 #' can nonetheless start a filter somewhere better than its own
-#' \code{term_start()}.
-#' @param strategy A \code{StartSearch} object.
-#' @param spec,design,obj,... As in \code{\link{start_at}}.
+#' `term_start()`.
+#' @param strategy A `StartSearch` object.
+#' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
 #' @keywords internal
 S7::method(start_at, StartSearch) <-

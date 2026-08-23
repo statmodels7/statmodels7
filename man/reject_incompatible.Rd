@@ -32,6 +32,6 @@ is the honest boundary: what makes one admissible is that everything else
 in the model is a predictor it can be driven by.
 }
 \seealso{
-\code{\link{reject_unfittable}}, \code{\link{statmod_structural}}
+\code{\link[=reject_unfittable]{reject_unfittable()}}, \code{\link[=statmod_structural]{statmod_structural()}}
 }
 \keyword{internal}

@@ -8,7 +8,7 @@ iwls_solve(pieces, u, how, damp = 0)
 }
 \arguments{
 \item{pieces}{A list with \code{R}, \code{C} and \code{A}, as
-\code{\link{iwls_pieces}} builds it.}
+\code{\link[=iwls_pieces]{iwls_pieces()}} builds it.}
 
 \item{u}{The right-hand side.}
 

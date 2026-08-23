@@ -7,7 +7,7 @@
 \method{df.residual}{StatmodFit}(object, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -33,6 +33,6 @@ fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), dd)
 df.residual(fit)
 }
 \seealso{
-\code{\link{logLik.StatmodFit}}, \code{\link{statmod_edf}}
+\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{\link[=statmod_edf]{statmod_edf()}}
 }
 \keyword{internal}

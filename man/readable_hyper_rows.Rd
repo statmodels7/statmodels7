@@ -7,7 +7,7 @@
 readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
 }
 \arguments{
-\item{rd}{The result of \code{\link[penalties7]{penalty_readable}}.}
+\item{rd}{The result of \code{\link[penalties7:penalty_readable]{penalties7::penalty_readable()}}.}
 
 \item{th}{The penalty's hyperparameters, as fitted.}
 
@@ -29,7 +29,7 @@ A data frame of rows, in the shape of a summary block.
 \description{
 Replaces the coordinate rows of a penalty whose hyperparameters are a chart
 with the quantities it declares through
-\code{\link[penalties7]{penalty_readable}}: the standard deviations and
+\code{\link[penalties7:penalty_readable]{penalties7::penalty_readable()}}: the standard deviations and
 correlations of a correlated random effect, rather than the logarithms of a
 Cholesky diagonal and the entries below it.
 }

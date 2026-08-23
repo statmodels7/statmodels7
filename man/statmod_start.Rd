@@ -14,7 +14,7 @@ statmod_start(spec, design, obj, start = NULL)
 \item{obj}{The objective.}
 
 \item{start}{Optional user starting values (a named list), or a
-\code{\link{start_strategy}}.}
+\code{\link[=start_strategy]{start_strategy()}}.}
 }
 \value{
 A stacked numeric vector.
@@ -25,12 +25,12 @@ coefficient at zero.
 }
 \details{
 Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
-\code{\link[distributions7]{fit_distrib}} supplies: the model with every
+\code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} supplies: the model with every
 covariate removed is the right place for the model with them to begin, and
 it costs one small fit. The penalized blocks start at zero, where their
 penalty is smallest.
 
-\code{\link[distributions7]{distrib_start}} is the fallback. It returns ONE
+\code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback. It returns ONE
 LIST PER START, each keyed by parameter, so the value wanted is
 \code{th[[1]][[p]]}; indexing the outer list by a parameter's name gives
 \code{NULL}, and this function did that, so every start silently fell to
@@ -43,9 +43,9 @@ worse place. What would be an error is not noticing, which is why the two
 routes are tried in order rather than one being assumed to work.
 
 \code{start} is either a named list of values, a
-\code{\link{start_strategy}} --- which is asked ONCE, here, before the
+\code{\link[=start_strategy]{start_strategy()}} --- which is asked ONCE, here, before the
 alternation between the coefficients and the hyperparameters begins --- or
-\code{NULL} for \code{\link{start_intercepts}}, which is what this function
+\code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}, which is what this function
 did before strategies existed and still does.
 }
 \keyword{internal}

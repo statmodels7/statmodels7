@@ -7,7 +7,7 @@
 refresh_units(spec, design, coef, params, npar, offs)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design, already refreshed at \code{coef}.}
 
@@ -29,6 +29,6 @@ and the Hessian's three corrections cannot disagree about which terms move
 or where their columns are.
 }
 \seealso{
-\code{\link{u_refresh}}, \code{\link{contract3_refresh}}
+\code{\link[=u_refresh]{u_refresh()}}, \code{\link[=contract3_refresh]{contract3_refresh()}}
 }
 \keyword{internal}

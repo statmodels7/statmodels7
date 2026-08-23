@@ -27,16 +27,16 @@ NULL
 #' and evaluated over all observations at once, which are many.
 #'
 #' A block that is not positive definite has a non-positive pivot, and the
-#' function returns \code{NULL} at that point rather than taking its square
+#' function returns `NULL` at that point rather than taking its square
 #' root: the observed curvature far from the optimum is routinely indefinite,
 #' so this is an ordinary outcome the caller answers by falling back to the
-#' assembled route, and a warning about a \code{NaN} would report it as a
+#' assembled route, and a warning about a `NaN` would report it as a
 #' defect.
 #'
 #' @param Om An \eqn{n \times K \times K} array of symmetric blocks.
 #'
 #' @return An array of the same shape, lower triangular in its last two
-#'   indices, or \code{NULL} when some block is not positive definite.
+#'   indices, or `NULL` when some block is not positive definite.
 #'
 #' @keywords internal
 chol_blocks <- function(Om) {
@@ -70,7 +70,7 @@ chol_blocks <- function(Om) {
 #' Assembles \eqn{\Omega_i}, the \eqn{K \times K} information of observation
 #' \eqn{i} in the link-scale predictors, weighted by the prior weight.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters.
 #' @param expected Whether the expected information is wanted.
 #' @param approx The approximation, where the expected one is not closed.
@@ -114,10 +114,10 @@ info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
 #' being lower triangular, the blocks with \eqn{b < a} are zero and are not
 #' formed.
 #'
-#' @param design The design, as \code{\link{statmod_design}} returns it.
-#' @param L The Cholesky factors, from \code{\link{chol_blocks}}.
+#' @param design The design, as [statmod_design()] returns it.
+#' @param L The Cholesky factors, from [chol_blocks()].
 #'
-#' @return An \eqn{nK \times p} matrix, or \code{NULL} when a block was not
+#' @return An \eqn{nK \times p} matrix, or `NULL` when a block was not
 #'   positive definite.
 #'
 #' @keywords internal
@@ -176,7 +176,7 @@ sqrt_design <- function(design, L) {
 #' of a diagonal matrix are its diagonal, so the two routes agree by
 #' construction and a test pins them together. It is not a special case worth
 #' having for its own sake but for how often it is the one that arises: a
-#' ridge, a random effect and the Demmler-Reinsch penalty of \code{s()},
+#' ridge, a random effect and the Demmler-Reinsch penalty of `s()`,
 #' which is \eqn{\mathrm{diag}(0, 1, \ldots, 1)} exactly, are all diagonal,
 #' and so is any block-diagonal assembly of them. The factor is recomputed at
 #' every iteration of the scoring loop, so the cost is the decomposition's
@@ -186,7 +186,7 @@ sqrt_design <- function(design, L) {
 #'
 #' @param S The penalty Hessian.
 #'
-#' @return A matrix with \code{ncol(S)} columns, or \code{NULL}.
+#' @return A matrix with `ncol(S)` columns, or `NULL`.
 #'
 #' @keywords internal
 penalty_sqrt <- function(S) {
@@ -208,7 +208,7 @@ penalty_sqrt <- function(S) {
 #'
 #' @description
 #' One row per coordinate the penalty reaches, carrying the square root of
-#' that coordinate's entry, which is \code{\link{penalty_sqrt}}'s answer
+#' that coordinate's entry, which is [penalty_sqrt()]'s answer
 #' where the matrix is diagonal.
 #'
 #' @details
@@ -217,14 +217,14 @@ penalty_sqrt <- function(S) {
 #' makes the penalty indefinite and there is no factor to return, and an
 #' entry at the tolerance is a null direction and contributes no row. The
 #' class of the result mirrors the argument's rather than being chosen:
-#' \code{\link{augmented_solve}} routes on whether either of the two factors
+#' [augmented_solve()] routes on whether either of the two factors
 #' is sparse, so returning a sparse factor for a dense design would send a
 #' dense fit through the sparse route and a dense one through neither.
 #'
 #' @param S A diagonal penalty Hessian.
 #' @param p Its dimension.
 #'
-#' @return A matrix with \code{p} columns, or \code{NULL}.
+#' @return A matrix with `p` columns, or `NULL`.
 #'
 #' @keywords internal
 diagonal_sqrt <- function(S, p) {
@@ -255,10 +255,10 @@ diagonal_sqrt <- function(S, p) {
 #' @param R The square-root design.
 #' @param C The penalty's factor.
 #' @param u The right-hand side.
-#' @param how Either \code{"qr"} or \code{"svd"}.
+#' @param how Either `"qr"` or `"svd"`.
 #' @param threads How many threads the triangular factor may use.
 #'
-#' @return A list with \code{delta} and \code{rank}.
+#' @return A list with `delta` and `rank`.
 #'
 #' @keywords internal
 augmented_solve <- function(R, C, u, how, threads = 1L) {
@@ -325,7 +325,7 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' Solve a Scoring Step From a Sparse Square-Root Design
 #'
 #' @description
-#' The same increment \code{\link{augmented_solve}} returns, taken through a
+#' The same increment [augmented_solve()] returns, taken through a
 #' sparse QR of \eqn{[R;\ C]}.
 #'
 #' @details
@@ -340,8 +340,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' columns to reduce fill, so \eqn{AP = QR} for the permutation \eqn{P} the
 #' decomposition chose, and \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}: the increment
 #' is two triangular solves between a permutation and its inverse, which is
-#' the same bookkeeping the dense route does with \code{qr}'s pivot.
-#' \code{backPermute = TRUE} looks simpler and is a trap -- it returns a
+#' the same bookkeeping the dense route does with `qr`'s pivot.
+#' `backPermute = TRUE` looks simpler and is a trap -- it returns a
 #' factor that is no longer triangular, so its diagonal says nothing about
 #' the rank and a solve against it is a general one rather than two
 #' triangular ones.
@@ -355,12 +355,12 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' @param R The square-root design.
 #' @param C The penalty's factor.
 #' @param u The right-hand side.
-#' @param how The decomposition asked for; \code{"svd"} has no sparse
+#' @param how The decomposition asked for; `"svd"` has no sparse
 #'   counterpart and declines.
 #'
-#' @return A list with \code{delta} and \code{rank}, or \code{NULL}.
+#' @return A list with `delta` and `rank`, or `NULL`.
 #'
-#' @seealso \code{\link{augmented_solve}}
+#' @seealso [augmented_solve()]
 #'
 #' @keywords internal
 sparse_augmented_solve <- function(R, C, u, how) {

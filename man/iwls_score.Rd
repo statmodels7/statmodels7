@@ -9,7 +9,7 @@ iwls_score(g, hj, groups, n)
 \arguments{
 \item{g}{The gradient at the point.}
 
-\item{hj}{The information's diagonal, from \code{\link{iwls_info_diag}}.}
+\item{hj}{The information's diagonal, from \code{\link[=iwls_info_diag]{iwls_info_diag()}}.}
 
 \item{groups}{The equations' coordinate index sets.}
 

@@ -7,7 +7,7 @@
 worker_map(spec, n, body, what = "folds")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{n}{How many units.}
 
@@ -22,7 +22,7 @@ A list of the bodies' results, in unit order.
 Applies a body to each of \code{n} independent units -- a
 cross-validation fold, a combination of a path's product grid -- over
 the worker processes the specification asks for (\code{spec@workers},
-from \code{\link[numericals7]{n_threads}(workers =)}) and in this
+from \code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this
 process otherwise. Results come back in unit order whatever the number
 of workers, which is what makes the answer independent of the count:
 the units share nothing, so the same bodies run either way.
@@ -41,6 +41,6 @@ therefore sequential by construction: the two levels of parallelism do
 not nest.
 }
 \seealso{
-\code{\link{cv_curve}}, \code{\link{statmod_path}}
+\code{\link[=cv_curve]{cv_curve()}}, \code{\link[=statmod_path]{statmod_path()}}
 }
 \keyword{internal}

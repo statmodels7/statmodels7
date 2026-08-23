@@ -10,7 +10,7 @@ inner_mode_error(ctx, spec, design, coef, hyper, score, expected = FALSE)
 \item{ctx}{The evaluation context, so the penalized factorization is the
 one the criterion will read rather than a second copy.}
 
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -58,6 +58,6 @@ which \code{piano_stabilita.txt} section 13 measured and withdrew -- there
 the flag was made STRICTER, and it cost a false negative on a good fit.
 }
 \seealso{
-\code{\link{mode_error_limit}}, \code{\link{criterion_resolution}}
+\code{\link[=mode_error_limit]{mode_error_limit()}}, \code{\link[=criterion_resolution]{criterion_resolution()}}
 }
 \keyword{internal}

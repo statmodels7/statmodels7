@@ -7,7 +7,7 @@
 \method{print}{StatmodFit}(x, ...)
 }
 \arguments{
-\item{x}{A \code{\link{StatmodFit}}.}
+\item{x}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -20,6 +20,6 @@ they spend, the log-likelihood, the elapsed time and whether every loop
 stopped on its own rule.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

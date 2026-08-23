@@ -7,7 +7,7 @@
 \method{sigma}{StatmodFit}(object, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -25,7 +25,7 @@ only where the scale's equation is an intercept, and returning its first
 value would silently answer a different question everywhere else.
 
 What is returned is the standard deviation of the response under the
-fitted distribution, through \code{\link[distributions7]{std_dev}}, and not
+fitted distribution, through \code{\link[distributions7:std_dev]{distributions7::std_dev()}}, and not
 whichever parameter happens to be spelled \code{sigma}: for a Gamma
 written by its mean and dispersion the two are different quantities. A
 family with no second moment signals an error rather than reporting one.
@@ -38,6 +38,6 @@ fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 head(sigma(fit))
 }
 \seealso{
-\code{\link{predict.StatmodFit}}, \code{\link{fitted.StatmodFit}}
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}}
 }
 \keyword{internal}

@@ -15,7 +15,7 @@ statmod_edf_correction(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{The coefficients.}
 
@@ -53,7 +53,7 @@ the implicit function theorem at the penalized mode: differentiating
 gives \eqn{(H+S)J_k = -\partial^2\rho/\partial\beta\,\partial\theta_k},
 whose right-hand side is \pkg{penalties7}'s \code{penalty_cross()}.
 \eqn{V_\theta} is the inverse of the outer criterion's own Hessian,
-which \code{\link{statmod_marginal_hess}} returns, negated because that
+which \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} returns, negated because that
 criterion is a maximand.
 
 Everything is on the hyperparameter's LINK scale, which is where the
@@ -71,7 +71,7 @@ measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
 2000, falling with the sample size.
 
 \strong{Where it does not apply.} A kinked penalty has no hyperparameter
-the outer criterion estimates -- \code{\link{outer_hyper_index}} skips it
+the outer criterion estimates -- \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips it
 -- so there is nothing to propagate and the correction is zero. That is
 not an approximation: the map from the hyperparameter to the penalized
 mode turns a corner whenever a coefficient joins or leaves the active
@@ -83,7 +83,7 @@ selection for general smooth models. \emph{Journal of the American
 Statistical Association}, 111(516), 1548--1563.
 }
 \seealso{
-\code{\link{statmod_marginal_hess}},
-\code{\link[penalties7]{penalty_cross}}
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}},
+\code{\link[penalties7:penalty_grad_theta]{penalties7::penalty_cross()}}
 }
 \keyword{internal}

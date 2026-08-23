@@ -7,38 +7,38 @@
 contract3_refresh(spec, design, params, npar, offs, total, dir, Hl, units)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
 \item{params, npar, offs, total}{The block bookkeeping.}
 
-\item{dir}{One entry per unit, from \code{\link{refresh_direction}}.}
+\item{dir}{One entry per unit, from \code{\link[=refresh_direction]{refresh_direction()}}.}
 
-\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}.}
+\item{Hl}{The link-scale curvature, from \code{\link[=refresh_hessian]{refresh_hessian()}}.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}.}
 }
 \value{
 A square matrix, whose transpose completes the correction.
 }
 \description{
 The part of \eqn{T[v] = (\partial K/\partial\beta)\cdot v} that
-\code{\link{contract3}} does not compute, as a matrix over the stacked
+\code{\link[=contract3]{contract3()}} does not compute, as a matrix over the stacked
 coefficients.
 }
 \details{
 Differentiating \eqn{H} in \eqn{\beta} and contracting with \eqn{v} leaves,
-beside the third derivative \code{\link{contract3}} carries, two terms in
+beside the third derivative \code{\link[=contract3]{contract3()}} carries, two terms in
 \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 and the other is its transpose, so the correction is \eqn{R + R^\top}. The
 derivative is asked of the TERM through
-\code{\link[modelterms7]{term_block_deriv}} and never differenced here, for
-the reason \code{\link{u_refresh}} records: a break-point column is a step
+\code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} and never differenced here, for
+the reason \code{\link[=u_refresh]{u_refresh()}} records: a break-point column is a step
 function in its break-point.
 }
 \seealso{
-\code{\link{contract3}}, \code{\link{u_refresh}}
+\code{\link[=contract3]{contract3()}}, \code{\link[=u_refresh]{u_refresh()}}
 }
 \keyword{internal}

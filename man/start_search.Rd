@@ -14,7 +14,7 @@ start_search(optimizer = optimizers7::sa(), over = NULL)
 the choice described above.}
 }
 \value{
-A \code{\link{start_strategy}}.
+A \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 Runs a global search ONCE, before the fit begins, over the coordinates
@@ -25,7 +25,7 @@ where the likelihood is not convex.
 value and not to the scoring step. Handed to \code{inner_optimizer} instead
 --- as \code{chain(sa(), iwls())} --- it would rerun at every
 hyperparameter the outer criterion tried, which on an ordinary fit is 46
-times and inside \code{\link{cv}} is the folds times the path, each time
+times and inside \code{\link[=cv]{cv()}} is the folds times the path, each time
 returning the same answer.
 
 \strong{On the likelihood alone.} The penalties are off. What a starting
@@ -38,9 +38,9 @@ model.
 
 \strong{Over the coordinates where the problem is not convex}, which the
 toolkit already knows how to name. They are the parameters of a structural
-term (\code{\link[modelterms7]{gas}}, \code{\link[modelterms7]{regime}}),
+term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}),
 the coefficients of a term that recomputes its own block
-(\code{\link[modelterms7]{nl}}, \code{\link[modelterms7]{seg}} and the
+(\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the
 break-point terms), and each equation's intercept. Everything else keeps
 the default: a smooth, a ridge or a random effect is a convex block whose
 optimum the scoring step reaches from anywhere, and searching over a
@@ -71,6 +71,6 @@ start_search(optimizers7::sa(maxit = 20))
 
 }
 \seealso{
-\code{\link{start_intercepts}},
-\code{\link[optimizers7]{sa}}, \code{\link[optimizers7]{chain}}
+\code{\link[=start_intercepts]{start_intercepts()}},
+\code{\link[optimizers7:sa]{optimizers7::sa()}}, \code{\link[optimizers7:chain]{optimizers7::chain()}}
 }

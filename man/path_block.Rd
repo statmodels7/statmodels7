@@ -9,7 +9,7 @@ path_block(blocks, row)
 \arguments{
 \item{blocks}{The blocks.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 }
 \value{
 One entry of \code{blocks$sparse}.

@@ -19,7 +19,7 @@ fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{\code{\link{iwls}()} or an optimizer.}
+\item{method}{\code{\link[=iwls]{iwls()}} or an optimizer.}
 
 \item{vb}{The resolved verbosity.}
 }

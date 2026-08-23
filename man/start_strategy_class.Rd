@@ -7,7 +7,7 @@
 start_strategy_class()
 }
 \value{
-The \code{\link{start_strategy}} class object.
+The \code{\link[=start_strategy]{start_strategy()}} class object.
 }
 \description{
 Fetched rather than captured, so that a test of membership cannot be fooled

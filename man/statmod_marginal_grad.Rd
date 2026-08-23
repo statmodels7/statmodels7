@@ -17,7 +17,7 @@ statmod_marginal_grad(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -25,7 +25,7 @@ statmod_marginal_grad(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{idx}{The outer index.}
 
@@ -60,6 +60,6 @@ one crossprod per distribution parameter. The component
 the family's own order, never parsed out of one.
 }
 \seealso{
-\code{\link{statmod_marginal}}, \code{\link{reml}}
+\code{\link[=statmod_marginal]{statmod_marginal()}}, \code{\link[=reml]{reml()}}
 }
 \keyword{internal}

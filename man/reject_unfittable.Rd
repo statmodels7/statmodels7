@@ -15,7 +15,7 @@ distribution parameter.}
 }
 \description{
 Signals an error naming any term whose block is not a fixed design, which
-is what the alternation of \code{\link{statmod}} assembles.
+is what the alternation of \code{\link[=statmod]{statmod()}} assembles.
 }
 \details{
 One shape is outside that assembly, and it is read off the term rather than
@@ -26,19 +26,19 @@ A \strong{structural} term rewrites the likelihood instead of contributing a
 predictor, so it has no design block at all and answers neither
 \code{term_matrix()} nor \code{term_npar()}. Reaching it through the design
 produced an error naming one of those generics, which says nothing about the
-cause. \code{\link{statmod_structural}} routes those, and what remains here
+cause. \code{\link[=statmod_structural]{statmod_structural()}} routes those, and what remains here
 is the term class that is structural and implements neither shape of the
 contract.
 
 A term whose block depends on its own coefficients was rejected here too
 until the alternation learned to refresh one; it is fitted now, by
-\code{\link{statmod_design_at}}.
+\code{\link[=statmod_design_at]{statmod_design_at()}}.
 
 Every equation is examined before the error is raised, so a model carrying
 one such term in the mean and another in the scale reports both rather than
 the first.
 }
 \seealso{
-\code{\link{statmod_terms}}, \code{\link{statmod}}
+\code{\link[=statmod_terms]{statmod_terms()}}, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

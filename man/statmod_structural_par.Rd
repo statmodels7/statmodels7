@@ -7,7 +7,7 @@
 statmod_structural_par(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design the fit ran on.}
 }
@@ -21,6 +21,6 @@ documentation describes them on, together with the unconstrained values
 they were estimated as.
 }
 \seealso{
-\code{\link{statmod_fit_structural}}
+\code{\link[=statmod_fit_structural]{statmod_fit_structural()}}
 }
 \keyword{internal}

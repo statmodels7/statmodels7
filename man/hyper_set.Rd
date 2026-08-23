@@ -9,7 +9,7 @@ hyper_set(hyper, row, value)
 \arguments{
 \item{hyper}{The hyperparameters.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
 \item{value}{The value to write.}
 }

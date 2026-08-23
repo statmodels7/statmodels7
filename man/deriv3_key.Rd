@@ -16,7 +16,7 @@ A single string.
 }
 \description{
 Locates the \eqn{(a, b, c)} entry of a distribution's third-derivative
-list, which is keyed by \code{\link[distributions7]{deriv_names}}.
+list, which is keyed by \code{\link[distributions7:deriv_names]{distributions7::deriv_names()}}.
 }
 \details{
 The name is BUILT from the parameter names in the family's own order, not

@@ -18,7 +18,7 @@ supplies, per parameter.
 }
 \details{
 They are SUMMED where both are given, which is what
-\code{\link[stats]{glm}} does with a formula offset and an \code{offset}
+\code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset}
 argument together.
 }
 \keyword{internal}

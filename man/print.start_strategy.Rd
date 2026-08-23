@@ -4,7 +4,7 @@
 \alias{print.start_strategy}
 \title{Print a Starting-Value Strategy}
 \arguments{
-\item{x}{A \code{\link{start_strategy}}.}
+\item{x}{A \code{\link[=start_strategy]{start_strategy()}}.}
 
 \item{...}{Unused.}
 }

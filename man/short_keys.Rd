@@ -19,10 +19,9 @@ specification.
 }
 \details{
 A key is the call that produced the term, and for a penalty over a
-sub-term it is that call followed by \code{::parameter::sub-term}. The
+sub-term it is that call followed by \verb{::parameter::sub-term}. The
 call is what grows: printed in full, one line of an outer trace carried
-the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
-list(...))} three times over, which is a line no reader can use. Only the
+the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links = list(...))} three times over, which is a line no reader can use. Only the
 leading call is shortened, and only past its first argument, so
 \code{s(x, k = 20)} and \code{s(z, k = 8)} stay apart; everything after
 \code{::} is kept whole, that being what distinguishes one entry of a term

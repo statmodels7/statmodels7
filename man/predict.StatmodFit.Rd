@@ -14,7 +14,7 @@
 )
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{what}{What to predict: a parameter's name, a moment's name,
 \code{"parameter"} or \code{"link"}.}
@@ -25,7 +25,7 @@
 
 \item{level}{The interval's level, where \code{se} is \code{TRUE}.}
 
-\item{...}{Passed to \code{\link{vcov.StatmodFit}} where \code{se} is
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} where \code{se} is
 \code{TRUE}, which is where \code{type} chooses between the bayesian
 variance and the frequentist one.}
 }
@@ -59,7 +59,7 @@ link.}
 A parameter's name may be prefixed by \code{"link:"} to ask for its
 predictor instead of its value, as \code{"link:sigma"}.
 
-\strong{The argument order departs from \code{\link[stats]{predict}}}, where
+\strong{The argument order departs from \code{\link[stats:predict]{stats::predict()}}}, where
 the second argument is \code{newdata}. Here it is \code{what}, because a
 statmod fit has several parameters and several moments and choosing among
 them is the ordinary variation, while predicting on new data is the
@@ -93,6 +93,6 @@ head(predict(fit, "link:sigma"))
 head(predict(fit, "mu", se = TRUE))
 }
 \seealso{
-\code{\link{statmod}}, \code{\link{fitted.StatmodFit}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}}
 }
 \keyword{internal}

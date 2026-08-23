@@ -7,7 +7,7 @@
 statmod_commit_refresh(spec, coef, design, which = "all")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 
@@ -40,7 +40,7 @@ the schedule -- a break-point is read off the coefficients and the
 rescaling reaches only the columns -- so committing does not move the
 objective at the same coefficients. For a FROZEN working block that
 sentence is false in two ways, which is why those terms are committed by
-\code{\link{fit_working}} and skipped here: a jseg's quadratic read-off
+\code{\link[=fit_working]{fit_working()}} and skipped here: a jseg's quadratic read-off
 is incremental in the committed position, so a second commit at the same
 coefficients takes a second step, and a refresh may relabel crossed
 break-point lineages, after which the caller's coefficients are stale.
@@ -48,6 +48,6 @@ The relabeling is why the COMMITTED coefficients are returned: a caller
 continues from what the terms stored, not from what it passed in.
 }
 \seealso{
-\code{\link{statmod_design_at}}, \code{\link{fit_working}}
+\code{\link[=statmod_design_at]{statmod_design_at()}}, \code{\link[=fit_working]{fit_working()}}
 }
 \keyword{internal}

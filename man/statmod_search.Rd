@@ -7,9 +7,9 @@
 statmod_search(spec, row, default = "grid")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
 \item{default}{What to use where the term named nothing.}
 }
@@ -34,6 +34,6 @@ Being per term is also what keeps one term's choice off another's:
 one coordinate at a time and leaves the lasso alone.
 }
 \seealso{
-\code{\link[modelterms7]{term_search}}, \code{\link{statmod_path}}
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}}, \code{\link[=statmod_path]{statmod_path()}}
 }
 \keyword{internal}

@@ -7,7 +7,7 @@
 \method{logLik}{StatmodFit}(object, type = c("conditional", "marginal"), ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{type}{\code{"conditional"} (default) or \code{"marginal"}.}
 
@@ -18,7 +18,7 @@ A \code{logLik} object.
 }
 \description{
 The value R's convention expects, carrying the degrees of freedom and the
-number of observations. \code{\link{loglik}} is the other thing: the model
+number of observations. \code{\link[=loglik]{loglik()}} is the other thing: the model
 evaluated at parameters and data of the caller's choosing.
 }
 \details{
@@ -40,7 +40,7 @@ effective count, or the reverse -- is what neither convention allows
 \code{type = "marginal"} returns the value the outer criterion evaluated
 while choosing the hyperparameters, with the number of estimated
 parameters as its degrees of freedom. It is available only where a
-marginal criterion actually ran: \code{\link{ml}} or \code{\link{reml}}.
+marginal criterion actually ran: \code{\link[=ml]{ml()}} or \code{\link[=reml]{reml()}}.
 Where the hyperparameters were held, or found by a prediction criterion,
 there is no marginal likelihood to report and asking for one is an error
 rather than a number that would look like one.
@@ -50,6 +50,6 @@ Vaida, F. and Blanchard, S. (2005). Conditional Akaike information for
 mixed-effects models. \emph{Biometrika}, 92(2), 351--370.
 }
 \seealso{
-\code{\link{loglik}}
+\code{\link[=loglik]{loglik()}}
 }
 \keyword{internal}

@@ -7,11 +7,11 @@
 statmod_grid_size(spec, row, default)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{row}{One row of \code{\link{path_rows}}'s index.}
+\item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
-\item{default}{\code{\link{path_fallbacks}}'s, for a term that named none.}
+\item{default}{\code{\link[=path_fallbacks]{path_fallbacks()}}'s, for a term that named none.}
 }
 \value{
 A single integer.
@@ -26,11 +26,11 @@ same reason as whether it is swept at all: a penalized block of four
 columns and one of four hundred want different grids, and a criterion
 applies to every hyperparameter of the model at once -- the smooth ones
 included, which are read at the mode and not swept -- so it cannot know
-which it is looking at. \code{\link[modelterms7]{term_grid}} is where a
+which it is looking at. \code{\link[modelterms7:term_grid]{modelterms7::term_grid()}} is where a
 term says so, and the value travels with the penalty's entry, so one
 reached through a sub-term of a structural term carries it too.
 }
 \seealso{
-\code{\link{statmod_held}}, \code{\link{path_values}}
+\code{\link[=statmod_held]{statmod_held()}}, \code{\link[=path_values]{path_values()}}
 }
 \keyword{internal}

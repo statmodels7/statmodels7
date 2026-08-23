@@ -18,7 +18,7 @@ The five penalized constructors carry these on their own signatures, where
 a reader can see them -- \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
 \code{enet(x, n_lambda = 25, n_alpha = 5)} -- so nothing here is reached
 for them. What reaches it is a term that declares a kinked penalty without
-offering an argument for the grid: \code{\link[modelterms7]{random}} under
+offering an argument for the grid: \code{\link[modelterms7:random]{modelterms7::random()}} under
 a Laplace prior is the case, its hyperparameters being whatever the
 effects' distribution happens to carry.
 
@@ -30,7 +30,7 @@ or a shape over its useful range, and needs fewer; with a product every
 extra point there multiplies the fits.
 }
 \seealso{
-\code{\link{path_grid}}, \code{\link{statmod_grid_size}},
-\code{\link[modelterms7]{term_grid}}
+\code{\link[=path_grid]{path_grid()}}, \code{\link[=statmod_grid_size]{statmod_grid_size()}},
+\code{\link[modelterms7:term_grid]{modelterms7::term_grid()}}
 }
 \keyword{internal}

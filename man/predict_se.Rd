@@ -13,12 +13,12 @@ predict_se(object, spec, design, ep, level = 0.95, ...)
 
 \item{design}{Its design.}
 
-\item{ep}{The predictors and parameters, as \code{\link{statmod_eta}}
+\item{ep}{The predictors and parameters, as \code{\link[=statmod_eta]{statmod_eta()}}
 returns them.}
 
 \item{level}{The interval's level.}
 
-\item{...}{Passed to \code{\link{vcov}}.}
+\item{...}{Passed to \code{\link[=vcov]{vcov()}}.}
 }
 \value{
 A named list, one entry per distribution parameter, each a data
@@ -50,11 +50,11 @@ a logarithm and its lower end cannot come out negative.
 
 A coefficient with no variance carries none forward. A discontinuous
 break-point term's block is a working linearization, held out of
-\code{\link{vcov}}, so every observation whose predictor reads it has no
+\code{\link[=vcov]{vcov()}}, so every observation whose predictor reads it has no
 standard error either -- which is the truth about it and not a gap in the
 arithmetic.
 }
 \seealso{
-\code{\link{predict.StatmodFit}}, \code{\link{vcov.StatmodFit}}
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}
 }
 \keyword{internal}

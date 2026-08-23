@@ -14,6 +14,6 @@ A single string.
 }
 \description{
 The name a summary gives a block, from the kind
-\code{\link{term_block_kind}} answered with.
+\code{\link[=term_block_kind]{term_block_kind()}} answered with.
 }
 \keyword{internal}

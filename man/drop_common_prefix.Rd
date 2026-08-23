@@ -20,7 +20,7 @@ removing it leaves every name non-empty.
 A term composes its coefficients' names from its own and its parameters',
 so inside the block of one term the leading piece repeats on every row
 and says what the heading has already said. It is dropped for the
-printing alone; \code{\link{coef}} and the summary's own tables keep the
+printing alone; \code{\link[=coef]{coef()}} and the summary's own tables keep the
 names the fit was built with, which are the ones another call can be
 indexed by.
 

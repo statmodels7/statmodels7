@@ -7,7 +7,7 @@
 iwls_info_diag(pieces)
 }
 \arguments{
-\item{pieces}{The pieces, as \code{\link{iwls_pieces}} builds them.}
+\item{pieces}{The pieces, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds them.}
 }
 \value{
 A numeric vector.

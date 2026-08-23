@@ -19,7 +19,7 @@ penalty_range_basis(pen, k, p, nm)
 A \code{k} by \code{r} matrix.
 }
 \description{
-The directions a penalty constrains, which are the ones \code{\link{ml}()}
+The directions a penalty constrains, which are the ones \code{\link[=ml]{ml()}}
 integrates over.
 }
 \keyword{internal}

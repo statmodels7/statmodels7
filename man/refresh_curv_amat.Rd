@@ -7,7 +7,7 @@
 refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -15,22 +15,22 @@ refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 
 \item{params, npar, offs}{The block bookkeeping.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}.}
 
-\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}.}
+\item{Hl}{The link-scale curvature, from \code{\link[=refresh_hessian]{refresh_hessian()}}.}
 }
 \value{
 A list of matrices, one per unit.
 }
 \description{
-\code{\link{refresh_amat}} with the curvature, one matrix per unit.
+\code{\link[=refresh_amat]{refresh_amat()}} with the curvature, one matrix per unit.
 }
 \details{
-It is the same weight \code{\link{u_refresh}} builds for the gradient, and
+It is the same weight \code{\link[=u_refresh]{u_refresh()}} builds for the gradient, and
 it depends on neither direction, so it is built once per Hessian rather
 than once per pair of hyperparameters.
 }
 \seealso{
-\code{\link{trace_refresh4}}, \code{\link{u_refresh}}
+\code{\link[=trace_refresh4]{trace_refresh4()}}, \code{\link[=u_refresh]{u_refresh()}}
 }
 \keyword{internal}

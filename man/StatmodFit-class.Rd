@@ -23,7 +23,7 @@ StatmodFit(
 )
 }
 \arguments{
-\item{spec}{The \code{\link{StatmodSpec}} that was fitted.}
+\item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} that was fitted.}
 
 \item{coefficients}{A named list, one vector per distribution parameter.}
 
@@ -53,7 +53,7 @@ StatmodFit(
 An object of class \code{StatmodFit}.
 }
 \description{
-What \code{\link{statmod}} returns: the specification kept whole, the
+What \code{\link[=statmod]{statmod()}} returns: the specification kept whole, the
 coefficients and hyperparameters it reached, and the record of how it got
 there.
 }
@@ -64,6 +64,6 @@ S7::S7_inherits(statmod(y ~ x, distributions7::gaussian1_distrib(), dd),
 
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

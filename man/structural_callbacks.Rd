@@ -7,10 +7,10 @@
 structural_callbacks(spec, theta, p)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{theta}{The per-observation parameters, as
-\code{\link{statmod_eta}} returns them.}
+\code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
 \item{p}{The distribution parameter the term sits in.}
 }

@@ -7,7 +7,7 @@
 iwls_scale(pieces)
 }
 \arguments{
-\item{pieces}{What \code{\link{iwls_pieces}} built.}
+\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built.}
 }
 \value{
 A positive number, or 1 where the pieces say nothing.
@@ -18,7 +18,7 @@ pieces without assembling it.
 }
 \details{
 It is what the Levenberg damping is measured against, so that
-\code{\link{iwls_escalate}} carries no constant with units. On the
+\code{\link[=iwls_escalate]{iwls_escalate()}} carries no constant with units. On the
 augmented route the diagonal of \eqn{K = R'R + C'C} is the column sums of
 the squares, which keeps a sparse design sparse; on the assembled route it
 is the diagonal itself.

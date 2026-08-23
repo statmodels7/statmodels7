@@ -25,6 +25,6 @@ operation, and answering it would mean choosing a reading the caller did
 not ask for.
 }
 \seealso{
-\code{\link{statmod_eta_continued}}
+\code{\link[=statmod_eta_continued]{statmod_eta_continued()}}
 }
 \keyword{internal}

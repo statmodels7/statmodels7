@@ -7,13 +7,13 @@
 format_conflicts(conflicts)
 }
 \arguments{
-\item{conflicts}{A list as returned by \code{\link{statmodels7_conflicts}}.}
+\item{conflicts}{A list as returned by \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}.}
 }
 \value{
 A character vector, one element per masked name.
 }
 \description{
-Formats the result of \code{\link{statmodels7_conflicts}} as one line per
+Formats the result of \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} as one line per
 masked name.
 }
 \keyword{internal}

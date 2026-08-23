@@ -7,7 +7,7 @@
 statmod_structural_score(spec, coef, design = statmod_design(spec))
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{coef}{A named list of coefficient vectors.}
 
@@ -28,6 +28,6 @@ reverse pass answers is the other question, the derivative in the
 coefficients of the equations.
 }
 \seealso{
-\code{\link{statmod_filter_at}}
+\code{\link[=statmod_filter_at]{statmod_filter_at()}}
 }
 \keyword{internal}

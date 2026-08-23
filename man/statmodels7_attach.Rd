@@ -16,9 +16,9 @@ Attaches every installed member that is not on the search path already.
 Each member's own startup messages are suppressed, since the caller asked
 for the toolkit and gets one message about it rather than one per package,
 and so are the masking warnings, which
-\code{\link{statmodels7_conflicts}} reports in one place instead.
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} reports in one place instead.
 }
 \seealso{
-\code{\link{statmodels7_packages}}
+\code{\link[=statmodels7_packages]{statmodels7_packages()}}
 }
 \keyword{internal}

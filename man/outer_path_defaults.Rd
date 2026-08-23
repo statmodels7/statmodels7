@@ -10,7 +10,7 @@ outer_path_defaults()
 A named list.
 }
 \description{
-The ones \code{\link{OuterMethod}} needs whether or not a given criterion
+The ones \code{\link[=OuterMethod]{OuterMethod()}} needs whether or not a given criterion
 uses them, so that one class serves every criterion.
 }
 \details{
@@ -21,6 +21,6 @@ put to the smooth hyperparameters of the model as well and those are read
 at the mode rather than swept.
 }
 \seealso{
-\code{\link{path_fallbacks}}
+\code{\link[=path_fallbacks]{path_fallbacks()}}
 }
 \keyword{internal}

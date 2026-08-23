@@ -28,6 +28,6 @@ without a word and the replicate would be of another model. A column of
 asking for that column to be drawn means.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

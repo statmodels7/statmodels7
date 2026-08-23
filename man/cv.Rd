@@ -16,7 +16,7 @@ to compare two criteria on the same one.}
 sparsest fit within one standard error of it.}
 }
 \value{
-An \code{\link{OuterMethod}}.
+An \code{\link[=OuterMethod]{OuterMethod()}}.
 }
 \description{
 \code{cv()} scores a path of hyperparameter values by the log-likelihood the
@@ -24,7 +24,7 @@ fit assigns to observations it was not fitted on.
 }
 \details{
 \strong{Why a penalty with a kink needs this.} A marginal criterion --
-\code{\link{reml}()} or \code{\link{ml}()} -- approximates an integral by a
+\code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} -- approximates an integral by a
 Laplace expansion at the penalized mode, which asks for the second
 derivative of the penalty there. The mode of a lasso, a SCAD or an MCP sits
 at the kink for every coefficient it sets to zero, which is where that
@@ -55,7 +55,7 @@ decides is how they are covered.
 carrying several kinked hyperparameters has every combination of them
 visited under \code{search = "grid"} and one swept at a time under
 \code{"cyclic"}. The choice is the TERM's -- \code{enet(X, search =)},
-\code{\link[modelterms7]{term_search}} -- and not this criterion's, since
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}} -- and not this criterion's, since
 the same criterion is put to the smooth hyperparameters of the model, which
 are read at the mode rather than swept, so most of what it is asked about
 could not use such an argument. Between two terms the sweep alternates
@@ -116,5 +116,5 @@ generalized linear models via coordinate descent. \emph{Journal of
 Statistical Software} 33(1), 1--22.
 }
 \seealso{
-\code{\link{reml}}, \code{\link{aic}}, \code{\link{statmod}}
+\code{\link[=reml]{reml()}}, \code{\link[=aic]{aic()}}, \code{\link[=statmod]{statmod()}}
 }

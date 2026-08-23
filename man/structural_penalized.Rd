@@ -7,7 +7,7 @@
 structural_penalized(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 }
@@ -19,6 +19,6 @@ A single logical.
 structural term rather than a block of design columns.
 }
 \seealso{
-\code{\link{statmod_marginal_full}}
+\code{\link[=statmod_marginal_full]{statmod_marginal_full()}}
 }
 \keyword{internal}

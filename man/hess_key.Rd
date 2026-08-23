@@ -16,7 +16,7 @@ A single string.
 }
 \description{
 Locates the \eqn{(a, b)} entry of a distribution's Hessian list, which is
-keyed by \code{\link[distributions7]{hess_names}} and not by position.
+keyed by \code{\link[distributions7:hess_names]{distributions7::hess_names()}} and not by position.
 }
 \details{
 The name is BUILT from the parameter names rather than parsed out of one,

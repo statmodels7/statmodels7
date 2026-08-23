@@ -7,7 +7,7 @@
 iwls_pieces(spec, design, coef, hyper, method)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -15,7 +15,7 @@ iwls_pieces(spec, design, coef, hyper, method)
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{Iwls}} object.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
 }
 \value{
 A list with \code{R}, \code{C} and \code{A}.

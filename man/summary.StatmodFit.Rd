@@ -13,23 +13,23 @@
 )
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{level}{The confidence level.}
 
-\item{type}{Which variance matrix: passed to \code{\link{vcov.StatmodFit}}.}
+\item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 
 \item{correct}{Whether the degrees of freedom carry what the estimation
 of the hyperparameters cost. The ordinary count reads them as known,
 and they were chosen from the same data, so a criterion built on it is
-too generous. See \code{\link{statmod_edf_correction}}. Defaults to
+too generous. See \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}. Defaults to
 \code{FALSE} because it changes a number a reader may be comparing with
 an earlier fit; it is zero where no hyperparameter was estimated.}
 
-\item{...}{Passed to \code{\link{vcov.StatmodFit}}.}
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
 \value{
-A \code{\link{StatmodSummary}}.
+A \code{\link[=StatmodSummary]{StatmodSummary()}}.
 }
 \description{
 One coefficient table per distribution parameter -- estimate, standard
@@ -60,11 +60,11 @@ interpretable under a ridge, together with its hyperparameters.}
 
 \strong{A hyperparameter is the first row of its block}, since it governs
 every coefficient under it, and the cell where its standard error would be
-says what put the value there. One estimated by \code{\link{reml}()} or
-\code{\link{ml}()} maximizes a twice differentiable criterion, so it carries
+says what put the value there. One estimated by \code{\link[=reml]{reml()}} or
+\code{\link[=ml]{ml()}} maximizes a twice differentiable criterion, so it carries
 a standard error and an interval, both read on the free scale its link
-defines and mapped back (\code{\link{statmod_hyper_vcov}}). One chosen by
-\code{\link{aic}()}, \code{\link{bic}()} or \code{\link{cv}()} over a kinked
+defines and mapped back (\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}}). One chosen by
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}} over a kinked
 penalty is the argument of a minimum over a grid, so the row names the
 criterion and leaves the remaining columns empty: there is no curvature at
 such a point to read a standard error from. One the caller set is marked
@@ -91,6 +91,6 @@ summary(statmod(y ~ x | sigma ~ x,
                 distributions7::gaussian1_distrib(), dd))
 }
 \seealso{
-\code{\link{vcov.StatmodFit}}, \code{\link{confint.StatmodFit}}
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}
 }
 \keyword{internal}

@@ -10,7 +10,7 @@ outer_backtracks()
 A single number.
 }
 \description{
-How many backtracks a line search inside \code{\link{outer_fit}} may take
+How many backtracks a line search inside \code{\link[=outer_fit]{outer_fit()}} may take
 before it gives up, where the optimizer is the one this package chose.
 }
 \details{
@@ -28,7 +28,7 @@ What it costs is nothing on the shapes where nothing was wrong. Measured at
 30, 12 and 8 backtracks on a smooth, on two smooths with a random effect and
 on a random intercept, all three are unchanged in evaluations, in criterion
 to six decimals, in effective degrees of freedom and in the convergence
-flag: the resolution \code{\link{criterion_resolution}} supplies stops the
+flag: the resolution \code{\link[=criterion_resolution]{criterion_resolution()}} supplies stops the
 search before the budget is ever reached. A hierarchical break-point model
 goes from 31 evaluations and 25.6 seconds to 13 and 20.3, with the criterion
 1.3e-04 better and the same degrees of freedom.
@@ -43,6 +43,6 @@ An optimizer the caller named keeps its own budget, as it keeps its own
 stopping rule.
 }
 \seealso{
-\code{\link{outer_fit}}, \code{\link{criterion_resolution}}
+\code{\link[=outer_fit]{outer_fit()}}, \code{\link[=criterion_resolution]{criterion_resolution()}}
 }
 \keyword{internal}

@@ -21,7 +21,7 @@ The term's starting values with whatever the caller named written over
 them.
 }
 \details{
-The values are on the scale \code{\link[modelterms7]{term_params}} names,
+The values are on the scale \code{\link[modelterms7:term_params]{modelterms7::term_params()}} names,
 which is the one a reader knows: a loading is the loading rather than its
 logarithm, and a persistence is the partial autocorrelation its chart
 carries rather than the autoregressive coefficient that chart produces. A
@@ -30,6 +30,6 @@ misspelt parameter would otherwise leave the term at a starting value and
 simulate a model with almost no dynamics.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

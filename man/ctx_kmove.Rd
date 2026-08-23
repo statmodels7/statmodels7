@@ -11,13 +11,13 @@ ctx_kmove(ctx, spec, design, coef, hyper, method)
 
 \item{spec, design, coef, hyper}{The fallback arguments.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 }
 \value{
 A list with \code{deriv} and \code{key}.
 }
 \description{
-The array \code{\link{u_vector}} contracts against the leverage diagonal,
+The array \code{\link[=u_vector]{u_vector()}} contracts against the leverage diagonal,
 together with the builder that reads it: the third derivative of the
 log-density where the criterion uses the observed information, and the
 derivative of the expected information where it uses the expected one.
@@ -33,12 +33,12 @@ as well as the integrand, and the missing piece
 isolates -- the third ties the symmetrized sum, not the single term.
 
 \pkg{distributions7} supplies it as
-\code{\link[distributions7]{distrib_dexpected_hessian}}. The two arrays are
+\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}. The two arrays are
 keyed differently, the observed one being symmetric in all three indices and
 the expected one in its first two only, so the key builder travels with the
 array rather than being assumed by the consumer.
 }
 \seealso{
-\code{\link{u_vector}}, \code{\link{outer_gradient_ok}}
+\code{\link[=u_vector]{u_vector()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}
 }
 \keyword{internal}

@@ -7,7 +7,7 @@
 statmod_design_blocks(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A named list, one entry per distribution parameter.

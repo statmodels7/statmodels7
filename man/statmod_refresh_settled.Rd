@@ -7,7 +7,7 @@
 statmod_refresh_settled(spec, design, which = "all")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -31,10 +31,10 @@ break-point with no gradient to vanish. Measured on
 \code{jump()}: the fit reaches the break-point and the jump size to three
 figures, the objective stops moving at the twelfth digit, and the score of
 the working model stays at 0.176 forever.
-\code{\link[modelterms7]{term_converged}} is what each construction
+\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} is what each construction
 answers instead.
 }
 \seealso{
-\code{\link{statmod_design_at}}
+\code{\link[=statmod_design_at]{statmod_design_at()}}
 }
 \keyword{internal}

@@ -8,9 +8,9 @@
 #' @details
 #' The three consumers each used to assemble these for themselves, so at one
 #' point the information was built three times and the penalized matrix
-#' factorized twice, and \code{\link{statmod_marginal_hess}} additionally
+#' factorized twice, and [statmod_marginal_hess()] additionally
 #' calls the gradient, which repeated the whole of it a fourth time. Measured
-#' by \code{Rprof}'s \code{by.total} on a random intercept over 500 levels at
+#' by `Rprof`'s `by.total` on a random intercept over 500 levels at
 #' 20000 observations, the gradient and the Hessian together accounted for 128
 #' per cent of the fit -- the overlap being exactly that repetition.
 #'
@@ -19,11 +19,11 @@
 #' and never speculatively: the criterion alone does not need an inverse, and
 #' a search running without an exact gradient must not pay for one.
 #'
-#' Passing \code{NULL} wherever a context is accepted restores the old
+#' Passing `NULL` wherever a context is accepted restores the old
 #' behaviour exactly, which is what keeps every existing caller -- and a
 #' caller's own code -- working unchanged.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
@@ -32,8 +32,8 @@
 #' @return An environment carrying the point and, as they are asked for, the
 #'   quantities derived from it.
 #'
-#' @seealso \code{\link{statmod_marginal}}, \code{\link{statmod_marginal_grad}},
-#'   \code{\link{statmod_marginal_hess}}
+#' @seealso [statmod_marginal()], [statmod_marginal_grad()],
+#'   [statmod_marginal_hess()]
 #'
 #' @keywords internal
 outer_context <- function(spec, design, coef, hyper, approx = "bartlett") {
@@ -59,12 +59,12 @@ outer_context <- function(spec, design, coef, hyper, approx = "bartlett") {
 #' which is linear in their length and so negligible beside the \eqn{O(np^2)}
 #' assembly it guards.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param coef The coefficients the caller is reading.
 #' @param hyper The hyperparameters the caller is reading.
 #'
-#' @return \code{TRUE} when the context is usable, \code{FALSE} when it is
-#'   \code{NULL}; an error when it belongs to another point.
+#' @return `TRUE` when the context is usable, `FALSE` when it is
+#'   `NULL`; an error when it belongs to another point.
 #'
 #' @keywords internal
 ctx_usable <- function(ctx, coef, hyper) {
@@ -81,9 +81,9 @@ ctx_usable <- function(ctx, coef, hyper) {
 
 #' The Information at the Context's Point
 #'
-#' @param ctx A context, or \code{NULL}.
-#' @param spec,design,coef The fallback arguments, used when \code{ctx} is
-#'   \code{NULL}.
+#' @param ctx A context, or `NULL`.
+#' @param spec,design,coef The fallback arguments, used when `ctx` is
+#'   `NULL`.
 #' @param hyper The hyperparameters, for the context's own check.
 #' @param expected Whether the expected information is wanted.
 #' @param approx The approximation for the expected information.
@@ -113,7 +113,7 @@ ctx_information <- function(ctx, spec, design, coef, hyper, expected,
 #' The non-finite entries are zeroed here rather than by each caller: three
 #' of them did it separately and a fourth would have had to remember.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
 #'
 #' @return A square matrix.
@@ -140,18 +140,18 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' the gradient and the Hessian both read.
 #'
 #' @param expected Whether \eqn{H} is the expected information, which is what
-#'   the criterion carries under \code{reml(hessian = "expected")}. It used to
+#'   the criterion carries under `reml(hessian = "expected")`. It used to
 #'   be hard-coded to the observed one, correctly, because the exact gradient
 #'   ran on no other route; admitting the expected route makes the criterion's
 #'   determinant a different matrix, and reading the wrong one would be a
 #'   gradient of the wrong function.
 #'
 #' @details
-#' \strong{The storage is the matrix's own.} \eqn{H} is already sparse
-#' wherever the design is -- a grouping indicator, a factor \code{by}, a
-#' \code{linpar} over many levels -- and it was being densified here only
+#' **The storage is the matrix's own.** \eqn{H} is already sparse
+#' wherever the design is -- a grouping indicator, a factor `by`, a
+#' `linpar` over many levels -- and it was being densified here only
 #' because the penalty's accumulator is a base matrix. Where the sum is large
-#' enough and sparse enough to be worth it (\code{\link{worth_sparse}}) it is
+#' enough and sparse enough to be worth it ([worth_sparse()]) it is
 #' kept sparse and factorized as such: measured on a random intercept over 500
 #' levels, p = 503 at a density of 0.014, the factorization and its
 #' log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
@@ -163,27 +163,27 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' matrix.
 #'
 #' ⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
-#' CACHE defeated. \code{Matrix::Cholesky} stores its result in the matrix's
-#' \code{factors} slot, so a benchmark that refactorizes the same object
+#' CACHE defeated. `Matrix::Cholesky` stores its result in the matrix's
+#' `factors` slot, so a benchmark that refactorizes the same object
 #' measures a cache hit -- 0.004 ms rather than 0.102 -- and reports the
 #' sparse route as three times better than it is. A fit never gets that hit,
 #' the penalized matrix being a new one at every point.
 #'
-#' \strong{The inverse stays dense whatever the factor is.} Its readers take
-#' full matrix products against it -- \code{\link{block_leverage}} and the
+#' **The inverse stays dense whatever the factor is.** Its readers take
+#' full matrix products against it -- [block_leverage()] and the
 #' Hessian's pair loop -- so the inverse of a sparse matrix being dense costs
 #' nothing sparsity could have kept. What the sparse factor buys is the cost
 #' of producing it.
 #'
-#' \code{NULL} is returned where the matrix is not positive definite, which is
+#' `NULL` is returned where the matrix is not positive definite, which is
 #' the answer both callers already gave there.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
 #'
-#' @return A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
+#' @return A list with `K`, `inv` and `logdet`, or `NULL`.
 #'
-#' @seealso \code{\link{pd_factor}}
+#' @seealso [pd_factor()]
 #'
 #' @keywords internal
 ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
@@ -233,7 +233,7 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 #'
 #' @details
 #' A parameter that has reached the clamp its link keeps it strictly inside
-#' leaves the family's curvature there at \code{NaN}, and one such entry is
+#' leaves the family's curvature there at `NaN`, and one such entry is
 #' enough to deny the whole matrix a Cholesky factor. The coordinate is not
 #' one the criterion integrates over -- it is held at a boundary, where its
 #' own score is exactly zero -- so what the Laplace approximation wants from
@@ -242,16 +242,16 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 #' \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 #'
 #' The shape is preserved deliberately. Dropping the coordinate would change
-#' the dimension of \code{K} and of its inverse, which some twenty consumers
+#' the dimension of `K` and of its inverse, which some twenty consumers
 #' index into by position; pinning says the same thing and breaks none of
 #' them.
 #'
 #' @param K The penalized information.
 #'
-#' @return \code{K} with the frozen coordinates pinned, or \code{K} unchanged
+#' @return `K` with the frozen coordinates pinned, or `K` unchanged
 #'   where there are none.
 #'
-#' @seealso \code{\link{ctx_penalized}}, \code{\link{iwls_solve}}
+#' @seealso [ctx_penalized()], [iwls_solve()]
 #'
 #' @keywords internal
 pin_boundary <- function(K) {
@@ -278,14 +278,14 @@ pin_boundary <- function(K) {
 #' The DIAGONAL and not the column. A frozen coordinate makes its whole row
 #' non-finite, cross terms included, so a column test marks its neighbours
 #' too: measured on a Student t whose \eqn{\nu} had reached
-#' \code{double.xmax}, testing columns held \eqn{\sigma} along with \eqn{\nu}
+#' `double.xmax`, testing columns held \eqn{\sigma} along with \eqn{\nu}
 #' and left the fit exactly where it had been.
 #'
 #' @param K A square matrix, the information or the penalized information.
 #'
 #' @return An integer vector of positions, empty where there are none.
 #'
-#' @seealso \code{\link{pin_boundary}}, \code{\link{iwls_solve}}
+#' @seealso [pin_boundary()], [iwls_solve()]
 #'
 #' @keywords internal
 boundary_coords <- function(K) {
@@ -312,44 +312,44 @@ boundary_coords <- function(K) {
 #' differ by. One assembly of the criterion at given coefficients answers it,
 #' with no refit.
 #'
-#' \strong{The quadratic form alone is not enough}, and the reason is
+#' **The quadratic form alone is not enough**, and the reason is
 #' structural rather than a matter of accuracy: the criterion carries
 #' \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is NOT stationary in
 #' \eqn{\beta}, so a mode error enters it at FIRST order. Measured,
 #' \eqn{\tfrac{1}{2} g' K^{-1} g} is right to one per cent at an inner
-#' tolerance of \code{1e-4}, where the second-order term dominates, and
-#' undershoots by 50 to 1000 times at \code{1e-6} and below, where the first
+#' tolerance of `1e-4`, where the second-order term dominates, and
+#' undershoots by 50 to 1000 times at `1e-6` and below, where the first
 #' order does.
 #'
 #' Measured against the spread of the criterion at one hyperparameter reached
 #' from six different warm starts, over four shapes and five inner tolerances,
 #' the displaced reading tracks it across six orders of magnitude -- from
-#' \code{8.6e-2} down to \code{2.2e-7} -- at a ratio between 0.05 and 0.99, and
-#' separates shapes that a formula cannot: at an inner tolerance of \code{1e-6}
-#' it reads \code{1.7e-4} on a random intercept over 500 levels against
-#' \code{7.9e-8} on a gaussian smooth.
+#' `8.6e-2` down to `2.2e-7` -- at a ratio between 0.05 and 0.99, and
+#' separates shapes that a formula cannot: at an inner tolerance of `1e-6`
+#' it reads `1.7e-4` on a random intercept over 500 levels against
+#' `7.9e-8` on a gaussian smooth.
 #'
 #' It reads LOW by two to three times, the spread being a range over six paths
 #' where this is one deviation, and that is the side to err on. A resolution
 #' smaller than the truth leaves the search where it was; one larger stops a
 #' healthy search short.
 #'
-#' @param st An evaluation's stored state, carrying \code{par}, \code{split},
-#'   \code{score}, \code{cf}, \code{hy}, \code{ctx} and \code{value}.
+#' @param st An evaluation's stored state, carrying `par`, `split`,
+#'   `score`, `cf`, `hy`, `ctx` and `value`.
 #' @param spec The specification.
 #' @param design The design.
-#' @param method An \code{\link{OuterMethod}}.
-#' @param criterion_at A function of \code{(cf, hy, par, ctx)} returning what
+#' @param method An [OuterMethod()].
+#' @param criterion_at A function of `(cf, hy, par, ctx)` returning what
 #'   THIS search is running, which is a prediction-error criterion or a
 #'   marginal one. It is passed in rather than chosen here: reading the
-#'   marginal criterion of a fit whose search is \code{\link{aic}} answers for
+#'   marginal criterion of a fit whose search is [aic()] answers for
 #'   a quantity the search never sees, and the number that comes back stopped
 #'   two such fits short of their own optimum.
 #'
-#' @return A single positive number, or \code{NA_real_} where the pieces are
+#' @return A single positive number, or `NA_real_` where the pieces are
 #'   not available.
 #'
-#' @seealso \code{\link{outer_fit}}, \code{\link[optimizers7]{armijo}}
+#' @seealso [outer_fit()], [optimizers7::armijo()]
 #'
 #' @keywords internal
 criterion_resolution <- function(st, spec, design, method, criterion_at) {
@@ -414,17 +414,17 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
 #' \eqn{M}, which is \eqn{K^{-1}} when nothing is projected away and the
 #' projected inverse otherwise.
 #'
-#' @param ctx A context, or \code{NULL}.
-#' @param pen The result of \code{\link{ctx_penalized}}.
-#' @param basis The integrated subspace, or \code{NULL}.
-#' @param expected Which information \code{pen} was built with, which is the
+#' @param ctx A context, or `NULL`.
+#' @param pen The result of [ctx_penalized()].
+#' @param basis The integrated subspace, or `NULL`.
+#' @param expected Which information `pen` was built with, which is the
 #'   cache's key: the projection is of THAT matrix, so one entry cannot serve
 #'   both. Nothing reaches it today, a search holding one
-#'   \code{\link{OuterMethod}} throughout, but the slot is keyed rather than
-#'   shared because the twin defect in \code{\link{ctx_penalized}} was
+#'   [OuterMethod()] throughout, but the slot is keyed rather than
+#'   shared because the twin defect in [ctx_penalized()] was
 #'   unreachable in exactly the same way until it was not.
 #'
-#' @return A square matrix, or \code{NULL}.
+#' @return A square matrix, or `NULL`.
 #'
 #' @keywords internal
 ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
@@ -449,7 +449,7 @@ ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
 
 #' The Linear Predictors' Parameters at the Context's Point
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
 #'
 #' @return A named list, one entry per distribution parameter.
@@ -469,10 +469,10 @@ ctx_theta <- function(ctx, spec, design, coef, hyper) {
 #' The Per-Observation Diagonals at the Context's Point
 #'
 #' @description
-#' \code{\link{block_leverage}}, computed once and read by the gradient's
+#' [block_leverage()], computed once and read by the gradient's
 #' contraction and by every pair of the Hessian.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param design The design.
 #' @param M The matrix the traces are taken against.
 #' @param params,npar,offs The block bookkeeping.
@@ -495,7 +495,7 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' How the Penalized Matrix Moves With the Coefficients
 #'
 #' @description
-#' The array \code{\link{u_vector}} contracts against the leverage diagonal,
+#' The array [u_vector()] contracts against the leverage diagonal,
 #' together with the builder that reads it: the third derivative of the
 #' log-density where the criterion uses the observed information, and the
 #' derivative of the expected information where it uses the expected one.
@@ -511,18 +511,18 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' isolates -- the third ties the symmetrized sum, not the single term.
 #'
 #' \pkg{distributions7} supplies it as
-#' \code{\link[distributions7]{distrib_dexpected_hessian}}. The two arrays are
+#' [distributions7::distrib_dexpected_hessian()]. The two arrays are
 #' keyed differently, the observed one being symmetric in all three indices and
 #' the expected one in its first two only, so the key builder travels with the
 #' array rather than being assumed by the consumer.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #'
-#' @return A list with \code{deriv} and \code{key}.
+#' @return A list with `deriv` and `key`.
 #'
-#' @seealso \code{\link{u_vector}}, \code{\link{outer_gradient_ok}}
+#' @seealso [u_vector()], [outer_gradient_ok()]
 #'
 #' @keywords internal
 ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
@@ -550,7 +550,7 @@ ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
 
 #' The Approximation a Context Was Built With
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #'
 #' @return A single string.
 #'
@@ -566,9 +566,9 @@ ctx_approx <- function(ctx) {
 #' The third or fourth derivative on the link scale, which the gradient's
 #' contraction and the Hessian's two contractions all read.
 #'
-#' @param ctx A context, or \code{NULL}.
+#' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
-#' @param order \code{3} or \code{4}.
+#' @param order `3` or `4`.
 #'
 #' @return A named list of vectors.
 #'
@@ -598,7 +598,7 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #' How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution
 #'
 #' @description
-#' The limit \code{\link{criterion_resolution}} puts on \eqn{g'K^{-1}g/2}, the
+#' The limit [criterion_resolution()] puts on \eqn{g'K^{-1}g/2}, the
 #' decrease the mode's own Newton correction predicts, before it refuses to
 #' report a resolution at all.
 #'
@@ -608,7 +608,7 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #' resolution while the displacement is a correction and something else
 #' entirely once it is not: an inner fit that stopped far from a mode produces
 #' a large displacement, a large movement, and a number that
-#' \code{\link[optimizers7]{crit_abs_obj}} would read as licence to stop.
+#' [optimizers7::crit_abs_obj()] would read as licence to stop.
 #'
 #' The quantity tested is in log-likelihood units rather than in the
 #' coefficients', so one limit serves every shape. Measured over whole fits it
@@ -620,7 +620,7 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #'
 #' @return A single number.
 #'
-#' @seealso \code{\link{criterion_resolution}}
+#' @seealso [criterion_resolution()]
 #'
 #' @keywords internal
 mode_error_limit <- function() 1e-3
@@ -641,7 +641,7 @@ mode_error_limit <- function() 1e-3
 #' has a natural scale, log-likelihood units, where the first is a boolean
 #' about a threshold on a score whose size depends on the model.
 #'
-#' The two come apart, and measured on \code{y ~ s(x) | sigma ~ s(z)} they
+#' The two come apart, and measured on `y ~ s(x) | sigma ~ s(z)` they
 #' come apart on nearly every point: of 38 inner fits during one search, 38
 #' are at their mode by this reading -- between 1e-09 and 3e-09 against a
 #' limit of 1e-03, six orders of margin -- and FOUR report convergence. The
@@ -656,22 +656,22 @@ mode_error_limit <- function() 1e-3
 #' It is used to ADD points and never to remove one: a run whose flag says
 #' converged stays usable whatever this reads, so no model that fitted before
 #' can stop fitting. That is also why it is not folded into the flag itself,
-#' which \code{piano_stabilita.txt} section 13 measured and withdrew -- there
+#' which `piano_stabilita.txt` section 13 measured and withdrew -- there
 #' the flag was made STRICTER, and it cost a false negative on a good fit.
 #'
 #' @param ctx The evaluation context, so the penalized factorization is the
 #'   one the criterion will read rather than a second copy.
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients the inner fit returned.
 #' @param hyper The hyperparameters.
 #' @param score The inner objective's gradient at those coefficients.
 #' @param expected Whether the penalized information is the expected one.
 #'
-#' @return A single number, or \code{NA} where the penalized system could not
+#' @return A single number, or `NA` where the penalized system could not
 #'   be read there -- which is itself a reason to call the point unavailable.
 #'
-#' @seealso \code{\link{mode_error_limit}}, \code{\link{criterion_resolution}}
+#' @seealso [mode_error_limit()], [criterion_resolution()]
 #'
 #' @keywords internal
 inner_mode_error <- function(ctx, spec, design, coef, hyper, score,

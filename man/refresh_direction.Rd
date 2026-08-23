@@ -7,7 +7,7 @@
 refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -21,7 +21,7 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 
 \item{v}{The direction, over the stacked coefficients.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}.}
 }
 \value{
 A list, one entry per unit, with \code{D} and \code{A}.
@@ -37,6 +37,6 @@ hyperparameter and combined in the Hessian's pair loop: computing them
 inside that loop would repeat an \eqn{O(np^2)} product for every pair.
 }
 \seealso{
-\code{\link{contract3_refresh}}, \code{\link{trace_refresh4}}
+\code{\link[=contract3_refresh]{contract3_refresh()}}, \code{\link[=trace_refresh4]{trace_refresh4()}}
 }
 \keyword{internal}

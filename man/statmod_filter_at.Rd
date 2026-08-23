@@ -7,7 +7,7 @@
 statmod_filter_at(spec, design, eta_static, theta_static)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -30,6 +30,6 @@ since the objective, its gradient and its curvature are asked for at the
 same point in turn and a filter is the expensive part of each.
 }
 \seealso{
-\code{\link{statmod_structural}}
+\code{\link[=statmod_structural]{statmod_structural()}}
 }
 \keyword{internal}

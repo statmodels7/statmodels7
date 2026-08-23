@@ -55,7 +55,7 @@ is what the size condition is there to prevent.
 STORAGE.} A matrix held as a base matrix is refused whatever its zeros,
 which reads like a test of the container rather than of the mathematics, so
 it is worth saying why it is neither an oversight nor a term test.
-\code{\link{statmod_information_at}} accumulates into the design's own kind,
+\code{\link[=statmod_information_at]{statmod_information_at()}} accumulates into the design's own kind,
 so the penalized matrix is stored sparsely exactly when the design is, and
 \pkg{modelterms7} builds a block sparse only when asked
 (\code{sparse = TRUE}, whose default is \code{FALSE}). Measured on
@@ -79,6 +79,6 @@ order their sizes predict. Nothing here asks which term or which family
 produced the matrix.
 }
 \seealso{
-\code{\link{pd_factor}}
+\code{\link[=pd_factor]{pd_factor()}}
 }
 \keyword{internal}

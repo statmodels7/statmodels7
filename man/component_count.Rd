@@ -7,7 +7,7 @@
 component_count(mu)
 }
 \arguments{
-\item{mu}{What \code{\link[modelterms7]{term_levels}} returned.}
+\item{mu}{What \code{\link[modelterms7:term_levels]{modelterms7::term_levels()}} returned.}
 }
 \value{
 A single integer.

@@ -4,25 +4,25 @@ NULL
 #' The Iterated Weighted Least Squares Method
 #'
 #' @description
-#' The S7 class of the scoring step \code{\link{statmod}} uses for the smooth
+#' The S7 class of the scoring step [statmod()] uses for the smooth
 #' block, carrying its own choice of curvature and of decomposition.
 #'
-#' @param hessian Either \code{"expected"} -- Fisher scoring -- or
-#'   \code{"observed"}, which is Newton.
+#' @param hessian Either `"expected"` -- Fisher scoring -- or
+#'   `"observed"`, which is Newton.
 #' @param approx The approximation of the expected information, read only
 #'   where the family has no closed form.
-#' @param decomposition How the step is solved: \code{"qr"}, \code{"svd"},
-#'   \code{"chol"} or \code{"chol_crossprod"}.
+#' @param decomposition How the step is solved: `"qr"`, `"svd"`,
+#'   `"chol"` or `"chol_crossprod"`.
 #' @param maxit The iteration budget.
 #' @param tol The stopping tolerance on the scaled score.
-#' @param criterion An \pkg{optimizers7} \code{criterion} driving the loop
-#'   in place of \code{tol}, or \code{NULL} for the built-in rule.
+#' @param criterion An \pkg{optimizers7} `criterion` driving the loop
+#'   in place of `tol`, or `NULL` for the built-in rule.
 #' @param step_halving The number of halvings allowed before a step is
 #'   abandoned.
 #'
-#' @return An object of class \code{Iwls}.
+#' @return An object of class `Iwls`.
 #'
-#' @seealso \code{\link{iwls}}
+#' @seealso [iwls()]
 #'
 #' @examples
 #' S7::S7_inherits(iwls(), Iwls)
@@ -51,66 +51,66 @@ Iwls <- S7::new_class("Iwls",
 #' left to the caller.
 #'
 #' @details
-#' The name is \code{iwls} and not \code{irls}: the re-weighting is already
-#' implied by the iteration, so the second \code{r} says nothing that
-#' \emph{iterated} has not said.
+#' The name is `iwls` and not `irls`: the re-weighting is already
+#' implied by the iteration, so the second `r` says nothing that
+#' *iterated* has not said.
 #'
-#' \strong{The curvature.} \code{hessian = "expected"} inverts the expected
-#' information, which is Fisher scoring; \code{"observed"} inverts the
-#' observed Hessian, which is Newton. \code{approx} is handed to
+#' **The curvature.** `hessian = "expected"` inverts the expected
+#' information, which is Fisher scoring; `"observed"` inverts the
+#' observed Hessian, which is Newton. `approx` is handed to
 #' \pkg{distributions7} and is read only where the family has no closed
 #' expected information; asking for one where it would be ignored is refused,
 #' since an argument accepted and ignored is worse than one that errors.
 #'
-#' \strong{The decomposition.} The step solves
+#' **The decomposition.** The step solves
 #' \eqn{(X'WX + S)\delta = X'g - S\beta}, and how depends on this argument.
 #'
 #' \describe{
-#'   \item{\code{"qr"}}{a QR of the augmented design
+#'   \item{`"qr"`}{a QR of the augmented design
 #'     \eqn{[\sqrt{W}X;\ \mathrm{chol}(S)]}. The default, and not as a matter
 #'     of taste: forming \eqn{X'X} squares a conditioning that the
 #'     break-point terms bound to \eqn{\epsilon^{-1/2}} by construction, and
 #'     it is why a closed-form ridge is beaten at \eqn{p = 200} by a method
 #'     that never forms it.}
-#'   \item{\code{"svd"}}{a singular value decomposition of the same augmented
+#'   \item{`"svd"`}{a singular value decomposition of the same augmented
 #'     design, which reports the numerical rank rather than failing on a
 #'     deficient block.}
-#'   \item{\code{"chol"}}{a Cholesky factor of the penalized information,
+#'   \item{`"chol"`}{a Cholesky factor of the penalized information,
 #'     assembled without the augmentation.}
-#'   \item{\code{"chol_crossprod"}}{the same, forming \eqn{X'WX} explicitly.
+#'   \item{`"chol_crossprod"`}{the same, forming \eqn{X'WX} explicitly.
 #'     The fastest per iteration and the worst conditioned; offered because
 #'     the choice is the user's.}
 #' }
 #'
-#' \strong{The stopping rule.} \code{iwls} is a scoring step and not an
+#' **The stopping rule.** `iwls` is a scoring step and not an
 #' optimizer, so it carries its own loop, but the rule that ends it is the
-#' caller's to choose. With \code{criterion = NULL} the built-in rule
+#' caller's to choose. With `criterion = NULL` the built-in rule
 #' applies: the score per observation \eqn{\max_j\lvert g_j\rvert / n}
-#' against \code{tol}, with the dimensionless reading of
-#' \code{\link{iwls_score}} arbitrating the final verdict. Any
-#' \pkg{optimizers7} \code{criterion} may drive the loop instead, and then
-#' \code{tol} is not read at all, so passing both is an error rather than a
+#' against `tol`, with the dimensionless reading of
+#' [iwls_score()] arbitrating the final verdict. Any
+#' \pkg{optimizers7} `criterion` may drive the loop instead, and then
+#' `tol` is not read at all, so passing both is an error rather than a
 #' silent choice between them.
 #'
-#' What the rule is shown is the state \code{optimizers7::crit_met}
-#' documents, with two things worth knowing. Its \code{gradient} is the
+#' What the rule is shown is the state `optimizers7::crit_met`
+#' documents, with two things worth knowing. Its `gradient` is the
 #' score PER OBSERVATION, the quantity the built-in rule compares, so
-#' \code{criterion = optimizers7::crit_grad(t)} is \code{tol = t} exactly and
+#' `criterion = optimizers7::crit_grad(t)` is `tol = t` exactly and
 #' a threshold means the same at \eqn{n = 10} and at \eqn{n = 10^7}. Its
 #' objective is the penalized log-likelihood UNAVERAGED, which is the scale
 #' the penalty is added on, so a rule reading the objective's absolute value
 #' rather than its relative change carries the sample size with it. On the
-#' first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being
-#' no previous point, so a rule reading a change returns \code{FALSE} there
+#' first iteration `f_old` and `x_old` are `NULL`, there being
+#' no previous point, so a rule reading a change returns `FALSE` there
 #' by construction. A rule needing something the step does not compute -- a
 #' stationarity measure, which belongs to the derivative-free methods -- is
 #' rejected at construction rather than sitting there never firing.
 #'
 #' @inheritParams Iwls-class
 #'
-#' @return An object of class \code{\link{Iwls}}.
+#' @return An object of class [Iwls()].
 #'
-#' @seealso \code{\link{statmod}}, \code{\link{iwls_score}}
+#' @seealso [statmod()], [iwls_score()]
 #'
 #' @examples
 #' iwls()
@@ -160,7 +160,7 @@ iwls <- function(hessian = c("expected", "observed"),
 }
 
 #' @export
-#' @param x An \code{\link{Iwls}} object.
+#' @param x An [Iwls()] object.
 #' @param ... Unused.
 #' @rdname iwls
 print.Iwls <- function(x, ...) {
@@ -180,21 +180,21 @@ S7::method(print, Iwls) <- print.Iwls
 #' requested decomposition.
 #'
 #' @details
-#' \code{"qr"} and \code{"svd"} decompose the augmented matrix
+#' `"qr"` and `"svd"` decompose the augmented matrix
 #' \eqn{[R;\ C]}, whose cross-product IS the penalized information, so
 #' \eqn{X'X} is never formed and the conditioning is never squared. That route
 #' needs the per-observation curvature to be positive definite and the penalty
 #' positive semidefinite; where either fails -- an observed Hessian far from
 #' the optimum, a non-convex penalty -- there is no square root to take, and
 #' the step falls back to the assembled matrix with its eigenvalues floored,
-#' reporting in \code{route} that it did.
+#' reporting in `route` that it did.
 #'
-#' \code{"chol"} and \code{"chol_crossprod"} factor the assembled information
+#' `"chol"` and `"chol_crossprod"` factor the assembled information
 #' directly: faster per iteration and worse conditioned, which is the trade
 #' the caller is choosing.
 #'
-#' \strong{The damping is Levenberg's and is zero unless a step has failed.}
-#' \code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate
+#' **The damping is Levenberg's and is zero unless a step has failed.**
+#' `damp` adds \eqn{\lambda I} to the system, which shortens a coordinate
 #' in proportion to how little curvature it has: one with a diagonal of 0.24
 #' beside neighbours at 2328 is shortened by \eqn{(0.24+\lambda)/0.24} while
 #' theirs move by \eqn{(2328+\lambda)/2328}, which is the differential shrink
@@ -203,26 +203,26 @@ S7::method(print, Iwls) <- print.Iwls
 #' \eqn{\mathrm{diag}(K)}, because a proportional damping shrinks every
 #' coordinate alike and would leave the disparity where it was.
 #'
-#' @param pieces A list with \code{R}, \code{C} and \code{A}, as
-#'   \code{\link{iwls_pieces}} builds it.
+#' @param pieces A list with `R`, `C` and `A`, as
+#'   [iwls_pieces()] builds it.
 #' @param u The right-hand side.
 #' @param how The decomposition.
 #' @param damp The Levenberg damping \eqn{\lambda}, zero for the plain
 #'   scoring step.
 #'
-#' \strong{A coordinate at a boundary is held.} Where a parameter has reached
+#' **A coordinate at a boundary is held.** Where a parameter has reached
 #' the clamp its link keeps it strictly inside, the family's curvature there
-#' is zero or \code{NaN} and no step can move that coordinate. Such
+#' is zero or `NaN` and no step can move that coordinate. Such
 #' coordinates are dropped from the system and the rest is solved, which is
 #' the active set the boundary defines; the step stays a descent step for the
 #' reduced problem. Holding them is what keeps one boundary coordinate from
-#' stopping the others: with a single \code{NaN} in the curvature the whole
+#' stopping the others: with a single `NaN` in the curvature the whole
 #' step came back zero, and a Student t whose \eqn{\nu} had reached
-#' \code{double.xmax} stopped with a score of -617.6 in \eqn{\sigma}, an
+#' `double.xmax` stopped with a score of -617.6 in \eqn{\sigma}, an
 #' ordinary coordinate, while \eqn{\nu}'s own was exactly 0.
 #'
-#' @return A list with \code{delta}, \code{rank}, \code{route} and
-#'   \code{held}, the positions dropped from the system.
+#' @return A list with `delta`, `rank`, `route` and
+#'   `held`, the positions dropped from the system.
 #'
 #' @keywords internal
 iwls_solve <- function(pieces, u, how, damp = 0) {
@@ -335,13 +335,13 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
 #' design, the penalty's factor and the penalized information the requested
 #' decomposition will actually use.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients, per parameter.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{Iwls}} object.
+#' @param method An [Iwls()] object.
 #'
-#' @return A list with \code{R}, \code{C} and \code{A}.
+#' @return A list with `R`, `C` and `A`.
 #'
 #' @keywords internal
 iwls_pieces <- function(spec, design, coef, hyper, method) {
@@ -366,14 +366,14 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'
 #' @description
 #' Runs the scoring iteration on the objective of
-#' \code{\link{statmod_objective}} at fixed hyperparameters, returning the
+#' [statmod_objective()] at fixed hyperparameters, returning the
 #' coefficients and the history of the run.
 #'
 #' @details
 #' Two things the loop does that a plain Newton iteration does not, both
 #' recorded elsewhere in the toolkit as the reason a run reported failure at
 #' the answer. A non-positive-definite curvature is repaired by flooring its
-#' eigenvalues rather than abandoning the start, since \code{solve()} would
+#' eigenvalues rather than abandoning the start, since `solve()` would
 #' otherwise force one. And the stopping rule is read at the ITERATE, on a
 #' score scaled by the sample size, so that a threshold means the same thing
 #' at \eqn{n = 10} and at \eqn{n = 10^7} while the objective itself stays
@@ -387,18 +387,18 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' run that has already stopped; driving the loop with it was tried and
 #' made the tolerance unreachable at the OTHER end of the scale.
 #'
-#' @param obj The objective, from \code{\link{statmod_objective}}.
+#' @param obj The objective, from [statmod_objective()].
 #' @param start The starting coefficients, stacked.
-#' @param method An \code{\link{Iwls}} object.
+#' @param method An [Iwls()] object.
 #' @param n The number of observations, for the scaled stopping rule.
 #' @param pieces_at A function of the stacked coefficients returning what
-#'   \code{\link{iwls_solve}} needs, as \code{\link{iwls_pieces}} builds it.
+#'   [iwls_solve()] needs, as [iwls_pieces()] builds it.
 #' @param verbose Whether to print a line per iteration.
 #'
-#' @return A list with \code{par}, \code{value}, \code{converged},
-#'   \code{iterations}, \code{score} and \code{history}.
+#' @return A list with `par`, `value`, `converged`,
+#'   `iterations`, `score` and `history`.
 #'
-#' @seealso \code{\link{iwls}}
+#' @seealso [iwls()]
 #'
 #' @keywords internal
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
@@ -586,12 +586,12 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
 #'
 #' @details
 #' It is what the Levenberg damping is measured against, so that
-#' \code{\link{iwls_escalate}} carries no constant with units. On the
+#' [iwls_escalate()] carries no constant with units. On the
 #' augmented route the diagonal of \eqn{K = R'R + C'C} is the column sums of
 #' the squares, which keeps a sparse design sparse; on the assembled route it
 #' is the diagonal itself.
 #'
-#' @param pieces What \code{\link{iwls_pieces}} built.
+#' @param pieces What [iwls_pieces()] built.
 #'
 #' @return A positive number, or 1 where the pieces say nothing.
 #'
@@ -627,11 +627,11 @@ iwls_scale <- function(pieces) {
 #' of 2328, which the sixth escalation passes.
 #'
 #' @param damp The current damping.
-#' @param pieces What \code{\link{iwls_pieces}} built, for the scale.
+#' @param pieces What [iwls_pieces()] built, for the scale.
 #'
 #' @return The next damping.
 #'
-#' @seealso \code{\link{iwls_scale}}, \code{\link{iwls_solve}}
+#' @seealso [iwls_scale()], [iwls_solve()]
 #'
 #' @keywords internal
 iwls_escalate <- function(damp, pieces) {
@@ -643,19 +643,19 @@ iwls_escalate <- function(damp, pieces) {
 #' Has the Step's Stopping Rule Been Met?
 #'
 #' @description
-#' The built-in rule, the score per observation against \code{tol}, or the
+#' The built-in rule, the score per observation against `tol`, or the
 #' caller's \pkg{optimizers7} criterion read on the same state.
 #'
 #' @details
 #' The two routes are here rather than at the two places the loop asks, so
-#' that what a rule is shown is written once. \code{state$gradient} is
+#' that what a rule is shown is written once. `state$gradient` is
 #' already the score PER OBSERVATION, which is what makes
-#' \code{crit_grad(t)} and \code{tol = t} the same rule; the objective in
+#' `crit_grad(t)` and `tol = t` the same rule; the objective in
 #' the state is the penalized log-likelihood unaveraged, the scale the
 #' penalty is added on.
 #'
-#' @param method An \code{\link{Iwls}} object.
-#' @param state The iteration state, as \code{optimizers7::crit_met}
+#' @param method An [Iwls()] object.
+#' @param state The iteration state, as `optimizers7::crit_met`
 #'   documents it.
 #'
 #' @return A single logical.
@@ -696,7 +696,7 @@ iwls_met <- function(method, state) {
 #' rule's run reaches 0.998).
 #'
 #' @param g The gradient at the point.
-#' @param hj The information's diagonal, from \code{\link{iwls_info_diag}}.
+#' @param hj The information's diagonal, from [iwls_info_diag()].
 #' @param groups The equations' coordinate index sets.
 #' @param n The number of observations.
 #'
@@ -722,7 +722,7 @@ iwls_score <- function(g, hj, groups, n) {
 #' which folds the penalty in, an acceptable normalizer on a route that is
 #' itself the fallback.
 #'
-#' @param pieces The pieces, as \code{\link{iwls_pieces}} builds them.
+#' @param pieces The pieces, as [iwls_pieces()] builds them.
 #'
 #' @return A numeric vector.
 #'
@@ -743,7 +743,7 @@ iwls_info_diag <- function(pieces) {
 #'
 #' @details
 #' Abandoning a start because the curvature is indefinite is what
-#' \code{solve()} forces and what a repair avoids; the floor is relative to
+#' `solve()` forces and what a repair avoids; the floor is relative to
 #' the largest eigenvalue, since an absolute one means nothing across scales.
 #'
 #' @param A A symmetric matrix.

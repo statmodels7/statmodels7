@@ -14,7 +14,7 @@ zap_nonfinite(S)
 }
 \description{
 A penalty at a hyperparameter far enough out returns non-finite entries,
-and every consumer of \code{\link{statmod_penalty_at}} zeroes them before
+and every consumer of \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} zeroes them before
 using the matrix.
 }
 \details{
@@ -29,6 +29,6 @@ Written once here rather than seven times, which is the discipline this
 package records for a shape of mistake rather than a line of it.
 }
 \seealso{
-\code{\link{statmod_penalty_at}}
+\code{\link[=statmod_penalty_at]{statmod_penalty_at()}}
 }
 \keyword{internal}

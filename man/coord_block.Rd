@@ -28,6 +28,6 @@ compression would describe the same entries differently. A dense
 nothing to save.
 }
 \seealso{
-\code{\link{coord_call}}, \code{\link{coord_fit}}
+\code{\link[=coord_call]{coord_call()}}, \code{\link[=coord_fit]{coord_fit()}}
 }
 \keyword{internal}

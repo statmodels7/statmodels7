@@ -7,20 +7,20 @@
 seg_boot_total(spec)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 }
 \value{
 A single non-negative integer.
 }
 \description{
 The largest \code{n_boot} any break-point term of the specification
-declares, or zero. The value is declared on \code{\link[modelterms7]{seg}},
-\code{\link[modelterms7]{jump}} and \code{\link[modelterms7]{jseg}}, the
+declares, or zero. The value is declared on \code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, the
 terms whose objective has the spurious local optima the device exists
 for; running the restarts is this layer's, the way a penalty's
 hyperparameters are declared by a term and estimated here.
 }
 \seealso{
-\code{\link{statmod_boot_restart}}
+\code{\link[=statmod_boot_restart]{statmod_boot_restart()}}
 }
 \keyword{internal}

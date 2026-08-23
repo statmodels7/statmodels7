@@ -32,7 +32,7 @@ statmod_boot_restart(
 
 \item{res}{The fitted result the restarts try to improve.}
 
-\item{expected, approx, maxit, tol}{As in \code{\link{statmod_alternate}}.}
+\item{expected, approx, maxit, tol}{As in \code{\link[=statmod_alternate]{statmod_alternate()}}.}
 
 \item{vb}{The resolved verbosity.}
 
@@ -57,7 +57,7 @@ the true objective.
 \details{
 Three proposal kinds, in order. The first is deterministic: each
 break-point swept over the profile with the others held
-(\code{\link[modelterms7]{seg_polish}}), which walks straight to a
+(\code{\link[modelterms7:seg_polish]{modelterms7::seg_polish()}}), which walks straight to a
 feature the iteration pressed a break-point away from. The stochastic
 ones alternate a BOOTSTRAP sweep -- the same descent on the profile of a
 resample, the multinomial counts entering as weights, which moves the
@@ -73,7 +73,7 @@ the loop.
 
 The profile reads the response net of the other contributions in the
 term's equation, on the predictor scale: exact for an identity link, a
-proposal elsewhere -- the argument \code{\link[modelterms7]{seg_start}}
+proposal elsewhere -- the argument \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}}
 already makes. The refreshable and structural state of the design is
 snapshotted at the incumbent and restored whenever a candidate loses,
 and the draws come from the session's generator, so a fit with restarts
@@ -85,6 +85,6 @@ spurious local minima by bootstrap restarting. \emph{Biometrics}, 57(1),
 240--244.
 }
 \seealso{
-\code{\link{seg_boot_total}}, \code{\link{statmod_alternate}}
+\code{\link[=seg_boot_total]{seg_boot_total()}}, \code{\link[=statmod_alternate]{statmod_alternate()}}
 }
 \keyword{internal}

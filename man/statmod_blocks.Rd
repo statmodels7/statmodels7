@@ -7,9 +7,9 @@
 statmod_blocks(spec, design)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, as \code{\link{statmod_design}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
 A list with \code{smooth} (the stacked column indices fitted
@@ -23,7 +23,7 @@ with a kink and are therefore fitted by a method of their own.
 }
 \details{
 The property that decides is one each term already reports: a penalty whose
-\code{\link[penalties7]{penalty_kinks}} is non-empty is not twice
+\code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is non-empty is not twice
 differentiable in its coefficients, so its block cannot enter a system
 solved by a curvature. Everything else -- an unpenalized block, a ridge, a
 spline, a random effect, a structured or additive penalty -- goes into one
@@ -35,6 +35,6 @@ A term whose penalty gains a smooth approximation would answer
 change here.
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

@@ -14,6 +14,6 @@ An environment, or \code{NULL}.
 }
 \description{
 The environment a design carries the structural terms' own parameters in,
-on the unconstrained scale of \code{\link[modelterms7]{term_links}}.
+on the unconstrained scale of \code{\link[modelterms7:term_links]{modelterms7::term_links()}}.
 }
 \keyword{internal}

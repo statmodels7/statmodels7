@@ -10,13 +10,13 @@ structural_grad_parts(spec, design, coef, jd, M)
 structural_grad_parts_impl(spec, design, coef, jd, M)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
 \item{coef}{The coefficients.}
 
-\item{jd}{The joint rows, from \code{\link{joint_design_rows}}.}
+\item{jd}{The joint rows, from \code{\link[=joint_design_rows]{joint_design_rows()}}.}
 
 \item{M}{The matrix the trace is taken against.}
 }
@@ -24,7 +24,7 @@ structural_grad_parts_impl(spec, design, coef, jd, M)
 A list of the shared quantities.
 }
 \description{
-The quantities of \code{\link{statmod_structural_grad}} that do not depend
+The quantities of \code{\link[=statmod_structural_grad]{statmod_structural_grad()}} that do not depend
 on which hyperparameter is being differentiated: the family's derivatives,
 the filter's forward Jacobian, the per-observation diagonal of \eqn{M} and
 the contraction \eqn{u}.

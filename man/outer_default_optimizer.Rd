@@ -19,6 +19,6 @@ The choice is made from what the criterion can supply: its exact Hessian,
 its exact gradient, or neither.
 }
 \seealso{
-\code{\link{outer_fit}}, \code{\link{outer_gradient_ok}}
+\code{\link[=outer_fit]{outer_fit()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}
 }
 \keyword{internal}

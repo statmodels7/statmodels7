@@ -21,7 +21,7 @@ whatever is left, which is what the interpreter is given.
 An offset is a column of the linear predictor whose coefficient is known to
 be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
 Without this the term reached \code{model.matrix} through
-\code{\link[modelterms7]{linpar}}, where \code{terms()} marks it in the
+\code{\link[modelterms7:linpar]{modelterms7::linpar()}}, where \code{terms()} marks it in the
 \code{"offset"} attribute and the design EXCLUDES it: the term contributed
 no column, no offset and no message, and the model fitted was the one
 without it. On a count model over person-years that moved the intercept
@@ -30,9 +30,9 @@ count.
 
 Only a top-level additive term is taken, which is where R recognizes one
 too; \code{stats::offset(x)} is recognized beside \code{offset(x)}. Several
-are summed, as \code{\link[stats]{glm}} sums them.
+are summed, as \code{\link[stats:glm]{stats::glm()}} sums them.
 }
 \seealso{
-\code{\link{statmod_spec}}, \code{\link{eval_offsets}}
+\code{\link[=statmod_spec]{statmod_spec()}}, \code{\link[=eval_offsets]{eval_offsets()}}
 }
 \keyword{internal}

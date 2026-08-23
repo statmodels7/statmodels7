@@ -19,7 +19,7 @@ se_answer(su, what, params, spec)
 A data frame, or a named list of them.
 }
 \description{
-The rows \code{\link{predict_se}} computed, reduced to what was asked for.
+The rows \code{\link[=predict_se]{predict_se()}} computed, reduced to what was asked for.
 }
 \details{
 The vocabulary is the one a prediction without uncertainty answers, minus

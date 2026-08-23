@@ -7,7 +7,7 @@
 \method{print}{StatmodSim}(x, ...)
 }
 \arguments{
-\item{x}{A \code{\link{rstatmod}} result.}
+\item{x}{A \code{\link[=rstatmod]{rstatmod()}} result.}
 
 \item{...}{Unused.}
 }
@@ -24,5 +24,5 @@ rstatmod(y ~ x, distributions7::gaussian1_distrib(),
          data.frame(x = runif(20)))
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }

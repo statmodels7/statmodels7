@@ -9,7 +9,7 @@ pd_factor(M, scale = NULL)
 \arguments{
 \item{M}{A symmetric matrix, sparse or dense.}
 
-\item{scale}{A reference magnitude, as \code{\link{pd_logdet}} takes.}
+\item{scale}{A reference magnitude, as \code{\link[=pd_logdet]{pd_logdet()}} takes.}
 }
 \value{
 A list with \code{logdet}, \code{ok}, \code{factor} and
@@ -25,18 +25,18 @@ matrix itself calls for.
 This is the one place the penalized matrix is factorized. The criterion
 wants its log-determinant, the gradient wants the mode's movement and the
 Hessian wants both plus the inverse; before this existed the criterion and
-\code{\link{ctx_penalized}} each factorized the SAME matrix at the same
+\code{\link[=ctx_penalized]{ctx_penalized()}} each factorized the SAME matrix at the same
 point, which at p = 503 was 12.4 ms spent twice.
 
 \strong{The verdict is unchanged and so is its property.} Whether the
 matrix is accepted never turns on whether a factorization raised: where the
 cheap test is inconclusive the eigendecomposition answers about the matrix.
 The sparse route carries its own condition estimate
-(\code{\link{sparse_lmin}}) rather than the dense one, and falls back to
+(\code{\link[=sparse_lmin]{sparse_lmin()}}) rather than the dense one, and falls back to
 the dense route where that estimate cannot be formed, so a refusal is
 reached by the same reasoning on either storage.
 }
 \seealso{
-\code{\link{pd_logdet}}, \code{\link{ctx_penalized}}
+\code{\link[=pd_logdet]{pd_logdet()}}, \code{\link[=ctx_penalized]{ctx_penalized()}}
 }
 \keyword{internal}

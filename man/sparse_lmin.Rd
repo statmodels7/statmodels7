@@ -40,6 +40,6 @@ to 1e15). A factor of two either way cannot move that verdict, which is the
 argument already recorded for the dense estimator.
 }
 \seealso{
-\code{\link{pd_factor}}, \code{\link{pd_logdet}}
+\code{\link[=pd_factor]{pd_factor()}}, \code{\link[=pd_logdet]{pd_logdet()}}
 }
 \keyword{internal}

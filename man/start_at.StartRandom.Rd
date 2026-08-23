@@ -6,7 +6,7 @@
 \arguments{
 \item{strategy}{A \code{StartRandom} object.}
 
-\item{spec, design, obj, ...}{As in \code{\link{start_at}}.}
+\item{spec, design, obj, ...}{As in \code{\link[=start_at]{start_at()}}.}
 }
 \value{
 A named list of numeric vectors.

@@ -28,6 +28,6 @@ are given they must agree, which is checked rather than resolved by
 preferring one: a caller who wrote both and got them wrong wants to know.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

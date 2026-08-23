@@ -7,7 +7,7 @@
 statmod_hyper_merge(spec, start, user)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{start}{The hyperparameters as computed.}
 
@@ -18,7 +18,7 @@ The merged structure.
 }
 \description{
 Merges a caller's hyperparameters into the ones
-\code{\link{statmod_hyper_start}} computed, by parameter and by term.
+\code{\link[=statmod_hyper_start]{statmod_hyper_start()}} computed, by parameter and by term.
 }
 \details{
 Until a hyperparameter is estimated by an outer criterion it is held at the

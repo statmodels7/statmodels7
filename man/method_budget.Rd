@@ -7,7 +7,7 @@
 method_budget(method)
 }
 \arguments{
-\item{method}{\code{\link{iwls}()} or an \pkg{optimizers7} optimizer.}
+\item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
 }
 \value{
 A list with \code{maxit} and \code{tol}.
@@ -17,22 +17,22 @@ Reads the iteration budget and the tolerance off the method that fits the
 smooth block, which is where they are set.
 }
 \details{
-\code{\link{statmod}} carries neither a \code{maxit} nor a \code{tol} of its
+\code{\link[=statmod]{statmod()}} carries neither a \code{maxit} nor a \code{tol} of its
 own. An argument accepted and ignored is worse than one that signals an
 error, and that is what a second copy would be: a caller setting
 \code{iwls(maxit = 20)} and a loose \code{maxit = 100} would get one of them
 with nothing said about the other. \pkg{distributions7}'s
 \code{fit_distrib()} shed the same pair for the same reason.
 
-\code{\link{iwls}} carries both directly. An \pkg{optimizers7} optimizer
+\code{\link[=iwls]{iwls()}} carries both directly. An \pkg{optimizers7} optimizer
 carries \code{maxit} and a \code{criterion}; the tolerance is the largest
 one the criterion tree contains, since a combined rule stops at whichever of
 its parts fires first and the alternation should not ask for more precision
 than the loop inside it can deliver. A criterion carrying no tolerance at
-all leaves the default of \code{\link[optimizers7]{crit_grad}}, read from
+all leaves the default of \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}, read from
 that function rather than copied as a number.
 }
 \seealso{
-\code{\link{statmod}}, \code{\link{iwls}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}
 }
 \keyword{internal}

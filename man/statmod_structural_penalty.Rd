@@ -12,7 +12,7 @@ statmod_structural_penalty(
 )
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -31,7 +31,7 @@ own parameters rather than in the coefficients.
 }
 \details{
 The objective of the structural block includes these penalties through
-\code{\link{statmod_penalty_at}}, so its gradient must include their
+\code{\link[=statmod_penalty_at]{statmod_penalty_at()}}, so its gradient must include their
 derivative: without it the two describe different functions, an optimizer
 walks until its budget runs out, and \code{optimizers7}'s own check reports
 that the objective changes at a rate the gradient does not predict.
@@ -42,6 +42,6 @@ defined; for a deviation, whose link is the identity, the two scales
 coincide.
 }
 \seealso{
-\code{\link{statmod_penalty_at}}
+\code{\link[=statmod_penalty_at]{statmod_penalty_at()}}
 }
 \keyword{internal}

@@ -18,17 +18,17 @@ NULL
 #' specification.
 #'
 #' @details
-#' The shape is \code{"filter"} for a term that produces a predictor, which
-#' the layer adds to the equation the term sits in, and \code{"loglik"} for
+#' The shape is `"filter"` for a term that produces a predictor, which
+#' the layer adds to the equation the term sits in, and `"loglik"` for
 #' one whose contribution is a likelihood mixed over states and cannot be
 #' written as a predictor at all.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
-#' @return A list of entries with \code{param}, \code{term} and \code{kind},
+#' @return A list of entries with `param`, `term` and `kind`,
 #'   possibly empty.
 #'
-#' @seealso \code{\link{statmod_filter_at}}
+#' @seealso [statmod_filter_at()]
 #'
 #' @keywords internal
 statmod_structural <- function(spec) {
@@ -48,15 +48,15 @@ statmod_structural <- function(spec) {
 #' Which Shape of the Structural Contract a Term Implements
 #'
 #' @description
-#' \code{"filter"} when the term reports a predictor,
-#' \code{"loglik"} when it reports a likelihood, and \code{""} when it
+#' `"filter"` when the term reports a predictor,
+#' `"loglik"` when it reports a likelihood, and `""` when it
 #' implements neither.
 #'
 #' @details
 #' The question is asked of the methods the term registers, not of a list of
 #' class names, so a structural term written outside the package is routed
 #' without an edit here. The class a method was registered on is
-#' \code{attr(m, "signature")[[1]]}, compared by name and package.
+#' `attr(m, "signature")[[1]]`, compared by name and package.
 #'
 #' @param term A term.
 #'
@@ -81,11 +81,11 @@ structural_kind <- function(term) {
 #'
 #' @description
 #' The environment a design carries the structural terms' own parameters in,
-#' on the unconstrained scale of \code{\link[modelterms7]{term_links}}.
+#' on the unconstrained scale of [modelterms7::term_links()].
 #'
 #' @param design The design.
 #'
-#' @return An environment, or \code{NULL}.
+#' @return An environment, or `NULL`.
 #'
 #' @keywords internal
 statmod_structural_state <- function(design) attr(design, "structure")
@@ -95,8 +95,8 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #'
 #' @description
 #' A depth-one exact memo on the design's structural state: where the last
-#' call's key is \code{identical()} to this one's, the stored value is
-#' returned; otherwise \code{compute()} runs and replaces it.
+#' call's key is `identical()` to this one's, the stored value is
+#' returned; otherwise `compute()` runs and replaces it.
 #'
 #' @details
 #' Measured on the gas panel at 60 groups, 62 of the 154 curvature
@@ -106,7 +106,7 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #' read the same mode -- and the recursion is 35 per cent of the fit. The
 #' cache returns the previously computed object itself, so a hit is
 #' bit-identical to recomputing by construction, and the key is compared
-#' with \code{identical()} on the full numeric inputs, so a collision
+#' with `identical()` on the full numeric inputs, so a collision
 #' cannot happen.
 #'
 #' It stands aside where the design carries REFRESHABLE terms: a
@@ -119,7 +119,7 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #' @param key The exact inputs the value depends on.
 #' @param compute A function of no arguments.
 #'
-#' @return \code{compute()}'s value, possibly from the cache.
+#' @return `compute()`'s value, possibly from the cache.
 #'
 #' @keywords internal
 structural_memo <- function(design, slot, key, compute) {
@@ -142,14 +142,14 @@ structural_memo <- function(design, slot, key, compute) {
 #'
 #' @description
 #' What the term itself declares through
-#' \code{\link[modelterms7]{term_start}}: as near the model without the
+#' [modelterms7::term_start()]: as near the model without the
 #' term as its charts allow, which only the term can say -- a score
 #' loading on the log chart has no coordinate for zero, and starts at a
 #' weak response instead.
 #'
 #' @param term A built structural term.
 #' @param target The response on the scale of the term's equation, from
-#'   \code{\link{predictor_target}}, or \code{NULL}. A term whose start is
+#'   [predictor_target()], or `NULL`. A term whose start is
 #'   read off the data -- the marginal break-point term's exact profile --
 #'   consumes it; every other method ignores it through the dots.
 #'
@@ -191,12 +191,12 @@ structural_psi <- function(term, zeta) {
 #' not depend on the state -- a regime chain, whose levels shift a predictor
 #' known in advance -- is given the whole index vector instead.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters, as
-#'   \code{\link{statmod_eta}} returns them.
+#'   [statmod_eta()] returns them.
 #' @param p The distribution parameter the term sits in.
 #'
-#' @return A list with \code{score}, \code{curvature} and \code{logdens}.
+#' @return A list with `score`, `curvature` and `logdens`.
 #'
 #' @keywords internal
 structural_callbacks <- function(spec, theta, p) {
@@ -301,15 +301,15 @@ structural_callbacks <- function(spec, theta, p) {
 #' since the objective, its gradient and its curvature are asked for at the
 #' same point in turn and a filter is the expensive part of each.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param eta_static The static predictors, one per distribution parameter.
 #' @param theta_static The parameters they give.
 #'
 #' @return A named list, one entry per structural term, each with
-#'   \code{param}, \code{level}, \code{jacobian} and the callbacks used.
+#'   `param`, `level`, `jacobian` and the callbacks used.
 #'
-#' @seealso \code{\link{statmod_structural}}
+#' @seealso [statmod_structural()]
 #'
 #' @keywords internal
 #' Run the Regime Terms at the Current Parameters
@@ -322,7 +322,7 @@ structural_callbacks <- function(spec, theta, p) {
 #' @details
 #' A term of this shape does not report a predictor: its contribution is a
 #' likelihood mixed over states, so the model's log-likelihood comes from
-#' \code{\link[modelterms7]{term_loglik}} and not from the density at a
+#' [modelterms7::term_loglik()] and not from the density at a
 #' single predictor. What makes everything else follow is Fisher's identity
 #' -- the derivative of that mixed likelihood in ANY predictor the model
 #' carries is the posterior-weighted derivative of the ordinary one, so a
@@ -332,14 +332,14 @@ structural_callbacks <- function(spec, theta, p) {
 #' The predictor reported for the equation the term sits in is the
 #' posterior-weighted one, which is what a fitted value means here.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param eta_static The static predictors.
 #' @param theta_static The parameters they give.
 #'
 #' @return A list, one entry per regime term.
 #'
-#' @seealso \code{\link{statmod_structural}}
+#' @seealso [statmod_structural()]
 #'
 #' @keywords internal
 statmod_regime_at <- function(spec, design, eta_static, theta_static) {
@@ -380,7 +380,7 @@ statmod_regime_at <- function(spec, design, eta_static, theta_static) {
 #' The level a component adds to the predictor: one number for a regime or
 #' a side pattern, one value per observation for a quadrature node.
 #'
-#' @param mu What \code{\link[modelterms7]{term_levels}} returned.
+#' @param mu What [modelterms7::term_levels()] returned.
 #' @param k The component.
 #'
 #' @return A single number or a vector over the observations.
@@ -393,7 +393,7 @@ component_shift <- function(mu, k) {
 
 #' How Many Mixture Components a Term Reports
 #'
-#' @param mu What \code{\link[modelterms7]{term_levels}} returned.
+#' @param mu What [modelterms7::term_levels()] returned.
 #'
 #' @return A single integer.
 #'
@@ -409,7 +409,7 @@ component_count <- function(mu) {
 #' The distribution's parameters at every observation with the regime term's
 #' equation shifted by one state's level.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param eta_static The static predictors.
 #' @param param The equation the term sits in.
 #' @param shift The level to add.
@@ -432,7 +432,7 @@ statmod_theta_shifted <- function(spec, eta_static, param, shift) {
 #'
 #' @description
 #' Locates the \eqn{(a, b, c)} entry of a distribution's third-derivative
-#' list, which is keyed by \code{\link[distributions7]{deriv_names}}.
+#' list, which is keyed by [distributions7::deriv_names()].
 #'
 #' @details
 #' The name is BUILT from the parameter names in the family's own order, not
@@ -440,7 +440,7 @@ statmod_theta_shifted <- function(spec, eta_static, param, shift) {
 #' for a parameter whose own name contains the separator.
 #'
 #' @param params The parameter names, in the family's order.
-#' @param a,b,c Indices into \code{params}.
+#' @param a,b,c Indices into `params`.
 #'
 #' @return A single string.
 #'
@@ -454,7 +454,7 @@ deriv3_key <- function(params, a, b, c) {
 #'
 #' @description
 #' Locates the \eqn{(a, b, c, d)} entry of a distribution's fourth-derivative
-#' list, built the same way \code{\link{deriv3_key}} builds its own.
+#' list, built the same way [deriv3_key()] builds its own.
 #'
 #' @details
 #' The fourth order is wanted where a filter's third derivative is: each
@@ -464,7 +464,7 @@ deriv3_key <- function(params, a, b, c) {
 #' it in closed form.
 #'
 #' @param params The parameter names, in the family's order.
-#' @param a,b,c,d Indices into \code{params}.
+#' @param a,b,c,d Indices into `params`.
 #'
 #' @return A single string.
 #'
@@ -483,7 +483,7 @@ deriv4_key <- function(params, a, b, c, d) {
 #'
 #' @details
 #' The gradient of such a model is exact already, through
-#' \code{\link[modelterms7]{term_adjoint}}. Its curvature is not: the matrix
+#' [modelterms7::term_adjoint()]. Its curvature is not: the matrix
 #' the scoring step inverts is assembled as though the level were an offset,
 #' which is a legitimate scoring matrix and is not the information. Writing
 #' \eqn{u} for the coefficients followed by the term's parameters on the
@@ -497,27 +497,27 @@ deriv4_key <- function(params, a, b, c, d) {
 #'
 #' Only the equation carrying the filter has a \eqn{V} that is not its own
 #' design: there it is the forward Jacobian of the recursion, which
-#' \code{\link[modelterms7]{term_curvature}} returns beside the contracted
+#' [modelterms7::term_curvature()] returns beside the contracted
 #' \eqn{E}. The third derivatives the second sum needs are
 #' \pkg{distributions7}'s, in closed form for every family.
 #'
 #' The term's parameters are the LAST columns, which is the convention
-#' \code{term_curvature()} shares with its caller.
+#' `term_curvature()` shares with its caller.
 #'
 #' A term that mixes over latent states rather than shifting the predictor
-#' is routed to \code{\link{statmod_regime_information}}, whose Hessian
+#' is routed to [statmod_regime_information()], whose Hessian
 #' comes from the same forward recursion the likelihood does; a model
 #' carrying neither gets the ordinary information.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design.
 #'
 #' @return A square matrix over the coefficients and the term's parameters,
 #'   or the ordinary information where there is no structural term.
 #'
-#' @seealso \code{\link{statmod_structural_score}},
-#'   \code{\link{statmod_regime_information}}
+#' @seealso [statmod_structural_score()],
+#'   [statmod_regime_information()]
 #'
 #' @keywords internal
 statmod_full_information <- function(spec, coef,
@@ -657,7 +657,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
 #' mixed log-likelihood.
 #'
 #' @details
-#' The matrix \code{\link{statmod_information_at}} assembles for a mixture is
+#' The matrix [statmod_information_at()] assembles for a mixture is
 #' the complete-data information, the ordinary one averaged over the
 #' smoothed states. That is a legitimate scoring matrix and it is not the
 #' observed information: by Louis's missing-information principle the two
@@ -665,7 +665,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
 #' positive semidefinite, so the complete-data matrix is the larger and a
 #' standard error read off it is too small.
 #'
-#' \code{\link[modelterms7]{term_hessian}} returns the exact Hessian by
+#' [modelterms7::term_hessian()] returns the exact Hessian by
 #' propagating first and second derivatives through the same scaled forward
 #' recursion that computes the likelihood. What this function supplies is
 #' the model's side of that contract: how each equation's unknowns reach
@@ -677,8 +677,8 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
 #' family is evaluated once per regime, vectorized over observations. That
 #' is the same property that made the forward recursion compilable.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param ev The evaluated predictors, from \code{\link{statmod_eta}}.
+#' @param spec A [StatmodSpec()].
+#' @param ev The evaluated predictors, from [statmod_eta()].
 #' @param design The design.
 #' @param npar,offs,nb The per-equation coefficient counts, their offsets and
 #'   their total.
@@ -761,13 +761,13 @@ statmod_regime_information <- function(spec, ev, design, npar, offs, nb, n,
 #' documentation describes them on, together with the unconstrained values
 #' they were estimated as.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design the fit ran on.
 #'
 #' @return A named list, one entry per structural term, each a list with
-#'   \code{parameter} and \code{unconstrained}. Empty when there is none.
+#'   `parameter` and `unconstrained`. Empty when there is none.
 #'
-#' @seealso \code{\link{statmod_fit_structural}}
+#' @seealso [statmod_fit_structural()]
 #'
 #' @keywords internal
 statmod_structural_par <- function(spec, design) {
@@ -793,29 +793,29 @@ statmod_structural_par <- function(spec, design) {
 #'
 #' @description
 #' Estimates each structural term's parameters on the unconstrained scale of
-#' \code{\link[modelterms7]{term_links}}, the coefficients held where they
+#' [modelterms7::term_links()], the coefficients held where they
 #' are, by a general optimizer with the exact gradient.
 #'
 #' @details
 #' It is a general optimizer and not the scoring step because these are not
 #' coefficients of a design block: there is no \eqn{X'WX} to invert, the
 #' predictor being a recursion rather than a product. The gradient is exact
-#' -- \code{\link{statmod_structural_score}} chains the filter's own
+#' -- [statmod_structural_score()] chains the filter's own
 #' jacobian, which is the total derivative of the predictor in those
 #' parameters -- so a quasi-Newton method has everything it needs.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param obj The objective, from \code{\link{statmod_objective}}.
+#' @param obj The objective, from [statmod_objective()].
 #' @param beta The stacked coefficients, held fixed.
 #' @param hyper The hyperparameters.
-#' @param optimizer An \pkg{optimizers7} optimizer, or \code{NULL} for
-#'   \code{\link[optimizers7]{lbfgs}}.
+#' @param optimizer An \pkg{optimizers7} optimizer, or `NULL` for
+#'   [optimizers7::lbfgs()].
 #' @param verbose Whether to print a line per term.
 #'
-#' @return A list with \code{value}, \code{converged} and \code{iterations}.
+#' @return A list with `value`, `converged` and `iterations`.
 #'
-#' @seealso \code{\link{statmod_structural}}
+#' @seealso [statmod_structural()]
 #'
 #' @keywords internal
 statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
@@ -891,23 +891,23 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
 #' @description
 #' The Hessian of whatever penalty covers a structural term's own parameters,
 #' over the FREE ones and in their order, which is the order the tail of
-#' \code{\link{statmod_full_information}} carries them in.
+#' [statmod_full_information()] carries them in.
 #'
 #' @details
 #' Written once because three readers need it and a block each of them placed
 #' for itself would agree only by accident: the joint fit, the variance
 #' matrix, and the marginal criterion. Where no structural term carries a
-#' penalty the answer is \code{NULL}, and a caller pads with zeros as before.
+#' penalty the answer is `NULL`, and a caller pads with zeros as before.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param hyper The hyperparameters.
 #' @param nfree The number of free parameters the caller expects, or
-#'   \code{NULL} to take whatever the term has.
+#'   `NULL` to take whatever the term has.
 #'
-#' @return A square matrix, or \code{NULL}.
+#' @return A square matrix, or `NULL`.
 #'
-#' @seealso \code{\link{statmod_structural_penalty}}
+#' @seealso [statmod_structural_penalty()]
 #'
 #' @keywords internal
 structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
@@ -933,8 +933,8 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' @details
 #' The alternation was not a statement about the model: the exact gradient of
 #' both blocks and the exact observed information over both together are
-#' already available, the second as \code{\link{statmod_full_information}},
-#' which was built for \code{\link{vcov.StatmodFit}} and discarded for the
+#' already available, the second as [statmod_full_information()],
+#' which was built for [vcov.StatmodFit()] and discarded for the
 #' fit. What the alternation cost is filter runs -- each sweep handed the
 #' term's parameters to an optimizer of their own, and every one of ITS
 #' iterations ran the recursion and its adjoint again, with the coefficients
@@ -951,19 +951,19 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' put it outside the region where its recursion is bounded, and the search
 #' must step back from it rather than abandon the run.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param obj The objective, as \code{\link{statmod_objective}} returns it.
+#' @param obj The objective, as [statmod_objective()] returns it.
 #' @param beta The coefficients to start from.
 #' @param hyper The hyperparameters.
-#' @param optimizer An \code{optimizers7} optimizer, or \code{NULL} for
+#' @param optimizer An `optimizers7` optimizer, or `NULL` for
 #'   Newton's method with the exact joint information.
 #' @param verbose Logical; report the run.
 #'
-#' @return A list with \code{par}, \code{value}, \code{converged} and
-#'   \code{iterations}.
+#' @return A list with `par`, `value`, `converged` and
+#'   `iterations`.
 #'
-#' @seealso \code{\link{statmod_fit_structural}}, which fits the term's
+#' @seealso [statmod_fit_structural()], which fits the term's
 #'   parameters alone and is what a term of the likelihood shape still uses.
 #'
 #' @keywords internal
@@ -1052,7 +1052,7 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #' since the objective, its gradient and its curvature are asked for at the
 #' same point in turn and a filter is the expensive part of each.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param eta_static The static predictors, one per distribution parameter.
 #' @param theta_static The parameters they give.
@@ -1061,7 +1061,7 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #'   predictor, the derivative of that predictor in the term's own
 #'   parameters, and the curvature the recursion read at each step.
 #'
-#' @seealso \code{\link{statmod_structural}}
+#' @seealso [statmod_structural()]
 #'
 #' @keywords internal
 statmod_filter_at <- function(spec, design, eta_static, theta_static) {
@@ -1096,8 +1096,8 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' @details
 #' A structural term contributes no design block, so nothing in the
 #' coefficient tables can report it and the values were reachable only
-#' through \code{fit@structural}. The information for them exists:
-#' \code{\link{statmod_full_information}} spans the coefficients AND the
+#' through `fit@structural`. The information for them exists:
+#' [statmod_full_information()] spans the coefficients AND the
 #' term's own parameters, and the tail block of its inverse is their
 #' variance on the unconstrained scale.
 #'
@@ -1109,16 +1109,16 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' an intercept in the same equation carries it is not estimated and is
 #' reported with a missing standard error rather than a zero one.
 #'
-#' @param fit A \code{\link{StatmodFit}}.
+#' @param fit A [StatmodFit()].
 #' @param level The interval level.
 #'
 #' @return A data frame with one row per parameter of per structural term,
-#'   carrying \code{component} and \code{position} -- which of the term's
+#'   carrying `component` and `position` -- which of the term's
 #'   own parameters the quantity belongs to and where in the parameter vector
-#'   it sits, both read off the Jacobian's support -- or \code{NULL} where
+#'   it sits, both read off the Jacobian's support -- or `NULL` where
 #'   the model carries none.
 #'
-#' @seealso \code{\link{statmod_full_information}}
+#' @seealso [statmod_full_information()]
 #'
 #' @keywords internal
 statmod_structural_table <- function(fit, level = 0.95) {
@@ -1236,22 +1236,22 @@ statmod_structural_table <- function(fit, level = 0.95) {
 #' @description
 #' The posterior mean and standard deviation of each group's latent
 #' break-points in a fitted model carrying a marginal break-point term
-#' (\code{\link[modelterms7]{jump}}, \code{\link[modelterms7]{seg}} or
-#' \code{\link[modelterms7]{jseg}} with \code{marginal = TRUE}).
+#' ([modelterms7::jump()], [modelterms7::seg()] or
+#' [modelterms7::jseg()] with `marginal = TRUE`).
 #'
 #' @details
 #' The quantities come from the same decomposition the marginal likelihood
 #' is computed on: the posterior over a group's intervals or quadrature
 #' nodes, with the within-interval moments those of the fitted prior
 #' truncated to it. The computation is
-#' \code{\link[modelterms7]{term_latent}}'s; this function supplies what
+#' [modelterms7::term_latent()]'s; this function supplies what
 #' the term cannot see, the fitted predictors and the model's log-density.
 #'
-#' @param fit A \code{\link{StatmodFit}} whose model carries a structural
+#' @param fit A [StatmodFit()] whose model carries a structural
 #'   term of the likelihood shape.
 #'
 #' @return A data frame with one row per group and break-point:
-#'   \code{group}, \code{psi}, \code{mean} and \code{sd}.
+#'   `group`, `psi`, `mean` and `sd`.
 #'
 #' @examples
 #' set.seed(1)
@@ -1262,8 +1262,8 @@ statmod_structural_table <- function(fit, level = 0.95) {
 #'                distributions7::gaussian1_distrib(), dd)
 #' statmod_latent(fit)
 #'
-#' @seealso \code{\link[modelterms7]{term_latent}},
-#'   \code{\link{statmod}}
+#' @seealso [modelterms7::term_latent()],
+#'   [statmod()]
 #'
 #' @export
 statmod_latent <- function(fit) {

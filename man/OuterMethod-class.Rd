@@ -33,7 +33,7 @@ criterion. \code{NA} where the method resolves it against the sample size.}
 An object of class \code{OuterMethod}.
 }
 \description{
-The criterion \code{\link{reml}()} and \code{\link{ml}()} build: which
+The criterion \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} build: which
 subspace of the coefficients is integrated over, and which information
 matrix enters the determinant.
 }
@@ -45,7 +45,7 @@ cv(nfolds = 5)
 
 }
 \seealso{
-\code{\link{reml}}, \code{\link{ml}}, \code{\link{aic}},
-\code{\link{cv}}, \code{\link{statmod}}
+\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}},
+\code{\link[=cv]{cv()}}, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

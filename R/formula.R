@@ -1,40 +1,40 @@
 #' Split a Multi-Parameter Formula Into One Equation Per Parameter
 #'
 #' @description
-#' Takes the single formula \code{\link{statmod}} accepts, in which the
-#' equations of the distribution's parameters are separated by \code{|}, and
+#' Takes the single formula [statmod()] accepts, in which the
+#' equations of the distribution's parameters are separated by `|`, and
 #' returns the response together with one one-sided formula per parameter.
 #'
 #' @details
 #' The syntax is
 #' \preformatted{    y ~ <terms>  |  p2 ~ <terms>  |  p3 ~ <terms>}
 #' with the first equation carrying the response and modelling the family's
-#' first parameter, and each \code{|} introducing the next.
+#' first parameter, and each `|` introducing the next.
 #'
 #' The recovery is not the obvious one, and the reason is R's own precedence.
-#' \code{~} binds looser than \code{|} and associates to the left, so
-#' \code{y ~ a | p2 ~ b | p3 ~ c} is the tree
-#' \code{((y ~ (a | p2)) ~ (b | p3)) ~ c}: the right-hand side of the whole
-#' formula is \code{c} alone, and splitting it on \code{|} returns one piece
+#' `~` binds looser than `|` and associates to the left, so
+#' `y ~ a | p2 ~ b | p3 ~ c` is the tree
+#' `((y ~ (a | p2)) ~ (b | p3)) ~ c`: the right-hand side of the whole
+#' formula is `c` alone, and splitting it on `|` returns one piece
 #' and silently drops two equations. What the associativity calls for instead
-#' is a walk down the left spine of the nested \code{~} calls, collecting each
+#' is a walk down the left spine of the nested `~` calls, collecting each
 #' level's right-hand side; the innermost left operand is the response, and
-#' each collected piece is either \code{<terms> | <name of the next
-#' parameter>} or, for the last, \code{<terms>} alone.
+#' each collected piece is either `<terms> | <name of the next
+#' parameter>` or, for the last, `<terms>` alone.
 #'
-#' A \code{|} inside a call is untouched, the walk descending only through
-#' \code{~} and the top-level \code{|}, so \code{random(1 | id)} and
-#' \code{gas(by = ~ random(1 | id))} survive intact.
+#' A `|` inside a call is untouched, the walk descending only through
+#' `~` and the top-level `|`, so `random(1 | id)` and
+#' `gas(by = ~ random(1 | id))` survive intact.
 #'
 #' @param formula The model formula.
 #' @param params The distribution's parameter names, in the family's order.
 #'
-#' @return A list with \code{response} (the unevaluated left-hand side),
-#'   \code{equations} (a named list of one-sided formulas, one per element of
-#'   \code{params}, in that order) and \code{given} (the names the formula
+#' @return A list with `response` (the unevaluated left-hand side),
+#'   `equations` (a named list of one-sided formulas, one per element of
+#'   `params`, in that order) and `given` (the names the formula
 #'   actually supplied).
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso [statmod()]
 #'
 #' @examples
 #' statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
@@ -108,7 +108,7 @@ statmod_equations <- function(formula, params) {
 #' Build a One-Sided Formula From an Expression
 #'
 #' @description
-#' Wraps a term expression as \code{~ expr} carrying the environment the
+#' Wraps a term expression as `~ expr` carrying the environment the
 #' original formula had, so that a term's symbols resolve where the user
 #' wrote them.
 #'
@@ -133,13 +133,13 @@ one_sided <- function(expr, env) {
 #' behind it.
 #'
 #' @details
-#' \pkg{mgcv} exports \code{s()} and \code{te()} and \pkg{segmented} exports
-#' \code{seg()}. With either attached, a user writing a statmod formula gets
+#' \pkg{mgcv} exports `s()` and `te()` and \pkg{segmented} exports
+#' `seg()`. With either attached, a user writing a statmod formula gets
 #' the other package's function, and the failure surfaces inside
-#' \code{model.matrix} naming neither the call nor the mask. Interpreting the
+#' `model.matrix` naming neither the call nor the mask. Interpreting the
 #' formula in an environment whose parent chain reaches modelterms7 first
 #' removes the ambiguity rather than reporting it; a user who wants the other
-#' package's term writes \code{mgcv::s(x)}, which the interpreter then
+#' package's term writes `mgcv::s(x)`, which the interpreter then
 #' rejects with the message it already has.
 #'
 #' @param env The environment the formula carried.

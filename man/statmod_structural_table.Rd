@@ -7,7 +7,7 @@
 statmod_structural_table(fit, level = 0.95)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{level}{The interval level.}
 }
@@ -27,7 +27,7 @@ information.
 A structural term contributes no design block, so nothing in the
 coefficient tables can report it and the values were reachable only
 through \code{fit@structural}. The information for them exists:
-\code{\link{statmod_full_information}} spans the coefficients AND the
+\code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients AND the
 term's own parameters, and the tail block of its inverse is their
 variance on the unconstrained scale.
 
@@ -40,6 +40,6 @@ an intercept in the same equation carries it is not estimated and is
 reported with a missing standard error rather than a zero one.
 }
 \seealso{
-\code{\link{statmod_full_information}}
+\code{\link[=statmod_full_information]{statmod_full_information()}}
 }
 \keyword{internal}

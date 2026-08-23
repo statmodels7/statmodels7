@@ -9,7 +9,7 @@ NULL
 #'
 #' @details
 #' The property that decides is one each term already reports: a penalty whose
-#' \code{\link[penalties7]{penalty_kinks}} is non-empty is not twice
+#' [penalties7::penalty_kinks()] is non-empty is not twice
 #' differentiable in its coefficients, so its block cannot enter a system
 #' solved by a curvature. Everything else -- an unpenalized block, a ridge, a
 #' spline, a random effect, a structured or additive penalty -- goes into one
@@ -17,18 +17,18 @@ NULL
 #' and using it is what makes a fit converge in a handful of iterations.
 #'
 #' A term whose penalty gains a smooth approximation would answer
-#' \code{penalty_kinks()} differently and move into the smooth block with no
+#' `penalty_kinks()` differently and move into the smooth block with no
 #' change here.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, as \code{\link{statmod_design}} returns it.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, as [statmod_design()] returns it.
 #'
-#' @return A list with \code{smooth} (the stacked column indices fitted
-#'   jointly) and \code{sparse} (a list, one entry per non-smooth term, each
+#' @return A list with `smooth` (the stacked column indices fitted
+#'   jointly) and `sparse` (a list, one entry per non-smooth term, each
 #'   with the parameter, the term's name, its stacked columns and its
 #'   penalty).
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso [statmod()]
 #'
 #' @keywords internal
 statmod_blocks <- function(spec, design) {
@@ -63,30 +63,30 @@ statmod_blocks <- function(spec, design) {
 #' Which Coefficients Are Not Sitting at a Kink
 #'
 #' @description
-#' A logical vector over the stacked coefficients, \code{FALSE} where one lies
+#' A logical vector over the stacked coefficients, `FALSE` where one lies
 #' at a point its penalty is not differentiable at.
 #'
 #' @details
-#' The kink locations come from \code{\link[penalties7]{penalty_kinks}} read at
+#' The kink locations come from [penalties7::penalty_kinks()] read at
 #' the hyperparameters in force, and a coefficient is inactive when it sits at
 #' one of them. Everything outside a kinked block is active, having no kink to
 #' sit at.
 #'
 #' The map of a kinked penalty is the identity here: a separable penalty under
 #' a general map is the generalized-lasso problem, which
-#' \code{\link[penalties7]{penalty_prox}} rejects, so a block that reaches this
+#' [penalties7::penalty_prox()] rejects, so a block that reaches this
 #' function penalizes its coefficients one at a time and a kink of the penalty
 #' is a kink in a coefficient.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param blocks The blocks, as \code{\link{statmod_blocks}} returns them.
+#' @param spec A [StatmodSpec()].
+#' @param blocks The blocks, as [statmod_blocks()] returns them.
 #' @param beta The stacked coefficients.
 #' @param hyper The hyperparameters.
 #' @param tol How close to a kink counts as at it.
 #'
-#' @return A logical vector as long as \code{beta}.
+#' @return A logical vector as long as `beta`.
 #'
-#' @seealso \code{\link{outer_tau}}
+#' @seealso [outer_tau()]
 #'
 #' @keywords internal
 statmod_active <- function(spec, blocks, beta, hyper, tol = 1e-8) {
@@ -107,18 +107,18 @@ statmod_active <- function(spec, blocks, beta, hyper, tol = 1e-8) {
 #' Does a Penalty Have a Kink?
 #'
 #' @description
-#' \code{TRUE} when the penalty is not differentiable somewhere a coefficient
+#' `TRUE` when the penalty is not differentiable somewhere a coefficient
 #' can be, which is what puts its block outside the jointly fitted system.
 #'
 #' @details
-#' \code{\link[penalties7]{penalty_kinks}} is read at a probe value of the
+#' [penalties7::penalty_kinks()] is read at a probe value of the
 #' hyperparameters -- the midpoint of their bounds, the rule
 #' \pkg{modelterms7} already uses -- because whether a kink exists is a
 #' property of the family and not of a point.
 #'
 #' A penalty that stops when asked is reported rather than treated as smooth.
 #' Reading the failure as an answer sends the term to the scheme for the
-#' opposite property: \code{scad()} and \code{mcp()} were fitted by the
+#' opposite property: `scad()` and `mcp()` were fitted by the
 #' curvature of a function that has none, reporting an effective 19.00
 #' degrees of freedom out of 20 on a design of pure noise, which is no
 #' selection at all.
@@ -152,8 +152,8 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' proximal operator.
 #'
 #' @details
-#' The route is \code{\link[optimizers7]{prox_grad}} with
-#' \code{\link[penalties7]{penalty_prox}}, accelerated: measured, at a
+#' The route is [optimizers7::prox_grad()] with
+#' [penalties7::penalty_prox()], accelerated: measured, at a
 #' condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
 #' iterations against 126, and at 480 the plain one does not converge in
 #' 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
@@ -163,16 +163,16 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #'
 #' @param obj The full objective.
 #' @param beta The current stacked coefficients.
-#' @param block One entry of \code{statmod_blocks()$sparse}.
+#' @param block One entry of `statmod_blocks()$sparse`.
 #' @param hyper The hyperparameters.
 #' @param maxit The iteration budget.
 #' @param tol The stopping tolerance.
 #' @param verbose Whether the optimizer prints its own trace.
 #'
-#' @return A list with \code{par} (the whole vector, updated in this block),
-#'   \code{value}, \code{converged} and \code{iterations}.
+#' @return A list with `par` (the whole vector, updated in this block),
+#'   `value`, `converged` and `iterations`.
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso [statmod()]
 #'
 #' @keywords internal
 sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
@@ -234,23 +234,23 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #' value and a shrunk deviation per group needs. Enumerating once is both the
 #' generalization and the removal of eleven copies.
 #'
-#' \strong{The key} is the term's name in the formula, and the entry's own name
-#' appended after \code{::} when the term carries more than one. Two
-#' \code{ridge()} terms are two terms with two keys and two hyperparameters,
+#' **The key** is the term's name in the formula, and the entry's own name
+#' appended after `::` when the term carries more than one. Two
+#' `ridge()` terms are two terms with two keys and two hyperparameters,
 #' which they already were; a term with one penalty over the whole of itself
 #' keys exactly as before, so nothing that reads a hyperparameter by term name
 #' changes.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param design The design, as \code{\link{statmod_design}} returns it.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, as [statmod_design()] returns it.
 #'
-#' @return A list of entries, each with \code{param}, \code{term} (the name in
-#'   the formula), \code{key}, \code{cols} (positions within the parameter's
-#'   coefficients), \code{index} (positions in the stacked vector) and
-#'   \code{penalty}.
+#' @return A list of entries, each with `param`, `term` (the name in
+#'   the formula), `key`, `cols` (positions within the parameter's
+#'   coefficients), `index` (positions in the stacked vector) and
+#'   `penalty`.
 #'
-#' @seealso \code{\link{statmod_blocks}},
-#'   \code{\link[modelterms7]{term_penalties}}
+#' @seealso [statmod_blocks()],
+#'   [modelterms7::term_penalties()]
 #'
 #' @keywords internal
 statmod_penalized <- function(spec, design) {
@@ -278,17 +278,17 @@ statmod_penalized <- function(spec, design) {
 #' Every Penalty in a Model, Without the Design
 #'
 #' @description
-#' The same enumeration as \code{\link{statmod_penalized}} minus the column
+#' The same enumeration as [statmod_penalized()] minus the column
 #' positions, for the callers that need to know which penalties exist before a
 #' design has been built.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #'
-#' @return A list of entries with \code{param}, \code{term}, \code{key},
-#'   \code{within} (positions among the term's own parameters) and
-#'   \code{penalty}.
+#' @return A list of entries with `param`, `term`, `key`,
+#'   `within` (positions among the term's own parameters) and
+#'   `penalty`.
 #'
-#' @seealso \code{\link{statmod_penalized}}
+#' @seealso [statmod_penalized()]
 #'
 #' @keywords internal
 statmod_penalty_keys <- function(spec) {
@@ -322,7 +322,7 @@ statmod_penalty_keys <- function(spec) {
 #'
 #' @description
 #' One key per hyperparameter a term fixed in its constructor, as
-#' \code{parameter}, the penalty's key and its name joined by a carriage
+#' `parameter`, the penalty's key and its name joined by a carriage
 #' return.
 #'
 #' @details
@@ -332,12 +332,12 @@ statmod_penalty_keys <- function(spec) {
 #' here consults this one enumeration -- the outer index, the path, and the
 #' summary's account of what was estimated and what was given.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #'
 #' @return A character vector, possibly empty.
 #'
-#' @seealso \code{\link[modelterms7]{term_hyper}}, \code{\link{outer_hyper_index}}
+#' @seealso [modelterms7::term_hyper()], [outer_hyper_index()]
 #'
 #' @keywords internal
 statmod_held <- function(spec, design = NULL) {
@@ -356,7 +356,7 @@ statmod_held <- function(spec, design = NULL) {
 #'
 #' @description
 #' What a hyperparameter row is filed under: the term's name where the term
-#' carries one penalty, and \code{term::entry} where it carries several.
+#' carries one penalty, and `term::entry` where it carries several.
 #'
 #' @details
 #' The composition is written once because two callers reading a
@@ -366,7 +366,7 @@ statmod_held <- function(spec, design = NULL) {
 #'
 #' @param term The term's name in the formula.
 #' @param entries The term's entries, as
-#'   \code{\link[modelterms7]{term_penalties}} returns them.
+#'   [modelterms7::term_penalties()] returns them.
 #' @param entry One of them.
 #'
 #' @return A single string.
@@ -384,21 +384,21 @@ statmod_entry_key <- function(term, entries, entry) {
 #' One Penalized Unit, by Parameter and Key
 #'
 #' @description
-#' The entry of \code{\link{statmod_penalized}} a hyperparameter row names, or
-#' \code{NULL} where there is none.
+#' The entry of [statmod_penalized()] a hyperparameter row names, or
+#' `NULL` where there is none.
 #'
 #' @details
-#' The places that read a penalty from a \code{(parameter, term)} pair used to
-#' fetch it with \code{term_penalty()} and take the term's whole block, which
+#' The places that read a penalty from a `(parameter, term)` pair used to
+#' fetch it with `term_penalty()` and take the term's whole block, which
 #' assumes one penalty per term. Looking it up here answers the same question
 #' where that holds and the right question where it does not.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param param The distribution parameter.
-#' @param key The key, as \code{statmod_penalized()} composes it.
+#' @param key The key, as `statmod_penalized()` composes it.
 #'
-#' @return One entry, or \code{NULL}.
+#' @return One entry, or `NULL`.
 #'
 #' @keywords internal
 statmod_unit <- function(spec, design, param, key) {
@@ -421,17 +421,17 @@ statmod_unit <- function(spec, design, param, key) {
 #' columns and one of four hundred want different grids, and a criterion
 #' applies to every hyperparameter of the model at once -- the smooth ones
 #' included, which are read at the mode and not swept -- so it cannot know
-#' which it is looking at. \code{\link[modelterms7]{term_grid}} is where a
+#' which it is looking at. [modelterms7::term_grid()] is where a
 #' term says so, and the value travels with the penalty's entry, so one
 #' reached through a sub-term of a structural term carries it too.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param row One row of \code{\link{path_rows}}'s index.
-#' @param default \code{\link{path_fallbacks}}'s, for a term that named none.
+#' @param spec A [StatmodSpec()].
+#' @param row One row of [path_rows()]'s index.
+#' @param default [path_fallbacks()]'s, for a term that named none.
 #'
 #' @return A single integer.
 #'
-#' @seealso \code{\link{statmod_held}}, \code{\link{path_values}}
+#' @seealso [statmod_held()], [path_values()]
 #'
 #' @keywords internal
 statmod_grid_size <- function(spec, row, default) {
@@ -451,13 +451,13 @@ statmod_grid_size <- function(spec, row, default) {
 #' interval and a shape that does not move the kink over a geometric grid
 #' above its lower bound.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param row One row of \code{\link{path_rows}}'s index.
-#' @param default \code{\link{path_fallbacks}}'s, for a term that named none.
+#' @param spec A [StatmodSpec()].
+#' @param row One row of [path_rows()]'s index.
+#' @param default [path_fallbacks()]'s, for a term that named none.
 #'
 #' @return A single number.
 #'
-#' @seealso \code{\link{statmod_grid_size}}, \code{\link{path_values}}
+#' @seealso [statmod_grid_size()], [path_values()]
 #'
 #' @keywords internal
 statmod_min_ratio <- function(spec, row, default) {
@@ -468,8 +468,8 @@ statmod_min_ratio <- function(spec, row, default) {
 #' How a Term Covers Its Own Hyperparameters
 #'
 #' @description
-#' \code{"grid"} for every combination of the term's kinked hyperparameters,
-#' \code{"cyclic"} for one at a time, or the default where the term named
+#' `"grid"` for every combination of the term's kinked hyperparameters,
+#' `"cyclic"` for one at a time, or the default where the term named
 #' neither.
 #'
 #' @details
@@ -481,16 +481,16 @@ statmod_min_ratio <- function(spec, row, default) {
 #' hyperparameters is part of the scheme.
 #'
 #' Being per term is also what keeps one term's choice off another's:
-#' \code{y ~ lasso(X) + enet(R, search = "cyclic")} sweeps the elastic net
+#' `y ~ lasso(X) + enet(R, search = "cyclic")` sweeps the elastic net
 #' one coordinate at a time and leaves the lasso alone.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param spec A [StatmodSpec()].
+#' @param row One row of [path_rows()]'s index.
 #' @param default What to use where the term named nothing.
 #'
-#' @return \code{"grid"} or \code{"cyclic"}.
+#' @return `"grid"` or `"cyclic"`.
 #'
-#' @seealso \code{\link[modelterms7]{term_search}}, \code{\link{statmod_path}}
+#' @seealso [modelterms7::term_search()], [statmod_path()]
 #'
 #' @keywords internal
 statmod_search <- function(spec, row, default = "grid") {
@@ -507,7 +507,7 @@ statmod_search <- function(spec, row, default = "grid") {
 #' The Values a Term Wrote Out for One Hyperparameter
 #'
 #' @description
-#' The grid the TERM named, or \code{NULL} where it left the path to build
+#' The grid the TERM named, or `NULL` where it left the path to build
 #' one.
 #'
 #' @details
@@ -516,12 +516,12 @@ statmod_search <- function(spec, row, default = "grid") {
 #' travels with the penalty's entry like the grid size and the depth, so a
 #' penalty reached through a sub-term of a structural term carries it too.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param spec A [StatmodSpec()].
+#' @param row One row of [path_rows()]'s index.
 #'
-#' @return A numeric vector, or \code{NULL}.
+#' @return A numeric vector, or `NULL`.
 #'
-#' @seealso \code{\link[modelterms7]{term_values}}, \code{\link{path_forced}}
+#' @seealso [modelterms7::term_values()], [path_forced()]
 #'
 #' @keywords internal
 statmod_values <- function(spec, row) {
@@ -537,11 +537,11 @@ statmod_values <- function(spec, row) {
 
 #' One Setting of the Path, Read From the Term
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
-#' @param row One row of \code{\link{path_rows}}'s index.
+#' @param spec A [StatmodSpec()].
+#' @param row One row of [path_rows()]'s index.
 #' @param field Which field of the penalty's entry to read.
 #' @param default What the criterion asks for.
-#' @param name The hyperparameter's name, or \code{NULL} where the setting
+#' @param name The hyperparameter's name, or `NULL` where the setting
 #'   is one per term.
 #'
 #' @return A single number.

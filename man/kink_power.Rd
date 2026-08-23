@@ -37,6 +37,6 @@ the answer, so a penalty whose kink is not a power of its hyperparameter
 costs two evaluations and then takes the search.
 }
 \seealso{
-\code{\link{kink_solve}}, \code{\link{path_values}}
+\code{\link[=kink_solve]{kink_solve()}}, \code{\link[=path_values]{path_values()}}
 }
 \keyword{internal}

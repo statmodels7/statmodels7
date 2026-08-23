@@ -24,6 +24,6 @@ too: measured on a Student t whose \eqn{\nu} had reached
 and left the fit exactly where it had been.
 }
 \seealso{
-\code{\link{pin_boundary}}, \code{\link{iwls_solve}}
+\code{\link[=pin_boundary]{pin_boundary()}}, \code{\link[=iwls_solve]{iwls_solve()}}
 }
 \keyword{internal}

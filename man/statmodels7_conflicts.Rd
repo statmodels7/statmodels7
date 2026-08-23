@@ -39,5 +39,5 @@ statmodels7_conflicts()
 
 }
 \seealso{
-\code{\link{statmodels7_packages}}
+\code{\link[=statmodels7_packages]{statmodels7_packages()}}
 }

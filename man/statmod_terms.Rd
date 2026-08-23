@@ -32,6 +32,6 @@ collects bare covariates into one \code{linpar()}, whose block comes from
 
 A break-point term whose starting positions the caller did not name has
 them chosen on a grid rather than left at the interior quantiles of the
-covariate; see \code{\link{seg_grid_start}}.
+covariate; see \code{\link[=seg_grid_start]{seg_grid_start()}}.
 }
 \keyword{internal}

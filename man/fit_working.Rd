@@ -30,7 +30,7 @@ fit_working(
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{\code{\link{iwls}()} or an optimizer.}
+\item{method}{\code{\link[=iwls]{iwls()}} or an optimizer.}
 
 \item{vb}{The resolved verbosity.}
 
@@ -40,20 +40,20 @@ fit_working(
 measured runs (69 to 165 iterations on three break-points) with room.}
 }
 \value{
-As \code{\link{fit_smooth}}, plus \code{fasola}, the number of
+As \code{\link[=fit_smooth]{fit_smooth()}}, plus \code{fasola}, the number of
 working fits taken.
 }
 \description{
 The iteration of \cite{fasola2018} for a term whose block is a working
-linearization with a frozen weight -- \code{\link[modelterms7]{jump}} and
-\code{\link[modelterms7]{jseg}}: the smooth block is fitted EXACTLY at
+linearization with a frozen weight -- \code{\link[modelterms7:jump]{modelterms7::jump()}} and
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}: the smooth block is fitted EXACTLY at
 the committed block, the break-points are read off the fitted
 coefficients and committed, and the two alternate until the read-off
 settles or the working objective stops moving.
 }
 \details{
 The sequencing is the whole of the difference from
-\code{\link{fit_smooth}}, and it is what \code{segmented} does. The
+\code{\link[=fit_smooth]{fit_smooth()}}, and it is what \code{segmented} does. The
 fixed-point iteration these constructions belong to is not a descent
 method on the model's objective -- its early steps under a large scaling
 factor move uphill on purpose, which is how it leaves a spurious optimum
@@ -68,7 +68,7 @@ then advances the read-off, the scaling schedule and any relabeling of
 crossed break-point lineages, once per working fit.
 
 Any inner method serves: the working fit goes through
-\code{\link{fit_smooth}}, which takes \code{\link{iwls}()} or any
+\code{\link[=fit_smooth]{fit_smooth()}}, which takes \code{\link[=iwls]{iwls()}} or any
 \pkg{optimizers7} optimizer, and the read-off never moves inside
 anyone's objective. What differs is the price. Each working fit is
 solved afresh at a frozen block, so a method carrying exact curvature
@@ -80,7 +80,7 @@ from nothing every time: measured on three break-points at
 
 The exit is at a fixed point of the iteration or in the cycle it settles
 into, judged on the WORKING objective: the read-off settled
-(\code{\link[modelterms7]{term_converged}}) with the objective stalled,
+(\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}}) with the objective stalled,
 the objective stalled three times in a row, or the objective equal to
 two iterations back twice -- the period-two cycle of the break-point
 Muggeo documents, which a consecutive-change rule never sees. Only at a
@@ -95,6 +95,6 @@ iterative algorithm for change-point detection in abrupt change
 models. \emph{Computational Statistics}, 33, 997--1015.
 }
 \seealso{
-\code{\link{fit_smooth}}, \code{\link{statmod_commit_refresh}}
+\code{\link[=fit_smooth]{fit_smooth()}}, \code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}}
 }
 \keyword{internal}

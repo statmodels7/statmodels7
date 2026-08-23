@@ -9,15 +9,15 @@ ctx_trace_matrix(ctx, pen, basis, expected = FALSE)
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}
 
-\item{pen}{The result of \code{\link{ctx_penalized}}.}
+\item{pen}{The result of \code{\link[=ctx_penalized]{ctx_penalized()}}.}
 
 \item{basis}{The integrated subspace, or \code{NULL}.}
 
 \item{expected}{Which information \code{pen} was built with, which is the
 cache's key: the projection is of THAT matrix, so one entry cannot serve
 both. Nothing reaches it today, a search holding one
-\code{\link{OuterMethod}} throughout, but the slot is keyed rather than
-shared because the twin defect in \code{\link{ctx_penalized}} was
+\code{\link[=OuterMethod]{OuterMethod()}} throughout, but the slot is keyed rather than
+shared because the twin defect in \code{\link[=ctx_penalized]{ctx_penalized()}} was
 unreachable in exactly the same way until it was not.}
 }
 \value{

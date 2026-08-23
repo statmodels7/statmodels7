@@ -7,7 +7,7 @@
 summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{spec}{The specification.}
 
@@ -15,14 +15,14 @@ summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 
 \item{p}{The distribution parameter.}
 
-\item{ci}{The flat interval table, as \code{\link{confint.StatmodFit}}
+\item{ci}{The flat interval table, as \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}
 returns it with the statistic and the p-value added.}
 
 \item{level}{The confidence level the intervals are built at.}
 
 \item{V}{The variance matrix over the stacked coefficients, or
 \code{NULL}. It is needed only by a term reported through
-\code{\link[modelterms7]{term_readable}}, whose quantities are
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, whose quantities are
 functions of several coefficients at once and whose standard errors
 are therefore the delta method rather than a diagonal entry.}
 

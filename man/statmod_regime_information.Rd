@@ -7,9 +7,9 @@
 statmod_regime_information(spec, ev, design, npar, offs, nb, n, w)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{ev}{The evaluated predictors, from \code{\link{statmod_eta}}.}
+\item{ev}{The evaluated predictors, from \code{\link[=statmod_eta]{statmod_eta()}}.}
 
 \item{design}{The design.}
 
@@ -28,7 +28,7 @@ with the regime term's own parameters, from the exact Hessian of the
 mixed log-likelihood.
 }
 \details{
-The matrix \code{\link{statmod_information_at}} assembles for a mixture is
+The matrix \code{\link[=statmod_information_at]{statmod_information_at()}} assembles for a mixture is
 the complete-data information, the ordinary one averaged over the
 smoothed states. That is a legitimate scoring matrix and it is not the
 observed information: by Louis's missing-information principle the two
@@ -36,7 +36,7 @@ differ by the conditional variance of the complete-data score, which is
 positive semidefinite, so the complete-data matrix is the larger and a
 standard error read off it is too small.
 
-\code{\link[modelterms7]{term_hessian}} returns the exact Hessian by
+\code{\link[modelterms7:term_hessian]{modelterms7::term_hessian()}} returns the exact Hessian by
 propagating first and second derivatives through the same scaled forward
 recursion that computes the likelihood. What this function supplies is
 the model's side of that contract: how each equation's unknowns reach

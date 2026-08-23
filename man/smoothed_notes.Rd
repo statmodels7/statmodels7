@@ -34,6 +34,6 @@ hyperparameter; any other development is left without the note rather
 than given a number of the wrong meaning.
 }
 \seealso{
-\code{\link[penalties7]{abs_smoother}}
+\code{\link[penalties7:abs_smoother]{penalties7::abs_smoother()}}
 }
 \keyword{internal}

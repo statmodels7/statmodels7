@@ -28,6 +28,6 @@ start_origin()
 
 }
 \seealso{
-\code{\link{start_intercepts}}, \code{\link{start_origin}},
-\code{\link{start_random}}
+\code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}},
+\code{\link[=start_random]{start_random()}}
 }

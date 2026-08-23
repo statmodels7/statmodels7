@@ -7,7 +7,7 @@
 \method{print}{OuterMethod}(x, ...)
 }
 \arguments{
-\item{x}{An \code{\link{OuterMethod}}.}
+\item{x}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{...}{Unused.}
 }
@@ -18,6 +18,6 @@
 Which criterion it is and which information it uses.
 }
 \seealso{
-\code{\link{reml}}
+\code{\link[=reml]{reml()}}
 }
 \keyword{internal}

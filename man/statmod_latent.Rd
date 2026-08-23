@@ -7,7 +7,7 @@
 statmod_latent(fit)
 }
 \arguments{
-\item{fit}{A \code{\link{StatmodFit}} whose model carries a structural
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}} whose model carries a structural
 term of the likelihood shape.}
 }
 \value{
@@ -17,15 +17,15 @@ A data frame with one row per group and break-point:
 \description{
 The posterior mean and standard deviation of each group's latent
 break-points in a fitted model carrying a marginal break-point term
-(\code{\link[modelterms7]{jump}}, \code{\link[modelterms7]{seg}} or
-\code{\link[modelterms7]{jseg}} with \code{marginal = TRUE}).
+(\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}} with \code{marginal = TRUE}).
 }
 \details{
 The quantities come from the same decomposition the marginal likelihood
 is computed on: the posterior over a group's intervals or quadrature
 nodes, with the within-interval moments those of the fitted prior
 truncated to it. The computation is
-\code{\link[modelterms7]{term_latent}}'s; this function supplies what
+\code{\link[modelterms7:term_latent]{modelterms7::term_latent()}}'s; this function supplies what
 the term cannot see, the fitted predictors and the model's log-density.
 }
 \examples{
@@ -39,6 +39,6 @@ statmod_latent(fit)
 
 }
 \seealso{
-\code{\link[modelterms7]{term_latent}},
-\code{\link{statmod}}
+\code{\link[modelterms7:term_latent]{modelterms7::term_latent()}},
+\code{\link[=statmod]{statmod()}}
 }

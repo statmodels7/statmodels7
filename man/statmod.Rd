@@ -32,17 +32,17 @@ statmod(
 
 \item{offsets}{Optional named list of offsets, one per parameter.}
 
-\item{inner_optimizer}{How the smooth block is fitted: \code{\link{iwls}()} or
+\item{inner_optimizer}{How the smooth block is fitted: \code{\link[=iwls]{iwls()}} or
 an \pkg{optimizers7} optimizer.}
 
 \item{outer_criterion}{How the SMOOTH hyperparameters are estimated:
-\code{\link{reml}()} (the default), \code{\link{ml}()},
-\code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()}, or
+\code{\link[=reml]{reml()}} (the default), \code{\link[=ml]{ml()}},
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}, \code{\link[=cv]{cv()}}, or
 \code{NULL} to hold them where they are.}
 
 \item{sparse_criterion}{How the hyperparameter of a KINKED penalty --
-lasso, scad, mcp -- is chosen: \code{\link{bic}()} (the default),
-\code{\link{aic}()}, \code{\link{cv}()}, or \code{NULL} to hold it.
+lasso, scad, mcp -- is chosen: \code{\link[=bic]{bic()}} (the default),
+\code{\link[=aic]{aic()}}, \code{\link[=cv]{cv()}}, or \code{NULL} to hold it.
 A marginal criterion is rejected here, being read at a mode that sits on
 the kink.}
 
@@ -50,26 +50,26 @@ the kink.}
 \code{NULL} to let the availability of the exact gradient decide.}
 
 \item{start}{Where the fit begins: a named list of coefficients, a
-\code{\link{start_strategy}} such as \code{\link{start_search}}, or
-\code{NULL} for \code{\link{start_intercepts}}. A strategy is asked once,
+\code{\link[=start_strategy]{start_strategy()}} such as \code{\link[=start_search]{start_search()}}, or
+\code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}. A strategy is asked once,
 before the alternation between the coefficients and the hyperparameters
 begins, which is why a global search belongs here and not in
 \code{inner_optimizer}: there it would rerun at every hyperparameter the
 outer search tried.}
 
 \item{linpar_control}{How the unpenalized parametric block is built, as
-\code{\link{linpar_options}()} returns it: the storage and the contrasts
+\code{\link[=linpar_options]{linpar_options()}} returns it: the storage and the contrasts
 for its factors. It reaches the IMPLICIT term, the one the bare
 covariates collapse into and which a caller never writes; a
-\code{\link[modelterms7]{linpar}()} written out takes them directly.
+\code{\link[modelterms7:linpar]{modelterms7::linpar()}} written out takes them directly.
 The argument and the function are named differently on purpose, as
-\code{\link[stats]{glm}}'s \code{control} and
-\code{\link[stats]{glm.control}} are.}
+\code{\link[stats:glm]{stats::glm()}}'s \code{control} and
+\code{\link[stats:glm.control]{stats::glm.control()}} are.}
 
 \item{verbose}{A level from 0 to 3, or a named logical vector.}
 
 \item{threads}{How many threads the fit may use, as
-\code{\link[numericals7]{n_threads}} constructs it. The default,
+\code{\link[numericals7:n_threads]{numericals7::n_threads()}} constructs it. The default,
 \code{n_threads(1)}, is sequential and takes exactly the sequential
 code path. A larger count reaches the compiled per-observation kernels
 of the family and the dense assembly products as an argument; below a
@@ -95,7 +95,7 @@ second place to say so would be read by nobody whenever the two
 disagreed.}
 }
 \value{
-An object of class \code{\link{StatmodFit}}.
+An object of class \code{\link[=StatmodFit]{StatmodFit()}}.
 }
 \description{
 Reads one formula carrying every parameter of a distribution, assembles the
@@ -106,7 +106,7 @@ terms it names into a penalized likelihood, and fits it.
 separated by \code{|}, the first carrying the response:
 \preformatted{    y ~ x1 + ridge(R) + lasso(L)  |  sigma ~ z  |  nu ~ 1}
 A parameter with no equation gets an intercept. See
-\code{\link{statmod_equations}}, whose recovery is not the obvious one.
+\code{\link[=statmod_equations]{statmod_equations()}}, whose recovery is not the obvious one.
 
 \strong{The fitting scheme.} The terms split in two by a property each one
 already reports. Every term whose penalty is twice differentiable in its
@@ -125,9 +125,9 @@ at \eqn{n = 10^7}.
 
 \strong{The budget and the stopping rule belong to the method.} There is no
 \code{maxit} and no \code{tol} here: they are set on \code{inner_optimizer},
-which is \code{\link{iwls}(maxit =, tol =)} or an optimizer with its own
+which is \code{\link[=iwls]{iwls(maxit =, tol =)}} or an optimizer with its own
 \code{maxit} and \code{criterion}, and the alternation reads them from there
-(see \code{\link{method_budget}}). Carrying a second copy would let a caller
+(see \code{\link[=method_budget]{method_budget()}}). Carrying a second copy would let a caller
 set both and be obeyed by neither.
 
 \strong{Every hyperparameter is ESTIMATED unless its own term holds it.}
@@ -137,12 +137,12 @@ Which ones are held is said by the TERM that carries the penalty --
 left \code{NULL}, which is the default, is chosen from the data. The term
 is where the penalty is named and so where that belongs; an argument here
 saying the same thing would be read by nobody whenever the two disagreed.
-\code{\link{reml}()} estimates the smooth ones, with
+\code{\link[=reml]{reml()}} estimates the smooth ones, with
 \code{outer_optimizer} searching over them and the coefficients refitted
 at each.
 
 A KINKED penalty is a different instrument and has its own
-argument. \code{sparse_criterion}, \code{\link{bic}()} by default, sweeps
+argument. \code{sparse_criterion}, \code{\link[=bic]{bic()}} by default, sweeps
 it along a PATH of its own values -- from the kink that empties the block
 down to \code{min_ratio} of it -- because the penalized mode is only
 piecewise smooth in that hyperparameter, turning a corner whenever a
@@ -182,6 +182,6 @@ statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 
 }
 \seealso{
-\code{\link{statmod_spec}}, \code{\link{iwls}},
-\code{\link{loglik}}
+\code{\link[=statmod_spec]{statmod_spec()}}, \code{\link[=iwls]{iwls()}},
+\code{\link[=loglik]{loglik()}}
 }

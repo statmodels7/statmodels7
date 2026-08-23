@@ -7,7 +7,7 @@
 outer_k(method, n)
 }
 \arguments{
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{n}{The number of observations.}
 }

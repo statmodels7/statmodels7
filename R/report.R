@@ -14,7 +14,7 @@ NULL
 #'
 #' Zero is a reading and not the absence of one: on a coarse clock a fast fit
 #' measures exactly zero seconds, so it is reported as such rather than
-#' suppressed. A guard of the form \code{if (elapsed > 0)} would be a claim
+#' suppressed. A guard of the form `if (elapsed > 0)` would be a claim
 #' that zero cannot be measured, and for a duration that claim is false.
 #'
 #' @param seconds A number of seconds.
@@ -47,10 +47,10 @@ format_duration <- function(seconds, digits = 3L) {
 #' The call, the distribution, one line per equation with its terms and what
 #' they spend, the log-likelihood, the elapsed time and whether every loop
 #' stopped on its own rule.
-#' @param x A \code{\link{StatmodFit}}.
+#' @param x A [StatmodFit()].
 #' @param ... Unused.
-#' @return \code{x}, invisibly.
-#' @seealso \code{\link{statmod}}
+#' @return `x`, invisibly.
+#' @seealso [statmod()]
 #' @keywords internal
 print.StatmodFit <- function(x, ...) {
   spec <- x@spec
@@ -122,33 +122,33 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' The Model as a Function of Parameters and Data
 #'
 #' @description
-#' \code{loglik()}, \code{gradient()} and \code{hessian()} evaluate a fitted
+#' `loglik()`, `gradient()` and `hessian()` evaluate a fitted
 #' model at parameters and data of the caller's choosing.
 #'
 #' @details
-#' The name is \code{loglik} and not \code{logLik}: R's \code{logLik()}
-#' returns the maximized value of the fitted model and carries \code{df} and
-#' \code{nobs}, and overloading it would give one name two behaviours. Both
-#' exist, and \code{loglik(fit)} with no arguments must equal
-#' \code{logLik(fit)} to the last digit, which is the cheapest check that the
+#' The name is `loglik` and not `logLik`: R's `logLik()`
+#' returns the maximized value of the fitted model and carries `df` and
+#' `nobs`, and overloading it would give one name two behaviours. Both
+#' exist, and `loglik(fit)` with no arguments must equal
+#' `logLik(fit)` to the last digit, which is the cheapest check that the
 #' callable route and the fitting route are the same model.
 #'
 #' They are generics rather than closures stored in the fit. A closure
 #' captures its environment, which means the data: a fit would then carry the
 #' frame twice and keep a stale copy after the data changed. These rebuild
 #' from the specification the fit keeps whole, running the terms' blueprints
-#' against new data by the same path \code{predict()} takes.
+#' against new data by the same path `predict()` takes.
 #'
-#' @param object A \code{\link{StatmodFit}}.
+#' @param object A [StatmodFit()].
 #' @param par A named list of coefficient vectors, one per distribution
 #'   parameter. Defaults to the fitted ones.
 #' @param data A data frame. Defaults to the data the model was fitted to.
 #' @param ... Passed to methods.
 #'
-#' @return A number for \code{loglik}, a named list of vectors for
-#'   \code{gradient}, a matrix for \code{hessian}.
+#' @return A number for `loglik`, a named list of vectors for
+#'   `gradient`, a matrix for `hessian`.
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso [statmod()]
 #'
 #' @examples
 #' set.seed(1)
@@ -178,15 +178,15 @@ hessian <- S7::new_generic("hessian", "object",
 #' Rebuild a Specification Against New Data
 #'
 #' @description
-#' Returns the fit's specification when \code{data} is \code{NULL}, and one
+#' Returns the fit's specification when `data` is `NULL`, and one
 #' built against the new data otherwise.
 #'
-#' @param fit A \code{\link{StatmodFit}}.
-#' @param data A data frame or \code{NULL}.
+#' @param fit A [StatmodFit()].
+#' @param data A data frame or `NULL`.
 #' @param need_response Whether the response must be there. A likelihood needs
 #'   it; a prediction does not, and new data routinely has no response column.
 #'
-#' @return A \code{\link{StatmodSpec}}.
+#' @return A [StatmodSpec()].
 #'
 #' @keywords internal
 spec_at <- function(fit, data, need_response = TRUE) {
@@ -197,11 +197,11 @@ spec_at <- function(fit, data, need_response = TRUE) {
 #' Resolve a Parameter Structure
 #'
 #' @description
-#' Returns the fitted coefficients when \code{par} is \code{NULL}, and
+#' Returns the fitted coefficients when `par` is `NULL`, and
 #' validates a supplied structure against the design otherwise.
 #'
-#' @param fit A \code{\link{StatmodFit}}.
-#' @param par A named list or \code{NULL}.
+#' @param fit A [StatmodFit()].
+#' @param par A named list or `NULL`.
 #' @param design The design to validate against.
 #'
 #' @return A named list of coefficient vectors.
@@ -264,10 +264,10 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' @name logLik.StatmodFit
 #' @description
 #' The value R's convention expects, carrying the degrees of freedom and the
-#' number of observations. \code{\link{loglik}} is the other thing: the model
+#' number of observations. [loglik()] is the other thing: the model
 #' evaluated at parameters and data of the caller's choosing.
 #' @details
-#' \strong{Which likelihood, and it matters.} The default is the
+#' **Which likelihood, and it matters.** The default is the
 #' CONDITIONAL one: the log-density at the fitted coefficients, a penalized
 #' coefficient among them, paired with the effective degrees of freedom
 #' \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion built on the pair is the
@@ -282,21 +282,21 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' effective count, or the reverse -- is what neither convention allows
 #' (Vaida and Blanchard, 2005).
 #'
-#' \code{type = "marginal"} returns the value the outer criterion evaluated
+#' `type = "marginal"` returns the value the outer criterion evaluated
 #' while choosing the hyperparameters, with the number of estimated
 #' parameters as its degrees of freedom. It is available only where a
-#' marginal criterion actually ran: \code{\link{ml}} or \code{\link{reml}}.
+#' marginal criterion actually ran: [ml()] or [reml()].
 #' Where the hyperparameters were held, or found by a prediction criterion,
 #' there is no marginal likelihood to report and asking for one is an error
 #' rather than a number that would look like one.
-#' @param object A \code{\link{StatmodFit}}.
-#' @param type \code{"conditional"} (default) or \code{"marginal"}.
+#' @param object A [StatmodFit()].
+#' @param type `"conditional"` (default) or `"marginal"`.
 #' @param ... Unused.
-#' @return A \code{logLik} object.
+#' @return A `logLik` object.
 #' @references
 #' Vaida, F. and Blanchard, S. (2005). Conditional Akaike information for
-#' mixed-effects models. \emph{Biometrika}, 92(2), 351--370.
-#' @seealso \code{\link{loglik}}
+#' mixed-effects models. *Biometrika*, 92(2), 351--370.
+#' @seealso [loglik()]
 #' @keywords internal
 logLik.StatmodFit <- function(object,
                               type = c("conditional", "marginal"), ...) {
@@ -354,13 +354,13 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #'
 #' @details
 #' Most coefficients are the same either way. A coefficient of a linear
-#' predictor is what it is, and \code{readable} moves only the two kinds of
+#' predictor is what it is, and `readable` moves only the two kinds of
 #' parameter that are reported under a different name from the one they are
 #' carried under.
 #'
 #' A break-point term is fitted through a working pair and its position is
-#' read off it: a discontinuous term carries \code{g} and reports
-#' \eqn{\psi = -g/\delta}, so with \code{readable = FALSE} the vector holds a
+#' read off it: a discontinuous term carries `g` and reports
+#' \eqn{\psi = -g/\delta}, so with `readable = FALSE` the vector holds a
 #' number that is no quantity of the model. A score-driven term's persistence
 #' rides a partial autocorrelation, the stationary region not being a box,
 #' and what the literature calls \eqn{\beta_j} is the autoregressive
@@ -370,14 +370,14 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #'
 #' A STRUCTURAL TERM contributes no design columns and its parameters are
 #' here under either reading. They used to be in neither: a model whose
-#' predictor is a score-driven filter answered \code{numeric(0)}.
+#' predictor is a score-driven filter answered `numeric(0)`.
 #'
-#' \code{readable = FALSE} is what a caller feeding a fit back needs: it is
+#' `readable = FALSE` is what a caller feeding a fit back needs: it is
 #' the vector the fit was estimated on, in the order and under the names
-#' \code{\link{vcov}} is indexed by, and a structural term's part of it is on
+#' [vcov()] is indexed by, and a structural term's part of it is on
 #' the unconstrained scale its charts define.
 #'
-#' Hyperparameters are not coefficients and are not here; \code{\link{hyper}}
+#' Hyperparameters are not coefficients and are not here; [hyper()]
 #' reports them.
 #'
 #' @param object A fitted model.
@@ -388,8 +388,8 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' @return A named list, one entry per distribution parameter, each a named
 #'   numeric vector.
 #'
-#' @seealso \code{\link{hyper}}, \code{\link{summary.StatmodFit}},
-#'   \code{\link[modelterms7]{term_readable}}
+#' @seealso [hyper()], [summary.StatmodFit()],
+#'   [modelterms7::term_readable()]
 #'
 #' @examples
 #' set.seed(1)
@@ -420,7 +420,7 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
 #'
 #' @details
 #' A term says what it is about through
-#' \code{\link[modelterms7]{term_readable}}, which gives the quantities and
+#' [modelterms7::term_readable()], which gives the quantities and
 #' the Jacobian from the coefficients. The columns that Jacobian touches are
 #' the coordinates the quantities are read from, and they are the ones
 #' replaced; a coordinate no quantity reads stands where it is. That is what
@@ -476,7 +476,7 @@ coef_readable <- function(spec, design, fit, p, v) {
 #' @details
 #' A structural term rewrites the likelihood rather than adding columns to a
 #' design, so its parameters are in no block and were in no reading of
-#' \code{\link{coef}}: a model whose whole predictor is a score-driven filter
+#' [coef()]: a model whose whole predictor is a score-driven filter
 #' answered with an empty vector. They are named from the term's label as
 #' every other coefficient of the term is.
 #'
@@ -548,8 +548,8 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' is \eqn{\Phi^{-1}(u_i)}. That is exact again, at the price of being random,
 #' so two calls give two answers. It applies to every discrete family and, at
 #' the atom alone, to a mixed one -- the zero-adjusted wrapper of a continuous
-#' parent. \code{seed} makes a call reproducible without disturbing the
-#' caller's stream; left \code{NULL} the ambient state is used and nothing is
+#' parent. `seed` makes a call reproducible without disturbing the
+#' caller's stream; left `NULL` the ambient state is used and nothing is
 #' set.
 #'
 #' The PEARSON residual is \eqn{(y_i - \mathbb{E}[Y_i])/\mathrm{sd}(Y_i)} and
@@ -561,7 +561,7 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @param object A fitted model.
 #' @param type The residual to compute.
-#' @param seed An integer to seed the randomization with, or \code{NULL}.
+#' @param seed An integer to seed the randomization with, or `NULL`.
 #'   Read only where the distribution function jumps.
 #' @param ... Unused.
 #'
@@ -569,9 +569,9 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @references
 #' Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
-#' \emph{Journal of Computational and Graphical Statistics} 5(3), 236--244.
+#' *Journal of Computational and Graphical Statistics* 5(3), 236--244.
 #'
-#' @seealso \code{\link{fitted.StatmodFit}}, \code{\link{predict.StatmodFit}}
+#' @seealso [fitted.StatmodFit()], [predict.StatmodFit()]
 #'
 #' @examples
 #' set.seed(1)
@@ -650,36 +650,36 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' put each value there.
 #'
 #' @details
-#' A hyperparameter is not a coefficient and is not in \code{\link{coef}}: it
+#' A hyperparameter is not a coefficient and is not in [coef()]: it
 #' governs the coefficients under it rather than sitting beside them, and the
 #' two are estimated by different routes and reported with different
 #' qualifications. This is where they are read.
 #'
-#' The \code{parameter} scale is the one the penalty is written on, which is
+#' The `parameter` scale is the one the penalty is written on, which is
 #' what a reader wants: a smoothing parameter is a positive number and a
-#' gaussian prior's \code{sigma} is a scale. The \code{link} scale is the
+#' gaussian prior's `sigma` is a scale. The `link` scale is the
 #' free one the outer search runs on, through each hyperparameter's own link,
 #' and is what a caller comparing two fits' searches wants. Where a
 #' hyperparameter carries no link the two coincide.
 #'
-#' \code{source} says what put the value there, which \code{held} alone
-#' cannot: a hyperparameter the term fixed reads \code{"fixed"}, one a
+#' `source` says what put the value there, which `held` alone
+#' cannot: a hyperparameter the term fixed reads `"fixed"`, one a
 #' marginal criterion maximized reads that criterion's name, and one chosen
 #' along a path over its own values reads the criterion that scored the path.
 #' A value chosen along a path is the argument of a minimum over a grid
 #' rather than the root of a derivative, so no standard error follows from
 #' it; one a marginal criterion reached carries one, and
-#' \code{\link{summary}} reports it.
+#' [summary()] reports it.
 #'
 #' @param fit A fitted model.
 #' @param scale Which scale the values are reported on.
 #'
-#' @return A data frame with \code{parameter}, \code{term}, \code{name},
-#'   \code{estimate}, \code{held} and \code{source}, or a frame of no rows
+#' @return A data frame with `parameter`, `term`, `name`,
+#'   `estimate`, `held` and `source`, or a frame of no rows
 #'   where the model carries no penalty.
 #'
-#' @seealso \code{\link{coef.StatmodFit}}, \code{\link{summary.StatmodFit}},
-#'   \code{\link{statmod_held}}
+#' @seealso [coef.StatmodFit()], [summary.StatmodFit()],
+#'   [statmod_held()]
 #'
 #' @examples
 #' set.seed(1)
@@ -755,14 +755,14 @@ hyper <- function(fit, scale = c("parameter", "link")) {
 #' would mean picking a threshold for what counts as running away, and the same
 #' fit at 100 columns converges to a scale of 0.77 that is nothing of the kind.
 #'
-#' @param x A \code{\link{StatmodFit}}.
+#' @param x A [StatmodFit()].
 #'
 #' @return A single string, empty when the parameters cannot be read. It is
-#'   a note of \code{\link{summary.StatmodFit}} rather than a line of
-#'   \code{\link{print.StatmodFit}}: it qualifies the fit rather than
+#'   a note of [summary.StatmodFit()] rather than a line of
+#'   [print.StatmodFit()]: it qualifies the fit rather than
 #'   describing it, and it is read once when something looks wrong.
 #'
-#' @seealso \code{\link{statmod}}
+#' @seealso [statmod()]
 #'
 #' @keywords internal
 fitted_ranges <- function(x) {
@@ -794,13 +794,13 @@ fitted_ranges <- function(x) {
 #'
 #' @details
 #' A key is the call that produced the term, and for a penalty over a
-#' sub-term it is that call followed by \code{::parameter::sub-term}. The
+#' sub-term it is that call followed by `::parameter::sub-term`. The
 #' call is what grows: printed in full, one line of an outer trace carried
-#' the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
-#' list(...))} three times over, which is a line no reader can use. Only the
+#' the deparsed `gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
+#' list(...))` three times over, which is a line no reader can use. Only the
 #' leading call is shortened, and only past its first argument, so
-#' \code{s(x, k = 20)} and \code{s(z, k = 8)} stay apart; everything after
-#' \code{::} is kept whole, that being what distinguishes one entry of a term
+#' `s(x, k = 20)` and `s(z, k = 8)` stay apart; everything after
+#' `::` is kept whole, that being what distinguishes one entry of a term
 #' from another.
 #'
 #' Where shortening would make two labels the same the FULL ones are
@@ -856,12 +856,12 @@ short_keys <- function(x) {
 #' method on every rule answers the question a reader of a slow fit actually
 #' has, which is what is running now.
 #'
-#' @param title The step, e.g. \code{"outer 3"}.
-#' @param method What runs it, or \code{NULL}.
+#' @param title The step, e.g. `"outer 3"`.
+#' @param method What runs it, or `NULL`.
 #' @param indent How far in, in spaces.
 #' @param char The rule's character.
 #'
-#' @return Invisibly \code{NULL}; prints.
+#' @return Invisibly `NULL`; prints.
 #'
 #' @keywords internal
 vb_rule <- function(title, method = NULL, indent = 0L, char = "-") {
@@ -876,10 +876,10 @@ vb_rule <- function(title, method = NULL, indent = 0L, char = "-") {
 
 #' A Detail Line of a Verbose Trace
 #'
-#' @param ... Passed to \code{sprintf}.
+#' @param ... Passed to `sprintf`.
 #' @param indent How far in, in spaces.
 #'
-#' @return Invisibly \code{NULL}; prints.
+#' @return Invisibly `NULL`; prints.
 #'
 #' @keywords internal
 vb_say <- function(..., indent = 5L) {
@@ -893,7 +893,7 @@ vb_say <- function(..., indent = 5L) {
 #' An optimizer's own name, a criterion's kind, or a short description of a
 #' step that is not an optimizer.
 #'
-#' @param x An optimizer, a criterion, or \code{NULL}.
+#' @param x An optimizer, a criterion, or `NULL`.
 #' @param default What to say when there is no object to ask.
 #'
 #' @return A single string.

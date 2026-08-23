@@ -7,7 +7,7 @@
 joint_design_rows(spec, design, coef)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -25,16 +25,16 @@ equation's design placed in its own columns, and for the equation carrying
 a filter the forward Jacobian of the recursion, which is dense.
 }
 \details{
-It exists so that the contraction \code{\link{u_vector}} performs is
+It exists so that the contraction \code{\link[=u_vector]{u_vector()}} performs is
 written once. The formula there does not change where a filter is present;
 only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
 downstream -- the third derivative against the diagonal of \eqn{M}, the
 movement of the mode -- then reads the joint vector without a special case.
 
 The rows are returned at the FULL width, a held level included, and the
-caller drops it exactly as \code{\link{statmod_full_information}} does.
+caller drops it exactly as \code{\link[=statmod_full_information]{statmod_full_information()}} does.
 }
 \seealso{
-\code{\link{u_vector}}, \code{\link{statmod_full_information}}
+\code{\link[=u_vector]{u_vector()}}, \code{\link[=statmod_full_information]{statmod_full_information()}}
 }
 \keyword{internal}

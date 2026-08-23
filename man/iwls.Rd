@@ -37,12 +37,12 @@ in place of \code{tol}, or \code{NULL} for the built-in rule.}
 \item{step_halving}{The number of halvings allowed before a step is
 abandoned.}
 
-\item{x}{An \code{\link{Iwls}} object.}
+\item{x}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{...}{Unused.}
 }
 \value{
-An object of class \code{\link{Iwls}}.
+An object of class \code{\link[=Iwls]{Iwls()}}.
 }
 \description{
 The scoring step, written out, with the curvature and the decomposition
@@ -85,7 +85,7 @@ optimizer, so it carries its own loop, but the rule that ends it is the
 caller's to choose. With \code{criterion = NULL} the built-in rule
 applies: the score per observation \eqn{\max_j\lvert g_j\rvert / n}
 against \code{tol}, with the dimensionless reading of
-\code{\link{iwls_score}} arbitrating the final verdict. Any
+\code{\link[=iwls_score]{iwls_score()}} arbitrating the final verdict. Any
 \pkg{optimizers7} \code{criterion} may drive the loop instead, and then
 \code{tol} is not read at all, so passing both is an error rather than a
 silent choice between them.
@@ -112,5 +112,5 @@ iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
 
 }
 \seealso{
-\code{\link{statmod}}, \code{\link{iwls_score}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=iwls_score]{iwls_score()}}
 }

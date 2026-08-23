@@ -40,32 +40,32 @@ NULL
 #' through the penalized curvature, and two contributions from the
 #' determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 #'
-#' \strong{Everything the penalty contributes is asked of the penalty}
-#' (\code{\link[penalties7]{penalty_hess_theta}},
-#' \code{\link[penalties7]{penalty_dhessian}},
-#' \code{\link[penalties7]{penalty_d2hessian}},
-#' \code{\link[penalties7]{penalty_dcross}}), so a penalty that is not
+#' **Everything the penalty contributes is asked of the penalty**
+#' ([penalties7::penalty_hess_theta()],
+#' [penalties7::penalty_dhessian()],
+#' [penalties7::penalty_d2hessian()],
+#' [penalties7::penalty_dcross()]), so a penalty that is not
 #' quadratic in its hyperparameters -- a ridge, a random effect, a structured
 #' prior -- is covered by the same assembly with no branch here.
 #'
-#' \strong{Onto the free scale} the chain rule is second order and diagonal,
+#' **Onto the free scale** the chain rule is second order and diagonal,
 #' each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
 #' \deqn{\partial^2 V/\partial\eta_m\partial\eta_l =
 #'   h_m'h_l'\,\partial^2 V/\partial\theta_m\partial\theta_l
 #'   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.}
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param method An \code{\link{OuterMethod}}.
+#' @param method An [OuterMethod()].
 #' @param idx The outer index.
-#' @param basis The integrated subspace, or \code{NULL}.
+#' @param basis The integrated subspace, or `NULL`.
 #'
-#' @return A square matrix, one row per row of \code{idx}, or \code{NULL} where
+#' @return A square matrix, one row per row of `idx`, or `NULL` where
 #'   the determinant does not exist.
 #'
-#' @seealso \code{\link{statmod_marginal_grad}}, \code{\link{reml}}
+#' @seealso [statmod_marginal_grad()], [reml()]
 #'
 #' @keywords internal
 statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
@@ -253,24 +253,24 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 #' The penalty's contributions to the criterion's gradient and Hessian, placed
 #' in the stacked coefficient space.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param idx The outer index.
 #' @param offs,total The block offsets and the total width.
-#' @param order \code{1} for the first-order pieces alone, \code{2} for the
+#' @param order `1` for the first-order pieces alone, `2` for the
 #'   second-order ones as well.
 #'
 #' @details
 #' At order 1 the second-order generics are not called at all. That is what
-#' lets a penalty supplying only \code{penalty_dhessian()} give an exact
+#' lets a penalty supplying only `penalty_dhessian()` give an exact
 #' gradient: asking it for a derivative the gradient does not use would have
 #' rejected it for a quantity nobody wanted.
 #'
-#' @return A list with \code{S} (one matrix per hyperparameter) and \code{c}
-#'   (one vector), and at order 2 also \code{S2} and \code{c2} (one per pair,
-#'   keyed), \code{rho2} (the hyperparameter Hessian) and \code{pair} (the key
+#' @return A list with `S` (one matrix per hyperparameter) and `c`
+#'   (one vector), and at order 2 also `S2` and `c2` (one per pair,
+#'   keyed), `rho2` (the hyperparameter Hessian) and `pair` (the key
 #'   of each pair).
 #'
 #' @keywords internal
@@ -398,7 +398,7 @@ block_predictors <- function(design, params, npar, offs, v) {
 #' \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}: the third derivative never
 #' appears as an array.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param d3 The third derivatives in the link scale.
 #' @param params,npar,offs,total The block bookkeeping.
@@ -438,7 +438,7 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
 #' \eqn{U[v, u] = (\partial^2 K/\partial\beta^2)\cdot(v, u)}, a matrix over the
 #' stacked coefficients.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param d4 The fourth derivatives in the link scale.
 #' @param params,npar,offs,total The block bookkeeping.
@@ -483,7 +483,7 @@ contract4 <- function(spec, design, d4, params, npar, offs, total, tv, tu) {
 #' names in the family's own order.
 #'
 #' @param params The parameter names.
-#' @param a,b,k,q Indices into \code{params}.
+#' @param a,b,k,q Indices into `params`.
 #' @param keys The names the derivative returned.
 #'
 #' @return A single string.
@@ -517,17 +517,17 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' the implicit function theorem at the penalized mode: differentiating
 #' \eqn{\partial(-\ell + \rho)/\partial\beta = 0} in the hyperparameter
 #' gives \eqn{(H+S)J_k = -\partial^2\rho/\partial\beta\,\partial\theta_k},
-#' whose right-hand side is \pkg{penalties7}'s \code{penalty_cross()}.
+#' whose right-hand side is \pkg{penalties7}'s `penalty_cross()`.
 #' \eqn{V_\theta} is the inverse of the outer criterion's own Hessian,
-#' which \code{\link{statmod_marginal_hess}} returns, negated because that
+#' which [statmod_marginal_hess()] returns, negated because that
 #' criterion is a maximand.
 #'
 #' Everything is on the hyperparameter's LINK scale, which is where the
 #' outer criterion optimizes and therefore the only scale on which its
 #' Hessian is a variance.
 #'
-#' \strong{Against mgcv.} This is the first of the two terms mgcv sums into
-#' \code{edf2}, and it agrees with mgcv's to about 3e-4 on a univariate
+#' **Against mgcv.** This is the first of the two terms mgcv sums into
+#' `edf2`, and it agrees with mgcv's to about 3e-4 on a univariate
 #' smooth once the difference between the two bases is allowed for. mgcv
 #' adds a second term for the Gaussian scale, which it profiles out of the
 #' fit and whose uncertainty it must therefore add back; here every
@@ -536,32 +536,32 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
 #' 2000, falling with the sample size.
 #'
-#' \strong{Where it does not apply.} A kinked penalty has no hyperparameter
-#' the outer criterion estimates -- \code{\link{outer_hyper_index}} skips it
+#' **Where it does not apply.** A kinked penalty has no hyperparameter
+#' the outer criterion estimates -- [outer_hyper_index()] skips it
 #' -- so there is nothing to propagate and the correction is zero. That is
 #' not an approximation: the map from the hyperparameter to the penalized
 #' mode turns a corner whenever a coefficient joins or leaves the active
 #' set, and a delta method needs a derivative that does not exist there.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param design The design.
-#' @param method The outer method that estimated them, or \code{NULL}.
+#' @param method The outer method that estimated them, or `NULL`.
 #' @param expected Whether the information is the expected one.
 #' @param approx The approximation for the expected information.
 #'
-#' @return A list with \code{total}, the scalar correction, and \code{per},
+#' @return A list with `total`, the scalar correction, and `per`,
 #'   one entry per penalty key. Zero throughout where no hyperparameter was
 #'   estimated.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
-#' selection for general smooth models. \emph{Journal of the American
-#' Statistical Association}, 111(516), 1548--1563.
+#' selection for general smooth models. *Journal of the American
+#' Statistical Association*, 111(516), 1548--1563.
 #'
-#' @seealso \code{\link{statmod_marginal_hess}},
-#'   \code{\link[penalties7]{penalty_cross}}
+#' @seealso [statmod_marginal_hess()],
+#'   [penalties7::penalty_cross()]
 #'
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
@@ -625,38 +625,38 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #' scale their links carry them onto.
 #'
 #' @details
-#' A hyperparameter estimated by \code{\link{reml}()} or \code{\link{ml}()} is
+#' A hyperparameter estimated by [reml()] or [ml()] is
 #' the maximizer of a criterion that is twice differentiable in it, so it has a
 #' variance like any other maximum-likelihood estimate: the inverse of the
 #' negative Hessian of that criterion at the point reached, which
-#' \code{\link{statmod_marginal_hess}} already computes exactly. It is read on
+#' [statmod_marginal_hess()] already computes exactly. It is read on
 #' the free scale because that is where the criterion was maximized and where
 #' the quadratic approximation behind it is reasonable; a variance for a
 #' smoothing parameter on its own scale, where the estimate is often several
 #' orders of magnitude from zero and the criterion far from symmetric, would
 #' describe a shape the criterion does not have.
 #'
-#' \strong{Where it does not apply.} A hyperparameter chosen by a path --
-#' \code{\link{aic}()}, \code{\link{bic}()}, \code{\link{cv}()} over a kinked
+#' **Where it does not apply.** A hyperparameter chosen by a path --
+#' [aic()], [bic()], [cv()] over a kinked
 #' penalty -- is the argument of a minimum over a grid, not the root of a
 #' derivative, so there is no Hessian to invert and no standard error to
-#' report. Its uncertainty is a resampling question and \code{NULL} is
+#' report. Its uncertainty is a resampling question and `NULL` is
 #' returned rather than a number of another kind.
 #'
-#' @param spec A \code{\link{StatmodSpec}}.
+#' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param method The outer method that estimated them, or \code{NULL}.
+#' @param method The outer method that estimated them, or `NULL`.
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
 #'   hyperparameter's own name with a carriage return -- a character no
 #'   name can contain, so the three are recoverable from the key -- and
-#'   which carries the index as the attribute \code{"idx"}; \code{NULL}
+#'   which carries the index as the attribute `"idx"`; `NULL`
 #'   where there is nothing to report.
 #'
-#' @seealso \code{\link{statmod_marginal_hess}}, \code{\link{summary.StatmodFit}}
+#' @seealso [statmod_marginal_hess()], [summary.StatmodFit()]
 #'
 #' @keywords internal
 statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {

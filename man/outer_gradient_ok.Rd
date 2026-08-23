@@ -7,13 +7,13 @@
 outer_gradient_ok(spec, design, idx, method, order = 1L)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
-\item{idx}{The outer index, from \code{\link{outer_hyper_index}}.}
+\item{idx}{The outer index, from \code{\link[=outer_hyper_index]{outer_hyper_index()}}.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{order}{\code{1} for the gradient, \code{2} for the Hessian as well.}
 }
@@ -39,9 +39,9 @@ derivative in \eqn{\beta} of \eqn{-E[\ell'']}, which is not
 
 \strong{Why the penalty is asked.} \eqn{\partial S/\partial\theta} and its
 second derivative are generics of \pkg{penalties7}
-(\code{\link[penalties7]{penalty_dhessian}},
-\code{\link[penalties7]{penalty_d2hessian}},
-\code{\link[penalties7]{penalty_dcross}}). A penalty that answers them is
+(\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
+\code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}},
+\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}). A penalty that answers them is
 estimable by a marginal criterion whatever its shape: the quadratic, the
 additive, the structured and the separable branches all do, so a ridge, a
 random effect and a heavy-tailed prior are covered as well as a spline. One
@@ -50,6 +50,6 @@ search stays derivative-free. Nothing here tests a penalty's behaviour to
 find out what it is; it is asked.
 }
 \seealso{
-\code{\link{statmod_marginal_grad}}
+\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}
 }
 \keyword{internal}

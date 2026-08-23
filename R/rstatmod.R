@@ -9,8 +9,8 @@ NULL
 #' behind it.
 #'
 #' @details
-#' This is not \code{\link[stats]{simulate}}, which draws from a model that
-#' has already been fitted. The \code{r} prefix is R's own for a random draw,
+#' This is not [stats::simulate()], which draws from a model that
+#' has already been fitted. The `r` prefix is R's own for a random draw,
 #' so the two names cannot be confused.
 #'
 #' The point of it is to have data whose truth is known: write the model, draw
@@ -19,50 +19,50 @@ NULL
 #' numeric stays itself -- because the design comes from the same interpreter
 #' a fit uses.
 #'
-#' \strong{The truth comes back beside the data, not attached to it.} What a
+#' **The truth comes back beside the data, not attached to it.** What a
 #' simulation study compares against is the coefficients, the parameters they
 #' gave and whatever a term with state drew, so the result is a list holding
-#' all of them: \code{data}, \code{par}, \code{theta} and, where there is
-#' one, \code{latent}. They were attributes of the data frame until version
+#' all of them: `data`, `par`, `theta` and, where there is
+#' one, `latent`. They were attributes of the data frame until version
 #' 0.88.0, and that was worse than it looks -- an attribute survives a row
-#' subset without being subset itself, so \code{sim[1:10, ]} kept a
-#' \code{theta} of the original length silently, and \code{subset()} and
-#' \code{merge()} dropped it altogether. Pass \code{sim$data} where a data
+#' subset without being subset itself, so `sim[1:10, ]` kept a
+#' `theta` of the original length silently, and `subset()` and
+#' `merge()` dropped it altogether. Pass `sim$data` where a data
 #' frame is wanted.
 #'
-#' \strong{The predictor is assembled exactly as a fit assembles it}, through
-#' \code{\link{statmod_design_at}}, which is what makes the simulated data
+#' **The predictor is assembled exactly as a fit assembles it**, through
+#' [statmod_design_at()], which is what makes the simulated data
 #' come from the model that was written rather than from a linearization of
-#' it. A term whose block moves with its coefficients -- \code{seg()},
-#' \code{jseg()}, \code{nl()} -- contributes \code{term_value()} at the
+#' it. A term whose block moves with its coefficients -- `seg()`,
+#' `jseg()`, `nl()` -- contributes `term_value()` at the
 #' coefficients supplied, not its block times them; the two differ by the
 #' whole nonlinearity, and the earlier version of this function used the
 #' second.
 #'
-#' \strong{Data, or a row count.} \code{data} carries the covariates. A model
-#' with none -- a pure time series, say -- needs only \code{n}, and one of the
+#' **Data, or a row count.** `data` carries the covariates. A model
+#' with none -- a pure time series, say -- needs only `n`, and one of the
 #' two must be given. Where both are given they must agree.
 #'
-#' \strong{The covariates may be drawn too, and the choice is not a detail.}
-#' \code{covariates} takes one function of the observation count per column,
-#' as \code{par} takes one per equation, and they are drawn AFRESH at every
+#' **The covariates may be drawn too, and the choice is not a detail.**
+#' `covariates` takes one function of the observation count per column,
+#' as `par` takes one per equation, and they are drawn AFRESH at every
 #' replicate. That is the difference between the two studies a caller might
-#' mean: with \code{data} the covariates are the same throughout, so what is
+#' mean: with `data` the covariates are the same throughout, so what is
 #' measured is the estimator's behaviour CONDITIONAL on that design, and with
-#' \code{covariates} it is measured over the design as well. Neither is more
+#' `covariates` it is measured over the design as well. Neither is more
 #' correct, and a study should say which it ran.
 #'
-#' \strong{Several replicates.} \code{n_sim} draws that many data sets. The
+#' **Several replicates.** `n_sim` draws that many data sets. The
 #' truth is drawn ONCE and shared: what a study over replicates measures is
 #' the variability of an estimator at a set of parameters, so the replicates
 #' differ in what is random and not in what is being estimated. Varying the
 #' truth as well is a loop over calls, and reads differently. With
-#' \code{n_sim > 1} the fields that are per-replicate -- \code{data},
-#' \code{theta}, \code{latent} -- come back as lists of that length, while
-#' \code{par} and \code{structural} stay single.
+#' `n_sim > 1` the fields that are per-replicate -- `data`,
+#' `theta`, `latent` -- come back as lists of that length, while
+#' `par` and `structural` stay single.
 #'
-#' \strong{The coefficients.} \code{par = NULL} draws every one of them from
-#' \code{rnorm(1, 0, sd)}, which on the link scale gives predictors of order
+#' **The coefficients.** `par = NULL` draws every one of them from
+#' `rnorm(1, 0, sd)`, which on the link scale gives predictors of order
 #' one. A named list fixes them instead, one entry per distribution
 #' parameter, and an entry may be
 #' \itemize{
@@ -72,23 +72,23 @@ NULL
 #'     that many values.
 #' }
 #' The function is what makes a structured truth expressible without a
-#' vocabulary for it: \code{function(k) rnorm(k, 0, 0.3)} is a random effect
+#' vocabulary for it: `function(k) rnorm(k, 0, 0.3)` is a random effect
 #' with its own standard deviation, and
-#' \code{function(k) c(1.5, -2, rep(0, k - 2))} is a sparse truth for a lasso
+#' `function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a lasso
 #' to find. A parameter left out of the list is drawn.
 #'
-#' \strong{A term with state} is simulated through
-#' \code{\link[modelterms7]{term_simulate}}, so the recursion that generates
+#' **A term with state** is simulated through
+#' [modelterms7::term_simulate()], so the recursion that generates
 #' is the term's own. A score-driven term draws the response AS it runs, its
 #' level at one time being driven by the score at the time before; a latent
 #' chain draws its path from the stationary law the likelihood is written
 #' with; a marginal break-point term draws each group's positions from their
-#' prior. What each drew is returned in the \code{"latent"} attribute, which
+#' prior. What each drew is returned in the `"latent"` attribute, which
 #' is what a recovery check compares against.
 #'
 #' Such a term's OWN parameters are not coefficients of any equation, so they
-#' are named through \code{structural} rather than through \code{par}, and
-#' on the scale \code{\link[modelterms7]{term_params}} names -- a loading is
+#' are named through `structural` rather than through `par`, and
+#' on the scale [modelterms7::term_params()] names -- a loading is
 #' the loading and not its logarithm, a persistence is the partial
 #' autocorrelation the chart carries. There is at most one such term in a
 #' formula, so no key is needed. Left unnamed they take the term's own
@@ -97,36 +97,36 @@ NULL
 #' name them, or the simulation will be of a model near the one with no term
 #' at all.
 #'
-#' \strong{The response's name} is the formula's left-hand side, which must be
-#' a symbol. \code{log(y) ~ x} is rejected rather than answered: the model
-#' generates values of \code{log(y)} and there is no column that could
+#' **The response's name** is the formula's left-hand side, which must be
+#' a symbol. `log(y) ~ x` is rejected rather than answered: the model
+#' generates values of `log(y)` and there is no column that could
 #' honestly be called either name. A censored response is rejected too, for
-#' the reason \code{\link{statmod}} rejects one.
+#' the reason [statmod()] rejects one.
 #'
-#' @param formula The model formula, as \code{\link{statmod}} takes it.
+#' @param formula The model formula, as [statmod()] takes it.
 #' @param distrib A \pkg{distributions7} distribution object.
-#' @param data A data frame of covariates, or \code{NULL}.
-#' @param n The number of observations, where \code{data} is \code{NULL}.
+#' @param data A data frame of covariates, or `NULL`.
+#' @param n The number of observations, where `data` is `NULL`.
 #' @param n_sim How many data sets to draw.
 #' @param par Optional named list, one entry per distribution parameter; see
 #'   the details.
 #' @param structural Optional named list of a structural term's own
-#'   parameters, on the scale \code{\link[modelterms7]{term_params}} names.
+#'   parameters, on the scale [modelterms7::term_params()] names.
 #' @param sd The standard deviation of the drawn coefficients.
 #' @param offsets Optional named list of offsets.
 #' @param covariates Optional named list of functions of the observation
 #'   count, one per covariate, drawn afresh at every replicate.
 #'
-#' @return An object of class \code{"StatmodSim"}: a list with \code{data},
-#'   the data frame with the response added; \code{par}, the coefficients
-#'   used, drawn or given, named as the design names them; \code{theta}, the
-#'   distribution's parameters at every observation; \code{latent}, what a
-#'   term with state drew, or \code{NULL}; \code{structural}, such a term's
-#'   own parameters, or \code{NULL}; \code{n_sim}; and \code{call}. With
-#'   \code{n_sim > 1} the per-replicate fields are lists of that length.
+#' @return An object of class `"StatmodSim"`: a list with `data`,
+#'   the data frame with the response added; `par`, the coefficients
+#'   used, drawn or given, named as the design names them; `theta`, the
+#'   distribution's parameters at every observation; `latent`, what a
+#'   term with state drew, or `NULL`; `structural`, such a term's
+#'   own parameters, or `NULL`; `n_sim`; and `call`. With
+#'   `n_sim > 1` the per-replicate fields are lists of that length.
 #'
-#' @seealso \code{\link{statmod}}, \code{\link{simulate.StatmodFit}},
-#'   \code{\link{predict.StatmodFit}}
+#' @seealso [statmod()], [simulate.StatmodFit()],
+#'   [predict.StatmodFit()]
 #'
 #' @examples
 #' set.seed(1)
@@ -258,20 +258,20 @@ rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
 #' The Covariate Generators of a Simulation
 #'
 #' @description
-#' Validates \code{covariates} and returns it, or \code{NULL}.
+#' Validates `covariates` and returns it, or `NULL`.
 #'
 #' @details
 #' Each entry is a function of the observation count, as an entry of
-#' \code{par} may be, so the two arguments read alike. A value that is not a
+#' `par` may be, so the two arguments read alike. A value that is not a
 #' function is rejected rather than recycled: a constant column is what
-#' \code{data} is for, and the whole point of this argument is that the
+#' `data` is for, and the whole point of this argument is that the
 #' covariates are drawn afresh at every replicate.
 #'
-#' @param covariates A named list, or \code{NULL}.
+#' @param covariates A named list, or `NULL`.
 #'
-#' @return The list, or \code{NULL}.
+#' @return The list, or `NULL`.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 check_covariates <- function(covariates) {
@@ -303,7 +303,7 @@ check_covariates <- function(covariates) {
 #' A generator that answers with the wrong length is reported rather than
 #' recycled, for the reason a coefficient function is: R would recycle it
 #' without a word and the replicate would be of another model. A column of
-#' \code{data} under the same name is overwritten, which is what a caller
+#' `data` under the same name is overwritten, which is what a caller
 #' asking for that column to be drawn means.
 #'
 #' @param covariates The generators.
@@ -312,7 +312,7 @@ check_covariates <- function(covariates) {
 #'
 #' @return A data frame.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 draw_covariates <- function(covariates, n, data) {
@@ -335,10 +335,10 @@ draw_covariates <- function(covariates, n, data) {
 #' @description
 #' The model that was written, the size of what came out, and the truth
 #' behind it.
-#' @param x A \code{\link{rstatmod}} result.
+#' @param x A [rstatmod()] result.
 #' @param ... Unused.
-#' @return \code{x}, invisibly.
-#' @seealso \code{\link{rstatmod}}
+#' @return `x`, invisibly.
+#' @seealso [rstatmod()]
 #' @examples
 #' set.seed(1)
 #' rstatmod(y ~ x, distributions7::gaussian1_distrib(),
@@ -382,7 +382,7 @@ print.StatmodSim <- function(x, ...) {
 #' The Data Frame a Simulation Runs Against
 #'
 #' @description
-#' Resolves \code{data} and \code{n} into one data frame of covariates.
+#' Resolves `data` and `n` into one data frame of covariates.
 #'
 #' @details
 #' A model may have no covariates at all -- a pure time series is the case --
@@ -391,14 +391,14 @@ print.StatmodSim <- function(x, ...) {
 #' are given they must agree, which is checked rather than resolved by
 #' preferring one: a caller who wrote both and got them wrong wants to know.
 #'
-#' @param data A data frame or \code{NULL}.
-#' @param n A row count or \code{NULL}.
-#' @param covariates The generators, or \code{NULL}. Where there are any,
+#' @param data A data frame or `NULL`.
+#' @param n A row count or `NULL`.
+#' @param covariates The generators, or `NULL`. Where there are any,
 #'   their columns are written in.
 #'
 #' @return A data frame.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 rstatmod_data <- function(data, n, covariates = NULL) {
@@ -436,18 +436,18 @@ rstatmod_data <- function(data, n, covariates = NULL) {
 #'
 #' @details
 #' A transformed response is rejected rather than answered. Under
-#' \code{log(y) ~ x} the model generates values of \code{log(y)}, so a column
-#' called \code{y} would hold the wrong quantity and one called
-#' \code{"log(y)"} would not be the name the formula reads back; the earlier
+#' `log(y) ~ x` the model generates values of `log(y)`, so a column
+#' called `y` would hold the wrong quantity and one called
+#' `"log(y)"` would not be the name the formula reads back; the earlier
 #' version wrote the first of those silently. A censored response is rejected
-#' for the reason \code{\link{statmod}} rejects one -- there is no censored
+#' for the reason [statmod()] rejects one -- there is no censored
 #' likelihood to fit it back with.
 #'
 #' @param response The formula's left-hand side.
 #'
 #' @return A single string.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 rstatmod_response_name <- function(response) {
@@ -473,25 +473,25 @@ rstatmod_response_name <- function(response) {
 #' has state -- the response it drew and the latent quantity behind it.
 #'
 #' @details
-#' With no structural term this is \code{\link{statmod_eta}} exactly, which is
+#' With no structural term this is [statmod_eta()] exactly, which is
 #' the point: the simulated data comes from the assembly a fit reads, so a
 #' term whose block moves with its coefficients contributes what it
 #' contributes rather than a linearization.
 #'
 #' With one, the static part is assembled the same way and the term is asked
-#' to finish through \code{\link[modelterms7]{term_simulate}}. A term that
+#' to finish through [modelterms7::term_simulate()]. A term that
 #' draws the response as it goes returns it; one that does not returns
-#' \code{NULL} there and the caller draws at the predictor.
+#' `NULL` there and the caller draws at the predictor.
 #'
 #' @param spec The specification.
 #' @param design Its design.
 #' @param coef The coefficients.
-#' @param structural The structural term's own parameters, or \code{NULL}.
+#' @param structural The structural term's own parameters, or `NULL`.
 #'
-#' @return A list with \code{eta}, \code{theta}, \code{y}, \code{latent}
-#'   and \code{structural}.
+#' @return A list with `eta`, `theta`, `y`, `latent`
+#'   and `structural`.
 #'
-#' @seealso \code{\link{rstatmod}}, \code{\link{statmod_eta}}
+#' @seealso [rstatmod()], [statmod_eta()]
 #'
 #' @keywords internal
 rstatmod_eta <- function(spec, design, coef, structural = NULL) {
@@ -563,7 +563,7 @@ rstatmod_eta <- function(spec, design, coef, structural = NULL) {
 #' normal where the caller gave none.
 #'
 #' @details
-#' An entry of \code{par} may be a vector of the equation's own length, a
+#' An entry of `par` may be a vector of the equation's own length, a
 #' single number used for all of them, or a function of the count returning
 #' that many values. The function form is what expresses a structured truth
 #' -- a random effect's standard deviation, a sparse vector for a lasso to
@@ -573,12 +573,12 @@ rstatmod_eta <- function(spec, design, coef, structural = NULL) {
 #'
 #' @param design The design blocks.
 #' @param params The parameter names.
-#' @param par A named list, or \code{NULL}.
+#' @param par A named list, or `NULL`.
 #' @param sd The standard deviation of the drawn coefficients.
 #'
 #' @return A named list of numeric vectors.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 draw_coefficients <- function(design, params, par, sd) {
@@ -626,7 +626,7 @@ draw_coefficients <- function(design, params, par, sd) {
 #' them.
 #'
 #' @details
-#' The values are on the scale \code{\link[modelterms7]{term_params}} names,
+#' The values are on the scale [modelterms7::term_params()] names,
 #' which is the one a reader knows: a loading is the loading rather than its
 #' logarithm, and a persistence is the partial autocorrelation its chart
 #' carries rather than the autoregressive coefficient that chart produces. A
@@ -636,11 +636,11 @@ draw_coefficients <- function(design, params, par, sd) {
 #'
 #' @param tm The built structural term.
 #' @param psi Its parameters at the specification's own state.
-#' @param given A named list, or \code{NULL}.
+#' @param given A named list, or `NULL`.
 #'
 #' @return A named list.
 #'
-#' @seealso \code{\link{rstatmod}}
+#' @seealso [rstatmod()]
 #'
 #' @keywords internal
 rstatmod_psi <- function(tm, psi, given) {

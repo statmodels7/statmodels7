@@ -7,7 +7,7 @@
 \method{family}{StatmodFit}(object, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{...}{Unused.}
 }
@@ -30,6 +30,6 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 family(fit)@params
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

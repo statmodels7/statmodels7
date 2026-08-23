@@ -15,7 +15,7 @@ kink_by_power(pen, theta, name, target, pw)
 
 \item{target}{The sizes the kink should have.}
 
-\item{pw}{What \code{\link{kink_power}} returned, or \code{NULL}.}
+\item{pw}{What \code{\link[=kink_power]{kink_power()}} returned, or \code{NULL}.}
 }
 \value{
 A numeric vector as long as \code{target}, \code{NA} where the
@@ -32,6 +32,6 @@ hyperparameter's own interval, comes back \code{NA} and the caller falls
 back to bracketing.
 }
 \seealso{
-\code{\link{kink_power}}, \code{\link{kink_solve}}
+\code{\link[=kink_power]{kink_power()}}, \code{\link[=kink_solve]{kink_solve()}}
 }
 \keyword{internal}

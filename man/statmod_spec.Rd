@@ -30,12 +30,12 @@ needs it; a prediction does not, and new data routinely has no response
 column.}
 
 \item{linpar}{How the IMPLICIT parametric block is built, as
-\code{\link{linpar_options}()} returns it. It is kept on the
-specification, so a rebuild -- a fold of \code{\link{cv}()} -- reproduces
+\code{\link[=linpar_options]{linpar_options()}} returns it. It is kept on the
+specification, so a rebuild -- a fold of \code{\link[=cv]{cv()}} -- reproduces
 the storage rather than quietly densifying.}
 }
 \value{
-An object of class \code{\link{StatmodSpec}}.
+An object of class \code{\link[=StatmodSpec]{StatmodSpec()}}.
 }
 \description{
 Splits the formula into one equation per distribution parameter, interprets
@@ -45,7 +45,7 @@ each with \pkg{modelterms7} and builds its terms against the data.
 The equations are interpreted in an environment where \pkg{modelterms7}'s
 term constructors shadow whatever the user has attached, so that \code{s()}
 means ours even with \pkg{mgcv} on the search path. See
-\code{\link{statmod_equations}} for the split itself, which is not the
+\code{\link[=statmod_equations]{statmod_equations()}} for the split itself, which is not the
 obvious one.
 
 Prior weights enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are
@@ -61,5 +61,5 @@ names(spec@terms)
 
 }
 \seealso{
-\code{\link{statmod_equations}}, \code{\link{statmod}}
+\code{\link[=statmod_equations]{statmod_equations()}}, \code{\link[=statmod]{statmod()}}
 }

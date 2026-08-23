@@ -7,7 +7,7 @@
 \method{fitted}{StatmodFit}(object, what = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{what}{Which distribution parameter, or \code{NULL} for the first.}
 
@@ -22,7 +22,7 @@ length.
 }
 \details{
 A VECTOR and not the whole set, so that this and
-\code{\link{residuals.StatmodFit}} are a matched pair and a diagnostic
+\code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} are a matched pair and a diagnostic
 drawn from them needs no unpacking. The default is the FIRST parameter
 rather than the mean: a family may have no mean -- a Cauchy has none --
 and a default that fails on a legitimate family is worse than one that
@@ -31,6 +31,6 @@ always answers. The whole set at once is
 \code{predict(fit, "mean")}.
 }
 \seealso{
-\code{\link{predict.StatmodFit}}
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 }
 \keyword{internal}

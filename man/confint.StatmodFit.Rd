@@ -14,16 +14,16 @@
 )
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{parm}{Which coefficients: a distribution parameter's name, a vector of
 \code{parameter:coefficient} labels, or \code{NULL} for all of them.}
 
 \item{level}{The confidence level.}
 
-\item{type}{Passed to \code{\link{vcov.StatmodFit}}.}
+\item{type}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 
-\item{...}{Passed to \code{\link{vcov.StatmodFit}}.}
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
 \value{
 A data frame with the parameter, the term, the coefficient, the
@@ -41,7 +41,7 @@ quantity lives on. What the interval does not do is respect a bound on the
 parameter itself; for that, map an interval for the predictor through the
 inverse link at the covariate values of interest.
 
-The variance comes from \code{\link{vcov.StatmodFit}}, so the same two
+The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same two
 conventions apply, and a coefficient a kinked penalty set to zero has
 \code{NA} rather than an interval.
 }
@@ -54,6 +54,6 @@ confint(fit)
 confint(fit, "sigma")
 }
 \seealso{
-\code{\link{vcov.StatmodFit}}, \code{\link{summary.StatmodFit}}
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
 }
 \keyword{internal}

@@ -32,6 +32,6 @@ block does not cap the grid and \code{min_ratio} does not extend it, both
 of those being ways to build one.
 }
 \seealso{
-\code{\link[modelterms7]{term_values}}, \code{\link{path_values}}
+\code{\link[modelterms7:term_values]{modelterms7::term_values()}}, \code{\link[=path_values]{path_values()}}
 }
 \keyword{internal}

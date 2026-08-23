@@ -7,7 +7,7 @@
 refresh_amat(spec, design, M, params, npar, offs, ra, cw)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 

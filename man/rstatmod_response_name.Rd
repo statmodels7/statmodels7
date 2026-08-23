@@ -21,10 +21,10 @@ A transformed response is rejected rather than answered. Under
 called \code{y} would hold the wrong quantity and one called
 \code{"log(y)"} would not be the name the formula reads back; the earlier
 version wrote the first of those silently. A censored response is rejected
-for the reason \code{\link{statmod}} rejects one -- there is no censored
+for the reason \code{\link[=statmod]{statmod()}} rejects one -- there is no censored
 likelihood to fit it back with.
 }
 \seealso{
-\code{\link{rstatmod}}
+\code{\link[=rstatmod]{rstatmod()}}
 }
 \keyword{internal}

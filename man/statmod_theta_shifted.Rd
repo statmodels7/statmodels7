@@ -7,7 +7,7 @@
 statmod_theta_shifted(spec, eta_static, param, shift)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{eta_static}{The static predictors.}
 

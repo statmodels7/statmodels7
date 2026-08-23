@@ -7,7 +7,7 @@
 outer_minimize(method)
 }
 \arguments{
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 }
 \value{
 A single logical.

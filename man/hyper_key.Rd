@@ -7,7 +7,7 @@
 hyper_key(spec, start, p, name)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{start}{The hyperparameter structure, whose names are the keys.}
 

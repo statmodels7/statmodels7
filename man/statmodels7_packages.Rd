@@ -22,8 +22,8 @@ and the two cannot disagree.
 \code{S7} is excluded, and it is the one name the convention cannot tell
 apart on its own: its \code{7} counts R's object systems and not this
 toolkit's, and it is what every member is built on rather than a member.
-Declaring it in \code{Imports}, which \code{R CMD check} requires because
-the code says \code{S7::} throughout, therefore made it report as a ninth
+Declaring it in \code{Imports}, which \verb{R CMD check} requires because
+the code says \verb{S7::} throughout, therefore made it report as a ninth
 package until this line existed.
 }
 \examples{
@@ -31,6 +31,6 @@ statmodels7_packages()
 
 }
 \seealso{
-\code{\link{statmodels7_versions}},
-\code{\link{statmodels7_conflicts}}
+\code{\link[=statmodels7_versions]{statmodels7_versions()}},
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}
 }

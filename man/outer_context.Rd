@@ -7,7 +7,7 @@
 outer_context(spec, design, coef, hyper, approx = "bartlett")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
@@ -29,7 +29,7 @@ the penalty's Hessian, their sum and its factorization.
 \details{
 The three consumers each used to assemble these for themselves, so at one
 point the information was built three times and the penalized matrix
-factorized twice, and \code{\link{statmod_marginal_hess}} additionally
+factorized twice, and \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} additionally
 calls the gradient, which repeated the whole of it a fourth time. Measured
 by \code{Rprof}'s \code{by.total} on a random intercept over 500 levels at
 20000 observations, the gradient and the Hessian together accounted for 128
@@ -45,7 +45,7 @@ behaviour exactly, which is what keeps every existing caller -- and a
 caller's own code -- working unchanged.
 }
 \seealso{
-\code{\link{statmod_marginal}}, \code{\link{statmod_marginal_grad}},
-\code{\link{statmod_marginal_hess}}
+\code{\link[=statmod_marginal]{statmod_marginal()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},
+\code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}
 }
 \keyword{internal}

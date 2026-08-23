@@ -7,34 +7,34 @@
 trace_refresh4(spec, M, params, npar, Hl, dv, du, units, G, d3, v, f2, acurv)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{M}{The matrix the trace is taken against.}
 
 \item{params, npar}{The parameter names and block sizes.}
 
-\item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}.}
+\item{Hl}{The link-scale curvature, from \code{\link[=refresh_hessian]{refresh_hessian()}}.}
 
-\item{dv, du}{The two directions, from \code{\link{refresh_direction}}.}
+\item{dv, du}{The two directions, from \code{\link[=refresh_direction]{refresh_direction()}}.}
 
-\item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+\item{units}{The refreshable terms, from \code{\link[=refresh_units]{refresh_units()}}.}
 
-\item{G}{The leverage diagonal, from \code{\link{block_leverage}}.}
+\item{G}{The leverage diagonal, from \code{\link[=block_leverage]{block_leverage()}}.}
 
 \item{d3}{The third derivatives on the link scale.}
 
 \item{v}{The first direction over the stacked coefficients.}
 
 \item{f2}{The block's second derivative in the two directions, one matrix
-per unit, from \code{\link{refresh_dblock2}}.}
+per unit, from \code{\link[=refresh_dblock2]{refresh_dblock2()}}.}
 
-\item{acurv}{The curvature weights, from \code{\link{refresh_curv_amat}}.}
+\item{acurv}{The curvature weights, from \code{\link[=refresh_curv_amat]{refresh_curv_amat()}}.}
 }
 \value{
 A single number.
 }
 \description{
-The part of \eqn{\mathrm{tr}(M\,U[v,u])} that \code{\link{trace_design_form}}
+The part of \eqn{\mathrm{tr}(M\,U[v,u])} that \code{\link[=trace_design_form]{trace_design_form()}}
 does not compute, where \eqn{U} is the second derivative of \eqn{K} in the
 coefficients contracted in two directions.
 }
@@ -50,9 +50,9 @@ derivative alone,
 supported where BOTH blocks move. A fourth reads the SECOND,
 \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
-\code{\link[modelterms7]{term_block_deriv2}}. Those four enter as
+\code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}}. Those four enter as
 \eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
-\code{\link{refresh_amat}} -- with the third derivative for the first two and
+\code{\link[=refresh_amat]{refresh_amat()}} -- with the third derivative for the first two and
 the curvature for the fourth -- so neither \eqn{N} nor any contraction is
 assembled.
 
@@ -62,7 +62,7 @@ third-derivative contraction carries the DIRECTION'S PREDICTOR
 \eqn{\beta} as everything else does, and differentiating it leaves
 \deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
   \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.}
-That is the shape \code{\link{trace_design_form}} already computes, so the
+That is the shape \code{\link[=trace_design_form]{trace_design_form()}} already computes, so the
 piece is one further call of it with \eqn{\dot v} in place of the
 predictors. \eqn{\dot v} is the predictor's own second derivative
 contracted in both directions and is therefore symmetric in them, which is
@@ -77,7 +77,7 @@ with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
 \eqn{5.19\times10^{-8}} with both.
 }
 \seealso{
-\code{\link{trace_design_form}}, \code{\link{contract3_refresh}},
-\code{\link{refresh_dblock2}}
+\code{\link[=trace_design_form]{trace_design_form()}}, \code{\link[=contract3_refresh]{contract3_refresh()}},
+\code{\link[=refresh_dblock2]{refresh_dblock2()}}
 }
 \keyword{internal}

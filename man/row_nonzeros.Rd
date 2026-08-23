@@ -16,6 +16,6 @@ A list with \code{i}, \code{j} and \code{v}, sorted by row.
 A Design's Nonzeros, Ordered by Row
 }
 \seealso{
-\code{\link{leverage_pairs}}
+\code{\link[=leverage_pairs]{leverage_pairs()}}
 }
 \keyword{internal}

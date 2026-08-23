@@ -4,23 +4,23 @@
 #' The names of the packages this one installs and attaches.
 #'
 #' @details
-#' The list is read from the \code{Imports} field of this package's own
-#' \code{DESCRIPTION}, keeping the entries whose names end in \code{7}, which
+#' The list is read from the `Imports` field of this package's own
+#' `DESCRIPTION`, keeping the entries whose names end in `7`, which
 #' is the toolkit's naming convention. Reading it rather than writing it out
-#' keeps one enumeration: a member added to \code{Imports} is a member here,
+#' keeps one enumeration: a member added to `Imports` is a member here,
 #' and the two cannot disagree.
 #'
-#' \code{S7} is excluded, and it is the one name the convention cannot tell
-#' apart on its own: its \code{7} counts R's object systems and not this
+#' `S7` is excluded, and it is the one name the convention cannot tell
+#' apart on its own: its `7` counts R's object systems and not this
 #' toolkit's, and it is what every member is built on rather than a member.
-#' Declaring it in \code{Imports}, which \code{R CMD check} requires because
-#' the code says \code{S7::} throughout, therefore made it report as a ninth
+#' Declaring it in `Imports`, which `R CMD check` requires because
+#' the code says `S7::` throughout, therefore made it report as a ninth
 #' package until this line existed.
 #'
 #' @return A character vector of package names, sorted.
 #'
-#' @seealso \code{\link{statmodels7_versions}},
-#'   \code{\link{statmodels7_conflicts}}
+#' @seealso [statmodels7_versions()],
+#'   [statmodels7_conflicts()]
 #'
 #' @examples
 #' statmodels7_packages()
@@ -42,10 +42,10 @@ statmodels7_packages <- function() {
 #' @description
 #' The version of each member package as currently installed.
 #'
-#' @return A data frame with columns \code{package} and \code{version}, the
-#'   latter \code{NA} for a member that is not installed.
+#' @return A data frame with columns `package` and `version`, the
+#'   latter `NA` for a member that is not installed.
 #'
-#' @seealso \code{\link{statmodels7_packages}}, \code{\link{statmodels7_update}}
+#' @seealso [statmodels7_packages()], [statmodels7_update()]
 #'
 #' @examples
 #' statmodels7_versions()
@@ -76,12 +76,12 @@ statmodels7_versions <- function() {
 #' complete toolkit. Plain ASCII throughout: a non-ASCII character in a
 #' package's own output is a portability risk taken for a decoration.
 #'
-#' @param versions A data frame as \code{\link{statmodels7_versions}} returns.
+#' @param versions A data frame as [statmodels7_versions()] returns.
 #'
 #' @return A character vector, one element per row of the layout, empty when
 #'   there are no members.
 #'
-#' @seealso \code{\link{statmodels7_versions}}
+#' @seealso [statmodels7_versions()]
 #'
 #' @keywords internal
 statmodels7_attach_message <- function(versions) {
@@ -111,11 +111,11 @@ statmodels7_attach_message <- function(versions) {
 #' Each member's own startup messages are suppressed, since the caller asked
 #' for the toolkit and gets one message about it rather than one per package,
 #' and so are the masking warnings, which
-#' \code{\link{statmodels7_conflicts}} reports in one place instead.
+#' [statmodels7_conflicts()] reports in one place instead.
 #'
 #' @return The names of the packages attached, invisibly.
 #'
-#' @seealso \code{\link{statmodels7_packages}}
+#' @seealso [statmodels7_packages()]
 #'
 #' @keywords internal
 statmodels7_attach <- function() {

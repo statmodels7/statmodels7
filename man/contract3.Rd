@@ -7,7 +7,7 @@
 contract3(spec, design, d3, params, npar, offs, total, tv)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 

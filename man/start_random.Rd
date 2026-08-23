@@ -8,7 +8,7 @@ start_random(fn = stats::rnorm, ..., center = TRUE)
 }
 \arguments{
 \item{fn}{A generator called as \code{fn(n, ...)}, returning \code{n}
-values. Defaults to \code{\link[stats]{rnorm}}.}
+values. Defaults to \code{\link[stats:Normal]{stats::rnorm()}}.}
 
 \item{...}{Further arguments to \code{fn}, such as \code{sd} or
 \code{min} and \code{max}.}
@@ -17,14 +17,14 @@ values. Defaults to \code{\link[stats]{rnorm}}.}
 than use it alone. Defaults to \code{TRUE}.}
 }
 \value{
-A \code{\link{start_strategy}}.
+A \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 Every coefficient drawn on the unconstrained scale, by default added to the
 intercept-only fit rather than replacing it.
 }
 \details{
-The draw is added to \code{\link{start_intercepts}}'s answer unless
+The draw is added to \code{\link[=start_intercepts]{start_intercepts()}}'s answer unless
 \code{center = FALSE}, and that is not a detail: a coefficient drawn from a
 standard normal is a sensible perturbation and a hopeless absolute value,
 since the intercept of a location equation is on the scale of the response.
@@ -40,6 +40,6 @@ start_random(stats::runif, min = -2, max = 2)
 
 }
 \seealso{
-\code{\link{start_intercepts}},
-\code{\link[optimizers7]{multistart}}
+\code{\link[=start_intercepts]{start_intercepts()}},
+\code{\link[optimizers7:multistart]{optimizers7::multistart()}}
 }

@@ -7,7 +7,7 @@
 refresh_hessian(spec, design, coef, expected = FALSE, approx = "bartlett")
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 

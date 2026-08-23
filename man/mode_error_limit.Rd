@@ -10,7 +10,7 @@ mode_error_limit()
 A single number.
 }
 \description{
-The limit \code{\link{criterion_resolution}} puts on \eqn{g'K^{-1}g/2}, the
+The limit \code{\link[=criterion_resolution]{criterion_resolution()}} puts on \eqn{g'K^{-1}g/2}, the
 decrease the mode's own Newton correction predicts, before it refuses to
 report a resolution at all.
 }
@@ -20,7 +20,7 @@ score says the mode is and asking how far the criterion moved. That is a
 resolution while the displacement is a correction and something else
 entirely once it is not: an inner fit that stopped far from a mode produces
 a large displacement, a large movement, and a number that
-\code{\link[optimizers7]{crit_abs_obj}} would read as licence to stop.
+\code{\link[optimizers7:crit_abs_obj]{optimizers7::crit_abs_obj()}} would read as licence to stop.
 
 The quantity tested is in log-likelihood units rather than in the
 coefficients', so one limit serves every shape. Measured over whole fits it
@@ -31,6 +31,6 @@ below has five orders of room on either side and is not what decides
 anything.
 }
 \seealso{
-\code{\link{criterion_resolution}}
+\code{\link[=criterion_resolution]{criterion_resolution()}}
 }
 \keyword{internal}

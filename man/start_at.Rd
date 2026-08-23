@@ -7,7 +7,7 @@
 start_at(strategy, spec, design, obj, ...)
 }
 \arguments{
-\item{strategy}{A \code{\link{start_strategy}}.}
+\item{strategy}{A \code{\link[=start_strategy]{start_strategy()}}.}
 
 \item{spec}{The specification.}
 

@@ -30,7 +30,7 @@ outer_fit(
 
 \item{inner_optimizer}{How the smooth block is fitted.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{optimizer}{An \pkg{optimizers7} optimizer, or \code{NULL} to let the
 availability of the exact gradient decide.}
@@ -58,15 +58,15 @@ hyperparameters the coefficients move very little and the inner loop
 converges in two or three iterations.
 
 \strong{The optimizer is chosen by whether the gradient exists.} Where
-\code{\link{statmod_marginal_grad}} applies -- the observed information, and
+\code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} applies -- the observed information, and
 penalties whose Hessian is linear in their hyperparameters -- the criterion
-is handed its exact derivative and \code{\link[optimizers7]{lbfgs}} is the
+is handed its exact derivative and \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} is the
 default; otherwise the search compares values and
-\code{\link[optimizers7]{nelder_mead}} is. An optimizer given explicitly is
+\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}} is. An optimizer given explicitly is
 used as given, and one that needs a gradient it cannot be given will say so
 itself.
 }
 \seealso{
-\code{\link{reml}}, \code{\link{statmod}}
+\code{\link[=reml]{reml()}}, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

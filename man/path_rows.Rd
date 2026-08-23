@@ -7,19 +7,19 @@
 path_rows(spec, blocks, hyper, method)
 }
 \arguments{
-\item{spec}{A \code{\link{StatmodSpec}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{blocks}{The blocks.}
 
 \item{hyper}{The hyperparameters.}
 
-\item{method}{An \code{\link{OuterMethod}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 }
 \value{
 A data frame of \code{parameter}, \code{term} and \code{name}.
 }
 \description{
-The rows of an index like \code{\link{outer_hyper_index}}'s, for the
+The rows of an index like \code{\link[=outer_hyper_index]{outer_hyper_index()}}'s, for the
 hyperparameters whose penalty has a kink.
 }
 \details{
@@ -31,6 +31,6 @@ quasi-Newton step is reading a slope that is about to change. A grid does
 not care, and warm starts make it cheap.
 
 Which hyperparameters are varied is read from the penalty by
-\code{\link{kink_hypers}} unless the method names them.
+\code{\link[=kink_hypers]{kink_hypers()}} unless the method names them.
 }
 \keyword{internal}
