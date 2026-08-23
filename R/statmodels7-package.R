@@ -28,6 +28,15 @@ NULL
 #' @noRd
 .onLoad <- function(libname, pkgname) {
   S7::methods_register()
+  # AND the one ordinary S3 method the package has, registered by hand.
+  # `S3method(print, StatmodSim)` in NAMESPACE is what an installed
+  # package reads, and it does not reach base's method table under
+  # pkgload: measured, `print(sim)` fell through to `print.default`
+  # and showed the raw list -- two hundred fitted parameters among them
+  # -- while `getS3method()` found the method and `methods(class =)` listed
+  # it. Registering it here covers both, and the suite runs under pkgload.
+  registerS3method("print", "StatmodSim", print.StatmodSim,
+                   envir = asNamespace("base"))
 }
 
 # The members sit in Imports rather than Depends. Depends would attach them

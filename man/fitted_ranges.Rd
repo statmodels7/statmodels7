@@ -10,7 +10,10 @@ fitted_ranges(x)
 \item{x}{A \code{\link{StatmodFit}}.}
 }
 \value{
-A single string, empty when the parameters cannot be read.
+A single string, empty when the parameters cannot be read. It is
+a note of \code{\link{summary.StatmodFit}} rather than a line of
+\code{\link{print.StatmodFit}}: it qualifies the fit rather than
+describing it, and it is read once when something looks wrong.
 }
 \description{
 One line per parameter of the distribution, giving the range of its fitted

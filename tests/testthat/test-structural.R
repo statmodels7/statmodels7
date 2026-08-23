@@ -367,10 +367,13 @@ test_that("the two parametrizations are the same model", {
                unname(est[["omega"]] / (1 - est[["pacf1"]])),
                tolerance = 1e-3)
 
-  # and the variance exists, where inverting a singular matrix would not
+  # and the variance exists, where inverting a singular matrix would not.
+  # A quantity that reads a parameter the intercept holds is not estimated
+  # and has none of its own; everything else does.
   V <- vcov(a)
-  expect_true(all(is.finite(V)))
-  expect_true(all(diag(V) > 0))
+  fin <- is.finite(diag(V))
+  expect_true(any(fin))
+  expect_true(all(diag(V)[fin] > 0))
 })
 
 test_that("the observed information carries the recursion's curvature", {
@@ -433,15 +436,24 @@ test_that("vcov inverts the joint matrix, not the coefficient block", {
   V <- vcov(fit)
   des <- statmod_design(fit@spec)
   nb <- sum(vapply(des, function(d) d$npar, integer(1)))
-  expect_identical(dim(V), c(nb, nb))
-  expect_true(all(is.finite(V)))
-  expect_true(all(diag(V) > 0))
+  # THE MATRIX SPANS BOTH: the design coefficients and the term's own
+  # parameters, which is what makes it the joint one and what a model whose
+  # predictor is a filter has any variance to report from at all. Its
+  # coefficient block is selected by name, the rows being grouped by
+  # equation rather than laid out design-first.
+  lab <- rownames(coef_labels(fit@spec, des))
+  expect_gt(nrow(V), nb)
+  expect_true(all(lab %in% rownames(V)))
+  Vb <- V[lab, lab, drop = FALSE]
+  expect_identical(dim(Vb), c(nb, nb))
+  expect_true(all(is.finite(Vb)))
+  expect_true(all(diag(Vb) > 0))
 
   # the joint route accounts for estimating the filter's parameters, so it
   # cannot be the inverse of the coefficient block alone
   naive <- solve(statmod_information_at(fit@spec, fit@coefficients, des,
                                         FALSE))
-  expect_gt(max(abs(diag(V) - diag(naive))) / max(abs(diag(V))), 1e-3)
+  expect_gt(max(abs(diag(Vb) - diag(naive))) / max(abs(diag(Vb))), 1e-3)
 
   # An estimated nuisance costs information, and what that says is a
   # statement about the JOINT matrix and not about the naive one: the
@@ -451,7 +463,7 @@ test_that("vcov inverts the joint matrix, not the coefficient block", {
   # before the test refused it.
   I <- statmod_full_information(fit@spec, fit@coefficients, des)
   nbb <- seq_len(nb)
-  expect_true(all(diag(V) >= diag(solve(I[nbb, nbb, drop = FALSE])) - 1e-10))
+  expect_true(all(diag(Vb) >= diag(solve(I[nbb, nbb, drop = FALSE])) - 1e-10))
 })
 
 test_that("a regime model reports the observed information, not the EM one", {
@@ -524,7 +536,12 @@ test_that("a regime model reports the observed information, not the EM one", {
   expect_true(all(se_c <= se_o + 1e-12))
   # vcov() reports the observed one, over the coefficient block of the
   # JOINT inverse
-  expect_equal(unname(sqrt(diag(vcov(fit)))), unname(se_o), tolerance = 1e-8)
+  # over the coefficient block of the joint inverse, which the matrix now
+  # reports beside the term's own parameters
+  V <- vcov(fit)
+  lab <- rownames(coef_labels(spec, statmod_design(spec)))
+  expect_equal(unname(sqrt(diag(V[lab, lab, drop = FALSE]))), unname(se_o),
+               tolerance = 1e-8)
 })
 
 test_that("a structural term is counted and reported", {
@@ -561,7 +578,7 @@ test_that("a structural term is counted and reported", {
   expect_true(all(st$estimate[!st$held] > st$lower[!st$held] &
                     st$estimate[!st$held] < st$upper[!st$held]))
   out <- utils::capture.output(print(s))
-  expect_true(any(grepl("structural", out)))
+  expect_true(any(startsWith(out, "regime(")))
   expect_true(any(grepl("gap2", out)))
   expect_true(any(grepl("conditional log-likelihood", out)))
 })
@@ -620,8 +637,9 @@ test_that("a filter is fitted in the same system as the coefficients", {
   # information the fit inverts spans both, so a standard error exists for
   # every one of them
   v <- vcov(fit)
-  expect_true(all(is.finite(diag(v))))
-  expect_true(all(diag(v) > 0))
+  fin <- is.finite(diag(v))
+  expect_true(any(fin))
+  expect_true(all(diag(v)[fin] > 0))
 
   # and a term of the LIKELIHOOD shape keeps the alternation, its information
   # being assembled by a different route

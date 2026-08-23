@@ -509,6 +509,13 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
                          offsets = NULL, need_response = TRUE,
                          linpar = list()) {
   if (!is.data.frame(data)) {
+    # rstatmod() returns the truth beside the data rather than attached to
+    # it, so a caller who passed the whole result is one field away
+    if (inherits(data, "StatmodSim")) {
+      stop("'data' is an rstatmod() result, which holds the truth beside ",
+           "the data.
+  Pass its 'data' field.", call. = FALSE)
+    }
     stop("'data' must be a data frame.", call. = FALSE)
   }
   if (!S7::S7_inherits(distrib, distributions7::distrib)) {
@@ -528,6 +535,18 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
                        error = function(e) if (need_response) stop(e) else NULL)
   if (is.null(response)) {
     response <- rep(NA_real_, nrow(data))
+  }
+  # A CENSORED RESPONSE IS REFUSED HERE, where it can be named. The pieces
+  # of a censored likelihood exist -- `cens()` marks the statuses and
+  # distributions7 carries the derivatives of a distribution function --
+  # and nothing in this package assembles them, so the log-density was
+  # being asked for at an object it cannot read and the run died inside
+  # `dnorm` three frames from the cause.
+  if (S7::S7_inherits(response, modelterms7::censored_response)) {
+    stop("A censored response is not fitted: `cens()` marks the statuses ",
+         "and this package has no censored likelihood to give them to. ",
+         "Fit the observed values, or use distributions7's cdf ",
+         "derivatives directly.", call. = FALSE)
   }
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
@@ -585,6 +604,13 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' @keywords internal
 statmod_respec <- function(spec, data, need_response = TRUE) {
   if (!is.data.frame(data)) {
+    # rstatmod() returns the truth beside the data rather than attached to
+    # it, so a caller who passed the whole result is one field away
+    if (inherits(data, "StatmodSim")) {
+      stop("'data' is an rstatmod() result, which holds the truth beside ",
+           "the data.
+  Pass its 'data' field.", call. = FALSE)
+    }
     stop("'data' must be a data frame.", call. = FALSE)
   }
   env <- environment(spec@formula)
@@ -593,6 +619,18 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   response <- tryCatch(eval(split$response, data, env),
                        error = function(e) if (need_response) stop(e) else NULL)
   if (is.null(response)) response <- rep(NA_real_, nrow(data))
+  # A CENSORED RESPONSE IS REFUSED HERE, where it can be named. The pieces
+  # of a censored likelihood exist -- `cens()` marks the statuses and
+  # distributions7 carries the derivatives of a distribution function --
+  # and nothing in this package assembles them, so the log-density was
+  # being asked for at an object it cannot read and the run died inside
+  # `dnorm` three frames from the cause.
+  if (S7::S7_inherits(response, modelterms7::censored_response)) {
+    stop("A censored response is not fitted: `cens()` marks the statuses ",
+         "and this package has no censored likelihood to give them to. ",
+         "Fit the observed values, or use distributions7's cdf ",
+         "derivatives directly.", call. = FALSE)
+  }
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
   # An offset the FORMULA names is re-evaluated here, which is the whole

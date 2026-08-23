@@ -10,7 +10,8 @@ term_block_kind(term)
 \item{term}{A built term.}
 }
 \value{
-One of \code{"parametric"}, \code{"smooth"}, \code{"random"},
+One of \code{"structural"}, \code{"breakpoint"},
+\code{"parametric"}, \code{"smooth"}, \code{"random"},
 \code{"selection"}, \code{"penalized"}.
 }
 \description{

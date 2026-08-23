@@ -242,7 +242,7 @@ test_that("a bounded hyperparameter is estimated unless the term holds it", {
   expect_equal(b$estimate[b$name == "alpha"], 0.5)
   # while its lambda is still chosen
   expect_identical(b$role[b$name == "lambda"], "estimated")
-  expect_output(print(summary(held)), "(fixed)", fixed = TRUE)
+  expect_output(print(summary(held)), "[fixed]", fixed = TRUE)
 })
 
 test_that("a bounded hyperparameter is swept over its own interval", {

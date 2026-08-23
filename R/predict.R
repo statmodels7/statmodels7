@@ -57,13 +57,31 @@ predict_moments <- function() {
 #' \strong{New data} goes through the terms' blueprints, so a factor keeps the
 #' levels and the contrasts it was fitted with rather than being rebuilt from
 #' whatever the new frame happens to contain.
+#'
+#' \strong{A model carrying a score-driven term is predicted past the
+#' series.} Such a term's contribution at one row is the state a recursion
+#' has reached, so new rows continue the series rather than being read on
+#' their own: each row is placed by its own time within its own group, and
+#' must come after every observed time of that group. Beyond the data the
+#' score sits at its conditional mean of zero, which the model's own
+#' definition guarantees, so the continuation is the deterministic recursion
+#' and involves no simulation. A forecast reports no standard error --
+#' \code{se = TRUE} gives the uncertainty of the parameters, while a forecast
+#' carries the uncertainty of the future scores as well, which is the larger
+#' part and is no delta method.
 #' @param object A \code{\link{StatmodFit}}.
 #' @param what What to predict: a parameter's name, a moment's name,
 #'   \code{"parameter"} or \code{"link"}.
 #' @param newdata A data frame, or \code{NULL} for the fitting data.
-#' @param ... Unused.
+#' @param se Whether to report the prediction's uncertainty as well.
+#' @param level The interval's level, where \code{se} is \code{TRUE}.
+#' @param ... Passed to \code{\link{vcov.StatmodFit}} where \code{se} is
+#'   \code{TRUE}, which is where \code{type} chooses between the bayesian
+#'   variance and the frequentist one.
 #' @return A numeric vector when \code{what} names one quantity, and a named
-#'   list of vectors for \code{"parameter"} and \code{"link"}.
+#'   list of vectors for \code{"parameter"} and \code{"link"}. With
+#'   \code{se = TRUE}, a data frame of \code{fit}, \code{se},
+#'   \code{lower} and \code{upper} in place of each vector.
 #' @seealso \code{\link{statmod}}, \code{\link{fitted.StatmodFit}}
 #' @examples
 #' set.seed(1)
@@ -73,9 +91,10 @@ predict_moments <- function() {
 #' head(predict(fit, "mu"))
 #' head(predict(fit, "variance"))
 #' head(predict(fit, "link:sigma"))
+#' head(predict(fit, "mu", se = TRUE))
 #' @keywords internal
 predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
-                               ...) {
+                               se = FALSE, level = 0.95, ...) {
   if (is.data.frame(what)) {
     stop(paste0("The second argument of statmod's predict() is 'what', not\n",
                 "  'newdata': a fit has several parameters and several\n",
@@ -88,8 +107,27 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   }
   spec <- spec_at(object, newdata, need_response = FALSE)
   design <- statmod_design(spec)
-  ep <- statmod_eta(spec, design, object@coefficients)
+  # A STRUCTURAL TERM HAS NO BLOCK TO REAPPLY: its contribution is the state
+  # a recursion has reached, so new rows CONTINUE the series rather than
+  # being read on their own. Running the ordinary assembly there returned
+  # the fitting data's values whatever `newdata` held, which is why the two
+  # paths are separated rather than merged.
+  cont <- !is.null(newdata) && length(attr(design, "structural"))
+  ep <- if (cont) statmod_eta_continued(object, spec, design) else
+    statmod_eta(spec, design, object@coefficients)
+  if (cont && isTRUE(se)) {
+    stop("The standard error of a prediction past the series is not ",
+         "reported. What\n  predict(se = TRUE) gives is the uncertainty of ",
+         "the parameters; a forecast\n  carries the uncertainty of the ",
+         "future scores as well, which is the larger part\n  and is no ",
+         "delta method. predict(fit, se = TRUE) at the observed rows is ",
+         "exact.", call. = FALSE)
+  }
   params <- spec@distrib@params
+  if (isTRUE(se)) {
+    su <- predict_se(object, spec, design, ep, level, ...)
+    return(se_answer(su, what, params, spec))
+  }
 
   if (identical(what, "link")) return(ep$eta)
   if (identical(what, "parameter")) return(ep$theta)
@@ -144,166 +182,393 @@ unknown_what <- function(what, params) {
 
 #' @title The Fitted Values of a Model
 #' @name fitted.StatmodFit
-#' @description The distribution's parameters at the fitting data.
+#' @description
+#' One distribution parameter's fitted values, as a vector of the data's
+#' length.
+#' @details
+#' A VECTOR and not the whole set, so that this and
+#' \code{\link{residuals.StatmodFit}} are a matched pair and a diagnostic
+#' drawn from them needs no unpacking. The default is the FIRST parameter
+#' rather than the mean: a family may have no mean -- a Cauchy has none --
+#' and a default that fails on a legitimate family is worse than one that
+#' always answers. The whole set at once is
+#' \code{predict(fit, "parameter")}, and the mean, where it exists, is
+#' \code{predict(fit, "mean")}.
 #' @param object A \code{\link{StatmodFit}}.
+#' @param what Which distribution parameter, or \code{NULL} for the first.
 #' @param ... Unused.
-#' @return A named list of vectors.
+#' @return A numeric vector.
 #' @seealso \code{\link{predict.StatmodFit}}
 #' @keywords internal
-fitted.StatmodFit <- function(object, ...) object@fitted
+fitted.StatmodFit <- function(object, what = NULL, ...) {
+  th <- object@fitted
+  ps <- object@spec@distrib@params
+  if (is.null(what)) what <- ps[[1L]]
+  if (!is.character(what) || length(what) != 1L || !what %in% ps) {
+    stop(sprintf(paste0("'what' must be one of the distribution's",
+                        " parameters (%s).\n  The whole set at once is",
+                        " predict(fit, \"parameter\")."),
+                 paste(ps, collapse = ", ")), call. = FALSE)
+  }
+  rep_len(as.numeric(th[[what]]), object@spec@n_obs)
+}
 S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 
 
-#' Simulate a Response From a Written Model
+
+#' The Uncertainty of a Predicted Predictor
 #'
 #' @description
-#' Takes a formula, a distribution and a data frame of covariates, and draws a
-#' response from that model -- at coefficients the caller supplies, or at
-#' coefficients drawn at random.
+#' The standard error of each equation's linear predictor, and of the
+#' parameter it gives, with an interval.
 #'
 #' @details
-#' This is not \code{\link[stats]{simulate}}, which draws from a model that has
-#' already been fitted. The \code{r} prefix is R's own for a random draw, so
-#' the two names cannot be confused.
+#' An equation's predictor is \eqn{\eta_{ip} = x_{ip}'\beta_p}, so its
+#' variance is \eqn{x_{ip}' V_{pp} x_{ip}} with \eqn{V} the variance of the
+#' coefficients as estimated -- the coordinates and not the quantities, the
+#' design being written in them. The equations do not mix here: the predictor
+#' of one reads that one's coefficients alone, whatever the covariance
+#' between the blocks.
 #'
-#' The point of it is to have data whose truth is known: write the model, draw
-#' from it, fit it back, and see whether the fit recovers what was put in. A
-#' covariate needs no declaring -- a factor becomes its contrasts and a
-#' numeric stays itself, because the design comes from the same interpreter a
-#' fit uses.
+#' A TERM WHOSE BLOCK MOVES with its coefficients needs no special case. Its
+#' block is the Jacobian \eqn{\partial\eta/\partial\beta} by construction --
+#' that is what makes a linear fit on it a Gauss-Newton step -- so the row is
+#' the derivative and the delta method is exact to first order. That covers
+#' \code{seg}, \code{jseg} and \code{nl}, including the parameters of a
+#' nonlinear term developed over covariates.
 #'
-#' \strong{The coefficients.} \code{par = NULL} draws them, each independently
-#' from \code{rnorm(1, 0, sd)}, which on the link scale gives predictors of
-#' order one. A named list fixes them instead, one vector per distribution
-#' parameter in the design's order; a parameter left out of that list is
-#' drawn. \code{coef()} on the result reports what was used, drawn or given,
-#' so a simulation is reproducible from its own output.
+#' The interval is built on the scale the equation is written on and mapped
+#' back through the link, as every interval in the toolkit is: a scale rides
+#' a logarithm and its lower end cannot come out negative.
 #'
-#' \strong{The response's name} is the formula's left-hand side when it is a
-#' symbol, and \code{"y"} otherwise.
+#' A coefficient with no variance carries none forward. A discontinuous
+#' break-point term's block is a working linearization, held out of
+#' \code{\link{vcov}}, so every observation whose predictor reads it has no
+#' standard error either -- which is the truth about it and not a gap in the
+#' arithmetic.
 #'
-#' @param formula The model formula, as \code{\link{statmod}} takes it.
-#' @param distrib A \pkg{distributions7} distribution object.
-#' @param data A data frame of covariates.
-#' @param par Optional named list of coefficient vectors.
-#' @param sd The standard deviation of the drawn coefficients.
-#' @param offsets Optional named list of offsets.
+#' @param object A fitted model.
+#' @param spec The specification the prediction is made under.
+#' @param design Its design.
+#' @param ep The predictors and parameters, as \code{\link{statmod_eta}}
+#'   returns them.
+#' @param level The interval's level.
+#' @param ... Passed to \code{\link{vcov}}.
 #'
-#' @return The data frame with the response added, carrying the attributes
-#'   \code{"par"} (the coefficients used) and \code{"theta"} (the parameters
-#'   they gave).
+#' @return A named list, one entry per distribution parameter, each a data
+#'   frame with \code{fit}, \code{se}, \code{lower} and \code{upper} on the
+#'   link scale and the same four on the parameter scale.
 #'
-#' @seealso \code{\link{statmod}}, \code{\link{predict.StatmodFit}}
+#' @seealso \code{\link{predict.StatmodFit}}, \code{\link{vcov.StatmodFit}}
 #'
-#' @examples
-#' set.seed(1)
-#' dd <- data.frame(x = runif(50), g = factor(rep(c("a", "b"), 25)))
-#'
-#' # coefficients drawn
-#' sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
-#' attr(sim, "par")
-#'
-#' # or given, and recovered by a fit
-#' sim2 <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-#'                  par = list(mu = c(1, 2), sigma = log(0.3)))
-#' statmod(y ~ x, distributions7::gaussian1_distrib(), sim2)
-#'
-#' @export
-rstatmod <- function(formula, distrib, data, par = NULL, sd = 1,
-                     offsets = NULL) {
-  if (!is.data.frame(data)) {
-    stop("'data' must be a data frame.", call. = FALSE)
-  }
-  if (!S7::S7_inherits(distrib, distributions7::distrib)) {
-    stop("'distrib' must be a distributions7 distribution object.",
-         call. = FALSE)
-  }
-  params <- distrib@params
-  split <- statmod_equations(formula, params)
-  env <- environment(formula)
-  if (is.null(env)) env <- baseenv()
-
-  # the response does not exist yet, which is the point, so the terms are
-  # built from the covariates alone; the offsets come out of the equations
-  # first, as they do when a spec is built
-  stripped <- lapply(split$equations, function(eq) split_offsets(eq)$formula)
-  for (p in names(stripped)) reject_nested_offsets(stripped[[p]], p)
-  built <- statmod_terms(stripped, data, env)
-  n <- nrow(data)
-  design <- lapply(built$terms, function(tms) {
-    if (!length(tms)) {
-      return(list(X = matrix(0, n, 0L), coef_names = character(0),
-                  npar = 0L, blocks = list()))
+#' @keywords internal
+predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
+  V <- vcov(object, readable = FALSE, ...)
+  z <- stats::qnorm((1 + level) / 2)
+  links <- spec@distrib@link_params
+  out <- stats::setNames(vector("list", length(spec@distrib@params)),
+                         spec@distrib@params)
+  for (p in spec@distrib@params) {
+    d <- design[[p]]
+    n <- spec@n_obs
+    eta <- rep_len(as.numeric(ep$eta[[p]]), n)
+    v <- rep(NA_real_, n)
+    key <- if (d$npar) paste(p, d$coef_names, sep = ":") else character(0)
+    X <- if (d$npar) as.matrix(d$X) else matrix(0, n, 0L)
+    # A SCORE-DRIVEN TERM ADDS ITS LEVEL to this equation's predictor, and
+    # the level is no column of the design: the filter returns its exact
+    # derivative in the term's own parameters at every observation, which is
+    # the only place it can be computed. Carried onto the free scale by each
+    # parameter's own link -- the same chain the exact gradient uses -- those
+    # become further columns of the derivative row, read against the tail of
+    # the joint variance.
+    fl <- structural_se_columns(spec, design, ep, p, X)
+    if (!is.null(fl) && nrow(fl$J) == n) {
+      X <- cbind(fl$X, fl$J)
+      key <- c(key, fl$key)
     }
-    mats <- lapply(tms, modelterms7::term_matrix)
-    list(X = do.call(cbind, mats),
-         coef_names = unlist(lapply(tms, modelterms7::term_coef_names),
-                             use.names = FALSE),
-         npar = as.integer(sum(vapply(mats, ncol, integer(1)))),
-         blocks = list())
-  })
-
-  coef <- draw_coefficients(design, params, par, sd)
-
-  off <- add_offsets(eval_offsets(formula, params, data, env, n),
-                     check_offsets(offsets, params, n))
-  links <- distrib@link_params
-  theta <- stats::setNames(vector("list", length(params)), params)
-  for (p in params) {
-    e <- if (design[[p]]$npar == 0L) rep(0, n) else
-      as.numeric(design[[p]]$X %*% coef[[p]])
-    if (!is.null(off[[p]])) e <- e + off[[p]]
-    theta[[p]] <- linkfunctions7::linkinv(links[[p]], e)
+    if (length(key) && all(key %in% rownames(V))) {
+      Vp <- as.matrix(V[key, key, drop = FALSE])
+      if (nrow(X) == n && all(is.finite(Vp))) {
+        v <- rowSums((X %*% Vp) * X)
+        v[v < 0] <- 0
+      }
+    }
+    se_eta <- sqrt(v)
+    lo <- eta - z * se_eta
+    hi <- eta + z * se_eta
+    g <- links[[p]]
+    th <- linkfunctions7::linkinv(g, eta)
+    # the interval is the predictor's, carried through the link, so it keeps
+    # the parameter inside its own set; the standard error beside it is the
+    # delta method, which the interval does not use
+    ends <- cbind(linkfunctions7::linkinv(g, lo),
+                  linkfunctions7::linkinv(g, hi))
+    out[[p]] <- data.frame(
+      eta = eta, se_eta = se_eta, eta_lower = lo, eta_upper = hi,
+      fit = as.numeric(th),
+      se = abs(linkfunctions7::dlinkinv(g, eta)) * se_eta,
+      lower = pmin(ends[, 1L], ends[, 2L]),
+      upper = pmax(ends[, 1L], ends[, 2L]))
   }
-
-  y <- distributions7::distrib_rng(distrib, n, theta)
-  nm <- if (is.name(split$response)) as.character(split$response) else "y"
-  out <- data
-  out[[nm]] <- y
-  attr(out, "par") <- Map(stats::setNames, coef,
-                          lapply(design, `[[`, "coef_names"))
-  attr(out, "theta") <- theta
   out
 }
 
 
-#' Draw or Validate the Coefficients of a Simulation
+#' The Shape a Prediction With Its Uncertainty Comes Back In
 #'
 #' @description
-#' Returns one coefficient vector per distribution parameter, drawn from a
-#' normal where the caller gave none.
+#' The rows \code{\link{predict_se}} computed, reduced to what was asked for.
 #'
-#' @param design The design blocks.
-#' @param params The parameter names.
-#' @param par A named list, or \code{NULL}.
-#' @param sd The standard deviation of the drawn coefficients.
+#' @details
+#' The vocabulary is the one a prediction without uncertainty answers, minus
+#' the moments: a moment's delta method needs its derivative in every
+#' parameter, which \pkg{distributions7} does not offer as a generic, and an
+#' interval assembled from what is at hand instead would be a number nobody
+#' could check.
 #'
-#' @return A named list of numeric vectors.
+#' @param su The per-parameter tables.
+#' @param what What was asked for.
+#' @param params The distribution's parameters.
+#' @param spec The specification, for the message.
+#'
+#' @return A data frame, or a named list of them.
 #'
 #' @keywords internal
-draw_coefficients <- function(design, params, par, sd) {
-  if (!is.null(par)) {
-    if (!is.list(par) || is.null(names(par))) {
-      stop("'par' must be a named list, one entry per parameter.",
-           call. = FALSE)
+se_answer <- function(su, what, params, spec) {
+  cols <- c("fit", "se", "lower", "upper")
+  lcols <- c("eta", "se_eta", "eta_lower", "eta_upper")
+  ren <- function(d, cc) stats::setNames(d[, cc, drop = FALSE], cols)
+  if (identical(what, "parameter")) {
+    return(lapply(su, ren, cc = cols))
+  }
+  if (identical(what, "link")) {
+    return(lapply(su, ren, cc = lcols))
+  }
+  if (what %in% params) return(ren(su[[what]], cols))
+  if (startsWith(what, "link:")) {
+    p <- substring(what, 6L)
+    if (!p %in% params) stop(unknown_what(p, params), call. = FALSE)
+    return(ren(su[[p]], lcols))
+  }
+  stop(sprintf(paste0("'%s' has no standard error here. A moment's would ",
+                      "need its\n  derivative in every parameter, which the ",
+                      "distribution does not\n  offer; ask for a parameter ",
+                      "(%s), for \"parameter\", or for \"link\"."),
+               what, paste(params, collapse = ", ")), call. = FALSE)
+}
+
+
+#' The Columns a Structural Term Adds to a Derivative Row
+#'
+#' @description
+#' The derivative of one equation's predictor in the free parameters of the
+#' score-driven term sitting in it, one row per observation, on the scale the
+#' variance matrix is indexed by.
+#'
+#' @details
+#' A filter's level is a recursion, not a column, so it has no row of a
+#' design. What it has is the derivative the recursion propagates beside the
+#' state, which \code{\link[modelterms7]{term_filter}} returns on the
+#' parameter scale; multiplying by each parameter's own
+#' \eqn{h'(\zeta_j)} carries it to the unconstrained scale the joint
+#' matrix is written in, which is the chain the exact gradient already uses.
+#'
+#' A parameter an intercept in the same equation holds is not estimated and
+#' is not in that matrix, so it is not here either.
+#'
+#' THE DESIGN'S OWN ROWS ARE CORRECTED at the same time, through
+#' \code{\link[modelterms7]{term_static_deriv}}: a coefficient of this
+#' equation moves the level as well as the static part, because the scores
+#' driving the recursion are read at the predictor the recursion produces.
+#' Measured on a score-driven mean with one covariate beside it, leaving
+#' that out understates the standard error by about a quarter.
+#'
+#' @param spec The specification.
+#' @param design Its design.
+#' @param ep The predictors, as \code{\link{statmod_eta}} returns them.
+#' @param p The distribution parameter whose equation is being read.
+#' @param X The equation's design rows.
+#'
+#' @return A list with \code{X}, \code{J} and \code{key}, or \code{NULL}
+#'   where the equation carries no filter.
+#'
+#' @seealso \code{\link{predict_se}}, \code{\link{statmod_filter_at}}
+#'
+#' @keywords internal
+structural_se_columns <- function(spec, design, ep, p, X) {
+  fs <- ep$filters
+  if (!length(fs)) return(NULL)
+  sst <- statmod_structural_state(design)
+  cols <- list()
+  keys <- character(0)
+  seen <- FALSE
+  for (f in fs) {
+    if (!identical(f$param, p)) next
+    if (ncol(X)) {
+      D <- modelterms7::term_static_deriv(f$tm, f$curv, X, f$psi)
+      if (!is.null(D) && identical(dim(D), dim(X))) X <- D
     }
-    bad <- setdiff(names(par), params)
-    if (length(bad)) {
-      stop(sprintf(paste0("'par' names '%s', which is not a parameter.\n",
-                          "  They are: %s."),
-                   bad[1L], paste(params, collapse = ", ")), call. = FALSE)
+    seen <- TRUE
+    z <- sst$zeta[[f$term]]
+    nm <- names(z)
+    hl <- sst$held[[f$term]]
+    free <- setdiff(nm, hl)
+    if (!length(free)) next
+    links <- modelterms7::term_links(f$tm)
+    ch <- vapply(free, function(j)
+      linkfunctions7::dlinkinv(links[[j]], z[[j]]), numeric(1))
+    J <- as.matrix(f$jacobian)[, match(free, nm), drop = FALSE]
+    cols[[length(cols) + 1L]] <- J * rep(ch, each = nrow(J))
+    lb <- tryCatch(f$tm@label, error = function(e) "")
+    nmf <- if (length(lb) == 1L && nzchar(lb)) paste(lb, free, sep = ".") else
+      free
+    keys <- c(keys, paste(p, nmf, sep = ":"))
+  }
+  if (!seen) return(NULL)
+  J <- if (length(cols)) do.call(cbind, cols) else matrix(0, nrow(X), 0L)
+  list(X = X, J = J, key = keys)
+}
+
+
+#' Predictors at Rows That Continue the Series
+#'
+#' @description
+#' The linear predictors and the parameters at new rows for a model carrying
+#' a structural term, with the term's own recursion carried forward from
+#' where the fitting data left it.
+#'
+#' @details
+#' The static part is the ordinary assembly: each term's block reapplied at
+#' the new rows, the offsets re-evaluated there. What cannot be reapplied is
+#' the structural term, whose contribution at one row is the state a
+#' recursion has reached over every row before it. The fit is therefore run
+#' once at the observed rows to recover that state -- the level and the
+#' driving quantity at each of them, the level being the difference between
+#' the filtered predictor and the static one -- and the term is asked to
+#' continue from there through
+#' \code{\link[modelterms7]{term_continue}}.
+#'
+#' WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
+#' times. New rows carrying the response are a re-reading: the filter is run
+#' over them from the term's own seed, which is what a caller means by
+#' predicting a model on another series, and is why
+#' \code{predict(fit, newdata = <the fitting data>)} returns the fitted
+#' values. New rows without it are a continuation, and must come after the
+#' observed series. A frame with the response on some rows and not others is
+#' rejected: the two readings differ, and picking one would answer a question
+#' that was not asked.
+#'
+#' A term whose contribution is a likelihood mixed over latent states is
+#' rejected: what such a term reports at an observed row is a posterior over
+#' states, which past the data is a predictive distribution and not a value.
+#'
+#' @param fit The fitted model.
+#' @param spec The specification at the new data.
+#' @param design Its design.
+#'
+#' @return A list shaped as \code{\link{statmod_eta}}'s, without the
+#'   memoized filter objects.
+#'
+#' @seealso \code{\link{predict.StatmodFit}}
+#'
+#' @keywords internal
+statmod_eta_continued <- function(fit, spec, design) {
+  nd <- spec@newdata
+  params <- spec@distrib@params
+  links <- spec@distrib@link_params
+  coef <- fit@coefficients
+  su <- attr(design, "structural")
+  for (u in su) {
+    if (!identical(u$kind, "filter")) {
+      stop(sprintf(paste0("'%s' reports a likelihood mixed over latent ",
+                          "states, not a predictor, so\n  it has no value ",
+                          "to continue past the series. predict(fit) at the ",
+                          "observed\n  rows gives its posterior-weighted ",
+                          "predictor."), u$term), call. = FALSE)
     }
   }
-  stats::setNames(lapply(params, function(p) {
-    k <- design[[p]]$npar
-    if (!is.null(par) && !is.null(par[[p]])) {
-      v <- as.numeric(par[[p]])
-      if (length(v) != k) {
-        stop(sprintf("'par$%s' has length %d but '%s' has %d coefficients.",
-                     p, length(v), p, k), call. = FALSE)
-      }
-      return(v)
+
+  # the static part at the new rows
+  eta <- stats::setNames(vector("list", length(params)), params)
+  theta <- eta
+  d2 <- statmod_design_at(spec, coef, design)
+  for (p in params) {
+    d <- d2[[p]]
+    e <- if (d$npar == 0L) rep(0, spec@n_obs) else
+      as.numeric(d$X %*% coef[[p]])
+    if (!is.null(d$adj)) e <- e + d$adj
+    off <- spec@offsets[[p]]
+    if (!is.null(off)) e <- e + off
+    eta[[p]] <- e
+    theta[[p]] <- linkfunctions7::linkinv(links[[p]], e)
+  }
+
+  # the state the observed part ended at
+  ospec <- fit@spec
+  odesign <- statmod_design(ospec)
+  oep <- statmod_eta(ospec, odesign, coef)
+  ost <- statmod_structural_state(odesign)
+  known <- statmod_response_known(spec@response)
+  for (f in oep$filters) {
+    tm <- ospec@terms[[f$param]][[f$term]]
+    psi <- structural_psi(tm, ost$zeta[[f$term]])
+    p <- f$param
+    if (identical(known, TRUE)) {
+      # A RE-READING: the response is there, so the filter is run over these
+      # rows from the term's own seed rather than continued. The term is
+      # rebuilt on them, which is what gives its recursion their own times
+      # and groups; every other block still goes through its blueprint.
+      tmn <- modelterms7::term_build(tm, nd)
+      cb <- structural_callbacks(spec, theta, p)
+      out <- modelterms7::term_filter(tmn, eta[[p]], spec@response,
+                                      cb$score, cb$curvature, psi,
+                                      fast = cb$fast, threads = spec@threads)
+      eta[[p]] <- out$eta
+    } else {
+      f_past <- as.numeric(f$eta) - as.numeric(f$eta_static)
+      # the driving quantity, read at the predictor the recursion produced --
+      # the same callback the filter itself was handed
+      s_past <- vapply(seq_along(f_past),
+                       function(i) f$cb$score(f$eta[[i]], i), numeric(1))
+      eta[[p]] <- eta[[p]] +
+        modelterms7::term_continue(tm, psi, f_past, s_past, nd)
     }
-    stats::rnorm(k, 0, sd)
-  }), params)
+    theta[[p]] <- linkfunctions7::linkinv(links[[p]], eta[[p]])
+  }
+  list(eta = eta, theta = theta, filters = list(), regimes = list(),
+       eta_static = eta)
+}
+
+
+#' Whether New Rows Carry the Response
+#'
+#' @description
+#' \code{TRUE} where every row has one, \code{FALSE} where none does, and an
+#' error where some do.
+#'
+#' @details
+#' It is what separates a re-reading of a model on another series from a
+#' continuation of the one it was fitted to, and the separation has to be
+#' all-or-nothing: a filter's recursion at one row reads the rows before it,
+#' so a frame with the response on some rows and not others describes neither
+#' operation, and answering it would mean choosing a reading the caller did
+#' not ask for.
+#'
+#' @param y The response as the specification carries it.
+#'
+#' @return \code{TRUE} or \code{FALSE}.
+#'
+#' @seealso \code{\link{statmod_eta_continued}}
+#'
+#' @keywords internal
+statmod_response_known <- function(y) {
+  if (is.null(y)) return(FALSE)
+  ok <- if (is.matrix(y)) stats::complete.cases(y) else !is.na(y)
+  if (all(ok)) return(TRUE)
+  if (!any(ok)) return(FALSE)
+  stop("the new data carries the response on some rows and not others, and ",
+       "the two\n  readings differ: rows with it are read by running the ",
+       "filter over them, rows\n  without it by continuing the fitted ",
+       "series. Ask for one or the other.", call. = FALSE)
 }

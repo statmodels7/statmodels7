@@ -9,7 +9,7 @@ test_that("an unpenalized gaussian fit reproduces the closed-form variance", {
   # the reference is the linear model's own, which shares no code with the
   # penalized information assembled here
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))
+                  par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))$data
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
   V <- vcov(fit)
 
@@ -28,7 +28,7 @@ test_that("an unpenalized gaussian fit reproduces the closed-form variance", {
 
 test_that("with no penalty the two conventions are the same matrix", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
   expect_equal(vcov(fit, "bayesian"), vcov(fit, "frequentist"),
                tolerance = 1e-10)
@@ -36,7 +36,7 @@ test_that("with no penalty the two conventions are the same matrix", {
 
 test_that("a ridge makes the bayesian variance the larger of the two", {
   sim <- rstatmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -1), sigma = log(0.5)))
+                  par = list(mu = c(1, 2, -1), sigma = log(0.5)))$data
   fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), sim)
   vb <- diag(vcov(fit, "bayesian"))
   vf <- diag(vcov(fit, "frequentist"))
@@ -54,7 +54,7 @@ test_that("vcov agrees with a numerical Hessian of the objective", {
   # penalized objective shares none of that arithmetic
   skip_if_not_installed("numDeriv")
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -67,7 +67,7 @@ test_that("vcov agrees with a numerical Hessian of the objective", {
 
 test_that("a confidence interval is symmetric and covers the truth", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
   ci <- confint(fit)
   expect_named(ci, c("parameter", "term", "coefficient", "estimate", "se",
@@ -87,7 +87,7 @@ test_that("a confidence interval is symmetric and covers the truth", {
 
 test_that("confint selects by parameter, by term and by label", {
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   expect_identical(unique(confint(fit, "sigma")$parameter), "sigma")
   expect_identical(nrow(confint(fit, "mu:x")), 1L)
@@ -117,7 +117,7 @@ test_that("a coefficient a lasso set to zero has no variance", {
 
 test_that("a summary carries the tables, the criteria and the notes", {
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 0.8)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   s <- summary(fit)
   expect_named(s@tables, c("mu", "sigma"))
@@ -140,7 +140,7 @@ test_that("a summary carries the tables, the criteria and the notes", {
 
 test_that("a penalized term is a block of its own, with its hyperparameter", {
   sim <- rstatmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -1), sigma = log(0.5)))
+                  par = list(mu = c(1, 2, -1), sigma = log(0.5)))$data
   fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(),
                  sim, outer_criterion = NULL)
   s <- summary(fit)
@@ -179,9 +179,9 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   # the linear component IS an ordinary coefficient and carries inference
   expect_true(is.finite(b$table$se[2L]))
 
-  expect_output(print(s), "Smooth")
+  expect_output(print(s), "s(x, k = 10, lambda = 5)", fixed = TRUE)
   expect_output(print(s), "edf")
-  expect_output(print(s), "(fixed)", fixed = TRUE)
+  expect_output(print(s), "[fixed]", fixed = TRUE)
 })
 
 test_that("a random effect shows its variance parameters, not its levels", {
@@ -202,7 +202,7 @@ test_that("a random effect shows its variance parameters, not its levels", {
   expect_true(all(b$table$role == "fixed"))
   expect_gt(nrow(b$table), 0)
   expect_false(any(startsWith(b$table$name, "random.")))
-  expect_output(print(s), "Random effect")
+  expect_output(print(s), "random(~1 | g)", fixed = TRUE)
 })
 
 test_that("a selection lists the survivors and counts the zeros", {
@@ -229,7 +229,7 @@ test_that("a fit whose information is singular says so rather than guessing", {
   # two identical columns: the data does not identify their difference, and a
   # pseudo-inverse would report a standard error for a direction it cannot see
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   sim$xcopy <- sim$x
   expect_error(
     vcov(statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim)),
@@ -490,4 +490,240 @@ test_that("a kinked hyperparameter is refused rather than read", {
   expect_match(ct$reason[1], "kink")
   # the distinction is the point: this reason is NOT the no-penalty one
   expect_false(grepl("no penalty", ct$reason[1], fixed = TRUE))
+})
+
+
+test_that("every hyperparameter carries the mark its note speaks of", {
+  # The note at the foot says "a hyperparameter marked REML was estimated by
+  # that criterion", and no such mark was ever printed: the source went into
+  # the column where a standard error would have been, which is occupied for
+  # a REML-estimated one and blank only for a held or path-chosen one. It
+  # goes in the NAME now, so the three kinds are marked alike and the note
+  # is true. Without this the defect is invisible -- the note reads as if it
+  # described something on screen.
+  sim <- rstatmod(y ~ x + z, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))$data
+  s <- summary(statmod(y ~ s(x, k = 8),
+                       distributions7::gaussian1_distrib(), sim))
+  expect_output(print(s), "[reml]", fixed = TRUE)
+  # and the note that speaks of it is emitted
+  expect_true(any(grepl("marked REML", s@notes, fixed = TRUE)))
+})
+
+test_that("the note about the point follows the certificate, not the flag", {
+  # WHETHER THE POINT IS A MAXIMUM is the certificate's question and the
+  # search's flag is a different one, so the note that says the estimates are
+  # read where the surface is still moving is emitted from the certificate.
+  # It used to read the flag, and was wrong in both directions: printed under
+  # a certificate saying CONVERGED, and absent on a fit whose search met its
+  # rule 0.371 log-likelihood units above its mode.
+  sim <- rstatmod(y ~ x + z, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))$data
+  for (f in list(statmod(y ~ x + z, distributions7::gaussian1_distrib(), sim),
+                 statmod(y ~ s(x, k = 8),
+                         distributions7::gaussian1_distrib(), sim))) {
+    s <- summary(f)
+    warned <- any(grepl("not certified as a maximum", s@notes, fixed = TRUE))
+    ok <- !is.null(s@certificate) &&
+      s@certificate$state %in% c("converged", "boundary")
+    expect_identical(warned, !ok)
+  }
+})
+
+test_that("a developed parameter is reported as a compartment of its own", {
+  set.seed(3)
+  m <- 6
+  ni <- 30
+  id <- factor(rep(seq_len(m), each = ni))
+  x <- runif(m * ni, 0, 10)
+  psi_i <- 5 + rnorm(m, 0, 0.6)
+  y <- 0.3 * x + 1.5 * pmax(x - psi_i[as.integer(id)], 0) +
+    rnorm(m * ni, 0, 0.5)
+  dd <- data.frame(y = y, x = x, id = id)
+  fit <- statmod(y ~ seg(x, psi ~ random(~ 1 | id), psi = 5),
+                 gaussian1_distrib(), dd)
+  s <- summary(fit)
+  b <- s@tables$mu[[which(vapply(s@tables$mu, `[[`, character(1), "kind") ==
+                          "breakpoint")]]
+  expect_identical(length(b$components), 1L)
+  cp <- b$components[[1L]]
+  expect_identical(cp$name, "psi1")
+  # the term's OWN table keeps what is not developed, and the developed
+  # parameter's columns are gone from it
+  expect_true(all(c("beta", "gamma1") %in%
+                    sub("^[^.]+\\.", "", b$table$name)))
+  expect_identical(nrow(b$table), 2L)
+  # the compartment carries its own hyperparameter and the population value,
+  # and NOT the predictions: a column of per-group numbers is what coef() is
+  # for
+  expect_true(any(b$components[[1L]]$table$role == "estimated"))
+  expect_true("(Intercept)" %in% cp$table$name)
+  expect_false(any(startsWith(cp$table$name, "random.")))
+  expect_lt(nrow(cp$table), cp$n_coef)
+  # and reports how many there are instead
+  expect_match(cp$lines[[1L]], "^[0-9]+ predictions, sd")
+
+  out <- paste(utils::capture.output(print(s)), collapse = "\n")
+  expect_match(out, "psi1  ~ intercept + random", fixed = TRUE)
+  expect_match(out, "effect sd", fixed = TRUE)
+  expect_match(out, "predictions, sd", fixed = TRUE)
+  expect_false(grepl("random.1", out, fixed = TRUE))
+})
+
+test_that("a term that develops nothing keeps the flat table it had", {
+  set.seed(4)
+  dd <- data.frame(x = runif(200, 0, 10))
+  dd$y <- 0.3 * dd$x + 1.5 * pmax(dd$x - 5, 0) + rnorm(200, 0, 0.5)
+  fit <- statmod(y ~ seg(x, psi = 4), gaussian1_distrib(), dd)
+  s <- summary(fit)
+  b <- s@tables$mu[[which(vapply(s@tables$mu, `[[`, character(1), "kind") ==
+                          "breakpoint")]]
+  expect_identical(b$components, list())
+  expect_null(b$head)
+  # the readable quantity, as before: the position and not the pair of
+  # working coefficients it is read off
+  expect_true("psi1" %in% b$table$name)
+})
+
+test_that("the head shows every parameter of a term at once", {
+  set.seed(5)
+  m <- 5
+  ni <- 30
+  id <- factor(rep(seq_len(m), each = ni))
+  x <- runif(m * ni, 0, 10)
+  psi_i <- 5 + rnorm(m, 0, 0.5)
+  y <- 0.3 * x + 1.5 * pmax(x - psi_i[as.integer(id)], 0) +
+    rnorm(m * ni, 0, 0.5)
+  dd <- data.frame(y = y, x = x, id = id)
+  fit <- statmod(y ~ seg(x, psi ~ random(~ 1 | id), psi = 5),
+                 gaussian1_distrib(), dd)
+  b <- summary(fit)@tables$mu[[2L]]
+  expect_identical(b$head$name, "psi1")
+  # it carries the population value of the development and says what
+  # develops it, which is the one thing the tables below cannot show: there
+  # that number is labelled by the development's intercept
+  expect_true(all(is.finite(b$head$estimate)))
+  expect_identical(b$head$note, "~ intercept + random")
+  expect_false(any(c("beta", "gamma1") %in% b$head$name))
+})
+
+test_that("a long block is cut and says how much it hid", {
+  tb <- data.frame(name = paste0("v", 1:40), estimate = 1:40 / 10,
+                   se = 0.1, statistic = 1, p_value = 0.5,
+                   lower = 0, upper = 1, role = "coefficient", source = "",
+                   stringsAsFactors = FALSE)
+  expect_identical(length(block_rows_shown(tb)), 10L)
+  expect_identical(block_rows_shown(tb[1:12, ]), 1:12)
+  # a hyperparameter is never among what is dropped: it governs every
+  # coefficient under it
+  tb$role[1L] <- "estimated"
+  expect_true(1L %in% block_rows_shown(tb))
+  b <- list(kind = "penalized", label = "Penalized", term = "ridge(x)",
+            n_coef = 40L, edf = 5, n_zero = 0L, table = tb, head = NULL,
+            components = list())
+  # eleven rows are shown, the hyperparameter and ten coefficients, so
+  # twenty-nine are not
+  expect_output(print_block(b), "29 more, in coef()", fixed = TRUE)
+})
+
+test_that("the prefix a term repeats on every row is dropped for printing", {
+  expect_identical(drop_common_prefix(c("seg.beta", "seg.gamma1")),
+                   c("beta", "gamma1"))
+  expect_identical(drop_common_prefix("seg.psi1"), "psi1")
+  # nothing in common, nothing dropped
+  expect_identical(drop_common_prefix(c("x", "gb")), c("x", "gb"))
+  expect_identical(drop_common_prefix(c("a.b", "c.d")), c("a.b", "c.d"))
+  # and never everything: a name is left with something to be
+  expect_identical(drop_common_prefix(c("a.b", "a.b")), c("b", "b"))
+  # ONE piece, not every piece they share: names that agree further along
+  # keep what distinguishes them where a reader would look for it
+  expect_identical(drop_common_prefix(c("ridge.r.1", "ridge.r.2")),
+                   c("r.1", "r.2"))
+})
+
+gas_panel_fit <- function(q = 1L) {
+  set.seed(21)
+  m <- 5
+  ni <- 40
+  id <- factor(rep(seq_len(m), each = ni))
+  tt <- rep(seq_len(ni), m)
+  om <- 0.4 + rnorm(m, 0, 0.3)
+  y <- numeric(m * ni)
+  for (g in seq_len(m)) {
+    f <- om[g] / (1 - 0.6)
+    for (i in seq_len(ni)) {
+      k <- (g - 1) * ni + i
+      y[k] <- f + rnorm(1, 0, 1)
+      f <- om[g] + 0.15 * (y[k] - f) + 0.6 * f
+    }
+  }
+  dd <- data.frame(y = y, id = id, t = tt)
+  statmod(y ~ 0 + gas(p = 1, q = q, omega ~ random(~ 1 | id), by = id,
+                      time = t),
+          gaussian1_distrib(), dd)
+}
+
+test_that("a structural term is a block, and its development a compartment", {
+  fit <- gas_panel_fit()
+  s <- summary(fit)
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  b <- s@tables$mu[[which(kinds == "structural")]]
+  expect_identical(length(b$components), 1L)
+  cp <- b$components[[1L]]
+  expect_identical(cp$name, "omega")
+  # the term's own table keeps the parameters that are numbers, under the
+  # names the term reports: the persistence rides a partial autocorrelation
+  # and what is reported is the autoregressive coefficient
+  expect_identical(b$table$name, c("alpha1", "beta1"))
+  # the hyperparameter sits with the coordinates it shrinks, not in a block
+  # of its own carrying nothing else
+  expect_true(any(cp$table$role == "estimated"))
+  expect_true("(Intercept)" %in% cp$table$name)
+  expect_match(cp$lines[[1L]], "^[0-9]+ predictions, sd")
+
+  lines <- utils::capture.output(print(s))
+  out <- paste(lines, collapse = "\n")
+  # a block is headed by its term and nothing else, at column zero: the
+  # call also appears indented under `Call:`, which is not the heading
+  expect_true(any(startsWith(lines, "gas(")))
+  expect_match(out, "omega  ~ intercept + random", fixed = TRUE)
+  expect_false(grepl("omega.random.1", out, fixed = TRUE))
+  # nothing reported here carries a test, so the two test columns are not
+  # printed at all
+  expect_false(grepl("(structural: no design columns)", out, fixed = TRUE))
+})
+
+test_that("which parameter a structural quantity belongs to is read off the jacobian", {
+  fit <- gas_panel_fit(q = 2L)
+  st <- statmod_structural_table(fit)
+  expect_true(all(c("component", "position") %in% names(st)))
+  # every deviation of the developed level belongs to it
+  expect_true(all(st$component[startsWith(st$name, "omega.")] == "omega"))
+  # and the first autoregressive coefficient belongs to no single
+  # parameter: phi_1 = rho_1 (1 - rho_2) reads two coordinates, so it is
+  # filed with the term. The last one is rho_q exactly and does belong to
+  # its own, which is the control saying the rule reads the Jacobian rather
+  # than the name
+  expect_identical(st$component[st$name == "beta1"], "")
+  expect_identical(st$component[st$name == "beta2"], "pacf2")
+  expect_identical(st$component[st$name == "alpha1"], "alpha1")
+})
+
+test_that("a structural term with no development is one flat block", {
+  set.seed(22)
+  n <- 300
+  y <- numeric(n)
+  f <- 1
+  for (i in seq_len(n)) {
+    y[i] <- f + rnorm(1, 0, 1)
+    f <- 0.4 + 0.15 * (y[i] - f) + 0.6 * f
+  }
+  dd <- data.frame(y = y, t = seq_len(n))
+  fit <- statmod(y ~ 0 + gas(p = 1, q = 1, time = t), gaussian1_distrib(), dd)
+  s <- summary(fit)
+  kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+  b <- s@tables$mu[[which(kinds == "structural")]]
+  expect_length(b$components, 0L)
+  expect_null(b$head)
+  expect_identical(b$table$name, c("omega", "alpha1", "beta1"))
 })

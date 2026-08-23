@@ -122,7 +122,8 @@ fit_expected <- function(object) {
 #' sqrt(diag(vcov(fit)))
 #' @keywords internal
 vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
-                            expected = NULL, ...) {
+                            expected = NULL, readable = TRUE,
+                            parameter = NULL, ...) {
   type <- match.arg(type)
   if (is.null(expected)) expected <- fit_expected(object)
   spec <- object@spec
@@ -162,6 +163,8 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   keep <- rep(TRUE, total)
   beta <- unlist(coef[spec@distrib@params], use.names = FALSE)
   keep[lab$kinked & beta == 0] <- FALSE
+  frz <- frozen_block(spec, lab)
+  keep[frz] <- FALSE
   # a kinked penalty contributes no curvature away from its kink either, and
   # any non-finite entry would be the kink itself reached by a hair
   S <- zap_nonfinite(S)
@@ -178,13 +181,312 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
                  c(nm[keep], rep("", nz)))
   V <- if (type == "bayesian") Vb else
     Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
-  # the coefficient block of the joint inverse, which is not the inverse of
-  # the coefficient block wherever the two are correlated
-  V <- V[seq_len(sum(keep)), seq_len(sum(keep)), drop = FALSE]
-  out[keep, keep] <- V
+  # THE JOINT INVERSE IS KEPT WHOLE. Its coefficient block is not the
+  # inverse of the coefficient block wherever the two are correlated, which
+  # is why the matrix is built jointly; and the structural block is the
+  # variance of the term's own parameters, which used to be computed here
+  # and dropped, leaving a model whose predictor is a filter with no
+  # variance to report at all.
+  if (any(frz)) {
+    warning(frozen_condition(sprintf(paste0(
+      "The block of %s is a working linearization with",
+                           " a frozen weight,\n  not a Jacobian, so its",
+                           " curvature is not the model's: every one of its",
+                           "\n  coefficients would be reported with a",
+                           " standard error of zero. They are\n  missing",
+                           " here instead. The rest of the matrix stands and",
+                           " is conditional\n  on the break-points where",
+                           " they are; resample for their own",
+      " uncertainty."),
+      paste(unique(lab$term[frz]), collapse = ", "))))
+  }
+  ns <- sum(keep)
+  out <- matrix(NA_real_, total + nz, total + nz)
+  out[c(keep, rep(TRUE, nz)), c(keep, rep(TRUE, nz))] <- V
+  rn <- c(nm, if (nz) rep("", nz) else character(0))
+  who <- c(lab$parameter, if (nz) rep(NA_character_, nz) else character(0))
+  if (nz) {
+    tl <- structural_tail_names(spec, design)
+    if (length(tl) == nz) {
+      rn[total + seq_len(nz)] <- unname(tl)
+      who[total + seq_len(nz)] <- names(tl)
+    }
+  }
+  dimnames(out) <- list(rn, rn)
+  if (isTRUE(readable)) {
+    out <- readable_vcov(spec, design, object, out)
+  } else if (nz) {
+    # BY EQUATION, as the readable route and `coef()` both are. The joint
+    # order puts every design block first and the structural tail last, so a
+    # model whose predictor is a filter listed the scale's intercept before
+    # the mean's own parameters and did not line up with `coef()`.
+    ord <- order(match(who, spec@distrib@params))
+    out <- out[ord, ord, drop = FALSE]
+  }
+  if (!is.null(parameter)) out <- select_parameter(out, parameter, spec)
   out
 }
+
+#' The Names of the Structural Tail of the Joint Information
+#'
+#' @description
+#' The free parameters of every structural term, under the names a
+#' coefficient of the same term would carry.
+#'
+#' @details
+#' A level an intercept in the same equation carries is held and is not in
+#' the joint information, so it is not here either; the tail is the free ones
+#' in the term's own order, which is the order the information was assembled
+#' in.
+#'
+#' @param spec The fitted specification.
+#' @param design The design.
+#'
+#' @return A character vector, empty where there is no structural term.
+#'
+#' @keywords internal
+structural_tail_names <- function(spec, design) {
+  su <- attr(design, "structural")
+  if (!length(su)) return(character(0))
+  sst <- statmod_structural_state(design)
+  out <- character(0)
+  for (u in su) {
+    tm <- spec@terms[[u$param]][[u$term]]
+    free <- setdiff(modelterms7::term_params(tm), sst$held[[u$term]])
+    lb <- tryCatch(tm@label, error = function(e) "")
+    if (length(lb) == 1L && nzchar(lb)) free <- paste(lb, free, sep = ".")
+    out <- c(out, stats::setNames(paste(u$param, free, sep = ":"),
+                                  rep(u$param, length(free))))
+  }
+  out
+}
+
+#' The Variance of the Quantities a Fit Reports
+#'
+#' @description
+#' The delta method over the joint variance, with the Jacobian
+#' \code{\link{readable_joint}} supplies.
+#'
+#' @details
+#' A quantity that reads a coordinate whose variance is missing -- one a
+#' kinked penalty set to zero, or a parameter held by an intercept -- has no
+#' variance either, and its row and column are left missing rather than
+#' computed from the coordinates that do have one.
+#'
+#' @param spec The fitted specification.
+#' @param design The design.
+#' @param fit The fit.
+#' @param V The joint variance over the coordinates.
+#'
+#' @return The variance over the quantities.
+#'
+#' @keywords internal
+readable_vcov <- function(spec, design, fit, V) {
+  rj <- tryCatch(readable_joint(spec, design, fit), error = function(e) NULL)
+  if (is.null(rj) || nrow(rj$jacobian) == 0L ||
+      ncol(rj$jacobian) != nrow(V)) {
+    return(V)
+  }
+  J <- rj$jacobian
+  ok <- !is.na(diag(V))
+  bad <- rj$held | apply(J[, !ok, drop = FALSE] != 0, 1L, any)
+  Vz <- V
+  Vz[is.na(Vz)] <- 0
+  out <- J %*% Vz %*% t(J)
+  out[bad, ] <- NA_real_
+  out[, bad] <- NA_real_
+  nm <- paste(rj$parameter, rj$name, sep = ":")
+  dimnames(out) <- list(nm, nm)
+  out
+}
+
+#' One Equation's Submatrix of a Variance Matrix
+#'
+#' @description
+#' The rows and columns of the named distribution parameters.
+#'
+#' @param V A variance matrix whose names are \code{parameter:name}.
+#' @param parameter The distribution parameters to keep.
+#' @param spec The fitted specification, for the message.
+#'
+#' @return The submatrix.
+#'
+#' @keywords internal
+select_parameter <- function(V, parameter, spec) {
+  who <- sub(":.*$", "", rownames(V))
+  keep <- who %in% parameter
+  if (!any(keep)) {
+    stop(sprintf(paste0("'parameter' matched nothing. The model's ",
+                        "distribution parameters are %s."),
+                 paste(spec@distrib@params, collapse = ", ")), call. = FALSE)
+  }
+  V[keep, keep, drop = FALSE]
+}
 S7::method(vcov, StatmodFit) <- vcov.StatmodFit
+
+#' The Quantities a Fit Reports, and the Map From Its Coordinates
+#'
+#' @description
+#' One row per quantity the model is about, over the coefficients of every
+#' equation and the own parameters of a structural term, with the Jacobian
+#' from the coordinates those were estimated on.
+#'
+#' @details
+#' This is the one place the readable view is built, so that
+#' \code{\link{coef.StatmodFit}}, \code{\link{vcov.StatmodFit}} and
+#' \code{\link{confint.StatmodFit}} cannot report a quantity under one name
+#' and index it under another.
+#'
+#' A term says what it is about through
+#' \code{\link[modelterms7]{term_readable}}, which gives the quantities and
+#' the Jacobian. The coordinates that Jacobian touches are replaced by the
+#' quantities; a coordinate no quantity reads stands where it is, with a unit
+#' row of its own. That is what leaves a developed parameter intact: its
+#' development is a vector of coefficients over covariates with no single
+#' value, so nothing is declared for it and nothing is taken away.
+#'
+#' The joint coordinate vector is the design coefficients of every equation
+#' in order, then the FREE parameters of each structural term -- free because
+#' a level an intercept in the same equation carries is held and is not in
+#' the information the variance comes from. A quantity that reads a held
+#' parameter is marked: its value stands, and its variance would be that of
+#' the rest alone, so it is not reported.
+#'
+#' @param spec The fitted specification.
+#' @param design The design.
+#' @param fit The fit.
+#'
+#' @return A list with \code{name}, \code{value}, \code{parameter},
+#'   \code{term}, \code{scale} (one link per quantity), \code{held} (whether
+#'   the quantity reads a parameter that is not estimated), \code{jacobian}
+#'   (quantities by joint coordinates) and \code{n_design}.
+#'
+#' @seealso \code{\link[modelterms7]{term_readable}},
+#'   \code{\link{statmod_structural_table}}
+#'
+#' @keywords internal
+readable_joint <- function(spec, design, fit) {
+  params <- spec@distrib@params
+  npar <- vapply(params, function(p) design[[p]]$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  total <- sum(npar)
+  su <- attr(design, "structural")
+  sst <- if (length(su)) statmod_structural_state(design) else NULL
+
+  tails <- list()
+  at <- total
+  for (u in su) {
+    tm <- spec@terms[[u$param]][[u$term]]
+    nmp <- modelterms7::term_params(tm)
+    hl <- if (is.null(sst)) character(0) else sst$held[[u$term]]
+    free <- setdiff(nmp, hl)
+    tails[[length(tails) + 1L]] <- list(
+      u = u, tm = tm, nm = nmp, held = hl, free = free, at = at)
+    at <- at + length(free)
+  }
+  njoint <- at
+  ident <- linkfunctions7::identity_link()
+
+  rows <- list()
+  add <- function(name, value, parameter, term, scale, held, j) {
+    rows[[length(rows) + 1L]] <<- list(
+      name = name, value = value, parameter = parameter, term = term,
+      scale = scale, held = held, j = j)
+  }
+
+  for (pi in seq_along(params)) {
+    p <- params[[pi]]
+    d <- design[[p]]
+    if (!d$npar) next
+    cf <- fit@coefficients[[p]]
+    term_of <- rep(NA_character_, d$npar)
+    for (nm in names(d$blocks)) term_of[d$blocks[[nm]]] <- nm
+    # which coordinates a term's quantities cover, and what they are
+    swap <- vector("list", d$npar)
+    drop <- rep(FALSE, d$npar)
+    for (nm in names(d$blocks)) {
+      idx <- d$blocks[[nm]]
+      if (!length(idx)) next
+      term <- spec@terms[[p]][[nm]]
+      rd <- tryCatch(modelterms7::term_readable(term, cf[idx]),
+                     error = function(e) NULL)
+      if (is.null(rd) || !length(rd$name)) next
+      sup <- which(apply(rd$jacobian != 0, 2L, any))
+      if (!length(sup)) next
+      lb <- tryCatch(term@label, error = function(e) "")
+      drop[idx[sup]] <- TRUE
+      swap[[idx[sup][1L]]] <- list(rd = rd, idx = idx, term = nm, lb = lb)
+    }
+    for (i in seq_len(d$npar)) {
+      s <- swap[[i]]
+      if (!is.null(s)) {
+        for (k in seq_along(s$rd$name)) {
+          j <- numeric(njoint)
+          j[offs[[pi]] + s$idx] <- s$rd$jacobian[k, ]
+          nmk <- if (nzchar(s$lb)) paste(s$lb, s$rd$name[[k]], sep = ".") else
+            s$rd$name[[k]]
+          sc <- if (is.null(s$rd$scale)) ident else s$rd$scale[[k]]
+          add(nmk, s$rd$value[[k]], p, s$term, sc, FALSE, j)
+        }
+      }
+      if (drop[[i]]) next
+      j <- numeric(njoint)
+      j[offs[[pi]] + i] <- 1
+      add(d$coef_names[[i]], cf[[i]], p, term_of[[i]], ident, FALSE, j)
+    }
+  }
+
+  for (tl in tails) {
+    z <- sst$zeta[[tl$u$term]]
+    rd <- tryCatch(modelterms7::term_readable(tl$tm, z),
+                   error = function(e) NULL)
+    lb <- tryCatch(tl$tm@label, error = function(e) "")
+    if (is.null(rd) || !length(rd$name)) {
+      vals <- unlist(z)[tl$free]
+      for (k in seq_along(tl$free)) {
+        j <- numeric(njoint)
+        j[tl$at + k] <- 1
+        nmk <- if (nzchar(lb)) paste(lb, tl$free[[k]], sep = ".") else
+          tl$free[[k]]
+        add(nmk, vals[[k]], tl$u$param, tl$u$term, ident, FALSE, j)
+      }
+      next
+    }
+    # the Jacobian is over the term's WHOLE parameter vector and the joint
+    # matrix carries the free ones alone, so the held columns are left out
+    # and a quantity that reads one is marked rather than given the variance
+    # of the rest
+    fi <- match(tl$free, tl$nm)
+    for (k in seq_along(rd$name)) {
+      j <- numeric(njoint)
+      j[tl$at + seq_along(fi)] <- rd$jacobian[k, fi]
+      touches <- length(tl$held) > 0L &&
+        any(rd$jacobian[k, match(tl$held, tl$nm)] != 0)
+      nmk <- if (nzchar(lb)) paste(lb, rd$name[[k]], sep = ".") else
+        rd$name[[k]]
+      sc <- if (is.null(rd$scale)) ident else rd$scale[[k]]
+      add(nmk, rd$value[[k]], tl$u$param, tl$u$term, sc, touches, j)
+    }
+  }
+
+  # BY EQUATION, and stably. The joint coordinate order puts every design
+  # block first and the structural tail last, so a model whose predictor is a
+  # filter listed the scale's intercept before the mean's own parameters. The
+  # Jacobian's COLUMNS keep the joint order, which is the order the variance
+  # matrix is in; only the rows move.
+  ord <- order(match(vapply(rows, function(z) z$parameter, character(1)),
+                     params))
+  rows <- rows[ord]
+  list(name = vapply(rows, function(z) z$name, character(1)),
+       value = vapply(rows, function(z) as.numeric(z$value), numeric(1)),
+       parameter = vapply(rows, function(z) z$parameter, character(1)),
+       term = vapply(rows, function(z) as.character(z$term)[[1L]],
+                     character(1)),
+       scale = lapply(rows, function(z) z$scale),
+       held = vapply(rows, function(z) z$held, logical(1)),
+       jacobian = do.call(rbind, lapply(rows, function(z) z$j)),
+       n_design = total)
+}
 
 
 #' Invert a Matrix That Ought to Be Positive Definite
@@ -235,6 +537,7 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #'
 #' @return The inverse.
 #'
+
 #' @keywords internal
 solve_pd <- function(A, what, labels = NULL) {
   # The verdict comes from the smallest eigenvalue and not from whether
@@ -305,6 +608,69 @@ solve_pd <- function(A, what, labels = NULL) {
                       " fitted parameters against the data before reading",
                       " anything\n  else."),
                what, flat_directions(A, labels)), call. = FALSE)
+}
+
+
+#' The Condition a Frozen Block Raises
+#'
+#' @description
+#' A warning of its own class, so that a caller reporting the same thing in
+#' its own channel can muffle it rather than repeat it.
+#'
+#' @details
+#' \code{\link{summary.StatmodFit}} calls \code{\link{vcov}} more than
+#' once and would raise the warning once per call; it says it once, as a
+#' note.
+#'
+#' @param msg The message.
+#'
+#' @return A condition.
+#'
+#' @keywords internal
+frozen_condition <- function(msg) {
+  structure(class = c("statmod_frozen_block", "warning", "condition"),
+            list(message = msg, call = NULL))
+}
+
+#' Which Coefficients Belong to a Block That Is Not a Jacobian
+#'
+#' @description
+#' The positions of every coefficient of a term whose design block is a
+#' working linearization with a frozen weight.
+#'
+#' @details
+#' A discontinuous break-point term is fitted through a block whose weight is
+#' held at the previous iterate, so the curvature that block carries is the
+#' working model's and not the model's. Measured on a jump at 400
+#' observations against a bootstrap of 200 resamples: the working information
+#' gives the change of level and the auxiliary coordinate a standard error of
+#' EXACTLY ZERO, where the resamples give 0.063 and 0.540, and the position
+#' read off them 1.8e-05 against 0.090. A zero looks like a number and is
+#' worse than a gap, so those coefficients are left missing.
+#'
+#' The question is asked of the term through
+#' \code{\link[modelterms7]{term_jacobian_block}} rather than of its class,
+#' so a construction whose block IS a Jacobian keeps its inference: a
+#' continuous \code{\link[modelterms7]{seg}}, and a discontinuous one
+#' smoothed by an \code{\link[penalties7]{abs_smoother}}, both answer yes.
+#'
+#' @param spec The fitted specification.
+#' @param lab The coefficient labels.
+#'
+#' @return A logical vector over the coefficients.
+#'
+#' @keywords internal
+frozen_block <- function(spec, lab) {
+  out <- rep(FALSE, nrow(lab))
+  for (p in names(spec@terms)) {
+    for (nm in names(spec@terms[[p]])) {
+      ok <- tryCatch(modelterms7::term_jacobian_block(spec@terms[[p]][[nm]]),
+                     error = function(e) TRUE)
+      if (isTRUE(ok)) next
+      out[lab$parameter == p & !is.na(lab$term) & lab$term == nm] <- TRUE
+    }
+  }
+  out
 }
 
 
@@ -686,7 +1052,8 @@ flat_directions <- function(A, labels) {
 #' confint(fit, "sigma")
 #' @keywords internal
 confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
-                               type = c("bayesian", "frequentist"), ...) {
+                               type = c("bayesian", "frequentist"),
+                               readable = TRUE, ...) {
   type <- match.arg(type)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
@@ -694,11 +1061,48 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
   }
   spec <- object@spec
   design <- statmod_design(spec)
+  z <- stats::qnorm((1 + level) / 2)
+  V <- vcov(object, readable = readable, type = type, ...)
+  se <- sqrt(diag(V))
+  if (isTRUE(readable)) {
+    rj <- readable_joint(spec, design, object)
+    est <- rj$value
+    # EACH INTERVAL ON THE SCALE THAT KEEPS ITS QUANTITY IN ITS OWN SET, and
+    # mapped back, as every interval in the toolkit is: a loading is
+    # positive and rides a log, an autoregressive coefficient is confined to
+    # no interval a scalar link expresses and rides the identity. Read on
+    # the raw scale a positive quantity routinely gets a negative lower end.
+    lo <- hi <- rep(NA_real_, length(est))
+    for (i in seq_along(est)) {
+      if (!is.finite(se[[i]])) next
+      g <- rj$scale[[i]]
+      t0 <- linkfunctions7::linkfun(g, est[[i]])
+      st <- se[[i]] * abs(linkfunctions7::dlinkfun(g, est[[i]]))
+      ends <- sort(c(linkfunctions7::linkinv(g, t0 - z * st),
+                     linkfunctions7::linkinv(g, t0 + z * st)))
+      lo[[i]] <- ends[[1L]]
+      hi[[i]] <- ends[[2L]]
+    }
+    out <- data.frame(parameter = rj$parameter, term = rj$term,
+                      coefficient = rj$name, estimate = est, se = se,
+                      lower = lo, upper = hi, stringsAsFactors = FALSE)
+    rownames(out) <- rownames(V)
+    if (is.null(parm)) return(out)
+    keep <- rownames(out) %in% parm | out$parameter %in% parm |
+      out$term %in% parm | out$coefficient %in% parm
+    if (!any(keep)) {
+      stop(sprintf(paste0("'parm' matched nothing. It takes a distribution",
+                          " parameter\n  (%s), a term's name, a quantity's",
+                          " name, or a label of the\n  form",
+                          " 'parameter:name'."),
+                   paste(spec@distrib@params, collapse = ", ")),
+           call. = FALSE)
+    }
+    return(out[keep, , drop = FALSE])
+  }
   lab <- coef_labels(spec, design)
   est <- unlist(object@coefficients[spec@distrib@params], use.names = FALSE)
-  se <- sqrt(diag(vcov(object, type = type, ...)))
-  z <- stats::qnorm((1 + level) / 2)
-
+  se <- se[seq_len(nrow(lab))]
   out <- data.frame(lab[, c("parameter", "term", "coefficient")],
                     estimate = est, se = se,
                     lower = est - z * se, upper = est + z * se,
@@ -737,12 +1141,21 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #'
 #' @param term A built term.
 #'
-#' @return One of \code{"parametric"}, \code{"smooth"}, \code{"random"},
+#' @return One of \code{"structural"}, \code{"breakpoint"},
+#'   \code{"parametric"}, \code{"smooth"}, \code{"random"},
 #'   \code{"selection"}, \code{"penalized"}.
 #'
 #' @keywords internal
 term_block_kind <- function(term) {
-  # a break-point term is asked about FIRST, before its penalties are
+  # a structural term is asked about FIRST OF ALL: it contributes no design
+  # columns, so what it is has nothing to do with whether it carries a
+  # penalty. Asked later it came back "parametric" whenever it carried none,
+  # which put a term with no columns among the terms whose columns are one
+  # unpenalized block.
+  if (S7::S7_inherits(term, modelterms7::structural_term)) {
+    return("structural")
+  }
+  # a break-point term is asked about next, before its penalties are
   # looked at: its block is a working linearization whose coefficients are
   # not the quantities of the model, so it wants a section of its own
   # whether or not a development of its coefficients carries a penalty
@@ -829,6 +1242,12 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     distrib_name = S7::class_character,
     n_obs = S7::class_numeric,
     tables = S7::class_list,
+    # the link each equation is written on, named by parameter. Every
+    # coefficient in a block is a coefficient of the LINEAR PREDICTOR, so
+    # what it means for the parameter depends on the link, and a summary
+    # that does not say which one leaves the reader to remember the
+    # family's defaults.
+    links = S7::new_property(S7::class_character, default = character(0)),
     edf = S7::class_any,
     structural = S7::class_any,
     loglik = S7::class_numeric,
@@ -923,7 +1342,25 @@ summary.StatmodFit <- function(object, level = 0.95,
                                type = c("bayesian", "frequentist"),
                                correct = FALSE, ...) {
   type <- match.arg(type)
-  ci <- confint(object, level = level, type = type, ...)
+  # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
+  # rather than once per call to vcov() -- of which this function makes more
+  # than one. The condition carries a class of its own, so muffling it cannot
+  # swallow another warning raised on the way.
+  frozen_msg <- character(0)
+  catch_frozen <- function(expr) {
+    withCallingHandlers(expr, statmod_frozen_block = function(cnd) {
+      frozen_msg <<- unique(c(frozen_msg, conditionMessage(cnd)))
+      invokeRestart("muffleWarning")
+    })
+  }
+  # ON THE RAW COORDINATES, both of them. This function does its own reading
+  # of what a term is about -- readable_rows() for a design block, the
+  # structural table for a term with none -- and it INDEXES the variance
+  # matrix by the design's own coefficient names. Given the readable matrix
+  # those keys are not in it, and every delta-method standard error a
+  # break-point term reports came back missing.
+  ci <- catch_frozen(confint(object, level = level, type = type,
+                             readable = FALSE, ...))
   spec <- object@spec
   design <- statmod_design(spec)
   ci$statistic <- ci$estimate / ci$se
@@ -932,14 +1369,32 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   # one variance matrix for every block that needs one: a term reported by
   # the quantities it is about carries them across by the delta method
-  V <- tryCatch(vcov(object, type = type, ...), error = function(e) NULL)
+  V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type, ...),
+                             error = function(e) NULL))
+  strc <- tryCatch(statmod_structural_table(object, level),
+                   error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
-    summary_blocks(object, spec, design, p, ci, level, V))
+    summary_blocks(object, spec, design, p, ci, level, V, strc))
   names(tables) <- spec@distrib@params
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
-  notes <- character(0)
+  notes <- c(character(0), frozen_msg)
+  # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
+  # qualifies the fit rather than describing it, so it is a note and not a
+  # line of print(): the measured case is a scale that ran to 1e-15 while
+  # 380 of 400 coefficients survived, which is read once when something
+  # looks wrong and never otherwise.
+  if (!object@converged) {
+    r <- tryCatch(fitted_ranges(object), error = function(e) "")
+    if (nzchar(r)) notes <- c(notes, r)
+  }
+  # read HERE and not at the end, because a note below asks whether the point
+  # is a maximum and that is the certificate's answer. It costs one outer
+  # gradient and one solve, which is nothing beside a summary that already
+  # inverts the penalized information, and a fold of cv() or a path point
+  # that never prints itself pays nothing at all.
+  cert <- tryCatch(statmod_certificate(object), error = function(e) NULL)
 
   # The count above reads the hyperparameters as though they were known,
   # and they were estimated from the same data. Adding what that costs is
@@ -1003,10 +1458,19 @@ summary.StatmodFit <- function(object, level = 0.95,
       "variance at\n  all: at the kink there is no curvature to read."),
       nz, sum(lab$kinked)))
   }
-  if (!object@converged) {
+  # ⚠️ WHETHER THE POINT IS A MAXIMUM is the CERTIFICATE's answer and not the
+  # search's flag, and this note used to read the flag: a fit whose search
+  # stopped on its own rule at a point located to 2e-11 printed "the fit did
+  # not converge, so everything above is read at a point that is not a
+  # maximum" directly under a certificate saying CONVERGED. The two are
+  # different questions, so the note is emitted only where the question it
+  # answers -- is this a maximum -- has actually been answered no.
+  bad <- if (is.null(cert) || is.null(cert$state)) !object@converged else
+    !cert$state %in% c("converged", "boundary")
+  if (bad) {
     notes <- c(notes, paste0(
-      "The fit did not converge, so everything below is read at a point that",
-      "\n  is not a maximum."))
+      "The point reported is not certified as a maximum, so every estimate ",
+      "and\n  interval above is read where the surface is still moving."))
   }
 
   # A smoothed break-point term: the smoother and its width are part of the
@@ -1017,10 +1481,9 @@ summary.StatmodFit <- function(object, level = 0.95,
   notes <- c(notes, tryCatch(smoothed_notes(spec, object),
                              error = function(e) character(0)))
 
-  # A structural term contributes no columns, so nothing above can report
-  # it and its parameters were reachable only through fit@structural.
-  strc <- tryCatch(statmod_structural_table(object, level),
-                   error = function(e) NULL)
+  # A structural term contributes no columns, so its block is built from
+  # what it reports rather than from a design; `strc` is computed above,
+  # where summary_blocks() can be given it.
   if (!is.null(strc) && any(strc$held)) {
     notes <- c(notes, paste0(
       "A level marked held is carried by an intercept in the same equation ",
@@ -1031,18 +1494,15 @@ summary.StatmodFit <- function(object, level = 0.95,
   StatmodSummary(
     call = object@call, distrib_name = spec@distrib@distrib_name,
     n_obs = spec@n_obs, tables = tables, edf = object@edf,
+    links = vapply(spec@distrib@link_params,
+                   function(g) g@link_name, character(1)),
     structural = strc,
     loglik = object@loglik, df = df,
     aic = -2 * object@loglik + 2 * df,
     bic = -2 * object@loglik + log(spec@n_obs) * df,
     converged = object@converged, elapsed = object@elapsed,
     level = level, type = type, notes = notes,
-    # read HERE and not in statmod(): it costs one outer gradient and one
-    # solve, which is nothing beside a summary that already inverts the
-    # penalized information, and a fold of cv() or a path point that never
-    # prints itself pays nothing at all.
-    certificate = tryCatch(statmod_certificate(object),
-                           error = function(e) NULL))
+    certificate = cert)
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
 
@@ -1143,11 +1603,20 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
 #'   are therefore the delta method rather than a diagonal entry.
 #'
 #' @return A list of block records, each with \code{kind}, \code{label},
-#'   \code{n_coef}, \code{edf}, \code{n_zero} and \code{table}.
+#'   \code{n_coef}, \code{edf}, \code{n_zero} and \code{table}, together
+#'   with \code{head} and \code{components}: a term written in parameters
+#'   of its own that develops one of them over covariates reports that
+#'   parameter as a compartment of its own, carrying its hyperparameter and
+#'   its sub-terms' rows, and \code{table} keeps only what is left.
+#'
+#' @param st The structural table, or \code{NULL}. A structural term has no
+#'   design columns, so its block is built from what it reports rather than
+#'   from a block of the design, and its hyperparameter is reported there
+#'   rather than in a block of its own carrying nothing else.
 #'
 #' @keywords internal
 summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
-                           V = NULL) {
+                           V = NULL, st = NULL) {
   rows <- ci[ci$parameter == p, , drop = FALSE]
   cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
             "upper", "role")
@@ -1190,9 +1659,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # there are several the hyperparameter is named for the penalty as well:
   # two lambdas in one block, one on the slope changes and one on the jumps,
   # are not the same number and cannot appear under the same name.
-  hyper_rows <- function(nm) {
+  hyper_parts <- function(nm) {
     ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
-    if (!length(ent)) return(empty)
+    if (!length(ent)) return(list(rows = list(), index = list()))
     des <- statmod_design(spec)
     out <- lapply(ent, function(e) {
       key <- statmod_entry_key(nm, ent, e)
@@ -1272,7 +1741,19 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       }
       stats::setNames(r, c(cols, "source"))
     })
-    do.call(rbind, out)
+    # PER ENTRY and not stacked, because an entry belongs where its
+    # coefficients do: a penalty covering a developed parameter's columns is
+    # that parameter's hyperparameter and is reported inside its
+    # compartment, while one covering the term's own columns stays with the
+    # term. Which is which is read off the columns rather than off the
+    # entry's name, so a term that names its entries differently is covered
+    # without an edit.
+    list(rows = out, index = lapply(ent, `[[`, "index"))
+  }
+  hyper_rows <- function(nm) {
+    hp <- hyper_parts(nm)
+    if (!length(hp$rows)) return(empty)
+    do.call(rbind, hp$rows)
   }
   # A term whose block is a working linearization is reported by what it is
   # ABOUT and not by the coefficients it is fitted through: a break-point
@@ -1324,6 +1805,172 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     if (length(v)) v[1L] else NA_real_
   }
 
+  # WHAT A SUB-TERM IS CALLED where a compartment header names it. The
+  # term's own label is used where it has one; a parametric development is
+  # named for what it carries, an intercept alone being the population
+  # value of the parameter and anything else a set of covariates.
+  sub_label <- function(s) {
+    lb <- tryCatch(s@label, error = function(e) "")
+    if (length(lb) == 1L && nzchar(lb)) return(lb)
+    nms <- tryCatch(modelterms7::term_coef_names(s),
+                    error = function(e) character(0))
+    if (length(nms) == 1L && endsWith(nms, "(Intercept)")) "intercept" else
+      "covariates"
+  }
+  # WHAT A HYPERPARAMETER IS, rather than which coordinate carries it. A
+  # compartment's `sigma` sits under a term of a model whose distribution
+  # has a `sigma` of its own, and the two are different quantities; a
+  # gaussian prior's is the scale of the effects it shrinks and a quadratic
+  # penalty's `lambda` is a precision. Any other name is left as it stands.
+  hyper_label <- function(nm, pen) {
+    if (identical(nm, "sigma") &&
+        grepl("gaussian", pen@penalty_name, fixed = TRUE)) {
+      return("effect sd")
+    }
+    if (identical(nm, "lambda") &&
+        isTRUE(tryCatch(penalties7::is_quadratic(pen),
+                        error = function(e) FALSE))) {
+      return("precision")
+    }
+    nm
+  }
+  # WHAT A SUB-TERM CONTRIBUTES to its compartment: its rows filtered the way
+  # a block of that kind is filtered at the top level, so a smooth shows its
+  # unpenalized part, a kinked penalty shows what it kept, and a random
+  # effect shows no coefficients at all. What a reader wants of a set of
+  # predictions is how many there are and how far they spread, which is one
+  # line, where the predictions themselves are a column of numbers nobody
+  # reads and are still in `coef()`.
+  #
+  # `rows_at` is how the rows of a set of the term's own coefficients are
+  # obtained. An additive term reads its design block's rows by column; a
+  # structural one has no design and reads what it REPORTS by position in
+  # its parameter vector. Everything below is common to the two.
+  sub_block <- function(s, ix, rows_at) {
+    sk <- term_block_kind(s)
+    rr <- rows_at(ix)
+    nms <- tryCatch(modelterms7::term_coef_names(s),
+                    error = function(e) character(0))
+    if (length(nms) == nrow(rr)) rr$name <- nms
+    keep <- switch(sk,
+      smooth = smooth_linear_cols(s, nrow(rr)),
+      selection = rr$estimate != 0,
+      rep(TRUE, nrow(rr)))
+    if (identical(sk, "random")) keep <- rep(FALSE, nrow(rr))
+    lines <- character(0)
+    if (identical(sk, "random") && nrow(rr)) {
+      lines <- sprintf("%d predictions, sd %s, range %s to %s", nrow(rr),
+                       format(signif(stats::sd(rr$estimate), 3L)),
+                       format(signif(min(rr$estimate), 3L)),
+                       format(signif(max(rr$estimate), 3L)))
+      names(lines) <- "effects"
+    }
+    list(kind = sk, table = rr[keep, , drop = FALSE], lines = lines)
+  }
+  # ONE COMPARTMENT PER DEVELOPED PARAMETER, carrying its own hyperparameter
+  # first and then each sub-term's rows in the order the block binds them.
+  compartments <- function(term, rows_at, dev, hp) {
+    ent <- modelterms7::term_penalties(term)
+    lapply(dev, function(cp) {
+      mine <- vapply(hp$index, function(ii) {
+        length(ii) > 0L && all(ii %in% cp$index)
+      }, logical(1))
+      hr <- hp$rows[mine]
+      pens <- lapply(ent[mine], function(e) e$penalty)
+      for (i in seq_along(hr)) {
+        if (!nrow(hr[[i]])) next
+        hr[[i]]$name <- vapply(hr[[i]]$name, hyper_label, character(1),
+                               pen = pens[[i]], USE.NAMES = FALSE)
+      }
+      parts <- lapply(seq_along(cp$subs), function(i) {
+        sub_block(cp$subs[[i]], cp$sub_index[[i]], rows_at)
+      })
+      tb <- do.call(rbind, c(hr, lapply(parts, function(z) z$table)))
+      ln <- unlist(lapply(parts, function(z) z$lines))
+      list(name = cp$name,
+           header = sprintf("%s  ~ %s", cp$name,
+                            paste(vapply(cp$subs, sub_label, character(1)),
+                                  collapse = " + ")),
+           table = if (is.null(tb)) empty else tb,
+           lines = if (is.null(ln)) character(0) else ln,
+           n_coef = length(cp$index))
+    })
+  }
+  # THE DEVELOPED PARAMETERS READ AT A GLANCE, one line each: the population
+  # value of the development, and what develops it. A parameter that is a
+  # number of its own is one row of the table below and needs no line above
+  # it; a developed one is spread over a compartment where its population
+  # value is labelled by the development's intercept, so this is the only
+  # place the parameter's own name appears beside a number.
+  head_rows <- function(rows_at, dev) {
+    out <- lapply(dev, function(cp) {
+      r <- NULL
+      note <- paste("~", paste(vapply(cp$subs, sub_label, character(1)),
+                               collapse = " + "))
+      for (i in seq_along(cp$subs)) {
+        j <- which(tryCatch(modelterms7::term_coef_names(cp$subs[[i]]),
+                            error = function(e) character(0)) ==
+                   "(Intercept)")
+        if (length(j) == 1L) {
+          r <- rows_at(cp$sub_index[[i]][[j]])
+          break
+        }
+      }
+      if (!is.null(r) && !nrow(r)) r <- NULL
+      data.frame(name = cp$name,
+                 estimate = if (is.null(r)) NA_real_ else r$estimate[[1L]],
+                 lower = if (is.null(r)) NA_real_ else r$lower[[1L]],
+                 upper = if (is.null(r)) NA_real_ else r$upper[[1L]],
+                 note = note, stringsAsFactors = FALSE)
+    })
+    do.call(rbind, out)
+  }
+  # WHICH COLUMNS ARE THE TERM'S OWN, and which hyperparameters go with
+  # them: everything a developed parameter does not claim.
+  own_hyper <- function(hp, dev) {
+    hp$rows[!vapply(hp$index, function(ii) {
+      any(vapply(dev, function(cp) length(ii) > 0L && all(ii %in% cp$index),
+                 logical(1)))
+    }, logical(1))]
+  }
+  developed <- function(term, n_own) {
+    cp <- tryCatch(modelterms7::term_components(term),
+                   error = function(e) list())
+    if (!length(cp)) return(list())
+    idx <- unlist(lapply(cp, function(z) z$index), use.names = FALSE)
+    if (!length(idx) || max(idx) > n_own) return(list())
+    cp
+  }
+  # A STRUCTURAL TERM contributes no design columns, so its block is built
+  # from what it REPORTS -- the quantities term_readable() names, with the
+  # variance of the joint information behind them -- and its hyperparameter
+  # sits with the coordinates it shrinks rather than in a block of its own
+  # carrying nothing else.
+  structural_rows <- function(r) {
+    stats::setNames(data.frame(
+      name = ifelse(r$held, paste0(r$name, " (held)"), r$name),
+      estimate = r$estimate, se = r$se, statistic = NA_real_,
+      p_value = NA_real_, lower = r$lower, upper = r$upper,
+      role = "coefficient", source = "", stringsAsFactors = FALSE), all_cols)
+  }
+  structural_block <- function(nm, term) {
+    r <- st[st$parameter == p & st$term == nm, , drop = FALSE]
+    hp <- hyper_parts(nm)
+    cp_all <- developed(term, length(modelterms7::term_params(term)))
+    dev <- cp_all[vapply(cp_all, function(z) length(z$subs) > 0L, logical(1))]
+    rows_at <- function(ix) {
+      structural_rows(r[!is.na(r$position) & r$position %in% ix, ,
+                        drop = FALSE])
+    }
+    own <- structural_rows(r[!(r$component %in% names(dev)), , drop = FALSE])
+    tb <- do.call(rbind, c(own_hyper(hp, dev), list(own)))
+    list(kind = "structural", label = block_label("structural"), term = nm,
+         n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
+         table = if (is.null(tb)) empty else tb,
+         head = if (length(dev)) head_rows(rows_at, dev) else NULL,
+         components = compartments(term, rows_at, dev, hp))
+  }
+
   blocks <- list()
   para <- character(0)
   for (nm in names(spec@terms[[p]])) {
@@ -1336,7 +1983,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     blocks[[length(blocks) + 1L]] <- list(
       kind = "parametric", label = "Parametric terms", term = NA_character_,
       n_coef = nrow(tb), edf = sum(vapply(para, term_edf, numeric(1))),
-      n_zero = 0L, table = tb)
+      n_zero = 0L, table = tb, head = NULL, components = list())
   }
 
   for (nm in names(spec@terms[[p]])) {
@@ -1344,7 +1991,40 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     kind <- term_block_kind(term)
     if (identical(kind, "parametric")) next
     k <- length(design[[p]]$blocks[[nm]])
+    if (!k) {
+      # no design columns: a structural term, reported by what it says it
+      # reports. Where the structural table could not be built there is
+      # nothing to show and the term is passed over rather than given an
+      # empty block.
+      if (is.null(st) || !any(st$parameter == p & st$term == nm)) next
+      blocks[[length(blocks) + 1L]] <- structural_block(nm, term)
+      next
+    }
     cr <- coef_rows(nm)
+    hp <- hyper_parts(nm)
+    rows_at <- function(ix) cr[ix, , drop = FALSE]
+    # a component whose parameter is a number of its own needs no
+    # compartment: it is one coefficient and belongs in the term's own table
+    cp_all <- if (nrow(cr) == k) developed(term, k) else list()
+    dev <- cp_all[vapply(cp_all, function(z) length(z$subs) > 0L, logical(1))]
+    if (length(dev)) {
+      own <- setdiff(seq_len(k),
+                     unlist(lapply(dev, function(z) z$index),
+                            use.names = FALSE))
+      # the own table reports the same quantities a term without a
+      # development reports: the position of a break-point and not the pair
+      # of working coefficients it is read off
+      rr <- if (identical(kind, "breakpoint")) readable_rows(nm) else NULL
+      tb <- do.call(rbind, c(own_hyper(hp, dev), list(
+        if (is.null(rr)) cr[own, , drop = FALSE] else rr)))
+      blocks[[length(blocks) + 1L]] <- list(
+        kind = kind, label = block_label(kind), term = nm, n_coef = k,
+        edf = term_edf(nm), n_zero = 0L,
+        table = if (is.null(tb)) empty else tb,
+        head = head_rows(rows_at, dev),
+        components = compartments(term, rows_at, dev, hp))
+      next
+    }
     keep <- switch(kind,
       smooth = smooth_linear_cols(term, nrow(cr)),
       # a coefficient a kinked penalty set to zero is counted, not listed
@@ -1362,15 +2042,31 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # coefficients buries the one number that produced that selection
     tb <- rbind(hyper_rows(nm), body)
     blocks[[length(blocks) + 1L]] <- list(
-      kind = kind,
-      label = switch(kind, smooth = "Smooth", random = "Random effect",
-                     selection = "Selection", breakpoint = "Break-points",
-                     "Penalized"),
-      term = nm, n_coef = k, edf = term_edf(nm),
+      kind = kind, label = block_label(kind), term = nm, n_coef = k,
+      edf = term_edf(nm),
       n_zero = if (identical(kind, "selection")) sum(cr$estimate == 0) else 0L,
-      table = tb)
+      table = tb, head = NULL, components = list())
   }
   blocks
+}
+
+
+#' The Heading a Block of Each Kind Is Printed Under
+#'
+#' @description
+#' The name a summary gives a block, from the kind
+#' \code{\link{term_block_kind}} answered with.
+#'
+#' @param kind The kind of the block.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+block_label <- function(kind) {
+  switch(kind, smooth = "Smooth", random = "Random effect",
+         selection = "Selection", breakpoint = "Break-points",
+         parametric = "Parametric terms", structural = "Structural",
+         "Penalized")
 }
 
 
@@ -1469,11 +2165,16 @@ smoothed_notes <- function(spec, object) {
 #' freedom, the criteria and the notes.
 #' @param x A \code{\link{StatmodSummary}}.
 #' @param digits Significant digits in the tables.
+#' @param notes Whether to print the qualifications the numbers carry.
+#'   \code{FALSE} by default, when the foot says how many there are: they
+#'   state conventions rather than facts of the fit, so they read the same
+#'   under every model. They are on the summary's \code{notes} property
+#'   either way.
 #' @param ... Unused.
 #' @return \code{x}, invisibly.
 #' @seealso \code{\link{summary.StatmodFit}}
 #' @keywords internal
-print.StatmodSummary <- function(x, digits = 4L, ...) {
+print.StatmodSummary <- function(x, digits = 4L, notes = FALSE, ...) {
   cat("A statmod fit\n\n")
   cat("Call:  ", paste(deparse(x@call), collapse = "\n        "), "\n\n",
       sep = "")
@@ -1481,27 +2182,15 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
       "\n", sep = "")
 
   for (p in names(x@tables)) {
-    cat("\n", strrep("=", 3L), " ", p, "\n", sep = "")
+    lk <- if (p %in% names(x@links)) x@links[[p]] else ""
+    cat("\n", strrep("=", 3L), " ", p,
+        if (nzchar(lk)) paste0("   [", lk, " link]") else "", "\n", sep = "")
     blocks <- x@tables[[p]]
     if (!length(blocks)) {
       cat("  (no coefficients)\n")
       next
     }
     for (b in blocks) print_block(b, digits)
-
-    # a structural term of this equation: no columns, so no block above
-    st <- x@structural
-    if (!is.null(st) && any(st$parameter == p)) {
-      for (tn in unique(st$term[st$parameter == p])) {
-        r <- st[st$parameter == p & st$term == tn, , drop = FALSE]
-        cat(sprintf("\n  %s   (structural: no design columns)\n", tn))
-        tb <- data.frame(estimate = r$estimate, se = r$se,
-                         lower = r$lower, upper = r$upper,
-                         row.names = ifelse(r$held, paste0(r$name, " (held)"),
-                                            r$name))
-        print(format(tb, digits = digits))
-      }
-    }
   }
 
   cat(sprintf("\n%.0f%% intervals, %s variance\n", 100 * x@level, x@type))
@@ -1516,12 +2205,15 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
   cat(sprintf(paste0("conditional log-likelihood %.6f    effective df %.2f",
                      "\ncAIC %.3f    cBIC %.3f\n"),
               x@loglik, x@df, x@aic, x@bic))
-  cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
+  # ⚠️ THE TWO LINES BELOW ANSWER DIFFERENT QUESTIONS and used to read as a
+  # contradiction: a fit could print DID NOT CONVERGE in capitals and
+  # certificate: CONVERGED two lines under it, with nothing on screen saying
+  # why both could be true. The first is a property of the SEARCH -- whether
+  # it met its own stopping rule -- and the second of the POINT it stopped
+  # at, which is the question a reader has. So the point gets the capitals
+  # and the search says what it is.
+  cat(sprintf("fitted in %s   search: %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
-  # THE CERTIFICATE, which is a property of the POINT where the line above is
-  # a property of the search. The two disagree exactly where it matters: a
-  # search can stop on its own rule far from an optimum, and a search that
-  # kept going can end at one. See statmod_certificate().
   if (!is.null(x@certificate)) {
     ct <- x@certificate
     cat(sprintf("certificate: %s", toupper(ct$state)))
@@ -1536,38 +2228,146 @@ print.StatmodSummary <- function(x, digits = 4L, ...) {
       cat("  at a boundary: ", paste(ct$boundary, collapse = ", "), "\n",
           sep = "")
     }
-    for (r in ct$reason) cat("  ", r, "\n", sep = "")
+    for (r in ct$reason) {
+      cat(paste0("  ", strwrap(r, width = 74L)), sep = "\n")
+      cat("\n")
+    }
   }
+  # THE NOTES ARE COUNTED AND NOT PRINTED. Almost every one of them states a
+  # CONVENTION rather than a fact of this fit -- why a hyperparameter's test
+  # columns are empty, what a coefficient beside an estimated one is
+  # conditional on -- so it reads the same under every model and fills the
+  # foot of every summary with a paragraph nobody reads twice. Nothing is
+  # dropped in silence: the count says they are there and how to see them,
+  # and `summary(fit)@notes` has carried them all along.
   if (length(x@notes)) {
-    cat("\n")
-    for (n in x@notes) cat("  ", n, "\n", sep = "")
+    if (isTRUE(notes)) {
+      cat("\n")
+      for (n in x@notes) {
+        cat(paste0("  ", strwrap(n, width = 74L)), sep = "\n")
+        cat("\n")
+      }
+    } else {
+      cat(sprintf("%d note%s: print(summary(fit), notes = TRUE)\n",
+                  length(x@notes), if (length(x@notes) > 1L) "s" else ""))
+    }
   }
   invisible(x)
 }
 S7::method(print, StatmodSummary) <- print.StatmodSummary
 
 
-#' Print One Block of a Summary
+#' The Rows of a Block Formatted for Printing
 #'
 #' @description
-#' A header saying what the block is and what it spends, then its rows.
+#' The six numeric columns of a summary table rendered as strings, with the
+#' cells a hyperparameter row has no number for left empty and the name of
+#' each such row carrying what put the value there.
 #'
 #' @details
-#' A row whose quantity was held fixed prints its value and blanks the rest,
-#' rather than showing \code{NA} four times over: what the columns say is that
-#' nothing estimated it, and the mark in the header says so once.
+#' A hyperparameter row prints numbers where there are any: one estimated by
+#' a marginal criterion carries a standard error and an interval. Where there
+#' is none the columns are blank. What put the value there goes in the NAME,
+#' on every hyperparameter row rather than only on the ones with nothing else
+#' in them: written into the column where a standard error would have been it
+#' marked a held or path-chosen row and never a REML one, whose column is
+#' occupied, so the note at the foot spoke of a mark that was never printed.
 #'
-#' @param b A block record, as \code{\link{summary_blocks}} returns.
+#' The whole block is formatted in ONE call, its own rows and every
+#' compartment's together, so that the widths a column is padded to are the
+#' same throughout and the compartments line up under the table they sit
+#' beneath.
+#'
+#' @param tb A summary table.
 #' @param digits Significant digits.
 #'
-#' @return \code{NULL}, invisibly.
+#' @return A list with \code{cells}, a character matrix of six columns, and
+#'   \code{name}, the row labels.
+#'
+#' @keywords internal
+format_block_cells <- function(tb, digits = 4L) {
+  hyp <- tb$role %in% c("fixed", "estimated")
+  fixed <- hyp & !is.finite(tb$se)
+  num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
+  out <- cbind(
+    estimate = format(signif(tb$estimate, digits)),
+    se = num(tb$se),
+    z = num(tb$statistic),
+    p = ifelse(is.na(tb$p_value), "",
+               format.pval(tb$p_value, digits = digits, eps = 1e-16)),
+    lower = num(tb$lower),
+    upper = num(tb$upper))
+  out[fixed, c("se", "z", "p", "lower", "upper")] <- ""
+  # an estimated one that does carry an interval still has no test: the null
+  # a z would report on is that the hyperparameter is zero, the edge of its
+  # range rather than an interior hypothesis
+  out[hyp & !fixed, c("z", "p")] <- ""
+  src <- if (is.null(tb$source)) tb$role else
+    ifelse(nzchar(tb$source), tb$source, tb$role)
+  nm <- tb$name
+  nm[hyp] <- sprintf("%s [%s]", nm[hyp], src[hyp])
+  list(cells = out, name = nm)
+}
+
+#' Which Rows of a Table a Summary Prints
+#'
+#' @description
+#' Every row of a short table, and of a long one the hyperparameters
+#' together with the first few coefficients, the rest reported as a count.
+#'
+#' @details
+#' A block of a few coefficients is printed whole: a threshold that cut it
+#' would hide the very numbers a reader opened the summary for. A block of
+#' many is a column of numbers nobody reads to the end, and what is dropped
+#' is still in \code{\link{coef}}. The hyperparameters are never dropped,
+#' whatever the length: they govern every coefficient under them.
+#'
+#' @param tb A summary table.
+#' @param cap The length above which a table is cut.
+#' @param show How many coefficient rows a cut table keeps.
+#'
+#' @return An integer vector of row positions.
+#'
+#' @keywords internal
+block_rows_shown <- function(tb, cap = 12L, show = 10L) {
+  if (nrow(tb) <= cap) return(seq_len(nrow(tb)))
+  hyp <- which(tb$role %in% c("fixed", "estimated"))
+  rest <- setdiff(seq_len(nrow(tb)), hyp)
+  sort(c(hyp, utils::head(rest, show)))
+}
+
+#' Print One Block of a Model Summary
+#'
+#' @description
+#' The heading of a block, the term read at a glance where it is written in
+#' parameters of its own, its own coefficients, and one indented compartment
+#' per parameter developed over covariates.
+#'
+#' @details
+#' A term that develops one of its own parameters carries columns that mean
+#' different things: a break-point's population value and its per-group
+#' deviations are not comparable quantities, and a table that stacks them
+#' reads as a list of numbers rather than as a model. Each developed
+#' parameter is therefore printed as a compartment of its own, headed by what
+#' develops it, opening with its hyperparameter under a name that says what
+#' the hyperparameter is, and rendering each sub-term the way a block of that
+#' kind is rendered at the top level. A random development reports the scale
+#' of its effects and one line saying how many predictions there are and how
+#' far they spread, the predictions themselves being in \code{\link{coef}}.
+#'
+#' @param b A block record from \code{\link{summary_blocks}}.
+#' @param digits Significant digits.
+#'
+#' @return \code{NULL}, invisibly. Called for the printing.
 #'
 #' @keywords internal
 print_block <- function(b, digits = 4L) {
-  head <- if (is.na(b$term)) b$label else sprintf("%s  %s", b$label, b$term)
+  head <- if (is.na(b$term)) b$label else b$term
   bits <- character(0)
   if (!identical(b$kind, "parametric")) {
-    bits <- c(bits, sprintf("%d coefficients", b$n_coef))
+    bits <- c(bits, sprintf("%d %s", b$n_coef,
+                            if (identical(b$kind, "structural")) "parameters"
+                            else "coefficients"))
     if (is.finite(b$edf)) bits <- c(bits, sprintf("edf %.2f", b$edf))
   }
   if (identical(b$kind, "selection")) {
@@ -1578,40 +2378,159 @@ print_block <- function(b, digits = 4L) {
   if (length(bits)) cat("   [", paste(bits, collapse = ", "), "]", sep = "")
   cat("\n")
 
-  tb <- b$table
-  if (!nrow(tb)) {
+  if (!is.null(b$head) && nrow(b$head)) {
+    print_block_head(b$head, digits)
+    cat("\n")
+  }
+
+  comp <- if (is.null(b$components)) list() else b$components
+  # the term's own table first, then one section per compartment, each
+  # carrying the rows it keeps and the free-text lines a random development
+  # reports instead of its predictions
+  secs <- list(list(header = NULL, indent = 2L, tb = b$table,
+                    lines = character(0)))
+  for (cp in comp) {
+    secs[[length(secs) + 1L]] <- list(header = cp$header, indent = 4L,
+                                      tb = cp$table, lines = cp$lines)
+  }
+  for (i in seq_along(secs)) {
+    keep <- block_rows_shown(secs[[i]]$tb)
+    secs[[i]]$hidden <- nrow(secs[[i]]$tb) - length(keep)
+    secs[[i]]$tb <- secs[[i]]$tb[keep, , drop = FALSE]
+  }
+  ns <- vapply(secs, function(z) nrow(z$tb), integer(1))
+  if (!sum(ns)) {
     cat("  (nothing to report on its own)\n")
     return(invisible(NULL))
   }
-  # a hyperparameter row prints numbers where there are any: one estimated by
-  # a marginal criterion carries a standard error and an interval. Where there
-  # is none the columns are blanked and the cell where the standard error
-  # would have been says what put the value there instead
-  hyp <- tb$role %in% c("fixed", "estimated")
-  fixed <- hyp & !is.finite(tb$se)
-  num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
-  out <- data.frame(
-    estimate = format(signif(tb$estimate, digits)),
-    se = num(tb$se),
-    z = num(tb$statistic),
-    p = ifelse(is.na(tb$p_value), "",
-               format.pval(tb$p_value, digits = digits, eps = 1e-16)),
-    lower = num(tb$lower),
-    upper = num(tb$upper),
-    check.names = FALSE, stringsAsFactors = FALSE)
-  # said once, in the column where a standard error would have been, rather
-  # than four times across a row that has nothing else in it
-  src <- if (is.null(tb$source)) tb$role else
-    ifelse(nzchar(tb$source), tb$source, tb$role)
-  out$se[fixed] <- paste0("(", src[fixed], ")")
-  out[fixed, c("z", "p", "lower", "upper")] <- ""
-  # an estimated one that does carry an interval still has no test: the null
-  # a z would report on is that the hyperparameter is zero, the edge of its
-  # range rather than an interior hypothesis
-  out[hyp & !fixed, c("z", "p")] <- ""
-  rownames(out) <- tb$name
-  print(out)
+  # THE WHOLE BLOCK IS FORMATTED AT ONCE, so a compartment's numbers are
+  # padded to the same widths as the table above it and the columns line up
+  # down the block rather than restarting at every section
+  fm <- format_block_cells(do.call(rbind, lapply(secs, function(z) z$tb)),
+                           digits)
+  used <- apply(fm$cells, 2L, function(z) any(nzchar(z)))
+  used[[1L]] <- TRUE
+  fm$cells <- fm$cells[, used, drop = FALSE]
+  # a name inside a compartment is the sub-term's own, and the term's prefix
+  # is dropped from its own rows: the heading already says which term this is
+  nm <- fm$name
+  # the COEFFICIENT rows alone: a hyperparameter's name is not built from
+  # the term's, so including it in the question leaves the names no prefix in
+  # common and the stripping fires nowhere
+  at <- 0L
+  for (i in seq_along(secs)) {
+    if (ns[[i]] && (i > 1L || !is.na(b$term))) {
+      ic <- at + which(secs[[i]]$tb$role == "coefficient")
+      if (length(ic)) nm[ic] <- drop_common_prefix(nm[ic])
+    }
+    at <- at + ns[[i]]
+  }
+  labs <- character(0)
+  ind <- integer(0)
+  at <- 0L
+  rows <- list()
+  for (i in seq_along(secs)) {
+    ii <- if (ns[[i]]) at + seq_len(ns[[i]]) else integer(0)
+    at <- at + ns[[i]]
+    rows[[i]] <- ii
+    labs <- c(labs, nm[ii], names(secs[[i]]$lines))
+    ind <- c(ind, rep(secs[[i]]$indent, ns[[i]] + length(secs[[i]]$lines)))
+  }
+  w <- max(nchar(labs) + ind)
+  cw <- pmax(nchar(colnames(fm$cells)),
+             apply(nchar(fm$cells), 2L, max))
+  pad <- function(x, k) {
+    mapply(function(v, j) formatC(v, width = j, flag = " "), x, k,
+           USE.NAMES = FALSE)
+  }
+  cat(sub("[ ]+$", "", paste0(strrep(" ", w + 2L),
+      paste(pad(colnames(fm$cells), cw), collapse = " "))), "\n", sep = "")
+  for (i in seq_along(secs)) {
+    s <- secs[[i]]
+    if (!is.null(s$header)) cat("\n", strrep(" ", s$indent - 2L), s$header,
+                                "\n", sep = "")
+    for (r in rows[[i]]) {
+      cat(sub("[ ]+$", "", paste0(
+        strrep(" ", s$indent),
+        formatC(nm[[r]], width = -(w - s$indent + 2L), flag = " "),
+        paste(pad(fm$cells[r, ], cw), collapse = " "))), "\n", sep = "")
+    }
+    for (k in seq_along(s$lines)) {
+      cat(sub("[ ]+$", "", paste0(
+        strrep(" ", s$indent),
+        formatC(names(s$lines)[[k]], width = -(w - s$indent + 2L),
+                flag = " "), s$lines[[k]])), "\n", sep = "")
+    }
+    if (s$hidden > 0L) {
+      cat(strrep(" ", s$indent),
+          sprintf("... %d more, in coef()\n", s$hidden), sep = "")
+    }
+  }
   invisible(NULL)
+}
+
+#' The Term Read at a Glance
+#'
+#' @description
+#' One line per parameter a term is written in, giving its value and interval
+#' where it is a number and, where it is developed over covariates, the
+#' population value of that development beside what develops it.
+#'
+#' @param hd The head record of a block.
+#' @param digits Significant digits.
+#'
+#' @return \code{NULL}, invisibly. Called for the printing.
+#'
+#' @keywords internal
+print_block_head <- function(hd, digits = 4L) {
+  val <- ifelse(is.na(hd$estimate), "", format(signif(hd$estimate, digits)))
+  ci <- ifelse(is.na(hd$lower) | is.na(hd$upper), "",
+               sprintf("[%s, %s]", format(signif(hd$lower, digits)),
+                       format(signif(hd$upper, digits))))
+  w <- max(nchar(hd$name))
+  for (i in seq_len(nrow(hd))) {
+    cat(sub("[ ]+$", "", paste0(
+      "  ", formatC(hd$name[[i]], width = -(w + 2L), flag = " "),
+      formatC(val[[i]], width = max(nchar(val)), flag = " "), "  ",
+      formatC(ci[[i]], width = -max(nchar(ci)), flag = " "), "  ",
+      hd$note[[i]])), "\n", sep = "")
+  }
+  invisible(NULL)
+}
+
+#' Drop the Prefix a Set of Coefficient Names Share
+#'
+#' @description
+#' The first dotted piece, where every name carries the same one and
+#' removing it leaves every name non-empty.
+#'
+#' @details
+#' A term composes its coefficients' names from its own and its parameters',
+#' so inside the block of one term the leading piece repeats on every row
+#' and says what the heading has already said. It is dropped for the
+#' printing alone; \code{\link{coef}} and the summary's own tables keep the
+#' names the fit was built with, which are the ones another call can be
+#' indexed by.
+#'
+#' ONE PIECE and not every piece they share: the term's own name is one, and
+#' a set of coefficients that happen to agree further along -- \code{r.1},
+#' \code{r.2} of a matrix column -- would otherwise be left as the bare
+#' numbers.
+#'
+#' @param nms The names.
+#'
+#' @return The names, shortened where they share a prefix.
+#'
+#' @keywords internal
+drop_common_prefix <- function(nms) {
+  if (length(nms) < 1L) return(nms)
+  sp <- strsplit(nms, ".", fixed = TRUE)
+  if (min(lengths(sp)) < 2L) return(nms)
+  if (length(unique(vapply(sp, function(z) z[[1L]], character(1)))) != 1L) {
+    return(nms)
+  }
+  vapply(sp, function(z) paste(z[-1L], collapse = "."), character(1),
+         USE.NAMES = FALSE)
 }
 
 

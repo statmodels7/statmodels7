@@ -4,7 +4,14 @@
 \alias{predict.StatmodFit}
 \title{Predict From a Fitted Model}
 \usage{
-\method{predict}{StatmodFit}(object, what = "parameter", newdata = NULL, ...)
+\method{predict}{StatmodFit}(
+  object,
+  what = "parameter",
+  newdata = NULL,
+  se = FALSE,
+  level = 0.95,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link{StatmodFit}}.}
@@ -14,11 +21,19 @@
 
 \item{newdata}{A data frame, or \code{NULL} for the fitting data.}
 
-\item{...}{Unused.}
+\item{se}{Whether to report the prediction's uncertainty as well.}
+
+\item{level}{The interval's level, where \code{se} is \code{TRUE}.}
+
+\item{...}{Passed to \code{\link{vcov.StatmodFit}} where \code{se} is
+\code{TRUE}, which is where \code{type} chooses between the bayesian
+variance and the frequentist one.}
 }
 \value{
 A numeric vector when \code{what} names one quantity, and a named
-list of vectors for \code{"parameter"} and \code{"link"}.
+list of vectors for \code{"parameter"} and \code{"link"}. With
+\code{se = TRUE}, a data frame of \code{fit}, \code{se},
+\code{lower} and \code{upper} in place of each vector.
 }
 \description{
 Any one of the distribution's parameters, any of its moments, or all of the
@@ -54,6 +69,18 @@ failing somewhere inside.
 \strong{New data} goes through the terms' blueprints, so a factor keeps the
 levels and the contrasts it was fitted with rather than being rebuilt from
 whatever the new frame happens to contain.
+
+\strong{A model carrying a score-driven term is predicted past the
+series.} Such a term's contribution at one row is the state a recursion
+has reached, so new rows continue the series rather than being read on
+their own: each row is placed by its own time within its own group, and
+must come after every observed time of that group. Beyond the data the
+score sits at its conditional mean of zero, which the model's own
+definition guarantees, so the continuation is the deterministic recursion
+and involves no simulation. A forecast reports no standard error --
+\code{se = TRUE} gives the uncertainty of the parameters, while a forecast
+carries the uncertainty of the future scores as well, which is the larger
+part and is no delta method.
 }
 \examples{
 set.seed(1)
@@ -63,6 +90,7 @@ fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 head(predict(fit, "mu"))
 head(predict(fit, "variance"))
 head(predict(fit, "link:sigma"))
+head(predict(fit, "mu", se = TRUE))
 }
 \seealso{
 \code{\link{statmod}}, \code{\link{fitted.StatmodFit}}

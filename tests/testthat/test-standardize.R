@@ -28,7 +28,7 @@ test_that("a standardized term fits what a hand-standardized design fits", {
   expect_length(bx, 5L)
   expect_equal(bz[-1L], unname(s) * bx[-1L])
   expect_equal(bz[1L], bx[1L])
-  expect_equal(fitted(f_std)[[1L]], fitted(f_man)[[1L]])
+  expect_equal(fitted(f_std), fitted(f_man))
 })
 
 test_that("standardizing makes the fit independent of a column's units", {
@@ -43,13 +43,13 @@ test_that("standardizing makes the fit independent of a column's units", {
   }
   a <- fit(sd_dat, TRUE)
   b <- fit(scaled, TRUE)
-  expect_equal(fitted(b)[[1L]], fitted(a)[[1L]])
+  expect_equal(fitted(b), fitted(a))
   # and the coefficient carries the rescaling exactly
   expect_equal(unname(coef(b)[[1L]])[2L] * 1000, unname(coef(a)[[1L]])[2L])
 
   a0 <- fit(sd_dat, FALSE)
   b0 <- fit(scaled, FALSE)
-  expect_gt(max(abs(fitted(b0)[[1L]] - fitted(a0)[[1L]])), 1e-3)
+  expect_gt(max(abs(fitted(b0) - fitted(a0))), 1e-3)
 })
 
 test_that("a sparse block survives a standardized penalty in the same equation", {

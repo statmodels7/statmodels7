@@ -1,5 +1,5 @@
 #' @include statmod.R
-#' @importFrom stats logLik coef
+#' @importFrom stats logLik coef residuals
 NULL
 
 #' Format a Duration in the Unit It Deserves
@@ -66,16 +66,22 @@ print.StatmodFit <- function(x, ...) {
   }
   cat("\n\n")
 
+  w <- if (is.null(x@edf) || !nrow(x@edf)) 0L else max(nchar(x@edf$term))
   for (p in spec@distrib@params) {
     rhs <- paste(deparse(spec@equations[[p]][[2L]]), collapse = " ")
     cat(sprintf("  %-10s ~ %s\n", p, rhs))
     if (!is.null(x@edf)) {
       rows <- x@edf[x@edf$parameter == p, , drop = FALSE]
       for (i in seq_len(nrow(rows))) {
-        cat(sprintf("  %-10s   %-14s %3d coef", "", rows$term[i],
-                    rows$coefficients[i]))
-        if (is.finite(rows$edf[i]) &&
-            !isTRUE(all.equal(rows$edf[i], rows$coefficients[i]))) {
+        tm <- spec@terms[[p]][[rows$term[i]]]
+        st <- !is.null(tm) &&
+          identical(term_block_kind(tm), "structural")
+        k <- if (st) length(modelterms7::term_params(tm)) else
+          rows$coefficients[i]
+        cat(sprintf("  %-10s   %s %3d %s", "",
+                    formatC(rows$term[i], width = -w, flag = " "), k,
+                    if (st) "param" else "coef"))
+        if (is.finite(rows$edf[i]) && !isTRUE(all.equal(rows$edf[i], k))) {
           cat(sprintf(", edf %.2f", rows$edf[i]))
         }
         cat("\n")
@@ -84,17 +90,25 @@ print.StatmodFit <- function(x, ...) {
   }
 
   cat("\n")
-  cat(sprintf("log-likelihood %.6f    objective %.6f\n",
-              x@loglik, x@objective))
+  # NO LIKELIHOOD HERE. There are two of them and they answer different
+  # questions -- the conditional one the criteria are built on, and the
+  # penalized one the inner fit minimizes -- so a single line either carried
+  # a number whose meaning changed with the model or invited the two views
+  # to be read against each other. `summary()` reports the conditional one
+  # beside the effective degrees of freedom and the criteria, which is where
+  # the pairing means something; this view says what the model IS.
   if (!is.null(x@methods$outer) && length(x@criterion) &&
       is.finite(x@criterion)) {
     cat(sprintf("%s %.6f over %d hyperparameter evaluation(s)\n",
                 toupper(x@methods$outer@kind), x@criterion,
                 if (is.null(x@history$outer)) 0L else nrow(x@history$outer)))
   }
-  cat(sprintf("fitted in %s, %s\n", format_duration(x@elapsed),
+  # the same distinction summary() draws: this is the SEARCH's own report and
+  # not a verdict on the point, which is what statmod_certificate() answers.
+  # The word is kept rather than replaced by "met its stopping rule", which
+  # is more precise and which nobody greps for.
+  cat(sprintf("fitted in %s   search: %s\n", format_duration(x@elapsed),
               if (x@converged) "converged" else "DID NOT CONVERGE"))
-  if (!x@converged) cat(fitted_ranges(x))
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {
     cat(sprintf("%d pass(es) over %d block(s)\n",
                 max(x@history$blocks$pass),
@@ -332,21 +346,393 @@ logLik.StatmodFit <- function(object,
 }
 S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 
-#' @title The Coefficients of a Fit
-#' @name coef.StatmodFit
-#' @description One vector per distribution parameter.
-#' @param object A \code{\link{StatmodFit}}.
+#' @title The Coefficients of a Fitted Model
+#'
+#' @description
+#' One named vector per distribution parameter: the quantities the model is
+#' written in, or the coordinates it was estimated on.
+#'
+#' @details
+#' Most coefficients are the same either way. A coefficient of a linear
+#' predictor is what it is, and \code{readable} moves only the two kinds of
+#' parameter that are reported under a different name from the one they are
+#' carried under.
+#'
+#' A break-point term is fitted through a working pair and its position is
+#' read off it: a discontinuous term carries \code{g} and reports
+#' \eqn{\psi = -g/\delta}, so with \code{readable = FALSE} the vector holds a
+#' number that is no quantity of the model. A score-driven term's persistence
+#' rides a partial autocorrelation, the stationary region not being a box,
+#' and what the literature calls \eqn{\beta_j} is the autoregressive
+#' coefficient the whole chart produces. Where a term declares no quantities
+#' of its own, and where a parameter it is written in is developed over
+#' covariates and so has no single value, the coordinates stand.
+#'
+#' A STRUCTURAL TERM contributes no design columns and its parameters are
+#' here under either reading. They used to be in neither: a model whose
+#' predictor is a score-driven filter answered \code{numeric(0)}.
+#'
+#' \code{readable = FALSE} is what a caller feeding a fit back needs: it is
+#' the vector the fit was estimated on, in the order and under the names
+#' \code{\link{vcov}} is indexed by, and a structural term's part of it is on
+#' the unconstrained scale its charts define.
+#'
+#' Hyperparameters are not coefficients and are not here; \code{\link{hyper}}
+#' reports them.
+#'
+#' @param object A fitted model.
+#' @param readable Whether to report the quantities the model is about rather
+#'   than the coordinates it was estimated on.
 #' @param ... Unused.
-#' @return A named list of numeric vectors.
-#' @seealso \code{\link{statmod}}
+#'
+#' @return A named list, one entry per distribution parameter, each a named
+#'   numeric vector.
+#'
+#' @seealso \code{\link{hyper}}, \code{\link{summary.StatmodFit}},
+#'   \code{\link[modelterms7]{term_readable}}
+#'
+#' @examples
+#' set.seed(1)
+#' d <- data.frame(x = sort(runif(200, 0, 10)))
+#' d$y <- 0.3 * d$x + 1.5 * pmax(d$x - 6, 0) + rnorm(200, 0, 0.4)
+#' fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
+#'                distributions7::gaussian1_distrib(), d)
+#' coef(fit)$mu
+#' coef(fit, readable = FALSE)$mu
+#'
 #' @keywords internal
-coef.StatmodFit <- function(object, ...) {
-  params <- object@spec@distrib@params
-  design <- statmod_design(object@spec)
-  stats::setNames(lapply(params, function(p)
-    stats::setNames(object@coefficients[[p]], design[[p]]$coef_names)), params)
+coef.StatmodFit <- function(object, readable = TRUE, ...) {
+  spec <- object@spec
+  params <- spec@distrib@params
+  design <- statmod_design(spec)
+  stats::setNames(lapply(params, function(p) {
+    v <- stats::setNames(object@coefficients[[p]], design[[p]]$coef_names)
+    if (isTRUE(readable)) v <- coef_readable(spec, design, object, p, v)
+    c(v, coef_structural(spec, object, p, readable))
+  }), params)
+}
+
+#' The Quantities a Term Reports in Place of Its Coordinates
+#'
+#' @description
+#' The coefficient vector of one equation with each term's declared
+#' quantities put where the coordinates they are read from were.
+#'
+#' @details
+#' A term says what it is about through
+#' \code{\link[modelterms7]{term_readable}}, which gives the quantities and
+#' the Jacobian from the coefficients. The columns that Jacobian touches are
+#' the coordinates the quantities are read from, and they are the ones
+#' replaced; a coordinate no quantity reads stands where it is. That is what
+#' keeps a developed parameter intact: its development is a vector of
+#' coefficients over covariates with no single value to report, so the term
+#' declares nothing for it and nothing is taken away.
+#'
+#' The names are composed as the term composes its coefficients', from its
+#' own label, so two terms of one kind in one formula stay apart.
+#'
+#' @param spec The fitted specification.
+#' @param design The design.
+#' @param fit The fit.
+#' @param p The distribution parameter.
+#' @param v The named coefficient vector of that equation.
+#'
+#' @return The vector, with the quantities in place of their coordinates.
+#'
+#' @keywords internal
+coef_readable <- function(spec, design, fit, p, v) {
+  keep <- rep(TRUE, length(v))
+  ins <- list()
+  for (nm in names(spec@terms[[p]])) {
+    idx <- design[[p]]$blocks[[nm]]
+    if (!length(idx)) next
+    term <- spec@terms[[p]][[nm]]
+    rd <- tryCatch(modelterms7::term_readable(term,
+                                              fit@coefficients[[p]][idx]),
+                   error = function(e) NULL)
+    if (is.null(rd) || !length(rd$name)) next
+    sup <- which(apply(rd$jacobian != 0, 2L, any))
+    if (!length(sup)) next
+    keep[idx[sup]] <- FALSE
+    ins[[as.character(idx[sup][1L])]] <- stats::setNames(
+      as.numeric(rd$value), paste(term@label, rd$name, sep = "."))
+  }
+  if (!length(ins)) return(v)
+  out <- list()
+  for (i in seq_along(v)) {
+    k <- as.character(i)
+    if (!is.null(ins[[k]])) out[[length(out) + 1L]] <- ins[[k]]
+    if (keep[[i]]) out[[length(out) + 1L]] <- v[i]
+  }
+  unlist(out)
+}
+
+#' What a Structural Term Contributes to the Coefficients
+#'
+#' @description
+#' The own parameters of a structural term of one equation, as quantities or
+#' as the coordinates they were estimated on.
+#'
+#' @details
+#' A structural term rewrites the likelihood rather than adding columns to a
+#' design, so its parameters are in no block and were in no reading of
+#' \code{\link{coef}}: a model whose whole predictor is a score-driven filter
+#' answered with an empty vector. They are named from the term's label as
+#' every other coefficient of the term is.
+#'
+#' A held parameter is one an intercept in the same equation carries and is
+#' not estimated; it is reported under either reading, at the value it is
+#' held at, because leaving it out would make the vector shorter than the
+#' term's own parameter count.
+#'
+#' @param spec The fitted specification.
+#' @param fit The fit.
+#' @param p The distribution parameter.
+#' @param readable Whether to report the quantities or the coordinates.
+#'
+#' @return A named numeric vector, empty where the equation carries no
+#'   structural term.
+#'
+#' @keywords internal
+coef_structural <- function(spec, fit, p, readable) {
+  out <- numeric(0)
+  sp <- fit@structural
+  if (!length(sp)) return(out)
+  for (nm in names(sp)) {
+    if (!identical(sp[[nm]]$equation, p)) next
+    term <- spec@terms[[p]][[nm]]
+    z <- sp[[nm]]$unconstrained
+    if (isTRUE(readable)) {
+      rd <- tryCatch(modelterms7::term_readable(term, z),
+                     error = function(e) NULL)
+      w <- if (is.null(rd) || !length(rd$name)) unlist(sp[[nm]]$parameter) else
+        stats::setNames(as.numeric(rd$value), rd$name)
+    } else {
+      w <- unlist(z)
+    }
+    lb <- tryCatch(term@label, error = function(e) "")
+    if (length(lb) == 1L && nzchar(lb)) names(w) <- paste(lb, names(w),
+                                                          sep = ".")
+    out <- c(out, w)
+  }
+  out
 }
 S7::method(coef, StatmodFit) <- coef.StatmodFit
+
+#' @title The Residuals of a Fitted Model
+#' @name residuals.StatmodFit
+#' @description
+#' One residual per observation, comparing it with the whole distribution the
+#' model puts on it rather than with any one of that distribution's
+#' parameters.
+#'
+#' @details
+#' A residual asks whether an observation is consistent with the LAW its row
+#' was given, and that law is one object carrying every parameter at once. So
+#' there is one residual per observation and not one per distribution
+#' parameter, however many of them the model develops over covariates. What
+#' IS per parameter is a different quantity: the contribution
+#' \eqn{\partial \ell_i / \partial \eta_{ip}} says which equation an
+#' observation strains, and the partial residuals of one equation are what a
+#' term's effect is drawn against.
+#'
+#' The QUANTILE residual is \eqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}. Under
+#' a correct model \eqn{F(y_i; \theta_i)} is exactly uniform, so \eqn{r_i} is
+#' exactly standard normal -- whatever the family, and whichever of its
+#' parameters are modelled. That is why it is the default here: it privileges
+#' no parameter, and it needs no asymptotics for its reference distribution
+#' to hold (Dunn and Smyth, 1996).
+#'
+#' Where the distribution function JUMPS the same construction is randomized:
+#' \eqn{u_i} is drawn uniformly on \eqn{(F(y_i^-), F(y_i))} and the residual
+#' is \eqn{\Phi^{-1}(u_i)}. That is exact again, at the price of being random,
+#' so two calls give two answers. It applies to every discrete family and, at
+#' the atom alone, to a mixed one -- the zero-adjusted wrapper of a continuous
+#' parent. \code{seed} makes a call reproducible without disturbing the
+#' caller's stream; left \code{NULL} the ambient state is used and nothing is
+#' set.
+#'
+#' The PEARSON residual is \eqn{(y_i - \mathbb{E}[Y_i])/\mathrm{sd}(Y_i)} and
+#' the RESPONSE residual the numerator alone. Both are defined against the
+#' mean, and for a skewed family the first is not standard normal even where
+#' the model is right, so its quantile-quantile plot misleads in exactly the
+#' case a distributional model is for. They are offered because they are
+#' familiar, not because they answer the question the quantile residual does.
+#'
+#' @param object A fitted model.
+#' @param type The residual to compute.
+#' @param seed An integer to seed the randomization with, or \code{NULL}.
+#'   Read only where the distribution function jumps.
+#' @param ... Unused.
+#'
+#' @return A numeric vector, one entry per observation.
+#'
+#' @references
+#' Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
+#' \emph{Journal of Computational and Graphical Statistics} 5(3), 236--244.
+#'
+#' @seealso \code{\link{fitted.StatmodFit}}, \code{\link{predict.StatmodFit}}
+#'
+#' @examples
+#' set.seed(1)
+#' d <- data.frame(x = runif(80, -2, 2))
+#' d$y <- 1 + 0.8 * d$x + rnorm(80, 0, 0.5)
+#' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
+#' r <- residuals(fit)
+#' c(mean = mean(r), sd = stats::sd(r))
+#'
+#' @keywords internal
+residuals.StatmodFit <- function(object,
+                                 type = c("quantile", "pearson", "response"),
+                                 seed = NULL, ...) {
+  type <- match.arg(type)
+  spec <- object@spec
+  d <- spec@distrib
+  y <- spec@response
+  th <- object@fitted
+  if (!length(th)) {
+    stop("The fit carries no fitted parameters to compare the response with.",
+         call. = FALSE)
+  }
+  if (identical(type, "response") || identical(type, "pearson")) {
+    m <- mean(d, th)
+    r <- as.numeric(y) - as.numeric(m)
+    if (identical(type, "response")) return(r)
+    s <- as.numeric(distributions7::std_dev(d, th))
+    return(r / s)
+  }
+  fy <- as.numeric(distributions7::distrib_cdf(d, y, th))
+  # WHERE THE DISTRIBUTION FUNCTION JUMPS, and by how much. A discrete family
+  # jumps at every observation and its mass IS what distrib_pdf returns
+  # there; a mixed one jumps at its declared atoms alone, where the same call
+  # returns the atom's probability. Asking the density rather than
+  # differencing the distribution function at the previous support point is
+  # what keeps this right for a family whose support is not the integers.
+  jump <- rep(FALSE, length(fy))
+  if (S7::S7_inherits(d, distributions7::discrete_distrib)) {
+    jump[] <- TRUE
+  } else {
+    at <- tryCatch(distributions7::distrib_atoms(d, th),
+                   error = function(e) list(y = numeric(0)))
+    if (length(at$y)) jump <- as.numeric(y) %in% at$y
+  }
+  u <- fy
+  if (any(jump)) {
+    py <- as.numeric(distributions7::distrib_pdf(d, y, th))
+    lo <- pmax(fy - py, 0)
+    if (!is.null(seed)) {
+      # the caller's stream is left where it was: a residual is not a reason
+      # to move it
+      old <- if (exists(".Random.seed", envir = globalenv())) {
+        get(".Random.seed", envir = globalenv())
+      } else NULL
+      set.seed(seed)
+      on.exit({
+        if (is.null(old)) {
+          suppressWarnings(rm(".Random.seed", envir = globalenv()))
+        } else {
+          assign(".Random.seed", old, envir = globalenv())
+        }
+      }, add = TRUE)
+    }
+    u[jump] <- stats::runif(sum(jump), lo[jump], fy[jump])
+  }
+  stats::qnorm(pmin(pmax(u, 0), 1))
+}
+S7::method(residuals, StatmodFit) <- residuals.StatmodFit
+
+
+#' @title The Hyperparameters of a Fitted Model
+#'
+#' @description
+#' One row per hyperparameter of every penalty the model carries, on the scale
+#' the penalty declares them or on the free scale its links define, with what
+#' put each value there.
+#'
+#' @details
+#' A hyperparameter is not a coefficient and is not in \code{\link{coef}}: it
+#' governs the coefficients under it rather than sitting beside them, and the
+#' two are estimated by different routes and reported with different
+#' qualifications. This is where they are read.
+#'
+#' The \code{parameter} scale is the one the penalty is written on, which is
+#' what a reader wants: a smoothing parameter is a positive number and a
+#' gaussian prior's \code{sigma} is a scale. The \code{link} scale is the
+#' free one the outer search runs on, through each hyperparameter's own link,
+#' and is what a caller comparing two fits' searches wants. Where a
+#' hyperparameter carries no link the two coincide.
+#'
+#' \code{source} says what put the value there, which \code{held} alone
+#' cannot: a hyperparameter the term fixed reads \code{"fixed"}, one a
+#' marginal criterion maximized reads that criterion's name, and one chosen
+#' along a path over its own values reads the criterion that scored the path.
+#' A value chosen along a path is the argument of a minimum over a grid
+#' rather than the root of a derivative, so no standard error follows from
+#' it; one a marginal criterion reached carries one, and
+#' \code{\link{summary}} reports it.
+#'
+#' @param fit A fitted model.
+#' @param scale Which scale the values are reported on.
+#'
+#' @return A data frame with \code{parameter}, \code{term}, \code{name},
+#'   \code{estimate}, \code{held} and \code{source}, or a frame of no rows
+#'   where the model carries no penalty.
+#'
+#' @seealso \code{\link{coef.StatmodFit}}, \code{\link{summary.StatmodFit}},
+#'   \code{\link{statmod_held}}
+#'
+#' @examples
+#' set.seed(1)
+#' d <- data.frame(x = runif(80, 0, 1))
+#' d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
+#' fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
+#' hyper(fit)
+#' hyper(fit, scale = "link")
+#'
+#' @export
+hyper <- function(fit, scale = c("parameter", "link")) {
+  scale <- match.arg(scale)
+  spec <- fit@spec
+  held <- tryCatch(statmod_held(spec, statmod_design(spec)),
+                   error = function(e) character(0))
+  outer_kind <- if (is.null(fit@methods$outer)) NA_character_ else
+    fit@methods$outer@kind
+  spc <- fit@methods$sparse_criterion
+  spc_kind <- if (is.null(spc)) NA_character_ else spc@kind
+  rows <- list()
+  for (u in statmod_penalty_keys(spec)) {
+    th <- fit@hyper[[u$param]][[u$key]]
+    if (is.null(th) || !length(th)) next
+    kink <- isTRUE(tryCatch(penalty_has_kink(u$penalty),
+                            error = function(e) FALSE))
+    for (h in names(th)) {
+      v <- as.numeric(th[[h]])
+      lk <- u$penalty@link_params[[h]]
+      if (identical(scale, "link") && !is.null(lk)) {
+        v <- linkfunctions7::linkfun(lk, v)
+      }
+      # HELD is the term's answer and nobody else's, and it is asked of the
+      # same enumeration the outer index asks: a hyperparameter a term fixed
+      # is fixed whatever criterion ran beside it.
+      hk <- paste(u$param, u$key, h, sep = "\r")
+      is_held <- hk %in% held || h %in% names(u$fixed)
+      src <- if (is_held) "fixed" else if (kink) spc_kind else outer_kind
+      rows[[length(rows) + 1L]] <- data.frame(
+        parameter = u$param, term = u$key, name = h, estimate = v,
+        held = is_held, source = if (is.na(src)) "" else src,
+        stringsAsFactors = FALSE)
+    }
+  }
+  if (!length(rows)) {
+    return(data.frame(parameter = character(0), term = character(0),
+                      name = character(0), estimate = numeric(0),
+                      held = logical(0), source = character(0),
+                      stringsAsFactors = FALSE))
+  }
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
+}
 
 
 #' What Each Distribution Parameter Reached
@@ -371,7 +757,10 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #'
 #' @param x A \code{\link{StatmodFit}}.
 #'
-#' @return A single string, empty when the parameters cannot be read.
+#' @return A single string, empty when the parameters cannot be read. It is
+#'   a note of \code{\link{summary.StatmodFit}} rather than a line of
+#'   \code{\link{print.StatmodFit}}: it qualifies the fit rather than
+#'   describing it, and it is read once when something looks wrong.
 #'
 #' @seealso \code{\link{statmod}}
 #'
@@ -390,7 +779,9 @@ fitted_ranges <- function(x) {
               format(signif(max(v), 4)))
     }
   }, character(1))
-  paste0("  the parameters it reached:\n", paste(rows, collapse = "\n"), "\n")
+  paste0("The fit did not converge. The parameters it reached: ",
+         paste(trimws(gsub("[ ]{2,}", " ", rows)), collapse = "; "),
+         ". A scale at 1e-15 says the rest on its own.")
 }
 
 

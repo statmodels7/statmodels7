@@ -4,7 +4,7 @@
 \alias{summary_blocks}
 \title{The Blocks of One Distribution Parameter}
 \usage{
-summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL)
+summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 }
 \arguments{
 \item{fit}{A \code{\link{StatmodFit}}.}
@@ -25,10 +25,19 @@ returns it with the statistic and the p-value added.}
 \code{\link[modelterms7]{term_readable}}, whose quantities are
 functions of several coefficients at once and whose standard errors
 are therefore the delta method rather than a diagonal entry.}
+
+\item{st}{The structural table, or \code{NULL}. A structural term has no
+design columns, so its block is built from what it reports rather than
+from a block of the design, and its hyperparameter is reported there
+rather than in a block of its own carrying nothing else.}
 }
 \value{
 A list of block records, each with \code{kind}, \code{label},
-\code{n_coef}, \code{edf}, \code{n_zero} and \code{table}.
+\code{n_coef}, \code{edf}, \code{n_zero} and \code{table}, together
+with \code{head} and \code{components}: a term written in parameters
+of its own that develops one of them over covariates reports that
+parameter as a compartment of its own, carrying its hyperparameter and
+its sub-terms' rows, and \code{table} keeps only what is left.
 }
 \description{
 Groups a parameter's terms into the readings a summary prints: the

@@ -1,3 +1,263 @@
+# statmodels7 0.88.0
+
+* `rstatmod(n_sim =)` draws several data sets in one call, and the truth is
+  drawn ONCE and shared: what a study over replicates measures is the
+  variability of an estimator at a set of parameters, so the replicates
+  differ in what is random and not in what is being estimated. Varying the
+  truth as well is a loop over calls, and reads differently. With
+  `n_sim > 1` the per-replicate fields -- `data`, `theta`, `latent` -- come
+  back as lists of that length while `par` and `structural` stay single; at
+  one replicate the shape is what it was.
+
+* `rstatmod(covariates =)` draws the covariates too, one function of the
+  observation count per column, afresh at every replicate. The choice is not
+  a detail: with `data` the covariates are held and what is measured is the
+  estimator's behaviour CONDITIONAL on that design, and with `covariates` it
+  is measured over the design as well -- fixed-X against random-X, two
+  studies that a report should tell apart. A design that changes shape
+  between replicates, a factor that lost a level being the ordinary cause,
+  is reported with the replicate rather than recycled against coefficients
+  drawn for another shape.
+
+* `rstatmod()` returns the truth BESIDE the data rather than attached to it,
+  which is what a simulation study reads: a list of `data`, `par`, `theta`,
+  `latent`, `structural` and `call`, with a `print` that says where the two
+  halves are instead of dumping a parameter at every row. They were
+  attributes of the data frame, and that was worse than it looks -- an
+  attribute survives a row subset without being subset itself, so
+  `sim[1:10, ]` kept a `theta` of the original length silently, while
+  `subset()` and `merge()` dropped it altogether. Every parameter comes back
+  at one value per observation, whether its equation varies it or not, so a
+  study can bind them to the rows. Passing the whole result where a data
+  frame is wanted is reported with the field to use.
+
+* `rstatmod()` simulates from the model that was written, whatever terms it
+  carries. Its predictor now comes from the assembly a fit reads --
+  `statmod_design_at()` and the adjustment beside it -- so a term whose block
+  moves with its coefficients contributes `term_value()` at them rather than
+  its block times them; measured, the two differ by 3 on a `seg()`, 4.05 on
+  an `nl()` and by a missing value on a `jseg()`, so the earlier version drew
+  from a linearization about the term's starting position. A term with state
+  goes through `modelterms7::term_simulate()`, so `gas()` and `regime()`,
+  which used to fail naming an internal generic, are simulated by their own
+  recursions; what each drew is returned in the `"latent"` attribute.
+
+* `rstatmod()` takes `n` in place of `data` for a model with no covariates,
+  `structural` for a structural term's own parameters (on the scale
+  `term_params()` names, and worth naming: left out they take the term's
+  deliberately weak starting values), and accepts a `par` entry that is one
+  number, used for every coefficient, or a FUNCTION of the coefficient count
+  -- which is how a structured truth is expressed without a vocabulary for
+  it, `function(k) c(2, -1.5, rep(0, k - 2))` being a sparse vector for a
+  lasso to find. A response that is not a symbol is now rejected rather than
+  written to a column of the wrong name, and a censored one is rejected for
+  the reason `statmod()` rejects one.
+
+* `predict()` at new data for a model carrying a score-driven term reads the
+  RESPONSE to decide what was asked. Rows carrying it are a re-reading, the
+  filter run over them from the term's own seed, which is what a caller means
+  by predicting a model on another series and is why
+  `predict(fit, newdata = <the fitting data>)` returns the fitted values;
+  rows without it are a continuation and must come after the observed series.
+  A frame with the response on some rows and not others is rejected.
+
+* The ordinary generics of `stats` answer, or say why they cannot.
+  `nobs()`, `formula()`, `family()` (the distributions7 object itself, so
+  everything the family can do is reachable from a fit), `weights()`,
+  `df.residual()` (the count subtracted is the EFFECTIVE one, so it is not
+  an integer), `sigma()` (a VECTOR, and the response's standard deviation
+  under the fitted law rather than whichever parameter is spelled `sigma`),
+  `model.matrix(fit, what)` and `simulate()`. Three signal an error naming
+  what to ask instead: `terms()`, a fit having one set per distribution
+  parameter and the formula's bars not being `stats`' syntax;
+  `model.frame()`, a fit keeping each term's blueprint rather than the data;
+  and `anova()`, a penalized fit whose hyperparameters were chosen from the
+  same data having no null distribution to test against.
+
+* `predict()` at new data works for a model carrying a score-driven term:
+  the new rows continue the series rather than being read on their own, each
+  group from its own state, through
+  `modelterms7::term_continue()`. Before this the ordinary assembly returned
+  the fitting data's values whatever `newdata` held -- a three-row `newdata`
+  came back with three hundred numbers -- so the two paths are separated
+  rather than merged. A forecast reports no standard error: what
+  `se = TRUE` gives is the uncertainty of the parameters, and a forecast
+  carries the uncertainty of the future scores as well, which is the larger
+  part and is no delta method. A term reporting a likelihood mixed over
+  latent states is rejected, its reading past the data being a predictive
+  distribution and not a value.
+
+* `predict()` takes `se = TRUE`, reporting the prediction's standard error
+  and an interval built on the link scale and mapped back. Every kind of
+  term is covered: a design's rows for the parametric and penalized blocks,
+  a Jacobian for the terms whose block moves with the coefficients, and for
+  a score-driven term the level's own derivative in its parameters together
+  with the correction to the equation's design rows that
+  `modelterms7::term_static_deriv()` supplies. Validated against a numerical
+  derivative of the predictor -- 1.7e-12 to 8.9e-11 on the ordinary shapes,
+  and 1.8e-09 or better on a filter alone, beside a covariate, in the scale's
+  equation, over a panel and with its level developed over covariates. A
+  discontinuous break-point reports `NA` rather than a number: its block is a
+  frozen working linearization, whose curvature is not the likelihood's.
+
+* `coef()`, `vcov()` and `confint()` report the quantities the model is
+  written in, and take `readable = FALSE` for the coordinates it was
+  estimated on. Most coefficients are the same either way; what moves is the
+  two kinds of parameter reported under a name they are not carried under. A
+  discontinuous break-point term carries `g` and reports
+  \eqn{\psi = -g/\delta}, so the old vector held a number that is no quantity
+  of the model and the position appeared nowhere; a score-driven term's
+  persistence rides a partial autocorrelation and what the literature calls
+  \eqn{\beta_j} is the autoregressive coefficient the whole chart produces.
+  The variance follows by the delta method and each interval is built on the
+  scale that keeps its quantity in its own set.
+
+* The three views are built from ONE map, `readable_joint()`, so they cannot
+  report a quantity under one name and index it under another.
+
+* A structural term's parameters are in `coef()` under either reading. They
+  were in neither: a model whose predictor is a score-driven filter answered
+  `numeric(0)` while spending nine parameters, and they were reachable only
+  through `fit@structural`.
+
+* `vcov()` keeps the structural block of the joint inverse rather than
+  computing it and dropping it, so a model with a filter has a variance to
+  report at all -- and it is the same matrix `statmod_structural_table()`
+  reads, which used to invert it a second time for itself.
+
+* `vcov(parameter =)` selects one equation's submatrix, and the rows of both
+  readings are grouped by equation. The joint coordinate order puts every
+  design block first and the structural tail last, so a filter model listed
+  the scale's intercept before the mean's own parameters and did not line up
+  with `coef()`.
+
+* `hyper()` reports every hyperparameter of every penalty -- the value, what
+  put it there, and whether the term held it -- on the scale the penalty
+  declares it or on the free scale its link defines. They are not
+  coefficients and are not in `coef()`; before this they were on
+  `fit@hyper` and nowhere else.
+
+* `residuals()` gives the QUANTILE residual by default:
+  \eqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}, which under a correct model is
+  exactly standard normal whatever the family and whichever of its parameters
+  are modelled. There is one residual per observation and not one per
+  distribution parameter: a residual compares an observation with the whole
+  law its row was given. Where the distribution function jumps -- every
+  discrete family, and a mixed one at its atom -- the construction is
+  randomized, which `seed` makes reproducible without disturbing the caller's
+  stream. Pearson and response residuals are offered as options; both are
+  defined against the mean, and for a skewed family the first is not standard
+  normal even where the model is right.
+
+* A term whose block is a working linearization with a frozen weight is held
+  out of the variance matrix, and the rest of it is reported. Measured on a
+  jump at 400 observations against a bootstrap of 200 resamples: the working
+  information gives the change of level and the auxiliary coordinate a
+  standard error of EXACTLY ZERO, against 0.063 and 0.540, and the position
+  read off them 1.8e-05 against 0.090. A zero looks like a number and is
+  worse than a gap. Before this the whole matrix was refused and a sharp
+  `jump()` or `jseg()` had no summary at all; now the coefficients beside the
+  term keep their inference, conditional on the break-points where they are.
+  The question is asked of the term through
+  `modelterms7::term_jacobian_block()`, so a continuous `seg()` and a
+  smoothed discontinuous one, whose blocks ARE Jacobians, keep everything.
+
+* `print()` heads a block by its term and nothing else, counts a structural
+  term's own PARAMETERS where it used to report zero coefficients, pads the
+  name column to the longest name in the table, and reports no likelihood:
+  there are two of them, the conditional one the criteria are built on and
+  the penalized one the inner fit minimizes, and `summary()` is where the
+  pairing means something.
+
+* A term that develops one of its own parameters over covariates reports
+  that parameter as a compartment of its own. Its columns mean different
+  things -- a break-point's population value and its per-group deviations
+  are not comparable quantities -- and a table that stacks them reads as a
+  list of numbers rather than as a model. Each compartment is indented under
+  the term, headed by what develops the parameter, and each sub-term inside
+  it is rendered the way a block of that kind is rendered at the top level.
+  The division comes from `modelterms7::term_components()`; nothing here
+  parses a coefficient name.
+
+* A random development reports the scale of its effects with its interval
+  and one line saying how many predictions there are and how far they
+  spread. The predictions themselves are not printed: they are a column of
+  numbers nobody reads to the end, and they are in `coef()`. This is what a
+  top-level `random()` term has always done, applied where the effects sit
+  inside another term.
+
+* A compartment opens with its own hyperparameter, under a name that says
+  what the hyperparameter is rather than which coordinate carries it. A
+  gaussian prior's `sigma` is the scale of the effects it shrinks and a
+  quadratic penalty's `lambda` is a precision; under a term of a model whose
+  distribution has a `sigma` of its own, the coordinate's name is the name
+  of a different quantity.
+
+* A term that develops one of its parameters is printed with that parameter
+  read at a glance before its tables: the population value of the
+  development and what develops it. A parameter that is a number of its own
+  is one row of the table below and gets no line above it; a developed one
+  is spread over a compartment where its population value is labelled by the
+  development's intercept, so this is the only place the parameter's own
+  name appears beside a number.
+
+* Each equation's heading names the link it is written on. Every coefficient
+  in the blocks below it is a coefficient of the LINEAR PREDICTOR, so what
+  it means for the parameter depends on the link, and a summary that did not
+  say which one left the reader to remember the family's defaults.
+
+* A structural term is headed by the call and nothing else. The word
+  `Structural` said what the call already shows.
+
+* The prefix a term repeats on every row is dropped for the printing, in its
+  own table and inside each compartment: the heading has already said which
+  term this is. `coef()` and the summary's own tables keep the names the fit
+  was built with, which are the ones another call can be indexed by.
+
+* A block of more than twelve rows shows the first ten coefficients and says
+  how many it did not show. A hyperparameter is never among them: it governs
+  every coefficient under it.
+
+* The whole of a block is formatted in one pass, its own rows and every
+  compartment's together, so the columns line up down the block rather than
+  restarting at each section.
+
+* A structural term is a block like any other. It contributes no design
+  columns, so its block is built from what it REPORTS -- the quantities
+  `term_readable()` names, with the variance of the joint information behind
+  them -- and a developed parameter becomes a compartment there as it does in
+  an additive term. `gas(omega ~ random(~1 | id))` used to print its
+  population value and every one of its per-group deviations in a flat table
+  below the equation's blocks; it prints the scale of the deviations and one
+  line saying how many there are.
+
+* And its hyperparameter sits with the coordinates it shrinks. It used to be
+  reported in a block of its own headed `Penalized ... [0 coefficients]`,
+  carrying nothing but that one number, while the coefficients it governs
+  were printed further down under a different heading.
+
+* `term_block_kind()` answers `"structural"`, asked before anything else. A
+  structural term carrying no penalty came back `"parametric"`, which put a
+  term with no columns among the terms whose columns are one unpenalized
+  block.
+
+* A column empty on every row of a block is not printed. A quantity reported
+  without a test -- a break-point's position, a hyperparameter, everything a
+  structural term reports -- left the two test columns blank throughout.
+
+* The matrix `statmod_structural_table()` inverts carries the DESIGN's own
+  penalties as well as the structural term's. A random effect is identified
+  by its penalty and by nothing else, so the unpenalized information is
+  singular along the direction that trades its population value against its
+  deviations; with a penalized block beside a structural term that direction
+  is in this matrix, and the solve failed. Measured on a break-point term
+  with a random development beside a score-driven level: reciprocal condition
+  number 1.2e-18, the smallest eigenvalue 2.7e-13 and its direction the six
+  deviations at +0.378 against the intercept at -0.378. Every standard error
+  of the structural term came back missing; they are there now, and they are
+  read off the same penalized information `vcov()` uses for the coefficients,
+  which the two did not share before.
+
 # statmodels7 0.86.0
 
 * The exact Hessian of a marginal criterion is complete where a design block

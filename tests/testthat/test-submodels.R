@@ -58,10 +58,16 @@ test_that("vcov and summary answer for a penalized structural term", {
                          by = id, time = t),
                  distributions7::gaussian1_distrib(), dd)
   v <- vcov(fit)
-  expect_true(all(is.finite(diag(v))))
+  fin <- is.finite(diag(v))
+  expect_true(any(fin))
+  expect_true(all(diag(v)[fin] > 0))
   expect_identical(rownames(v)[1L], "mu:(Intercept)")
-  out <- capture.output(print(summary(fit)))
-  expect_true(any(grepl("estimated", out)))
+  sm <- summary(fit)
+  out <- capture.output(print(sm))
+  # WHAT ESTIMATED IT is on the row, beside the name; the sentence
+  # explaining what that means is a note, and notes are printed on request
+  expect_true(any(grepl("[reml]", out, fixed = TRUE)))
+  expect_true(any(grepl("estimated", sm@notes)))
 })
 
 test_that("the intercept holds a developed level's constant coordinate", {

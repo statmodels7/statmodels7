@@ -191,8 +191,9 @@ test_that("a break-point term has its own section, reporting psi", {
   expect_true(is.na(tb$p_value[tb$name == "psi1"]))
   expect_true(all(is.finite(unlist(tb[tb$name == "psi1", c("lower", "upper")]))))
 
-  out <- paste(utils::capture.output(print(s)), collapse = "\n")
-  expect_match(out, "Break-points")
+  lines <- utils::capture.output(print(s))
+  out <- paste(lines, collapse = "\n")
+  expect_true(any(startsWith(lines, "seg(x)")))
   expect_match(out, "psi1")
   # and the auxiliary pair is nowhere in it
   expect_false(grepl("seg.psi1", out, fixed = TRUE))
@@ -206,7 +207,14 @@ test_that("a break-point term has its own section, reporting psi", {
                summary(fj)@tables$mu)[[1L]]$table
   expect_identical(tj$name, c("delta1", "psi1"))
   expect_equal(tj$estimate[tj$name == "psi1"], 6, tolerance = 0.1)
-  expect_true(is.finite(tj$se[tj$name == "psi1"]))
+  # and its standard error is MISSING, deliberately. The block of a
+  # discontinuous construction is a working linearization with a frozen
+  # weight, so the curvature it carries is the working model's: measured at
+  # 400 observations against a bootstrap of 200 resamples, it gives the
+  # change of level and the auxiliary coordinate a standard error of exactly
+  # zero, against 0.063 and 0.540, and the position read off them 1.8e-05
+  # against 0.090. A number wrong by five thousand times is worse than a gap.
+  expect_true(is.na(tj$se[tj$name == "psi1"]))
   expect_false(any(grepl("^g[0-9]", tj$name)))
 })
 

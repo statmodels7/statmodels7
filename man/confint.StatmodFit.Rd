@@ -9,6 +9,7 @@
   parm = NULL,
   level = 0.95,
   type = c("bayesian", "frequentist"),
+  readable = TRUE,
   ...
 )
 }

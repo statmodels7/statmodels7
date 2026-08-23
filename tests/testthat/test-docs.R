@@ -43,7 +43,9 @@ documentable <- function() {
   nms <- setdiff(ls(ns, all.names = FALSE),
                  c("print", "plot", "summary", "mean", "simulate",
                    "coef", "confint", "logLik", "vcov",
-                   "predict", "fitted"))
+                   "predict", "fitted", "residuals", "nobs", "formula",
+                   "family", "weights", "df.residual", "sigma",
+                   "model.matrix", "terms", "model.frame", "anova"))
   nms <- grep("^_statmodels7_", nms, invert = TRUE, value = TRUE)
   keep <- vapply(nms, function(n) {
     o <- get(n, envir = ns)

@@ -35,6 +35,7 @@ reference:
   - aic
   - cv
   - rstatmod
+  - print.StatmodSim
 
 - title: Where a fit begins
   desc: >
@@ -57,6 +58,7 @@ reference:
     elapsed time in the unit it deserves.
   contents:
   - loglik
+  - hyper
   - statmod_certificate
   - statmod_latent
   - format_duration

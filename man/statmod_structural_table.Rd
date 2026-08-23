@@ -13,7 +13,10 @@ statmod_structural_table(fit, level = 0.95)
 }
 \value{
 A data frame with one row per parameter of per structural term,
-or \code{NULL} where the model carries none.
+carrying \code{component} and \code{position} -- which of the term's
+own parameters the quantity belongs to and where in the parameter vector
+it sits, both read off the Jacobian's support -- or \code{NULL} where
+the model carries none.
 }
 \description{
 The estimated parameters of every structural term, on their own scale,

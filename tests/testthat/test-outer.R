@@ -313,7 +313,7 @@ test_that("a hyperparameter chosen by a path is marked estimated, not held", {
   expect_identical(r$source, "bic")
   # and it is not the value it came in with
   expect_false(isTRUE(all.equal(r$estimate, 1)))
-  expect_output(print(s), "(bic)", fixed = TRUE)
+  expect_output(print(s), "[bic]", fixed = TRUE)
   expect_false(any(grepl("held at the value", s@notes)))
 })
 

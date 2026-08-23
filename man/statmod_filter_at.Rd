@@ -16,7 +16,9 @@ statmod_filter_at(spec, design, eta_static, theta_static)
 \item{theta_static}{The parameters they give.}
 }
 \value{
-A named list, one entry per structural term.
+A named list, one entry per structural term, carrying its
+predictor, the derivative of that predictor in the term's own
+parameters, and the curvature the recursion read at each step.
 }
 \description{
 The level each filter adds to the equation it sits in, together with the

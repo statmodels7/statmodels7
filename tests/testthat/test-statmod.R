@@ -132,7 +132,12 @@ test_that("print says what the fit is", {
   expect_true(any(grepl("gaussian1", out)))
   expect_true(any(grepl("mu .*~ x", out)))
   expect_true(any(grepl("sigma .*~ z", out)))
-  expect_true(any(grepl("log-likelihood", out)))
+  # print() carries no likelihood: there are two of them, the conditional
+  # one the criteria are built on and the penalized one the inner fit
+  # minimizes, and summary() is where the pairing means something
+  expect_false(any(grepl("log-likelihood", out)))
+  expect_true(any(grepl("conditional log-likelihood",
+                        utils::capture.output(print(summary(fit))))))
   expect_true(any(grepl("converged", out)))
 })
 

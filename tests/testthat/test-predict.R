@@ -7,7 +7,7 @@ dd <- data.frame(x = runif(n), z = runif(n),
 
 test_that("a written model draws a response and a fit recovers it", {
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))
+                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))$data
   expect_true("y" %in% names(sim))
   expect_identical(nrow(sim), 200L)
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
@@ -23,15 +23,15 @@ test_that("a factor needs no declaring", {
   # appear by themselves
   sim <- rstatmod(y ~ g, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(0, 1, 2), sigma = log(0.3)))
-  expect_identical(names(attr(sim, "par")$mu),
+  expect_identical(names(sim$par$mu),
                    c("(Intercept)", "gb", "gc"))
-  fit <- statmod(y ~ g, distributions7::gaussian1_distrib(), sim)
+  fit <- statmod(y ~ g, distributions7::gaussian1_distrib(), sim$data)
   expect_equal(fit@coefficients$mu, c(0, 1, 2), tolerance = 0.15)
 })
 
 test_that("a count model is drawn and recovered", {
   sim <- rstatmod(counts ~ x, distributions7::poisson_distrib(), dd,
-                  par = list(mu = c(0.5, 1.5)))
+                  par = list(mu = c(0.5, 1.5)))$data
   expect_true(all(sim$counts >= 0))
   expect_true(all(sim$counts == round(sim$counts)))
   fit <- statmod(counts ~ x, distributions7::poisson_distrib(), sim)
@@ -40,7 +40,7 @@ test_that("a count model is drawn and recovered", {
 
 test_that("every parameter can be simulated and recovered", {
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   expect_equal(fit@coefficients$mu, c(1, 2), tolerance = 0.2)
   expect_equal(fit@coefficients$sigma, c(-1, 1.5), tolerance = 0.5)
@@ -49,7 +49,7 @@ test_that("every parameter can be simulated and recovered", {
 test_that("the coefficients are drawn when none are given, and reported", {
   set.seed(11)
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd)
-  p <- attr(sim, "par")
+  p <- sim$par
   expect_named(p, c("mu", "sigma"))
   expect_length(p$mu, 4L)
   expect_true(all(is.finite(unlist(p))))
@@ -57,22 +57,34 @@ test_that("the coefficients are drawn when none are given, and reported", {
   # output
   again <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
                     par = p)
-  expect_equal(attr(again, "theta")$mu, attr(sim, "theta")$mu)
+  expect_equal(again$theta$mu, sim$theta$mu)
 })
 
 test_that("what rstatmod refuses", {
   expect_error(rstatmod(y ~ x, distributions7::gaussian1_distrib(),
                         list(x = 1)), "must be a data frame")
+  # a caller who passed the whole result where a data frame was wanted is
+  # one field away, and the message says which
+  expect_error(statmod(y ~ x, distributions7::gaussian1_distrib(),
+                       rstatmod(y ~ x, distributions7::gaussian1_distrib(),
+                                dd)),
+               "Pass its 'data' field", fixed = TRUE)
   expect_error(rstatmod(y ~ x, "gaussian", dd), "distributions7")
   expect_error(rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                         par = list(wrong = 1)), "not a parameter")
-  expect_error(rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                        par = list(mu = 1)), "length 1")
+  # ONE number is used for every coefficient of the equation, deliberately;
+  # what is refused is a length that is neither one nor the equation's own,
+  # which R would recycle without a word
+  expect_equal(unname(
+    rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+             par = list(mu = 1))$par$mu), c(1, 1))
+  expect_error(rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
+                        par = list(mu = c(1, 2))), "has length 2")
 })
 
 test_that("prediction does not need the response", {
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))
+                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))$data
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
   # new data routinely has no response column, and a prediction that demanded
   # one would be useless for the thing prediction is for
@@ -86,7 +98,7 @@ test_that("prediction does not need the response", {
 
 test_that("a parameter can be asked for by its own name", {
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   nd <- dd[1:8, ]
   th <- predict(fit, "parameter", nd)
@@ -107,7 +119,7 @@ test_that("a parameter can be asked for by its own name", {
 
 test_that("a moment can be asked for, and agrees with the parameters", {
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))
+                  par = list(mu = c(1, 2), sigma = c(-1, 1.5)))$data
   fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
   nd <- dd[1:8, ]
   th <- predict(fit, "parameter", nd)
@@ -122,7 +134,7 @@ test_that("a moment can be asked for, and agrees with the parameters", {
 
 test_that("a moment of a count model varies with the fitted mean", {
   sim <- rstatmod(counts ~ x, distributions7::poisson_distrib(), dd,
-                  par = list(mu = c(0.5, 1.5)))
+                  par = list(mu = c(0.5, 1.5)))$data
   fit <- statmod(counts ~ x, distributions7::poisson_distrib(), sim)
   nd <- dd[1:6, ]
   mu <- predict(fit, "mu", nd)
@@ -135,7 +147,7 @@ test_that("a level absent from the new data keeps its contrasts", {
   # the blueprint is what makes this work: rebuilding from the new frame would
   # give a different design and silently different predictions
   sim <- rstatmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))
+                  par = list(mu = c(1, 2, -0.5, 0.8), sigma = log(0.4)))$data
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
   one_level <- dd[dd$g == "a", ][1:4, ]
   expect_length(levels(droplevels(one_level$g)), 1L)
@@ -149,7 +161,7 @@ test_that("a moment that does not exist is reported as NaN, not as a number", {
   # returning the location, which would be a plausible wrong number. The
   # prediction carries that through instead of hiding it.
   sim <- rstatmod(y ~ x, distributions7::cauchy_distrib(), dd,
-                  par = list(mu = c(0, 1), sigma = log(0.5)))
+                  par = list(mu = c(0, 1), sigma = log(0.5)))$data
   fit <- statmod(y ~ x, distributions7::cauchy_distrib(), sim)
   expect_true(all(is.nan(suppressWarnings(predict(fit, "mean", dd[1:3, ])))))
   expect_true(all(is.nan(suppressWarnings(
@@ -163,14 +175,19 @@ test_that("a moment that does not exist is reported as NaN, not as a number", {
 
 test_that("at the fitting data, prediction and fitted() are the same thing", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
-  expect_equal(predict(fit), fitted(fit), tolerance = 1e-12)
+  # fitted() is ONE parameter, so that it and residuals() are a matched
+  # pair; the whole set at once is what predict() defaults to
+  expect_equal(predict(fit, "mu"), fitted(fit), tolerance = 1e-12)
+  expect_equal(predict(fit, "sigma"), fitted(fit, "sigma"),
+               tolerance = 1e-12)
+  expect_equal(predict(fit)$mu, fitted(fit), tolerance = 1e-12)
 })
 
 test_that("an unrecognized target names what is available", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
   expect_error(predict(fit, "median"), "neither a parameter")
   expect_error(predict(fit, "median"), "mu, sigma")
@@ -183,7 +200,7 @@ test_that("a data frame passed second is named rather than failing inside", {
   # to report itself: without this a data frame lands in 'what' and the failure
   # surfaces several frames away from the mistake
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                  par = list(mu = c(1, 2), sigma = log(0.4)))
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
   fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
   expect_error(predict(fit, dd[1:3, ]), "is 'what', not")
   # and the spelling the message suggests works

@@ -4,7 +4,14 @@
 \alias{vcov.StatmodFit}
 \title{The Variance Matrix of a Fit}
 \usage{
-\method{vcov}{StatmodFit}(object, type = c("bayesian", "frequentist"), expected = NULL, ...)
+\method{vcov}{StatmodFit}(
+  object,
+  type = c("bayesian", "frequentist"),
+  expected = NULL,
+  readable = TRUE,
+  parameter = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link{StatmodFit}}.}

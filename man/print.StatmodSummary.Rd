@@ -4,12 +4,18 @@
 \alias{print.StatmodSummary}
 \title{Print a Model Summary}
 \usage{
-\method{print}{StatmodSummary}(x, digits = 4L, ...)
+\method{print}{StatmodSummary}(x, digits = 4L, notes = FALSE, ...)
 }
 \arguments{
 \item{x}{A \code{\link{StatmodSummary}}.}
 
 \item{digits}{Significant digits in the tables.}
+
+\item{notes}{Whether to print the qualifications the numbers carry.
+\code{FALSE} by default, when the foot says how many there are: they
+state conventions rather than facts of the fit, so they read the same
+under every model. They are on the summary's \code{notes} property
+either way.}
 
 \item{...}{Unused.}
 }

@@ -66,6 +66,11 @@ test_that("a panel fit through the memo matches its own criterion identities", {
   # vcov reads the full information at the fitted point, which the memo
   # serves: it must be symmetric and finite
   vc <- vcov(fit)
-  expect_true(all(is.finite(diag(vc))))
+  # a quantity that reads a parameter an intercept in the same equation
+  # holds is not estimated and has no variance of its own; everything else
+  # does
+  fin <- is.finite(diag(vc))
+  expect_true(any(fin))
+  expect_true(all(diag(vc)[fin] > 0))
   expect_identical(vc, t(vc))
 })

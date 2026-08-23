@@ -2,22 +2,66 @@
 % Please edit documentation in R/report.R
 \name{coef.StatmodFit}
 \alias{coef.StatmodFit}
-\title{The Coefficients of a Fit}
+\title{The Coefficients of a Fitted Model}
 \usage{
-\method{coef}{StatmodFit}(object, ...)
+\method{coef}{StatmodFit}(object, readable = TRUE, ...)
 }
 \arguments{
-\item{object}{A \code{\link{StatmodFit}}.}
+\item{object}{A fitted model.}
+
+\item{readable}{Whether to report the quantities the model is about rather
+than the coordinates it was estimated on.}
 
 \item{...}{Unused.}
 }
 \value{
-A named list of numeric vectors.
+A named list, one entry per distribution parameter, each a named
+numeric vector.
 }
 \description{
-One vector per distribution parameter.
+One named vector per distribution parameter: the quantities the model is
+written in, or the coordinates it was estimated on.
+}
+\details{
+Most coefficients are the same either way. A coefficient of a linear
+predictor is what it is, and \code{readable} moves only the two kinds of
+parameter that are reported under a different name from the one they are
+carried under.
+
+A break-point term is fitted through a working pair and its position is
+read off it: a discontinuous term carries \code{g} and reports
+\eqn{\psi = -g/\delta}, so with \code{readable = FALSE} the vector holds a
+number that is no quantity of the model. A score-driven term's persistence
+rides a partial autocorrelation, the stationary region not being a box,
+and what the literature calls \eqn{\beta_j} is the autoregressive
+coefficient the whole chart produces. Where a term declares no quantities
+of its own, and where a parameter it is written in is developed over
+covariates and so has no single value, the coordinates stand.
+
+A STRUCTURAL TERM contributes no design columns and its parameters are
+here under either reading. They used to be in neither: a model whose
+predictor is a score-driven filter answered \code{numeric(0)}.
+
+\code{readable = FALSE} is what a caller feeding a fit back needs: it is
+the vector the fit was estimated on, in the order and under the names
+\code{\link{vcov}} is indexed by, and a structural term's part of it is on
+the unconstrained scale its charts define.
+
+Hyperparameters are not coefficients and are not here; \code{\link{hyper}}
+reports them.
+}
+\examples{
+set.seed(1)
+d <- data.frame(x = sort(runif(200, 0, 10)))
+d$y <- 0.3 * d$x + 1.5 * pmax(d$x - 6, 0) + rnorm(200, 0, 0.4)
+fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
+               distributions7::gaussian1_distrib(), d)
+coef(fit)$mu
+coef(fit, readable = FALSE)$mu
+
 }
 \seealso{
-\code{\link{statmod}}
+\code{\link{hyper}}, \code{\link{summary.StatmodFit}},
+\code{\link[modelterms7]{term_readable}}
 }
 \keyword{internal}

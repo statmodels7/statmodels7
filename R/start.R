@@ -454,7 +454,14 @@ predictor_target <- function(spec, p) {
   if (!("params_interpretation" %in% S7::prop_names(d))) return(NULL)
   ip <- d@params_interpretation[[p]]
   if (is.null(ip) || !ip %in% c("mean", "location")) return(NULL)
-  y <- suppressWarnings(as.numeric(spec@response))
+  # A RESPONSE THAT IS NOT A VECTOR OF NUMBERS has no target: a censored one
+  # is an S7 object carrying values and their statuses, and the values alone
+  # are not observations of the parameter -- a right-censored one is a lower
+  # bound. `as.numeric` RAISES on such an object rather than warning, so the
+  # suppression here caught nothing and a censored fit stopped before its
+  # first iteration.
+  y <- tryCatch(suppressWarnings(as.numeric(spec@response)),
+                error = function(e) numeric(0))
   if (!length(y) || length(y) != spec@n_obs) return(NULL)
   lk <- d@link_params[[p]]
   if (is.null(lk)) return(NULL)

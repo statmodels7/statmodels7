@@ -62,7 +62,10 @@ test_that("the smoothed jseg fits the random changepoint the sharp one
   expect_gt(stats::cor(per_id, psi_i), 0.9)
   # the summary names the smoother and the width, and prints the apparent
   # scale beside the corrected one -- the probit's convolution identity
-  txt <- paste(utils::capture.output(print(summary(fit))), collapse = "\n")
-  expect_match(txt, "smoothed \\(probit")
-  expect_match(txt, "corrected")
+  # the qualifications a summary carries are on its `notes` and are printed
+  # on request: they state conventions rather than facts of the fit, and the
+  # foot of every summary was a paragraph nobody read twice
+  nt <- paste(summary(fit)@notes, collapse = "\n")
+  expect_match(nt, "smoothed \\(probit")
+  expect_match(nt, "corrected")
 })

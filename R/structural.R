@@ -1057,7 +1057,9 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #' @param eta_static The static predictors, one per distribution parameter.
 #' @param theta_static The parameters they give.
 #'
-#' @return A named list, one entry per structural term.
+#' @return A named list, one entry per structural term, carrying its
+#'   predictor, the derivative of that predictor in the term's own
+#'   parameters, and the curvature the recursion read at each step.
 #'
 #' @seealso \code{\link{statmod_structural}}
 #'
@@ -1076,6 +1078,7 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
                                   fast = cb$fast, threads = spec@threads)
     out[[u$term]] <- list(param = u$param, term = u$term, tm = tm,
                           eta = f$eta, jacobian = f$jacobian,
+                          curv = f$curv,
                           psi = psi, cb = cb,
                           eta_static = eta_static[[u$param]])
   }
@@ -1110,7 +1113,10 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' @param level The interval level.
 #'
 #' @return A data frame with one row per parameter of per structural term,
-#'   or \code{NULL} where the model carries none.
+#'   carrying \code{component} and \code{position} -- which of the term's
+#'   own parameters the quantity belongs to and where in the parameter vector
+#'   it sits, both read off the Jacobian's support -- or \code{NULL} where
+#'   the model carries none.
 #'
 #' @seealso \code{\link{statmod_full_information}}
 #'
@@ -1132,6 +1138,22 @@ statmod_structural_table <- function(fit, level = 0.95) {
     if (!is.null(ps)) {
       ix <- nb + seq_len(nrow(I) - nb)
       I[ix, ix] <- I[ix, ix] + ps
+    }
+    # AND THE DESIGN'S OWN PENALTIES, for the same reason. A random effect is
+    # identified by its penalty and by nothing else, so the unpenalized
+    # information is singular along the direction that trades its population
+    # value against its deviations; with a penalized block beside a
+    # structural term that direction is in this matrix, and inverting it left
+    # every structural standard error missing. Measured on a break-point term
+    # with a random development beside a score-driven level: the smallest
+    # eigenvalue is 2.7e-13 and its direction is the six deviations at +0.378
+    # against the intercept at -0.378, exactly the flat one.
+    Sd <- tryCatch(statmod_penalty_at(spec, fit@coefficients, fit@hyper,
+                                      design, "hessian"),
+                   error = function(e) NULL)
+    if (!is.null(Sd) && nrow(Sd) == nb) {
+      I[seq_len(nb), seq_len(nb)] <- I[seq_len(nb), seq_len(nb)] +
+        as.matrix(Sd)
     }
     solve(I)
   }, error = function(e) NULL)
@@ -1163,6 +1185,22 @@ statmod_structural_table <- function(fit, level = 0.95) {
     }
     J <- rd$jacobian
     vq <- if (ok) diag(J %*% Vz %*% t(J)) else rep(NA_real_, length(nm))
+    # WHICH of the term's own parameters a reported quantity belongs to, and
+    # WHERE in the parameter vector it sits, read off the Jacobian's support
+    # rather than off the quantity's name. A quantity reading coordinates of
+    # several parameters belongs to none of them and stays with the term: an
+    # autoregressive coefficient is a function of the whole chart, which is
+    # why it is not filed under one partial autocorrelation.
+    cps <- tryCatch(modelterms7::term_components(tm),
+                    error = function(e) list())
+    owner <- function(i) {
+      k <- which(J[i, ] != 0)
+      if (!length(k)) return(list("", NA_integer_))
+      hit <- vapply(cps, function(z) all(k %in% z$index), logical(1))
+      if (sum(hit) != 1L) return(list("", NA_integer_))
+      list(names(cps)[which(hit)],
+           if (length(k) == 1L) as.integer(k) else NA_integer_)
+    }
     # a held parameter is not estimated, and a quantity that reads one is not
     # either: it would be reported with the variance of the rest alone
     touches_held <- apply(J[, held, drop = FALSE] != 0, 1L, any)
@@ -1181,10 +1219,12 @@ statmod_structural_table <- function(fit, level = 0.95) {
         lo <- ends[1L]
         hi <- ends[2L]
       }
+      ow <- owner(i)
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = u$param, term = u$term, name = rd$name[[i]],
         estimate = as.numeric(val), se = s, lower = lo, upper = hi,
-        held = nm[[i]] %in% held, stringsAsFactors = FALSE)
+        held = nm[[i]] %in% held, component = ow[[1L]],
+        position = ow[[2L]], stringsAsFactors = FALSE)
     }
   }
   do.call(rbind, rows)
