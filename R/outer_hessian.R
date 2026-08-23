@@ -121,6 +121,18 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
               identical(method@hessian, "expected"), ctx_approx(ctx),
               units = units, Hl = Hl)
   } else NULL
+  # the weight the block's SECOND derivative is paired with depends on neither
+  # direction, so it is built once here rather than once per pair below
+  acurv <- if (length(units)) {
+    refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
+  } else NULL
+  # the score the mode's own third derivative is weighted by, read once
+  glref <- if (length(units)) {
+    distributions7::distrib_gradient(
+      spec@distrib, spec@response,
+      statmod_eta(spec, design, coef)$theta, scale = "link",
+      threads = spec@threads)
+  } else NULL
 
   # ⚠️ HOW THE MODE MOVES is governed by the penalized LIKELIHOOD's own
   # curvature, which for a block that moves with its coefficients is not the
@@ -175,8 +187,24 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       key <- pieces$pair[m, l]
       Sml <- pieces$S2[[key]]
       cml <- pieces$c2[[key]]
+      # the block's SECOND derivative in the pair's two directions, read once
+      # and consumed twice: the mode's second movement below and the
+      # twice-contracted fourth derivative further down
+      f2 <- if (length(units)) {
+        lapply(units, function(un)
+          refresh_dblock2(un, bhat[[l]][un$ra], bhat[[m]][un$ra], spec@n_obs))
+      } else NULL
       rhs <- (pieces$S[[l]] + Tm[[l]]) %*% bhat[[m]] +
         pieces$S[[m]] %*% bhat[[l]] + cml
+      # ⚠️ T[b_l] is the third derivative of the PENALIZED OBJECTIVE, whose
+      # second is K + D and not K, so its own third derivative is not
+      # dK/dbeta alone. The missing piece is dD/dbeta, and leaving it out is
+      # not a small error: measured against the mode refitted and differenced
+      # twice, b_ml is wrong by 7.6 to 9.0 per cent without it.
+      if (length(units)) {
+        rhs <- rhs + refresh_mode_third(spec, params, npar, units, Hl, glref,
+                                        tv[[l]], dref[[m]], f2, total)
+      }
       bml <- -msolve(rhs)
       # dK_m/dt_l enters ONLY through its trace against M, so the two
       # contractions are never assembled: tr(M X'WX) is a weighted sum of the
@@ -189,7 +217,8 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
                           block_predictors(design, params, npar, offs, bml))
       if (length(units)) {
         tr_dKm <- tr_dKm + sum(uref * bml) +
-          trace_refresh4(spec, M, params, Hl, dref[[l]], dref[[m]], units)
+          trace_refresh4(spec, M, params, npar, Hl, dref[[l]], dref[[m]],
+                         units, G, d3, bhat[[l]], f2, acurv)
       }
       v <- -pieces$rho2[m, l] +
         sum(bhat[[m]] * as.numeric(Jmat %*% bhat[[l]])) +

@@ -253,12 +253,15 @@ test_that("the Hessian covers a block that moves with its coefficients", {
   # nl()'s block is the Jacobian, so dX/dbeta reaches the assembly in three
   # places -- the matrix dK/dt, the trace of dK_m/dt_l against M, and the
   # twice-contracted fourth derivative -- and the mode moves by the penalized
-  # likelihood's own curvature rather than by K. Measured against a central
-  # difference of the exact gradient with the mode refitted, the four together
-  # take a*exp(-r x) from 2.17e-04 to 2.26e-05 and a weakly identified one
-  # (r*x_max = 0.5, where the curve is nearly straight and the criterion flat)
-  # from 2.10e-01 to 3.54e-03, its hyperparameter's standard error from
-  # 1.25e-01 to 1.77e-03.
+  # likelihood's own curvature rather than by K. Beside those, the twice-
+  # contracted fourth derivative reads the block's SECOND derivative and the
+  # direction's own predictor, and the mode's SECOND movement reads both:
+  # measured against a central difference of the exact gradient with the mode
+  # refitted, the whole set takes this cell from 2.19e-05 to 1.63e-07, which
+  # is the reference's own floor, and a nearly straight one (r*x_max = 1.5,
+  # where the criterion is flat and the Hessian small) from 5.48e-04 to
+  # 1.37e-07 with its hyperparameter's standard error from 2.74e-04 to
+  # 6.85e-08.
   set.seed(9)
   np <- 40; m <- 8
   dn <- data.frame(x = rep(seq(0.2, 4, length.out = np), m),
@@ -290,18 +293,22 @@ test_that("a break-point term's Hessian is covered too", {
 })
 
 test_that("a fixed design gets exactly zero from every refresh correction", {
-  # the negative control, and it is what says the four corrections cannot move
-  # a model with no block that moves: they are not small there, they are the
+  # the negative control, and it is what says the corrections cannot move a
+  # model with no block that moves: they are not small there, they are the
   # zero matrix and the number zero.
   b <- refresh_bits(y ~ s(x, k = 8), dh)
   expect_length(b$units, 0L)
   R <- contract3_refresh(b$spec, b$design, b$params, b$npar, b$offs, b$total,
                          list(), b$Hl, b$units)
   expect_true(all(as.matrix(R) == 0))
-  expect_identical(trace_refresh4(b$spec, b$M, b$params, b$Hl, list(), list(),
-                                  b$units), 0)
+  expect_identical(trace_refresh4(b$spec, b$M, b$params, b$npar, b$Hl, list(),
+                                  list(), b$units, NULL, b$d3, NULL, list(),
+                                  list()), 0)
   expect_true(all(u_refresh(b$spec, b$design, b$coef, b$M, b$params, b$npar,
                             b$offs, b$total, units = b$units) == 0))
+  expect_true(all(refresh_mode_third(b$spec, b$params, b$npar, b$units, b$Hl,
+                                     NULL, NULL, list(), list(),
+                                     b$total) == 0))
 })
 
 test_that("the trace of the refresh correction is read off the adjoint", {
@@ -334,4 +341,100 @@ test_that("the trace of the refresh correction is read off the adjoint", {
   direct <- sum(as.matrix(b$M) * as.matrix(R + t(R)))
   expect_gt(abs(direct), 1e-8)
   expect_equal(sum(uref * v), direct, tolerance = 1e-10)
+})
+
+
+# The twice-contracted fourth derivative on its own, against a mixed second
+# difference of H. It is a far sharper instrument than the Hessian end to end,
+# where one addend's error is diluted among the others, and it is what the
+# corrections reading the block's second derivative were written against.
+u_trace_bits <- function(formula, data, shift = 0.3) {
+  b <- refresh_bits(formula, data, shift)
+  spec <- b$spec
+  design0 <- statmod_design(spec)
+  join <- function(cf) unlist(cf[spec@distrib@params], use.names = FALSE)
+  splt <- function(bv) {
+    out <- list()
+    for (a in seq_along(b$params)) {
+      out[[b$params[a]]] <- if (b$npar[a] == 0L) numeric(0) else
+        bv[b$offs[a] + seq_len(b$npar[a])]
+    }
+    out
+  }
+  # H alone: the order-2 route assumes the penalty is quadratic in beta, so
+  # d2S/dbeta2 is zero and the penalty does not enter U
+  Hof <- function(bv) {
+    cf <- splt(bv)
+    as_dense(statmod_information_at(spec, cf,
+                                    statmod_design_at(spec, cf, design0),
+                                    expected = FALSE))
+  }
+  c(b, list(bflat = join(b$coef), Hof = Hof))
+}
+
+u_trace_gap <- function(b, v, u, h = 3e-4) {
+  M <- as_dense(b$M)
+  ref <- (b$Hof(b$bflat + h * v + h * u) - b$Hof(b$bflat + h * v - h * u) -
+          b$Hof(b$bflat - h * v + h * u) + b$Hof(b$bflat - h * v - h * u)) /
+    (4 * h^2)
+  d4 <- ctx_deriv(NULL, b$spec, b$design, b$coef, b$hyper, 4L)
+  G <- block_leverage(b$design, M, b$params, b$npar, b$offs, 1L)
+  tv <- block_predictors(b$design, b$params, b$npar, b$offs, v)
+  tu <- block_predictors(b$design, b$params, b$npar, b$offs, u)
+  got <- trace_design_form(b$spec, G, d4, b$params, b$npar, tv, tu)
+  if (length(b$units)) {
+    dv <- refresh_direction(b$spec, b$design, M, b$params, b$npar, b$offs,
+                            b$d3, tv, v, b$units)
+    du <- refresh_direction(b$spec, b$design, M, b$params, b$npar, b$offs,
+                            b$d3, tu, u, b$units)
+    ac <- refresh_curv_amat(b$spec, b$design, M, b$params, b$npar, b$offs,
+                            b$units, b$Hl)
+    f2 <- lapply(b$units, function(un)
+      refresh_dblock2(un, v[un$ra], u[un$ra], b$spec@n_obs))
+    got <- got + trace_refresh4(b$spec, M, b$params, b$npar, b$Hl, dv, du,
+                                b$units, G, b$d3, v, f2, ac)
+  }
+  trace <- sum(M * ref)
+  abs(got - trace) / max(1e-12, abs(trace))
+}
+
+test_that("the twice-contracted fourth derivative matches a second difference", {
+  # Three cells, and the middle one is what identifies each correction. On a
+  # bilinear f the block's SECOND derivative is exactly zero, so whatever gap
+  # remains there belongs to the term reading only the first -- the direction's
+  # own predictor, which moves with beta because the block is a Jacobian.
+  # Measured before these were written: 5.04e-08 on the fixed design, 2.32e-02
+  # on the bilinear one and 7.60e-02 on the curved one.
+  set.seed(12)
+  n1 <- 200
+  d1 <- data.frame(x = runif(n1, 0, 10))
+  d1$y <- 1 + 0.3 * d1$x + stats::rnorm(n1, sd = 0.4)
+
+  set.seed(21)
+  nb <- 200
+  db <- data.frame(x = runif(nb, 0.5, 3), z = runif(nb, -1, 1),
+                   w = runif(nb, 0.5, 2),
+                   grp = factor(rep(sprintf("g%d", 1:5), length.out = nb)))
+  db$y <- 1.4 * db$x + 0.8 * db$z + 1.4 * 0.8 * db$w +
+    stats::rnorm(nb, sd = 0.2)
+
+  set.seed(9)
+  nn <- 200
+  dn <- data.frame(x = seq(0.2, 4, length.out = nn),
+                   grp = factor(rep(sprintf("g%d", 1:5), length.out = nn)))
+  dn$y <- 3 * exp(-0.6 * dn$x) + stats::rnorm(nn, sd = 0.15)
+
+  cases <- list(
+    list(y ~ s(x, k = 6), d1, 0L),
+    list(y ~ nl(~ a * x + b * z + a * b * w, a ~ 0 + ridge(~ grp),
+                start = list(b = 0.8)), db, 1L),
+    list(y ~ 0 + nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn, 1L))
+  for (cs in cases) {
+    b <- u_trace_bits(cs[[1L]], cs[[2L]])
+    expect_length(b$units, cs[[3L]])
+    set.seed(2)
+    v <- stats::rnorm(b$total) * 0.1
+    u <- stats::rnorm(b$total) * 0.1
+    expect_lt(u_trace_gap(b, v, u), 1e-5)
+  }
 })

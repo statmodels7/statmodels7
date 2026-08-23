@@ -1,3 +1,56 @@
+# statmodels7 0.86.0
+
+* The exact Hessian of a marginal criterion is complete where a design block
+  moves with its coefficients. Three quantities were missing, and they are
+  added together because adding any one alone is not an improvement --
+  measured on the twice-contracted fourth derivative of a curved `nl`,
+  2.62e-02 today, 2.88e-02 with one of them, 2.65e-03 with another, 5.19e-08
+  with both.
+
+* Two of the three reach `tr(M dK_m/dt_l)`. One is the block's SECOND
+  derivative in the coefficients, which `modelterms7::term_block_deriv2()`
+  now supplies; the other reads only the FIRST and had been missing since
+  these corrections were written. The third-derivative contraction carries
+  the direction's own predictor, and where the block is a Jacobian that
+  predictor moves with the coefficients like everything else. On a bilinear
+  `f`, where the block's second derivative is exactly zero, it is the whole
+  of the gap: 2.32e-02 against an arbitrary trace matrix, 2.19e-08 with it.
+
+* The third reaches the mode's SECOND movement. `b_ml` solves a system whose
+  right-hand side carries the third derivative of the penalized OBJECTIVE,
+  whose second derivative where a block moves is not `K` but `K + D` -- the
+  two `statmod_marginal_grad()` has kept apart through `mode_curvature()`
+  since the gradient was written, and which this equation did not. Measured
+  against the mode refitted at four hyperparameter values and differenced
+  twice, `b_m` was already right to 3.8e-08 and `b_ml` was wrong by 7.6 to
+  9.0 per cent at every step tried; with `dD/dbeta` in, the gap is 1.8e-05,
+  inside the spread between the reference's own consecutive steps.
+
+* What it is worth, against a central difference of the exact gradient with
+  the mode refitted warm, at an inner tolerance of 1e-10 and read against the
+  same harness's own floor of 2.3e-07 on a fixed design:
+
+  | model | before | after |
+  |---|---|---|
+  | `nl`, r*x_max = 1.50 | 5.48e-04 | 1.37e-07 |
+  | `nl`, r*x_max = 1.75 | 2.28e-04 | 1.57e-07 |
+  | `nl`, r*x_max = 7.00 | 1.25e-04 | 1.52e-07 |
+  | `nl`, r*x_max = 2.40 | 2.15e-05 | 1.63e-07 |
+  | `nl`, r*x_max = 3.00 | 1.09e-05 | 1.63e-07 |
+  | `seg(gamma1 ~ 0 + ridge)` | 1.46e-07 | 1.62e-07 |
+  | `s(x, k = 8)`, no moving block | 2.29e-07 | 2.29e-07 |
+
+  Every cell now reads the floor whatever the nonlinearity, where before the
+  error rose as the curve straightened and again as it sharpened. The
+  standard error of the hyperparameter on the nearly straight model goes
+  from 2.74e-04 wrong to 6.85e-08.
+
+* Nothing else moves. A model with no block that moves is IDENTICAL TO THE
+  BIT -- coefficients, log-likelihood, criterion, effective degrees of
+  freedom, outer gradient and outer Hessian -- on a smooth, a smooth with a
+  random effect and two smooths, because the corrections are not small there
+  but exactly zero.
+
 # statmodels7 0.85.0
 
 * `statmod_certificate()` takes `edge`, the free value beyond which a

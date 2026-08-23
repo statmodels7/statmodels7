@@ -4,20 +4,31 @@
 \alias{trace_refresh4}
 \title{How a Moving Block Enters the Twice-Contracted Fourth Derivative}
 \usage{
-trace_refresh4(spec, M, params, Hl, dv, du, units)
+trace_refresh4(spec, M, params, npar, Hl, dv, du, units, G, d3, v, f2, acurv)
 }
 \arguments{
 \item{spec}{A \code{\link{StatmodSpec}}.}
 
 \item{M}{The matrix the trace is taken against.}
 
-\item{params}{The parameter names.}
+\item{params, npar}{The parameter names and block sizes.}
 
 \item{Hl}{The link-scale curvature, from \code{\link{refresh_hessian}}.}
 
 \item{dv, du}{The two directions, from \code{\link{refresh_direction}}.}
 
 \item{units}{The refreshable terms, from \code{\link{refresh_units}}.}
+
+\item{G}{The leverage diagonal, from \code{\link{block_leverage}}.}
+
+\item{d3}{The third derivatives on the link scale.}
+
+\item{v}{The first direction over the stacked coefficients.}
+
+\item{f2}{The block's second derivative in the two directions, one matrix
+per unit, from \code{\link{refresh_dblock2}}.}
+
+\item{acurv}{The curvature weights, from \code{\link{refresh_curv_amat}}.}
 }
 \value{
 A single number.
@@ -29,26 +40,44 @@ coefficients contracted in two directions.
 }
 \details{
 Differentiating the three contributions of \eqn{\partial K/\partial\beta}
-once more leaves three further terms that read \eqn{\partial X/\partial\beta}
-and one that would read \eqn{\partial^2X/\partial\beta^2}. Writing
-\eqn{D_a = (\partial X_a/\partial\beta)v} and
-\eqn{E_a = (\partial X_a/\partial\beta)u},
-\deqn{N = N_1 + N_2 + N_3, \qquad
-  N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
+once more leaves FIVE terms. Writing \eqn{D_a = (\partial X_a/\partial\beta)v}
+and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read the first
+derivative alone,
+\deqn{N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
     E_a[i,j]X_b[i,k],}
 \eqn{N_2} the same with the two directions exchanged, and
 \eqn{N_3[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}D_a[i,j]E_b[i,k]}, which is
-supported where BOTH blocks move. The correction is
-\eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and the first two pieces
-are read off \code{\link{refresh_amat}} with the third derivative in place of
-the curvature, so neither \eqn{N} nor any contraction is assembled.
+supported where BOTH blocks move. A fourth reads the SECOND,
+\eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
+\eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
+\code{\link[modelterms7]{term_block_deriv2}}. Those four enter as
+\eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
+\code{\link{refresh_amat}} -- with the third derivative for the first two and
+the curvature for the fourth -- so neither \eqn{N} nor any contraction is
+assembled.
 
-\strong{The omitted term} carries \eqn{\partial^2X/\partial\beta^2}, the
-term's own third derivative, which no contract supplies. Measured on a
-bilinear \eqn{f}, where it is exactly zero, the corrected Hessian reaches the
-reference's own floor.
+The fifth is of another shape and is added separately. The
+third-derivative contraction carries the DIRECTION'S PREDICTOR
+\eqn{(X_mv_m)_i}, which where \eqn{X_m} is a Jacobian moves with
+\eqn{\beta} as everything else does, and differentiating it leaves
+\deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],
+  \qquad \dot v_m = (\partial X_m/\partial\beta[u])\,v_m.}
+That is the shape \code{\link{trace_design_form}} already computes, so the
+piece is one further call of it with \eqn{\dot v} in place of the
+predictors. \eqn{\dot v} is the predictor's own second derivative
+contracted in both directions and is therefore symmetric in them, which is
+a free check on the assembly.
+
+\strong{Measured}, against a mixed second difference of \eqn{H} that shares
+no arithmetic with any of this: on a bilinear \eqn{f}, where the fourth
+term is exactly zero, the fifth is the whole of the gap and takes
+\eqn{2.32\times10^{-2}} to \eqn{2.19\times10^{-8}}; on a curved one neither
+alone suffices -- \eqn{2.62\times10^{-2}} today, \eqn{2.88\times10^{-2}}
+with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
+\eqn{5.19\times10^{-8}} with both.
 }
 \seealso{
-\code{\link{trace_design_form}}, \code{\link{contract3_refresh}}
+\code{\link{trace_design_form}}, \code{\link{contract3_refresh}},
+\code{\link{refresh_dblock2}}
 }
 \keyword{internal}
