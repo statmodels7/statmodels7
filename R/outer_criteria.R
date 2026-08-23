@@ -46,7 +46,7 @@ NULL
 #' makes it computable is that at the mode \eqn{\partial\ell/\partial\beta} is
 #' \eqn{\partial\rho/\partial\beta}.
 #'
-#' \strong{Which \eqn{\tau}.} The trace is taken over the whole coefficient
+#' **Which \eqn{\tau}.** The trace is taken over the whole coefficient
 #' vector, so a term's contribution reads the full penalized information and
 #' not only its own block. [statmod_edf()]'s per-term numbers invert
 #' the block instead, which is what a per-term reading has to do, and the two

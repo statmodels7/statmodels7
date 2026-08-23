@@ -700,16 +700,14 @@ joint_design_rows <- function(spec, design, coef) {
 #' so differentiating it along the direction \eqn{v} the mode moves in gives
 #' three contributions instead of one:
 #'
-#' \enumerate{
-#'   \item the family's third derivative against the per-observation diagonal
-#'     of \eqn{M}, which is [u_vector()]'s formula with \eqn{V} in
-#'     place of \eqn{X};
-#'   \item the derivative of \eqn{V_p} itself, which is \eqn{E_t v}, one row
-#'     per observation, entering through every \eqn{\ell_{pb}};
-#'   \item the derivative of \eqn{\ell_p E_t}, whose first half is \eqn{E}
-#'     re-weighted by \eqn{\sum_k \ell_{pk}(V_k\cdot v)} and whose second is
-#'     \eqn{\partial^3 e_t/\partial u^3[v]}, the one genuinely new object.
-#' }
+#' 1. the family's third derivative against the per-observation diagonal
+#'    of \eqn{M}, which is [u_vector()]'s formula with \eqn{V} in
+#'    place of \eqn{X};
+#' 2. the derivative of \eqn{V_p} itself, which is \eqn{E_t v}, one row
+#'    per observation, entering through every \eqn{\ell_{pb}};
+#' 3. the derivative of \eqn{\ell_p E_t}, whose first half is \eqn{E}
+#'    re-weighted by \eqn{\sum_k \ell_{pk}(V_k\cdot v)} and whose second is
+#'    \eqn{\partial^3 e_t/\partial u^3[v]}, the one genuinely new object.
 #'
 #' Piece 1 is direction-free and is computed once; pieces 2 and 3 are read
 #' along each hyperparameter's own direction, which is the trade that keeps

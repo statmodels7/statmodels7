@@ -48,7 +48,6 @@ The criterion is the same and so are its three pieces; what changes is that
   - \sum_t w_t \ell_{p,t}E_t,}
 so differentiating it along the direction \eqn{v} the mode moves in gives
 three contributions instead of one:
-
 \enumerate{
 \item the family's third derivative against the per-observation diagonal
 of \eqn{M}, which is \code{\link[=u_vector]{u_vector()}}'s formula with \eqn{V} in

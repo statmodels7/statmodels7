@@ -65,12 +65,12 @@ NULL
 #' `rnorm(1, 0, sd)`, which on the link scale gives predictors of order
 #' one. A named list fixes them instead, one entry per distribution
 #' parameter, and an entry may be
-#' \itemize{
-#'   \item a numeric vector, as long as that equation has coefficients;
-#'   \item a single number, used for every coefficient of the equation;
-#'   \item a FUNCTION of the coefficient count, called once and returning
-#'     that many values.
-#' }
+#'
+#' - a numeric vector, as long as that equation has coefficients;
+#' - a single number, used for every coefficient of the equation;
+#' - a FUNCTION of the coefficient count, called once and returning
+#'   that many values.
+#'
 #' The function is what makes a structured truth expressible without a
 #' vocabulary for it: `function(k) rnorm(k, 0, 0.3)` is a random effect
 #' with its own standard deviation, and

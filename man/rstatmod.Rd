@@ -118,6 +118,7 @@ parameter, and an entry may be
 \item a FUNCTION of the coefficient count, called once and returning
 that many values.
 }
+
 The function is what makes a structured truth expressible without a
 vocabulary for it: \code{function(k) rnorm(k, 0, 0.3)} is a random effect
 with its own standard deviation, and
