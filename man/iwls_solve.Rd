@@ -7,57 +7,83 @@
 iwls_solve(pieces, u, how, damp = 0)
 }
 \arguments{
-\item{pieces}{A list with \code{R}, \code{C} and \code{A}, as
-\code{\link[=iwls_pieces]{iwls_pieces()}} builds it.}
+\item{pieces}{A list with \code{R}, \code{C} and \code{A}, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.
+Which of the three are present depends on \code{how}.}
 
-\item{u}{The right-hand side.}
+\item{u}{The right-hand side \eqn{X'g - S\beta}, a numeric vector of
+length \code{p}.}
 
-\item{how}{The decomposition.}
+\item{how}{The decomposition: \code{"qr"}, \code{"svd"}, \code{"chol"} or
+\code{"chol_crossprod"}.}
 
-\item{damp}{The Levenberg damping \eqn{\lambda}, zero for the plain
-scoring step.
-
-\strong{A coordinate at a boundary is held.} Where a parameter has reached
-the clamp its link keeps it strictly inside, the family's curvature there
-is zero or \code{NaN} and no step can move that coordinate. Such
-coordinates are dropped from the system and the rest is solved, which is
-the active set the boundary defines; the step stays a descent step for the
-reduced problem. Holding them is what keeps one boundary coordinate from
-stopping the others: with a single \code{NaN} in the curvature the whole
-step came back zero, and a Student t whose \eqn{\nu} had reached
-\code{double.xmax} stopped with a score of -617.6 in \eqn{\sigma}, an
-ordinary coordinate, while \eqn{\nu}'s own was exactly 0.}
+\item{damp}{The Levenberg damping \eqn{\lambda}, a single non-negative
+number. \code{0}, the default, is the plain scoring step.}
 }
 \value{
-A list with \code{delta}, \code{rank}, \code{route} and
-\code{held}, the positions dropped from the system.
+A list of four:
+\describe{
+\item{\code{delta}}{the increment, a numeric vector of length \code{p}, zero in
+every held coordinate.}
+\item{\code{rank}}{the rank of the system solved, an integer.}
+\item{\code{route}}{which decomposition was used, including \code{"floor"} when
+the augmented route fell back to the floored assembled matrix.}
+\item{\code{held}}{the positions dropped from the system, an integer
+vector, empty when nothing was held.}
+}
 }
 \description{
 Returns the increment \eqn{\delta} solving \eqn{(H + S)\delta = u} by the
 requested decomposition.
 }
-\details{
-\code{"qr"} and \code{"svd"} decompose the augmented matrix
-\eqn{[R;\ C]}, whose cross-product IS the penalized information, so
-\eqn{X'X} is never formed and the conditioning is never squared. That route
-needs the per-observation curvature to be positive definite and the penalty
-positive semidefinite; where either fails -- an observed Hessian far from
-the optimum, a non-convex penalty -- there is no square root to take, and
-the step falls back to the assembled matrix with its eigenvalues floored,
-reporting in \code{route} that it did.
+\section{The two families of route}{
+\code{"qr"} and \code{"svd"} decompose the augmented matrix \eqn{[R;\, C]}, whose
+cross-product is the penalized information, so \eqn{X'X} is never formed
+and the condition number is never squared. That route needs the
+per-observation curvature to be positive definite and the penalty positive
+semidefinite. Where either fails, as with an observed Hessian far from the
+optimum or a non-convex penalty, there is no square root to take: the step
+falls back to the assembled matrix with its eigenvalues floored, and says
+so in \code{route}.
 
-\code{"chol"} and \code{"chol_crossprod"} factor the assembled information
-directly: faster per iteration and worse conditioned, which is the trade
-the caller is choosing.
+\code{"chol"} and \code{"chol_crossprod"} factor the assembled information directly.
+Faster per iteration, worse conditioned, and the trade the caller chose.
+}
 
-\strong{The damping is Levenberg's and is zero unless a step has failed.}
-\code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate
-in proportion to how little curvature it has: one with a diagonal of 0.24
-beside neighbours at 2328 is shortened by \eqn{(0.24+\lambda)/0.24} while
-theirs move by \eqn{(2328+\lambda)/2328}, which is the differential shrink
-a scalar step length cannot give. It is added to the augmented design as
-further rows, so the QR route keeps its conditioning; the identity and not
-\eqn{\mathrm{diag}(K)}, because a proportional damping shrinks every
-coordinate alike and would leave the disparity where it was.
+\section{The damping is Levenberg's, and is zero unless a step has failed}{
+\code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate in
+proportion to how little curvature it has. A coordinate whose diagonal is
+0.24 beside neighbours at 2328 is shortened by
+\eqn{(0.24 + \lambda)/0.24} while theirs move by
+\eqn{(2328 + \lambda)/2328}: a differential shrink, which a scalar step
+length cannot give.
+
+It goes in as further rows of the augmented design, so the QR route keeps
+its conditioning. The matrix added is the identity. A damping
+proportional to \eqn{\mathrm{diag}(K)} would shrink every coordinate
+alike and leave the disparity exactly where it was.
+}
+
+\section{A coordinate at a boundary is held}{
+Where a parameter has reached the clamp its link keeps it strictly inside,
+the family's curvature there is zero or \code{NaN}, and no step can move that
+coordinate. Those coordinates are dropped from the system and the rest is
+solved, which is the active set the boundary defines; the step stays a
+descent step for the reduced problem.
+
+Holding them keeps one boundary coordinate from stopping the others. With
+a single \code{NaN} in the curvature the whole step came back zero, and a
+Student t whose \eqn{\nu} had reached \code{double.xmax} stopped with a score
+of -617.6 in \eqn{\sigma}, an ordinary coordinate nowhere near stationary,
+while \eqn{\nu}'s own score was exactly 0.
+
+The test is on the \strong{diagonal} of the curvature. A boundary coordinate
+makes its entire row non-finite, cross terms included, so a test over
+whole columns marks its neighbours too and holds coordinates that were
+perfectly movable.
+}
+
+\seealso{
+\code{\link[=iwls_pieces]{iwls_pieces()}} for the input, \code{\link[=iwls]{iwls()}} for the \code{decomposition}
+argument this serves.
 }
 \keyword{internal}

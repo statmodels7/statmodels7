@@ -7,47 +7,71 @@
 iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
 }
 \arguments{
-\item{obj}{The objective, from \code{\link[=statmod_objective]{statmod_objective()}}.}
+\item{obj}{The objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it.}
 
-\item{start}{The starting coefficients, stacked.}
+\item{start}{The starting coefficients, stacked into one numeric vector.}
 
-\item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object, carrying the curvature, the
+decomposition, the budget and the stopping rule.}
 
-\item{n}{The number of observations, for the scaled stopping rule.}
+\item{n}{The number of observations, the divisor of the scaled stopping
+rule.}
 
 \item{pieces_at}{A function of the stacked coefficients returning what
 \code{\link[=iwls_solve]{iwls_solve()}} needs, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.}
 
-\item{verbose}{Whether to print a line per iteration.}
+\item{verbose}{\code{TRUE} to print one line per iteration: the objective, the
+score, the step length and the route taken.}
 }
 \value{
-A list with \code{par}, \code{value}, \code{converged},
-\code{iterations}, \code{score} and \code{history}.
+A list of six:
+\describe{
+\item{\code{par}}{the stacked coefficients reached, a numeric vector.}
+\item{\code{value}}{the penalized objective there, unaveraged.}
+\item{\code{converged}}{a single logical: whether a stopping rule fired,
+the dimensionless verdict included.}
+\item{\code{iterations}}{how many steps were taken. \code{1} means the rule was
+met at the first check with no step taken, which is what a warm
+start already at the mode reports.}
+\item{\code{score}}{the score per observation at the point reached.}
+\item{\code{history}}{a data frame with one row per iteration.}
+}
 }
 \description{
 Runs the scoring iteration on the objective of
 \code{\link[=statmod_objective]{statmod_objective()}} at fixed hyperparameters, returning the
 coefficients and the history of the run.
 }
-\details{
-Two things the loop does that a plain Newton iteration does not, both
-recorded elsewhere in the toolkit as the reason a run reported failure at
-the answer. A non-positive-definite curvature is repaired by flooring its
-eigenvalues rather than abandoning the start, since \code{solve()} would
-otherwise force one. And the stopping rule is read at the ITERATE, on a
-score scaled by the sample size, so that a threshold means the same thing
-at \eqn{n = 10} and at \eqn{n = 10^7} while the objective itself stays
-unaveraged. The final verdict adds a DIMENSIONLESS reading,
-\eqn{\max_j \lvert g_j\rvert / (n\,s_p)} with
-\eqn{s_p = \sqrt{\mathrm{median}_j H_{jj} / n}} over the equation the
-coordinate belongs to: the absolute score of a location equation
-carries the units \eqn{1/y}, so on a response three decades small its
-rounding floor sits above the threshold, and a run stalled at the
-optimum read as a failure. The dimensionless reading only relabels a
-run that has already stopped; driving the loop with it was tried and
-made the tolerance unreachable at the OTHER end of the scale.
+\section{Two departures from a plain Newton iteration}{
+A curvature that is not positive definite is repaired by flooring its
+eigenvalues, and the run continues. \code{solve()} would signal an error there
+and abandon a start that is merely far from the optimum.
+
+The stopping rule is read at the iterate, on a score divided by the sample
+size, so a threshold means the same at \eqn{n = 10} and at
+\eqn{n = 10^7}. The objective itself stays unaveraged, that being the
+scale the penalty is added on.
 }
+
+\section{The dimensionless final verdict}{
+The absolute score of a location equation carries the units \eqn{1/y}. On
+a response three decades small its rounding floor sits above any fixed
+threshold, and a run stalled exactly at the optimum reads as a failure.
+
+The verdict therefore adds a second, dimensionless reading,
+\deqn{\max_j \lvert g_j \rvert / (n\,s_p), \qquad
+      s_p = \sqrt{\mathrm{median}_j H_{jj} / n},}
+with \eqn{s_p} taken over the equation each coordinate belongs to.
+
+It can relabel a run that has already stopped as converged, and it can
+never stop a run that is still moving. Driving the loop with it was tried
+and made the tolerance unreachable at the other end of the scale, where
+the objective's magnitude grows with \eqn{\log y} and the stall guard
+fires first.
+}
+
 \seealso{
-\code{\link[=iwls]{iwls()}}
+\code{\link[=iwls]{iwls()}} for the settings, \code{\link[=iwls_solve]{iwls_solve()}} for one step,
+\code{\link[=iwls_score]{iwls_score()}} for the dimensionless reading.
 }
 \keyword{internal}

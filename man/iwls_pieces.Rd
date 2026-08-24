@@ -9,20 +9,43 @@ iwls_pieces(spec, design, coef, hyper, method)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, refreshed at \code{coef} if any term needs it.}
 
-\item{coef}{The coefficients, per parameter.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, per penalized term.}
 
-\item{method}{An \code{\link[=Iwls]{Iwls()}} object.}
+\item{method}{An \code{\link[=Iwls]{Iwls()}} object, read for \code{decomposition}, \code{hessian} and
+\code{approx}.}
 }
 \value{
-A list with \code{R}, \code{C} and \code{A}.
+A list of three, of which the ones the route does not need are
+\code{NULL}:
+\describe{
+\item{\code{R}}{the square-root design, as \code{\link[=sqrt_design]{sqrt_design()}} returns it, or
+\code{NULL}.}
+\item{\code{C}}{the penalty's factor, as \code{\link[=penalty_sqrt]{penalty_sqrt()}} returns it, or
+\code{NULL}.}
+\item{\code{A}}{the assembled penalized information, or \code{NULL}.}
+}
+\code{R} is also \code{NULL} when the per-observation curvature had no Cholesky
+factor, and \code{\link[=iwls_solve]{iwls_solve()}} falls back to the assembled route there.
 }
 \description{
 Assembles, at the current coefficients, whichever of the square-root
 design, the penalty's factor and the penalized information the requested
 decomposition will actually use.
+}
+\details{
+Only what the decomposition will read is built. \code{"qr"} and \code{"svd"} need
+the square-root design \code{R} and the penalty's factor \code{C} and never form the
+information; \code{"chol"} and \code{"chol_crossprod"} need the assembled \code{A} and
+neither square root. Building all three unconditionally would pay for the
+route not taken at every iteration of the loop.
+}
+\seealso{
+\code{\link[=iwls_solve]{iwls_solve()}}, which consumes this,
+\code{\link[=sqrt_design]{sqrt_design()}} and \code{\link[=penalty_sqrt]{penalty_sqrt()}} for the two factors.
 }
 \keyword{internal}

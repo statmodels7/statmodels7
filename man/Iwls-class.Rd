@@ -16,37 +16,42 @@ Iwls(
 )
 }
 \arguments{
-\item{hessian}{Either \code{"expected"} -- Fisher scoring -- or
-\code{"observed"}, which is Newton.}
+\item{hessian}{\code{"expected"} for Fisher scoring or \code{"observed"} for
+Newton, a single string.}
 
-\item{approx}{The approximation of the expected information, read only
-where the family has no closed form.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
-\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"},
-\code{"chol"} or \code{"chol_crossprod"}.}
+\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"}, \code{"chol"} or
+\code{"chol_crossprod"}.}
 
-\item{maxit}{The iteration budget.}
+\item{maxit}{The iteration budget, a single positive number.}
 
-\item{tol}{The stopping tolerance on the scaled score.}
+\item{tol}{The stopping tolerance on the score per observation.}
 
-\item{criterion}{An \pkg{optimizers7} \code{criterion} driving the loop
+\item{criterion}{An \pkg{optimizers7} \code{criterion} object driving the loop
 in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
-\item{step_halving}{The number of halvings allowed before a step is
-abandoned.}
+\item{step_halving}{How many halvings are allowed before a step is
+abandoned, a single non-negative number.}
 }
 \value{
-An object of class \code{Iwls}.
+An object of class \code{Iwls} with one property per argument above,
+each holding what was passed.
 }
 \description{
-The S7 class of the scoring step \code{\link[=statmod]{statmod()}} uses for the smooth
-block, carrying its own choice of curvature and of decomposition.
+The S7 class of the scoring step \code{\link[=statmod]{statmod()}} uses for the jointly fitted
+smooth block. An object of this class carries the whole configuration of
+that step: which curvature to invert, how to solve the system, how long to
+run and when to stop. Build one with \code{\link[=iwls]{iwls()}}, which validates every
+argument; this raw constructor does not.
 }
 \examples{
 S7::S7_inherits(iwls(), Iwls)
+iwls()@decomposition
 
 }
 \seealso{
-\code{\link[=iwls]{iwls()}}
+\code{\link[=iwls]{iwls()}}, the constructor to use.
 }
 \keyword{internal}

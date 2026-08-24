@@ -7,26 +7,31 @@
 iwls_escalate(damp, pieces)
 }
 \arguments{
-\item{damp}{The current damping.}
+\item{damp}{The current damping, a single non-negative number. \code{0} starts
+the schedule.}
 
-\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built, for the scale.}
+\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built, read only for the scale.}
 }
 \value{
-The next damping.
+The next damping to try, a single positive number.
 }
 \description{
 The next \eqn{\lambda} to try after a step that failed or moved nothing.
 }
 \details{
-The first value is \eqn{10^{-8}} of the curvature's own scale, which is
-negligible against a well-curved coordinate and already large against one
-whose information has fallen by eight orders; each further try multiplies
-by a hundred, so eight tries span sixteen orders and reach a damping that
-dominates the largest diagonal. Measured on the case this exists for, the
-coordinate needed a \eqn{\lambda} of about 100 against a largest diagonal
-of 2328, which the sixth escalation passes.
+The first value is \eqn{10^{-8}} of the curvature's own scale, as
+\code{\link[=iwls_scale]{iwls_scale()}} measures it. That is negligible beside a well-curved
+coordinate and already large beside one whose information has fallen by
+eight orders, which is the disparity the damping exists to correct.
+
+Each further escalation multiplies by a hundred, so eight of them span
+sixteen orders and reach a damping that dominates the largest diagonal.
+Measured on the case this was built for, the offending coordinate needed
+\eqn{\lambda \approx 100} against a largest diagonal of 2328, which the
+sixth escalation passes.
 }
 \seealso{
-\code{\link[=iwls_scale]{iwls_scale()}}, \code{\link[=iwls_solve]{iwls_solve()}}
+\code{\link[=iwls_scale]{iwls_scale()}} for the scale, \code{\link[=iwls_solve]{iwls_solve()}} for what the damping
+does to the system.
 }
 \keyword{internal}

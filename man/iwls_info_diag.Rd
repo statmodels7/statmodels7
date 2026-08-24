@@ -7,15 +7,30 @@
 iwls_info_diag(pieces)
 }
 \arguments{
-\item{pieces}{The pieces, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds them.}
+\item{pieces}{The pieces, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds them, carrying \code{R} or
+\code{A}.}
 }
 \value{
-A numeric vector.
+An unnamed numeric vector, one entry per stacked coefficient.
+\code{\link[=iwls_pieces]{iwls_pieces()}} always builds one of the two matrices, so there is no
+third branch.
 }
 \description{
-The crossprod diagonal of the square-root design, whose crossprod IS
-the unpenalized information, or the assembled matrix's own diagonal --
-which folds the penalty in, an acceptable normalizer on a route that is
-itself the fallback.
+Returns the diagonal of the information \code{\link[=iwls_score]{iwls_score()}} normalizes by, one
+entry per stacked coefficient.
+}
+\details{
+On the augmented route it is the column sums of the squares of the
+square-root design, whose cross-product is the unpenalized information, so
+the penalty does not enter.
+
+On the assembled route it is the diagonal of the matrix itself, which
+folds the penalty in. That is a different normalizer, and it is accepted
+because the assembled route is already the fallback: it is reached only
+where no square root exists, and the reading it feeds arbitrates a verdict
+rather than driving the loop.
+}
+\seealso{
+\code{\link[=iwls_score]{iwls_score()}}, the only caller.
 }
 \keyword{internal}

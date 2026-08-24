@@ -7,20 +7,28 @@
 iwls_scale(pieces)
 }
 \arguments{
-\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built.}
+\item{pieces}{What \code{\link[=iwls_pieces]{iwls_pieces()}} built, carrying \code{R} and \code{C}, or \code{A}.}
 }
 \value{
-A positive number, or 1 where the pieces say nothing.
+A single positive number: the largest diagonal entry. \code{1} where
+the pieces carry nothing usable, which makes the damping schedule
+absolute there instead of relative.
 }
 \description{
 The largest diagonal entry of the penalized information, read off the
 pieces without assembling it.
 }
 \details{
-It is what the Levenberg damping is measured against, so that
-\code{\link[=iwls_escalate]{iwls_escalate()}} carries no constant with units. On the
-augmented route the diagonal of \eqn{K = R'R + C'C} is the column sums of
-the squares, which keeps a sparse design sparse; on the assembled route it
-is the diagonal itself.
+The Levenberg damping is measured against this, so \code{\link[=iwls_escalate]{iwls_escalate()}}
+carries no constant with units of its own.
+
+On the augmented route the diagonal of \eqn{K = R'R + C'C} is the column
+sums of the squares of \eqn{R} and \eqn{C}, which reads a sparse design
+without densifying it. On the assembled route it is the matrix's own
+diagonal.
+}
+\seealso{
+\code{\link[=iwls_escalate]{iwls_escalate()}}, which divides by this,
+\code{\link[=iwls_pieces]{iwls_pieces()}} for the input.
 }
 \keyword{internal}

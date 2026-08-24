@@ -16,15 +16,19 @@ documents it.}
 A single logical.
 }
 \description{
-The built-in rule, the score per observation against \code{tol}, or the
-caller's \pkg{optimizers7} criterion read on the same state.
+Applies whichever stopping rule the step was configured with: the built-in
+one, the score per observation against \code{tol}, or the caller's
+\pkg{optimizers7} criterion read on the same state.
 }
 \details{
-The two routes are here rather than at the two places the loop asks, so
-that what a rule is shown is written once. \code{state$gradient} is
-already the score PER OBSERVATION, which is what makes
-\code{crit_grad(t)} and \code{tol = t} the same rule; the objective in
-the state is the penalized log-likelihood unaveraged, the scale the
-penalty is added on.
+Both routes live here, in one place, although the loop asks the question
+at two. That is what keeps the state a criterion is shown identical in
+both.
+
+Two properties of that state matter to a caller writing a rule.
+\code{state$gradient} is already the score per observation, so \code{crit_grad(t)}
+and \code{tol = t} are the same rule. \code{state$objective} is the penalized
+log-likelihood unaveraged, that being the scale the penalty is added
+on.
 }
 \keyword{internal}

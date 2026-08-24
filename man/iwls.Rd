@@ -18,99 +18,134 @@ iwls(
 \method{print}{Iwls}(x, ...)
 }
 \arguments{
-\item{hessian}{Either \code{"expected"} -- Fisher scoring -- or
-\code{"observed"}, which is Newton.}
+\item{hessian}{\code{"expected"} for Fisher scoring or \code{"observed"} for
+Newton, a single string.}
 
-\item{approx}{The approximation of the expected information, read only
-where the family has no closed form.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
-\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"},
-\code{"chol"} or \code{"chol_crossprod"}.}
+\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"}, \code{"chol"} or
+\code{"chol_crossprod"}.}
 
-\item{maxit}{The iteration budget.}
+\item{maxit}{The iteration budget, a single positive number.}
 
-\item{tol}{The stopping tolerance on the scaled score.}
+\item{tol}{The stopping tolerance on the score per observation.}
 
-\item{criterion}{An \pkg{optimizers7} \code{criterion} driving the loop
+\item{criterion}{An \pkg{optimizers7} \code{criterion} object driving the loop
 in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
-\item{step_halving}{The number of halvings allowed before a step is
-abandoned.}
+\item{step_halving}{How many halvings are allowed before a step is
+abandoned, a single non-negative number.}
 
 \item{x}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{...}{Unused.}
 }
 \value{
-An object of class \code{\link[=Iwls]{Iwls()}}.
+An \code{\link[=Iwls]{Iwls()}} object, holding the seven settings above and no data.
 }
 \description{
-The scoring step, written out, with the curvature and the decomposition
-left to the caller.
+Configures the scoring step \code{statmod()} fits the smooth block with, and
+returns it as an object to pass as \code{inner_optimizer}. This is the default,
+so \code{statmod(...)} and \code{statmod(..., inner_optimizer = iwls())} fit the
+same model; call it by name to change the curvature, the decomposition,
+the budget or the stopping rule.
+
+Every argument has a default, and the object carries no data: one \code{iwls()}
+can be passed to any number of fits.
 }
-\details{
-The name is \code{iwls} and not \code{irls}: the re-weighting is already
-implied by the iteration, so the second \code{r} says nothing that
-\emph{iterated} has not said.
+\section{The name}{
+\code{iwls}, not \code{irls}. The iteration already implies the re-weighting, so the
+second \code{r} says nothing \emph{iterated} has not said.
+}
 
-\strong{The curvature.} \code{hessian = "expected"} inverts the expected
-information, which is Fisher scoring; \code{"observed"} inverts the
-observed Hessian, which is Newton. \code{approx} is handed to
-\pkg{distributions7} and is read only where the family has no closed
-expected information; asking for one where it would be ignored is refused,
-since an argument accepted and ignored is worse than one that errors.
+\section{The curvature}{
+\code{hessian = "expected"} inverts the expected information, which is Fisher
+scoring, and \code{"observed"} inverts the observed Hessian, which is Newton.
+The expected information is positive definite wherever the family is
+regular, so Fisher scoring takes usable steps from a poor start where
+Newton's matrix may be indefinite; Newton converges faster near the
+optimum and is what the exact outer gradient needs.
 
-\strong{The decomposition.} The step solves
-\eqn{(X'WX + S)\delta = X'g - S\beta}, and how depends on this argument.
+\code{approx} reaches \pkg{distributions7} and is read only where the family
+has no closed expected information. Asking for one where it would be
+ignored is an error: an argument accepted and ignored is worse than one
+that refuses.
+}
+
+\section{The decomposition}{
+The step solves \eqn{(X'WX + S)\delta = X'g - S\beta}, and this argument
+says how.
 
 \describe{
 \item{\code{"qr"}}{a QR of the augmented design
-\eqn{[\sqrt{W}X;\ \mathrm{chol}(S)]}. The default, and not as a matter
-of taste: forming \eqn{X'X} squares a conditioning that the
-break-point terms bound to \eqn{\epsilon^{-1/2}} by construction, and
-it is why a closed-form ridge is beaten at \eqn{p = 200} by a method
-that never forms it.}
+\eqn{[\sqrt{W}X;\ \mathrm{chol}(S)]}, and the default. Forming
+\eqn{X'X} squares the condition number, and a break-point term's
+design is bounded only to \eqn{\epsilon^{-1/2}} by construction, so
+squaring it exhausts double precision. This is also why a closed-form
+ridge is beaten at \eqn{p = 200} by a method that never forms
+\eqn{X'X}.}
 \item{\code{"svd"}}{a singular value decomposition of the same augmented
-design, which reports the numerical rank rather than failing on a
-deficient block.}
+design. It reports a numerical rank where a deficient block would make
+a Cholesky fail.}
 \item{\code{"chol"}}{a Cholesky factor of the penalized information,
 assembled without the augmentation.}
 \item{\code{"chol_crossprod"}}{the same, forming \eqn{X'WX} explicitly.
 The fastest per iteration and the worst conditioned; offered because
 the choice is the user's.}
 }
-
-\strong{The stopping rule.} \code{iwls} is a scoring step and not an
-optimizer, so it carries its own loop, but the rule that ends it is the
-caller's to choose. With \code{criterion = NULL} the built-in rule
-applies: the score per observation \eqn{\max_j\lvert g_j\rvert / n}
-against \code{tol}, with the dimensionless reading of
-\code{\link[=iwls_score]{iwls_score()}} arbitrating the final verdict. Any
-\pkg{optimizers7} \code{criterion} may drive the loop instead, and then
-\code{tol} is not read at all, so passing both is an error rather than a
-silent choice between them.
-
-What the rule is shown is the state \code{optimizers7::crit_met}
-documents, with two things worth knowing. Its \code{gradient} is the
-score PER OBSERVATION, the quantity the built-in rule compares, so
-\code{criterion = optimizers7::crit_grad(t)} is \code{tol = t} exactly and
-a threshold means the same at \eqn{n = 10} and at \eqn{n = 10^7}. Its
-objective is the penalized log-likelihood UNAVERAGED, which is the scale
-the penalty is added on, so a rule reading the objective's absolute value
-rather than its relative change carries the sample size with it. On the
-first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being
-no previous point, so a rule reading a change returns \code{FALSE} there
-by construction. A rule needing something the step does not compute -- a
-stationarity measure, which belongs to the derivative-free methods -- is
-rejected at construction rather than sitting there never firing.
 }
+
+\section{The stopping rule}{
+A scoring step is not an optimizer and carries its own loop, but the rule
+that ends the loop belongs to the caller.
+
+With \code{criterion = NULL}, the default, the built-in rule applies: the score
+per observation \eqn{\max_j \lvert g_j \rvert / n} against \code{tol}, with the
+dimensionless reading of \code{\link[=iwls_score]{iwls_score()}} arbitrating the final verdict. Any
+\pkg{optimizers7} criterion may drive the loop instead, and then \code{tol} is
+never read, so passing both is an error.
+
+What a criterion is shown is the state \code{optimizers7::crit_met()}
+documents, with three things worth knowing about it here:
+\itemize{
+\item Its \code{gradient} is the score \strong{per observation}, the quantity the
+built-in rule compares. So \code{criterion = optimizers7::crit_grad(t)} is
+exactly \code{tol = t}, and either threshold means the same at \eqn{n = 10}
+and at \eqn{n = 10^7}.
+\item Its objective is the penalized log-likelihood \strong{unaveraged}, which is
+the scale the penalty is added on. A rule reading the objective's
+absolute value therefore carries the sample size with it; one reading
+its relative change does not.
+\item On the first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being no
+previous point, so a rule reading a change returns \code{FALSE} there by
+construction.
+}
+
+A criterion needing something the step does not compute is rejected at
+construction. A stationarity measure is the case: it belongs to the
+derivative-free methods, and a rule asking for one would otherwise sit in
+the loop and never fire.
+}
+
 \examples{
 iwls()
+
+# Newton instead of Fisher scoring, solved through an SVD, which reports a
+# numerical rank where a deficient block would make a Cholesky fail.
 iwls(hessian = "observed", decomposition = "svd")
+
+# An optimizers7 stopping rule in place of tol. crit_grad(t) here is
+# exactly tol = t, the state's gradient being the score per observation.
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
 
+# Both at once is an error: tol would be read by nobody.
+try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))
+
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=iwls_score]{iwls_score()}}
+\code{\link[=statmod]{statmod()}} for where it is passed, \code{\link[=iwls_score]{iwls_score()}} for the
+built-in rule's final verdict, \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}} for the
+criteria that can replace it.
 }
