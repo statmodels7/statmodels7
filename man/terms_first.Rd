@@ -7,24 +7,38 @@
 terms_first(env)
 }
 \arguments{
-\item{env}{The environment the formula carried.}
+\item{env}{The environment the formula carried, which becomes the parent
+of the result. Everything visible from \code{env} stays visible.}
 }
 \value{
-An environment.
+A new environment holding one binding per exported function of
+\pkg{modelterms7}, currently 82 of them, with \code{env} as its parent.
 }
 \description{
-Returns an environment in which a term call resolves to modelterms7's
-function whatever the user has attached, with everything else visible
-behind it.
+Returns a fresh environment holding every function \pkg{modelterms7}
+exports, whose parent is \code{env}. A term call evaluated there reaches
+\pkg{modelterms7}'s function whatever the caller has attached, and every
+other name the caller wrote resolves as usual, one step further out.
 }
 \details{
-\pkg{mgcv} exports \code{s()} and \code{te()} and \pkg{segmented} exports
-\code{seg()}. With either attached, a user writing a statmod formula gets
-the other package's function, and the failure surfaces inside
-\code{model.matrix} naming neither the call nor the mask. Interpreting the
-formula in an environment whose parent chain reaches modelterms7 first
-removes the ambiguity rather than reporting it; a user who wants the other
-package's term writes \code{mgcv::s(x)}, which the interpreter then
-rejects with the message it already has.
+The masking this removes is real and its symptom names nothing.
+\pkg{mgcv} exports \code{s()} and \code{te()}, and \pkg{segmented} exports \code{seg()}.
+With either package attached, a caller writing a \code{statmod()} formula gets
+that package's function, whose value is not a model term; the failure then
+surfaces inside \code{model.matrix()} as \verb{invalid type (list) for variable 's(x)'}, which names neither the call nor the mask.
+
+Putting \pkg{modelterms7} in front removes the ambiguity at the point
+where the formula is read. A caller who wants the other package's function
+writes \code{mgcv::s(x)}, which reaches past the shim; \pkg{modelterms7}'s
+formula interpreter then rejects it, naming the class returned and the
+package that supplied it.
+
+Only functions are copied. \pkg{modelterms7} exports objects that are not
+functions, S7 classes among them, and shadowing those would change what a
+name means without any of the benefit.
+}
+\seealso{
+\code{\link[=statmod_equations]{statmod_equations()}} for the formula this is used to interpret,
+\code{\link[modelterms7:interpret_formula]{modelterms7::interpret_formula()}} for the reading it feeds.
 }
 \keyword{internal}

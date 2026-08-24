@@ -7,16 +7,32 @@
 one_sided(expr, env)
 }
 \arguments{
-\item{expr}{A language object.}
+\item{expr}{A language object, the right-hand side to wrap: a symbol, a
+call, or the literal \code{1}. Substituted unevaluated, so a term call is not
+run here.}
 
-\item{env}{The environment to attach.}
+\item{env}{The environment to attach. Passed through with no check, so a
+caller supplying \code{NULL} gets a formula with a \code{NULL} environment rather
+than an error.}
 }
 \value{
-A one-sided formula.
+A one-sided formula of length 2, whose \verb{[[2]]} is \code{expr} and whose
+\code{environment()} is \code{env}.
 }
 \description{
-Wraps a term expression as \code{~ expr} carrying the environment the
-original formula had, so that a term's symbols resolve where the user
-wrote them.
+Wraps a term expression as \code{~ expr} and attaches \code{env} to it, so that the
+symbols in a term resolve where the caller wrote them. Used by
+\code{\link[=statmod_equations]{statmod_equations()}} on each piece it collects, and on \code{quote(1)} for a
+parameter with no equation.
+}
+\details{
+The formula is built with \code{eval(bquote(~ .(expr)), envir = env)}, and the
+environment is then assigned again. The second step is what makes the
+result reliable: \code{eval()} gives the formula the environment it was
+evaluated in, and the assignment states it, so the two cannot come apart
+if the construction changes.
+}
+\seealso{
+\code{\link[=statmod_equations]{statmod_equations()}}, its only caller.
 }
 \keyword{internal}

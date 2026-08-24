@@ -7,45 +7,103 @@
 statmod_equations(formula, params)
 }
 \arguments{
-\item{formula}{The model formula.}
+\item{formula}{A two-sided formula, with the parameters' equations
+separated by \code{|} as above. Its environment is carried onto every
+equation returned, so a term's symbols resolve where the caller wrote
+them; a formula with a \code{NULL} environment gets \code{\link[=baseenv]{baseenv()}}.}
 
-\item{params}{The distribution's parameter names, in the family's order.}
+\item{params}{The distribution's parameter names in the family's own
+order, as \code{distrib@params} gives them. A character vector. The first
+element is the parameter the response's own equation belongs to.}
 }
 \value{
-A list with \code{response} (the unevaluated left-hand side),
-\code{equations} (a named list of one-sided formulas, one per element of
-\code{params}, in that order) and \code{given} (the names the formula
-actually supplied).
+A list of three:
+\describe{
+\item{\code{response}}{the unevaluated left-hand side, a language object,
+usually a symbol but any expression the caller wrote.}
+\item{\code{equations}}{a named list of one-sided formulas, one per element
+of \code{params} and in that order, whatever order the caller wrote them
+in. A parameter with no equation of its own holds \code{~ 1}.}
+\item{\code{given}}{the parameter names the formula supplied, in the order
+it supplied them. A subset of \code{params}, possibly of length one.}
+}
 }
 \description{
-Takes the single formula \code{\link[=statmod]{statmod()}} accepts, in which the
-equations of the distribution's parameters are separated by \code{|}, and
-returns the response together with one one-sided formula per parameter.
+Takes the single formula \code{\link[=statmod]{statmod()}} accepts, in which the equations of the
+distribution's parameters are separated by \code{|}, and returns the response
+together with one one-sided formula per parameter of the family. Every
+parameter gets an equation: one a caller did not write is filled in as
+\code{~ 1}, an intercept.
 }
-\details{
-The syntax is
+\section{The syntax}{
 \preformatted{    y ~ <terms>  |  p2 ~ <terms>  |  p3 ~ <terms>}
-with the first equation carrying the response and modelling the family's
-first parameter, and each \code{|} introducing the next.
 
-The recovery is not the obvious one, and the reason is R's own precedence.
-\code{~} binds looser than \code{|} and associates to the left, so
-\code{y ~ a | p2 ~ b | p3 ~ c} is the tree
-\code{((y ~ (a | p2)) ~ (b | p3)) ~ c}: the right-hand side of the whole
-formula is \code{c} alone, and splitting it on \code{|} returns one piece
-and silently drops two equations. What the associativity calls for instead
-is a walk down the left spine of the nested \code{~} calls, collecting each
-level's right-hand side; the innermost left operand is the response, and
-each collected piece is either \verb{<terms> | <name of the next parameter>} or, for the last, \verb{<terms>} alone.
-
-A \code{|} inside a call is untouched, the walk descending only through
-\code{~} and the top-level \code{|}, so \code{random(1 | id)} and
-\code{gas(by = ~ random(1 | id))} survive intact.
+The first equation carries the response and models the family's first
+parameter, and each \code{|} introduces the next. The parameters may be named
+in any order and any of them may be omitted.
 }
+
+\section{Why the recovery is a walk and not a split}{
+R's own precedence decides this. \code{~} binds looser than \code{|} and associates
+to the left, so \code{y ~ a | p2 ~ b | p3 ~ c} parses as
+
+\preformatted{    ((y ~ (a | p2)) ~ (b | p3)) ~ c}
+
+The right-hand side of the whole formula is \code{c} alone. Splitting it on \code{|}
+returns one piece and drops two equations without an error.
+
+What the associativity calls for is a walk down the left spine of the
+nested \code{~} calls, collecting each level's right-hand side and then
+reversing. The innermost left operand is the response. Each collected
+piece is either \verb{<terms> | <name of the next parameter>}, or, for the
+last, \verb{<terms>} alone.
+}
+
+\section{Bars inside a call survive}{
+The walk descends only through \code{~} and through a \code{|} at the top of a
+collected piece. A \code{|} anywhere inside a call is left as it stands, so
+\code{random(1 | id)} and \code{gas(by = ~ random(1 | id))} reach the term
+constructor whole.
+}
+
+\section{What is refused}{
+Five conditions, each with an error naming the offending name:
+\itemize{
+\item \code{formula} is not a formula.
+\item \code{formula} has no left-hand side, so there is no response.
+\item A \code{|} is not followed by an equation, as in \code{y ~ x | sigma}.
+\item A name is not a parameter of this distribution. The message lists the
+ones that are.
+\item A parameter is given two equations.
+}
+}
+
 \examples{
-statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
+e <- statmod_equations(y ~ x1 + x2 | sigma ~ z, c("mu", "sigma"))
+e$response
+e$equations
+
+# Every parameter gets an equation; the ones not written get an intercept.
+f <- statmod_equations(y ~ x, c("mu", "sigma", "nu"))
+vapply(f$equations, function(q) deparse(q[[2]]), character(1))
+f$given
+
+# Three equations survive, where splitting the right-hand side on "|"
+# would keep only the last.
+g <- y ~ a | sigma ~ b | nu ~ cc
+deparse(g[[3]])                       # the whole right-hand side: just "cc"
+statmod_equations(g, c("mu", "sigma", "nu"))$given
+
+# A bar inside a call is not a separator.
+h <- statmod_equations(y ~ random(1 | id) | sigma ~ z, c("mu", "sigma"))
+deparse(h$equations$mu[[2]])
+
+# A name that is not a parameter is refused, and the message says which
+# names are.
+try(statmod_equations(y ~ x | zz ~ z, c("mu", "sigma")))
 
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=statmod]{statmod()}}, which calls this on the formula it is given,
+\code{\link[=statmod_spec]{statmod_spec()}} for what is built from the result.
 }
