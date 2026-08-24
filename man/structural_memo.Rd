@@ -25,10 +25,10 @@ returned; otherwise \code{compute()} runs and replaces it.
 }
 \details{
 Measured on the gas panel at 60 groups, 62 of the 154 curvature
-recursions of one fit recompute a point already visited -- the same
-coefficients and the same term parameters, up to five times each,
-because the criterion, its gradient and the joint step's curvature all
-read the same mode -- and the recursion is 35 per cent of the fit. The
+recursions of one fit recompute a point already visited: the same
+coefficients and the same term parameters, up to five times each, the
+criterion and its gradient and the joint step's curvature all reading the
+same mode. The recursion is 35 per cent of the fit. The
 cache returns the previously computed object itself, so a hit is
 bit-identical to recomputing by construction, and the key is compared
 with \code{identical()} on the full numeric inputs, so a collision

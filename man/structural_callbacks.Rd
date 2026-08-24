@@ -26,7 +26,7 @@ one observation, with every other parameter held where it is.
 They are read one observation at a time because a score-driven filter
 evaluates them at the predictor it has just produced, which is not known
 before the recursion reaches that observation. A term whose callbacks do
-not depend on the state -- a regime chain, whose levels shift a predictor
-known in advance -- is given the whole index vector instead.
+not depend on the state is given the whole index vector instead. A regime
+chain is such a term: its levels shift a predictor known in advance.
 }
 \keyword{internal}

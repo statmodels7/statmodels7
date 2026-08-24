@@ -9,14 +9,15 @@ statmod_structural_table(fit, level = 0.95)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{level}{The interval level.}
+\item{level}{The interval's level, \code{0.95} by default.}
 }
 \value{
-A data frame with one row per parameter of per structural term,
-carrying \code{component} and \code{position} -- which of the term's
-own parameters the quantity belongs to and where in the parameter vector
-it sits, both read off the Jacobian's support -- or \code{NULL} where
-the model carries none.
+A data frame with one row per parameter of each structural term,
+carrying the estimate, its standard error and the interval's two ends,
+plus \code{component} and \code{position}: which of the term's own parameters the
+quantity belongs to, and where in the parameter vector it sits, both
+read off the Jacobian's support. \code{NULL} where the model carries no
+structural term.
 }
 \description{
 The estimated parameters of every structural term, on their own scale,
@@ -32,14 +33,19 @@ term's own parameters, and the tail block of its inverse is their
 variance on the unconstrained scale.
 
 The interval is built on that scale and mapped back through the link,
-which is what keeps a persistence inside \eqn{(-1, 1)} and a positive
-loading positive; the standard error on the parameter scale is the delta
-method, \eqn{|h'(\zeta)|\,\mathrm{se}(\zeta)}, and is reported for
-reading rather than for building the interval from. A level held because
-an intercept in the same equation carries it is not estimated and is
-reported with a missing standard error rather than a zero one.
+which keeps a persistence inside \eqn{(-1, 1)} and a positive loading
+positive.
+
+The standard error on the parameter scale is the delta method,
+\eqn{|h'(\zeta)|\,\mathrm{se}(\zeta)}. It is reported for reading, and the
+interval is not built from it.
+
+A level held because an intercept in the same equation carries it is not
+estimated, and is reported with a missing standard error. Zero would claim
+it had been estimated exactly.
 }
 \seealso{
-\code{\link[=statmod_full_information]{statmod_full_information()}}
+\code{\link[=statmod_full_information]{statmod_full_information()}} for the joint matrix inverted,
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}} for the same parameters without their uncertainty
 }
 \keyword{internal}

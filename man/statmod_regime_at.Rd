@@ -36,12 +36,14 @@ same point in turn and a filter is the expensive part of each.
 
 A term of this shape does not report a predictor: its contribution is a
 likelihood mixed over states, so the model's log-likelihood comes from
-\code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} and not from the density at a
-single predictor. What makes everything else follow is Fisher's identity
--- the derivative of that mixed likelihood in ANY predictor the model
-carries is the posterior-weighted derivative of the ordinary one, so a
-caller differentiates its own log-density once per state, vectorized,
-and weights.
+\code{\link[modelterms7:term_loglik]{modelterms7::term_loglik()}} and never from the density at a single
+predictor.
+
+Everything else follows from Fisher's identity: the derivative of that
+mixed likelihood in any predictor the model carries is the
+posterior-weighted derivative of the ordinary one. A caller therefore
+differentiates its own log-density once per state, vectorized, and
+weights.
 
 The predictor reported for the equation the term sits in is the
 posterior-weighted one, which is what a fitted value means here.

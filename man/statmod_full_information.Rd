@@ -51,7 +51,7 @@ design: there it is the forward Jacobian of the recursion, which
 The term's parameters are the LAST columns, which is the convention
 \code{term_curvature()} shares with its caller.
 
-A term that mixes over latent states rather than shifting the predictor
+A term that mixes over latent states, in place of shifting the predictor,
 is routed to \code{\link[=statmod_regime_information]{statmod_regime_information()}}, whose Hessian
 comes from the same forward recursion the likelihood does; a model
 carrying neither gets the ordinary information.

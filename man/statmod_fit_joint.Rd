@@ -44,9 +44,10 @@ The alternation was not a statement about the model: the exact gradient of
 both blocks and the exact observed information over both together are
 already available, the second as \code{\link[=statmod_full_information]{statmod_full_information()}},
 which was built for \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} and discarded for the
-fit. What the alternation cost is filter runs -- each sweep handed the
-term's parameters to an optimizer of their own, and every one of ITS
-iterations ran the recursion and its adjoint again, with the coefficients
+fit. What the alternation cost is filter runs: each sweep handed the
+term's parameters to an optimizer of their own, and every one of that
+optimizer's iterations ran the recursion and its adjoint again, with the
+coefficients
 held at a point that was about to move.
 
 The unknowns are ordered as the information orders them, the coefficients
@@ -58,7 +59,7 @@ The objective is evaluated once outside the guard, so that a term that
 cannot be evaluated at all raises where it can be read; inside the search
 a non-finite value is a statement about the point, a filter whose loadings
 put it outside the region where its recursion is bounded, and the search
-must step back from it rather than abandon the run.
+must step back from it, never abandon the run.
 }
 \seealso{
 \code{\link[=statmod_fit_structural]{statmod_fit_structural()}}, which fits the term's

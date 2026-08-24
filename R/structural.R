@@ -100,10 +100,10 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #'
 #' @details
 #' Measured on the gas panel at 60 groups, 62 of the 154 curvature
-#' recursions of one fit recompute a point already visited -- the same
-#' coefficients and the same term parameters, up to five times each,
-#' because the criterion, its gradient and the joint step's curvature all
-#' read the same mode -- and the recursion is 35 per cent of the fit. The
+#' recursions of one fit recompute a point already visited: the same
+#' coefficients and the same term parameters, up to five times each, the
+#' criterion and its gradient and the joint step's curvature all reading the
+#' same mode. The recursion is 35 per cent of the fit. The
 #' cache returns the previously computed object itself, so a hit is
 #' bit-identical to recomputing by construction, and the key is compared
 #' with `identical()` on the full numeric inputs, so a collision
@@ -143,15 +143,15 @@ structural_memo <- function(design, slot, key, compute) {
 #' @description
 #' What the term itself declares through
 #' [modelterms7::term_start()]: as near the model without the
-#' term as its charts allow, which only the term can say -- a score
-#' loading on the log chart has no coordinate for zero, and starts at a
-#' weak response instead.
+#' term as its charts allow, which only the term can say. A score loading on
+#' the log chart has no coordinate for zero, so it starts at a weak response
+#' instead.
 #'
 #' @param term A built structural term.
-#' @param target The response on the scale of the term's equation, from
-#'   [predictor_target()], or `NULL`. A term whose start is
-#'   read off the data -- the marginal break-point term's exact profile --
-#'   consumes it; every other method ignores it through the dots.
+#' @param target The response on the scale of the term's equation, as
+#'   [predictor_target()] returns it, or `NULL`. A term whose start is read
+#'   off the data consumes it, the marginal break-point term's exact profile
+#'   being the case; every other method ignores it through the dots.
 #'
 #' @return A named numeric vector.
 #'
@@ -188,8 +188,8 @@ structural_psi <- function(term, zeta) {
 #' They are read one observation at a time because a score-driven filter
 #' evaluates them at the predictor it has just produced, which is not known
 #' before the recursion reaches that observation. A term whose callbacks do
-#' not depend on the state -- a regime chain, whose levels shift a predictor
-#' known in advance -- is given the whole index vector instead.
+#' not depend on the state is given the whole index vector instead. A regime
+#' chain is such a term: its levels shift a predictor known in advance.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param theta The per-observation parameters, as
@@ -322,12 +322,14 @@ structural_callbacks <- function(spec, theta, p) {
 #' @details
 #' A term of this shape does not report a predictor: its contribution is a
 #' likelihood mixed over states, so the model's log-likelihood comes from
-#' [modelterms7::term_loglik()] and not from the density at a
-#' single predictor. What makes everything else follow is Fisher's identity
-#' -- the derivative of that mixed likelihood in ANY predictor the model
-#' carries is the posterior-weighted derivative of the ordinary one, so a
-#' caller differentiates its own log-density once per state, vectorized,
-#' and weights.
+#' [modelterms7::term_loglik()] and never from the density at a single
+#' predictor.
+#'
+#' Everything else follows from Fisher's identity: the derivative of that
+#' mixed likelihood in any predictor the model carries is the
+#' posterior-weighted derivative of the ordinary one. A caller therefore
+#' differentiates its own log-density once per state, vectorized, and
+#' weights.
 #'
 #' The predictor reported for the equation the term sits in is the
 #' posterior-weighted one, which is what a fitted value means here.
@@ -504,7 +506,7 @@ deriv4_key <- function(params, a, b, c, d) {
 #' The term's parameters are the LAST columns, which is the convention
 #' `term_curvature()` shares with its caller.
 #'
-#' A term that mixes over latent states rather than shifting the predictor
+#' A term that mixes over latent states, in place of shifting the predictor,
 #' is routed to [statmod_regime_information()], whose Hessian
 #' comes from the same forward recursion the likelihood does; a model
 #' carrying neither gets the ordinary information.
@@ -797,12 +799,13 @@ statmod_structural_par <- function(spec, design) {
 #' are, by a general optimizer with the exact gradient.
 #'
 #' @details
-#' It is a general optimizer and not the scoring step because these are not
-#' coefficients of a design block: there is no \eqn{X'WX} to invert, the
-#' predictor being a recursion rather than a product. The gradient is exact
-#' -- [statmod_structural_score()] chains the filter's own
-#' jacobian, which is the total derivative of the predictor in those
-#' parameters -- so a quasi-Newton method has everything it needs.
+#' A general optimizer serves here and the scoring step does not, because
+#' these are not coefficients of a design block: there is no \eqn{X'WX} to
+#' invert, the predictor being a recursion and not a product.
+#'
+#' The gradient is exact. [statmod_structural_score()] chains the filter's
+#' own Jacobian, which is already the total derivative of the predictor in
+#' those parameters, so a quasi-Newton method has everything it needs.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -935,9 +938,10 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' both blocks and the exact observed information over both together are
 #' already available, the second as [statmod_full_information()],
 #' which was built for [vcov.StatmodFit()] and discarded for the
-#' fit. What the alternation cost is filter runs -- each sweep handed the
-#' term's parameters to an optimizer of their own, and every one of ITS
-#' iterations ran the recursion and its adjoint again, with the coefficients
+#' fit. What the alternation cost is filter runs: each sweep handed the
+#' term's parameters to an optimizer of their own, and every one of that
+#' optimizer's iterations ran the recursion and its adjoint again, with the
+#' coefficients
 #' held at a point that was about to move.
 #'
 #' The unknowns are ordered as the information orders them, the coefficients
@@ -949,7 +953,7 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' cannot be evaluated at all raises where it can be read; inside the search
 #' a non-finite value is a statement about the point, a filter whose loadings
 #' put it outside the region where its recursion is bounded, and the search
-#' must step back from it rather than abandon the run.
+#' must step back from it, never abandon the run.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1102,23 +1106,29 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' variance on the unconstrained scale.
 #'
 #' The interval is built on that scale and mapped back through the link,
-#' which is what keeps a persistence inside \eqn{(-1, 1)} and a positive
-#' loading positive; the standard error on the parameter scale is the delta
-#' method, \eqn{|h'(\zeta)|\,\mathrm{se}(\zeta)}, and is reported for
-#' reading rather than for building the interval from. A level held because
-#' an intercept in the same equation carries it is not estimated and is
-#' reported with a missing standard error rather than a zero one.
+#' which keeps a persistence inside \eqn{(-1, 1)} and a positive loading
+#' positive.
+#'
+#' The standard error on the parameter scale is the delta method,
+#' \eqn{|h'(\zeta)|\,\mathrm{se}(\zeta)}. It is reported for reading, and the
+#' interval is not built from it.
+#'
+#' A level held because an intercept in the same equation carries it is not
+#' estimated, and is reported with a missing standard error. Zero would claim
+#' it had been estimated exactly.
 #'
 #' @param fit A [StatmodFit()].
-#' @param level The interval level.
+#' @param level The interval's level, `0.95` by default.
 #'
-#' @return A data frame with one row per parameter of per structural term,
-#'   carrying `component` and `position` -- which of the term's
-#'   own parameters the quantity belongs to and where in the parameter vector
-#'   it sits, both read off the Jacobian's support -- or `NULL` where
-#'   the model carries none.
+#' @return A data frame with one row per parameter of each structural term,
+#'   carrying the estimate, its standard error and the interval's two ends,
+#'   plus `component` and `position`: which of the term's own parameters the
+#'   quantity belongs to, and where in the parameter vector it sits, both
+#'   read off the Jacobian's support. `NULL` where the model carries no
+#'   structural term.
 #'
-#' @seealso [statmod_full_information()]
+#' @seealso [statmod_full_information()] for the joint matrix inverted,
+#'   [coef.StatmodFit()] for the same parameters without their uncertainty
 #'
 #' @keywords internal
 statmod_structural_table <- function(fit, level = 0.95) {
