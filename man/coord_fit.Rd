@@ -19,32 +19,43 @@ coord_fit(
 )
 }
 \arguments{
-\item{obj}{The full objective.}
+\item{obj}{The full objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it. Read
+for the value at the point reached, not for its gradient.}
 
-\item{beta}{The current stacked coefficients.}
+\item{beta}{The current stacked coefficients, a named list with one vector
+per distribution parameter. Every block but this one is held at these.}
 
-\item{block}{One entry of \code{statmod_blocks()$sparse}.}
+\item{block}{One entry of \code{statmod_blocks()$sparse}: the equation, the
+term, its column positions and its penalty.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, per penalized term, held fixed here.}
 
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, refreshed at \code{beta} if any term needs it.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{\code{TRUE} for the expected information in the working
+weights, \code{FALSE} for the observed one.}
 
-\item{approx}{How the expected information is approximated.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form.}
 
-\item{maxit}{The iteration budget.}
+\item{maxit}{The budget in weighted least squares iterations, each of
+which rebuilds the weights and runs the compiled sweeps to convergence.}
 
-\item{tol}{The stopping tolerance.}
+\item{tol}{The stopping tolerance on the relative change in the block's
+coefficients.}
 
-\item{prev_kink}{The size of the kink at the previous point of a path, or
-\code{NULL} to cycle over every coordinate.}
+\item{prev_kink}{The size of the kink at the previous point of a path, a
+single number, or \code{NULL} to cycle over every coordinate. Only the strong
+rule reads it.}
 }
 \value{
-A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s, or \code{NULL} where
-the route does not apply.
+A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s, with the block's fitted
+coefficients, the sweep count and the gradient the kernel ended at.
+\code{NULL} where the route does not apply: the penalty describes no
+proximal table at the steps this block's curvature produces, or the
+working weights are unusable.
 }
 \description{
 Estimates one penalized block by cycling over its coefficients on the

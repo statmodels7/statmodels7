@@ -7,22 +7,25 @@
 blocks_at_kink(blocks, hyper)
 }
 \arguments{
-\item{blocks}{The blocks, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns them.}
+\item{blocks}{The blocks, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns them, with a
+\code{sparse} list of the kinked entries.}
 
 \item{hyper}{The hyperparameters at the point just fitted.}
 }
 \value{
-The blocks, each sparse entry carrying \code{prev_kink}.
+\code{blocks}, with each entry of its \code{sparse} list carrying a
+\code{prev_kink} element: the size of that penalty's kink at \code{hyper}. The
+\code{smooth} list is untouched.
 }
 \description{
 Writes the size of each kinked penalty's kink at the given hyperparameters
 onto its block, so that the next point of a path can screen against it.
 }
 \details{
-The previous point travels on the blocks rather than through the argument
-list of every layer between the path and the descent. It is a property of
-the block -- where its penalty was a moment ago -- and the path rebuilds the
-blocks at each point anyway.
+The previous point travels on the blocks and not through the argument list
+of every layer between the path and the descent. It is a property of the
+block, namely where its penalty was a moment ago, and the path rebuilds
+the blocks at each point in any case.
 }
 \seealso{
 \code{\link[=coord_screen]{coord_screen()}}, \code{\link[=statmod_path]{statmod_path()}}

@@ -7,22 +7,30 @@
 coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
 }
 \arguments{
-\item{X}{The block's columns.}
+\item{X}{The block's own columns, \verb{n x p}, dense or \code{dgCMatrix}.}
 
-\item{w}{The working weights.}
+\item{w}{The working weights, length \code{n}.}
 
-\item{z}{The working response.}
+\item{z}{The working response, length \code{n}.}
 
-\item{beta}{The coefficients at the previous point.}
+\item{beta}{The block's coefficients at the previous point of the path,
+length \code{p}.}
 
-\item{s_now}{The size of the kink here.}
+\item{s_now}{The size of the kink at this point, a single number.}
 
-\item{s_prev}{The size of the kink at the previous point, or \code{NULL}.}
+\item{s_prev}{The size of the kink at the previous point, or \code{NULL} when
+there is no previous point.}
 
-\item{threads}{The thread count the gradient read may use.}
+\item{threads}{The thread count the gradient read may use, a plain
+integer.}
 }
 \value{
-An integer vector of column indices, never empty.
+An integer vector of one-based column indices to visit, in
+ascending order. Every column when \code{s_prev} is \code{NULL} or either kink
+size is not usable. A coordinate already away from zero is always kept,
+whatever its gradient, so the rule can only ever add coordinates to the
+active set. Never empty: where the test discards everything, the column
+with the largest gradient is kept.
 }
 \description{
 The sequential strong rule: a coordinate whose gradient at the previous

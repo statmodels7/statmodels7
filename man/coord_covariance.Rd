@@ -9,22 +9,31 @@ coord_covariance(n, m)
 \arguments{
 \item{n}{The number of observations.}
 
-\item{m}{How many coordinates are visited.}
+\item{m}{How many coordinates the strong rule left to visit.}
 }
 \value{
 A single logical.
 }
 \description{
-\code{TRUE} for the covariance form, \code{FALSE} for the residual.
+Chooses how the compiled sweeps keep the gradient: \code{TRUE} for the
+covariance form, which holds the gradient itself and caches columns of
+\eqn{X'WX}, and \code{FALSE} for the running residual. The test is
+\code{m <= 32 && n > 8 * m}.
 }
 \details{
-The covariance form replaces an \eqn{O(n)} read with an \eqn{O(m)} one, and
-pays for it by building a column of \eqn{X'WX} at \eqn{O(nm)} the first time
-a coordinate moves off zero. It is therefore worth it only when \eqn{m} is
-small next to \eqn{n}, and the measurement is unambiguous: at 5000
-observations with 200 columns screened to 200, taking the covariance form
-cost 70 milliseconds against 55 for the residual, the Gram columns being
-dearer than the residual passes they replaced. The threshold is set where
-the two cross rather than at a rule of thumb.
+The covariance form replaces an \eqn{O(n)} read of the gradient with an
+\eqn{O(m)} one, and pays for it by building a column of \eqn{X'WX} at
+\eqn{O(nm)} the first time a coordinate moves off zero. It is worth having
+only while \eqn{m} is small next to \eqn{n}, which is what the two
+conditions say.
+
+The measurement is unambiguous in the other direction: at 5000
+observations with 200 columns and nothing screened away, the covariance
+form cost 70 milliseconds against 55 for the residual, the Gram columns
+being dearer than the residual passes they replaced.
+}
+\seealso{
+\code{\link[=coord_call]{coord_call()}}, which passes the answer to the kernel,
+\code{\link[=coord_screen]{coord_screen()}} for \code{m}.
 }
 \keyword{internal}

@@ -51,21 +51,32 @@ NULL
 #' \eqn{n} is large next to the number of live coordinates and pays in memory,
 #' so the choice is made by size rather than declared.
 #'
-#' @param obj The full objective.
-#' @param beta The current stacked coefficients.
-#' @param block One entry of `statmod_blocks()$sparse`.
-#' @param hyper The hyperparameters.
+#' @param obj The full objective, as [statmod_objective()] returns it. Read
+#'   for the value at the point reached, not for its gradient.
+#' @param beta The current stacked coefficients, a named list with one vector
+#'   per distribution parameter. Every block but this one is held at these.
+#' @param block One entry of `statmod_blocks()$sparse`: the equation, the
+#'   term, its column positions and its penalty.
+#' @param hyper The hyperparameters, per penalized term, held fixed here.
 #' @param spec A [StatmodSpec()].
-#' @param design The design.
-#' @param expected Whether the information is the expected one.
-#' @param approx How the expected information is approximated.
-#' @param maxit The iteration budget.
-#' @param tol The stopping tolerance.
-#' @param prev_kink The size of the kink at the previous point of a path, or
-#'   `NULL` to cycle over every coordinate.
+#' @param design The design, refreshed at `beta` if any term needs it.
+#' @param expected `TRUE` for the expected information in the working
+#'   weights, `FALSE` for the observed one.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form.
+#' @param maxit The budget in weighted least squares iterations, each of
+#'   which rebuilds the weights and runs the compiled sweeps to convergence.
+#' @param tol The stopping tolerance on the relative change in the block's
+#'   coefficients.
+#' @param prev_kink The size of the kink at the previous point of a path, a
+#'   single number, or `NULL` to cycle over every coordinate. Only the strong
+#'   rule reads it.
 #'
-#' @return A list shaped like [sparse_fit()]'s, or `NULL` where
-#'   the route does not apply.
+#' @return A list shaped like [sparse_fit()]'s, with the block's fitted
+#'   coefficients, the sweep count and the gradient the kernel ended at.
+#'   `NULL` where the route does not apply: the penalty describes no
+#'   proximal table at the steps this block's curvature produces, or the
+#'   working weights are unusable.
 #'
 #' @references
 #' Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for
@@ -194,15 +205,23 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' caller checks what it discarded. With no previous point there is nothing to
 #' screen against and every coordinate is visited.
 #'
-#' @param X The block's columns.
-#' @param w The working weights.
-#' @param z The working response.
-#' @param beta The coefficients at the previous point.
-#' @param s_now The size of the kink here.
-#' @param s_prev The size of the kink at the previous point, or `NULL`.
-#' @param threads The thread count the gradient read may use.
+#' @param X The block's own columns, `n x p`, dense or `dgCMatrix`.
+#' @param w The working weights, length `n`.
+#' @param z The working response, length `n`.
+#' @param beta The block's coefficients at the previous point of the path,
+#'   length `p`.
+#' @param s_now The size of the kink at this point, a single number.
+#' @param s_prev The size of the kink at the previous point, or `NULL` when
+#'   there is no previous point.
+#' @param threads The thread count the gradient read may use, a plain
+#'   integer.
 #'
-#' @return An integer vector of column indices, never empty.
+#' @return An integer vector of one-based column indices to visit, in
+#'   ascending order. Every column when `s_prev` is `NULL` or either kink
+#'   size is not usable. A coordinate already away from zero is always kept,
+#'   whatever its gradient, so the rule can only ever add coordinates to the
+#'   active set. Never empty: where the test discards everything, the column
+#'   with the largest gradient is kept.
 #'
 #' @seealso [coord_fit()]
 #'
@@ -241,10 +260,12 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
 #' \pkg{Matrix} class is materialized as a base matrix instead, there being
 #' nothing to save.
 #'
-#' @param X The equation's design.
-#' @param cols The term's column positions.
+#' @param X The equation's design, dense or any \pkg{Matrix} class.
+#' @param cols The term's column positions within it, an integer vector.
 #'
-#' @return A numeric matrix or a `dgCMatrix`.
+#' @return A base numeric matrix with `length(cols)` columns when `X` is
+#'   dense or a dense \pkg{Matrix} class, and a `dgCMatrix` when `X` is
+#'   sparse.
 #'
 #' @seealso [coord_call()], [coord_fit()]
 #'
@@ -266,21 +287,30 @@ coord_block <- function(X, cols) {
 #'
 #' @details
 #' The two kernels are one algorithm instantiated twice over a column
-#' accessor, so they agree BIT FOR BIT rather than to a tolerance: skipping
-#' a structural zero omits an addition of zero, which is exact. The
-#' `dgCMatrix` is decomposed here rather than in C++ so that the
-#' compiled code needs no dependency on the \pkg{Matrix} package's C API.
+#' accessor, and they agree bit for bit rather than to a tolerance. That is
+#' licensed by the arithmetic: skipping a structural zero omits an addition
+#' of zero, which is exact. It is the one place in this toolkit where an
+#' identity assertion over compiled floating point is correct.
 #'
-#' @param X The block, dense or `dgCMatrix`.
-#' @param z,w The working response and weights.
-#' @param b0 The starting coefficients.
-#' @param tab The proximal table, from
-#'   [penalties7::penalty_prox_spec()].
-#' @param screen The zero-based positions the strong rule kept.
-#' @param tol The stopping tolerance on the coefficient change.
-#' @param covariance Whether to hold the gradient rather than the residual.
+#' The `dgCMatrix` is taken apart here and not in C++, so the compiled code
+#' needs no dependency on the \pkg{Matrix} package's C API.
 #'
-#' @return The kernel's list: `beta`, `sweeps`, `grad`.
+#' @param X The block, `n x p`, dense or `dgCMatrix`.
+#' @param z,w The working response and weights, each of length `n`.
+#' @param b0 The starting coefficients, length `p`.
+#' @param tab The piecewise linear proximal table, as
+#'   [penalties7::penalty_prox_spec()] returns it.
+#' @param screen The **zero-based** positions the strong rule kept, for the
+#'   C++ indexing.
+#' @param tol The stopping tolerance on the largest coefficient change of a
+#'   sweep.
+#' @param covariance `TRUE` to hold the gradient itself and cache Gram
+#'   columns, `FALSE` to hold the running residual. [coord_covariance()]
+#'   decides.
+#'
+#' @return The kernel's list of three: `beta` (the fitted coefficients,
+#'   length `p`), `sweeps` (how many passes it took) and `grad` (the gradient
+#'   at the point reached, length `p`).
 #'
 #' @seealso [coord_block()]
 #'
@@ -303,15 +333,18 @@ coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
 #' onto its block, so that the next point of a path can screen against it.
 #'
 #' @details
-#' The previous point travels on the blocks rather than through the argument
-#' list of every layer between the path and the descent. It is a property of
-#' the block -- where its penalty was a moment ago -- and the path rebuilds the
-#' blocks at each point anyway.
+#' The previous point travels on the blocks and not through the argument list
+#' of every layer between the path and the descent. It is a property of the
+#' block, namely where its penalty was a moment ago, and the path rebuilds
+#' the blocks at each point in any case.
 #'
-#' @param blocks The blocks, as [statmod_blocks()] returns them.
+#' @param blocks The blocks, as [statmod_blocks()] returns them, with a
+#'   `sparse` list of the kinked entries.
 #' @param hyper The hyperparameters at the point just fitted.
 #'
-#' @return The blocks, each sparse entry carrying `prev_kink`.
+#' @return `blocks`, with each entry of its `sparse` list carrying a
+#'   `prev_kink` element: the size of that penalty's kink at `hyper`. The
+#'   `smooth` list is untouched.
 #'
 #' @seealso [coord_screen()], [statmod_path()]
 #'
@@ -330,22 +363,30 @@ blocks_at_kink <- function(blocks, hyper) {
 #' Which Way of Holding the Gradient Is Cheaper
 #'
 #' @description
-#' `TRUE` for the covariance form, `FALSE` for the residual.
+#' Chooses how the compiled sweeps keep the gradient: `TRUE` for the
+#' covariance form, which holds the gradient itself and caches columns of
+#' \eqn{X'WX}, and `FALSE` for the running residual. The test is
+#' `m <= 32 && n > 8 * m`.
 #'
 #' @details
-#' The covariance form replaces an \eqn{O(n)} read with an \eqn{O(m)} one, and
-#' pays for it by building a column of \eqn{X'WX} at \eqn{O(nm)} the first time
-#' a coordinate moves off zero. It is therefore worth it only when \eqn{m} is
-#' small next to \eqn{n}, and the measurement is unambiguous: at 5000
-#' observations with 200 columns screened to 200, taking the covariance form
-#' cost 70 milliseconds against 55 for the residual, the Gram columns being
-#' dearer than the residual passes they replaced. The threshold is set where
-#' the two cross rather than at a rule of thumb.
+#' The covariance form replaces an \eqn{O(n)} read of the gradient with an
+#' \eqn{O(m)} one, and pays for it by building a column of \eqn{X'WX} at
+#' \eqn{O(nm)} the first time a coordinate moves off zero. It is worth having
+#' only while \eqn{m} is small next to \eqn{n}, which is what the two
+#' conditions say.
+#'
+#' The measurement is unambiguous in the other direction: at 5000
+#' observations with 200 columns and nothing screened away, the covariance
+#' form cost 70 milliseconds against 55 for the residual, the Gram columns
+#' being dearer than the residual passes they replaced.
 #'
 #' @param n The number of observations.
-#' @param m How many coordinates are visited.
+#' @param m How many coordinates the strong rule left to visit.
 #'
 #' @return A single logical.
+#'
+#' @seealso [coord_call()], which passes the answer to the kernel,
+#'   [coord_screen()] for `m`.
 #'
 #' @keywords internal
 coord_covariance <- function(n, m) {
@@ -359,17 +400,26 @@ coord_covariance <- function(n, m) {
 #' \eqn{h_i} and \eqn{z_i = \eta_i + s_i/h_i}, the weighted least squares
 #' problem the log-likelihood is locally.
 #'
-#' @param spec A [StatmodSpec()].
-#' @param ep The linear predictors and parameters, from
-#'   [statmod_eta()].
-#' @param coef The coefficients.
-#' @param design The design.
-#' @param p Which distribution parameter.
-#' @param expected Whether the information is the expected one.
-#' @param approx How it is approximated.
+#' @details
+#' For a Gaussian response on the identity link the quadratic is exact and
+#' one pass answers the problem. Elsewhere it is the local approximation a
+#' scoring step works on, and the weights are rebuilt at each iteration.
 #'
-#' @return A list with `w` and `z`, or `NULL` where the
-#'   curvature is not usable.
+#' @param spec A [StatmodSpec()].
+#' @param ep The linear predictors and the parameters they imply, as
+#'   [statmod_eta()] returns them.
+#' @param coef A named list of coefficient vectors.
+#' @param design The design.
+#' @param p Which distribution parameter's equation, a string.
+#' @param expected `TRUE` for the expected information, `FALSE` for the
+#'   observed one.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form.
+#'
+#' @return A list with `w` and `z`, each a numeric vector of length
+#'   `spec@n_obs`. `NULL` where the curvature is not usable, which is any
+#'   non-finite or non-positive \eqn{h_i}; the observed information can
+#'   produce both far from the optimum.
 #'
 #' @keywords internal
 coord_working <- function(spec, ep, coef, design, p, expected, approx) {
@@ -388,11 +438,30 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
 
 #' The Offset of One Equation
 #'
-#' @param spec A [StatmodSpec()].
-#' @param p Which distribution parameter.
-#' @param n The number of observations.
+#' @description
+#' Returns the offset of one distribution parameter's equation, evaluated in
+#' the fitting data and recycled to the sample size. An equation with no
+#' offset gets zeros, so the caller adds the result unconditionally.
 #'
-#' @return A numeric vector of length `n`.
+#' @details
+#' The offsets are stored on the specification as evaluated vectors, one per
+#' parameter, and an absent one is `NULL` rather than a vector of zeros. This
+#' turns the second into the first at the point of use.
+#'
+#' An offset shorter than `n` is recycled with [rep_len()], so a single
+#' number is a constant offset. That is the shape a caller writing
+#' `offsets = list(mu = log(2))` gets.
+#'
+#' @param spec A [StatmodSpec()], read for its `offsets` list.
+#' @param p Which distribution parameter, a string naming one of the
+#'   family's.
+#' @param n The number of observations to recycle to.
+#'
+#' @return A numeric vector of length `n`: the offset, or zeros where the
+#'   equation has none.
+#'
+#' @seealso [eval_offsets()], which evaluates the expressions this reads,
+#'   [statmod()] for the `offsets` argument.
 #'
 #' @keywords internal
 coord_offset <- function(spec, p, n) {

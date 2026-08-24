@@ -64,7 +64,7 @@ condition, \eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
 The exact derivatives need \code{hessian = "observed"}, which is the default.
 }
 
-\section{Which r1bhZRCWkbHDB9RSRCO3wcNfgDwN0gZ3-4-}{
+\section{Which gdD7sIuV7opHdjMUmINU48sc50GJulBB-4-}{
 The trace runs over the whole coefficient vector, so a term's contribution
 reads the full penalized information and not only its own block.
 \code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert the block instead, which is what

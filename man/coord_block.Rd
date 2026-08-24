@@ -7,12 +7,14 @@
 coord_block(X, cols)
 }
 \arguments{
-\item{X}{The equation's design.}
+\item{X}{The equation's design, dense or any \pkg{Matrix} class.}
 
-\item{cols}{The term's column positions.}
+\item{cols}{The term's column positions within it, an integer vector.}
 }
 \value{
-A numeric matrix or a \code{dgCMatrix}.
+A base numeric matrix with \code{length(cols)} columns when \code{X} is
+dense or a dense \pkg{Matrix} class, and a \code{dgCMatrix} when \code{X} is
+sparse.
 }
 \description{
 Slices a penalized term's columns out of its equation's design without

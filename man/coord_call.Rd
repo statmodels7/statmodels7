@@ -7,23 +7,29 @@
 coord_call(X, z, w, b0, tab, screen, tol, covariance)
 }
 \arguments{
-\item{X}{The block, dense or \code{dgCMatrix}.}
+\item{X}{The block, \verb{n x p}, dense or \code{dgCMatrix}.}
 
-\item{z, w}{The working response and weights.}
+\item{z, w}{The working response and weights, each of length \code{n}.}
 
-\item{b0}{The starting coefficients.}
+\item{b0}{The starting coefficients, length \code{p}.}
 
-\item{tab}{The proximal table, from
-\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}}.}
+\item{tab}{The piecewise linear proximal table, as
+\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} returns it.}
 
-\item{screen}{The zero-based positions the strong rule kept.}
+\item{screen}{The \strong{zero-based} positions the strong rule kept, for the
+C++ indexing.}
 
-\item{tol}{The stopping tolerance on the coefficient change.}
+\item{tol}{The stopping tolerance on the largest coefficient change of a
+sweep.}
 
-\item{covariance}{Whether to hold the gradient rather than the residual.}
+\item{covariance}{\code{TRUE} to hold the gradient itself and cache Gram
+columns, \code{FALSE} to hold the running residual. \code{\link[=coord_covariance]{coord_covariance()}}
+decides.}
 }
 \value{
-The kernel's list: \code{beta}, \code{sweeps}, \code{grad}.
+The kernel's list of three: \code{beta} (the fitted coefficients,
+length \code{p}), \code{sweeps} (how many passes it took) and \code{grad} (the gradient
+at the point reached, length \code{p}).
 }
 \description{
 Sends the block to the dense kernel or to the sparse one, taking a
@@ -31,10 +37,13 @@ Sends the block to the dense kernel or to the sparse one, taking a
 }
 \details{
 The two kernels are one algorithm instantiated twice over a column
-accessor, so they agree BIT FOR BIT rather than to a tolerance: skipping
-a structural zero omits an addition of zero, which is exact. The
-\code{dgCMatrix} is decomposed here rather than in C++ so that the
-compiled code needs no dependency on the \pkg{Matrix} package's C API.
+accessor, and they agree bit for bit rather than to a tolerance. That is
+licensed by the arithmetic: skipping a structural zero omits an addition
+of zero, which is exact. It is the one place in this toolkit where an
+identity assertion over compiled floating point is correct.
+
+The \code{dgCMatrix} is taken apart here and not in C++, so the compiled code
+needs no dependency on the \pkg{Matrix} package's C API.
 }
 \seealso{
 \code{\link[=coord_block]{coord_block()}}

@@ -9,25 +9,34 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{ep}{The linear predictors and parameters, from
-\code{\link[=statmod_eta]{statmod_eta()}}.}
+\item{ep}{The linear predictors and the parameters they imply, as
+\code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
-\item{coef}{The coefficients.}
+\item{coef}{A named list of coefficient vectors.}
 
 \item{design}{The design.}
 
-\item{p}{Which distribution parameter.}
+\item{p}{Which distribution parameter's equation, a string.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
+observed one.}
 
-\item{approx}{How it is approximated.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form.}
 }
 \value{
-A list with \code{w} and \code{z}, or \code{NULL} where the
-curvature is not usable.
+A list with \code{w} and \code{z}, each a numeric vector of length
+\code{spec@n_obs}. \code{NULL} where the curvature is not usable, which is any
+non-finite or non-positive \eqn{h_i}; the observed information can
+produce both far from the optimum.
 }
 \description{
 \eqn{h_i} and \eqn{z_i = \eta_i + s_i/h_i}, the weighted least squares
 problem the log-likelihood is locally.
+}
+\details{
+For a Gaussian response on the identity link the quadratic is exact and
+one pass answers the problem. Elsewhere it is the local approximation a
+scoring step works on, and the weights are rebuilt at each iteration.
 }
 \keyword{internal}

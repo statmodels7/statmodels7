@@ -7,16 +7,33 @@
 coord_offset(spec, p, n)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for its \code{offsets} list.}
 
-\item{p}{Which distribution parameter.}
+\item{p}{Which distribution parameter, a string naming one of the
+family's.}
 
-\item{n}{The number of observations.}
+\item{n}{The number of observations to recycle to.}
 }
 \value{
-A numeric vector of length \code{n}.
+A numeric vector of length \code{n}: the offset, or zeros where the
+equation has none.
 }
 \description{
-The Offset of One Equation
+Returns the offset of one distribution parameter's equation, evaluated in
+the fitting data and recycled to the sample size. An equation with no
+offset gets zeros, so the caller adds the result unconditionally.
+}
+\details{
+The offsets are stored on the specification as evaluated vectors, one per
+parameter, and an absent one is \code{NULL} rather than a vector of zeros. This
+turns the second into the first at the point of use.
+
+An offset shorter than \code{n} is recycled with \code{\link[=rep_len]{rep_len()}}, so a single
+number is a constant offset. That is the shape a caller writing
+\code{offsets = list(mu = log(2))} gets.
+}
+\seealso{
+\code{\link[=eval_offsets]{eval_offsets()}}, which evaluates the expressions this reads,
+\code{\link[=statmod]{statmod()}} for the \code{offsets} argument.
 }
 \keyword{internal}
