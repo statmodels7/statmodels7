@@ -7,14 +7,27 @@
 unknown_what(what, params)
 }
 \arguments{
-\item{what}{What was asked for.}
+\item{what}{What was asked for, for the message.}
 
-\item{params}{The family's parameter names.}
+\item{params}{The family's parameter names, in the family's order.}
 }
 \value{
-A single string.
+A single string, ready for \code{\link[=stop]{stop()}}.
 }
 \description{
-The Message for an Unrecognized Prediction Target
+Builds the error \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} signals when \code{what} names
+nothing it can compute, listing this family's own parameter names, the
+five moments and the two collective targets.
+}
+\details{
+The family's parameters are listed by name rather than described, since
+they differ from family to family and are the commonest thing a caller
+means. A data frame passed where \code{what} belongs, which is the mistake
+\code{\link[stats:predict]{stats::predict()}}'s argument order invites, is recognized and named
+separately.
+}
+\seealso{
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the caller,
+\code{\link[=predict_moments]{predict_moments()}} for the moment names listed.
 }
 \keyword{internal}

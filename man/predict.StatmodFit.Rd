@@ -16,41 +16,50 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{what}{What to predict: a parameter's name, a moment's name,
-\code{"parameter"} or \code{"link"}.}
+\item{what}{What to predict: a parameter's name, optionally prefixed
+\code{"link:"}; a moment's name; \code{"parameter"} (the default) or \code{"link"}. An
+unrecognized name signals an error listing what is available.}
 
-\item{newdata}{A data frame, or \code{NULL} for the fitting data.}
+\item{newdata}{A data frame, or \code{NULL} for the fitting data. Needs the
+covariates the model names but not the response.}
 
-\item{se}{Whether to report the prediction's uncertainty as well.}
+\item{se}{\code{TRUE} to report the standard error and an interval as well.
+\code{FALSE} by default.}
 
-\item{level}{The interval's level, where \code{se} is \code{TRUE}.}
+\item{level}{The interval's level, \code{0.95} by default. Read only where \code{se}
+is \code{TRUE}.}
 
-\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} where \code{se} is
-\code{TRUE}, which is where \code{type} chooses between the bayesian
-variance and the frequentist one.}
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} where \code{se} is \code{TRUE}. That is
+where \code{type} chooses between the Bayesian variance and the frequentist
+one.}
 }
 \value{
-A numeric vector when \code{what} names one quantity, and a named
-list of vectors for \code{"parameter"} and \code{"link"}. With
-\code{se = TRUE}, a data frame of \code{fit}, \code{se},
-\code{lower} and \code{upper} in place of each vector.
+With \code{se = FALSE}, a numeric vector of \code{nrow(newdata)} values when
+\code{what} names one quantity, and a named list of such vectors for
+\code{"parameter"} and \code{"link"}.
+
+With \code{se = TRUE}, a data frame with columns \code{fit}, \code{se}, \code{lower} and
+\code{upper} in place of each vector. \code{se} is \code{NA} for an observation whose
+predictor reads a coefficient that has no variance, which is the truth
+about it and not a gap in the arithmetic.
 }
 \description{
-Any one of the distribution's parameters, any of its moments, or all of the
-parameters or linear predictors at once, at the fitting data or at new data.
+Predicts from a fitted model: any one of the distribution's parameters,
+any of its moments, or every parameter or linear predictor at once, at the
+fitting data or at new data, with standard errors and intervals on
+request.
 }
-\details{
-\strong{What can be asked for.} \code{what} takes
+\section{What can be asked for}{
+\code{what} takes
 \describe{
 \item{a parameter's name}{\code{"mu"}, \code{"sigma"}, \code{"alpha"} --
 whatever the family calls them. Always available, whatever the family:
 a parameter is what the model fits, and it exists even where a moment
 does not.}
-\item{a moment's name}{\code{"mean"}, \code{"variance"},
-\code{"std_dev"}, \code{"skewness"}, \code{"kurtosis"}. Available where
-the family has one, and answering \code{NaN} or \code{NA} where it does
-not exist -- a Cauchy's mean is \code{NaN}, which is the honest answer
-and not a failure.}
+\item{a moment's name}{\code{"mean"}, \code{"variance"}, \code{"std_dev"},
+\code{"skewness"}, \code{"kurtosis"}. Available where the family has one, and
+answering \code{NaN} or \code{NA} where it does not exist. A Cauchy's mean is
+\code{NaN}, which is the correct answer and not a failure.}
 \item{\code{"parameter"}}{every parameter at once, as a named list. The
 default.}
 \item{\code{"link"}}{every linear predictor at once, before the inverse
@@ -58,41 +67,74 @@ link.}
 }
 A parameter's name may be prefixed by \code{"link:"} to ask for its
 predictor instead of its value, as \code{"link:sigma"}.
-
-\strong{The argument order departs from \code{\link[stats:predict]{stats::predict()}}}, where
-the second argument is \code{newdata}. Here it is \code{what}, because a
-statmod fit has several parameters and several moments and choosing among
-them is the ordinary variation, while predicting on new data is the
-occasional one. Passing a data frame second is caught and named rather than
-failing somewhere inside.
-
-\strong{New data} goes through the terms' blueprints, so a factor keeps the
-levels and the contrasts it was fitted with rather than being rebuilt from
-whatever the new frame happens to contain.
-
-\strong{A model carrying a score-driven term is predicted past the
-series.} Such a term's contribution at one row is the state a recursion
-has reached, so new rows continue the series rather than being read on
-their own: each row is placed by its own time within its own group, and
-must come after every observed time of that group. Beyond the data the
-score sits at its conditional mean of zero, which the model's own
-definition guarantees, so the continuation is the deterministic recursion
-and involves no simulation. A forecast reports no standard error --
-\code{se = TRUE} gives the uncertainty of the parameters, while a forecast
-carries the uncertainty of the future scores as well, which is the larger
-part and is no delta method.
 }
+
+\section{The argument order departs from \code{\link[stats:predict]{stats::predict()}}}{
+There the second argument is \code{newdata}; here it is \code{what}. A statmod fit
+has several parameters and several moments, so choosing among them is the
+ordinary variation and predicting on new data is the occasional one.
+
+Passing a data frame second is caught and named, instead of failing
+somewhere inside.
+}
+
+\section{New data}{
+Goes through each term's blueprint, so a factor keeps the levels and
+contrasts it was fitted with, a spline its knots, and a basis its
+reparametrization. Nothing is rebuilt from whatever the new frame happens
+to contain.
+}
+
+\section{A score-driven term is predicted past the series}{
+Such a term's contribution at one row is the state a recursion has
+reached, so new rows continue the series instead of being read on their
+own. Each row is placed by its own time within its own group, and must
+come after every observed time of that group; a row falling inside the
+observed series is refused, since there the response is known and the
+filter must be run and not continued.
+
+Beyond the data the score sits at its conditional mean of zero, which the
+model's own definition guarantees, so the continuation is the
+deterministic recursion and involves no simulation.
+
+A forecast reports \strong{no standard error}. \code{se = TRUE} gives the
+uncertainty of the parameters, while a forecast carries the uncertainty of
+the future scores as well, which is the larger part and is no delta
+method. Reporting the smaller half under the name of the whole would
+mislead.
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(60))
 dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.4)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+
+# One parameter, and one of the family's moments.
 head(predict(fit, "mu"))
 head(predict(fit, "variance"))
+
+# A parameter's predictor instead of its value.
 head(predict(fit, "link:sigma"))
+
+# For a Gaussian the mean is mu and the variance is sigma squared, which
+# is what the moments come to.
+all.equal(predict(fit, "mean"), predict(fit, "mu"))
+all.equal(predict(fit, "variance"), predict(fit, "sigma")^2)
+
+# With an interval.
 head(predict(fit, "mu", se = TRUE))
+
+# Every parameter at once, on either scale.
+str(predict(fit, "parameter"))
+
+# A name the family does not have is refused, and the message says what
+# is available.
+try(predict(fit, "median"))
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}}
+\code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} for one parameter's fitted values,
+\code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} for the matched diagnostic,
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance the standard errors come from.
 }
 \keyword{internal}

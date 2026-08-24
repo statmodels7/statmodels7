@@ -9,28 +9,33 @@
 \arguments{
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{what}{Which distribution parameter, or \code{NULL} for the first.}
+\item{what}{Which distribution parameter, a string naming one of the
+family's, or \code{NULL} for the first.}
 
 \item{...}{Unused.}
 }
 \value{
-A numeric vector.
+A numeric vector of length \code{nobs(object)}, that parameter's fitted
+values on its own scale.
 }
 \description{
 One distribution parameter's fitted values, as a vector of the data's
 length.
 }
 \details{
-A VECTOR and not the whole set, so that this and
-\code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} are a matched pair and a diagnostic
-drawn from them needs no unpacking. The default is the FIRST parameter
-rather than the mean: a family may have no mean -- a Cauchy has none --
-and a default that fails on a legitimate family is worse than one that
-always answers. The whole set at once is
-\code{predict(fit, "parameter")}, and the mean, where it exists, is
-\code{predict(fit, "mean")}.
+The result is a vector and not the whole set, so that this and
+\code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} are a matched pair and a diagnostic drawn from
+them needs no unpacking.
+
+The default is the \strong{first} parameter and not the mean. A family may have
+no mean, a Cauchy being one, and a default that fails on a legitimate
+family is worse than one that always answers.
+
+The whole set at once is \code{predict(fit, "parameter")}, and the mean, where
+it exists, is \code{predict(fit, "mean")}.
 }
 \seealso{
-\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the other quantities and for new data,
+\code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} for the matched diagnostic.
 }
 \keyword{internal}

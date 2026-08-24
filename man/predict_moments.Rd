@@ -7,10 +7,21 @@
 predict_moments()
 }
 \value{
-A named list of functions.
+A named list of five functions, keyed \code{"mean"}, \code{"variance"},
+\code{"std_dev"}, \code{"skewness"} and \code{"kurtosis"}. Each takes a distribution
+and a parameter list and returns one value per observation.
 }
 \description{
-The moment names \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} understands, mapped to the
-\pkg{distributions7} generic each one asks.
+The table \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} resolves a moment name against: the five
+names it understands, each mapped to the \pkg{distributions7} generic that
+computes it.
+}
+\details{
+Written once as a table so that the recognized names and the functions
+they call cannot disagree, and so that \code{\link[=unknown_what]{unknown_what()}} can list them in
+its message.
+}
+\seealso{
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the only caller.
 }
 \keyword{internal}
