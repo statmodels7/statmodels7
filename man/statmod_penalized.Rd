@@ -27,7 +27,7 @@ over each one's terms, asking each term for its penalty. Every one of them
 assumed a term carries at most one.
 
 A term may carry several, over different subsets of its own parameters,
-which is what a panel model with a population value and a shrunk deviation
+as a panel model with a population value and a shrunk deviation
 per group needs. Enumerating once is both the generalization and the
 removal of eleven copies.
 

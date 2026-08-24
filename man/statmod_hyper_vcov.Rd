@@ -41,13 +41,12 @@ smoothing parameter on its own scale, where the estimate is often several
 orders of magnitude from zero and the criterion far from symmetric, would
 describe a shape the criterion does not have.
 
-\strong{Where it does not apply.} A hyperparameter chosen by a path,
-\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}, \code{\link[=cv]{cv()}} over a kinked
-which is what happens to a kinked penalty's, is the argument of a minimum
-over a grid and not the root of a
-derivative, so there is no Hessian to invert and no standard error to
-report. Its uncertainty is a resampling question and \code{NULL} is
-returned, in place of a number of another kind.
+\strong{Where it does not apply.} A hyperparameter chosen along a path, which
+is what \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} do to a kinked penalty's, is the
+argument of a minimum over a grid. It is no root of a derivative, so there
+is no Hessian to invert and no standard error follows. Its uncertainty is
+a resampling question, and \code{NULL} is returned in place of a number of
+another kind.
 }
 \seealso{
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
