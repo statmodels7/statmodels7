@@ -14,11 +14,12 @@ statmod_structural_penalty(
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, whose structural state holds each term's current
+parameters.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, per penalized term.}
 
-\item{what}{One of \code{"value"}, \code{"gradient"} or \code{"hessian"}.}
+\item{what}{Which quantity: \code{"value"}, \code{"gradient"} or \code{"hessian"}.}
 }
 \value{
 A named list, one entry per structural term, each a numeric vector
@@ -27,7 +28,8 @@ structural term carries a penalty.
 }
 \description{
 The derivative of the penalties a structural term declares, in the term's
-own parameters rather than in the coefficients.
+own parameters, in place of the coefficients the other penalty function
+reads.
 }
 \details{
 The objective of the structural block includes these penalties through
@@ -36,9 +38,9 @@ derivative: without it the two describe different functions, an optimizer
 walks until its budget runs out, and \code{optimizers7}'s own check reports
 that the objective changes at a rate the gradient does not predict.
 
-The penalty is read on the UNCONSTRAINED scale, which is where the term
-carries its parameters and where a deviation from a population value is
-defined; for a deviation, whose link is the identity, the two scales
+The penalty is read on the \strong{unconstrained scale}, which is where the
+term carries its parameters and where a deviation from a population value
+is defined. For a deviation, whose link is the identity, the two scales
 coincide.
 }
 \seealso{

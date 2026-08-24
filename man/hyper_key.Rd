@@ -7,16 +7,18 @@
 hyper_key(spec, start, p, name)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the terms' labels.}
 
 \item{start}{The hyperparameter structure, whose names are the keys.}
 
-\item{p}{The distribution parameter.}
+\item{p}{The distribution parameter whose equation to look in, a string.}
 
-\item{name}{What the caller wrote.}
+\item{name}{What the caller wrote: a key or a label.}
 }
 \value{
-A single key.
+A single string, the key \code{start[[p]]} holds the term under.
+Signals an error when \code{name} matches nothing, and when it matches the
+labels of two terms at once.
 }
 \description{
 Turns the name a caller used into the key the specification holds the term
@@ -24,10 +26,14 @@ under, accepting either that key or the term's \code{label}.
 }
 \details{
 A specification keys its terms by the call as written, so a lasso is
-\code{"lasso(~noise1 + noise2)"}. That is what makes two lassos on different
-covariates distinct, and it is not what anybody wants to type; the label the
-term constructor carries is. Where two terms share a label the request is
-ambiguous and the keys are asked for, since guessing would set a
-hyperparameter on the wrong block.
+\code{"lasso(~noise1 + noise2)"}. The call is what distinguishes two lassos on
+different covariates, and it is also nothing anybody wants to type. The
+\code{label} the term constructor carries is the short form, \code{"lasso"}, and
+both are accepted here. Where two terms share a label the request is
+ambiguous and the keys are asked for, guessing having a fair chance of
+setting a hyperparameter on the wrong block.
+}
+\seealso{
+\code{\link[=statmod_hyper_user]{statmod_hyper_user()}}, its caller.
 }
 \keyword{internal}

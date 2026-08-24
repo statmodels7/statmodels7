@@ -15,31 +15,50 @@ statmod_objective(
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, per penalized term, held for the life of
+the objective.}
 
-\item{design}{The design.}
+\item{design}{The design. Rebuilt from \code{spec} when absent.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{\code{TRUE} for the expected information in \code{he}, \code{FALSE} for
+the observed one.}
 
-\item{approx}{The approximation for the expected information.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form.}
 }
 \value{
-A list of functions \code{fn}, \code{gr} and \code{he} of the
-stacked coefficient vector, plus \code{split} and \code{stack} to move
-between that vector and the per-parameter list.
+A list of five functions:
+\describe{
+\item{\code{fn(b)}}{the objective at the stacked coefficients \code{b}, a single
+number.}
+\item{\code{gr(b)}}{its gradient, a numeric vector as long as \code{b}.}
+\item{\code{he(b)}}{its Hessian, a \verb{p x p} matrix.}
+\item{\code{split(b)}}{the stacked vector as a named list, one entry per
+distribution parameter.}
+\item{\code{stack(l)}}{the inverse of \code{split}.}
+}
 }
 \description{
 \eqn{F(\beta) = -\ell(\beta) + \sum_t \rho_t}, unaveraged, over the
 coefficients of every parameter stacked into one vector.
 }
-\details{
-The objective is NOT divided by the sample size. A penalty is a negative
-log-prior at full size, and a posterior is a log-likelihood plus a log-prior
-at full size; averaging the first would make a hyperparameter mean something
-that depends on \eqn{n}. What is scaled instead is the stopping rule, in the
-one place it is read.
+\section{The objective is not divided by the sample size}{
+A penalty is a negative log-prior at full size, and a posterior adds a
+log-likelihood and a log-prior at full size. Averaging the likelihood
+alone would make a hyperparameter mean something that depends on \eqn{n}.
+
+What is scaled instead is the stopping rule, in the one place it is read.
+See \code{\link[=iwls]{iwls()}} and \code{\link[=iwls_score]{iwls_score()}}.
 }
+
+\section{The five closures share one design}{
+All five close over \code{design}, \code{hyper} and the two information settings, so
+a caller who changes a hyperparameter builds a new objective. That is what
+the outer search does at every point it visits.
+}
+
 \seealso{
-\code{\link[=iwls]{iwls()}}
+\code{\link[=iwls]{iwls()}} and \code{\link[=fit_smooth]{fit_smooth()}}, which consume this,
+\code{\link[=statmod_loglik_at]{statmod_loglik_at()}} and \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} for its two halves.
 }
 \keyword{internal}

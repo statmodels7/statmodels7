@@ -17,22 +17,41 @@ statmod_information_at(
 
 \item{coef}{A named list of coefficient vectors.}
 
-\item{design}{The design.}
+\item{design}{The design, refreshed at \code{coef} if any term needs it.}
 
-\item{expected}{Whether to use the expected information.}
+\item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
+negated observed Hessian.}
 
-\item{approx}{The approximation, when the expected one is not closed.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 }
 \value{
-A square matrix over the stacked coefficients.
+A symmetric \verb{p x p} matrix over the stacked coefficients, \code{p}
+being their total count across the equations. A \pkg{Matrix} object when
+any equation's design is sparse, a base matrix otherwise.
 }
 \description{
 The negative Hessian in the coefficients, assembled block by block from the
 distribution's own link-scale second derivatives.
 }
 \details{
-\code{expected = TRUE} gives the expected information, which is what Fisher
-scoring inverts; \code{approx} is passed to \pkg{distributions7} and read only
-where the family has no closed expected information.
+Block \eqn{(a, b)} is \eqn{X_a'\,\mathrm{diag}(w\,h_{ab})\,X_b} with
+\eqn{h_{ab}} the per-observation second derivative of the log-density in
+\eqn{(\eta_a, \eta_b)}, negated. The blocks are assembled in the storage
+the designs call for, so a model with a sparse equation gets a sparse
+information.
+
+\code{expected = TRUE} gives the expected information, which Fisher scoring
+inverts and which is positive definite wherever the family is regular.
+\code{expected = FALSE} gives the negated observed Hessian, which far from the
+optimum may be indefinite.
+
+\code{approx} reaches \pkg{distributions7} and is read only where the family
+has no closed expected information.
+}
+\seealso{
+\code{\link[=statmod_score_at]{statmod_score_at()}} for the first derivative,
+\code{\link[=info_blocks]{info_blocks()}} for the per-observation blocks a square-root route uses
+instead.
 }
 \keyword{internal}

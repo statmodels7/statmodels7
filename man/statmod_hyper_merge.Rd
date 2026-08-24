@@ -9,30 +9,36 @@ statmod_hyper_merge(spec, start, user)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{start}{The hyperparameters as computed.}
+\item{start}{The hyperparameters as \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} computed them.}
 
-\item{user}{A named list of named lists, or \code{NULL}.}
+\item{user}{A named list of named lists, keyed by distribution parameter
+and then by term, or \code{NULL} for no overrides.}
 }
 \value{
-The merged structure.
+The same structure as \code{start}, with the caller's values merged in.
+\code{start} unchanged when \code{user} is \code{NULL}.
 }
 \description{
 Merges a caller's hyperparameters into the ones
 \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} computed, by parameter and by term.
 }
 \details{
-Until a hyperparameter is estimated by an outer criterion it is held at the
-probe value, which is a placeholder and not a choice: a lasso at
-\eqn{\lambda = 1} against an unaveraged log-likelihood of a few hundred
-observations selects nothing. This is what lets a caller set it.
+Until an outer criterion estimates it, a hyperparameter sits at the probe
+value, which is a placeholder: a lasso at \eqn{\lambda = 1} against an
+unaveraged log-likelihood over a few hundred observations selects
+everything. This is the route by which a caller sets it instead.
 
 A vector is matched by name against the penalty's own hyperparameters, so
-\code{c(lambda = 5)} sets that one and leaves the rest where they were; an
-unnamed vector of the full length replaces them all.
+\code{c(lambda = 5)} sets that one and leaves the rest. An unnamed vector of
+the full length replaces them all.
 
-A term is named either by the key the specification holds it under, which is
-its call deparsed, or by its \code{label} -- \code{"lasso"} rather than
-\code{"lasso(~noise1 + noise2)"}. Two terms sharing a label are ambiguous
-and the keys are asked for instead.
+A term may be named either by the key the specification holds it under,
+which is its call deparsed, or by its \code{label}: \code{"lasso"} in place of
+\code{"lasso(~noise1 + noise2)"}. Where two terms share a label the request is
+ambiguous and the keys are asked for.
+}
+\seealso{
+\code{\link[=statmod_hyper_start]{statmod_hyper_start()}} for the structure,
+\code{\link[=resolve_term_key]{resolve_term_key()}} for the name matching.
 }
 \keyword{internal}

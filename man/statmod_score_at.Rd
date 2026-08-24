@@ -11,13 +11,34 @@ statmod_score_at(spec, coef, design = statmod_design(spec))
 
 \item{coef}{A named list of coefficient vectors.}
 
-\item{design}{The design.}
+\item{design}{The design, refreshed at \code{coef} if any term needs it.}
 }
 \value{
-A named list of gradient vectors, one per parameter.
+A named list of numeric vectors, one per distribution parameter in
+the family's order, each as long as that equation's design is wide.
 }
 \description{
-One block per distribution parameter, \eqn{X_k'(w\,g_k)} with \eqn{g_k} the
-per-observation derivative of the log-density in the link-scale predictor.
+Computes the score of the weighted log-likelihood in the coefficients, one
+block per distribution parameter:
+
+\deqn{\frac{\partial \ell}{\partial \beta_k} = X_k'\,(w \odot g_k)}
+
+with \eqn{g_k} the per-observation derivative of the log-density in the
+link-scale predictor \eqn{\eta_k}, which \pkg{distributions7} supplies
+already chained onto that scale.
+}
+\details{
+This is the score of the likelihood alone, with no penalty in it, and it
+is the gradient of a model whose design is fixed.
+
+A model carrying a structural term needs a correction that is not here:
+the term's level is driven by scores read at earlier predictors, so a
+coefficient reaches it through the recursion. \code{\link[=statmod_structural_score]{statmod_structural_score()}}
+and \code{modelterms7::term_adjoint()} supply that.
+}
+\seealso{
+\code{\link[=statmod_loglik_at]{statmod_loglik_at()}} for the value,
+\code{\link[=statmod_information_at]{statmod_information_at()}} for the curvature,
+\code{\link[=statmod_structural_score]{statmod_structural_score()}} for a filter's own parameters.
 }
 \keyword{internal}

@@ -7,17 +7,44 @@
 statmod_eta(spec, design, coef)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the distribution, its links, the
+offsets and the sample size.}
 
-\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it, refreshed at
+\code{coef} if any term needs it.}
 
-\item{coef}{A named list of coefficient vectors, one per parameter.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter, each as long as its equation's design is wide.}
 }
 \value{
-A list with \code{eta} and \code{theta}, both named lists.
+A list of two named lists, each with one entry per distribution
+parameter in the family's order:
+\describe{
+\item{\code{eta}}{the linear predictors, numeric vectors of length
+\code{spec@n_obs}.}
+\item{\code{theta}}{the parameters they imply, the same shape, each
+strictly inside its parameter's bounds.}
+}
 }
 \description{
-Turns a coefficient structure into the per-observation parameters the
-distribution's generics take.
+Turns a coefficient structure into the per-observation parameters every
+\pkg{distributions7} generic takes. Each equation's design, coefficients,
+offset and adjustment give a linear predictor \eqn{\eta_k}, and the
+parameter's own link inverts it to \eqn{\theta_k}.
+}
+\details{
+\deqn{\eta_k = X_k \beta_k + o_k + a_k, \qquad \theta_k = g_k^{-1}(\eta_k)}
+
+with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment a
+refreshable term contributes, zero for an ordinary design.
+
+The inverse link clamps \eqn{\theta_k} strictly inside its own open
+bounds, so a predictor far out on the link scale gives a parameter a
+density can be evaluated at. A structural term of the filter shape adds
+its level to \eqn{\eta_k} before the link is inverted.
+}
+\seealso{
+\code{\link[=statmod_loglik_at]{statmod_loglik_at()}} and \code{\link[=statmod_score_at]{statmod_score_at()}}, which read this,
+\code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh.
 }
 \keyword{internal}

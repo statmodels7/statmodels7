@@ -7,13 +7,33 @@
 statmod_hyper_start(spec, design = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, whose terms are walked equation by
+equation.}
 }
 \value{
-A named list, one entry per parameter.
+A named list with one entry per distribution parameter, each a
+named list of numeric vectors keyed by term key, each vector named by
+that penalty's own hyperparameters. An equation with no penalized term
+holds an empty list.
 }
 \description{
-One entry per penalized term, at the midpoint of its bounds -- the probe
-rule \pkg{modelterms7} already uses when it reads a penalty's kinks.
+Builds the hyperparameter structure a fit begins from: one entry per
+penalized term, each at the midpoint of its own bounds. That is the probe
+rule \pkg{modelterms7} already uses when it reads a penalty's kinks, so
+the two layers start a penalty at the same place.
+}
+\details{
+A hyperparameter the term holds keeps the held value instead of the probe.
+Which ones those are is said by the term and by nothing else, through
+\code{modelterms7::term_hyper()}.
+
+The probe is a placeholder. Every hyperparameter left
+\code{NULL} on its term is estimated afterwards, by a marginal criterion or
+along a path.
+}
+\seealso{
+\code{\link[=hyper_defaults]{hyper_defaults()}} for one penalty's midpoints,
+\code{\link[=statmod_hyper_user]{statmod_hyper_user()}} for a caller's overrides,
+\code{\link[=statmod_held]{statmod_held()}} for which are held.
 }
 \keyword{internal}

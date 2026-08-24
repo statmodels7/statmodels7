@@ -7,14 +7,27 @@
 penalty_theta_start(pen)
 }
 \arguments{
-\item{pen}{A \pkg{penalties7} penalty.}
+\item{pen}{A \pkg{penalties7} penalty object.}
 }
 \value{
-A named numeric vector.
+A named numeric vector, one entry per hyperparameter of \code{pen},
+named as the penalty names them. \code{numeric(0)} for a penalty with none,
+which a fixed prior is.
 }
 \description{
-The midpoint of each hyperparameter's bounds, finite ends taken as they
-are and an infinite one replaced by one, which is the scale a smoothing
-parameter lives on before anything is known about it.
+Returns the midpoint of each of a penalty's hyperparameter bounds. A
+finite endpoint is taken as it stands; an infinite one is replaced by 1,
+which is the scale a smoothing parameter lives on before anything is known
+about it.
+}
+\details{
+A hyperparameter bounded below by 0 and unbounded above, which is the
+common case, therefore starts at the midpoint of \eqn{[0, 1]}. The value
+matters only as somewhere to begin: it is a probe, and the criterion moves
+it.
+}
+\seealso{
+\code{\link[=statmod_hyper_start]{statmod_hyper_start()}}, its caller,
+\code{\link[penalties7:penalty_bounds]{penalties7::penalty_bounds()}} for the bounds read.
 }
 \keyword{internal}

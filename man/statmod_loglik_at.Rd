@@ -9,14 +9,30 @@ statmod_loglik_at(spec, coef, design = statmod_design(spec))
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{coef}{A named list of coefficient vectors.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter.}
 
-\item{design}{The design; recomputed when absent.}
+\item{design}{The design. Rebuilt from \code{spec} when absent, which is
+convenient at the console and wasteful in a loop.}
 }
 \value{
-A single number.
+A single number. \code{-Inf} where the density is zero at some
+observation, and \code{NaN} where the parameters are outside the family's
+support, both of which a search reads as an unusable point.
 }
 \description{
-\eqn{\sum_i w_i \log f(y_i; \theta_i)}, the weights entering as given.
+Computes \deqn{\ell(\beta) = \sum_i w_i \log f(y_i; \theta_i),} the
+weighted log-likelihood of the whole model at one set of coefficients. The
+weights enter as supplied and are never normalized, so a weight of two
+counts an observation twice.
+}
+\details{
+No penalty enters. This is the likelihood alone; \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}
+gives the other half of the objective, and \code{\link[=statmod_objective]{statmod_objective()}} combines
+them.
+}
+\seealso{
+\code{\link[=statmod_score_at]{statmod_score_at()}} for its derivative,
+\code{\link[=statmod_objective]{statmod_objective()}} for the penalized objective it enters.
 }
 \keyword{internal}

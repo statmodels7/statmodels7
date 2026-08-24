@@ -7,20 +7,29 @@
 hess_key(params, a, b)
 }
 \arguments{
-\item{params}{The parameter names, in the family's order.}
+\item{params}{The parameter names, in the family's order, as
+\code{distrib@params} gives them.}
 
-\item{a, b}{Indices into \code{params}.}
+\item{a, b}{Indices into \code{params}, in either order: the Hessian is
+symmetric and this returns the key the list actually holds.}
 }
 \value{
-A single string.
+A single string, one of the names of the list
+\code{\link[distributions7:distrib_hessian]{distributions7::distrib_hessian()}} returns.
 }
 \description{
 Locates the \eqn{(a, b)} entry of a distribution's Hessian list, which is
-keyed by \code{\link[distributions7:hess_names]{distributions7::hess_names()}} and not by position.
+keyed by \code{\link[distributions7:hess_names]{distributions7::hess_names()}} and never by position.
 }
 \details{
-The name is BUILT from the parameter names rather than parsed out of one,
-the discipline \pkg{distributions7} records for a parameter whose own name
-contains the separator.
+The key is built by pasting the two parameter names in the order
+\code{\link[distributions7:hess_names]{distributions7::hess_names()}} uses, and is never parsed back out of a
+name. That is the discipline \pkg{distributions7} records for a family
+whose parameter name contains the separator: splitting \code{"log_scale_mu"} on
+the underscore gives the wrong pair, while generating the name from the
+same enumeration that generated the list cannot.
+}
+\seealso{
+\code{\link[=statmod_information_at]{statmod_information_at()}}, its caller.
 }
 \keyword{internal}

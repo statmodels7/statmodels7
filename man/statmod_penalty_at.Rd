@@ -17,18 +17,42 @@ statmod_penalty_at(
 
 \item{coef}{A named list of coefficient vectors.}
 
-\item{hyper}{A named list, one entry per parameter, each a named list of
-hyperparameter vectors per penalized term.}
+\item{hyper}{A named list with one entry per distribution parameter, each
+a named list of hyperparameter vectors keyed by term.}
 
 \item{design}{The design.}
 
-\item{what}{One of \code{"value"}, \code{"gradient"}, \code{"hessian"}.}
+\item{what}{Which quantity: \code{"value"}, \code{"gradient"} or \code{"hessian"}.}
 }
 \value{
-A number, a named list of vectors, or a square matrix.
+Depends on \code{what}:
+\describe{
+\item{\code{"value"}}{a single number, the penalties summed. \code{0} for an
+unpenalized model.}
+\item{\code{"gradient"}}{a named list of numeric vectors, one per
+distribution parameter, zero in every unpenalized coordinate.}
+\item{\code{"hessian"}}{a symmetric \verb{p x p} base matrix over the stacked
+coefficients, zero outside the penalized blocks.}
+}
 }
 \description{
 The sum of every penalized term's \code{penalty_value()}, with its gradient
 and Hessian placed in the columns that term owns.
+}
+\details{
+Each penalized term is asked for the quantity at its own coefficients and
+its own hyperparameters, and the answer is placed in the columns that term
+owns. A term declaring several penalties, each over a subset of its
+coefficients, contributes each one at its own coordinates.
+
+The accumulator is a base matrix even where a penalty answers with a
+sparse Hessian, and the coercion is written once at that boundary. Making
+it the design's own kind was measured at 0.8x end to end against a blast
+radius of twenty-two consumers.
+}
+\seealso{
+\code{\link[=statmod_loglik_at]{statmod_loglik_at()}} for the other half of the objective,
+\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} for penalties over a structural term's
+own parameters, which this does not cover.
 }
 \keyword{internal}
