@@ -35,11 +35,12 @@ The first sum is what the design gives; the second is zero for every fixed
 block and is not for a refreshable one, where \eqn{X} is the Jacobian and so
 \eqn{\partial^2\eta_i/\partial\beta_c\partial\beta_d =
 \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
-which is what keeps this cheap: one call of
+and that is what keeps this cheap: one call of
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}} per column, weighted by the
 SCORE where \code{\link[=u_refresh]{u_refresh()}} weights by \eqn{M}.
 
-⚠️ It is the mode's matrix and NOT the criterion's. The determinant is of
+Note that it is the \strong{mode's} matrix and not the criterion's. The
+determinant is of
 whatever \code{\link[=statmod_information_at]{statmod_information_at()}} assembles, and its derivative
 reads that one; how the mode MOVES is a fact about the penalized likelihood
 and reads this one. Confusing the two is the defect this file already

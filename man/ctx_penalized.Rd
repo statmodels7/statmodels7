@@ -41,7 +41,7 @@ three times over: removing the dearer half leaves the cheaper one. Nothing
 here asks which term produced the matrix; both quantities are read off the
 matrix.
 
-⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
+Those figures are the ones measured with \pkg{Matrix}'s factorization
 CACHE defeated. \code{Matrix::Cholesky} stores its result in the matrix's
 \code{factors} slot, so a benchmark that refactorizes the same object
 measures a cache hit, 0.004 ms against 0.102, and reports the sparse

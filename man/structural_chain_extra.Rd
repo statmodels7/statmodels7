@@ -24,7 +24,7 @@ A single number.
 }
 \description{
 The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-come from the recursion rather than from the design: the derivative of the
+come from the recursion and not from the design: the derivative of the
 filter's own Jacobian, and the derivative of the term the level contributes
 to the information.
 }

@@ -60,10 +60,10 @@ transposes under the trace, so with
 
 \strong{The derivative is asked of the TERM}, through
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}, and never differenced here.
-Two reasons, both measured: a term knows its own chain rule -- the links on
-its parameters and a subformula's design -- and a break-point column is a
+Two reasons, both measured. A term carries its own chain rule, the links
+on its parameters and a subformula's design; and a break-point column is a
 step function in its break-point, so a difference quotient of it diverges as
-the step shrinks rather than converging. A term that does not implement the
+the step shrinks and never converges. A term that does not implement the
 contraction inherits zeros, which is exactly right for a fixed design.
 }
 \seealso{

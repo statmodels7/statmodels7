@@ -30,7 +30,8 @@ product computes \eqn{p_a p_b} of them per row to keep one. The pairs are
 expanded once and the whole sum is vectorized.
 
 \strong{It is taken only where it wins}, and the threshold is measured
-rather than assumed. At a combined density of 3.6e-05 (a random intercept
+and nothing about it is assumed. At a combined density of 3.6e-05 (a
+random intercept
 over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
 and a random effect) it is 50 times SLOWER, R's per-element indexing being
 far dearer than a BLAS flop, and at a dense block 50 times slower again.

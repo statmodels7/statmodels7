@@ -45,7 +45,7 @@ second derivative are generics of \pkg{penalties7}
 estimable by a marginal criterion whatever its shape: the quadratic, the
 additive, the structured and the separable branches all do, so a ridge, a
 random effect and a heavy-tailed prior are covered as well as a spline. One
-that does not -- a SCAD, an MCP, anything with a kink -- rejects, and the
+that does not, a SCAD or an MCP or anything with a kink, rejects, and the
 search stays derivative-free. Nothing here tests a penalty's behaviour to
 find out what it is; it is asked.
 }

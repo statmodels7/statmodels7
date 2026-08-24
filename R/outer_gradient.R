@@ -51,7 +51,7 @@ NULL
 #' estimable by a marginal criterion whatever its shape: the quadratic, the
 #' additive, the structured and the separable branches all do, so a ridge, a
 #' random effect and a heavy-tailed prior are covered as well as a spline. One
-#' that does not -- a SCAD, an MCP, anything with a kink -- rejects, and the
+#' that does not, a SCAD or an MCP or anything with a kink, rejects, and the
 #' search stays derivative-free. Nothing here tests a penalty's behaviour to
 #' find out what it is; it is asked.
 #'
@@ -134,14 +134,14 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
 #'
 #' @description
 #' Whether [distributions7::distrib_dexpected_hessian()] answers for
-#' this family, asked at a probe rather than inferred from its class.
+#' this family, asked at a probe and never inferred from its class.
 #'
 #' @details
 #' The default route in \pkg{distributions7} is one central difference of the
 #' family's own expected information, which is a single stencil on an analytic
 #' quantity wherever that information is a written-out formula and refuses
 #' where it is itself an integral. Six of forty univariate families refuse, and
-#' the reason is cost rather than accuracy: measured at 100 observations they
+#' the reason is cost and not accuracy: measured at 100 observations they
 #' cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
 #' of those calls per criterion evaluation is not a slower route but an
 #' unusable one.
@@ -172,7 +172,7 @@ expected_deriv_ok <- function(distrib) {
 #'
 #' @description
 #' Whether the term implements [modelterms7::term_third()], read
-#' from the class the method is registered on rather than from a list of
+#' from the class the method is registered on, never from a list of
 #' class names, so a term written later is covered without an edit here.
 #'
 #' @details
@@ -461,10 +461,10 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' **The derivative is asked of the TERM**, through
 #' [modelterms7::term_block_contract()], and never differenced here.
-#' Two reasons, both measured: a term knows its own chain rule -- the links on
-#' its parameters and a subformula's design -- and a break-point column is a
+#' Two reasons, both measured. A term carries its own chain rule, the links
+#' on its parameters and a subformula's design; and a break-point column is a
 #' step function in its break-point, so a difference quotient of it diverges as
-#' the step shrinks rather than converging. A term that does not implement the
+#' the step shrinks and never converges. A term that does not implement the
 #' contraction inherits zeros, which is exactly right for a fixed design.
 #'
 #' @param spec A [StatmodSpec()].
@@ -537,11 +537,12 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' block and is not for a refreshable one, where \eqn{X} is the Jacobian and so
 #' \eqn{\partial^2\eta_i/\partial\beta_c\partial\beta_d =
 #' \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
-#' which is what keeps this cheap: one call of
+#' and that is what keeps this cheap: one call of
 #' [modelterms7::term_block_contract()] per column, weighted by the
 #' SCORE where [u_refresh()] weights by \eqn{M}.
 #'
-#' ⚠️ It is the mode's matrix and NOT the criterion's. The determinant is of
+#' Note that it is the **mode's** matrix and not the criterion's. The
+#' determinant is of
 #' whatever [statmod_information_at()] assembles, and its derivative
 #' reads that one; how the mode MOVES is a fact about the penalized likelihood
 #' and reads this one. Confusing the two is the defect this file already
@@ -602,12 +603,12 @@ mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
 #'
 #' @description
 #' Locates the \eqn{(a, b, k)} entry of a distribution's third derivative,
-#' which is keyed by name and not by position.
+#' which is keyed by name, never by position.
 #'
 #' @details
 #' The name is BUILT by putting the three parameter names in the family's own
 #' order and joining them, the direction \pkg{distributions7} sanctions, and
-#' then checked against the enumeration rather than trusted.
+#' then checked against the enumeration, never trusted.
 #'
 #' @param params The parameter names, in the family's order.
 #' @param a,b,k Indices into `params`.
@@ -637,8 +638,8 @@ d3_key <- function(params, a, b, k, keys) {
 #' It exists so that the contraction [u_vector()] performs is
 #' written once. The formula there does not change where a filter is present;
 #' only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
-#' downstream -- the third derivative against the diagonal of \eqn{M}, the
-#' movement of the mode -- then reads the joint vector without a special case.
+#' downstream, the third derivative against the diagonal of \eqn{M} and the
+#' movement of the mode, then reads the joint vector with no special case.
 #'
 #' The rows are returned at the FULL width, a held level included, and the
 #' caller drops it exactly as [statmod_full_information()] does.
@@ -689,7 +690,7 @@ joint_design_rows <- function(spec, design, coef) {
 #'
 #' @description
 #' [statmod_marginal_grad()] over the joint vector of coefficients
-#' and a structural term's parameters, which is what the determinant spans
+#' and a structural term's parameters, over which the determinant spans
 #' there.
 #'
 #' @details
@@ -898,7 +899,7 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
 #'
 #' @description
 #' The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-#' come from the recursion rather than from the design: the derivative of the
+#' come from the recursion and not from the design: the derivative of the
 #' filter's own Jacobian, and the derivative of the term the level contributes
 #' to the information.
 #'
@@ -1243,7 +1244,8 @@ row_nonzeros <- function(X) {
 #' expanded once and the whole sum is vectorized.
 #'
 #' **It is taken only where it wins**, and the threshold is measured
-#' rather than assumed. At a combined density of 3.6e-05 (a random intercept
+#' and nothing about it is assumed. At a combined density of 3.6e-05 (a
+#' random intercept
 #' over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
 #' and a random effect) it is 50 times SLOWER, R's per-element indexing being
 #' far dearer than a BLAS flop, and at a dense block 50 times slower again.
@@ -1295,7 +1297,7 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' twice.
 #'
 #' The weights \eqn{w_i} are built exactly as those two functions build them,
-#' which is what keeps the two routes the same arithmetic in the same order
+#' and that keeps the two routes the same arithmetic in the same order
 #' where it matters.
 #'
 #' @param spec A [StatmodSpec()].

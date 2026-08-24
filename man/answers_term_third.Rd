@@ -14,7 +14,7 @@ A single logical.
 }
 \description{
 Whether the term implements \code{\link[modelterms7:term_third]{modelterms7::term_third()}}, read
-from the class the method is registered on rather than from a list of
+from the class the method is registered on, never from a list of
 class names, so a term written later is covered without an edit here.
 }
 \details{

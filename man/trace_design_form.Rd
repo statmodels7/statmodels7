@@ -36,7 +36,7 @@ The block and its transpose both contribute, so an off-diagonal pair counts
 twice.
 
 The weights \eqn{w_i} are built exactly as those two functions build them,
-which is what keeps the two routes the same arithmetic in the same order
+and that keeps the two routes the same arithmetic in the same order
 where it matters.
 }
 \seealso{

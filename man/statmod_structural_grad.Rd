@@ -38,7 +38,7 @@ where the determinant does not exist.
 }
 \description{
 \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}} over the joint vector of coefficients
-and a structural term's parameters, which is what the determinant spans
+and a structural term's parameters, over which the determinant spans
 there.
 }
 \details{

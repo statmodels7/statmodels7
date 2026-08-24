@@ -162,7 +162,7 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' here asks which term produced the matrix; both quantities are read off the
 #' matrix.
 #'
-#' ⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
+#' Those figures are the ones measured with \pkg{Matrix}'s factorization
 #' CACHE defeated. `Matrix::Cholesky` stores its result in the matrix's
 #' `factors` slot, so a benchmark that refactorizes the same object
 #' measures a cache hit, 0.004 ms against 0.102, and reports the sparse
