@@ -39,6 +39,6 @@ ambiguous and the keys are asked for.
 }
 \seealso{
 \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} for the structure,
-\code{\link[=resolve_term_key]{resolve_term_key()}} for the name matching.
+\code{\link[=hyper_key]{hyper_key()}} for the name matching.
 }
 \keyword{internal}

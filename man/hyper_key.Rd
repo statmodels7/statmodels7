@@ -34,6 +34,6 @@ ambiguous and the keys are asked for, guessing having a fair chance of
 setting a hyperparameter on the wrong block.
 }
 \seealso{
-\code{\link[=statmod_hyper_user]{statmod_hyper_user()}}, its caller.
+\code{\link[=statmod_hyper_merge]{statmod_hyper_merge()}}, its caller.
 }
 \keyword{internal}

@@ -32,8 +32,8 @@ The probe is a placeholder. Every hyperparameter left
 along a path.
 }
 \seealso{
-\code{\link[=hyper_defaults]{hyper_defaults()}} for one penalty's midpoints,
-\code{\link[=statmod_hyper_user]{statmod_hyper_user()}} for a caller's overrides,
+\code{\link[=penalty_theta_start]{penalty_theta_start()}} for one penalty's midpoints,
+\code{\link[=statmod_hyper_merge]{statmod_hyper_merge()}} for a caller's overrides,
 \code{\link[=statmod_held]{statmod_held()}} for which are held.
 }
 \keyword{internal}

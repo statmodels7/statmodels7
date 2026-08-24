@@ -670,8 +670,8 @@ statmod_structural_penalty <- function(spec, design, hyper,
 #'   that penalty's own hyperparameters. An equation with no penalized term
 #'   holds an empty list.
 #'
-#' @seealso [hyper_defaults()] for one penalty's midpoints,
-#'   [statmod_hyper_user()] for a caller's overrides,
+#' @seealso [penalty_theta_start()] for one penalty's midpoints,
+#'   [statmod_hyper_merge()] for a caller's overrides,
 #'   [statmod_held()] for which are held.
 #'
 #' @keywords internal
@@ -722,7 +722,7 @@ statmod_hyper_start <- function(spec, design = NULL) {
 #'   `start` unchanged when `user` is `NULL`.
 #'
 #' @seealso [statmod_hyper_start()] for the structure,
-#'   [resolve_term_key()] for the name matching.
+#'   [hyper_key()] for the name matching.
 #'
 #' @keywords internal
 statmod_hyper_merge <- function(spec, start, user) {
@@ -800,7 +800,7 @@ statmod_hyper_merge <- function(spec, start, user) {
 #'   Signals an error when `name` matches nothing, and when it matches the
 #'   labels of two terms at once.
 #'
-#' @seealso [statmod_hyper_user()], its caller.
+#' @seealso [statmod_hyper_merge()], its caller.
 #'
 #' @keywords internal
 hyper_key <- function(spec, start, p, name) {
