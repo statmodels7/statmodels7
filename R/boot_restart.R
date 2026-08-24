@@ -26,7 +26,7 @@ NULL
 #' @param spec A [StatmodSpec()], whose terms are walked in every equation.
 #'
 #' @return A single non-negative integer. Zero when no term declares
-#'   `n_boot`, which is what turns the restart loop off.
+#'   `n_boot`, and a budget of zero turns the restart loop off.
 #'
 #' @seealso [statmod_boot_restart()], which spends this budget,
 #'   [modelterms7::seg()] for where the number is set.
@@ -95,7 +95,8 @@ seg_boot_total <- function(spec) {
 #' equation, on the predictor scale. For a Gaussian response and an identity
 #' link that is the model's own least-squares objective. For anything else
 #' it is an approximation used to rank candidates, and the true objective
-#' decides the acceptance, so a poor ranking costs time and not correctness.
+#' decides the acceptance, so a poor ranking costs time and never
+#' correctness.
 #' [modelterms7::seg_start()] makes the same argument for the same reason.
 #'
 #' # Reproducibility

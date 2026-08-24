@@ -96,7 +96,8 @@ It reads the response net of the other contributions in the term's
 equation, on the predictor scale. For a Gaussian response and an identity
 link that is the model's own least-squares objective. For anything else
 it is an approximation used to rank candidates, and the true objective
-decides the acceptance, so a poor ranking costs time and not correctness.
+decides the acceptance, so a poor ranking costs time and never
+correctness.
 \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} makes the same argument for the same reason.
 }
 

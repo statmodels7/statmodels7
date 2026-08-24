@@ -66,10 +66,10 @@ NULL
 #' # Which effective degrees of freedom
 #'
 #' The trace runs over the whole coefficient vector, so a term's contribution
-#' reads the full penalized information and not only its own block.
-#' [statmod_edf()]'s per-term numbers invert the block instead, which is what
-#' a per-term reading has to do. The two agree when the blocks are orthogonal
-#' and differ when they are not.
+#' reads the full penalized information, its couplings with the other blocks
+#' included. [statmod_edf()]'s per-term numbers invert each block on its own,
+#' which is all a per-term reading can do. The two agree when the blocks are
+#' orthogonal and differ when they are not.
 #'
 #' Where a penalty has a kink the trace is restricted to the active
 #' coordinates, so for a lasso \eqn{\tau} is the number of surviving
@@ -92,8 +92,8 @@ NULL
 #'
 #' The penalized mode is only piecewise smooth in such a hyperparameter,
 #' turning a corner whenever a coefficient joins the active set or leaves it,
-#' so the criterion inherits the corners and is swept rather than
-#' differentiated. How the path covers a term carrying more than one kinked
+#' so the criterion inherits the corners and is swept over a grid. How the
+#' path covers a term carrying more than one kinked
 #' hyperparameter belongs to the term, through
 #' [modelterms7::term_search()]: the same criterion object is asked about the
 #' model's smooth hyperparameters as well, and those are not swept at all.
@@ -196,9 +196,9 @@ outer_minimize <- function(method) {
 #' every other criterion returns the `k` it was constructed with.
 #'
 #' @details
-#' The resolution happens at fit time and not at construction because
-#' [bic()] takes no data and cannot know \eqn{n}. A criterion object is a
-#' specification and is reusable across models of different sizes.
+#' The resolution happens at fit time because [bic()] takes no data and
+#' cannot know \eqn{n} at construction. A criterion object is a
+#' specification, reusable across models of different sizes.
 #'
 #' @param method An [OuterMethod()]. Its `kind` and `k` are read.
 #' @param n The number of observations, a single positive number.
@@ -319,8 +319,8 @@ outer_tau <- function(J, H, active = NULL) {
 #'   \describe{
 #'     \item{`value`}{the criterion, \eqn{-2\ell + \kappa\tau}.}
 #'     \item{`loglik`}{the weighted log-likelihood at `coef`.}
-#'     \item{`penalty`}{the penalties' total value there, reported and not
-#'       used in `value`.}
+#'     \item{`penalty`}{the penalties' total value there. Reported for the
+#'       caller; it does not enter `value`.}
 #'     \item{`edf`}{the trace \eqn{\tau}.}
 #'   }
 #'

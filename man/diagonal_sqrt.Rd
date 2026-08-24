@@ -10,8 +10,8 @@ diagonal_sqrt(S, p)
 \item{S}{A diagonal penalty Hessian, \verb{p x p}, dense or sparse. Only its
 diagonal is read.}
 
-\item{p}{Its dimension, passed rather than read so the caller's own count
-is used.}
+\item{p}{Its dimension. Passed in so that the caller's own count is used
+and no dimension is inferred here.}
 }
 \value{
 A matrix with \code{p} columns and one row per retained coordinate,

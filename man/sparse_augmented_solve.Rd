@@ -26,7 +26,7 @@ deficient.
 The same increment \code{\link[=augmented_solve]{augmented_solve()}} returns, taken through a
 sparse QR of \eqn{[R;\ C]}.
 }
-\section{Why a QR and not a Cholesky}{
+\section{Why a QR}{
 The augmented form exists so that \eqn{X'X} is never formed and the
 conditioning is never squared. A sparse QR is a QR and keeps that
 property exactly. A sparse Cholesky of the normal equations would be
@@ -56,21 +56,21 @@ report a rank. The test is on the \strong{Jacobi-equilibrated} diagonal, each
 entry divided by its column's norm, and declines when the smallest ratio
 falls to \code{ncol(A) * .Machine$double.eps} of the largest.
 
-The equilibration is what makes the route usable. Reading the raw diagonal
-rejected 87 of 127 solves on matrices the dense route finds at full rank,
-the ratio there running down to \eqn{7 \times 10^{-30}} while the
-equilibrated one stayed between 0.445 and 1. Those matrices are not
-near-singular; their columns differ in size, which is what a large
-smoothing parameter does. With the raw test a random-effect fit fell
-through to a dense QR and cost 34.1 s where it now costs 3.9.
+Without the equilibration the route is barely usable. Reading the raw
+diagonal rejected 87 of 127 solves on matrices the dense route finds at
+full rank, the ratio there running down to \eqn{7 \times 10^{-30}} while
+the equilibrated one stayed between 0.445 and 1. Those matrices are not
+near-singular; their columns differ in size, as a large smoothing
+parameter makes them. With the raw test a random-effect fit fell through
+to a dense QR and cost 34.1 s where it now costs 3.9.
 
-The column norms come from \code{colSums(A^2)} and not \code{colSums(A * A)}. A
-binary operation between two sparse matrices intersects their index sets,
-which is 29 to 35 times slower here, and the norms were 70 to 74 per cent
-of the whole solve before the change.
+The column norms come from \code{colSums(A^2)}. Writing \code{colSums(A * A)}
+instead makes a binary operation between two sparse matrices, which
+intersects their index sets and is 29 to 35 times slower; the norms were
+70 to 74 per cent of the whole solve until that line changed.
 
 Where the matrix really is rank deficient there is no unique increment,
-and this route declines rather than choosing one. The caller falls back to
+and this route declines instead of choosing one. The caller falls back to
 the dense route, which drops columns and says how many it kept.
 }
 

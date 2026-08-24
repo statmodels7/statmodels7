@@ -42,13 +42,13 @@ example below is the one-line check.
 }
 
 \section{Namespaces, not attached environments}{
-The names are read with \code{\link[=getNamespaceExports]{getNamespaceExports()}} rather than from the
-attached environment. The two agree for an installed package. They do not
-agree under \pkg{pkgload}, which attaches a package's internal objects
-along with its exports and adds shims of its own, \code{system.file} and
+The names are read with \code{\link[=getNamespaceExports]{getNamespaceExports()}}, and not off the attached
+environment. The two agree for an installed package. They diverge under
+\pkg{pkgload}, which attaches a package's internal objects along with its
+exports and adds shims of its own, \code{system.file} and
 \code{library.dynam.unload} among them. Reading the attached environment there
-reports those shims as names that every member exports, which is a
-conflict between packages that export no such thing.
+reports those shims as names every member exports, a conflict between
+packages that export no such thing.
 }
 
 \examples{

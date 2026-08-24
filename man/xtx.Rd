@@ -30,8 +30,8 @@ by the square root of the working weights, so no weight vector enters.
 Only the upper triangle is accumulated: one thread owns column \eqn{k} and
 walks \eqn{j = 1, \ldots, k}, and each entry it computes is written to
 both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
-number and not two roundings of one, so the result is exactly symmetric
-with nothing to symmetrize away. Each pair belongs to exactly one thread,
+number, one rounding shared, so the result is exactly symmetric with
+nothing to symmetrize away. Each pair belongs to exactly one thread,
 so the mirrored write is disjoint, and no accumulation is split, so the
 answer is identical bit for bit at any thread count.
 

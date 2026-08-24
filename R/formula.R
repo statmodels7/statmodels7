@@ -16,7 +16,7 @@
 #' parameter, and each `|` introduces the next. The parameters may be named
 #' in any order and any of them may be omitted.
 #'
-#' # Why the recovery is a walk and not a split
+#' # Why the recovery is a walk
 #'
 #' R's own precedence decides this. `~` binds looser than `|` and associates
 #' to the left, so `y ~ a | p2 ~ b | p3 ~ c` parses as
@@ -172,10 +172,10 @@ statmod_equations <- function(formula, params) {
 #'
 #' @details
 #' The formula is built with `eval(bquote(~ .(expr)), envir = env)`, and the
-#' environment is then assigned again. The second step is what makes the
-#' result reliable: `eval()` gives the formula the environment it was
-#' evaluated in, and the assignment states it, so the two cannot come apart
-#' if the construction changes.
+#' environment is then assigned again. The second step makes the result
+#' reliable: `eval()` gives the formula whatever environment it was evaluated
+#' in, and the assignment states the intended one, so the two cannot come
+#' apart if the construction changes.
 #'
 #' @param expr A language object, the right-hand side to wrap: a symbol, a
 #'   call, or the literal `1`. Substituted unevaluated, so a term call is not

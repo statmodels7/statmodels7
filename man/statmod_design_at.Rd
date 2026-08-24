@@ -24,9 +24,8 @@ refreshes.
 Recomputes every refreshable term's design block at the coefficients
 currently in hand, and carries the difference between what the term
 contributes and what its linearization contributes as a per-observation
-adjustment to the predictor. The adjustment is what lets every
-cross-product in the objective read the block as an ordinary design while
-the predictor stays exact:
+adjustment to the predictor. With it, every cross-product in the objective
+reads the block as an ordinary design while the predictor stays exact:
 
 \deqn{\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta}
 
@@ -42,14 +41,13 @@ and the arithmetic downstream is untouched.
 }
 
 \section{Chained from the term, not from the specification}{
-The refresh reads the term the design state currently holds, and not the
-one the specification was built with. The reason is that a discontinuous
-break-point term carries a rescaling factor that is a state of the
-iteration and not a function of the coefficients: \pkg{modelterms7} halves
-it whenever the break-point reverses direction, which is a fact about the
-path taken and not about the point reached. Refreshing from the
-specification each time would reset that factor to its starting value and
-solve a permanently smoothed problem, whose fixed point is not the
+The refresh reads the term the design state currently holds, never the one
+the specification was built with. A discontinuous break-point term carries
+a rescaling factor that is a state of its iteration: \pkg{modelterms7}
+halves it whenever the break-point reverses direction, so it records the
+path taken and cannot be recovered from the point reached. Refreshing from
+the specification each time would reset that factor to its starting value
+and solve a permanently smoothed problem, whose fixed point is not the
 model's.
 
 The state advances only when \code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} is called, so

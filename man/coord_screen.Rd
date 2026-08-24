@@ -37,10 +37,10 @@ The sequential strong rule: a coordinate whose gradient at the previous
 point of the path is below \eqn{2s_k - s_{k-1}} is left out of the sweeps.
 }
 \details{
-The rule rests on the gradient moving no faster than the threshold, which is
-an assumption rather than a bound, so it screens rather than proves and the
-caller checks what it discarded. With no previous point there is nothing to
-screen against and every coordinate is visited.
+The rule rests on the gradient moving no faster than the threshold does.
+That is an assumption and not a bound, so the rule screens without
+proving, and the caller checks what it discarded. With no previous point
+there is nothing to screen against and every coordinate is visited.
 }
 \seealso{
 \code{\link[=coord_fit]{coord_fit()}}

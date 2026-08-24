@@ -31,13 +31,13 @@
 #'
 #' # Namespaces, not attached environments
 #'
-#' The names are read with [getNamespaceExports()] rather than from the
-#' attached environment. The two agree for an installed package. They do not
-#' agree under \pkg{pkgload}, which attaches a package's internal objects
-#' along with its exports and adds shims of its own, `system.file` and
+#' The names are read with [getNamespaceExports()], and not off the attached
+#' environment. The two agree for an installed package. They diverge under
+#' \pkg{pkgload}, which attaches a package's internal objects along with its
+#' exports and adds shims of its own, `system.file` and
 #' `library.dynam.unload` among them. Reading the attached environment there
-#' reports those shims as names that every member exports, which is a
-#' conflict between packages that export no such thing.
+#' reports those shims as names every member exports, a conflict between
+#' packages that export no such thing.
 #'
 #' @return A named list, one entry per masked name, sorted by name. Each entry
 #'   is a character vector of the packages exporting that name, the most
@@ -99,8 +99,9 @@ statmodels7_conflicts <- function() {
 #'   validated; a vector of length one would render as masking nothing.
 #'
 #' @return A character vector with one element per entry of `conflicts`, in
-#'   the order they arrived, with no names. `character(0)` for an empty input,
-#'   which is what makes it safe to `c()` into a message unconditionally.
+#'   the order they arrived, with no names. `character(0)` for an empty
+#'   input, so a caller can `c()` the result into a message
+#'   unconditionally.
 #'
 #' @seealso [statmodels7_conflicts()] for the input,
 #'   [statmodels7_attach_message()] for the other half of the same message.

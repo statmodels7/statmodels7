@@ -41,15 +41,16 @@ NULL
 #' a theorem, so the rule can discard a coordinate that belongs in the fit, and
 #' what makes the answer exact is the check afterwards: the gradient is read
 #' over every column at the point reached, any discarded coordinate whose
-#' gradient exceeds the kink is put back, and the fit is repeated. Without the
-#' check the route would be wrong now and then rather than slow.
+#' gradient exceeds the kink is put back, and the fit is repeated. Without
+#' the check the route would be occasionally wrong instead of occasionally
+#' slow.
 #'
 #' **Which update.** The gradient is kept either as a residual, at
 #' \eqn{O(n)} a visit, or as itself through
 #' \eqn{g_j = (X'Wz)_j - \sum_k (X'WX)_{jk}\beta_k}, at \eqn{O(m)} a change
 #' with the Gram columns cached as coordinates come alive. The second wins when
-#' \eqn{n} is large next to the number of live coordinates and pays in memory,
-#' so the choice is made by size rather than declared.
+#' \eqn{n} is large next to the number of live coordinates and pays in
+#' memory, so [coord_covariance()] decides it from the two sizes.
 #'
 #' @param obj The full objective, as [statmod_objective()] returns it. Read
 #'   for the value at the point reached, not for its gradient.
@@ -200,10 +201,10 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' point of the path is below \eqn{2s_k - s_{k-1}} is left out of the sweeps.
 #'
 #' @details
-#' The rule rests on the gradient moving no faster than the threshold, which is
-#' an assumption rather than a bound, so it screens rather than proves and the
-#' caller checks what it discarded. With no previous point there is nothing to
-#' screen against and every coordinate is visited.
+#' The rule rests on the gradient moving no faster than the threshold does.
+#' That is an assumption and not a bound, so the rule screens without
+#' proving, and the caller checks what it discarded. With no previous point
+#' there is nothing to screen against and every coordinate is visited.
 #'
 #' @param X The block's own columns, `n x p`, dense or `dgCMatrix`.
 #' @param w The working weights, length `n`.
@@ -287,13 +288,13 @@ coord_block <- function(X, cols) {
 #'
 #' @details
 #' The two kernels are one algorithm instantiated twice over a column
-#' accessor, and they agree bit for bit rather than to a tolerance. That is
-#' licensed by the arithmetic: skipping a structural zero omits an addition
-#' of zero, which is exact. It is the one place in this toolkit where an
-#' identity assertion over compiled floating point is correct.
+#' accessor, and they agree bit for bit. The arithmetic licenses that:
+#' skipping a structural zero omits an addition of zero, which is exact. It
+#' is the one place in this toolkit where an identity assertion over compiled
+#' floating point is correct.
 #'
-#' The `dgCMatrix` is taken apart here and not in C++, so the compiled code
-#' needs no dependency on the \pkg{Matrix} package's C API.
+#' The `dgCMatrix` is taken apart in R, so the compiled code needs no
+#' dependency on the \pkg{Matrix} package's C API.
 #'
 #' @param X The block, `n x p`, dense or `dgCMatrix`.
 #' @param z,w The working response and weights, each of length `n`.
@@ -333,10 +334,10 @@ coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
 #' onto its block, so that the next point of a path can screen against it.
 #'
 #' @details
-#' The previous point travels on the blocks and not through the argument list
-#' of every layer between the path and the descent. It is a property of the
-#' block, namely where its penalty was a moment ago, and the path rebuilds
-#' the blocks at each point in any case.
+#' The previous point travels on the blocks themselves, sparing every layer
+#' between the path and the descent an argument. Where a penalty was a moment
+#' ago is a property of its block, and the path rebuilds the blocks at each
+#' point in any case.
 #'
 #' @param blocks The blocks, as [statmod_blocks()] returns them, with a
 #'   `sparse` list of the kinked entries.
@@ -372,8 +373,8 @@ blocks_at_kink <- function(blocks, hyper) {
 #' The covariance form replaces an \eqn{O(n)} read of the gradient with an
 #' \eqn{O(m)} one, and pays for it by building a column of \eqn{X'WX} at
 #' \eqn{O(nm)} the first time a coordinate moves off zero. It is worth having
-#' only while \eqn{m} is small next to \eqn{n}, which is what the two
-#' conditions say.
+#' only while \eqn{m} is small next to \eqn{n}, and the two conditions say
+#' exactly that.
 #'
 #' The measurement is unambiguous in the other direction: at 5000
 #' observations with 200 columns and nothing screened away, the covariance
@@ -445,8 +446,8 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
 #'
 #' @details
 #' The offsets are stored on the specification as evaluated vectors, one per
-#' parameter, and an absent one is `NULL` rather than a vector of zeros. This
-#' turns the second into the first at the point of use.
+#' parameter, with `NULL` for an equation that has none. This turns that
+#' `NULL` into zeros at the point of use, so no caller has to test for it.
 #'
 #' An offset shorter than `n` is recycled with [rep_len()], so a single
 #' number is a constant offset. That is the shape a caller writing

@@ -23,9 +23,9 @@ the method left it open. \code{\link[=bic]{bic()}} stores \code{NA} and gets \eq
 every other criterion returns the \code{k} it was constructed with.
 }
 \details{
-The resolution happens at fit time and not at construction because
-\code{\link[=bic]{bic()}} takes no data and cannot know \eqn{n}. A criterion object is a
-specification and is reusable across models of different sizes.
+The resolution happens at fit time because \code{\link[=bic]{bic()}} takes no data and
+cannot know \eqn{n} at construction. A criterion object is a
+specification, reusable across models of different sizes.
 }
 \seealso{
 \code{\link[=aic]{aic()}} for where \code{k} is set, \code{\link[=outer_minimize]{outer_minimize()}} for the other

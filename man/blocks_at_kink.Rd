@@ -22,10 +22,10 @@ Writes the size of each kinked penalty's kink at the given hyperparameters
 onto its block, so that the next point of a path can screen against it.
 }
 \details{
-The previous point travels on the blocks and not through the argument list
-of every layer between the path and the descent. It is a property of the
-block, namely where its penalty was a moment ago, and the path rebuilds
-the blocks at each point in any case.
+The previous point travels on the blocks themselves, sparing every layer
+between the path and the descent an argument. Where a penalty was a moment
+ago is a property of its block, and the path rebuilds the blocks at each
+point in any case.
 }
 \seealso{
 \code{\link[=coord_screen]{coord_screen()}}, \code{\link[=statmod_path]{statmod_path()}}

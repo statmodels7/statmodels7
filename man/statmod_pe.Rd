@@ -39,8 +39,8 @@ Cholesky factor:
 \describe{
 \item{\code{value}}{the criterion, \eqn{-2\ell + \kappa\tau}.}
 \item{\code{loglik}}{the weighted log-likelihood at \code{coef}.}
-\item{\code{penalty}}{the penalties' total value there, reported and not
-used in \code{value}.}
+\item{\code{penalty}}{the penalties' total value there. Reported for the
+caller; it does not enter \code{value}.}
 \item{\code{edf}}{the trace \eqn{\tau}.}
 }
 }

@@ -11,7 +11,7 @@ seg_boot_total(spec)
 }
 \value{
 A single non-negative integer. Zero when no term declares
-\code{n_boot}, which is what turns the restart loop off.
+\code{n_boot}, and a budget of zero turns the restart loop off.
 }
 \description{
 Returns the largest \code{n_boot} any break-point term of the specification

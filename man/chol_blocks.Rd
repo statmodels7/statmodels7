@@ -31,10 +31,10 @@ observations.
 
 A block that is not positive definite produces a non-positive pivot, and
 the function returns \code{NULL} at that point instead of taking its square
-root. That is an ordinary outcome and not a failure: the observed
-curvature far from the optimum is routinely indefinite, and the caller
-answers by falling back to the assembled route. A warning about a \code{NaN}
-would report an expected branch as a defect.
+root. That is an expected outcome: the observed curvature far from the
+optimum is routinely indefinite, and the caller answers by falling back to
+the assembled route. A warning about a \code{NaN} would report an ordinary
+branch as a defect.
 }
 \seealso{
 \code{\link[=info_blocks]{info_blocks()}} for the input,

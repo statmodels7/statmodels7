@@ -20,9 +20,10 @@ names the parameters and \verb{@links} holds their charts.
 The \pkg{distributions7} object, with its links.
 }
 \details{
-It is the family itself rather than a description of one, so everything
-the family can do is available from a fit: its density, its derivatives,
-its moments and its parameters' links.
+What comes back is the family object itself, so everything the family can
+do is reachable from a fit: its density, its derivatives, its moments and
+its parameters' links. Compare \code{\link[stats:glm]{stats::glm()}}, whose \code{family()} returns a
+description.
 }
 \examples{
 set.seed(1)

@@ -37,13 +37,13 @@ Sends the block to the dense kernel or to the sparse one, taking a
 }
 \details{
 The two kernels are one algorithm instantiated twice over a column
-accessor, and they agree bit for bit rather than to a tolerance. That is
-licensed by the arithmetic: skipping a structural zero omits an addition
-of zero, which is exact. It is the one place in this toolkit where an
-identity assertion over compiled floating point is correct.
+accessor, and they agree bit for bit. The arithmetic licenses that:
+skipping a structural zero omits an addition of zero, which is exact. It
+is the one place in this toolkit where an identity assertion over compiled
+floating point is correct.
 
-The \code{dgCMatrix} is taken apart here and not in C++, so the compiled code
-needs no dependency on the \pkg{Matrix} package's C API.
+The \code{dgCMatrix} is taken apart in R, so the compiled code needs no
+dependency on the \pkg{Matrix} package's C API.
 }
 \seealso{
 \code{\link[=coord_block]{coord_block()}}

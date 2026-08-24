@@ -22,9 +22,9 @@ spent.
 }
 \details{
 The count subtracted is the effective one, the trace of the model's
-smoother, and not the number of coefficients. A penalized block spends
-less than it carries, and that is the whole reason a smoothing parameter
-is estimated at all. The result is therefore not an integer.
+smoother. A penalized block spends less than the number of coefficients it
+carries, which is the whole reason a smoothing parameter is estimated at
+all, so the result is not an integer.
 }
 \examples{
 set.seed(1)

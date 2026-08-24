@@ -30,9 +30,9 @@ S7::method(nobs, StatmodFit) <- nobs.StatmodFit
 #' @description
 #' The formula as supplied, every distribution parameter's equation included.
 #' @details
-#' It is returned whole rather than split into one formula per parameter: the
-#' bars are part of what was written, and a caller wanting the equations
-#' separately gets them from the fit's specification.
+#' The formula comes back whole, bars included, because the bars are part of
+#' what was written. A caller who wants the equations separately gets them
+#' from the fit's specification through [statmod_equations()].
 #' @param x A [StatmodFit()].
 #' @param ... Unused.
 #' @return The formula object supplied to [statmod()], with its bars and its
@@ -54,9 +54,10 @@ S7::method(formula, StatmodFit) <- formula.StatmodFit
 #' @name family.StatmodFit
 #' @description The \pkg{distributions7} object, with its links.
 #' @details
-#' It is the family itself rather than a description of one, so everything
-#' the family can do is available from a fit: its density, its derivatives,
-#' its moments and its parameters' links.
+#' What comes back is the family object itself, so everything the family can
+#' do is reachable from a fit: its density, its derivatives, its moments and
+#' its parameters' links. Compare [stats::glm()], whose `family()` returns a
+#' description.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
 #' @return The \pkg{distributions7} distribution object the model was fitted
@@ -105,9 +106,9 @@ S7::method(weights, StatmodFit) <- weights.StatmodFit
 #' spent.
 #' @details
 #' The count subtracted is the effective one, the trace of the model's
-#' smoother, and not the number of coefficients. A penalized block spends
-#' less than it carries, and that is the whole reason a smoothing parameter
-#' is estimated at all. The result is therefore not an integer.
+#' smoother. A penalized block spends less than the number of coefficients it
+#' carries, which is the whole reason a smoothing parameter is estimated at
+#' all, so the result is not an integer.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
 #' @return A single number, `nobs(object)` less the total effective degrees
@@ -141,11 +142,11 @@ S7::method(df.residual, StatmodFit) <- df.residual.StatmodFit
 #' returning its first value would answer a different question everywhere
 #' else without saying so.
 #'
-#' What is returned is the standard deviation of the response under the
-#' fitted distribution, through [distributions7::std_dev()], and not
-#' whichever parameter happens to be spelled `sigma`: for a Gamma
-#' written by its mean and dispersion the two are different quantities. A
-#' family with no second moment signals an error rather than reporting one.
+#' What comes back is the standard deviation of the response under the fitted
+#' distribution, through [distributions7::std_dev()]. It is not whichever
+#' parameter happens to be spelled `sigma`: for a Gamma written by its mean
+#' and dispersion those are two different quantities. A family with no second
+#' moment signals an error.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
 #' @return A numeric vector of length `nobs(object)`, the standard deviation
@@ -171,9 +172,8 @@ S7::method(sigma, StatmodFit) <- sigma.StatmodFit
 #' @description
 #' The block of columns a distribution parameter's equation was fitted with.
 #' @details
-#' A fit has one design per parameter, so which one is asked for is an
-#' argument rather than something to be guessed; `NULL` gives the first,
-#' as [fitted.StatmodFit()] does. A term whose block moves with its
+#' A fit has one design per parameter, so which one is wanted is an argument.
+#' `NULL` gives the first, as [fitted.StatmodFit()] does. A term whose block moves with its
 #' coefficients is returned at the fitted ones, which is the block the fit
 #' ended on.
 #'
@@ -281,9 +281,10 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' `stats`' syntax. [formula.StatmodFit()] gives what was written and
 #' [statmod_design()] gives what it produced.
 #'
-#' `model.frame()` would have to return the fitting data, which a fit
-#' does not keep: what it keeps is each term's blueprint, so that new data is
-#' reapplied rather than relearned.
+#' `model.frame()` would have to return the fitting data, which a fit does
+#' not keep. What it keeps is each term's blueprint, so that a basis, a set
+#' of levels or a set of contrasts is reapplied to new data instead of being
+#' learned from it again.
 #'
 #' `anova()` would have to compare models by a test, and a penalized fit
 #' whose hyperparameters were chosen from the same data has no null

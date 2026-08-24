@@ -95,15 +95,16 @@ gradient moves at most as fast as the threshold does. That assumption is not
 a theorem, so the rule can discard a coordinate that belongs in the fit, and
 what makes the answer exact is the check afterwards: the gradient is read
 over every column at the point reached, any discarded coordinate whose
-gradient exceeds the kink is put back, and the fit is repeated. Without the
-check the route would be wrong now and then rather than slow.
+gradient exceeds the kink is put back, and the fit is repeated. Without
+the check the route would be occasionally wrong instead of occasionally
+slow.
 
 \strong{Which update.} The gradient is kept either as a residual, at
 \eqn{O(n)} a visit, or as itself through
 \eqn{g_j = (X'Wz)_j - \sum_k (X'WX)_{jk}\beta_k}, at \eqn{O(m)} a change
 with the Gram columns cached as coordinates come alive. The second wins when
-\eqn{n} is large next to the number of live coordinates and pays in memory,
-so the choice is made by size rather than declared.
+\eqn{n} is large next to the number of live coordinates and pays in
+memory, so \code{\link[=coord_covariance]{coord_covariance()}} decides it from the two sizes.
 }
 \references{
 Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for

@@ -23,9 +23,8 @@ otherwise. Zero columns for an equation carrying only a structural term.
 The block of columns a distribution parameter's equation was fitted with.
 }
 \details{
-A fit has one design per parameter, so which one is asked for is an
-argument rather than something to be guessed; \code{NULL} gives the first,
-as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block moves with its
+A fit has one design per parameter, so which one is wanted is an argument.
+\code{NULL} gives the first, as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block moves with its
 coefficients is returned at the fitted ones, which is the block the fit
 ended on.
 

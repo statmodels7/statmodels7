@@ -33,9 +33,10 @@ distribution parameter, and the formula it was written with is not a
 \code{stats}' syntax. \code{\link[=formula.StatmodFit]{formula.StatmodFit()}} gives what was written and
 \code{\link[=statmod_design]{statmod_design()}} gives what it produced.
 
-\code{model.frame()} would have to return the fitting data, which a fit
-does not keep: what it keeps is each term's blueprint, so that new data is
-reapplied rather than relearned.
+\code{model.frame()} would have to return the fitting data, which a fit does
+not keep. What it keeps is each term's blueprint, so that a basis, a set
+of levels or a set of contrasts is reapplied to new data instead of being
+learned from it again.
 
 \code{anova()} would have to compare models by a test, and a penalized fit
 whose hyperparameters were chosen from the same data has no null

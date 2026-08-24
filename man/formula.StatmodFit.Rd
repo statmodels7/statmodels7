@@ -19,9 +19,9 @@ original environment intact.
 The formula as supplied, every distribution parameter's equation included.
 }
 \details{
-It is returned whole rather than split into one formula per parameter: the
-bars are part of what was written, and a caller wanting the equations
-separately gets them from the fit's specification.
+The formula comes back whole, bars included, because the bars are part of
+what was written. A caller who wants the equations separately gets them
+from the fit's specification through \code{\link[=statmod_equations]{statmod_equations()}}.
 }
 \examples{
 set.seed(1)

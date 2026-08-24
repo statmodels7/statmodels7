@@ -14,8 +14,9 @@ validated; a vector of length one would render as masking nothing.}
 }
 \value{
 A character vector with one element per entry of \code{conflicts}, in
-the order they arrived, with no names. \code{character(0)} for an empty input,
-which is what makes it safe to \code{c()} into a message unconditionally.
+the order they arrived, with no names. \code{character(0)} for an empty
+input, so a caller can \code{c()} the result into a message
+unconditionally.
 }
 \description{
 Formats the result of \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} as one line per masked

@@ -66,10 +66,10 @@ The exact derivatives need \code{hessian = "observed"}, which is the default.
 
 \section{Which effective degrees of freedom}{
 The trace runs over the whole coefficient vector, so a term's contribution
-reads the full penalized information and not only its own block.
-\code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert the block instead, which is what
-a per-term reading has to do. The two agree when the blocks are orthogonal
-and differ when they are not.
+reads the full penalized information, its couplings with the other blocks
+included. \code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert each block on its own,
+which is all a per-term reading can do. The two agree when the blocks are
+orthogonal and differ when they are not.
 
 Where a penalty has a kink the trace is restricted to the active
 coordinates, so for a lasso \eqn{\tau} is the number of surviving
@@ -92,8 +92,8 @@ parameters, which is not one of \pkg{distributions7}'s generics.
 \section{Over a kinked penalty these sweep a path}{
 The penalized mode is only piecewise smooth in such a hyperparameter,
 turning a corner whenever a coefficient joins the active set or leaves it,
-so the criterion inherits the corners and is swept rather than
-differentiated. How the path covers a term carrying more than one kinked
+so the criterion inherits the corners and is swept over a grid. How the
+path covers a term carrying more than one kinked
 hyperparameter belongs to the term, through
 \code{\link[modelterms7:term_search]{modelterms7::term_search()}}: the same criterion object is asked about the
 model's smooth hyperparameters as well, and those are not swept at all.

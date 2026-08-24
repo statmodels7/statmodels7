@@ -38,7 +38,7 @@ nothing here multiplies by a link's derivative. With \code{expected = TRUE} the
 expected information is taken and the blocks are positive definite
 wherever the family is regular; with \code{expected = FALSE} the observed
 Hessian is negated, which far from the optimum is routinely indefinite.
-That is what makes \code{\link[=chol_blocks]{chol_blocks()}}'s refusal an ordinary branch.
+\code{\link[=chol_blocks]{chol_blocks()}}'s refusal is the ordinary consequence.
 
 The weights enter as given, without normalization, so a weight of two
 counts an observation twice.

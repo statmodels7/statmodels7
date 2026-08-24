@@ -32,10 +32,10 @@ NULL
 #'
 #' A block that is not positive definite produces a non-positive pivot, and
 #' the function returns `NULL` at that point instead of taking its square
-#' root. That is an ordinary outcome and not a failure: the observed
-#' curvature far from the optimum is routinely indefinite, and the caller
-#' answers by falling back to the assembled route. A warning about a `NaN`
-#' would report an expected branch as a defect.
+#' root. That is an expected outcome: the observed curvature far from the
+#' optimum is routinely indefinite, and the caller answers by falling back to
+#' the assembled route. A warning about a `NaN` would report an ordinary
+#' branch as a defect.
 #'
 #' @param Om An \eqn{n \times K \times K} array of symmetric blocks, as
 #'   [info_blocks()] returns it. Only the lower triangle of each block is
@@ -90,7 +90,7 @@ chol_blocks <- function(Om) {
 #' expected information is taken and the blocks are positive definite
 #' wherever the family is regular; with `expected = FALSE` the observed
 #' Hessian is negated, which far from the optimum is routinely indefinite.
-#' That is what makes [chol_blocks()]'s refusal an ordinary branch.
+#' [chol_blocks()]'s refusal is the ordinary consequence.
 #'
 #' The weights enter as given, without normalization, so a weight of two
 #' counts an observation twice.
@@ -151,8 +151,8 @@ info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
 #' row. The factor is lower triangular, so the blocks with \eqn{b < a} are
 #' zero and are not formed at all.
 #'
-#' The result is sparse when any equation's design block is, which is what
-#' sends the solve to [sparse_augmented_solve()].
+#' The result is sparse when any equation's design block is, and the solve
+#' then goes to [sparse_augmented_solve()].
 #'
 #' @param design The design, as [statmod_design()] returns it, holding one
 #'   block of columns per distribution parameter.
@@ -214,7 +214,7 @@ sqrt_design <- function(design, L) {
 #' Hessian, dropping the rows a null space contributes nothing to.
 #'
 #' @details
-#' # Why an eigendecomposition and not a Cholesky
+#' # Why an eigendecomposition
 #'
 #' A penalty is positive semidefinite and is often rank deficient. A spline's
 #' is deficient by exactly the dimension of its null space, which is the
@@ -291,8 +291,8 @@ penalty_sqrt <- function(S) {
 #'
 #' @param S A diagonal penalty Hessian, `p x p`, dense or sparse. Only its
 #'   diagonal is read.
-#' @param p Its dimension, passed rather than read so the caller's own count
-#'   is used.
+#' @param p Its dimension. Passed in so that the caller's own count is used
+#'   and no dimension is inferred here.
 #'
 #' @return A matrix with `p` columns and one row per retained coordinate,
 #'   each row zero except for the square root of that coordinate's entry.
@@ -331,7 +331,8 @@ diagonal_sqrt <- function(S, p) {
 #'
 #' The augmented form is the point: neither \eqn{R'R} nor the penalized
 #' information is ever formed, so a design whose condition number is
-#' \eqn{\kappa} is decomposed at \eqn{\kappa} and not at \eqn{\kappa^2}.
+#' \eqn{\kappa} is decomposed at \eqn{\kappa}. Forming the normal equations
+#' would square it.
 #'
 #' @details
 #' # The four routes
@@ -361,13 +362,13 @@ diagonal_sqrt <- function(S, p) {
 #' a decomposition with unit column norms.
 #'
 #' Reading the raw diagonal instead reports a matrix as near-singular
-#' whenever its columns differ in size, which is what a large smoothing
-#' parameter does to the penalty rows of its own block beside an unpenalized
+#' whenever its columns differ in size, and a large smoothing parameter does
+#' exactly that to the penalty rows of its own block beside an unpenalized
 #' one. Per-column scaling forgives separation from any source; an exact
 #' collinearity stays exactly singular.
 #'
-#' The tolerance is `1e-7` on that ratio, which is what `dqrdc2` itself uses,
-#' so anything the pivoted route would call deficient still goes there and is
+#' The tolerance is `1e-7` on that ratio, the same one `dqrdc2` uses, so
+#' anything the pivoted route would call deficient still goes there and is
 #' reported with its rank.
 #'
 #' Measured against `qr()` at \eqn{n = 40000} with the column scales spread
@@ -389,8 +390,9 @@ diagonal_sqrt <- function(S, p) {
 #'   \describe{
 #'     \item{`delta`}{the increment, an unnamed numeric vector of length `p`.
 #'       Zero in any coordinate the pivoted route dropped.}
-#'     \item{`rank`}{the rank used, an integer. Equal to `p` on the threaded
-#'       and sparse routes, which decline rather than report a deficiency.}
+#'     \item{`rank`}{the rank used, an integer. Always `p` on the threaded
+#'       and sparse routes, which decline on a deficient matrix instead of
+#'       reporting a smaller rank.}
 #'   }
 #'
 #' @seealso [sqrt_design()] and [penalty_sqrt()] for the two factors,
@@ -465,7 +467,7 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' sparse QR of \eqn{[R;\ C]}.
 #'
 #' @details
-#' # Why a QR and not a Cholesky
+#' # Why a QR
 #'
 #' The augmented form exists so that \eqn{X'X} is never formed and the
 #' conditioning is never squared. A sparse QR is a QR and keeps that
@@ -496,21 +498,21 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' entry divided by its column's norm, and declines when the smallest ratio
 #' falls to `ncol(A) * .Machine$double.eps` of the largest.
 #'
-#' The equilibration is what makes the route usable. Reading the raw diagonal
-#' rejected 87 of 127 solves on matrices the dense route finds at full rank,
-#' the ratio there running down to \eqn{7 \times 10^{-30}} while the
-#' equilibrated one stayed between 0.445 and 1. Those matrices are not
-#' near-singular; their columns differ in size, which is what a large
-#' smoothing parameter does. With the raw test a random-effect fit fell
-#' through to a dense QR and cost 34.1 s where it now costs 3.9.
+#' Without the equilibration the route is barely usable. Reading the raw
+#' diagonal rejected 87 of 127 solves on matrices the dense route finds at
+#' full rank, the ratio there running down to \eqn{7 \times 10^{-30}} while
+#' the equilibrated one stayed between 0.445 and 1. Those matrices are not
+#' near-singular; their columns differ in size, as a large smoothing
+#' parameter makes them. With the raw test a random-effect fit fell through
+#' to a dense QR and cost 34.1 s where it now costs 3.9.
 #'
-#' The column norms come from `colSums(A^2)` and not `colSums(A * A)`. A
-#' binary operation between two sparse matrices intersects their index sets,
-#' which is 29 to 35 times slower here, and the norms were 70 to 74 per cent
-#' of the whole solve before the change.
+#' The column norms come from `colSums(A^2)`. Writing `colSums(A * A)`
+#' instead makes a binary operation between two sparse matrices, which
+#' intersects their index sets and is 29 to 35 times slower; the norms were
+#' 70 to 74 per cent of the whole solve until that line changed.
 #'
 #' Where the matrix really is rank deficient there is no unique increment,
-#' and this route declines rather than choosing one. The caller falls back to
+#' and this route declines instead of choosing one. The caller falls back to
 #' the dense route, which drops columns and says how many it kept.
 #'
 #' @param R The square-root design, \eqn{nK \times p}, sparse or dense.

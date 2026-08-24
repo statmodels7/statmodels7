@@ -27,8 +27,9 @@ A list of two:
 \describe{
 \item{\code{delta}}{the increment, an unnamed numeric vector of length \code{p}.
 Zero in any coordinate the pivoted route dropped.}
-\item{\code{rank}}{the rank used, an integer. Equal to \code{p} on the threaded
-and sparse routes, which decline rather than report a deficiency.}
+\item{\code{rank}}{the rank used, an integer. Always \code{p} on the threaded
+and sparse routes, which decline on a deficient matrix instead of
+reporting a smaller rank.}
 }
 }
 \description{
@@ -40,7 +41,8 @@ increment solving
 
 The augmented form is the point: neither \eqn{R'R} nor the penalized
 information is ever formed, so a design whose condition number is
-\eqn{\kappa} is decomposed at \eqn{\kappa} and not at \eqn{\kappa^2}.
+\eqn{\kappa} is decomposed at \eqn{\kappa}. Forming the normal equations
+would square it.
 }
 \section{The four routes}{
 Tried in this order.
@@ -69,13 +71,13 @@ scales that diagonal by the same factors, so the ratio is the diagonal of
 a decomposition with unit column norms.
 
 Reading the raw diagonal instead reports a matrix as near-singular
-whenever its columns differ in size, which is what a large smoothing
-parameter does to the penalty rows of its own block beside an unpenalized
+whenever its columns differ in size, and a large smoothing parameter does
+exactly that to the penalty rows of its own block beside an unpenalized
 one. Per-column scaling forgives separation from any source; an exact
 collinearity stays exactly singular.
 
-The tolerance is \code{1e-7} on that ratio, which is what \code{dqrdc2} itself uses,
-so anything the pivoted route would call deficient still goes there and is
+The tolerance is \code{1e-7} on that ratio, the same one \code{dqrdc2} uses, so
+anything the pivoted route would call deficient still goes there and is
 reported with its rank.
 
 Measured against \code{qr()} at \eqn{n = 40000} with the column scales spread

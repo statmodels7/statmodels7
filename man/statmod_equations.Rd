@@ -43,7 +43,7 @@ parameter, and each \code{|} introduces the next. The parameters may be named
 in any order and any of them may be omitted.
 }
 
-\section{Why the recovery is a walk and not a split}{
+\section{Why the recovery is a walk}{
 R's own precedence decides this. \code{~} binds looser than \code{|} and associates
 to the left, so \code{y ~ a | p2 ~ b | p3 ~ c} parses as
 

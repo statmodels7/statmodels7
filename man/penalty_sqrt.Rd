@@ -21,7 +21,7 @@ space. Its class mirrors \code{S}'s, dense for dense and sparse for sparse.
 Returns \eqn{C} with \eqn{C'C = S(\theta)}, the block-diagonal penalty
 Hessian, dropping the rows a null space contributes nothing to.
 }
-\section{Why an eigendecomposition and not a Cholesky}{
+\section{Why an eigendecomposition}{
 A penalty is positive semidefinite and is often rank deficient. A spline's
 is deficient by exactly the dimension of its null space, which is the
 whole point of the construction: the null space is what the penalty does

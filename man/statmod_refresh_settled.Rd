@@ -30,8 +30,8 @@ Where a term's block is the Jacobian of its contribution, the gradient of
 the model's objective is the model's own gradient and its vanishing is
 the test. Where the block is a working linearization with a frozen
 weight, as in a discontinuous break-point term, the gradient belongs to
-the working model and not to the objective, and the profile objective is
-a step function in the break-point with no gradient to vanish at all.
+the working model alone, and the profile objective there is a step
+function in the break-point with no gradient to vanish at all.
 
 Measured on \code{y ~ jump(x)} at \eqn{n = 400}, a Gaussian response with a
 step of 2 at \eqn{x = 6}: the fit recovers the position at 6.004 and

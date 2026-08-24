@@ -22,10 +22,10 @@
 #' the sum is the same sequence of additions at any count and the result is
 #' identical bit for bit at 1, 2 or 24 threads.
 #'
-#' That guarantee is about the kernel and not about the two routes agreeing
-#' with each other. Engaging the kernel replaces a BLAS call, and an
-#' optimized BLAS (OpenBLAS, Accelerate) blocks its accumulations into a
-#' different order. The two routes therefore agree to the last bit on R's
+#' That guarantee is about the kernel alone. It says nothing about the two
+#' routes agreeing with each other: engaging the kernel replaces a BLAS call,
+#' and an optimized BLAS (OpenBLAS, Accelerate) blocks its accumulations into
+#' a different order. The two routes therefore agree to the last bit on R's
 #' reference BLAS and to the rounding of a single dot product elsewhere.
 #'
 #' # When the kernel is used
@@ -37,8 +37,8 @@
 #' nothing: the cost there is set by the number of stored nonzeros, and the
 #' threshold above reads the dense shape.
 #'
-#' The threshold is a constant in the source and not an argument. It was
-#' measured: the crossover where opening a parallel region costs what it
+#' The threshold is a constant in the source, with no argument to set it. It
+#' was measured: the crossover where opening a parallel region costs what it
 #' saves sits near \eqn{9 \times 10^4} multiply-adds on the development
 #' machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
 #' \eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
@@ -168,8 +168,8 @@ wxsq <- function(X, w, threads = 1L) {
 #' Only the upper triangle is accumulated: one thread owns column \eqn{k} and
 #' walks \eqn{j = 1, \ldots, k}, and each entry it computes is written to
 #' both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
-#' number and not two roundings of one, so the result is exactly symmetric
-#' with nothing to symmetrize away. Each pair belongs to exactly one thread,
+#' number, one rounding shared, so the result is exactly symmetric with
+#' nothing to symmetrize away. Each pair belongs to exactly one thread,
 #' so the mirrored write is disjoint, and no accumulation is split, so the
 #' answer is identical bit for bit at any thread count.
 #'

@@ -25,8 +25,8 @@ offset gets zeros, so the caller adds the result unconditionally.
 }
 \details{
 The offsets are stored on the specification as evaluated vectors, one per
-parameter, and an absent one is \code{NULL} rather than a vector of zeros. This
-turns the second into the first at the point of use.
+parameter, with \code{NULL} for an equation that has none. This turns that
+\code{NULL} into zeros at the point of use, so no caller has to test for it.
 
 An offset shorter than \code{n} is recycled with \code{\link[=rep_len]{rep_len()}}, so a single
 number is a constant offset. That is the shape a caller writing

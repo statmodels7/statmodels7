@@ -27,10 +27,10 @@ parameter with no equation.
 }
 \details{
 The formula is built with \code{eval(bquote(~ .(expr)), envir = env)}, and the
-environment is then assigned again. The second step is what makes the
-result reliable: \code{eval()} gives the formula the environment it was
-evaluated in, and the assignment states it, so the two cannot come apart
-if the construction changes.
+environment is then assigned again. The second step makes the result
+reliable: \code{eval()} gives the formula whatever environment it was evaluated
+in, and the assignment states the intended one, so the two cannot come
+apart if the construction changes.
 }
 \seealso{
 \code{\link[=statmod_equations]{statmod_equations()}}, its only caller.

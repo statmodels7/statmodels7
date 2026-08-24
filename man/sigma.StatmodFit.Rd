@@ -27,11 +27,11 @@ deviation exists only where the scale's equation is an intercept, and
 returning its first value would answer a different question everywhere
 else without saying so.
 
-What is returned is the standard deviation of the response under the
-fitted distribution, through \code{\link[distributions7:std_dev]{distributions7::std_dev()}}, and not
-whichever parameter happens to be spelled \code{sigma}: for a Gamma
-written by its mean and dispersion the two are different quantities. A
-family with no second moment signals an error rather than reporting one.
+What comes back is the standard deviation of the response under the fitted
+distribution, through \code{\link[distributions7:std_dev]{distributions7::std_dev()}}. It is not whichever
+parameter happens to be spelled \code{sigma}: for a Gamma written by its mean
+and dispersion those are two different quantities. A family with no second
+moment signals an error.
 }
 \examples{
 set.seed(1)

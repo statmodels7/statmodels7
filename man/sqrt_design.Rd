@@ -32,8 +32,8 @@ parameter \eqn{b}, the entry \eqn{L_i[b, a]} times that parameter's design
 row. The factor is lower triangular, so the blocks with \eqn{b < a} are
 zero and are not formed at all.
 
-The result is sparse when any equation's design block is, which is what
-sends the solve to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}.
+The result is sparse when any equation's design block is, and the solve
+then goes to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}.
 }
 \seealso{
 \code{\link[=chol_blocks]{chol_blocks()}} for \code{L},
