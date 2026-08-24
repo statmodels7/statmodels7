@@ -7,27 +7,42 @@
 format_duration(seconds, digits = 3L)
 }
 \arguments{
-\item{seconds}{A number of seconds.}
+\item{seconds}{A number of seconds. Vectorized: a vector in gives a vector
+out, each element in its own unit.}
 
-\item{digits}{Significant digits.}
+\item{digits}{How many significant digits to keep, passed to \code{\link[=signif]{signif()}}.
+Defaults to 3.}
 }
 \value{
-A single string.
+A character vector the length of \code{seconds}, each element a number
+and a unit separated by a space, as \code{"340 us"} or \code{"2.6 h"}.
 }
 \description{
 Turns a number of seconds into a string in microseconds, milliseconds,
 seconds, minutes, hours or days, whichever keeps it readable.
 }
 \details{
-A fit that took 340 microseconds and one that took 2.6 hours must both read
-at a glance, which a single unit cannot do.
+A fit that took 340 microseconds and one that took 2.6 hours must both
+read at a glance, and no single unit does that.
 
-Zero is a reading and not the absence of one: on a coarse clock a fast fit
-measures exactly zero seconds, so it is reported as such rather than
-suppressed. A guard of the form \verb{if (elapsed > 0)} would be a claim
-that zero cannot be measured, and for a duration that claim is false.
+The thresholds are the obvious ones: below a millisecond it reads in
+microseconds, below a second in milliseconds, below a minute in seconds,
+then minutes, hours and days.
+
+Zero is a reading. On a coarse clock a fast fit measures exactly zero
+seconds, and it is reported as \code{"0 s"} rather than suppressed. A guard of
+the form \verb{if (elapsed > 0)} would claim that zero cannot be measured,
+which for a duration is false, and would make what the object prints
+depend on the platform's timer resolution.
 }
 \examples{
 format_duration(c(3.4e-4, 0.25, 90, 7200))
 
+# Zero is a reading, not a missing value.
+format_duration(0)
+
+}
+\seealso{
+\code{\link[=print.StatmodFit]{print.StatmodFit()}}, which reports a fit's elapsed time with
+this.
 }

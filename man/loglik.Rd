@@ -19,46 +19,82 @@ hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 \item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{par}{A named list of coefficient vectors, one per distribution
-parameter. Defaults to the fitted ones.}
+parameter, each as long as that equation's design is wide. Defaults to
+the fitted coefficients. Validated against the design, so a wrong length
+is an error and not a recycling.}
 
-\item{data}{A data frame. Defaults to the data the model was fitted to.}
+\item{data}{A data frame with the columns the model names. Defaults to the
+data the model was fitted to. New data must carry the response, since a
+likelihood needs one.}
 
-\item{...}{Passed to methods.}
+\item{...}{Passed to methods. No shipped method reads it.}
 
 \item{expected}{Whether the expected information is wanted.}
 }
 \value{
-A number for \code{loglik}, a named list of vectors for
-\code{gradient}, a matrix for \code{hessian}.
+\code{loglik()} gives a single number. \code{gradient()} gives a named list
+of numeric vectors, one per distribution parameter. \code{hessian()} gives a
+symmetric \verb{p x p} matrix over the stacked coefficients, \code{p} being their
+total count.
 }
 \description{
-\code{loglik()}, \code{gradient()} and \code{hessian()} evaluate a fitted
-model at parameters and data of the caller's choosing.
-}
-\details{
-The name is \code{loglik} and not \code{logLik}: R's \code{logLik()}
-returns the maximized value of the fitted model and carries \code{df} and
-\code{nobs}, and overloading it would give one name two behaviours. Both
-exist, and \code{loglik(fit)} with no arguments must equal
-\code{logLik(fit)} to the last digit, which is the cheapest check that the
-callable route and the fitting route are the same model.
+Turn a fitted model back into a function. \code{loglik()}, \code{gradient()} and
+\code{hessian()} evaluate the model's log-likelihood and its first two
+derivatives at coefficients and data of the caller's choosing, so a fit
+can be profiled, differenced or handed to an optimizer of one's own.
 
-They are generics rather than closures stored in the fit. A closure
-captures its environment, which means the data: a fit would then carry the
-frame twice and keep a stale copy after the data changed. These rebuild
-from the specification the fit keeps whole, running the terms' blueprints
-against new data by the same path \code{predict()} takes.
+With no arguments beyond the fit they read at the fitted coefficients and
+the fitting data.
 }
+\section{The name}{
+\code{loglik}, not \code{logLik}. R's \code{\link[stats:logLik]{stats::logLik()}} returns the maximized value
+of the fitted model and carries \code{df} and \code{nobs} with it, and overloading
+it would give one name two behaviors. Both exist here, and
+\code{loglik(fit)} with no further arguments equals \code{logLik(fit)} to the last
+digit, which is the cheapest check that the callable route and the fitting
+route are the same model.
+}
+
+\section{Generics, not closures on the fit}{
+A closure captures its environment, which here means the data. A fit
+carrying one would hold the frame twice and would keep a stale copy after
+the data changed.
+
+These rebuild from the specification the fit keeps whole, running each
+term's blueprint against \code{data} by the same path \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
+takes. A factor's levels, a spline's knots and a basis reparametrization
+are therefore reapplied and not relearned.
+}
+
+\section{No penalty enters}{
+All three are the likelihood alone. A model's penalized objective at given
+coefficients is not what a caller profiling a likelihood wants, and the
+hyperparameters are not arguments here.
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(40))
 dd$y <- 1 + dd$x + rnorm(40, sd = 0.5)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-loglik(fit)
+
+# At the fitted coefficients it is the maximized value.
+all.equal(loglik(fit), as.numeric(logLik(fit)))
+
+# Anywhere else it is lower, and the gradient says which way to go.
 loglik(fit, par = list(mu = c(0, 0), sigma = 0))
+gradient(fit, par = list(mu = c(0, 0), sigma = 0))
+
+# At the optimum the gradient vanishes.
+max(abs(unlist(gradient(fit))))
+
+# And the observed information is positive definite there.
+eigen(-hessian(fit), only.values = TRUE)$values
 
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} for the maximized value with its degrees of
+freedom, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the variance matrix,
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the same reapplication on new data.
 }
 \keyword{internal}

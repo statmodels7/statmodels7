@@ -9,21 +9,35 @@ NULL
 #' seconds, minutes, hours or days, whichever keeps it readable.
 #'
 #' @details
-#' A fit that took 340 microseconds and one that took 2.6 hours must both read
-#' at a glance, which a single unit cannot do.
+#' A fit that took 340 microseconds and one that took 2.6 hours must both
+#' read at a glance, and no single unit does that.
 #'
-#' Zero is a reading and not the absence of one: on a coarse clock a fast fit
-#' measures exactly zero seconds, so it is reported as such rather than
-#' suppressed. A guard of the form `if (elapsed > 0)` would be a claim
-#' that zero cannot be measured, and for a duration that claim is false.
+#' The thresholds are the obvious ones: below a millisecond it reads in
+#' microseconds, below a second in milliseconds, below a minute in seconds,
+#' then minutes, hours and days.
 #'
-#' @param seconds A number of seconds.
-#' @param digits Significant digits.
+#' Zero is a reading. On a coarse clock a fast fit measures exactly zero
+#' seconds, and it is reported as `"0 s"` rather than suppressed. A guard of
+#' the form `if (elapsed > 0)` would claim that zero cannot be measured,
+#' which for a duration is false, and would make what the object prints
+#' depend on the platform's timer resolution.
 #'
-#' @return A single string.
+#' @param seconds A number of seconds. Vectorized: a vector in gives a vector
+#'   out, each element in its own unit.
+#' @param digits How many significant digits to keep, passed to [signif()].
+#'   Defaults to 3.
+#'
+#' @return A character vector the length of `seconds`, each element a number
+#'   and a unit separated by a space, as `"340 us"` or `"2.6 h"`.
+#'
+#' @seealso [print.StatmodFit()], which reports a fit's elapsed time with
+#'   this.
 #'
 #' @examples
 #' format_duration(c(3.4e-4, 0.25, 90, 7200))
+#'
+#' # Zero is a reading, not a missing value.
+#' format_duration(0)
 #'
 #' @export
 format_duration <- function(seconds, digits = 3L) {
@@ -44,13 +58,18 @@ format_duration <- function(seconds, digits = 3L) {
 #' @title Print a Fitted Model
 #' @name print.StatmodFit
 #' @description
-#' The call, the distribution, one line per equation with its terms and what
-#' they spend, the log-likelihood, the elapsed time and whether every loop
-#' stopped on its own rule.
+#' Prints a compact report of a fitted model: the call, the distribution, one
+#' line per equation naming its terms and the effective degrees of freedom
+#' each spends, the conditional log-likelihood, the elapsed time and whether
+#' every loop stopped on its own rule.
+#'
+#' [summary.StatmodFit()] is the long form, with coefficients, standard
+#' errors and the hyperparameters.
 #' @param x A [StatmodFit()].
 #' @param ... Unused.
-#' @return `x`, invisibly.
-#' @seealso [statmod()]
+#' @return `x`, invisibly, as a print method should.
+#' @seealso [summary.StatmodFit()] for the full report,
+#'   [statmod_certificate()] for the verdict behind the convergence line.
 #' @keywords internal
 print.StatmodFit <- function(x, ...) {
   spec <- x@spec
@@ -122,41 +141,80 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' The Model as a Function of Parameters and Data
 #'
 #' @description
-#' `loglik()`, `gradient()` and `hessian()` evaluate a fitted
-#' model at parameters and data of the caller's choosing.
+#' Turn a fitted model back into a function. `loglik()`, `gradient()` and
+#' `hessian()` evaluate the model's log-likelihood and its first two
+#' derivatives at coefficients and data of the caller's choosing, so a fit
+#' can be profiled, differenced or handed to an optimizer of one's own.
+#'
+#' With no arguments beyond the fit they read at the fitted coefficients and
+#' the fitting data.
 #'
 #' @details
-#' The name is `loglik` and not `logLik`: R's `logLik()`
-#' returns the maximized value of the fitted model and carries `df` and
-#' `nobs`, and overloading it would give one name two behaviours. Both
-#' exist, and `loglik(fit)` with no arguments must equal
-#' `logLik(fit)` to the last digit, which is the cheapest check that the
-#' callable route and the fitting route are the same model.
+#' # The name
 #'
-#' They are generics rather than closures stored in the fit. A closure
-#' captures its environment, which means the data: a fit would then carry the
-#' frame twice and keep a stale copy after the data changed. These rebuild
-#' from the specification the fit keeps whole, running the terms' blueprints
-#' against new data by the same path `predict()` takes.
+#' `loglik`, not `logLik`. R's [stats::logLik()] returns the maximized value
+#' of the fitted model and carries `df` and `nobs` with it, and overloading
+#' it would give one name two behaviors. Both exist here, and
+#' `loglik(fit)` with no further arguments equals `logLik(fit)` to the last
+#' digit, which is the cheapest check that the callable route and the fitting
+#' route are the same model.
+#'
+#' # Generics, not closures on the fit
+#'
+#' A closure captures its environment, which here means the data. A fit
+#' carrying one would hold the frame twice and would keep a stale copy after
+#' the data changed.
+#'
+#' These rebuild from the specification the fit keeps whole, running each
+#' term's blueprint against `data` by the same path [predict.StatmodFit()]
+#' takes. A factor's levels, a spline's knots and a basis reparametrization
+#' are therefore reapplied and not relearned.
+#'
+#' # No penalty enters
+#'
+#' All three are the likelihood alone. A model's penalized objective at given
+#' coefficients is not what a caller profiling a likelihood wants, and the
+#' hyperparameters are not arguments here.
 #'
 #' @param object A [StatmodFit()].
 #' @param par A named list of coefficient vectors, one per distribution
-#'   parameter. Defaults to the fitted ones.
-#' @param data A data frame. Defaults to the data the model was fitted to.
-#' @param ... Passed to methods.
+#'   parameter, each as long as that equation's design is wide. Defaults to
+#'   the fitted coefficients. Validated against the design, so a wrong length
+#'   is an error and not a recycling.
+#' @param data A data frame with the columns the model names. Defaults to the
+#'   data the model was fitted to. New data must carry the response, since a
+#'   likelihood needs one.
+#' @param expected `hessian()` only: `TRUE` for the expected information,
+#'   `FALSE` (the default) for the observed Hessian.
+#' @param ... Passed to methods. No shipped method reads it.
 #'
-#' @return A number for `loglik`, a named list of vectors for
-#'   `gradient`, a matrix for `hessian`.
+#' @return `loglik()` gives a single number. `gradient()` gives a named list
+#'   of numeric vectors, one per distribution parameter. `hessian()` gives a
+#'   symmetric `p x p` matrix over the stacked coefficients, `p` being their
+#'   total count.
 #'
-#' @seealso [statmod()]
+#' @seealso [logLik.StatmodFit()] for the maximized value with its degrees of
+#'   freedom, [vcov.StatmodFit()] for the variance matrix,
+#'   [predict.StatmodFit()] for the same reapplication on new data.
 #'
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
 #' dd$y <- 1 + dd$x + rnorm(40, sd = 0.5)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' loglik(fit)
+#'
+#' # At the fitted coefficients it is the maximized value.
+#' all.equal(loglik(fit), as.numeric(logLik(fit)))
+#'
+#' # Anywhere else it is lower, and the gradient says which way to go.
 #' loglik(fit, par = list(mu = c(0, 0), sigma = 0))
+#' gradient(fit, par = list(mu = c(0, 0), sigma = 0))
+#'
+#' # At the optimum the gradient vanishes.
+#' max(abs(unlist(gradient(fit))))
+#'
+#' # And the observed information is positive definite there.
+#' eigen(-hessian(fit), only.values = TRUE)$values
 #'
 #' @export
 loglik <- S7::new_generic("loglik", "object",
@@ -178,15 +236,19 @@ hessian <- S7::new_generic("hessian", "object",
 #' Rebuild a Specification Against New Data
 #'
 #' @description
-#' Returns the fit's specification when `data` is `NULL`, and one
-#' built against the new data otherwise.
+#' Returns the fit's own specification when `data` is `NULL`, and one carrying
+#' the fitted terms reapplied to the new rows otherwise. This is the one place
+#' the two cases are told apart, so every route that accepts a `data`
+#' argument treats `NULL` alike.
 #'
 #' @param fit A [StatmodFit()].
-#' @param data A data frame or `NULL`.
-#' @param need_response Whether the response must be there. A likelihood needs
-#'   it; a prediction does not, and new data routinely has no response column.
+#' @param data A data frame, or `NULL` for the data the model was fitted to.
+#' @param need_response `TRUE` where the response must be present, as for a
+#'   log-likelihood; `FALSE` for a prediction, new data routinely having no
+#'   response column.
 #'
-#' @return A [StatmodSpec()].
+#' @return A [StatmodSpec()]: `fit@spec` itself when `data` is `NULL`, and
+#'   [statmod_respec()]'s result otherwise.
 #'
 #' @keywords internal
 spec_at <- function(fit, data, need_response = TRUE) {
@@ -197,14 +259,24 @@ spec_at <- function(fit, data, need_response = TRUE) {
 #' Resolve a Parameter Structure
 #'
 #' @description
-#' Returns the fitted coefficients when `par` is `NULL`, and
-#' validates a supplied structure against the design otherwise.
+#' Returns the fitted coefficients when `par` is `NULL`, and otherwise checks
+#' a supplied structure against the design before returning it.
 #'
-#' @param fit A [StatmodFit()].
-#' @param par A named list or `NULL`.
-#' @param design The design to validate against.
+#' @details
+#' Three things are checked: that `par` is a named list, that it names every
+#' distribution parameter, and that each vector is as long as that equation's
+#' design is wide. Each failure signals an error naming the parameter, which
+#' is the alternative to R recycling a short vector into a different model
+#' without a word.
 #'
-#' @return A named list of coefficient vectors.
+#' @param fit A [StatmodFit()], read for its fitted coefficients.
+#' @param par A named list of coefficient vectors, or `NULL`.
+#' @param design The design to validate the lengths against.
+#'
+#' @return A named list of coefficient vectors, one per distribution
+#'   parameter in the family's order.
+#'
+#' @seealso [loglik()], whose three methods all pass through this.
 #'
 #' @keywords internal
 par_at <- function(fit, par, design) {
@@ -267,32 +339,44 @@ S7::method(hessian, StatmodFit) <- function(object, par = NULL, data = NULL,
 #' number of observations. [loglik()] is the other thing: the model
 #' evaluated at parameters and data of the caller's choosing.
 #' @details
-#' **Which likelihood, and it matters.** The default is the
-#' CONDITIONAL one: the log-density at the fitted coefficients, a penalized
-#' coefficient among them, paired with the effective degrees of freedom
-#' \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion built on the pair is the
-#' conditional AIC, and its question is how well the model describes the
-#' groups, curves and states actually observed.
+#' # Which likelihood, and why it matters
 #'
-#' A mixed-model package reports the MARGINAL likelihood instead: the random
-#' effects are integrated out and the count is the number of estimated
-#' parameters, variance components among them. Its question is about the
-#' population, and its AIC is a different number that is not comparable with
-#' the conditional one. Mixing the two -- a marginal likelihood against an
-#' effective count, or the reverse -- is what neither convention allows
+#' The default is the **conditional** one: the log-density at the fitted
+#' coefficients, a penalized coefficient among them, paired with the
+#' effective degrees of freedom \eqn{\mathrm{tr}[(H+S)^{-1}H]}. A criterion
+#' built on that pair is the conditional AIC, and it asks how well the model
+#' describes the groups, curves and states actually observed.
+#'
+#' A mixed-model package reports the **marginal** likelihood instead: the
+#' random effects are integrated out and the count is the number of estimated
+#' parameters, variance components among them. That asks about the
+#' population, and its AIC is a different number, not comparable with the
+#' conditional one.
+#'
+#' Neither convention allows the halves to be mixed: a marginal likelihood
+#' against an effective count, or a conditional one against a parameter count
 #' (Vaida and Blanchard, 2005).
 #'
-#' `type = "marginal"` returns the value the outer criterion evaluated
-#' while choosing the hyperparameters, with the number of estimated
-#' parameters as its degrees of freedom. It is available only where a
-#' marginal criterion actually ran: [ml()] or [reml()].
-#' Where the hyperparameters were held, or found by a prediction criterion,
-#' there is no marginal likelihood to report and asking for one is an error
-#' rather than a number that would look like one.
+#' Measured on a random intercept over 120 groups, the two readings of the
+#' same fit are -4148.59 on 115.72 effective degrees of freedom and -4372.79
+#' on 4, against `lme4::lmer`'s marginal -4371.71 on 4.
+#'
+#' # When the marginal one is available
+#'
+#' `type = "marginal"` returns the value the outer criterion evaluated while
+#' choosing the hyperparameters, with the number of estimated parameters as
+#' its degrees of freedom. It exists only where a marginal criterion actually
+#' ran, which is [ml()] or [reml()].
+#'
+#' Where the hyperparameters were held, or chosen by [aic()], [bic()] or
+#' [cv()], there is no marginal likelihood to report and asking for one
+#' signals an error instead of returning a number that would look like one.
 #' @param object A [StatmodFit()].
-#' @param type `"conditional"` (default) or `"marginal"`.
+#' @param type `"conditional"` (the default) or `"marginal"`.
 #' @param ... Unused.
-#' @return A `logLik` object.
+#' @return A `logLik` object: a single number with attributes `df`, the
+#'   degrees of freedom, and `nobs`. [stats::AIC()] and [stats::BIC()] read
+#'   it, so `AIC(fit)` is the conditional AIC.
 #' @references
 #' Vaida, F. and Blanchard, S. (2005). Conditional Akaike information for
 #' mixed-effects models. *Biometrika*, 92(2), 351--370.

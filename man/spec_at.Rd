@@ -9,16 +9,20 @@ spec_at(fit, data, need_response = TRUE)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{data}{A data frame or \code{NULL}.}
+\item{data}{A data frame, or \code{NULL} for the data the model was fitted to.}
 
-\item{need_response}{Whether the response must be there. A likelihood needs
-it; a prediction does not, and new data routinely has no response column.}
+\item{need_response}{\code{TRUE} where the response must be present, as for a
+log-likelihood; \code{FALSE} for a prediction, new data routinely having no
+response column.}
 }
 \value{
-A \code{\link[=StatmodSpec]{StatmodSpec()}}.
+A \code{\link[=StatmodSpec]{StatmodSpec()}}: \code{fit@spec} itself when \code{data} is \code{NULL}, and
+\code{\link[=statmod_respec]{statmod_respec()}}'s result otherwise.
 }
 \description{
-Returns the fit's specification when \code{data} is \code{NULL}, and one
-built against the new data otherwise.
+Returns the fit's own specification when \code{data} is \code{NULL}, and one carrying
+the fitted terms reapplied to the new rows otherwise. This is the one place
+the two cases are told apart, so every route that accepts a \code{data}
+argument treats \code{NULL} alike.
 }
 \keyword{internal}

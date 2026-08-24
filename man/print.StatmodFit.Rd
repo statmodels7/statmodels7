@@ -12,14 +12,19 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly, as a print method should.
 }
 \description{
-The call, the distribution, one line per equation with its terms and what
-they spend, the log-likelihood, the elapsed time and whether every loop
-stopped on its own rule.
+Prints a compact report of a fitted model: the call, the distribution, one
+line per equation naming its terms and the effective degrees of freedom
+each spends, the conditional log-likelihood, the elapsed time and whether
+every loop stopped on its own rule.
+
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} is the long form, with coefficients, standard
+errors and the hyperparameters.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the full report,
+\code{\link[=statmod_certificate]{statmod_certificate()}} for the verdict behind the convergence line.
 }
 \keyword{internal}

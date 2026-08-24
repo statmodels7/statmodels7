@@ -7,17 +7,28 @@
 par_at(fit, par, design)
 }
 \arguments{
-\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}, read for its fitted coefficients.}
 
-\item{par}{A named list or \code{NULL}.}
+\item{par}{A named list of coefficient vectors, or \code{NULL}.}
 
-\item{design}{The design to validate against.}
+\item{design}{The design to validate the lengths against.}
 }
 \value{
-A named list of coefficient vectors.
+A named list of coefficient vectors, one per distribution
+parameter in the family's order.
 }
 \description{
-Returns the fitted coefficients when \code{par} is \code{NULL}, and
-validates a supplied structure against the design otherwise.
+Returns the fitted coefficients when \code{par} is \code{NULL}, and otherwise checks
+a supplied structure against the design before returning it.
+}
+\details{
+Three things are checked: that \code{par} is a named list, that it names every
+distribution parameter, and that each vector is as long as that equation's
+design is wide. Each failure signals an error naming the parameter, which
+is the alternative to R recycling a short vector into a different model
+without a word.
+}
+\seealso{
+\code{\link[=loglik]{loglik()}}, whose three methods all pass through this.
 }
 \keyword{internal}
