@@ -20,65 +20,93 @@ statmod_boot_restart(
 )
 }
 \arguments{
-\item{spec}{The specification.}
+\item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} being fitted.}
 
-\item{design}{The design.}
+\item{design}{The assembled design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 
-\item{blocks}{The block split.}
+\item{blocks}{The split of the terms into the jointly fitted smooth block
+and the kinked ones, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns it.}
 
-\item{hyper}{The hyperparameters the fit ended at.}
+\item{hyper}{The hyperparameters the fit ended at, held fixed throughout:
+the restarts search over positions, not over hyperparameters.}
 
-\item{inner_optimizer}{How the smooth block is fitted.}
+\item{inner_optimizer}{How the smooth block is fitted, \code{\link[=iwls]{iwls()}} or an
+\pkg{optimizers7} optimizer.}
 
-\item{res}{The fitted result the restarts try to improve.}
+\item{res}{The fitted result to improve, as \code{\link[=statmod_alternate]{statmod_alternate()}} returns
+it. Returned unchanged when nothing better is found.}
 
-\item{expected, approx, maxit, tol}{As in \code{\link[=statmod_alternate]{statmod_alternate()}}.}
+\item{expected, approx, maxit, tol}{Passed to \code{\link[=statmod_alternate]{statmod_alternate()}} for each
+refit, with the same meanings they have there.}
 
-\item{vb}{The resolved verbosity.}
+\item{vb}{The resolved verbosity, as \code{\link[=verbosity]{verbosity()}} returns it.}
 
-\item{nb}{At most how many proposals.}
+\item{nb}{The budget: at most how many proposals to try, as
+\code{\link[=seg_boot_total]{seg_boot_total()}} reports it. A budget of zero returns \code{res}
+untouched.}
 }
 \value{
-\code{res}, with \code{par}, \code{value}, \code{converged},
-\code{obj} and the block histories replaced when a restart improved
-the fit; any other field -- an outer search's history, its optimizer
--- is kept.
+\code{res}, with \code{par}, \code{value}, \code{converged}, \code{obj} and the block
+histories replaced when a restart improved the objective. Everything
+else is carried over untouched, an outer search's history and its
+optimizer among them, so the result is the same shape either way.
 }
 \description{
-Bootstrap restarting (Wood 2001) with the observation that makes it
-cheap: the non-convexity of a break-point model lives entirely in the
-positions, everything else being convex once they are held, so a
-proposal is a CONFIGURATION OF POSITIONS and two configurations are
-compared on the exact profile -- least squares at fixed positions, one
-linear fit each -- rather than by refitting the model. Only a proposal
-the profile prefers earns a refit, and the refit's answer is accepted on
-the true objective.
+Improves a fitted break-point model by bootstrap restarting (Wood 2001),
+screening each proposal on the exact profile before paying for a refit.
+The objective of a model with break-points has spurious local minima, and
+an ordinary fit converges into whichever one its starting positions sit
+in; this searches for a better one.
 }
-\details{
-Three proposal kinds, in order. The first is deterministic: each
-break-point swept over the profile with the others held
-(\code{\link[modelterms7:seg_polish]{modelterms7::seg_polish()}}), which walks straight to a
-feature the iteration pressed a break-point away from. The stochastic
-ones alternate a BOOTSTRAP sweep -- the same descent on the profile of a
-resample, the multinomial counts entering as weights, which moves the
-profile's optima the way refitting the resample would -- with a sweep
-from RANDOM positions drawn over the confinement interval. The screen
-compares every proposal's unweighted profile against the incumbent's,
-so a proposal that lands back on the incumbent costs a few grid-many
-linear fits and no refit: measured at n = 10000, a dry proposal fell
-from a whole refit (5 to 15 s) to about half a second, and the earlier
-design that refitted every proposal had spent 945 s re-verifying an
-optimum the sweep had already found. Four consecutive dry proposals end
-the loop.
+\section{What makes the screen cheap}{
+The non-convexity of a break-point model lives entirely in the positions.
+Hold them and everything left is convex, so the exact profile at a fixed
+configuration of positions is one linear fit. A proposal is therefore a
+configuration of positions and nothing else, and two proposals are ranked
+by their profiles at a cost of one linear fit each. Only a proposal the
+profile prefers earns a refit of the whole model, and the refit's answer
+is accepted or rejected on the true objective.
 
-The profile reads the response net of the other contributions in the
-term's equation, on the predictor scale: exact for an identity link, a
-proposal elsewhere -- the argument \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}}
-already makes. The refreshable and structural state of the design is
-snapshotted at the incumbent and restored whenever a candidate loses,
-and the draws come from the session's generator, so a fit with restarts
-is reproducible under \code{set.seed()}.
+Measured at \eqn{n = 10^4}: a proposal that goes nowhere costs about half
+a second, against 5 to 15 seconds for the refit it would otherwise have
+triggered. The design this replaced refitted every proposal and spent
+945 seconds re-verifying an optimum the sweep had already found.
 }
+
+\section{The three proposal kinds}{
+Tried in this order.
+\enumerate{
+\item \strong{The deterministic sweep.} Each break-point in turn is swept over a
+grid on the profile with the others held, which is
+\code{\link[modelterms7:seg_polish]{modelterms7::seg_polish()}}. This walks straight to a feature the
+fitting iteration pressed a break-point away from.
+\item \strong{The bootstrap sweep.} The same descent on the profile of a
+resample, the multinomial counts entering as weights, which moves the
+profile's optima the way refitting the resample would.
+\item \strong{The random sweep.} The same descent from positions drawn uniformly
+over the confinement interval.
+}
+
+The two stochastic kinds alternate. Four consecutive proposals that fail
+the screen end the loop, whatever budget is left.
+}
+
+\section{The profile is exact for an identity link and a proposal elsewhere}{
+It reads the response net of the other contributions in the term's
+equation, on the predictor scale. For a Gaussian response and an identity
+link that is the model's own least-squares objective. For anything else
+it is an approximation used to rank candidates, and the true objective
+decides the acceptance, so a poor ranking costs time and not correctness.
+\code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} makes the same argument for the same reason.
+}
+
+\section{Reproducibility}{
+The draws come from the session's generator, so a fit with restarts
+repeats under \code{\link[=set.seed]{set.seed()}}. The refreshable and structural state of the
+design is snapshotted at the incumbent and restored whenever a candidate
+loses, so a rejected proposal leaves nothing behind.
+}
+
 \references{
 Wood, S. N. (2001). Minimizing model fitting objectives that contain
 spurious local minima by bootstrap restarting. \emph{Biometrics}, 57(1),

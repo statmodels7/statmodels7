@@ -7,20 +7,34 @@
 seg_boot_total(spec)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, whose terms are walked in every equation.}
 }
 \value{
-A single non-negative integer.
+A single non-negative integer. Zero when no term declares
+\code{n_boot}, which is what turns the restart loop off.
 }
 \description{
-The largest \code{n_boot} any break-point term of the specification
-declares, or zero. The value is declared on \code{\link[modelterms7:seg]{modelterms7::seg()}},
-\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, the
-terms whose objective has the spurious local optima the device exists
-for; running the restarts is this layer's, the way a penalty's
-hyperparameters are declared by a term and estimated here.
+Returns the largest \code{n_boot} any break-point term of the specification
+declares, and zero when the model carries no such term. This is the
+budget \code{\link[=statmod_boot_restart]{statmod_boot_restart()}} spends: how many proposals it may try
+before giving up on improving the fit.
+}
+\details{
+The number is declared on the term. \code{\link[modelterms7:seg]{modelterms7::seg()}},
+\code{\link[modelterms7:jump]{modelterms7::jump()}} and \code{\link[modelterms7:jseg]{modelterms7::jseg()}} each take \code{n_boot}, with
+a default of 10, because those are the terms whose objective has the
+spurious local optima the device exists for. Running the restarts belongs
+here, in the layer that can refit the model, and the split follows the
+one a penalty already uses: the term says what it needs, this package
+does it.
+
+A model with two break-point terms asking for 10 and 25 gets 25. The
+restart loop works on all of them together, since a proposal moves every
+break-point in the model at once, so the budget is one number and the
+largest request is the one honored.
 }
 \seealso{
-\code{\link[=statmod_boot_restart]{statmod_boot_restart()}}
+\code{\link[=statmod_boot_restart]{statmod_boot_restart()}}, which spends this budget,
+\code{\link[modelterms7:seg]{modelterms7::seg()}} for where the number is set.
 }
 \keyword{internal}
