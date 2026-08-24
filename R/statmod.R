@@ -809,7 +809,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 #' @return A list of two: `maxit`, the budget in passes, and `tol`, the
 #'   relative tolerance on the objective.
 #'
-#' @seealso [statmod()], [iwls()], [crit_tol()] for the tree walk.
+#' @seealso [statmod()], [iwls()], [criterion_tol()] for the tree walk.
 #'
 #' @keywords internal
 method_budget <- function(method) {

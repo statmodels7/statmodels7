@@ -36,6 +36,6 @@ A criterion carrying no tolerance at all leaves the default of
 never copied as a number, so a change there reaches here.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=crit_tol]{crit_tol()}} for the tree walk.
+\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=criterion_tol]{criterion_tol()}} for the tree walk.
 }
 \keyword{internal}
