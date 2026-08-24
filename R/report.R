@@ -784,49 +784,83 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' @title The Hyperparameters of a Fitted Model
 #'
 #' @description
-#' One row per hyperparameter of every penalty the model carries, on the scale
-#' the penalty declares them or on the free scale its links define, with what
-#' put each value there.
+#' Reports every hyperparameter of every penalty the model carries: one row
+#' each, with the value, whether it was held, and what put it there. A
+#' smoothing parameter, a prior scale, a lasso's \eqn{\lambda} and an elastic
+#' net's \eqn{\alpha} all appear here.
 #'
 #' @details
-#' A hyperparameter is not a coefficient and is not in [coef()]: it
-#' governs the coefficients under it rather than sitting beside them, and the
-#' two are estimated by different routes and reported with different
-#' qualifications. This is where they are read.
+#' # A hyperparameter is not a coefficient
 #'
-#' The `parameter` scale is the one the penalty is written on, which is
-#' what a reader wants: a smoothing parameter is a positive number and a
-#' gaussian prior's `sigma` is a scale. The `link` scale is the
-#' free one the outer search runs on, through each hyperparameter's own link,
-#' and is what a caller comparing two fits' searches wants. Where a
-#' hyperparameter carries no link the two coincide.
+#' It governs the coefficients under it instead of sitting beside them, and
+#' the two are estimated by different routes and reported with different
+#' qualifications. [coef.StatmodFit()] holds the coefficients and this holds
+#' the hyperparameters; neither holds the other.
 #'
-#' `source` says what put the value there, which `held` alone
-#' cannot: a hyperparameter the term fixed reads `"fixed"`, one a
-#' marginal criterion maximized reads that criterion's name, and one chosen
-#' along a path over its own values reads the criterion that scored the path.
-#' A value chosen along a path is the argument of a minimum over a grid
-#' rather than the root of a derivative, so no standard error follows from
-#' it; one a marginal criterion reached carries one, and
-#' [summary()] reports it.
+#' # The two scales
 #'
-#' @param fit A fitted model.
-#' @param scale Which scale the values are reported on.
+#' `scale = "parameter"`, the default, is the scale the penalty is written
+#' on: a smoothing parameter is a positive number, and a gaussian prior's
+#' `sigma` is a scale. That is what a reader wants.
 #'
-#' @return A data frame with `parameter`, `term`, `name`,
-#'   `estimate`, `held` and `source`, or a frame of no rows
-#'   where the model carries no penalty.
+#' `scale = "link"` is the free scale the outer search runs on, through each
+#' hyperparameter's own link. That is what a caller comparing two fits'
+#' searches wants. Where a hyperparameter carries no link the two coincide.
 #'
-#' @seealso [coef.StatmodFit()], [summary.StatmodFit()],
-#'   [statmod_held()]
+#' # What `source` says that `held` cannot
+#'
+#' `held` is a logical and says only whether the value moved. `source` says
+#' what put it there:
+#'
+#' - `"fixed"` for one the term itself held, as `s(x, lambda = 2)`.
+#' - the criterion's name, `"reml"` or `"ml"`, for one a marginal criterion
+#'   maximized.
+#' - the criterion that scored the path, `"bic"` and so on, for one chosen
+#'   along a path over its own values.
+#'
+#' The distinction has a consequence a reader needs. A value chosen along a
+#' path is the argument of a minimum over a grid, not the root of a
+#' derivative, so no standard error follows from it. One a marginal criterion
+#' reached carries one, from the curvature of that criterion, and
+#' [summary.StatmodFit()] prints it.
+#'
+#' @param fit A [StatmodFit()].
+#' @param scale `"parameter"` (the default) or `"link"`. Matched with
+#'   [match.arg()].
+#'
+#' @return A data frame with one row per hyperparameter and six columns:
+#'   \describe{
+#'     \item{`parameter`}{the distribution parameter whose equation the
+#'       penalized term sits in.}
+#'     \item{`term`}{the term's key, its call as written.}
+#'     \item{`name`}{the hyperparameter's own name, as the penalty names it.}
+#'     \item{`estimate`}{its value, on the scale asked for.}
+#'     \item{`held`}{a logical: whether the term fixed it.}
+#'     \item{`source`}{what put the value there, as above.}
+#'   }
+#'   A data frame of no rows, with those columns, where the model carries no
+#'   penalty at all.
+#'
+#' @seealso [coef.StatmodFit()] for the coefficients,
+#'   [summary.StatmodFit()] for the two printed together with standard
+#'   errors, [statmod_held()] for which are held.
 #'
 #' @examples
 #' set.seed(1)
 #' d <- data.frame(x = runif(80, 0, 1))
 #' d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
+#'
+#' # Estimated by REML, which is what source says.
 #' fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
 #' hyper(fit)
+#'
+#' # The same value on the scale the outer search ran on.
 #' hyper(fit, scale = "link")
+#'
+#' # Held by the term instead, and reported as fixed.
+#' held <- statmod(y ~ s(x, k = 6, lambda = 2),
+#'                 distributions7::gaussian1_distrib(), d)
+#' hyper(held)[, c("name", "estimate", "held", "source")]
 #'
 #' @export
 hyper <- function(fit, scale = c("parameter", "link")) {

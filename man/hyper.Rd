@@ -7,52 +7,86 @@
 hyper(fit, scale = c("parameter", "link"))
 }
 \arguments{
-\item{fit}{A fitted model.}
+\item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{scale}{Which scale the values are reported on.}
+\item{scale}{\code{"parameter"} (the default) or \code{"link"}. Matched with
+\code{\link[=match.arg]{match.arg()}}.}
 }
 \value{
-A data frame with \code{parameter}, \code{term}, \code{name},
-\code{estimate}, \code{held} and \code{source}, or a frame of no rows
-where the model carries no penalty.
+A data frame with one row per hyperparameter and six columns:
+\describe{
+\item{\code{parameter}}{the distribution parameter whose equation the
+penalized term sits in.}
+\item{\code{term}}{the term's key, its call as written.}
+\item{\code{name}}{the hyperparameter's own name, as the penalty names it.}
+\item{\code{estimate}}{its value, on the scale asked for.}
+\item{\code{held}}{a logical: whether the term fixed it.}
+\item{\code{source}}{what put the value there, as above.}
+}
+A data frame of no rows, with those columns, where the model carries no
+penalty at all.
 }
 \description{
-One row per hyperparameter of every penalty the model carries, on the scale
-the penalty declares them or on the free scale its links define, with what
-put each value there.
+Reports every hyperparameter of every penalty the model carries: one row
+each, with the value, whether it was held, and what put it there. A
+smoothing parameter, a prior scale, a lasso's \eqn{\lambda} and an elastic
+net's \eqn{\alpha} all appear here.
 }
-\details{
-A hyperparameter is not a coefficient and is not in \code{\link[=coef]{coef()}}: it
-governs the coefficients under it rather than sitting beside them, and the
-two are estimated by different routes and reported with different
-qualifications. This is where they are read.
-
-The \code{parameter} scale is the one the penalty is written on, which is
-what a reader wants: a smoothing parameter is a positive number and a
-gaussian prior's \code{sigma} is a scale. The \code{link} scale is the
-free one the outer search runs on, through each hyperparameter's own link,
-and is what a caller comparing two fits' searches wants. Where a
-hyperparameter carries no link the two coincide.
-
-\code{source} says what put the value there, which \code{held} alone
-cannot: a hyperparameter the term fixed reads \code{"fixed"}, one a
-marginal criterion maximized reads that criterion's name, and one chosen
-along a path over its own values reads the criterion that scored the path.
-A value chosen along a path is the argument of a minimum over a grid
-rather than the root of a derivative, so no standard error follows from
-it; one a marginal criterion reached carries one, and
-\code{\link[=summary]{summary()}} reports it.
+\section{A hyperparameter is not a coefficient}{
+It governs the coefficients under it instead of sitting beside them, and
+the two are estimated by different routes and reported with different
+qualifications. \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} holds the coefficients and this holds
+the hyperparameters; neither holds the other.
 }
+
+\section{The two scales}{
+\code{scale = "parameter"}, the default, is the scale the penalty is written
+on: a smoothing parameter is a positive number, and a gaussian prior's
+\code{sigma} is a scale. That is what a reader wants.
+
+\code{scale = "link"} is the free scale the outer search runs on, through each
+hyperparameter's own link. That is what a caller comparing two fits'
+searches wants. Where a hyperparameter carries no link the two coincide.
+}
+
+\section{What \code{source} says that \code{held} cannot}{
+\code{held} is a logical and says only whether the value moved. \code{source} says
+what put it there:
+\itemize{
+\item \code{"fixed"} for one the term itself held, as \code{s(x, lambda = 2)}.
+\item the criterion's name, \code{"reml"} or \code{"ml"}, for one a marginal criterion
+maximized.
+\item the criterion that scored the path, \code{"bic"} and so on, for one chosen
+along a path over its own values.
+}
+
+The distinction has a consequence a reader needs. A value chosen along a
+path is the argument of a minimum over a grid, not the root of a
+derivative, so no standard error follows from it. One a marginal criterion
+reached carries one, from the curvature of that criterion, and
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
+}
+
 \examples{
 set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
+
+# Estimated by REML, which is what source says.
 fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
 hyper(fit)
+
+# The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
+
+# Held by the term instead, and reported as fixed.
+held <- statmod(y ~ s(x, k = 6, lambda = 2),
+                distributions7::gaussian1_distrib(), d)
+hyper(held)[, c("name", "estimate", "held", "source")]
 
 }
 \seealso{
-\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
-\code{\link[=statmod_held]{statmod_held()}}
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}} for the coefficients,
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the two printed together with standard
+errors, \code{\link[=statmod_held]{statmod_held()}} for which are held.
 }
