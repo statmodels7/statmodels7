@@ -41,8 +41,9 @@ the fold left out, returning the mean deviance per observation and its
 standard error across folds.
 }
 \details{
-The path is run fold by fold rather than point by point so that each fit
-starts from the previous point's coefficients, which is what makes a path
+The path is run fold by fold, not point by point, so that each fit starts
+from the previous point's coefficients. That warm chain is what makes a
+path
 cheaper than its length suggests. Each training fit rebuilds the design on
 its own rows: a term is re-evaluated in the data it is fitted to, so a basis
 or a set of contrasts is not carried over from rows the fit did not see.

@@ -31,13 +31,12 @@ doubling and found with \code{\link[stats:uniroot]{stats::uniroot()}}. A version
 the size increases returned \code{NA} for every target on the Laplace,
 having walked away from the answer.
 
-Where the size is a POWER of the hyperparameter -- which every kinked
+Where the size is a power of the hyperparameter, which every kinked
 penalty here turns out to be, the hyperparameter entering a separable
-penalty as a scale -- the inversion is closed and the search is not run at
+penalty as a scale is, the inversion is closed and the search is not run at
 all. \code{\link[=kink_power]{kink_power()}} measures the exponent and the answer is
 checked against the size before it is returned, so a penalty that does not
-obey a power law falls back to the search rather than being assumed into
-one.
+obey a power law falls back to the search and is never assumed into one.
 }
 \seealso{
 \code{\link[=kink_power]{kink_power()}}, \code{\link[=path_values]{path_values()}}

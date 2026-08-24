@@ -28,8 +28,8 @@ rebuilding the model on those rows finds it there.
 and in the formula's environment after. \code{data.frame(X = X, y = y)}
 SPLITS a matrix into \verb{X.x1 ... X.xp}, leaving no column \code{X}, so
 \code{lasso(X)} reaches past the data to the matrix in the calling
-environment. The fit is right -- the matrix is captured once and the
-coefficients are identical to the other spelling -- but the fold cannot
+environment. The fit itself is right, the matrix being captured once and
+the coefficients identical to the other spelling, but the fold cannot
 rebuild: the name still resolves to all the rows.
 
 The matrix is already on the built term, and \code{term_build()} checked at
@@ -40,11 +40,11 @@ the spelling the documentation asks the caller for.
 Nothing is relearned that should be: a matrix carries no knots, no
 contrasts and no levels, so subsetting it and re-evaluating it give the
 same block. A FORMULA input is untouched and keeps being rebuilt on the
-fold's own rows, which is what that rule exists for.
+fold's own rows, and that is what the rule exists for.
 
 It applies where \code{input_expr} is a plain symbol, which is the case the
-name can be bound for. A call -- \code{lasso(scale(X))} -- keeps only its
-own value on the term and not the \code{X} its re-evaluation would need, so
+name can be bound for. A call such as \code{lasso(scale(X))} keeps only its own
+value on the term, never the \code{X} its re-evaluation would need, so
 it is left to the error that names it.
 }
 \seealso{

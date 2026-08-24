@@ -29,8 +29,8 @@ whole block at zero. That is where a path starts: at the smallest
 hyperparameter for which the term contributes nothing, which is
 \pkg{glmnet}'s \code{lambda.max} written for any separable penalty.
 
-The other coefficients are held where the caller left them rather than
-refitted, so the number is a starting point and not a boundary. The path
+The other coefficients are held where the caller left them and are not
+refitted, so the number is a starting point and no boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.
 }
 \keyword{internal}

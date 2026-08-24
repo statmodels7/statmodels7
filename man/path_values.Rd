@@ -28,13 +28,13 @@ A geometric grid of kink sizes from the one that empties the block down to
 \code{min_ratio} of it, carried back onto the hyperparameter.
 }
 \details{
-The grid is geometric in the size of the kink rather than in the
+The grid is geometric in the size of the kink, never in the
 hyperparameter, so that a penalty whose kink narrows as its hyperparameter
 grows is swept in the same order as one whose kink widens: from the empty
 model towards the full one. Values the penalty cannot reach are dropped.
 
 The exponent relating the two is read ONCE and every target inverted
-through it, rather than each target bracketed on its own. Measured, a
+through it, in place of bracketing each target on its own. Measured, a
 bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 twenty-five points spent 6.7 per cent of itself locating the values it
 would visit; through the exponent the whole grid costs four evaluations of

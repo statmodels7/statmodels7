@@ -11,7 +11,7 @@ NULL
 #' A coefficient stays at the kink while the unpenalized score at that point is
 #' inside the subdifferential, so this number is what a score has to exceed for
 #' a coefficient to leave zero. It is \eqn{\lambda} for the lasso, SCAD and
-#' MCP, and \eqn{\lambda\alpha} for the elastic net, but it is read rather than
+#' MCP, and \eqn{\lambda\alpha} for the elastic net, but it is read and never
 #' assumed: a penalty built from a density carries the same information in a
 #' hyperparameter of its own, and a Laplace prior written by its scale has a
 #' kink whose size falls as that scale grows.
@@ -20,11 +20,11 @@ NULL
 #' kinked penalty under a general map being the generalized-lasso problem and
 #' rejected upstream, so one coordinate answers for all of them.
 #'
-#' The derivative just past the kink carries the distance it was read at --
-#' MCP's is \eqn{\lambda - \epsilon/\gamma} -- so the two readings are
+#' The derivative just past the kink carries the distance it was read at,
+#' MCP's being \eqn{\lambda - \epsilon/\gamma}, so the two readings are
 #' extrapolated to the limit. Without that the shape parameters appear to move
 #' the kink by a millionth of themselves, which is enough to be selected for a
-#' path and is a measurement of \eqn{\epsilon} rather than of the penalty. The
+#' path, and measures \eqn{\epsilon} in place of the penalty. The
 #' extrapolation is exact for a penalty that is affine on each side of the
 #' kink, which the lasso, SCAD, MCP and the elastic net all are.
 #'
@@ -59,15 +59,15 @@ kink_scale <- function(pen, theta, eps = 1e-4) {
 #' path over the penalty has to vary.
 #'
 #' @details
-#' The question is put to the penalty rather than answered from a list of
+#' The question is put to the penalty and never answered from a list of
 #' families: the shape parameters of SCAD and MCP leave the subdifferential at
 #' zero unchanged and govern how fast the penalty flattens further out, while
 #' \eqn{\lambda} and the elastic net's \eqn{\alpha} both scale it.
 #'
 #' `unbounded` restricts the answer to the hyperparameters with no upper
 #' bound, which is the default choice of what to select. The reference
-#' implementations do the same by convention -- \pkg{glmnet} holds
-#' \eqn{\alpha} fixed and \pkg{ncvreg} holds \eqn{\gamma} -- and a bounded
+#' implementations do the same by convention, \pkg{glmnet} holding
+#' \eqn{\alpha} fixed and \pkg{ncvreg} holding \eqn{\gamma}, and a bounded
 #' shape is better swept by hand over a few values than searched.
 #'
 #' @param pen A \pkg{penalties7} penalty.
@@ -130,13 +130,12 @@ bounded_bump <- function(v, b) {
 #' the size increases returned `NA` for every target on the Laplace,
 #' having walked away from the answer.
 #'
-#' Where the size is a POWER of the hyperparameter -- which every kinked
+#' Where the size is a power of the hyperparameter, which every kinked
 #' penalty here turns out to be, the hyperparameter entering a separable
-#' penalty as a scale -- the inversion is closed and the search is not run at
+#' penalty as a scale is, the inversion is closed and the search is not run at
 #' all. [kink_power()] measures the exponent and the answer is
 #' checked against the size before it is returned, so a penalty that does not
-#' obey a power law falls back to the search rather than being assumed into
-#' one.
+#' obey a power law falls back to the search and is never assumed into one.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The other hyperparameters.
@@ -205,7 +204,7 @@ kink_solve <- function(pen, theta, name, target) {
 #' \eqn{5.6\times 10^{-16}}. A Laplace prior written by its scale has exponent
 #' \eqn{-1}, its kink narrowing as the hyperparameter grows.
 #'
-#' The exponent is MEASURED rather than assumed, and whoever inverts it checks
+#' The exponent is measured, never assumed, and whoever inverts it checks
 #' the answer, so a penalty whose kink is not a power of its hyperparameter
 #' costs two evaluations and then takes the search.
 #'
@@ -297,8 +296,8 @@ kink_by_power <- function(pen, theta, name, target, pw) {
 #' hyperparameter for which the term contributes nothing, which is
 #' \pkg{glmnet}'s `lambda.max` written for any separable penalty.
 #'
-#' The other coefficients are held where the caller left them rather than
-#' refitted, so the number is a starting point and not a boundary. The path
+#' The other coefficients are held where the caller left them and are not
+#' refitted, so the number is a starting point and no boundary. The path
 #' checks it: a top whose fit is not empty is doubled until it is.
 #'
 #' @param obj The stacked objective.
@@ -330,13 +329,13 @@ path_null_score <- function(obj, beta, block, hyper) {
 #' `min_ratio` of it, carried back onto the hyperparameter.
 #'
 #' @details
-#' The grid is geometric in the size of the kink rather than in the
+#' The grid is geometric in the size of the kink, never in the
 #' hyperparameter, so that a penalty whose kink narrows as its hyperparameter
 #' grows is swept in the same order as one whose kink widens: from the empty
 #' model towards the full one. Values the penalty cannot reach are dropped.
 #'
 #' The exponent relating the two is read ONCE and every target inverted
-#' through it, rather than each target bracketed on its own. Measured, a
+#' through it, in place of bracketing each target on its own. Measured, a
 #' bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 #' twenty-five points spent 6.7 per cent of itself locating the values it
 #' would visit; through the exponent the whole grid costs four evaluations of
@@ -378,11 +377,11 @@ path_values <- function(pen, theta, name, s_max, n_values = 40L,
 #' so that the warm starts run the way every other path here runs.
 #'
 #' @details
-#' Which end is the sparse one is a property of the penalty and not of the
+#' Which end is the sparse one is a property of the penalty, never of the
 #' numbers: the kink of a lasso widens with \eqn{\lambda} and that of a
 #' Laplace prior written by its scale narrows with \eqn{\sigma}, so the order
-#' is settled by asking the penalty which way its kink moves rather than by
-#' sorting downwards. Nothing else is applied -- the value that empties the
+#' is settled by asking the penalty which way its kink moves, and not by
+#' sorting downwards. Nothing else is applied: the value that empties the
 #' block does not cap the grid and `min_ratio` does not extend it, both
 #' of those being ways to build one.
 #'
@@ -414,8 +413,8 @@ path_forced <- function(pen, theta, name, values) {
 #' the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
 #' no admissible \eqn{\alpha} empties the block and every point of such a path
 #' is dropped. The interval itself is what a bounded shape is swept over
-#' instead -- \eqn{\alpha} between the ridge and the lasso, SCAD's and MCP's
-#' shape between their limits -- and the sweeps being cyclic, one coordinate
+#' instead, \eqn{\alpha} between the ridge and the lasso and SCAD's and MCP's
+#' shape between their limits, and the sweeps being cyclic, one coordinate
 #' at a time, the kink still moves through \eqn{\lambda}.
 #'
 #' The endpoints are excluded because the bounds are open: the elastic net at
@@ -480,8 +479,8 @@ path_grid <- function(pen, theta, name, n_values = 25L, steps = NULL) {
 #' \eqn{a > 3}, and a Poisson block whose fitted means are near
 #' \eqn{10^{-3}} needs \eqn{a > 11}.
 #'
-#' Everything is guarded, and `NULL` -- which the caller reads as "the
-#' penalty's own bound and nothing more" -- is the answer wherever the
+#' Everything is guarded, and `NULL`, which the caller reads as "the
+#' penalty's own bound and nothing more", is the answer wherever the
 #' working weights are not usable. A starting grid may be approximate; what
 #' it may not do is fail.
 #'
@@ -522,8 +521,9 @@ path_steps <- function(spec, design, block, beta, split) {
 #' steps the block's coordinate descent will take.
 #'
 #' @details
-#' The limit is DERIVED from the condition and not written down. The question
-#' is put to the penalty -- does it produce a table at this step? -- and
+#' The limit is derived from the condition, with nothing written down. The
+#' question is put to the penalty, namely whether it produces a table at this
+#' step, and
 #' bisected, so a family added later is covered and neither the \eqn{a - 1} of
 #' SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
 #' the constant the penalty is defined over would otherwise contain points at
@@ -574,15 +574,15 @@ shape_floor <- function(pen, theta, name, steps = NULL) {
 #'
 #' @details
 #' The five penalized constructors carry these on their own signatures, where
-#' a reader can see them -- `lasso(x, n_lambda = 25, min_ratio = 1e-4)`,
-#' `enet(x, n_lambda = 25, n_alpha = 5)` -- so nothing here is reached
+#' a reader can see them, `lasso(x, n_lambda = 25, min_ratio = 1e-4)` and
+#' `enet(x, n_lambda = 25, n_alpha = 5)`, so nothing here is reached
 #' for them. What reaches it is a term that declares a kinked penalty without
 #' offering an argument for the grid: [modelterms7::random()] under
 #' a Laplace prior is the case, its hyperparameters being whatever the
 #' effects' distribution happens to carry.
 #'
 #' `kink` is the length of the path over the SIZE OF THE KINK, which
-#' runs geometrically over `1/min_ratio` -- four decades -- and wants
+#' runs geometrically over `1/min_ratio`, which is four decades, and wants
 #' that many points to be smooth in. `other` serves an axis that spans
 #' one bounded interval instead, \eqn{\alpha} between the ridge and the lasso
 #' or a shape over its useful range, and needs fewer; with a product every
@@ -710,7 +710,7 @@ path_rows <- function(spec, blocks, hyper, method) {
 #' @details
 #' The permutation is drawn from the caller's stream and put back, so a fit is
 #' not silently reproducible only when the caller happens to have seeded.
-#' Passing `folds` explicitly is what makes two criteria comparable on the
+#' Passing `folds` explicitly is how two criteria are made comparable on the
 #' same partition.
 #'
 #' @param n The number of observations.
@@ -782,8 +782,8 @@ hyper_set <- function(hyper, row, value) {
 #' and in the formula's environment after. `data.frame(X = X, y = y)`
 #' SPLITS a matrix into `X.x1 ... X.xp`, leaving no column `X`, so
 #' `lasso(X)` reaches past the data to the matrix in the calling
-#' environment. The fit is right -- the matrix is captured once and the
-#' coefficients are identical to the other spelling -- but the fold cannot
+#' environment. The fit itself is right, the matrix being captured once and
+#' the coefficients identical to the other spelling, but the fold cannot
 #' rebuild: the name still resolves to all the rows.
 #'
 #' The matrix is already on the built term, and `term_build()` checked at
@@ -794,11 +794,11 @@ hyper_set <- function(hyper, row, value) {
 #' Nothing is relearned that should be: a matrix carries no knots, no
 #' contrasts and no levels, so subsetting it and re-evaluating it give the
 #' same block. A FORMULA input is untouched and keeps being rebuilt on the
-#' fold's own rows, which is what that rule exists for.
+#' fold's own rows, and that is what the rule exists for.
 #'
 #' It applies where `input_expr` is a plain symbol, which is the case the
-#' name can be bound for. A call -- `lasso(scale(X))` -- keeps only its
-#' own value on the term and not the `X` its re-evaluation would need, so
+#' name can be bound for. A call such as `lasso(scale(X))` keeps only its own
+#' value on the term, never the `X` its re-evaluation would need, so
 #' it is left to the error that names it.
 #'
 #' @param spec A [StatmodSpec()] whose terms are built.
@@ -846,8 +846,9 @@ cv_bind_inputs <- function(spec, sub, i, n) {
 #' standard error across folds.
 #'
 #' @details
-#' The path is run fold by fold rather than point by point so that each fit
-#' starts from the previous point's coefficients, which is what makes a path
+#' The path is run fold by fold, not point by point, so that each fit starts
+#' from the previous point's coefficients. That warm chain is what makes a
+#' path
 #' cheaper than its length suggests. Each training fit rebuilds the design on
 #' its own rows: a term is re-evaluated in the data it is fitted to, so a basis
 #' or a set of contrasts is not carried over from rows the fit did not see.

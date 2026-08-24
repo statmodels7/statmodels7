@@ -23,7 +23,7 @@ permutation.
 \details{
 The permutation is drawn from the caller's stream and put back, so a fit is
 not silently reproducible only when the caller happens to have seeded.
-Passing \code{folds} explicitly is what makes two criteria comparable on the
+Passing \code{folds} explicitly is how two criteria are made comparable on the
 same partition.
 }
 \keyword{internal}

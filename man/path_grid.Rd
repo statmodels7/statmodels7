@@ -29,8 +29,8 @@ empties the block down, and a bounded hyperparameter cannot reach that end:
 the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
 no admissible \eqn{\alpha} empties the block and every point of such a path
 is dropped. The interval itself is what a bounded shape is swept over
-instead -- \eqn{\alpha} between the ridge and the lasso, SCAD's and MCP's
-shape between their limits -- and the sweeps being cyclic, one coordinate
+instead, \eqn{\alpha} between the ridge and the lasso and SCAD's and MCP's
+shape between their limits, and the sweeps being cyclic, one coordinate
 at a time, the kink still moves through \eqn{\lambda}.
 
 The endpoints are excluded because the bounds are open: the elastic net at

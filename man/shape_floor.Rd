@@ -24,8 +24,9 @@ bound, raised to wherever its proximal operator starts to exist at the
 steps the block's coordinate descent will take.
 }
 \details{
-The limit is DERIVED from the condition and not written down. The question
-is put to the penalty -- does it produce a table at this step? -- and
+The limit is derived from the condition, with nothing written down. The
+question is put to the penalty, namely whether it produces a table at this
+step, and
 bisected, so a family added later is covered and neither the \eqn{a - 1} of
 SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
 the constant the penalty is defined over would otherwise contain points at

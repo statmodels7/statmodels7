@@ -32,7 +32,7 @@ not move the kink at all; the largest spread across a decade sweep is
 \eqn{5.6\times 10^{-16}}. A Laplace prior written by its scale has exponent
 \eqn{-1}, its kink narrowing as the hyperparameter grows.
 
-The exponent is MEASURED rather than assumed, and whoever inverts it checks
+The exponent is measured, never assumed, and whoever inverts it checks
 the answer, so a penalty whose kink is not a power of its hyperparameter
 costs two evaluations and then takes the search.
 }

@@ -36,8 +36,8 @@ a standardized penalty on a column of spread 20 at \eqn{n = 200} needs
 \eqn{a > 3}, and a Poisson block whose fitted means are near
 \eqn{10^{-3}} needs \eqn{a > 11}.
 
-Everything is guarded, and \code{NULL} -- which the caller reads as "the
-penalty's own bound and nothing more" -- is the answer wherever the
+Everything is guarded, and \code{NULL}, which the caller reads as "the
+penalty's own bound and nothing more", is the answer wherever the
 working weights are not usable. A starting grid may be approximate; what
 it may not do is fail.
 }

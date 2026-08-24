@@ -15,15 +15,15 @@ term named neither.
 }
 \details{
 The five penalized constructors carry these on their own signatures, where
-a reader can see them -- \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
-\code{enet(x, n_lambda = 25, n_alpha = 5)} -- so nothing here is reached
+a reader can see them, \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)} and
+\code{enet(x, n_lambda = 25, n_alpha = 5)}, so nothing here is reached
 for them. What reaches it is a term that declares a kinked penalty without
 offering an argument for the grid: \code{\link[modelterms7:random]{modelterms7::random()}} under
 a Laplace prior is the case, its hyperparameters being whatever the
 effects' distribution happens to carry.
 
 \code{kink} is the length of the path over the SIZE OF THE KINK, which
-runs geometrically over \code{1/min_ratio} -- four decades -- and wants
+runs geometrically over \code{1/min_ratio}, which is four decades, and wants
 that many points to be smooth in. \code{other} serves an axis that spans
 one bounded interval instead, \eqn{\alpha} between the ridge and the lasso
 or a shape over its useful range, and needs fewer; with a product every

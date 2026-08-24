@@ -21,15 +21,15 @@ The names whose value moves \code{\link[=kink_scale]{kink_scale()}}, which are t
 path over the penalty has to vary.
 }
 \details{
-The question is put to the penalty rather than answered from a list of
+The question is put to the penalty and never answered from a list of
 families: the shape parameters of SCAD and MCP leave the subdifferential at
 zero unchanged and govern how fast the penalty flattens further out, while
 \eqn{\lambda} and the elastic net's \eqn{\alpha} both scale it.
 
 \code{unbounded} restricts the answer to the hyperparameters with no upper
 bound, which is the default choice of what to select. The reference
-implementations do the same by convention -- \pkg{glmnet} holds
-\eqn{\alpha} fixed and \pkg{ncvreg} holds \eqn{\gamma} -- and a bounded
+implementations do the same by convention, \pkg{glmnet} holding
+\eqn{\alpha} fixed and \pkg{ncvreg} holding \eqn{\gamma}, and a bounded
 shape is better swept by hand over a few values than searched.
 }
 \seealso{
