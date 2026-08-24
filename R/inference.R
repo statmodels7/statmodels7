@@ -1151,8 +1151,8 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' label, so a term given a name of its own is read the same way. The
 #' penalties are the ones the term declares through
 #' [modelterms7::term_penalties()], so a term penalized over part of
-#' its parameters -- a segmented term's changes, a filter's deviations -- is
-#' read as penalized rather than as parametric, and is a selection when any
+#' its parameters, a segmented term's changes or a filter's deviations, is
+#' read as penalized and not as parametric, and is a selection when any
 #' of its penalties has a kink.
 #'
 #' @param term A built term.
@@ -1199,7 +1199,7 @@ term_block_kind <- function(term) {
 #' effective degrees of freedom, which the block header reports instead.
 #'
 #' The question is asked of the term's own specification (`spec$linear`)
-#' rather than of a suffix in a coefficient's name, since a name is a label and
+#' and never of a suffix in a coefficient's name, a name being a label and
 #' this is a fact about the construction.
 #'
 #' @param term A built smooth term.
@@ -1286,9 +1286,10 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @title Summarize a Fitted Model
 #' @name summary.StatmodFit
 #' @description
-#' One coefficient table per distribution parameter -- estimate, standard
-#' error, Wald statistic, p-value and interval -- with the degrees of freedom,
-#' the information criteria and the qualifications the numbers carry.
+#' One coefficient table per distribution parameter, carrying the estimate,
+#' its standard error, the Wald statistic, its p-value and an interval,
+#' together with the degrees of freedom, the information criteria and the
+#' qualifications the numbers carry.
 #' @details
 #' **Each distribution parameter is read as blocks, not as one list of
 #' coefficients**, because most of a fitted model's coefficients are not
@@ -1302,7 +1303,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'     they are coordinates in an orthonormal basis and say nothing one at a
 #'     time, while what they say together is the edf.}
 #'   \item{one block per random effect}{the parameters of the effects'
-#'     distribution -- what is usually called the variance component -- and the
+#'     distribution, usually called the variance component, and the
 #'     edf. Not the effects themselves, of which there is one per level.}
 #'   \item{one block per selection}{a lasso, a SCAD or an MCP: its
 #'     hyperparameters, how many coefficients survived, and those coefficients.
@@ -1324,7 +1325,8 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' fixed.
 #'
 #' **What a Wald p-value means here depends on the row**, and the summary
-#' says which is which rather than printing one column and leaving it at that.
+#' says which is which, in place of printing one column and leaving it at
+#' that.
 #' For an unpenalized coefficient it is the usual thing. For a coefficient in a
 #' penalized block it is conditional on the smoothing parameter, which was not
 #' estimated jointly with it, and it does not account for the shrinkage of the
@@ -1333,7 +1335,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' interval there under-covers.
 #'
 #' **The degrees of freedom** are the effective ones, summed over the
-#' terms, so that a penalized term counts what it spends rather than how many
+#' terms, so a penalized term counts what it spends and not how many
 #' columns it has. The information criteria are built on that count.
 #' @param object A [StatmodFit()].
 #' @param level The confidence level.
@@ -1529,15 +1531,17 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' Replaces the coordinate rows of a penalty whose hyperparameters are a chart
 #' with the quantities it declares through
 #' [penalties7::penalty_readable()]: the standard deviations and
-#' correlations of a correlated random effect, rather than the logarithms of a
+#' correlations of a correlated random effect, in place of the logarithms of
+#' a
 #' Cholesky diagonal and the entries below it.
 #'
 #' @details
 #' The standard error is the delta method, and it composes two Jacobians: the
 #' penalty's, which is in the parameter scale of its hyperparameters, and the
 #' link's, the variance matrix being on the free scale the outer criterion was
-#' maximized on. Each interval is built on the scale the quantity declares --
-#' log for a standard deviation, Fisher's z for a correlation -- and mapped
+#' maximized on. Each interval is built on the scale the quantity declares,
+#' log for a standard deviation and Fisher's z for a correlation, and
+#' mapped
 #' back, so a standard deviation cannot be given a negative lower end and a
 #' correlation cannot be given an interval that leaves \eqn{(-1, 1)}. That is
 #' the rule every other interval in the toolkit follows.
@@ -1616,7 +1620,7 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
 #'   `NULL`. It is needed only by a term reported through
 #'   [modelterms7::term_readable()], whose quantities are
 #'   functions of several coefficients at once and whose standard errors
-#'   are therefore the delta method rather than a diagonal entry.
+#'   are therefore the delta method and no diagonal entry.
 #'
 #' @return A list of block records, each with `kind`, `label`,
 #'   `n_coef`, `edf`, `n_zero` and `table`, together
@@ -1626,9 +1630,9 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
 #'   its sub-terms' rows, and `table` keeps only what is left.
 #'
 #' @param st The structural table, or `NULL`. A structural term has no
-#'   design columns, so its block is built from what it reports rather than
+#'   design columns, so its block is built from what it reports and not
 #'   from a block of the design, and its hyperparameter is reported there
-#'   rather than in a block of its own carrying nothing else.
+#'   and not in a block of its own carrying nothing else.
 #'
 #' @keywords internal
 summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
@@ -2090,8 +2094,8 @@ block_label <- function(kind) {
 #'
 #' @description
 #' One note per smoothed term, naming the smoother and the width the build
-#' resolved -- the width of the transition, which is part of the model and
-#' not a detail -- and, where a break-point carries a random development
+#' resolved, the width of the transition being part of the model, and, where
+#' a break-point carries a random development
 #' under a Gaussian precision and the smoother declares a scale correction,
 #' the corrected scale beside the apparent one.
 #'
@@ -2183,7 +2187,7 @@ smoothed_notes <- function(spec, object) {
 #' @param digits Significant digits in the tables.
 #' @param notes Whether to print the qualifications the numbers carry.
 #'   `FALSE` by default, when the foot says how many there are: they
-#'   state conventions rather than facts of the fit, so they read the same
+#'   state conventions and not facts of the fit, so they read the same
 #'   under every model. They are on the summary's `notes` property
 #'   either way.
 #' @param ... Unused.
@@ -2284,7 +2288,7 @@ S7::method(print, StatmodSummary) <- print.StatmodSummary
 #' A hyperparameter row prints numbers where there are any: one estimated by
 #' a marginal criterion carries a standard error and an interval. Where there
 #' is none the columns are blank. What put the value there goes in the NAME,
-#' on every hyperparameter row rather than only on the ones with nothing else
+#' on every hyperparameter row and not only on the ones with nothing else
 #' in them: written into the column where a standard error would have been it
 #' marked a held or path-chosen row and never a REML one, whose column is
 #' occupied, so the note at the foot spoke of a mark that was never printed.
@@ -2363,7 +2367,7 @@ block_rows_shown <- function(tb, cap = 12L, show = 10L) {
 #' A term that develops one of its own parameters carries columns that mean
 #' different things: a break-point's population value and its per-group
 #' deviations are not comparable quantities, and a table that stacks them
-#' reads as a list of numbers rather than as a model. Each developed
+#' reads as a list of numbers and no longer as a model. Each developed
 #' parameter is therefore printed as a compartment of its own, headed by what
 #' develops it, opening with its hyperparameter under a name that says what
 #' the hyperparameter is, and rendering each sub-term the way a block of that
@@ -2528,9 +2532,9 @@ print_block_head <- function(hd, digits = 4L) {
 #' names the fit was built with, which are the ones another call can be
 #' indexed by.
 #'
-#' ONE PIECE and not every piece they share: the term's own name is one, and
-#' a set of coefficients that happen to agree further along -- `r.1`,
-#' `r.2` of a matrix column -- would otherwise be left as the bare
+#' **one piece** and never every piece they share: the term's own name is
+#' one, and a set of coefficients that happen to agree further along, `r.1`
+#' and `r.2` of a matrix column, would otherwise be left as the bare
 #' numbers.
 #'
 #' @param nms The names.
@@ -2558,7 +2562,7 @@ drop_common_prefix <- function(nms) {
 #' above the penalized mode, and which hyperparameters have run to a boundary.
 #'
 #' @details
-#' **Why a certificate rather than the optimizer's flag.** The flag says
+#' **Why a certificate and not the optimizer's flag.** The flag says
 #' whether a search stopped on its own rule, which is a statement about the
 #' search. Measured across shapes, it does not order fits by quality: on one
 #' model the default reported success at a criterion of -1783.47 while the same
@@ -2567,15 +2571,16 @@ drop_common_prefix <- function(nms) {
 #'
 #' **The state comes from the gradient and the mode error is reported
 #' beside it, not folded into it.** Measured at the reported point over six
-#' shapes, the outer gradient separates by five orders -- 4.7e-07, 7.8e-07,
+#' shapes, the outer gradient separates by five orders, 4.7e-07, 7.8e-07,
 #' 5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
-#' that is not -- while the mode error does not: it reads 1.8e-16 to 6.1e-12 on
+#' that is not, while the mode error does not: it reads 1.8e-16 to 6.1e-12
+#' on
 #' four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
 #' `seg` whose answer is right to a correlation of 0.9932. A number that
 #' does not separate cannot decide a state, and a certificate that says how far
 #' from the mode is worth more than a boolean that hides it.
 #'
-#' `tol` is 1e-2 rather than the geometric middle of the two groups: the
+#' `tol` is 1e-2 and not the geometric middle of the two groups: the
 #' two ways of being wrong are not symmetric, and a certificate that says NOT
 #' CONVERGED at a good point is visible and checkable where one that certifies
 #' a bad point is the failure this exists to remove.
@@ -2583,18 +2588,20 @@ drop_common_prefix <- function(nms) {
 #' **What it costs** is one outer gradient and one solve, once, at a point
 #' the fit already holds. Nothing is refitted: measured, the criterion
 #' reconstructed from `fit@spec` equals the one the fit reports EXACTLY on
-#' every shape, so the reading is of the fitted model and not of another one.
+#' every shape, so the reading is of the fitted model and of no other.
 #'
 #' **Where there is no outer gradient there are two cases, and they get
-#' different answers.** A model with NO PENALTY -- `linpar`, `nl`,
-#' `seg`, `jump`, `jseg` -- has no hyperparameter for a
+#' different answers.** A model with **no penalty**, which covers `linpar`,
+#' `nl`, `seg`, `jump` and `jseg`, has no hyperparameter for a
 #' gradient to be about, so the only question left is whether the inner fit
 #' reached its mode, and the mode error answers it: measured over the
 #' reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
 #' against 1.215 on a `jump` fitted to data carrying a slope and a slope
-#' change it has no term for. A model whose only hyperparameters are KINKED --
+#' change it has no term for. A model whose only hyperparameters are
+#' **kinked**,
 #' `lasso`, `scad`, `mcp`, swept along a path because a Laplace
-#' approximation at a mode sitting on the kink has no meaning -- gets neither
+#' a Laplace approximation at a mode sitting on the kink having no meaning,
+#' gets neither
 #' reading and stays `"unknown"`: at a coefficient the penalty has set to
 #' zero the score does not vanish but lies in the subdifferential, so the mode
 #' error is not a statement about being at a mode. Measured on a lasso, its
@@ -2602,7 +2609,7 @@ drop_common_prefix <- function(nms) {
 #' score is -0.715.
 #'
 #' A form whose criterion has no EXACT gradient
-#' ([outer_gradient_ok()]) is also `"unknown"` rather than
+#' ([outer_gradient_ok()]) is also `"unknown"` and never
 #' approximated: 2p refits to difference it would cost more than the fit.
 #'
 #' **The boundary label, and why its threshold needs no derivation.**

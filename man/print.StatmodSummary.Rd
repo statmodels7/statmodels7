@@ -13,7 +13,7 @@
 
 \item{notes}{Whether to print the qualifications the numbers carry.
 \code{FALSE} by default, when the foot says how many there are: they
-state conventions rather than facts of the fit, so they read the same
+state conventions and not facts of the fit, so they read the same
 under every model. They are on the summary's \code{notes} property
 either way.}
 

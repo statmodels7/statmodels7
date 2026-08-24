@@ -24,12 +24,12 @@ returns it with the statistic and the p-value added.}
 \code{NULL}. It is needed only by a term reported through
 \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, whose quantities are
 functions of several coefficients at once and whose standard errors
-are therefore the delta method rather than a diagonal entry.}
+are therefore the delta method and no diagonal entry.}
 
 \item{st}{The structural table, or \code{NULL}. A structural term has no
-design columns, so its block is built from what it reports rather than
+design columns, so its block is built from what it reports and not
 from a block of the design, and its hyperparameter is reported there
-rather than in a block of its own carrying nothing else.}
+and not in a block of its own carrying nothing else.}
 }
 \value{
 A list of block records, each with \code{kind}, \code{label},

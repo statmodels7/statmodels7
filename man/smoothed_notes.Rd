@@ -17,8 +17,8 @@ A character vector, possibly empty.
 }
 \description{
 One note per smoothed term, naming the smoother and the width the build
-resolved -- the width of the transition, which is part of the model and
-not a detail -- and, where a break-point carries a random development
+resolved, the width of the transition being part of the model, and, where
+a break-point carries a random development
 under a Gaussian precision and the smoother declares a scale correction,
 the corrected scale beside the apparent one.
 }

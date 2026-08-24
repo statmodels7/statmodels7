@@ -24,7 +24,7 @@ each such row carrying what put the value there.
 A hyperparameter row prints numbers where there are any: one estimated by
 a marginal criterion carries a standard error and an interval. Where there
 is none the columns are blank. What put the value there goes in the NAME,
-on every hyperparameter row rather than only on the ones with nothing else
+on every hyperparameter row and not only on the ones with nothing else
 in them: written into the column where a standard error would have been it
 marked a held or path-chosen row and never a REML one, whose column is
 occupied, so the note at the foot spoke of a mark that was never printed.

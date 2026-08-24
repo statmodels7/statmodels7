@@ -23,7 +23,7 @@ per parameter developed over covariates.
 A term that develops one of its own parameters carries columns that mean
 different things: a break-point's population value and its per-group
 deviations are not comparable quantities, and a table that stacks them
-reads as a list of numbers rather than as a model. Each developed
+reads as a list of numbers and no longer as a model. Each developed
 parameter is therefore printed as a compartment of its own, headed by what
 develops it, opening with its hyperparameter under a name that says what
 the hyperparameter is, and rendering each sub-term the way a block of that

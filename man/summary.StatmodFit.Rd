@@ -32,9 +32,10 @@ an earlier fit; it is zero where no hyperparameter was estimated.}
 A \code{\link[=StatmodSummary]{StatmodSummary()}}.
 }
 \description{
-One coefficient table per distribution parameter -- estimate, standard
-error, Wald statistic, p-value and interval -- with the degrees of freedom,
-the information criteria and the qualifications the numbers carry.
+One coefficient table per distribution parameter, carrying the estimate,
+its standard error, the Wald statistic, its p-value and an interval,
+together with the degrees of freedom, the information criteria and the
+qualifications the numbers carry.
 }
 \details{
 \strong{Each distribution parameter is read as blocks, not as one list of
@@ -49,7 +50,7 @@ degrees of freedom. The coefficients of the wiggly part are not shown:
 they are coordinates in an orthonormal basis and say nothing one at a
 time, while what they say together is the edf.}
 \item{one block per random effect}{the parameters of the effects'
-distribution -- what is usually called the variance component -- and the
+distribution, usually called the variance component, and the
 edf. Not the effects themselves, of which there is one per level.}
 \item{one block per selection}{a lasso, a SCAD or an MCP: its
 hyperparameters, how many coefficients survived, and those coefficients.
@@ -71,7 +72,8 @@ such a point to read a standard error from. One the caller set is marked
 fixed.
 
 \strong{What a Wald p-value means here depends on the row}, and the summary
-says which is which rather than printing one column and leaving it at that.
+says which is which, in place of printing one column and leaving it at
+that.
 For an unpenalized coefficient it is the usual thing. For a coefficient in a
 penalized block it is conditional on the smoothing parameter, which was not
 estimated jointly with it, and it does not account for the shrinkage of the
@@ -80,7 +82,7 @@ exists only because that coefficient survived the selection, and a naive
 interval there under-covers.
 
 \strong{The degrees of freedom} are the effective ones, summed over the
-terms, so that a penalized term counts what it spends rather than how many
+terms, so a penalized term counts what it spends and not how many
 columns it has. The information criteria are built on that count.
 }
 \examples{
