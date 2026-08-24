@@ -7,18 +7,30 @@
 statmodels7_attach()
 }
 \value{
-The names of the packages attached, invisibly.
+The names of the packages this call attached, a character vector,
+invisibly. Empty when every installed member was already on the search
+path.
 }
 \description{
-Attaches every installed member that is not on the search path already.
+Attaches every installed member that is not on the search path already,
+with \code{\link[=library]{library()}}. A member already attached is left alone, so calling this
+twice attaches nothing the second time, and a member that is not installed
+is skipped without an error.
 }
 \details{
-Each member's own startup messages are suppressed, since the caller asked
-for the toolkit and gets one message about it rather than one per package,
-and so are the masking warnings, which
-\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} reports in one place instead.
+Each member's own startup messages are suppressed: the caller asked for
+the toolkit and gets one message about it, not eight. The masking warnings
+are suppressed too, and \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} reports the same
+information once, at the end, in one block.
+
+Attachment order follows \code{\link[=statmodels7_packages]{statmodels7_packages()}}, which is alphabetical.
+The members export no name in common, so nothing about the result depends
+on that order; \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} is what would report it if one
+day they did.
 }
 \seealso{
-\code{\link[=statmodels7_packages]{statmodels7_packages()}}
+\code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members,
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for what the suppressed warnings would have
+said.
 }
 \keyword{internal}

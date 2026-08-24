@@ -7,16 +7,43 @@
 statmodels7_versions()
 }
 \value{
-A data frame with columns \code{package} and \code{version}, the
-latter \code{NA} for a member that is not installed.
+A data frame with one row per member and two character columns:
+\describe{
+\item{\code{package}}{the member's name, sorted alphabetically.}
+\item{\code{version}}{its installed version, or \code{NA} when the package
+cannot be found in the library path.}
+}
+Row names are the default integers, and \code{stringsAsFactors} is \code{FALSE},
+so both columns are character.
 }
 \description{
-The version of each member package as currently installed.
+Reports the version of each member package as it is installed on this
+machine, one row per member. A member that is not installed reports \code{NA}
+instead of being dropped, so the result always has one row per name
+\code{\link[=statmodels7_packages]{statmodels7_packages()}} returns and a missing member is visible.
+}
+\details{
+The version is read with \code{\link[utils:packageDescription]{utils::packageVersion()}} and coerced to a
+character string, so \code{"0.38.0"} sorts and prints as written and no
+comparison is implied between two members' numbers. The members version
+independently.
+
+This is the source of the table the attach message prints, and of the
+comparison \code{\link[=statmodels7_update]{statmodels7_update()}} makes against GitHub.
 }
 \examples{
-statmodels7_versions()
+v <- statmodels7_versions()
+v
+
+# One row per member, and every column is character.
+nrow(v) == length(statmodels7_packages())
+vapply(v, class, character(1))
+
+# Which members, if any, are missing from this library.
+v$package[is.na(v$version)]
 
 }
 \seealso{
-\code{\link[=statmodels7_packages]{statmodels7_packages()}}, \code{\link[=statmodels7_update]{statmodels7_update()}}
+\code{\link[=statmodels7_packages]{statmodels7_packages()}} for the names alone,
+\code{\link[=statmodels7_update]{statmodels7_update()}} to install the members that are behind.
 }

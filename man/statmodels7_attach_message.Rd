@@ -7,25 +7,34 @@
 statmodels7_attach_message(versions)
 }
 \arguments{
-\item{versions}{A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns.}
+\item{versions}{A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with
+character columns \code{package} and \code{version} and \code{NA} in \code{version} for a
+member that is not installed. Not validated: this is called from
+\code{.onAttach()} with that function's own result.}
 }
 \value{
-A character vector, one element per row of the layout, empty when
-there are no members.
+A character vector with \code{ceiling(nrow(versions) / 2)} elements, one
+per row of the two-column layout, each already trimmed of trailing
+spaces. \code{character(0)} when \code{versions} has no rows.
 }
 \description{
-The member packages laid out in two columns with their versions, padded so
+Lays the member packages out in two columns with their versions, padded so
 that the second column and the versions within it start at a fixed offset.
+Each entry is prefixed \code{v} when the member is installed and \code{x} when it is
+not, and the two columns are filled down the left one first.
 }
 \details{
-Padding is applied inside a line and removed at its end, since a trailing
+Padding is applied inside a line and stripped at its end, since a trailing
 run of spaces is invisible where it is written and visible wherever the
-message is pasted. A member that is not installed is marked rather than
-shown blank: the two are different states and only one of them is a
-complete toolkit. Plain ASCII throughout: a non-ASCII character in a
-package's own output is a portability risk taken for a decoration.
+message is pasted. A member that is not installed is marked \code{x} and named
+with the text \verb{not installed}; leaving it blank would hide the difference
+between an absent member and a present one.
+
+Plain ASCII throughout. A non-ASCII character in a package's startup
+message is a portability risk taken for a decoration.
 }
 \seealso{
-\code{\link[=statmodels7_versions]{statmodels7_versions()}}
+\code{\link[=statmodels7_versions]{statmodels7_versions()}} for the input,
+\code{\link[=format_conflicts]{format_conflicts()}} for the other half of the same message.
 }
 \keyword{internal}
