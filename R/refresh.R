@@ -209,7 +209,7 @@ statmod_design_at <- function(spec, coef, design) {
 #' # What moves
 #'
 #' The rescaling factor of a discontinuous break-point term, and the
-#' direction it last travelled in, which \pkg{modelterms7} halves on a
+#' direction it last traveled in, which \pkg{modelterms7} halves on a
 #' reversal. Advancing that once per objective evaluation would anneal at
 #' the speed of the line search instead of the speed of the fit; never
 #' advancing it would solve a permanently smoothed problem, whose fixed

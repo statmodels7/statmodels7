@@ -262,7 +262,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' coef(fit)
 #'
-#' # The scale modelled too, which is what the framework is for. The data
+#' # The scale modeled too, which is what the framework is for. The data
 #' # were drawn with log sigma = 0.3 x, and the interval covers it.
 #' both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 #' coef(both)$sigma
@@ -607,7 +607,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       # the caller's optimizer, where they named one. `iwls()` is a scoring
       # iteration over a design block and has no meaning over a filter's own
       # parameters, so it is what asks for the joint step's own default
-      # rather than a choice to be honoured here; anything else is used as
+      # rather than a choice to be honored here; anything else is used as
       # given, and passing NULL unconditionally made `inner_optimizer`
       # accepted and ignored for exactly the models it matters most for
       res <- statmod_fit_joint(spec, design, obj, beta, hyper,
@@ -1188,7 +1188,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
 #' `th[[1]][[p]]`; indexing the outer list by a parameter's name gives
 #' `NULL`, and this function did that, so every start silently fell to
 #' zero on the link scale. On a response centered at 5.84 that put the location
-#' at 0 and sent the run travelling, which is how a Student t fitted to iris
+#' at 0 and sent the run traveling, which is how a Student t fitted to iris
 #' reached a variance of \eqn{10^7}.
 #'
 #' A start that cannot be obtained is not an error: the fit still runs, from a
@@ -1383,7 +1383,7 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   # while sigma's agreed exactly -- because the Demmler-Reinsch basis is
   # orthogonalized against the constant in the UNWEIGHTED metric and mu's
   # information carries the weights 1/sigma^2, which vary here because sigma
-  # is itself modelled. The gap is small wherever the blocks are nearly
+  # is itself modeled. The gap is small wherever the blocks are nearly
   # orthogonal and is not bounded in general.
   #
   # A kinked penalty is NOT read from this matrix. There the count is the

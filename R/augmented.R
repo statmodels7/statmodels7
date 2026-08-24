@@ -3,10 +3,10 @@ NULL
 
 # The square-root design, so that the scoring step never forms X'X.
 #
-# With more than one modelled parameter the information is not X'WX for a
+# With more than one modeled parameter the information is not X'WX for a
 # diagonal W: it is Z' Omega Z, where Z is the block diagonal of the equations'
 # designs and Omega is block diagonal BY OBSERVATION with a K by K block per
-# observation, K being the number of modelled parameters. Those blocks are
+# observation, K being the number of modeled parameters. Those blocks are
 # information matrices of one observation and are positive definite wherever
 # the family is regular, so each has a Cholesky factor, and
 #

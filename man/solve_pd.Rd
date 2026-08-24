@@ -17,7 +17,7 @@ solve_pd(A, what, labels = NULL)
 The inverse.
 }
 \description{
-An inverse through the Cholesky factor, signalling an error naming the
+An inverse through the Cholesky factor, signaling an error naming the
 matrix when a direction is flat.
 }
 \details{

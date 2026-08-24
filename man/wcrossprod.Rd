@@ -59,7 +59,7 @@ was measured: the crossover where opening a parallel region costs what it
 saves sits near \eqn{9 \times 10^4} multiply-adds on the development
 machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
 \eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
-the gate is set above it, where a misjudgement in either direction costs
+the gate is set above it, where a misjudgment in either direction costs
 almost nothing.
 }
 

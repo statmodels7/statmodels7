@@ -277,7 +277,7 @@ pin_boundary <- function(K) {
 #' @details
 #' The test is on the **diagonal**. A frozen coordinate makes its whole row
 #' non-finite, cross terms included, so a test over whole columns marks its
-#' neighbours too. Measured on a Student t whose \eqn{\nu} had reached
+#' neighbors too. Measured on a Student t whose \eqn{\nu} had reached
 #' `double.xmax`, a column test held \eqn{\sigma} along with \eqn{\nu} and
 #' left the fit exactly where it had been.
 #'
@@ -608,7 +608,7 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #' resolution while the displacement is a correction and something else
 #' entirely once it is not: an inner fit that stopped far from a mode produces
 #' a large displacement, a large movement, and a number that
-#' [optimizers7::crit_abs_obj()] would read as licence to stop.
+#' [optimizers7::crit_abs_obj()] would read as license to stop.
 #'
 #' The quantity tested is in log-likelihood units, not in the coefficients',
 #' so one limit serves every shape. Measured over whole fits it

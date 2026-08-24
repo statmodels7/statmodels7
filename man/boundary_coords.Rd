@@ -19,7 +19,7 @@ sitting at the clamp its link keeps it strictly inside leaves behind.
 \details{
 The test is on the \strong{diagonal}. A frozen coordinate makes its whole row
 non-finite, cross terms included, so a test over whole columns marks its
-neighbours too. Measured on a Student t whose \eqn{\nu} had reached
+neighbors too. Measured on a Student t whose \eqn{\nu} had reached
 \code{double.xmax}, a column test held \eqn{\sigma} along with \eqn{\nu} and
 left the fit exactly where it had been.
 }

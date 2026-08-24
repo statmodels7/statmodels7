@@ -238,7 +238,7 @@ S7::method(print, Iwls) <- print.Iwls
 #'
 #' `damp` adds \eqn{\lambda I} to the system, which shortens a coordinate in
 #' proportion to how little curvature it has. A coordinate whose diagonal is
-#' 0.24 beside neighbours at 2328 is shortened by
+#' 0.24 beside neighbors at 2328 is shortened by
 #' \eqn{(0.24 + \lambda)/0.24} while theirs move by
 #' \eqn{(2328 + \lambda)/2328}: a differential shrink, which a scalar step
 #' length cannot give.
@@ -264,7 +264,7 @@ S7::method(print, Iwls) <- print.Iwls
 #'
 #' The test is on the **diagonal** of the curvature. A boundary coordinate
 #' makes its entire row non-finite, cross terms included, so a test over
-#' whole columns marks its neighbours too and holds coordinates that were
+#' whole columns marks its neighbors too and holds coordinates that were
 #' perfectly movable.
 #'
 #' @param pieces A list with `R`, `C` and `A`, as [iwls_pieces()] builds it.
@@ -350,7 +350,7 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
   if (!is.null(A0)) {
     # BY THE DIAGONAL AND NOT BY THE COLUMN. A boundary coordinate makes its
     # whole ROW non-finite, cross terms included, so a column test marks its
-    # neighbours too: measured on the Student t, testing columns held sigma
+    # neighbors too: measured on the Student t, testing columns held sigma
     # along with nu and left the fit exactly where it had been. The diagonal
     # names the coordinate whose own curvature is gone; dropping its row and
     # column then clears the cross terms, and the loop repeats in case the
@@ -600,7 +600,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     value <- vnew
     # A STALL WITH THE SCORE STILL LARGE IS ONE COORDINATE HOLDING THE OTHERS,
     # and a shorter step cannot cure it because the step length is scalar.
-    # Where a coordinate's curvature is orders below its neighbours' -- a
+    # Where a coordinate's curvature is orders below its neighbors' -- a
     # shape approaching the clamp its link keeps it inside, whose information
     # falls as nu^-4 -- the scoring step in it is astronomically long, and the
     # line search shortens the WHOLE step to keep it admissible: measured on a
@@ -812,7 +812,7 @@ iwls_met <- function(method, state) {
 #' curvature \eqn{1/y^2}, so dividing by \eqn{s_p} survives any rescaling of
 #' the response. Taking \eqn{s_p} over the whole equation changes nothing
 #' within it: a stiff, heavily penalized coordinate is held to the same rule
-#' as its neighbours, and that is what the envelope identities the outer
+#' as its neighbors, and that is what the envelope identities the outer
 #' gradient rests on require of the mode.
 #'
 #' This reading arbitrates the final verdict and never drives the loop.

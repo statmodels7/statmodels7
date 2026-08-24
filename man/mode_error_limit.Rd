@@ -20,7 +20,7 @@ score says the mode is and asking how far the criterion moved. That is a
 resolution while the displacement is a correction and something else
 entirely once it is not: an inner fit that stopped far from a mode produces
 a large displacement, a large movement, and a number that
-\code{\link[optimizers7:crit_abs_obj]{optimizers7::crit_abs_obj()}} would read as licence to stop.
+\code{\link[optimizers7:crit_abs_obj]{optimizers7::crit_abs_obj()}} would read as license to stop.
 
 The quantity tested is in log-likelihood units, not in the coefficients',
 so one limit serves every shape. Measured over whole fits it

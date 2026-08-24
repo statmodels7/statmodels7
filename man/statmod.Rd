@@ -210,7 +210,7 @@ dd$y <- 1 + 2 * dd$x + rnorm(200, sd = exp(0.3 * dd$x))
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 coef(fit)
 
-# The scale modelled too, which is what the framework is for. The data
+# The scale modeled too, which is what the framework is for. The data
 # were drawn with log sigma = 0.3 x, and the interval covers it.
 both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 coef(both)$sigma

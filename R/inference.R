@@ -501,7 +501,7 @@ readable_joint <- function(spec, design, fit) {
 #' Invert a Matrix That Ought to Be Positive Definite
 #'
 #' @description
-#' An inverse through the Cholesky factor, signalling an error naming the
+#' An inverse through the Cholesky factor, signaling an error naming the
 #' matrix when a direction is flat.
 #'
 #' @details

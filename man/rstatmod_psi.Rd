@@ -26,7 +26,7 @@ which is the one a reader knows: a loading is the loading rather than its
 logarithm, and a persistence is the partial autocorrelation its chart
 carries rather than the autoregressive coefficient that chart produces. A
 name the term does not have is reported with the ones it does, since a
-misspelt parameter would otherwise leave the term at a starting value and
+misspelled parameter would otherwise leave the term at a starting value and
 simulate a model with almost no dynamics.
 }
 \seealso{

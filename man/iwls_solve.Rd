@@ -52,7 +52,7 @@ Faster per iteration, worse conditioned, and the trade the caller chose.
 \section{The damping is Levenberg's, and is zero unless a step has failed}{
 \code{damp} adds \eqn{\lambda I} to the system, which shortens a coordinate in
 proportion to how little curvature it has. A coordinate whose diagonal is
-0.24 beside neighbours at 2328 is shortened by
+0.24 beside neighbors at 2328 is shortened by
 \eqn{(0.24 + \lambda)/0.24} while theirs move by
 \eqn{(2328 + \lambda)/2328}: a differential shrink, which a scalar step
 length cannot give.
@@ -78,7 +78,7 @@ while \eqn{\nu}'s own score was exactly 0.
 
 The test is on the \strong{diagonal} of the curvature. A boundary coordinate
 makes its entire row non-finite, cross terms included, so a test over
-whole columns marks its neighbours too and holds coordinates that were
+whole columns marks its neighbors too and holds coordinates that were
 perfectly movable.
 }
 
