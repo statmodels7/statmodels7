@@ -71,8 +71,8 @@ measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
 2000, falling with the sample size.
 
 \strong{Where it does not apply.} A kinked penalty has no hyperparameter
-the outer criterion estimates -- \code{\link[=outer_hyper_index]{outer_hyper_index()}} skips it
--- so there is nothing to propagate and the correction is zero. That is
+the outer criterion estimates, \code{\link[=outer_hyper_index]{outer_hyper_index()}} skipping it, so
+there is nothing to propagate and the correction is zero. That is
 not an approximation: the map from the hyperparameter to the penalized
 mode turns a corner whenever a coefficient joins or leaves the active
 set, and a delta method needs a derivative that does not exist there.

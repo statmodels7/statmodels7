@@ -16,6 +16,6 @@ A single string.
 }
 \description{
 Locates the entry of a penalty's hyperparameter Hessian, which is keyed by
-name and not by position.
+name, never by position.
 }
 \keyword{internal}

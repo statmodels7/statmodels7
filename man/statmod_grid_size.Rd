@@ -24,9 +24,9 @@ for nothing.
 How finely a hyperparameter is swept is a property of the term for the
 same reason as whether it is swept at all: a penalized block of four
 columns and one of four hundred want different grids, and a criterion
-applies to every hyperparameter of the model at once -- the smooth ones
-included, which are read at the mode and not swept -- so it cannot know
-which it is looking at. \code{\link[modelterms7:term_grid]{modelterms7::term_grid()}} is where a
+applies to every hyperparameter of the model at once, the smooth ones
+included, and those are read at the mode instead of being swept, so a
+criterion cannot know which kind it is looking at. \code{\link[modelterms7:term_grid]{modelterms7::term_grid()}} is where a
 term says so, and the value travels with the penalty's entry, so one
 reached through a sub-term of a structural term carries it too.
 }

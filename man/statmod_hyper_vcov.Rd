@@ -20,10 +20,10 @@ statmod_hyper_vcov(spec, design, coef, hyper, method)
 \value{
 A square matrix, one row per estimated hyperparameter, whose
 dimnames join the distribution parameter, the term and the
-hyperparameter's own name with a carriage return -- a character no
-name can contain, so the three are recoverable from the key -- and
-which carries the index as the attribute \code{"idx"}; \code{NULL}
-where there is nothing to report.
+hyperparameter's own name with a carriage return, a character no name
+can contain, so the three stay recoverable from the key. The index
+rides on the attribute \code{"idx"}. \code{NULL} where there is nothing to
+report.
 }
 \description{
 The asymptotic variance matrix of the estimated hyperparameters, on the free
@@ -41,12 +41,13 @@ smoothing parameter on its own scale, where the estimate is often several
 orders of magnitude from zero and the criterion far from symmetric, would
 describe a shape the criterion does not have.
 
-\strong{Where it does not apply.} A hyperparameter chosen by a path --
+\strong{Where it does not apply.} A hyperparameter chosen by a path,
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}, \code{\link[=cv]{cv()}} over a kinked
-penalty -- is the argument of a minimum over a grid, not the root of a
+which is what happens to a kinked penalty's, is the argument of a minimum
+over a grid and not the root of a
 derivative, so there is no Hessian to invert and no standard error to
 report. Its uncertainty is a resampling question and \code{NULL} is
-returned rather than a number of another kind.
+returned, in place of a number of another kind.
 }
 \seealso{
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

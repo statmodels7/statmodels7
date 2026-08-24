@@ -11,10 +11,10 @@ NULL
 #' The property that decides is one each term already reports: a penalty whose
 #' [penalties7::penalty_kinks()] is non-empty is not twice
 #' differentiable in its coefficients, so its block cannot enter a system
-#' solved by a curvature. Everything else -- an unpenalized block, a ridge, a
-#' spline, a random effect, a structured or additive penalty -- goes into one
-#' system and is estimated all together, because their joint curvature exists
-#' and using it is what makes a fit converge in a handful of iterations.
+#' solved by a curvature. Everything else goes into one system and is
+#' estimated all together: an unpenalized block, a ridge, a spline, a random
+#' effect, a structured or additive penalty. Their joint curvature exists,
+#' and using it closes a fit in a handful of iterations.
 #'
 #' A term whose penalty gains a smooth approximation would answer
 #' `penalty_kinks()` differently and move into the smooth block with no
@@ -107,16 +107,17 @@ statmod_active <- function(spec, blocks, beta, hyper, tol = 1e-8) {
 #' Does a Penalty Have a Kink?
 #'
 #' @description
-#' `TRUE` when the penalty is not differentiable somewhere a coefficient
-#' can be, which is what puts its block outside the jointly fitted system.
+#' `TRUE` when the penalty is not differentiable somewhere a coefficient can
+#' be. A block whose penalty answers `TRUE` is estimated outside the jointly
+#' fitted system, by a coordinate descent of its own.
 #'
 #' @details
 #' [penalties7::penalty_kinks()] is read at a probe value of the
-#' hyperparameters -- the midpoint of their bounds, the rule
-#' \pkg{modelterms7} already uses -- because whether a kink exists is a
-#' property of the family and not of a point.
+#' hyperparameters, the midpoint of their bounds, which is the rule
+#' \pkg{modelterms7} already uses. Whether a kink exists is a property of the
+#' family, not of a point, so any admissible probe answers.
 #'
-#' A penalty that stops when asked is reported rather than treated as smooth.
+#' A penalty that stops when asked is reported, never treated as smooth.
 #' Reading the failure as an answer sends the term to the scheme for the
 #' opposite property: `scad()` and `mcp()` were fitted by the
 #' curvature of a function that has none, reporting an effective 19.00
@@ -157,9 +158,9 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
 #' iterations against 126, and at 480 the plain one does not converge in
 #' 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
-#' faster again and is the next thing to write; it needs the columns of the
-#' design and the running residual, so it belongs here and not behind an
-#' optimizer's interface.
+#' faster again and is the next thing to write. It needs the columns of the
+#' design and the running residual, which is the model itself, so it belongs
+#' here and could not live behind an optimizer's black-box interface.
 #'
 #' @param obj The full objective.
 #' @param beta The current stacked coefficients.
@@ -227,12 +228,14 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #' or not that term has more than one.
 #'
 #' @details
-#' Twelve places used to run the same loop -- over the distribution parameters,
-#' over each one's terms, asking each term for its penalty -- and each of them
-#' assumed a term carries at most one. A term may carry several, over different
-#' subsets of its own parameters, which is what a panel model with a population
-#' value and a shrunk deviation per group needs. Enumerating once is both the
-#' generalization and the removal of eleven copies.
+#' Twelve places used to run the same loop: over the distribution parameters,
+#' over each one's terms, asking each term for its penalty. Every one of them
+#' assumed a term carries at most one.
+#'
+#' A term may carry several, over different subsets of its own parameters,
+#' which is what a panel model with a population value and a shrunk deviation
+#' per group needs. Enumerating once is both the generalization and the
+#' removal of eleven copies.
 #'
 #' **The key** is the term's name in the formula, and the entry's own name
 #' appended after `::` when the term carries more than one. Two
@@ -329,7 +332,7 @@ statmod_penalty_keys <- function(spec) {
 #' WHICH hyperparameters are estimated is a property of the terms, not of the
 #' criterion: the term is where the penalty is named, and a criterion argument
 #' saying otherwise was read by nothing when the two disagreed. Everything
-#' here consults this one enumeration -- the outer index, the path, and the
+#' here consults this one enumeration: the outer index, the path, and the
 #' summary's account of what was estimated and what was given.
 #'
 #' @param spec A [StatmodSpec()].
@@ -419,9 +422,9 @@ statmod_unit <- function(spec, design, param, key) {
 #' How finely a hyperparameter is swept is a property of the term for the
 #' same reason as whether it is swept at all: a penalized block of four
 #' columns and one of four hundred want different grids, and a criterion
-#' applies to every hyperparameter of the model at once -- the smooth ones
-#' included, which are read at the mode and not swept -- so it cannot know
-#' which it is looking at. [modelterms7::term_grid()] is where a
+#' applies to every hyperparameter of the model at once, the smooth ones
+#' included, and those are read at the mode instead of being swept, so a
+#' criterion cannot know which kind it is looking at. [modelterms7::term_grid()] is where a
 #' term says so, and the value travels with the penalty's entry, so one
 #' reached through a sub-term of a structural term carries it too.
 #'
@@ -446,10 +449,10 @@ statmod_grid_size <- function(spec, row, default) {
 #' nothing.
 #'
 #' @details
-#' One number per term rather than one per hyperparameter, because only the
-#' sweep by kink size uses it: a bounded hyperparameter is swept over its own
-#' interval and a shape that does not move the kink over a geometric grid
-#' above its lower bound.
+#' One number per term, not one per hyperparameter, because only the sweep by
+#' kink size reads it. A bounded hyperparameter is swept over its own
+#' interval, and a shape that does not move the kink over a geometric grid
+#' above its lower bound; neither takes its length from here.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param row One row of [path_rows()]'s index.
@@ -473,10 +476,10 @@ statmod_min_ratio <- function(spec, row, default) {
 #' neither.
 #'
 #' @details
-#' It belongs to the TERM and not to the criterion, for the reason the whole
-#' enumeration does: a criterion is asked of every hyperparameter of the
-#' model, and a smooth one is read at the mode rather than swept, so most of
-#' what it is asked about could not answer. A penalty with a kink is fitted
+#' It belongs to the term, for the reason the whole enumeration does: a
+#' criterion is asked about every hyperparameter of the model, and a smooth
+#' one is read at the mode instead of being swept, so most of what it is
+#' asked about could not answer. A penalty with a kink is fitted
 #' by a scheme of its own, and how that scheme covers the term's own
 #' hyperparameters is part of the scheme.
 #'

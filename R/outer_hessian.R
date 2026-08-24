@@ -45,8 +45,8 @@ NULL
 #' [penalties7::penalty_dhessian()],
 #' [penalties7::penalty_d2hessian()],
 #' [penalties7::penalty_dcross()]), so a penalty that is not
-#' quadratic in its hyperparameters -- a ridge, a random effect, a structured
-#' prior -- is covered by the same assembly with no branch here.
+#' quadratic in its hyperparameters is covered by the same assembly with no
+#' branch here: a ridge, a random effect, a structured prior.
 #'
 #' **Onto the free scale** the chain rule is second order and diagonal,
 #' each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
@@ -347,7 +347,7 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
 #'
 #' @description
 #' Locates the entry of a penalty's hyperparameter Hessian, which is keyed by
-#' name and not by position.
+#' name, never by position.
 #'
 #' @param a,b The two hyperparameter names.
 #' @param keys The names the penalty actually returned.
@@ -537,8 +537,8 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' 2000, falling with the sample size.
 #'
 #' **Where it does not apply.** A kinked penalty has no hyperparameter
-#' the outer criterion estimates -- [outer_hyper_index()] skips it
-#' -- so there is nothing to propagate and the correction is zero. That is
+#' the outer criterion estimates, [outer_hyper_index()] skipping it, so
+#' there is nothing to propagate and the correction is zero. That is
 #' not an approximation: the map from the hyperparameter to the penalized
 #' mode turns a corner whenever a coefficient joins or leaves the active
 #' set, and a delta method needs a derivative that does not exist there.
@@ -636,12 +636,13 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #' orders of magnitude from zero and the criterion far from symmetric, would
 #' describe a shape the criterion does not have.
 #'
-#' **Where it does not apply.** A hyperparameter chosen by a path --
+#' **Where it does not apply.** A hyperparameter chosen by a path,
 #' [aic()], [bic()], [cv()] over a kinked
-#' penalty -- is the argument of a minimum over a grid, not the root of a
+#' which is what happens to a kinked penalty's, is the argument of a minimum
+#' over a grid and not the root of a
 #' derivative, so there is no Hessian to invert and no standard error to
 #' report. Its uncertainty is a resampling question and `NULL` is
-#' returned rather than a number of another kind.
+#' returned, in place of a number of another kind.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -651,10 +652,10 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
-#'   hyperparameter's own name with a carriage return -- a character no
-#'   name can contain, so the three are recoverable from the key -- and
-#'   which carries the index as the attribute `"idx"`; `NULL`
-#'   where there is nothing to report.
+#'   hyperparameter's own name with a carriage return, a character no name
+#'   can contain, so the three stay recoverable from the key. The index
+#'   rides on the attribute `"idx"`. `NULL` where there is nothing to
+#'   report.
 #'
 #' @seealso [statmod_marginal_hess()], [summary.StatmodFit()]
 #'

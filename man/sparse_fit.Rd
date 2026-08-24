@@ -48,9 +48,9 @@ The route is \code{\link[optimizers7:prox_grad]{optimizers7::prox_grad()}} with
 condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
 iterations against 126, and at 480 the plain one does not converge in
 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
-faster again and is the next thing to write; it needs the columns of the
-design and the running residual, so it belongs here and not behind an
-optimizer's interface.
+faster again and is the next thing to write. It needs the columns of the
+design and the running residual, which is the model itself, so it belongs
+here and could not live behind an optimizer's black-box interface.
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}

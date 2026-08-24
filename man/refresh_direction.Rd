@@ -32,7 +32,8 @@ for a given direction: the block's own derivative along it, and the third
 derivative already contracted in it and carried onto the term's columns.
 }
 \details{
-Both depend on ONE direction and not on a pair, so they are built once per
+Both depend on one direction alone, never on a pair, so they are built
+once per
 hyperparameter and combined in the Hessian's pair loop: computing them
 inside that loop would repeat an \eqn{O(np^2)} product for every pair.
 }

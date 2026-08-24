@@ -25,10 +25,10 @@ with a kink and are therefore fitted by a method of their own.
 The property that decides is one each term already reports: a penalty whose
 \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is non-empty is not twice
 differentiable in its coefficients, so its block cannot enter a system
-solved by a curvature. Everything else -- an unpenalized block, a ridge, a
-spline, a random effect, a structured or additive penalty -- goes into one
-system and is estimated all together, because their joint curvature exists
-and using it is what makes a fit converge in a handful of iterations.
+solved by a curvature. Everything else goes into one system and is
+estimated all together: an unpenalized block, a ridge, a spline, a random
+effect, a structured or additive penalty. Their joint curvature exists,
+and using it closes a fit in a handful of iterations.
 
 A term whose penalty gains a smooth approximation would answer
 \code{penalty_kinks()} differently and move into the smooth block with no

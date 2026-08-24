@@ -21,10 +21,10 @@ The depth the TERM asked for, or the layer's fallback where it asked for
 nothing.
 }
 \details{
-One number per term rather than one per hyperparameter, because only the
-sweep by kink size uses it: a bounded hyperparameter is swept over its own
-interval and a shape that does not move the kink over a geometric grid
-above its lower bound.
+One number per term, not one per hyperparameter, because only the sweep by
+kink size reads it. A bounded hyperparameter is swept over its own
+interval, and a shape that does not move the kink over a geometric grid
+above its lower bound; neither takes its length from here.
 }
 \seealso{
 \code{\link[=statmod_grid_size]{statmod_grid_size()}}, \code{\link[=path_values]{path_values()}}

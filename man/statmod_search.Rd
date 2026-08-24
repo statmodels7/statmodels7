@@ -22,10 +22,10 @@ statmod_search(spec, row, default = "grid")
 neither.
 }
 \details{
-It belongs to the TERM and not to the criterion, for the reason the whole
-enumeration does: a criterion is asked of every hyperparameter of the
-model, and a smooth one is read at the mode rather than swept, so most of
-what it is asked about could not answer. A penalty with a kink is fitted
+It belongs to the term, for the reason the whole enumeration does: a
+criterion is asked about every hyperparameter of the model, and a smooth
+one is read at the mode instead of being swept, so most of what it is
+asked about could not answer. A penalty with a kink is fitted
 by a scheme of its own, and how that scheme covers the term's own
 hyperparameters is part of the scheme.
 

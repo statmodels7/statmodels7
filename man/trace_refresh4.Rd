@@ -52,8 +52,8 @@ supported where BOTH blocks move. A fourth reads the SECOND,
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
 \code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}}. Those four enter as
 \eqn{\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N}, and each is read off
-\code{\link[=refresh_amat]{refresh_amat()}} -- with the third derivative for the first two and
-the curvature for the fourth -- so neither \eqn{N} nor any contraction is
+\code{\link[=refresh_amat]{refresh_amat()}}, with the third derivative for the first two and the
+curvature for the fourth, so neither \eqn{N} nor any contraction is
 assembled.
 
 The fifth is of another shape and is added separately. The
@@ -72,7 +72,7 @@ a free check on the assembly.
 no arithmetic with any of this: on a bilinear \eqn{f}, where the fourth
 term is exactly zero, the fifth is the whole of the gap and takes
 \eqn{2.32\times10^{-2}} to \eqn{2.19\times10^{-8}}; on a curved one neither
-alone suffices -- \eqn{2.62\times10^{-2}} today, \eqn{2.88\times10^{-2}}
+alone suffices: \eqn{2.62\times10^{-2}} today, \eqn{2.88\times10^{-2}}
 with the fifth alone, \eqn{2.65\times10^{-3}} with the fourth alone,
 \eqn{5.19\times10^{-8}} with both.
 }

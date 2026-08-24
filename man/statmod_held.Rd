@@ -23,7 +23,7 @@ return.
 WHICH hyperparameters are estimated is a property of the terms, not of the
 criterion: the term is where the penalty is named, and a criterion argument
 saying otherwise was read by nothing when the two disagreed. Everything
-here consults this one enumeration -- the outer index, the path, and the
+here consults this one enumeration: the outer index, the path, and the
 summary's account of what was estimated and what was given.
 }
 \seealso{

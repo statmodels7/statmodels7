@@ -49,8 +49,8 @@ determinant, one from \eqn{M} moving and one from \eqn{K_m} moving.
 \code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}},
 \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}},
 \code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}), so a penalty that is not
-quadratic in its hyperparameters -- a ridge, a random effect, a structured
-prior -- is covered by the same assembly with no branch here.
+quadratic in its hyperparameters is covered by the same assembly with no
+branch here: a ridge, a random effect, a structured prior.
 
 \strong{Onto the free scale} the chain rule is second order and diagonal,
 each hyperparameter having its own link: with \eqn{\theta = h(\eta)},
