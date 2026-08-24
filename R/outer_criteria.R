@@ -63,7 +63,7 @@ NULL
 #'
 #' The exact derivatives need `hessian = "observed"`, which is the default.
 #'
-#' # Which \eqn{\tau}
+#' # Which effective degrees of freedom
 #'
 #' The trace runs over the whole coefficient vector, so a term's contribution
 #' reads the full penalized information and not only its own block.
