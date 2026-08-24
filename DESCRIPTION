@@ -3,12 +3,17 @@ Title: The S7 Toolkit for Statistical Modeling
 Version: 0.88.1
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
-Description: Installs and attaches the packages of the statmodels7 toolkit,
-    a set of statistical modeling components built on the S7 object system:
-    link functions, probability distributions, optimization algorithms, basis
-    expansions and constrained parameters. Installing this package installs
-    all of them, attaching it attaches all of them, and it reports which are
-    out of date and which of their exports mask one another.
+Description: Fits distributional regression models, and installs and attaches
+    the eight packages of the statmodels7 toolkit that supply their parts: a
+    numerical layer, link functions, probability distributions, constrained
+    parameters, basis expansions, penalties, model terms and optimization
+    algorithms, all built on the S7 object system. One formula carries an
+    equation per parameter of the response distribution, so a scale or a
+    shape is modeled as readily as a mean. Smoothing parameters and prior
+    scales are estimated by a marginal criterion or by prediction error.
+    Installing this package installs all eight members, attaching it attaches
+    all eight, and it reports which are out of date and which of their
+    exports mask one another.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

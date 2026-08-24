@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Installs and attaches the packages of the statmodels7 toolkit, a set of statistical modeling components built on the S7 object system: link functions, probability distributions, optimization algorithms, basis expansions and constrained parameters. Installing this package installs all of them, attaching it attaches all of them, and it reports which are out of date and which of their exports mask one another.
+Fits distributional regression models, and installs and attaches the eight packages of the statmodels7 toolkit that supply their parts: a numerical layer, link functions, probability distributions, constrained parameters, basis expansions, penalties, model terms and optimization algorithms, all built on the S7 object system. One formula carries an equation per parameter of the response distribution, so a scale or a shape is modeled as readily as a mean. Smoothing parameters and prior scales are estimated by a marginal criterion or by prediction error. Installing this package installs all eight members, attaching it attaches all eight, and it reports which are out of date and which of their exports mask one another.
 }
 \seealso{
 Useful links:
