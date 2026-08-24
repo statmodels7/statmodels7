@@ -9,8 +9,11 @@ NULL
 #' @description The row count of the fitting data.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return An integer.
-#' @seealso [logLik.StatmodFit()], [statmod()]
+#' @return A single integer: the number of rows of the data the model was
+#'   fitted to. Rows the model frame dropped are already gone, so this is the
+#'   count that entered the likelihood.
+#' @seealso [df.residual.StatmodFit()], which subtracts the effective degrees
+#'   of freedom from it, [statmod()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -32,8 +35,10 @@ S7::method(nobs, StatmodFit) <- nobs.StatmodFit
 #' separately gets them from the fit's specification.
 #' @param x A [StatmodFit()].
 #' @param ... Unused.
-#' @return A formula.
-#' @seealso [statmod()]
+#' @return The formula object supplied to [statmod()], with its bars and its
+#'   original environment intact.
+#' @seealso [statmod_equations()] to split it into one equation per
+#'   parameter, [statmod()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -54,8 +59,11 @@ S7::method(formula, StatmodFit) <- formula.StatmodFit
 #' its moments and its parameters' links.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A \pkg{distributions7} distribution.
-#' @seealso [statmod()]
+#' @return The \pkg{distributions7} distribution object the model was fitted
+#'   with, links included, exactly as it was supplied. Its `@params` property
+#'   names the parameters and `@links` holds their charts.
+#' @seealso [statmod()]; [distributions7::distrib_pdf()] and its siblings for
+#'   what can then be asked of the family
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -72,14 +80,19 @@ S7::method(family, StatmodFit) <- family.StatmodFit
 #' @description The weights each observation entered the likelihood with.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A numeric vector.
-#' @seealso [statmod()]
+#' @return A numeric vector of length `nobs(object)`, the prior weights as
+#'   supplied. All ones when none were given. They enter as given and are
+#'   never normalized, so a weight of two counts an observation twice.
+#' @seealso [statmod()], [nobs.StatmodFit()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
 #' dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' head(weights(fit))
+#'
+#' # An unweighted fit carries ones, so the weights sum to the row count.
+#' sum(weights(fit)) == nobs(fit)
 #' @keywords internal
 weights.StatmodFit <- function(object, ...) object@spec@weights
 S7::method(weights, StatmodFit) <- weights.StatmodFit
@@ -91,15 +104,17 @@ S7::method(weights, StatmodFit) <- weights.StatmodFit
 #' The observation count less the effective degrees of freedom the model
 #' spent.
 #' @details
-#' The count subtracted is the EFFECTIVE one, the trace of the model's
-#' smoother, and not the number of coefficients: a penalized block spends
-#' less than it carries, which is the whole reason a smoothing parameter is
-#' estimated. It is therefore not an integer, and for a model whose degrees
-#' of freedom could not be counted it is `NA`.
+#' The count subtracted is the effective one, the trace of the model's
+#' smoother, and not the number of coefficients. A penalized block spends
+#' less than it carries, and that is the whole reason a smoothing parameter
+#' is estimated at all. The result is therefore not an integer.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A number.
-#' @seealso [logLik.StatmodFit()], [statmod_edf()]
+#' @return A single number, `nobs(object)` less the total effective degrees
+#'   of freedom. Not an integer in general, and `NA` for a model whose
+#'   degrees of freedom could not be counted.
+#' @seealso [statmod_edf()] for the per-term counts this sums,
+#'   [logLik.StatmodFit()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(60))
@@ -120,10 +135,11 @@ S7::method(df.residual, StatmodFit) <- df.residual.StatmodFit
 #' The fitted standard deviation at each observation, where the family has
 #' one.
 #' @details
-#' A VECTOR rather than a number, because the whole point of the framework is
-#' that a scale may be modelled: a single residual standard deviation exists
-#' only where the scale's equation is an intercept, and returning its first
-#' value would silently answer a different question everywhere else.
+#' The result is a vector, one entry per observation, and that is the whole
+#' point of the framework: a scale may be modeled. A single residual standard
+#' deviation exists only where the scale's equation is an intercept, and
+#' returning its first value would answer a different question everywhere
+#' else without saying so.
 #'
 #' What is returned is the standard deviation of the response under the
 #' fitted distribution, through [distributions7::std_dev()], and not
@@ -132,8 +148,11 @@ S7::method(df.residual, StatmodFit) <- df.residual.StatmodFit
 #' family with no second moment signals an error rather than reporting one.
 #' @param object A [StatmodFit()].
 #' @param ... Unused.
-#' @return A numeric vector.
-#' @seealso [predict.StatmodFit()], [fitted.StatmodFit()]
+#' @return A numeric vector of length `nobs(object)`, the standard deviation
+#'   of the response under the fitted distribution at each observation.
+#'   Constant when no equation models a scale.
+#' @seealso [fitted.StatmodFit()] for the fitted parameters themselves,
+#'   [distributions7::std_dev()] for the quantity
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -155,7 +174,7 @@ S7::method(sigma, StatmodFit) <- sigma.StatmodFit
 #' A fit has one design per parameter, so which one is asked for is an
 #' argument rather than something to be guessed; `NULL` gives the first,
 #' as [fitted.StatmodFit()] does. A term whose block moves with its
-#' coefficients is returned AT the fitted ones, which is the block the fit
+#' coefficients is returned at the fitted ones, which is the block the fit
 #' ended on.
 #'
 #' A structural term contributes no columns at all, so an equation carrying
@@ -164,8 +183,12 @@ S7::method(sigma, StatmodFit) <- sigma.StatmodFit
 #' @param object A [StatmodFit()].
 #' @param what Which distribution parameter, or `NULL` for the first.
 #' @param ... Unused.
-#' @return A matrix, sparse where the equation's blocks are.
-#' @seealso [statmod_design()], [coef.StatmodFit()]
+#' @return An `n x p` matrix, `p` being the width of that equation's design,
+#'   carrying the coefficient names as its column names. A \pkg{Matrix}
+#'   object where the equation's own blocks are sparse, a base matrix
+#'   otherwise. Zero columns for an equation carrying only a structural term.
+#' @seealso [statmod_design()] for every equation at once,
+#'   [coef.StatmodFit()] for the coefficients these columns multiply
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -197,20 +220,22 @@ S7::method(model.matrix, StatmodFit) <- model.matrix.StatmodFit
 #' @description
 #' Responses drawn from the fitted distribution, one column per replicate.
 #' @details
-#' The draws are taken at the FITTED parameters, so what they carry is the
-#' variation of the response and not the uncertainty of the estimates; a
-#' parametric bootstrap adds the second by refitting each column.
+#' The draws are taken at the fitted parameters, so what they carry is the
+#' variation of the response alone. The uncertainty of the estimates is not
+#' in them; a parametric bootstrap adds it by refitting each column.
 #'
 #' For a model carrying a structural term the fitted parameters are the ones
-#' the filter reached ALONG the observed series, so the draws are conditional
-#' on that series rather than a fresh path of the process.
+#' the filter reached along the observed series, so the draws are conditional
+#' on that series and are not a fresh path of the process.
 #' @param object A [StatmodFit()].
 #' @param nsim How many replicates.
 #' @param seed Passed to [base::set.seed()] if given, the caller's
 #'   stream being restored afterwards.
 #' @param ... Unused.
-#' @return A data frame of `nsim` columns.
-#' @seealso [rstatmod()], [predict.StatmodFit()]
+#' @return A data frame with `nobs(object)` rows and `nsim` columns, each
+#'   column one draw of the whole response vector.
+#' @seealso [rstatmod()] to simulate from a model that was never fitted,
+#'   [predict.StatmodFit()] for the fitted parameters the draws come from
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(40))
@@ -250,10 +275,10 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' Three generics of \pkg{stats} signal an error on a statmod fit, each
 #' naming what to ask instead.
 #' @details
-#' `terms()` would have to report one set of terms where a fit has one
-#' per distribution parameter, and the formula it was written with is not a
-#' `terms` object -- the bars separating the equations are not
-#' `stats`' syntax. `formula()` gives what was written and
+#' `terms()` would have to report one set of terms where a fit has one per
+#' distribution parameter, and the formula it was written with is not a
+#' `terms` object at all, the bars separating the equations not being
+#' `stats`' syntax. [formula.StatmodFit()] gives what was written and
 #' [statmod_design()] gives what it produced.
 #'
 #' `model.frame()` would have to return the fitting data, which a fit
@@ -268,7 +293,8 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' having been estimated.
 #' @param object,x,formula A [StatmodFit()].
 #' @param ... Unused.
-#' @return Nothing; each method signals an error.
+#' @return Nothing. Each method signals an error naming what to ask
+#'   instead.
 #' @seealso [formula.StatmodFit()],
 #'   [model.matrix.StatmodFit()], [logLik.StatmodFit()]
 #' @keywords internal

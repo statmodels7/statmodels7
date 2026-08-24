@@ -12,17 +12,20 @@
 \item{...}{Unused.}
 }
 \value{
-A numeric vector.
+A numeric vector of length \code{nobs(object)}, the standard deviation
+of the response under the fitted distribution at each observation.
+Constant when no equation models a scale.
 }
 \description{
 The fitted standard deviation at each observation, where the family has
 one.
 }
 \details{
-A VECTOR rather than a number, because the whole point of the framework is
-that a scale may be modelled: a single residual standard deviation exists
-only where the scale's equation is an intercept, and returning its first
-value would silently answer a different question everywhere else.
+The result is a vector, one entry per observation, and that is the whole
+point of the framework: a scale may be modeled. A single residual standard
+deviation exists only where the scale's equation is an intercept, and
+returning its first value would answer a different question everywhere
+else without saying so.
 
 What is returned is the standard deviation of the response under the
 fitted distribution, through \code{\link[distributions7:std_dev]{distributions7::std_dev()}}, and not
@@ -38,6 +41,7 @@ fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 head(sigma(fit))
 }
 \seealso{
-\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}}
+\code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} for the fitted parameters themselves,
+\code{\link[distributions7:std_dev]{distributions7::std_dev()}} for the quantity
 }
 \keyword{internal}

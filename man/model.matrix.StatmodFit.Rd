@@ -14,7 +14,10 @@
 \item{...}{Unused.}
 }
 \value{
-A matrix, sparse where the equation's blocks are.
+An \verb{n x p} matrix, \code{p} being the width of that equation's design,
+carrying the coefficient names as its column names. A \pkg{Matrix}
+object where the equation's own blocks are sparse, a base matrix
+otherwise. Zero columns for an equation carrying only a structural term.
 }
 \description{
 The block of columns a distribution parameter's equation was fitted with.
@@ -23,7 +26,7 @@ The block of columns a distribution parameter's equation was fitted with.
 A fit has one design per parameter, so which one is asked for is an
 argument rather than something to be guessed; \code{NULL} gives the first,
 as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block moves with its
-coefficients is returned AT the fitted ones, which is the block the fit
+coefficients is returned at the fitted ones, which is the block the fit
 ended on.
 
 A structural term contributes no columns at all, so an equation carrying
@@ -39,6 +42,7 @@ dim(model.matrix(fit))
 colnames(model.matrix(fit, "sigma"))
 }
 \seealso{
-\code{\link[=statmod_design]{statmod_design()}}, \code{\link[=coef.StatmodFit]{coef.StatmodFit()}}
+\code{\link[=statmod_design]{statmod_design()}} for every equation at once,
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}} for the coefficients these columns multiply
 }
 \keyword{internal}

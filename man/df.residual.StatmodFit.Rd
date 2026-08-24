@@ -12,18 +12,19 @@
 \item{...}{Unused.}
 }
 \value{
-A number.
+A single number, \code{nobs(object)} less the total effective degrees
+of freedom. Not an integer in general, and \code{NA} for a model whose
+degrees of freedom could not be counted.
 }
 \description{
 The observation count less the effective degrees of freedom the model
 spent.
 }
 \details{
-The count subtracted is the EFFECTIVE one, the trace of the model's
-smoother, and not the number of coefficients: a penalized block spends
-less than it carries, which is the whole reason a smoothing parameter is
-estimated. It is therefore not an integer, and for a model whose degrees
-of freedom could not be counted it is \code{NA}.
+The count subtracted is the effective one, the trace of the model's
+smoother, and not the number of coefficients. A penalized block spends
+less than it carries, and that is the whole reason a smoothing parameter
+is estimated at all. The result is therefore not an integer.
 }
 \examples{
 set.seed(1)
@@ -33,6 +34,7 @@ fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), dd)
 df.residual(fit)
 }
 \seealso{
-\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{\link[=statmod_edf]{statmod_edf()}}
+\code{\link[=statmod_edf]{statmod_edf()}} for the per-term counts this sums,
+\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}
 }
 \keyword{internal}

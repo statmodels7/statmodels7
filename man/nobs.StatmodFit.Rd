@@ -12,7 +12,9 @@
 \item{...}{Unused.}
 }
 \value{
-An integer.
+A single integer: the number of rows of the data the model was
+fitted to. Rows the model frame dropped are already gone, so this is the
+count that entered the likelihood.
 }
 \description{
 The row count of the fitting data.
@@ -25,6 +27,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 nobs(fit)
 }
 \seealso{
-\code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}, \code{\link[=statmod]{statmod()}}
+\code{\link[=df.residual.StatmodFit]{df.residual.StatmodFit()}}, which subtracts the effective degrees
+of freedom from it, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

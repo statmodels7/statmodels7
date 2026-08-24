@@ -19,17 +19,18 @@
 \item{object, x, formula}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 }
 \value{
-Nothing; each method signals an error.
+Nothing. Each method signals an error naming what to ask
+instead.
 }
 \description{
 Three generics of \pkg{stats} signal an error on a statmod fit, each
 naming what to ask instead.
 }
 \details{
-\code{terms()} would have to report one set of terms where a fit has one
-per distribution parameter, and the formula it was written with is not a
-\code{terms} object -- the bars separating the equations are not
-\code{stats}' syntax. \code{formula()} gives what was written and
+\code{terms()} would have to report one set of terms where a fit has one per
+distribution parameter, and the formula it was written with is not a
+\code{terms} object at all, the bars separating the equations not being
+\code{stats}' syntax. \code{\link[=formula.StatmodFit]{formula.StatmodFit()}} gives what was written and
 \code{\link[=statmod_design]{statmod_design()}} gives what it produced.
 
 \code{model.frame()} would have to return the fitting data, which a fit

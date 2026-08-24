@@ -17,19 +17,20 @@ stream being restored afterwards.}
 \item{...}{Unused.}
 }
 \value{
-A data frame of \code{nsim} columns.
+A data frame with \code{nobs(object)} rows and \code{nsim} columns, each
+column one draw of the whole response vector.
 }
 \description{
 Responses drawn from the fitted distribution, one column per replicate.
 }
 \details{
-The draws are taken at the FITTED parameters, so what they carry is the
-variation of the response and not the uncertainty of the estimates; a
-parametric bootstrap adds the second by refitting each column.
+The draws are taken at the fitted parameters, so what they carry is the
+variation of the response alone. The uncertainty of the estimates is not
+in them; a parametric bootstrap adds it by refitting each column.
 
 For a model carrying a structural term the fitted parameters are the ones
-the filter reached ALONG the observed series, so the draws are conditional
-on that series rather than a fresh path of the process.
+the filter reached along the observed series, so the draws are conditional
+on that series and are not a fresh path of the process.
 }
 \examples{
 set.seed(1)
@@ -39,6 +40,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 dim(simulate(fit, nsim = 3))
 }
 \seealso{
-\code{\link[=rstatmod]{rstatmod()}}, \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
+\code{\link[=rstatmod]{rstatmod()}} to simulate from a model that was never fitted,
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for the fitted parameters the draws come from
 }
 \keyword{internal}

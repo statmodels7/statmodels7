@@ -12,7 +12,8 @@
 \item{...}{Unused.}
 }
 \value{
-A formula.
+The formula object supplied to \code{\link[=statmod]{statmod()}}, with its bars and its
+original environment intact.
 }
 \description{
 The formula as supplied, every distribution parameter's equation included.
@@ -30,6 +31,7 @@ fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 formula(fit)
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=statmod_equations]{statmod_equations()}} to split it into one equation per
+parameter, \code{\link[=statmod]{statmod()}}
 }
 \keyword{internal}

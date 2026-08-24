@@ -12,7 +12,9 @@
 \item{...}{Unused.}
 }
 \value{
-A \pkg{distributions7} distribution.
+The \pkg{distributions7} distribution object the model was fitted
+with, links included, exactly as it was supplied. Its \verb{@params} property
+names the parameters and \verb{@links} holds their charts.
 }
 \description{
 The \pkg{distributions7} object, with its links.
@@ -30,6 +32,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 family(fit)@params
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=statmod]{statmod()}}; \code{\link[distributions7:distrib_pdf]{distributions7::distrib_pdf()}} and its siblings for
+what can then be asked of the family
 }
 \keyword{internal}
