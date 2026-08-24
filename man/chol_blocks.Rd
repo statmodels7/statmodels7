@@ -8,7 +8,7 @@ chol_blocks(Om)
 }
 \arguments{
 \item{Om}{An \eqn{n \times K \times K} array of symmetric blocks, as
-\code{\link[=obs_information]{obs_information()}} returns it. Only the lower triangle of each block is
+\code{\link[=info_blocks]{info_blocks()}} returns it. Only the lower triangle of each block is
 read.}
 }
 \value{
@@ -37,7 +37,7 @@ answers by falling back to the assembled route. A warning about a \code{NaN}
 would report an expected branch as a defect.
 }
 \seealso{
-\code{\link[=obs_information]{obs_information()}} for the input,
+\code{\link[=info_blocks]{info_blocks()}} for the input,
 \code{\link[=sqrt_design]{sqrt_design()}} for what the factors are used to build.
 }
 \keyword{internal}

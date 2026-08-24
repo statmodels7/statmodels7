@@ -50,7 +50,7 @@ cent of the whole fit.
 }
 
 \seealso{
-\code{\link[=penalty_sqrt_diag]{penalty_sqrt_diag()}} for the diagonal route,
+\code{\link[=diagonal_sqrt]{diagonal_sqrt()}} for the diagonal route,
 \code{\link[=augmented_solve]{augmented_solve()}} for the solve this feeds,
 \code{\link[=sqrt_design]{sqrt_design()}} for the other half of the augmented matrix.
 }

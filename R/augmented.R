@@ -38,7 +38,7 @@ NULL
 #' would report an expected branch as a defect.
 #'
 #' @param Om An \eqn{n \times K \times K} array of symmetric blocks, as
-#'   [obs_information()] returns it. Only the lower triangle of each block is
+#'   [info_blocks()] returns it. Only the lower triangle of each block is
 #'   read.
 #'
 #' @return An \eqn{n \times K \times K} numeric array, lower triangular in
@@ -46,7 +46,7 @@ NULL
 #'   every `i`. `NULL` as soon as any block fails to be positive definite,
 #'   so a single bad observation declines for the whole sample.
 #'
-#' @seealso [obs_information()] for the input,
+#' @seealso [info_blocks()] for the input,
 #'   [sqrt_design()] for what the factors are used to build.
 #'
 #' @keywords internal
@@ -251,7 +251,7 @@ sqrt_design <- function(design, L) {
 #'   space. Its class mirrors `S`'s, dense for dense and sparse for sparse.
 #'   `NULL` when the penalty is indefinite beyond the tolerance.
 #'
-#' @seealso [penalty_sqrt_diag()] for the diagonal route,
+#' @seealso [diagonal_sqrt()] for the diagonal route,
 #'   [augmented_solve()] for the solve this feeds,
 #'   [sqrt_design()] for the other half of the augmented matrix.
 #'
