@@ -16,7 +16,7 @@ there is no block to read a row count from.}
 \value{
 An \verb{n x p} matrix with \code{p} the total width of the blocks: a
 \pkg{Matrix} object when any input is sparse, a base matrix otherwise.
-An \verb{n x 0} base matrix for an empty \code{mats}, which is what an equation
+An \verb{n x 0} base matrix for an empty \code{mats}, as an equation
 carrying only a structural term gives.
 }
 \description{
@@ -35,7 +35,8 @@ from anything a caller wrote. \code{Matrix::cbind2()} is what handles the mixed
 pair.
 
 The result is sparse when \strong{one} block is. Sparsity is a property of the
-assembled matrix and not of its pieces: a dense fixed block beside a large
+assembled matrix, never of its pieces: a dense fixed block beside a
+large
 indicator leaves a matrix that is still overwhelmingly zero, and its
 factorization stays sparse under a fill-reducing ordering.
 }

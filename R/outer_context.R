@@ -271,7 +271,7 @@ pin_boundary <- function(K) {
 #' Which Coordinates a Boundary Has Frozen
 #'
 #' @description
-#' The positions whose curvature is not finite, which is what a parameter
+#' The positions whose curvature is not finite, as a parameter
 #' sitting at the clamp its link keeps it strictly inside leaves behind.
 #'
 #' @details
@@ -508,7 +508,7 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 #' as well as the integrand, and the missing piece
 #' \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity
-#' isolates: the third ties the symmetrized sum and not the single term.
+#' isolates: the third ties the symmetrized sum, never the single term.
 #'
 #' \pkg{distributions7} supplies it as
 #' [distributions7::distrib_dexpected_hessian()]. The two arrays are

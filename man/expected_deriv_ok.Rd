@@ -21,7 +21,7 @@ The default route in \pkg{distributions7} is one central difference of the
 family's own expected information, which is a single stencil on an analytic
 quantity wherever that information is a written-out formula and refuses
 where it is itself an integral. Six of forty univariate families refuse, and
-the reason is cost and not accuracy: measured at 100 observations they
+the reason is cost, never accuracy: measured at 100 observations they
 cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
 of those calls per criterion evaluation is not a slower route but an
 unusable one.

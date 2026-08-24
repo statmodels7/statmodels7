@@ -54,7 +54,7 @@ slower, and preventing that is what the size condition is for.
 
 \strong{Both quantities are read off the matrix, and the first is its storage.}
 A matrix held as a base matrix is refused whatever its zeros,
-which reads like a test of the container and not of the mathematics, so
+which reads like a test of the container instead of the mathematics, so
 it is worth saying why it is neither an oversight nor a term test.
 \code{\link[=statmod_information_at]{statmod_information_at()}} accumulates into the design's own kind,
 so the penalized matrix is stored sparsely exactly when the design is, and

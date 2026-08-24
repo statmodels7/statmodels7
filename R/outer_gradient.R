@@ -141,7 +141,7 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
 #' family's own expected information, which is a single stencil on an analytic
 #' quantity wherever that information is a written-out formula and refuses
 #' where it is itself an integral. Six of forty univariate families refuse, and
-#' the reason is cost and not accuracy: measured at 100 observations they
+#' the reason is cost, never accuracy: measured at 100 observations they
 #' cost 1880 to 147300 ms against a median of 0.183 ms for the others, so 2p
 #' of those calls per criterion evaluation is not a slower route but an
 #' unusable one.
@@ -899,7 +899,7 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
 #'
 #' @description
 #' The contributions to \eqn{\mathrm{tr}(M\,\partial K/\partial u[v])} that
-#' come from the recursion and not from the design: the derivative of the
+#' come from the recursion, never from the design: the derivative of the
 #' filter's own Jacobian, and the derivative of the term the level contributes
 #' to the information.
 #'

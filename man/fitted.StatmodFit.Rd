@@ -23,11 +23,12 @@ One distribution parameter's fitted values, as a vector of the data's
 length.
 }
 \details{
-The result is a vector and not the whole set, so that this and
+The result is one vector, never the whole set, so that this and
 \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}} are a matched pair and a diagnostic drawn from
 them needs no unpacking.
 
-The default is the \strong{first} parameter and not the mean. A family may have
+The default is the \strong{first} parameter, never the mean. A family may
+have
 no mean, a Cauchy being one, and a default that fails on a legitimate
 family is worse than one that always answers.
 

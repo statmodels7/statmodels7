@@ -36,7 +36,7 @@ direction from the scale separation a large smoothing parameter
 legitimately produces. Returning a pseudo-inverse instead would give a
 standard error for a direction the data does not identify.
 
-The smallest eigenvalue is estimated and not computed, from LAPACK's
+The smallest eigenvalue is estimated, never computed, from LAPACK's
 condition estimator (\code{dpocon}) read on the Cholesky factor the
 inverse needs anyway: \code{rcond} is
 \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
@@ -50,7 +50,7 @@ reaches the other. It replaced a full eigendecomposition, which answers
 the same question exactly and costs \eqn{O(p^3)} with a large constant:
 measured at \eqn{p = 1022}, 1.18 s against the Cholesky's 0.25.
 
-The message names the directions and not the causes. A first version
+The message names the directions, never the causes. A first version
 offered two causes, the run not having reached a maximum and two columns
 of the design carrying the same information, and on a Student t fitted to
 \code{iris} neither was right: the design was full rank and the score was

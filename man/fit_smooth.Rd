@@ -42,7 +42,7 @@ kinked block at its current values. This is the smooth half of one pass of
 \details{
 The objective handed to the optimizer is the full one restricted to \code{idx}:
 the coefficients outside the block enter it as constants, so the value it
-reports is the model's objective and not a block's own.
+reports is the model's objective, never a block's own.
 
 With \code{\link[=iwls]{iwls()}} the step is solved through \code{\link[=fit_smooth]{fit_smooth()}}'s own scoring
 loop, which reads the exact information. With an \pkg{optimizers7}

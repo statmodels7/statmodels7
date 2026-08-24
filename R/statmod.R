@@ -167,7 +167,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' The top of that path depends on the data **and on the rest of the model**:
 #' it is the kink that empties the block, found at the coefficients in hand
-#' and not at a refitted null, so the other terms' fits enter it.
+#' never at a refitted null, so the other terms' fits enter it.
 #'
 #' Where a model carries both kinds the path is outside and the marginal
 #' criterion is estimated inside each of its points, so a smoothing parameter
@@ -209,7 +209,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   [start_strategy()] such as [start_search()], or
 #'   `NULL` for [start_intercepts()]. A strategy is asked once,
 #'   before the alternation between the coefficients and the hyperparameters
-#'   begins, which is why a global search belongs here and not in
+#'   begins, which is why a global search belongs here instead of in
 #'   `inner_optimizer`: there it would rerun at every hyperparameter the
 #'   outer search tried.
 #' @param linpar_control How the unpenalized parametric block is built, as
@@ -790,7 +790,8 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 #' [statmod()] carries neither a `maxit` nor a `tol` of its own. An argument
 #' accepted and ignored is worse than one that signals an error, and a second
 #' copy would be exactly that: a caller setting `iwls(maxit = 20)` alongside
-#' a loose `maxit = 100` would be obeyed in one and not told about the other.
+#' a loose `maxit = 100` would be obeyed in one and never told about the
+#' other.
 #' \pkg{distributions7}'s `fit_distrib()` shed the same pair for the same
 #' reason.
 #'
@@ -905,7 +906,7 @@ criterion_tol <- function(crit) {
 #' @details
 #' The objective handed to the optimizer is the full one restricted to `idx`:
 #' the coefficients outside the block enter it as constants, so the value it
-#' reports is the model's objective and not a block's own.
+#' reports is the model's objective, never a block's own.
 #'
 #' With [iwls()] the step is solved through [fit_smooth()]'s own scoring
 #' loop, which reads the exact information. With an \pkg{optimizers7}
@@ -1197,8 +1198,8 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
 #' `start` is either a named list of values, a
 #' [start_strategy()] --- which is asked ONCE, here, before the
 #' alternation between the coefficients and the hyperparameters begins --- or
-#' `NULL` for [start_intercepts()], which is what this function
-#' did before strategies existed and still does.
+#' `NULL` for [start_intercepts()], which this function did before
+#' strategies existed and still does.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -1276,7 +1277,7 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #' fitting function has to give the same answer twice, so the seed is fixed for
 #' the length of this call and the caller's stream is put back afterwards.
 #'
-#' Pinning makes it reproducible and not necessarily good, since one draw is
+#' Pinning makes it reproducible without making it good, one draw being
 #' one draw; several are taken and the best kept. What would make it good is a
 #' data-based `distrib_start` method on the univariate families, which is
 #' the design \pkg{distributions7} already documents and which only its
@@ -1335,7 +1336,7 @@ statmod_intercepts <- function(spec) {
 #'
 #' @details
 #' A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
-#' block, so it needs the unpenalized curvature there and not only its
+#' block, so it needs the unpenalized curvature there, never only its
 #' coefficients and its hyperparameters. That block is cut out of the
 #' likelihood's information, which is computed once for every term rather than
 #' per term.

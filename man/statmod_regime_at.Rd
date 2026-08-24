@@ -46,7 +46,7 @@ differentiates its own log-density once per state, vectorized, and
 weights.
 
 The predictor reported for the equation the term sits in is the
-posterior-weighted one, which is what a fitted value means here.
+posterior-weighted one, and that is what a fitted value means here.
 }
 \seealso{
 \code{\link[=statmod_structural]{statmod_structural()}}

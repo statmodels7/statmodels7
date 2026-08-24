@@ -82,7 +82,7 @@ exists only because that coefficient survived the selection, and a naive
 interval there under-covers.
 
 \strong{The degrees of freedom} are the effective ones, summed over the
-terms, so a penalized term counts what it spends and not how many
+terms, so a penalized term counts what it spends instead of how many
 columns it has. The information criteria are built on that count.
 }
 \examples{

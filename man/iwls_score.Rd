@@ -34,7 +34,7 @@ The score of a location equation carries the units \eqn{1/y} and its
 curvature \eqn{1/y^2}, so dividing by \eqn{s_p} survives any rescaling of
 the response. Taking \eqn{s_p} over the whole equation changes nothing
 within it: a stiff, heavily penalized coordinate is held to the same rule
-as its neighbours, which is what the envelope identities the outer
+as its neighbours, and that is what the envelope identities the outer
 gradient rests on require of the mode.
 
 This reading arbitrates the final verdict and never drives the loop.

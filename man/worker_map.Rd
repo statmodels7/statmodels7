@@ -24,7 +24,7 @@ cross-validation fold, a combination of a path's product grid -- over
 the worker processes the specification asks for (\code{spec@workers},
 from \code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this
 process otherwise. Results come back in unit order whatever the number
-of workers, which is what makes the answer independent of the count:
+of workers, and that is what makes the answer independent of the count:
 the units share nothing, so the same bodies run either way.
 }
 \details{

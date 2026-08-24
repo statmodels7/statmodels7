@@ -41,7 +41,7 @@ With \code{se = FALSE}, a numeric vector of \code{nrow(newdata)} values when
 With \code{se = TRUE}, a data frame with columns \code{fit}, \code{se}, \code{lower} and
 \code{upper} in place of each vector. \code{se} is \code{NA} for an observation whose
 predictor reads a coefficient that has no variance, which is the truth
-about it and not a gap in the arithmetic.
+about such a fit, and no gap in the arithmetic.
 }
 \description{
 Predicts from a fitted model: any one of the distribution's parameters,
@@ -59,7 +59,7 @@ does not.}
 \item{a moment's name}{\code{"mean"}, \code{"variance"}, \code{"std_dev"},
 \code{"skewness"}, \code{"kurtosis"}. Available where the family has one, and
 answering \code{NaN} or \code{NA} where it does not exist. A Cauchy's mean is
-\code{NaN}, which is the correct answer and not a failure.}
+\code{NaN}, which is the correct answer for it.}
 \item{\code{"parameter"}}{every parameter at once, as a named list. The
 default.}
 \item{\code{"link"}}{every linear predictor at once, before the inverse
@@ -91,7 +91,7 @@ reached, so new rows continue the series instead of being read on their
 own. Each row is placed by its own time within its own group, and must
 come after every observed time of that group; a row falling inside the
 observed series is refused, since there the response is known and the
-filter must be run and not continued.
+filter must be run, never continued.
 
 Beyond the data the score sits at its conditional mean of zero, which the
 model's own definition guarantees, so the continuation is the

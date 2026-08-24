@@ -53,7 +53,7 @@ coefficients at every hyperparameter it tries.
 }
 \details{
 Each evaluation is a whole inner fit, warm-started from the previous one,
-which is what makes the search affordable: after the first few
+and that is what makes the search affordable: after the first few
 hyperparameters the coefficients move very little and the inner loop
 converges in two or three iterations.
 

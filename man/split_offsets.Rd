@@ -20,13 +20,14 @@ Empty when there were none.}
 }
 \description{
 Splits a one-sided formula into the \code{offset()} terms it names and
-whatever is left, which is what the interpreter is given.
+whatever is left, and the interpreter is given the second.
 }
 \details{
 An offset is a column of the linear predictor whose coefficient is known
 to be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
 
-Taking it out here is what makes it work at all. Left in, the term reached
+Taking it out here is the whole of what makes it work. Left in, the term
+reached
 \code{model.matrix} through \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, where \code{terms()} marks it
 in the \code{"offset"} attribute and the design excludes it: the term
 contributed no column, no offset and no message, and the model fitted was

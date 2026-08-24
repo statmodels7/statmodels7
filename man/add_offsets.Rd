@@ -20,8 +20,8 @@ supplies, per parameter.
 }
 \details{
 Where both name an offset for the same parameter the two are \strong{summed},
-which is what \code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset}
-argument together. Where only one does, that one is taken.
+as \code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset} argument
+together. Where only one does, that one is taken.
 }
 \seealso{
 \code{\link[=eval_offsets]{eval_offsets()}} for the formula's own,

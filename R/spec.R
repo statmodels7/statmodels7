@@ -19,7 +19,8 @@ NULL
 #' pair.
 #'
 #' The result is sparse when **one** block is. Sparsity is a property of the
-#' assembled matrix and not of its pieces: a dense fixed block beside a large
+#' assembled matrix, never of its pieces: a dense fixed block beside a
+#' large
 #' indicator leaves a matrix that is still overwhelmingly zero, and its
 #' factorization stays sparse under a fill-reducing ordering.
 #'
@@ -30,7 +31,7 @@ NULL
 #'
 #' @return An `n x p` matrix with `p` the total width of the blocks: a
 #'   \pkg{Matrix} object when any input is sparse, a base matrix otherwise.
-#'   An `n x 0` base matrix for an empty `mats`, which is what an equation
+#'   An `n x 0` base matrix for an empty `mats`, as an equation
 #'   carrying only a structural term gives.
 #'
 #' @seealso [design_sparse()] for the same question asked of a whole design,
@@ -90,13 +91,14 @@ as_sparse <- function(A) {
 #'
 #' @description
 #' Splits a one-sided formula into the `offset()` terms it names and
-#' whatever is left, which is what the interpreter is given.
+#' whatever is left, and the interpreter is given the second.
 #'
 #' @details
 #' An offset is a column of the linear predictor whose coefficient is known
 #' to be one, and `y ~ x + offset(log_n)` is how R has always written it.
 #'
-#' Taking it out here is what makes it work at all. Left in, the term reached
+#' Taking it out here is the whole of what makes it work. Left in, the term
+#' reached
 #' `model.matrix` through [modelterms7::linpar()], where `terms()` marks it
 #' in the `"offset"` attribute and the design excludes it: the term
 #' contributed no column, no offset and no message, and the model fitted was
@@ -172,10 +174,11 @@ split_offsets <- function(eq) {
 #' of the model without it, and the intercept came back at 1.33 against the
 #' -5.01 the offset gives, a factor of 566.
 #'
-#' Such a term is **refused** and not routed up to the equation, because the
+#' Such a term is **refused**, never routed up to the equation, because
+#' the
 #' meaning differs by where it sits. In a penalized term's formula an offset
-#' would be a contribution to the equation's predictor, which is what writing
-#' it at the equation level already says. In a subformula it would be a
+#' would be a contribution to the equation's predictor, and writing it at
+#' the equation level already says that. In a subformula it would be a
 #' contribution to that parameter's own chart, a different quantity. Picking
 #' one reading would fit the wrong model in half the cases; the refusal names
 #' the place it belongs and costs a caller one edit.
@@ -236,7 +239,7 @@ reject_nested_offsets <- function(eq, param) {
 #'
 #' @details
 #' The expressions are kept and re-evaluated, never carried as numbers, and
-#' that is what lets an offset survive prediction. [statmod_respec()] calls
+#' that is how an offset survives prediction. [statmod_respec()] calls
 #' this against the new data; a vector supplied through [statmod()]'s
 #' `offsets` argument at fitting time has the wrong length for other rows and
 #' cannot be reused. Before this, `predict(fit, newdata =)` returned the
@@ -303,8 +306,8 @@ eval_offsets <- function(formula, params, data, env, n) {
 #'
 #' @details
 #' Where both name an offset for the same parameter the two are **summed**,
-#' which is what [stats::glm()] does with a formula offset and an `offset`
-#' argument together. Where only one does, that one is taken.
+#' as [stats::glm()] does with a formula offset and an `offset` argument
+#' together. Where only one does, that one is taken.
 #'
 #' @param a,b Two named lists of offsets keyed by distribution parameter,
 #'   either list's entries possibly `NULL`. Either list may itself be `NULL`.
@@ -479,15 +482,14 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
 #' against `stats::model.matrix`'s
 #' 0.100 s and 161.5 MB, the numbers identical; and a design that would be
-#' 32 GB dense builds in 0.02 s and 19 MB, which is what says there is no
+#' 32 GB dense builds in 0.02 s and 19 MB, which settles that there is no
 #' dense intermediate. It pays where the formula carries a factor of many
 #' levels and costs more than it saves on numeric covariates, whose block is
 #' dense whatever is asked for.
 #'
 #' **There is no rescaling here, and that is measured rather than
 #' omitted.** Scaling the columns and carrying the coefficients back is the
-#' remedy for a conditioning that squares, which is what forming \eqn{X'X}
-#' does; [iwls()] fits through a QR of the design and never forms
+#' remedy for a conditioning that squares, as forming \eqn{X'X} does; [iwls()] fits through a QR of the design and never forms
 #' it. On columns spanning fifteen decades the raw fit and the scaled one
 #' converge in the same number of iterations, and both agree with
 #' [stats::lm()] to \eqn{10^{-14}}. What does move is the SCORE the
@@ -840,7 +842,7 @@ statmod_terms <- function(equations, data, env, response = NULL,
 #' runs recovering the break-point is 0 to 0.5 from a single conventional
 #' start and 1 from the grid. The term's own default is a conventional
 #' start: the interior quantiles of the covariate, which look at the
-#' covariate and not at the response.
+#' covariate and never at the response.
 #'
 #' The rule costs `k` linear fits and is exact for a gaussian response, so it
 #' places a starting value and does not fit. Two consequences follow, and
@@ -954,7 +956,7 @@ reject_unfittable <- function(terms) {
 #' flat, not because it is a maximum.
 #'
 #' **The linear intercept wins.** Where both are present the term's
-#' level is held at zero and the coefficient carries it, which is what makes
+#' level is held at zero and the coefficient carries it, and that makes
 #' `y ~ x + gas(...)` an ordinary thing to write. Nothing about the
 #' model is lost: what a constant cannot express is the dynamics, or the
 #' difference between one regime and another, and those are the parameters

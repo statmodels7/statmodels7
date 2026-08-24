@@ -25,7 +25,7 @@ label, so a term given a name of its own is read the same way. The
 penalties are the ones the term declares through
 \code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}}, so a term penalized over part of
 its parameters, a segmented term's changes or a filter's deviations, is
-read as penalized and not as parametric, and is a selection when any
+read as penalized, never as parametric, and is a selection when any
 of its penalties has a kink.
 }
 \keyword{internal}

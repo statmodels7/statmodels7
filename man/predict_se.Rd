@@ -33,7 +33,7 @@ parameter it gives, with an interval.
 An equation's predictor is \eqn{\eta_{ip} = x_{ip}'\beta_p}, so its
 variance is \eqn{x_{ip}' V_{pp} x_{ip}}, with \eqn{V} the variance of the
 coefficients \strong{as estimated}: the coordinates, since the design is
-written in them, and not the quantities \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} reports by
+written in them, never the quantities \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} reports by
 default.
 
 The equations do not mix. One equation's predictor reads that equation's
@@ -42,7 +42,7 @@ coefficients alone, whatever the covariance between the blocks.
 
 \section{A term whose block moves needs no special case}{
 Its block is the Jacobian \eqn{\partial\eta/\partial\beta} by
-construction, which is what makes a linear fit on it a Gauss-Newton step,
+construction, that being why a linear fit on it is a Gauss-Newton step,
 so the row already is the derivative and the delta method is exact to
 first order. That covers \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}} and
 \code{\link[modelterms7:nl]{modelterms7::nl()}}, including the parameters of a nonlinear term
@@ -64,7 +64,7 @@ its lower end cannot come out negative.
 A discontinuous break-point term's block is a working linearization and is
 held out of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so every observation whose predictor
 reads it reports \code{NA} for its standard error. That is the truth about such
-a fit and not a gap in the arithmetic.
+a fit, no gap in the arithmetic.
 }
 
 \seealso{

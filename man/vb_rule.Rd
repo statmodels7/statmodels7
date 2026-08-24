@@ -26,9 +26,9 @@ step ends and the next begins.
 \details{
 The trace has three nested things to say -- which outer step, which pass
 of the alternation inside it, and what each block did -- and printed as
-undifferentiated lines they are unreadable, which is what a panel fit with
+undifferentiated lines they are unreadable, as a panel fit with
 three hyperparameters and 130 outer evaluations demonstrated. Naming the
 method on every rule answers the question a reader of a slow fit actually
-has, which is what is running now.
+has, and that is the one running now.
 }
 \keyword{internal}

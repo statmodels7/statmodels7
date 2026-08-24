@@ -332,7 +332,7 @@ structural_callbacks <- function(spec, theta, p) {
 #' weights.
 #'
 #' The predictor reported for the equation the term sits in is the
-#' posterior-weighted one, which is what a fitted value means here.
+#' posterior-weighted one, and that is what a fitted value means here.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.

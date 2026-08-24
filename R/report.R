@@ -168,7 +168,7 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' These rebuild from the specification the fit keeps whole, running each
 #' term's blueprint against `data` by the same path [predict.StatmodFit()]
 #' takes. A factor's levels, a spline's knots and a basis reparametrization
-#' are therefore reapplied and not relearned.
+#' are therefore reapplied, never relearned.
 #'
 #' # No penalty enters
 #'
@@ -180,7 +180,7 @@ S7::method(print, StatmodFit) <- print.StatmodFit
 #' @param par A named list of coefficient vectors, one per distribution
 #'   parameter, each as long as that equation's design is wide. Defaults to
 #'   the fitted coefficients. Validated against the design, so a wrong length
-#'   is an error and not a recycling.
+#'   is an error, never a recycling.
 #' @param data A data frame with the columns the model names. Defaults to the
 #'   data the model was fitted to. New data must carry the response, since a
 #'   likelihood needs one.
@@ -1024,10 +1024,10 @@ short_keys <- function(x) {
 #' @details
 #' The trace has three nested things to say -- which outer step, which pass
 #' of the alternation inside it, and what each block did -- and printed as
-#' undifferentiated lines they are unreadable, which is what a panel fit with
+#' undifferentiated lines they are unreadable, as a panel fit with
 #' three hyperparameters and 130 outer evaluations demonstrated. Naming the
 #' method on every rule answers the question a reader of a slow fit actually
-#' has, which is what is running now.
+#' has, and that is the one running now.
 #'
 #' @param title The step, e.g. `"outer 3"`.
 #' @param method What runs it, or `NULL`.

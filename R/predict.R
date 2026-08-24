@@ -51,7 +51,7 @@ predict_moments <- function() {
 #'   \item{a moment's name}{`"mean"`, `"variance"`, `"std_dev"`,
 #'     `"skewness"`, `"kurtosis"`. Available where the family has one, and
 #'     answering `NaN` or `NA` where it does not exist. A Cauchy's mean is
-#'     `NaN`, which is the correct answer and not a failure.}
+#'     `NaN`, which is the correct answer for it.}
 #'   \item{`"parameter"`}{every parameter at once, as a named list. The
 #'     default.}
 #'   \item{`"link"`}{every linear predictor at once, before the inverse
@@ -83,7 +83,7 @@ predict_moments <- function() {
 #' own. Each row is placed by its own time within its own group, and must
 #' come after every observed time of that group; a row falling inside the
 #' observed series is refused, since there the response is known and the
-#' filter must be run and not continued.
+#' filter must be run, never continued.
 #'
 #' Beyond the data the score sits at its conditional mean of zero, which the
 #' model's own definition guarantees, so the continuation is the
@@ -114,7 +114,7 @@ predict_moments <- function() {
 #'   With `se = TRUE`, a data frame with columns `fit`, `se`, `lower` and
 #'   `upper` in place of each vector. `se` is `NA` for an observation whose
 #'   predictor reads a coefficient that has no variance, which is the truth
-#'   about it and not a gap in the arithmetic.
+#'   about such a fit, and no gap in the arithmetic.
 #' @seealso [fitted.StatmodFit()] for one parameter's fitted values,
 #'   [residuals.StatmodFit()] for the matched diagnostic,
 #'   [vcov.StatmodFit()] for the variance the standard errors come from.
@@ -254,11 +254,12 @@ unknown_what <- function(what, params) {
 #' One distribution parameter's fitted values, as a vector of the data's
 #' length.
 #' @details
-#' The result is a vector and not the whole set, so that this and
+#' The result is one vector, never the whole set, so that this and
 #' [residuals.StatmodFit()] are a matched pair and a diagnostic drawn from
 #' them needs no unpacking.
 #'
-#' The default is the **first** parameter and not the mean. A family may have
+#' The default is the **first** parameter, never the mean. A family may
+#' have
 #' no mean, a Cauchy being one, and a default that fails on a legitimate
 #' family is worse than one that always answers.
 #'
@@ -301,7 +302,7 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' An equation's predictor is \eqn{\eta_{ip} = x_{ip}'\beta_p}, so its
 #' variance is \eqn{x_{ip}' V_{pp} x_{ip}}, with \eqn{V} the variance of the
 #' coefficients **as estimated**: the coordinates, since the design is
-#' written in them, and not the quantities [coef.StatmodFit()] reports by
+#' written in them, never the quantities [coef.StatmodFit()] reports by
 #' default.
 #'
 #' The equations do not mix. One equation's predictor reads that equation's
@@ -310,7 +311,7 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' # A term whose block moves needs no special case
 #'
 #' Its block is the Jacobian \eqn{\partial\eta/\partial\beta} by
-#' construction, which is what makes a linear fit on it a Gauss-Newton step,
+#' construction, that being why a linear fit on it is a Gauss-Newton step,
 #' so the row already is the derivative and the delta method is exact to
 #' first order. That covers [modelterms7::seg()], [modelterms7::jseg()] and
 #' [modelterms7::nl()], including the parameters of a nonlinear term
@@ -332,7 +333,7 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' A discontinuous break-point term's block is a working linearization and is
 #' held out of [vcov.StatmodFit()], so every observation whose predictor
 #' reads it reports `NA` for its standard error. That is the truth about such
-#' a fit and not a gap in the arithmetic.
+#' a fit, no gap in the arithmetic.
 #'
 #' @param object A fitted model.
 #' @param spec The specification the prediction is made under.
@@ -538,17 +539,18 @@ structural_se_columns <- function(spec, design, ep, p, X) {
 #'
 #' WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
 #' times. New rows carrying the response are a re-reading: the filter is run
-#' over them from the term's own seed, which is what a caller means by
+#' over them from the term's own seed, and that is what a caller means by
 #' predicting a model on another series, and is why
 #' `predict(fit, newdata = <the fitting data>)` returns the fitted
 #' values. New rows without it are a continuation, and must come after the
-#' observed series. A frame with the response on some rows and not others is
+#' observed series. A frame carrying the response on some rows only is
 #' rejected: the two readings differ, and picking one would answer a question
 #' that was not asked.
 #'
 #' A term whose contribution is a likelihood mixed over latent states is
 #' rejected: what such a term reports at an observed row is a posterior over
-#' states, which past the data is a predictive distribution and not a value.
+#' states, which past the data is a predictive distribution, no single
+#' value.
 #'
 #' @param fit The fitted model.
 #' @param spec The specification at the new data.
@@ -638,7 +640,7 @@ statmod_eta_continued <- function(fit, spec, design) {
 #' It is what separates a re-reading of a model on another series from a
 #' continuation of the one it was fitted to, and the separation has to be
 #' all-or-nothing: a filter's recursion at one row reads the rows before it,
-#' so a frame with the response on some rows and not others describes neither
+#' so a frame carrying the response on some rows only describes neither
 #' operation, and answering it would mean choosing a reading the caller did
 #' not ask for.
 #'

@@ -31,7 +31,7 @@ A list of six:
 \item{\code{converged}}{a single logical: whether a stopping rule fired,
 the dimensionless verdict included.}
 \item{\code{iterations}}{how many steps were taken. \code{1} means the rule was
-met at the first check with no step taken, which is what a warm
+met at the first check with no step taken, as a warm
 start already at the mode reports.}
 \item{\code{score}}{the score per observation at the point reached.}
 \item{\code{history}}{a data frame with one row per iteration.}

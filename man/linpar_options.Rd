@@ -52,15 +52,14 @@ memory the choice exists to avoid.
 Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
 against \code{stats::model.matrix}'s
 0.100 s and 161.5 MB, the numbers identical; and a design that would be
-32 GB dense builds in 0.02 s and 19 MB, which is what says there is no
+32 GB dense builds in 0.02 s and 19 MB, which settles that there is no
 dense intermediate. It pays where the formula carries a factor of many
 levels and costs more than it saves on numeric covariates, whose block is
 dense whatever is asked for.
 
 \strong{There is no rescaling here, and that is measured rather than
 omitted.} Scaling the columns and carrying the coefficients back is the
-remedy for a conditioning that squares, which is what forming \eqn{X'X}
-does; \code{\link[=iwls]{iwls()}} fits through a QR of the design and never forms
+remedy for a conditioning that squares, as forming \eqn{X'X} does; \code{\link[=iwls]{iwls()}} fits through a QR of the design and never forms
 it. On columns spanning fifteen decades the raw fit and the scaled one
 converge in the same number of iterations, and both agree with
 \code{\link[stats:lm]{stats::lm()}} to \eqn{10^{-14}}. What does move is the SCORE the

@@ -29,7 +29,7 @@ The offset per distribution parameter, evaluated in the data.
 }
 \details{
 The expressions are kept and re-evaluated, never carried as numbers, and
-that is what lets an offset survive prediction. \code{\link[=statmod_respec]{statmod_respec()}} calls
+that is how an offset survives prediction. \code{\link[=statmod_respec]{statmod_respec()}} calls
 this against the new data; a vector supplied through \code{\link[=statmod]{statmod()}}'s
 \code{offsets} argument at fitting time has the wrong length for other rows and
 cannot be reused. Before this, \code{predict(fit, newdata =)} returned the

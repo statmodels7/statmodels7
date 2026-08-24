@@ -380,7 +380,7 @@ path_values <- function(pen, theta, name, s_max, n_values = 40L,
 #' Which end is the sparse one is a property of the penalty, never of the
 #' numbers: the kink of a lasso widens with \eqn{\lambda} and that of a
 #' Laplace prior written by its scale narrows with \eqn{\sigma}, so the order
-#' is settled by asking the penalty which way its kink moves, and not by
+#' is settled by asking the penalty which way its kink moves, never by
 #' sorting downwards. Nothing else is applied: the value that empties the
 #' block does not cap the grid and `min_ratio` does not extend it, both
 #' of those being ways to build one.
@@ -847,8 +847,8 @@ cv_bind_inputs <- function(spec, sub, i, n) {
 #'
 #' @details
 #' The path is run fold by fold, not point by point, so that each fit starts
-#' from the previous point's coefficients. That warm chain is what makes a
-#' path
+#' from the previous point's coefficients. That warm chain is the whole
+#' economy of a path
 #' cheaper than its length suggests. Each training fit rebuilds the design on
 #' its own rows: a term is re-evaluated in the data it is fitted to, so a basis
 #' or a set of contrasts is not carried over from rows the fit did not see.
@@ -975,7 +975,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
 #' the worker processes the specification asks for (`spec@workers`,
 #' from [`n_threads(workers =)`][numericals7::n_threads]) and in this
 #' process otherwise. Results come back in unit order whatever the number
-#' of workers, which is what makes the answer independent of the count:
+#' of workers, and that is what makes the answer independent of the count:
 #' the units share nothing, so the same bodies run either way.
 #'
 #' @details
@@ -1079,7 +1079,7 @@ path_pick <- function(value, se = NULL, rule = "min") {
 #' term asks for `search = "grid"` and one coordinate at a time where it
 #' asks for `"cyclic"`. Between terms the alternation is cyclic either
 #' way, so the cost is the product WITHIN a term and the sum ACROSS them. Each
-#' axis is built at the settings of the axes outside it, which is what makes
+#' axis is built at the settings of the axes outside it, and that makes
 #' the elastic net's grid a family of \eqn{\lambda} axes rather than one, and
 #' the axis swept by kink size is put innermost so that the warm starts walk
 #' along it.
@@ -1599,13 +1599,13 @@ path_block <- function(blocks, row) {
 #' `"cyclic"`.
 #'
 #' The choice belongs to the term, through `enet(X, search =)` and
-#' [modelterms7::term_search()], and not to this criterion. The same
+#' [modelterms7::term_search()], never to this criterion. The same
 #' criterion is put to the model's smooth hyperparameters as well, and those
 #' are read at the mode instead of being swept, so most of what it is asked
 #' about could not use such an argument.
 #'
 #' Between two terms the sweep alternates whichever each one named, so
-#' `y ~ lasso(X) + enet(R)` costs the two blocks added and not multiplied,
+#' `y ~ lasso(X) + enet(R)` costs the two blocks added, never multiplied,
 #' and one term asking for a product does not make the other pay for it.
 #'
 #' A term that names neither gets the product, because the cyclic sweep

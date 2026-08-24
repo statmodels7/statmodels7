@@ -20,7 +20,7 @@ error where some do.
 It is what separates a re-reading of a model on another series from a
 continuation of the one it was fitted to, and the separation has to be
 all-or-nothing: a filter's recursion at one row reads the rows before it,
-so a frame with the response on some rows and not others describes neither
+so a frame carrying the response on some rows only describes neither
 operation, and answering it would mean choosing a reading the caller did
 not ask for.
 }

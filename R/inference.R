@@ -520,7 +520,7 @@ readable_joint <- function(spec, design, fit) {
 #' legitimately produces. Returning a pseudo-inverse instead would give a
 #' standard error for a direction the data does not identify.
 #'
-#' The smallest eigenvalue is estimated and not computed, from LAPACK's
+#' The smallest eigenvalue is estimated, never computed, from LAPACK's
 #' condition estimator (`dpocon`) read on the Cholesky factor the
 #' inverse needs anyway: `rcond` is
 #' \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
@@ -534,7 +534,7 @@ readable_joint <- function(spec, design, fit) {
 #' the same question exactly and costs \eqn{O(p^3)} with a large constant:
 #' measured at \eqn{p = 1022}, 1.18 s against the Cholesky's 0.25.
 #'
-#' The message names the directions and not the causes. A first version
+#' The message names the directions, never the causes. A first version
 #' offered two causes, the run not having reached a maximum and two columns
 #' of the design carrying the same information, and on a Student t fitted to
 #' `iris` neither was right: the design was full rank and the score was
@@ -727,7 +727,7 @@ frozen_block <- function(spec, lab) {
 #'
 #' **Both quantities are read off the matrix, and the first is its storage.**
 #' A matrix held as a base matrix is refused whatever its zeros,
-#' which reads like a test of the container and not of the mathematics, so
+#' which reads like a test of the container instead of the mathematics, so
 #' it is worth saying why it is neither an oversight nor a term test.
 #' [statmod_information_at()] accumulates into the design's own kind,
 #' so the penalized matrix is stored sparsely exactly when the design is, and
@@ -1152,7 +1152,7 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' penalties are the ones the term declares through
 #' [modelterms7::term_penalties()], so a term penalized over part of
 #' its parameters, a segmented term's changes or a filter's deviations, is
-#' read as penalized and not as parametric, and is a selection when any
+#' read as penalized, never as parametric, and is a selection when any
 #' of its penalties has a kink.
 #'
 #' @param term A built term.
@@ -1335,7 +1335,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' interval there under-covers.
 #'
 #' **The degrees of freedom** are the effective ones, summed over the
-#' terms, so a penalized term counts what it spends and not how many
+#' terms, so a penalized term counts what it spends instead of how many
 #' columns it has. The information criteria are built on that count.
 #' @param object A [StatmodFit()].
 #' @param level The confidence level.
@@ -1630,9 +1630,9 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
 #'   its sub-terms' rows, and `table` keeps only what is left.
 #'
 #' @param st The structural table, or `NULL`. A structural term has no
-#'   design columns, so its block is built from what it reports and not
-#'   from a block of the design, and its hyperparameter is reported there
-#'   and not in a block of its own carrying nothing else.
+#'   design columns, so its block is built from what it reports, never from
+#'   a block of the design, and its hyperparameter is reported there instead
+#'   of in a block of its own carrying nothing else.
 #'
 #' @keywords internal
 summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
@@ -2187,7 +2187,7 @@ smoothed_notes <- function(spec, object) {
 #' @param digits Significant digits in the tables.
 #' @param notes Whether to print the qualifications the numbers carry.
 #'   `FALSE` by default, when the foot says how many there are: they
-#'   state conventions and not facts of the fit, so they read the same
+#'   state conventions, never facts of the fit, so they read the same
 #'   under every model. They are on the summary's `notes` property
 #'   either way.
 #' @param ... Unused.
@@ -2288,7 +2288,7 @@ S7::method(print, StatmodSummary) <- print.StatmodSummary
 #' A hyperparameter row prints numbers where there are any: one estimated by
 #' a marginal criterion carries a standard error and an interval. Where there
 #' is none the columns are blank. What put the value there goes in the NAME,
-#' on every hyperparameter row and not only on the ones with nothing else
+#' on every hyperparameter row, never only on the ones with nothing else
 #' in them: written into the column where a standard error would have been it
 #' marked a held or path-chosen row and never a REML one, whose column is
 #' occupied, so the note at the foot spoke of a mark that was never printed.
@@ -2580,7 +2580,7 @@ drop_common_prefix <- function(nms) {
 #' does not separate cannot decide a state, and a certificate that says how far
 #' from the mode is worth more than a boolean that hides it.
 #'
-#' `tol` is 1e-2 and not the geometric middle of the two groups: the
+#' `tol` is 1e-2 instead of the geometric middle of the two groups: the
 #' two ways of being wrong are not symmetric, and a certificate that says NOT
 #' CONVERGED at a good point is visible and checkable where one that certifies
 #' a bad point is the failure this exists to remove.

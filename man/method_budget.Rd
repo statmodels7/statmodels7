@@ -21,7 +21,8 @@ smooth block, which is where they are set.
 \code{\link[=statmod]{statmod()}} carries neither a \code{maxit} nor a \code{tol} of its own. An argument
 accepted and ignored is worse than one that signals an error, and a second
 copy would be exactly that: a caller setting \code{iwls(maxit = 20)} alongside
-a loose \code{maxit = 100} would be obeyed in one and not told about the other.
+a loose \code{maxit = 100} would be obeyed in one and never told about the
+other.
 \pkg{distributions7}'s \code{fit_distrib()} shed the same pair for the same
 reason.
 

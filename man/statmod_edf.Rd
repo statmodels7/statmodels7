@@ -27,7 +27,7 @@ Asks each term what it spends, through \pkg{modelterms7}'s \code{edf()}.
 }
 \details{
 A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
-block, so it needs the unpenalized curvature there and not only its
+block, so it needs the unpenalized curvature there, never only its
 coefficients and its hyperparameters. That block is cut out of the
 likelihood's information, which is computed once for every term rather than
 per term.

@@ -35,17 +35,18 @@ continue from there through
 
 WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
 times. New rows carrying the response are a re-reading: the filter is run
-over them from the term's own seed, which is what a caller means by
+over them from the term's own seed, and that is what a caller means by
 predicting a model on another series, and is why
 \verb{predict(fit, newdata = <the fitting data>)} returns the fitted
 values. New rows without it are a continuation, and must come after the
-observed series. A frame with the response on some rows and not others is
+observed series. A frame carrying the response on some rows only is
 rejected: the two readings differ, and picking one would answer a question
 that was not asked.
 
 A term whose contribution is a likelihood mixed over latent states is
 rejected: what such a term reports at an observed row is a posterior over
-states, which past the data is a predictive distribution and not a value.
+states, which past the data is a predictive distribution, no single
+value.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}

@@ -30,10 +30,11 @@ the equation level. Measured: the fit ran, the block carried the columns
 of the model without it, and the intercept came back at 1.33 against the
 -5.01 the offset gives, a factor of 566.
 
-Such a term is \strong{refused} and not routed up to the equation, because the
+Such a term is \strong{refused}, never routed up to the equation, because
+the
 meaning differs by where it sits. In a penalized term's formula an offset
-would be a contribution to the equation's predictor, which is what writing
-it at the equation level already says. In a subformula it would be a
+would be a contribution to the equation's predictor, and writing it at
+the equation level already says that. In a subformula it would be a
 contribution to that parameter's own chart, a different quantity. Picking
 one reading would fit the wrong model in half the cases; the refusal names
 the place it belongs and costs a caller one edit.

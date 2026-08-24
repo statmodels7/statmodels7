@@ -97,7 +97,7 @@ length, while \code{subset()} and \code{merge()} dropped it altogether.
 
 \section{The predictor is assembled as a fit assembles it}{
 Through \code{\link[=statmod_design_at]{statmod_design_at()}}, so the simulated data come from the model
-that was written and not from a linearization of it.
+that was written, never from a linearization of it.
 
 A term whose block moves with its coefficients, \code{\link[modelterms7:seg]{modelterms7::seg()}},
 \code{\link[modelterms7:jseg]{modelterms7::jseg()}} or \code{\link[modelterms7:nl]{modelterms7::nl()}}, contributes
@@ -124,7 +124,7 @@ the same throughout, so what is measured is the estimator's behavior
 design as well. Neither is more correct, and a study should say which it
 ran. Measured on a simple regression at \eqn{n = 40}, the slope's standard
 deviation is 0.1465 under the first and 0.1443 under the second, so the
-distinction is about what a study claims and not about a large numerical
+distinction is about what a study claims, never about a large numerical
 difference.
 
 A drawn factor is refused unless its levels are fixed. Drawn freely it
@@ -135,7 +135,7 @@ first design would then be recycled into a different model.
 \section{Several replicates}{
 \code{n_sim} draws that many data sets. The truth is drawn \strong{once} and shared:
 a study over replicates measures the variability of an estimator at a set
-of parameters, so the replicates differ in what is random and not in what
+of parameters, so the replicates differ in what is random, never in what
 is being estimated. Varying the truth as well is a loop over calls and
 reads differently.
 
@@ -169,12 +169,12 @@ generates is the term's own. A score-driven term draws the response as it
 runs, its level at one time driven by the score at the time before; a
 latent chain draws its path from the stationary law the likelihood is
 written with; a marginal break-point term draws each group's positions
-from their prior. What each drew comes back in \code{latent}, which is what a
-recovery check compares against.
+from their prior. What each drew comes back in \code{latent}, and that is what
+a recovery check compares against.
 
 Such a term's own parameters are not coefficients of any equation, so they
-are named through \code{structural} and not through \code{par}, on the scale
-\code{\link[modelterms7:term_params]{modelterms7::term_params()}} names: a loading is the loading and not its
+are named through \code{structural}, never through \code{par}, on the scale
+\code{\link[modelterms7:term_params]{modelterms7::term_params()}} names: a loading is the loading, not its
 logarithm, a persistence is the partial autocorrelation the chart carries.
 A formula holds at most one such term, so no key is needed.
 

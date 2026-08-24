@@ -53,7 +53,7 @@ the kink.}
 \code{\link[=start_strategy]{start_strategy()}} such as \code{\link[=start_search]{start_search()}}, or
 \code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}. A strategy is asked once,
 before the alternation between the coefficients and the hyperparameters
-begins, which is why a global search belongs here and not in
+begins, which is why a global search belongs here instead of in
 \code{inner_optimizer}: there it would rerun at every hyperparameter the
 outer search tried.}
 
@@ -180,7 +180,7 @@ a slope about to change.
 
 The top of that path depends on the data \strong{and on the rest of the model}:
 it is the kink that empties the block, found at the coefficients in hand
-and not at a refitted null, so the other terms' fits enter it.
+never at a refitted null, so the other terms' fits enter it.
 
 Where a model carries both kinds the path is outside and the marginal
 criterion is estimated inside each of its points, so a smoothing parameter

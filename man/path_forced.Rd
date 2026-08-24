@@ -26,7 +26,7 @@ so that the warm starts run the way every other path here runs.
 Which end is the sparse one is a property of the penalty, never of the
 numbers: the kink of a lasso widens with \eqn{\lambda} and that of a
 Laplace prior written by its scale narrows with \eqn{\sigma}, so the order
-is settled by asking the penalty which way its kink moves, and not by
+is settled by asking the penalty which way its kink moves, never by
 sorting downwards. Nothing else is applied: the value that empties the
 block does not cap the grid and \code{min_ratio} does not extend it, both
 of those being ways to build one.

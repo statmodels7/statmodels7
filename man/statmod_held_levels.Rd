@@ -31,7 +31,7 @@ the ridge without failing -- the score is small because the surface is
 flat, not because it is a maximum.
 
 \strong{The linear intercept wins.} Where both are present the term's
-level is held at zero and the coefficient carries it, which is what makes
+level is held at zero and the coefficient carries it, and that makes
 \code{y ~ x + gas(...)} an ordinary thing to write. Nothing about the
 model is lost: what a constant cannot express is the dynamics, or the
 difference between one regime and another, and those are the parameters

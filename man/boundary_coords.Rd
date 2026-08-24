@@ -13,7 +13,7 @@ boundary_coords(K)
 An integer vector of positions, empty where there are none.
 }
 \description{
-The positions whose curvature is not finite, which is what a parameter
+The positions whose curvature is not finite, as a parameter
 sitting at the clamp its link keeps it strictly inside leaves behind.
 }
 \details{

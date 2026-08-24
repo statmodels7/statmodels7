@@ -27,9 +27,9 @@ functions of several coefficients at once and whose standard errors
 are therefore the delta method and no diagonal entry.}
 
 \item{st}{The structural table, or \code{NULL}. A structural term has no
-design columns, so its block is built from what it reports and not
-from a block of the design, and its hyperparameter is reported there
-and not in a block of its own carrying nothing else.}
+design columns, so its block is built from what it reports, never from
+a block of the design, and its hyperparameter is reported there instead
+of in a block of its own carrying nothing else.}
 }
 \value{
 A list of block records, each with \code{kind}, \code{label},

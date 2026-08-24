@@ -504,7 +504,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'     \item{`converged`}{a single logical: whether a stopping rule fired,
 #'       the dimensionless verdict included.}
 #'     \item{`iterations`}{how many steps were taken. `1` means the rule was
-#'       met at the first check with no step taken, which is what a warm
+#'       met at the first check with no step taken, as a warm
 #'       start already at the mode reports.}
 #'     \item{`score`}{the score per observation at the point reached.}
 #'     \item{`history`}{a data frame with one row per iteration.}
@@ -812,7 +812,7 @@ iwls_met <- function(method, state) {
 #' curvature \eqn{1/y^2}, so dividing by \eqn{s_p} survives any rescaling of
 #' the response. Taking \eqn{s_p} over the whole equation changes nothing
 #' within it: a stiff, heavily penalized coordinate is held to the same rule
-#' as its neighbours, which is what the envelope identities the outer
+#' as its neighbours, and that is what the envelope identities the outer
 #' gradient rests on require of the mode.
 #'
 #' This reading arbitrates the final verdict and never drives the loop.

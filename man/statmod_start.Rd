@@ -45,7 +45,7 @@ routes are tried in order rather than one being assumed to work.
 \code{start} is either a named list of values, a
 \code{\link[=start_strategy]{start_strategy()}} --- which is asked ONCE, here, before the
 alternation between the coefficients and the hyperparameters begins --- or
-\code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}, which is what this function
-did before strategies existed and still does.
+\code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}, which this function did before
+strategies existed and still does.
 }
 \keyword{internal}

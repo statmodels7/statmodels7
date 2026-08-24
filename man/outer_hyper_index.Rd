@@ -32,8 +32,8 @@ A hyperparameter its own term holds is left out too, whatever kind of
 penalty it belongs to: \code{\link[=statmod_held]{statmod_held()}} is what says so.
 
 The result is the index the whole outer search runs on. Its row count is
-the dimension of that search, and zero rows is what makes the criterion
-not run at all.
+the dimension of that search, and at zero rows the criterion does not run
+at all.
 }
 \seealso{
 \code{\link[=hyper_to_eta]{hyper_to_eta()}} for the map those links define,

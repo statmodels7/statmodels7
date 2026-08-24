@@ -72,13 +72,13 @@ visited under \code{search = "grid"} and one swept at a time under
 \code{"cyclic"}.
 
 The choice belongs to the term, through \code{enet(X, search =)} and
-\code{\link[modelterms7:term_search]{modelterms7::term_search()}}, and not to this criterion. The same
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}}, never to this criterion. The same
 criterion is put to the model's smooth hyperparameters as well, and those
 are read at the mode instead of being swept, so most of what it is asked
 about could not use such an argument.
 
 Between two terms the sweep alternates whichever each one named, so
-\code{y ~ lasso(X) + enet(R)} costs the two blocks added and not multiplied,
+\code{y ~ lasso(X) + enet(R)} costs the two blocks added, never multiplied,
 and one term asking for a product does not make the other pay for it.
 
 A term that names neither gets the product, because the cyclic sweep

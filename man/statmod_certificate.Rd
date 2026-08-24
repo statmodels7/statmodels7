@@ -44,7 +44,7 @@ four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
 does not separate cannot decide a state, and a certificate that says how far
 from the mode is worth more than a boolean that hides it.
 
-\code{tol} is 1e-2 and not the geometric middle of the two groups: the
+\code{tol} is 1e-2 instead of the geometric middle of the two groups: the
 two ways of being wrong are not symmetric, and a certificate that says NOT
 CONVERGED at a good point is visible and checkable where one that certifies
 a bad point is the failure this exists to remove.

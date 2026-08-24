@@ -21,7 +21,7 @@ hessian(object, par = NULL, data = NULL, expected = FALSE, ...)
 \item{par}{A named list of coefficient vectors, one per distribution
 parameter, each as long as that equation's design is wide. Defaults to
 the fitted coefficients. Validated against the design, so a wrong length
-is an error and not a recycling.}
+is an error, never a recycling.}
 
 \item{data}{A data frame with the columns the model names. Defaults to the
 data the model was fitted to. New data must carry the response, since a
@@ -63,7 +63,7 @@ the data changed.
 These rebuild from the specification the fit keeps whole, running each
 term's blueprint against \code{data} by the same path \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
 takes. A factor's levels, a spline's knots and a basis reparametrization
-are therefore reapplied and not relearned.
+are therefore reapplied, never relearned.
 }
 
 \section{No penalty enters}{

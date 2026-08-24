@@ -32,7 +32,7 @@ starting positions on a joint jump and change of slope, the fraction of
 runs recovering the break-point is 0 to 0.5 from a single conventional
 start and 1 from the grid. The term's own default is a conventional
 start: the interior quantiles of the covariate, which look at the
-covariate and not at the response.
+covariate and never at the response.
 
 The rule costs \code{k} linear fits and is exact for a gaussian response, so it
 places a starting value and does not fit. Two consequences follow, and
