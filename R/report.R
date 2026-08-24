@@ -437,43 +437,59 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' written in, or the coordinates it was estimated on.
 #'
 #' @details
-#' Most coefficients are the same either way. A coefficient of a linear
-#' predictor is what it is, and `readable` moves only the two kinds of
-#' parameter that are reported under a different name from the one they are
-#' carried under.
+#' # What `readable` moves, and what it does not
 #'
-#' A break-point term is fitted through a working pair and its position is
-#' read off it: a discontinuous term carries `g` and reports
-#' \eqn{\psi = -g/\delta}, so with `readable = FALSE` the vector holds a
-#' number that is no quantity of the model. A score-driven term's persistence
-#' rides a partial autocorrelation, the stationary region not being a box,
-#' and what the literature calls \eqn{\beta_j} is the autoregressive
-#' coefficient the whole chart produces. Where a term declares no quantities
-#' of its own, and where a parameter it is written in is developed over
-#' covariates and so has no single value, the coordinates stand.
+#' Most coefficients are the same under either reading. A coefficient of a
+#' linear predictor is what it is. Two kinds of parameter are reported under
+#' a different name from the one they are carried under, and those are the
+#' ones this argument moves.
 #'
-#' A STRUCTURAL TERM contributes no design columns and its parameters are
-#' here under either reading. They used to be in neither: a model whose
-#' predictor is a score-driven filter answered `numeric(0)`.
+#' A **break-point** term is fitted through a working pair and its position
+#' is read off that pair. A discontinuous term carries \eqn{g} and reports
+#' \eqn{\psi = -g/\delta}, so at `readable = FALSE` the vector holds a number
+#' that is no quantity of the model at all.
 #'
-#' `readable = FALSE` is what a caller feeding a fit back needs: it is
-#' the vector the fit was estimated on, in the order and under the names
-#' [vcov()] is indexed by, and a structural term's part of it is on
-#' the unconstrained scale its charts define.
+#' A **score-driven** term's persistence rides a partial autocorrelation, the
+#' stationary region not being a box, and what the literature calls
+#' \eqn{\beta_j} is the autoregressive coefficient the whole chart produces.
+#' At \eqn{q = 2} a fit reporting \eqn{\beta_1 = 0.761} has a free coordinate
+#' of \eqn{\mathrm{pacf}_1 = 0.857}.
 #'
-#' Hyperparameters are not coefficients and are not here; [hyper()]
-#' reports them.
+#' Where a term declares no quantities of its own the coordinates stand. So
+#' do the coefficients of a parameter developed over covariates: a
+#' development is a vector with no single value to report, so the term
+#' declares nothing for it.
 #'
-#' @param object A fitted model.
-#' @param readable Whether to report the quantities the model is about rather
-#'   than the coordinates it was estimated on.
+#' # A structural term is present under both readings
+#'
+#' It contributes no design columns, so its parameters are in no block. They
+#' used to be in neither reading, and a model whose whole predictor is a
+#' score-driven filter answered `numeric(0)`.
+#'
+#' # When to ask for `FALSE`
+#'
+#' `readable = FALSE` gives the vector the fit was estimated on, in the order
+#' and under the names [vcov.StatmodFit()] is indexed by, with a structural
+#' term's part on the unconstrained scale its charts define. That is what a
+#' caller feeding a fit back to [loglik()] or to an optimizer needs.
+#'
+#' Hyperparameters are not coefficients and are not here. [hyper()] reports
+#' them.
+#'
+#' @param object A [StatmodFit()].
+#' @param readable `TRUE`, the default, reports the quantities the model is
+#'   written in. `FALSE` reports the coordinates it was estimated on.
 #' @param ... Unused.
 #'
-#' @return A named list, one entry per distribution parameter, each a named
-#'   numeric vector.
+#' @return A named list with one entry per distribution parameter, in the
+#'   family's order, each a named numeric vector. The names are the
+#'   coefficient labels, composed from each term's own label, so two terms of
+#'   one kind in one formula stay apart.
 #'
-#' @seealso [hyper()], [summary.StatmodFit()],
-#'   [modelterms7::term_readable()]
+#' @seealso [hyper()] for the hyperparameters, [vcov.StatmodFit()] for the
+#'   variance matrix indexed by the `readable = FALSE` names,
+#'   [summary.StatmodFit()] for the two together,
+#'   [modelterms7::term_readable()] for what a term declares.
 #'
 #' @examples
 #' set.seed(1)
@@ -481,8 +497,14 @@ S7::method(logLik, StatmodFit) <- logLik.StatmodFit
 #' d$y <- 0.3 * d$x + 1.5 * pmax(d$x - 6, 0) + rnorm(200, 0, 0.4)
 #' fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
 #'                distributions7::gaussian1_distrib(), d)
+#'
+#' # The break-point is a quantity of the model, near the true 6.
 #' coef(fit)$mu
+#'
+#' # The coordinates the fit ran on are the same numbers here, seg() being
+#' # continuous, and vcov() is indexed by these names.
 #' coef(fit, readable = FALSE)$mu
+#' rownames(vcov(fit))
 #'
 #' @keywords internal
 coef.StatmodFit <- function(object, readable = TRUE, ...) {
@@ -503,12 +525,12 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
 #' quantities put where the coordinates they are read from were.
 #'
 #' @details
-#' A term says what it is about through
-#' [modelterms7::term_readable()], which gives the quantities and
-#' the Jacobian from the coefficients. The columns that Jacobian touches are
-#' the coordinates the quantities are read from, and they are the ones
-#' replaced; a coordinate no quantity reads stands where it is. That is what
-#' keeps a developed parameter intact: its development is a vector of
+#' A term says what it is about through [modelterms7::term_readable()], which
+#' returns the quantities and the Jacobian from the coefficients they are
+#' read from. The columns that Jacobian touches are exactly the coordinates
+#' to replace; a coordinate no quantity reads stays where it is.
+#'
+#' That rule keeps a developed parameter intact. A development is a vector of
 #' coefficients over covariates with no single value to report, so the term
 #' declares nothing for it and nothing is taken away.
 #'
@@ -517,11 +539,16 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
 #'
 #' @param spec The fitted specification.
 #' @param design The design.
-#' @param fit The fit.
-#' @param p The distribution parameter.
+#' @param fit The [StatmodFit()].
+#' @param p The distribution parameter naming the equation, a string.
 #' @param v The named coefficient vector of that equation.
 #'
-#' @return The vector, with the quantities in place of their coordinates.
+#' @return `v`, with each term's declared quantities in place of the
+#'   coordinates they are read from. `v` unchanged where no term of the
+#'   equation declares any.
+#'
+#' @seealso [coef.StatmodFit()], the caller,
+#'   [modelterms7::term_readable()] for what a term declares.
 #'
 #' @keywords internal
 coef_readable <- function(spec, design, fit, p, v) {
@@ -558,24 +585,28 @@ coef_readable <- function(spec, design, fit, p, v) {
 #' as the coordinates they were estimated on.
 #'
 #' @details
-#' A structural term rewrites the likelihood rather than adding columns to a
-#' design, so its parameters are in no block and were in no reading of
-#' [coef()]: a model whose whole predictor is a score-driven filter
-#' answered with an empty vector. They are named from the term's label as
-#' every other coefficient of the term is.
+#' A structural term rewrites the likelihood instead of adding columns to a
+#' design, so its parameters sit in no block and appeared in no reading of
+#' [coef.StatmodFit()]: a model whose whole predictor is a score-driven
+#' filter answered with an empty vector. They are named from the term's
+#' label, as every other coefficient of that term is.
 #'
-#' A held parameter is one an intercept in the same equation carries and is
-#' not estimated; it is reported under either reading, at the value it is
-#' held at, because leaving it out would make the vector shorter than the
-#' term's own parameter count.
+#' A **held** parameter is one an intercept in the same equation carries, so
+#' it is not estimated. It is reported under either reading, at the value it
+#' is held at. Leaving it out would make the vector shorter than the term's
+#' own parameter count and break the correspondence with [vcov.StatmodFit()].
 #'
 #' @param spec The fitted specification.
-#' @param fit The fit.
-#' @param p The distribution parameter.
-#' @param readable Whether to report the quantities or the coordinates.
+#' @param fit The [StatmodFit()].
+#' @param p The distribution parameter naming the equation, a string.
+#' @param readable `TRUE` for the quantities the term declares, `FALSE` for
+#'   the coordinates on the unconstrained scale.
 #'
-#' @return A named numeric vector, empty where the equation carries no
-#'   structural term.
+#' @return A named numeric vector of that term's own parameters.
+#'   `numeric(0)` where the equation carries no structural term.
+#'
+#' @seealso [coef.StatmodFit()], the caller,
+#'   [statmod_latent()] for a latent-state term's smoothed states.
 #'
 #' @keywords internal
 coef_structural <- function(spec, fit, p, readable) {
@@ -611,59 +642,83 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' parameters.
 #'
 #' @details
-#' A residual asks whether an observation is consistent with the LAW its row
+#' # One residual per observation
+#'
+#' A residual asks whether an observation is consistent with the law its row
 #' was given, and that law is one object carrying every parameter at once. So
-#' there is one residual per observation and not one per distribution
-#' parameter, however many of them the model develops over covariates. What
-#' IS per parameter is a different quantity: the contribution
+#' there is one residual per observation, however many parameters the model
+#' develops over covariates.
+#'
+#' A per-parameter quantity exists and is a different thing: the contribution
 #' \eqn{\partial \ell_i / \partial \eta_{ip}} says which equation an
 #' observation strains, and the partial residuals of one equation are what a
 #' term's effect is drawn against.
 #'
-#' The QUANTILE residual is \eqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}. Under
-#' a correct model \eqn{F(y_i; \theta_i)} is exactly uniform, so \eqn{r_i} is
-#' exactly standard normal -- whatever the family, and whichever of its
-#' parameters are modelled. That is why it is the default here: it privileges
-#' no parameter, and it needs no asymptotics for its reference distribution
-#' to hold (Dunn and Smyth, 1996).
+#' # The quantile residual, and why it is the default
 #'
-#' Where the distribution function JUMPS the same construction is randomized:
-#' \eqn{u_i} is drawn uniformly on \eqn{(F(y_i^-), F(y_i))} and the residual
-#' is \eqn{\Phi^{-1}(u_i)}. That is exact again, at the price of being random,
-#' so two calls give two answers. It applies to every discrete family and, at
-#' the atom alone, to a mixed one -- the zero-adjusted wrapper of a continuous
-#' parent. `seed` makes a call reproducible without disturbing the
-#' caller's stream; left `NULL` the ambient state is used and nothing is
-#' set.
+#' \deqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}
 #'
-#' The PEARSON residual is \eqn{(y_i - \mathbb{E}[Y_i])/\mathrm{sd}(Y_i)} and
-#' the RESPONSE residual the numerator alone. Both are defined against the
-#' mean, and for a skewed family the first is not standard normal even where
-#' the model is right, so its quantile-quantile plot misleads in exactly the
-#' case a distributional model is for. They are offered because they are
-#' familiar, not because they answer the question the quantile residual does.
+#' Under a correct model \eqn{F(y_i; \theta_i)} is exactly uniform, so
+#' \eqn{r_i} is exactly standard normal: whatever the family, and whichever
+#' of its parameters are modeled. It privileges no parameter, and its
+#' reference distribution needs no asymptotics (Dunn and Smyth, 1996).
 #'
-#' @param object A fitted model.
-#' @param type The residual to compute.
-#' @param seed An integer to seed the randomization with, or `NULL`.
-#'   Read only where the distribution function jumps.
+#' # Where the distribution function jumps
+#'
+#' The construction is randomized: \eqn{u_i} is drawn uniformly on
+#' \eqn{(F(y_i^-), F(y_i))} and the residual is \eqn{\Phi^{-1}(u_i)}. Exact
+#' again, at the price of being random, so two calls give two answers.
+#'
+#' This applies to every discrete family, and at the atom alone to a mixed
+#' one, which is the zero-adjusted wrapper of a continuous parent. `seed`
+#' makes a call reproducible without disturbing the caller's stream; left
+#' `NULL`, the ambient state is used and nothing is set.
+#'
+#' # Pearson and response residuals
+#'
+#' \eqn{(y_i - \mathbb{E}[Y_i]) / \mathrm{sd}(Y_i)} and its numerator alone.
+#' Both are defined against the mean, and for a skewed family the Pearson
+#' residual is not standard normal even where the model is right, so its
+#' quantile-quantile plot misleads in exactly the case a distributional model
+#' is for. They are here because they are familiar.
+#'
+#' @param object A [StatmodFit()].
+#' @param type `"quantile"` (the default), `"pearson"` or `"response"`.
+#'   Matched with [match.arg()].
+#' @param seed An integer to seed the randomization with, or `NULL` for the
+#'   ambient state. Read only where the distribution function jumps, so it
+#'   changes nothing for a continuous family.
 #' @param ... Unused.
 #'
-#' @return A numeric vector, one entry per observation.
+#' @return A numeric vector with one entry per observation. Standard normal
+#'   under a correct model for `"quantile"`; approximately standardized for
+#'   `"pearson"`; on the response's own scale for `"response"`.
 #'
 #' @references
 #' Dunn, P. K. and Smyth, G. K. (1996). Randomized quantile residuals.
 #' *Journal of Computational and Graphical Statistics* 5(3), 236--244.
 #'
-#' @seealso [fitted.StatmodFit()], [predict.StatmodFit()]
+#' @seealso [fitted.StatmodFit()] and [predict.StatmodFit()] for the fitted
+#'   parameters these are read against.
 #'
 #' @examples
 #' set.seed(1)
-#' d <- data.frame(x = runif(80, -2, 2))
-#' d$y <- 1 + 0.8 * d$x + rnorm(80, 0, 0.5)
+#' d <- data.frame(x = runif(200, -2, 2))
+#' d$y <- 1 + 0.8 * d$x + rnorm(200, 0, 0.5)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
+#'
+#' # Under a correct model the quantile residuals are standard normal.
 #' r <- residuals(fit)
 #' c(mean = mean(r), sd = stats::sd(r))
+#' stats::shapiro.test(r)$p.value
+#'
+#' # For a discrete family the same residual is randomized, so two calls
+#' # differ unless a seed is given.
+#' dp <- data.frame(x = runif(200, -1, 1))
+#' dp$y <- rpois(200, exp(1 + dp$x))
+#' fp <- statmod(y ~ x, distributions7::poisson_distrib(), dp)
+#' identical(residuals(fp, seed = 1), residuals(fp, seed = 1))
+#' identical(residuals(fp, seed = 1), residuals(fp, seed = 2))
 #'
 #' @keywords internal
 residuals.StatmodFit <- function(object,

@@ -9,30 +9,35 @@ coef_structural(spec, fit, p, readable)
 \arguments{
 \item{spec}{The fitted specification.}
 
-\item{fit}{The fit.}
+\item{fit}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{p}{The distribution parameter.}
+\item{p}{The distribution parameter naming the equation, a string.}
 
-\item{readable}{Whether to report the quantities or the coordinates.}
+\item{readable}{\code{TRUE} for the quantities the term declares, \code{FALSE} for
+the coordinates on the unconstrained scale.}
 }
 \value{
-A named numeric vector, empty where the equation carries no
-structural term.
+A named numeric vector of that term's own parameters.
+\code{numeric(0)} where the equation carries no structural term.
 }
 \description{
 The own parameters of a structural term of one equation, as quantities or
 as the coordinates they were estimated on.
 }
 \details{
-A structural term rewrites the likelihood rather than adding columns to a
-design, so its parameters are in no block and were in no reading of
-\code{\link[=coef]{coef()}}: a model whose whole predictor is a score-driven filter
-answered with an empty vector. They are named from the term's label as
-every other coefficient of the term is.
+A structural term rewrites the likelihood instead of adding columns to a
+design, so its parameters sit in no block and appeared in no reading of
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}: a model whose whole predictor is a score-driven
+filter answered with an empty vector. They are named from the term's
+label, as every other coefficient of that term is.
 
-A held parameter is one an intercept in the same equation carries and is
-not estimated; it is reported under either reading, at the value it is
-held at, because leaving it out would make the vector shorter than the
-term's own parameter count.
+A \strong{held} parameter is one an intercept in the same equation carries, so
+it is not estimated. It is reported under either reading, at the value it
+is held at. Leaving it out would make the vector shorter than the term's
+own parameter count and break the correspondence with \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
+}
+\seealso{
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, the caller,
+\code{\link[=statmod_latent]{statmod_latent()}} for a latent-state term's smoothed states.
 }
 \keyword{internal}

@@ -7,61 +7,82 @@
 \method{coef}{StatmodFit}(object, readable = TRUE, ...)
 }
 \arguments{
-\item{object}{A fitted model.}
+\item{object}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{readable}{Whether to report the quantities the model is about rather
-than the coordinates it was estimated on.}
+\item{readable}{\code{TRUE}, the default, reports the quantities the model is
+written in. \code{FALSE} reports the coordinates it was estimated on.}
 
 \item{...}{Unused.}
 }
 \value{
-A named list, one entry per distribution parameter, each a named
-numeric vector.
+A named list with one entry per distribution parameter, in the
+family's order, each a named numeric vector. The names are the
+coefficient labels, composed from each term's own label, so two terms of
+one kind in one formula stay apart.
 }
 \description{
 One named vector per distribution parameter: the quantities the model is
 written in, or the coordinates it was estimated on.
 }
-\details{
-Most coefficients are the same either way. A coefficient of a linear
-predictor is what it is, and \code{readable} moves only the two kinds of
-parameter that are reported under a different name from the one they are
-carried under.
+\section{What \code{readable} moves, and what it does not}{
+Most coefficients are the same under either reading. A coefficient of a
+linear predictor is what it is. Two kinds of parameter are reported under
+a different name from the one they are carried under, and those are the
+ones this argument moves.
 
-A break-point term is fitted through a working pair and its position is
-read off it: a discontinuous term carries \code{g} and reports
-\eqn{\psi = -g/\delta}, so with \code{readable = FALSE} the vector holds a
-number that is no quantity of the model. A score-driven term's persistence
-rides a partial autocorrelation, the stationary region not being a box,
-and what the literature calls \eqn{\beta_j} is the autoregressive
-coefficient the whole chart produces. Where a term declares no quantities
-of its own, and where a parameter it is written in is developed over
-covariates and so has no single value, the coordinates stand.
+A \strong{break-point} term is fitted through a working pair and its position
+is read off that pair. A discontinuous term carries \eqn{g} and reports
+\eqn{\psi = -g/\delta}, so at \code{readable = FALSE} the vector holds a number
+that is no quantity of the model at all.
 
-A STRUCTURAL TERM contributes no design columns and its parameters are
-here under either reading. They used to be in neither: a model whose
-predictor is a score-driven filter answered \code{numeric(0)}.
+A \strong{score-driven} term's persistence rides a partial autocorrelation, the
+stationary region not being a box, and what the literature calls
+\eqn{\beta_j} is the autoregressive coefficient the whole chart produces.
+At \eqn{q = 2} a fit reporting \eqn{\beta_1 = 0.761} has a free coordinate
+of \eqn{\mathrm{pacf}_1 = 0.857}.
 
-\code{readable = FALSE} is what a caller feeding a fit back needs: it is
-the vector the fit was estimated on, in the order and under the names
-\code{\link[=vcov]{vcov()}} is indexed by, and a structural term's part of it is on
-the unconstrained scale its charts define.
-
-Hyperparameters are not coefficients and are not here; \code{\link[=hyper]{hyper()}}
-reports them.
+Where a term declares no quantities of its own the coordinates stand. So
+do the coefficients of a parameter developed over covariates: a
+development is a vector with no single value to report, so the term
+declares nothing for it.
 }
+
+\section{A structural term is present under both readings}{
+It contributes no design columns, so its parameters are in no block. They
+used to be in neither reading, and a model whose whole predictor is a
+score-driven filter answered \code{numeric(0)}.
+}
+
+\section{When to ask for \code{FALSE}}{
+\code{readable = FALSE} gives the vector the fit was estimated on, in the order
+and under the names \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} is indexed by, with a structural
+term's part on the unconstrained scale its charts define. That is what a
+caller feeding a fit back to \code{\link[=loglik]{loglik()}} or to an optimizer needs.
+
+Hyperparameters are not coefficients and are not here. \code{\link[=hyper]{hyper()}} reports
+them.
+}
+
 \examples{
 set.seed(1)
 d <- data.frame(x = sort(runif(200, 0, 10)))
 d$y <- 0.3 * d$x + 1.5 * pmax(d$x - 6, 0) + rnorm(200, 0, 0.4)
 fit <- statmod(y ~ modelterms7::seg(x, psi = 4),
                distributions7::gaussian1_distrib(), d)
+
+# The break-point is a quantity of the model, near the true 6.
 coef(fit)$mu
+
+# The coordinates the fit ran on are the same numbers here, seg() being
+# continuous, and vcov() is indexed by these names.
 coef(fit, readable = FALSE)$mu
+rownames(vcov(fit))
 
 }
 \seealso{
-\code{\link[=hyper]{hyper()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
-\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}
+\code{\link[=hyper]{hyper()}} for the hyperparameters, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} for the
+variance matrix indexed by the \code{readable = FALSE} names,
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the two together,
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} for what a term declares.
 }
 \keyword{internal}

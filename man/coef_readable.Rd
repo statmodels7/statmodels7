@@ -11,30 +11,36 @@ coef_readable(spec, design, fit, p, v)
 
 \item{design}{The design.}
 
-\item{fit}{The fit.}
+\item{fit}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{p}{The distribution parameter.}
+\item{p}{The distribution parameter naming the equation, a string.}
 
 \item{v}{The named coefficient vector of that equation.}
 }
 \value{
-The vector, with the quantities in place of their coordinates.
+\code{v}, with each term's declared quantities in place of the
+coordinates they are read from. \code{v} unchanged where no term of the
+equation declares any.
 }
 \description{
 The coefficient vector of one equation with each term's declared
 quantities put where the coordinates they are read from were.
 }
 \details{
-A term says what it is about through
-\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which gives the quantities and
-the Jacobian from the coefficients. The columns that Jacobian touches are
-the coordinates the quantities are read from, and they are the ones
-replaced; a coordinate no quantity reads stands where it is. That is what
-keeps a developed parameter intact: its development is a vector of
+A term says what it is about through \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}}, which
+returns the quantities and the Jacobian from the coefficients they are
+read from. The columns that Jacobian touches are exactly the coordinates
+to replace; a coordinate no quantity reads stays where it is.
+
+That rule keeps a developed parameter intact. A development is a vector of
 coefficients over covariates with no single value to report, so the term
 declares nothing for it and nothing is taken away.
 
 The names are composed as the term composes its coefficients', from its
 own label, so two terms of one kind in one formula stay apart.
+}
+\seealso{
+\code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, the caller,
+\code{\link[modelterms7:term_readable]{modelterms7::term_readable()}} for what a term declares.
 }
 \keyword{internal}
