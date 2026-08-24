@@ -16,15 +16,40 @@ NULL
 #' Which Terms Recompute Their Own Block
 #'
 #' @description
-#' The parameter and name of every term whose design block is a function of
-#' its own coefficients, in the order the design holds them.
+#' Locates every term of the specification whose design block is a function
+#' of its own coefficients, and reports where each one sits. These are the
+#' terms whose block has to be rebuilt whenever the coefficients move:
+#' [modelterms7::seg()], [modelterms7::jump()], [modelterms7::jseg()] and
+#' [modelterms7::nl()]. Every other term's block is fixed once at build
+#' time.
 #'
-#' @param spec A [StatmodSpec()].
+#' @details
+#' Membership is decided by asking whether the term registers a
+#' `term_refresh()` method of its own, which is [refreshes_own_block()]. The
+#' base method on `model_term` is the identity, so a term written later is
+#' covered without an edit here.
 #'
-#' @return A list of entries with `param` and `term`, possibly
-#'   empty.
+#' This is the list every other function in the file walks. Its emptiness is
+#' what makes a model of ordinary terms pay nothing for the refresh
+#' machinery.
 #'
-#' @seealso [statmod_design_at()], [refreshes_own_block()]
+#' @param spec A [StatmodSpec()], whose `terms` are walked equation by
+#'   equation.
+#'
+#' @return A list with one element per refreshable term, in the order the
+#'   design holds them: equations in the family's parameter order, and terms
+#'   within an equation in the order they were written. Each element is a
+#'   list of two:
+#'   \describe{
+#'     \item{`param`}{the distribution parameter whose equation the term sits
+#'       in, a string.}
+#'     \item{`term`}{the term's index within that equation, an integer.}
+#'   }
+#'   An empty list when no term refreshes, which is the common case.
+#'
+#' @seealso [statmod_design_at()] for the rebuild,
+#'   [refreshes_own_block()] for the predicate,
+#'   [statmod_commit_refresh()] for advancing the state.
 #'
 #' @keywords internal
 statmod_refreshable <- function(spec) {
@@ -43,35 +68,62 @@ statmod_refreshable <- function(spec) {
 #' The Design at Given Coefficients
 #'
 #' @description
-#' The design with every refreshable term's block recomputed at the
-#' coefficients it currently holds, and the difference between its
-#' contribution and its linearization carried as an adjustment to the
-#' predictor.
+#' Recomputes every refreshable term's design block at the coefficients
+#' currently in hand, and carries the difference between what the term
+#' contributes and what its linearization contributes as a per-observation
+#' adjustment to the predictor. The adjustment is what lets every
+#' cross-product in the objective read the block as an ordinary design while
+#' the predictor stays exact:
+#'
+#' \deqn{\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta}
+#'
+#' For a term whose block is a Jacobian, [modelterms7::seg()] and
+#' [modelterms7::nl()], the adjustment is non-zero and the resulting scoring
+#' step is the Gauss-Newton one. For [modelterms7::jump()] the columns
+#' satisfy \eqn{X\beta = \mathrm{value}} exactly, so the adjustment is zero
+#' and the same step is Fasola's fixed-point iteration.
 #'
 #' @details
-#' A design with no refreshable term is returned unchanged, so a model of
-#' ordinary terms pays nothing and reaches exactly the same arithmetic as
-#' before.
+#' # A model with no refreshable term pays nothing
 #'
-#' The refresh is CHAINED from the term the state holds rather than from the
-#' specification, because the rescaling factor of a discontinuous break-point
-#' term is a state of the iteration and not a function of the coefficients:
-#' it halves when the break-point reverses direction, which is a fact about
-#' the path and not about the point. The state advances only when
-#' [statmod_commit_refresh()] is called, so the trial points of a
-#' line search all see the same schedule and the schedule advances once per
-#' sweep.
+#' [refresh_units()] is empty there, the design is returned as it arrived,
+#' and the arithmetic downstream is untouched.
 #'
-#' The result is memoized on the coefficients, since the objective, its
-#' gradient and its curvature are asked for at the same point in turn.
+#' # Chained from the term, not from the specification
+#'
+#' The refresh reads the term the design state currently holds, and not the
+#' one the specification was built with. The reason is that a discontinuous
+#' break-point term carries a rescaling factor that is a state of the
+#' iteration and not a function of the coefficients: \pkg{modelterms7} halves
+#' it whenever the break-point reverses direction, which is a fact about the
+#' path taken and not about the point reached. Refreshing from the
+#' specification each time would reset that factor to its starting value and
+#' solve a permanently smoothed problem, whose fixed point is not the
+#' model's.
+#'
+#' The state advances only when [statmod_commit_refresh()] is called, so
+#' every trial point of a line search sees one schedule and the schedule
+#' advances once per sweep.
+#'
+#' # Memoization
+#'
+#' The result is cached on the coefficients, because the objective, its
+#' gradient and its curvature are all asked for at the same point in turn
+#' and each would otherwise rebuild the same blocks.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param coef A named list of coefficient vectors.
-#' @param design The design, as [statmod_design()] returns it.
+#' @param coef A named list of coefficient vectors, one per distribution
+#'   parameter, each as long as its equation's design is wide.
+#' @param design The design to refresh, as [statmod_design()] returns it.
 #'
-#' @return A design.
+#' @return A design of the same shape as `design`, with the refreshable
+#'   terms' column blocks replaced and each equation's `adj` set to the
+#'   per-observation adjustment above. `design` itself when nothing
+#'   refreshes.
 #'
-#' @seealso [statmod_commit_refresh()]
+#' @seealso [statmod_commit_refresh()] to advance the state afterwards,
+#'   [refresh_units()] for the terms this walks,
+#'   [statmod_refresh_settled()] for the verdict.
 #'
 #' @keywords internal
 statmod_design_at <- function(spec, coef, design) {
@@ -156,37 +208,49 @@ statmod_design_at <- function(spec, coef, design) {
 #' its iteration moves on one step.
 #'
 #' @details
-#' What moves is the rescaling factor of a discontinuous break-point term and
-#' the direction it last travelled in, which \pkg{modelterms7} halves on a
-#' reversal: a schedule that advanced once per objective evaluation would
-#' anneal at the speed of the line search rather than at the speed of the
-#' fit, and one that never advanced would solve a permanently smoothed
-#' problem, whose fixed point is not the model's.
+#' # What moves
 #'
-#' For a term whose block is a Jacobian the value it reports is unchanged by
-#' the schedule -- a break-point is read off the coefficients and the
-#' rescaling reaches only the columns -- so committing does not move the
-#' objective at the same coefficients. For a FROZEN working block that
-#' sentence is false in two ways, which is why those terms are committed by
-#' [fit_working()] and skipped here: a jseg's quadratic read-off
-#' is incremental in the committed position, so a second commit at the same
-#' coefficients takes a second step, and a refresh may relabel crossed
-#' break-point lineages, after which the caller's coefficients are stale.
-#' The relabeling is why the COMMITTED coefficients are returned: a caller
+#' The rescaling factor of a discontinuous break-point term, and the
+#' direction it last travelled in, which \pkg{modelterms7} halves on a
+#' reversal. Advancing that once per objective evaluation would anneal at
+#' the speed of the line search instead of the speed of the fit; never
+#' advancing it would solve a permanently smoothed problem, whose fixed
+#' point is not the model's. Once per sweep is what this call is for.
+#'
+#' # Why a frozen block is committed elsewhere
+#'
+#' Where a term's block is a Jacobian, committing does not move the
+#' objective at the same coefficients: the break-point is read off the
+#' coefficients and the rescaling reaches only the columns.
+#'
+#' Where the block is a frozen working linearization, that is false twice
+#' over, which is why those terms are committed by [fit_working()] and
+#' skipped here at the default. A [modelterms7::jseg()] reads its position
+#' from a quadratic that is incremental in the position already committed,
+#' so a second commit at the same coefficients takes a further hidden step,
+#' measured at up to 0.71 per observation on the contribution. And a refresh
+#' may relabel crossed break-point lineages, after which the caller's own
+#' copy of the coefficients names them in the old order.
+#'
+#' The relabeling is why the committed coefficients are returned. A caller
 #' continues from what the terms stored, not from what it passed in.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param coef A named list of coefficient vectors.
-#' @param design The design.
-#' @param which Which refresh entries to commit: `"all"`,
-#'   `"jacobian"` (the default at the alternation's pass level, where
-#'   the frozen ones are already committed by their own phase) or
-#'   `"frozen"`.
+#' @param coef A named list of coefficient vectors, one per distribution
+#'   parameter.
+#' @param design The design, whose refresh state is what this advances.
+#' @param which Which entries to commit: `"all"` (the default), `"jacobian"`
+#'   or `"frozen"`. The alternation's pass level and [statmod_fitted_spec()]
+#'   both pass `"jacobian"`, the frozen terms having been committed already
+#'   by their own phase.
 #'
-#' @return The coefficient list, with each committed term's stretch replaced
-#'   by the coefficients the term stored, invisibly.
+#' @return The coefficient list, invisibly, with each committed term's
+#'   stretch replaced by the coefficients that term stored. Identical to
+#'   `coef` when nothing was committed or when no term relabeled.
 #'
-#' @seealso [statmod_design_at()], [fit_working()]
+#' @seealso [statmod_design_at()] for the refresh this advances,
+#'   [fit_working()] for the phase that commits the frozen terms,
+#'   [statmod_refresh_settled()] for the verdict.
 #'
 #' @keywords internal
 statmod_commit_refresh <- function(spec, coef, design, which = "all") {
@@ -214,30 +278,40 @@ statmod_commit_refresh <- function(spec, coef, design, which = "all") {
 #' Have the Refreshable Terms Settled?
 #'
 #' @description
-#' `TRUE` when every term that recomputes its own block reports that its
-#' own iteration has nothing further to say.
+#' Asks every term that recomputes its own block whether its own iteration
+#' has anything further to say, through
+#' [modelterms7::term_converged()], and returns `TRUE` when none of them
+#' does. This is the verdict for the refreshable half of a fit.
 #'
 #' @details
-#' The question cannot always be answered by the score. Where a term's block
-#' is the Jacobian of its contribution, the gradient of the model's objective
-#' is the model's and its vanishing is the test; where the block is a working
-#' linearization with a frozen weight, as in a discontinuous break-point
-#' term, it is not, and the profile objective there is a step function in the
-#' break-point with no gradient to vanish. Measured on
-#' `jump()`: the fit reaches the break-point and the jump size to three
-#' figures, the objective stops moving at the twelfth digit, and the score of
-#' the working model stays at 0.176 forever.
-#' [modelterms7::term_converged()] is what each construction
-#' answers instead.
+#' # Why the score cannot answer this
+#'
+#' Where a term's block is the Jacobian of its contribution, the gradient of
+#' the model's objective is the model's own gradient and its vanishing is
+#' the test. Where the block is a working linearization with a frozen
+#' weight, as in a discontinuous break-point term, the gradient belongs to
+#' the working model and not to the objective, and the profile objective is
+#' a step function in the break-point with no gradient to vanish at all.
+#'
+#' Measured on `y ~ jump(x)` at \eqn{n = 400}, a Gaussian response with a
+#' step of 2 at \eqn{x = 6}: the fit recovers the position at 6.004 and
+#' reports `converged = TRUE`, while the score of the working model at that
+#' point is \eqn{7.8 \times 10^{7}}. The size is the annealed rescaling
+#' factor, whose auxiliary columns grow as the schedule tightens. A rule
+#' reading that score would never stop.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param design The design.
-#' @param which Which refresh entries to ask: `"all"`,
-#'   `"jacobian"` or `"frozen"`.
+#' @param design The design, whose refresh state holds the terms asked.
+#' @param which Which entries to ask: `"all"` (the default), `"jacobian"` or
+#'   `"frozen"`.
 #'
-#' @return A single logical; `TRUE` when there is nothing to ask.
+#' @return A single logical. `TRUE` when every term asked reports it has
+#'   settled, and `TRUE` when there is nothing to ask, so a model with no
+#'   refreshable term never blocks a fit's verdict on this.
 #'
-#' @seealso [statmod_design_at()]
+#' @seealso [modelterms7::term_converged()] for what each construction
+#'   answers, [statmod_design_at()] for the refresh,
+#'   [statmod_commit_refresh()] for the state it reads.
 #'
 #' @keywords internal
 statmod_refresh_settled <- function(spec, design, which = "all") {
@@ -258,18 +332,34 @@ statmod_refresh_settled <- function(spec, design, which = "all") {
 #' The Terms as the Fit Left Them
 #'
 #' @description
-#' The specification with every refreshable term replaced by the one the fit
-#' arrived at, so that a break-point, a nonlinear parameter and the block
-#' they imply are read off the fitted object rather than off the
-#' specification it started from.
+#' Returns the specification with every refreshable term replaced by the one
+#' the fit arrived at. A break-point, a nonlinear parameter and the design
+#' block they imply are then read off the fitted object, and the
+#' specification a caller passed to [statmod()] no longer decides what
+#' `summary()`, `predict()` or [modelterms7::seg_psi()] report.
 #'
-#' @param spec A [StatmodSpec()].
-#' @param coef A named list of coefficient vectors.
-#' @param design The design.
+#' @details
+#' This is what a [StatmodFit()] stores in its `spec` property. The commit is
+#' `which = "jacobian"`: a frozen block was committed by its own phase at
+#' exactly these coefficients, and committing a [modelterms7::jseg()] again
+#' at the same point would take a further step of its incremental read-off,
+#' so the break-points reported would not be the fitted ones. Both kinds of
+#' term are then copied across from the design's state, committed or not.
 #'
-#' @return A [StatmodSpec()].
+#' A structural term's own parameters are copied too, from the design's
+#' structural state onto `spec@structural`, so a filter's persistence and
+#' loadings are read off the fit as well.
 #'
-#' @seealso [statmod_commit_refresh()]
+#' @param spec A [StatmodSpec()], the one the fit started from.
+#' @param coef A named list of coefficient vectors, the ones the fit reached.
+#' @param design The design at those coefficients, whose refresh state holds
+#'   the terms to copy across.
+#'
+#' @return A [StatmodSpec()] identical to `spec` except that each
+#'   refreshable term is the object the fit left behind.
+#'
+#' @seealso [statmod_commit_refresh()] for the commit this performs,
+#'   [refresh_units()] for the terms replaced.
 #'
 #' @keywords internal
 statmod_fitted_spec <- function(spec, coef, design) {

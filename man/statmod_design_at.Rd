@@ -9,37 +9,63 @@ statmod_design_at(spec, coef, design)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{coef}{A named list of coefficient vectors.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter, each as long as its equation's design is wide.}
 
-\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
+\item{design}{The design to refresh, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 }
 \value{
-A design.
+A design of the same shape as \code{design}, with the refreshable
+terms' column blocks replaced and each equation's \code{adj} set to the
+per-observation adjustment above. \code{design} itself when nothing
+refreshes.
 }
 \description{
-The design with every refreshable term's block recomputed at the
-coefficients it currently holds, and the difference between its
-contribution and its linearization carried as an adjustment to the
-predictor.
-}
-\details{
-A design with no refreshable term is returned unchanged, so a model of
-ordinary terms pays nothing and reaches exactly the same arithmetic as
-before.
+Recomputes every refreshable term's design block at the coefficients
+currently in hand, and carries the difference between what the term
+contributes and what its linearization contributes as a per-observation
+adjustment to the predictor. The adjustment is what lets every
+cross-product in the objective read the block as an ordinary design while
+the predictor stays exact:
 
-The refresh is CHAINED from the term the state holds rather than from the
-specification, because the rescaling factor of a discontinuous break-point
-term is a state of the iteration and not a function of the coefficients:
-it halves when the break-point reverses direction, which is a fact about
-the path and not about the point. The state advances only when
-\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} is called, so the trial points of a
-line search all see the same schedule and the schedule advances once per
-sweep.
+\deqn{\mathrm{adj} = \mathrm{term\_value}(\beta) - X(\beta)\,\beta}
 
-The result is memoized on the coefficients, since the objective, its
-gradient and its curvature are asked for at the same point in turn.
+For a term whose block is a Jacobian, \code{\link[modelterms7:seg]{modelterms7::seg()}} and
+\code{\link[modelterms7:nl]{modelterms7::nl()}}, the adjustment is non-zero and the resulting scoring
+step is the Gauss-Newton one. For \code{\link[modelterms7:jump]{modelterms7::jump()}} the columns
+satisfy \eqn{X\beta = \mathrm{value}} exactly, so the adjustment is zero
+and the same step is Fasola's fixed-point iteration.
 }
+\section{A model with no refreshable term pays nothing}{
+\code{\link[=refresh_units]{refresh_units()}} is empty there, the design is returned as it arrived,
+and the arithmetic downstream is untouched.
+}
+
+\section{Chained from the term, not from the specification}{
+The refresh reads the term the design state currently holds, and not the
+one the specification was built with. The reason is that a discontinuous
+break-point term carries a rescaling factor that is a state of the
+iteration and not a function of the coefficients: \pkg{modelterms7} halves
+it whenever the break-point reverses direction, which is a fact about the
+path taken and not about the point reached. Refreshing from the
+specification each time would reset that factor to its starting value and
+solve a permanently smoothed problem, whose fixed point is not the
+model's.
+
+The state advances only when \code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} is called, so
+every trial point of a line search sees one schedule and the schedule
+advances once per sweep.
+}
+
+\section{Memoization}{
+The result is cached on the coefficients, because the objective, its
+gradient and its curvature are all asked for at the same point in turn
+and each would otherwise rebuild the same blocks.
+}
+
 \seealso{
-\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}}
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} to advance the state afterwards,
+\code{\link[=refresh_units]{refresh_units()}} for the terms this walks,
+\code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}} for the verdict.
 }
 \keyword{internal}

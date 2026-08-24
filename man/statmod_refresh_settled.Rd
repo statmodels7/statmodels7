@@ -9,32 +9,41 @@ statmod_refresh_settled(spec, design, which = "all")
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, whose refresh state holds the terms asked.}
 
-\item{which}{Which refresh entries to ask: \code{"all"},
-\code{"jacobian"} or \code{"frozen"}.}
+\item{which}{Which entries to ask: \code{"all"} (the default), \code{"jacobian"} or
+\code{"frozen"}.}
 }
 \value{
-A single logical; \code{TRUE} when there is nothing to ask.
+A single logical. \code{TRUE} when every term asked reports it has
+settled, and \code{TRUE} when there is nothing to ask, so a model with no
+refreshable term never blocks a fit's verdict on this.
 }
 \description{
-\code{TRUE} when every term that recomputes its own block reports that its
-own iteration has nothing further to say.
+Asks every term that recomputes its own block whether its own iteration
+has anything further to say, through
+\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}}, and returns \code{TRUE} when none of them
+does. This is the verdict for the refreshable half of a fit.
 }
-\details{
-The question cannot always be answered by the score. Where a term's block
-is the Jacobian of its contribution, the gradient of the model's objective
-is the model's and its vanishing is the test; where the block is a working
-linearization with a frozen weight, as in a discontinuous break-point
-term, it is not, and the profile objective there is a step function in the
-break-point with no gradient to vanish. Measured on
-\code{jump()}: the fit reaches the break-point and the jump size to three
-figures, the objective stops moving at the twelfth digit, and the score of
-the working model stays at 0.176 forever.
-\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} is what each construction
-answers instead.
+\section{Why the score cannot answer this}{
+Where a term's block is the Jacobian of its contribution, the gradient of
+the model's objective is the model's own gradient and its vanishing is
+the test. Where the block is a working linearization with a frozen
+weight, as in a discontinuous break-point term, the gradient belongs to
+the working model and not to the objective, and the profile objective is
+a step function in the break-point with no gradient to vanish at all.
+
+Measured on \code{y ~ jump(x)} at \eqn{n = 400}, a Gaussian response with a
+step of 2 at \eqn{x = 6}: the fit recovers the position at 6.004 and
+reports \code{converged = TRUE}, while the score of the working model at that
+point is \eqn{7.8 \times 10^{7}}. The size is the annealed rescaling
+factor, whose auxiliary columns grow as the schedule tightens. A rule
+reading that score would never stop.
 }
+
 \seealso{
-\code{\link[=statmod_design_at]{statmod_design_at()}}
+\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}} for what each construction
+answers, \code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh,
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for the state it reads.
 }
 \keyword{internal}

@@ -9,45 +9,56 @@ statmod_commit_refresh(spec, coef, design, which = "all")
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{coef}{A named list of coefficient vectors.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter.}
 
-\item{design}{The design.}
+\item{design}{The design, whose refresh state is what this advances.}
 
-\item{which}{Which refresh entries to commit: \code{"all"},
-\code{"jacobian"} (the default at the alternation's pass level, where
-the frozen ones are already committed by their own phase) or
-\code{"frozen"}.}
+\item{which}{Which entries to commit: \code{"all"} (the default), \code{"jacobian"}
+or \code{"frozen"}. The alternation's pass level and \code{\link[=statmod_fitted_spec]{statmod_fitted_spec()}}
+both pass \code{"jacobian"}, the frozen terms having been committed already
+by their own phase.}
 }
 \value{
-The coefficient list, with each committed term's stretch replaced
-by the coefficients the term stored, invisibly.
+The coefficient list, invisibly, with each committed term's
+stretch replaced by the coefficients that term stored. Identical to
+\code{coef} when nothing was committed or when no term relabeled.
 }
 \description{
 Replaces the terms the design refreshes from by the ones they refresh to
 at the given coefficients, so that whatever a term carries as a state of
 its iteration moves on one step.
 }
-\details{
-What moves is the rescaling factor of a discontinuous break-point term and
-the direction it last travelled in, which \pkg{modelterms7} halves on a
-reversal: a schedule that advanced once per objective evaluation would
-anneal at the speed of the line search rather than at the speed of the
-fit, and one that never advanced would solve a permanently smoothed
-problem, whose fixed point is not the model's.
+\section{What moves}{
+The rescaling factor of a discontinuous break-point term, and the
+direction it last travelled in, which \pkg{modelterms7} halves on a
+reversal. Advancing that once per objective evaluation would anneal at
+the speed of the line search instead of the speed of the fit; never
+advancing it would solve a permanently smoothed problem, whose fixed
+point is not the model's. Once per sweep is what this call is for.
+}
 
-For a term whose block is a Jacobian the value it reports is unchanged by
-the schedule -- a break-point is read off the coefficients and the
-rescaling reaches only the columns -- so committing does not move the
-objective at the same coefficients. For a FROZEN working block that
-sentence is false in two ways, which is why those terms are committed by
-\code{\link[=fit_working]{fit_working()}} and skipped here: a jseg's quadratic read-off
-is incremental in the committed position, so a second commit at the same
-coefficients takes a second step, and a refresh may relabel crossed
-break-point lineages, after which the caller's coefficients are stale.
-The relabeling is why the COMMITTED coefficients are returned: a caller
+\section{Why a frozen block is committed elsewhere}{
+Where a term's block is a Jacobian, committing does not move the
+objective at the same coefficients: the break-point is read off the
+coefficients and the rescaling reaches only the columns.
+
+Where the block is a frozen working linearization, that is false twice
+over, which is why those terms are committed by \code{\link[=fit_working]{fit_working()}} and
+skipped here at the default. A \code{\link[modelterms7:jseg]{modelterms7::jseg()}} reads its position
+from a quadratic that is incremental in the position already committed,
+so a second commit at the same coefficients takes a further hidden step,
+measured at up to 0.71 per observation on the contribution. And a refresh
+may relabel crossed break-point lineages, after which the caller's own
+copy of the coefficients names them in the old order.
+
+The relabeling is why the committed coefficients are returned. A caller
 continues from what the terms stored, not from what it passed in.
 }
+
 \seealso{
-\code{\link[=statmod_design_at]{statmod_design_at()}}, \code{\link[=fit_working]{fit_working()}}
+\code{\link[=statmod_design_at]{statmod_design_at()}} for the refresh this advances,
+\code{\link[=fit_working]{fit_working()}} for the phase that commits the frozen terms,
+\code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}} for the verdict.
 }
 \keyword{internal}

@@ -7,17 +7,42 @@
 statmod_refreshable(spec)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, whose \code{terms} are walked equation by
+equation.}
 }
 \value{
-A list of entries with \code{param} and \code{term}, possibly
-empty.
+A list with one element per refreshable term, in the order the
+design holds them: equations in the family's parameter order, and terms
+within an equation in the order they were written. Each element is a
+list of two:
+\describe{
+\item{\code{param}}{the distribution parameter whose equation the term sits
+in, a string.}
+\item{\code{term}}{the term's index within that equation, an integer.}
+}
+An empty list when no term refreshes, which is the common case.
 }
 \description{
-The parameter and name of every term whose design block is a function of
-its own coefficients, in the order the design holds them.
+Locates every term of the specification whose design block is a function
+of its own coefficients, and reports where each one sits. These are the
+terms whose block has to be rebuilt whenever the coefficients move:
+\code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:jseg]{modelterms7::jseg()}} and
+\code{\link[modelterms7:nl]{modelterms7::nl()}}. Every other term's block is fixed once at build
+time.
+}
+\details{
+Membership is decided by asking whether the term registers a
+\code{term_refresh()} method of its own, which is \code{\link[=refreshes_own_block]{refreshes_own_block()}}. The
+base method on \code{model_term} is the identity, so a term written later is
+covered without an edit here.
+
+This is the list every other function in the file walks. Its emptiness is
+what makes a model of ordinary terms pay nothing for the refresh
+machinery.
 }
 \seealso{
-\code{\link[=statmod_design_at]{statmod_design_at()}}, \code{\link[=refreshes_own_block]{refreshes_own_block()}}
+\code{\link[=statmod_design_at]{statmod_design_at()}} for the rebuild,
+\code{\link[=refreshes_own_block]{refreshes_own_block()}} for the predicate,
+\code{\link[=statmod_commit_refresh]{statmod_commit_refresh()}} for advancing the state.
 }
 \keyword{internal}
