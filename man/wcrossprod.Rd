@@ -7,39 +7,70 @@
 wcrossprod(A, w, B, threads = 1L)
 }
 \arguments{
-\item{A, B}{Design blocks, \verb{n x pa} and \verb{n x pb}.}
+\item{A, B}{Dense design blocks with the same number of rows, \verb{n x pa} and
+\verb{n x pb}. Either may be sparse, in which case the \pkg{Matrix} route is
+taken and the result is whatever \code{crossprod()} gives for that pair.}
 
-\item{w}{The per-observation weights, length \code{n}.}
+\item{w}{Per-observation weights, a numeric vector of length \code{n}. A weight
+of any sign is accepted; nothing here assumes the working weights are
+positive.}
 
-\item{threads}{The thread count, a plain integer.}
+\item{threads}{The thread count, a plain integer as
+\code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L}, the default, takes the
+sequential route unconditionally.}
 }
 \value{
-A \verb{pa x pb} matrix.
+A \verb{pa x pb} numeric matrix, with the column names of \code{A} and \code{B}
+as its dimnames when either block carries them.
 }
 \description{
-\code{t(A) \%*\% (w * B)}, through the package's threaded kernel where the
-thread count and the measured work threshold allow it, and through
-\code{crossprod(A * w, B)} -- exactly the expression it replaces --
-everywhere else.
+Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product the
+information matrix and the outer Hessian are assembled from. Above a
+measured work threshold, and only when the caller asked for more than one
+thread, the work goes to the package's own threaded kernel. Everywhere
+else it evaluates \code{crossprod(A * w, B)}, which is the expression the
+kernel replaces.
 }
-\details{
-The kernel decomposes over the ELEMENTS of the output, each dot product
-accumulated in full by one thread in ascending row order with the weight
-multiplied onto \code{A}'s entry first: the kernel's result does not
-depend on the thread count, bit for bit. Engaging the kernel replaces the
-BLAS expression, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
-accumulations, so the two implementations coincide to the last bit only
-on the reference BLAS and to the rounding of one dot product elsewhere.
-Only base dense matrices with a full-length weight are eligible; a sparse
-design keeps its \pkg{Matrix} route, where a threaded dense kernel would
-do nothing (piano_parallel.txt: the threshold is on the work, p and the
-density, not on n alone).
+\section{Why the answer does not depend on the thread count}{
+The kernel splits the work over the \strong{elements of the output}: one thread
+owns one entry \eqn{(j,k)} and accumulates its whole dot product, in
+ascending row order, with the weight multiplied onto \code{A}'s entry before
+the product is formed. No accumulation is ever split between threads, so
+the sum is the same sequence of additions at any count and the result is
+identical bit for bit at 1, 2 or 24 threads.
 
-The threshold is internal and measured, not an argument: the crossover
-where the cost of opening the region meets its gain sits near \code{9e4}
-multiply-adds on this machine's grid (0.94x at 8e4, 1.7x at 1e5, 10x at
-2e6, 19-20x at the profile shapes), and the gate is set a factor of two
-above it, where the asymmetry argument says an error either way costs
+That guarantee is about the kernel and not about the two routes agreeing
+with each other. Engaging the kernel replaces a BLAS call, and an
+optimized BLAS (OpenBLAS, Accelerate) blocks its accumulations into a
+different order. The two routes therefore agree to the last bit on R's
+reference BLAS and to the rounding of a single dot product elsewhere.
+}
+
+\section{When the kernel is used}{
+All four conditions must hold: \code{threads > 1}, \code{A} and \code{B} are base dense
+matrices, \code{w} has one entry per row, and the work
+\eqn{n \times p_A \times p_B} is at least \code{2e5} multiply-adds. A sparse
+design keeps its \pkg{Matrix} route, where a dense kernel would gain
+nothing: the cost there is set by the number of stored nonzeros, and the
+threshold above reads the dense shape.
+
+The threshold is a constant in the source and not an argument. It was
+measured: the crossover where opening a parallel region costs what it
+saves sits near \eqn{9 \times 10^4} multiply-adds on the development
+machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
+\eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
+the gate is set above it, where a misjudgement in either direction costs
 almost nothing.
+}
+
+\section{Dimnames}{
+The kernel returns a bare matrix, so the column names of \code{A} and \code{B} are
+put back as the row and column names of the result when either has them.
+\code{crossprod()} does this itself, so both routes name their output alike.
+}
+
+\seealso{
+\code{\link[=xtv]{xtv()}} and \code{\link[=xtx]{xtx()}}, the other two threaded assembly kernels,
+which share this threshold.
 }
 \keyword{internal}

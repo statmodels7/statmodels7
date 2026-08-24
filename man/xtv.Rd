@@ -12,30 +12,59 @@ wxsq(X, w, threads = 1L)
 \arguments{
 \item{X}{A design block, \verb{n x p}.}
 
-\item{v, w}{Per-observation vectors of length \code{n}.}
+\item{v}{The vector \eqn{X^\top v} is taken against, length \code{n}. Read by
+\code{xtv()} only.}
 
-\item{threads}{The thread count, a plain integer.}
+\item{threads}{The thread count, a plain integer as
+\code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L} takes the sequential
+route unconditionally.}
+
+\item{w}{Per-observation weights, length \code{n}. Read by \code{wxsq()} only, and
+multiplied onto the squared entry.}
 }
 \value{
-A numeric vector of length \code{ncol(X)}.
+An unnamed numeric vector of length \code{ncol(X)}: for \code{xtv()} the
+column dot products with \code{v}, for \code{wxsq()} the weighted sums of squares.
+Neither carries the column names of \code{X}, since both feed arithmetic
+indexed by position.
 }
 \description{
-\code{xtv()} is \code{as.numeric(crossprod(X, v))}, one dot product per
-column; \code{wxsq()} is \code{as.numeric(crossprod(w, X^2))}, the column
-curvatures of a working model, computed without materializing the
-\verb{n x p} square. Both run through the package's threaded kernels
-above the same measured work gate as \code{\link[=wcrossprod]{wcrossprod()}} and through
-the exact expressions they replace everywhere else.
+The two per-sweep reads of the compiled coordinate descent, each one
+vector of length \code{p} over an \verb{n x p} design.
+
+\code{xtv()} computes \eqn{X^\top v}, one dot product per column. It is the
+gradient read: \code{v} is the running residual, or the residual times the
+working weights.
+
+\code{wxsq()} computes \eqn{\sum_i w_i x_{ij}^2} for each column \eqn{j}, the
+column curvatures of a working model. The \verb{n x p} matrix of squares is
+never formed.
+
+Both take the package's threaded kernel above the same measured work
+threshold \code{\link[=wcrossprod]{wcrossprod()}} uses, and otherwise evaluate the expressions they
+replace, \code{as.numeric(crossprod(X, v))} and
+\code{as.numeric(crossprod(w, X^2))}.
 }
-\details{
-Each output element is accumulated in full by one thread in ascending row
-order, with any elementwise product rounded exactly as the replaced
-expression rounds it (\code{v} arrives precomputed; the square is taken
-before the weight multiplies it), so the kernel's result does not depend
-on the thread count, bit for bit; against an optimized BLAS's own
-accumulation order it agrees to the rounding of one dot product. These
-are the per-sweep reads the plan's
-section 0quinquies classifies as reductions: they are parallel over the
-OUTPUT elements, never over a split of one accumulation.
+\section{Why the answer does not depend on the thread count}{
+Each element of the output is one column's accumulation, owned in full by
+one thread and summed in ascending row order. Nothing is split between
+threads, so the result is identical bit for bit at any count.
+
+The elementwise product inside each term is formed in the order the
+replaced expression forms it: \code{v} arrives already multiplied by whatever
+the caller wanted, and in \code{wxsq()} the entry is squared before the weight
+multiplies it. Against an optimized BLAS, which blocks its own
+accumulations, the two routes agree to the rounding of one dot product.
+}
+
+\section{When the kernel is used}{
+\code{threads > 1}, \code{X} a base dense matrix, the vector of length \code{nrow(X)},
+and \eqn{n \times p} at least \code{2e5}. A sparse \code{X} takes the
+\pkg{Matrix} route.
+}
+
+\seealso{
+\code{\link[=wcrossprod]{wcrossprod()}} for the matrix-valued kernel and the measured
+threshold both share, \code{\link[=coord_fit]{coord_fit()}} for the descent that calls these.
 }
 \keyword{internal}

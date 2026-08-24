@@ -5,36 +5,67 @@
 #' The Weighted Cross Product of the Assembly
 #'
 #' @description
-#' `t(A) %*% (w * B)`, through the package's threaded kernel where the
-#' thread count and the measured work threshold allow it, and through
-#' `crossprod(A * w, B)` -- exactly the expression it replaces --
-#' everywhere else.
+#' Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product the
+#' information matrix and the outer Hessian are assembled from. Above a
+#' measured work threshold, and only when the caller asked for more than one
+#' thread, the work goes to the package's own threaded kernel. Everywhere
+#' else it evaluates `crossprod(A * w, B)`, which is the expression the
+#' kernel replaces.
 #'
 #' @details
-#' The kernel decomposes over the ELEMENTS of the output, each dot product
-#' accumulated in full by one thread in ascending row order with the weight
-#' multiplied onto `A`'s entry first: the kernel's result does not
-#' depend on the thread count, bit for bit. Engaging the kernel replaces the
-#' BLAS expression, and an optimized BLAS (OpenBLAS, Accelerate) blocks its
-#' accumulations, so the two implementations coincide to the last bit only
-#' on the reference BLAS and to the rounding of one dot product elsewhere.
-#' Only base dense matrices with a full-length weight are eligible; a sparse
-#' design keeps its \pkg{Matrix} route, where a threaded dense kernel would
-#' do nothing (piano_parallel.txt: the threshold is on the work, p and the
-#' density, not on n alone).
+#' # Why the answer does not depend on the thread count
 #'
-#' The threshold is internal and measured, not an argument: the crossover
-#' where the cost of opening the region meets its gain sits near `9e4`
-#' multiply-adds on this machine's grid (0.94x at 8e4, 1.7x at 1e5, 10x at
-#' 2e6, 19-20x at the profile shapes), and the gate is set a factor of two
-#' above it, where the asymmetry argument says an error either way costs
+#' The kernel splits the work over the **elements of the output**: one thread
+#' owns one entry \eqn{(j,k)} and accumulates its whole dot product, in
+#' ascending row order, with the weight multiplied onto `A`'s entry before
+#' the product is formed. No accumulation is ever split between threads, so
+#' the sum is the same sequence of additions at any count and the result is
+#' identical bit for bit at 1, 2 or 24 threads.
+#'
+#' That guarantee is about the kernel and not about the two routes agreeing
+#' with each other. Engaging the kernel replaces a BLAS call, and an
+#' optimized BLAS (OpenBLAS, Accelerate) blocks its accumulations into a
+#' different order. The two routes therefore agree to the last bit on R's
+#' reference BLAS and to the rounding of a single dot product elsewhere.
+#'
+#' # When the kernel is used
+#'
+#' All four conditions must hold: `threads > 1`, `A` and `B` are base dense
+#' matrices, `w` has one entry per row, and the work
+#' \eqn{n \times p_A \times p_B} is at least `2e5` multiply-adds. A sparse
+#' design keeps its \pkg{Matrix} route, where a dense kernel would gain
+#' nothing: the cost there is set by the number of stored nonzeros, and the
+#' threshold above reads the dense shape.
+#'
+#' The threshold is a constant in the source and not an argument. It was
+#' measured: the crossover where opening a parallel region costs what it
+#' saves sits near \eqn{9 \times 10^4} multiply-adds on the development
+#' machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
+#' \eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
+#' the gate is set above it, where a misjudgement in either direction costs
 #' almost nothing.
 #'
-#' @param A,B Design blocks, `n x pa` and `n x pb`.
-#' @param w The per-observation weights, length `n`.
-#' @param threads The thread count, a plain integer.
+#' # Dimnames
 #'
-#' @return A `pa x pb` matrix.
+#' The kernel returns a bare matrix, so the column names of `A` and `B` are
+#' put back as the row and column names of the result when either has them.
+#' `crossprod()` does this itself, so both routes name their output alike.
+#'
+#' @param A,B Dense design blocks with the same number of rows, `n x pa` and
+#'   `n x pb`. Either may be sparse, in which case the \pkg{Matrix} route is
+#'   taken and the result is whatever `crossprod()` gives for that pair.
+#' @param w Per-observation weights, a numeric vector of length `n`. A weight
+#'   of any sign is accepted; nothing here assumes the working weights are
+#'   positive.
+#' @param threads The thread count, a plain integer as
+#'   [numericals7::thread_count()] returns it. `1L`, the default, takes the
+#'   sequential route unconditionally.
+#'
+#' @return A `pa x pb` numeric matrix, with the column names of `A` and `B`
+#'   as its dimnames when either block carries them.
+#'
+#' @seealso [xtv()] and [xtx()], the other two threaded assembly kernels,
+#'   which share this threshold.
 #'
 #' @keywords internal
 wcrossprod <- function(A, w, B, threads = 1L) {
@@ -52,29 +83,57 @@ wcrossprod <- function(A, w, B, threads = 1L) {
 #' The Two Vector Products of the Coordinate-Descent Loop
 #'
 #' @description
-#' `xtv()` is `as.numeric(crossprod(X, v))`, one dot product per
-#' column; `wxsq()` is `as.numeric(crossprod(w, X^2))`, the column
-#' curvatures of a working model, computed without materializing the
-#' `n x p` square. Both run through the package's threaded kernels
-#' above the same measured work gate as [wcrossprod()] and through
-#' the exact expressions they replace everywhere else.
+#' The two per-sweep reads of the compiled coordinate descent, each one
+#' vector of length `p` over an `n x p` design.
+#'
+#' `xtv()` computes \eqn{X^\top v}, one dot product per column. It is the
+#' gradient read: `v` is the running residual, or the residual times the
+#' working weights.
+#'
+#' `wxsq()` computes \eqn{\sum_i w_i x_{ij}^2} for each column \eqn{j}, the
+#' column curvatures of a working model. The `n x p` matrix of squares is
+#' never formed.
+#'
+#' Both take the package's threaded kernel above the same measured work
+#' threshold [wcrossprod()] uses, and otherwise evaluate the expressions they
+#' replace, `as.numeric(crossprod(X, v))` and
+#' `as.numeric(crossprod(w, X^2))`.
 #'
 #' @details
-#' Each output element is accumulated in full by one thread in ascending row
-#' order, with any elementwise product rounded exactly as the replaced
-#' expression rounds it (`v` arrives precomputed; the square is taken
-#' before the weight multiplies it), so the kernel's result does not depend
-#' on the thread count, bit for bit; against an optimized BLAS's own
-#' accumulation order it agrees to the rounding of one dot product. These
-#' are the per-sweep reads the plan's
-#' section 0quinquies classifies as reductions: they are parallel over the
-#' OUTPUT elements, never over a split of one accumulation.
+#' # Why the answer does not depend on the thread count
+#'
+#' Each element of the output is one column's accumulation, owned in full by
+#' one thread and summed in ascending row order. Nothing is split between
+#' threads, so the result is identical bit for bit at any count.
+#'
+#' The elementwise product inside each term is formed in the order the
+#' replaced expression forms it: `v` arrives already multiplied by whatever
+#' the caller wanted, and in `wxsq()` the entry is squared before the weight
+#' multiplies it. Against an optimized BLAS, which blocks its own
+#' accumulations, the two routes agree to the rounding of one dot product.
+#'
+#' # When the kernel is used
+#'
+#' `threads > 1`, `X` a base dense matrix, the vector of length `nrow(X)`,
+#' and \eqn{n \times p} at least `2e5`. A sparse `X` takes the
+#' \pkg{Matrix} route.
 #'
 #' @param X A design block, `n x p`.
-#' @param v,w Per-observation vectors of length `n`.
-#' @param threads The thread count, a plain integer.
+#' @param v The vector \eqn{X^\top v} is taken against, length `n`. Read by
+#'   `xtv()` only.
+#' @param w Per-observation weights, length `n`. Read by `wxsq()` only, and
+#'   multiplied onto the squared entry.
+#' @param threads The thread count, a plain integer as
+#'   [numericals7::thread_count()] returns it. `1L` takes the sequential
+#'   route unconditionally.
 #'
-#' @return A numeric vector of length `ncol(X)`.
+#' @return An unnamed numeric vector of length `ncol(X)`: for `xtv()` the
+#'   column dot products with `v`, for `wxsq()` the weighted sums of squares.
+#'   Neither carries the column names of `X`, since both feed arithmetic
+#'   indexed by position.
+#'
+#' @seealso [wcrossprod()] for the matrix-valued kernel and the measured
+#'   threshold both share, [coord_fit()] for the descent that calls these.
 #'
 #' @keywords internal
 xtv <- function(X, v, threads = 1L) {
@@ -97,24 +156,51 @@ wxsq <- function(X, w, threads = 1L) {
 #' The Unweighted Cross Product of a Square-Root Design
 #'
 #' @description
-#' `crossprod(A)` through the threaded kernel where the count and the
-#' measured work gate allow it, and through `crossprod(A)` itself
-#' everywhere else. What `fit_smooth()`'s subset route assembles at
-#' every scoring iteration.
+#' Computes \eqn{A^\top A} for a square-root design, through the package's
+#' threaded kernel above the measured work threshold and through
+#' `crossprod(A)` everywhere else. This is what `fit_smooth()`'s subset route
+#' assembles at every scoring iteration: the design has already been scaled
+#' by the square root of the working weights, so no weight vector enters.
 #'
 #' @details
-#' Element \eqn{(j, k)} is one dot product accumulated in full by one
-#' thread in ascending row order, and elements \eqn{(j, k)} and
-#' \eqn{(k, j)} are the same products summed in the same order, so the
-#' result is exactly symmetric and the kernel does not depend on the thread
-#' count, bit for bit. The reference `dsyrk` behind `crossprod`
-#' accumulates in the same order; an optimized BLAS does not, and agrees to
-#' the rounding of one dot product.
+#' # Symmetry, and independence of the thread count
 #'
-#' @param A A dense design block, `n x p`.
-#' @param threads The thread count, a plain integer.
+#' Only the upper triangle is accumulated: one thread owns column \eqn{k} and
+#' walks \eqn{j = 1, \ldots, k}, and each entry it computes is written to
+#' both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
+#' number and not two roundings of one, so the result is exactly symmetric
+#' with nothing to symmetrize away. Each pair belongs to exactly one thread,
+#' so the mirrored write is disjoint, and no accumulation is split, so the
+#' answer is identical bit for bit at any thread count.
 #'
-#' @return A `p x p` matrix.
+#' That halving is what the reference `dsyrk` behind `crossprod()` does too,
+#' and it accumulates in the same ascending row order, so the two routes
+#' agree to the last bit there. An optimized BLAS blocks its accumulations
+#' and agrees to the rounding of one dot product.
+#'
+#' A full \eqn{p^2} version was measured and is not what ships: it was no
+#' better than `dsyrk` at eight threads, so the second half of the work
+#' bought nothing.
+#'
+#' # When the kernel is used
+#'
+#' `threads > 1`, `A` a base dense matrix, and \eqn{n \times p^2} at least
+#' `2e5`. Note the \eqn{p^2}: this kernel writes \eqn{p^2} outputs where
+#' [xtv()] writes \eqn{p}, so a design wide enough to reach the threshold
+#' here can be too narrow to reach it there.
+#'
+#' @param A A dense design block, `n x p`, already scaled by the square root
+#'   of the working weights. A sparse `A` takes the \pkg{Matrix} route and
+#'   returns whatever `crossprod()` gives for it.
+#' @param threads The thread count, a plain integer as
+#'   [numericals7::thread_count()] returns it. `1L` takes the sequential
+#'   route unconditionally.
+#'
+#' @return A `p x p` symmetric numeric matrix, with the column names of `A`
+#'   as both dimnames when `A` has them.
+#'
+#' @seealso [wcrossprod()] for the weighted two-block form,
+#'   [xtv()] for the vector-valued kernels.
 #'
 #' @keywords internal
 xtx <- function(A, threads = 1L) {

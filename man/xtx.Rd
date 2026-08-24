@@ -7,26 +7,53 @@
 xtx(A, threads = 1L)
 }
 \arguments{
-\item{A}{A dense design block, \verb{n x p}.}
+\item{A}{A dense design block, \verb{n x p}, already scaled by the square root
+of the working weights. A sparse \code{A} takes the \pkg{Matrix} route and
+returns whatever \code{crossprod()} gives for it.}
 
-\item{threads}{The thread count, a plain integer.}
+\item{threads}{The thread count, a plain integer as
+\code{\link[numericals7:thread_count]{numericals7::thread_count()}} returns it. \code{1L} takes the sequential
+route unconditionally.}
 }
 \value{
-A \verb{p x p} matrix.
+A \verb{p x p} symmetric numeric matrix, with the column names of \code{A}
+as both dimnames when \code{A} has them.
 }
 \description{
-\code{crossprod(A)} through the threaded kernel where the count and the
-measured work gate allow it, and through \code{crossprod(A)} itself
-everywhere else. What \code{fit_smooth()}'s subset route assembles at
-every scoring iteration.
+Computes \eqn{A^\top A} for a square-root design, through the package's
+threaded kernel above the measured work threshold and through
+\code{crossprod(A)} everywhere else. This is what \code{fit_smooth()}'s subset route
+assembles at every scoring iteration: the design has already been scaled
+by the square root of the working weights, so no weight vector enters.
 }
-\details{
-Element \eqn{(j, k)} is one dot product accumulated in full by one
-thread in ascending row order, and elements \eqn{(j, k)} and
-\eqn{(k, j)} are the same products summed in the same order, so the
-result is exactly symmetric and the kernel does not depend on the thread
-count, bit for bit. The reference \code{dsyrk} behind \code{crossprod}
-accumulates in the same order; an optimized BLAS does not, and agrees to
-the rounding of one dot product.
+\section{Symmetry, and independence of the thread count}{
+Only the upper triangle is accumulated: one thread owns column \eqn{k} and
+walks \eqn{j = 1, \ldots, k}, and each entry it computes is written to
+both \eqn{(j,k)} and \eqn{(k,j)}. The two halves are therefore the same
+number and not two roundings of one, so the result is exactly symmetric
+with nothing to symmetrize away. Each pair belongs to exactly one thread,
+so the mirrored write is disjoint, and no accumulation is split, so the
+answer is identical bit for bit at any thread count.
+
+That halving is what the reference \code{dsyrk} behind \code{crossprod()} does too,
+and it accumulates in the same ascending row order, so the two routes
+agree to the last bit there. An optimized BLAS blocks its accumulations
+and agrees to the rounding of one dot product.
+
+A full \eqn{p^2} version was measured and is not what ships: it was no
+better than \code{dsyrk} at eight threads, so the second half of the work
+bought nothing.
+}
+
+\section{When the kernel is used}{
+\code{threads > 1}, \code{A} a base dense matrix, and \eqn{n \times p^2} at least
+\code{2e5}. Note the \eqn{p^2}: this kernel writes \eqn{p^2} outputs where
+\code{\link[=xtv]{xtv()}} writes \eqn{p}, so a design wide enough to reach the threshold
+here can be too narrow to reach it there.
+}
+
+\seealso{
+\code{\link[=wcrossprod]{wcrossprod()}} for the weighted two-block form,
+\code{\link[=xtv]{xtv()}} for the vector-valued kernels.
 }
 \keyword{internal}
