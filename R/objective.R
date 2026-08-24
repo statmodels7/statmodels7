@@ -829,25 +829,28 @@ hyper_key <- function(spec, start, p, name) {
 #' A Penalty's Starting Hyperparameters
 #'
 #' @description
-#' Returns the midpoint of each of a penalty's hyperparameter bounds. A
-#' finite endpoint is taken as it stands; an infinite one is replaced by 1,
-#' which is the scale a smoothing parameter lives on before anything is known
-#' about it.
+#' Picks a starting value for each of a penalty's hyperparameters from its
+#' `params_bounds`, one unit inside whichever ends are infinite:
+#'
+#' - both ends finite: their midpoint;
+#' - bounded below only, the common case: `lower + 1`, so a hyperparameter on
+#'   \eqn{[0, \infty)} starts at 1;
+#' - bounded above only: `upper - 1`;
+#' - unbounded: 1.
 #'
 #' @details
-#' A hyperparameter bounded below by 0 and unbounded above, which is the
-#' common case, therefore starts at the midpoint of \eqn{[0, 1]}. The value
-#' matters only as somewhere to begin: it is a probe, and the criterion moves
-#' it.
+#' One is the scale a smoothing parameter lives on before anything is known
+#' about it. The value matters only as somewhere to begin: it is a probe, and
+#' the criterion moves it at the first opportunity.
 #'
-#' @param pen A \pkg{penalties7} penalty object.
+#' @param pen A \pkg{penalties7} penalty object, read for its
+#'   `params_bounds` property alone.
 #'
 #' @return A named numeric vector, one entry per hyperparameter of `pen`,
 #'   named as the penalty names them. `numeric(0)` for a penalty with none,
 #'   which a fixed prior is.
 #'
-#' @seealso [statmod_hyper_start()], its caller,
-#'   [penalties7::penalty_bounds()] for the bounds read.
+#' @seealso [statmod_hyper_start()], its caller.
 #'
 #' @keywords internal
 penalty_theta_start <- function(pen) {

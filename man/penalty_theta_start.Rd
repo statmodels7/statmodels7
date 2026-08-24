@@ -7,7 +7,8 @@
 penalty_theta_start(pen)
 }
 \arguments{
-\item{pen}{A \pkg{penalties7} penalty object.}
+\item{pen}{A \pkg{penalties7} penalty object, read for its
+\code{params_bounds} property alone.}
 }
 \value{
 A named numeric vector, one entry per hyperparameter of \code{pen},
@@ -15,19 +16,22 @@ named as the penalty names them. \code{numeric(0)} for a penalty with none,
 which a fixed prior is.
 }
 \description{
-Returns the midpoint of each of a penalty's hyperparameter bounds. A
-finite endpoint is taken as it stands; an infinite one is replaced by 1,
-which is the scale a smoothing parameter lives on before anything is known
-about it.
+Picks a starting value for each of a penalty's hyperparameters from its
+\code{params_bounds}, one unit inside whichever ends are infinite:
+\itemize{
+\item both ends finite: their midpoint;
+\item bounded below only, the common case: \code{lower + 1}, so a hyperparameter on
+\eqn{[0, \infty)} starts at 1;
+\item bounded above only: \code{upper - 1};
+\item unbounded: 1.
+}
 }
 \details{
-A hyperparameter bounded below by 0 and unbounded above, which is the
-common case, therefore starts at the midpoint of \eqn{[0, 1]}. The value
-matters only as somewhere to begin: it is a probe, and the criterion moves
-it.
+One is the scale a smoothing parameter lives on before anything is known
+about it. The value matters only as somewhere to begin: it is a probe, and
+the criterion moves it at the first opportunity.
 }
 \seealso{
-\code{\link[=statmod_hyper_start]{statmod_hyper_start()}}, its caller,
-\code{\link[penalties7:penalty_bounds]{penalties7::penalty_bounds()}} for the bounds read.
+\code{\link[=statmod_hyper_start]{statmod_hyper_start()}}, its caller.
 }
 \keyword{internal}
