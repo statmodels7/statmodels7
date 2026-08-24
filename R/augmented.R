@@ -23,20 +23,31 @@ NULL
 #' every observation, as a \eqn{n \times K \times K} array.
 #'
 #' @details
-#' The standard recursion is written over the \eqn{K} indices, which are few,
-#' and evaluated over all observations at once, which are many.
+#' \eqn{K} is the number of distribution parameters, so it is 1, 2 or 3 for
+#' most families and never large; \eqn{n} is the number of observations and
+#' is. The standard Cholesky recursion is therefore written out over the
+#' \eqn{K} indices and evaluated over all \eqn{n} observations at once, one
+#' vectorized pass per entry of the factor, so no loop runs over
+#' observations.
 #'
-#' A block that is not positive definite has a non-positive pivot, and the
-#' function returns `NULL` at that point rather than taking its square
-#' root: the observed curvature far from the optimum is routinely indefinite,
-#' so this is an ordinary outcome the caller answers by falling back to the
-#' assembled route, and a warning about a `NaN` would report it as a
-#' defect.
+#' A block that is not positive definite produces a non-positive pivot, and
+#' the function returns `NULL` at that point instead of taking its square
+#' root. That is an ordinary outcome and not a failure: the observed
+#' curvature far from the optimum is routinely indefinite, and the caller
+#' answers by falling back to the assembled route. A warning about a `NaN`
+#' would report an expected branch as a defect.
 #'
-#' @param Om An \eqn{n \times K \times K} array of symmetric blocks.
+#' @param Om An \eqn{n \times K \times K} array of symmetric blocks, as
+#'   [obs_information()] returns it. Only the lower triangle of each block is
+#'   read.
 #'
-#' @return An array of the same shape, lower triangular in its last two
-#'   indices, or `NULL` when some block is not positive definite.
+#' @return An \eqn{n \times K \times K} numeric array, lower triangular in
+#'   its last two indices, with `Om[i, , ] == L[i, , ] %*% t(L[i, , ])` for
+#'   every `i`. `NULL` as soon as any block fails to be positive definite,
+#'   so a single bad observation declines for the whole sample.
+#'
+#' @seealso [obs_information()] for the input,
+#'   [sqrt_design()] for what the factors are used to build.
 #'
 #' @keywords internal
 chol_blocks <- function(Om) {
@@ -68,14 +79,38 @@ chol_blocks <- function(Om) {
 #'
 #' @description
 #' Assembles \eqn{\Omega_i}, the \eqn{K \times K} information of observation
-#' \eqn{i} in the link-scale predictors, weighted by the prior weight.
+#' \eqn{i} with respect to the \eqn{K} link-scale predictors, multiplied by
+#' that observation's prior weight. This is the per-observation curvature a
+#' scoring step is built from, before any design enters.
 #'
-#' @param spec A [StatmodSpec()].
-#' @param theta The per-observation parameters.
-#' @param expected Whether the expected information is wanted.
-#' @param approx The approximation, where the expected one is not closed.
+#' @details
+#' The derivatives come from the family on the link scale, so the chain rule
+#' onto \eqn{\eta} has already been applied by \pkg{distributions7} and
+#' nothing here multiplies by a link's derivative. With `expected = TRUE` the
+#' expected information is taken and the blocks are positive definite
+#' wherever the family is regular; with `expected = FALSE` the observed
+#' Hessian is negated, which far from the optimum is routinely indefinite.
+#' That is what makes [chol_blocks()]'s refusal an ordinary branch.
 #'
-#' @return An \eqn{n \times K \times K} array.
+#' The weights enter as given, without normalization, so a weight of two
+#' counts an observation twice.
+#'
+#' @param spec A [StatmodSpec()], read for the distribution, the weights and
+#'   the thread count.
+#' @param theta The per-observation parameters on the parameter scale, a
+#'   named list of \eqn{n}-vectors, one per distribution parameter.
+#' @param expected `TRUE` for the expected information, `FALSE` for the
+#'   negated observed Hessian.
+#' @param approx How the expected information is approximated for a family
+#'   that has no closed form, passed through to \pkg{distributions7}:
+#'   `"bartlett"`, `"integrate"` or `"mc"`. Ignored when `expected` is
+#'   `FALSE` or when the family computes its expected information exactly.
+#'
+#' @return An \eqn{n \times K \times K} numeric array, symmetric in its last
+#'   two indices, with \eqn{K} the number of distribution parameters.
+#'
+#' @seealso [chol_blocks()], which factorizes these,
+#'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
 info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
@@ -105,20 +140,34 @@ info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
 #' The Square-Root Design
 #'
 #' @description
-#' Returns \eqn{R} with \eqn{R'R = Z'\Omega Z}, the matrix a scoring step
-#' decomposes instead of the information itself.
+#' Builds \eqn{R} with \eqn{R'R = Z'\Omega Z}, the square root of the
+#' assembled information. A scoring step decomposes this instead of the
+#' information itself, so \eqn{Z'\Omega Z} is never formed and its condition
+#' number is never squared.
 #'
 #' @details
-#' Row block \eqn{a} of \eqn{R} carries, in the columns of parameter \eqn{b},
-#' the entry \eqn{L_i[b, a]} times that parameter's design row; the factor
-#' being lower triangular, the blocks with \eqn{b < a} are zero and are not
-#' formed.
+#' Row block \eqn{a} of \eqn{R} carries, in the columns belonging to
+#' parameter \eqn{b}, the entry \eqn{L_i[b, a]} times that parameter's design
+#' row. The factor is lower triangular, so the blocks with \eqn{b < a} are
+#' zero and are not formed at all.
 #'
-#' @param design The design, as [statmod_design()] returns it.
-#' @param L The Cholesky factors, from [chol_blocks()].
+#' The result is sparse when any equation's design block is, which is what
+#' sends the solve to [sparse_augmented_solve()].
 #'
-#' @return An \eqn{nK \times p} matrix, or `NULL` when a block was not
-#'   positive definite.
+#' @param design The design, as [statmod_design()] returns it, holding one
+#'   block of columns per distribution parameter.
+#' @param L The per-observation Cholesky factors, as [chol_blocks()] returns
+#'   them, or `NULL`.
+#'
+#' @return An \eqn{nK \times p} matrix, dense or a \pkg{Matrix} sparse
+#'   matrix according to the design's own storage, where \eqn{p} is the total
+#'   number of coefficients across the equations. `NULL` when `L` is `NULL`,
+#'   so the refusal propagates from the factorization to the solve without a
+#'   test at each step.
+#'
+#' @seealso [chol_blocks()] for `L`,
+#'   [augmented_solve()] for the decomposition this feeds,
+#'   [penalty_sqrt()] for the other half of the augmented matrix.
 #'
 #' @keywords internal
 sqrt_design <- function(design, L) {
@@ -165,28 +214,46 @@ sqrt_design <- function(design, L) {
 #' Hessian, dropping the rows a null space contributes nothing to.
 #'
 #' @details
-#' A penalty is positive semidefinite and may be rank deficient -- a spline's
-#' is, by exactly the dimension of its null space -- so the factor comes from
-#' an eigendecomposition with the non-positive eigenvalues dropped, rather
-#' than from a Cholesky, which would fail there. A non-convex penalty, whose
-#' Hessian is indefinite, has no such factor and the caller falls back.
+#' # Why an eigendecomposition and not a Cholesky
 #'
-#' A DIAGONAL penalty is factored by taking the square root of its diagonal,
-#' which is the same answer the eigendecomposition returns -- the eigenvalues
-#' of a diagonal matrix are its diagonal, so the two routes agree by
-#' construction and a test pins them together. It is not a special case worth
-#' having for its own sake but for how often it is the one that arises: a
-#' ridge, a random effect and the Demmler-Reinsch penalty of `s()`,
-#' which is \eqn{\mathrm{diag}(0, 1, \ldots, 1)} exactly, are all diagonal,
-#' and so is any block-diagonal assembly of them. The factor is recomputed at
-#' every iteration of the scoring loop, so the cost is the decomposition's
-#' times the iteration count: measured on a random intercept over 1000 groups,
-#' one dense eigendecomposition of the 1003 by 1003 penalty costs 0.63 s and
-#' was 83 per cent of the whole fit.
+#' A penalty is positive semidefinite and is often rank deficient. A spline's
+#' is deficient by exactly the dimension of its null space, which is the
+#' whole point of the construction: the null space is what the penalty does
+#' not shrink. A Cholesky fails there, so the factor comes from an
+#' eigendecomposition with the non-positive eigenvalues dropped, and the rows
+#' they would have contributed are simply absent.
 #'
-#' @param S The penalty Hessian.
+#' A non-convex penalty has an indefinite Hessian and no such factor at all.
+#' `NULL` is returned and the caller falls back to the assembled route.
 #'
-#' @return A matrix with `ncol(S)` columns, or `NULL`.
+#' # The diagonal shortcut
+#'
+#' A diagonal penalty is factored by taking the square root of its diagonal.
+#' That is the same answer the eigendecomposition gives, since the
+#' eigenvalues of a diagonal matrix are its diagonal entries, so the two
+#' routes agree by construction and a test pins them together.
+#'
+#' The case is worth detecting for how often it arises. A ridge is diagonal,
+#' a random effect is diagonal, and the Demmler-Reinsch penalty of
+#' [modelterms7::s()] is \eqn{\mathrm{diag}(0, 1, \ldots, 1)} exactly. So is
+#' any block-diagonal assembly of them. The factor is recomputed at every
+#' iteration of the scoring loop, so its cost is multiplied by the iteration
+#' count: measured on a random intercept over 1000 groups, one dense
+#' eigendecomposition of the 1003 by 1003 penalty cost 0.63 s and was 83 per
+#' cent of the whole fit.
+#'
+#' @param S The penalty Hessian, a `p x p` symmetric matrix, dense or sparse.
+#'   `Matrix::isDiagonal()` decides which route is taken, so a matrix stored
+#'   as diagonal and one merely having zero off-diagonals are both caught.
+#'
+#' @return A matrix with `ncol(S)` columns and one row per retained
+#'   eigendirection, so at most `p` and fewer where the penalty has a null
+#'   space. Its class mirrors `S`'s, dense for dense and sparse for sparse.
+#'   `NULL` when the penalty is indefinite beyond the tolerance.
+#'
+#' @seealso [penalty_sqrt_diag()] for the diagonal route,
+#'   [augmented_solve()] for the solve this feeds,
+#'   [sqrt_design()] for the other half of the augmented matrix.
 #'
 #' @keywords internal
 penalty_sqrt <- function(S) {
@@ -212,19 +279,27 @@ penalty_sqrt <- function(S) {
 #' where the matrix is diagonal.
 #'
 #' @details
-#' The thresholds are the eigen route's, read on the diagonal, which for a
-#' diagonal matrix IS its spectrum: a negative entry beyond the tolerance
-#' makes the penalty indefinite and there is no factor to return, and an
-#' entry at the tolerance is a null direction and contributes no row. The
-#' class of the result mirrors the argument's rather than being chosen:
-#' [augmented_solve()] routes on whether either of the two factors
-#' is sparse, so returning a sparse factor for a dense design would send a
-#' dense fit through the sparse route and a dense one through neither.
+#' The thresholds are the eigen route's, applied to the diagonal, which for
+#' a diagonal matrix is its spectrum. A negative entry beyond the tolerance
+#' makes the penalty indefinite and there is no factor to return; an entry
+#' at or below the tolerance is a null direction and contributes no row.
 #'
-#' @param S A diagonal penalty Hessian.
-#' @param p Its dimension.
+#' The class of the result mirrors the argument's and is not chosen here.
+#' [augmented_solve()] routes on whether either of its two factors is
+#' sparse, so a sparse factor returned for a dense design would send a dense
+#' fit down the sparse route.
 #'
-#' @return A matrix with `p` columns, or `NULL`.
+#' @param S A diagonal penalty Hessian, `p x p`, dense or sparse. Only its
+#'   diagonal is read.
+#' @param p Its dimension, passed rather than read so the caller's own count
+#'   is used.
+#'
+#' @return A matrix with `p` columns and one row per retained coordinate,
+#'   each row zero except for the square root of that coordinate's entry.
+#'   Its class mirrors `S`'s. `NULL` when any entry is negative beyond the
+#'   tolerance.
+#'
+#' @seealso [penalty_sqrt()], which dispatches here for a diagonal penalty.
 #'
 #' @keywords internal
 diagonal_sqrt <- function(S, p) {
@@ -248,17 +323,78 @@ diagonal_sqrt <- function(S, p) {
 #' Solve a Scoring Step From the Square-Root Design
 #'
 #' @description
-#' Decomposes the augmented matrix \eqn{[R;\ C]}, whose cross-product is the
-#' penalized information, and returns the increment solving
-#' \eqn{(R'R + C'C)\delta = u}.
+#' Decomposes the augmented matrix \eqn{A = [R;\, C]}, whose cross-product
+#' \eqn{A'A = R'R + C'C} is the penalized information, and returns the
+#' increment solving
 #'
-#' @param R The square-root design.
-#' @param C The penalty's factor.
-#' @param u The right-hand side.
-#' @param how Either `"qr"` or `"svd"`.
-#' @param threads How many threads the triangular factor may use.
+#' \deqn{(R'R + C'C)\,\delta = u}
 #'
-#' @return A list with `delta` and `rank`.
+#' The augmented form is the point: neither \eqn{R'R} nor the penalized
+#' information is ever formed, so a design whose condition number is
+#' \eqn{\kappa} is decomposed at \eqn{\kappa} and not at \eqn{\kappa^2}.
+#'
+#' @details
+#' # The four routes
+#'
+#' Tried in this order.
+#'
+#' 1. **Sparse QR**, when either factor is a \pkg{Matrix} object. Handed to
+#'    [sparse_augmented_solve()], which declines on a rank-deficient matrix.
+#' 2. **SVD**, when `how = "svd"`. The singular values below
+#'    \eqn{\max(\dim A)\,\epsilon\,\sigma_{\max}} are dropped and the
+#'    increment is built from the retained right singular vectors, so a
+#'    deficient system gets the minimum-norm answer.
+#' 3. **The threaded triangular factor**, when `how = "qr"`, `threads > 1`
+#'    and the work \eqn{n p^2} is at least `5e7`. Only the triangular factor
+#'    is ever read, so a kernel that produces it and never accumulates
+#'    \eqn{Q} does the whole job.
+#' 4. **`qr()`**, the pivoted LINPACK route, which reports a rank and can
+#'    drop columns. A sparse solve that declined falls through to here on
+#'    densified factors.
+#'
+#' # Why the rank test is equilibrated
+#'
+#' The threaded route is taken only where the matrix is comfortably of full
+#' rank, and the test reads the diagonal of the triangular factor **divided
+#' by each column's norm**. Since \eqn{A'A = R'R}, scaling \eqn{A}'s columns
+#' scales that diagonal by the same factors, so the ratio is the diagonal of
+#' a decomposition with unit column norms.
+#'
+#' Reading the raw diagonal instead reports a matrix as near-singular
+#' whenever its columns differ in size, which is what a large smoothing
+#' parameter does to the penalty rows of its own block beside an unpenalized
+#' one. Per-column scaling forgives separation from any source; an exact
+#' collinearity stays exactly singular.
+#'
+#' The tolerance is `1e-7` on that ratio, which is what `dqrdc2` itself uses,
+#' so anything the pivoted route would call deficient still goes there and is
+#' reported with its rank.
+#'
+#' Measured against `qr()` at \eqn{n = 40000} with the column scales spread
+#' over \eqn{10^8}: 2.6x at \eqn{p = 51} and 3.8x at \eqn{p = 145} to 600 on
+#' eight threads, with the increment agreeing to \eqn{1.6 \times 10^{-16}}.
+#'
+#' @param R The square-root design, as [sqrt_design()] returns it,
+#'   \eqn{nK \times p}.
+#' @param C The penalty's factor, as [penalty_sqrt()] returns it, with `p`
+#'   columns and at most `p` rows. May have zero rows for an unpenalized
+#'   model.
+#' @param u The right-hand side, a numeric vector of length `p`.
+#' @param how `"qr"` or `"svd"`. `"svd"` has no sparse counterpart, so a
+#'   sparse pair asked for it is densified first.
+#' @param threads How many threads the triangular factor may use, a plain
+#'   integer. `1L` takes `qr()` unconditionally.
+#'
+#' @return A list of two:
+#'   \describe{
+#'     \item{`delta`}{the increment, an unnamed numeric vector of length `p`.
+#'       Zero in any coordinate the pivoted route dropped.}
+#'     \item{`rank`}{the rank used, an integer. Equal to `p` on the threaded
+#'       and sparse routes, which decline rather than report a deficiency.}
+#'   }
+#'
+#' @seealso [sqrt_design()] and [penalty_sqrt()] for the two factors,
+#'   [sparse_augmented_solve()] for the sparse route.
 #'
 #' @keywords internal
 augmented_solve <- function(R, C, u, how, threads = 1L) {
@@ -329,38 +465,66 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
 #' sparse QR of \eqn{[R;\ C]}.
 #'
 #' @details
-#' The augmented route exists so that \eqn{X'X} is never formed and the
-#' conditioning is never squared, and a sparse QR is a QR: it keeps that
-#' property exactly, which a sparse Cholesky of the normal equations would
-#' not. Measured against the dense QR on the same augmented design of a
-#' random-intercept model, it is 695 times faster at 100 groups and 75475 at
-#' 1000, the dense factorization there costing 9.06 s against 0.00012.
+#' # Why a QR and not a Cholesky
 #'
-#' The factor is taken WITHOUT back-permuting. A sparse QR reorders the
-#' columns to reduce fill, so \eqn{AP = QR} for the permutation \eqn{P} the
-#' decomposition chose, and \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}: the increment
-#' is two triangular solves between a permutation and its inverse, which is
-#' the same bookkeeping the dense route does with `qr`'s pivot.
-#' `backPermute = TRUE` looks simpler and is a trap -- it returns a
-#' factor that is no longer triangular, so its diagonal says nothing about
-#' the rank and a solve against it is a general one rather than two
+#' The augmented form exists so that \eqn{X'X} is never formed and the
+#' conditioning is never squared. A sparse QR is a QR and keeps that
+#' property exactly. A sparse Cholesky of the normal equations would be
+#' faster still and would give it up.
+#'
+#' Measured against the dense QR on the same augmented design of a
+#' random-intercept model: 695 times faster at 100 groups and 75475 times at
+#' 1000, where the dense factorization costs 9.06 s against 0.00012 s.
+#'
+#' # The factor is not back-permuted
+#'
+#' A sparse QR reorders the columns to reduce fill, so \eqn{AP = QR} for the
+#' permutation \eqn{P} the decomposition chose, and
+#' \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}. The increment is two triangular solves
+#' between a permutation and its inverse, which is the bookkeeping the dense
+#' route already does with `qr()`'s pivot.
+#'
+#' `qrR(backPermute = TRUE)` looks like the simpler choice and is a trap. The
+#' back-permuted factor is no longer triangular, so its diagonal says nothing
+#' about the rank, and a solve against it is a general solve instead of two
 #' triangular ones.
 #'
-#' The rank is read off the diagonal of the triangular factor rather than
-#' reported by the decomposition, which for a sparse QR does not give one.
-#' Where the matrix is rank deficient there is no unique increment to return
-#' and this route declines, leaving the caller its dense fallback, which can
-#' drop columns and say how many it kept.
+#' # The rank test
 #'
-#' @param R The square-root design.
-#' @param C The penalty's factor.
-#' @param u The right-hand side.
-#' @param how The decomposition asked for; `"svd"` has no sparse
-#'   counterpart and declines.
+#' Read off the diagonal of the triangular factor, since a sparse QR does not
+#' report a rank. The test is on the **Jacobi-equilibrated** diagonal, each
+#' entry divided by its column's norm, and declines when the smallest ratio
+#' falls to `ncol(A) * .Machine$double.eps` of the largest.
 #'
-#' @return A list with `delta` and `rank`, or `NULL`.
+#' The equilibration is what makes the route usable. Reading the raw diagonal
+#' rejected 87 of 127 solves on matrices the dense route finds at full rank,
+#' the ratio there running down to \eqn{7 \times 10^{-30}} while the
+#' equilibrated one stayed between 0.445 and 1. Those matrices are not
+#' near-singular; their columns differ in size, which is what a large
+#' smoothing parameter does. With the raw test a random-effect fit fell
+#' through to a dense QR and cost 34.1 s where it now costs 3.9.
 #'
-#' @seealso [augmented_solve()]
+#' The column norms come from `colSums(A^2)` and not `colSums(A * A)`. A
+#' binary operation between two sparse matrices intersects their index sets,
+#' which is 29 to 35 times slower here, and the norms were 70 to 74 per cent
+#' of the whole solve before the change.
+#'
+#' Where the matrix really is rank deficient there is no unique increment,
+#' and this route declines rather than choosing one. The caller falls back to
+#' the dense route, which drops columns and says how many it kept.
+#'
+#' @param R The square-root design, \eqn{nK \times p}, sparse or dense.
+#' @param C The penalty's factor, with `p` columns.
+#' @param u The right-hand side, a numeric vector of length `p`.
+#' @param how The decomposition asked for. Only `"qr"` is served; `"svd"` has
+#'   no sparse counterpart and declines.
+#'
+#' @return A list with `delta` (numeric, length `p`) and `rank` (integer,
+#'   equal to `p`), or `NULL` when the route declines: `how` is not `"qr"`,
+#'   the factorization fails, or the equilibrated diagonal says the matrix is
+#'   deficient.
+#'
+#' @seealso [augmented_solve()], the caller and the dense fallback.
 #'
 #' @keywords internal
 sparse_augmented_solve <- function(R, C, u, how) {

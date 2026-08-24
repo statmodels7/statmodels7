@@ -7,19 +7,44 @@
 info_blocks(spec, theta, expected = TRUE, approx = "bartlett")
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the distribution, the weights and
+the thread count.}
 
-\item{theta}{The per-observation parameters.}
+\item{theta}{The per-observation parameters on the parameter scale, a
+named list of \eqn{n}-vectors, one per distribution parameter.}
 
-\item{expected}{Whether the expected information is wanted.}
+\item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
+negated observed Hessian.}
 
-\item{approx}{The approximation, where the expected one is not closed.}
+\item{approx}{How the expected information is approximated for a family
+that has no closed form, passed through to \pkg{distributions7}:
+\code{"bartlett"}, \code{"integrate"} or \code{"mc"}. Ignored when \code{expected} is
+\code{FALSE} or when the family computes its expected information exactly.}
 }
 \value{
-An \eqn{n \times K \times K} array.
+An \eqn{n \times K \times K} numeric array, symmetric in its last
+two indices, with \eqn{K} the number of distribution parameters.
 }
 \description{
 Assembles \eqn{\Omega_i}, the \eqn{K \times K} information of observation
-\eqn{i} in the link-scale predictors, weighted by the prior weight.
+\eqn{i} with respect to the \eqn{K} link-scale predictors, multiplied by
+that observation's prior weight. This is the per-observation curvature a
+scoring step is built from, before any design enters.
+}
+\details{
+The derivatives come from the family on the link scale, so the chain rule
+onto \eqn{\eta} has already been applied by \pkg{distributions7} and
+nothing here multiplies by a link's derivative. With \code{expected = TRUE} the
+expected information is taken and the blocks are positive definite
+wherever the family is regular; with \code{expected = FALSE} the observed
+Hessian is negated, which far from the optimum is routinely indefinite.
+That is what makes \code{\link[=chol_blocks]{chol_blocks()}}'s refusal an ordinary branch.
+
+The weights enter as given, without normalization, so a weight of two
+counts an observation twice.
+}
+\seealso{
+\code{\link[=chol_blocks]{chol_blocks()}}, which factorizes these,
+\code{\link[=statmod_information_at]{statmod_information_at()}} for the assembled \eqn{Z'\Omega Z}.
 }
 \keyword{internal}

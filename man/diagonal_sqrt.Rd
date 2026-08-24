@@ -7,12 +7,17 @@
 diagonal_sqrt(S, p)
 }
 \arguments{
-\item{S}{A diagonal penalty Hessian.}
+\item{S}{A diagonal penalty Hessian, \verb{p x p}, dense or sparse. Only its
+diagonal is read.}
 
-\item{p}{Its dimension.}
+\item{p}{Its dimension, passed rather than read so the caller's own count
+is used.}
 }
 \value{
-A matrix with \code{p} columns, or \code{NULL}.
+A matrix with \code{p} columns and one row per retained coordinate,
+each row zero except for the square root of that coordinate's entry.
+Its class mirrors \code{S}'s. \code{NULL} when any entry is negative beyond the
+tolerance.
 }
 \description{
 One row per coordinate the penalty reaches, carrying the square root of
@@ -20,13 +25,17 @@ that coordinate's entry, which is \code{\link[=penalty_sqrt]{penalty_sqrt()}}'s 
 where the matrix is diagonal.
 }
 \details{
-The thresholds are the eigen route's, read on the diagonal, which for a
-diagonal matrix IS its spectrum: a negative entry beyond the tolerance
-makes the penalty indefinite and there is no factor to return, and an
-entry at the tolerance is a null direction and contributes no row. The
-class of the result mirrors the argument's rather than being chosen:
-\code{\link[=augmented_solve]{augmented_solve()}} routes on whether either of the two factors
-is sparse, so returning a sparse factor for a dense design would send a
-dense fit through the sparse route and a dense one through neither.
+The thresholds are the eigen route's, applied to the diagonal, which for
+a diagonal matrix is its spectrum. A negative entry beyond the tolerance
+makes the penalty indefinite and there is no factor to return; an entry
+at or below the tolerance is a null direction and contributes no row.
+
+The class of the result mirrors the argument's and is not chosen here.
+\code{\link[=augmented_solve]{augmented_solve()}} routes on whether either of its two factors is
+sparse, so a sparse factor returned for a dense design would send a dense
+fit down the sparse route.
+}
+\seealso{
+\code{\link[=penalty_sqrt]{penalty_sqrt()}}, which dispatches here for a diagonal penalty.
 }
 \keyword{internal}

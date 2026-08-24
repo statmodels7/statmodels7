@@ -7,22 +7,84 @@
 augmented_solve(R, C, u, how, threads = 1L)
 }
 \arguments{
-\item{R}{The square-root design.}
+\item{R}{The square-root design, as \code{\link[=sqrt_design]{sqrt_design()}} returns it,
+\eqn{nK \times p}.}
 
-\item{C}{The penalty's factor.}
+\item{C}{The penalty's factor, as \code{\link[=penalty_sqrt]{penalty_sqrt()}} returns it, with \code{p}
+columns and at most \code{p} rows. May have zero rows for an unpenalized
+model.}
 
-\item{u}{The right-hand side.}
+\item{u}{The right-hand side, a numeric vector of length \code{p}.}
 
-\item{how}{Either \code{"qr"} or \code{"svd"}.}
+\item{how}{\code{"qr"} or \code{"svd"}. \code{"svd"} has no sparse counterpart, so a
+sparse pair asked for it is densified first.}
 
-\item{threads}{How many threads the triangular factor may use.}
+\item{threads}{How many threads the triangular factor may use, a plain
+integer. \code{1L} takes \code{qr()} unconditionally.}
 }
 \value{
-A list with \code{delta} and \code{rank}.
+A list of two:
+\describe{
+\item{\code{delta}}{the increment, an unnamed numeric vector of length \code{p}.
+Zero in any coordinate the pivoted route dropped.}
+\item{\code{rank}}{the rank used, an integer. Equal to \code{p} on the threaded
+and sparse routes, which decline rather than report a deficiency.}
+}
 }
 \description{
-Decomposes the augmented matrix \eqn{[R;\ C]}, whose cross-product is the
-penalized information, and returns the increment solving
-\eqn{(R'R + C'C)\delta = u}.
+Decomposes the augmented matrix \eqn{A = [R;\, C]}, whose cross-product
+\eqn{A'A = R'R + C'C} is the penalized information, and returns the
+increment solving
+
+\deqn{(R'R + C'C)\,\delta = u}
+
+The augmented form is the point: neither \eqn{R'R} nor the penalized
+information is ever formed, so a design whose condition number is
+\eqn{\kappa} is decomposed at \eqn{\kappa} and not at \eqn{\kappa^2}.
+}
+\section{The four routes}{
+Tried in this order.
+\enumerate{
+\item \strong{Sparse QR}, when either factor is a \pkg{Matrix} object. Handed to
+\code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}, which declines on a rank-deficient matrix.
+\item \strong{SVD}, when \code{how = "svd"}. The singular values below
+\eqn{\max(\dim A)\,\epsilon\,\sigma_{\max}} are dropped and the
+increment is built from the retained right singular vectors, so a
+deficient system gets the minimum-norm answer.
+\item \strong{The threaded triangular factor}, when \code{how = "qr"}, \code{threads > 1}
+and the work \eqn{n p^2} is at least \code{5e7}. Only the triangular factor
+is ever read, so a kernel that produces it and never accumulates
+\eqn{Q} does the whole job.
+\item \strong{\code{qr()}}, the pivoted LINPACK route, which reports a rank and can
+drop columns. A sparse solve that declined falls through to here on
+densified factors.
+}
+}
+
+\section{Why the rank test is equilibrated}{
+The threaded route is taken only where the matrix is comfortably of full
+rank, and the test reads the diagonal of the triangular factor \strong{divided
+by each column's norm}. Since \eqn{A'A = R'R}, scaling \eqn{A}'s columns
+scales that diagonal by the same factors, so the ratio is the diagonal of
+a decomposition with unit column norms.
+
+Reading the raw diagonal instead reports a matrix as near-singular
+whenever its columns differ in size, which is what a large smoothing
+parameter does to the penalty rows of its own block beside an unpenalized
+one. Per-column scaling forgives separation from any source; an exact
+collinearity stays exactly singular.
+
+The tolerance is \code{1e-7} on that ratio, which is what \code{dqrdc2} itself uses,
+so anything the pivoted route would call deficient still goes there and is
+reported with its rank.
+
+Measured against \code{qr()} at \eqn{n = 40000} with the column scales spread
+over \eqn{10^8}: 2.6x at \eqn{p = 51} and 3.8x at \eqn{p = 145} to 600 on
+eight threads, with the increment agreeing to \eqn{1.6 \times 10^{-16}}.
+}
+
+\seealso{
+\code{\link[=sqrt_design]{sqrt_design()}} and \code{\link[=penalty_sqrt]{penalty_sqrt()}} for the two factors,
+\code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}} for the sparse route.
 }
 \keyword{internal}

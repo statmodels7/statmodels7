@@ -7,22 +7,37 @@
 sqrt_design(design, L)
 }
 \arguments{
-\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it, holding one
+block of columns per distribution parameter.}
 
-\item{L}{The Cholesky factors, from \code{\link[=chol_blocks]{chol_blocks()}}.}
+\item{L}{The per-observation Cholesky factors, as \code{\link[=chol_blocks]{chol_blocks()}} returns
+them, or \code{NULL}.}
 }
 \value{
-An \eqn{nK \times p} matrix, or \code{NULL} when a block was not
-positive definite.
+An \eqn{nK \times p} matrix, dense or a \pkg{Matrix} sparse
+matrix according to the design's own storage, where \eqn{p} is the total
+number of coefficients across the equations. \code{NULL} when \code{L} is \code{NULL},
+so the refusal propagates from the factorization to the solve without a
+test at each step.
 }
 \description{
-Returns \eqn{R} with \eqn{R'R = Z'\Omega Z}, the matrix a scoring step
-decomposes instead of the information itself.
+Builds \eqn{R} with \eqn{R'R = Z'\Omega Z}, the square root of the
+assembled information. A scoring step decomposes this instead of the
+information itself, so \eqn{Z'\Omega Z} is never formed and its condition
+number is never squared.
 }
 \details{
-Row block \eqn{a} of \eqn{R} carries, in the columns of parameter \eqn{b},
-the entry \eqn{L_i[b, a]} times that parameter's design row; the factor
-being lower triangular, the blocks with \eqn{b < a} are zero and are not
-formed.
+Row block \eqn{a} of \eqn{R} carries, in the columns belonging to
+parameter \eqn{b}, the entry \eqn{L_i[b, a]} times that parameter's design
+row. The factor is lower triangular, so the blocks with \eqn{b < a} are
+zero and are not formed at all.
+
+The result is sparse when any equation's design block is, which is what
+sends the solve to \code{\link[=sparse_augmented_solve]{sparse_augmented_solve()}}.
+}
+\seealso{
+\code{\link[=chol_blocks]{chol_blocks()}} for \code{L},
+\code{\link[=augmented_solve]{augmented_solve()}} for the decomposition this feeds,
+\code{\link[=penalty_sqrt]{penalty_sqrt()}} for the other half of the augmented matrix.
 }
 \keyword{internal}

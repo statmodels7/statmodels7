@@ -7,25 +7,37 @@
 chol_blocks(Om)
 }
 \arguments{
-\item{Om}{An \eqn{n \times K \times K} array of symmetric blocks.}
+\item{Om}{An \eqn{n \times K \times K} array of symmetric blocks, as
+\code{\link[=obs_information]{obs_information()}} returns it. Only the lower triangle of each block is
+read.}
 }
 \value{
-An array of the same shape, lower triangular in its last two
-indices, or \code{NULL} when some block is not positive definite.
+An \eqn{n \times K \times K} numeric array, lower triangular in
+its last two indices, with \code{Om[i, , ] == L[i, , ] \%*\% t(L[i, , ])} for
+every \code{i}. \code{NULL} as soon as any block fails to be positive definite,
+so a single bad observation declines for the whole sample.
 }
 \description{
 Returns the lower triangular \eqn{L_i} with \eqn{L_iL_i' = \Omega_i} for
 every observation, as a \eqn{n \times K \times K} array.
 }
 \details{
-The standard recursion is written over the \eqn{K} indices, which are few,
-and evaluated over all observations at once, which are many.
+\eqn{K} is the number of distribution parameters, so it is 1, 2 or 3 for
+most families and never large; \eqn{n} is the number of observations and
+is. The standard Cholesky recursion is therefore written out over the
+\eqn{K} indices and evaluated over all \eqn{n} observations at once, one
+vectorized pass per entry of the factor, so no loop runs over
+observations.
 
-A block that is not positive definite has a non-positive pivot, and the
-function returns \code{NULL} at that point rather than taking its square
-root: the observed curvature far from the optimum is routinely indefinite,
-so this is an ordinary outcome the caller answers by falling back to the
-assembled route, and a warning about a \code{NaN} would report it as a
-defect.
+A block that is not positive definite produces a non-positive pivot, and
+the function returns \code{NULL} at that point instead of taking its square
+root. That is an ordinary outcome and not a failure: the observed
+curvature far from the optimum is routinely indefinite, and the caller
+answers by falling back to the assembled route. A warning about a \code{NaN}
+would report an expected branch as a defect.
+}
+\seealso{
+\code{\link[=obs_information]{obs_information()}} for the input,
+\code{\link[=sqrt_design]{sqrt_design()}} for what the factors are used to build.
 }
 \keyword{internal}

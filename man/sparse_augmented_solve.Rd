@@ -7,47 +7,74 @@
 sparse_augmented_solve(R, C, u, how)
 }
 \arguments{
-\item{R}{The square-root design.}
+\item{R}{The square-root design, \eqn{nK \times p}, sparse or dense.}
 
-\item{C}{The penalty's factor.}
+\item{C}{The penalty's factor, with \code{p} columns.}
 
-\item{u}{The right-hand side.}
+\item{u}{The right-hand side, a numeric vector of length \code{p}.}
 
-\item{how}{The decomposition asked for; \code{"svd"} has no sparse
-counterpart and declines.}
+\item{how}{The decomposition asked for. Only \code{"qr"} is served; \code{"svd"} has
+no sparse counterpart and declines.}
 }
 \value{
-A list with \code{delta} and \code{rank}, or \code{NULL}.
+A list with \code{delta} (numeric, length \code{p}) and \code{rank} (integer,
+equal to \code{p}), or \code{NULL} when the route declines: \code{how} is not \code{"qr"},
+the factorization fails, or the equilibrated diagonal says the matrix is
+deficient.
 }
 \description{
 The same increment \code{\link[=augmented_solve]{augmented_solve()}} returns, taken through a
 sparse QR of \eqn{[R;\ C]}.
 }
-\details{
-The augmented route exists so that \eqn{X'X} is never formed and the
-conditioning is never squared, and a sparse QR is a QR: it keeps that
-property exactly, which a sparse Cholesky of the normal equations would
-not. Measured against the dense QR on the same augmented design of a
-random-intercept model, it is 695 times faster at 100 groups and 75475 at
-1000, the dense factorization there costing 9.06 s against 0.00012.
+\section{Why a QR and not a Cholesky}{
+The augmented form exists so that \eqn{X'X} is never formed and the
+conditioning is never squared. A sparse QR is a QR and keeps that
+property exactly. A sparse Cholesky of the normal equations would be
+faster still and would give it up.
 
-The factor is taken WITHOUT back-permuting. A sparse QR reorders the
-columns to reduce fill, so \eqn{AP = QR} for the permutation \eqn{P} the
-decomposition chose, and \eqn{(A'A)^{-1} = P(R'R)^{-1}P'}: the increment
-is two triangular solves between a permutation and its inverse, which is
-the same bookkeeping the dense route does with \code{qr}'s pivot.
-\code{backPermute = TRUE} looks simpler and is a trap -- it returns a
-factor that is no longer triangular, so its diagonal says nothing about
-the rank and a solve against it is a general one rather than two
-triangular ones.
-
-The rank is read off the diagonal of the triangular factor rather than
-reported by the decomposition, which for a sparse QR does not give one.
-Where the matrix is rank deficient there is no unique increment to return
-and this route declines, leaving the caller its dense fallback, which can
-drop columns and say how many it kept.
+Measured against the dense QR on the same augmented design of a
+random-intercept model: 695 times faster at 100 groups and 75475 times at
+1000, where the dense factorization costs 9.06 s against 0.00012 s.
 }
+
+\section{The factor is not back-permuted}{
+A sparse QR reorders the columns to reduce fill, so \eqn{AP = QR} for the
+permutation \eqn{P} the decomposition chose, and
+\eqn{(A'A)^{-1} = P(R'R)^{-1}P'}. The increment is two triangular solves
+between a permutation and its inverse, which is the bookkeeping the dense
+route already does with \code{qr()}'s pivot.
+
+\code{qrR(backPermute = TRUE)} looks like the simpler choice and is a trap. The
+back-permuted factor is no longer triangular, so its diagonal says nothing
+about the rank, and a solve against it is a general solve instead of two
+triangular ones.
+}
+
+\section{The rank test}{
+Read off the diagonal of the triangular factor, since a sparse QR does not
+report a rank. The test is on the \strong{Jacobi-equilibrated} diagonal, each
+entry divided by its column's norm, and declines when the smallest ratio
+falls to \code{ncol(A) * .Machine$double.eps} of the largest.
+
+The equilibration is what makes the route usable. Reading the raw diagonal
+rejected 87 of 127 solves on matrices the dense route finds at full rank,
+the ratio there running down to \eqn{7 \times 10^{-30}} while the
+equilibrated one stayed between 0.445 and 1. Those matrices are not
+near-singular; their columns differ in size, which is what a large
+smoothing parameter does. With the raw test a random-effect fit fell
+through to a dense QR and cost 34.1 s where it now costs 3.9.
+
+The column norms come from \code{colSums(A^2)} and not \code{colSums(A * A)}. A
+binary operation between two sparse matrices intersects their index sets,
+which is 29 to 35 times slower here, and the norms were 70 to 74 per cent
+of the whole solve before the change.
+
+Where the matrix really is rank deficient there is no unique increment,
+and this route declines rather than choosing one. The caller falls back to
+the dense route, which drops columns and says how many it kept.
+}
+
 \seealso{
-\code{\link[=augmented_solve]{augmented_solve()}}
+\code{\link[=augmented_solve]{augmented_solve()}}, the caller and the dense fallback.
 }
 \keyword{internal}
