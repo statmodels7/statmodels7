@@ -20,7 +20,7 @@
 * `rstatmod(covariates =)` draws the covariates too, one function of the
   observation count per column, afresh at every replicate. The choice is not
   a detail: with `data` the covariates are held and what is measured is the
-  estimator's behaviour CONDITIONAL on that design, and with `covariates` it
+  estimator's behavior CONDITIONAL on that design, and with `covariates` it
   is measured over the design as well -- fixed-X against random-X, two
   studies that a report should tell apart. A design that changes shape
   between replicates, a factor that lost a level being the ordinary cause,
@@ -205,7 +205,7 @@
   read at a glance before its tables: the population value of the
   development and what develops it. A parameter that is a number of its own
   is one row of the table below and gets no line above it; a developed one
-  is spread over a compartment where its population value is labelled by the
+  is spread over a compartment where its population value is labeled by the
   development's intercept, so this is the only place the parameter's own
   name appears beside a number.
 
@@ -3345,7 +3345,7 @@
   `statmod_start()` read `distrib_start()`'s result by parameter name,
   where that result is a list of starts each keyed by parameter, so the
   name matched nothing and every fit began at zeros on the link scale --
-  a location of 0 for a response centred at 5.84. The intercept of each
+  a location of 0 for a response centered at 5.84. The intercept of each
   equation now starts at the intercept-only maximum likelihood estimate,
   which for a gaussian is the sample mean and standard deviation
   exactly. That estimate draws its own starting values at random, so the
@@ -3446,7 +3446,7 @@
 
 # statmodels7 0.4.0
 
-* The modelling layer. `statmod()` reads one formula carrying every
+* The modeling layer. `statmod()` reads one formula carrying every
   parameter of a distribution, the equations separated by a bar, and
   fits it: the terms whose penalties are twice differentiable in one
   system by `iwls()` or any optimizer, each remaining block by a

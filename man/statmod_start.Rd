@@ -34,7 +34,7 @@ penalty is smallest.
 LIST PER START, each keyed by parameter, so the value wanted is
 \code{th[[1]][[p]]}; indexing the outer list by a parameter's name gives
 \code{NULL}, and this function did that, so every start silently fell to
-zero on the link scale. On a response centred at 5.84 that put the location
+zero on the link scale. On a response centered at 5.84 that put the location
 at 0 and sent the run travelling, which is how a Student t fitted to iris
 reached a variance of \eqn{10^7}.
 

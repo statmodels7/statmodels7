@@ -1920,7 +1920,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # value of the development, and what develops it. A parameter that is a
   # number of its own is one row of the table below and needs no line above
   # it; a developed one is spread over a compartment where its population
-  # value is labelled by the development's intercept, so this is the only
+  # value is labeled by the development's intercept, so this is the only
   # place the parameter's own name appears beside a number.
   head_rows <- function(rows_at, dev) {
     out <- lapply(dev, function(cp) {
