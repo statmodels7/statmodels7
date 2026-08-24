@@ -25,21 +25,26 @@ statmod_alternate(
 
 \item{design}{The design.}
 
-\item{blocks}{The block split.}
+\item{blocks}{The split of the terms into \code{smooth} and \code{sparse}, as
+\code{\link[=statmod_blocks]{statmod_blocks()}} returns it.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, held fixed for the whole call.}
 
-\item{inner_optimizer}{How the smooth block is fitted.}
+\item{inner_optimizer}{How the smooth block is fitted: \code{\link[=iwls]{iwls()}} or an
+\pkg{optimizers7} optimizer.}
 
-\item{beta}{The starting coefficients, stacked.}
+\item{beta}{The starting coefficients, stacked into one numeric vector.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{\code{TRUE} for the expected information, \code{FALSE} for the
+observed one.}
 
-\item{approx}{The approximation for the expected information.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form.}
 
-\item{maxit, tol}{The budget and the tolerance.}
+\item{maxit, tol}{The budget in passes and the relative tolerance on the
+objective, as \code{\link[=method_budget]{method_budget()}} read them off \code{inner_optimizer}.}
 
-\item{vb}{The resolved verbosity.}
+\item{vb}{The resolved verbosity, as \code{\link[=verbosity]{verbosity()}} returns it.}
 
 \item{working_budget}{How many working fits \code{\link[=fit_working]{fit_working()}} may
 take. The bootstrap excursions of \code{\link[=statmod_boot_restart]{statmod_boot_restart()}}
@@ -57,8 +62,16 @@ positions are refined ONCE, by the full alternation \code{statmod()}
 runs at the chosen hyperparameters before the restarts.}
 }
 \value{
-A list with \code{par}, \code{value}, \code{converged}, \code{obj},
-\code{hist_blocks} and \code{hist_inner}.
+A list of six:
+\describe{
+\item{\code{par}}{the stacked coefficients reached.}
+\item{\code{value}}{the penalized objective there, unaveraged.}
+\item{\code{converged}}{a single logical: the objective settled, every
+block settled, and every refreshable term reported it had.}
+\item{\code{obj}}{the objective object the last pass used.}
+\item{\code{hist_blocks}}{a data frame, one row per pass.}
+\item{\code{hist_inner}}{a data frame, one row per inner iteration.}
+}
 }
 \description{
 Fits the terms whose penalties are twice differentiable in one system and
@@ -66,10 +79,18 @@ each remaining block by a method of its own, alternating until the objective
 stops moving.
 }
 \details{
-It is a function of its own because the outer search calls it once per
-hyperparameter it tries, warm-started from the previous coefficients.
+This is a function of its own because the outer search calls it once per
+hyperparameter it tries, warm-started from the previous coefficients. A
+whole fit at one point of the search is one call of this.
+
+One pass does the smooth block, then each kinked block with everything
+else held, then commits any refreshable term's schedule. The passes repeat
+until the objective's relative change falls below \code{tol}, every block
+reports it has settled, and \code{\link[=statmod_refresh_settled]{statmod_refresh_settled()}} agrees.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=statmod]{statmod()}} for the fit this performs,
+\code{\link[=fit_smooth]{fit_smooth()}} and \code{\link[=sparse_fit]{sparse_fit()}} for the two halves of a pass,
+\code{\link[=statmod_boot_restart]{statmod_boot_restart()}}, which calls this repeatedly.
 }
 \keyword{internal}

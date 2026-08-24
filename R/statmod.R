@@ -513,19 +513,30 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' stops moving.
 #'
 #' @details
-#' It is a function of its own because the outer search calls it once per
-#' hyperparameter it tries, warm-started from the previous coefficients.
+#' This is a function of its own because the outer search calls it once per
+#' hyperparameter it tries, warm-started from the previous coefficients. A
+#' whole fit at one point of the search is one call of this.
+#'
+#' One pass does the smooth block, then each kinked block with everything
+#' else held, then commits any refreshable term's schedule. The passes repeat
+#' until the objective's relative change falls below `tol`, every block
+#' reports it has settled, and [statmod_refresh_settled()] agrees.
 #'
 #' @param spec The specification.
 #' @param design The design.
-#' @param blocks The block split.
-#' @param hyper The hyperparameters.
-#' @param inner_optimizer How the smooth block is fitted.
-#' @param beta The starting coefficients, stacked.
-#' @param expected Whether the information is the expected one.
-#' @param approx The approximation for the expected information.
-#' @param maxit,tol The budget and the tolerance.
-#' @param vb The resolved verbosity.
+#' @param blocks The split of the terms into `smooth` and `sparse`, as
+#'   [statmod_blocks()] returns it.
+#' @param hyper The hyperparameters, held fixed for the whole call.
+#' @param inner_optimizer How the smooth block is fitted: [iwls()] or an
+#'   \pkg{optimizers7} optimizer.
+#' @param beta The starting coefficients, stacked into one numeric vector.
+#' @param expected `TRUE` for the expected information, `FALSE` for the
+#'   observed one.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form.
+#' @param maxit,tol The budget in passes and the relative tolerance on the
+#'   objective, as [method_budget()] read them off `inner_optimizer`.
+#' @param vb The resolved verbosity, as [verbosity()] returns it.
 #' @param working_budget How many working fits [fit_working()] may
 #'   take. The bootstrap excursions of [statmod_boot_restart()]
 #'   pass a short one: an excursion needs to travel, not to converge.
@@ -540,10 +551,20 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #'   positions are refined ONCE, by the full alternation `statmod()`
 #'   runs at the chosen hyperparameters before the restarts.
 #'
-#' @return A list with `par`, `value`, `converged`, `obj`,
-#'   `hist_blocks` and `hist_inner`.
+#' @return A list of six:
+#'   \describe{
+#'     \item{`par`}{the stacked coefficients reached.}
+#'     \item{`value`}{the penalized objective there, unaveraged.}
+#'     \item{`converged`}{a single logical: the objective settled, every
+#'       block settled, and every refreshable term reported it had.}
+#'     \item{`obj`}{the objective object the last pass used.}
+#'     \item{`hist_blocks`}{a data frame, one row per pass.}
+#'     \item{`hist_inner`}{a data frame, one row per inner iteration.}
+#'   }
 #'
-#' @seealso [statmod()]
+#' @seealso [statmod()] for the fit this performs,
+#'   [fit_smooth()] and [sparse_fit()] for the two halves of a pass,
+#'   [statmod_boot_restart()], which calls this repeatedly.
 #'
 #' @keywords internal
 statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta,
@@ -766,26 +787,29 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
 #' smooth block, which is where they are set.
 #'
 #' @details
-#' [statmod()] carries neither a `maxit` nor a `tol` of its
-#' own. An argument accepted and ignored is worse than one that signals an
-#' error, and that is what a second copy would be: a caller setting
-#' `iwls(maxit = 20)` and a loose `maxit = 100` would get one of them
-#' with nothing said about the other. \pkg{distributions7}'s
-#' `fit_distrib()` shed the same pair for the same reason.
+#' [statmod()] carries neither a `maxit` nor a `tol` of its own. An argument
+#' accepted and ignored is worse than one that signals an error, and a second
+#' copy would be exactly that: a caller setting `iwls(maxit = 20)` alongside
+#' a loose `maxit = 100` would be obeyed in one and not told about the other.
+#' \pkg{distributions7}'s `fit_distrib()` shed the same pair for the same
+#' reason.
 #'
-#' [iwls()] carries both directly. An \pkg{optimizers7} optimizer
-#' carries `maxit` and a `criterion`; the tolerance is the largest
-#' one the criterion tree contains, since a combined rule stops at whichever of
-#' its parts fires first and the alternation should not ask for more precision
-#' than the loop inside it can deliver. A criterion carrying no tolerance at
-#' all leaves the default of [optimizers7::crit_grad()], read from
-#' that function rather than copied as a number.
+#' [iwls()] carries both directly. An \pkg{optimizers7} optimizer carries
+#' `maxit` and a `criterion`, and the tolerance is taken as the **largest**
+#' one in the criterion tree: a combined rule stops at whichever of its parts
+#' fires first, so the alternation should not ask for more precision than the
+#' loop inside it can deliver.
+#'
+#' A criterion carrying no tolerance at all leaves the default of
+#' [optimizers7::crit_grad()], read from that function's own formals and
+#' never copied as a number, so a change there reaches here.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #'
-#' @return A list with `maxit` and `tol`.
+#' @return A list of two: `maxit`, the budget in passes, and `tol`, the
+#'   relative tolerance on the objective.
 #'
-#' @seealso [statmod()], [iwls()]
+#' @seealso [statmod()], [iwls()], [crit_tol()] for the tree walk.
 #'
 #' @keywords internal
 method_budget <- function(method) {
@@ -809,16 +833,23 @@ method_budget <- function(method) {
 #' method in one place.
 #'
 #' @details
-#' Every route that fits the coefficients reads these, and reading them in one
-#' place is what keeps a refit inside a path or a fold on the same terms as the
-#' fit the caller asked for. Hard-coding them instead ran cross-validation at a
-#' tolerance a hundred times tighter than [iwls()]'s own, which cost
-#' 26 per cent in time and answered a question the caller had not asked.
+#' Every route that fits the coefficients reads these, and reading them in
+#' one place keeps a refit inside a path or a fold on the same terms as the
+#' fit the caller asked for. Hard-coding them instead ran cross-validation at
+#' a tolerance a hundred times tighter than [iwls()]'s own, which cost 26 per
+#' cent in time and answered a question the caller had not asked.
+#'
+#' An \pkg{optimizers7} optimizer says nothing about which information to
+#' use, having no such notion, so it gets the expected one and
+#' `"bartlett"`.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #'
-#' @return A list with `expected`, `approx`, `maxit` and
-#'   `tol`.
+#' @return A list of four: `expected` (a logical), `approx` (a string),
+#'   `maxit` and `tol`.
+#'
+#' @seealso [method_budget()] for the last two,
+#'   [iwls()] for where the first two are set.
 #'
 #' @keywords internal
 inner_settings <- function(method) {
@@ -834,12 +865,23 @@ inner_settings <- function(method) {
 #' The Tolerance a Criterion Asks For
 #'
 #' @description
-#' The largest `tol` in a criterion, walking a combined one into its
-#' parts.
+#' Returns the largest tolerance a criterion asks for, descending into a
+#' combined rule and taking the maximum over its parts.
 #'
-#' @param crit An \pkg{optimizers7} criterion.
+#' @details
+#' The maximum is the right reduction because a combined rule stops when
+#' **any** part fires, so the loop it drives is no more precise than its
+#' loosest term. A caller of [method_budget()] wants the precision the loop
+#' will actually deliver.
 #'
-#' @return A single number.
+#' @param crit An \pkg{optimizers7} criterion, possibly a combined one built
+#'   by `crit_any()` or `crit_all()`.
+#'
+#' @return A single number. [optimizers7::crit_grad()]'s own default where
+#'   the criterion carries no tolerance at all, read from that function's
+#'   formals.
+#'
+#' @seealso [method_budget()], its caller.
 #'
 #' @keywords internal
 criterion_tol <- function(crit) {
@@ -856,20 +898,44 @@ criterion_tol <- function(crit) {
 #' Fit the Smooth Block
 #'
 #' @description
-#' Runs `inner_optimizer` on the jointly fitted coefficients, the others
-#' held fixed.
+#' Runs `inner_optimizer` on the jointly fitted coefficients, holding every
+#' kinked block at its current values. This is the smooth half of one pass of
+#' [statmod_alternate()].
 #'
-#' @param obj The objective.
-#' @param beta The current stacked coefficients.
-#' @param idx The smooth block's indices.
+#' @details
+#' The objective handed to the optimizer is the full one restricted to `idx`:
+#' the coefficients outside the block enter it as constants, so the value it
+#' reports is the model's objective and not a block's own.
+#'
+#' With [iwls()] the step is solved through [fit_smooth()]'s own scoring
+#' loop, which reads the exact information. With an \pkg{optimizers7}
+#' optimizer the objective's `fn`, `gr` and `he` are all supplied, so
+#' `newton()` gets the exact second derivative instead of differencing the
+#' gradient: measured, that is 2.5x on one smooth and 5.5x on three smooths
+#' with a random effect, at identical answers.
+#'
+#' @param obj The objective, as [statmod_objective()] returns it.
+#' @param beta The current stacked coefficients, all of them.
+#' @param idx The smooth block's positions within `beta`, an integer vector.
 #' @param spec The specification.
 #' @param design The design.
-#' @param hyper The hyperparameters.
-#' @param method [iwls()] or an optimizer.
+#' @param hyper The hyperparameters, held fixed.
+#' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #' @param vb The resolved verbosity.
 #'
-#' @return A list with `par`, `value`, `converged`,
-#'   `iterations` and `history`.
+#' @return A list of five:
+#'   \describe{
+#'     \item{`par`}{the full stacked coefficient vector, with the block's
+#'       positions replaced.}
+#'     \item{`value`}{the objective there.}
+#'     \item{`converged`}{a single logical, the method's own verdict.}
+#'     \item{`iterations`}{how many the method took.}
+#'     \item{`history`}{a data frame, one row per iteration.}
+#'   }
+#'
+#' @seealso [statmod_alternate()], the caller,
+#'   [sparse_fit()] for the kinked half of the same pass,
+#'   [iwls()] for the default method.
 #'
 #' @keywords internal
 fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {

@@ -10,18 +10,26 @@ inner_settings(method)
 \item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
 }
 \value{
-A list with \code{expected}, \code{approx}, \code{maxit} and
-\code{tol}.
+A list of four: \code{expected} (a logical), \code{approx} (a string),
+\code{maxit} and \code{tol}.
 }
 \description{
 The information matrix, its approximation and the budget, read off the inner
 method in one place.
 }
 \details{
-Every route that fits the coefficients reads these, and reading them in one
-place is what keeps a refit inside a path or a fold on the same terms as the
-fit the caller asked for. Hard-coding them instead ran cross-validation at a
-tolerance a hundred times tighter than \code{\link[=iwls]{iwls()}}'s own, which cost
-26 per cent in time and answered a question the caller had not asked.
+Every route that fits the coefficients reads these, and reading them in
+one place keeps a refit inside a path or a fold on the same terms as the
+fit the caller asked for. Hard-coding them instead ran cross-validation at
+a tolerance a hundred times tighter than \code{\link[=iwls]{iwls()}}'s own, which cost 26 per
+cent in time and answered a question the caller had not asked.
+
+An \pkg{optimizers7} optimizer says nothing about which information to
+use, having no such notion, so it gets the expected one and
+\code{"bartlett"}.
+}
+\seealso{
+\code{\link[=method_budget]{method_budget()}} for the last two,
+\code{\link[=iwls]{iwls()}} for where the first two are set.
 }
 \keyword{internal}

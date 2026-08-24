@@ -7,13 +7,25 @@
 criterion_tol(crit)
 }
 \arguments{
-\item{crit}{An \pkg{optimizers7} criterion.}
+\item{crit}{An \pkg{optimizers7} criterion, possibly a combined one built
+by \code{crit_any()} or \code{crit_all()}.}
 }
 \value{
-A single number.
+A single number. \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}'s own default where
+the criterion carries no tolerance at all, read from that function's
+formals.
 }
 \description{
-The largest \code{tol} in a criterion, walking a combined one into its
-parts.
+Returns the largest tolerance a criterion asks for, descending into a
+combined rule and taking the maximum over its parts.
+}
+\details{
+The maximum is the right reduction because a combined rule stops when
+\strong{any} part fires, so the loop it drives is no more precise than its
+loosest term. A caller of \code{\link[=method_budget]{method_budget()}} wants the precision the loop
+will actually deliver.
+}
+\seealso{
+\code{\link[=method_budget]{method_budget()}}, its caller.
 }
 \keyword{internal}

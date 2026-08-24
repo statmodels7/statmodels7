@@ -10,29 +10,32 @@ method_budget(method)
 \item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
 }
 \value{
-A list with \code{maxit} and \code{tol}.
+A list of two: \code{maxit}, the budget in passes, and \code{tol}, the
+relative tolerance on the objective.
 }
 \description{
 Reads the iteration budget and the tolerance off the method that fits the
 smooth block, which is where they are set.
 }
 \details{
-\code{\link[=statmod]{statmod()}} carries neither a \code{maxit} nor a \code{tol} of its
-own. An argument accepted and ignored is worse than one that signals an
-error, and that is what a second copy would be: a caller setting
-\code{iwls(maxit = 20)} and a loose \code{maxit = 100} would get one of them
-with nothing said about the other. \pkg{distributions7}'s
-\code{fit_distrib()} shed the same pair for the same reason.
+\code{\link[=statmod]{statmod()}} carries neither a \code{maxit} nor a \code{tol} of its own. An argument
+accepted and ignored is worse than one that signals an error, and a second
+copy would be exactly that: a caller setting \code{iwls(maxit = 20)} alongside
+a loose \code{maxit = 100} would be obeyed in one and not told about the other.
+\pkg{distributions7}'s \code{fit_distrib()} shed the same pair for the same
+reason.
 
-\code{\link[=iwls]{iwls()}} carries both directly. An \pkg{optimizers7} optimizer
-carries \code{maxit} and a \code{criterion}; the tolerance is the largest
-one the criterion tree contains, since a combined rule stops at whichever of
-its parts fires first and the alternation should not ask for more precision
-than the loop inside it can deliver. A criterion carrying no tolerance at
-all leaves the default of \code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}, read from
-that function rather than copied as a number.
+\code{\link[=iwls]{iwls()}} carries both directly. An \pkg{optimizers7} optimizer carries
+\code{maxit} and a \code{criterion}, and the tolerance is taken as the \strong{largest}
+one in the criterion tree: a combined rule stops at whichever of its parts
+fires first, so the alternation should not ask for more precision than the
+loop inside it can deliver.
+
+A criterion carrying no tolerance at all leaves the default of
+\code{\link[optimizers7:crit_grad]{optimizers7::crit_grad()}}, read from that function's own formals and
+never copied as a number, so a change there reaches here.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}, \code{\link[=crit_tol]{crit_tol()}} for the tree walk.
 }
 \keyword{internal}
