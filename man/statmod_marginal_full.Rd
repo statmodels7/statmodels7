@@ -60,6 +60,6 @@ happens to an unpenalized coefficient too.
 
 \seealso{
 \code{\link[=statmod_marginal]{statmod_marginal()}}, the caller,
-\code{\link[=has_structural_penalty]{has_structural_penalty()}} for the predicate that selects this route.
+\code{\link[=structural_penalized]{structural_penalized()}} for the predicate that selects this route.
 }
 \keyword{internal}

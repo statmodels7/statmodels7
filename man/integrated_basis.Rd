@@ -34,7 +34,7 @@ ten orders of magnitude apart the small contributions sink below any
 tolerance and the count falls, while the null space itself does not move.
 }
 \seealso{
-\code{\link[=range_basis]{range_basis()}} for one penalty's contribution,
+\code{\link[=penalty_range_basis]{penalty_range_basis()}} for one penalty's contribution,
 \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the distinction this implements.
 }
 \keyword{internal}

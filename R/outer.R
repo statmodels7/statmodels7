@@ -407,7 +407,7 @@ eta_to_hyper <- function(eta, idx, hyper) {
 #'   the penalty's range space, `p` the total coefficient count and `r` its
 #'   rank.
 #'
-#' @seealso [range_basis()] for one penalty's contribution,
+#' @seealso [penalty_range_basis()] for one penalty's contribution,
 #'   [reml()] and [ml()] for the distinction this implements.
 #'
 #' @keywords internal
@@ -571,7 +571,7 @@ structural_penalized <- function(spec, design) {
 #'   reads as an unusable hyperparameter.
 #'
 #' @seealso [statmod_marginal()], the caller,
-#'   [has_structural_penalty()] for the predicate that selects this route.
+#'   [structural_penalized()] for the predicate that selects this route.
 #'
 #' @keywords internal
 statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
