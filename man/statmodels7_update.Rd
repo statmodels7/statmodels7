@@ -7,39 +7,62 @@
 statmodels7_update(action = c("report", "install"), quiet = FALSE)
 }
 \arguments{
-\item{action}{\code{"report"} to describe what is installed, or
-\code{"install"} to install and update.}
+\item{action}{\code{"report"} (the default) to print the installed versions and
+the calls that would update them, or \code{"install"} to install and update.
+Matched with \code{\link[=match.arg]{match.arg()}}, so an unambiguous prefix such as \code{"i"} is
+accepted and anything else is an error.}
 
-\item{quiet}{Passed to \pkg{pak}; suppresses its output when \code{TRUE}.}
+\item{quiet}{Accepted for symmetry with the installers and currently not
+read: \pkg{pak} is called with its own defaults. A single logical.}
 }
 \value{
-For \code{"report"}, a data frame as
-\code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, invisibly for
-\code{"install"}. The report is printed as a side effect.
+A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with columns
+\code{package} and \code{version}. Returned invisibly under both actions: the
+report prints to the console with \code{\link[=cat]{cat()}} and is not the return value.
+Under \code{"install"} the versions are read \strong{after} the install, so the
+result is the state the call left behind.
 }
 \description{
-Installs every member package from its GitHub repository, or reports what
-would be installed.
+Installs the eight member packages of the toolkit from their GitHub
+repositories under \code{github.com/statmodels7}, or prints what is installed
+and stops. The default is to print: installing packages is a side effect,
+and this function asks for it to be requested by name.
 }
-\details{
-The toolkit is not on CRAN, so the install path is GitHub and the work is
-delegated to \pkg{pak}, which resolves the dependencies among the members
-itself and installs only what is missing or out of date. The order of the
-names therefore does not matter.
+\section{Where the packages come from}{
+None of the toolkit is on CRAN, so the install path is GitHub, at
+\verb{statmodels7/<package>} for each member \code{\link[=statmodels7_packages]{statmodels7_packages()}} names.
+The work is handed to \pkg{pak}, which resolves the dependencies among the
+members itself and installs only what is missing or behind. The order the
+names are passed in therefore does not matter.
 
-With \code{action = "report"}, the default, nothing is installed and the
-function returns the versions currently installed together with the call
-that would update them. Installing packages is a side effect that must
-be requested explicitly.
+\pkg{pak} is not a dependency of this package. When \code{action = "install"}
+is asked for and \pkg{pak} is not installed, the call stops with a message
+giving both the \code{install.packages("pak")} line and the equivalent
+\code{\link[remotes:install_github]{remotes::install_github()}} call spelled out with all eight repositories,
+so a caller who prefers \pkg{remotes} can paste it.
 }
+
+\section{Installing over a loaded package}{
+A member that is attached in the current session holds its own DLL open on
+Windows, and \pkg{pak} cannot replace a file that is in use. Restart R
+before installing, or the install of a compiled member fails partway and
+leaves that member in a state where \code{packageVersion()} reports it absent.
+}
+
 \examples{
-statmodels7_update()
+# Prints the table and the two calls that would update it. Installs
+# nothing.
+v <- statmodels7_update()
+identical(v, statmodels7_versions())
 
 \dontrun{
+# Installs from GitHub, so it needs a network connection and writes to
+# the library. Restart R first if a member is attached.
 statmodels7_update("install")
 }
 
 }
 \seealso{
-\code{\link[=statmodels7_versions]{statmodels7_versions()}}
+\code{\link[=statmodels7_versions]{statmodels7_versions()}} for the versions alone,
+\code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members installed.
 }
