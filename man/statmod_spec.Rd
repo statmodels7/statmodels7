@@ -15,51 +15,73 @@ statmod_spec(
 )
 }
 \arguments{
-\item{formula}{The model formula.}
+\item{formula}{The model formula, with the parameters' equations separated
+by \code{|}.}
 
-\item{distrib}{A \pkg{distributions7} distribution object.}
+\item{distrib}{A \pkg{distributions7} distribution object, which decides
+how many equations there are and what they are called.}
 
-\item{data}{A data frame.}
+\item{data}{A data frame holding the response, the covariates and any
+matrix columns the terms name.}
 
-\item{weights}{Optional prior weights, one per observation.}
+\item{weights}{Optional prior weights, a numeric vector of length
+\code{nrow(data)}, or \code{NULL} for all ones.}
 
-\item{offsets}{Optional named list of offsets, one per parameter.}
+\item{offsets}{Optional named list of offsets, one entry per parameter,
+summed with any the formula names.}
 
-\item{need_response}{Whether the left-hand side must evaluate. A likelihood
-needs it; a prediction does not, and new data routinely has no response
-column.}
+\item{need_response}{\code{TRUE}, the default, requires the left-hand side to
+evaluate. \code{FALSE} is what prediction uses: new data routinely has no
+response column.}
 
-\item{linpar}{How the IMPLICIT parametric block is built, as
-\code{\link[=linpar_options]{linpar_options()}} returns it. It is kept on the
-specification, so a rebuild -- a fold of \code{\link[=cv]{cv()}} -- reproduces
-the storage rather than quietly densifying.}
+\item{linpar}{How the implicit parametric block is built, as
+\code{\link[=linpar_options]{linpar_options()}} returns it. Kept on the specification, so a rebuild
+such as a fold of \code{\link[=cv]{cv()}} reproduces the storage instead of quietly
+densifying.}
 }
 \value{
-An object of class \code{\link[=StatmodSpec]{StatmodSpec()}}.
+A \code{\link[=StatmodSpec]{StatmodSpec()}} object.
 }
 \description{
-Splits the formula into one equation per distribution parameter, interprets
-each with \pkg{modelterms7} and builds its terms against the data.
+Builds everything \code{\link[=statmod]{statmod()}} fits from: splits the formula into one
+equation per distribution parameter, interprets each with
+\pkg{modelterms7}, and builds the terms it names against the data.
+\code{\link[=statmod]{statmod()}} calls this first; calling it directly is how a model is
+inspected without being fitted.
 }
-\details{
-The equations are interpreted in an environment where \pkg{modelterms7}'s
-term constructors shadow whatever the user has attached, so that \code{s()}
-means ours even with \pkg{mgcv} on the search path. See
-\code{\link[=statmod_equations]{statmod_equations()}} for the split itself, which is not the
-obvious one.
+\section{The formula}{
+The equations are separated by \code{|}, the first carrying the response, and a
+parameter with no equation gets an intercept. \code{\link[=statmod_equations]{statmod_equations()}} does
+the split, which is not the obvious one: R's precedence makes the whole
+right-hand side of a three-equation formula the last term alone.
 
-Prior weights enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are
-taken as given. They are deliberately NOT normalized: dividing by their sum
-would turn the log-likelihood into a mean, shrinking every standard error
-by \eqn{\sqrt{n}} and making the information criteria incomparable with an
-unweighted fit of the same model.
+Each equation is interpreted in an environment where \pkg{modelterms7}'s
+term constructors sit in front of the search path, so \code{s()} means this
+toolkit's even with \pkg{mgcv} attached.
 }
+
+\section{Prior weights are not normalized}{
+They enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are taken as
+given. Dividing by their sum would turn the log-likelihood into a mean,
+shrinking every standard error by \eqn{\sqrt{n}} and making the
+information criteria incomparable with an unweighted fit of the same
+model.
+}
+
 \examples{
 dd <- data.frame(y = rnorm(20), x = runif(20), z = runif(20))
-spec <- statmod_spec(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd)
+spec <- statmod_spec(y ~ x | sigma ~ z,
+                     distributions7::gaussian1_distrib(), dd)
+
+# One entry per parameter of the family, in the family's order.
 names(spec@terms)
+spec@equations
+
+# Unweighted, so the weights are ones.
+c(n = spec@n_obs, total_weight = sum(spec@weights))
 
 }
 \seealso{
-\code{\link[=statmod_equations]{statmod_equations()}}, \code{\link[=statmod]{statmod()}}
+\code{\link[=statmod_equations]{statmod_equations()}} for the split,
+\code{\link[=statmod_design]{statmod_design()}} for the assembly, \code{\link[=statmod]{statmod()}} to fit it.
 }

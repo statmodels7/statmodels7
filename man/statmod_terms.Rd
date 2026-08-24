@@ -7,31 +7,45 @@
 statmod_terms(equations, data, env, response = NULL, linpar = list())
 }
 \arguments{
-\item{equations}{A named list of one-sided formulas.}
+\item{equations}{A named list of one-sided formulas, one per distribution
+parameter.}
 
-\item{data}{A data frame.}
+\item{data}{A data frame to build the terms against.}
 
-\item{env}{The environment the original formula carried.}
+\item{env}{The environment the original formula carried, which becomes the
+parent of the interpreting environment.}
 
-\item{response}{The evaluated left-hand side, or \code{NULL}.}
+\item{response}{The evaluated left-hand side, or \code{NULL} where there is
+none. Read by \code{\link[=seg_grid_start]{seg_grid_start()}} and by nothing else.}
 }
 \value{
-A list with \code{terms} (a named list per parameter) and
-\code{intercepts} (a named logical).
+A list of two:
+\describe{
+\item{\code{terms}}{a named list with one entry per parameter, each a named
+list of built terms keyed by the term's call as written.}
+\item{\code{intercepts}}{a named logical, one per parameter: whether that
+equation's parametric block carried an intercept.}
+}
 }
 \description{
 Runs \pkg{modelterms7}'s interpreter on every equation and builds the terms
 it names against the data.
 }
 \details{
-The equations are interpreted with \pkg{modelterms7}'s constructors in front
-of the search path, so that \code{s()} means ours whatever the user has
-attached. A factor covariate needs no special handling: the interpreter
-collects bare covariates into one \code{linpar()}, whose block comes from
-\code{model.matrix} and therefore carries the contrasts.
+The equations are interpreted with \pkg{modelterms7}'s constructors in
+front of the search path, so \code{s()} means this toolkit's whatever the
+caller has attached. See \code{\link[=terms_first]{terms_first()}} for the shim and the collision it
+removes.
+
+A factor covariate needs no handling of its own: the interpreter collects
+the bare covariates of an equation into one \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, whose
+block comes from \code{model.matrix} and so carries the contrasts.
 
 A break-point term whose starting positions the caller did not name has
-them chosen on a grid rather than left at the interior quantiles of the
-covariate; see \code{\link[=seg_grid_start]{seg_grid_start()}}.
+them chosen on a grid, through \code{\link[=seg_grid_start]{seg_grid_start()}}, in place of the
+interior quantiles of the covariate the term would otherwise default to.
+}
+\seealso{
+\code{\link[=statmod_spec]{statmod_spec()}}, the caller, \code{\link[=terms_first]{terms_first()}} for the shim.
 }
 \keyword{internal}

@@ -9,29 +9,37 @@ statmod_respec(spec, data, need_response = TRUE)
 \arguments{
 \item{spec}{The fitted \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{data}{The rows to read it on.}
+\item{data}{The rows to read the model on.}
 
-\item{need_response}{Whether the response has to be there.}
+\item{need_response}{\code{TRUE} where the response must be present, as for a
+log-likelihood; \code{FALSE} for a prediction.}
 }
 \value{
-A \code{\link[=StatmodSpec]{StatmodSpec()}} whose \code{newdata} is set.
+A \code{\link[=StatmodSpec]{StatmodSpec()}} carrying the fitted terms, with \code{newdata} set to
+\code{data}, \code{n_obs} its row count, and the offsets and response evaluated
+there. Every other property is \code{spec}'s.
 }
 \description{
 A specification carrying the fitted terms and a new data frame, so that
 every block is reapplied to those rows rather than rebuilt from them.
 }
 \details{
-A term records how its block was made -- a factor's levels and contrasts, a
-spline's knots, a basis reparametrization -- and
-\code{\link[modelterms7:term_predict]{modelterms7::term_predict()}} reapplies that record. Rebuilding
-instead gives a block of the same shape, multiplying the same coefficients,
-that means something else: measured on \code{y ~ s(x, k = 10)} at 200
-observations, predicting on 40 of the rows the model was fitted to differed
-from the fitted values there by 0.237, and on the 51 rows with
-\eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. The whole
-data handed back agrees exactly, which is why nothing noticed.
+A term records how its block was made: a factor's levels and contrasts, a
+spline's knots, a basis reparametrization. \code{\link[modelterms7:term_predict]{modelterms7::term_predict()}}
+reapplies that record to new rows.
+
+Rebuilding instead gives a block of the same shape, multiplying the same
+coefficients, that means something else. Measured on \code{y ~ s(x, k = 10)} at
+200 observations: predicting on 40 of the rows the model was fitted to
+differed from the fitted values there by 0.237, and on the 51 rows with
+\eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. Handing
+back the whole data agrees exactly, which is why nothing noticed.
+
+The offsets are re-evaluated against \code{data} rather than carried across,
+since a vector of the fitting data's length says nothing about other rows.
 }
 \seealso{
-\code{\link[=statmod_design]{statmod_design()}}
+\code{\link[=statmod_design]{statmod_design()}}, which reapplies the terms,
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the caller.
 }
 \keyword{internal}

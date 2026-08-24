@@ -23,41 +23,55 @@ StatmodSpec(
 )
 }
 \arguments{
-\item{formula}{The model formula, as given.}
+\item{formula}{The model formula, as given, bars included.}
 
-\item{distrib}{The \pkg{distributions7} object.}
+\item{distrib}{The \pkg{distributions7} distribution object.}
 
 \item{equations}{A named list of one-sided formulas, one per parameter, in
 the family's order.}
 
-\item{terms}{A named list, one entry per parameter, each a named list of
-built \pkg{modelterms7} terms.}
+\item{terms}{A named list with one entry per parameter, each a named list
+of built \pkg{modelterms7} terms keyed by the term's call as written.}
 
 \item{response}{The evaluated left-hand side.}
 
-\item{n_obs}{The number of observations.}
+\item{n_obs}{The number of observations, a single integer.}
 
-\item{weights}{Prior weights, one per observation.}
+\item{weights}{Prior weights, a numeric vector of length \code{n_obs}.}
 
-\item{offsets}{A named list of offsets, one per parameter or \code{NULL}.}
+\item{offsets}{A named list of offsets, one entry per parameter, \code{NULL}
+where an equation has none.}
 
-\item{intercepts}{A named logical, whether each equation carried one.}
+\item{intercepts}{A named logical, one per parameter: whether that
+equation's parametric block carried an intercept.}
 }
 \value{
-An object of class \code{StatmodSpec}.
+An object of class \code{StatmodSpec} with one property per argument
+above, plus \code{threads}, \code{workers}, \code{linpar}, \code{newdata} and \code{structural},
+which \code{\link[=statmod]{statmod()}} fills in.
 }
 \description{
-Everything the formula, the data and the distribution produce: one
-equation per distribution parameter, the terms each equation names built
-against the data, the response, and the prior weights and offsets.
+Everything the formula, the data and the distribution produce, before any
+fitting: one equation per distribution parameter, the terms each equation
+names built against the data, the response, and the prior weights and
+offsets. A fit keeps one of these in its \code{spec} property, so it is also
+what \code{summary()}, \code{predict()} and the accessors read.
+
+Build one with \code{\link[=statmod_spec]{statmod_spec()}}, which interprets the formula and
+validates. This raw constructor takes the pieces already made.
 }
 \examples{
 dd <- data.frame(y = rnorm(10), x = runif(10))
-S7::S7_inherits(statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd),
-                StatmodSpec)
+spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+S7::S7_inherits(spec, StatmodSpec)
+
+# One equation per parameter of the family, whatever the formula wrote.
+names(spec@equations)
+spec@n_obs
 
 }
 \seealso{
-\code{\link[=statmod_spec]{statmod_spec()}}
+\code{\link[=statmod_spec]{statmod_spec()}}, the constructor to use,
+\code{\link[=statmod_design]{statmod_design()}} for what is assembled from one.
 }
 \keyword{internal}

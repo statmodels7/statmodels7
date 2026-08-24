@@ -7,36 +7,50 @@
 linpar_options(sparse = NULL, contrasts = NULL)
 }
 \arguments{
-\item{sparse}{Whether the block is a \code{dgCMatrix}. \code{NULL}, the
-default, leaves it to \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, which settles it
-at build from the size of the design.}
+\item{sparse}{A single logical, or \code{NULL}. \code{TRUE} makes the block a
+\code{dgCMatrix}, \code{FALSE} a base matrix. \code{NULL}, the default, leaves it to
+\code{\link[modelterms7:linpar]{modelterms7::linpar()}}, which settles it at build time from the size of
+the design.}
 
-\item{contrasts}{The contrasts for the block's factors, as a named list of
-the kind \code{\link[stats:model.matrix]{stats::model.matrix()}}'s \code{contrasts.arg} takes,
-or \code{NULL} for the session's \code{options("contrasts")}.}
+\item{contrasts}{The contrasts for the block's factors, a named list of
+the kind \code{\link[stats:model.matrix]{stats::model.matrix()}}'s \code{contrasts.arg} takes, or \code{NULL} for
+the session's \code{options("contrasts")}. Carried on the specification, so a
+fold of \code{\link[=cv]{cv()}} reproduces them instead of re-reading the option.}
 }
 \value{
-A named list, for \code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
-The argument and this function are named differently on purpose: with
+A named list with elements \code{sparse} and \code{contrasts}, to be passed
+as \code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
+
+The argument and this function are named differently on purpose. With
 one name for both, the argument's default would resolve to its own
-promise. \code{\link[stats:glm]{stats::glm()}} and \code{\link[stats:glm.control]{stats::glm.control()}}
-keep them apart for the same reason.
+promise and R would report \emph{promise already under evaluation}.
+\code{\link[stats:glm]{stats::glm()}} and \code{\link[stats:glm.control]{stats::glm.control()}} are kept apart for the same
+reason.
 }
 \description{
-How the design of the linear predictor's parametric part is built: the
-storage, and the contrasts for its factors.
-}
-\details{
-It governs the IMPLICIT \code{\link[modelterms7:linpar]{modelterms7::linpar()}} term -- the one
-the bare covariates of a formula collapse into, which a caller never
-writes -- so this is the only place its arguments can be given. A
-\code{linpar()} written out takes them directly.
+Says how the parametric part of each linear predictor is built: in what
+storage, and with which contrasts for its factors. Pass the result as
+\code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
 
-\strong{Sparse storage.} \code{sparse = TRUE} builds the block through
-\code{\link[Matrix:sparse.model.matrix]{Matrix::sparse.model.matrix()}}, which BUILDS it sparse rather
-than building a dense matrix and compressing it -- the second would cost
-the memory the choice exists to avoid. Measured at 20000 rows and a factor
-of 1000 levels, 0.002 s and 1.8 MB against \code{stats::model.matrix}'s
+The one case it exists for is a formula naming a factor of many levels,
+where \code{sparse = TRUE} turns a design that would be gigabytes into one that
+is megabytes.
+}
+\section{Which term it reaches}{
+The \strong{implicit} \code{\link[modelterms7:linpar]{modelterms7::linpar()}} term: the one the bare covariates
+of a formula collapse into, which a caller never writes and so has no
+other way to configure. A \code{linpar()} written out in the formula takes
+these arguments directly and ignores this.
+}
+
+\section{Sparse storage}{
+\code{sparse = TRUE} builds the block through
+\code{\link[Matrix:sparse.model.matrix]{Matrix::sparse.model.matrix()}}, which \strong{builds} it sparse instead of
+building a dense matrix and compressing it. The second would cost the
+memory the choice exists to avoid.
+
+Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
+against \code{stats::model.matrix}'s
 0.100 s and 161.5 MB, the numbers identical; and a design that would be
 32 GB dense builds in 0.02 s and 19 MB, which is what says there is no
 dense intermediate. It pays where the formula carries a factor of many
@@ -53,10 +67,28 @@ converge in the same number of iterations, and both agree with
 fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 answer: the final verdict is already arbitrated on a dimensionless scale.
 }
+
 \examples{
 linpar_options(sparse = TRUE)
 
+# The whole point: a factor of many levels.
+set.seed(1)
+n <- 2000
+dd <- data.frame(y = rnorm(n), g = factor(sample(200, n, replace = TRUE)))
+dense  <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
+                       linpar = linpar_options(sparse = FALSE))
+sparse <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
+                       linpar = linpar_options(sparse = TRUE))
+Xd <- statmod_design(dense)$mu$X
+Xs <- statmod_design(sparse)$mu$X
+
+# Same numbers, one two orders of magnitude smaller.
+c(dense = class(Xd)[1], sparse = class(Xs)[1])
+all.equal(as.matrix(Xs), Xd, check.attributes = FALSE)
+c(dense = object.size(Xd), sparse = object.size(Xs))
+
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[modelterms7:linpar]{modelterms7::linpar()}}
+\code{\link[=statmod]{statmod()}} for where it is passed,
+\code{\link[modelterms7:linpar]{modelterms7::linpar()}} for the term it configures.
 }

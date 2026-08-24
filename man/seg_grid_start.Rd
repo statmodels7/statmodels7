@@ -7,14 +7,16 @@
 seg_grid_start(tm, data, response)
 }
 \arguments{
-\item{tm}{One term specification.}
+\item{tm}{One term specification, as the formula interpreter produced it.}
 
 \item{data}{The data frame the term is built against.}
 
 \item{response}{The evaluated left-hand side, or \code{NULL}.}
 }
 \value{
-The specification, with \code{psi} set where the rule applies.
+\code{tm}, with \code{psi} set to the grid's choice where the rule applies,
+and unchanged where it does not: a term of another kind, a term whose
+\code{psi} the caller named, or a response the rule cannot score against.
 }
 \description{
 Runs \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} on a
@@ -32,16 +34,16 @@ start and 1 from the grid. The term's own default is a conventional
 start: the interior quantiles of the covariate, which look at the
 covariate and not at the response.
 
-The rule costs \code{k} linear fits and is exact for a gaussian
-response, so it places a starting value and does not fit. Two things
-are therefore not asked of it. It is applied whatever equation the term
-sits in, the response being what there is to score against even where
-the term develops a scale; and it is skipped where the response is not
-plain numbers -- a censored one, or a matrix -- rather than being given
-a reading of its own.
+The rule costs \code{k} linear fits and is exact for a gaussian response, so it
+places a starting value and does not fit. Two consequences follow, and
+both are deliberate. It is applied whatever equation the term sits in,
+the response being what there is to score against even where the term
+develops a scale. And it is skipped where the response is not plain
+numbers, a censored one or a matrix, instead of being given a reading of
+its own.
 
-A caller who names \code{psi} has said where to begin and is left
-alone, which is also how the grid is turned off.
+A caller who names \code{psi} has said where to begin and is left alone, which
+is also how the grid is turned off.
 }
 \seealso{
 \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}},

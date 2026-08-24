@@ -375,30 +375,44 @@ zero_information <- function(design, total) {
 #' The Specification of a Model, Before It Is Fitted
 #'
 #' @description
-#' Everything the formula, the data and the distribution produce: one
-#' equation per distribution parameter, the terms each equation names built
-#' against the data, the response, and the prior weights and offsets.
+#' Everything the formula, the data and the distribution produce, before any
+#' fitting: one equation per distribution parameter, the terms each equation
+#' names built against the data, the response, and the prior weights and
+#' offsets. A fit keeps one of these in its `spec` property, so it is also
+#' what `summary()`, `predict()` and the accessors read.
 #'
-#' @param formula The model formula, as given.
-#' @param distrib The \pkg{distributions7} object.
+#' Build one with [statmod_spec()], which interprets the formula and
+#' validates. This raw constructor takes the pieces already made.
+#'
+#' @param formula The model formula, as given, bars included.
+#' @param distrib The \pkg{distributions7} distribution object.
 #' @param equations A named list of one-sided formulas, one per parameter, in
 #'   the family's order.
-#' @param terms A named list, one entry per parameter, each a named list of
-#'   built \pkg{modelterms7} terms.
+#' @param terms A named list with one entry per parameter, each a named list
+#'   of built \pkg{modelterms7} terms keyed by the term's call as written.
 #' @param response The evaluated left-hand side.
-#' @param n_obs The number of observations.
-#' @param weights Prior weights, one per observation.
-#' @param offsets A named list of offsets, one per parameter or `NULL`.
-#' @param intercepts A named logical, whether each equation carried one.
+#' @param n_obs The number of observations, a single integer.
+#' @param weights Prior weights, a numeric vector of length `n_obs`.
+#' @param offsets A named list of offsets, one entry per parameter, `NULL`
+#'   where an equation has none.
+#' @param intercepts A named logical, one per parameter: whether that
+#'   equation's parametric block carried an intercept.
 #'
-#' @return An object of class `StatmodSpec`.
+#' @return An object of class `StatmodSpec` with one property per argument
+#'   above, plus `threads`, `workers`, `linpar`, `newdata` and `structural`,
+#'   which [statmod()] fills in.
 #'
-#' @seealso [statmod_spec()]
+#' @seealso [statmod_spec()], the constructor to use,
+#'   [statmod_design()] for what is assembled from one.
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(10), x = runif(10))
-#' S7::S7_inherits(statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd),
-#'                 StatmodSpec)
+#' spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+#' S7::S7_inherits(spec, StatmodSpec)
+#'
+#' # One equation per parameter of the family, whatever the formula wrote.
+#' names(spec@equations)
+#' spec@n_obs
 #'
 #' @name StatmodSpec-class
 #' @aliases StatmodSpec
@@ -439,20 +453,31 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' Options for the Unpenalized Parametric Block
 #'
 #' @description
-#' How the design of the linear predictor's parametric part is built: the
-#' storage, and the contrasts for its factors.
+#' Says how the parametric part of each linear predictor is built: in what
+#' storage, and with which contrasts for its factors. Pass the result as
+#' [statmod()]'s `linpar_control`.
+#'
+#' The one case it exists for is a formula naming a factor of many levels,
+#' where `sparse = TRUE` turns a design that would be gigabytes into one that
+#' is megabytes.
 #'
 #' @details
-#' It governs the IMPLICIT [modelterms7::linpar()] term -- the one
-#' the bare covariates of a formula collapse into, which a caller never
-#' writes -- so this is the only place its arguments can be given. A
-#' `linpar()` written out takes them directly.
+#' # Which term it reaches
 #'
-#' **Sparse storage.** `sparse = TRUE` builds the block through
-#' [Matrix::sparse.model.matrix()], which BUILDS it sparse rather
-#' than building a dense matrix and compressing it -- the second would cost
-#' the memory the choice exists to avoid. Measured at 20000 rows and a factor
-#' of 1000 levels, 0.002 s and 1.8 MB against `stats::model.matrix`'s
+#' The **implicit** [modelterms7::linpar()] term: the one the bare covariates
+#' of a formula collapse into, which a caller never writes and so has no
+#' other way to configure. A `linpar()` written out in the formula takes
+#' these arguments directly and ignores this.
+#'
+#' # Sparse storage
+#'
+#' `sparse = TRUE` builds the block through
+#' [Matrix::sparse.model.matrix()], which **builds** it sparse instead of
+#' building a dense matrix and compressing it. The second would cost the
+#' memory the choice exists to avoid.
+#'
+#' Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
+#' against `stats::model.matrix`'s
 #' 0.100 s and 161.5 MB, the numbers identical; and a design that would be
 #' 32 GB dense builds in 0.02 s and 19 MB, which is what says there is no
 #' dense intermediate. It pays where the formula carries a factor of many
@@ -469,23 +494,45 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 #' answer: the final verdict is already arbitrated on a dimensionless scale.
 #'
-#' @param sparse Whether the block is a `dgCMatrix`. `NULL`, the
-#'   default, leaves it to [modelterms7::linpar()], which settles it
-#'   at build from the size of the design.
-#' @param contrasts The contrasts for the block's factors, as a named list of
-#'   the kind [stats::model.matrix()]'s `contrasts.arg` takes,
-#'   or `NULL` for the session's `options("contrasts")`.
+#' @param sparse A single logical, or `NULL`. `TRUE` makes the block a
+#'   `dgCMatrix`, `FALSE` a base matrix. `NULL`, the default, leaves it to
+#'   [modelterms7::linpar()], which settles it at build time from the size of
+#'   the design.
+#' @param contrasts The contrasts for the block's factors, a named list of
+#'   the kind [stats::model.matrix()]'s `contrasts.arg` takes, or `NULL` for
+#'   the session's `options("contrasts")`. Carried on the specification, so a
+#'   fold of [cv()] reproduces them instead of re-reading the option.
 #'
-#' @return A named list, for [statmod()]'s `linpar_control`.
-#'   The argument and this function are named differently on purpose: with
+#' @return A named list with elements `sparse` and `contrasts`, to be passed
+#'   as [statmod()]'s `linpar_control`.
+#'
+#'   The argument and this function are named differently on purpose. With
 #'   one name for both, the argument's default would resolve to its own
-#'   promise. [stats::glm()] and [stats::glm.control()]
-#'   keep them apart for the same reason.
+#'   promise and R would report *promise already under evaluation*.
+#'   [stats::glm()] and [stats::glm.control()] are kept apart for the same
+#'   reason.
 #'
-#' @seealso [statmod()], [modelterms7::linpar()]
+#' @seealso [statmod()] for where it is passed,
+#'   [modelterms7::linpar()] for the term it configures.
 #'
 #' @examples
 #' linpar_options(sparse = TRUE)
+#'
+#' # The whole point: a factor of many levels.
+#' set.seed(1)
+#' n <- 2000
+#' dd <- data.frame(y = rnorm(n), g = factor(sample(200, n, replace = TRUE)))
+#' dense  <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
+#'                        linpar = linpar_options(sparse = FALSE))
+#' sparse <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
+#'                        linpar = linpar_options(sparse = TRUE))
+#' Xd <- statmod_design(dense)$mu$X
+#' Xs <- statmod_design(sparse)$mu$X
+#'
+#' # Same numbers, one two orders of magnitude smaller.
+#' c(dense = class(Xd)[1], sparse = class(Xs)[1])
+#' all.equal(as.matrix(Xs), Xd, check.attributes = FALSE)
+#' c(dense = object.size(Xd), sparse = object.size(Xs))
 #'
 #' @export
 linpar_options <- function(sparse = NULL, contrasts = NULL) {
@@ -507,43 +554,66 @@ linpar_options <- function(sparse = NULL, contrasts = NULL) {
 #' Build a Model Specification
 #'
 #' @description
-#' Splits the formula into one equation per distribution parameter, interprets
-#' each with \pkg{modelterms7} and builds its terms against the data.
+#' Builds everything [statmod()] fits from: splits the formula into one
+#' equation per distribution parameter, interprets each with
+#' \pkg{modelterms7}, and builds the terms it names against the data.
+#' [statmod()] calls this first; calling it directly is how a model is
+#' inspected without being fitted.
 #'
 #' @details
-#' The equations are interpreted in an environment where \pkg{modelterms7}'s
-#' term constructors shadow whatever the user has attached, so that `s()`
-#' means ours even with \pkg{mgcv} on the search path. See
-#' [statmod_equations()] for the split itself, which is not the
-#' obvious one.
+#' # The formula
 #'
-#' Prior weights enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are
-#' taken as given. They are deliberately NOT normalized: dividing by their sum
-#' would turn the log-likelihood into a mean, shrinking every standard error
-#' by \eqn{\sqrt{n}} and making the information criteria incomparable with an
-#' unweighted fit of the same model.
+#' The equations are separated by `|`, the first carrying the response, and a
+#' parameter with no equation gets an intercept. [statmod_equations()] does
+#' the split, which is not the obvious one: R's precedence makes the whole
+#' right-hand side of a three-equation formula the last term alone.
 #'
-#' @param formula The model formula.
-#' @param distrib A \pkg{distributions7} distribution object.
-#' @param data A data frame.
-#' @param weights Optional prior weights, one per observation.
-#' @param offsets Optional named list of offsets, one per parameter.
-#' @param need_response Whether the left-hand side must evaluate. A likelihood
-#'   needs it; a prediction does not, and new data routinely has no response
-#'   column.
-#' @param linpar How the IMPLICIT parametric block is built, as
-#'   [linpar_options()] returns it. It is kept on the
-#'   specification, so a rebuild -- a fold of [cv()] -- reproduces
-#'   the storage rather than quietly densifying.
+#' Each equation is interpreted in an environment where \pkg{modelterms7}'s
+#' term constructors sit in front of the search path, so `s()` means this
+#' toolkit's even with \pkg{mgcv} attached.
 #'
-#' @return An object of class [StatmodSpec()].
+#' # Prior weights are not normalized
 #'
-#' @seealso [statmod_equations()], [statmod()]
+#' They enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are taken as
+#' given. Dividing by their sum would turn the log-likelihood into a mean,
+#' shrinking every standard error by \eqn{\sqrt{n}} and making the
+#' information criteria incomparable with an unweighted fit of the same
+#' model.
+#'
+#' @param formula The model formula, with the parameters' equations separated
+#'   by `|`.
+#' @param distrib A \pkg{distributions7} distribution object, which decides
+#'   how many equations there are and what they are called.
+#' @param data A data frame holding the response, the covariates and any
+#'   matrix columns the terms name.
+#' @param weights Optional prior weights, a numeric vector of length
+#'   `nrow(data)`, or `NULL` for all ones.
+#' @param offsets Optional named list of offsets, one entry per parameter,
+#'   summed with any the formula names.
+#' @param need_response `TRUE`, the default, requires the left-hand side to
+#'   evaluate. `FALSE` is what prediction uses: new data routinely has no
+#'   response column.
+#' @param linpar How the implicit parametric block is built, as
+#'   [linpar_options()] returns it. Kept on the specification, so a rebuild
+#'   such as a fold of [cv()] reproduces the storage instead of quietly
+#'   densifying.
+#'
+#' @return A [StatmodSpec()] object.
+#'
+#' @seealso [statmod_equations()] for the split,
+#'   [statmod_design()] for the assembly, [statmod()] to fit it.
 #'
 #' @examples
 #' dd <- data.frame(y = rnorm(20), x = runif(20), z = runif(20))
-#' spec <- statmod_spec(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd)
+#' spec <- statmod_spec(y ~ x | sigma ~ z,
+#'                      distributions7::gaussian1_distrib(), dd)
+#'
+#' # One entry per parameter of the family, in the family's order.
 #' names(spec@terms)
+#' spec@equations
+#'
+#' # Unweighted, so the weights are ones.
+#' c(n = spec@n_obs, total_weight = sum(spec@weights))
 #'
 #' @export
 statmod_spec <- function(formula, distrib, data, weights = NULL,
@@ -624,23 +694,31 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' every block is reapplied to those rows rather than rebuilt from them.
 #'
 #' @details
-#' A term records how its block was made -- a factor's levels and contrasts, a
-#' spline's knots, a basis reparametrization -- and
-#' [modelterms7::term_predict()] reapplies that record. Rebuilding
-#' instead gives a block of the same shape, multiplying the same coefficients,
-#' that means something else: measured on `y ~ s(x, k = 10)` at 200
-#' observations, predicting on 40 of the rows the model was fitted to differed
-#' from the fitted values there by 0.237, and on the 51 rows with
-#' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. The whole
-#' data handed back agrees exactly, which is why nothing noticed.
+#' A term records how its block was made: a factor's levels and contrasts, a
+#' spline's knots, a basis reparametrization. [modelterms7::term_predict()]
+#' reapplies that record to new rows.
+#'
+#' Rebuilding instead gives a block of the same shape, multiplying the same
+#' coefficients, that means something else. Measured on `y ~ s(x, k = 10)` at
+#' 200 observations: predicting on 40 of the rows the model was fitted to
+#' differed from the fitted values there by 0.237, and on the 51 rows with
+#' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. Handing
+#' back the whole data agrees exactly, which is why nothing noticed.
+#'
+#' The offsets are re-evaluated against `data` rather than carried across,
+#' since a vector of the fitting data's length says nothing about other rows.
 #'
 #' @param spec The fitted [StatmodSpec()].
-#' @param data The rows to read it on.
-#' @param need_response Whether the response has to be there.
+#' @param data The rows to read the model on.
+#' @param need_response `TRUE` where the response must be present, as for a
+#'   log-likelihood; `FALSE` for a prediction.
 #'
-#' @return A [StatmodSpec()] whose `newdata` is set.
+#' @return A [StatmodSpec()] carrying the fitted terms, with `newdata` set to
+#'   `data`, `n_obs` its row count, and the offsets and response evaluated
+#'   there. Every other property is `spec`'s.
 #'
-#' @seealso [statmod_design()]
+#' @seealso [statmod_design()], which reapplies the terms,
+#'   [predict.StatmodFit()], the caller.
 #'
 #' @keywords internal
 statmod_respec <- function(spec, data, need_response = TRUE) {
@@ -694,23 +772,36 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
 #' it names against the data.
 #'
 #' @details
-#' The equations are interpreted with \pkg{modelterms7}'s constructors in front
-#' of the search path, so that `s()` means ours whatever the user has
-#' attached. A factor covariate needs no special handling: the interpreter
-#' collects bare covariates into one `linpar()`, whose block comes from
-#' `model.matrix` and therefore carries the contrasts.
+#' The equations are interpreted with \pkg{modelterms7}'s constructors in
+#' front of the search path, so `s()` means this toolkit's whatever the
+#' caller has attached. See [terms_first()] for the shim and the collision it
+#' removes.
+#'
+#' A factor covariate needs no handling of its own: the interpreter collects
+#' the bare covariates of an equation into one [modelterms7::linpar()], whose
+#' block comes from `model.matrix` and so carries the contrasts.
 #'
 #' A break-point term whose starting positions the caller did not name has
-#' them chosen on a grid rather than left at the interior quantiles of the
-#' covariate; see [seg_grid_start()].
+#' them chosen on a grid, through [seg_grid_start()], in place of the
+#' interior quantiles of the covariate the term would otherwise default to.
 #'
-#' @param equations A named list of one-sided formulas.
-#' @param data A data frame.
-#' @param env The environment the original formula carried.
-#' @param response The evaluated left-hand side, or `NULL`.
+#' @param equations A named list of one-sided formulas, one per distribution
+#'   parameter.
+#' @param data A data frame to build the terms against.
+#' @param env The environment the original formula carried, which becomes the
+#'   parent of the interpreting environment.
+#' @param response The evaluated left-hand side, or `NULL` where there is
+#'   none. Read by [seg_grid_start()] and by nothing else.
 #'
-#' @return A list with `terms` (a named list per parameter) and
-#'   `intercepts` (a named logical).
+#' @return A list of two:
+#'   \describe{
+#'     \item{`terms`}{a named list with one entry per parameter, each a named
+#'       list of built terms keyed by the term's call as written.}
+#'     \item{`intercepts`}{a named logical, one per parameter: whether that
+#'       equation's parametric block carried an intercept.}
+#'   }
+#'
+#' @seealso [statmod_spec()], the caller, [terms_first()] for the shim.
 #'
 #' @keywords internal
 statmod_terms <- function(equations, data, env, response = NULL,
@@ -751,22 +842,24 @@ statmod_terms <- function(equations, data, env, response = NULL,
 #' start: the interior quantiles of the covariate, which look at the
 #' covariate and not at the response.
 #'
-#' The rule costs `k` linear fits and is exact for a gaussian
-#' response, so it places a starting value and does not fit. Two things
-#' are therefore not asked of it. It is applied whatever equation the term
-#' sits in, the response being what there is to score against even where
-#' the term develops a scale; and it is skipped where the response is not
-#' plain numbers -- a censored one, or a matrix -- rather than being given
-#' a reading of its own.
+#' The rule costs `k` linear fits and is exact for a gaussian response, so it
+#' places a starting value and does not fit. Two consequences follow, and
+#' both are deliberate. It is applied whatever equation the term sits in,
+#' the response being what there is to score against even where the term
+#' develops a scale. And it is skipped where the response is not plain
+#' numbers, a censored one or a matrix, instead of being given a reading of
+#' its own.
 #'
-#' A caller who names `psi` has said where to begin and is left
-#' alone, which is also how the grid is turned off.
+#' A caller who names `psi` has said where to begin and is left alone, which
+#' is also how the grid is turned off.
 #'
-#' @param tm One term specification.
+#' @param tm One term specification, as the formula interpreter produced it.
 #' @param data The data frame the term is built against.
 #' @param response The evaluated left-hand side, or `NULL`.
 #'
-#' @return The specification, with `psi` set where the rule applies.
+#' @return `tm`, with `psi` set to the grid's choice where the rule applies,
+#'   and unchanged where it does not: a term of another kind, a term whose
+#'   `psi` the caller named, or a response the rule cannot score against.
 #'
 #' @seealso [modelterms7::seg_start()],
 #'   [statmod_terms()]
