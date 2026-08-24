@@ -23,47 +23,73 @@ StatmodFit(
 )
 }
 \arguments{
-\item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} that was fitted.}
+\item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} that was fitted, with every refreshable
+term as the fit left it.}
 
-\item{coefficients}{A named list, one vector per distribution parameter.}
+\item{coefficients}{A named list, one numeric vector per distribution
+parameter.}
 
-\item{hyper}{The hyperparameters, per penalized term.}
+\item{structural}{A named list, one entry per structural term, holding
+that term's own parameters on the unconstrained scale.}
 
-\item{loglik}{The maximized weighted log-likelihood.}
+\item{hyper}{The hyperparameters, keyed by distribution parameter and then
+by term.}
 
-\item{objective}{The value of the penalized objective.}
+\item{loglik}{The maximized weighted log-likelihood, a single number. The
+\strong{conditional} one, read at the fitted coefficients.}
 
-\item{edf}{Effective degrees of freedom, per term and total.}
+\item{objective}{The penalized objective there, unaveraged.}
 
-\item{fitted}{The fitted parameters, per distribution parameter.}
+\item{edf}{A data frame of effective degrees of freedom, one row per term.}
 
-\item{converged}{Whether every loop stopped on its own rule.}
+\item{fitted}{A named list of the fitted parameters, one vector per
+distribution parameter.}
 
-\item{elapsed}{The elapsed time, in seconds.}
+\item{converged}{A single logical: whether every loop stopped on its own
+rule.}
+
+\item{elapsed}{The elapsed time in seconds.}
 
 \item{criterion}{The marginal criterion at the estimated hyperparameters,
-\code{NA} when none was used.}
+\code{NA} when no criterion ran.}
 
-\item{history}{A list of data frames: \code{outer}, \code{blocks},
-\code{inner}.}
+\item{history}{A list of data frames recording the run: \code{outer}, \code{blocks}
+and \code{inner}.}
 
-\item{methods}{What fitted each block.}
+\item{methods}{A list naming what fitted each block, and the optimizer the
+outer search used.}
+
+\item{call}{The matched call.}
 }
 \value{
-An object of class \code{StatmodFit}.
+An object of class \code{StatmodFit} with one property per argument
+above.
 }
 \description{
-What \code{\link[=statmod]{statmod()}} returns: the specification kept whole, the
-coefficients and hyperparameters it reached, and the record of how it got
-there.
+What \code{\link[=statmod]{statmod()}} returns. It holds three things: the specification kept
+whole, so the model can be read back and reapplied to new data; the
+coefficients, hyperparameters and structural parameters the fit reached;
+and the record of how it got there.
+
+Reach the contents through the accessors rather than the properties where
+one exists: \code{\link[=coef.StatmodFit]{coef.StatmodFit()}}, \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}},
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}}.
 }
 \examples{
-dd <- data.frame(y = rnorm(30), x = runif(30))
-S7::S7_inherits(statmod(y ~ x, distributions7::gaussian1_distrib(), dd),
-                StatmodFit)
+set.seed(1)
+dd <- data.frame(x = runif(30))
+dd$y <- 1 + 2 * dd$x + rnorm(30, sd = 0.3)
+fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+
+S7::S7_inherits(fit, StatmodFit)
+
+# One coefficient vector per parameter of the family.
+fit@coefficients
+fit@converged
 
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}
+\code{\link[=statmod]{statmod()}}, which builds one, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} for the
+printed report, \code{\link[=statmod_certificate]{statmod_certificate()}} for the verdict on convergence.
 }
 \keyword{internal}

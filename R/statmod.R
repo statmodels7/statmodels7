@@ -4,33 +4,57 @@ NULL
 #' A Fitted Model
 #'
 #' @description
-#' What [statmod()] returns: the specification kept whole, the
-#' coefficients and hyperparameters it reached, and the record of how it got
-#' there.
+#' What [statmod()] returns. It holds three things: the specification kept
+#' whole, so the model can be read back and reapplied to new data; the
+#' coefficients, hyperparameters and structural parameters the fit reached;
+#' and the record of how it got there.
 #'
-#' @param spec The [StatmodSpec()] that was fitted.
-#' @param coefficients A named list, one vector per distribution parameter.
-#' @param hyper The hyperparameters, per penalized term.
-#' @param loglik The maximized weighted log-likelihood.
-#' @param objective The value of the penalized objective.
-#' @param edf Effective degrees of freedom, per term and total.
-#' @param fitted The fitted parameters, per distribution parameter.
-#' @param converged Whether every loop stopped on its own rule.
-#' @param elapsed The elapsed time, in seconds.
+#' Reach the contents through the accessors rather than the properties where
+#' one exists: [coef.StatmodFit()], [vcov.StatmodFit()],
+#' [predict.StatmodFit()], [summary.StatmodFit()], [logLik.StatmodFit()].
+#'
+#' @param spec The [StatmodSpec()] that was fitted, with every refreshable
+#'   term as the fit left it.
+#' @param coefficients A named list, one numeric vector per distribution
+#'   parameter.
+#' @param structural A named list, one entry per structural term, holding
+#'   that term's own parameters on the unconstrained scale.
+#' @param hyper The hyperparameters, keyed by distribution parameter and then
+#'   by term.
+#' @param loglik The maximized weighted log-likelihood, a single number. The
+#'   **conditional** one, read at the fitted coefficients.
+#' @param objective The penalized objective there, unaveraged.
+#' @param edf A data frame of effective degrees of freedom, one row per term.
+#' @param fitted A named list of the fitted parameters, one vector per
+#'   distribution parameter.
+#' @param converged A single logical: whether every loop stopped on its own
+#'   rule.
+#' @param elapsed The elapsed time in seconds.
 #' @param criterion The marginal criterion at the estimated hyperparameters,
-#'   `NA` when none was used.
-#' @param history A list of data frames: `outer`, `blocks`,
-#'   `inner`.
-#' @param methods What fitted each block.
+#'   `NA` when no criterion ran.
+#' @param history A list of data frames recording the run: `outer`, `blocks`
+#'   and `inner`.
+#' @param methods A list naming what fitted each block, and the optimizer the
+#'   outer search used.
+#' @param call The matched call.
 #'
-#' @return An object of class `StatmodFit`.
+#' @return An object of class `StatmodFit` with one property per argument
+#'   above.
 #'
-#' @seealso [statmod()]
+#' @seealso [statmod()], which builds one, [summary.StatmodFit()] for the
+#'   printed report, [statmod_certificate()] for the verdict on convergence.
 #'
 #' @examples
-#' dd <- data.frame(y = rnorm(30), x = runif(30))
-#' S7::S7_inherits(statmod(y ~ x, distributions7::gaussian1_distrib(), dd),
-#'                 StatmodFit)
+#' set.seed(1)
+#' dd <- data.frame(x = runif(30))
+#' dd$y <- 1 + 2 * dd$x + rnorm(30, sd = 0.3)
+#' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+#'
+#' S7::S7_inherits(fit, StatmodFit)
+#'
+#' # One coefficient vector per parameter of the family.
+#' fit@coefficients
+#' fit@converged
 #'
 #' @name StatmodFit-class
 #' @aliases StatmodFit
@@ -59,77 +83,109 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' Fit a Model
 #'
 #' @description
-#' Reads one formula carrying every parameter of a distribution, assembles the
-#' terms it names into a penalized likelihood, and fits it.
+#' Fits a distributional regression. One formula carries an equation per
+#' parameter of the response distribution, so a scale or a shape is modeled
+#' as readily as a mean; the terms those equations name are assembled into a
+#' penalized likelihood and fitted, and any smoothing parameters or prior
+#' scales are estimated from the data.
+#'
+#' Returns a [StatmodFit()], which [summary.StatmodFit()],
+#' [predict.StatmodFit()], [coef.StatmodFit()] and the other accessors read.
 #'
 #' @details
-#' **The formula.** The equations of the distribution's parameters are
-#' separated by `|`, the first carrying the response:
+#' # The formula
+#'
+#' The equations are separated by `|`, and the first carries the response:
+#'
 #' \preformatted{    y ~ x1 + ridge(R) + lasso(L)  |  sigma ~ z  |  nu ~ 1}
-#' A parameter with no equation gets an intercept. See
-#' [statmod_equations()], whose recovery is not the obvious one.
 #'
-#' **The fitting scheme.** The terms split in two by a property each one
-#' already reports. Every term whose penalty is twice differentiable in its
-#' coefficients -- an unpenalized block, a ridge, a spline, a random effect --
-#' is estimated in ONE system by `inner_optimizer`, because their joint
-#' curvature exists and using it is what makes a fit converge in a handful of
-#' iterations. A term whose penalty has a kink -- lasso, scad, mcp -- is
-#' estimated by a method of its own with everything else held fixed. The fit
-#' alternates between the two until the objective and every block stop moving.
+#' A parameter with no equation of its own gets an intercept, so
+#' `y ~ x` on a two-parameter family fits a constant scale.
+#' [statmod_equations()] does the split; the recovery is not the obvious one,
+#' since R's precedence makes the whole right-hand side of a three-equation
+#' formula the last term alone.
 #'
-#' **The objective is unaveraged**: minus the weighted log-likelihood
-#' plus the penalties at full size, since a penalty is a negative log-prior
-#' and a posterior adds the two at full size. What is scaled instead is the
-#' stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
-#' at \eqn{n = 10^7}.
+#' The terms available are \pkg{modelterms7}'s: [modelterms7::s()],
+#' [modelterms7::te()], [modelterms7::random()], [modelterms7::ridge()],
+#' [modelterms7::lasso()], [modelterms7::seg()], [modelterms7::nl()],
+#' [modelterms7::gas()] and the rest. Bare covariates collapse into one
+#' parametric block.
 #'
-#' **The budget and the stopping rule belong to the method.** There is no
-#' `maxit` and no `tol` here: they are set on `inner_optimizer`,
-#' which is [`iwls(maxit =, tol =)`][iwls] or an optimizer with its own
-#' `maxit` and `criterion`, and the alternation reads them from there
-#' (see [method_budget()]). Carrying a second copy would let a caller
-#' set both and be obeyed by neither.
+#' # The fitting scheme
 #'
-#' **Every hyperparameter is ESTIMATED unless its own term holds it.**
-#' Which ones are held is said by the TERM that carries the penalty --
-#' `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`,
-#' `s(x, lambda = 2)`, `enet(x, alpha = 0.5)` -- and everything
-#' left `NULL`, which is the default, is chosen from the data. The term
-#' is where the penalty is named and so where that belongs; an argument here
-#' saying the same thing would be read by nobody whenever the two disagreed.
-#' [reml()] estimates the smooth ones, with
-#' `outer_optimizer` searching over them and the coefficients refitted
-#' at each.
+#' The terms split in two by a property each one already reports.
 #'
-#' A KINKED penalty is a different instrument and has its own
-#' argument. `sparse_criterion`, [bic()] by default, sweeps
-#' it along a PATH of its own values -- from the kink that empties the block
-#' down to `min_ratio` of it -- because the penalized mode is only
-#' piecewise smooth in that hyperparameter, turning a corner whenever a
-#' coefficient joins the active set or leaves it, so a criterion read there
-#' inherits the corners and a gradient search reads a slope about to change.
+#' A term whose penalty is **twice differentiable** in its coefficients, an
+#' unpenalized block, a ridge, a spline or a random effect, is estimated in
+#' one system by `inner_optimizer`. Their joint curvature exists, and using
+#' it is what closes a fit in a handful of iterations.
+#'
+#' A term whose penalty has a **kink**, a lasso, a SCAD or an MCP, is
+#' estimated by a coordinate descent of its own with everything else held
+#' fixed.
+#'
+#' The fit alternates between the two until the objective and every block
+#' stop moving.
+#'
+#' # The objective is unaveraged
+#'
+#' Minus the weighted log-likelihood, plus the penalties at full size. A
+#' penalty is a negative log-prior, and a posterior adds a log-likelihood and
+#' a log-prior at full size; averaging one of them would make a
+#' hyperparameter mean something that depends on \eqn{n}. What is scaled
+#' instead is the stopping rule, so a threshold means the same at
+#' \eqn{n = 10} and at \eqn{n = 10^7}.
+#'
+#' # The budget and the stopping rule belong to the method
+#'
+#' There is no `maxit` and no `tol` here. Both are set on `inner_optimizer`,
+#' which is [`iwls(maxit =, tol =)`][iwls] or an \pkg{optimizers7} optimizer
+#' with its own `maxit` and `criterion`, and the alternation reads them from
+#' there. A second copy here would let a caller set both and be obeyed by
+#' neither.
+#'
+#' # Every hyperparameter is estimated unless its term holds it
+#'
+#' Which ones are held is said by the **term** that carries the penalty:
+#' `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, lambda = 2)`,
+#' `enet(x, alpha = 0.5)`. Everything left `NULL`, which is each term's
+#' default, is chosen from the data. The term is where the penalty is named
+#' and so is where that belongs; an argument here saying the same thing would
+#' be read by nobody whenever the two disagreed.
+#'
+#' The **smooth** hyperparameters go to `outer_criterion`, [reml()] by
+#' default, with `outer_optimizer` searching over them and the coefficients
+#' refitted at each point.
+#'
+#' A **kinked** penalty is a different instrument with its own argument.
+#' `sparse_criterion`, [bic()] by default, sweeps it along a path of its own
+#' values, from the kink that empties the block down to a fraction of it. The
+#' penalized mode is only piecewise smooth in such a hyperparameter, turning
+#' a corner whenever a coefficient joins the active set or leaves it, so a
+#' criterion read there inherits the corners and a gradient search would read
+#' a slope about to change.
+#'
+#' The top of that path depends on the data **and on the rest of the model**:
+#' it is the kink that empties the block, found at the coefficients in hand
+#' and not at a refitted null, so the other terms' fits enter it.
+#'
 #' Where a model carries both kinds the path is outside and the marginal
 #' criterion is estimated inside each of its points, so a smoothing parameter
-#' can come from REML and a lasso's \eqn{\lambda} from BIC in the same fit.
+#' can come from REML and a lasso's \eqn{\lambda} from BIC in one fit.
 #'
-#' The top of that path is DATA-DEPENDENT and depends on the rest of the
-#' model: it is the kink that empties the block, found at the coefficients in
-#' hand rather than at a refitted null, so the other terms' fits enter it.
-#'
-#' It comes into play IF AND ONLY IF the model carries a smooth penalty.
-#' Where nothing is estimable -- an ordinary `y ~ x`, or a model whose
-#' only penalty is kinked -- it is simply not run, and that is a property of
-#' the model rather than of how the argument was written, so typing the
-#' default changes nothing. `outer_criterion = NULL` holds every smooth
+#' `outer_criterion` runs if and only if the model carries a smooth penalty.
+#' On an ordinary `y ~ x`, or on a model whose only penalty is kinked, there
+#' is nothing for it to estimate and it is not run, so typing the default
+#' changes nothing. `outer_criterion = NULL` holds every smooth
 #' hyperparameter where its term left it.
 #'
-#' **Verbosity** has three levels, naming the loops rather than counting
-#' them: `1` the outer search and the alternation, `2` the inner
-#' method's own iterations, `3` the optimizers' traces as well. A named
-#' form is accepted too, as `verbose = c(outer = TRUE, blocks = FALSE)`,
-#' since watching the hyperparameters move while silencing a chatty inner
-#' optimizer is the common case.
+#' # Verbosity
+#'
+#' Three levels, naming the loops: `1` the outer search and the alternation,
+#' `2` the inner method's own iterations, `3` the optimizers' traces as well.
+#' A named form is accepted too, `verbose = c(outer = TRUE, blocks = FALSE)`,
+#' for watching the hyperparameters move while silencing a chatty inner
+#' optimizer.
 #'
 #' @param formula The model formula.
 #' @param distrib A \pkg{distributions7} distribution object.
@@ -190,20 +246,30 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   second place to say so would be read by nobody whenever the two
 #'   disagreed.
 #'
-#' @return An object of class [StatmodFit()].
+#' @return A [StatmodFit()] object.
 #'
-#' @seealso [statmod_spec()], [iwls()],
-#'   [loglik()]
+#' @seealso [summary.StatmodFit()] and [predict.StatmodFit()] for what to do
+#'   with the result, [statmod_spec()] to build the model without fitting it,
+#'   [iwls()] for the inner method, [reml()] and [bic()] for the criteria,
+#'   [rstatmod()] to simulate from a model.
 #'
 #' @examples
 #' set.seed(1)
-#' dd <- data.frame(x = runif(60))
-#' dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.5)
-#' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-#' fit
+#' dd <- data.frame(x = runif(200, -2, 2))
+#' dd$y <- 1 + 2 * dd$x + rnorm(200, sd = exp(0.3 * dd$x))
 #'
-#' # every parameter can be modelled
-#' statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+#' # An ordinary regression: the scale gets an intercept it was not given.
+#' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+#' coef(fit)
+#'
+#' # The scale modelled too, which is what the framework is for. The data
+#' # were drawn with log sigma = 0.3 x, and the interval covers it.
+#' both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+#' coef(both)$sigma
+#' confint(both)["sigma:x", c("estimate", "lower", "upper")]
+#'
+#' # It is the better model on this data.
+#' c(one = AIC(fit), both = AIC(both))
 #'
 #' @export
 statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,

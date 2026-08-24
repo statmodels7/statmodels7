@@ -95,93 +95,134 @@ second place to say so would be read by nobody whenever the two
 disagreed.}
 }
 \value{
-An object of class \code{\link[=StatmodFit]{StatmodFit()}}.
+A \code{\link[=StatmodFit]{StatmodFit()}} object.
 }
 \description{
-Reads one formula carrying every parameter of a distribution, assembles the
-terms it names into a penalized likelihood, and fits it.
+Fits a distributional regression. One formula carries an equation per
+parameter of the response distribution, so a scale or a shape is modeled
+as readily as a mean; the terms those equations name are assembled into a
+penalized likelihood and fitted, and any smoothing parameters or prior
+scales are estimated from the data.
+
+Returns a \code{\link[=StatmodFit]{StatmodFit()}}, which \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, \code{\link[=coef.StatmodFit]{coef.StatmodFit()}} and the other accessors read.
 }
-\details{
-\strong{The formula.} The equations of the distribution's parameters are
-separated by \code{|}, the first carrying the response:
+\section{The formula}{
+The equations are separated by \code{|}, and the first carries the response:
+
 \preformatted{    y ~ x1 + ridge(R) + lasso(L)  |  sigma ~ z  |  nu ~ 1}
-A parameter with no equation gets an intercept. See
-\code{\link[=statmod_equations]{statmod_equations()}}, whose recovery is not the obvious one.
 
-\strong{The fitting scheme.} The terms split in two by a property each one
-already reports. Every term whose penalty is twice differentiable in its
-coefficients -- an unpenalized block, a ridge, a spline, a random effect --
-is estimated in ONE system by \code{inner_optimizer}, because their joint
-curvature exists and using it is what makes a fit converge in a handful of
-iterations. A term whose penalty has a kink -- lasso, scad, mcp -- is
-estimated by a method of its own with everything else held fixed. The fit
-alternates between the two until the objective and every block stop moving.
+A parameter with no equation of its own gets an intercept, so
+\code{y ~ x} on a two-parameter family fits a constant scale.
+\code{\link[=statmod_equations]{statmod_equations()}} does the split; the recovery is not the obvious one,
+since R's precedence makes the whole right-hand side of a three-equation
+formula the last term alone.
 
-\strong{The objective is unaveraged}: minus the weighted log-likelihood
-plus the penalties at full size, since a penalty is a negative log-prior
-and a posterior adds the two at full size. What is scaled instead is the
-stopping rule, so that a threshold means the same thing at \eqn{n = 10} and
-at \eqn{n = 10^7}.
+The terms available are \pkg{modelterms7}'s: \code{\link[modelterms7:s]{modelterms7::s()}},
+\code{\link[modelterms7:te]{modelterms7::te()}}, \code{\link[modelterms7:random]{modelterms7::random()}}, \code{\link[modelterms7:ridge]{modelterms7::ridge()}},
+\code{\link[modelterms7:lasso]{modelterms7::lasso()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}},
+\code{\link[modelterms7:gas]{modelterms7::gas()}} and the rest. Bare covariates collapse into one
+parametric block.
+}
 
-\strong{The budget and the stopping rule belong to the method.} There is no
-\code{maxit} and no \code{tol} here: they are set on \code{inner_optimizer},
-which is \code{\link[=iwls]{iwls(maxit =, tol =)}} or an optimizer with its own
-\code{maxit} and \code{criterion}, and the alternation reads them from there
-(see \code{\link[=method_budget]{method_budget()}}). Carrying a second copy would let a caller
-set both and be obeyed by neither.
+\section{The fitting scheme}{
+The terms split in two by a property each one already reports.
 
-\strong{Every hyperparameter is ESTIMATED unless its own term holds it.}
-Which ones are held is said by the TERM that carries the penalty --
-\code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)},
-\code{s(x, lambda = 2)}, \code{enet(x, alpha = 0.5)} -- and everything
-left \code{NULL}, which is the default, is chosen from the data. The term
-is where the penalty is named and so where that belongs; an argument here
-saying the same thing would be read by nobody whenever the two disagreed.
-\code{\link[=reml]{reml()}} estimates the smooth ones, with
-\code{outer_optimizer} searching over them and the coefficients refitted
-at each.
+A term whose penalty is \strong{twice differentiable} in its coefficients, an
+unpenalized block, a ridge, a spline or a random effect, is estimated in
+one system by \code{inner_optimizer}. Their joint curvature exists, and using
+it is what closes a fit in a handful of iterations.
 
-A KINKED penalty is a different instrument and has its own
-argument. \code{sparse_criterion}, \code{\link[=bic]{bic()}} by default, sweeps
-it along a PATH of its own values -- from the kink that empties the block
-down to \code{min_ratio} of it -- because the penalized mode is only
-piecewise smooth in that hyperparameter, turning a corner whenever a
-coefficient joins the active set or leaves it, so a criterion read there
-inherits the corners and a gradient search reads a slope about to change.
+A term whose penalty has a \strong{kink}, a lasso, a SCAD or an MCP, is
+estimated by a coordinate descent of its own with everything else held
+fixed.
+
+The fit alternates between the two until the objective and every block
+stop moving.
+}
+
+\section{The objective is unaveraged}{
+Minus the weighted log-likelihood, plus the penalties at full size. A
+penalty is a negative log-prior, and a posterior adds a log-likelihood and
+a log-prior at full size; averaging one of them would make a
+hyperparameter mean something that depends on \eqn{n}. What is scaled
+instead is the stopping rule, so a threshold means the same at
+\eqn{n = 10} and at \eqn{n = 10^7}.
+}
+
+\section{The budget and the stopping rule belong to the method}{
+There is no \code{maxit} and no \code{tol} here. Both are set on \code{inner_optimizer},
+which is \code{\link[=iwls]{iwls(maxit =, tol =)}} or an \pkg{optimizers7} optimizer
+with its own \code{maxit} and \code{criterion}, and the alternation reads them from
+there. A second copy here would let a caller set both and be obeyed by
+neither.
+}
+
+\section{Every hyperparameter is estimated unless its term holds it}{
+Which ones are held is said by the \strong{term} that carries the penalty:
+\code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)}, \code{s(x, lambda = 2)},
+\code{enet(x, alpha = 0.5)}. Everything left \code{NULL}, which is each term's
+default, is chosen from the data. The term is where the penalty is named
+and so is where that belongs; an argument here saying the same thing would
+be read by nobody whenever the two disagreed.
+
+The \strong{smooth} hyperparameters go to \code{outer_criterion}, \code{\link[=reml]{reml()}} by
+default, with \code{outer_optimizer} searching over them and the coefficients
+refitted at each point.
+
+A \strong{kinked} penalty is a different instrument with its own argument.
+\code{sparse_criterion}, \code{\link[=bic]{bic()}} by default, sweeps it along a path of its own
+values, from the kink that empties the block down to a fraction of it. The
+penalized mode is only piecewise smooth in such a hyperparameter, turning
+a corner whenever a coefficient joins the active set or leaves it, so a
+criterion read there inherits the corners and a gradient search would read
+a slope about to change.
+
+The top of that path depends on the data \strong{and on the rest of the model}:
+it is the kink that empties the block, found at the coefficients in hand
+and not at a refitted null, so the other terms' fits enter it.
+
 Where a model carries both kinds the path is outside and the marginal
 criterion is estimated inside each of its points, so a smoothing parameter
-can come from REML and a lasso's \eqn{\lambda} from BIC in the same fit.
+can come from REML and a lasso's \eqn{\lambda} from BIC in one fit.
 
-The top of that path is DATA-DEPENDENT and depends on the rest of the
-model: it is the kink that empties the block, found at the coefficients in
-hand rather than at a refitted null, so the other terms' fits enter it.
-
-It comes into play IF AND ONLY IF the model carries a smooth penalty.
-Where nothing is estimable -- an ordinary \code{y ~ x}, or a model whose
-only penalty is kinked -- it is simply not run, and that is a property of
-the model rather than of how the argument was written, so typing the
-default changes nothing. \code{outer_criterion = NULL} holds every smooth
+\code{outer_criterion} runs if and only if the model carries a smooth penalty.
+On an ordinary \code{y ~ x}, or on a model whose only penalty is kinked, there
+is nothing for it to estimate and it is not run, so typing the default
+changes nothing. \code{outer_criterion = NULL} holds every smooth
 hyperparameter where its term left it.
-
-\strong{Verbosity} has three levels, naming the loops rather than counting
-them: \code{1} the outer search and the alternation, \code{2} the inner
-method's own iterations, \code{3} the optimizers' traces as well. A named
-form is accepted too, as \code{verbose = c(outer = TRUE, blocks = FALSE)},
-since watching the hyperparameters move while silencing a chatty inner
-optimizer is the common case.
 }
+
+\section{Verbosity}{
+Three levels, naming the loops: \code{1} the outer search and the alternation,
+\code{2} the inner method's own iterations, \code{3} the optimizers' traces as well.
+A named form is accepted too, \code{verbose = c(outer = TRUE, blocks = FALSE)},
+for watching the hyperparameters move while silencing a chatty inner
+optimizer.
+}
+
 \examples{
 set.seed(1)
-dd <- data.frame(x = runif(60))
-dd$y <- 1 + 2 * dd$x + rnorm(60, sd = 0.5)
-fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
-fit
+dd <- data.frame(x = runif(200, -2, 2))
+dd$y <- 1 + 2 * dd$x + rnorm(200, sd = exp(0.3 * dd$x))
 
-# every parameter can be modelled
-statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+# An ordinary regression: the scale gets an intercept it was not given.
+fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+coef(fit)
+
+# The scale modelled too, which is what the framework is for. The data
+# were drawn with log sigma = 0.3 x, and the interval covers it.
+both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
+coef(both)$sigma
+confint(both)["sigma:x", c("estimate", "lower", "upper")]
+
+# It is the better model on this data.
+c(one = AIC(fit), both = AIC(both))
 
 }
 \seealso{
-\code{\link[=statmod_spec]{statmod_spec()}}, \code{\link[=iwls]{iwls()}},
-\code{\link[=loglik]{loglik()}}
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} and \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} for what to do
+with the result, \code{\link[=statmod_spec]{statmod_spec()}} to build the model without fitting it,
+\code{\link[=iwls]{iwls()}} for the inner method, \code{\link[=reml]{reml()}} and \code{\link[=bic]{bic()}} for the criteria,
+\code{\link[=rstatmod]{rstatmod()}} to simulate from a model.
 }
