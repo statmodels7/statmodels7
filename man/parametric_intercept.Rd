@@ -22,11 +22,12 @@ The position of the intercept of one equation's PARAMETRIC block, or
 \code{NA} where it has none.
 }
 \details{
-It is a column of the parametric block and not merely a coefficient whose
-name ends in \code{(Intercept)}. \code{\link[modelterms7:nl]{modelterms7::nl()}} names the
-intercept of each of its own parameters the same way, and those live on
-those parameters' charts rather than on the predictor's, so a model
-written \code{y ~ 0 + nl(...)} puts one of them first. Writing the
+What is looked for is a column of the parametric block, which is a
+stricter test than a coefficient whose name ends in \code{(Intercept)}.
+\code{\link[modelterms7:nl]{modelterms7::nl()}} names the intercept of each of its own parameters the
+same way, and those live on those parameters' own charts, not on the
+predictor's, so a model written \code{y ~ 0 + nl(...)} puts one of them
+first. Writing the
 intercept-only fit there sets the parameter to \code{linkinv} of a value
 that was never on its scale: measured on a logistic growth curve whose
 asymptote rides a log link, \code{mean(y) = 23.9} became a starting

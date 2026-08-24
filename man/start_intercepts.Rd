@@ -7,7 +7,7 @@
 start_intercepts()
 }
 \value{
-A \code{\link[=start_strategy]{start_strategy()}}.
+A \code{StartIntercepts} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 The default: each equation's intercept at the maximum likelihood estimate
@@ -15,17 +15,42 @@ of the model with every covariate removed, and every other coefficient at
 zero.
 }
 \details{
-The model with no covariates is the same model with every slope set to
-zero, so it is exactly where the model with them should begin, and it costs
-one small fit. The penalized blocks start at zero, where their penalty is
-smallest. This is what \code{statmod()} does when \code{start} is
-\code{NULL}; the constructor exists so that the default can be named,
-compared against and passed on.
+The model with no covariates is the model with every slope set to zero, so
+its maximum likelihood estimate is exactly where the model with covariates
+should begin. It costs one small fit, on an intercept-only design.
+
+Every other coefficient starts at zero, which is where a penalized block's
+penalty is smallest.
+
+Two adjustments make it usable where a naive intercept would not be:
+\itemize{
+\item An \strong{offset} is subtracted before the value is written. Without that, a
+model with an offset averaging 6.74 begins at
+\eqn{\exp(0.897 + 6.74) = 2080} against a sample mean of 2.45. Measured
+on a negative binomial over person-years: 4.9 s and 9 scoring iterations
+with the correction, more than 25 minutes without.
+\item The value is written to a \strong{parametric intercept} and to nothing else.
+A term such as \code{\link[modelterms7:nl]{modelterms7::nl()}} names the intercept of each of its own
+parameters \code{(Intercept)} too, and those live on that parameter's chart,
+not the predictor's. Writing a predictor-scale value onto a \code{phi} that
+rides a log link gave \eqn{\exp(23.9) = 2.5 \times 10^{10}}.
+}
+
+This is what \code{\link[=statmod]{statmod()}} does when \code{start} is \code{NULL}. The constructor
+exists so the default can be named, compared against and passed on.
 }
 \examples{
 start_intercepts()
 
+set.seed(1)
+dd <- data.frame(x = runif(60, 0, 10))
+dd$y <- 500 + 20 * dd$x + rnorm(60, sd = 5)
+spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+
+# The intercept starts at the response's own scale, and the slope at zero.
+start_at(start_intercepts(), spec, statmod_design(spec), NULL)
+
 }
 \seealso{
-\code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}}
+\code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}}, \code{\link[=start_search]{start_search()}}
 }

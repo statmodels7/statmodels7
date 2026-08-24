@@ -22,16 +22,27 @@ StartRandom(
 StartSearch(label = character(0), optimizer = NULL, over = NULL)
 }
 \arguments{
-\item{fn}{The generator a random start draws from.}
+\item{fn}{The generator a random start draws from, called as \code{fn(n, ...)}.
+\code{StartRandom} only.}
 
-\item{args}{Further arguments to it.}
+\item{args}{A list of further arguments to \code{fn}. \code{StartRandom} only.}
 
-\item{center}{Whether the draw is added to the intercept-only start.}
+\item{center}{A single logical: whether the draw is added to the
+intercept-only start. \code{StartRandom} only.}
 }
 \value{
-An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}.
+An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}:
+\code{StartIntercepts} and \code{StartOrigin} with the one inherited property
+\code{label}, \code{StartRandom} with \code{fn}, \code{args} and \code{center} besides.
 }
 \description{
-The classes the constructors below instantiate.
+The three classes \code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}} and
+\code{\link[=start_random]{start_random()}} instantiate. Each inherits from \code{\link[=start_strategy]{start_strategy()}} and
+carries its \code{label}; only \code{StartRandom} adds properties of its own. Use the
+constructors, which validate; these raw ones do not.
+}
+\seealso{
+\code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}} for the
+constructors, \code{\link[=start_at]{start_at()}} for the methods registered on these classes.
 }
 \keyword{internal}

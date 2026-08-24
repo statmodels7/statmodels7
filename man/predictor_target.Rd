@@ -15,15 +15,16 @@ predictor_target(spec, p)
 A numeric vector, one value per observation, or \code{NULL}.
 }
 \description{
-The response carried onto the scale of one equation's linear predictor,
-which is what \code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} needs to estimate
-a term's own parameters from the data.
+The response carried onto the scale of one equation's linear predictor.
+\code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} takes it to estimate a term's own
+parameters from the data, which is the one thing a term cannot work out
+for itself.
 }
 \details{
 It exists only where the response reads the parameter directly, which
-\code{params_interpretation} says: a mean or a location. For a scale or a
-shape there is no per-observation reading of the parameter, and
-\code{NULL} is returned rather than a quantity invented for the occasion.
+\code{params_interpretation} says: a mean or a location. A scale or a shape has
+no per-observation reading, so \code{NULL} is returned and nothing is invented
+for the occasion.
 
 The scale matters and is not a detail. Measured on a Poisson whose
 predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
@@ -34,9 +35,9 @@ the other terms' contribution: subtracting it moved the estimate from
 39.68 to 39.87 against a truth of 40, so the response is passed as it
 stands and nothing is residualized.
 
-A response on a bound of the parameter's own domain is moved half way to
-the nearest admissible value, since a link is not defined at its bound --
-for counts under a log link that is the classical half.
+A response sitting on a bound of the parameter's own domain is moved half
+way to the nearest admissible value, a link not being defined at its
+bound. For counts under a log link that is the classical half.
 }
 \seealso{
 \code{\link[=start_at]{start_at()}},

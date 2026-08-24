@@ -7,39 +7,64 @@
 start_random(fn = stats::rnorm, ..., center = TRUE)
 }
 \arguments{
-\item{fn}{A generator called as \code{fn(n, ...)}, returning \code{n}
-values. Defaults to \code{\link[stats:Normal]{stats::rnorm()}}.}
+\item{fn}{A generator called as \code{fn(n, ...)} and returning \code{n} values.
+Defaults to \code{\link[stats:Normal]{stats::rnorm()}}. Any function of that shape serves.}
 
-\item{...}{Further arguments to \code{fn}, such as \code{sd} or
-\code{min} and \code{max}.}
+\item{...}{Further arguments to \code{fn}, captured at construction and stored
+on the object: \code{sd = 0.1}, or \code{min} and \code{max} for \code{\link[stats:Uniform]{stats::runif()}}.}
 
-\item{center}{Whether to add the draw to the intercept-only start rather
-than use it alone. Defaults to \code{TRUE}.}
+\item{center}{A single logical. \code{TRUE}, the default, adds the draw to the
+intercept-only start; \code{FALSE} uses the draw alone.}
 }
 \value{
-A \code{\link[=start_strategy]{start_strategy()}}.
+A \code{StartRandom} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}, with
+properties \code{fn}, \code{args} and \code{center}.
 }
 \description{
-Every coefficient drawn on the unconstrained scale, by default added to the
-intercept-only fit rather than replacing it.
+Draws every coefficient from a generator of the caller's choosing and, by
+default, adds the draw to the intercept-only fit. Built for running a model
+from several starts and comparing where they land, which is how a
+multimodal likelihood is explored.
 }
-\details{
-The draw is added to \code{\link[=start_intercepts]{start_intercepts()}}'s answer unless
-\code{center = FALSE}, and that is not a detail: a coefficient drawn from a
-standard normal is a sensible perturbation and a hopeless absolute value,
-since the intercept of a location equation is on the scale of the response.
-Centring keeps the scale and randomizes the direction, which is what a
-caller wanting several starts is after.
+\section{Why the draw is centered by default}{
+A coefficient drawn from a standard normal is a sensible perturbation and a
+hopeless absolute value: the intercept of a location equation is on the
+scale of the response, which may be a thousand. Adding the draw to
+\code{\link[=start_intercepts]{start_intercepts()}}'s answer keeps that scale and randomizes the
+direction, leaving the several starts something to differ in.
 
-The stream is the caller's, so \code{set.seed()} governs the result and a
-fit begun this way is reproducible only alongside its seed.
+\code{center = FALSE} uses the draw alone, which is right when the generator is
+already scaled to the problem.
 }
+
+\section{The random stream}{
+The draw comes from the session's generator, so \code{\link[=set.seed]{set.seed()}} governs the
+result and a fit begun this way repeats only alongside its seed. Nothing
+is seeded internally.
+}
+
 \examples{
 start_random()
 start_random(stats::runif, min = -2, max = 2)
+start_random(sd = 0.1)@args
+
+set.seed(1)
+dd <- data.frame(x = runif(40))
+dd$y <- 100 + 2 * dd$x + rnorm(40, sd = 0.3)
+spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+design <- statmod_design(spec)
+
+# Centered, the intercept stays on the response's scale.
+set.seed(2)
+start_at(start_random(sd = 0.5), spec, design, NULL)$mu
+
+# Uncentered, it is the raw draw, which is nowhere near 100.
+set.seed(2)
+start_at(start_random(sd = 0.5, center = FALSE), spec, design, NULL)$mu
 
 }
 \seealso{
-\code{\link[=start_intercepts]{start_intercepts()}},
-\code{\link[optimizers7:multistart]{optimizers7::multistart()}}
+\code{\link[=start_intercepts]{start_intercepts()}} for what the draw is added to,
+\code{\link[optimizers7:multistart]{optimizers7::multistart()}} for running several starts inside an
+optimizer.
 }

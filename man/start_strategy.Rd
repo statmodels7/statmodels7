@@ -7,27 +7,52 @@
 start_strategy(label = character(0))
 }
 \arguments{
-\item{label}{A short name, used when printing.}
+\item{label}{A short name, printed by \code{\link[=print.start_strategy]{print.start_strategy()}}. A single
+string. Set by each subclass's constructor, since the class itself
+cannot be built.}
 }
 \value{
-An S7 object of class \code{start_strategy}.
+Nothing: the class is abstract and the constructor signals an
+error. Used as a class object, for \code{S7::S7_inherits()} and for
+registering methods, it has one property, \code{label}, which every subclass
+inherits.
 }
 \description{
-Where a fit begins, as an object rather than as a vector of numbers.
+The abstract parent of the starting-value strategies. A strategy says where
+a fit begins as a \strong{procedure}, not as a vector of numbers: fit the
+intercept-only model, draw around it, or search the likelihood for a basin.
+\code{statmod(start =)} accepts one, or a plain named list of coefficients.
 }
 \details{
-The reason it is an object is that the interesting answers are not values
-but PROCEDURES: draw around the intercept-only fit, or search the
-likelihood for a basin. A strategy is asked once, before the alternation
-between the coefficients and the hyperparameters begins, which is what
-separates it from an optimizer: an optimizer runs at every step of the fit,
-a strategy runs once at its start.
+A strategy is asked exactly once, before the alternation between the
+coefficients and the hyperparameters begins. An optimizer runs at every
+step of that alternation, which is why a global search belongs here: given
+to \code{inner_optimizer} it would rerun at every hyperparameter the outer
+search tried and return the same answer each time.
+
+\strong{The class is abstract and cannot be instantiated.} Calling
+\code{start_strategy()} signals an error; what the class is for is to be
+subclassed and to make a membership test possible. To write a strategy of
+your own, subclass it and register a \code{\link[=start_at]{start_at()}} method on the subclass.
+That method receives the specification, the design and the objective, and
+returns one vector per distribution parameter.
 }
 \examples{
-start_origin()
+# The four shipped strategies all inherit from this.
+S7::S7_inherits(start_origin(), start_strategy)
+S7::S7_inherits(start_search(), start_strategy)
+
+# Every one of them carries the label the class defines.
+vapply(list(start_intercepts(), start_origin(), start_random(),
+            start_search()),
+       function(s) s@label, character(1))
+
+# The class itself is abstract.
+try(start_strategy("my own"))
 
 }
 \seealso{
-\code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}},
-\code{\link[=start_random]{start_random()}}
+\code{\link[=start_intercepts]{start_intercepts()}} (the default), \code{\link[=start_origin]{start_origin()}},
+\code{\link[=start_random]{start_random()}} and \code{\link[=start_search]{start_search()}} for the four shipped strategies,
+\code{\link[=start_at]{start_at()}} for the generic they implement.
 }

@@ -7,31 +7,46 @@
 start_origin()
 }
 \value{
-A \code{\link[=start_strategy]{start_strategy()}}.
+A \code{StartOrigin} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
 Every coefficient at zero on the unconstrained scale, which for each
 distribution parameter is the value its link maps zero to.
 }
-\details{
-The name is \code{start_origin} and not \code{start_zeros} because
-\pkg{optimizers7} already exports the second for the starting POINT of an
-optimizer, and the toolkit's members share no exported name --- a
-collision would be reported by \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} and, far
-worse, would mean that which function a user got depended on the order the
-packages were attached in.
+\section{When it is a poor choice}{
+A location parameter on the identity link begins at zero whatever the
+response is. On a response centered at a thousand the run then starts a
+thousand units away and has to travel there, and on a badly scaled model
+it may not arrive at all. \code{\link[=start_intercepts]{start_intercepts()}}, the default, exists for
+that reason.
 
-It is the plainest starting point and rarely the best: a location parameter
-on the identity link then begins at zero whatever the response is, which on
-a response centred at a thousand sends the run travelling. It is here
-because it is the reference other strategies are judged against, and
-because a model whose equations are all on a log or logit link is not
-harmed by it.
+It is harmless where every equation is on a log or a logit link, since
+zero is then an ordinary interior value of the parameter, and it is the
+reference the other strategies are judged against.
 }
+
+\section{The name}{
+\code{start_origin}, not \code{start_zeros}. \pkg{optimizers7} already exports
+\code{start_zeros()} for the starting point of an optimizer, and no two members
+of this toolkit export the same name. A collision would be reported by
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}, and, worse, which function a caller reached
+would depend on the order the packages were attached in.
+}
+
 \examples{
 start_origin()
 
+set.seed(1)
+dd <- data.frame(x = runif(40))
+dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
+spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+
+# Every coefficient of every equation is zero, intercepts included.
+s <- start_at(start_origin(), spec, statmod_design(spec), NULL)
+s
+all(unlist(s) == 0)
+
 }
 \seealso{
-\code{\link[=start_intercepts]{start_intercepts()}}
+\code{\link[=start_intercepts]{start_intercepts()}}, the default and usually the better choice.
 }

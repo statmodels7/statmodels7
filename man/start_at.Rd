@@ -7,23 +7,37 @@
 start_at(strategy, spec, design, obj, ...)
 }
 \arguments{
-\item{strategy}{A \code{\link[=start_strategy]{start_strategy()}}.}
+\item{strategy}{A \code{\link[=start_strategy]{start_strategy()}}, which decides the method.}
 
-\item{spec}{The specification.}
+\item{spec}{The \code{\link[=StatmodSpec]{StatmodSpec()}} being fitted.}
 
-\item{design}{The design.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 
-\item{obj}{The objective.}
+\item{obj}{The objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it, or \code{NULL}.
+Only \code{\link[=start_search]{start_search()}} reads it; the other three accept \code{NULL}.}
 
-\item{...}{Passed to methods.}
+\item{...}{Passed to methods. No shipped method reads it.}
 }
 \value{
-A named list, one numeric vector per distribution parameter, each
-as long as that parameter's design.
+A named list, one numeric vector per distribution parameter in the
+family's order, each as long as that parameter's design is wide.
 }
 \description{
-The one generic a starting-value strategy implements: given the model, it
-returns one starting vector per distribution parameter.
+The one generic a starting-value strategy implements. Given the model, it
+returns one starting vector per distribution parameter, on the coefficient
+scale, ready for the fit to begin from.
+}
+\details{
+Write a method on your own subclass of \code{\link[=start_strategy]{start_strategy()}} to add a
+strategy. The four shipped methods show the range: \code{\link[=start_origin]{start_origin()}} reads
+only the design's widths, \code{\link[=start_intercepts]{start_intercepts()}} fits a small model,
+\code{\link[=start_random]{start_random()}} draws from the caller's generator, and \code{\link[=start_search]{start_search()}}
+runs an optimizer over \code{obj}.
+
+A method must return a full-length vector for every distribution
+parameter, including the ones it has nothing to say about. Zero is the
+conventional filler, and it is the value a penalized block wants anyway,
+its penalty being smallest there.
 }
 \examples{
 set.seed(1)

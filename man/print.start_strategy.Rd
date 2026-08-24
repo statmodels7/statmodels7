@@ -4,15 +4,17 @@
 \alias{print.start_strategy}
 \title{Print a Starting-Value Strategy}
 \arguments{
-\item{x}{A \code{\link[=start_strategy]{start_strategy()}}.}
+\item{x}{A \code{\link[=start_strategy]{start_strategy()}} or any object inheriting from it.}
 
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly, as a print method should.
 }
 \description{
-Print a Starting-Value Strategy
+Prints a one-line description of a starting-value strategy: its label, and
+for \code{\link[=start_random]{start_random()}} whether the draw is centered, for \code{\link[=start_search]{start_search()}}
+which optimizer it searches with.
 }
 \examples{
 print(start_random())

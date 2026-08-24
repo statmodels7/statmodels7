@@ -20,11 +20,11 @@ the likelihood is not convex: each equation's intercept, and the blocks of
 the terms that recompute their own design.
 }
 \details{
-The predicate for the second is \code{\link[=refreshes_own_block]{refreshes_own_block()}}, the same
-one \code{\link[=unfittable_reason]{unfittable_reason()}} uses, so a term written later is
-covered without an edit here. A convex block is left out deliberately
-rather than forgotten: the scoring step reaches its optimum from anywhere,
-and a search over it would spend the budget where it buys nothing.
+The predicate for the second is \code{\link[=refreshes_own_block]{refreshes_own_block()}}, the same one
+\code{\link[=unfittable_reason]{unfittable_reason()}} uses, so a term written later is covered with no
+edit here. A convex block is left out deliberately: the scoring step
+reaches its optimum from anywhere, and a search over it would spend the
+budget where it buys nothing.
 
 A penalized coordinate is then removed wherever it sits, which is not the
 same question as whether its term is convex: a penalty declared through a
