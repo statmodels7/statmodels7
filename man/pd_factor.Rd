@@ -25,8 +25,8 @@ matrix itself calls for.
 This is the one place the penalized matrix is factorized. The criterion
 wants its log-determinant, the gradient wants the mode's movement and the
 Hessian wants both plus the inverse; before this existed the criterion and
-\code{\link[=ctx_penalized]{ctx_penalized()}} each factorized the SAME matrix at the same
-point, which at p = 503 was 12.4 ms spent twice.
+\code{\link[=ctx_penalized]{ctx_penalized()}} each factorized the same matrix at the same point,
+which at \eqn{p = 503} was 12.4 ms spent twice.
 
 \strong{The verdict is unchanged and so is its property.} Whether the
 matrix is accepted never turns on whether a factorization raised: where the

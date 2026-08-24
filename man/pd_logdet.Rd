@@ -26,7 +26,8 @@ it is not.
 \strong{Why not \code{chol()} alone.} A marginal criterion read the
 determinant off \code{chol(M)} and reported the criterion as NONEXISTENT
 whenever the factorization raised. At a condition number near the rounding
-floor whether it raises is decided by arithmetic and not by the matrix:
+floor, whether it raises is decided by the arithmetic and never by the
+matrix:
 measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
 eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
 search then backtracked through a dozen points reported unavailable towards
@@ -37,9 +38,10 @@ already records for \code{\link[=solve_pd]{solve_pd()}} and for basis7's rank te
 and the common case. Where it succeeds, LAPACK's condition estimator reads
 the smallest eigenvalue off the factor already in hand for O(p^2), and a
 matrix comfortably away from the floor is accepted with the determinant the
-factor gives. Only where that test is inconclusive -- or the factorization
-raised at all -- is the eigendecomposition computed, which costs more and
-answers about the MATRIX: a factorization that failed by rounding luck on a
+factor gives. The eigendecomposition is computed only where that test is
+inconclusive, or where the factorization raised at all. It costs more and
+answers about the matrix: a factorization that failed by rounding luck on
+a
 matrix that is in fact positive definite is recovered there, and one that
 is genuinely rank deficient is refused deterministically rather than
 according to the platform.

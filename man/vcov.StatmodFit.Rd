@@ -39,7 +39,7 @@ the second derivative of the penalty,
 The first is the posterior variance under the prior the penalty is the
 negative logarithm of, and it is what an interval around a penalized term
 should be built from: it carries the smoothing bias as though it were
-variance, which is what makes such intervals cover at about their nominal
+variance, and that is why such intervals cover at about their nominal
 rate. The second is the sampling variance of the penalized estimator at a
 fixed penalty, which is smaller and covers less. With no penalty \eqn{S = 0}
 and both are \eqn{H^{-1}}.
@@ -48,8 +48,8 @@ and both are \eqn{H^{-1}}.
 the penalty is not twice differentiable, so \eqn{S} does not exist there and
 no curvature can be read; the entry is \code{NA}. The coefficients a lasso
 or an MCP left non-zero do get a variance, and it is conditional on that
-selection -- \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} says so in a note rather than
-leaving the reader to assume otherwise.
+selection, which \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} says in a note instead of leaving
+a reader to assume otherwise.
 }
 \examples{
 set.seed(1)

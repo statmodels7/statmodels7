@@ -15,11 +15,11 @@ sparse_lmin(L, p)
 A single number, or \code{NA_real_} where the estimate failed.
 }
 \description{
-\eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, which is the
+\eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, the same
 quantity LAPACK's \code{dpocon} produces from a dense one.
 }
 \details{
-The sparse route needs a condition estimate OF ITS OWN, and it cannot
+The sparse route needs a condition estimate of its own, and it cannot
 borrow the dense one: \code{chol_rcond_cpp} reads a dense triangular
 factor. \code{Matrix::rcond} is not the answer either -- measured, it costs
 10.3 ms at p = 503 and 500 ms at p = 2003, more than the dense

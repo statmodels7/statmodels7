@@ -39,9 +39,9 @@ development is a vector of coefficients over covariates with no single
 value, so nothing is declared for it and nothing is taken away.
 
 The joint coordinate vector is the design coefficients of every equation
-in order, then the FREE parameters of each structural term -- free because
-a level an intercept in the same equation carries is held and is not in
-the information the variance comes from. A quantity that reads a held
+in order, then the \strong{free} parameters of each structural term. Free,
+because a level an intercept in the same equation carries is held and is
+absent from the information the variance comes from. A quantity that reads a held
 parameter is marked: its value stands, and its variance would be that of
 the rest alone, so it is not reported.
 }

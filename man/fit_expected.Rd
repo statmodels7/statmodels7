@@ -13,12 +13,12 @@ fit_expected(object)
 A single logical.
 }
 \description{
-\code{TRUE} when the fit inverted the expected information, which is what
-\code{\link[=iwls]{iwls()}} does unless asked otherwise.
+\code{TRUE} when the fit inverted the expected information, as \code{\link[=iwls]{iwls()}} does
+unless asked otherwise.
 }
 \details{
-The default of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} follows this rather than
-choosing for itself, so that a standard error comes from the same matrix the
-fit did, and a caller who wants the other one asks for it.
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}'s default follows this instead of choosing for itself,
+so a standard error comes from the same matrix the fit did. A caller who
+wants the other one asks for it.
 }
 \keyword{internal}

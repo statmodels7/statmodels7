@@ -63,13 +63,13 @@ coef_labels <- function(spec, design) {
 #' Which Information Matrix a Fit Used
 #'
 #' @description
-#' `TRUE` when the fit inverted the expected information, which is what
-#' [iwls()] does unless asked otherwise.
+#' `TRUE` when the fit inverted the expected information, as [iwls()] does
+#' unless asked otherwise.
 #'
 #' @details
-#' The default of [vcov.StatmodFit()] follows this rather than
-#' choosing for itself, so that a standard error comes from the same matrix the
-#' fit did, and a caller who wants the other one asks for it.
+#' [vcov.StatmodFit()]'s default follows this instead of choosing for itself,
+#' so a standard error comes from the same matrix the fit did. A caller who
+#' wants the other one asks for it.
 #'
 #' @param object A [StatmodFit()].
 #'
@@ -95,7 +95,7 @@ fit_expected <- function(object) {
 #' The first is the posterior variance under the prior the penalty is the
 #' negative logarithm of, and it is what an interval around a penalized term
 #' should be built from: it carries the smoothing bias as though it were
-#' variance, which is what makes such intervals cover at about their nominal
+#' variance, and that is why such intervals cover at about their nominal
 #' rate. The second is the sampling variance of the penalized estimator at a
 #' fixed penalty, which is smaller and covers less. With no penalty \eqn{S = 0}
 #' and both are \eqn{H^{-1}}.
@@ -104,8 +104,8 @@ fit_expected <- function(object) {
 #' the penalty is not twice differentiable, so \eqn{S} does not exist there and
 #' no curvature can be read; the entry is `NA`. The coefficients a lasso
 #' or an MCP left non-zero do get a variance, and it is conditional on that
-#' selection -- [summary.StatmodFit()] says so in a note rather than
-#' leaving the reader to assume otherwise.
+#' selection, which [summary.StatmodFit()] says in a note instead of leaving
+#' a reader to assume otherwise.
 #' @param object A [StatmodFit()].
 #' @param type `"bayesian"` or `"frequentist"`.
 #' @param expected Whether the expected information is used. Defaults to what
@@ -268,10 +268,11 @@ structural_tail_names <- function(spec, design) {
 #' [readable_joint()] supplies.
 #'
 #' @details
-#' A quantity that reads a coordinate whose variance is missing -- one a
-#' kinked penalty set to zero, or a parameter held by an intercept -- has no
-#' variance either, and its row and column are left missing rather than
-#' computed from the coordinates that do have one.
+#' A quantity that reads a coordinate whose variance is missing has no
+#' variance either, and its row and column are left missing. Such a
+#' coordinate is one a kinked penalty set to zero, or a parameter held by an
+#' intercept. Computing the entry from the coordinates that do have a
+#' variance would report a number for something the fit did not estimate.
 #'
 #' @param spec The fitted specification.
 #' @param design The design.
@@ -354,9 +355,9 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' value, so nothing is declared for it and nothing is taken away.
 #'
 #' The joint coordinate vector is the design coefficients of every equation
-#' in order, then the FREE parameters of each structural term -- free because
-#' a level an intercept in the same equation carries is held and is not in
-#' the information the variance comes from. A quantity that reads a held
+#' in order, then the **free** parameters of each structural term. Free,
+#' because a level an intercept in the same equation carries is held and is
+#' absent from the information the variance comes from. A quantity that reads a held
 #' parameter is marked: its value stands, and its variance would be that of
 #' the rest alone, so it is not reported.
 #'
@@ -504,36 +505,40 @@ readable_joint <- function(spec, design, fit) {
 #' matrix when a direction is flat.
 #'
 #' @details
-#' A failure here is a statement about the fit rather than about the
-#' arithmetic: at a maximum the penalized information is positive definite, so
-#' a matrix that is not says something about where the run stopped. The test is
-#' `lmin > tol * ref` on the smallest eigenvalue rather than whether
-#' `chol()` raised, because on an exactly singular matrix the latter is
-#' decided by rounding and differs between platforms; `ref` is the
-#' matrix's own scale, or the scale of the unpenalized
-#' information where the caller holds it, which is what tells a flat
+#' A failure here is a statement about the fit and not about the arithmetic:
+#' at a maximum the penalized information is positive definite, so a matrix
+#' that is not says something about where the run stopped.
+#'
+#' The test is `lmin > tol * ref` on the smallest eigenvalue, and never
+#' whether `chol()` raised. On an exactly singular matrix the pivot that
+#' should be zero comes out positive or negative according to rounding, so
+#' the second answer differs between platforms for one matrix.
+#'
+#' `ref` is the matrix's own scale, or the scale of the unpenalized
+#' information where the caller holds it. That is what separates a flat
 #' direction from the scale separation a large smoothing parameter
 #' legitimately produces. Returning a pseudo-inverse instead would give a
 #' standard error for a direction the data does not identify.
 #'
-#' The smallest eigenvalue is ESTIMATED rather than computed, from LAPACK's
+#' The smallest eigenvalue is estimated and not computed, from LAPACK's
 #' condition estimator (`dpocon`) read on the Cholesky factor the
 #' inverse needs anyway: `rcond` is
 #' \eqn{1/(\lVert A\rVert_1\lVert A^{-1}\rVert_1)}, so
 #' `rcond * ||A||_1` is \eqn{1/\lVert A^{-1}\rVert_1}, which for a
 #' symmetric matrix lies between \eqn{\lambda_{\min}/\sqrt{p}} and
-#' \eqn{\lambda_{\min}}. The estimate therefore errs on the SMALL side and
+#' \eqn{\lambda_{\min}}. The estimate therefore errs on the small side and
 #' the test is conservative by at most a factor \eqn{\sqrt{p}}, plus
 #' whatever the estimator's own slack is; the two cases it has to keep
 #' apart are separated by some fifty orders of magnitude, so neither
 #' reaches the other. It replaced a full eigendecomposition, which answers
-#' the same question exactly and costs O(p^3) with a large constant --
-#' measured at p = 1022, 1.18 s against the Cholesky's 0.25.
+#' the same question exactly and costs \eqn{O(p^3)} with a large constant:
+#' measured at \eqn{p = 1022}, 1.18 s against the Cholesky's 0.25.
 #'
-#' The message names the directions rather than the causes. A first version
-#' offered two -- the run not having reached a maximum, or two columns of the
-#' design carrying the same information -- and on a Student t fitted to iris
-#' NEITHER was right: the design was full rank and the score was 4e-5. What had
+#' The message names the directions and not the causes. A first version
+#' offered two causes, the run not having reached a maximum and two columns
+#' of the design carrying the same information, and on a Student t fitted to
+#' `iris` neither was right: the design was full rank and the score was
+#' 4e-5. What had
 #' happened is the third and commonest case, a parameter drifting to where its
 #' information vanishes, and no list of guesses would have said so. The
 #' eigenvector of the smallest eigenvalue does: it is read off and the
@@ -623,7 +628,7 @@ solve_pd <- function(A, what, labels = NULL) {
 #'
 #' @description
 #' A warning of its own class, so that a caller reporting the same thing in
-#' its own channel can muffle it rather than repeat it.
+#' its own channel can muffle it in place of repeating it.
 #'
 #' @details
 #' [summary.StatmodFit()] calls [vcov()] more than
@@ -649,15 +654,15 @@ frozen_condition <- function(msg) {
 #' @details
 #' A discontinuous break-point term is fitted through a block whose weight is
 #' held at the previous iterate, so the curvature that block carries is the
-#' working model's and not the model's. Measured on a jump at 400
+#' working model's, never the model's. Measured on a jump at 400
 #' observations against a bootstrap of 200 resamples: the working information
 #' gives the change of level and the auxiliary coordinate a standard error of
-#' EXACTLY ZERO, where the resamples give 0.063 and 0.540, and the position
-#' read off them 1.8e-05 against 0.090. A zero looks like a number and is
+#' **exactly zero**, where the resamples give 0.063 and 0.540, and the
+#' position read off them 1.8e-05 against 0.090. A zero looks like a number and is
 #' worse than a gap, so those coefficients are left missing.
 #'
 #' The question is asked of the term through
-#' [modelterms7::term_jacobian_block()] rather than of its class,
+#' [modelterms7::term_jacobian_block()] and never of its class,
 #' so a construction whose block IS a Jacobian keeps its inference: a
 #' continuous [modelterms7::seg()], and a discontinuous one
 #' smoothed by an [penalties7::abs_smoother()], both answer yes.
@@ -686,13 +691,14 @@ frozen_block <- function(spec, lab) {
 #'
 #' @description
 #' Whether a symmetric matrix is large enough and sparse enough that a sparse
-#' Cholesky beats a dense one, asked of the MATRIX and of nothing else.
+#' Cholesky beats a dense one. The question is put to the matrix and to
+#' nothing else: no term, no model and no caller's preference enters.
 #'
 #' @details
-#' The two conditions are the measured crossover and not a preference. On the
-#' penalized information of a random intercept over \eqn{m} levels at 20000
-#' observations, the sparse route against the dense one -- coercion,
-#' factorization, log-determinant and full inverse, each timed with the
+#' The two conditions are the measured crossover. On the penalized
+#' information of a random intercept over \eqn{m} levels at 20000
+#' observations, the sparse route against the dense one, with coercion,
+#' factorization, log-determinant and full inverse each timed with the
 #' repetition loop sized by elapsed time:
 #'
 #' \tabular{rrrrr}{
@@ -713,15 +719,15 @@ frozen_block <- function(spec, lab) {
 #' version of it timed the sparse solves against a factor built once outside
 #' the loop, which flattered the sparse side without changing where it loses.
 #'
-#' Below about a hundred coefficients the sparse route LOSES, and loses badly:
+#' Below about a hundred coefficients the sparse route loses badly:
 #' its fixed cost is the coercion and the S4 dispatch around it, which does not
 #' shrink with the matrix. On the fully dense penalized information of a single
-#' smooth (p = 16, density 1) it measures 0.01x, a hundred times slower, which
-#' is what the size condition is there to prevent.
+#' smooth (\eqn{p = 16}, density 1) it measures 0.01x, a hundred times
+#' slower, and preventing that is what the size condition is for.
 #'
-#' **Both quantities are read off the matrix, and the first one is its
-#' STORAGE.** A matrix held as a base matrix is refused whatever its zeros,
-#' which reads like a test of the container rather than of the mathematics, so
+#' **Both quantities are read off the matrix, and the first is its storage.**
+#' A matrix held as a base matrix is refused whatever its zeros,
+#' which reads like a test of the container and not of the mathematics, so
 #' it is worth saying why it is neither an oversight nor a term test.
 #' [statmod_information_at()] accumulates into the design's own kind,
 #' so the penalized matrix is stored sparsely exactly when the design is, and
@@ -741,7 +747,7 @@ frozen_block <- function(spec, lab) {
 #' test**, and it is the check `piano_lme4.txt` section 5 asks for. With
 #' every design built the same way, this route is worth 1.38x on
 #' `0 + g + s(x)` over 400 levels, 1.33x on `random(~1|g)` over 500
-#' and 1.07x on `s(x, by = g)` over 60 -- an unpenalized indicator block,
+#' and 1.07x on `s(x, by = g)` over 60: an unpenalized indicator block,
 #' a random effect and a factor-`by` smooth, gaining together and in the
 #' order their sizes predict. Nothing here asks which term or which family
 #' produced the matrix.
@@ -768,11 +774,11 @@ worth_sparse <- function(M, min_dim = 100L, max_density = 0.10) {
 #' The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 #'
 #' @description
-#' \eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, which is the
+#' \eqn{1/\lVert A^{-1}\rVert_1} from a sparse Cholesky factor, the same
 #' quantity LAPACK's `dpocon` produces from a dense one.
 #'
 #' @details
-#' The sparse route needs a condition estimate OF ITS OWN, and it cannot
+#' The sparse route needs a condition estimate of its own, and it cannot
 #' borrow the dense one: `chol_rcond_cpp` reads a dense triangular
 #' factor. `Matrix::rcond` is not the answer either -- measured, it costs
 #' 10.3 ms at p = 503 and 500 ms at p = 2003, more than the dense
@@ -821,8 +827,8 @@ sparse_lmin <- function(L, p) {
 #' This is the one place the penalized matrix is factorized. The criterion
 #' wants its log-determinant, the gradient wants the mode's movement and the
 #' Hessian wants both plus the inverse; before this existed the criterion and
-#' [ctx_penalized()] each factorized the SAME matrix at the same
-#' point, which at p = 503 was 12.4 ms spent twice.
+#' [ctx_penalized()] each factorized the same matrix at the same point,
+#' which at \eqn{p = 503} was 12.4 ms spent twice.
 #'
 #' **The verdict is unchanged and so is its property.** Whether the
 #' matrix is accepted never turns on whether a factorization raised: where the
@@ -893,7 +899,8 @@ pd_factor <- function(M, scale = NULL) {
 #' **Why not `chol()` alone.** A marginal criterion read the
 #' determinant off `chol(M)` and reported the criterion as NONEXISTENT
 #' whenever the factorization raised. At a condition number near the rounding
-#' floor whether it raises is decided by arithmetic and not by the matrix:
+#' floor, whether it raises is decided by the arithmetic and never by the
+#' matrix:
 #' measured on a hierarchical score-driven panel, \eqn{K+S} had a smallest
 #' eigenvalue of 4.3e-11 against a condition number of 8.0e15, and the outer
 #' search then backtracked through a dozen points reported unavailable towards
@@ -904,9 +911,10 @@ pd_factor <- function(M, scale = NULL) {
 #' and the common case. Where it succeeds, LAPACK's condition estimator reads
 #' the smallest eigenvalue off the factor already in hand for O(p^2), and a
 #' matrix comfortably away from the floor is accepted with the determinant the
-#' factor gives. Only where that test is inconclusive -- or the factorization
-#' raised at all -- is the eigendecomposition computed, which costs more and
-#' answers about the MATRIX: a factorization that failed by rounding luck on a
+#' factor gives. The eigendecomposition is computed only where that test is
+#' inconclusive, or where the factorization raised at all. It costs more and
+#' answers about the matrix: a factorization that failed by rounding luck on
+#' a
 #' matrix that is in fact positive definite is recovered there, and one that
 #' is genuinely rank deficient is refused deterministically rather than
 #' according to the platform.
@@ -1041,7 +1049,7 @@ flat_directions <- function(A, labels) {
 #'
 #' The variance comes from [vcov.StatmodFit()], so the same two
 #' conventions apply, and a coefficient a kinked penalty set to zero has
-#' `NA` rather than an interval.
+#' `NA` in place of an interval.
 #' @param object A [StatmodFit()].
 #' @param parm Which coefficients: a distribution parameter's name, a vector of
 #'   `parameter:coefficient` labels, or `NULL` for all of them.

@@ -23,9 +23,10 @@ The delta method over the joint variance, with the Jacobian
 \code{\link[=readable_joint]{readable_joint()}} supplies.
 }
 \details{
-A quantity that reads a coordinate whose variance is missing -- one a
-kinked penalty set to zero, or a parameter held by an intercept -- has no
-variance either, and its row and column are left missing rather than
-computed from the coordinates that do have one.
+A quantity that reads a coordinate whose variance is missing has no
+variance either, and its row and column are left missing. Such a
+coordinate is one a kinked penalty set to zero, or a parameter held by an
+intercept. Computing the entry from the coordinates that do have a
+variance would report a number for something the fit did not estimate.
 }
 \keyword{internal}

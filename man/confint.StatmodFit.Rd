@@ -43,7 +43,7 @@ inverse link at the covariate values of interest.
 
 The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same two
 conventions apply, and a coefficient a kinked penalty set to zero has
-\code{NA} rather than an interval.
+\code{NA} in place of an interval.
 }
 \examples{
 set.seed(1)
