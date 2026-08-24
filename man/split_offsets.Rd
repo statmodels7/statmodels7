@@ -7,30 +7,36 @@
 split_offsets(eq)
 }
 \arguments{
-\item{eq}{A one-sided formula.}
+\item{eq}{A one-sided formula, one equation of the model.}
 }
 \value{
-A list with \code{formula}, the equation with the offsets removed,
-and \code{offsets}, a list of the expressions taken out.
+A list of two:
+\describe{
+\item{\code{formula}}{\code{eq} with the offset terms removed. \code{~ 1} where the
+equation held nothing else.}
+\item{\code{offsets}}{a list of the expressions taken out, unevaluated.
+Empty when there were none.}
+}
 }
 \description{
 Splits a one-sided formula into the \code{offset()} terms it names and
 whatever is left, which is what the interpreter is given.
 }
 \details{
-An offset is a column of the linear predictor whose coefficient is known to
-be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
-Without this the term reached \code{model.matrix} through
-\code{\link[modelterms7:linpar]{modelterms7::linpar()}}, where \code{terms()} marks it in the
-\code{"offset"} attribute and the design EXCLUDES it: the term contributed
-no column, no offset and no message, and the model fitted was the one
-without it. On a count model over person-years that moved the intercept
-from -7.5 to -0.6, which is the difference between a log rate and a log
-count.
+An offset is a column of the linear predictor whose coefficient is known
+to be one, and \code{y ~ x + offset(log_n)} is how R has always written it.
+
+Taking it out here is what makes it work at all. Left in, the term reached
+\code{model.matrix} through \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, where \code{terms()} marks it
+in the \code{"offset"} attribute and the design excludes it: the term
+contributed no column, no offset and no message, and the model fitted was
+the one without it. On a count model over person-years that moved the
+intercept from -7.5 to -0.6, which is the difference between a log rate
+and a log count.
 
 Only a top-level additive term is taken, which is where R recognizes one
-too; \code{stats::offset(x)} is recognized beside \code{offset(x)}. Several
-are summed, as \code{\link[stats:glm]{stats::glm()}} sums them.
+too, and \code{stats::offset(x)} is recognized beside \code{offset(x)}. Several in
+one equation are summed, as \code{\link[stats:glm]{stats::glm()}} sums them.
 }
 \seealso{
 \code{\link[=statmod_spec]{statmod_spec()}}, \code{\link[=eval_offsets]{eval_offsets()}}

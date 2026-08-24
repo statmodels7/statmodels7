@@ -8,35 +8,37 @@ reject_nested_offsets(eq, param)
 }
 \arguments{
 \item{eq}{A one-sided formula, with the equation's own offsets already
-taken out.}
+taken out by \code{\link[=split_offsets]{split_offsets()}}.}
 
-\item{param}{The parameter the equation belongs to, for the message.}
+\item{param}{The parameter the equation belongs to, named in the message.}
 }
 \value{
-\code{NULL}, invisibly; an error where one is found.
+\code{NULL}, invisibly, when nothing is found. Signals an error naming
+\code{param} and the offending call otherwise.
 }
 \description{
 Stops where \code{offset()} appears anywhere other than as a term of the
 equation itself.
 }
 \details{
-\code{\link[=split_offsets]{split_offsets()}} takes the top-level additive terms, which is
-where R recognizes an offset. One written inside another term's formula --
-\code{ridge(~ z + offset(o))}, \code{random(~ 1 + offset(o) | g)},
-\code{nl(a ~ 0 + ridge(~ g + offset(o)))} -- reaches that term's own
-\code{model.matrix}, where it is dropped exactly as it used to be dropped
-at the equation level: measured, the fit ran, the block had the columns of
-the model WITHOUT it, and the intercept came back at 1.33 against the
+\code{\link[=split_offsets]{split_offsets()}} takes the top-level additive terms, which is where R
+recognizes an offset. One written inside another term's formula, as in
+\code{ridge(~ z + offset(o))}, \code{random(~ 1 + offset(o) | g)} or
+\code{nl(a ~ 0 + ridge(~ g + offset(o)))}, reaches that term's own
+\code{model.matrix} and is dropped there exactly as it used to be dropped at
+the equation level. Measured: the fit ran, the block carried the columns
+of the model without it, and the intercept came back at 1.33 against the
 -5.01 the offset gives, a factor of 566.
 
-It is REFUSED rather than routed up, and the reason is that the meaning
-differs by where it sits. In a penalized term's formula an offset would be
-a contribution to the equation's predictor, which is what writing it at the
-equation level already says. In a SUBFORMULA it would be a contribution to
-that parameter's own chart, which is a different quantity. Rather than pick
-one reading and apply it everywhere, the construct is rejected with the
-place it belongs named, which costs a user one edit and cannot silently
-fit the wrong model.
+Such a term is \strong{refused} and not routed up to the equation, because the
+meaning differs by where it sits. In a penalized term's formula an offset
+would be a contribution to the equation's predictor, which is what writing
+it at the equation level already says. In a subformula it would be a
+contribution to that parameter's own chart, a different quantity. Picking
+one reading would fit the wrong model in half the cases; the refusal names
+the place it belongs and costs a caller one edit.
+
+The whole expression tree is walked, so a term written later is covered.
 }
 \seealso{
 \code{\link[=split_offsets]{split_offsets()}}

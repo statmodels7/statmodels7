@@ -7,29 +7,38 @@
 eval_offsets(formula, params, data, env, n)
 }
 \arguments{
-\item{formula}{The model formula, before the offsets are stripped.}
+\item{formula}{The model formula, before \code{\link[=split_offsets]{split_offsets()}} has stripped
+anything.}
 
-\item{params}{The distribution's parameter names.}
+\item{params}{The distribution's parameter names, in the family's order.}
 
-\item{data}{A data frame.}
+\item{data}{A data frame to evaluate in.}
 
-\item{env}{The environment the formula carried.}
+\item{env}{The environment the formula carried, the enclosure of the
+evaluation.}
 
-\item{n}{The number of observations.}
+\item{n}{The number of observations, the length to recycle to.}
 }
 \value{
-A named list, one entry per parameter, \code{NULL} where the
-equation names no offset.
+A named list with one entry per element of \code{params}, each a
+numeric vector of length \code{n} or \code{NULL} where that equation names no
+offset.
 }
 \description{
 The offset per distribution parameter, evaluated in the data.
 }
 \details{
-The expressions are re-evaluated rather than carried as numbers, which is
-what lets an offset survive prediction: \code{\link[=statmod_respec]{statmod_respec()}} calls
-this against the new data, where a vector supplied through the
-\code{offsets} argument at fitting time has the wrong length and cannot be
-reused.
+The expressions are kept and re-evaluated, never carried as numbers, and
+that is what lets an offset survive prediction. \code{\link[=statmod_respec]{statmod_respec()}} calls
+this against the new data; a vector supplied through \code{\link[=statmod]{statmod()}}'s
+\code{offsets} argument at fitting time has the wrong length for other rows and
+cannot be reused. Before this, \code{predict(fit, newdata =)} returned the
+predictor of a model with no offset at all.
+
+Each expression is evaluated in \code{data} with \code{env} behind it, so a symbol
+resolves as a column first and as a variable of the caller's environment
+second. A result shorter than \code{n} is recycled, so a single number is a
+constant offset.
 }
 \seealso{
 \code{\link[=split_offsets]{split_offsets()}}

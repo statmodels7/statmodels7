@@ -7,18 +7,24 @@
 add_offsets(a, b)
 }
 \arguments{
-\item{a, b}{Two named lists of offsets, either entry possibly \code{NULL}.}
+\item{a, b}{Two named lists of offsets keyed by distribution parameter,
+either list's entries possibly \code{NULL}. Either list may itself be \code{NULL}.}
 }
 \value{
-A named list.
+A named list with one entry per parameter named in either input,
+\code{NULL} where neither supplied one.
 }
 \description{
 Combines the offsets a formula names with those the \code{offsets} argument
 supplies, per parameter.
 }
 \details{
-They are SUMMED where both are given, which is what
-\code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset}
-argument together.
+Where both name an offset for the same parameter the two are \strong{summed},
+which is what \code{\link[stats:glm]{stats::glm()}} does with a formula offset and an \code{offset}
+argument together. Where only one does, that one is taken.
+}
+\seealso{
+\code{\link[=eval_offsets]{eval_offsets()}} for the formula's own,
+\code{\link[=statmod]{statmod()}} for the \code{offsets} argument.
 }
 \keyword{internal}

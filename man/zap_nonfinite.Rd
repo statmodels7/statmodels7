@@ -7,10 +7,11 @@
 zap_nonfinite(S)
 }
 \arguments{
-\item{S}{A penalty's Hessian, sparse or dense.}
+\item{S}{A penalty's Hessian, a square matrix, sparse or dense.}
 }
 \value{
-\code{S} with its non-finite entries replaced by zero.
+\code{S} with its non-finite entries replaced by zero, in the storage
+it arrived in.
 }
 \description{
 A penalty at a hyperparameter far enough out returns non-finite entries,
@@ -18,15 +19,15 @@ and every consumer of \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} ze
 using the matrix.
 }
 \details{
-Seven places wrote \code{S[!is.finite(S)] <- 0}, which is correct on a base
-matrix and a trap on a sparse one: the logical index is a DENSE \eqn{p
-\times p} matrix, so the storage the accumulator exists to keep is thrown
-away at the first consumer. On a sparse matrix only the STORED values can
-be non-finite -- a structural zero is finite by construction -- so the same
-answer comes from the value slot alone, in \eqn{O(\mathrm{nnz})}.
+Seven places wrote \code{S[!is.finite(S)] <- 0}. That is correct on a base
+matrix and a trap on a sparse one: the logical index is a dense
+\eqn{p \times p} matrix, so the storage the accumulator exists to keep is
+thrown away at the first consumer.
 
-Written once here rather than seven times, which is the discipline this
-package records for a shape of mistake rather than a line of it.
+On a sparse matrix only the \strong{stored} values can be non-finite, a
+structural zero being finite by construction, so the same answer comes
+from the value slot alone in \eqn{O(\mathrm{nnz})}. The two branches are
+written once here in place of seven times.
 }
 \seealso{
 \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}

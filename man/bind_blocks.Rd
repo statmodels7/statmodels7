@@ -7,28 +7,40 @@
 bind_blocks(mats, n)
 }
 \arguments{
-\item{mats}{A list of blocks.}
+\item{mats}{A list of design blocks, all with the same number of rows,
+each dense or sparse. May be empty.}
 
-\item{n}{The number of observations, for the empty case.}
+\item{n}{The number of observations, used only when \code{mats} is empty, where
+there is no block to read a row count from.}
 }
 \value{
-A matrix, or a \pkg{Matrix} sparse matrix.
+An \verb{n x p} matrix with \code{p} the total width of the blocks: a
+\pkg{Matrix} object when any input is sparse, a base matrix otherwise.
+An \verb{n x 0} base matrix for an empty \code{mats}, which is what an equation
+carrying only a structural term gives.
 }
 \description{
-The assembled design, sparse when any term's block is.
+Binds one equation's term blocks side by side into its design, keeping the
+result sparse whenever any block is.
 }
 \details{
-A grouping indicator is sparse by construction -- a row belongs to one
-group, so a random effect over \eqn{m} of them has density \eqn{1/m} --
-and \pkg{modelterms7} builds it that way. Binding it beside a dense block
-with \code{cbind()} does not work: base dispatch reads the sparse block as
-a vector and reports that the number of items to replace is not a multiple
-of the replacement length, three frames from anything a caller wrote.
+A grouping indicator is sparse by construction. A row belongs to one group,
+so a random effect over \eqn{m} groups has density \eqn{1/m}, and
+\pkg{modelterms7} builds it that way.
 
-The result is sparse whenever ONE block is, which is the right rule
-because sparsity is a property of the assembled matrix rather than of its
-pieces: a dense fixed block beside a large indicator leaves a matrix that
-is still overwhelmingly zero, and its factorization stays sparse under a
-fill-reducing ordering.
+Binding such a block beside a dense one with \code{cbind()} fails: base
+dispatch reads the sparse block as a vector and reports that the number of
+items to replace is not a multiple of the replacement length, three frames
+from anything a caller wrote. \code{Matrix::cbind2()} is what handles the mixed
+pair.
+
+The result is sparse when \strong{one} block is. Sparsity is a property of the
+assembled matrix and not of its pieces: a dense fixed block beside a large
+indicator leaves a matrix that is still overwhelmingly zero, and its
+factorization stays sparse under a fill-reducing ordering.
+}
+\seealso{
+\code{\link[=design_sparse]{design_sparse()}} for the same question asked of a whole design,
+\code{\link[=statmod_design]{statmod_design()}} for the assembly this serves.
 }
 \keyword{internal}

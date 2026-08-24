@@ -16,12 +16,16 @@ as_sparse(A)
 zero_information(design, total)
 }
 \arguments{
-\item{design}{The design.}
+\item{design}{The design, a list with one entry per distribution
+parameter, each carrying its block as \code{X}.}
 
-\item{total}{The number of stacked coefficients.}
+\item{total}{The number of stacked coefficients across the equations,
+which is the side of the accumulator.}
 }
 \value{
-A logical, or a square matrix of zeros.
+\code{design_sparse()} gives a single logical. \code{zero_information()}
+gives a \verb{total x total} matrix of zeros, a \code{dgCMatrix} when the design
+is sparse and a base matrix otherwise.
 }
 \description{
 \code{design_sparse()} reports whether any equation's block is sparse, and
@@ -29,11 +33,15 @@ A logical, or a square matrix of zeros.
 accumulate the information into.
 }
 \details{
-The information is assembled one \code{crossprod} per parameter pair and
-placed into a square accumulator. With a sparse design each product is
-sparse, and placing it into a dense accumulator signals that the number of
-items to replace is not a multiple of the replacement length -- from
-inside the assembly, naming nothing a caller wrote. The accumulator
-follows the design instead.
+The information is assembled one \code{crossprod} per parameter pair and each
+product is written into a square accumulator. With a sparse design each
+product is sparse, and writing a sparse block into a dense accumulator
+signals that the number of items to replace is not a multiple of the
+replacement length, from inside the assembly and naming nothing a caller
+wrote. The accumulator therefore follows the design.
+}
+\seealso{
+\code{\link[=statmod_information_at]{statmod_information_at()}}, which accumulates into it,
+\code{\link[=zap_nonfinite]{zap_nonfinite()}} for the other place the two storages meet.
 }
 \keyword{internal}

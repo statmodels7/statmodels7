@@ -4,26 +4,37 @@ NULL
 #' Bind a Model's Term Blocks Side by Side
 #'
 #' @description
-#' The assembled design, sparse when any term's block is.
+#' Binds one equation's term blocks side by side into its design, keeping the
+#' result sparse whenever any block is.
 #'
 #' @details
-#' A grouping indicator is sparse by construction -- a row belongs to one
-#' group, so a random effect over \eqn{m} of them has density \eqn{1/m} --
-#' and \pkg{modelterms7} builds it that way. Binding it beside a dense block
-#' with `cbind()` does not work: base dispatch reads the sparse block as
-#' a vector and reports that the number of items to replace is not a multiple
-#' of the replacement length, three frames from anything a caller wrote.
+#' A grouping indicator is sparse by construction. A row belongs to one group,
+#' so a random effect over \eqn{m} groups has density \eqn{1/m}, and
+#' \pkg{modelterms7} builds it that way.
 #'
-#' The result is sparse whenever ONE block is, which is the right rule
-#' because sparsity is a property of the assembled matrix rather than of its
-#' pieces: a dense fixed block beside a large indicator leaves a matrix that
-#' is still overwhelmingly zero, and its factorization stays sparse under a
-#' fill-reducing ordering.
+#' Binding such a block beside a dense one with `cbind()` fails: base
+#' dispatch reads the sparse block as a vector and reports that the number of
+#' items to replace is not a multiple of the replacement length, three frames
+#' from anything a caller wrote. `Matrix::cbind2()` is what handles the mixed
+#' pair.
 #'
-#' @param mats A list of blocks.
-#' @param n The number of observations, for the empty case.
+#' The result is sparse when **one** block is. Sparsity is a property of the
+#' assembled matrix and not of its pieces: a dense fixed block beside a large
+#' indicator leaves a matrix that is still overwhelmingly zero, and its
+#' factorization stays sparse under a fill-reducing ordering.
 #'
-#' @return A matrix, or a \pkg{Matrix} sparse matrix.
+#' @param mats A list of design blocks, all with the same number of rows,
+#'   each dense or sparse. May be empty.
+#' @param n The number of observations, used only when `mats` is empty, where
+#'   there is no block to read a row count from.
+#'
+#' @return An `n x p` matrix with `p` the total width of the blocks: a
+#'   \pkg{Matrix} object when any input is sparse, a base matrix otherwise.
+#'   An `n x 0` base matrix for an empty `mats`, which is what an equation
+#'   carrying only a structural term gives.
+#'
+#' @seealso [design_sparse()] for the same question asked of a whole design,
+#'   [statmod_design()] for the assembly this serves.
 #'
 #' @keywords internal
 bind_blocks <- function(mats, n) {
@@ -41,17 +52,24 @@ bind_blocks <- function(mats, n) {
 #' accumulate the information into.
 #'
 #' @details
-#' The information is assembled one `crossprod` per parameter pair and
-#' placed into a square accumulator. With a sparse design each product is
-#' sparse, and placing it into a dense accumulator signals that the number of
-#' items to replace is not a multiple of the replacement length -- from
-#' inside the assembly, naming nothing a caller wrote. The accumulator
-#' follows the design instead.
+#' The information is assembled one `crossprod` per parameter pair and each
+#' product is written into a square accumulator. With a sparse design each
+#' product is sparse, and writing a sparse block into a dense accumulator
+#' signals that the number of items to replace is not a multiple of the
+#' replacement length, from inside the assembly and naming nothing a caller
+#' wrote. The accumulator therefore follows the design.
 #'
-#' @param design The design.
-#' @param total The number of stacked coefficients.
+#' @param design The design, a list with one entry per distribution
+#'   parameter, each carrying its block as `X`.
+#' @param total The number of stacked coefficients across the equations,
+#'   which is the side of the accumulator.
 #'
-#' @return A logical, or a square matrix of zeros.
+#' @return `design_sparse()` gives a single logical. `zero_information()`
+#'   gives a `total x total` matrix of zeros, a `dgCMatrix` when the design
+#'   is sparse and a base matrix otherwise.
+#'
+#' @seealso [statmod_information_at()], which accumulates into it,
+#'   [zap_nonfinite()] for the other place the two storages meet.
 #'
 #' @keywords internal
 design_sparse <- function(design) {
@@ -75,24 +93,30 @@ as_sparse <- function(A) {
 #' whatever is left, which is what the interpreter is given.
 #'
 #' @details
-#' An offset is a column of the linear predictor whose coefficient is known to
-#' be one, and `y ~ x + offset(log_n)` is how R has always written it.
-#' Without this the term reached `model.matrix` through
-#' [modelterms7::linpar()], where `terms()` marks it in the
-#' `"offset"` attribute and the design EXCLUDES it: the term contributed
-#' no column, no offset and no message, and the model fitted was the one
-#' without it. On a count model over person-years that moved the intercept
-#' from -7.5 to -0.6, which is the difference between a log rate and a log
-#' count.
+#' An offset is a column of the linear predictor whose coefficient is known
+#' to be one, and `y ~ x + offset(log_n)` is how R has always written it.
+#'
+#' Taking it out here is what makes it work at all. Left in, the term reached
+#' `model.matrix` through [modelterms7::linpar()], where `terms()` marks it
+#' in the `"offset"` attribute and the design excludes it: the term
+#' contributed no column, no offset and no message, and the model fitted was
+#' the one without it. On a count model over person-years that moved the
+#' intercept from -7.5 to -0.6, which is the difference between a log rate
+#' and a log count.
 #'
 #' Only a top-level additive term is taken, which is where R recognizes one
-#' too; `stats::offset(x)` is recognized beside `offset(x)`. Several
-#' are summed, as [stats::glm()] sums them.
+#' too, and `stats::offset(x)` is recognized beside `offset(x)`. Several in
+#' one equation are summed, as [stats::glm()] sums them.
 #'
-#' @param eq A one-sided formula.
+#' @param eq A one-sided formula, one equation of the model.
 #'
-#' @return A list with `formula`, the equation with the offsets removed,
-#'   and `offsets`, a list of the expressions taken out.
+#' @return A list of two:
+#'   \describe{
+#'     \item{`formula`}{`eq` with the offset terms removed. `~ 1` where the
+#'       equation held nothing else.}
+#'     \item{`offsets`}{a list of the expressions taken out, unevaluated.
+#'       Empty when there were none.}
+#'   }
 #'
 #' @seealso [statmod_spec()], [eval_offsets()]
 #'
@@ -139,29 +163,31 @@ split_offsets <- function(eq) {
 #' equation itself.
 #'
 #' @details
-#' [split_offsets()] takes the top-level additive terms, which is
-#' where R recognizes an offset. One written inside another term's formula --
-#' `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)`,
-#' `nl(a ~ 0 + ridge(~ g + offset(o)))` -- reaches that term's own
-#' `model.matrix`, where it is dropped exactly as it used to be dropped
-#' at the equation level: measured, the fit ran, the block had the columns of
-#' the model WITHOUT it, and the intercept came back at 1.33 against the
+#' [split_offsets()] takes the top-level additive terms, which is where R
+#' recognizes an offset. One written inside another term's formula, as in
+#' `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)` or
+#' `nl(a ~ 0 + ridge(~ g + offset(o)))`, reaches that term's own
+#' `model.matrix` and is dropped there exactly as it used to be dropped at
+#' the equation level. Measured: the fit ran, the block carried the columns
+#' of the model without it, and the intercept came back at 1.33 against the
 #' -5.01 the offset gives, a factor of 566.
 #'
-#' It is REFUSED rather than routed up, and the reason is that the meaning
-#' differs by where it sits. In a penalized term's formula an offset would be
-#' a contribution to the equation's predictor, which is what writing it at the
-#' equation level already says. In a SUBFORMULA it would be a contribution to
-#' that parameter's own chart, which is a different quantity. Rather than pick
-#' one reading and apply it everywhere, the construct is rejected with the
-#' place it belongs named, which costs a user one edit and cannot silently
-#' fit the wrong model.
+#' Such a term is **refused** and not routed up to the equation, because the
+#' meaning differs by where it sits. In a penalized term's formula an offset
+#' would be a contribution to the equation's predictor, which is what writing
+#' it at the equation level already says. In a subformula it would be a
+#' contribution to that parameter's own chart, a different quantity. Picking
+#' one reading would fit the wrong model in half the cases; the refusal names
+#' the place it belongs and costs a caller one edit.
+#'
+#' The whole expression tree is walked, so a term written later is covered.
 #'
 #' @param eq A one-sided formula, with the equation's own offsets already
-#'   taken out.
-#' @param param The parameter the equation belongs to, for the message.
+#'   taken out by [split_offsets()].
+#' @param param The parameter the equation belongs to, named in the message.
 #'
-#' @return `NULL`, invisibly; an error where one is found.
+#' @return `NULL`, invisibly, when nothing is found. Signals an error naming
+#'   `param` and the offending call otherwise.
 #'
 #' @seealso [split_offsets()]
 #'
@@ -209,20 +235,29 @@ reject_nested_offsets <- function(eq, param) {
 #' The offset per distribution parameter, evaluated in the data.
 #'
 #' @details
-#' The expressions are re-evaluated rather than carried as numbers, which is
-#' what lets an offset survive prediction: [statmod_respec()] calls
-#' this against the new data, where a vector supplied through the
-#' `offsets` argument at fitting time has the wrong length and cannot be
-#' reused.
+#' The expressions are kept and re-evaluated, never carried as numbers, and
+#' that is what lets an offset survive prediction. [statmod_respec()] calls
+#' this against the new data; a vector supplied through [statmod()]'s
+#' `offsets` argument at fitting time has the wrong length for other rows and
+#' cannot be reused. Before this, `predict(fit, newdata =)` returned the
+#' predictor of a model with no offset at all.
 #'
-#' @param formula The model formula, before the offsets are stripped.
-#' @param params The distribution's parameter names.
-#' @param data A data frame.
-#' @param env The environment the formula carried.
-#' @param n The number of observations.
+#' Each expression is evaluated in `data` with `env` behind it, so a symbol
+#' resolves as a column first and as a variable of the caller's environment
+#' second. A result shorter than `n` is recycled, so a single number is a
+#' constant offset.
 #'
-#' @return A named list, one entry per parameter, `NULL` where the
-#'   equation names no offset.
+#' @param formula The model formula, before [split_offsets()] has stripped
+#'   anything.
+#' @param params The distribution's parameter names, in the family's order.
+#' @param data A data frame to evaluate in.
+#' @param env The environment the formula carried, the enclosure of the
+#'   evaluation.
+#' @param n The number of observations, the length to recycle to.
+#'
+#' @return A named list with one entry per element of `params`, each a
+#'   numeric vector of length `n` or `NULL` where that equation names no
+#'   offset.
 #'
 #' @seealso [split_offsets()]
 #'
@@ -267,13 +302,18 @@ eval_offsets <- function(formula, params, data, env, n) {
 #' supplies, per parameter.
 #'
 #' @details
-#' They are SUMMED where both are given, which is what
-#' [stats::glm()] does with a formula offset and an `offset`
-#' argument together.
+#' Where both name an offset for the same parameter the two are **summed**,
+#' which is what [stats::glm()] does with a formula offset and an `offset`
+#' argument together. Where only one does, that one is taken.
 #'
-#' @param a,b Two named lists of offsets, either entry possibly `NULL`.
+#' @param a,b Two named lists of offsets keyed by distribution parameter,
+#'   either list's entries possibly `NULL`. Either list may itself be `NULL`.
 #'
-#' @return A named list.
+#' @return A named list with one entry per parameter named in either input,
+#'   `NULL` where neither supplied one.
+#'
+#' @seealso [eval_offsets()] for the formula's own,
+#'   [statmod()] for the `offsets` argument.
 #'
 #' @keywords internal
 add_offsets <- function(a, b) {
@@ -293,19 +333,20 @@ add_offsets <- function(a, b) {
 #' using the matrix.
 #'
 #' @details
-#' Seven places wrote `S[!is.finite(S)] <- 0`, which is correct on a base
-#' matrix and a trap on a sparse one: the logical index is a DENSE \eqn{p
-#' \times p} matrix, so the storage the accumulator exists to keep is thrown
-#' away at the first consumer. On a sparse matrix only the STORED values can
-#' be non-finite -- a structural zero is finite by construction -- so the same
-#' answer comes from the value slot alone, in \eqn{O(\mathrm{nnz})}.
+#' Seven places wrote `S[!is.finite(S)] <- 0`. That is correct on a base
+#' matrix and a trap on a sparse one: the logical index is a dense
+#' \eqn{p \times p} matrix, so the storage the accumulator exists to keep is
+#' thrown away at the first consumer.
 #'
-#' Written once here rather than seven times, which is the discipline this
-#' package records for a shape of mistake rather than a line of it.
+#' On a sparse matrix only the **stored** values can be non-finite, a
+#' structural zero being finite by construction, so the same answer comes
+#' from the value slot alone in \eqn{O(\mathrm{nnz})}. The two branches are
+#' written once here in place of seven times.
 #'
-#' @param S A penalty's Hessian, sparse or dense.
+#' @param S A penalty's Hessian, a square matrix, sparse or dense.
 #'
-#' @return `S` with its non-finite entries replaced by zero.
+#' @return `S` with its non-finite entries replaced by zero, in the storage
+#'   it arrived in.
 #'
 #' @seealso [statmod_penalty_at()]
 #'
