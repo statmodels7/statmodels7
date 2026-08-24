@@ -10,19 +10,26 @@ reml(hessian = c("observed", "expected"))
 ml(hessian = c("observed", "expected"))
 }
 \arguments{
-\item{hessian}{Which information enters the determinant: \code{"expected"}
-or \code{"observed"}.}
+\item{hessian}{Which information enters the determinant: \code{"observed"} (the
+default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The observed one
+is what the exact gradient needs.}
 }
 \value{
-An \code{\link[=OuterMethod]{OuterMethod()}}.
+An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, with
+\code{hessian} as supplied and the path settings unused.
 }
 \description{
-\code{reml()} integrates every coefficient out of the likelihood before
-maximizing in the hyperparameters; \code{ml()} integrates only the
-penalized directions and profiles the rest.
+Build the object that tells \code{\link[=statmod]{statmod()}} to choose a model's smooth
+hyperparameters by a marginal likelihood: the coefficients are integrated
+out by a Laplace approximation at the penalized mode, and what is left is
+maximized in the hyperparameters. Pass the result as \code{outer_criterion}.
+
+\code{reml()} integrates \strong{every} coefficient out. \code{ml()} integrates only the
+penalized directions and profiles the rest. \code{reml()} is \code{\link[=statmod]{statmod()}}'s
+default.
 }
-\details{
-\strong{The criterion.} At the penalized mode \eqn{\hat\beta(\theta)},
+\section{The criterion}{
+At the penalized mode \eqn{\hat\beta(\theta)},
 \deqn{\log L(\theta) = \ell(\hat\beta) - \rho(\hat\beta;\theta)
   + \frac{q}{2}\log 2\pi - \frac12\log|A'(H+S)A|,}
 with \eqn{H} the information of the log-likelihood, \eqn{S} the penalty's
@@ -33,50 +40,78 @@ exactly minus a log prior density, and for a quadratic penalty that constant
 carries the \eqn{-\frac{r}{2}\log\lambda} and the log pseudo-determinant
 that a marginal criterion needs. Written out, the expression reproduces
 Wood's (2011) REML criterion term for term.
-
-\strong{What each one integrates.} \code{reml()} takes \eqn{A = I}: every
-coefficient is integrated, the unpenalized ones under the flat prior their
-absence of a penalty amounts to. \code{ml()} takes \eqn{A} spanning the
-range space of the penalty, so a coefficient that is unpenalized -- an
-ordinary covariate, or the linear component of a Demmler-Reinsch smooth,
-which its penalty leaves alone -- is profiled rather than integrated. This
-is the same distinction as between REML and ML for a variance component in a
-mixed model, and \code{reml()} is the default for the same reason: profiling
-a fixed effect leaves the estimate of the variance biased downwards.
-
-\strong{Which hyperparameters.} Those of the terms fitted in one system,
-which is to say those whose penalty is twice differentiable. A lasso, a SCAD
-or an MCP has a kink, its coefficients are estimated by a method of their
-own, and a Laplace approximation at a point where the second derivative does
-not exist would be arithmetic without a meaning; those hyperparameters stay
-where \code{hyper} put them.
-
-\strong{The criterion has an exact gradient} where the information is the
-observed one and every penalty under estimation has a Hessian linear in its
-hyperparameters, which covers \code{s()}, \code{te()} and any
-\code{\link[penalties7:quadratic_penalty]{penalties7::quadratic_penalty()}}. It is then supplied to the
-search and \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} becomes the default optimizer;
-otherwise the search compares values. Measured, in evaluations of the
-criterion (each a whole inner fit) against
-\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}: 40 against 32 with one smoothing
-parameter, 40 against 135 with two, 41 against 269 with three, and 12
-against 283 with three and a modelled scale. It does not pay in one
-dimension and pays from two on, a simplex needing a vertex per dimension
-and a quasi-Newton method not. See \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}.
-
-\strong{ML needs a null basis} for every penalty that has one, since that is
-what says which directions are profiled. \code{\link[penalties7:is_proper]{penalties7::is_proper()}}
-answers for a penalty with no null space at all, and
-\code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} for the quadratic and
-structured branches. A penalty that has neither is rejected by name rather
-than integrated over a subspace guessed at.
 }
+
+\section{What each one integrates}{
+\code{reml()} takes \eqn{A = I}: every coefficient is integrated, the
+unpenalized ones under the flat prior their absence of a penalty amounts
+to.
+
+\code{ml()} takes \eqn{A} spanning the range space of the penalty, so an
+unpenalized coefficient is profiled. An ordinary covariate is one; so is
+the linear component of a Demmler-Reinsch smooth, which that smooth's
+penalty leaves alone.
+
+This is the distinction between REML and ML for a variance component in a
+mixed model, and \code{reml()} is the default for the same reason: profiling a
+fixed effect leaves the variance estimate biased downwards.
+}
+
+\section{Which hyperparameters}{
+Those of the terms fitted in one system, meaning those whose penalty is
+twice differentiable. A lasso, a SCAD or an MCP has a kink, its
+coefficients are estimated by a method of their own, and a Laplace
+approximation at a point where the second derivative does not exist would
+be arithmetic with no meaning. Those hyperparameters stay where their term
+left them, and \code{\link[=bic]{bic()}} is what \code{\link[=statmod]{statmod()}} puts to them instead.
+}
+
+\section{The exact gradient}{
+The criterion has one where the information is the observed one and every
+penalty under estimation has a Hessian linear in its hyperparameters,
+which covers \code{\link[modelterms7:s]{modelterms7::s()}}, \code{\link[modelterms7:te]{modelterms7::te()}} and any
+\code{\link[penalties7:quadratic_penalty]{penalties7::quadratic_penalty()}}. It is then supplied to the search and
+\code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} becomes the default optimizer; otherwise the search
+compares values.
+
+Measured in evaluations of the criterion, each a whole inner fit, against
+\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}: 40 against 32 with one smoothing parameter,
+40 against 135 with two, 41 against 269 with three, and 12 against 283
+with three and a modeled scale. It does not pay in one dimension and pays
+from two on, a simplex needing a vertex per dimension and a quasi-Newton
+method not.
+}
+
+\section{ML needs a null basis}{
+For every penalty that has one, since that is what says which directions
+are profiled. \code{\link[penalties7:is_proper]{penalties7::is_proper()}} answers for a penalty with no null
+space at all, and \code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}} for the quadratic and
+structured branches. A penalty offering neither is rejected by name,
+instead of being integrated over a subspace guessed at.
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
-statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-        outer_criterion = reml())
+
+fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+               outer_criterion = reml())
+
+# The smoothing parameter was estimated, and hyper() says by what.
+hyper(fit)
+
+# ML profiles the unpenalized directions instead of integrating them, so
+# it shrinks a little less. The gap is small here because only two of the
+# ten coefficients are unpenalized; it widens with the fixed effects.
+fml <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+               outer_criterion = ml())
+c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
+c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
+
+# The marginal log-likelihood is what these maximize, and it is only
+# available where one of them ran.
+logLik(fit, type = "marginal")
 
 }
 \references{
@@ -85,5 +120,7 @@ likelihood estimation of semiparametric generalized linear models.
 \emph{Journal of the Royal Statistical Society, Series B}, 73(1), 3--36.
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=iwls]{iwls()}}
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} for the prediction-error criteria,
+\code{\link[=statmod]{statmod()}} for where these are passed, \code{\link[=hyper]{hyper()}} for reading back what
+they chose.
 }

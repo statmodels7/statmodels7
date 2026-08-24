@@ -9,16 +9,25 @@ structural_penalized(spec, design)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, whose structural state holds the terms.}
 }
 \value{
-A single logical.
+A single logical. \code{FALSE} for a model with no structural term, and
+for one whose structural term declares no penalty.
 }
 \description{
-\code{TRUE} where some penalty of the model covers the parameters of a
-structural term rather than a block of design columns.
+Reports whether any penalty of the model covers the own parameters of a
+structural term, as opposed to a block of design columns. The deviations
+of a score-driven filter over a panel are the case.
+}
+\details{
+The answer decides which matrix the Laplace determinant is taken over.
+\code{TRUE} sends the criterion to \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}, which spans the
+coefficients \strong{and} the term's free parameters; \code{FALSE} leaves it over
+the coefficients alone.
 }
 \seealso{
-\code{\link[=statmod_marginal_full]{statmod_marginal_full()}}
+\code{\link[=statmod_marginal_full]{statmod_marginal_full()}} for the matrix it selects,
+\code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} for the penalties it looks for.
 }
 \keyword{internal}

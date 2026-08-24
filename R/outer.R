@@ -23,23 +23,35 @@ NULL
 #' How the Hyperparameters Are Estimated
 #'
 #' @description
-#' The criterion [reml()] and [ml()] build: which
-#' subspace of the coefficients is integrated over, and which information
-#' matrix enters the determinant.
+#' The class every outer criterion is an instance of: [reml()], [ml()],
+#' [aic()], [bic()] and [cv()] all return one. It carries which subspace of
+#' the coefficients is integrated over, which information matrix enters the
+#' determinant, and the settings a path or a cross-validation needs.
 #'
-#' @param kind `"reml"`, `"ml"`, `"aic"`, `"bic"` or
-#'   `"cv"`.
-#' @param hessian `"expected"` or `"observed"`.
-#' @param k The price of one degree of freedom, for a prediction-error
-#'   criterion. `NA` where the method resolves it against the sample size.
-#' @param nfolds How many folds cross-validation uses.
-#' @param rule `"min"` or `"1se"`.
-#' @param folds A fold number per observation, or `integer(0)`.
+#' One class serves all five, so a property a given criterion does not read
+#' is present and unused. Use the five constructors, which validate; this raw
+#' one does not.
 #'
-#' @return An object of class `OuterMethod`.
+#' @param kind `"reml"`, `"ml"`, `"aic"`, `"bic"` or `"cv"`. Decides which
+#'   criterion is evaluated and, through [outer_minimize()], whether it is
+#'   made small or large.
+#' @param hessian `"expected"` or `"observed"`. Which information enters the
+#'   Laplace determinant, and whether the exact gradient is available.
+#' @param k The price of one effective degree of freedom, for a
+#'   prediction-error criterion. `NA_real_` for [bic()], which resolves it to
+#'   \eqn{\log n} at fit time, and for the criteria that do not charge per
+#'   degree of freedom.
+#' @param nfolds How many folds [cv()] uses. Read by `"cv"` alone.
+#' @param rule `"min"` or `"1se"`. Read by `"cv"` alone.
+#' @param folds A fold number per observation, or `integer(0)` for folds
+#'   drawn at fit time. Read by `"cv"` alone.
 #'
-#' @seealso [reml()], [ml()], [aic()],
-#'   [cv()], [statmod()]
+#' @return An object of class `OuterMethod` with one property per argument
+#'   above.
+#'
+#' @seealso [reml()] and [ml()] for the marginal criteria, [aic()] and
+#'   [bic()] for the prediction-error ones, [cv()] for cross-validation,
+#'   [statmod()] for where one is passed.
 #'
 #' @examples
 #' reml()
@@ -85,19 +97,23 @@ OuterMethod <- S7::new_class("OuterMethod",
 #' The Properties Every Criterion Carries
 #'
 #' @description
-#' The ones [OuterMethod()] needs whether or not a given criterion
-#' uses them, so that one class serves every criterion.
+#' The defaults for the three properties only [cv()] reads, so that one class
+#' can serve every criterion and each constructor names only what it needs.
 #'
 #' @details
-#' What a PATH does is not among them. How many values it visits, how far
-#' down it reaches and whether a term's own hyperparameters are combined or
-#' swept one at a time all belong to the term, since the same criterion is
-#' put to the smooth hyperparameters of the model as well and those are read
-#' at the mode rather than swept.
+#' What a **path** does is not among them. How many values it visits, how far
+#' down it reaches, and whether a term's own hyperparameters are combined or
+#' swept one at a time all belong to the term. The same criterion object is
+#' put to the model's smooth hyperparameters as well, and those are read at
+#' the mode instead of being swept, so a path setting on the criterion would
+#' be meaningless for most of what it is asked about.
 #'
-#' @return A named list.
+#' @return A named list with `nfolds`, `rule` and `folds`, to be spliced into
+#'   an [OuterMethod()] call.
 #'
-#' @seealso [path_fallbacks()]
+#' @seealso [path_fallbacks()] for the settings a term that declares a kinked
+#'   penalty without offering a grid argument falls back to,
+#'   [modelterms7::term_search()] for where a path's shape is set.
 #'
 #' @keywords internal
 outer_path_defaults <- function() {
@@ -108,12 +124,19 @@ outer_path_defaults <- function() {
 #' Estimate the Hyperparameters by a Marginal Likelihood
 #'
 #' @description
-#' `reml()` integrates every coefficient out of the likelihood before
-#' maximizing in the hyperparameters; `ml()` integrates only the
-#' penalized directions and profiles the rest.
+#' Build the object that tells [statmod()] to choose a model's smooth
+#' hyperparameters by a marginal likelihood: the coefficients are integrated
+#' out by a Laplace approximation at the penalized mode, and what is left is
+#' maximized in the hyperparameters. Pass the result as `outer_criterion`.
+#'
+#' `reml()` integrates **every** coefficient out. `ml()` integrates only the
+#' penalized directions and profiles the rest. `reml()` is [statmod()]'s
+#' default.
 #'
 #' @details
-#' **The criterion.** At the penalized mode \eqn{\hat\beta(\theta)},
+#' # The criterion
+#'
+#' At the penalized mode \eqn{\hat\beta(\theta)},
 #' \deqn{\log L(\theta) = \ell(\hat\beta) - \rho(\hat\beta;\theta)
 #'   + \frac{q}{2}\log 2\pi - \frac12\log|A'(H+S)A|,}
 #' with \eqn{H} the information of the log-likelihood, \eqn{S} the penalty's
@@ -125,61 +148,92 @@ outer_path_defaults <- function() {
 #' that a marginal criterion needs. Written out, the expression reproduces
 #' Wood's (2011) REML criterion term for term.
 #'
-#' **What each one integrates.** `reml()` takes \eqn{A = I}: every
-#' coefficient is integrated, the unpenalized ones under the flat prior their
-#' absence of a penalty amounts to. `ml()` takes \eqn{A} spanning the
-#' range space of the penalty, so a coefficient that is unpenalized -- an
-#' ordinary covariate, or the linear component of a Demmler-Reinsch smooth,
-#' which its penalty leaves alone -- is profiled rather than integrated. This
-#' is the same distinction as between REML and ML for a variance component in a
-#' mixed model, and `reml()` is the default for the same reason: profiling
-#' a fixed effect leaves the estimate of the variance biased downwards.
+#' # What each one integrates
 #'
-#' **Which hyperparameters.** Those of the terms fitted in one system,
-#' which is to say those whose penalty is twice differentiable. A lasso, a SCAD
-#' or an MCP has a kink, its coefficients are estimated by a method of their
-#' own, and a Laplace approximation at a point where the second derivative does
-#' not exist would be arithmetic without a meaning; those hyperparameters stay
-#' where `hyper` put them.
+#' `reml()` takes \eqn{A = I}: every coefficient is integrated, the
+#' unpenalized ones under the flat prior their absence of a penalty amounts
+#' to.
 #'
-#' **The criterion has an exact gradient** where the information is the
-#' observed one and every penalty under estimation has a Hessian linear in its
-#' hyperparameters, which covers `s()`, `te()` and any
-#' [penalties7::quadratic_penalty()]. It is then supplied to the
-#' search and [optimizers7::lbfgs()] becomes the default optimizer;
-#' otherwise the search compares values. Measured, in evaluations of the
-#' criterion (each a whole inner fit) against
-#' [optimizers7::nelder_mead()]: 40 against 32 with one smoothing
-#' parameter, 40 against 135 with two, 41 against 269 with three, and 12
-#' against 283 with three and a modelled scale. It does not pay in one
-#' dimension and pays from two on, a simplex needing a vertex per dimension
-#' and a quasi-Newton method not. See [statmod_marginal_grad()].
+#' `ml()` takes \eqn{A} spanning the range space of the penalty, so an
+#' unpenalized coefficient is profiled. An ordinary covariate is one; so is
+#' the linear component of a Demmler-Reinsch smooth, which that smooth's
+#' penalty leaves alone.
 #'
-#' **ML needs a null basis** for every penalty that has one, since that is
-#' what says which directions are profiled. [penalties7::is_proper()]
-#' answers for a penalty with no null space at all, and
-#' [penalties7::penalty_null_basis()] for the quadratic and
-#' structured branches. A penalty that has neither is rejected by name rather
-#' than integrated over a subspace guessed at.
+#' This is the distinction between REML and ML for a variance component in a
+#' mixed model, and `reml()` is the default for the same reason: profiling a
+#' fixed effect leaves the variance estimate biased downwards.
 #'
-#' @param hessian Which information enters the determinant: `"expected"`
-#'   or `"observed"`.
+#' # Which hyperparameters
 #'
-#' @return An [OuterMethod()].
+#' Those of the terms fitted in one system, meaning those whose penalty is
+#' twice differentiable. A lasso, a SCAD or an MCP has a kink, its
+#' coefficients are estimated by a method of their own, and a Laplace
+#' approximation at a point where the second derivative does not exist would
+#' be arithmetic with no meaning. Those hyperparameters stay where their term
+#' left them, and [bic()] is what [statmod()] puts to them instead.
+#'
+#' # The exact gradient
+#'
+#' The criterion has one where the information is the observed one and every
+#' penalty under estimation has a Hessian linear in its hyperparameters,
+#' which covers [modelterms7::s()], [modelterms7::te()] and any
+#' [penalties7::quadratic_penalty()]. It is then supplied to the search and
+#' [optimizers7::lbfgs()] becomes the default optimizer; otherwise the search
+#' compares values.
+#'
+#' Measured in evaluations of the criterion, each a whole inner fit, against
+#' [optimizers7::nelder_mead()]: 40 against 32 with one smoothing parameter,
+#' 40 against 135 with two, 41 against 269 with three, and 12 against 283
+#' with three and a modeled scale. It does not pay in one dimension and pays
+#' from two on, a simplex needing a vertex per dimension and a quasi-Newton
+#' method not.
+#'
+#' # ML needs a null basis
+#'
+#' For every penalty that has one, since that is what says which directions
+#' are profiled. [penalties7::is_proper()] answers for a penalty with no null
+#' space at all, and [penalties7::penalty_null_basis()] for the quadratic and
+#' structured branches. A penalty offering neither is rejected by name,
+#' instead of being integrated over a subspace guessed at.
+#'
+#' @param hessian Which information enters the determinant: `"observed"` (the
+#'   default) or `"expected"`. Matched with [match.arg()]. The observed one
+#'   is what the exact gradient needs.
+#'
+#' @return An [OuterMethod()] object of kind `"reml"` or `"ml"`, with
+#'   `hessian` as supplied and the path settings unused.
 #'
 #' @references
 #' Wood, S. N. (2011). Fast stable restricted maximum likelihood and marginal
 #' likelihood estimation of semiparametric generalized linear models.
 #' *Journal of the Royal Statistical Society, Series B*, 73(1), 3--36.
 #'
-#' @seealso [statmod()], [iwls()]
+#' @seealso [aic()], [bic()] and [cv()] for the prediction-error criteria,
+#'   [statmod()] for where these are passed, [hyper()] for reading back what
+#'   they chose.
 #'
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(200, -2, 2))
 #' dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
-#' statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-#'         outer_criterion = reml())
+#'
+#' fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+#'                outer_criterion = reml())
+#'
+#' # The smoothing parameter was estimated, and hyper() says by what.
+#' hyper(fit)
+#'
+#' # ML profiles the unpenalized directions instead of integrating them, so
+#' # it shrinks a little less. The gap is small here because only two of the
+#' # ten coefficients are unpenalized; it widens with the fixed effects.
+#' fml <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+#'                outer_criterion = ml())
+#' c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
+#' c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
+#'
+#' # The marginal log-likelihood is what these maximize, and it is only
+#' # available where one of them ran.
+#' logLik(fit, type = "marginal")
 #'
 #' @export
 reml <- function(hessian = c("observed", "expected")) {
@@ -197,11 +251,14 @@ ml <- function(hessian = c("observed", "expected")) {
 
 #' @title Print an Outer Method
 #' @name print.OuterMethod
-#' @description Which criterion it is and which information it uses.
+#' @description
+#' Prints one line naming the criterion and the information it is built on,
+#' as `<REML>  observed information`, and for [cv()] the number of folds and
+#' the selection rule.
 #' @param x An [OuterMethod()].
 #' @param ... Unused.
-#' @return `x`, invisibly.
-#' @seealso [reml()]
+#' @return `x`, invisibly, as a print method should.
+#' @seealso [reml()], [aic()] and [cv()] for the objects printed.
 #' @keywords internal
 print.OuterMethod <- function(x, ...) {
   if (identical(x@kind, "cv")) {
@@ -222,16 +279,29 @@ S7::method(print, OuterMethod) <- print.OuterMethod
 #' system, with the link that carries it onto the whole line.
 #'
 #' @details
-#' A term whose penalty has a kink is left out. Its coefficients are estimated
-#' by a proximal method with everything else held fixed, and the criterion is a
-#' Laplace approximation, which asks for a second derivative that does not
-#' exist at a kink.
+#' A term whose penalty has a kink is left out. Its coefficients are
+#' estimated by a coordinate descent with everything else held fixed, and the
+#' criterion is a Laplace approximation, which asks for a second derivative
+#' that does not exist at a kink. Those hyperparameters go to a path instead.
+#'
+#' A hyperparameter its own term holds is left out too, whatever kind of
+#' penalty it belongs to: [statmod_held()] is what says so.
+#'
+#' The result is the index the whole outer search runs on. Its row count is
+#' the dimension of that search, and zero rows is what makes the criterion
+#' not run at all.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param blocks The block split, as [statmod_blocks()] returns it.
 #'
-#' @return A data frame with `parameter`, `term` and `name`, and
-#'   a list column-free `link` carried as an attribute list.
+#' @return A data frame with one row per estimated hyperparameter and three
+#'   character columns, `parameter`, `term` and `name`. The links that carry
+#'   each onto the whole line ride on the `"link"` attribute, a list the same
+#'   length as the frame has rows, since a list column would not survive the
+#'   subsetting the search does.
+#'
+#' @seealso [hyper_to_eta()] for the map those links define,
+#'   [statmod_held()] for what is excluded.
 #'
 #' @keywords internal
 outer_hyper_index <- function(spec, blocks) {
@@ -268,15 +338,28 @@ outer_hyper_index <- function(spec, blocks) {
 #' line through their links; `eta_to_hyper()` puts a free vector back.
 #'
 #' @details
-#' The outer search runs on the free scale for the reason every other search in
-#' the toolkit does: a smoothing parameter is positive, and an optimizer that
-#' does not know that will step outside its domain.
+#' The outer search runs on the free scale for the reason every other search
+#' in the toolkit does: a smoothing parameter is positive, and an optimizer
+#' that does not know it will step outside the domain. Each hyperparameter's
+#' own link comes from the `"link"` attribute [outer_hyper_index()] carries.
 #'
-#' @param hyper The hyperparameter structure.
-#' @param idx The index, as [outer_hyper_index()] returns it.
-#' @param eta A free vector.
+#' The two are inverses over the estimated hyperparameters:
+#' `eta_to_hyper(hyper_to_eta(h, idx), idx, h)` returns `h`. The
+#' hyperparameters `idx` does not name are untouched by both.
 #'
-#' @return A numeric vector, or the hyperparameter structure.
+#' @param hyper The hyperparameter structure, keyed by distribution parameter
+#'   and then by term.
+#' @param idx The index, as [outer_hyper_index()] returns it, whose rows say
+#'   which hyperparameters are on the search and whose `"link"` attribute
+#'   says how each is carried.
+#' @param eta A free vector, as long as `idx` has rows.
+#'
+#' @return `hyper_to_eta()` gives an unnamed numeric vector with one entry
+#'   per row of `idx`. `eta_to_hyper()` gives the hyperparameter structure,
+#'   with the estimated entries replaced and every other one as it was.
+#'
+#' @seealso [outer_hyper_index()] for the index and its links,
+#'   [outer_fit()] for the search that runs on this scale.
 #'
 #' @keywords internal
 hyper_to_eta <- function(hyper, idx) {
@@ -307,18 +390,25 @@ eta_to_hyper <- function(eta, idx, hyper) {
 #'
 #' @details
 #' The total penalty is block diagonal over the terms, each owning its own
-#' columns, so its null space is the direct sum of the unpenalized columns and
-#' each penalty's own null space. It is assembled that way and never read off
-#' the eigenvalues of the assembled matrix, which measure the arithmetic rather
-#' than the family: with two smoothing parameters ten orders of magnitude
-#' apart, an eigenvalue count of a sum falls while the null space does not
-#' move.
+#' columns, so its null space is the direct sum of the unpenalized columns
+#' and each penalty's own null space. The basis is assembled that way.
+#'
+#' It is never read off the eigenvalues of the assembled matrix. Such a count
+#' measures the arithmetic and not the family: with two smoothing parameters
+#' ten orders of magnitude apart the small contributions sink below any
+#' tolerance and the count falls, while the null space itself does not move.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param kind `"reml"` or `"ml"`.
 #'
-#' @return `NULL`, or a matrix with one column per integrated direction.
+#' @return `NULL` for `"reml"`, which integrates every direction and needs no
+#'   basis. For `"ml"`, a `p x r` matrix with orthonormal columns spanning
+#'   the penalty's range space, `p` the total coefficient count and `r` its
+#'   rank.
+#'
+#' @seealso [range_basis()] for one penalty's contribution,
+#'   [reml()] and [ml()] for the distinction this implements.
 #'
 #' @keywords internal
 integrated_basis <- function(spec, design, kind) {
@@ -356,15 +446,29 @@ integrated_basis <- function(spec, design, kind) {
 #' An Orthonormal Basis of a Penalty's Range Space
 #'
 #' @description
-#' The directions a penalty constrains, which are the ones [ml()]
-#' integrates over.
+#' Returns an orthonormal basis of the directions a penalty constrains, which
+#' are the ones [ml()] integrates over and [reml()] would integrate anyway.
 #'
-#' @param pen A \pkg{penalties7} penalty.
+#' @details
+#' A proper penalty constrains every direction, so the basis is the identity
+#' and [penalties7::is_proper()] is all that has to be asked. A penalty with
+#' a null space supplies it through
+#' [penalties7::penalty_null_basis()], and the range basis is the orthogonal
+#' complement.
+#'
+#' A penalty answering neither question is **rejected by name**. Integrating
+#' over a subspace guessed at would give a criterion that looks like a
+#' number and is not one.
+#'
+#' @param pen A \pkg{penalties7} penalty object.
 #' @param k The number of coefficients in the term's block.
-#' @param p The distribution parameter, for the message.
-#' @param nm The term's name, for the message.
+#' @param p The distribution parameter, named in the error message.
+#' @param nm The term's name, named in the error message.
 #'
-#' @return A `k` by `r` matrix.
+#' @return A `k x r` matrix with orthonormal columns, `r` being the penalty's
+#'   rank. The `k x k` identity for a proper penalty.
+#'
+#' @seealso [integrated_basis()], which assembles these blockwise.
 #'
 #' @keywords internal
 penalty_range_basis <- function(pen, k, p, nm) {
@@ -389,15 +493,24 @@ penalty_range_basis <- function(pen, k, p, nm) {
 #' Does a Structural Term Carry a Penalty of Its Own?
 #'
 #' @description
-#' `TRUE` where some penalty of the model covers the parameters of a
-#' structural term rather than a block of design columns.
+#' Reports whether any penalty of the model covers the own parameters of a
+#' structural term, as opposed to a block of design columns. The deviations
+#' of a score-driven filter over a panel are the case.
+#'
+#' @details
+#' The answer decides which matrix the Laplace determinant is taken over.
+#' `TRUE` sends the criterion to [statmod_marginal_full()], which spans the
+#' coefficients **and** the term's free parameters; `FALSE` leaves it over
+#' the coefficients alone.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param design The design.
+#' @param design The design, whose structural state holds the terms.
 #'
-#' @return A single logical.
+#' @return A single logical. `FALSE` for a model with no structural term, and
+#'   for one whose structural term declares no penalty.
 #'
-#' @seealso [statmod_marginal_full()]
+#' @seealso [statmod_marginal_full()] for the matrix it selects,
+#'   [statmod_structural_penalty()] for the penalties it looks for.
 #'
 #' @keywords internal
 structural_penalized <- function(spec, design) {
@@ -416,36 +529,49 @@ structural_penalized <- function(spec, design) {
 #' design columns.
 #'
 #' @details
+#' # Why the determinant has to span them
+#'
 #' A marginal criterion integrates the quantities its penalty shrinks. Where
-#' that penalty is a term's own -- the deviations of a panel -- those
-#' quantities are not coefficients, so the determinant has to span them too:
-#' taken over the coefficients alone it does not depend on the hyperparameter
-#' at all, and the criterion is the penalized likelihood, whose maximum in a
-#' shrinkage parameter is at no shrinkage.
+#' the penalty is a structural term's own, as with the deviations of a panel,
+#' those quantities are not coefficients.
 #'
-#' Both pieces exist already. [statmod_full_information()] spans the
-#' coefficients followed by the term's free parameters, which is the order the
-#' joint fit uses, and [statmod_structural_penalty()] gives the
-#' penalty's Hessian in those same parameters. The information here is the
-#' OBSERVED one whatever the method asks for: the expected information over a
-#' filter's own parameters is not one of the quantities the toolkit carries,
-#' the recursion's state entering the expectation.
+#' Taken over the coefficients alone the determinant then does not depend on
+#' the hyperparameter at all, and the criterion reduces to the penalized
+#' likelihood, whose maximum in a shrinkage parameter is at no shrinkage. It
+#' does not merely lose accuracy: it answers a different question.
 #'
-#' For [ml()] the tail is integrated over the penalized
-#' coordinates alone, through the penalty's own range basis, so a parameter
-#' the penalty does not cover -- a population value -- is profiled rather than
-#' integrated, exactly as an unpenalized coefficient is.
+#' # Both pieces already exist
+#'
+#' [statmod_full_information()] spans the coefficients followed by the term's
+#' free parameters, which is the order the joint fit uses, and
+#' [statmod_structural_penalty()] gives the penalty's Hessian in those same
+#' parameters.
+#'
+#' The information here is the **observed** one whatever the method asks for.
+#' The expected information over a filter's own parameters is not a quantity
+#' the toolkit carries, the recursion's state entering the expectation.
+#'
+#' # Under ML
+#'
+#' The tail is integrated over the penalized coordinates alone, through the
+#' penalty's own range basis, so a parameter the penalty does not cover, such
+#' as a population value, is profiled instead of integrated. That is what
+#' happens to an unpenalized coefficient too.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients, at the penalized mode.
 #' @param hyper The hyperparameters.
-#' @param basis The integrated subspace over the coefficients, or `NULL`
-#'   for [reml()].
+#' @param basis The integrated subspace over the coefficients, as
+#'   [integrated_basis()] returns it, or `NULL` for [reml()].
 #'
-#' @return A square matrix, or `NULL` where the term could not be run.
+#' @return A square symmetric matrix spanning the integrated coefficients
+#'   followed by the integrated structural parameters. `NULL` where the
+#'   structural term could not be run at the given point, which a caller
+#'   reads as an unusable hyperparameter.
 #'
-#' @seealso [statmod_marginal()]
+#' @seealso [statmod_marginal()], the caller,
+#'   [has_structural_penalty()] for the predicate that selects this route.
 #'
 #' @keywords internal
 statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
@@ -485,15 +611,25 @@ statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
 #' Which of a Structural Term's Free Parameters a Penalty Covers
 #'
 #' @description
-#' Positions among the term's free parameters that some penalty of the model
-#' shrinks, which are the directions [ml()] integrates over.
+#' Returns the positions, among a structural term's free parameters, that
+#' some penalty of the model shrinks. Those are the directions [ml()]
+#' integrates over; the rest are profiled.
+#'
+#' @details
+#' A term declares its penalties through `modelterms7::term_penalties()`,
+#' each entry naming a subset of the term's own parameters. This collects
+#' those subsets and maps them onto positions in `free`.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param key The term's name.
-#' @param free The term's free parameters, in order.
+#' @param key The term's key in the specification, its call as written.
+#' @param free The term's free parameter names, in the order the term holds
+#'   them.
 #'
-#' @return An integer vector.
+#' @return An integer vector of positions into `free`, sorted and without
+#'   repeats. Empty where no penalty covers the term.
+#'
+#' @seealso [statmod_marginal_full()], the caller.
 #'
 #' @keywords internal
 structural_range_cols <- function(spec, design, key, free) {

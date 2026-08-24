@@ -12,12 +12,14 @@
 \item{...}{Unused.}
 }
 \value{
-\code{x}, invisibly.
+\code{x}, invisibly, as a print method should.
 }
 \description{
-Which criterion it is and which information it uses.
+Prints one line naming the criterion and the information it is built on,
+as \verb{<REML>  observed information}, and for \code{\link[=cv]{cv()}} the number of folds and
+the selection rule.
 }
 \seealso{
-\code{\link[=reml]{reml()}}
+\code{\link[=reml]{reml()}}, \code{\link[=aic]{aic()}} and \code{\link[=cv]{cv()}} for the objects printed.
 }
 \keyword{internal}

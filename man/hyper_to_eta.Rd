@@ -10,22 +10,36 @@ hyper_to_eta(hyper, idx)
 eta_to_hyper(eta, idx, hyper)
 }
 \arguments{
-\item{hyper}{The hyperparameter structure.}
+\item{hyper}{The hyperparameter structure, keyed by distribution parameter
+and then by term.}
 
-\item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it.}
+\item{idx}{The index, as \code{\link[=outer_hyper_index]{outer_hyper_index()}} returns it, whose rows say
+which hyperparameters are on the search and whose \code{"link"} attribute
+says how each is carried.}
 
-\item{eta}{A free vector.}
+\item{eta}{A free vector, as long as \code{idx} has rows.}
 }
 \value{
-A numeric vector, or the hyperparameter structure.
+\code{hyper_to_eta()} gives an unnamed numeric vector with one entry
+per row of \code{idx}. \code{eta_to_hyper()} gives the hyperparameter structure,
+with the estimated entries replaced and every other one as it was.
 }
 \description{
 \code{hyper_to_eta()} carries the estimated hyperparameters onto the whole
 line through their links; \code{eta_to_hyper()} puts a free vector back.
 }
 \details{
-The outer search runs on the free scale for the reason every other search in
-the toolkit does: a smoothing parameter is positive, and an optimizer that
-does not know that will step outside its domain.
+The outer search runs on the free scale for the reason every other search
+in the toolkit does: a smoothing parameter is positive, and an optimizer
+that does not know it will step outside the domain. Each hyperparameter's
+own link comes from the \code{"link"} attribute \code{\link[=outer_hyper_index]{outer_hyper_index()}} carries.
+
+The two are inverses over the estimated hyperparameters:
+\code{eta_to_hyper(hyper_to_eta(h, idx), idx, h)} returns \code{h}. The
+hyperparameters \code{idx} does not name are untouched by both.
+}
+\seealso{
+\code{\link[=outer_hyper_index]{outer_hyper_index()}} for the index and its links,
+\code{\link[=outer_fit]{outer_fit()}} for the search that runs on this scale.
 }
 \keyword{internal}

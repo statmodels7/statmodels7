@@ -14,7 +14,10 @@ integrated_basis(spec, design, kind)
 \item{kind}{\code{"reml"} or \code{"ml"}.}
 }
 \value{
-\code{NULL}, or a matrix with one column per integrated direction.
+\code{NULL} for \code{"reml"}, which integrates every direction and needs no
+basis. For \code{"ml"}, a \verb{p x r} matrix with orthonormal columns spanning
+the penalty's range space, \code{p} the total coefficient count and \code{r} its
+rank.
 }
 \description{
 \code{NULL} for REML, which integrates everything, and an orthonormal basis
@@ -22,11 +25,16 @@ of the penalty's range space for ML.
 }
 \details{
 The total penalty is block diagonal over the terms, each owning its own
-columns, so its null space is the direct sum of the unpenalized columns and
-each penalty's own null space. It is assembled that way and never read off
-the eigenvalues of the assembled matrix, which measure the arithmetic rather
-than the family: with two smoothing parameters ten orders of magnitude
-apart, an eigenvalue count of a sum falls while the null space does not
-move.
+columns, so its null space is the direct sum of the unpenalized columns
+and each penalty's own null space. The basis is assembled that way.
+
+It is never read off the eigenvalues of the assembled matrix. Such a count
+measures the arithmetic and not the family: with two smoothing parameters
+ten orders of magnitude apart the small contributions sink below any
+tolerance and the count falls, while the null space itself does not move.
+}
+\seealso{
+\code{\link[=range_basis]{range_basis()}} for one penalty's contribution,
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the distinction this implements.
 }
 \keyword{internal}

@@ -15,27 +15,38 @@ OuterMethod(
 )
 }
 \arguments{
-\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or
-\code{"cv"}.}
+\item{kind}{\code{"reml"}, \code{"ml"}, \code{"aic"}, \code{"bic"} or \code{"cv"}. Decides which
+criterion is evaluated and, through \code{\link[=outer_minimize]{outer_minimize()}}, whether it is
+made small or large.}
 
-\item{hessian}{\code{"expected"} or \code{"observed"}.}
+\item{hessian}{\code{"expected"} or \code{"observed"}. Which information enters the
+Laplace determinant, and whether the exact gradient is available.}
 
-\item{k}{The price of one degree of freedom, for a prediction-error
-criterion. \code{NA} where the method resolves it against the sample size.}
+\item{k}{The price of one effective degree of freedom, for a
+prediction-error criterion. \code{NA_real_} for \code{\link[=bic]{bic()}}, which resolves it to
+\eqn{\log n} at fit time, and for the criteria that do not charge per
+degree of freedom.}
 
-\item{nfolds}{How many folds cross-validation uses.}
+\item{nfolds}{How many folds \code{\link[=cv]{cv()}} uses. Read by \code{"cv"} alone.}
 
-\item{rule}{\code{"min"} or \code{"1se"}.}
+\item{rule}{\code{"min"} or \code{"1se"}. Read by \code{"cv"} alone.}
 
-\item{folds}{A fold number per observation, or \code{integer(0)}.}
+\item{folds}{A fold number per observation, or \code{integer(0)} for folds
+drawn at fit time. Read by \code{"cv"} alone.}
 }
 \value{
-An object of class \code{OuterMethod}.
+An object of class \code{OuterMethod} with one property per argument
+above.
 }
 \description{
-The criterion \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} build: which
-subspace of the coefficients is integrated over, and which information
-matrix enters the determinant.
+The class every outer criterion is an instance of: \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}},
+\code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}} all return one. It carries which subspace of
+the coefficients is integrated over, which information matrix enters the
+determinant, and the settings a path or a cross-validation needs.
+
+One class serves all five, so a property a given criterion does not read
+is present and unused. Use the five constructors, which validate; this raw
+one does not.
 }
 \examples{
 reml()
@@ -45,7 +56,8 @@ cv(nfolds = 5)
 
 }
 \seealso{
-\code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}},
-\code{\link[=cv]{cv()}}, \code{\link[=statmod]{statmod()}}
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the marginal criteria, \code{\link[=aic]{aic()}} and
+\code{\link[=bic]{bic()}} for the prediction-error ones, \code{\link[=cv]{cv()}} for cross-validation,
+\code{\link[=statmod]{statmod()}} for where one is passed.
 }
 \keyword{internal}

@@ -12,17 +12,31 @@ outer_hyper_index(spec, blocks)
 \item{blocks}{The block split, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns it.}
 }
 \value{
-A data frame with \code{parameter}, \code{term} and \code{name}, and
-a list column-free \code{link} carried as an attribute list.
+A data frame with one row per estimated hyperparameter and three
+character columns, \code{parameter}, \code{term} and \code{name}. The links that carry
+each onto the whole line ride on the \code{"link"} attribute, a list the same
+length as the frame has rows, since a list column would not survive the
+subsetting the search does.
 }
 \description{
 One row per hyperparameter of a penalized term that is fitted in the joint
 system, with the link that carries it onto the whole line.
 }
 \details{
-A term whose penalty has a kink is left out. Its coefficients are estimated
-by a proximal method with everything else held fixed, and the criterion is a
-Laplace approximation, which asks for a second derivative that does not
-exist at a kink.
+A term whose penalty has a kink is left out. Its coefficients are
+estimated by a coordinate descent with everything else held fixed, and the
+criterion is a Laplace approximation, which asks for a second derivative
+that does not exist at a kink. Those hyperparameters go to a path instead.
+
+A hyperparameter its own term holds is left out too, whatever kind of
+penalty it belongs to: \code{\link[=statmod_held]{statmod_held()}} is what says so.
+
+The result is the index the whole outer search runs on. Its row count is
+the dimension of that search, and zero rows is what makes the criterion
+not run at all.
+}
+\seealso{
+\code{\link[=hyper_to_eta]{hyper_to_eta()}} for the map those links define,
+\code{\link[=statmod_held]{statmod_held()}} for what is excluded.
 }
 \keyword{internal}

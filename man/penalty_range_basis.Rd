@@ -7,19 +7,34 @@
 penalty_range_basis(pen, k, p, nm)
 }
 \arguments{
-\item{pen}{A \pkg{penalties7} penalty.}
+\item{pen}{A \pkg{penalties7} penalty object.}
 
 \item{k}{The number of coefficients in the term's block.}
 
-\item{p}{The distribution parameter, for the message.}
+\item{p}{The distribution parameter, named in the error message.}
 
-\item{nm}{The term's name, for the message.}
+\item{nm}{The term's name, named in the error message.}
 }
 \value{
-A \code{k} by \code{r} matrix.
+A \verb{k x r} matrix with orthonormal columns, \code{r} being the penalty's
+rank. The \verb{k x k} identity for a proper penalty.
 }
 \description{
-The directions a penalty constrains, which are the ones \code{\link[=ml]{ml()}}
-integrates over.
+Returns an orthonormal basis of the directions a penalty constrains, which
+are the ones \code{\link[=ml]{ml()}} integrates over and \code{\link[=reml]{reml()}} would integrate anyway.
+}
+\details{
+A proper penalty constrains every direction, so the basis is the identity
+and \code{\link[penalties7:is_proper]{penalties7::is_proper()}} is all that has to be asked. A penalty with
+a null space supplies it through
+\code{\link[penalties7:penalty_matrix]{penalties7::penalty_null_basis()}}, and the range basis is the orthogonal
+complement.
+
+A penalty answering neither question is \strong{rejected by name}. Integrating
+over a subspace guessed at would give a criterion that looks like a
+number and is not one.
+}
+\seealso{
+\code{\link[=integrated_basis]{integrated_basis()}}, which assembles these blockwise.
 }
 \keyword{internal}
