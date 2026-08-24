@@ -7,19 +7,25 @@
 outer_minimize(method)
 }
 \arguments{
-\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}, as \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or
+\code{\link[=cv]{cv()}} returns it. Only its \code{kind} is read.}
 }
 \value{
 A single logical.
 }
 \description{
-\code{TRUE} for a prediction-error criterion, \code{FALSE} for a marginal
-likelihood, which is maximized.
+Reports whether a criterion is to be made small: \code{TRUE} for \code{\link[=aic]{aic()}},
+\code{\link[=bic]{bic()}} and \code{\link[=cv]{cv()}}, which estimate prediction error, and \code{FALSE} for
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}}, which are log-likelihoods and are maximized.
 }
 \details{
-The search always minimizes; this is what says whether the criterion goes in
-as it is or with its sign turned. It is asked of the method rather than
-written into the search, so a criterion added later declares its own
-orientation.
+The outer search always minimizes, so this decides whether the criterion
+goes in as it stands or with its sign turned. Asking the method, rather
+than writing the list of kinds into the search, means a criterion added
+later declares its own orientation in one place.
+}
+\seealso{
+\code{\link[=outer_k]{outer_k()}} for the other property of a criterion the search
+reads, \code{\link[=aic]{aic()}} for the criteria this answers \code{TRUE} for.
 }
 \keyword{internal}

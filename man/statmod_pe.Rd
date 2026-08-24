@@ -17,28 +17,50 @@ statmod_pe(
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design.}
+\item{design}{The design, refreshed at \code{coef} if any term needs it.}
 
-\item{coef}{The coefficients.}
+\item{coef}{A named list of coefficient vectors, one per distribution
+parameter.}
 
-\item{hyper}{The hyperparameters.}
+\item{hyper}{The hyperparameters, per penalized term.}
 
-\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}} of kind \code{"aic"} or \code{"bic"}, read for
+\code{hessian} and for \eqn{\kappa}.}
 
-\item{approx}{The approximation for the expected information.}
+\item{approx}{How the expected information is approximated for a family
+with no closed form. Read only when \code{method@hessian} is \code{"expected"}.}
 
 \item{active}{Which coefficients are away from a kink, as
-\code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} where no
-penalty has one.}
+\code{\link[=statmod_active]{statmod_active()}} reports them, or \code{NULL} where no penalty has one.}
 }
 \value{
-A list with \code{value}, \code{loglik}, \code{penalty} and
-\code{edf}, or \code{NULL} where the information is not invertible.
+A list of four, or \code{NULL} when the penalized information has no
+Cholesky factor:
+\describe{
+\item{\code{value}}{the criterion, \eqn{-2\ell + \kappa\tau}.}
+\item{\code{loglik}}{the weighted log-likelihood at \code{coef}.}
+\item{\code{penalty}}{the penalties' total value there, reported and not
+used in \code{value}.}
+\item{\code{edf}}{the trace \eqn{\tau}.}
+}
 }
 \description{
-\eqn{-2\ell + \kappa\tau} at the penalized mode.
+Evaluates \eqn{-2\ell + \kappa\tau} at one set of coefficients and
+hyperparameters. The coefficients are taken as given and no fitting
+happens here, so a caller who wants the criterion at the penalized mode
+has to pass the mode.
+}
+\details{
+The pieces are assembled once each: the weighted log-likelihood, the
+penalized information \eqn{H + S} and the information \eqn{H} alone, then
+\code{\link[=outer_tau]{outer_tau()}} for the trace and \code{\link[=outer_k]{outer_k()}} for \eqn{\kappa}.
+
+The penalty's own value is reported alongside but does not enter the
+criterion. A prediction-error criterion prices the fit's complexity
+through \eqn{\tau}, not through the size of the penalty.
 }
 \seealso{
-\code{\link[=aic]{aic()}}
+\code{\link[=aic]{aic()}} for the criterion, \code{\link[=outer_tau]{outer_tau()}} for the trace,
+\code{\link[=statmod_marginal]{statmod_marginal()}} for the marginal criteria's counterpart.
 }
 \keyword{internal}

@@ -7,15 +7,28 @@
 outer_k(method, n)
 }
 \arguments{
-\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
+\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}. Its \code{kind} and \code{k} are read.}
 
-\item{n}{The number of observations.}
+\item{n}{The number of observations, a single positive number.}
 }
 \value{
-A single number.
+A single number: \eqn{\log n} for \code{\link[=bic]{bic()}}, and \code{method@k} for
+anything else, which is \code{NA_real_} for \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}} and \code{\link[=cv]{cv()}},
+none of which charges per degree of freedom.
 }
 \description{
-\eqn{\kappa}, resolved against the sample size where the method left it
-open.
+Returns \eqn{\kappa}, the price a prediction-error criterion charges for
+one effective degree of freedom, resolved against the sample size where
+the method left it open. \code{\link[=bic]{bic()}} stores \code{NA} and gets \eqn{\log n} here;
+every other criterion returns the \code{k} it was constructed with.
+}
+\details{
+The resolution happens at fit time and not at construction because
+\code{\link[=bic]{bic()}} takes no data and cannot know \eqn{n}. A criterion object is a
+specification and is reusable across models of different sizes.
+}
+\seealso{
+\code{\link[=aic]{aic()}} for where \code{k} is set, \code{\link[=outer_minimize]{outer_minimize()}} for the other
+property read at the same point.
 }
 \keyword{internal}

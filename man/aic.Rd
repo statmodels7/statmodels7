@@ -10,71 +10,124 @@ aic(k = 2, hessian = c("observed", "expected"))
 bic(hessian = c("observed", "expected"))
 }
 \arguments{
-\item{k}{The price of one degree of freedom. Defaults to 2; \code{bic()}
-uses \eqn{\log n}, resolved when the model is fitted.}
+\item{k}{The price of one degree of freedom, a single non-negative finite
+number. Defaults to 2, which is Akaike's. \code{k = log(n)} by hand is \code{bic()}.
+Anything else is an error. \code{bic()} does not take it: its \eqn{\kappa} is
+\code{NA} on the object and resolved to \eqn{\log n} when the model is fitted,
+the sample size being unknown until then.}
 
-\item{hessian}{Which information is used, \code{"expected"} or
-\code{"observed"}. The exact derivatives need the observed one.}
+\item{hessian}{Which information the criterion is built on, \code{"observed"}
+(the default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The exact
+gradient and Hessian of the criterion need the observed one; with
+\code{"expected"} the outer search is derivative-free.}
 }
 \value{
-An \code{\link[=OuterMethod]{OuterMethod()}}.
+An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or
+\code{"bic"}), \code{hessian} as supplied, \code{k} (the number given, or \code{NA_real_}
+for \code{bic()}), and the path settings \code{nfolds}, \code{rule} and \code{folds}, which
+only \code{\link[=cv]{cv()}} reads.
 }
 \description{
-\code{aic()} and \code{bic()} choose the hyperparameters by an estimate of
-prediction error rather than by a marginal likelihood.
-}
-\details{
-\strong{The criterion} is
+Build the object that tells \code{\link[=statmod]{statmod()}} to choose a model's
+hyperparameters by an estimate of prediction error. Pass the result as
+\code{outer_criterion} for the smooth hyperparameters, as \code{sparse_criterion}
+for a lasso's or a SCAD's, or as both.
+
+The criterion is
 \deqn{C(\theta) = -2\ell(\hat\beta(\theta)) + \kappa\,\tau(\theta),}
 with \eqn{\tau = \mathrm{tr}[(H+S)^{-1}H]} the effective degrees of freedom
-and \eqn{\kappa} the price of one of them: \eqn{2} for \code{aic()} and
-\eqn{\log n} for \code{bic()}, which is \code{aic()} with that
-\eqn{\kappa} and is offered separately because it is what anybody would
-look for.
-
-\strong{Both derivatives are exact}, by the implicit function theorem, and
-come from the same pieces the marginal criterion uses. One thing differs and
-it is what separates the two families: the envelope theorem does not apply
-here. \eqn{\ell} alone is not stationary at the penalized mode, so its
-derivative carries \eqn{d\hat\beta/d\theta} from the first order, and what
-makes it computable is that at the mode \eqn{\partial\ell/\partial\beta} is
-\eqn{\partial\rho/\partial\beta}.
-
-\strong{Which \eqn{\tau}.} The trace is taken over the whole coefficient
-vector, so a term's contribution reads the full penalized information and
-not only its own block. \code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert
-the block instead, which is what a per-term reading has to do, and the two
-agree when the blocks are orthogonal and differ when they are not.
-
-\strong{GCV is not among these}, and the reason is the framework rather
-than the work: classical GCV divides a residual sum of squares by
-\eqn{(n-\tau)^2}, which estimates an unknown scale. Here every distribution
-parameter has its own equation and nothing is profiled, so there is no
-unknown scale for that ratio to estimate, and the criterion it degenerates
-to is \code{aic()} -- the substitution Wood (2008) makes in the other
-direction when the scale is known. A GCV on the squared error of the fitted
-mean is a different and well-defined object; it needs the derivative of that
-mean in the parameters, which is not one of \pkg{distributions7}'s generics.
-
-\strong{Over a penalty with a kink} these criteria sweep a path rather than
-differentiate. How that path covers a term carrying more than one such
-hyperparameter is the TERM's own, \code{\link[modelterms7:term_search]{modelterms7::term_search()}},
-since the same criterion is asked of the smooth hyperparameters of the
-model as well and those are not swept at all.
+and \eqn{\kappa} the price of one of them. \code{aic()} charges 2 by default and
+\code{bic()} charges \eqn{\log n}. Both are minimized.
 }
+\section{The alternative, and when to prefer this}{
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} integrate the coefficients out and maximize what is
+left, which needs a penalty that is twice differentiable at the mode.
+A kinked penalty puts the mode on the kink for every coefficient it sets
+to zero, so a marginal criterion cannot be read there at all. That is the
+case these two exist for, and \code{bic()} is \code{statmod()}'s default
+\code{sparse_criterion}.
+
+For a smooth penalty both families apply and the choice is the usual one:
+a marginal criterion asks which hyperparameter makes the data most likely
+with the coefficients integrated out, and these ask which one predicts
+best.
+}
+
+\section{Both derivatives are exact}{
+By the implicit function theorem, from the same pieces the marginal
+criteria use. One thing differs and it separates the two families: the
+envelope theorem does not apply here. \eqn{\ell} alone is not stationary
+at the penalized mode, so its derivative carries \eqn{d\hat\beta/d\theta}
+from the first order. What makes that computable is the mode's own
+condition, \eqn{\partial\ell/\partial\beta = \partial\rho/\partial\beta}.
+
+The exact derivatives need \code{hessian = "observed"}, which is the default.
+}
+
+\section{Which rE3W1IAh7Gb44497vT8c1fApo1kTOq5J-4-}{
+The trace runs over the whole coefficient vector, so a term's contribution
+reads the full penalized information and not only its own block.
+\code{\link[=statmod_edf]{statmod_edf()}}'s per-term numbers invert the block instead, which is what
+a per-term reading has to do. The two agree when the blocks are orthogonal
+and differ when they are not.
+
+Where a penalty has a kink the trace is restricted to the active
+coordinates, so for a lasso \eqn{\tau} is the number of surviving
+coefficients, the unbiased count of Zou, Hastie and Tibshirani (2007).
+}
+
+\section{GCV is not offered}{
+Classical GCV divides a residual sum of squares by \eqn{(n-\tau)^2}, which
+estimates an unknown scale. Here every distribution parameter carries its
+own equation and nothing is profiled, so there is no unknown scale for
+that ratio to estimate and the criterion degenerates to \code{aic()}. That is
+the substitution Wood (2008) makes in the other direction when the scale
+is known.
+
+A GCV on the squared error of the fitted mean is a different and
+well-defined object. It would need the derivative of that mean in the
+parameters, which is not one of \pkg{distributions7}'s generics.
+}
+
+\section{Over a kinked penalty these sweep a path}{
+The penalized mode is only piecewise smooth in such a hyperparameter,
+turning a corner whenever a coefficient joins the active set or leaves it,
+so the criterion inherits the corners and is swept rather than
+differentiated. How the path covers a term carrying more than one kinked
+hyperparameter belongs to the term, through
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}}: the same criterion object is asked about the
+model's smooth hyperparameters as well, and those are not swept at all.
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
-statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
-        outer_criterion = aic())
+
+fa <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+              outer_criterion = aic())
+fb <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+              outer_criterion = bic())
+
+# BIC charges log(n) = 5.3 per degree of freedom against AIC's 2, so it
+# buys a smoother fit: a larger smoothing parameter and fewer edf.
+c(aic = unlist(fa@hyper), bic = unlist(fb@hyper))
+c(aic = sum(fa@edf$edf), bic = sum(fb@edf$edf))
+
+# The object is a specification and carries no data.
+aic()
+aic(k = 4)@k
 
 }
 \references{
+Zou, H., Hastie, T. and Tibshirani, R. (2007). On the degrees of freedom of
+the lasso. \emph{The Annals of Statistics} \strong{35}(5), 2173--2192.
+
 Wood, S. N. (2008). Fast stable direct fitting and smoothness selection for
 generalized additive models. \emph{Journal of the Royal Statistical Society,
-Series B}, 70(3), 495--518.
+Series B} \strong{70}(3), 495--518.
 }
 \seealso{
-\code{\link[=reml]{reml()}}, \code{\link[=statmod]{statmod()}}
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} for the marginal criteria, \code{\link[=cv]{cv()}} for
+cross-validation, \code{\link[=statmod]{statmod()}} for where these are passed.
 }
