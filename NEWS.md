@@ -1,5 +1,29 @@
 # statmodels7 0.88.1
 
+* Documentation pass over all 329 help pages. Every page is now
+  self-contained: a `@return` names the length, the class and the names of
+  what comes back instead of a bare type, every argument states its accepted
+  shape and its default, and the public pages carry examples that demonstrate
+  a property rather than printing an object.
+
+  Nine claims were corrected against measurement. `xtx()`'s page said a full
+  p-squared kernel ships, where the kernel accumulates the upper triangle and
+  mirrors it; `statmod_commit_refresh(which =)` defaults to `"all"` and not
+  to `"jacobian"`; `statmod_fitted_spec()` commits only the Jacobian entries
+  and also copies a structural term's own parameters; `start_strategy()` is
+  abstract and its constructor signals an error; `penalty_theta_start()`
+  starts a hyperparameter bounded below at `lower + 1` and not at the
+  midpoint of the unit interval; and `iwls_info_diag()`,
+  `statmod_structural_table()`, `rstatmod()` and `statmod_refresh_settled()`
+  each described something the code does not do.
+
+  Two rendering defects were fixed. A `\eqn{}` in a section heading made
+  roxygen emit a random placeholder as the title, changing on every run, and
+  a paragraph of `iwls_solve()`'s details sat between its `@param` and its
+  `@return`, so it rendered inside the last argument's description.
+
+  No behavior changed.
+
 * The readable variance matrix is SYMMETRIZED rather than left symmetric by
   construction. The delta method's `J V J'` collects an entry and its
   transpose in a different order, and floating-point addition is not
