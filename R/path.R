@@ -334,7 +334,7 @@ path_null_score <- function(obj, beta, block, hyper) {
 #' grows is swept in the same order as one whose kink widens: from the empty
 #' model towards the full one. Values the penalty cannot reach are dropped.
 #'
-#' The exponent relating the two is read ONCE and every target inverted
+#' The exponent relating the two is read once and every target inverted
 #' through it, in place of bracketing each target on its own. Measured, a
 #' bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 #' twenty-five points spent 6.7 per cent of itself locating the values it
@@ -408,7 +408,7 @@ path_forced <- function(pen, theta, name, values) {
 #' An equally spaced grid strictly inside the hyperparameter's own interval.
 #'
 #' @details
-#' [path_values()] walks the SIZE OF THE KINK, from the value that
+#' [path_values()] walks the size of the kink, from the value that
 #' empties the block down, and a bounded hyperparameter cannot reach that end:
 #' the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
 #' no admissible \eqn{\alpha} empties the block and every point of such a path
@@ -422,7 +422,7 @@ path_forced <- function(pen, theta, name, values) {
 #' penalty of another kind.
 #'
 #' A shape parameter is swept above the smallest value at which the block can
-#' be FITTED, which [shape_floor()] derives from the proximal
+#' be fitted, which [shape_floor()] derives from the proximal
 #' condition at the steps the block's coordinate descent will take, rather
 #' than above the constant the penalty is defined over. The two coincide on an
 #' ordinary well-conditioned block and differ where the steps are long: with a
@@ -473,7 +473,7 @@ path_grid <- function(pen, theta, name, n_values = 25L, steps = NULL) {
 #' decides whether a shape parameter is admissible: SCAD's proximal operator
 #' needs \eqn{t < a - 1} and MCP's \eqn{t < \gamma}, tightened to
 #' \eqn{t d^2} under the diagonal map standardization applies. So the useful
-#' lower limit of a shape is a property of the DATA, not the constant 2 or 1
+#' lower limit of a shape is a property of the data, not the constant 2 or 1
 #' the penalty is defined above, and it binds at ordinary settings: measured,
 #' a standardized penalty on a column of spread 20 at \eqn{n = 200} needs
 #' \eqn{a > 3}, and a Poisson block whose fitted means are near
@@ -527,7 +527,7 @@ path_steps <- function(spec, design, block, beta, split) {
 #' bisected, so a family added later is covered and neither the \eqn{a - 1} of
 #' SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
 #' the constant the penalty is defined over would otherwise contain points at
-#' which THAT block, with THOSE data, cannot be fitted by the only route a
+#' which that block, with those data, cannot be fitted by the only route a
 #' kinked penalty has.
 #'
 #' @param pen A \pkg{penalties7} penalty.
@@ -581,7 +581,7 @@ shape_floor <- function(pen, theta, name, steps = NULL) {
 #' a Laplace prior is the case, its hyperparameters being whatever the
 #' effects' distribution happens to carry.
 #'
-#' `kink` is the length of the path over the SIZE OF THE KINK, which
+#' `kink` is the length of the path over the size of the kink, which
 #' runs geometrically over `1/min_ratio`, which is four decades, and wants
 #' that many points to be smooth in. `other` serves an axis that spans
 #' one bounded interval instead, \eqn{\alpha} between the ridge and the lasso
@@ -780,7 +780,7 @@ hyper_set <- function(hyper, row, value) {
 #' `interpret_formula()` evaluates a term's call as
 #' `eval(call, data, env)`, so a name is looked up in `data` first
 #' and in the formula's environment after. `data.frame(X = X, y = y)`
-#' SPLITS a matrix into `X.x1 ... X.xp`, leaving no column `X`, so
+#' splits a matrix into `X.x1 ... X.xp`, leaving no column `X`, so
 #' `lasso(X)` reaches past the data to the matrix in the calling
 #' environment. The fit itself is right, the matrix being captured once and
 #' the coefficients identical to the other spelling, but the fold cannot
@@ -793,7 +793,7 @@ hyper_set <- function(hyper, row, value) {
 #'
 #' Nothing is relearned that should be: a matrix carries no knots, no
 #' contrasts and no levels, so subsetting it and re-evaluating it give the
-#' same block. A FORMULA input is untouched and keeps being rebuilt on the
+#' same block. A formula input is untouched and keeps being rebuilt on the
 #' fold's own rows, and that is what the rule exists for.
 #'
 #' It applies where `input_expr` is a plain symbol, which is the case the
@@ -979,9 +979,9 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
 #' the units share nothing, so the same bodies run either way.
 #'
 #' @details
-#' The units are independent BY CONSTRUCTION -- a fold is a complete refit
+#' The units are independent by construction -- a fold is a complete refit
 #' on its own rows, a path combination restarts its warm chain from the
-#' sweep's own starting coefficients -- so they go by PROCESSES, with the
+#' sweep's own starting coefficients -- so they go by processes, with the
 #' safeguards `optimizers7::multistart` records: under `pkgload`
 #' the run stays sequential, because a worker loads the installed copy and
 #' S7 objects built in the development namespace do not dispatch correctly
@@ -1078,7 +1078,7 @@ path_pick <- function(value, se = NULL, rule = "min") {
 #' A term carrying several of them has every combination visited where the
 #' term asks for `search = "grid"` and one coordinate at a time where it
 #' asks for `"cyclic"`. Between terms the alternation is cyclic either
-#' way, so the cost is the product WITHIN a term and the sum ACROSS them. Each
+#' way, so the cost is the product within a term and the sum across them. Each
 #' axis is built at the settings of the axes outside it, and that makes
 #' the elastic net's grid a family of \eqn{\lambda} axes rather than one, and
 #' the axis swept by kink size is put innermost so that the warm starts walk

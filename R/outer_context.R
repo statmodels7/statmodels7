@@ -155,7 +155,7 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' kept sparse and factorized as such: measured on a random intercept over 500
 #' levels, p = 503 at a density of 0.014, the factorization and its
 #' log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
-#' 3.280 ms against 25.000 ms, each route timed WITH its own factorization.
+#' 3.280 ms against 25.000 ms, each route timed with its own factorization.
 #' End to end that is 1.25x at 500 levels and 2.01x at 1000, the difference
 #' between the operation and the fit being the lesson this package records
 #' three times over: removing the dearer half leaves the cheaper one. Nothing
@@ -163,7 +163,7 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' matrix.
 #'
 #' Those figures are the ones measured with \pkg{Matrix}'s factorization
-#' CACHE defeated. `Matrix::Cholesky` stores its result in the matrix's
+#' cache defeated. `Matrix::Cholesky` stores its result in the matrix's
 #' `factors` slot, so a benchmark that refactorizes the same object
 #' measures a cache hit, 0.004 ms against 0.102, and reports the sparse
 #' route as three times better than it is. A fit never gets that hit,
@@ -329,7 +329,7 @@ boundary_coords <- function(K) {
 #' it reads `1.7e-4` on a random intercept over 500 levels against
 #' `7.9e-8` on a gaussian smooth.
 #'
-#' It reads LOW by two to three times, the spread being a range over six paths
+#' It reads low by two to three times, the spread being a range over six paths
 #' where this is one deviation, and that is the side to err on. A resolution
 #' smaller than the truth leaves the search where it was; one larger stops a
 #' healthy search short.
@@ -418,7 +418,7 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
 #' @param pen The result of [ctx_penalized()].
 #' @param basis The integrated subspace, or `NULL`.
 #' @param expected Which information `pen` was built with, which is the
-#'   cache's key: the projection is of THAT matrix, so one entry cannot serve
+#'   cache's key: the projection is of that matrix, so one entry cannot serve
 #'   both. Nothing reaches it today, a search holding one [OuterMethod()]
 #'   throughout. The slot is keyed all the same, the twin defect in
 #'   [ctx_penalized()] having been unreachable in exactly the same way until
@@ -504,7 +504,7 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' \eqn{K} enters the criterion through its determinant, so the gradient needs
 #' \eqn{\partial K/\partial\beta}. With the observed information that is
 #' \eqn{-\ell'''}, which every family carries in closed form. With the expected
-#' one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is NOT
+#' one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is not
 #' \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 #' as well as the integrand, and the missing piece
 #' \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity
@@ -655,11 +655,11 @@ mode_error_limit <- function() 1e-3
 #' search moved 0.005 in eta over 38 evaluations and stopped 4.0 criterion
 #' units below the optimum its own gradient was correctly pointing at.
 #'
-#' It is used to ADD points and never to remove one: a run whose flag says
+#' It is used to add points and never to remove one: a run whose flag says
 #' converged stays usable whatever this reads, so no model that fitted before
 #' can stop fitting. That is also why it is not folded into the flag itself,
 #' which `piano_stabilita.txt` section 13 measured and withdrew -- there
-#' the flag was made STRICTER, and it cost a false negative on a good fit.
+#' the flag was made stricter, and it cost a false negative on a good fit.
 #'
 #' @param ctx The evaluation context, so the penalized factorization is the
 #'   one the criterion will read rather than a second copy.

@@ -26,7 +26,7 @@ derivative of the expected information where it uses the expected one.
 \eqn{K} enters the criterion through its determinant, so the gradient needs
 \eqn{\partial K/\partial\beta}. With the observed information that is
 \eqn{-\ell'''}, which every family carries in closed form. With the expected
-one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is NOT
+one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is not
 \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 as well as the integrand, and the missing piece
 \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity

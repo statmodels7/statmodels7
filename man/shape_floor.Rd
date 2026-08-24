@@ -30,7 +30,7 @@ step, and
 bisected, so a family added later is covered and neither the \eqn{a - 1} of
 SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
 the constant the penalty is defined over would otherwise contain points at
-which THAT block, with THOSE data, cannot be fitted by the only route a
+which that block, with those data, cannot be fitted by the only route a
 kinked penalty has.
 }
 \seealso{

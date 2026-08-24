@@ -37,7 +37,7 @@ matrix is written in, which is the chain the exact gradient already uses.
 A parameter an intercept in the same equation holds is not estimated and
 is not in that matrix, so it is not here either.
 
-THE DESIGN'S OWN ROWS ARE CORRECTED at the same time, through
+The design's own rows are corrected at the same time, through
 \code{\link[modelterms7:term_static_deriv]{modelterms7::term_static_deriv()}}: a coefficient of this
 equation moves the level as well as the static part, because the scores
 driving the recursion are read at the predictor the recursion produces.

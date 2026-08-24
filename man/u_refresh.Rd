@@ -58,7 +58,7 @@ transposes under the trace, so with
 \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 
-\strong{The derivative is asked of the TERM}, through
+\strong{The derivative is asked of the term}, through
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}}, and never differenced here.
 Two reasons, both measured. A term carries its own chain rule, the links
 on its parameters and a subformula's design; and a break-point column is a

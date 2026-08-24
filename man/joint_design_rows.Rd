@@ -31,7 +31,7 @@ only its operand does, \eqn{X} becoming \eqn{[X_p \mid D]}. Everything
 downstream, the third derivative against the diagonal of \eqn{M} and the
 movement of the mode, then reads the joint vector with no special case.
 
-The rows are returned at the FULL width, a held level included, and the
+The rows are returned at the full width, a held level included, and the
 caller drops it exactly as \code{\link[=statmod_full_information]{statmod_full_information()}} does.
 }
 \seealso{

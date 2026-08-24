@@ -15,7 +15,7 @@ statmod_values(spec, row)
 A numeric vector, or \code{NULL}.
 }
 \description{
-The grid the TERM named, or \code{NULL} where it left the path to build
+The grid the term named, or \code{NULL} where it left the path to build
 one.
 }
 \details{

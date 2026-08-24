@@ -17,7 +17,7 @@ statmod_min_ratio(spec, row, default)
 A single number.
 }
 \description{
-The depth the TERM asked for, or the layer's fallback where it asked for
+The depth the term asked for, or the layer's fallback where it asked for
 nothing.
 }
 \details{

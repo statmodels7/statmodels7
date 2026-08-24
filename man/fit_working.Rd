@@ -46,7 +46,7 @@ working fits taken.
 \description{
 The iteration of \cite{fasola2018} for a term whose block is a working
 linearization with a frozen weight -- \code{\link[modelterms7:jump]{modelterms7::jump()}} and
-\code{\link[modelterms7:jseg]{modelterms7::jseg()}}: the smooth block is fitted EXACTLY at
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}: the smooth block is fitted exactly at
 the committed block, the break-points are read off the fitted
 coefficients and committed, and the two alternate until the read-off
 settles or the working objective stops moving.
@@ -60,7 +60,7 @@ factor move uphill on purpose, which is how it leaves a spurious optimum
 -- so embedding the read-off inside the inner optimizer's objective put a
 sufficient-decrease line search in its way and stalled it: measured on a
 three-break-point jseg, the embedded route ended at an rss worse than the
-mean-only fit FROM THE TRUE BREAK-POINTS, while this iteration recovers
+mean-only fit from the TRUE break-points, while this iteration recovers
 them from the same start. During the working fit the frozen blocks
 contribute \eqn{X\beta} and nothing else (\code{st$working}), which makes
 the inner fit the plain penalized working fit of the papers; the commit
@@ -79,7 +79,7 @@ from nothing every time: measured on three break-points at
 \code{lbfgs()}.
 
 The exit is at a fixed point of the iteration or in the cycle it settles
-into, judged on the WORKING objective: the read-off settled
+into, judged on the working objective: the read-off settled
 (\code{\link[modelterms7:term_converged]{modelterms7::term_converged()}}) with the objective stalled,
 the objective stalled three times in a row, or the objective equal to
 two iterations back twice -- the period-two cycle of the break-point

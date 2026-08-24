@@ -40,7 +40,7 @@ and the hyperparameters are handed over keyed by the penalty names
 \code{edf()} reads them in. Passing the hyperparameters of one penalty for
 a term carrying two would count the whole block against it.
 
-The arguments are passed BY NAME. \code{edf()}'s third argument is the
+The arguments are passed by name. \code{edf()}'s third argument is the
 curvature and its fourth the hyperparameters, and a positional call put the
 hyperparameters where the curvature belongs: every smooth term then reported
 \code{NA}, the total degrees of freedom counted the unpenalized terms alone,

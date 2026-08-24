@@ -30,7 +30,7 @@ worse than a gap, so those coefficients are left missing.
 
 The question is asked of the term through
 \code{\link[modelterms7:term_jacobian_block]{modelterms7::term_jacobian_block()}} and never of its class,
-so a construction whose block IS a Jacobian keeps its inference: a
+so a construction whose block is a Jacobian keeps its inference: a
 continuous \code{\link[modelterms7:seg]{modelterms7::seg()}}, and a discontinuous one
 smoothed by an \code{\link[penalties7:abs_smoother]{penalties7::abs_smoother()}}, both answer yes.
 }

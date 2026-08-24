@@ -72,7 +72,7 @@ being computed at the coefficients in hand rather than at a refitted null.
 A term carrying several of them has every combination visited where the
 term asks for \code{search = "grid"} and one coordinate at a time where it
 asks for \code{"cyclic"}. Between terms the alternation is cyclic either
-way, so the cost is the product WITHIN a term and the sum ACROSS them. Each
+way, so the cost is the product within a term and the sum across them. Each
 axis is built at the settings of the axes outside it, and that makes
 the elastic net's grid a family of \eqn{\lambda} axes rather than one, and
 the axis swept by kink size is put innermost so that the warm starts walk

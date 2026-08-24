@@ -109,7 +109,7 @@ statmod_structural_state <- function(design) attr(design, "structure")
 #' with `identical()` on the full numeric inputs, so a collision
 #' cannot happen.
 #'
-#' It stands aside where the design carries REFRESHABLE terms: a
+#' It stands aside where the design carries refreshable terms: a
 #' break-point block advances its rescaling schedule as the alternation
 #' commits, so the same coefficients do not imply the same design there,
 #' and a key that cannot see the schedule must not answer.
@@ -437,7 +437,7 @@ statmod_theta_shifted <- function(spec, eta_static, param, shift) {
 #' list, which is keyed by [distributions7::deriv_names()].
 #'
 #' @details
-#' The name is BUILT from the parameter names in the family's own order, not
+#' The name is built from the parameter names in the family's own order, not
 #' parsed out of one, which is the discipline \pkg{distributions7} records
 #' for a parameter whose own name contains the separator.
 #'
@@ -503,7 +503,7 @@ deriv4_key <- function(params, a, b, c, d) {
 #' \eqn{E}. The third derivatives the second sum needs are
 #' \pkg{distributions7}'s, in closed form for every family.
 #'
-#' The term's parameters are the LAST columns, which is the convention
+#' The term's parameters are the last columns, which is the convention
 #' `term_curvature()` shares with its caller.
 #'
 #' A term that mixes over latent states, in place of shifting the predictor,
@@ -893,7 +893,7 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
 #'
 #' @description
 #' The Hessian of whatever penalty covers a structural term's own parameters,
-#' over the FREE ones and in their order, which is the order the tail of
+#' over the free ones and in their order, which is the order the tail of
 #' [statmod_full_information()] carries them in.
 #'
 #' @details
@@ -1101,7 +1101,7 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' A structural term contributes no design block, so nothing in the
 #' coefficient tables can report it and the values were reachable only
 #' through `fit@structural`. The information for them exists:
-#' [statmod_full_information()] spans the coefficients AND the
+#' [statmod_full_information()] spans the coefficients **and** the
 #' term's own parameters, and the tail block of its inverse is their
 #' variance on the unconstrained scale.
 #'

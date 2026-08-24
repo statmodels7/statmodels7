@@ -28,7 +28,7 @@ information.
 A structural term contributes no design block, so nothing in the
 coefficient tables can report it and the values were reachable only
 through \code{fit@structural}. The information for them exists:
-\code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients AND the
+\code{\link[=statmod_full_information]{statmod_full_information()}} spans the coefficients \strong{and} the
 term's own parameters, and the tail block of its inverse is their
 variance on the unconstrained scale.
 

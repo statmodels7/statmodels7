@@ -33,7 +33,7 @@ the filtered predictor and the static one -- and the term is asked to
 continue from there through
 \code{\link[modelterms7:term_continue]{modelterms7::term_continue()}}.
 
-WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
+Which of the two a call asks for is decided by the response, not by the
 times. New rows carrying the response are a re-reading: the filter is run
 over them from the term's own seed, and that is what a caller means by
 predicting a model on another series, and is why

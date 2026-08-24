@@ -56,7 +56,7 @@ whose right-hand side is \pkg{penalties7}'s \code{penalty_cross()}.
 which \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} returns, negated because that
 criterion is a maximand.
 
-Everything is on the hyperparameter's LINK scale, which is where the
+Everything is on the hyperparameter's link scale, which is where the
 outer criterion optimizes and therefore the only scale on which its
 Hessian is a variance.
 

@@ -33,7 +33,7 @@ expanded once and the whole sum is vectorized.
 and nothing about it is assumed. At a combined density of 3.6e-05 (a
 random intercept
 over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
-and a random effect) it is 50 times SLOWER, R's per-element indexing being
+and a random effect) it is 50 times slower, R's per-element indexing being
 far dearer than a BLAS flop, and at a dense block 50 times slower again.
 Interpolating the two measurements puts the crossover at a combined density
 near 1.1e-03, which is the gate: below it the route is taken, at it the two

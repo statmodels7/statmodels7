@@ -53,11 +53,11 @@ iteration and accept a step of 0.0026 where the Newton step is 1.4, so the
 search moved 0.005 in eta over 38 evaluations and stopped 4.0 criterion
 units below the optimum its own gradient was correctly pointing at.
 
-It is used to ADD points and never to remove one: a run whose flag says
+It is used to add points and never to remove one: a run whose flag says
 converged stays usable whatever this reads, so no model that fitted before
 can stop fitting. That is also why it is not folded into the flag itself,
 which \code{piano_stabilita.txt} section 13 measured and withdrew -- there
-the flag was made STRICTER, and it cost a false negative on a good fit.
+the flag was made stricter, and it cost a false negative on a good fit.
 }
 \seealso{
 \code{\link[=mode_error_limit]{mode_error_limit()}}, \code{\link[=criterion_resolution]{criterion_resolution()}}

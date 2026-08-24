@@ -26,7 +26,7 @@ and \code{\link[modelterms7:term_third]{modelterms7::term_third()}} take, at a d
 one.
 }
 \details{
-The pieces are built on the ACTIVE SET the term asks for, so a panel's
+The pieces are built on the active set the term asks for, so a panel's
 outer products are of the same size whatever the number of groups.
 \code{dcurv} serves twice, as the derivative of the curvature along the
 direction and as the factor multiplying the movement of \eqn{V_p}, and

@@ -35,12 +35,12 @@ statmod(
 \item{inner_optimizer}{How the smooth block is fitted: \code{\link[=iwls]{iwls()}} or
 an \pkg{optimizers7} optimizer.}
 
-\item{outer_criterion}{How the SMOOTH hyperparameters are estimated:
+\item{outer_criterion}{How the smooth hyperparameters are estimated:
 \code{\link[=reml]{reml()}} (the default), \code{\link[=ml]{ml()}},
 \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}}, \code{\link[=cv]{cv()}}, or
 \code{NULL} to hold them where they are.}
 
-\item{sparse_criterion}{How the hyperparameter of a KINKED penalty --
+\item{sparse_criterion}{How the hyperparameter of a kinked penalty --
 lasso, scad, mcp -- is chosen: \code{\link[=bic]{bic()}} (the default),
 \code{\link[=aic]{aic()}}, \code{\link[=cv]{cv()}}, or \code{NULL} to hold it.
 A marginal criterion is rejected here, being read at a mode that sits on
@@ -59,7 +59,7 @@ outer search tried.}
 
 \item{linpar_control}{How the unpenalized parametric block is built, as
 \code{\link[=linpar_options]{linpar_options()}} returns it: the storage and the contrasts
-for its factors. It reaches the IMPLICIT term, the one the bare
+for its factors. It reaches the implicit term, the one the bare
 covariates collapse into and which a caller never writes; a
 \code{\link[modelterms7:linpar]{modelterms7::linpar()}} written out takes them directly.
 The argument and the function are named differently on purpose, as
@@ -80,7 +80,7 @@ construction out over separate R processes -- the folds of a
 cross-validation, and the combinations of a kinked path's product
 grid, each of which restarts its warm chain from the sweep's own
 starting coefficients -- each unit fitting sequentially, so the two
-levels never nest. The points WITHIN one chain stay sequential:
+levels never nest. The points within one chain stay sequential:
 measured, a point paid cold costs 2.2-3.2 times the warm chain, so
 splitting a chain would slow the single-process default or make the
 result depend on the count. The result does

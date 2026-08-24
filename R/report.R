@@ -976,7 +976,7 @@ fitted_ranges <- function(x) {
 #' `::` is kept whole, that being what distinguishes one entry of a term
 #' from another.
 #'
-#' Where shortening would make two labels the same the FULL ones are
+#' Where shortening would make two labels the same the full ones are
 #' returned, all of them: a shorter label that is ambiguous is worse than a
 #' long one, and deciding per label would leave a reader unable to tell which
 #' convention a given line follows.

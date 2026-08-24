@@ -62,7 +62,7 @@ omitted.} Scaling the columns and carrying the coefficients back is the
 remedy for a conditioning that squares, as forming \eqn{X'X} does; \code{\link[=iwls]{iwls()}} fits through a QR of the design and never forms
 it. On columns spanning fifteen decades the raw fit and the scaled one
 converge in the same number of iterations, and both agree with
-\code{\link[stats:lm]{stats::lm()}} to \eqn{10^{-14}}. What does move is the SCORE the
+\code{\link[stats:lm]{stats::lm()}} to \eqn{10^{-14}}. What does move is the score the
 fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 answer: the final verdict is already arbitrated on a dimensionless scale.
 }

@@ -30,7 +30,7 @@ The scale matters and is not a detail. Measured on a Poisson whose
 predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
 the raw response estimated \eqn{\phi} between 52.7 and 54.8 over five
 samples, and one handed \eqn{g(y)} estimated it between 4.03 and 4.07.
-What does NOT matter, measured on the same shape beside another term, is
+What does not matter, measured on the same shape beside another term, is
 the other terms' contribution: subtracting it moved the estimate from
 39.68 to 39.87 against a truth of 40, so the response is passed as it
 stands and nothing is residualized.

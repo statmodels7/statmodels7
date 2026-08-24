@@ -17,7 +17,7 @@ d4_key(params, a, b, k, q, keys)
 A single string.
 }
 \description{
-Locates the \eqn{(a, b, k, q)} entry, by a name BUILT from the parameter
+Locates the \eqn{(a, b, k, q)} entry, by a name built from the parameter
 names in the family's own order.
 }
 \keyword{internal}

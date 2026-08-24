@@ -22,7 +22,7 @@ offering an argument for the grid: \code{\link[modelterms7:random]{modelterms7::
 a Laplace prior is the case, its hyperparameters being whatever the
 effects' distribution happens to carry.
 
-\code{kink} is the length of the path over the SIZE OF THE KINK, which
+\code{kink} is the length of the path over the size of the kink, which
 runs geometrically over \code{1/min_ratio}, which is four decades, and wants
 that many points to be smooth in. \code{other} serves an axis that spans
 one bounded interval instead, \eqn{\alpha} between the ridge and the lasso

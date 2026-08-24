@@ -58,7 +58,7 @@ separates shapes that a formula cannot: at an inner tolerance of \code{1e-6}
 it reads \code{1.7e-4} on a random intercept over 500 levels against
 \code{7.9e-8} on a gaussian smooth.
 
-It reads LOW by two to three times, the spread being a range over six paths
+It reads low by two to three times, the spread being a range over six paths
 where this is one deviation, and that is the side to err on. A resolution
 smaller than the truth leaves the search where it was; one larger stops a
 healthy search short.

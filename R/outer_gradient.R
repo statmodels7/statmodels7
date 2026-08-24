@@ -254,7 +254,7 @@ penalty_answers <- function(pen, order = 1L) {
 #' the block of \eqn{M},
 #' \deqn{u_{k} = -X_k'\Big(w \sum_{a,b} \ell'''_{abk}\, G_{ab}\Big),}
 #' one crossprod per distribution parameter. The component
-#' \eqn{\ell'''_{abk}} is looked up by a name BUILT from the parameter names in
+#' \eqn{\ell'''_{abk}} is looked up by a name built from the parameter names in
 #' the family's own order, never parsed out of one.
 #'
 #' @param spec A [StatmodSpec()].
@@ -459,7 +459,7 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #' \eqn{A_a[i,j] = w_i\sum_b \ell_{ab,i}R_{ab}[i,j]},
 #' \deqn{\Delta u_c = -2\sum_{i,j}A_a[i,j]\,\partial X_a[i,j]/\partial\beta_c.}
 #'
-#' **The derivative is asked of the TERM**, through
+#' **The derivative is asked of the term**, through
 #' [modelterms7::term_block_contract()], and never differenced here.
 #' Two reasons, both measured. A term carries its own chain rule, the links
 #' on its parameters and a subformula's design; and a break-point column is a
@@ -539,12 +539,12 @@ u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
 #' \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
 #' and that is what keeps this cheap: one call of
 #' [modelterms7::term_block_contract()] per column, weighted by the
-#' SCORE where [u_refresh()] weights by \eqn{M}.
+#' score where [u_refresh()] weights by \eqn{M}.
 #'
 #' Note that it is the **mode's** matrix and not the criterion's. The
 #' determinant is of
 #' whatever [statmod_information_at()] assembles, and its derivative
-#' reads that one; how the mode MOVES is a fact about the penalized likelihood
+#' reads that one; how the mode moves is a fact about the penalized likelihood
 #' and reads this one. Confusing the two is the defect this file already
 #' records for the expected information, in a second place.
 #'
@@ -606,7 +606,7 @@ mode_curvature <- function(spec, design, coef, params, npar, offs, total) {
 #' which is keyed by name, never by position.
 #'
 #' @details
-#' The name is BUILT by putting the three parameter names in the family's own
+#' The name is built by putting the three parameter names in the family's own
 #' order and joining them, the direction \pkg{distributions7} sanctions, and
 #' then checked against the enumeration, never trusted.
 #'
@@ -641,7 +641,7 @@ d3_key <- function(params, a, b, k, keys) {
 #' downstream, the third derivative against the diagonal of \eqn{M} and the
 #' movement of the mode, then reads the joint vector with no special case.
 #'
-#' The rows are returned at the FULL width, a held level included, and the
+#' The rows are returned at the full width, a held level included, and the
 #' caller drops it exactly as [statmod_full_information()] does.
 #'
 #' @param spec A [StatmodSpec()].
@@ -967,7 +967,7 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' one.
 #'
 #' @details
-#' The pieces are built on the ACTIVE SET the term asks for, so a panel's
+#' The pieces are built on the active set the term asks for, so a panel's
 #' outer products are of the same size whatever the number of groups.
 #' `dcurv` serves twice, as the derivative of the curvature along the
 #' direction and as the factor multiplying the movement of \eqn{V_p}, and
@@ -1109,7 +1109,7 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
 #'
 #' @details
 #' It is written once because [statmod_marginal_full()] and
-#' [statmod_structural_grad()] must project onto the SAME subspace,
+#' [statmod_structural_grad()] must project onto the same subspace,
 #' and two callers composing it separately would agree only by accident.
 #'
 #' @param spec A [StatmodSpec()].
@@ -1247,7 +1247,7 @@ row_nonzeros <- function(X) {
 #' and nothing about it is assumed. At a combined density of 3.6e-05 (a
 #' random intercept
 #' over 500 levels) it is 14.2 times the dense route; at 0.18 (three smooths
-#' and a random effect) it is 50 times SLOWER, R's per-element indexing being
+#' and a random effect) it is 50 times slower, R's per-element indexing being
 #' far dearer than a BLAS flop, and at a dense block 50 times slower again.
 #' Interpolating the two measurements puts the crossover at a combined density
 #' near 1.1e-03, which is the gate: below it the route is taken, at it the two

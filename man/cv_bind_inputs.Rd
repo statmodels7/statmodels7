@@ -26,7 +26,7 @@ rebuilding the model on those rows finds it there.
 \code{interpret_formula()} evaluates a term's call as
 \code{eval(call, data, env)}, so a name is looked up in \code{data} first
 and in the formula's environment after. \code{data.frame(X = X, y = y)}
-SPLITS a matrix into \verb{X.x1 ... X.xp}, leaving no column \code{X}, so
+splits a matrix into \verb{X.x1 ... X.xp}, leaving no column \code{X}, so
 \code{lasso(X)} reaches past the data to the matrix in the calling
 environment. The fit itself is right, the matrix being captured once and
 the coefficients identical to the other spelling, but the fold cannot
@@ -39,7 +39,7 @@ the spelling the documentation asks the caller for.
 
 Nothing is relearned that should be: a matrix carries no knots, no
 contrasts and no levels, so subsetting it and re-evaluating it give the
-same block. A FORMULA input is untouched and keeps being rebuilt on the
+same block. A formula input is untouched and keeps being rebuilt on the
 fold's own rows, and that is what the rule exists for.
 
 It applies where \code{input_expr} is a plain symbol, which is the case the

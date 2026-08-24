@@ -40,14 +40,14 @@ coefficients contracted in two directions.
 }
 \details{
 Differentiating the three contributions of \eqn{\partial K/\partial\beta}
-once more leaves FIVE terms. Writing \eqn{D_a = (\partial X_a/\partial\beta)v}
+once more leaves five terms. Writing \eqn{D_a = (\partial X_a/\partial\beta)v}
 and \eqn{E_a = (\partial X_a/\partial\beta)u}, three of them read the first
 derivative alone,
 \deqn{N_1[(a,j),(b,k)] = -\sum_i w_i\Big(\sum_m \ell_{abm}(X_mv_m)_i\Big)
     E_a[i,j]X_b[i,k],}
 \eqn{N_2} the same with the two directions exchanged, and
 \eqn{N_3[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}D_a[i,j]E_b[i,k]}, which is
-supported where BOTH blocks move. A fourth reads the SECOND,
+supported where both blocks move. A fourth reads the second,
 \eqn{N_4[(a,j),(b,k)] = -\sum_i w_i\ell_{ab,i}F_a[i,j]X_b[i,k]} with
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]} from
 \code{\link[modelterms7:term_block_deriv2]{modelterms7::term_block_deriv2()}}. Those four enter as
@@ -57,7 +57,7 @@ curvature for the fourth, so neither \eqn{N} nor any contraction is
 assembled.
 
 The fifth is of another shape and is added separately. The
-third-derivative contraction carries the DIRECTION'S PREDICTOR
+third-derivative contraction carries the direction's predictor
 \eqn{(X_mv_m)_i}, which where \eqn{X_m} is a Jacobian moves with
 \eqn{\beta} as everything else does, and differentiating it leaves
 \deqn{-\sum_i w_i\Big(\sum_m \ell_{abm}\,\dot v_m(i)\Big)X_a[i,j]X_b[i,k],

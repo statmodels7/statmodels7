@@ -18,7 +18,7 @@ An integer position into the equation's coefficient vector, or
 \code{NA_integer_}.
 }
 \description{
-The position of the intercept of one equation's PARAMETRIC block, or
+The position of the intercept of one equation's parametric block, or
 \code{NA} where it has none.
 }
 \details{

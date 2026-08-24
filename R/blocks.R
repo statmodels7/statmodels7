@@ -329,7 +329,7 @@ statmod_penalty_keys <- function(spec) {
 #' return.
 #'
 #' @details
-#' WHICH hyperparameters are estimated is a property of the terms, not of the
+#' which hyperparameters are estimated is a property of the terms, not of the
 #' criterion: the term is where the penalty is named, and a criterion argument
 #' saying otherwise was read by nothing when the two disagreed. Everything
 #' here consults this one enumeration: the outer index, the path, and the
@@ -415,7 +415,7 @@ statmod_unit <- function(spec, design, param, key) {
 #' How Many Values a Path Visits for One Hyperparameter
 #'
 #' @description
-#' The grid size the TERM asked for, or the layer's fallback where it asked
+#' The grid size the term asked for, or the layer's fallback where it asked
 #' for nothing.
 #'
 #' @details
@@ -445,7 +445,7 @@ statmod_grid_size <- function(spec, row, default) {
 #' How Far Down the Path Reaches for One Term
 #'
 #' @description
-#' The depth the TERM asked for, or the layer's fallback where it asked for
+#' The depth the term asked for, or the layer's fallback where it asked for
 #' nothing.
 #'
 #' @details
@@ -510,7 +510,7 @@ statmod_search <- function(spec, row, default = "grid") {
 #' The Values a Term Wrote Out for One Hyperparameter
 #'
 #' @description
-#' The grid the TERM named, or `NULL` where it left the path to build
+#' The grid the term named, or `NULL` where it left the path to build
 #' one.
 #'
 #' @details

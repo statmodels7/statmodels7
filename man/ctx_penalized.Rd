@@ -34,7 +34,7 @@ enough and sparse enough to be worth it (\code{\link[=worth_sparse]{worth_sparse
 kept sparse and factorized as such: measured on a random intercept over 500
 levels, p = 503 at a density of 0.014, the factorization and its
 log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
-3.280 ms against 25.000 ms, each route timed WITH its own factorization.
+3.280 ms against 25.000 ms, each route timed with its own factorization.
 End to end that is 1.25x at 500 levels and 2.01x at 1000, the difference
 between the operation and the fit being the lesson this package records
 three times over: removing the dearer half leaves the cheaper one. Nothing
@@ -42,7 +42,7 @@ here asks which term produced the matrix; both quantities are read off the
 matrix.
 
 Those figures are the ones measured with \pkg{Matrix}'s factorization
-CACHE defeated. \code{Matrix::Cholesky} stores its result in the matrix's
+cache defeated. \code{Matrix::Cholesky} stores its result in the matrix's
 \code{factors} slot, so a benchmark that refactorizes the same object
 measures a cache hit, 0.004 ms against 0.102, and reports the sparse
 route as three times better than it is. A fit never gets that hit,

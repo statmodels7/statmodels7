@@ -33,7 +33,7 @@ as a vector over the stacked coefficients.
 }
 \details{
 \eqn{b_{ml}} solves \eqn{J b_{ml} = -[(S_l + T[b_l])b_m + S_m b_l + c_{ml}]}
-with \eqn{T} the THIRD derivative of the penalized objective in \eqn{\beta}.
+with \eqn{T} the third derivative of the penalized objective in \eqn{\beta}.
 Where a block moves, the objective's second derivative is not \eqn{K} but
 \eqn{K + D}, with \eqn{D} the term \code{\link[=mode_curvature]{mode_curvature()}} builds, so
 its third derivative is not \eqn{\partial K/\partial\beta} either. What is
@@ -43,7 +43,7 @@ pieces,
 \deqn{-\sum_i w_i\Big(\sum_k \ell_{ak}(X_kv_k)_i\Big)\,
   \big[(\partial X_a/\partial\beta)u\big][i,c]
   \;-\;\sum_i w_i\,\ell_a(i)\,F_a[i,c],}
-the first reading the block's first derivative and the second its SECOND,
+the first reading the block's first derivative and the second its second,
 \eqn{F_a = (\partial^2X_a/\partial\beta^2)[v,u]}. Both are one
 \code{crossprod} against a per-observation weight, so neither the
 third-derivative array of the predictor nor any contraction of it is formed.

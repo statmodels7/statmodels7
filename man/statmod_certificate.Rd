@@ -21,7 +21,7 @@ A list with \code{state} (\code{"converged"}, \code{"boundary"},
 \code{mode_error}, \code{boundary} and \code{reason}.
 }
 \description{
-Three readings taken AT THE REPORTED POINT and independent of the path the
+Three readings taken at the reported point and independent of the path the
 search took: the outer criterion's gradient, how far the coefficients sit
 above the penalized mode, and which hyperparameters have run to a boundary.
 }
@@ -45,13 +45,13 @@ does not separate cannot decide a state, and a certificate that says how far
 from the mode is worth more than a boolean that hides it.
 
 \code{tol} is 1e-2 instead of the geometric middle of the two groups: the
-two ways of being wrong are not symmetric, and a certificate that says NOT
-CONVERGED at a good point is visible and checkable where one that certifies
+two ways of being wrong are not symmetric, and a certificate that says not
+converged at a good point is visible and checkable where one that certifies
 a bad point is the failure this exists to remove.
 
 \strong{What it costs} is one outer gradient and one solve, once, at a point
 the fit already holds. Nothing is refitted: measured, the criterion
-reconstructed from \code{fit@spec} equals the one the fit reports EXACTLY on
+reconstructed from \code{fit@spec} equals the one the fit reports exactly on
 every shape, so the reading is of the fitted model and of no other.
 
 \strong{Where there is no outer gradient there are two cases, and they get
@@ -72,7 +72,7 @@ error is not a statement about being at a mode. Measured on a lasso, its
 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
 score is -0.715.
 
-A form whose criterion has no EXACT gradient
+A form whose criterion has no exact gradient
 (\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}) is also \code{"unknown"} and never
 approximated: 2p refits to difference it would cost more than the fit.
 

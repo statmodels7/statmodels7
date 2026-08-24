@@ -37,12 +37,12 @@ block and is not for a refreshable one, where \eqn{X} is the Jacobian and so
 \partial X_{id}/\partial\beta_c}. It is supported on the term's own block,
 and that is what keeps this cheap: one call of
 \code{\link[modelterms7:term_block_contract]{modelterms7::term_block_contract()}} per column, weighted by the
-SCORE where \code{\link[=u_refresh]{u_refresh()}} weights by \eqn{M}.
+score where \code{\link[=u_refresh]{u_refresh()}} weights by \eqn{M}.
 
 Note that it is the \strong{mode's} matrix and not the criterion's. The
 determinant is of
 whatever \code{\link[=statmod_information_at]{statmod_information_at()}} assembles, and its derivative
-reads that one; how the mode MOVES is a fact about the penalized likelihood
+reads that one; how the mode moves is a fact about the penalized likelihood
 and reads this one. Confusing the two is the defect this file already
 records for the expected information, in a second place.
 

@@ -492,7 +492,7 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' remedy for a conditioning that squares, as forming \eqn{X'X} does; [iwls()] fits through a QR of the design and never forms
 #' it. On columns spanning fifteen decades the raw fit and the scaled one
 #' converge in the same number of iterations, and both agree with
-#' [stats::lm()] to \eqn{10^{-14}}. What does move is the SCORE the
+#' [stats::lm()] to \eqn{10^{-14}}. What does move is the score the
 #' fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
 #' answer: the final verdict is already arbitrated on a dimensionless scale.
 #'
@@ -947,7 +947,7 @@ reject_unfittable <- function(terms) {
 #' @details
 #' A score-driven level and a regime's first level both add a constant to
 #' their equation's predictor. With an intercept there too the two are
-#' EXACTLY confounded: shifting the intercept by \eqn{c} and the level by
+#' exactly confounded: shifting the intercept by \eqn{c} and the level by
 #' \eqn{-c(1 - \sum_j b_j)} leaves every predictor unchanged, since the
 #' recursion is affine in the level given the score path, the score path
 #' depends on the predictor alone, and the starting level moves by the same

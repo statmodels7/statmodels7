@@ -29,7 +29,7 @@ the structural term appended.
 }
 \details{
 It is written once because \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
-\code{\link[=statmod_structural_grad]{statmod_structural_grad()}} must project onto the SAME subspace,
+\code{\link[=statmod_structural_grad]{statmod_structural_grad()}} must project onto the same subspace,
 and two callers composing it separately would agree only by accident.
 }
 \keyword{internal}

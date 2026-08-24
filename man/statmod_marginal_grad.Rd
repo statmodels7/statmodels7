@@ -56,7 +56,7 @@ the determinant reads that movement.
 the block of \eqn{M},
 \deqn{u_{k} = -X_k'\Big(w \sum_{a,b} \ell'''_{abk}\, G_{ab}\Big),}
 one crossprod per distribution parameter. The component
-\eqn{\ell'''_{abk}} is looked up by a name BUILT from the parameter names in
+\eqn{\ell'''_{abk}} is looked up by a name built from the parameter names in
 the family's own order, never parsed out of one.
 }
 \seealso{

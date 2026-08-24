@@ -17,7 +17,7 @@ statmod_grid_size(spec, row, default)
 A single integer.
 }
 \description{
-The grid size the TERM asked for, or the layer's fallback where it asked
+The grid size the term asked for, or the layer's fallback where it asked
 for nothing.
 }
 \details{

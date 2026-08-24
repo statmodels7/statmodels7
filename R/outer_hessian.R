@@ -479,7 +479,7 @@ contract4 <- function(spec, design, d4, params, npar, offs, total, tv, tu) {
 #' The Name of a Fourth-Derivative Component
 #'
 #' @description
-#' Locates the \eqn{(a, b, k, q)} entry, by a name BUILT from the parameter
+#' Locates the \eqn{(a, b, k, q)} entry, by a name built from the parameter
 #' names in the family's own order.
 #'
 #' @param params The parameter names.
@@ -522,7 +522,7 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' which [statmod_marginal_hess()] returns, negated because that
 #' criterion is a maximand.
 #'
-#' Everything is on the hyperparameter's LINK scale, which is where the
+#' Everything is on the hyperparameter's link scale, which is where the
 #' outer criterion optimizes and therefore the only scale on which its
 #' Hessian is a variance.
 #'

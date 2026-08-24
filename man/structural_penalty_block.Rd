@@ -21,7 +21,7 @@ A square matrix, or \code{NULL}.
 }
 \description{
 The Hessian of whatever penalty covers a structural term's own parameters,
-over the FREE ones and in their order, which is the order the tail of
+over the free ones and in their order, which is the order the tail of
 \code{\link[=statmod_full_information]{statmod_full_information()}} carries them in.
 }
 \details{

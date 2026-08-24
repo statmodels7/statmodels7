@@ -33,7 +33,7 @@ hyperparameter, so that a penalty whose kink narrows as its hyperparameter
 grows is swept in the same order as one whose kink widens: from the empty
 model towards the full one. Values the penalty cannot reach are dropped.
 
-The exponent relating the two is read ONCE and every target inverted
+The exponent relating the two is read once and every target inverted
 through it, in place of bracketing each target on its own. Measured, a
 bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 twenty-five points spent 6.7 per cent of itself locating the values it

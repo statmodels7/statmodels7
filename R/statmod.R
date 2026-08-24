@@ -194,11 +194,11 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param offsets Optional named list of offsets, one per parameter.
 #' @param inner_optimizer How the smooth block is fitted: [iwls()] or
 #'   an \pkg{optimizers7} optimizer.
-#' @param outer_criterion How the SMOOTH hyperparameters are estimated:
+#' @param outer_criterion How the smooth hyperparameters are estimated:
 #'   [reml()] (the default), [ml()],
 #'   [aic()], [bic()], [cv()], or
 #'   `NULL` to hold them where they are.
-#' @param sparse_criterion How the hyperparameter of a KINKED penalty --
+#' @param sparse_criterion How the hyperparameter of a kinked penalty --
 #'   lasso, scad, mcp -- is chosen: [bic()] (the default),
 #'   [aic()], [cv()], or `NULL` to hold it.
 #'   A marginal criterion is rejected here, being read at a mode that sits on
@@ -214,7 +214,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   outer search tried.
 #' @param linpar_control How the unpenalized parametric block is built, as
 #'   [linpar_options()] returns it: the storage and the contrasts
-#'   for its factors. It reaches the IMPLICIT term, the one the bare
+#'   for its factors. It reaches the implicit term, the one the bare
 #'   covariates collapse into and which a caller never writes; a
 #'   [modelterms7::linpar()] written out takes them directly.
 #'   The argument and the function are named differently on purpose, as
@@ -233,7 +233,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   cross-validation, and the combinations of a kinked path's product
 #'   grid, each of which restarts its warm chain from the sweep's own
 #'   starting coefficients -- each unit fitting sequentially, so the two
-#'   levels never nest. The points WITHIN one chain stay sequential:
+#'   levels never nest. The points within one chain stay sequential:
 #'   measured, a point paid cold costs 2.2-3.2 times the warm chain, so
 #'   splitting a chain would slow the single-process default or make the
 #'   result depend on the count. The result does
@@ -540,7 +540,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @param working_budget How many working fits [fit_working()] may
 #'   take. The bootstrap excursions of [statmod_boot_restart()]
 #'   pass a short one: an excursion needs to travel, not to converge.
-#' @param hold_refresh `TRUE` holds every FROZEN break-point block at
+#' @param hold_refresh `TRUE` holds every frozen break-point block at
 #'   its committed positions: the fit is then an ordinary smooth fit, no
 #'   read-off runs and no schedule advances. The outer machinery passes it
 #'   at every criterion evaluation, path point and fold, for two reasons
@@ -548,7 +548,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #'   evaluations multiplied a fit's cost by twenty, and a break-point
 #'   moving between evaluations makes the criterion path-dependent while
 #'   its cycling flags read as unavailable points to the search. The
-#'   positions are refined ONCE, by the full alternation `statmod()`
+#'   positions are refined once, by the full alternation `statmod()`
 #'   runs at the chosen hyperparameters before the restarts.
 #'
 #' @return A list of six:
@@ -1007,7 +1007,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' @description
 #' The iteration of \cite{fasola2018} for a term whose block is a working
 #' linearization with a frozen weight -- [modelterms7::jump()] and
-#' [modelterms7::jseg()]: the smooth block is fitted EXACTLY at
+#' [modelterms7::jseg()]: the smooth block is fitted exactly at
 #' the committed block, the break-points are read off the fitted
 #' coefficients and committed, and the two alternate until the read-off
 #' settles or the working objective stops moving.
@@ -1021,7 +1021,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' -- so embedding the read-off inside the inner optimizer's objective put a
 #' sufficient-decrease line search in its way and stalled it: measured on a
 #' three-break-point jseg, the embedded route ended at an rss worse than the
-#' mean-only fit FROM THE TRUE BREAK-POINTS, while this iteration recovers
+#' mean-only fit from the TRUE break-points, while this iteration recovers
 #' them from the same start. During the working fit the frozen blocks
 #' contribute \eqn{X\beta} and nothing else (`st$working`), which makes
 #' the inner fit the plain penalized working fit of the papers; the commit
@@ -1040,7 +1040,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' `lbfgs()`.
 #'
 #' The exit is at a fixed point of the iteration or in the cycle it settles
-#' into, judged on the WORKING objective: the read-off settled
+#' into, judged on the working objective: the read-off settled
 #' ([modelterms7::term_converged()]) with the objective stalled,
 #' the objective stalled three times in a row, or the objective equal to
 #' two iterations back twice -- the period-two cycle of the break-point
@@ -1177,14 +1177,14 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
 #' coefficient at zero.
 #'
 #' @details
-#' Each equation's intercept starts at the INTERCEPT-ONLY MLE, which
+#' Each equation's intercept starts at the intercept-only MLE, which
 #' [distributions7::fit_distrib()] supplies: the model with every
 #' covariate removed is the right place for the model with them to begin, and
 #' it costs one small fit. The penalized blocks start at zero, where their
 #' penalty is smallest.
 #'
-#' [distributions7::distrib_start()] is the fallback. It returns ONE
-#' LIST PER START, each keyed by parameter, so the value wanted is
+#' [distributions7::distrib_start()] is the fallback. It returns one
+#' list per start, each keyed by parameter, so the value wanted is
 #' `th[[1]][[p]]`; indexing the outer list by a parameter's name gives
 #' `NULL`, and this function did that, so every start silently fell to
 #' zero on the link scale. On a response centered at 5.84 that put the location
@@ -1196,7 +1196,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
 #' routes are tried in order rather than one being assumed to work.
 #'
 #' `start` is either a named list of values, a
-#' [start_strategy()] --- which is asked ONCE, here, before the
+#' [start_strategy()] --- which is asked once, here, before the
 #' alternation between the coefficients and the hyperparameters begins --- or
 #' `NULL` for [start_intercepts()], which this function did before
 #' strategies existed and still does.
@@ -1349,7 +1349,7 @@ statmod_intercepts <- function(spec) {
 #' `edf()` reads them in. Passing the hyperparameters of one penalty for
 #' a term carrying two would count the whole block against it.
 #'
-#' The arguments are passed BY NAME. `edf()`'s third argument is the
+#' The arguments are passed by name. `edf()`'s third argument is the
 #' curvature and its fourth the hyperparameters, and a positional call put the
 #' hyperparameters where the curvature belongs: every smooth term then reported
 #' `NA`, the total degrees of freedom counted the unpenalized terms alone,

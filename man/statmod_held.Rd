@@ -20,7 +20,7 @@ One key per hyperparameter a term fixed in its constructor, as
 return.
 }
 \details{
-WHICH hyperparameters are estimated is a property of the terms, not of the
+which hyperparameters are estimated is a property of the terms, not of the
 criterion: the term is where the penalty is named, and a criterion argument
 saying otherwise was read by nothing when the two disagreed. Everything
 here consults this one enumeration: the outer index, the path, and the

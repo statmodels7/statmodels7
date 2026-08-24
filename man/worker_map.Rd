@@ -28,9 +28,9 @@ of workers, and that is what makes the answer independent of the count:
 the units share nothing, so the same bodies run either way.
 }
 \details{
-The units are independent BY CONSTRUCTION -- a fold is a complete refit
+The units are independent by construction -- a fold is a complete refit
 on its own rows, a path combination restarts its warm chain from the
-sweep's own starting coefficients -- so they go by PROCESSES, with the
+sweep's own starting coefficients -- so they go by processes, with the
 safeguards \code{optimizers7::multistart} records: under \code{pkgload}
 the run stays sequential, because a worker loads the installed copy and
 S7 objects built in the development namespace do not dispatch correctly

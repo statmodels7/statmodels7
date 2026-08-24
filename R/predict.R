@@ -465,7 +465,7 @@ se_answer <- function(su, what, params, spec) {
 #' A parameter an intercept in the same equation holds is not estimated and
 #' is not in that matrix, so it is not here either.
 #'
-#' THE DESIGN'S OWN ROWS ARE CORRECTED at the same time, through
+#' The design's own rows are corrected at the same time, through
 #' [modelterms7::term_static_deriv()]: a coefficient of this
 #' equation moves the level as well as the static part, because the scores
 #' driving the recursion are read at the predictor the recursion produces.
@@ -537,7 +537,7 @@ structural_se_columns <- function(spec, design, ep, p, X) {
 #' continue from there through
 #' [modelterms7::term_continue()].
 #'
-#' WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
+#' Which of the two a call asks for is decided by the response, not by the
 #' times. New rows carrying the response are a re-reading: the filter is run
 #' over them from the term's own seed, and that is what a caller means by
 #' predicting a model on another series, and is why

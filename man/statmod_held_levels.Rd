@@ -22,7 +22,7 @@ they would shift it by.
 \details{
 A score-driven level and a regime's first level both add a constant to
 their equation's predictor. With an intercept there too the two are
-EXACTLY confounded: shifting the intercept by \eqn{c} and the level by
+exactly confounded: shifting the intercept by \eqn{c} and the level by
 \eqn{-c(1 - \sum_j b_j)} leaves every predictor unchanged, since the
 recursion is affine in the level given the score path, the score path
 depends on the predictor alone, and the starting level moves by the same

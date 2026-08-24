@@ -24,7 +24,7 @@ it is not.
 }
 \details{
 \strong{Why not \code{chol()} alone.} A marginal criterion read the
-determinant off \code{chol(M)} and reported the criterion as NONEXISTENT
+determinant off \code{chol(M)} and reported the criterion as nonexistent
 whenever the factorization raised. At a condition number near the rounding
 floor, whether it raises is decided by the arithmetic and never by the
 matrix:

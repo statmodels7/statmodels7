@@ -30,7 +30,7 @@ This is the step the sweeps of \code{\link[=coord_fit]{coord_fit()}} use, and it
 decides whether a shape parameter is admissible: SCAD's proximal operator
 needs \eqn{t < a - 1} and MCP's \eqn{t < \gamma}, tightened to
 \eqn{t d^2} under the diagonal map standardization applies. So the useful
-lower limit of a shape is a property of the DATA, not the constant 2 or 1
+lower limit of a shape is a property of the data, not the constant 2 or 1
 the penalty is defined above, and it binds at ordinary settings: measured,
 a standardized penalty on a column of spread 20 at \eqn{n = 200} needs
 \eqn{a > 3}, and a Poisson block whose fitted means are near

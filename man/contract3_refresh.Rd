@@ -33,7 +33,7 @@ beside the third derivative \code{\link[=contract3]{contract3()}} carries, two t
 \eqn{\partial X/\partial\beta}: with \eqn{D_a = (\partial X_a/\partial\beta)v},
 \deqn{R[(a,j),(b,k)] = -\sum_i w_i\,\ell_{ab,i}\,D_a[i,j]\,X_b[i,k],}
 and the other is its transpose, so the correction is \eqn{R + R^\top}. The
-derivative is asked of the TERM through
+derivative is asked of the term through
 \code{\link[modelterms7:term_block_deriv]{modelterms7::term_block_deriv()}} and never differenced here, for
 the reason \code{\link[=u_refresh]{u_refresh()}} records: a break-point column is a step
 function in its break-point.
