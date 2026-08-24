@@ -32,17 +32,19 @@ Newton correction predicts at the point the inner fit returned: how much
 log-likelihood is still on the table there.
 }
 \details{
-It answers the question AVAILABILITY asks, which is not the question the
-inner optimizer's flag answers. The flag says whether a stopping rule
-fired; availability asks whether the criterion -- a Laplace expansion AT
-THE MODE -- is valid at this point. The second is a matter of distance and
-has a natural scale, log-likelihood units, where the first is a boolean
-about a threshold on a score whose size depends on the model.
+It answers the question \strong{availability} asks, which is a different
+question from the one the inner optimizer's flag answers. The flag says
+whether a stopping rule fired. Availability asks whether the criterion, a
+Laplace expansion at the mode, is valid at this point.
 
-The two come apart, and measured on \code{y ~ s(x) | sigma ~ s(z)} they
-come apart on nearly every point: of 38 inner fits during one search, 38
-are at their mode by this reading -- between 1e-09 and 3e-09 against a
-limit of 1e-03, six orders of margin -- and FOUR report convergence. The
+The second is a matter of distance and has a natural scale, log-likelihood
+units. The first is a boolean about a threshold on a score whose size
+depends on the model.
+
+The two come apart on nearly every point. Measured on
+\code{y ~ s(x) | sigma ~ s(z)}, of 38 inner fits during one search, 38 are at
+their mode by this reading, between 1e-09 and 3e-09 against a limit of
+1e-03, and \strong{four} report convergence. The
 other 34 stopped on the objective-stall guard with the objective already
 fixed to twelve significant digits and a score oscillating between 2.5e-06
 and 3.3e-06, just above the absolute tolerance of 1e-06. Read as

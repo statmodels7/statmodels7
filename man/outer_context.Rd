@@ -33,16 +33,16 @@ factorized twice, and \code{\link[=statmod_marginal_hess]{statmod_marginal_hess(
 calls the gradient, which repeated the whole of it a fourth time. Measured
 by \code{Rprof}'s \code{by.total} on a random intercept over 500 levels at
 20000 observations, the gradient and the Hessian together accounted for 128
-per cent of the fit -- the overlap being exactly that repetition.
+per cent of the fit, the overlap being exactly that repetition.
 
 The context is an environment, so an accessor fills it in place and later
 readers find the quantity already there. Each is computed on first demand
 and never speculatively: the criterion alone does not need an inverse, and
 a search running without an exact gradient must not pay for one.
 
-Passing \code{NULL} wherever a context is accepted restores the old
-behaviour exactly, which is what keeps every existing caller -- and a
-caller's own code -- working unchanged.
+Passing \code{NULL} wherever a context is accepted restores the earlier
+behavior exactly, so every existing caller goes on working unchanged, a
+caller's own code included.
 }
 \seealso{
 \code{\link[=statmod_marginal]{statmod_marginal()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},

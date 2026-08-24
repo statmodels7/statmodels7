@@ -30,13 +30,13 @@ one it is \eqn{-\partial\,\mathbb{E}[\ell'']/\partial\eta}, which is NOT
 \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 as well as the integrand, and the missing piece
 \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity
-isolates -- the third ties the symmetrized sum, not the single term.
+isolates: the third ties the symmetrized sum and not the single term.
 
 \pkg{distributions7} supplies it as
 \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}. The two arrays are
 keyed differently, the observed one being symmetric in all three indices and
-the expected one in its first two only, so the key builder travels with the
-array rather than being assumed by the consumer.
+the expected one in its first two only, so the key builder travels with
+the array and no consumer assumes one.
 }
 \seealso{
 \code{\link[=u_vector]{u_vector()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

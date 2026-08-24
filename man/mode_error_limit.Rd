@@ -22,8 +22,8 @@ entirely once it is not: an inner fit that stopped far from a mode produces
 a large displacement, a large movement, and a number that
 \code{\link[optimizers7:crit_abs_obj]{optimizers7::crit_abs_obj()}} would read as licence to stop.
 
-The quantity tested is in log-likelihood units rather than in the
-coefficients', so one limit serves every shape. Measured over whole fits it
+The quantity tested is in log-likelihood units, not in the coefficients',
+so one limit serves every shape. Measured over whole fits it
 reaches 2.8e-08 on a smooth and 1.4e-10 on a random intercept, against 20.9
 to 22.9 on a hierarchical break-point model whose inner fit reports
 convergence at a score of 247.8. Nine orders separate them, so the value

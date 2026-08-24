@@ -12,16 +12,16 @@
 #' calls the gradient, which repeated the whole of it a fourth time. Measured
 #' by `Rprof`'s `by.total` on a random intercept over 500 levels at
 #' 20000 observations, the gradient and the Hessian together accounted for 128
-#' per cent of the fit -- the overlap being exactly that repetition.
+#' per cent of the fit, the overlap being exactly that repetition.
 #'
 #' The context is an environment, so an accessor fills it in place and later
 #' readers find the quantity already there. Each is computed on first demand
 #' and never speculatively: the criterion alone does not need an inverse, and
 #' a search running without an exact gradient must not pay for one.
 #'
-#' Passing `NULL` wherever a context is accepted restores the old
-#' behaviour exactly, which is what keeps every existing caller -- and a
-#' caller's own code -- working unchanged.
+#' Passing `NULL` wherever a context is accepted restores the earlier
+#' behavior exactly, so every existing caller goes on working unchanged, a
+#' caller's own code included.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -110,8 +110,8 @@ ctx_information <- function(ctx, spec, design, coef, hyper, expected,
 #' The Penalty's Hessian at the Context's Point
 #'
 #' @details
-#' The non-finite entries are zeroed here rather than by each caller: three
-#' of them did it separately and a fourth would have had to remember.
+#' The non-finite entries are zeroed here, once. Three callers did it
+#' separately before, and a fourth would have had to remember.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
@@ -139,18 +139,18 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' \eqn{K = H + S} with the criterion's own information, and its inverse, which
 #' the gradient and the Hessian both read.
 #'
-#' @param expected Whether \eqn{H} is the expected information, which is what
-#'   the criterion carries under `reml(hessian = "expected")`. It used to
+#' @param expected Whether \eqn{H} is the expected information, as the
+#'   criterion carries under `reml(hessian = "expected")`. It used to
 #'   be hard-coded to the observed one, correctly, because the exact gradient
 #'   ran on no other route; admitting the expected route makes the criterion's
 #'   determinant a different matrix, and reading the wrong one would be a
 #'   gradient of the wrong function.
 #'
 #' @details
-#' **The storage is the matrix's own.** \eqn{H} is already sparse
-#' wherever the design is -- a grouping indicator, a factor `by`, a
-#' `linpar` over many levels -- and it was being densified here only
-#' because the penalty's accumulator is a base matrix. Where the sum is large
+#' **The storage is the matrix's own.** \eqn{H} is already sparse wherever
+#' the design is, which covers a grouping indicator, a factor `by` and a
+#' `linpar` over many levels, and it was being densified here only because
+#' the penalty's accumulator is a base matrix. Where the sum is large
 #' enough and sparse enough to be worth it ([worth_sparse()]) it is
 #' kept sparse and factorized as such: measured on a random intercept over 500
 #' levels, p = 503 at a density of 0.014, the factorization and its
@@ -165,14 +165,14 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' ⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
 #' CACHE defeated. `Matrix::Cholesky` stores its result in the matrix's
 #' `factors` slot, so a benchmark that refactorizes the same object
-#' measures a cache hit -- 0.004 ms rather than 0.102 -- and reports the
-#' sparse route as three times better than it is. A fit never gets that hit,
+#' measures a cache hit, 0.004 ms against 0.102, and reports the sparse
+#' route as three times better than it is. A fit never gets that hit,
 #' the penalized matrix being a new one at every point.
 #'
-#' **The inverse stays dense whatever the factor is.** Its readers take
-#' full matrix products against it -- [block_leverage()] and the
-#' Hessian's pair loop -- so the inverse of a sparse matrix being dense costs
-#' nothing sparsity could have kept. What the sparse factor buys is the cost
+#' **The inverse stays dense whatever the factor is.** Its readers take full
+#' matrix products against it, [block_leverage()] and the Hessian's pair loop
+#' among them, so a dense inverse of a sparse matrix costs nothing sparsity
+#' could have kept. What the sparse factor buys is the cost
 #' of producing it.
 #'
 #' `NULL` is returned where the matrix is not positive definite, which is
@@ -235,9 +235,9 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 #' A parameter that has reached the clamp its link keeps it strictly inside
 #' leaves the family's curvature there at `NaN`, and one such entry is
 #' enough to deny the whole matrix a Cholesky factor. The coordinate is not
-#' one the criterion integrates over -- it is held at a boundary, where its
-#' own score is exactly zero -- so what the Laplace approximation wants from
-#' it is nothing, which is what a unit diagonal contributes:
+#' one the criterion integrates over, being held at a boundary where its own
+#' score is exactly zero, so the Laplace approximation wants nothing from it.
+#' A unit diagonal contributes exactly that:
 #' \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
 #' \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 #'
@@ -271,15 +271,15 @@ pin_boundary <- function(K) {
 #' Which Coordinates a Boundary Has Frozen
 #'
 #' @description
-#' The positions whose curvature is not finite, which is what a parameter at
-#' the clamp its link keeps it strictly inside leaves behind.
+#' The positions whose curvature is not finite, which is what a parameter
+#' sitting at the clamp its link keeps it strictly inside leaves behind.
 #'
 #' @details
-#' The DIAGONAL and not the column. A frozen coordinate makes its whole row
-#' non-finite, cross terms included, so a column test marks its neighbours
-#' too: measured on a Student t whose \eqn{\nu} had reached
-#' `double.xmax`, testing columns held \eqn{\sigma} along with \eqn{\nu}
-#' and left the fit exactly where it had been.
+#' The test is on the **diagonal**. A frozen coordinate makes its whole row
+#' non-finite, cross terms included, so a test over whole columns marks its
+#' neighbours too. Measured on a Student t whose \eqn{\nu} had reached
+#' `double.xmax`, a column test held \eqn{\sigma} along with \eqn{\nu} and
+#' left the fit exactly where it had been.
 #'
 #' @param K A square matrix, the information or the penalized information.
 #'
@@ -300,7 +300,7 @@ boundary_coords <- function(K) {
 #'
 #' @description
 #' The size of the difference in the criterion that carries no information,
-#' measured at the point rather than assumed.
+#' measured at the point. Nothing about it is assumed.
 #'
 #' @details
 #' The criterion is read at the penalized mode, and the inner fit stops short
@@ -312,10 +312,10 @@ boundary_coords <- function(K) {
 #' differ by. One assembly of the criterion at given coefficients answers it,
 #' with no refit.
 #'
-#' **The quadratic form alone is not enough**, and the reason is
-#' structural rather than a matter of accuracy: the criterion carries
-#' \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is NOT stationary in
-#' \eqn{\beta}, so a mode error enters it at FIRST order. Measured,
+#' **The quadratic form alone is not enough**, and the reason is structural
+#' before it is a matter of accuracy: the criterion carries
+#' \eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is not stationary in
+#' \eqn{\beta}, so a mode error enters it at **first** order. Measured,
 #' \eqn{\tfrac{1}{2} g' K^{-1} g} is right to one per cent at an inner
 #' tolerance of `1e-4`, where the second-order term dominates, and
 #' undershoots by 50 to 1000 times at `1e-6` and below, where the first
@@ -323,8 +323,8 @@ boundary_coords <- function(K) {
 #'
 #' Measured against the spread of the criterion at one hyperparameter reached
 #' from six different warm starts, over four shapes and five inner tolerances,
-#' the displaced reading tracks it across six orders of magnitude -- from
-#' `8.6e-2` down to `2.2e-7` -- at a ratio between 0.05 and 0.99, and
+#' the displaced reading tracks it across six orders of magnitude, from
+#' `8.6e-2` down to `2.2e-7`, at a ratio between 0.05 and 0.99, and
 #' separates shapes that a formula cannot: at an inner tolerance of `1e-6`
 #' it reads `1.7e-4` on a random intercept over 500 levels against
 #' `7.9e-8` on a gaussian smooth.
@@ -340,11 +340,11 @@ boundary_coords <- function(K) {
 #' @param design The design.
 #' @param method An [OuterMethod()].
 #' @param criterion_at A function of `(cf, hy, par, ctx)` returning what
-#'   THIS search is running, which is a prediction-error criterion or a
-#'   marginal one. It is passed in rather than chosen here: reading the
-#'   marginal criterion of a fit whose search is [aic()] answers for
-#'   a quantity the search never sees, and the number that comes back stopped
-#'   two such fits short of their own optimum.
+#'   **this** search is running, a prediction-error criterion or a marginal
+#'   one. It is passed in and never chosen here: reading the marginal
+#'   criterion of a fit whose search is [aic()] answers for a quantity the
+#'   search never sees, and the number that came back stopped two such fits
+#'   short of their own optimum.
 #'
 #' @return A single positive number, or `NA_real_` where the pieces are
 #'   not available.
@@ -419,10 +419,10 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
 #' @param basis The integrated subspace, or `NULL`.
 #' @param expected Which information `pen` was built with, which is the
 #'   cache's key: the projection is of THAT matrix, so one entry cannot serve
-#'   both. Nothing reaches it today, a search holding one
-#'   [OuterMethod()] throughout, but the slot is keyed rather than
-#'   shared because the twin defect in [ctx_penalized()] was
-#'   unreachable in exactly the same way until it was not.
+#'   both. Nothing reaches it today, a search holding one [OuterMethod()]
+#'   throughout. The slot is keyed all the same, the twin defect in
+#'   [ctx_penalized()] having been unreachable in exactly the same way until
+#'   it was not.
 #'
 #' @return A square matrix, or `NULL`.
 #'
@@ -508,13 +508,13 @@ ctx_leverage <- function(ctx, design, M, params, npar, offs, threads = 1L) {
 #' \eqn{-\mathbb{E}[\ell''']}: differentiating an expectation moves the measure
 #' as well as the integrand, and the missing piece
 #' \eqn{\mathbb{E}[\ell_{ab}\ell_{c}]} is a mixed moment no Bartlett identity
-#' isolates -- the third ties the symmetrized sum, not the single term.
+#' isolates: the third ties the symmetrized sum and not the single term.
 #'
 #' \pkg{distributions7} supplies it as
 #' [distributions7::distrib_dexpected_hessian()]. The two arrays are
 #' keyed differently, the observed one being symmetric in all three indices and
-#' the expected one in its first two only, so the key builder travels with the
-#' array rather than being assumed by the consumer.
+#' the expected one in its first two only, so the key builder travels with
+#' the array and no consumer assumes one.
 #'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
@@ -610,8 +610,8 @@ ctx_deriv <- function(ctx, spec, design, coef, hyper, order) {
 #' a large displacement, a large movement, and a number that
 #' [optimizers7::crit_abs_obj()] would read as licence to stop.
 #'
-#' The quantity tested is in log-likelihood units rather than in the
-#' coefficients', so one limit serves every shape. Measured over whole fits it
+#' The quantity tested is in log-likelihood units, not in the coefficients',
+#' so one limit serves every shape. Measured over whole fits it
 #' reaches 2.8e-08 on a smooth and 1.4e-10 on a random intercept, against 20.9
 #' to 22.9 on a hierarchical break-point model whose inner fit reports
 #' convergence at a score of 247.8. Nine orders separate them, so the value
@@ -634,17 +634,19 @@ mode_error_limit <- function() 1e-3
 #' log-likelihood is still on the table there.
 #'
 #' @details
-#' It answers the question AVAILABILITY asks, which is not the question the
-#' inner optimizer's flag answers. The flag says whether a stopping rule
-#' fired; availability asks whether the criterion -- a Laplace expansion AT
-#' THE MODE -- is valid at this point. The second is a matter of distance and
-#' has a natural scale, log-likelihood units, where the first is a boolean
-#' about a threshold on a score whose size depends on the model.
+#' It answers the question **availability** asks, which is a different
+#' question from the one the inner optimizer's flag answers. The flag says
+#' whether a stopping rule fired. Availability asks whether the criterion, a
+#' Laplace expansion at the mode, is valid at this point.
 #'
-#' The two come apart, and measured on `y ~ s(x) | sigma ~ s(z)` they
-#' come apart on nearly every point: of 38 inner fits during one search, 38
-#' are at their mode by this reading -- between 1e-09 and 3e-09 against a
-#' limit of 1e-03, six orders of margin -- and FOUR report convergence. The
+#' The second is a matter of distance and has a natural scale, log-likelihood
+#' units. The first is a boolean about a threshold on a score whose size
+#' depends on the model.
+#'
+#' The two come apart on nearly every point. Measured on
+#' `y ~ s(x) | sigma ~ s(z)`, of 38 inner fits during one search, 38 are at
+#' their mode by this reading, between 1e-09 and 3e-09 against a limit of
+#' 1e-03, and **four** report convergence. The
 #' other 34 stopped on the objective-stall guard with the objective already
 #' fixed to twelve significant digits and a score oscillating between 2.5e-06
 #' and 3.3e-06, just above the absolute tolerance of 1e-06. Read as

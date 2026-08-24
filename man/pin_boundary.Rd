@@ -21,9 +21,9 @@ finite by the identity's, leaving the rest of the matrix alone.
 A parameter that has reached the clamp its link keeps it strictly inside
 leaves the family's curvature there at \code{NaN}, and one such entry is
 enough to deny the whole matrix a Cholesky factor. The coordinate is not
-one the criterion integrates over -- it is held at a boundary, where its
-own score is exactly zero -- so what the Laplace approximation wants from
-it is nothing, which is what a unit diagonal contributes:
+one the criterion integrates over, being held at a boundary where its own
+score is exactly zero, so the Laplace approximation wants nothing from it.
+A unit diagonal contributes exactly that:
 \eqn{\log\lvert K\rvert} gains \eqn{\log 1 = 0}, and
 \eqn{K^{-1}g} returns that coordinate's own score, which is zero.
 

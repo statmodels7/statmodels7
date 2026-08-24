@@ -17,11 +17,11 @@ criterion_resolution(st, spec, design, method, criterion_at)
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{criterion_at}{A function of \verb{(cf, hy, par, ctx)} returning what
-THIS search is running, which is a prediction-error criterion or a
-marginal one. It is passed in rather than chosen here: reading the
-marginal criterion of a fit whose search is \code{\link[=aic]{aic()}} answers for
-a quantity the search never sees, and the number that comes back stopped
-two such fits short of their own optimum.}
+\strong{this} search is running, a prediction-error criterion or a marginal
+one. It is passed in and never chosen here: reading the marginal
+criterion of a fit whose search is \code{\link[=aic]{aic()}} answers for a quantity the
+search never sees, and the number that came back stopped two such fits
+short of their own optimum.}
 }
 \value{
 A single positive number, or \code{NA_real_} where the pieces are
@@ -29,7 +29,7 @@ not available.
 }
 \description{
 The size of the difference in the criterion that carries no information,
-measured at the point rather than assumed.
+measured at the point. Nothing about it is assumed.
 }
 \details{
 The criterion is read at the penalized mode, and the inner fit stops short
@@ -41,10 +41,10 @@ amount that is exactly what an evaluation from a different warm start would
 differ by. One assembly of the criterion at given coefficients answers it,
 with no refit.
 
-\strong{The quadratic form alone is not enough}, and the reason is
-structural rather than a matter of accuracy: the criterion carries
-\eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is NOT stationary in
-\eqn{\beta}, so a mode error enters it at FIRST order. Measured,
+\strong{The quadratic form alone is not enough}, and the reason is structural
+before it is a matter of accuracy: the criterion carries
+\eqn{-\tfrac{1}{2}\log\lvert K(\beta)\rvert}, which is not stationary in
+\eqn{\beta}, so a mode error enters it at \strong{first} order. Measured,
 \eqn{\tfrac{1}{2} g' K^{-1} g} is right to one per cent at an inner
 tolerance of \code{1e-4}, where the second-order term dominates, and
 undershoots by 50 to 1000 times at \code{1e-6} and below, where the first
@@ -52,8 +52,8 @@ order does.
 
 Measured against the spread of the criterion at one hyperparameter reached
 from six different warm starts, over four shapes and five inner tolerances,
-the displaced reading tracks it across six orders of magnitude -- from
-\code{8.6e-2} down to \code{2.2e-7} -- at a ratio between 0.05 and 0.99, and
+the displaced reading tracks it across six orders of magnitude, from
+\code{8.6e-2} down to \code{2.2e-7}, at a ratio between 0.05 and 0.99, and
 separates shapes that a formula cannot: at an inner tolerance of \code{1e-6}
 it reads \code{1.7e-4} on a random intercept over 500 levels against
 \code{7.9e-8} on a gaussian smooth.

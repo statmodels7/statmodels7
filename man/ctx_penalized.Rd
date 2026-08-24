@@ -11,8 +11,8 @@ ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
 
 \item{spec, design, coef, hyper}{The fallback arguments.}
 
-\item{expected}{Whether \eqn{H} is the expected information, which is what
-the criterion carries under \code{reml(hessian = "expected")}. It used to
+\item{expected}{Whether \eqn{H} is the expected information, as the
+criterion carries under \code{reml(hessian = "expected")}. It used to
 be hard-coded to the observed one, correctly, because the exact gradient
 ran on no other route; admitting the expected route makes the criterion's
 determinant a different matrix, and reading the wrong one would be a
@@ -26,10 +26,10 @@ A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
 the gradient and the Hessian both read.
 }
 \details{
-\strong{The storage is the matrix's own.} \eqn{H} is already sparse
-wherever the design is -- a grouping indicator, a factor \code{by}, a
-\code{linpar} over many levels -- and it was being densified here only
-because the penalty's accumulator is a base matrix. Where the sum is large
+\strong{The storage is the matrix's own.} \eqn{H} is already sparse wherever
+the design is, which covers a grouping indicator, a factor \code{by} and a
+\code{linpar} over many levels, and it was being densified here only because
+the penalty's accumulator is a base matrix. Where the sum is large
 enough and sparse enough to be worth it (\code{\link[=worth_sparse]{worth_sparse()}}) it is
 kept sparse and factorized as such: measured on a random intercept over 500
 levels, p = 503 at a density of 0.014, the factorization and its
@@ -44,14 +44,14 @@ matrix.
 ⚠️ Those figures are the ones measured with \pkg{Matrix}'s factorization
 CACHE defeated. \code{Matrix::Cholesky} stores its result in the matrix's
 \code{factors} slot, so a benchmark that refactorizes the same object
-measures a cache hit -- 0.004 ms rather than 0.102 -- and reports the
-sparse route as three times better than it is. A fit never gets that hit,
+measures a cache hit, 0.004 ms against 0.102, and reports the sparse
+route as three times better than it is. A fit never gets that hit,
 the penalized matrix being a new one at every point.
 
-\strong{The inverse stays dense whatever the factor is.} Its readers take
-full matrix products against it -- \code{\link[=block_leverage]{block_leverage()}} and the
-Hessian's pair loop -- so the inverse of a sparse matrix being dense costs
-nothing sparsity could have kept. What the sparse factor buys is the cost
+\strong{The inverse stays dense whatever the factor is.} Its readers take full
+matrix products against it, \code{\link[=block_leverage]{block_leverage()}} and the Hessian's pair loop
+among them, so a dense inverse of a sparse matrix costs nothing sparsity
+could have kept. What the sparse factor buys is the cost
 of producing it.
 
 \code{NULL} is returned where the matrix is not positive definite, which is
