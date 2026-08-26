@@ -1,0 +1,222 @@
+---
+title: "Fitting a distributional model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fitting a distributional model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(statmodels7)
+set.seed(1)
+```
+
+An ordinary regression models the mean and treats everything else about the
+distribution as a nuisance held constant. A distributional model gives **every
+parameter its own equation**, so the scale, the shape and a zero-inflation
+probability may each depend on covariates, and each may be a smooth, a random
+effect or a penalized block.
+
+`statmod()` reads one formula carrying all of them, the equations separated by
+a bar, and fits it. This vignette walks through a fit and the questions a reader
+asks of one.
+
+```{r}
+n <- 300
+da <- data.frame(x = sort(runif(n, -3, 3)))
+da$y <- rnorm(n, 1 + 0.8 * da$x, exp(-0.6 + 0.35 * da$x))
+```
+
+The scale of these data grows with `x`, from about $0.19$ at $x = -3$ to about
+$1.57$ at $x = 3$.
+
+## A first fit
+
+The first equation belongs to the distribution's first parameter, so a formula
+with no bar models the mean and leaves the rest as intercepts:
+
+```{r}
+f1 <- statmod(y ~ x, gaussian1_distrib(), da)
+coef(f1)
+```
+
+`coef()` answers with **one compartment per parameter**, because the
+coefficients of the mean and of the scale are different quantities on different
+scales and a single flat vector would run them together. Where the model is an
+ordinary regression, it is one:
+
+```{r}
+all.equal(unname(coef(f1)$mu), unname(coef(lm(y ~ x, da))), tolerance = 1e-6)
+```
+
+## Modeling the scale
+
+Name a parameter on the left of its own equation, after a bar:
+
+```{r}
+f2 <- statmod(y ~ x | sigma ~ x, gaussian1_distrib(), da)
+lapply(coef(f2), round, 3)
+```
+
+against a truth of $\mu = 1 + 0.8x$ and $\log\sigma = -0.6 + 0.35x$. The scale's
+equation is on the **log scale**, which is that parameter's own link: an
+equation is fitted on the scale that keeps its parameter inside its domain, so
+no combination of covariates can produce a negative standard deviation.
+
+Comparing the two fits shows what the second equation bought:
+
+```{r}
+c(constant_scale = loglik(f1), modeled_scale = loglik(f2))
+```
+
+## Terms
+
+Any `modelterms7` term goes in any equation. A smooth carries a penalty, and its
+smoothing parameter is estimated, not set:
+
+```{r}
+db <- data.frame(z = sort(runif(n, -3, 3)),
+                 g = factor(rep(1:20, length.out = n)))
+db$y <- rnorm(n, 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], 0.4)
+
+f3 <- statmod(y ~ s(z, k = 8), gaussian1_distrib(), db)
+f3@edf
+```
+
+The smooth carries 7 coefficients and **spends** about 5.3 of them: that is what
+the penalty buys, and it is the number a criterion should count, and never the
+7. `hyper()` reports the hyperparameters and who chose each:
+
+```{r}
+hyper(f3)
+```
+
+A random effect is written the same way and is the same machinery, its penalty
+being a Gaussian prior over the group effects:
+
+```{r}
+f4 <- statmod(y ~ s(z, k = 8) + random(~ 1 | g), gaussian1_distrib(), db)
+f4@edf
+hyper(f4)
+```
+
+20 group effects spend about 18.6 degrees of freedom here, and the estimated
+prior scale is close to the 0.6 the groups were drawn at. A random intercept is
+a ridge penalty on an indicator block, which is why it needs no separate
+machinery.
+
+## Who chooses the hyperparameters
+
+Every hyperparameter is estimated unless the term holds it. Which criterion does
+the choosing is `outer_criterion`:
+
+* `reml()` and `ml()` are marginal criteria: they integrate out what the penalty
+  shrinks and are differentiable, so the search uses an exact gradient and, where
+  it exists, an exact Hessian. `reml()` is the default.
+* `aic()`, `bic()` and `cv()` score an estimate of prediction error instead, and
+  are what a penalty with a **kink** needs: a marginal criterion expands around
+  the penalized mode, and for a lasso that mode sits *at* the kink, where the
+  second derivative it wants does not exist.
+
+A term holds a hyperparameter by naming it, and `hyper()` then says so in its
+`held` column.
+
+## Reading a fit
+
+```{r}
+summary(f3)
+```
+
+Three things in that output are worth naming. The log-likelihood is the
+**conditional** one, read at the fitted coefficients, and the effective degrees
+of freedom go with it: `cAIC` and `cBIC` are built from that pair, and comparing
+a conditional log-likelihood against a marginal one from another package is
+comparing two different quantities. Every interval is built on the scale that
+keeps its quantity in its own set and mapped back, so a scale's interval cannot
+contain a negative number. And the last line is the certificate.
+
+## The certificate
+
+The optimizer's convergence flag answers whether a stopping rule fired.
+`statmod_certificate()` answers a different question: is the point reported the
+one the model asks for?
+
+```{r}
+cert <- statmod_certificate(f4)
+c(state = cert$state, mode_error = signif(cert$mode_error, 3))
+```
+
+`mode_error` is how far above its own penalized mode the inner fit stopped, in
+log-likelihood units, so one limit serves every model whatever its scale. The
+`state` is `converged`, `boundary` where a hyperparameter has run to an edge and
+the criterion is genuinely flat there, or `not converged`.
+
+## Prediction, and the ordinary generics
+
+`predict()` answers per parameter, with a standard error on request:
+
+```{r}
+nd <- data.frame(z = c(-1, 0, 1),
+                 g = factor(c(1, 2, 3), levels = levels(db$g)))
+predict(f4, newdata = nd, se = TRUE)$mu
+```
+
+Prediction **reapplies** each term's blueprint rather than rebuilding it, so the
+knots of a smooth and the levels of a factor are the ones the model was fitted
+with. The identity that pins it is that predicting on rows the model saw returns
+the fitted values there.
+
+The `stats` generics behave as they read:
+
+```{r}
+c(nobs = nobs(f4), df.residual = df.residual(f4))
+length(sigma(f4))
+```
+
+`sigma()` returns a **vector**, because the whole point of the layer is that a
+scale may be modeled: a single residual standard deviation exists only where
+that equation is an intercept, and returning its first value everywhere else
+would answer a different question. `df.residual()` subtracts the *effective*
+count, so it is not an integer.
+
+Three generics signal an error instead of guessing. `terms()` would have to
+choose one equation's terms of several; `model.frame()` has no frame to return,
+a fit keeping each term's blueprint and never the data; and `anova()` has no
+null distribution to test against when the hyperparameters were chosen from the
+same data.
+
+## Simulating from a model
+
+`rstatmod()` draws from a model at coefficients you supply, as a simulation
+study needs:
+
+```{r}
+sim <- rstatmod(y ~ x, gaussian1_distrib(), da,
+                par = list(mu = c(1, 0.8), sigma = -0.6))
+names(sim)
+head(sim$data, 3)
+```
+
+It returns the truth **beside** the data and never as an attribute of it: an
+attribute survives a row subset without being subset itself, so
+`attr(sim[1:10, ], "theta")` would still hold every row's parameters and be
+silently misaligned, which for a simulation study is the worse failure.
+
+## Summary
+
+* One formula, the equations separated by a bar, one per distribution
+  parameter; an equation omitted is an intercept.
+* Each equation is fitted on its parameter's own link scale, so no combination
+  of covariates leaves the parameter's domain.
+* `coef()`, `predict()` and `summary()` answer with one compartment per
+  parameter.
+* Any `modelterms7` term goes in any equation, and its penalty travels with it.
+* Hyperparameters are estimated unless a term holds one: `reml()` and `ml()`
+  where the penalty is twice differentiable, `aic()`, `bic()` or `cv()` where it
+  has a kink.
+* The log-likelihood reported is the conditional one, and `cAIC` and `cBIC` go
+  with the effective degrees of freedom, never a parameter count.
+* `statmod_certificate()` asks whether the point is the model's mode, which the
+  optimizer's flag does not.

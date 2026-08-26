@@ -52,7 +52,9 @@ Suggests:
     pak,
     pkgdown,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr
+VignetteBuilder: knitr
 Remotes:
     statmodels7/basis7,
     statmodels7/modelterms7,
