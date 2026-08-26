@@ -408,8 +408,11 @@ test_that("scad and mcp keep ONE lambda_max whatever the shape", {
                      stats::rnorm(n2))
   dd$Z <- Z
 
-  for (call in c("scad(Z, n_lambda = 5, n_a = 3)",
-                 "mcp(Z, n_lambda = 5, n_gamma = 3)")) {
+  # the shape is HELD at the literature's value by default, so it is asked
+  # for explicitly here: without a grid over it there is nothing to hold
+  # lambda_max against
+  for (call in c("scad(Z, n_lambda = 5, n_a = 3, a = NULL)",
+                 "mcp(Z, n_lambda = 5, n_gamma = 3, gamma = NULL)")) {
     f <- suppressWarnings(statmod(
       stats::as.formula(paste("y ~", call)),
       distributions7::gaussian1_distrib(), dd, sparse_criterion = bic()))
