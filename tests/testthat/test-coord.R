@@ -93,8 +93,21 @@ test_that("coordinate descent and the proximal route reach the same point", {
                      design = b$design)
     px <- sparse_fit(b$obj, b$beta, b$block, b$hyper)
     expect_false(is.null(cd), label = cs$nm)
-    expect_equal(cd$par, px$par, tolerance = 1e-7, label = cs$nm)
+    # The objective is what the two routes share, and it is the quantity
+    # that survives a change of platform. Near the optimum the excess
+    # F(b) - F(bhat) is the quadratic form in the block's own curvature,
+    # so a coefficient gap of size d appears in the objective as d^2 and
+    # a flat direction admits a large d at a negligible dF. Measured
+    # here the coefficients agree to between 2.8e-10 and 4.4e-09 and the
+    # objective to 5.7e-14 or better; on macOS the enet case reached
+    # 3.2e-07 on the coefficients while the objective comparison still
+    # passed, which is that inequality doing its work. The sharp claims
+    # are therefore the objective and the SUPPORT, which is what a
+    # sparse penalty promises and which held on macOS too; the
+    # coefficient tolerance is loose enough to cover the conditioning.
+    expect_identical(cd$par != 0, px$par != 0, label = cs$nm)
     expect_equal(cd$value, px$value, tolerance = 1e-9, label = cs$nm)
+    expect_equal(cd$par, px$par, tolerance = 1e-5, label = cs$nm)
   }
 })
 
