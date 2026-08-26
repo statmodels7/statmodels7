@@ -172,7 +172,7 @@
 * `residuals()` gives the QUANTILE residual by default:
   \eqn{r_i = \Phi^{-1}(F(y_i; \hat\theta_i))}, which under a correct model is
   exactly standard normal whatever the family and whichever of its parameters
-  are modelled. There is one residual per observation and not one per
+  are modeled. There is one residual per observation and not one per
   distribution parameter: a residual compares an observation with the whole
   law its row was given. Where the distribution function jumps -- every
   discrete family, and a mixed one at its atom -- the construction is
@@ -404,7 +404,7 @@
 # statmodels7 0.83.0
 
 * The scoring step no longer deadlocks where one coordinate's curvature is
-  orders below its neighbours'. This is the second of the two regimes 0.82.0
+  orders below its neighbors'. This is the second of the two regimes 0.82.0
   named: there the curvature was `NaN` and the solve died for everyone, here
   it is finite but negligible, so nothing is held and the step in that
   coordinate is astronomically long. Measured on a Student t whose `nu`
@@ -501,7 +501,7 @@
 
   ⚠️ **By the DIAGONAL and not by the column**, which is measured rather
   than reasoned: a boundary coordinate makes its whole ROW non-finite, cross
-  terms included, so a column test marks its neighbours too. The first
+  terms included, so a column test marks its neighbors too. The first
   version did, held `sigma` along with `nu`, and left the fit exactly where
   it had been. The test pins the distinction.
 
@@ -552,7 +552,7 @@
   central difference of the criterion gives (-0.360, 2.721) at h = 0.2 and
   (-0.344, 2.723) at h = 0.05 against the exact (-0.343, 2.720); and all four
   routes -- default, `lbfgs()`, `newton()` and `nelder_mead()` -- stop at the
-  same place, which a simplex could not do if the neighbouring points were
+  same place, which a simplex could not do if the neighboring points were
   merely worse.
 
   End to end the model now reaches **-1558.352**, 4.33 better, and its
@@ -793,7 +793,7 @@
   was usable, and that fit is back to 6 evaluations and `TRUE`.
 
 * `outer_default_optimizer()` is the policy `exact2 -> newton()`, extracted so
-  that it can be read, pinned and swept. Behaviour is unchanged.
+  that it can be read, pinned and swept. Behavior is unchanged.
 
 # statmodels7 0.74.0
 
@@ -2263,7 +2263,7 @@
   criterion, each a whole inner fit: 19 against 31 with one hyperparameter --
   where it does not pay, a simplex needing no derivative in one dimension --
   then 126 against 35 with a smooth and a random effect, 133 against 32 with
-  two smooths, and 166 against 6 with a modelled scale, the criterion
+  two smooths, and 166 against 6 with a modeled scale, the criterion
   agreeing to four decimals throughout.
 
   ⚠️ It has a cost, and it is on the criterion's PLATEAU. Once the penalty
@@ -2666,7 +2666,7 @@
   while its text claimed the criterion was still falling. With the top now
   emptying the block the criterion is FLAT across that stretch, so index one
   is a legitimate minimum and the message was naming a cause that was not the
-  real one. It compares against the neighbouring point now, and the two
+  real one. It compares against the neighboring point now, and the two
   warnings the suite carried were both of that kind.
 
 # statmodels7 0.25.0
@@ -2809,7 +2809,7 @@
   16.98939 and 16.98885, and the whole of the gap sat on the MU smooth while
   sigma's agreed exactly: the Demmler-Reinsch basis is orthogonalized
   against the constant in the UNWEIGHTED metric, and the mean's information
-  carries weights `1/sigma^2` that vary as soon as the scale is modelled, so
+  carries weights `1/sigma^2` that vary as soon as the scale is modeled, so
   the orthogonality the construction arranged does not survive the
   weighting. The gap is small wherever the blocks are nearly orthogonal and
   is not bounded in general.
@@ -2817,7 +2817,7 @@
   Now exact against the full-model trace, per term and in total, on a
   gaussian with smooths in both equations, on a gumbel, whose location and
   scale are NOT information-orthogonal, and on a gamma with its dispersion
-  modelled. A kinked penalty keeps its own count, the number of coefficients
+  modeled. A kinked penalty keeps its own count, the number of coefficients
   away from the kink, since the curvature the smoother matrix is built from
   does not exist at a coefficient sitting on one.
 
@@ -3459,7 +3459,7 @@
   `v = db/dtheta` from the stationarity condition and
   `u_c = tr(M dK/db_c)` from the third derivative of the log-likelihood
   in the link-scale predictors. Checked against numDeriv at 1e-6 for
-  one smoothing parameter, for several, with the scale modelled, and
+  one smoothing parameter, for several, with the scale modeled, and
   under `ml()`.
 
 * `outer_optimizer` defaults to `lbfgs()` where the gradient exists and
