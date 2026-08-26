@@ -128,4 +128,11 @@ test_that("the report describes what is installed without installing it", {
   expect_match(txt, "pak::pak", fixed = TRUE)
 
   expect_error(statmodels7_update("nonsense"))
+
+  # 'quiet' was accepted and read by nobody: the report printed its whole
+  # table under it and the install branch hands pak its own defaults. It is
+  # reported by name now, and the versions without the printing are what
+  # the return value already is.
+  expect_error(statmodels7_update(quiet = TRUE), "unused argument")
+  expect_identical(res, statmodels7_versions())
 })

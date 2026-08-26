@@ -4,16 +4,13 @@
 \alias{statmodels7_update}
 \title{Install or Update the Toolkit}
 \usage{
-statmodels7_update(action = c("report", "install"), quiet = FALSE)
+statmodels7_update(action = c("report", "install"))
 }
 \arguments{
 \item{action}{\code{"report"} (the default) to print the installed versions and
 the calls that would update them, or \code{"install"} to install and update.
 Matched with \code{\link[=match.arg]{match.arg()}}, so an unambiguous prefix such as \code{"i"} is
 accepted and anything else is an error.}
-
-\item{quiet}{Accepted for symmetry with the installers and currently not
-read: \pkg{pak} is called with its own defaults. A single logical.}
 }
 \value{
 A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with columns
@@ -49,10 +46,21 @@ before installing, or the install of a compiled member fails partway and
 leaves that member in a state where \code{packageVersion()} reports it absent.
 }
 
+\section{Printing}{
+Both actions print, and neither takes an argument to suppress it. The
+report exists to be read, and its return value is
+\code{\link[=statmodels7_versions]{statmodels7_versions()}}, so a caller who wants the versions without the
+console output calls that instead. The install hands the work to
+\pkg{pak}, which prints its own progress and takes no \code{quiet} argument.
+}
+
 \examples{
 # Prints the table and the two calls that would update it. Installs
 # nothing.
 v <- statmodels7_update()
+
+# The return value is the versions, so that is the call to make when the
+# table is wanted and the printing is not.
 identical(v, statmodels7_versions())
 
 \dontrun{

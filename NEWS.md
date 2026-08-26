@@ -1,3 +1,23 @@
+# statmodels7 0.89.0
+
+* `statmodels7_update(quiet =)` is removed. It was accepted and read by
+  nobody: the report branch printed its whole table under it, and the install
+  branch hands the work to `pak::pak()`, which takes no `quiet` argument of
+  its own. `statmodels7_update(quiet = TRUE)` was as loud as the default and
+  nothing said the setting had been dropped, which is the shape recorded twice
+  for `fit_distrib(maxit =, tol =)` and once for `ridge(n_lambda =)`: an
+  argument accepted and ignored is worse than one that errors.
+
+  Nothing is lost. The report exists to be read, and its return value is
+  `statmodels7_versions()`, so the versions without the console output are one
+  call away and always were. The argument is now reported by name.
+
+  A walk over every function definition in the nine packages, comparing each
+  formal against the symbols in the body and in every default, put this at
+  778 candidates over 3,280 functions, of which all but 57 are S7 or S3
+  methods whose formals have to match the generic; of the 57 plain functions,
+  this was the only exported one. So the toolkit has no second instance.
+
 # statmodels7 0.88.1
 
 * Documentation pass over all 329 help pages. Every page is now
