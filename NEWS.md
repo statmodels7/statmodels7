@@ -1,3 +1,25 @@
+# statmodels7 0.90.0
+
+* `ml()` fits a model carrying an anisotropic tensor smooth, where it
+  refused. The criterion projects the determinant's matrix onto the range
+  of each penalty, and `te()`'s is an `additive_penalty()`, which exposed
+  no null basis to take the complement of; `penalties7` 0.19.0 supplies
+  one, and it is a property of the components rather than of any setting
+  of the hyperparameters, so there is nothing to guess at.
+
+  Measured on the model the refusal was written for, 200 observations of a
+  surface quadratic in one margin and linear in the other: `ml()` and
+  `reml()` reach smoothing parameters agreeing to four significant figures
+  (3.43e+07 and 0.438 either way), the same 8.50 effective degrees of
+  freedom, and fitted values correlating at 1 with an identical rmse of
+  0.0569 against the truth, where an intercept-only fit is at 0.638. The
+  two criteria differ in value, as two criteria do.
+
+  The guard itself is unchanged and still reachable: `scad_penalty()` and
+  `mcp_penalty()` are improper by construction and are not quadratic, so
+  they have no null basis, and `ml()` refuses by name rather than guess
+  which directions are profiled.
+
 # statmodels7 0.89.0
 
 * `statmodels7_update(quiet =)` is removed. It was accepted and read by

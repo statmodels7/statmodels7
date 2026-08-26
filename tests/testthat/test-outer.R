@@ -185,22 +185,37 @@ test_that("the criterion applies to a smooth penalty and to nothing else", {
                "reml(), ml(), aic(), bic(), cv() or NULL", fixed = TRUE)
 })
 
-test_that("ml refuses a penalty whose null space it cannot read", {
-  # an anisotropic tensor smooth carries an additive penalty, which reports a
-  # rank but exposes no null basis; guessing which directions are profiled
-  # would give a criterion that is arithmetic without a meaning
+test_that("ml reads an additive penalty's null space, and refuses without one", {
+  # An anisotropic tensor smooth carries an additive penalty. It exposed no
+  # null basis until penalties7 0.19.0, so ml() refused rather than guess which
+  # directions are profiled; the basis is a property of the components -- the
+  # null space of the sum is the intersection of theirs -- so there is nothing
+  # to guess and the criterion is now defined here.
   set.seed(24)
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + dt$x2 + stats::rnorm(200, sd = 0.3)
-  expect_error(statmod(y ~ te(x1, x2, k = 4),
-                       distributions7::gaussian1_distrib(), dt,
-                       outer_criterion = ml()),
+  fml <- statmod(y ~ te(x1, x2, k = 4),
+                 distributions7::gaussian1_distrib(), dt,
+                 outer_criterion = ml())
+  expect_true(is.finite(fml@criterion))
+
+  # the guard is still there for a penalty that genuinely exposes none: scad
+  # and mcp are improper by construction and are not quadratic, so they have no
+  # null basis to read. A fit routes a kinked penalty elsewhere, so the guard
+  # is asked here where it is reachable.
+  expect_error(penalty_range_basis(penalties7::scad_penalty(), 5L, "mu", "scad(X)"),
                "cannot read the null space")
-  # while reml integrates everything and needs no such basis
+  # and reml, which integrates everything and needs no such basis, agrees with
+  # ml about the answer: the two criteria differ, the fits do not
   fit <- statmod(y ~ te(x1, x2, k = 4),
                  distributions7::gaussian1_distrib(), dt,
                  outer_criterion = reml())
   expect_true(is.finite(fit@criterion))
+  expect_equal(as.numeric(fitted(fml)), as.numeric(fitted(fit)),
+               tolerance = 1e-3)
+  expect_equal(unlist(fml@hyper$mu[["te(x1, x2, k = 4)"]]),
+               unlist(fit@hyper$mu[["te(x1, x2, k = 4)"]]),
+               tolerance = 1e-2)
   # one smoothing parameter per margin, both moved off the probe value
   th <- fit@hyper$mu[["te(x1, x2, k = 4)"]]
   expect_gte(length(th), 2L)
