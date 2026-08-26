@@ -27,7 +27,7 @@ A single logical.
 
 The order-2 route additionally requires the penalty to be quadratic in
 the coefficients
-([`beta_quadratic`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)),
+([`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)),
 since otherwise the third and fourth derivatives of the penalty in
 \\\beta\\ enter the criterion's own second derivative and penalties7
 does not carry them.

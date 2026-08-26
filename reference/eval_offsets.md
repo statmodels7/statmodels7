@@ -12,38 +12,47 @@ eval_offsets(formula, params, data, env, n)
 
 - formula:
 
-  The model formula, before the offsets are stripped.
+  The model formula, before
+  [`split_offsets()`](https://statmodels7.github.io/statmodels7/reference/split_offsets.md)
+  has stripped anything.
 
 - params:
 
-  The distribution's parameter names.
+  The distribution's parameter names, in the family's order.
 
 - data:
 
-  A data frame.
+  A data frame to evaluate in.
 
 - env:
 
-  The environment the formula carried.
+  The environment the formula carried, the enclosure of the evaluation.
 
 - n:
 
-  The number of observations.
+  The number of observations, the length to recycle to.
 
 ## Value
 
-A named list, one entry per parameter, `NULL` where the equation names
-no offset.
+A named list with one entry per element of `params`, each a numeric
+vector of length `n` or `NULL` where that equation names no offset.
 
 ## Details
 
-The expressions are re-evaluated rather than carried as numbers, which
-is what lets an offset survive prediction:
-[`statmod_respec`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
-calls this against the new data, where a vector supplied through the
-`offsets` argument at fitting time has the wrong length and cannot be
-reused.
+The expressions are kept and re-evaluated, never carried as numbers, and
+that is how an offset survives prediction.
+[`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+calls this against the new data; a vector supplied through
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)'s
+`offsets` argument at fitting time has the wrong length for other rows
+and cannot be reused. Before this, `predict(fit, newdata =)` returned
+the predictor of a model with no offset at all.
+
+Each expression is evaluated in `data` with `env` behind it, so a symbol
+resolves as a column first and as a variable of the caller's environment
+second. A result shorter than `n` is recycled, so a single number is a
+constant offset.
 
 ## See also
 
-[`split_offsets`](https://statmodels7.github.io/statmodels7/reference/split_offsets.md)
+[`split_offsets()`](https://statmodels7.github.io/statmodels7/reference/split_offsets.md)

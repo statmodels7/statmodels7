@@ -1,7 +1,7 @@
 # Does a Term Recompute Its Own Block?
 
 `TRUE` when the term registers a
-[`term_refresh`](https://statmodels7.github.io/modelterms7/reference/term_refresh.html)
+[`modelterms7::term_refresh()`](https://statmodels7.github.io/modelterms7/reference/term_refresh.html)
 method of its own rather than inheriting the identity registered on
 `model_term`.
 
@@ -32,4 +32,4 @@ than loaded.
 
 ## See also
 
-[`unfittable_reason`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
+[`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)

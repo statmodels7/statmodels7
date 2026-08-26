@@ -1,7 +1,7 @@
 # The Key of a Hyperparameter Pair
 
 Locates the entry of a penalty's hyperparameter Hessian, which is keyed
-by name and not by position.
+by name, never by position.
 
 ## Usage
 

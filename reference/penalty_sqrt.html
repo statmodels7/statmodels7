@@ -9,7 +9,7 @@ Hessian, dropping the rows a null space contributes nothing to."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ Hessian, dropping the rows a null space contributes nothing to."><meta property=
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,32 +53,49 @@ Hessian, dropping the rows a null space contributes nothing to.</p>
 
 
 <dl><dt id="arg-s">S<a class="anchor" aria-label="anchor" href="#arg-s"></a></dt>
-<dd><p>The penalty Hessian.</p></dd>
+<dd><p>The penalty Hessian, a <code>p x p</code> symmetric matrix, dense or sparse.
+<code><a href="https://rdrr.io/pkg/Matrix/man/isTriangular-methods.html" class="external-link">Matrix::isDiagonal()</a></code> decides which route is taken, so a matrix stored
+as diagonal and one merely having zero off-diagonals are both caught.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matrix with <code>ncol(S)</code> columns, or <code>NULL</code>.</p>
+    <p>A matrix with <code>ncol(S)</code> columns and one row per retained
+eigendirection, so at most <code>p</code> and fewer where the penalty has a null
+space. Its class mirrors <code>S</code>'s, dense for dense and sparse for sparse.
+<code>NULL</code> when the penalty is indefinite beyond the tolerance.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A penalty is positive semidefinite and may be rank deficient – a spline's
-is, by exactly the dimension of its null space – so the factor comes from
-an eigendecomposition with the non-positive eigenvalues dropped, rather
-than from a Cholesky, which would fail there. A non-convex penalty, whose
-Hessian is indefinite, has no such factor and the caller falls back.</p>
-<p>A DIAGONAL penalty is factored by taking the square root of its diagonal,
-which is the same answer the eigendecomposition returns – the eigenvalues
-of a diagonal matrix are its diagonal, so the two routes agree by
-construction and a test pins them together. It is not a special case worth
-having for its own sake but for how often it is the one that arises: a
-ridge, a random effect and the Demmler-Reinsch penalty of <code>s()</code>,
-which is \(\mathrm{diag}(0, 1, \ldots, 1)\) exactly, are all diagonal,
-and so is any block-diagonal assembly of them. The factor is recomputed at
-every iteration of the scoring loop, so the cost is the decomposition's
-times the iteration count: measured on a random intercept over 1000 groups,
-one dense eigendecomposition of the 1003 by 1003 penalty costs 0.63 s and
-was 83 per cent of the whole fit.</p>
+    <h2 id="why-an-eigendecomposition">Why an eigendecomposition<a class="anchor" aria-label="anchor" href="#why-an-eigendecomposition"></a></h2>
+    <p>A penalty is positive semidefinite and is often rank deficient. A spline's
+is deficient by exactly the dimension of its null space, which is the
+whole point of the construction: the null space is what the penalty does
+not shrink. A Cholesky fails there, so the factor comes from an
+eigendecomposition with the non-positive eigenvalues dropped, and the rows
+they would have contributed are simply absent.</p>
+<p>A non-convex penalty has an indefinite Hessian and no such factor at all.
+<code>NULL</code> is returned and the caller falls back to the assembled route.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-diagonal-shortcut">The diagonal shortcut<a class="anchor" aria-label="anchor" href="#the-diagonal-shortcut"></a></h2>
+    <p>A diagonal penalty is factored by taking the square root of its diagonal.
+That is the same answer the eigendecomposition gives, since the
+eigenvalues of a diagonal matrix are its diagonal entries, so the two
+routes agree by construction and a test pins them together.</p>
+<p>The case is worth detecting for how often it arises. A ridge is diagonal,
+a random effect is diagonal, and the Demmler-Reinsch penalty of
+<code><a href="https://statmodels7.github.io/modelterms7/reference/s.html" class="external-link">modelterms7::s()</a></code> is \(\mathrm{diag}(0, 1, \ldots, 1)\) exactly. So is
+any block-diagonal assembly of them. The factor is recomputed at every
+iteration of the scoring loop, so its cost is multiplied by the iteration
+count: measured on a random intercept over 1000 groups, one dense
+eigendecomposition of the 1003 by 1003 penalty cost 0.63 s and was 83 per
+cent of the whole fit.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="diagonal_sqrt.html">diagonal_sqrt()</a></code> for the diagonal route,
+<code><a href="augmented_solve.html">augmented_solve()</a></code> for the solve this feeds,
+<code><a href="sqrt_design.html">sqrt_design()</a></code> for the other half of the augmented matrix.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

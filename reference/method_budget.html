@@ -9,7 +9,7 @@ smooth block, which is where they are set."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ smooth block, which is where they are set."><meta property="og:image" content="h
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -54,27 +58,30 @@ smooth block, which is where they are set.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>maxit</code> and <code>tol</code>.</p>
+    <p>A list of two: <code>maxit</code>, the budget in passes, and <code>tol</code>, the
+relative tolerance on the objective.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="statmod.html">statmod</a></code> carries neither a <code>maxit</code> nor a <code>tol</code> of its
-own. An argument accepted and ignored is worse than one that signals an
-error, and that is what a second copy would be: a caller setting
-<code>iwls(maxit = 20)</code> and a loose <code>maxit = 100</code> would get one of them
-with nothing said about the other. <span class="pkg">distributions7</span>'s
-<code>fit_distrib()</code> shed the same pair for the same reason.</p>
-<p><code><a href="iwls.html">iwls</a></code> carries both directly. An <span class="pkg">optimizers7</span> optimizer
-carries <code>maxit</code> and a <code>criterion</code>; the tolerance is the largest
-one the criterion tree contains, since a combined rule stops at whichever of
-its parts fires first and the alternation should not ask for more precision
-than the loop inside it can deliver. A criterion carrying no tolerance at
-all leaves the default of <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></code>, read from
-that function rather than copied as a number.</p>
+    <p><code><a href="statmod.html">statmod()</a></code> carries neither a <code>maxit</code> nor a <code>tol</code> of its own. An argument
+accepted and ignored is worse than one that signals an error, and a second
+copy would be exactly that: a caller setting <code>iwls(maxit = 20)</code> alongside
+a loose <code>maxit = 100</code> would be obeyed in one and never told about the
+other.
+<span class="pkg">distributions7</span>'s <code>fit_distrib()</code> shed the same pair for the same
+reason.</p>
+<p><code><a href="iwls.html">iwls()</a></code> carries both directly. An <span class="pkg">optimizers7</span> optimizer carries
+<code>maxit</code> and a <code>criterion</code>, and the tolerance is taken as the <strong>largest</strong>
+one in the criterion tree: a combined rule stops at whichever of its parts
+fires first, so the alternation should not ask for more precision than the
+loop inside it can deliver.</p>
+<p>A criterion carrying no tolerance at all leaves the default of
+<code><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">optimizers7::crit_grad()</a></code>, read from that function's own formals and
+never copied as a number, so a change there reaches here.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod.html">statmod</a></code>, <code><a href="iwls.html">iwls</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code>, <code><a href="iwls.html">iwls()</a></code>, <code><a href="criterion_tol.html">criterion_tol()</a></code> for the tree walk.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

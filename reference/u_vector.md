@@ -26,7 +26,7 @@ u_vector(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 

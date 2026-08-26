@@ -1,7 +1,8 @@
 # The Penalty Over a Structural Term's Own Parameters
 
 The derivative of the penalties a structural term declares, in the
-term's own parameters rather than in the coefficients.
+term's own parameters, in place of the coefficients the other penalty
+function reads.
 
 ## Usage
 
@@ -19,19 +20,20 @@ statmod_structural_penalty(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
-  The design.
+  The design, whose structural state holds each term's current
+  parameters.
 
 - hyper:
 
-  The hyperparameters.
+  The hyperparameters, per penalized term.
 
 - what:
 
-  One of `"value"`, `"gradient"` or `"hessian"`.
+  Which quantity: `"value"`, `"gradient"` or `"hessian"`.
 
 ## Value
 
@@ -42,17 +44,17 @@ structural term carries a penalty.
 ## Details
 
 The objective of the structural block includes these penalties through
-[`statmod_penalty_at`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md),
+[`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md),
 so its gradient must include their derivative: without it the two
 describe different functions, an optimizer walks until its budget runs
 out, and `optimizers7`'s own check reports that the objective changes at
 a rate the gradient does not predict.
 
-The penalty is read on the UNCONSTRAINED scale, which is where the term
-carries its parameters and where a deviation from a population value is
-defined; for a deviation, whose link is the identity, the two scales
-coincide.
+The penalty is read on the **unconstrained scale**, which is where the
+term carries its parameters and where a deviation from a population
+value is defined. For a deviation, whose link is the identity, the two
+scales coincide.
 
 ## See also
 
-[`statmod_penalty_at`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
+[`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)

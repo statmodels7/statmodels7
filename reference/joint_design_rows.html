@@ -13,7 +13,7 @@ a filter the forward Jacobian of the recursion, which is dense."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,6 +22,10 @@ a filter the forward Jacobian of the recursion, which is dense."><meta property=
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -55,7 +59,7 @@ a filter the forward Jacobian of the recursion, which is dense.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -74,17 +78,17 @@ that survive a held level), <code>ev</code>, <code>f</code> and the sizes.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It exists so that the contraction <code><a href="u_vector.html">u_vector</a></code> performs is
+    <p>It exists so that the contraction <code><a href="u_vector.html">u_vector()</a></code> performs is
 written once. The formula there does not change where a filter is present;
 only its operand does, \(X\) becoming \([X_p \mid D]\). Everything
-downstream – the third derivative against the diagonal of \(M\), the
-movement of the mode – then reads the joint vector without a special case.</p>
-<p>The rows are returned at the FULL width, a held level included, and the
-caller drops it exactly as <code><a href="statmod_full_information.html">statmod_full_information</a></code> does.</p>
+downstream, the third derivative against the diagonal of \(M\) and the
+movement of the mode, then reads the joint vector with no special case.</p>
+<p>The rows are returned at the full width, a held level included, and the
+caller drops it exactly as <code><a href="statmod_full_information.html">statmod_full_information()</a></code> does.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="u_vector.html">u_vector</a></code>, <code><a href="statmod_full_information.html">statmod_full_information</a></code></p></div>
+    <div class="dont-index"><p><code><a href="u_vector.html">u_vector()</a></code>, <code><a href="statmod_full_information.html">statmod_full_information()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

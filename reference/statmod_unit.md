@@ -1,7 +1,7 @@
 # One Penalized Unit, by Parameter and Key
 
 The entry of
-[`statmod_penalized`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+[`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
 a hyperparameter row names, or `NULL` where there is none.
 
 ## Usage
@@ -15,7 +15,7 @@ statmod_unit(spec, design, param, key)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 

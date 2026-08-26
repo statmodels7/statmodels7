@@ -1,6 +1,9 @@
 # Print an Outer Method
 
-Which criterion it is and which information it uses.
+Prints one line naming the criterion and the information it is built on,
+as `<REML> observed information`, and for
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) the
+number of folds and the selection rule.
 
 ## Usage
 
@@ -14,7 +17,7 @@ print(x, ...)
 - x:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - ...:
 
@@ -22,8 +25,11 @@ print(x, ...)
 
 ## Value
 
-`x`, invisibly.
+`x`, invisibly, as a print method should.
 
 ## See also
 
-[`reml`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+for the objects printed.

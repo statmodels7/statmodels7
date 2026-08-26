@@ -11,7 +11,7 @@ information."><meta property="og:image" content="https://statmodels7.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ information."><meta property="og:image" content="https://statmodels7.github.io/s
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -52,40 +56,44 @@ information.</p>
 
 
 <dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
-<dd><p>The interval level.</p></dd>
+<dd><p>The interval's level, <code>0.95</code> by default.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with one row per parameter of per structural term,
-carrying <code>component</code> and <code>position</code> – which of the term's
-own parameters the quantity belongs to and where in the parameter vector
-it sits, both read off the Jacobian's support – or <code>NULL</code> where
-the model carries none.</p>
+    <p>A data frame with one row per parameter of each structural term,
+carrying the estimate, its standard error and the interval's two ends,
+plus <code>component</code> and <code>position</code>: which of the term's own parameters the
+quantity belongs to, and where in the parameter vector it sits, both
+read off the Jacobian's support. <code>NULL</code> where the model carries no
+structural term.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A structural term contributes no design block, so nothing in the
 coefficient tables can report it and the values were reachable only
 through <code>fit@structural</code>. The information for them exists:
-<code><a href="statmod_full_information.html">statmod_full_information</a></code> spans the coefficients AND the
+<code><a href="statmod_full_information.html">statmod_full_information()</a></code> spans the coefficients <strong>and</strong> the
 term's own parameters, and the tail block of its inverse is their
 variance on the unconstrained scale.</p>
 <p>The interval is built on that scale and mapped back through the link,
-which is what keeps a persistence inside \((-1, 1)\) and a positive
-loading positive; the standard error on the parameter scale is the delta
-method, \(|h'(\zeta)|\,\mathrm{se}(\zeta)\), and is reported for
-reading rather than for building the interval from. A level held because
-an intercept in the same equation carries it is not estimated and is
-reported with a missing standard error rather than a zero one.</p>
+which keeps a persistence inside \((-1, 1)\) and a positive loading
+positive.</p>
+<p>The standard error on the parameter scale is the delta method,
+\(|h'(\zeta)|\,\mathrm{se}(\zeta)\). It is reported for reading, and the
+interval is not built from it.</p>
+<p>A level held because an intercept in the same equation carries it is not
+estimated, and is reported with a missing standard error. Zero would claim
+it had been estimated exactly.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_full_information.html">statmod_full_information</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_full_information.html">statmod_full_information()</a></code> for the joint matrix inverted,
+<code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code> for the same parameters without their uncertainty</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

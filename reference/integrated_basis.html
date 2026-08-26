@@ -9,7 +9,7 @@ of the penalty's range space for ML."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ of the penalty's range space for ML."><meta property="og:image" content="https:/
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,7 +53,7 @@ of the penalty's range space for ML.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -62,17 +66,25 @@ of the penalty's range space for ML.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>NULL</code>, or a matrix with one column per integrated direction.</p>
+    <p><code>NULL</code> for <code>"reml"</code>, which integrates every direction and needs no
+basis. For <code>"ml"</code>, a <code>p x r</code> matrix with orthonormal columns spanning
+the penalty's range space, <code>p</code> the total coefficient count and <code>r</code> its
+rank.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The total penalty is block diagonal over the terms, each owning its own
-columns, so its null space is the direct sum of the unpenalized columns and
-each penalty's own null space. It is assembled that way and never read off
-the eigenvalues of the assembled matrix, which measure the arithmetic rather
-than the family: with two smoothing parameters ten orders of magnitude
-apart, an eigenvalue count of a sum falls while the null space does not
-move.</p>
+columns, so its null space is the direct sum of the unpenalized columns
+and each penalty's own null space. The basis is assembled that way.</p>
+<p>It is never read off the eigenvalues of the assembled matrix. Such a count
+measures the arithmetic and not the family: with two smoothing parameters
+ten orders of magnitude apart the small contributions sink below any
+tolerance and the count falls, while the null space itself does not move.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="penalty_range_basis.html">penalty_range_basis()</a></code> for one penalty's contribution,
+<code><a href="reml.html">reml()</a></code> and <code><a href="reml.html">ml()</a></code> for the distinction this implements.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

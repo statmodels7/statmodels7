@@ -15,7 +15,7 @@ outer_context(spec, design, coef, hyper, approx = "bartlett")
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -43,11 +43,11 @@ quantities derived from it.
 The three consumers each used to assemble these for themselves, so at
 one point the information was built three times and the penalized matrix
 factorized twice, and
-[`statmod_marginal_hess`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+[`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 additionally calls the gradient, which repeated the whole of it a fourth
 time. Measured by `Rprof`'s `by.total` on a random intercept over 500
 levels at 20000 observations, the gradient and the Hessian together
-accounted for 128 per cent of the fit – the overlap being exactly that
+accounted for 128 per cent of the fit, the overlap being exactly that
 repetition.
 
 The context is an environment, so an accessor fills it in place and
@@ -56,12 +56,12 @@ demand and never speculatively: the criterion alone does not need an
 inverse, and a search running without an exact gradient must not pay for
 one.
 
-Passing `NULL` wherever a context is accepted restores the old behaviour
-exactly, which is what keeps every existing caller – and a caller's own
-code – working unchanged.
+Passing `NULL` wherever a context is accepted restores the earlier
+behavior exactly, so every existing caller goes on working unchanged, a
+caller's own code included.
 
 ## See also
 
-[`statmod_marginal`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md),
-[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
-[`statmod_marginal_hess`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+[`statmod_marginal()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal.md),
+[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
+[`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)

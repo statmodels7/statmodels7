@@ -11,7 +11,7 @@ The default strategy's answer.
 - spec, design, obj, ...:
 
   As in
-  [`start_at`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
+  [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
 
 ## Value
 

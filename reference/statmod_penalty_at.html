@@ -9,7 +9,7 @@ and Hessian placed in the columns that term owns."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ and Hessian placed in the columns that term owns."><meta property="og:image" con
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -55,7 +59,7 @@ and Hessian placed in the columns that term owns.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
@@ -63,8 +67,8 @@ and Hessian placed in the columns that term owns.</p>
 
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
-<dd><p>A named list, one entry per parameter, each a named list of
-hyperparameter vectors per penalized term.</p></dd>
+<dd><p>A named list with one entry per distribution parameter, each
+a named list of hyperparameter vectors keyed by term.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -72,12 +76,41 @@ hyperparameter vectors per penalized term.</p></dd>
 
 
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
-<dd><p>One of <code>"value"</code>, <code>"gradient"</code>, <code>"hessian"</code>.</p></dd>
+<dd><p>Which quantity: <code>"value"</code>, <code>"gradient"</code> or <code>"hessian"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A number, a named list of vectors, or a square matrix.</p>
+    <p>Depends on <code>what</code>:</p><dl><dt><code>"value"</code></dt>
+<dd><p>a single number, the penalties summed. <code>0</code> for an
+unpenalized model.</p></dd>
+
+<dt><code>"gradient"</code></dt>
+<dd><p>a named list of numeric vectors, one per
+distribution parameter, zero in every unpenalized coordinate.</p></dd>
+
+<dt><code>"hessian"</code></dt>
+<dd><p>a symmetric <code>p x p</code> base matrix over the stacked
+coefficients, zero outside the penalized blocks.</p></dd>
+
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Each penalized term is asked for the quantity at its own coefficients and
+its own hyperparameters, and the answer is placed in the columns that term
+owns. A term declaring several penalties, each over a subset of its
+coefficients, contributes each one at its own coordinates.</p>
+<p>The accumulator is a base matrix even where a penalty answers with a
+sparse Hessian, and the coercion is written once at that boundary. Making
+it the design's own kind was measured at 0.8x end to end against a blast
+radius of twenty-two consumers.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="statmod_loglik_at.html">statmod_loglik_at()</a></code> for the other half of the objective,
+<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> for penalties over a structural term's
+own parameters, which this does not cover.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -9,7 +9,7 @@ working linearization with a frozen weight."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ working linearization with a frozen weight."><meta property="og:image" content="
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -64,17 +68,17 @@ working linearization with a frozen weight.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A discontinuous break-point term is fitted through a block whose weight is
 held at the previous iterate, so the curvature that block carries is the
-working model's and not the model's. Measured on a jump at 400
+working model's, never the model's. Measured on a jump at 400
 observations against a bootstrap of 200 resamples: the working information
 gives the change of level and the auxiliary coordinate a standard error of
-EXACTLY ZERO, where the resamples give 0.063 and 0.540, and the position
-read off them 1.8e-05 against 0.090. A zero looks like a number and is
+<strong>exactly zero</strong>, where the resamples give 0.063 and 0.540, and the
+position read off them 1.8e-05 against 0.090. A zero looks like a number and is
 worse than a gap, so those coefficients are left missing.</p>
 <p>The question is asked of the term through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html" class="external-link">term_jacobian_block</a></code> rather than of its class,
-so a construction whose block IS a Jacobian keeps its inference: a
-continuous <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">seg</a></code>, and a discontinuous one
-smoothed by an <code><a href="https://statmodels7.github.io/penalties7/reference/abs_smoother.html" class="external-link">abs_smoother</a></code>, both answer yes.</p>
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html" class="external-link">modelterms7::term_jacobian_block()</a></code> and never of its class,
+so a construction whose block is a Jacobian keeps its inference: a
+continuous <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, and a discontinuous one
+smoothed by an <code><a href="https://statmodels7.github.io/penalties7/reference/abs_smoother.html" class="external-link">penalties7::abs_smoother()</a></code>, both answer yes.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -9,7 +9,7 @@ of the hyperparameters under estimation."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ of the hyperparameters under estimation."><meta property="og:image" content="htt
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -58,7 +62,7 @@ of the hyperparameters under estimation.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -74,7 +78,7 @@ of the hyperparameters under estimation.</p>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>An <code><a href="OuterMethod-class.html">OuterMethod</a></code>.</p></dd>
+<dd><p>An <code><a href="OuterMethod-class.html">OuterMethod()</a></code>.</p></dd>
 
 
 <dt id="arg-idx">idx<a class="anchor" aria-label="anchor" href="#arg-idx"></a></dt>
@@ -97,12 +101,12 @@ hyperparameter Hessian of the penalty, the movement of the mode read
 through the penalized curvature, and two contributions from the
 determinant, one from \(M\) moving and one from \(K_m\) moving.</p>
 <p><strong>Everything the penalty contributes is asked of the penalty</strong>
-(<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalty_hess_theta</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalty_dhessian</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalty_d2hessian</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalty_dcross</a></code>), so a penalty that is not
-quadratic in its hyperparameters – a ridge, a random effect, a structured
-prior – is covered by the same assembly with no branch here.</p>
+(<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_hess_theta()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalties7::penalty_dhessian()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalties7::penalty_d2hessian()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalties7::penalty_dcross()</a></code>), so a penalty that is not
+quadratic in its hyperparameters is covered by the same assembly with no
+branch here: a ridge, a random effect, a structured prior.</p>
 <p><strong>Onto the free scale</strong> the chain rule is second order and diagonal,
 each hyperparameter having its own link: with \(\theta = h(\eta)\),
 $$\partial^2 V/\partial\eta_m\partial\eta_l =
@@ -111,7 +115,7 @@ $$\partial^2 V/\partial\eta_m\partial\eta_l =
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_marginal_grad.html">statmod_marginal_grad</a></code>, <code><a href="reml.html">reml</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_marginal_grad.html">statmod_marginal_grad()</a></code>, <code><a href="reml.html">reml()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

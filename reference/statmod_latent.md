@@ -2,9 +2,10 @@
 
 The posterior mean and standard deviation of each group's latent
 break-points in a fitted model carrying a marginal break-point term
-([`jump`](https://statmodels7.github.io/modelterms7/reference/jump.html),
-[`seg`](https://statmodels7.github.io/modelterms7/reference/seg.html) or
-[`jseg`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
+([`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+or
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
 with `marginal = TRUE`).
 
 ## Usage
@@ -18,7 +19,7 @@ statmod_latent(fit)
 - fit:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md)
   whose model carries a structural term of the likelihood shape.
 
 ## Value
@@ -32,14 +33,14 @@ The quantities come from the same decomposition the marginal likelihood
 is computed on: the posterior over a group's intervals or quadrature
 nodes, with the within-interval moments those of the fitted prior
 truncated to it. The computation is
-[`term_latent`](https://statmodels7.github.io/modelterms7/reference/term_latent.html)'s;
+[`modelterms7::term_latent()`](https://statmodels7.github.io/modelterms7/reference/term_latent.html)'s;
 this function supplies what the term cannot see, the fitted predictors
 and the model's log-density.
 
 ## See also
 
-[`term_latent`](https://statmodels7.github.io/modelterms7/reference/term_latent.html),
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`modelterms7::term_latent()`](https://statmodels7.github.io/modelterms7/reference/term_latent.html),
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 
 ## Examples
 

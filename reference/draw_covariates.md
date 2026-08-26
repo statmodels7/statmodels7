@@ -32,9 +32,9 @@ A data frame.
 A generator that answers with the wrong length is reported rather than
 recycled, for the reason a coefficient function is: R would recycle it
 without a word and the replicate would be of another model. A column of
-`data` under the same name is overwritten, which is what a caller asking
-for that column to be drawn means.
+`data` under the same name is overwritten, as a caller asking for that
+column to be drawn means.
 
 ## See also
 
-[`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+[`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)

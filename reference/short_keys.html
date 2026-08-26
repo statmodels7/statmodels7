@@ -11,7 +11,7 @@ specification."><meta property="og:image" content="https://statmodels7.github.io
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ specification."><meta property="og:image" content="https://statmodels7.github.io
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -64,13 +68,12 @@ specification.</p>
     <p>A key is the call that produced the term, and for a penalty over a
 sub-term it is that call followed by <code>::parameter::sub-term</code>. The
 call is what grows: printed in full, one line of an outer trace carried
-the deparsed <code>gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
-list(...))</code> three times over, which is a line no reader can use. Only the
+the deparsed <code>gas(p = 1, q = 1, time = t, by = ~ridge(~id), links = list(...))</code> three times over, which is a line no reader can use. Only the
 leading call is shortened, and only past its first argument, so
 <code>s(x, k = 20)</code> and <code>s(z, k = 8)</code> stay apart; everything after
 <code>::</code> is kept whole, that being what distinguishes one entry of a term
 from another.</p>
-<p>Where shortening would make two labels the same the FULL ones are
+<p>Where shortening would make two labels the same the full ones are
 returned, all of them: a shorter label that is ambiguous is worse than a
 long one, and deciding per label would leave a reader unable to tell which
 convention a given line follows.</p>

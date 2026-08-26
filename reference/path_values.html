@@ -9,7 +9,7 @@ min_ratio of it, carried back onto the hyperparameter."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ min_ratio of it, carried back onto the hyperparameter."><meta property="og:image
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -79,22 +83,22 @@ the fullest.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The grid is geometric in the size of the kink rather than in the
+    <p>The grid is geometric in the size of the kink, never in the
 hyperparameter, so that a penalty whose kink narrows as its hyperparameter
 grows is swept in the same order as one whose kink widens: from the empty
 model towards the full one. Values the penalty cannot reach are dropped.</p>
-<p>The exponent relating the two is read ONCE and every target inverted
-through it, rather than each target bracketed on its own. Measured, a
+<p>The exponent relating the two is read once and every target inverted
+through it, in place of bracketing each target on its own. Measured, a
 bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 twenty-five points spent 6.7 per cent of itself locating the values it
 would visit; through the exponent the whole grid costs four evaluations of
-the size. <code><a href="kink_by_power.html">kink_by_power</a></code> checks the relation before the values
+the size. <code><a href="kink_by_power.html">kink_by_power()</a></code> checks the relation before the values
 are used and returns <code>NA</code> where it does not hold, and those fall back
-to <code><a href="kink_solve.html">kink_solve</a></code> one at a time.</p>
+to <code><a href="kink_solve.html">kink_solve()</a></code> one at a time.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="kink_power.html">kink_power</a></code>, <code><a href="path_forced.html">path_forced</a></code></p></div>
+    <div class="dont-index"><p><code><a href="kink_power.html">kink_power()</a></code>, <code><a href="path_forced.html">path_forced()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

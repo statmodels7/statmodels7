@@ -60,16 +60,17 @@ A list with `par` (the whole vector, updated in this block), `value`,
 ## Details
 
 The route is
-[`prox_grad`](https://statmodels7.github.io/optimizers7/reference/prox_grad.html)
+[`optimizers7::prox_grad()`](https://statmodels7.github.io/optimizers7/reference/prox_grad.html)
 with
-[`penalty_prox`](https://statmodels7.github.io/penalties7/reference/penalty_prox.html),
+[`penalties7::penalty_prox()`](https://statmodels7.github.io/penalties7/reference/penalty_prox.html),
 accelerated: measured, at a condition number of 3 the plain iteration
 wins narrowly, at 55 it is 4153 iterations against 126, and at 480 the
 plain one does not converge in 50000. A coordinate descent on the same
 objective is 1.1 to 5.3 times faster again and is the next thing to
-write; it needs the columns of the design and the running residual, so
-it belongs here and not behind an optimizer's interface.
+write. It needs the columns of the design and the running residual,
+which is the model itself, so it belongs here and could not live behind
+an optimizer's black-box interface.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)

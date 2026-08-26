@@ -2,7 +2,7 @@
 
 The environment a design carries the structural terms' own parameters
 in, on the unconstrained scale of
-[`term_links`](https://statmodels7.github.io/modelterms7/reference/term_links.html).
+[`modelterms7::term_links()`](https://statmodels7.github.io/modelterms7/reference/term_links.html).
 
 ## Usage
 

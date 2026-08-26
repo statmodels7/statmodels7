@@ -1,6 +1,9 @@
 # Which Way of Holding the Gradient Is Cheaper
 
-`TRUE` for the covariance form, `FALSE` for the residual.
+Chooses how the compiled sweeps keep the gradient: `TRUE` for the
+covariance form, which holds the gradient itself and caches columns of
+\\X'WX\\, and `FALSE` for the running residual. The test is
+`m <= 32 && n > 8 * m`.
 
 ## Usage
 
@@ -16,7 +19,7 @@ coord_covariance(n, m)
 
 - m:
 
-  How many coordinates are visited.
+  How many coordinates the strong rule left to visit.
 
 ## Value
 
@@ -24,11 +27,20 @@ A single logical.
 
 ## Details
 
-The covariance form replaces an \\O(n)\\ read with an \\O(m)\\ one, and
-pays for it by building a column of \\X'WX\\ at \\O(nm)\\ the first time
-a coordinate moves off zero. It is therefore worth it only when \\m\\ is
-small next to \\n\\, and the measurement is unambiguous: at 5000
-observations with 200 columns screened to 200, taking the covariance
+The covariance form replaces an \\O(n)\\ read of the gradient with an
+\\O(m)\\ one, and pays for it by building a column of \\X'WX\\ at
+\\O(nm)\\ the first time a coordinate moves off zero. It is worth having
+only while \\m\\ is small next to \\n\\, and the two conditions say
+exactly that.
+
+The measurement is unambiguous in the other direction: at 5000
+observations with 200 columns and nothing screened away, the covariance
 form cost 70 milliseconds against 55 for the residual, the Gram columns
-being dearer than the residual passes they replaced. The threshold is
-set where the two cross rather than at a rule of thumb.
+being dearer than the residual passes they replaced.
+
+## See also
+
+[`coord_call()`](https://statmodels7.github.io/statmodels7/reference/coord_call.md),
+which passes the answer to the kernel,
+[`coord_screen()`](https://statmodels7.github.io/statmodels7/reference/coord_screen.md)
+for `m`.

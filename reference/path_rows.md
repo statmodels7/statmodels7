@@ -1,7 +1,7 @@
 # Which Hyperparameters a Path Has to Select
 
 The rows of an index like
-[`outer_hyper_index`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)'s,
+[`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)'s,
 for the hyperparameters whose penalty has a kink.
 
 ## Usage
@@ -15,7 +15,7 @@ path_rows(spec, blocks, hyper, method)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - blocks:
 
@@ -28,7 +28,7 @@ path_rows(spec, blocks, hyper, method)
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 ## Value
 
@@ -44,5 +44,5 @@ a quasi-Newton step is reading a slope that is about to change. A grid
 does not care, and warm starts make it cheap.
 
 Which hyperparameters are varied is read from the penalty by
-[`kink_hypers`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
+[`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
 unless the method names them.

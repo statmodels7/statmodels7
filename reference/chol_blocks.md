@@ -13,21 +13,36 @@ chol_blocks(Om)
 
 - Om:
 
-  An \\n \times K \times K\\ array of symmetric blocks.
+  An \\n \times K \times K\\ array of symmetric blocks, as
+  [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
+  returns it. Only the lower triangle of each block is read.
 
 ## Value
 
-An array of the same shape, lower triangular in its last two indices, or
-`NULL` when some block is not positive definite.
+An \\n \times K \times K\\ numeric array, lower triangular in its last
+two indices, with `Om[i, , ] == L[i, , ] %*% t(L[i, , ])` for every `i`.
+`NULL` as soon as any block fails to be positive definite, so a single
+bad observation declines for the whole sample.
 
 ## Details
 
-The standard recursion is written over the \\K\\ indices, which are few,
-and evaluated over all observations at once, which are many.
+\\K\\ is the number of distribution parameters, so it is 1, 2 or 3 for
+most families and never large; \\n\\ is the number of observations and
+is. The standard Cholesky recursion is therefore written out over the
+\\K\\ indices and evaluated over all \\n\\ observations at once, one
+vectorized pass per entry of the factor, so no loop runs over
+observations.
 
-A block that is not positive definite has a non-positive pivot, and the
-function returns `NULL` at that point rather than taking its square
-root: the observed curvature far from the optimum is routinely
-indefinite, so this is an ordinary outcome the caller answers by falling
-back to the assembled route, and a warning about a `NaN` would report it
-as a defect.
+A block that is not positive definite produces a non-positive pivot, and
+the function returns `NULL` at that point instead of taking its square
+root. That is an expected outcome: the observed curvature far from the
+optimum is routinely indefinite, and the caller answers by falling back
+to the assembled route. A warning about a `NaN` would report an ordinary
+branch as a defect.
+
+## See also
+
+[`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
+for the input,
+[`sqrt_design()`](https://statmodels7.github.io/statmodels7/reference/sqrt_design.md)
+for what the factors are used to build.

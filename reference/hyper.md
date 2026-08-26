@@ -1,8 +1,9 @@
 # The Hyperparameters of a Fitted Model
 
-One row per hyperparameter of every penalty the model carries, on the
-scale the penalty declares them or on the free scale its links define,
-with what put each value there.
+Reports every hyperparameter of every penalty the model carries: one row
+each, with the value, whether it was held, and what put it there. A
+smoothing parameter, a prior scale, a lasso's \\\lambda\\ and an elastic
+net's \\\alpha\\ all appear here.
 
 ## Usage
 
@@ -14,46 +15,93 @@ hyper(fit, scale = c("parameter", "link"))
 
 - fit:
 
-  A fitted model.
+  A
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - scale:
 
-  Which scale the values are reported on.
+  `"parameter"` (the default) or `"link"`. Matched with
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html).
 
 ## Value
 
-A data frame with `parameter`, `term`, `name`, `estimate`, `held` and
-`source`, or a frame of no rows where the model carries no penalty.
+A data frame with one row per hyperparameter and six columns:
 
-## Details
+- `parameter`:
 
-A hyperparameter is not a coefficient and is not in
-[`coef`](https://rdrr.io/r/stats/coef.html): it governs the coefficients
-under it rather than sitting beside them, and the two are estimated by
-different routes and reported with different qualifications. This is
-where they are read.
+  the distribution parameter whose equation the penalized term sits in.
 
-The `parameter` scale is the one the penalty is written on, which is
-what a reader wants: a smoothing parameter is a positive number and a
-gaussian prior's `sigma` is a scale. The `link` scale is the free one
-the outer search runs on, through each hyperparameter's own link, and is
-what a caller comparing two fits' searches wants. Where a hyperparameter
-carries no link the two coincide.
+- `term`:
 
-`source` says what put the value there, which `held` alone cannot: a
-hyperparameter the term fixed reads `"fixed"`, one a marginal criterion
-maximized reads that criterion's name, and one chosen along a path over
-its own values reads the criterion that scored the path. A value chosen
-along a path is the argument of a minimum over a grid rather than the
-root of a derivative, so no standard error follows from it; one a
-marginal criterion reached carries one, and
-[`summary`](https://rdrr.io/r/base/summary.html) reports it.
+  the term's key, its call as written.
+
+- `name`:
+
+  the hyperparameter's own name, as the penalty names it.
+
+- `estimate`:
+
+  its value, on the scale asked for.
+
+- `held`:
+
+  a logical: whether the term fixed it.
+
+- `source`:
+
+  what put the value there, as above.
+
+A data frame of no rows, with those columns, where the model carries no
+penalty at all.
+
+## A hyperparameter is not a coefficient
+
+It governs the coefficients under it instead of sitting beside them, and
+the two are estimated by different routes and reported with different
+qualifications.
+[`coef.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
+holds the coefficients and this holds the hyperparameters; neither holds
+the other.
+
+## The two scales
+
+`scale = "parameter"`, the default, is the scale the penalty is written
+on: a smoothing parameter is a positive number, and a gaussian prior's
+`sigma` is a scale. That is what a reader wants.
+
+`scale = "link"` is the free scale the outer search runs on, through
+each hyperparameter's own link. That is what a caller comparing two
+fits' searches wants. Where a hyperparameter carries no link the two
+coincide.
+
+## What `source` says that `held` cannot
+
+`held` is a logical and says only whether the value moved. `source` says
+what put it there:
+
+- `"fixed"` for one the term itself held, as `s(x, lambda = 2)`.
+
+- the criterion's name, `"reml"` or `"ml"`, for one a marginal criterion
+  maximized.
+
+- the criterion that scored the path, `"bic"` and so on, for one chosen
+  along a path over its own values.
+
+The distinction has a consequence a reader needs. A value chosen along a
+path is the argument of a minimum over a grid, not the root of a
+derivative, so no standard error follows from it. One a marginal
+criterion reached carries one, from the curvature of that criterion, and
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+prints it.
 
 ## See also
 
-[`coef.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md),
-[`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
-[`statmod_held`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
+[`coef.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
+for the coefficients,
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+for the two printed together with standard errors,
+[`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
+for which are held.
 
 ## Examples
 
@@ -61,11 +109,22 @@ marginal criterion reached carries one, and
 set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
+
+# Estimated by REML, which is what source says.
 fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
 hyper(fit)
 #>   parameter        term   name estimate  held source
 #> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml
+
+# The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
 #>   parameter        term   name estimate  held source
 #> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml
+
+# Held by the term instead, and reported as fixed.
+held <- statmod(y ~ s(x, k = 6, lambda = 2),
+                distributions7::gaussian1_distrib(), d)
+hyper(held)[, c("name", "estimate", "held", "source")]
+#>     name estimate held source
+#> 1 lambda        2 TRUE  fixed
 ```

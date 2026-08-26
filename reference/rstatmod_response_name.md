@@ -25,9 +25,9 @@ A transformed response is rejected rather than answered. Under
 `y` would hold the wrong quantity and one called `"log(y)"` would not be
 the name the formula reads back; the earlier version wrote the first of
 those silently. A censored response is rejected for the reason
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 rejects one – there is no censored likelihood to fit it back with.
 
 ## See also
 
-[`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+[`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)

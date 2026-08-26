@@ -14,7 +14,7 @@ statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -31,7 +31,7 @@ statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - idx:
 
@@ -55,10 +55,10 @@ T\[\hat\beta_m\]\\, \$\$\tau_m = \mathrm{tr}(PB_m) -
 \\(\partial\rho/\partial\beta)' \hat\beta_m\\. Differentiating once more
 brings in \\A\_{ml}\\, \\B\_{ml}\\ and \\\hat\beta\_{ml}\\, which are
 the quantities
-[`statmod_marginal_hess`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+[`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 already assembles.
 
 ## See also
 
-[`aic`](https://statmodels7.github.io/statmodels7/reference/aic.md),
-[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)

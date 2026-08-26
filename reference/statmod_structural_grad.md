@@ -1,8 +1,8 @@
 # The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 
-[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
 over the joint vector of coefficients and a structural term's
-parameters, which is what the determinant spans there.
+parameters, over which the determinant spans there.
 
 ## Usage
 
@@ -24,7 +24,7 @@ statmod_structural_grad(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -41,7 +41,7 @@ statmod_structural_grad(
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - idx:
 
@@ -70,7 +70,7 @@ mode moves in gives three contributions instead of one:
 
 1.  the family's third derivative against the per-observation diagonal
     of \\M\\, which is
-    [`u_vector`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)'s
+    [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)'s
     formula with \\V\\ in place of \\X\\;
 
 2.  the derivative of \\V_p\\ itself, which is \\E_t v\\, one row per
@@ -86,5 +86,5 @@ the cost at \\O(nm^2)\\ per hyperparameter instead of \\O(nm^3)\\ once.
 
 ## See also
 
-[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
-[`term_third`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
+[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
+[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -72,20 +76,19 @@ necessarily increasing: a Laplace prior written by its scale has a kink of
 \(1/\sigma\), which narrows as the hyperparameter grows. Which way to walk
 is therefore measured before walking, by comparing the size at the current
 value with the size at twice it, and only then is the root bracketed by
-doubling and found with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">uniroot</a></code>. A version that assumed
+doubling and found with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">stats::uniroot()</a></code>. A version that assumed
 the size increases returned <code>NA</code> for every target on the Laplace,
 having walked away from the answer.</p>
-<p>Where the size is a POWER of the hyperparameter – which every kinked
+<p>Where the size is a power of the hyperparameter, which every kinked
 penalty here turns out to be, the hyperparameter entering a separable
-penalty as a scale – the inversion is closed and the search is not run at
-all. <code><a href="kink_power.html">kink_power</a></code> measures the exponent and the answer is
+penalty as a scale is, the inversion is closed and the search is not run at
+all. <code><a href="kink_power.html">kink_power()</a></code> measures the exponent and the answer is
 checked against the size before it is returned, so a penalty that does not
-obey a power law falls back to the search rather than being assumed into
-one.</p>
+obey a power law falls back to the search and is never assumed into one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="kink_power.html">kink_power</a></code>, <code><a href="path_values.html">path_values</a></code></p></div>
+    <div class="dont-index"><p><code><a href="kink_power.html">kink_power()</a></code>, <code><a href="path_values.html">path_values()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -14,15 +14,15 @@ fitted_ranges(x)
 - x:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 ## Value
 
 A single string, empty when the parameters cannot be read. It is a note
 of
-[`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 rather than a line of
-[`print.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md):
+[`print.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md):
 it qualifies the fit rather than describing it, and it is read once when
 something looks wrong.
 
@@ -45,4 +45,4 @@ nothing of the kind.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)

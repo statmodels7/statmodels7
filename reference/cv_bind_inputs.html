@@ -9,7 +9,7 @@ rebuilding the model on those rows finds it there."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ rebuilding the model on those rows finds it there."><meta property="og:image" co
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,7 +53,7 @@ rebuilding the model on those rows finds it there.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code> whose terms are built.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code> whose terms are built.</p></dd>
 
 
 <dt id="arg-sub">sub<a class="anchor" aria-label="anchor" href="#arg-sub"></a></dt>
@@ -73,10 +77,10 @@ rebuilding the model on those rows finds it there.</p>
     <p><code>interpret_formula()</code> evaluates a term's call as
 <code>eval(call, data, env)</code>, so a name is looked up in <code>data</code> first
 and in the formula's environment after. <code>data.frame(X = X, y = y)</code>
-SPLITS a matrix into <code>X.x1 ... X.xp</code>, leaving no column <code>X</code>, so
+splits a matrix into <code>X.x1 ... X.xp</code>, leaving no column <code>X</code>, so
 <code>lasso(X)</code> reaches past the data to the matrix in the calling
-environment. The fit is right – the matrix is captured once and the
-coefficients are identical to the other spelling – but the fold cannot
+environment. The fit itself is right, the matrix being captured once and
+the coefficients identical to the other spelling, but the fold cannot
 rebuild: the name still resolves to all the rows.</p>
 <p>The matrix is already on the built term, and <code>term_build()</code> checked at
 the full fit that it has one row per observation, so the rows of a fold are
@@ -84,16 +88,16 @@ the same rows by position. Binding the subset here builds, for the fold,
 the spelling the documentation asks the caller for.</p>
 <p>Nothing is relearned that should be: a matrix carries no knots, no
 contrasts and no levels, so subsetting it and re-evaluating it give the
-same block. A FORMULA input is untouched and keeps being rebuilt on the
-fold's own rows, which is what that rule exists for.</p>
+same block. A formula input is untouched and keeps being rebuilt on the
+fold's own rows, and that is what the rule exists for.</p>
 <p>It applies where <code>input_expr</code> is a plain symbol, which is the case the
-name can be bound for. A call – <code>lasso(scale(X))</code> – keeps only its
-own value on the term and not the <code>X</code> its re-evaluation would need, so
+name can be bound for. A call such as <code>lasso(scale(X))</code> keeps only its own
+value on the term, never the <code>X</code> its re-evaluation would need, so
 it is left to the error that names it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="cv_curve.html">cv_curve</a></code></p></div>
+    <div class="dont-index"><p><code><a href="cv_curve.html">cv_curve()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

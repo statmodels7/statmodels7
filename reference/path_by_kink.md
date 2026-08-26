@@ -35,9 +35,9 @@ elastic net's alpha scales the kink and is bounded by one, so no
 admissible value of it empties the block at a given lambda; the shape of
 SCAD and MCP has no upper bound and does not move the kink at all, so
 the solve has nothing to solve. Either way the sweep is
-[`path_grid`](https://statmodels7.github.io/statmodels7/reference/path_grid.md).
+[`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md).
 
 ## See also
 
-[`path_values`](https://statmodels7.github.io/statmodels7/reference/path_values.md),
-[`path_grid`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
+[`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md),
+[`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)

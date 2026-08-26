@@ -26,168 +26,238 @@ rstatmod(
 - formula:
 
   The model formula, as
-  [`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-  takes it.
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  takes it, with the equations separated by `|`. Its left-hand side must
+  be a symbol.
 
 - distrib:
 
-  A distributions7 distribution object.
+  A distributions7 distribution object, which decides how many equations
+  there are and what is drawn from.
 
 - data:
 
-  A data frame of covariates, or `NULL`.
+  A data frame of covariates, or `NULL` where `n` is given.
 
 - n:
 
-  The number of observations, where `data` is `NULL`.
+  The number of observations, where `data` is `NULL`. One of the two is
+  required.
 
 - n_sim:
 
-  How many data sets to draw.
+  How many data sets to draw. `1` by default.
 
 - par:
 
-  Optional named list, one entry per distribution parameter; see the
-  details.
+  Optional named list, one entry per distribution parameter, each a
+  numeric vector, a single number or a function of the coefficient
+  count. See the details. `NULL` draws every coefficient.
 
 - structural:
 
   Optional named list of a structural term's own parameters, on the
   scale
-  [`term_params`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
-  names.
+  [`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
+  names. Strongly recommended when the formula carries such a term.
 
 - sd:
 
-  The standard deviation of the drawn coefficients.
+  The standard deviation of the drawn coefficients, `1` by default. Read
+  only for the coefficients `par` does not fix.
 
 - offsets:
 
-  Optional named list of offsets.
+  Optional named list of offsets, one per parameter, as
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  takes them.
 
 - covariates:
 
   Optional named list of functions of the observation count, one per
-  covariate, drawn afresh at every replicate.
+  covariate, drawn afresh at every replicate. A drawn factor must have
+  its levels fixed.
 
 ## Value
 
-An object of class `"StatmodSim"`: a list with `data`, the data frame
-with the response added; `par`, the coefficients used, drawn or given,
-named as the design names them; `theta`, the distribution's parameters
-at every observation; `latent`, what a term with state drew, or `NULL`;
-`structural`, such a term's own parameters, or `NULL`; `n_sim`; and
-`call`. With `n_sim > 1` the per-replicate fields are lists of that
-length.
+An object of class `"StatmodSim"`, a list of seven:
 
-## Details
+- `data`:
 
-This is not [`simulate`](https://rdrr.io/r/stats/simulate.html), which
-draws from a model that has already been fitted. The `r` prefix is R's
-own for a random draw, so the two names cannot be confused.
+  the data frame with the response column added, named after the
+  formula's left-hand side.
 
-The point of it is to have data whose truth is known: write the model,
-draw from it, fit it back, and see whether the fit recovers what was put
-in. A covariate needs no declaring – a factor becomes its contrasts and
-a numeric stays itself – because the design comes from the same
-interpreter a fit uses.
+- `par`:
 
-**The truth comes back beside the data, not attached to it.** What a
-simulation study compares against is the coefficients, the parameters
+  the coefficients used, drawn or given, named as the design names them.
+
+- `theta`:
+
+  the distribution's parameters at every observation, a named list with
+  one vector per parameter.
+
+- `latent`:
+
+  what a term with state drew, or `NULL`.
+
+- `structural`:
+
+  such a term's own parameters, or `NULL`.
+
+- `n_sim`:
+
+  as supplied.
+
+- `call`:
+
+  the matched call.
+
+With `n_sim > 1` the fields `data`, `theta` and `latent` are lists of
+that length.
+
+## What it is for
+
+Data whose truth is known: write the model, draw from it, fit it back,
+and see whether the fit recovers what was put in. That is the shape of a
+simulation study, and of a check on a term one has just written.
+
+This is not
+[`stats::simulate()`](https://rdrr.io/r/stats/simulate.html), which
+draws from a model already fitted. The `r` prefix is R's own for a
+random draw, so the two names stay apart.
+
+A covariate needs no declaring. A factor becomes its contrasts and a
+numeric stays itself, the design coming from the same interpreter a fit
+uses.
+
+## The truth comes back beside the data
+
+A simulation study compares against the coefficients, the parameters
 they gave and whatever a term with state drew, so the result is a list
-holding all of them: `data`, `par`, `theta` and, where there is one,
-`latent`. They were attributes of the data frame until version 0.88.0,
-and that was worse than it looks – an attribute survives a row subset
-without being subset itself, so `sim[1:10, ]` kept a `theta` of the
-original length silently, and
-[`subset()`](https://rdrr.io/r/base/subset.html) and
-[`merge()`](https://rdrr.io/r/base/merge.html) dropped it altogether.
-Pass `sim$data` where a data frame is wanted.
+holding all of them. Pass `sim$data` where a data frame is wanted.
 
-**The predictor is assembled exactly as a fit assembles it**, through
-[`statmod_design_at`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md),
-which is what makes the simulated data come from the model that was
-written rather than from a linearization of it. A term whose block moves
-with its coefficients – `seg()`, `jseg()`, `nl()` – contributes
-`term_value()` at the coefficients supplied, not its block times them;
-the two differ by the whole nonlinearity, and the earlier version of
-this function used the second.
+They were attributes of the data frame until version 0.88.0, and that
+was worse than it looks: an attribute survives a row subset without
+being subset itself, so `sim[1:10, ]` silently kept a `theta` of the
+original length, while [`subset()`](https://rdrr.io/r/base/subset.html)
+and [`merge()`](https://rdrr.io/r/base/merge.html) dropped it
+altogether.
 
-**Data, or a row count.** `data` carries the covariates. A model with
-none – a pure time series, say – needs only `n`, and one of the two must
-be given. Where both are given they must agree.
+## The predictor is assembled as a fit assembles it
 
-**The covariates may be drawn too, and the choice is not a detail.**
+Through
+[`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md),
+so the simulated data come from the model that was written, never from a
+linearization of it.
+
+A term whose block moves with its coefficients,
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
+or
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+contributes `term_value()` at the coefficients supplied, not its block
+times them. The two differ by the whole nonlinearity, and an earlier
+version of this function used the second: measured, the gap is 3 on a
+`seg()`, 4.05 on an `nl()` and a missing value on a `jseg()`.
+
+## Data, or a row count
+
+`data` carries the covariates. A model with none, a pure time series
+say, needs only `n`. One of the two must be given, and where both are
+given they must agree.
+
+## Fixed covariates or drawn ones
+
 `covariates` takes one function of the observation count per column, as
-`par` takes one per equation, and they are drawn AFRESH at every
-replicate. That is the difference between the two studies a caller might
-mean: with `data` the covariates are the same throughout, so what is
-measured is the estimator's behaviour CONDITIONAL on that design, and
-with `covariates` it is measured over the design as well. Neither is
-more correct, and a study should say which it ran.
+`par` takes one per equation, and they are drawn afresh at every
+replicate.
 
-**Several replicates.** `n_sim` draws that many data sets. The truth is
-drawn ONCE and shared: what a study over replicates measures is the
-variability of an estimator at a set of parameters, so the replicates
-differ in what is random and not in what is being estimated. Varying the
-truth as well is a loop over calls, and reads differently. With
-`n_sim > 1` the fields that are per-replicate – `data`, `theta`,
-`latent` – come back as lists of that length, while `par` and
-`structural` stay single.
+The choice decides what a study measures. With `data` the covariates are
+the same throughout, so what is measured is the estimator's behavior
+**conditional** on that design; with `covariates` it is measured over
+the design as well. Neither is more correct, and a study should say
+which it ran. Measured on a simple regression at \\n = 40\\, the slope's
+standard deviation is 0.1465 under the first and 0.1443 under the
+second, so the distinction is about what a study claims, never about a
+large numerical difference.
 
-**The coefficients.** `par = NULL` draws every one of them from
-`rnorm(1, 0, sd)`, which on the link scale gives predictors of order
-one. A named list fixes them instead, one entry per distribution
-parameter, and an entry may be
+A drawn factor is refused unless its levels are fixed. Drawn freely it
+loses a level on some replicate, and the coefficients drawn against the
+first design would then be recycled into a different model.
+
+## Several replicates
+
+`n_sim` draws that many data sets. The truth is drawn **once** and
+shared: a study over replicates measures the variability of an estimator
+at a set of parameters, so the replicates differ in what is random,
+never in what is being estimated. Varying the truth as well is a loop
+over calls and reads differently.
+
+With `n_sim > 1` the per-replicate fields, `data`, `theta` and `latent`,
+come back as lists of that length, while `par` and `structural` stay
+single.
+
+## The coefficients
+
+`par = NULL` draws every one from `rnorm(1, 0, sd)`, which on the link
+scale gives predictors of order one. A named list fixes them instead,
+one entry per distribution parameter, and an entry may be:
 
 - a numeric vector, as long as that equation has coefficients;
 
 - a single number, used for every coefficient of the equation;
 
-- a FUNCTION of the coefficient count, called once and returning that
-  many values.
+- a **function** of the coefficient count, called once and returning
+  that many values.
 
-The function is what makes a structured truth expressible without a
-vocabulary for it: `function(k) rnorm(k, 0, 0.3)` is a random effect
-with its own standard deviation, and
-`function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a lasso to
-find. A parameter left out of the list is drawn.
+The function is how a structured truth is written without a vocabulary
+for it. `function(k) rnorm(k, 0, 0.3)` is a random effect with its own
+standard deviation, and `function(k) c(1.5, -2, rep(0, k - 2))` is a
+sparse truth for a lasso to find. A function answering with the wrong
+count is refused, R being willing to recycle it into a different model.
+A parameter left out of the list is drawn.
 
-**A term with state** is simulated through
-[`term_simulate`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html),
+## A term with state
+
+Simulated through
+[`modelterms7::term_simulate()`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html),
 so the recursion that generates is the term's own. A score-driven term
-draws the response AS it runs, its level at one time being driven by the
-score at the time before; a latent chain draws its path from the
-stationary law the likelihood is written with; a marginal break-point
-term draws each group's positions from their prior. What each drew is
-returned in the `"latent"` attribute, which is what a recovery check
-compares against.
+draws the response as it runs, its level at one time driven by the score
+at the time before; a latent chain draws its path from the stationary
+law the likelihood is written with; a marginal break-point term draws
+each group's positions from their prior. What each drew comes back in
+`latent`, and that is what a recovery check compares against.
 
-Such a term's OWN parameters are not coefficients of any equation, so
-they are named through `structural` rather than through `par`, and on
-the scale
-[`term_params`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
-names – a loading is the loading and not its logarithm, a persistence is
-the partial autocorrelation the chart carries. There is at most one such
-term in a formula, so no key is needed. Left unnamed they take the
-term's own starting values, which are deliberately weak (a score-driven
-term starts at a loading of about 0.1) and make for a series with almost
-no dynamics: name them, or the simulation will be of a model near the
-one with no term at all.
+Such a term's own parameters are not coefficients of any equation, so
+they are named through `structural`, never through `par`, on the scale
+[`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
+names: a loading is the loading, not its logarithm, a persistence is the
+partial autocorrelation the chart carries. A formula holds at most one
+such term, so no key is needed.
 
-**The response's name** is the formula's left-hand side, which must be a
-symbol. `log(y) ~ x` is rejected rather than answered: the model
-generates values of `log(y)` and there is no column that could honestly
-be called either name. A censored response is rejected too, for the
-reason
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-rejects one.
+Left unnamed they take the term's own starting values, which are
+deliberately weak. A score-driven term starts at a loading near 0.1, and
+the series then has almost no dynamics: measured, its level ranged over
+0.64 against 2.40 at named parameters. Name them, or the simulation is
+of a model close to the one with no term at all.
+
+## The response's name
+
+The formula's left-hand side, which must be a symbol. `log(y) ~ x` is
+refused: the model generates values of `log(y)`, and no column could
+honestly be called either name. A censored response is refused too, for
+the reason
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+refuses one.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
-[`simulate.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/simulate.StatmodFit.md),
-[`predict.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+to fit what this draws,
+[`simulate.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/simulate.StatmodFit.md)
+to draw from a model already fitted,
+[`print.StatmodSim()`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSim.md)
+for the printed form.
 
 ## Examples
 

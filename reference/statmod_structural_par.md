@@ -15,7 +15,7 @@ statmod_structural_par(spec, design)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -28,4 +28,4 @@ A named list, one entry per structural term, each a list with
 
 ## See also
 
-[`statmod_fit_structural`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md)
+[`statmod_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_structural.md)

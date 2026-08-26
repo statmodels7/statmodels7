@@ -36,16 +36,16 @@ structural_memo(design, slot, key, compute)
 ## Details
 
 Measured on the gas panel at 60 groups, 62 of the 154 curvature
-recursions of one fit recompute a point already visited – the same
-coefficients and the same term parameters, up to five times each,
-because the criterion, its gradient and the joint step's curvature all
-read the same mode – and the recursion is 35 per cent of the fit. The
-cache returns the previously computed object itself, so a hit is
-bit-identical to recomputing by construction, and the key is compared
-with [`identical()`](https://rdrr.io/r/base/identical.html) on the full
+recursions of one fit recompute a point already visited: the same
+coefficients and the same term parameters, up to five times each, the
+criterion and its gradient and the joint step's curvature all reading
+the same mode. The recursion is 35 per cent of the fit. The cache
+returns the previously computed object itself, so a hit is bit-identical
+to recomputing by construction, and the key is compared with
+[`identical()`](https://rdrr.io/r/base/identical.html) on the full
 numeric inputs, so a collision cannot happen.
 
-It stands aside where the design carries REFRESHABLE terms: a
+It stands aside where the design carries refreshable terms: a
 break-point block advances its rescaling schedule as the alternation
 commits, so the same coefficients do not imply the same design there,
 and a key that cannot see the schedule must not answer.

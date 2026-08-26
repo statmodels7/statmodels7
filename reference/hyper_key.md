@@ -14,7 +14,8 @@ hyper_key(spec, start, p, name)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md),
+  read for the terms' labels.
 
 - start:
 
@@ -22,21 +23,29 @@ hyper_key(spec, start, p, name)
 
 - p:
 
-  The distribution parameter.
+  The distribution parameter whose equation to look in, a string.
 
 - name:
 
-  What the caller wrote.
+  What the caller wrote: a key or a label.
 
 ## Value
 
-A single key.
+A single string, the key `start[[p]]` holds the term under. Signals an
+error when `name` matches nothing, and when it matches the labels of two
+terms at once.
 
 ## Details
 
 A specification keys its terms by the call as written, so a lasso is
-`"lasso(~noise1 + noise2)"`. That is what makes two lassos on different
-covariates distinct, and it is not what anybody wants to type; the label
-the term constructor carries is. Where two terms share a label the
-request is ambiguous and the keys are asked for, since guessing would
-set a hyperparameter on the wrong block.
+`"lasso(~noise1 + noise2)"`. The call is what distinguishes two lassos
+on different covariates, and it is also nothing anybody wants to type.
+The `label` the term constructor carries is the short form, `"lasso"`,
+and both are accepted here. Where two terms share a label the request is
+ambiguous and the keys are asked for, guessing having a fair chance of
+setting a hyperparameter on the wrong block.
+
+## See also
+
+[`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md),
+its caller.

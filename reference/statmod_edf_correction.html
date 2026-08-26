@@ -9,7 +9,7 @@ complexity of a fit whose hyperparameters were themselves estimated."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ complexity of a fit whose hyperparameters were themselves estimated."><meta prop
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -57,7 +61,7 @@ complexity of a fit whose hyperparameters were themselves estimated.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
@@ -104,9 +108,9 @@ the implicit function theorem at the penalized mode: differentiating
 gives \((H+S)J_k = -\partial^2\rho/\partial\beta\,\partial\theta_k\),
 whose right-hand side is <span class="pkg">penalties7</span>'s <code>penalty_cross()</code>.
 \(V_\theta\) is the inverse of the outer criterion's own Hessian,
-which <code><a href="statmod_marginal_hess.html">statmod_marginal_hess</a></code> returns, negated because that
+which <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> returns, negated because that
 criterion is a maximand.</p>
-<p>Everything is on the hyperparameter's LINK scale, which is where the
+<p>Everything is on the hyperparameter's link scale, which is where the
 outer criterion optimizes and therefore the only scale on which its
 Hessian is a variance.</p>
 <p><strong>Against mgcv.</strong> This is the first of the two terms mgcv sums into
@@ -119,8 +123,8 @@ so that uncertainty is already inside \(H\). The residual difference is
 measured at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and
 2000, falling with the sample size.</p>
 <p><strong>Where it does not apply.</strong> A kinked penalty has no hyperparameter
-the outer criterion estimates – <code><a href="outer_hyper_index.html">outer_hyper_index</a></code> skips it
-– so there is nothing to propagate and the correction is zero. That is
+the outer criterion estimates, <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> skipping it, so
+there is nothing to propagate and the correction is zero. That is
 not an approximation: the map from the hyperparameter to the penalized
 mode turns a corner whenever a coefficient joins or leaves the active
 set, and a delta method needs a derivative that does not exist there.</p>
@@ -133,8 +137,8 @@ Statistical Association</em>, 111(516), 1548–1563.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_marginal_hess.html">statmod_marginal_hess</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalty_cross</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_cross()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

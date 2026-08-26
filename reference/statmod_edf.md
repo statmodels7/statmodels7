@@ -41,7 +41,7 @@ A data frame with one row per term.
 ## Details
 
 A smooth penalized term counts \\\mathrm{tr}\[(H+S)^{-1}H\]\\ over its
-own block, so it needs the unpenalized curvature there and not only its
+own block, so it needs the unpenalized curvature there, never only its
 coefficients and its hyperparameters. That block is cut out of the
 likelihood's information, which is computed once for every term rather
 than per term.
@@ -51,12 +51,12 @@ own, and each has hyperparameters of its own filed under a key of its
 own. The row stays per term, which is the granularity a table of terms
 wants, and the hyperparameters are handed over keyed by the penalty
 names
-[`term_penalties`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
+[`modelterms7::term_penalties()`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
 gives, which is the shape `edf()` reads them in. Passing the
 hyperparameters of one penalty for a term carrying two would count the
 whole block against it.
 
-The arguments are passed BY NAME. `edf()`'s third argument is the
+The arguments are passed by name. `edf()`'s third argument is the
 curvature and its fourth the hyperparameters, and a positional call put
 the hyperparameters where the curvature belongs: every smooth term then
 reported `NA`, the total degrees of freedom counted the unpenalized

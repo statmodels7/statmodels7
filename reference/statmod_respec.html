@@ -9,7 +9,7 @@ every block is reapplied to those rows rather than rebuilt from them."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ every block is reapplied to those rows rather than rebuilt from them."><meta pro
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,36 +53,42 @@ every block is reapplied to those rows rather than rebuilt from them.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>The fitted <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>The fitted <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>The rows to read it on.</p></dd>
+<dd><p>The rows to read the model on.</p></dd>
 
 
 <dt id="arg-need-response">need_response<a class="anchor" aria-label="anchor" href="#arg-need-response"></a></dt>
-<dd><p>Whether the response has to be there.</p></dd>
+<dd><p><code>TRUE</code> where the response must be present, as for a
+log-likelihood; <code>FALSE</code> for a prediction.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code> whose <code>newdata</code> is set.</p>
+    <p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code> carrying the fitted terms, with <code>newdata</code> set to
+<code>data</code>, <code>n_obs</code> its row count, and the offsets and response evaluated
+there. Every other property is <code>spec</code>'s.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A term records how its block was made – a factor's levels and contrasts, a
-spline's knots, a basis reparametrization – and
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_predict.html" class="external-link">term_predict</a></code> reapplies that record. Rebuilding
-instead gives a block of the same shape, multiplying the same coefficients,
-that means something else: measured on <code>y ~ s(x, k = 10)</code> at 200
-observations, predicting on 40 of the rows the model was fitted to differed
-from the fitted values there by 0.237, and on the 51 rows with
-\(|x| &lt; 0.5\), where the rebuilt knots move furthest, by 1.19. The whole
-data handed back agrees exactly, which is why nothing noticed.</p>
+    <p>A term records how its block was made: a factor's levels and contrasts, a
+spline's knots, a basis reparametrization. <code><a href="https://statmodels7.github.io/modelterms7/reference/term_predict.html" class="external-link">modelterms7::term_predict()</a></code>
+reapplies that record to new rows.</p>
+<p>Rebuilding instead gives a block of the same shape, multiplying the same
+coefficients, that means something else. Measured on <code>y ~ s(x, k = 10)</code> at
+200 observations: predicting on 40 of the rows the model was fitted to
+differed from the fitted values there by 0.237, and on the 51 rows with
+\(|x| &lt; 0.5\), where the rebuilt knots move furthest, by 1.19. Handing
+back the whole data agrees exactly, which is why nothing noticed.</p>
+<p>The offsets are re-evaluated against <code>data</code> rather than carried across,
+since a vector of the fitting data's length says nothing about other rows.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_design.html">statmod_design</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_design.html">statmod_design()</a></code>, which reapplies the terms,
+<code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code>, the caller.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -11,7 +11,7 @@ from the coordinates those were estimated on."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ from the coordinates those were estimated on."><meta property="og:image" content
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -73,27 +77,27 @@ the quantity reads a parameter that is not estimated), <code>jacobian</code>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This is the one place the readable view is built, so that
-<code><a href="coef.StatmodFit.html">coef.StatmodFit</a></code>, <code><a href="vcov.StatmodFit.html">vcov.StatmodFit</a></code> and
-<code><a href="confint.StatmodFit.html">confint.StatmodFit</a></code> cannot report a quantity under one name
+<code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code>, <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> and
+<code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> cannot report a quantity under one name
 and index it under another.</p>
 <p>A term says what it is about through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">term_readable</a></code>, which gives the quantities and
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>, which gives the quantities and
 the Jacobian. The coordinates that Jacobian touches are replaced by the
 quantities; a coordinate no quantity reads stands where it is, with a unit
 row of its own. That is what leaves a developed parameter intact: its
 development is a vector of coefficients over covariates with no single
 value, so nothing is declared for it and nothing is taken away.</p>
 <p>The joint coordinate vector is the design coefficients of every equation
-in order, then the FREE parameters of each structural term – free because
-a level an intercept in the same equation carries is held and is not in
-the information the variance comes from. A quantity that reads a held
+in order, then the <strong>free</strong> parameters of each structural term. Free,
+because a level an intercept in the same equation carries is held and is
+absent from the information the variance comes from. A quantity that reads a held
 parameter is marked: its value stands, and its variance would be that of
 the rest alone, so it is not reported.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">term_readable</a></code>,
-<code><a href="statmod_structural_table.html">statmod_structural_table</a></code></p></div>
+    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>,
+<code><a href="statmod_structural_table.html">statmod_structural_table()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -20,7 +20,7 @@ statmod_information_at(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - coef:
 
@@ -28,22 +28,43 @@ statmod_information_at(
 
 - design:
 
-  The design.
+  The design, refreshed at `coef` if any term needs it.
 
 - expected:
 
-  Whether to use the expected information.
+  `TRUE` for the expected information, `FALSE` for the negated observed
+  Hessian.
 
 - approx:
 
-  The approximation, when the expected one is not closed.
+  How the expected information is approximated for a family with no
+  closed form: `"bartlett"`, `"integrate"` or `"mc"`.
 
 ## Value
 
-A square matrix over the stacked coefficients.
+A symmetric `p x p` matrix over the stacked coefficients, `p` being
+their total count across the equations. A Matrix object when any
+equation's design is sparse, a base matrix otherwise.
 
 ## Details
 
-`expected = TRUE` gives the expected information, which is what Fisher
-scoring inverts; `approx` is passed to distributions7 and read only
-where the family has no closed expected information.
+Block \\(a, b)\\ is \\X_a'\\\mathrm{diag}(w\\h\_{ab})\\X_b\\ with
+\\h\_{ab}\\ the per-observation second derivative of the log-density in
+\\(\eta_a, \eta_b)\\, negated. The blocks are assembled in the storage
+the designs call for, so a model with a sparse equation gets a sparse
+information.
+
+`expected = TRUE` gives the expected information, which Fisher scoring
+inverts and which is positive definite wherever the family is regular.
+`expected = FALSE` gives the negated observed Hessian, which far from
+the optimum may be indefinite.
+
+`approx` reaches distributions7 and is read only where the family has no
+closed expected information.
+
+## See also
+
+[`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
+for the first derivative,
+[`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
+for the per-observation blocks a square-root route uses instead.

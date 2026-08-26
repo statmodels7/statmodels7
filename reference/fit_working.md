@@ -2,10 +2,10 @@
 
 The iteration of fasola2018 for a term whose block is a working
 linearization with a frozen weight –
-[`jump`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 and
-[`jseg`](https://statmodels7.github.io/modelterms7/reference/jseg.html):
-the smooth block is fitted EXACTLY at the committed block, the
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html):
+the smooth block is fitted exactly at the committed block, the
 break-points are read off the fitted coefficients and committed, and the
 two alternate until the read-off settles or the working objective stops
 moving.
@@ -74,21 +74,21 @@ fit_working(
 ## Value
 
 As
-[`fit_smooth`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
+[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
 plus `fasola`, the number of working fits taken.
 
 ## Details
 
 The sequencing is the whole of the difference from
-[`fit_smooth`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
+[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
 and it is what `segmented` does. The fixed-point iteration these
 constructions belong to is not a descent method on the model's objective
 – its early steps under a large scaling factor move uphill on purpose,
 which is how it leaves a spurious optimum – so embedding the read-off
 inside the inner optimizer's objective put a sufficient-decrease line
 search in its way and stalled it: measured on a three-break-point jseg,
-the embedded route ended at an rss worse than the mean-only fit FROM THE
-TRUE BREAK-POINTS, while this iteration recovers them from the same
+the embedded route ended at an rss worse than the mean-only fit from the
+TRUE break-points, while this iteration recovers them from the same
 start. During the working fit the frozen blocks contribute \\X\beta\\
 and nothing else (`st$working`), which makes the inner fit the plain
 penalized working fit of the papers; the commit then advances the
@@ -96,7 +96,7 @@ read-off, the scaling schedule and any relabeling of crossed break-point
 lineages, once per working fit.
 
 Any inner method serves: the working fit goes through
-[`fit_smooth`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
+[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
 which takes
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
 or any optimizers7 optimizer, and the read-off never moves inside
@@ -109,8 +109,8 @@ from nothing every time: measured on three break-points at \\n =
 9.2 s under `newton()` and 140 s under `lbfgs()`.
 
 The exit is at a fixed point of the iteration or in the cycle it settles
-into, judged on the WORKING objective: the read-off settled
-([`term_converged`](https://statmodels7.github.io/modelterms7/reference/term_converged.html))
+into, judged on the working objective: the read-off settled
+([`modelterms7::term_converged()`](https://statmodels7.github.io/modelterms7/reference/term_converged.html))
 with the objective stalled, the objective stalled three times in a row,
 or the objective equal to two iterations back twice – the period-two
 cycle of the break-point Muggeo documents, which a consecutive-change
@@ -128,5 +128,5 @@ iterative algorithm for change-point detection in abrupt change models.
 
 ## See also
 
-[`fit_smooth`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
-[`statmod_commit_refresh`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
+[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md),
+[`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)

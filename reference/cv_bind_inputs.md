@@ -14,7 +14,7 @@ cv_bind_inputs(spec, sub, i, n)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
   whose terms are built.
 
 - sub:
@@ -37,11 +37,11 @@ cv_bind_inputs(spec, sub, i, n)
 
 `interpret_formula()` evaluates a term's call as
 `eval(call, data, env)`, so a name is looked up in `data` first and in
-the formula's environment after. `data.frame(X = X, y = y)` SPLITS a
+the formula's environment after. `data.frame(X = X, y = y)` splits a
 matrix into `X.x1 ... X.xp`, leaving no column `X`, so `lasso(X)`
 reaches past the data to the matrix in the calling environment. The fit
-is right – the matrix is captured once and the coefficients are
-identical to the other spelling – but the fold cannot rebuild: the name
+itself is right, the matrix being captured once and the coefficients
+identical to the other spelling, but the fold cannot rebuild: the name
 still resolves to all the rows.
 
 The matrix is already on the built term, and `term_build()` checked at
@@ -51,14 +51,14 @@ fold, the spelling the documentation asks the caller for.
 
 Nothing is relearned that should be: a matrix carries no knots, no
 contrasts and no levels, so subsetting it and re-evaluating it give the
-same block. A FORMULA input is untouched and keeps being rebuilt on the
-fold's own rows, which is what that rule exists for.
+same block. A formula input is untouched and keeps being rebuilt on the
+fold's own rows, and that is what the rule exists for.
 
 It applies where `input_expr` is a plain symbol, which is the case the
-name can be bound for. A call – `lasso(scale(X))` – keeps only its own
-value on the term and not the `X` its re-evaluation would need, so it is
-left to the error that names it.
+name can be bound for. A call such as `lasso(scale(X))` keeps only its
+own value on the term, never the `X` its re-evaluation would need, so it
+is left to the error that names it.
 
 ## See also
 
-[`cv_curve`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
+[`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)

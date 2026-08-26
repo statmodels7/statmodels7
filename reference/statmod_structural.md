@@ -14,7 +14,7 @@ statmod_structural(spec)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 ## Value
 
@@ -29,4 +29,4 @@ written as a predictor at all.
 
 ## See also
 
-[`statmod_filter_at`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
+[`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)

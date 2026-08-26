@@ -31,5 +31,5 @@ the effective degrees of freedom, which the block header reports
 instead.
 
 The question is asked of the term's own specification (`spec$linear`)
-rather than of a suffix in a coefficient's name, since a name is a label
-and this is a fact about the construction.
+and never of a suffix in a coefficient's name, a name being a label and
+this is a fact about the construction.

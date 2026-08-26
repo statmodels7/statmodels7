@@ -27,13 +27,13 @@ An integer vector of positions, possibly empty.
 ## Details
 
 The predicate for the second is
-[`refreshes_own_block`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md),
+[`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md),
 the same one
-[`unfittable_reason`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
-uses, so a term written later is covered without an edit here. A convex
-block is left out deliberately rather than forgotten: the scoring step
-reaches its optimum from anywhere, and a search over it would spend the
-budget where it buys nothing.
+[`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
+uses, so a term written later is covered with no edit here. A convex
+block is left out deliberately: the scoring step reaches its optimum
+from anywhere, and a search over it would spend the budget where it buys
+nothing.
 
 A penalized coordinate is then removed wherever it sits, which is not
 the same question as whether its term is convex: a penalty declared

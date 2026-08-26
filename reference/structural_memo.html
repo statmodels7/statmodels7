@@ -11,7 +11,7 @@ returned; otherwise compute() runs and replaces it."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ returned; otherwise compute() runs and replaces it."><meta property="og:image" c
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -74,15 +78,15 @@ returned; otherwise <code>compute()</code> runs and replaces it.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Measured on the gas panel at 60 groups, 62 of the 154 curvature
-recursions of one fit recompute a point already visited – the same
-coefficients and the same term parameters, up to five times each,
-because the criterion, its gradient and the joint step's curvature all
-read the same mode – and the recursion is 35 per cent of the fit. The
+recursions of one fit recompute a point already visited: the same
+coefficients and the same term parameters, up to five times each, the
+criterion and its gradient and the joint step's curvature all reading the
+same mode. The recursion is 35 per cent of the fit. The
 cache returns the previously computed object itself, so a hit is
 bit-identical to recomputing by construction, and the key is compared
 with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> on the full numeric inputs, so a collision
 cannot happen.</p>
-<p>It stands aside where the design carries REFRESHABLE terms: a
+<p>It stands aside where the design carries refreshable terms: a
 break-point block advances its rescaling schedule as the alternation
 commits, so the same coefficients do not imply the same design there,
 and a key that cannot see the schedule must not answer.</p>

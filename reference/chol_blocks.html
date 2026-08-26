@@ -9,7 +9,7 @@ every observation, as a \(n \times K \times K\) array."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ every observation, as a \(n \times K \times K\) array."><meta property="og:image
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,24 +53,37 @@ every observation, as a \(n \times K \times K\) array.</p>
 
 
 <dl><dt id="arg-om">Om<a class="anchor" aria-label="anchor" href="#arg-om"></a></dt>
-<dd><p>An \(n \times K \times K\) array of symmetric blocks.</p></dd>
+<dd><p>An \(n \times K \times K\) array of symmetric blocks, as
+<code><a href="info_blocks.html">info_blocks()</a></code> returns it. Only the lower triangle of each block is
+read.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An array of the same shape, lower triangular in its last two
-indices, or <code>NULL</code> when some block is not positive definite.</p>
+    <p>An \(n \times K \times K\) numeric array, lower triangular in
+its last two indices, with <code>Om[i, , ] == L[i, , ] %*% t(L[i, , ])</code> for
+every <code>i</code>. <code>NULL</code> as soon as any block fails to be positive definite,
+so a single bad observation declines for the whole sample.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The standard recursion is written over the \(K\) indices, which are few,
-and evaluated over all observations at once, which are many.</p>
-<p>A block that is not positive definite has a non-positive pivot, and the
-function returns <code>NULL</code> at that point rather than taking its square
-root: the observed curvature far from the optimum is routinely indefinite,
-so this is an ordinary outcome the caller answers by falling back to the
-assembled route, and a warning about a <code>NaN</code> would report it as a
-defect.</p>
+    <p>\(K\) is the number of distribution parameters, so it is 1, 2 or 3 for
+most families and never large; \(n\) is the number of observations and
+is. The standard Cholesky recursion is therefore written out over the
+\(K\) indices and evaluated over all \(n\) observations at once, one
+vectorized pass per entry of the factor, so no loop runs over
+observations.</p>
+<p>A block that is not positive definite produces a non-positive pivot, and
+the function returns <code>NULL</code> at that point instead of taking its square
+root. That is an expected outcome: the observed curvature far from the
+optimum is routinely indefinite, and the caller answers by falling back to
+the assembled route. A warning about a <code>NaN</code> would report an ordinary
+branch as a defect.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="info_blocks.html">info_blocks()</a></code> for the input,
+<code><a href="sqrt_design.html">sqrt_design()</a></code> for what the factors are used to build.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

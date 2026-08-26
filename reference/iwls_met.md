@@ -1,7 +1,8 @@
 # Has the Step's Stopping Rule Been Met?
 
-The built-in rule, the score per observation against `tol`, or the
-caller's optimizers7 criterion read on the same state.
+Applies whichever stopping rule the step was configured with: the
+built-in one, the score per observation against `tol`, or the caller's
+optimizers7 criterion read on the same state.
 
 ## Usage
 
@@ -14,7 +15,7 @@ iwls_met(method, state)
 - method:
 
   An
-  [`Iwls`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
+  [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
   object.
 
 - state:
@@ -29,8 +30,11 @@ A single logical.
 
 ## Details
 
-The two routes are here rather than at the two places the loop asks, so
-that what a rule is shown is written once. `state$gradient` is already
-the score PER OBSERVATION, which is what makes `crit_grad(t)` and
-`tol = t` the same rule; the objective in the state is the penalized
-log-likelihood unaveraged, the scale the penalty is added on.
+Both routes live here, in one place, although the loop asks the question
+at two. That is what keeps the state a criterion is shown identical in
+both.
+
+Two properties of that state matter to a caller writing a rule.
+`state$gradient` is already the score per observation, so `crit_grad(t)`
+and `tol = t` are the same rule. `state$objective` is the penalized
+log-likelihood unaveraged, that being the scale the penalty is added on.

@@ -9,7 +9,7 @@ spent."><meta property="og:image" content="https://statmodels7.github.io/statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ spent."><meta property="og:image" content="https://statmodels7.github.io/statmod
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -50,7 +54,7 @@ spent.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -59,19 +63,21 @@ spent.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A number.</p>
+    <p>A single number, <code>nobs(object)</code> less the total effective degrees
+of freedom. Not an integer in general, and <code>NA</code> for a model whose
+degrees of freedom could not be counted.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The count subtracted is the EFFECTIVE one, the trace of the model's
-smoother, and not the number of coefficients: a penalized block spends
-less than it carries, which is the whole reason a smoothing parameter is
-estimated. It is therefore not an integer, and for a model whose degrees
-of freedom could not be counted it is <code>NA</code>.</p>
+    <p>The count subtracted is the effective one, the trace of the model's
+smoother. A penalized block spends less than the number of coefficients it
+carries, which is the whole reason a smoothing parameter is estimated at
+all, so the result is not an integer.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="logLik.StatmodFit.html">logLik.StatmodFit</a></code>, <code><a href="statmod_edf.html">statmod_edf</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_edf.html">statmod_edf()</a></code> for the per-term counts this sums,
+<code><a href="logLik.StatmodFit.html">logLik.StatmodFit()</a></code></p></div>
     </div>
 
     <div class="section level2">

@@ -1,9 +1,9 @@
 # The Penalty Over a Structural Term's Free Parameters, as a Block
 
 The Hessian of whatever penalty covers a structural term's own
-parameters, over the FREE ones and in their order, which is the order
+parameters, over the free ones and in their order, which is the order
 the tail of
-[`statmod_full_information`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
 carries them in.
 
 ## Usage
@@ -17,7 +17,7 @@ structural_penalty_block(spec, design, hyper, nfree = NULL)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -46,4 +46,4 @@ before.
 
 ## See also
 
-[`statmod_structural_penalty`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
+[`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)

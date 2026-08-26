@@ -15,7 +15,7 @@ print(x, ...)
 - x:
 
   A
-  [`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   result.
 
 - ...:
@@ -28,7 +28,7 @@ print(x, ...)
 
 ## See also
 
-[`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+[`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
 
 ## Examples
 

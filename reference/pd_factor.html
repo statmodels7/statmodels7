@@ -11,7 +11,7 @@ matrix itself calls for."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ matrix itself calls for."><meta property="og:image" content="https://statmodels7
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -56,7 +60,7 @@ matrix itself calls for.</p>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>A reference magnitude, as <code><a href="pd_logdet.html">pd_logdet</a></code> takes.</p></dd>
+<dd><p>A reference magnitude, as <code><a href="pd_logdet.html">pd_logdet()</a></code> takes.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -70,19 +74,19 @@ eigendecomposition.</p>
     <p>This is the one place the penalized matrix is factorized. The criterion
 wants its log-determinant, the gradient wants the mode's movement and the
 Hessian wants both plus the inverse; before this existed the criterion and
-<code><a href="ctx_penalized.html">ctx_penalized</a></code> each factorized the SAME matrix at the same
-point, which at p = 503 was 12.4 ms spent twice.</p>
+<code><a href="ctx_penalized.html">ctx_penalized()</a></code> each factorized the same matrix at the same point,
+which at \(p = 503\) was 12.4 ms spent twice.</p>
 <p><strong>The verdict is unchanged and so is its property.</strong> Whether the
 matrix is accepted never turns on whether a factorization raised: where the
 cheap test is inconclusive the eigendecomposition answers about the matrix.
 The sparse route carries its own condition estimate
-(<code><a href="sparse_lmin.html">sparse_lmin</a></code>) rather than the dense one, and falls back to
+(<code><a href="sparse_lmin.html">sparse_lmin()</a></code>) rather than the dense one, and falls back to
 the dense route where that estimate cannot be formed, so a refusal is
 reached by the same reasoning on either storage.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="pd_logdet.html">pd_logdet</a></code>, <code><a href="ctx_penalized.html">ctx_penalized</a></code></p></div>
+    <div class="dont-index"><p><code><a href="pd_logdet.html">pd_logdet()</a></code>, <code><a href="ctx_penalized.html">ctx_penalized()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

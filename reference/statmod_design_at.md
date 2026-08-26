@@ -1,9 +1,23 @@
 # The Design at Given Coefficients
 
-The design with every refreshable term's block recomputed at the
-coefficients it currently holds, and the difference between its
-contribution and its linearization carried as an adjustment to the
-predictor.
+Recomputes every refreshable term's design block at the coefficients
+currently in hand, and carries the difference between what the term
+contributes and what its linearization contributes as a per-observation
+adjustment to the predictor. With it, every cross-product in the
+objective reads the block as an ordinary design while the predictor
+stays exact:
+
+\$\$\mathrm{adj} = \mathrm{term\\value}(\beta) - X(\beta)\\\beta\$\$
+
+For a term whose block is a Jacobian,
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+and
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
+the adjustment is non-zero and the resulting scoring step is the
+Gauss-Newton one. For
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+the columns satisfy \\X\beta = \mathrm{value}\\ exactly, so the
+adjustment is zero and the same step is Fasola's fixed-point iteration.
 
 ## Usage
 
@@ -16,41 +30,59 @@ statmod_design_at(spec, coef, design)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - coef:
 
-  A named list of coefficient vectors.
+  A named list of coefficient vectors, one per distribution parameter,
+  each as long as its equation's design is wide.
 
 - design:
 
-  The design, as
-  [`statmod_design`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  The design to refresh, as
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
   returns it.
 
 ## Value
 
-A design.
+A design of the same shape as `design`, with the refreshable terms'
+column blocks replaced and each equation's `adj` set to the
+per-observation adjustment above. `design` itself when nothing
+refreshes.
 
-## Details
+## A model with no refreshable term pays nothing
 
-A design with no refreshable term is returned unchanged, so a model of
-ordinary terms pays nothing and reaches exactly the same arithmetic as
-before.
+[`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
+is empty there, the design is returned as it arrived, and the arithmetic
+downstream is untouched.
 
-The refresh is CHAINED from the term the state holds rather than from
-the specification, because the rescaling factor of a discontinuous
-break-point term is a state of the iteration and not a function of the
-coefficients: it halves when the break-point reverses direction, which
-is a fact about the path and not about the point. The state advances
-only when
-[`statmod_commit_refresh`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
-is called, so the trial points of a line search all see the same
-schedule and the schedule advances once per sweep.
+## Chained from the term, not from the specification
 
-The result is memoized on the coefficients, since the objective, its
-gradient and its curvature are asked for at the same point in turn.
+The refresh reads the term the design state currently holds, never the
+one the specification was built with. A discontinuous break-point term
+carries a rescaling factor that is a state of its iteration: modelterms7
+halves it whenever the break-point reverses direction, so it records the
+path taken and cannot be recovered from the point reached. Refreshing
+from the specification each time would reset that factor to its starting
+value and solve a permanently smoothed problem, whose fixed point is not
+the model's.
+
+The state advances only when
+[`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
+is called, so every trial point of a line search sees one schedule and
+the schedule advances once per sweep.
+
+## Memoization
+
+The result is cached on the coefficients, because the objective, its
+gradient and its curvature are all asked for at the same point in turn
+and each would otherwise rebuild the same blocks.
 
 ## See also
 
-[`statmod_commit_refresh`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
+[`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
+to advance the state afterwards,
+[`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md)
+for the terms this walks,
+[`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
+for the verdict.

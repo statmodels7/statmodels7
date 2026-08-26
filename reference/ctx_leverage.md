@@ -1,6 +1,6 @@
 # The Per-Observation Diagonals at the Context's Point
 
-[`block_leverage`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md),
+[`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md),
 computed once and read by the gradient's contraction and by every pair
 of the Hessian.
 

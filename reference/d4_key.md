@@ -1,6 +1,6 @@
 # The Name of a Fourth-Derivative Component
 
-Locates the \\(a, b, k, q)\\ entry, by a name BUILT from the parameter
+Locates the \\(a, b, k, q)\\ entry, by a name built from the parameter
 names in the family's own order.
 
 ## Usage

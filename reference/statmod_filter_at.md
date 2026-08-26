@@ -14,7 +14,7 @@ statmod_filter_at(spec, design, eta_static, theta_static)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -42,4 +42,4 @@ same point in turn and a filter is the expensive part of each.
 
 ## See also
 
-[`statmod_structural`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
+[`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)

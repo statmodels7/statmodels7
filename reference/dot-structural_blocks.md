@@ -1,9 +1,9 @@
 # The Model's Derivative Pieces for a Filter's Recursion
 
 Builds the `blocks` callback
-[`term_curvature`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
+[`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
 and
-[`term_third`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
+[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
 take, at a direction or without one.
 
 ## Usage
@@ -40,7 +40,7 @@ A function of the direction returning a `blocks` callback.
 
 ## Details
 
-The pieces are built on the ACTIVE SET the term asks for, so a panel's
+The pieces are built on the active set the term asks for, so a panel's
 outer products are of the same size whatever the number of groups.
 `dcurv` serves twice, as the derivative of the curvature along the
 direction and as the factor multiplying the movement of \\V_p\\, and `N`

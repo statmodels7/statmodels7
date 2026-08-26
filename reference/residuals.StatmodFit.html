@@ -11,7 +11,7 @@ parameters."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ parameters."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -58,16 +62,18 @@ parameters.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A fitted model.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>The residual to compute.</p></dd>
+<dd><p><code>"quantile"</code> (the default), <code>"pearson"</code> or <code>"response"</code>.
+Matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>An integer to seed the randomization with, or <code>NULL</code>.
-Read only where the distribution function jumps.</p></dd>
+<dd><p>An integer to seed the randomization with, or <code>NULL</code> for the
+ambient state. Read only where the distribution function jumps, so it
+changes nothing for a continuous family.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -76,38 +82,46 @@ Read only where the distribution function jumps.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric vector, one entry per observation.</p>
+    <p>A numeric vector with one entry per observation. Standard normal
+under a correct model for <code>"quantile"</code>; approximately standardized for
+<code>"pearson"</code>; on the response's own scale for <code>"response"</code>.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A residual asks whether an observation is consistent with the LAW its row
+    <h2 id="one-residual-per-observation">One residual per observation<a class="anchor" aria-label="anchor" href="#one-residual-per-observation"></a></h2>
+    <p>A residual asks whether an observation is consistent with the law its row
 was given, and that law is one object carrying every parameter at once. So
-there is one residual per observation and not one per distribution
-parameter, however many of them the model develops over covariates. What
-IS per parameter is a different quantity: the contribution
+there is one residual per observation, however many parameters the model
+develops over covariates.</p>
+<p>A per-parameter quantity exists and is a different thing: the contribution
 \(\partial \ell_i / \partial \eta_{ip}\) says which equation an
 observation strains, and the partial residuals of one equation are what a
 term's effect is drawn against.</p>
-<p>The QUANTILE residual is \(r_i = \Phi^{-1}(F(y_i; \hat\theta_i))\). Under
-a correct model \(F(y_i; \theta_i)\) is exactly uniform, so \(r_i\) is
-exactly standard normal – whatever the family, and whichever of its
-parameters are modelled. That is why it is the default here: it privileges
-no parameter, and it needs no asymptotics for its reference distribution
-to hold (Dunn and Smyth, 1996).</p>
-<p>Where the distribution function JUMPS the same construction is randomized:
-\(u_i\) is drawn uniformly on \((F(y_i^-), F(y_i))\) and the residual
-is \(\Phi^{-1}(u_i)\). That is exact again, at the price of being random,
-so two calls give two answers. It applies to every discrete family and, at
-the atom alone, to a mixed one – the zero-adjusted wrapper of a continuous
-parent. <code>seed</code> makes a call reproducible without disturbing the
-caller's stream; left <code>NULL</code> the ambient state is used and nothing is
-set.</p>
-<p>The PEARSON residual is \((y_i - \mathbb{E}[Y_i])/\mathrm{sd}(Y_i)\) and
-the RESPONSE residual the numerator alone. Both are defined against the
-mean, and for a skewed family the first is not standard normal even where
-the model is right, so its quantile-quantile plot misleads in exactly the
-case a distributional model is for. They are offered because they are
-familiar, not because they answer the question the quantile residual does.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-quantile-residual-and-why-it-is-the-default">The quantile residual, and why it is the default<a class="anchor" aria-label="anchor" href="#the-quantile-residual-and-why-it-is-the-default"></a></h2>
+    <p>$$r_i = \Phi^{-1}(F(y_i; \hat\theta_i))$$</p>
+<p>Under a correct model \(F(y_i; \theta_i)\) is exactly uniform, so
+\(r_i\) is exactly standard normal: whatever the family, and whichever
+of its parameters are modeled. It privileges no parameter, and its
+reference distribution needs no asymptotics (Dunn and Smyth, 1996).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="where-the-distribution-function-jumps">Where the distribution function jumps<a class="anchor" aria-label="anchor" href="#where-the-distribution-function-jumps"></a></h2>
+    <p>The construction is randomized: \(u_i\) is drawn uniformly on
+\((F(y_i^-), F(y_i))\) and the residual is \(\Phi^{-1}(u_i)\). Exact
+again, at the price of being random, so two calls give two answers.</p>
+<p>This applies to every discrete family, and at the atom alone to a mixed
+one, which is the zero-adjusted wrapper of a continuous parent. <code>seed</code>
+makes a call reproducible without disturbing the caller's stream; left
+<code>NULL</code>, the ambient state is used and nothing is set.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="pearson-and-response-residuals">Pearson and response residuals<a class="anchor" aria-label="anchor" href="#pearson-and-response-residuals"></a></h2>
+    <p>\((y_i - \mathbb{E}[Y_i]) / \mathrm{sd}(Y_i)\) and its numerator alone.
+Both are defined against the mean, and for a skewed family the Pearson
+residual is not standard normal even where the model is right, so its
+quantile-quantile plot misleads in exactly the case a distributional model
+is for. They are here because they are familiar.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -116,19 +130,34 @@ familiar, not because they answer the question the quantile residual does.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="fitted.StatmodFit.html">fitted.StatmodFit</a></code>, <code><a href="predict.StatmodFit.html">predict.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="fitted.StatmodFit.html">fitted.StatmodFit()</a></code> and <code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code> for the fitted
+parameters these are read against.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">80</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">0.8</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">0.8</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Under a correct model the quantile residuals are standard normal.</span></span></span>
 <span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         mean           sd </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5.498294e-17 1.006309e+00 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2.090233e-17 1.002509e+00 </span>
+<span class="r-in"><span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/shapiro.test.html" class="external-link">shapiro.test</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.8361219</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># For a discrete family the same residual is randomized, so two calls</span></span></span>
+<span class="r-in"><span><span class="co"># differ unless a seed is given.</span></span></span>
+<span class="r-in"><span><span class="va">dp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dp</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">dp</span><span class="op">$</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dp</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fp</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fp</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fp</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fp</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

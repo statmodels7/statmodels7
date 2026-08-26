@@ -1,7 +1,7 @@
 # A Summary of a Fitted Model
 
 What
-[`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 returns: the blocks of each distribution parameter, the degrees of
 freedom, the information criteria and whatever has to be said about how
 the numbers should be read.
@@ -91,7 +91,7 @@ An object of class `StatmodSummary`.
 
 ## See also
 
-[`summary.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 
 ## Examples
 

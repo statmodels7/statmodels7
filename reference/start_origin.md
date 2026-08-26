@@ -11,33 +11,57 @@ start_origin()
 
 ## Value
 
-A
-[`start_strategy`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
+A `StartOrigin` object, inheriting from
+[`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
 
-## Details
+## When it is a poor choice
 
-The name is `start_origin` and not `start_zeros` because optimizers7
-already exports the second for the starting POINT of an optimizer, and
-the toolkit's members share no exported name — a collision would be
+A location parameter on the identity link begins at zero whatever the
+response is. On a response centered at a thousand the run then starts a
+thousand units away and has to travel there, and on a badly scaled model
+it may not arrive at all.
+[`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
+the default, exists for that reason.
+
+It is harmless where every equation is on a log or a logit link, since
+zero is then an ordinary interior value of the parameter, and it is the
+reference the other strategies are judged against.
+
+## The name
+
+`start_origin`, not `start_zeros`. optimizers7 already exports
+`start_zeros()` for the starting point of an optimizer, and no two
+members of this toolkit export the same name. A collision would be
 reported by
-[`statmodels7_conflicts`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
-and, far worse, would mean that which function a user got depended on
-the order the packages were attached in.
-
-It is the plainest starting point and rarely the best: a location
-parameter on the identity link then begins at zero whatever the response
-is, which on a response centred at a thousand sends the run travelling.
-It is here because it is the reference other strategies are judged
-against, and because a model whose equations are all on a log or logit
-link is not harmed by it.
+[`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md),
+and, worse, which function a caller reached would depend on the order
+the packages were attached in.
 
 ## See also
 
-[`start_intercepts`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
+[`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
+the default and usually the better choice.
 
 ## Examples
 
 ``` r
 start_origin()
 #> <start> zero
+
+set.seed(1)
+dd <- data.frame(x = runif(40))
+dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
+spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
+
+# Every coefficient of every equation is zero, intercepts included.
+s <- start_at(start_origin(), spec, statmod_design(spec), NULL)
+s
+#> $mu
+#> [1] 0 0
+#> 
+#> $sigma
+#> [1] 0
+#> 
+all(unlist(s) == 0)
+#> [1] TRUE
 ```

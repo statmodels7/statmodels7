@@ -9,7 +9,7 @@ coefficients, with the block held at the kink."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ coefficients, with the block held at the kink."><meta property="og:image" conten
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -75,8 +79,8 @@ half-width of the subdifferential, so a kink at least this wide leaves the
 whole block at zero. That is where a path starts: at the smallest
 hyperparameter for which the term contributes nothing, which is
 <span class="pkg">glmnet</span>'s <code>lambda.max</code> written for any separable penalty.</p>
-<p>The other coefficients are held where the caller left them rather than
-refitted, so the number is a starting point and not a boundary. The path
+<p>The other coefficients are held where the caller left them and are not
+refitted, so the number is a starting point and no boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.</p>
     </div>
 

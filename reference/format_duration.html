@@ -9,7 +9,7 @@ seconds, minutes, hours or days, whichever keeps it readable."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ seconds, minutes, hours or days, whichever keeps it readable."><meta property="o
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,31 +53,47 @@ seconds, minutes, hours or days, whichever keeps it readable.</p>
 
 
 <dl><dt id="arg-seconds">seconds<a class="anchor" aria-label="anchor" href="#arg-seconds"></a></dt>
-<dd><p>A number of seconds.</p></dd>
+<dd><p>A number of seconds. Vectorized: a vector in gives a vector
+out, each element in its own unit.</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>Significant digits.</p></dd>
+<dd><p>How many significant digits to keep, passed to <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif()</a></code>.
+Defaults to 3.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single string.</p>
+    <p>A character vector the length of <code>seconds</code>, each element a number
+and a unit separated by a space, as <code>"340 us"</code> or <code>"2.6 h"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A fit that took 340 microseconds and one that took 2.6 hours must both read
-at a glance, which a single unit cannot do.</p>
-<p>Zero is a reading and not the absence of one: on a coarse clock a fast fit
-measures exactly zero seconds, so it is reported as such rather than
-suppressed. A guard of the form <code>if (elapsed &gt; 0)</code> would be a claim
-that zero cannot be measured, and for a duration that claim is false.</p>
+    <p>A fit that took 340 microseconds and one that took 2.6 hours must both
+read at a glance, and no single unit does that.</p>
+<p>The thresholds are the obvious ones: below a millisecond it reads in
+microseconds, below a second in milliseconds, below a minute in seconds,
+then minutes, hours and days.</p>
+<p>Zero is a reading. On a coarse clock a fast fit measures exactly zero
+seconds, and it is reported as <code>"0 s"</code> rather than suppressed. A guard of
+the form <code>if (elapsed &gt; 0)</code> would claim that zero cannot be measured,
+which for a duration is false, and would make what the object prints
+depend on the platform's timer resolution.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="print.StatmodFit.html">print.StatmodFit()</a></code>, which reports a fit's elapsed time with
+this.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">format_duration</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.4e-4</span>, <span class="fl">0.25</span>, <span class="fl">90</span>, <span class="fl">7200</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "340 us"  "250 ms"  "1.5 min" "2 h"    </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Zero is a reading, not a missing value.</span></span></span>
+<span class="r-in"><span><span class="fu">format_duration</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "0 s"</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -11,7 +11,7 @@ The draw, added to the intercept-only fit unless told not to.
 - spec, design, obj, ...:
 
   As in
-  [`start_at`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
+  [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
 
 ## Value
 

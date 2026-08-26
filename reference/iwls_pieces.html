@@ -11,7 +11,7 @@ decomposition will actually use."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ decomposition will actually use."><meta property="og:image" content="https://sta
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -52,28 +56,57 @@ decomposition will actually use.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
-<dd><p>The design.</p></dd>
+<dd><p>The design, refreshed at <code>coef</code> if any term needs it.</p></dd>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
-<dd><p>The coefficients, per parameter.</p></dd>
+<dd><p>A named list of coefficient vectors, one per distribution
+parameter.</p></dd>
 
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
-<dd><p>The hyperparameters.</p></dd>
+<dd><p>The hyperparameters, per penalized term.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>An <code><a href="Iwls-class.html">Iwls</a></code> object.</p></dd>
+<dd><p>An <code><a href="Iwls-class.html">Iwls()</a></code> object, read for <code>decomposition</code>, <code>hessian</code> and
+<code>approx</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>R</code>, <code>C</code> and <code>A</code>.</p>
+    <p>A list of three, of which the ones the route does not need are
+<code>NULL</code>:</p><dl><dt><code>R</code></dt>
+<dd><p>the square-root design, as <code><a href="sqrt_design.html">sqrt_design()</a></code> returns it, or
+<code>NULL</code>.</p></dd>
+
+<dt><code>C</code></dt>
+<dd><p>the penalty's factor, as <code><a href="penalty_sqrt.html">penalty_sqrt()</a></code> returns it, or
+<code>NULL</code>.</p></dd>
+
+<dt><code>A</code></dt>
+<dd><p>the assembled penalized information, or <code>NULL</code>.</p></dd>
+
+
+</dl><p><code>R</code> is also <code>NULL</code> when the per-observation curvature had no Cholesky
+factor, and <code><a href="iwls_solve.html">iwls_solve()</a></code> falls back to the assembled route there.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Only what the decomposition will read is built. <code>"qr"</code> and <code>"svd"</code> need
+the square-root design <code>R</code> and the penalty's factor <code>C</code> and never form the
+information; <code>"chol"</code> and <code>"chol_crossprod"</code> need the assembled <code>A</code> and
+neither square root. Building all three unconditionally would pay for the
+route not taken at every iteration of the loop.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="iwls_solve.html">iwls_solve()</a></code>, which consumes this,
+<code><a href="sqrt_design.html">sqrt_design()</a></code> and <code><a href="penalty_sqrt.html">penalty_sqrt()</a></code> for the two factors.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

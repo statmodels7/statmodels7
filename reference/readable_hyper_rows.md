@@ -2,9 +2,9 @@
 
 Replaces the coordinate rows of a penalty whose hyperparameters are a
 chart with the quantities it declares through
-[`penalty_readable`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html):
+[`penalties7::penalty_readable()`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html):
 the standard deviations and correlations of a correlated random effect,
-rather than the logarithms of a Cholesky diagonal and the entries below
+in place of the logarithms of a Cholesky diagonal and the entries below
 it.
 
 ## Usage
@@ -18,7 +18,7 @@ readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
 - rd:
 
   The result of
-  [`penalty_readable`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html).
+  [`penalties7::penalty_readable()`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html).
 
 - th:
 
@@ -58,8 +58,8 @@ The standard error is the delta method, and it composes two Jacobians:
 the penalty's, which is in the parameter scale of its hyperparameters,
 and the link's, the variance matrix being on the free scale the outer
 criterion was maximized on. Each interval is built on the scale the
-quantity declares – log for a standard deviation, Fisher's z for a
-correlation – and mapped back, so a standard deviation cannot be given a
+quantity declares, log for a standard deviation and Fisher's z for a
+correlation, and mapped back, so a standard deviation cannot be given a
 negative lower end and a correlation cannot be given an interval that
 leaves \\(-1, 1)\\. That is the rule every other interval in the toolkit
 follows.

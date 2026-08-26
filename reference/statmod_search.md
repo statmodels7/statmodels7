@@ -15,12 +15,12 @@ statmod_search(spec, row, default = "grid")
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - row:
 
   One row of
-  [`path_rows`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
+  [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
   index.
 
 - default:
@@ -33,12 +33,12 @@ statmod_search(spec, row, default = "grid")
 
 ## Details
 
-It belongs to the TERM and not to the criterion, for the reason the
-whole enumeration does: a criterion is asked of every hyperparameter of
-the model, and a smooth one is read at the mode rather than swept, so
-most of what it is asked about could not answer. A penalty with a kink
-is fitted by a scheme of its own, and how that scheme covers the term's
-own hyperparameters is part of the scheme.
+It belongs to the term, for the reason the whole enumeration does: a
+criterion is asked about every hyperparameter of the model, and a smooth
+one is read at the mode instead of being swept, so most of what it is
+asked about could not answer. A penalty with a kink is fitted by a
+scheme of its own, and how that scheme covers the term's own
+hyperparameters is part of the scheme.
 
 Being per term is also what keeps one term's choice off another's:
 `y ~ lasso(X) + enet(R, search = "cyclic")` sweeps the elastic net one
@@ -46,5 +46,5 @@ coordinate at a time and leaves the lasso alone.
 
 ## See also
 
-[`term_search`](https://statmodels7.github.io/modelterms7/reference/term_search.html),
-[`statmod_path`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
+[`modelterms7::term_search()`](https://statmodels7.github.io/modelterms7/reference/term_search.html),
+[`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)

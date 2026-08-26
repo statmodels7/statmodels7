@@ -1,6 +1,6 @@
 # The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 
-\\1/\lVert A^{-1}\rVert_1\\ from a sparse Cholesky factor, which is the
+\\1/\lVert A^{-1}\rVert_1\\ from a sparse Cholesky factor, the same
 quantity LAPACK's `dpocon` produces from a dense one.
 
 ## Usage
@@ -25,7 +25,7 @@ A single number, or `NA_real_` where the estimate failed.
 
 ## Details
 
-The sparse route needs a condition estimate OF ITS OWN, and it cannot
+The sparse route needs a condition estimate of its own, and it cannot
 borrow the dense one: `chol_rcond_cpp` reads a dense triangular factor.
 [`Matrix::rcond`](https://rdrr.io/pkg/Matrix/man/rcond-methods.html) is
 not the answer either – measured, it costs 10.3 ms at p = 503 and 500 ms
@@ -48,5 +48,5 @@ estimator.
 
 ## See also
 
-[`pd_factor`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md),
-[`pd_logdet`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
+[`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md),
+[`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)

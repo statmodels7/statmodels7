@@ -9,7 +9,7 @@ parameter's block at once."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ parameter's block at once."><meta property="og:image" content="https://statmodel
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -57,7 +61,7 @@ parameter's block at once.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
@@ -87,7 +91,7 @@ $$V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.$$
 The first is the posterior variance under the prior the penalty is the
 negative logarithm of, and it is what an interval around a penalized term
 should be built from: it carries the smoothing bias as though it were
-variance, which is what makes such intervals cover at about their nominal
+variance, and that is why such intervals cover at about their nominal
 rate. The second is the sampling variance of the penalized estimator at a
 fixed penalty, which is smaller and covers less. With no penalty \(S = 0\)
 and both are \(H^{-1}\).</p>
@@ -95,12 +99,12 @@ and both are \(H^{-1}\).</p>
 the penalty is not twice differentiable, so \(S\) does not exist there and
 no curvature can be read; the entry is <code>NA</code>. The coefficients a lasso
 or an MCP left non-zero do get a variance, and it is conditional on that
-selection – <code><a href="summary.StatmodFit.html">summary.StatmodFit</a></code> says so in a note rather than
-leaving the reader to assume otherwise.</p>
+selection, which <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> says in a note instead of leaving
+a reader to assume otherwise.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="confint.StatmodFit.html">confint.StatmodFit</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code></p></div>
     </div>
 
     <div class="section level2">

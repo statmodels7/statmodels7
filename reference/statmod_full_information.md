@@ -17,7 +17,7 @@ statmod_full_information_impl(spec, coef, design, params, ev)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - coef:
 
@@ -40,7 +40,7 @@ ordinary information where there is no structural term.
 ## Details
 
 The gradient of such a model is exact already, through
-[`term_adjoint`](https://statmodels7.github.io/modelterms7/reference/term_adjoint.html).
+[`modelterms7::term_adjoint()`](https://statmodels7.github.io/modelterms7/reference/term_adjoint.html).
 Its curvature is not: the matrix the scoring step inverts is assembled
 as though the level were an offset, which is a legitimate scoring matrix
 and is not the information. Writing \\u\\ for the coefficients followed
@@ -54,20 +54,20 @@ E_t.\$\$
 
 Only the equation carrying the filter has a \\V\\ that is not its own
 design: there it is the forward Jacobian of the recursion, which
-[`term_curvature`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
+[`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
 returns beside the contracted \\E\\. The third derivatives the second
 sum needs are distributions7's, in closed form for every family.
 
-The term's parameters are the LAST columns, which is the convention
+The term's parameters are the last columns, which is the convention
 `term_curvature()` shares with its caller.
 
-A term that mixes over latent states rather than shifting the predictor
-is routed to
-[`statmod_regime_information`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md),
+A term that mixes over latent states, in place of shifting the
+predictor, is routed to
+[`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md),
 whose Hessian comes from the same forward recursion the likelihood does;
 a model carrying neither gets the ordinary information.
 
 ## See also
 
-[`statmod_structural_score`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md),
-[`statmod_regime_information`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)
+[`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md),
+[`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)

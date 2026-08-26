@@ -11,7 +11,7 @@ behind it."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ behind it."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -63,145 +67,199 @@ behind it.</p>
 
 
 <dl><dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
-<dd><p>The model formula, as <code><a href="statmod.html">statmod</a></code> takes it.</p></dd>
+<dd><p>The model formula, as <code><a href="statmod.html">statmod()</a></code> takes it, with the
+equations separated by <code>|</code>. Its left-hand side must be a symbol.</p></dd>
 
 
 <dt id="arg-distrib">distrib<a class="anchor" aria-label="anchor" href="#arg-distrib"></a></dt>
-<dd><p>A <span class="pkg">distributions7</span> distribution object.</p></dd>
+<dd><p>A <span class="pkg">distributions7</span> distribution object, which decides
+how many equations there are and what is drawn from.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame of covariates, or <code>NULL</code>.</p></dd>
+<dd><p>A data frame of covariates, or <code>NULL</code> where <code>n</code> is given.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>The number of observations, where <code>data</code> is <code>NULL</code>.</p></dd>
+<dd><p>The number of observations, where <code>data</code> is <code>NULL</code>. One of the
+two is required.</p></dd>
 
 
 <dt id="arg-n-sim">n_sim<a class="anchor" aria-label="anchor" href="#arg-n-sim"></a></dt>
-<dd><p>How many data sets to draw.</p></dd>
+<dd><p>How many data sets to draw. <code>1</code> by default.</p></dd>
 
 
 <dt id="arg-par">par<a class="anchor" aria-label="anchor" href="#arg-par"></a></dt>
-<dd><p>Optional named list, one entry per distribution parameter; see
-the details.</p></dd>
+<dd><p>Optional named list, one entry per distribution parameter, each
+a numeric vector, a single number or a function of the coefficient
+count. See the details. <code>NULL</code> draws every coefficient.</p></dd>
 
 
 <dt id="arg-structural">structural<a class="anchor" aria-label="anchor" href="#arg-structural"></a></dt>
 <dd><p>Optional named list of a structural term's own
-parameters, on the scale <code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">term_params</a></code> names.</p></dd>
+parameters, on the scale <code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">modelterms7::term_params()</a></code> names. Strongly
+recommended when the formula carries such a term.</p></dd>
 
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
-<dd><p>The standard deviation of the drawn coefficients.</p></dd>
+<dd><p>The standard deviation of the drawn coefficients, <code>1</code> by
+default. Read only for the coefficients <code>par</code> does not fix.</p></dd>
 
 
 <dt id="arg-offsets">offsets<a class="anchor" aria-label="anchor" href="#arg-offsets"></a></dt>
-<dd><p>Optional named list of offsets.</p></dd>
+<dd><p>Optional named list of offsets, one per parameter, as
+<code><a href="statmod.html">statmod()</a></code> takes them.</p></dd>
 
 
 <dt id="arg-covariates">covariates<a class="anchor" aria-label="anchor" href="#arg-covariates"></a></dt>
 <dd><p>Optional named list of functions of the observation
-count, one per covariate, drawn afresh at every replicate.</p></dd>
+count, one per covariate, drawn afresh at every replicate. A drawn
+factor must have its levels fixed.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>"StatmodSim"</code>: a list with <code>data</code>,
-the data frame with the response added; <code>par</code>, the coefficients
-used, drawn or given, named as the design names them; <code>theta</code>, the
-distribution's parameters at every observation; <code>latent</code>, what a
-term with state drew, or <code>NULL</code>; <code>structural</code>, such a term's
-own parameters, or <code>NULL</code>; <code>n_sim</code>; and <code>call</code>. With
-<code>n_sim &gt; 1</code> the per-replicate fields are lists of that length.</p>
+    <p>An object of class <code>"StatmodSim"</code>, a list of seven:</p><dl><dt><code>data</code></dt>
+<dd><p>the data frame with the response column added, named
+after the formula's left-hand side.</p></dd>
+
+<dt><code>par</code></dt>
+<dd><p>the coefficients used, drawn or given, named as the
+design names them.</p></dd>
+
+<dt><code>theta</code></dt>
+<dd><p>the distribution's parameters at every observation, a
+named list with one vector per parameter.</p></dd>
+
+<dt><code>latent</code></dt>
+<dd><p>what a term with state drew, or <code>NULL</code>.</p></dd>
+
+<dt><code>structural</code></dt>
+<dd><p>such a term's own parameters, or <code>NULL</code>.</p></dd>
+
+<dt><code>n_sim</code></dt>
+<dd><p>as supplied.</p></dd>
+
+<dt><code>call</code></dt>
+<dd><p>the matched call.</p></dd>
+
+
+</dl><p>With <code>n_sim &gt; 1</code> the fields <code>data</code>, <code>theta</code> and <code>latent</code> are lists of
+that length.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is not <code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></code>, which draws from a model that
-has already been fitted. The <code>r</code> prefix is R's own for a random draw,
-so the two names cannot be confused.</p>
-<p>The point of it is to have data whose truth is known: write the model, draw
-from it, fit it back, and see whether the fit recovers what was put in. A
-covariate needs no declaring – a factor becomes its contrasts and a
-numeric stays itself – because the design comes from the same interpreter
-a fit uses.</p>
-<p><strong>The truth comes back beside the data, not attached to it.</strong> What a
-simulation study compares against is the coefficients, the parameters they
+    <h2 id="what-it-is-for">What it is for<a class="anchor" aria-label="anchor" href="#what-it-is-for"></a></h2>
+    <p>Data whose truth is known: write the model, draw from it, fit it back, and
+see whether the fit recovers what was put in. That is the shape of a
+simulation study, and of a check on a term one has just written.</p>
+<p>This is not <code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">stats::simulate()</a></code>, which draws from a model already fitted.
+The <code>r</code> prefix is R's own for a random draw, so the two names stay apart.</p>
+<p>A covariate needs no declaring. A factor becomes its contrasts and a
+numeric stays itself, the design coming from the same interpreter a fit
+uses.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-truth-comes-back-beside-the-data">The truth comes back beside the data<a class="anchor" aria-label="anchor" href="#the-truth-comes-back-beside-the-data"></a></h2>
+    <p>A simulation study compares against the coefficients, the parameters they
 gave and whatever a term with state drew, so the result is a list holding
-all of them: <code>data</code>, <code>par</code>, <code>theta</code> and, where there is
-one, <code>latent</code>. They were attributes of the data frame until version
-0.88.0, and that was worse than it looks – an attribute survives a row
-subset without being subset itself, so <code>sim[1:10, ]</code> kept a
-<code>theta</code> of the original length silently, and <code><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset()</a></code> and
-<code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code> dropped it altogether. Pass <code>sim$data</code> where a data
-frame is wanted.</p>
-<p><strong>The predictor is assembled exactly as a fit assembles it</strong>, through
-<code><a href="statmod_design_at.html">statmod_design_at</a></code>, which is what makes the simulated data
-come from the model that was written rather than from a linearization of
-it. A term whose block moves with its coefficients – <code>seg()</code>,
-<code>jseg()</code>, <code>nl()</code> – contributes <code>term_value()</code> at the
-coefficients supplied, not its block times them; the two differ by the
-whole nonlinearity, and the earlier version of this function used the
-second.</p>
-<p><strong>Data, or a row count.</strong> <code>data</code> carries the covariates. A model
-with none – a pure time series, say – needs only <code>n</code>, and one of the
-two must be given. Where both are given they must agree.</p>
-<p><strong>The covariates may be drawn too, and the choice is not a detail.</strong>
-<code>covariates</code> takes one function of the observation count per column,
-as <code>par</code> takes one per equation, and they are drawn AFRESH at every
-replicate. That is the difference between the two studies a caller might
-mean: with <code>data</code> the covariates are the same throughout, so what is
-measured is the estimator's behaviour CONDITIONAL on that design, and with
-<code>covariates</code> it is measured over the design as well. Neither is more
-correct, and a study should say which it ran.</p>
-<p><strong>Several replicates.</strong> <code>n_sim</code> draws that many data sets. The
-truth is drawn ONCE and shared: what a study over replicates measures is
-the variability of an estimator at a set of parameters, so the replicates
-differ in what is random and not in what is being estimated. Varying the
-truth as well is a loop over calls, and reads differently. With
-<code>n_sim &gt; 1</code> the fields that are per-replicate – <code>data</code>,
-<code>theta</code>, <code>latent</code> – come back as lists of that length, while
-<code>par</code> and <code>structural</code> stay single.</p>
-<p><strong>The coefficients.</strong> <code>par = NULL</code> draws every one of them from
-<code>rnorm(1, 0, sd)</code>, which on the link scale gives predictors of order
-one. A named list fixes them instead, one entry per distribution
-parameter, and an entry may be</p><ul><li><p>a numeric vector, as long as that equation has coefficients;</p></li>
+all of them. Pass <code>sim$data</code> where a data frame is wanted.</p>
+<p>They were attributes of the data frame until version 0.88.0, and that was
+worse than it looks: an attribute survives a row subset without being
+subset itself, so <code>sim[1:10, ]</code> silently kept a <code>theta</code> of the original
+length, while <code><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset()</a></code> and <code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code> dropped it altogether.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-predictor-is-assembled-as-a-fit-assembles-it">The predictor is assembled as a fit assembles it<a class="anchor" aria-label="anchor" href="#the-predictor-is-assembled-as-a-fit-assembles-it"></a></h2>
+    <p>Through <code><a href="statmod_design_at.html">statmod_design_at()</a></code>, so the simulated data come from the model
+that was written, never from a linearization of it.</p>
+<p>A term whose block moves with its coefficients, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, contributes
+<code>term_value()</code> at the coefficients supplied, not its block times them. The
+two differ by the whole nonlinearity, and an earlier version of this
+function used the second: measured, the gap is 3 on a <code>seg()</code>, 4.05 on an
+<code>nl()</code> and a missing value on a <code>jseg()</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="data-or-a-row-count">Data, or a row count<a class="anchor" aria-label="anchor" href="#data-or-a-row-count"></a></h2>
+    <p><code>data</code> carries the covariates. A model with none, a pure time series say,
+needs only <code>n</code>. One of the two must be given, and where both are given
+they must agree.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="fixed-covariates-or-drawn-ones">Fixed covariates or drawn ones<a class="anchor" aria-label="anchor" href="#fixed-covariates-or-drawn-ones"></a></h2>
+    <p><code>covariates</code> takes one function of the observation count per column, as
+<code>par</code> takes one per equation, and they are drawn afresh at every
+replicate.</p>
+<p>The choice decides what a study measures. With <code>data</code> the covariates are
+the same throughout, so what is measured is the estimator's behavior
+<strong>conditional</strong> on that design; with <code>covariates</code> it is measured over the
+design as well. Neither is more correct, and a study should say which it
+ran. Measured on a simple regression at \(n = 40\), the slope's standard
+deviation is 0.1465 under the first and 0.1443 under the second, so the
+distinction is about what a study claims, never about a large numerical
+difference.</p>
+<p>A drawn factor is refused unless its levels are fixed. Drawn freely it
+loses a level on some replicate, and the coefficients drawn against the
+first design would then be recycled into a different model.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="several-replicates">Several replicates<a class="anchor" aria-label="anchor" href="#several-replicates"></a></h2>
+    <p><code>n_sim</code> draws that many data sets. The truth is drawn <strong>once</strong> and shared:
+a study over replicates measures the variability of an estimator at a set
+of parameters, so the replicates differ in what is random, never in what
+is being estimated. Varying the truth as well is a loop over calls and
+reads differently.</p>
+<p>With <code>n_sim &gt; 1</code> the per-replicate fields, <code>data</code>, <code>theta</code> and <code>latent</code>,
+come back as lists of that length, while <code>par</code> and <code>structural</code> stay
+single.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-coefficients">The coefficients<a class="anchor" aria-label="anchor" href="#the-coefficients"></a></h2>
+    <p><code>par = NULL</code> draws every one from <code>rnorm(1, 0, sd)</code>, which on the link
+scale gives predictors of order one. A named list fixes them instead, one
+entry per distribution parameter, and an entry may be:</p><ul><li><p>a numeric vector, as long as that equation has coefficients;</p></li>
 <li><p>a single number, used for every coefficient of the equation;</p></li>
-<li><p>a FUNCTION of the coefficient count, called once and returning
-that many values.</p></li>
-</ul><p>The function is what makes a structured truth expressible without a
-vocabulary for it: <code>function(k) rnorm(k, 0, 0.3)</code> is a random effect
-with its own standard deviation, and
-<code>function(k) c(1.5, -2, rep(0, k - 2))</code> is a sparse truth for a lasso
-to find. A parameter left out of the list is drawn.</p>
-<p><strong>A term with state</strong> is simulated through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">term_simulate</a></code>, so the recursion that generates
-is the term's own. A score-driven term draws the response AS it runs, its
-level at one time being driven by the score at the time before; a latent
-chain draws its path from the stationary law the likelihood is written
-with; a marginal break-point term draws each group's positions from their
-prior. What each drew is returned in the <code>"latent"</code> attribute, which
-is what a recovery check compares against.</p>
-<p>Such a term's OWN parameters are not coefficients of any equation, so they
-are named through <code>structural</code> rather than through <code>par</code>, and
-on the scale <code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">term_params</a></code> names – a loading is
-the loading and not its logarithm, a persistence is the partial
-autocorrelation the chart carries. There is at most one such term in a
-formula, so no key is needed. Left unnamed they take the term's own
-starting values, which are deliberately weak (a score-driven term starts
-at a loading of about 0.1) and make for a series with almost no dynamics:
-name them, or the simulation will be of a model near the one with no term
-at all.</p>
-<p><strong>The response's name</strong> is the formula's left-hand side, which must be
-a symbol. <code>log(y) ~ x</code> is rejected rather than answered: the model
-generates values of <code>log(y)</code> and there is no column that could
-honestly be called either name. A censored response is rejected too, for
-the reason <code><a href="statmod.html">statmod</a></code> rejects one.</p>
+<li><p>a <strong>function</strong> of the coefficient count, called once and returning that
+many values.</p></li>
+</ul><p>The function is how a structured truth is written without a vocabulary for
+it. <code>function(k) rnorm(k, 0, 0.3)</code> is a random effect with its own
+standard deviation, and <code>function(k) c(1.5, -2, rep(0, k - 2))</code> is a
+sparse truth for a lasso to find. A function answering with the wrong
+count is refused, R being willing to recycle it into a different model. A
+parameter left out of the list is drawn.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="a-term-with-state">A term with state<a class="anchor" aria-label="anchor" href="#a-term-with-state"></a></h2>
+    <p>Simulated through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">modelterms7::term_simulate()</a></code>, so the recursion that
+generates is the term's own. A score-driven term draws the response as it
+runs, its level at one time driven by the score at the time before; a
+latent chain draws its path from the stationary law the likelihood is
+written with; a marginal break-point term draws each group's positions
+from their prior. What each drew comes back in <code>latent</code>, and that is what
+a recovery check compares against.</p>
+<p>Such a term's own parameters are not coefficients of any equation, so they
+are named through <code>structural</code>, never through <code>par</code>, on the scale
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">modelterms7::term_params()</a></code> names: a loading is the loading, not its
+logarithm, a persistence is the partial autocorrelation the chart carries.
+A formula holds at most one such term, so no key is needed.</p>
+<p>Left unnamed they take the term's own starting values, which are
+deliberately weak. A score-driven term starts at a loading near 0.1, and
+the series then has almost no dynamics: measured, its level ranged over
+0.64 against 2.40 at named parameters. Name them, or the simulation is of
+a model close to the one with no term at all.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-response-s-name">The response's name<a class="anchor" aria-label="anchor" href="#the-response-s-name"></a></h2>
+    <p>The formula's left-hand side, which must be a symbol. <code>log(y) ~ x</code> is
+refused: the model generates values of <code>log(y)</code>, and no column could
+honestly be called either name. A censored response is refused too, for
+the reason <code><a href="statmod.html">statmod()</a></code> refuses one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod.html">statmod</a></code>, <code><a href="simulate.StatmodFit.html">simulate.StatmodFit</a></code>,
-<code><a href="predict.StatmodFit.html">predict.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code> to fit what this draws,
+<code><a href="simulate.StatmodFit.html">simulate.StatmodFit()</a></code> to draw from a model already fitted,
+<code><a href="print.StatmodSim.html">print.StatmodSim()</a></code> for the printed form.</p></div>
     </div>
 
     <div class="section level2">

@@ -1,7 +1,7 @@
 # The Dense Route of pd_logdet
 
 The three routes described at
-[`pd_logdet`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md),
+[`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md),
 on a dense matrix.
 
 ## Usage
@@ -28,11 +28,11 @@ eigendecomposition, `min_ev` and `max_ev`.
 ## Details
 
 Split out so that
-[`pd_factor`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
+[`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
 can reach it as the fallback of the sparse route without restating the
 verdict: there is one place that decides whether a matrix is positive
 definite, and one set of thresholds.
 
 ## See also
 
-[`pd_logdet`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)
+[`pd_logdet()`](https://statmodels7.github.io/statmodels7/reference/pd_logdet.md)

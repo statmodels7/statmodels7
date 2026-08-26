@@ -29,7 +29,7 @@ kink_by_power(pen, theta, name, target, pw)
 - pw:
 
   What
-  [`kink_power`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
+  [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
   returned, or `NULL`.
 
 ## Value
@@ -47,5 +47,5 @@ caller falls back to bracketing.
 
 ## See also
 
-[`kink_power`](https://statmodels7.github.io/statmodels7/reference/kink_power.md),
-[`kink_solve`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
+[`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md),
+[`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)

@@ -15,7 +15,7 @@ sigma(object, ...)
 - object:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - ...:
 
@@ -23,27 +23,31 @@ sigma(object, ...)
 
 ## Value
 
-A numeric vector.
+A numeric vector of length `nobs(object)`, the standard deviation of the
+response under the fitted distribution at each observation. Constant
+when no equation models a scale.
 
 ## Details
 
-A VECTOR rather than a number, because the whole point of the framework
-is that a scale may be modelled: a single residual standard deviation
-exists only where the scale's equation is an intercept, and returning
-its first value would silently answer a different question everywhere
-else.
+The result is a vector, one entry per observation, and that is the whole
+point of the framework: a scale may be modeled. A single residual
+standard deviation exists only where the scale's equation is an
+intercept, and returning its first value would answer a different
+question everywhere else without saying so.
 
-What is returned is the standard deviation of the response under the
+What comes back is the standard deviation of the response under the
 fitted distribution, through
-[`std_dev`](https://statmodels7.github.io/distributions7/reference/std_dev.html),
-and not whichever parameter happens to be spelled `sigma`: for a Gamma
-written by its mean and dispersion the two are different quantities. A
-family with no second moment signals an error rather than reporting one.
+[`distributions7::std_dev()`](https://statmodels7.github.io/distributions7/reference/std_dev.html).
+It is not whichever parameter happens to be spelled `sigma`: for a Gamma
+written by its mean and dispersion those are two different quantities. A
+family with no second moment signals an error.
 
 ## See also
 
-[`predict.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md),
-[`fitted.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
+[`fitted.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
+for the fitted parameters themselves,
+[`distributions7::std_dev()`](https://statmodels7.github.io/distributions7/reference/std_dev.html)
+for the quantity
 
 ## Examples
 

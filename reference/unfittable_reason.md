@@ -21,4 +21,4 @@ A single string.
 
 ## See also
 
-[`reject_unfittable`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)
+[`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md)

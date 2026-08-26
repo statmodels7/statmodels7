@@ -41,11 +41,11 @@ decade sweep is \\5.6\times 10^{-16}\\. A Laplace prior written by its
 scale has exponent \\-1\\, its kink narrowing as the hyperparameter
 grows.
 
-The exponent is MEASURED rather than assumed, and whoever inverts it
-checks the answer, so a penalty whose kink is not a power of its
-hyperparameter costs two evaluations and then takes the search.
+The exponent is measured, never assumed, and whoever inverts it checks
+the answer, so a penalty whose kink is not a power of its hyperparameter
+costs two evaluations and then takes the search.
 
 ## See also
 
-[`kink_solve`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md),
-[`path_values`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
+[`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md),
+[`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)

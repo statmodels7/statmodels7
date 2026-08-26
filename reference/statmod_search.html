@@ -11,7 +11,7 @@ neither."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ neither."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -52,11 +56,11 @@ neither.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-row">row<a class="anchor" aria-label="anchor" href="#arg-row"></a></dt>
-<dd><p>One row of <code><a href="path_rows.html">path_rows</a></code>'s index.</p></dd>
+<dd><p>One row of <code><a href="path_rows.html">path_rows()</a></code>'s index.</p></dd>
 
 
 <dt id="arg-default">default<a class="anchor" aria-label="anchor" href="#arg-default"></a></dt>
@@ -69,10 +73,10 @@ neither.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It belongs to the TERM and not to the criterion, for the reason the whole
-enumeration does: a criterion is asked of every hyperparameter of the
-model, and a smooth one is read at the mode rather than swept, so most of
-what it is asked about could not answer. A penalty with a kink is fitted
+    <p>It belongs to the term, for the reason the whole enumeration does: a
+criterion is asked about every hyperparameter of the model, and a smooth
+one is read at the mode instead of being swept, so most of what it is
+asked about could not answer. A penalty with a kink is fitted
 by a scheme of its own, and how that scheme covers the term's own
 hyperparameters is part of the scheme.</p>
 <p>Being per term is also what keeps one term's choice off another's:
@@ -81,7 +85,7 @@ one coordinate at a time and leaves the lasso alone.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_search.html" class="external-link">term_search</a></code>, <code><a href="statmod_path.html">statmod_path</a></code></p></div>
+    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_search.html" class="external-link">modelterms7::term_search()</a></code>, <code><a href="statmod_path.html">statmod_path()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

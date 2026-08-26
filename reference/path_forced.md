@@ -33,15 +33,15 @@ A numeric vector, from the emptiest fit to the fullest.
 
 ## Details
 
-Which end is the sparse one is a property of the penalty and not of the
+Which end is the sparse one is a property of the penalty, never of the
 numbers: the kink of a lasso widens with \\\lambda\\ and that of a
 Laplace prior written by its scale narrows with \\\sigma\\, so the order
-is settled by asking the penalty which way its kink moves rather than by
-sorting downwards. Nothing else is applied – the value that empties the
+is settled by asking the penalty which way its kink moves, never by
+sorting downwards. Nothing else is applied: the value that empties the
 block does not cap the grid and `min_ratio` does not extend it, both of
 those being ways to build one.
 
 ## See also
 
-[`term_values`](https://statmodels7.github.io/modelterms7/reference/term_values.html),
-[`path_values`](https://statmodels7.github.io/statmodels7/reference/path_values.md)
+[`modelterms7::term_values()`](https://statmodels7.github.io/modelterms7/reference/term_values.html),
+[`path_values()`](https://statmodels7.github.io/statmodels7/reference/path_values.md)

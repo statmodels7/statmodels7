@@ -24,5 +24,5 @@ A square matrix.
 
 ## Details
 
-The non-finite entries are zeroed here rather than by each caller: three
-of them did it separately and a fourth would have had to remember.
+The non-finite entries are zeroed here, once. Three callers did it
+separately before, and a fourth would have had to remember.

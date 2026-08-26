@@ -34,18 +34,18 @@ A list with `eta`, `theta`, `y`, `latent` and `structural`.
 ## Details
 
 With no structural term this is
-[`statmod_eta`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+[`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
 exactly, which is the point: the simulated data comes from the assembly
 a fit reads, so a term whose block moves with its coefficients
 contributes what it contributes rather than a linearization.
 
 With one, the static part is assembled the same way and the term is
 asked to finish through
-[`term_simulate`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html).
+[`modelterms7::term_simulate()`](https://statmodels7.github.io/modelterms7/reference/term_simulate.html).
 A term that draws the response as it goes returns it; one that does not
 returns `NULL` there and the caller draws at the predictor.
 
 ## See also
 
-[`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md),
-[`statmod_eta`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+[`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md),
+[`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)

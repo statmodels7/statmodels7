@@ -16,7 +16,7 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -45,7 +45,7 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 - units:
 
   The refreshable terms, from
-  [`refresh_units`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
+  [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
 
 ## Value
 
@@ -53,12 +53,12 @@ A list, one entry per unit, with `D` and `A`.
 
 ## Details
 
-Both depend on ONE direction and not on a pair, so they are built once
-per hyperparameter and combined in the Hessian's pair loop: computing
-them inside that loop would repeat an \\O(np^2)\\ product for every
-pair.
+Both depend on one direction alone, never on a pair, so they are built
+once per hyperparameter and combined in the Hessian's pair loop:
+computing them inside that loop would repeat an \\O(np^2)\\ product for
+every pair.
 
 ## See also
 
-[`contract3_refresh`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md),
-[`trace_refresh4`](https://statmodels7.github.io/statmodels7/reference/trace_refresh4.md)
+[`contract3_refresh()`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md),
+[`trace_refresh4()`](https://statmodels7.github.io/statmodels7/reference/trace_refresh4.md)

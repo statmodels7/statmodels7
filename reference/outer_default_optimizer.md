@@ -25,5 +25,5 @@ An optimizers7 optimizer.
 
 ## See also
 
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md),
-[`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md),
+[`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)

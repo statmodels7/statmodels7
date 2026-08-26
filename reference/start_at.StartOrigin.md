@@ -11,7 +11,7 @@ Every coefficient at zero.
 - spec, design, obj, ...:
 
   As in
-  [`start_at`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
+  [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md).
 
 ## Value
 

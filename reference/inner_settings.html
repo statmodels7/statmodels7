@@ -9,7 +9,7 @@ method in one place."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ method in one place."><meta property="og:image" content="https://statmodels7.git
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -54,16 +58,24 @@ method in one place.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>expected</code>, <code>approx</code>, <code>maxit</code> and
-<code>tol</code>.</p>
+    <p>A list of four: <code>expected</code> (a logical), <code>approx</code> (a string),
+<code>maxit</code> and <code>tol</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Every route that fits the coefficients reads these, and reading them in one
-place is what keeps a refit inside a path or a fold on the same terms as the
-fit the caller asked for. Hard-coding them instead ran cross-validation at a
-tolerance a hundred times tighter than <code><a href="iwls.html">iwls</a></code>'s own, which cost
-26 per cent in time and answered a question the caller had not asked.</p>
+    <p>Every route that fits the coefficients reads these, and reading them in
+one place keeps a refit inside a path or a fold on the same terms as the
+fit the caller asked for. Hard-coding them instead ran cross-validation at
+a tolerance a hundred times tighter than <code><a href="iwls.html">iwls()</a></code>'s own, which cost 26 per
+cent in time and answered a question the caller had not asked.</p>
+<p>An <span class="pkg">optimizers7</span> optimizer says nothing about which information to
+use, having no such notion, so it gets the expected one and
+<code>"bartlett"</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="method_budget.html">method_budget()</a></code> for the last two,
+<code><a href="iwls.html">iwls()</a></code> for where the first two are set.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

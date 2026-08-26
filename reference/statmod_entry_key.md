@@ -18,7 +18,7 @@ statmod_entry_key(term, entries, entry)
 - entries:
 
   The term's entries, as
-  [`term_penalties`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
+  [`modelterms7::term_penalties()`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
   returns them.
 
 - entry:

@@ -1,8 +1,13 @@
 # Print a Fitted Model
 
-The call, the distribution, one line per equation with its terms and
-what they spend, the log-likelihood, the elapsed time and whether every
-loop stopped on its own rule.
+Prints a compact report of a fitted model: the call, the distribution,
+one line per equation naming its terms and the effective degrees of
+freedom each spends, the conditional log-likelihood, the elapsed time
+and whether every loop stopped on its own rule.
+
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+is the long form, with coefficients, standard errors and the
+hyperparameters.
 
 ## Usage
 
@@ -16,7 +21,7 @@ print(x, ...)
 - x:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - ...:
 
@@ -24,8 +29,11 @@ print(x, ...)
 
 ## Value
 
-`x`, invisibly.
+`x`, invisibly, as a print method should.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+for the full report,
+[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+for the verdict behind the convergence line.

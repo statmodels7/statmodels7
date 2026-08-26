@@ -14,15 +14,16 @@ coord_block(X, cols)
 
 - X:
 
-  The equation's design.
+  The equation's design, dense or any Matrix class.
 
 - cols:
 
-  The term's column positions.
+  The term's column positions within it, an integer vector.
 
 ## Value
 
-A numeric matrix or a `dgCMatrix`.
+A base numeric matrix with `length(cols)` columns when `X` is dense or a
+dense Matrix class, and a `dgCMatrix` when `X` is sparse.
 
 ## Details
 
@@ -34,5 +35,5 @@ materialized as a base matrix instead, there being nothing to save.
 
 ## See also
 
-[`coord_call`](https://statmodels7.github.io/statmodels7/reference/coord_call.md),
-[`coord_fit`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+[`coord_call()`](https://statmodels7.github.io/statmodels7/reference/coord_call.md),
+[`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)

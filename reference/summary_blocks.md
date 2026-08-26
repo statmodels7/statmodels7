@@ -14,7 +14,7 @@ summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 - fit:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - spec:
 
@@ -31,7 +31,7 @@ summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 - ci:
 
   The flat interval table, as
-  [`confint.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
+  [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
   returns it with the statistic and the p-value added.
 
 - level:
@@ -42,17 +42,17 @@ summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
 
   The variance matrix over the stacked coefficients, or `NULL`. It is
   needed only by a term reported through
-  [`term_readable`](https://statmodels7.github.io/modelterms7/reference/term_readable.html),
+  [`modelterms7::term_readable()`](https://statmodels7.github.io/modelterms7/reference/term_readable.html),
   whose quantities are functions of several coefficients at once and
-  whose standard errors are therefore the delta method rather than a
-  diagonal entry.
+  whose standard errors are therefore the delta method and no diagonal
+  entry.
 
 - st:
 
   The structural table, or `NULL`. A structural term has no design
-  columns, so its block is built from what it reports rather than from a
-  block of the design, and its hyperparameter is reported there rather
-  than in a block of its own carrying nothing else.
+  columns, so its block is built from what it reports, never from a
+  block of the design, and its hyperparameter is reported there instead
+  of in a block of its own carrying nothing else.
 
 ## Value
 

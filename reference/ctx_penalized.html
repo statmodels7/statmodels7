@@ -9,7 +9,7 @@ the gradient and the Hessian both read."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ the gradient and the Hessian both read."><meta property="og:image" content="http
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -57,8 +61,8 @@ the gradient and the Hessian both read.</p>
 
 
 <dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
-<dd><p>Whether \(H\) is the expected information, which is what
-the criterion carries under <code>reml(hessian = "expected")</code>. It used to
+<dd><p>Whether \(H\) is the expected information, as the
+criterion carries under <code>reml(hessian = "expected")</code>. It used to
 be hard-coded to the observed one, correctly, because the exact gradient
 ran on no other route; admitting the expected route makes the criterion's
 determinant a different matrix, and reading the wrong one would be a
@@ -71,37 +75,37 @@ gradient of the wrong function.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>The storage is the matrix's own.</strong> \(H\) is already sparse
-wherever the design is – a grouping indicator, a factor <code>by</code>, a
-<code>linpar</code> over many levels – and it was being densified here only
-because the penalty's accumulator is a base matrix. Where the sum is large
-enough and sparse enough to be worth it (<code><a href="worth_sparse.html">worth_sparse</a></code>) it is
+    <p><strong>The storage is the matrix's own.</strong> \(H\) is already sparse wherever
+the design is, which covers a grouping indicator, a factor <code>by</code> and a
+<code>linpar</code> over many levels, and it was being densified here only because
+the penalty's accumulator is a base matrix. Where the sum is large
+enough and sparse enough to be worth it (<code><a href="worth_sparse.html">worth_sparse()</a></code>) it is
 kept sparse and factorized as such: measured on a random intercept over 500
 levels, p = 503 at a density of 0.014, the factorization and its
 log-determinant cost 0.102 ms against 10.811 ms dense, and the full inverse
-3.280 ms against 25.000 ms, each route timed WITH its own factorization.
+3.280 ms against 25.000 ms, each route timed with its own factorization.
 End to end that is 1.25x at 500 levels and 2.01x at 1000, the difference
 between the operation and the fit being the lesson this package records
 three times over: removing the dearer half leaves the cheaper one. Nothing
 here asks which term produced the matrix; both quantities are read off the
 matrix.</p>
-<p>⚠️ Those figures are the ones measured with <span class="pkg">Matrix</span>'s factorization
-CACHE defeated. <code><a href="https://rdrr.io/pkg/Matrix/man/Cholesky-methods.html" class="external-link">Matrix::Cholesky</a></code> stores its result in the matrix's
+<p>Those figures are the ones measured with <span class="pkg">Matrix</span>'s factorization
+cache defeated. <code><a href="https://rdrr.io/pkg/Matrix/man/Cholesky-methods.html" class="external-link">Matrix::Cholesky</a></code> stores its result in the matrix's
 <code>factors</code> slot, so a benchmark that refactorizes the same object
-measures a cache hit – 0.004 ms rather than 0.102 – and reports the
-sparse route as three times better than it is. A fit never gets that hit,
+measures a cache hit, 0.004 ms against 0.102, and reports the sparse
+route as three times better than it is. A fit never gets that hit,
 the penalized matrix being a new one at every point.</p>
-<p><strong>The inverse stays dense whatever the factor is.</strong> Its readers take
-full matrix products against it – <code><a href="block_leverage.html">block_leverage</a></code> and the
-Hessian's pair loop – so the inverse of a sparse matrix being dense costs
-nothing sparsity could have kept. What the sparse factor buys is the cost
+<p><strong>The inverse stays dense whatever the factor is.</strong> Its readers take full
+matrix products against it, <code><a href="block_leverage.html">block_leverage()</a></code> and the Hessian's pair loop
+among them, so a dense inverse of a sparse matrix costs nothing sparsity
+could have kept. What the sparse factor buys is the cost
 of producing it.</p>
 <p><code>NULL</code> is returned where the matrix is not positive definite, which is
 the answer both callers already gave there.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="pd_factor.html">pd_factor</a></code></p></div>
+    <div class="dont-index"><p><code><a href="pd_factor.html">pd_factor()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

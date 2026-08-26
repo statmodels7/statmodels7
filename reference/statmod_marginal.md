@@ -23,7 +23,7 @@ statmod_marginal(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -40,7 +40,7 @@ statmod_marginal(
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - approx:
 
@@ -49,7 +49,7 @@ statmod_marginal(
 - basis:
 
   The integrated subspace, from
-  [`integrated_basis`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md).
+  [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md).
 
 ## Value
 

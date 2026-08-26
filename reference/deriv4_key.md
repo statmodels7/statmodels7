@@ -2,7 +2,7 @@
 
 Locates the \\(a, b, c, d)\\ entry of a distribution's fourth-derivative
 list, built the same way
-[`deriv3_key`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
+[`deriv3_key()`](https://statmodels7.github.io/statmodels7/reference/deriv3_key.md)
 builds its own.
 
 ## Usage

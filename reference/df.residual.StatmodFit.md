@@ -15,7 +15,7 @@ df.residual(object, ...)
 - object:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - ...:
 
@@ -23,20 +23,22 @@ df.residual(object, ...)
 
 ## Value
 
-A number.
+A single number, `nobs(object)` less the total effective degrees of
+freedom. Not an integer in general, and `NA` for a model whose degrees
+of freedom could not be counted.
 
 ## Details
 
-The count subtracted is the EFFECTIVE one, the trace of the model's
-smoother, and not the number of coefficients: a penalized block spends
-less than it carries, which is the whole reason a smoothing parameter is
-estimated. It is therefore not an integer, and for a model whose degrees
-of freedom could not be counted it is `NA`.
+The count subtracted is the effective one, the trace of the model's
+smoother. A penalized block spends less than the number of coefficients
+it carries, which is the whole reason a smoothing parameter is estimated
+at all, so the result is not an integer.
 
 ## See also
 
-[`logLik.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md),
-[`statmod_edf`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
+[`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
+for the per-term counts this sums,
+[`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
 
 ## Examples
 

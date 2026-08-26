@@ -14,7 +14,7 @@ statmod_design(spec)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 ## Value
 
@@ -23,7 +23,7 @@ A named list with one entry per parameter, each a list with `X`,
 
 ## See also
 
-[`statmod_spec`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md)
+[`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md)
 
 ## Examples
 

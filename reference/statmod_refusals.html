@@ -9,7 +9,7 @@ naming what to ask instead."><meta property="og:image" content="https://statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ naming what to ask instead."><meta property="og:image" content="https://statmode
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -60,34 +64,36 @@ naming what to ask instead.</p>
 
 
 <dt id="arg-object-x-formula">object, x, formula<a class="anchor" aria-label="anchor" href="#arg-object-x-formula"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Nothing; each method signals an error.</p>
+    <p>Nothing. Each method signals an error naming what to ask
+instead.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms()</a></code> would have to report one set of terms where a fit has one
-per distribution parameter, and the formula it was written with is not a
-<code>terms</code> object – the bars separating the equations are not
-<code>stats</code>' syntax. <code><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula()</a></code> gives what was written and
-<code><a href="statmod_design.html">statmod_design</a></code> gives what it produced.</p>
-<p><code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> would have to return the fitting data, which a fit
-does not keep: what it keeps is each term's blueprint, so that new data is
-reapplied rather than relearned.</p>
+    <p><code><a href="https://rdrr.io/r/stats/terms.html" class="external-link">terms()</a></code> would have to report one set of terms where a fit has one per
+distribution parameter, and the formula it was written with is not a
+<code>terms</code> object at all, the bars separating the equations not being
+<code>stats</code>' syntax. <code><a href="formula.StatmodFit.html">formula.StatmodFit()</a></code> gives what was written and
+<code><a href="statmod_design.html">statmod_design()</a></code> gives what it produced.</p>
+<p><code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> would have to return the fitting data, which a fit does
+not keep. What it keeps is each term's blueprint, so that a basis, a set
+of levels or a set of contrasts is reapplied to new data instead of being
+learned from it again.</p>
 <p><code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code> would have to compare models by a test, and a penalized fit
 whose hyperparameters were chosen from the same data has no null
-distribution to compare against. <code><a href="logLik.StatmodFit.html">logLik.StatmodFit</a></code>,
+distribution to compare against. <code><a href="logLik.StatmodFit.html">logLik.StatmodFit()</a></code>,
 <code>AIC</code> and <code>BIC</code> are what this package reports, with the
 effective degrees of freedom corrected for the smoothing parameters
 having been estimated.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="formula.StatmodFit.html">formula.StatmodFit</a></code>,
-<code><a href="model.matrix.StatmodFit.html">model.matrix.StatmodFit</a></code>, <code><a href="logLik.StatmodFit.html">logLik.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="formula.StatmodFit.html">formula.StatmodFit()</a></code>,
+<code><a href="model.matrix.StatmodFit.html">model.matrix.StatmodFit()</a></code>, <code><a href="logLik.StatmodFit.html">logLik.StatmodFit()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

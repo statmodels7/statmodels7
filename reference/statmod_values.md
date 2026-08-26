@@ -1,6 +1,6 @@
 # The Values a Term Wrote Out for One Hyperparameter
 
-The grid the TERM named, or `NULL` where it left the path to build one.
+The grid the term named, or `NULL` where it left the path to build one.
 
 ## Usage
 
@@ -13,12 +13,12 @@ statmod_values(spec, row)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - row:
 
   One row of
-  [`path_rows`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
+  [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
   index.
 
 ## Value
@@ -35,5 +35,5 @@ too.
 
 ## See also
 
-[`term_values`](https://statmodels7.github.io/modelterms7/reference/term_values.html),
-[`path_forced`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)
+[`modelterms7::term_values()`](https://statmodels7.github.io/modelterms7/reference/term_values.html),
+[`path_forced()`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)

@@ -15,12 +15,12 @@ structural_callbacks(spec, theta, p)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - theta:
 
   The per-observation parameters, as
-  [`statmod_eta`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   returns them.
 
 - p:
@@ -36,5 +36,6 @@ A list with `score`, `curvature` and `logdens`.
 They are read one observation at a time because a score-driven filter
 evaluates them at the predictor it has just produced, which is not known
 before the recursion reaches that observation. A term whose callbacks do
-not depend on the state – a regime chain, whose levels shift a predictor
-known in advance – is given the whole index vector instead.
+not depend on the state is given the whole index vector instead. A
+regime chain is such a term: its levels shift a predictor known in
+advance.

@@ -9,7 +9,7 @@ pieces without assembling it."><meta property="og:image" content="https://statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ pieces without assembling it."><meta property="og:image" content="https://statmo
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,20 +53,28 @@ pieces without assembling it.</p>
 
 
 <dl><dt id="arg-pieces">pieces<a class="anchor" aria-label="anchor" href="#arg-pieces"></a></dt>
-<dd><p>What <code><a href="iwls_pieces.html">iwls_pieces</a></code> built.</p></dd>
+<dd><p>What <code><a href="iwls_pieces.html">iwls_pieces()</a></code> built, carrying <code>R</code> and <code>C</code>, or <code>A</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A positive number, or 1 where the pieces say nothing.</p>
+    <p>A single positive number: the largest diagonal entry. <code>1</code> where
+the pieces carry nothing usable, which makes the damping schedule
+absolute there instead of relative.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It is what the Levenberg damping is measured against, so that
-<code><a href="iwls_escalate.html">iwls_escalate</a></code> carries no constant with units. On the
-augmented route the diagonal of \(K = R'R + C'C\) is the column sums of
-the squares, which keeps a sparse design sparse; on the assembled route it
-is the diagonal itself.</p>
+    <p>The Levenberg damping is measured against this, so <code><a href="iwls_escalate.html">iwls_escalate()</a></code>
+carries no constant with units of its own.</p>
+<p>On the augmented route the diagonal of \(K = R'R + C'C\) is the column
+sums of the squares of \(R\) and \(C\), which reads a sparse design
+without densifying it. On the assembled route it is the matrix's own
+diagonal.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="iwls_escalate.html">iwls_escalate()</a></code>, which divides by this,
+<code><a href="iwls_pieces.html">iwls_pieces()</a></code> for the input.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

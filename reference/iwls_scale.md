@@ -14,17 +14,29 @@ iwls_scale(pieces)
 - pieces:
 
   What
-  [`iwls_pieces`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
-  built.
+  [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
+  built, carrying `R` and `C`, or `A`.
 
 ## Value
 
-A positive number, or 1 where the pieces say nothing.
+A single positive number: the largest diagonal entry. `1` where the
+pieces carry nothing usable, which makes the damping schedule absolute
+there instead of relative.
 
 ## Details
 
-It is what the Levenberg damping is measured against, so that
-[`iwls_escalate`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md)
-carries no constant with units. On the augmented route the diagonal of
-\\K = R'R + C'C\\ is the column sums of the squares, which keeps a
-sparse design sparse; on the assembled route it is the diagonal itself.
+The Levenberg damping is measured against this, so
+[`iwls_escalate()`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md)
+carries no constant with units of its own.
+
+On the augmented route the diagonal of \\K = R'R + C'C\\ is the column
+sums of the squares of \\R\\ and \\C\\, which reads a sparse design
+without densifying it. On the assembled route it is the matrix's own
+diagonal.
+
+## See also
+
+[`iwls_escalate()`](https://statmodels7.github.io/statmodels7/reference/iwls_escalate.md),
+which divides by this,
+[`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
+for the input.

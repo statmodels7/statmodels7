@@ -11,7 +11,7 @@ zero."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ zero."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,26 +53,51 @@ zero.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code><a href="start_strategy.html">start_strategy</a></code>.</p>
+    <p>A <code>StartIntercepts</code> object, inheriting from <code><a href="start_strategy.html">start_strategy()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The model with no covariates is the same model with every slope set to
-zero, so it is exactly where the model with them should begin, and it costs
-one small fit. The penalized blocks start at zero, where their penalty is
-smallest. This is what <code><a href="statmod.html">statmod()</a></code> does when <code>start</code> is
-<code>NULL</code>; the constructor exists so that the default can be named,
-compared against and passed on.</p>
+    <p>The model with no covariates is the model with every slope set to zero, so
+its maximum likelihood estimate is exactly where the model with covariates
+should begin. It costs one small fit, on an intercept-only design.</p>
+<p>Every other coefficient starts at zero, which is where a penalized block's
+penalty is smallest.</p>
+<p>Two adjustments make it usable where a naive intercept would not be:</p><ul><li><p>An <strong>offset</strong> is subtracted before the value is written. Without that, a
+model with an offset averaging 6.74 begins at
+\(\exp(0.897 + 6.74) = 2080\) against a sample mean of 2.45. Measured
+on a negative binomial over person-years: 4.9 s and 9 scoring iterations
+with the correction, more than 25 minutes without.</p></li>
+<li><p>The value is written to a <strong>parametric intercept</strong> and to nothing else.
+A term such as <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> names the intercept of each of its own
+parameters <code>(Intercept)</code> too, and those live on that parameter's chart,
+not the predictor's. Writing a predictor-scale value onto a <code>phi</code> that
+rides a log link gave \(\exp(23.9) = 2.5 \times 10^{10}\).</p></li>
+</ul><p>This is what <code><a href="statmod.html">statmod()</a></code> does when <code>start</code> is <code>NULL</code>. The constructor
+exists so the default can be named, compared against and passed on.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="start_origin.html">start_origin</a></code>, <code><a href="start_random.html">start_random</a></code></p></div>
+    <div class="dont-index"><p><code><a href="start_origin.html">start_origin()</a></code>, <code><a href="start_random.html">start_random()</a></code>, <code><a href="start_search.html">start_search()</a></code></p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">start_intercepts</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;start&gt; intercept-only fit</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">500</span> <span class="op">+</span> <span class="fl">20</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, sd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_spec.html">statmod_spec</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The intercept starts at the response's own scale, and the slope at zero.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="start_at.html">start_at</a></span><span class="op">(</span><span class="fu">start_intercepts</span><span class="op">(</span><span class="op">)</span>, <span class="va">spec</span>, <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 603.0251   0.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.979791</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

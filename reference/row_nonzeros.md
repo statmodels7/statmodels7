@@ -20,4 +20,4 @@ A list with `i`, `j` and `v`, sorted by row.
 
 ## See also
 
-[`leverage_pairs`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
+[`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)

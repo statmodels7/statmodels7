@@ -11,7 +11,7 @@ design columns."><meta property="og:image" content="https://statmodels7.github.i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ design columns."><meta property="og:image" content="https://statmodels7.github.i
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -52,7 +56,7 @@ design columns.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -68,37 +72,48 @@ design columns.</p>
 
 
 <dt id="arg-basis">basis<a class="anchor" aria-label="anchor" href="#arg-basis"></a></dt>
-<dd><p>The integrated subspace over the coefficients, or <code>NULL</code>
-for <code><a href="reml.html">reml()</a></code>.</p></dd>
+<dd><p>The integrated subspace over the coefficients, as
+<code><a href="integrated_basis.html">integrated_basis()</a></code> returns it, or <code>NULL</code> for <code><a href="reml.html">reml()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A square matrix, or <code>NULL</code> where the term could not be run.</p>
+    <p>A square symmetric matrix spanning the integrated coefficients
+followed by the integrated structural parameters. <code>NULL</code> where the
+structural term could not be run at the given point, which a caller
+reads as an unusable hyperparameter.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <h2 id="why-the-determinant-has-to-span-them">Why the determinant has to span them<a class="anchor" aria-label="anchor" href="#why-the-determinant-has-to-span-them"></a></h2>
     <p>A marginal criterion integrates the quantities its penalty shrinks. Where
-that penalty is a term's own – the deviations of a panel – those
-quantities are not coefficients, so the determinant has to span them too:
-taken over the coefficients alone it does not depend on the hyperparameter
-at all, and the criterion is the penalized likelihood, whose maximum in a
-shrinkage parameter is at no shrinkage.</p>
-<p>Both pieces exist already. <code><a href="statmod_full_information.html">statmod_full_information</a></code> spans the
-coefficients followed by the term's free parameters, which is the order the
-joint fit uses, and <code><a href="statmod_structural_penalty.html">statmod_structural_penalty</a></code> gives the
-penalty's Hessian in those same parameters. The information here is the
-OBSERVED one whatever the method asks for: the expected information over a
-filter's own parameters is not one of the quantities the toolkit carries,
-the recursion's state entering the expectation.</p>
-<p>For <code><a href="reml.html">ml()</a></code> the tail is integrated over the penalized
-coordinates alone, through the penalty's own range basis, so a parameter
-the penalty does not cover – a population value – is profiled rather than
-integrated, exactly as an unpenalized coefficient is.</p>
+the penalty is a structural term's own, as with the deviations of a panel,
+those quantities are not coefficients.</p>
+<p>Taken over the coefficients alone the determinant then does not depend on
+the hyperparameter at all, and the criterion reduces to the penalized
+likelihood, whose maximum in a shrinkage parameter is at no shrinkage. It
+does not merely lose accuracy: it answers a different question.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="both-pieces-already-exist">Both pieces already exist<a class="anchor" aria-label="anchor" href="#both-pieces-already-exist"></a></h2>
+    <p><code><a href="statmod_full_information.html">statmod_full_information()</a></code> spans the coefficients followed by the term's
+free parameters, which is the order the joint fit uses, and
+<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> gives the penalty's Hessian in those same
+parameters.</p>
+<p>The information here is the <strong>observed</strong> one whatever the method asks for.
+The expected information over a filter's own parameters is not a quantity
+the toolkit carries, the recursion's state entering the expectation.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="under-ml">Under ML<a class="anchor" aria-label="anchor" href="#under-ml"></a></h2>
+    <p>The tail is integrated over the penalized coordinates alone, through the
+penalty's own range basis, so a parameter the penalty does not cover, such
+as a population value, is profiled instead of integrated. That is what
+happens to an unpenalized coefficient too.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_marginal.html">statmod_marginal</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod_marginal.html">statmod_marginal()</a></code>, the caller,
+<code><a href="structural_penalized.html">structural_penalized()</a></code> for the predicate that selects this route.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -16,7 +16,7 @@ joint_design_rows(spec, design, coef)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -35,19 +35,19 @@ level), `ev`, `f` and the sizes.
 ## Details
 
 It exists so that the contraction
-[`u_vector`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
+[`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
 performs is written once. The formula there does not change where a
 filter is present; only its operand does, \\X\\ becoming \\\[X_p \mid
-D\]\\. Everything downstream – the third derivative against the diagonal
-of \\M\\, the movement of the mode – then reads the joint vector without
-a special case.
+D\]\\. Everything downstream, the third derivative against the diagonal
+of \\M\\ and the movement of the mode, then reads the joint vector with
+no special case.
 
-The rows are returned at the FULL width, a held level included, and the
+The rows are returned at the full width, a held level included, and the
 caller drops it exactly as
-[`statmod_full_information`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
 does.
 
 ## See also
 
-[`u_vector`](https://statmodels7.github.io/statmodels7/reference/u_vector.md),
-[`statmod_full_information`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+[`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md),
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)

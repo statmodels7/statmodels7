@@ -1,8 +1,8 @@
 # The Two Pieces of the Chain Term That Read the Direction
 
 The contributions to \\\mathrm{tr}(M\\\partial K/\partial u\[v\])\\ that
-come from the recursion rather than from the design: the derivative of
-the filter's own Jacobian, and the derivative of the term the level
+come from the recursion, never from the design: the derivative of the
+filter's own Jacobian, and the derivative of the term the level
 contributes to the information.
 
 ## Usage
@@ -16,7 +16,7 @@ structural_chain_extra(spec, design, jd, M, st, v)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -33,7 +33,7 @@ structural_chain_extra(spec, design, jd, M, st, v)
 - st:
 
   The shared quantities, from
-  [`structural_grad_parts`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md).
+  [`structural_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md).
 
 - v:
 

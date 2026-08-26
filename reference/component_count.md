@@ -13,7 +13,7 @@ component_count(mu)
 - mu:
 
   What
-  [`term_levels`](https://statmodels7.github.io/modelterms7/reference/term_levels.html)
+  [`modelterms7::term_levels()`](https://statmodels7.github.io/modelterms7/reference/term_levels.html)
   returned.
 
 ## Value

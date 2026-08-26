@@ -15,7 +15,7 @@ refresh_units(spec, design, coef, params, npar, offs)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -41,5 +41,5 @@ which terms move or where their columns are.
 
 ## See also
 
-[`u_refresh`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md),
-[`contract3_refresh`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md)
+[`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md),
+[`contract3_refresh()`](https://statmodels7.github.io/statmodels7/reference/contract3_refresh.md)

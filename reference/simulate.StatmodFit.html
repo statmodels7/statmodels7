@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -47,7 +51,7 @@
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodFit-class.html">StatmodFit()</a></code>.</p></dd>
 
 
 <dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
@@ -55,7 +59,7 @@
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Passed to <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></code> if given, the caller's
+<dd><p>Passed to <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">base::set.seed()</a></code> if given, the caller's
 stream being restored afterwards.</p></dd>
 
 
@@ -65,20 +69,22 @@ stream being restored afterwards.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame of <code>nsim</code> columns.</p>
+    <p>A data frame with <code>nobs(object)</code> rows and <code>nsim</code> columns, each
+column one draw of the whole response vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The draws are taken at the FITTED parameters, so what they carry is the
-variation of the response and not the uncertainty of the estimates; a
-parametric bootstrap adds the second by refitting each column.</p>
+    <p>The draws are taken at the fitted parameters, so what they carry is the
+variation of the response alone. The uncertainty of the estimates is not
+in them; a parametric bootstrap adds it by refitting each column.</p>
 <p>For a model carrying a structural term the fitted parameters are the ones
-the filter reached ALONG the observed series, so the draws are conditional
-on that series rather than a fresh path of the process.</p>
+the filter reached along the observed series, so the draws are conditional
+on that series and are not a fresh path of the process.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="rstatmod.html">rstatmod</a></code>, <code><a href="predict.StatmodFit.html">predict.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="rstatmod.html">rstatmod()</a></code> to simulate from a model that was never fitted,
+<code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code> for the fitted parameters the draws come from</p></div>
     </div>
 
     <div class="section level2">

@@ -1,7 +1,7 @@
 # The Outer Line Search's Backtracking Budget
 
 How many backtracks a line search inside
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 may take before it gives up, where the optimizer is the one this package
 chose.
 
@@ -32,7 +32,7 @@ at 30, 12 and 8 backtracks on a smooth, on two smooths with a random
 effect and on a random intercept, all three are unchanged in
 evaluations, in criterion to six decimals, in effective degrees of
 freedom and in the convergence flag: the resolution
-[`criterion_resolution`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+[`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
 supplies stops the search before the budget is ever reached. A
 hierarchical break-point model goes from 31 evaluations and 25.6 seconds
 to 13 and 20.3, with the criterion 1.3e-04 better and the same degrees
@@ -50,5 +50,5 @@ stopping rule.
 
 ## See also
 
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md),
-[`criterion_resolution`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md),
+[`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)

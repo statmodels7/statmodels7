@@ -28,4 +28,4 @@ drawn afresh at every replicate.
 
 ## See also
 
-[`rstatmod`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+[`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)

@@ -2,7 +2,7 @@
 
 Locates the \\(a, b, c)\\ entry of a distribution's third-derivative
 list, which is keyed by
-[`deriv_names`](https://statmodels7.github.io/distributions7/reference/deriv_names.html).
+[`distributions7::deriv_names()`](https://statmodels7.github.io/distributions7/reference/deriv_names.html).
 
 ## Usage
 
@@ -26,6 +26,6 @@ A single string.
 
 ## Details
 
-The name is BUILT from the parameter names in the family's own order,
+The name is built from the parameter names in the family's own order,
 not parsed out of one, which is the discipline distributions7 records
 for a parameter whose own name contains the separator.

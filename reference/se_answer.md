@@ -1,7 +1,7 @@
 # The Shape a Prediction With Its Uncertainty Comes Back In
 
 The rows
-[`predict_se`](https://statmodels7.github.io/statmodels7/reference/predict_se.md)
+[`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md)
 computed, reduced to what was asked for.
 
 ## Usage

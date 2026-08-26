@@ -1,8 +1,8 @@
 # Is a Matrix Worth Factorizing Sparsely?
 
 Whether a symmetric matrix is large enough and sparse enough that a
-sparse Cholesky beats a dense one, asked of the MATRIX and of nothing
-else.
+sparse Cholesky beats a dense one. The question is put to the matrix and
+to nothing else: no term, no model and no caller's preference enters.
 
 ## Usage
 
@@ -30,10 +30,10 @@ A single logical.
 
 ## Details
 
-The two conditions are the measured crossover and not a preference. On
-the penalized information of a random intercept over \\m\\ levels at
-20000 observations, the sparse route against the dense one – coercion,
-factorization, log-determinant and full inverse, each timed with the
+The two conditions are the measured crossover. On the penalized
+information of a random intercept over \\m\\ levels at 20000
+observations, the sparse route against the dense one, with coercion,
+factorization, log-determinant and full inverse each timed with the
 repetition loop sized by elapsed time:
 
 |       |       |             |                 |             |
@@ -54,18 +54,17 @@ earlier version of it timed the sparse solves against a factor built
 once outside the loop, which flattered the sparse side without changing
 where it loses.
 
-Below about a hundred coefficients the sparse route LOSES, and loses
-badly: its fixed cost is the coercion and the S4 dispatch around it,
-which does not shrink with the matrix. On the fully dense penalized
-information of a single smooth (p = 16, density 1) it measures 0.01x, a
-hundred times slower, which is what the size condition is there to
-prevent.
+Below about a hundred coefficients the sparse route loses badly: its
+fixed cost is the coercion and the S4 dispatch around it, which does not
+shrink with the matrix. On the fully dense penalized information of a
+single smooth (\\p = 16\\, density 1) it measures 0.01x, a hundred times
+slower, and preventing that is what the size condition is for.
 
-**Both quantities are read off the matrix, and the first one is its
-STORAGE.** A matrix held as a base matrix is refused whatever its zeros,
-which reads like a test of the container rather than of the mathematics,
-so it is worth saying why it is neither an oversight nor a term test.
-[`statmod_information_at`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
+**Both quantities are read off the matrix, and the first is its
+storage.** A matrix held as a base matrix is refused whatever its zeros,
+which reads like a test of the container instead of the mathematics, so
+it is worth saying why it is neither an oversight nor a term test.
+[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 accumulates into the design's own kind, so the penalized matrix is
 stored sparsely exactly when the design is, and modelterms7 builds a
 block sparse only when asked (`sparse = TRUE`, whose default is
@@ -83,11 +82,11 @@ of that size would cost more than it returns.
 test**, and it is the check `piano_lme4.txt` section 5 asks for. With
 every design built the same way, this route is worth 1.38x on
 `0 + g + s(x)` over 400 levels, 1.33x on `random(~1|g)` over 500 and
-1.07x on `s(x, by = g)` over 60 – an unpenalized indicator block, a
+1.07x on `s(x, by = g)` over 60: an unpenalized indicator block, a
 random effect and a factor-`by` smooth, gaining together and in the
 order their sizes predict. Nothing here asks which term or which family
 produced the matrix.
 
 ## See also
 
-[`pd_factor`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)
+[`pd_factor()`](https://statmodels7.github.io/statmodels7/reference/pd_factor.md)

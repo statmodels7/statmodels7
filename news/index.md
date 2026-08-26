@@ -1,6 +1,92 @@
 # Changelog
 
+## statmodels7 0.90.0
+
+- [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  fits a model carrying an anisotropic tensor smooth, where it refused.
+  The criterion projects the determinant’s matrix onto the range of each
+  penalty, and `te()`’s is an `additive_penalty()`, which exposed no
+  null basis to take the complement of; `penalties7` 0.19.0 supplies
+  one, and it is a property of the components rather than of any setting
+  of the hyperparameters, so there is nothing to guess at.
+
+  Measured on the model the refusal was written for, 200 observations of
+  a surface quadratic in one margin and linear in the other:
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  reach smoothing parameters agreeing to four significant figures
+  (3.43e+07 and 0.438 either way), the same 8.50 effective degrees of
+  freedom, and fitted values correlating at 1 with an identical rmse of
+  0.0569 against the truth, where an intercept-only fit is at 0.638. The
+  two criteria differ in value, as two criteria do.
+
+  The guard itself is unchanged and still reachable: `scad_penalty()`
+  and `mcp_penalty()` are improper by construction and are not
+  quadratic, so they have no null basis, and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  refuses by name rather than guess which directions are profiled.
+
+## statmodels7 0.89.0
+
+- `statmodels7_update(quiet =)` is removed. It was accepted and read by
+  nobody: the report branch printed its whole table under it, and the
+  install branch hands the work to
+  [`pak::pak()`](https://pak.r-lib.org/reference/pak.html), which takes
+  no `quiet` argument of its own. `statmodels7_update(quiet = TRUE)` was
+  as loud as the default and nothing said the setting had been dropped,
+  which is the shape recorded twice for `fit_distrib(maxit =, tol =)`
+  and once for `ridge(n_lambda =)`: an argument accepted and ignored is
+  worse than one that errors.
+
+  Nothing is lost. The report exists to be read, and its return value is
+  [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md),
+  so the versions without the console output are one call away and
+  always were. The argument is now reported by name.
+
+  A walk over every function definition in the nine packages, comparing
+  each formal against the symbols in the body and in every default, put
+  this at 778 candidates over 3,280 functions, of which all but 57 are
+  S7 or S3 methods whose formals have to match the generic; of the 57
+  plain functions, this was the only exported one. So the toolkit has no
+  second instance.
+
 ## statmodels7 0.88.1
+
+- Documentation pass over all 329 help pages. Every page is now
+  self-contained: a `@return` names the length, the class and the names
+  of what comes back instead of a bare type, every argument states its
+  accepted shape and its default, and the public pages carry examples
+  that demonstrate a property rather than printing an object.
+
+  Nine claims were corrected against measurement.
+  [`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md)’s
+  page said a full p-squared kernel ships, where the kernel accumulates
+  the upper triangle and mirrors it; `statmod_commit_refresh(which =)`
+  defaults to `"all"` and not to `"jacobian"`;
+  [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
+  commits only the Jacobian entries and also copies a structural term’s
+  own parameters;
+  [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
+  is abstract and its constructor signals an error;
+  [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
+  starts a hyperparameter bounded below at `lower + 1` and not at the
+  midpoint of the unit interval; and
+  [`iwls_info_diag()`](https://statmodels7.github.io/statmodels7/reference/iwls_info_diag.md),
+  [`statmod_structural_table()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_table.md),
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  and
+  [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
+  each described something the code does not do.
+
+  Two rendering defects were fixed. A `\eqn{}` in a section heading made
+  roxygen emit a random placeholder as the title, changing on every run,
+  and a paragraph of
+  [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)’s
+  details sat between its `@param` and its `@return`, so it rendered
+  inside the last argument’s description.
+
+  No behavior changed.
 
 - The readable variance matrix is SYMMETRIZED rather than left symmetric
   by construction. The delta method’s `J V J'` collects an entry and its
@@ -22,7 +108,7 @@
 - `rstatmod(covariates =)` draws the covariates too, one function of the
   observation count per column, afresh at every replicate. The choice is
   not a detail: with `data` the covariates are held and what is measured
-  is the estimator’s behaviour CONDITIONAL on that design, and with
+  is the estimator’s behavior CONDITIONAL on that design, and with
   `covariates` it is measured over the design as well – fixed-X against
   random-X, two studies that a report should tell apart. A design that
   changes shape between replicates, a factor that lost a level being the
@@ -184,7 +270,7 @@
 - [`residuals()`](https://rdrr.io/r/stats/residuals.html) gives the
   QUANTILE residual by default: , which under a correct model is exactly
   standard normal whatever the family and whichever of its parameters
-  are modelled. There is one residual per observation and not one per
+  are modeled. There is one residual per observation and not one per
   distribution parameter: a residual compares an observation with the
   whole law its row was given. Where the distribution function jumps –
   every discrete family, and a mixed one at its atom – the construction
@@ -248,7 +334,7 @@
   the development and what develops it. A parameter that is a number of
   its own is one row of the table below and gets no line above it; a
   developed one is spread over a compartment where its population value
-  is labelled by the development’s intercept, so this is the only place
+  is labeled by the development’s intercept, so this is the only place
   the parameter’s own name appears beside a number.
 
 - Each equation’s heading names the link it is written on. Every
@@ -437,7 +523,7 @@
 ## statmodels7 0.83.0
 
 - The scoring step no longer deadlocks where one coordinate’s curvature
-  is orders below its neighbours’. This is the second of the two regimes
+  is orders below its neighbors’. This is the second of the two regimes
   0.82.0 named: there the curvature was `NaN` and the solve died for
   everyone, here it is finite but negligible, so nothing is held and the
   step in that coordinate is astronomically long. Measured on a Student
@@ -540,7 +626,7 @@
 
   ⚠️ **By the DIAGONAL and not by the column**, which is measured rather
   than reasoned: a boundary coordinate makes its whole ROW non-finite,
-  cross terms included, so a column test marks its neighbours too. The
+  cross terms included, so a column test marks its neighbors too. The
   first version did, held `sigma` along with `nu`, and left the fit
   exactly where it had been. The test pins the distinction.
 
@@ -596,7 +682,7 @@
   criterion gives (-0.360, 2.721) at h = 0.2 and (-0.344, 2.723) at h =
   0.05 against the exact (-0.343, 2.720); and all four routes – default,
   `lbfgs()`, `newton()` and `nelder_mead()` – stop at the same place,
-  which a simplex could not do if the neighbouring points were merely
+  which a simplex could not do if the neighboring points were merely
   worse.
 
   End to end the model now reaches **-1558.352**, 4.33 better, and its
@@ -877,7 +963,7 @@
 
 - [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
   is the policy `exact2 -> newton()`, extracted so that it can be read,
-  pinned and swept. Behaviour is unchanged.
+  pinned and swept. Behavior is unchanged.
 
 ## statmodels7 0.74.0
 
@@ -2592,7 +2678,7 @@
   each a whole inner fit: 19 against 31 with one hyperparameter – where
   it does not pay, a simplex needing no derivative in one dimension –
   then 126 against 35 with a smooth and a random effect, 133 against 32
-  with two smooths, and 166 against 6 with a modelled scale, the
+  with two smooths, and 166 against 6 with a modeled scale, the
   criterion agreeing to four decimals throughout.
 
   ⚠️ It has a cost, and it is on the criterion’s PLATEAU. Once the
@@ -3050,7 +3136,7 @@
   alone while its text claimed the criterion was still falling. With the
   top now emptying the block the criterion is FLAT across that stretch,
   so index one is a legitimate minimum and the message was naming a
-  cause that was not the real one. It compares against the neighbouring
+  cause that was not the real one. It compares against the neighboring
   point now, and the two warnings the suite carried were both of that
   kind.
 
@@ -3219,14 +3305,14 @@
   smooth while sigma’s agreed exactly: the Demmler-Reinsch basis is
   orthogonalized against the constant in the UNWEIGHTED metric, and the
   mean’s information carries weights `1/sigma^2` that vary as soon as
-  the scale is modelled, so the orthogonality the construction arranged
+  the scale is modeled, so the orthogonality the construction arranged
   does not survive the weighting. The gap is small wherever the blocks
   are nearly orthogonal and is not bounded in general.
 
   Now exact against the full-model trace, per term and in total, on a
   gaussian with smooths in both equations, on a gumbel, whose location
   and scale are NOT information-orthogonal, and on a gamma with its
-  dispersion modelled. A kinked penalty keeps its own count, the number
+  dispersion modeled. A kinked penalty keeps its own count, the number
   of coefficients away from the kink, since the curvature the smoother
   matrix is built from does not exist at a coefficient sitting on one.
 
@@ -3851,7 +3937,7 @@
   read `distrib_start()`’s result by parameter name, where that result
   is a list of starts each keyed by parameter, so the name matched
   nothing and every fit began at zeros on the link scale – a location of
-  0 for a response centred at 5.84. The intercept of each equation now
+  0 for a response centered at 5.84. The intercept of each equation now
   starts at the intercept-only maximum likelihood estimate, which for a
   gaussian is the sample mean and standard deviation exactly. That
   estimate draws its own starting values at random, so the stream is
@@ -3950,7 +4036,7 @@
   `v = db/dtheta` from the stationarity condition and
   `u_c = tr(M dK/db_c)` from the third derivative of the log-likelihood
   in the link-scale predictors. Checked against numDeriv at 1e-6 for one
-  smoothing parameter, for several, with the scale modelled, and under
+  smoothing parameter, for several, with the scale modeled, and under
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
 
 - `outer_optimizer` defaults to `lbfgs()` where the gradient exists and
@@ -3961,7 +4047,7 @@
 
 ## statmodels7 0.4.0
 
-- The modelling layer.
+- The modeling layer.
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   reads one formula carrying every parameter of a distribution, the
   equations separated by a bar, and fits it: the terms whose penalties

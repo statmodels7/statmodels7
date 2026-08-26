@@ -11,7 +11,7 @@ they would shift it by."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ they would shift it by."><meta property="og:image" content="https://statmodels7.
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -52,7 +56,7 @@ they would shift it by.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
@@ -67,7 +71,7 @@ they would shift it by.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A score-driven level and a regime's first level both add a constant to
 their equation's predictor. With an intercept there too the two are
-EXACTLY confounded: shifting the intercept by \(c\) and the level by
+exactly confounded: shifting the intercept by \(c\) and the level by
 \(-c(1 - \sum_j b_j)\) leaves every predictor unchanged, since the
 recursion is affine in the level given the score path, the score path
 depends on the predictor alone, and the starting level moves by the same
@@ -75,7 +79,7 @@ depends on the predictor alone, and the starting level moves by the same
 the ridge without failing – the score is small because the surface is
 flat, not because it is a maximum.</p>
 <p><strong>The linear intercept wins.</strong> Where both are present the term's
-level is held at zero and the coefficient carries it, which is what makes
+level is held at zero and the coefficient carries it, and that makes
 <code>y ~ x + gas(...)</code> an ordinary thing to write. Nothing about the
 model is lost: what a constant cannot express is the dynamics, or the
 difference between one regime and another, and those are the parameters
@@ -84,7 +88,7 @@ that remain free.</p>
 not of a column named <code>"(Intercept)"</code>: a factor coded without one,
 or any set of columns summing to a constant, spans it just as well.
 Which parameter is the level is the term's own answer, through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_level_param.html" class="external-link">term_level_param</a></code>.</p>
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_level_param.html" class="external-link">modelterms7::term_level_param()</a></code>.</p>
 <p><strong>A developed level asks the same question of a subspace.</strong> With
 <code>omega ~ Z gamma</code> the confounding is no longer with one constant
 but with whatever <code>span(Z)</code> shares with the span of the equation's
@@ -100,7 +104,7 @@ names it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="reject_incompatible.html">reject_incompatible</a></code></p></div>
+    <div class="dont-index"><p><code><a href="reject_incompatible.html">reject_incompatible()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

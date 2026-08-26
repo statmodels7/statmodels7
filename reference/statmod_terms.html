@@ -9,7 +9,7 @@ it names against the data."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ it names against the data."><meta property="og:image" content="https://statmodel
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,36 +53,52 @@ it names against the data.</p>
 
 
 <dl><dt id="arg-equations">equations<a class="anchor" aria-label="anchor" href="#arg-equations"></a></dt>
-<dd><p>A named list of one-sided formulas.</p></dd>
+<dd><p>A named list of one-sided formulas, one per distribution
+parameter.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A data frame.</p></dd>
+<dd><p>A data frame to build the terms against.</p></dd>
 
 
 <dt id="arg-env">env<a class="anchor" aria-label="anchor" href="#arg-env"></a></dt>
-<dd><p>The environment the original formula carried.</p></dd>
+<dd><p>The environment the original formula carried, which becomes the
+parent of the interpreting environment.</p></dd>
 
 
 <dt id="arg-response">response<a class="anchor" aria-label="anchor" href="#arg-response"></a></dt>
-<dd><p>The evaluated left-hand side, or <code>NULL</code>.</p></dd>
+<dd><p>The evaluated left-hand side, or <code>NULL</code> where there is
+none. Read by <code><a href="seg_grid_start.html">seg_grid_start()</a></code> and by nothing else.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>terms</code> (a named list per parameter) and
-<code>intercepts</code> (a named logical).</p>
-    </div>
+    <p>A list of two:</p><dl><dt><code>terms</code></dt>
+<dd><p>a named list with one entry per parameter, each a named
+list of built terms keyed by the term's call as written.</p></dd>
+
+<dt><code>intercepts</code></dt>
+<dd><p>a named logical, one per parameter: whether that
+equation's parametric block carried an intercept.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The equations are interpreted with <span class="pkg">modelterms7</span>'s constructors in front
-of the search path, so that <code>s()</code> means ours whatever the user has
-attached. A factor covariate needs no special handling: the interpreter
-collects bare covariates into one <code>linpar()</code>, whose block comes from
-<code>model.matrix</code> and therefore carries the contrasts.</p>
+    <p>The equations are interpreted with <span class="pkg">modelterms7</span>'s constructors in
+front of the search path, so <code>s()</code> means this toolkit's whatever the
+caller has attached. See <code><a href="terms_first.html">terms_first()</a></code> for the shim and the collision it
+removes.</p>
+<p>A factor covariate needs no handling of its own: the interpreter collects
+the bare covariates of an equation into one <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code>, whose
+block comes from <code>model.matrix</code> and so carries the contrasts.</p>
 <p>A break-point term whose starting positions the caller did not name has
-them chosen on a grid rather than left at the interior quantiles of the
-covariate; see <code><a href="seg_grid_start.html">seg_grid_start</a></code>.</p>
+them chosen on a grid, through <code><a href="seg_grid_start.html">seg_grid_start()</a></code>, in place of the
+interior quantiles of the covariate the term would otherwise default to.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="statmod_spec.html">statmod_spec()</a></code>, the caller, <code><a href="terms_first.html">terms_first()</a></code> for the shim.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

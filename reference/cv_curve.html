@@ -11,7 +11,7 @@ standard error across folds."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ standard error across folds."><meta property="og:image" content="https://statmod
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -61,7 +65,7 @@ standard error across folds.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
@@ -69,7 +73,7 @@ standard error across folds.</p>
 
 
 <dt id="arg-weights-offsets">weights, offsets<a class="anchor" aria-label="anchor" href="#arg-weights-offsets"></a></dt>
-<dd><p>As <code><a href="statmod.html">statmod</a></code> received them.</p></dd>
+<dd><p>As <code><a href="statmod.html">statmod()</a></code> received them.</p></dd>
 
 
 <dt id="arg-inner-optimizer">inner_optimizer<a class="anchor" aria-label="anchor" href="#arg-inner-optimizer"></a></dt>
@@ -96,15 +100,16 @@ there. <code>NULL</code> treats the whole list as one run.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The path is run fold by fold rather than point by point so that each fit
-starts from the previous point's coefficients, which is what makes a path
+    <p>The path is run fold by fold, not point by point, so that each fit starts
+from the previous point's coefficients. That warm chain is the whole
+economy of a path
 cheaper than its length suggests. Each training fit rebuilds the design on
 its own rows: a term is re-evaluated in the data it is fitted to, so a basis
 or a set of contrasts is not carried over from rows the fit did not see.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="cv.html">cv</a></code></p></div>
+    <div class="dont-index"><p><code><a href="cv.html">cv()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

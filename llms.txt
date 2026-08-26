@@ -836,3 +836,9 @@ exported, and none is needed to use the package.
 - [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
   : Zero the Non-Finite Entries of a Penalty's Hessian
 
+# Articles
+
+### All vignettes
+
+- [Fitting a distributional
+  model](https://statmodels7.github.io/statmodels7/articles/fitting-a-distributional-model.md):

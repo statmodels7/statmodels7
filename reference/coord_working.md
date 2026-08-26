@@ -14,16 +14,17 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - ep:
 
-  The linear predictors and parameters, from
-  [`statmod_eta`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md).
+  The linear predictors and the parameters they imply, as
+  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+  returns them.
 
 - coef:
 
-  The coefficients.
+  A named list of coefficient vectors.
 
 - design:
 
@@ -31,16 +32,26 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 
 - p:
 
-  Which distribution parameter.
+  Which distribution parameter's equation, a string.
 
 - expected:
 
-  Whether the information is the expected one.
+  `TRUE` for the expected information, `FALSE` for the observed one.
 
 - approx:
 
-  How it is approximated.
+  How the expected information is approximated for a family with no
+  closed form.
 
 ## Value
 
-A list with `w` and `z`, or `NULL` where the curvature is not usable.
+A list with `w` and `z`, each a numeric vector of length `spec@n_obs`.
+`NULL` where the curvature is not usable, which is any non-finite or
+non-positive \\h_i\\; the observed information can produce both far from
+the optimum.
+
+## Details
+
+For a Gaussian response on the identity link the quadratic is exact and
+one pass answers the problem. Elsewhere it is the local approximation a
+scoring step works on, and the weights are rebuilt at each iteration.

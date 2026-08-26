@@ -51,5 +51,5 @@ contraction and by every pair of the Hessian.
 
 ## See also
 
-[`u_vector`](https://statmodels7.github.io/statmodels7/reference/u_vector.md),
-[`trace_design_form`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
+[`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md),
+[`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)

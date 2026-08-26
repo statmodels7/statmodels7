@@ -24,7 +24,7 @@ cv_curve(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - data:
 
@@ -33,7 +33,7 @@ cv_curve(
 - weights, offsets:
 
   As
-  [`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   received them.
 
 - inner_optimizer:
@@ -60,13 +60,13 @@ A list with `cvm`, `cvse` and `n_fail`.
 
 ## Details
 
-The path is run fold by fold rather than point by point so that each fit
-starts from the previous point's coefficients, which is what makes a
-path cheaper than its length suggests. Each training fit rebuilds the
-design on its own rows: a term is re-evaluated in the data it is fitted
-to, so a basis or a set of contrasts is not carried over from rows the
-fit did not see.
+The path is run fold by fold, not point by point, so that each fit
+starts from the previous point's coefficients. That warm chain is the
+whole economy of a path cheaper than its length suggests. Each training
+fit rebuilds the design on its own rows: a term is re-evaluated in the
+data it is fitted to, so a basis or a set of contrasts is not carried
+over from rows the fit did not see.
 
 ## See also
 
-[`cv`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)

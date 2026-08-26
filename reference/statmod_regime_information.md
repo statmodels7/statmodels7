@@ -15,12 +15,12 @@ statmod_regime_information(spec, ev, design, npar, offs, nb, n, w)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - ev:
 
   The evaluated predictors, from
-  [`statmod_eta`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md).
+  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md).
 
 - design:
 
@@ -42,7 +42,7 @@ free parameters.
 ## Details
 
 The matrix
-[`statmod_information_at`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
+[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 assembles for a mixture is the complete-data information, the ordinary
 one averaged over the smoothed states. That is a legitimate scoring
 matrix and it is not the observed information: by Louis's
@@ -51,7 +51,7 @@ of the complete-data score, which is positive semidefinite, so the
 complete-data matrix is the larger and a standard error read off it is
 too small.
 
-[`term_hessian`](https://statmodels7.github.io/modelterms7/reference/term_hessian.html)
+[`modelterms7::term_hessian()`](https://statmodels7.github.io/modelterms7/reference/term_hessian.html)
 returns the exact Hessian by propagating first and second derivatives
 through the same scaled forward recursion that computes the likelihood.
 What this function supplies is the model's side of that contract: how

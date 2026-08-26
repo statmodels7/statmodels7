@@ -14,7 +14,7 @@ statmod_held(spec, design = NULL)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -26,14 +26,14 @@ A character vector, possibly empty.
 
 ## Details
 
-WHICH hyperparameters are estimated is a property of the terms, not of
+which hyperparameters are estimated is a property of the terms, not of
 the criterion: the term is where the penalty is named, and a criterion
 argument saying otherwise was read by nothing when the two disagreed.
-Everything here consults this one enumeration – the outer index, the
+Everything here consults this one enumeration: the outer index, the
 path, and the summary's account of what was estimated and what was
 given.
 
 ## See also
 
-[`term_hyper`](https://statmodels7.github.io/modelterms7/reference/term_hyper.html),
-[`outer_hyper_index`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
+[`modelterms7::term_hyper()`](https://statmodels7.github.io/modelterms7/reference/term_hyper.html),
+[`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)

@@ -13,12 +13,12 @@ statmod_path_setting(spec, row, field, default, name = NULL)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - row:
 
   One row of
-  [`path_rows`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
+  [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
   index.
 
 - field:

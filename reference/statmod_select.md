@@ -1,9 +1,9 @@
 # Estimate the Hyperparameters, by Whichever Route Each One Admits
 
 Routes the twice differentiable hyperparameters to
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 and the rest to
-[`statmod_path`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md).
+[`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md).
 
 ## Usage
 
@@ -33,7 +33,7 @@ statmod_select(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -54,7 +54,7 @@ statmod_select(
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - optimizer:
 
@@ -84,7 +84,7 @@ statmod_select(
 ## Value
 
 The list
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 returns.
 
 ## Details
@@ -96,4 +96,4 @@ does not have.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)

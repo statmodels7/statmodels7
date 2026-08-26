@@ -2,7 +2,7 @@
 
 What separates the true Hessian of the penalized log-likelihood from the
 Gauss-Newton matrix
-[`statmod_information_at`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
+[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 returns, where a term's block moves with its coefficients.
 
 ## Usage
@@ -16,7 +16,7 @@ mode_curvature(spec, design, coef, params, npar, offs, total)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -46,17 +46,17 @@ A square matrix, zero everywhere no refreshable term reaches.
 what the design gives; the second is zero for every fixed block and is
 not for a refreshable one, where \\X\\ is the Jacobian and so
 \\\partial^2\eta_i/\partial\beta_c\partial\beta_d = \partial
-X\_{id}/\partial\beta_c\\. It is supported on the term's own block,
-which is what keeps this cheap: one call of
-[`term_block_contract`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)
-per column, weighted by the SCORE where
-[`u_refresh`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
+X\_{id}/\partial\beta_c\\. It is supported on the term's own block, and
+that is what keeps this cheap: one call of
+[`modelterms7::term_block_contract()`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)
+per column, weighted by the score where
+[`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
 weights by \\M\\.
 
-⚠️ It is the mode's matrix and NOT the criterion's. The determinant is
-of whatever
-[`statmod_information_at`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
-assembles, and its derivative reads that one; how the mode MOVES is a
+Note that it is the **mode's** matrix and not the criterion's. The
+determinant is of whatever
+[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
+assembles, and its derivative reads that one; how the mode moves is a
 fact about the penalized likelihood and reads this one. Confusing the
 two is the defect this file already records for the expected
 information, in a second place.
@@ -68,5 +68,5 @@ observed route and the expected one alike.
 
 ## See also
 
-[`u_refresh`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md),
-[`term_block_contract`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)
+[`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md),
+[`modelterms7::term_block_contract()`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html)

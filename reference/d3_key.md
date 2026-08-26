@@ -1,7 +1,7 @@
 # The Name of a Third-Derivative Component
 
 Locates the \\(a, b, k)\\ entry of a distribution's third derivative,
-which is keyed by name and not by position.
+which is keyed by name, never by position.
 
 ## Usage
 
@@ -29,6 +29,6 @@ A single string.
 
 ## Details
 
-The name is BUILT by putting the three parameter names in the family's
+The name is built by putting the three parameter names in the family's
 own order and joining them, the direction distributions7 sanctions, and
-then checked against the enumeration rather than trusted.
+then checked against the enumeration, never trusted.

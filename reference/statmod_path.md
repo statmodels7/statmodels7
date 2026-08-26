@@ -33,7 +33,7 @@ statmod_path(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -54,7 +54,7 @@ statmod_path(
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - optimizer:
 
@@ -92,7 +92,7 @@ statmod_path(
 ## Value
 
 The same list
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 returns.
 
 ## Details
@@ -107,11 +107,11 @@ a refitted null.
 A term carrying several of them has every combination visited where the
 term asks for `search = "grid"` and one coordinate at a time where it
 asks for `"cyclic"`. Between terms the alternation is cyclic either way,
-so the cost is the product WITHIN a term and the sum ACROSS them. Each
-axis is built at the settings of the axes outside it, which is what
-makes the elastic net's grid a family of \\\lambda\\ axes rather than
-one, and the axis swept by kink size is put innermost so that the warm
-starts walk along it.
+so the cost is the product within a term and the sum across them. Each
+axis is built at the settings of the axes outside it, and that makes the
+elastic net's grid a family of \\\lambda\\ axes rather than one, and the
+axis swept by kink size is put innermost so that the warm starts walk
+along it.
 
 A pass that would visit the points the last one scored is not run. The
 top of the path is read again at every pass because the rest of the
@@ -119,11 +119,11 @@ model moves, and where it has not the grid is the one already in hand.
 
 Where the model also carries hyperparameters that are twice
 differentiable, those are estimated by
-[`outer_fit`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+[`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
 inside each point of the path, so the two kinds are not mixed into one
 search.
 
 ## See also
 
-[`cv`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-[`path_rows`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+[`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)

@@ -17,7 +17,7 @@ path_block(blocks, row)
 - row:
 
   One row of
-  [`path_rows`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
+  [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)'s
   index.
 
 ## Value

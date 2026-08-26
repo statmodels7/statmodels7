@@ -9,7 +9,7 @@ system, with the link that carries it onto the whole line."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ system, with the link that carries it onto the whole line."><meta property="og:i
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,24 +53,37 @@ system, with the link that carries it onto the whole line.</p>
 
 
 <dl><dt id="arg-spec">spec<a class="anchor" aria-label="anchor" href="#arg-spec"></a></dt>
-<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec</a></code>.</p></dd>
+<dd><p>A <code><a href="StatmodSpec-class.html">StatmodSpec()</a></code>.</p></dd>
 
 
 <dt id="arg-blocks">blocks<a class="anchor" aria-label="anchor" href="#arg-blocks"></a></dt>
-<dd><p>The block split, as <code><a href="statmod_blocks.html">statmod_blocks</a></code> returns it.</p></dd>
+<dd><p>The block split, as <code><a href="statmod_blocks.html">statmod_blocks()</a></code> returns it.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with <code>parameter</code>, <code>term</code> and <code>name</code>, and
-a list column-free <code>link</code> carried as an attribute list.</p>
+    <p>A data frame with one row per estimated hyperparameter and three
+character columns, <code>parameter</code>, <code>term</code> and <code>name</code>. The links that carry
+each onto the whole line ride on the <code>"link"</code> attribute, a list the same
+length as the frame has rows, since a list column would not survive the
+subsetting the search does.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A term whose penalty has a kink is left out. Its coefficients are estimated
-by a proximal method with everything else held fixed, and the criterion is a
-Laplace approximation, which asks for a second derivative that does not
-exist at a kink.</p>
+    <p>A term whose penalty has a kink is left out. Its coefficients are
+estimated by a coordinate descent with everything else held fixed, and the
+criterion is a Laplace approximation, which asks for a second derivative
+that does not exist at a kink. Those hyperparameters go to a path instead.</p>
+<p>A hyperparameter its own term holds is left out too, whatever kind of
+penalty it belongs to: <code><a href="statmod_held.html">statmod_held()</a></code> is what says so.</p>
+<p>The result is the index the whole outer search runs on. Its row count is
+the dimension of that search, and at zero rows the criterion does not run
+at all.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="hyper_to_eta.html">hyper_to_eta()</a></code> for the map those links define,
+<code><a href="statmod_held.html">statmod_held()</a></code> for what is excluded.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,7 +1,7 @@
 # What the Joint Chain Term Needs Before a Direction Is Known
 
 The quantities of
-[`statmod_structural_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
+[`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
 that do not depend on which hyperparameter is being differentiated: the
 family's derivatives, the filter's forward Jacobian, the per-observation
 diagonal of \\M\\ and the contraction \\u\\.
@@ -19,7 +19,7 @@ structural_grad_parts_impl(spec, design, coef, jd, M)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -32,7 +32,7 @@ structural_grad_parts_impl(spec, design, coef, jd, M)
 - jd:
 
   The joint rows, from
-  [`joint_design_rows`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md).
+  [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md).
 
 - M:
 

@@ -1,6 +1,6 @@
 # A Refreshable Block's Second Derivative Along Two Directions
 
-[`term_block_deriv2`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html)
+[`modelterms7::term_block_deriv2()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html)
 on one unit, with the shape it returns checked rather than assumed.
 
 ## Usage
@@ -14,7 +14,7 @@ refresh_dblock2(un, v, u, n)
 - un:
 
   One entry of
-  [`refresh_units`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
+  [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
 
 - v, u:
 
@@ -37,5 +37,5 @@ Jacobian. Nothing is differenced here in either case.
 
 ## See also
 
-[`refresh_dblock`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock.md),
-[`trace_refresh4`](https://statmodels7.github.io/statmodels7/reference/trace_refresh4.md)
+[`refresh_dblock()`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock.md),
+[`trace_refresh4()`](https://statmodels7.github.io/statmodels7/reference/trace_refresh4.md)

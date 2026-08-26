@@ -9,7 +9,7 @@ distribution parameter is the value its link maps zero to."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ distribution parameter is the value its link maps zero to."><meta property="og:i
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -46,32 +50,53 @@ distribution parameter is the value its link maps zero to.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code><a href="start_strategy.html">start_strategy</a></code>.</p>
+    <p>A <code>StartOrigin</code> object, inheriting from <code><a href="start_strategy.html">start_strategy()</a></code>.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The name is <code>start_origin</code> and not <code>start_zeros</code> because
-<span class="pkg">optimizers7</span> already exports the second for the starting POINT of an
-optimizer, and the toolkit's members share no exported name — a
-collision would be reported by <code><a href="statmodels7_conflicts.html">statmodels7_conflicts</a></code> and, far
-worse, would mean that which function a user got depended on the order the
-packages were attached in.</p>
-<p>It is the plainest starting point and rarely the best: a location parameter
-on the identity link then begins at zero whatever the response is, which on
-a response centred at a thousand sends the run travelling. It is here
-because it is the reference other strategies are judged against, and
-because a model whose equations are all on a log or logit link is not
-harmed by it.</p>
+    <h2 id="when-it-is-a-poor-choice">When it is a poor choice<a class="anchor" aria-label="anchor" href="#when-it-is-a-poor-choice"></a></h2>
+    <p>A location parameter on the identity link begins at zero whatever the
+response is. On a response centered at a thousand the run then starts a
+thousand units away and has to travel there, and on a badly scaled model
+it may not arrive at all. <code><a href="start_intercepts.html">start_intercepts()</a></code>, the default, exists for
+that reason.</p>
+<p>It is harmless where every equation is on a log or a logit link, since
+zero is then an ordinary interior value of the parameter, and it is the
+reference the other strategies are judged against.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-name">The name<a class="anchor" aria-label="anchor" href="#the-name"></a></h2>
+    <p><code>start_origin</code>, not <code>start_zeros</code>. <span class="pkg">optimizers7</span> already exports
+<code>start_zeros()</code> for the starting point of an optimizer, and no two members
+of this toolkit export the same name. A collision would be reported by
+<code><a href="statmodels7_conflicts.html">statmodels7_conflicts()</a></code>, and, worse, which function a caller reached
+would depend on the order the packages were attached in.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="start_intercepts.html">start_intercepts</a></code></p></div>
+    <div class="dont-index"><p><code><a href="start_intercepts.html">start_intercepts()</a></code>, the default and usually the better choice.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">start_origin</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;start&gt; zero</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span>, sd <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_spec.html">statmod_spec</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Every coefficient of every equation is zero, intercepts included.</span></span></span>
+<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="start_at.html">start_at</a></span><span class="op">(</span><span class="fu">start_origin</span><span class="op">(</span><span class="op">)</span>, <span class="va">spec</span>, <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">s</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

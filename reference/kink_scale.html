@@ -9,7 +9,7 @@ differentiable at, which is the half-width of the subdifferential there."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ differentiable at, which is the half-width of the subdifferential there."><meta 
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -69,24 +73,24 @@ differentiable at, which is the half-width of the subdifferential there.</p>
     <p>A coefficient stays at the kink while the unpenalized score at that point is
 inside the subdifferential, so this number is what a score has to exceed for
 a coefficient to leave zero. It is \(\lambda\) for the lasso, SCAD and
-MCP, and \(\lambda\alpha\) for the elastic net, but it is read rather than
+MCP, and \(\lambda\alpha\) for the elastic net, but it is read and never
 assumed: a penalty built from a density carries the same information in a
 hyperparameter of its own, and a Laplace prior written by its scale has a
 kink whose size falls as that scale grows.</p>
 <p>The penalty is separable over the coefficients wherever it has a kink, a
 kinked penalty under a general map being the generalized-lasso problem and
 rejected upstream, so one coordinate answers for all of them.</p>
-<p>The derivative just past the kink carries the distance it was read at –
-MCP's is \(\lambda - \epsilon/\gamma\) – so the two readings are
+<p>The derivative just past the kink carries the distance it was read at,
+MCP's being \(\lambda - \epsilon/\gamma\), so the two readings are
 extrapolated to the limit. Without that the shape parameters appear to move
 the kink by a millionth of themselves, which is enough to be selected for a
-path and is a measurement of \(\epsilon\) rather than of the penalty. The
+path, and measures \(\epsilon\) in place of the penalty. The
 extrapolation is exact for a penalty that is affine on each side of the
 kink, which the lasso, SCAD, MCP and the elastic net all are.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="kink_hypers.html">kink_hypers</a></code>, <code><a href="kink_solve.html">kink_solve</a></code></p></div>
+    <div class="dont-index"><p><code><a href="kink_hypers.html">kink_hypers()</a></code>, <code><a href="kink_solve.html">kink_solve()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

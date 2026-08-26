@@ -11,7 +11,7 @@ where the fitting data left it."><meta property="og:image" content="https://stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,10 @@ where the fitting data left it."><meta property="og:image" content="https://stat
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -65,7 +69,7 @@ where the fitting data left it.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list shaped as <code><a href="statmod_eta.html">statmod_eta</a></code>'s, without the
+    <p>A list shaped as <code><a href="statmod_eta.html">statmod_eta()</a></code>'s, without the
 memoized filter objects.</p>
     </div>
     <div class="section level2">
@@ -78,23 +82,24 @@ once at the observed rows to recover that state – the level and the
 driving quantity at each of them, the level being the difference between
 the filtered predictor and the static one – and the term is asked to
 continue from there through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_continue.html" class="external-link">term_continue</a></code>.</p>
-<p>WHICH OF THE TWO a call asks for is decided by the RESPONSE, not by the
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_continue.html" class="external-link">modelterms7::term_continue()</a></code>.</p>
+<p>Which of the two a call asks for is decided by the response, not by the
 times. New rows carrying the response are a re-reading: the filter is run
-over them from the term's own seed, which is what a caller means by
+over them from the term's own seed, and that is what a caller means by
 predicting a model on another series, and is why
 <code>predict(fit, newdata = &lt;the fitting data&gt;)</code> returns the fitted
 values. New rows without it are a continuation, and must come after the
-observed series. A frame with the response on some rows and not others is
+observed series. A frame carrying the response on some rows only is
 rejected: the two readings differ, and picking one would answer a question
 that was not asked.</p>
 <p>A term whose contribution is a likelihood mixed over latent states is
 rejected: what such a term reports at an observed row is a posterior over
-states, which past the data is a predictive distribution and not a value.</p>
+states, which past the data is a predictive distribution, no single
+value.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="predict.StatmodFit.html">predict.StatmodFit</a></code></p></div>
+    <div class="dont-index"><p><code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

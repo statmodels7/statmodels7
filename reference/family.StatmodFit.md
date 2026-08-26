@@ -14,7 +14,7 @@ family(object, ...)
 - object:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - ...:
 
@@ -22,17 +22,23 @@ family(object, ...)
 
 ## Value
 
-A distributions7 distribution.
+The distributions7 distribution object the model was fitted with, links
+included, exactly as it was supplied. Its `@params` property names the
+parameters and `@links` holds their charts.
 
 ## Details
 
-It is the family itself rather than a description of one, so everything
-the family can do is available from a fit: its density, its derivatives,
-its moments and its parameters' links.
+What comes back is the family object itself, so everything the family
+can do is reachable from a fit: its density, its derivatives, its
+moments and its parameters' links. Compare
+[`stats::glm()`](https://rdrr.io/r/stats/glm.html), whose
+[`family()`](https://rdrr.io/r/stats/family.html) returns a description.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md);
+[`distributions7::distrib_pdf()`](https://statmodels7.github.io/distributions7/reference/distrib_pdf.html)
+and its siblings for what can then be asked of the family
 
 ## Examples
 

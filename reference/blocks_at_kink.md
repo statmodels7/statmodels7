@@ -15,8 +15,8 @@ blocks_at_kink(blocks, hyper)
 - blocks:
 
   The blocks, as
-  [`statmod_blocks`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
-  returns them.
+  [`statmod_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_blocks.md)
+  returns them, with a `sparse` list of the kinked entries.
 
 - hyper:
 
@@ -24,16 +24,18 @@ blocks_at_kink(blocks, hyper)
 
 ## Value
 
-The blocks, each sparse entry carrying `prev_kink`.
+`blocks`, with each entry of its `sparse` list carrying a `prev_kink`
+element: the size of that penalty's kink at `hyper`. The `smooth` list
+is untouched.
 
 ## Details
 
-The previous point travels on the blocks rather than through the
-argument list of every layer between the path and the descent. It is a
-property of the block – where its penalty was a moment ago – and the
-path rebuilds the blocks at each point anyway.
+The previous point travels on the blocks themselves, sparing every layer
+between the path and the descent an argument. Where a penalty was a
+moment ago is a property of its block, and the path rebuilds the blocks
+at each point in any case.
 
 ## See also
 
-[`coord_screen`](https://statmodels7.github.io/statmodels7/reference/coord_screen.md),
-[`statmod_path`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
+[`coord_screen()`](https://statmodels7.github.io/statmodels7/reference/coord_screen.md),
+[`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)

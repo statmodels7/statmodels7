@@ -9,7 +9,7 @@ so that the warm starts run the way every other path here runs."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,6 +18,10 @@ so that the warm starts run the way every other path here runs."><meta property=
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -70,17 +74,17 @@ so that the warm starts run the way every other path here runs.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Which end is the sparse one is a property of the penalty and not of the
+    <p>Which end is the sparse one is a property of the penalty, never of the
 numbers: the kink of a lasso widens with \(\lambda\) and that of a
 Laplace prior written by its scale narrows with \(\sigma\), so the order
-is settled by asking the penalty which way its kink moves rather than by
-sorting downwards. Nothing else is applied – the value that empties the
+is settled by asking the penalty which way its kink moves, never by
+sorting downwards. Nothing else is applied: the value that empties the
 block does not cap the grid and <code>min_ratio</code> does not extend it, both
 of those being ways to build one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_values.html" class="external-link">term_values</a></code>, <code><a href="path_values.html">path_values</a></code></p></div>
+    <div class="dont-index"><p><code><a href="https://statmodels7.github.io/modelterms7/reference/term_values.html" class="external-link">modelterms7::term_values()</a></code>, <code><a href="path_values.html">path_values()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

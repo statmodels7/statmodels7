@@ -37,5 +37,5 @@ everything else in the model is a predictor it can be driven by.
 
 ## See also
 
-[`reject_unfittable`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md),
-[`statmod_structural`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
+[`reject_unfittable()`](https://statmodels7.github.io/statmodels7/reference/reject_unfittable.md),
+[`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)

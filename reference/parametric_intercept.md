@@ -1,6 +1,6 @@
 # Where an Equation's Intercept Is
 
-The position of the intercept of one equation's PARAMETRIC block, or
+The position of the intercept of one equation's parametric block, or
 `NA` where it has none.
 
 ## Usage
@@ -30,12 +30,12 @@ An integer position into the equation's coefficient vector, or
 
 ## Details
 
-It is a column of the parametric block and not merely a coefficient
-whose name ends in `(Intercept)`.
-[`nl`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+What is looked for is a column of the parametric block, which is a
+stricter test than a coefficient whose name ends in `(Intercept)`.
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 names the intercept of each of its own parameters the same way, and
-those live on those parameters' charts rather than on the predictor's,
-so a model written `y ~ 0 + nl(...)` puts one of them first. Writing the
+those live on those parameters' own charts, not on the predictor's, so a
+model written `y ~ 0 + nl(...)` puts one of them first. Writing the
 intercept-only fit there sets the parameter to `linkinv` of a value that
 was never on its scale: measured on a logistic growth curve whose
 asymptote rides a log link, `mean(y) = 23.9` became a starting \\\phi\\
@@ -47,5 +47,5 @@ subject deviation was estimated as exactly zero.
 
 ## See also
 
-[`start_at`](https://statmodels7.github.io/statmodels7/reference/start_at.md),
-[`statmod_intercepts`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
+[`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md),
+[`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)

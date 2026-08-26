@@ -1,6 +1,6 @@
 # A Refreshable Block's Derivative Along One Direction
 
-[`term_block_deriv`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
+[`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
 on one unit, with the shape it returns checked rather than assumed.
 
 ## Usage
@@ -14,7 +14,7 @@ refresh_dblock(un, v, n)
 - un:
 
   One entry of
-  [`refresh_units`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
+  [`refresh_units()`](https://statmodels7.github.io/statmodels7/reference/refresh_units.md).
 
 - v:
 

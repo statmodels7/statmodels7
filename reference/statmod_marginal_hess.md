@@ -23,7 +23,7 @@ statmod_marginal_hess(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
@@ -40,7 +40,7 @@ statmod_marginal_hess(
 - method:
 
   An
-  [`OuterMethod`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
 
 - idx:
 
@@ -63,13 +63,13 @@ through the penalized curvature, and two contributions from the
 determinant, one from \\M\\ moving and one from \\K_m\\ moving.
 
 **Everything the penalty contributes is asked of the penalty**
-([`penalty_hess_theta`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html),
-[`penalty_dhessian`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
-[`penalty_d2hessian`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html),
-[`penalty_dcross`](https://statmodels7.github.io/penalties7/reference/penalty_dcross.html)),
-so a penalty that is not quadratic in its hyperparameters – a ridge, a
-random effect, a structured prior – is covered by the same assembly with
-no branch here.
+([`penalties7::penalty_hess_theta()`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html),
+[`penalties7::penalty_dhessian()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
+[`penalties7::penalty_d2hessian()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html),
+[`penalties7::penalty_dcross()`](https://statmodels7.github.io/penalties7/reference/penalty_dcross.html)),
+so a penalty that is not quadratic in its hyperparameters is covered by
+the same assembly with no branch here: a ridge, a random effect, a
+structured prior.
 
 **Onto the free scale** the chain rule is second order and diagonal,
 each hyperparameter having its own link: with \\\theta = h(\eta)\\,
@@ -79,5 +79,5 @@ V/\partial\theta_m.\$\$
 
 ## See also
 
-[`statmod_marginal_grad`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
-[`reml`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)

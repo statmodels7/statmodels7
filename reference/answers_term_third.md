@@ -1,9 +1,9 @@
 # Does a Term Supply Its Third Derivative?
 
 Whether the term implements
-[`term_third`](https://statmodels7.github.io/modelterms7/reference/term_third.html),
-read from the class the method is registered on rather than from a list
-of class names, so a term written later is covered without an edit here.
+[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html),
+read from the class the method is registered on, never from a list of
+class names, so a term written later is covered without an edit here.
 
 ## Usage
 
@@ -30,4 +30,4 @@ question is therefore whether the owning class is the refusing base.
 
 ## See also
 
-[`outer_gradient_ok`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+[`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)

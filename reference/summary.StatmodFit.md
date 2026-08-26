@@ -1,9 +1,9 @@
 # Summarize a Fitted Model
 
-One coefficient table per distribution parameter – estimate, standard
-error, Wald statistic, p-value and interval – with the degrees of
-freedom, the information criteria and the qualifications the numbers
-carry.
+One coefficient table per distribution parameter, carrying the estimate,
+its standard error, the Wald statistic, its p-value and an interval,
+together with the degrees of freedom, the information criteria and the
+qualifications the numbers carry.
 
 ## Usage
 
@@ -23,7 +23,7 @@ summary(
 - object:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - level:
 
@@ -32,7 +32,7 @@ summary(
 - type:
 
   Which variance matrix: passed to
-  [`vcov.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 - correct:
 
@@ -40,7 +40,7 @@ summary(
   hyperparameters cost. The ordinary count reads them as known, and they
   were chosen from the same data, so a criterion built on it is too
   generous. See
-  [`statmod_edf_correction`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md).
+  [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md).
   Defaults to `FALSE` because it changes a number a reader may be
   comparing with an earlier fit; it is zero where no hyperparameter was
   estimated.
@@ -48,12 +48,12 @@ summary(
 - ...:
 
   Passed to
-  [`vcov.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 ## Value
 
 A
-[`StatmodSummary`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md).
+[`StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md).
 
 ## Details
 
@@ -76,9 +76,9 @@ quantities anybody reads. The blocks are
 
 - one block per random effect:
 
-  the parameters of the effects' distribution – what is usually called
-  the variance component – and the edf. Not the effects themselves, of
-  which there is one per level.
+  the parameters of the effects' distribution, usually called the
+  variance component, and the edf. Not the effects themselves, of which
+  there is one per level.
 
 - one block per selection:
 
@@ -99,7 +99,7 @@ or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 maximizes a twice differentiable criterion, so it carries a standard
 error and an interval, both read on the free scale its link defines and
 mapped back
-([`statmod_hyper_vcov`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)).
+([`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)).
 One chosen by
 [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
@@ -110,7 +110,7 @@ curvature at such a point to read a standard error from. One the caller
 set is marked fixed.
 
 **What a Wald p-value means here depends on the row**, and the summary
-says which is which rather than printing one column and leaving it at
+says which is which, in place of printing one column and leaving it at
 that. For an unpenalized coefficient it is the usual thing. For a
 coefficient in a penalized block it is conditional on the smoothing
 parameter, which was not estimated jointly with it, and it does not
@@ -120,13 +120,13 @@ coefficient survived the selection, and a naive interval there
 under-covers.
 
 **The degrees of freedom** are the effective ones, summed over the
-terms, so that a penalized term counts what it spends rather than how
-many columns it has. The information criteria are built on that count.
+terms, so a penalized term counts what it spends instead of how many
+columns it has. The information criteria are built on that count.
 
 ## See also
 
-[`vcov.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
-[`confint.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
+[`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
 
 ## Examples
 
@@ -160,7 +160,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 25 ms   search: converged
+#> fitted in 31 ms   search: converged
 #> certificate: CONVERGED   2.21e-11 above the mode
 #>   the model carries no penalty, so there is no outer gradient; the reading
 #>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode

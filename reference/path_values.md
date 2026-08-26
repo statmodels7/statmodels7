@@ -42,25 +42,25 @@ fullest.
 
 ## Details
 
-The grid is geometric in the size of the kink rather than in the
+The grid is geometric in the size of the kink, never in the
 hyperparameter, so that a penalty whose kink narrows as its
 hyperparameter grows is swept in the same order as one whose kink
 widens: from the empty model towards the full one. Values the penalty
 cannot reach are dropped.
 
-The exponent relating the two is read ONCE and every target inverted
-through it, rather than each target bracketed on its own. Measured, a
+The exponent relating the two is read once and every target inverted
+through it, in place of bracketing each target on its own. Measured, a
 bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
 twenty-five points spent 6.7 per cent of itself locating the values it
 would visit; through the exponent the whole grid costs four evaluations
 of the size.
-[`kink_by_power`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
+[`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
 checks the relation before the values are used and returns `NA` where it
 does not hold, and those fall back to
-[`kink_solve`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
+[`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
 one at a time.
 
 ## See also
 
-[`kink_power`](https://statmodels7.github.io/statmodels7/reference/kink_power.md),
-[`path_forced`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)
+[`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md),
+[`path_forced()`](https://statmodels7.github.io/statmodels7/reference/path_forced.md)

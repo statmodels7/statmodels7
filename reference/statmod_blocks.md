@@ -14,12 +14,12 @@ statmod_blocks(spec, design)
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - design:
 
   The design, as
-  [`statmod_design`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
   returns it.
 
 ## Value
@@ -32,13 +32,13 @@ parameter, the term's name, its stacked columns and its penalty).
 
 The property that decides is one each term already reports: a penalty
 whose
-[`penalty_kinks`](https://statmodels7.github.io/penalties7/reference/penalty_kinks.html)
+[`penalties7::penalty_kinks()`](https://statmodels7.github.io/penalties7/reference/penalty_kinks.html)
 is non-empty is not twice differentiable in its coefficients, so its
-block cannot enter a system solved by a curvature. Everything else – an
-unpenalized block, a ridge, a spline, a random effect, a structured or
-additive penalty – goes into one system and is estimated all together,
-because their joint curvature exists and using it is what makes a fit
-converge in a handful of iterations.
+block cannot enter a system solved by a curvature. Everything else goes
+into one system and is estimated all together: an unpenalized block, a
+ridge, a spline, a random effect, a structured or additive penalty.
+Their joint curvature exists, and using it closes a fit in a handful of
+iterations.
 
 A term whose penalty gains a smooth approximation would answer
 `penalty_kinks()` differently and move into the smooth block with no
@@ -46,4 +46,4 @@ change here.
 
 ## See also
 
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)

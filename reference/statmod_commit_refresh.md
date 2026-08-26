@@ -15,50 +15,65 @@ statmod_commit_refresh(spec, coef, design, which = "all")
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - coef:
 
-  A named list of coefficient vectors.
+  A named list of coefficient vectors, one per distribution parameter.
 
 - design:
 
-  The design.
+  The design, whose refresh state is what this advances.
 
 - which:
 
-  Which refresh entries to commit: `"all"`, `"jacobian"` (the default at
-  the alternation's pass level, where the frozen ones are already
-  committed by their own phase) or `"frozen"`.
+  Which entries to commit: `"all"` (the default), `"jacobian"` or
+  `"frozen"`. The alternation's pass level and
+  [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
+  both pass `"jacobian"`, the frozen terms having been committed already
+  by their own phase.
 
 ## Value
 
-The coefficient list, with each committed term's stretch replaced by the
-coefficients the term stored, invisibly.
+The coefficient list, invisibly, with each committed term's stretch
+replaced by the coefficients that term stored. Identical to `coef` when
+nothing was committed or when no term relabeled.
 
-## Details
+## What moves
 
-What moves is the rescaling factor of a discontinuous break-point term
-and the direction it last travelled in, which modelterms7 halves on a
-reversal: a schedule that advanced once per objective evaluation would
-anneal at the speed of the line search rather than at the speed of the
-fit, and one that never advanced would solve a permanently smoothed
-problem, whose fixed point is not the model's.
+The rescaling factor of a discontinuous break-point term, and the
+direction it last traveled in, which modelterms7 halves on a reversal.
+Advancing that once per objective evaluation would anneal at the speed
+of the line search instead of the speed of the fit; never advancing it
+would solve a permanently smoothed problem, whose fixed point is not the
+model's. Once per sweep is what this call is for.
 
-For a term whose block is a Jacobian the value it reports is unchanged
-by the schedule – a break-point is read off the coefficients and the
-rescaling reaches only the columns – so committing does not move the
-objective at the same coefficients. For a FROZEN working block that
-sentence is false in two ways, which is why those terms are committed by
-[`fit_working`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
-and skipped here: a jseg's quadratic read-off is incremental in the
-committed position, so a second commit at the same coefficients takes a
-second step, and a refresh may relabel crossed break-point lineages,
-after which the caller's coefficients are stale. The relabeling is why
-the COMMITTED coefficients are returned: a caller continues from what
-the terms stored, not from what it passed in.
+## Why a frozen block is committed elsewhere
+
+Where a term's block is a Jacobian, committing does not move the
+objective at the same coefficients: the break-point is read off the
+coefficients and the rescaling reaches only the columns.
+
+Where the block is a frozen working linearization, that is false twice
+over, which is why those terms are committed by
+[`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+and skipped here at the default. A
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
+reads its position from a quadratic that is incremental in the position
+already committed, so a second commit at the same coefficients takes a
+further hidden step, measured at up to 0.71 per observation on the
+contribution. And a refresh may relabel crossed break-point lineages,
+after which the caller's own copy of the coefficients names them in the
+old order.
+
+The relabeling is why the committed coefficients are returned. A caller
+continues from what the terms stored, not from what it passed in.
 
 ## See also
 
-[`statmod_design_at`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md),
-[`fit_working`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+[`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
+for the refresh this advances,
+[`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+for the phase that commits the frozen terms,
+[`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
+for the verdict.

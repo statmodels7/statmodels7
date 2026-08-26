@@ -22,7 +22,7 @@ statmod_edf_correction(
 - spec:
 
   A
-  [`StatmodSpec`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
 
 - coef:
 
@@ -69,10 +69,10 @@ implicit function theorem at the penalized mode: differentiating
 \\(H+S)J_k = -\partial^2\rho/\partial\beta\\\partial\theta_k\\, whose
 right-hand side is penalties7's `penalty_cross()`. \\V\_\theta\\ is the
 inverse of the outer criterion's own Hessian, which
-[`statmod_marginal_hess`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+[`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 returns, negated because that criterion is a maximand.
 
-Everything is on the hyperparameter's LINK scale, which is where the
+Everything is on the hyperparameter's link scale, which is where the
 outer criterion optimizes and therefore the only scale on which its
 Hessian is a variance.
 
@@ -87,13 +87,13 @@ at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and 2000,
 falling with the sample size.
 
 **Where it does not apply.** A kinked penalty has no hyperparameter the
-outer criterion estimates –
-[`outer_hyper_index`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
-skips it – so there is nothing to propagate and the correction is zero.
-That is not an approximation: the map from the hyperparameter to the
-penalized mode turns a corner whenever a coefficient joins or leaves the
-active set, and a delta method needs a derivative that does not exist
-there.
+outer criterion estimates,
+[`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
+skipping it, so there is nothing to propagate and the correction is
+zero. That is not an approximation: the map from the hyperparameter to
+the penalized mode turns a corner whenever a coefficient joins or leaves
+the active set, and a delta method needs a derivative that does not
+exist there.
 
 ## References
 
@@ -103,5 +103,5 @@ Statistical Association*, 111(516), 1548–1563.
 
 ## See also
 
-[`statmod_marginal_hess`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md),
-[`penalty_cross`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html)
+[`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md),
+[`penalties7::penalty_cross()`](https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html)

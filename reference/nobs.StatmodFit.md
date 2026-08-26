@@ -14,7 +14,7 @@ nobs(object, ...)
 - object:
 
   A
-  [`StatmodFit`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
+  [`StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.md).
 
 - ...:
 
@@ -22,12 +22,15 @@ nobs(object, ...)
 
 ## Value
 
-An integer.
+A single integer: the number of rows of the data the model was fitted
+to. Rows the model frame dropped are already gone, so this is the count
+that entered the likelihood.
 
 ## See also
 
-[`logLik.StatmodFit`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md),
-[`statmod`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+[`df.residual.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md),
+which subtracts the effective degrees of freedom from it,
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 
 ## Examples
 

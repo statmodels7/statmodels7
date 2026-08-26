@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.88.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/fitting-a-distributional-model.html">Fitting a distributional model</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -62,7 +66,7 @@
 
 
 <dt id="arg-steps">steps<a class="anchor" aria-label="anchor" href="#arg-steps"></a></dt>
-<dd><p>What <code><a href="path_steps.html">path_steps</a></code> returned, or <code>NULL</code>.</p></dd>
+<dd><p>What <code><a href="path_steps.html">path_steps()</a></code> returned, or <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -71,19 +75,19 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="path_values.html">path_values</a></code> walks the SIZE OF THE KINK, from the value that
+    <p><code><a href="path_values.html">path_values()</a></code> walks the size of the kink, from the value that
 empties the block down, and a bounded hyperparameter cannot reach that end:
 the elastic net's kink is \(\lambda\alpha\), so at a given \(\lambda\)
 no admissible \(\alpha\) empties the block and every point of such a path
 is dropped. The interval itself is what a bounded shape is swept over
-instead – \(\alpha\) between the ridge and the lasso, SCAD's and MCP's
-shape between their limits – and the sweeps being cyclic, one coordinate
+instead, \(\alpha\) between the ridge and the lasso and SCAD's and MCP's
+shape between their limits, and the sweeps being cyclic, one coordinate
 at a time, the kink still moves through \(\lambda\).</p>
 <p>The endpoints are excluded because the bounds are open: the elastic net at
 \(\alpha = 0\) has no kink at all, and the path would be scoring a
 penalty of another kind.</p>
 <p>A shape parameter is swept above the smallest value at which the block can
-be FITTED, which <code><a href="shape_floor.html">shape_floor</a></code> derives from the proximal
+be fitted, which <code><a href="shape_floor.html">shape_floor()</a></code> derives from the proximal
 condition at the steps the block's coordinate descent will take, rather
 than above the constant the penalty is defined over. The two coincide on an
 ordinary well-conditioned block and differ where the steps are long: with a
@@ -93,8 +97,8 @@ reach.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="path_values.html">path_values</a></code>, <code><a href="path_bounded.html">path_bounded</a></code>,
-<code><a href="shape_floor.html">shape_floor</a></code></p></div>
+    <div class="dont-index"><p><code><a href="path_values.html">path_values()</a></code>, <code><a href="path_bounded.html">path_bounded()</a></code>,
+<code><a href="shape_floor.html">shape_floor()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
