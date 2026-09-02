@@ -267,7 +267,7 @@ test_that("a correlated random effect reports variance components", {
   # apart from the summary
   eta <- unlist(fit@hyper$mu[[1L]])
   sig <- parameters7::param_value(
-    parameters7::log_cholesky(2, role = "covariance"), eta)
+    parameters7::log_cholesky(2), eta)
   expect_equal(tb$estimate[1L], sqrt(sig[1, 1]), tolerance = 1e-8)
   expect_equal(tb$estimate[2L], sqrt(sig[2, 2]), tolerance = 1e-8)
   expect_equal(tb$estimate[3L], sig[1, 2] / sqrt(sig[1, 1] * sig[2, 2]),
@@ -328,7 +328,7 @@ test_that("a hyperparameter the readable block does not describe keeps its row",
     y = 1 + 0.8 * x + b[as.integer(g), 1L] + b[as.integer(g), 2L] * x +
       stats::rnorm(m * ni, 0, 0.7), x = x, g = g)
   mvt <- do.call(distributions7::fixed,
-                 list(distributions7::mvstudent_t_distrib(2),
+                 list(distributions7::mvstudent_t1_distrib(2),
                       mu1 = 0, mu2 = 0))
   fit <- statmod(y ~ x + random(~ x | g, distrib = mvt),
                  distributions7::gaussian1_distrib(), dd,
