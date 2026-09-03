@@ -292,10 +292,9 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     nm <- bits[2L]
     a <- match(p, params)
     un <- statmod_unit(spec, design, p, nm)
-    cols <- un$cols
     pos <- un$index
     pen <- un$penalty
-    bt <- coef[[p]][cols]
+    bt <- unit_beta(un, coef, params)
     th <- as.list(hyper[[p]][[nm]])
     dS <- penalties7::penalty_dhessian(pen, bt, th)
     cr <- penalties7::penalty_cross(pen, bt, th)
@@ -568,6 +567,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
                                    expected = TRUE, approx = "bartlett") {
   zero <- list(total = 0, per = numeric(0))
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(zero)
+  params <- spec@distrib@params
 
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
@@ -583,7 +583,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   J <- matrix(0, nrow(H), nrow(idx))
   for (un in statmod_penalized(spec, design)) {
     cr <- tryCatch(
-      penalties7::penalty_cross(un$penalty, coef[[un$param]][un$cols],
+      penalties7::penalty_cross(un$penalty, unit_beta(un, coef, params),
                                 as.list(hyper[[un$param]][[un$key]]),
                                 scale = "link"),
       error = function(e) NULL)

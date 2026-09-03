@@ -267,6 +267,11 @@ statmod_penalized <- function(spec, design) {
     # positions then indexed the equation's coefficients -- 25 of them where
     # the equation has one -- so the penalty was evaluated at NA and every
     # quantity built on it was not finite.
+    if (!is.null(u$class)) {
+      return(c(u, list(structural = FALSE, cols = NULL,
+                       index = class_index(u$class, design, params, offs),
+                       pieces = class_pieces(u$class, design, params, offs))))
+    }
     if (S7::S7_inherits(spec@terms[[u$param]][[u$term]],
                         modelterms7::structural_term)) {
       return(c(u, list(structural = TRUE, cols = u$within, index = NULL)))
@@ -275,6 +280,101 @@ statmod_penalized <- function(spec, design) {
     cols <- design[[u$param]]$blocks[[u$term]][u$within]
     c(u, list(structural = FALSE, cols = cols, index = offs[a] + cols))
   })
+}
+
+
+#' Where a Covariance Class's Members Sit in the Stacked Vector
+#'
+#' @description
+#' `class_pieces()` gives one entry per member with its parameter, its columns
+#' in that parameter's coefficients and their positions in the stacked vector;
+#' `class_index()` interleaves those positions group by group, which is the
+#' order the class's penalty reads.
+#'
+#' @details
+#' A blockwise penalty reads its argument in consecutive chunks of the prior's
+#' dimension, one per group: \pkg{penalties7} reshapes the vector by row. The
+#' class's prior is over the \eqn{d} columns one group carries across every
+#' member, so the index must list, for each group in turn, that group's columns
+#' from each member.
+#'
+#' Each member's own block is already group-major, so member \eqn{k}'s columns
+#' for group \eqn{i} are its positions \eqn{(i-1)d_k + 1} to \eqn{id_k}. The
+#' union across members is **not** contiguous -- one member's columns all
+#' precede the next member's in the stacked vector, and the two may be in
+#' different equations -- so what comes out is a permutation rather than a
+#' range. Nothing downstream minds: reading and writing a matrix at
+#' `[index, index]` is correct for any index, provided the penalty's own
+#' output is in the same order, which is what this ordering arranges.
+#'
+#' @param cl One class, from [statmod_classes()].
+#' @param design The design.
+#' @param params The distribution's parameters, in order.
+#' @param offs Where each parameter's coefficients start in the stacked vector.
+#'
+#' @return `class_pieces()` a list of lists with `param`, `term`, `cols` and
+#'   `index`; `class_index()` an integer vector of `m * dim` positions.
+#'
+#' @seealso [statmod_penalized()], their caller.
+#'
+#' @keywords internal
+class_pieces <- function(cl, design, params, offs) {
+  lapply(cl$pieces, function(pc) {
+    a <- match(pc$param, params)
+    cols <- design[[pc$param]]$blocks[[pc$term]]
+    # a piece written in a SUBFORMULA is part of its parent's block, and
+    # `within` says which part; one written as a term of the equation is the
+    # whole of it
+    if (!is.null(pc$within)) cols <- cols[pc$within]
+    c(pc, list(cols = cols, index = offs[a] + cols))
+  })
+}
+
+#' @rdname class_pieces
+#' @keywords internal
+class_index <- function(cl, design, params, offs) {
+  pcs <- class_pieces(cl, design, params, offs)
+  out <- integer(0)
+  for (i in seq_len(cl$m)) {
+    for (pc in pcs) {
+      d <- as.integer(pc$dim)
+      out <- c(out, pc$index[(i - 1L) * d + seq_len(d)])
+    }
+  }
+  out
+}
+
+
+#' The Coefficients a Penalized Unit Covers
+#'
+#' @description
+#' The values the unit's penalty is read at, in the unit's own order.
+#'
+#' @details
+#' Written once because a unit's coefficients are addressed differently
+#' depending on what it is, and every caller wants the same vector. An ordinary
+#' unit sits in one equation and its columns are positions in that parameter's
+#' coefficients; a covariance class spans several and is addressed only in the
+#' stacked vector. Stacking and indexing answers both, and for an ordinary unit
+#' it returns exactly what `coef[[u$param]][u$cols]` returned, the stacked
+#' index being that parameter's offset plus those columns.
+#'
+#' A structural unit has no position in the stacked vector at all: its penalty
+#' covers the term's own parameters, which contribute no design column. It is
+#' read from the design's structural state instead and never reaches here.
+#'
+#' @param u One unit, from [statmod_penalized()].
+#' @param coef The coefficients, a named list by distribution parameter.
+#' @param params The distribution's parameters, in order.
+#'
+#' @return A numeric vector as long as the unit's index.
+#'
+#' @seealso [statmod_penalty_at()], [statmod_marginal_grad()],
+#'   [statmod_edf_correction()].
+#'
+#' @keywords internal
+unit_beta <- function(u, coef, params) {
+  unlist(coef[params], use.names = FALSE)[u$index]
 }
 
 
@@ -298,6 +398,8 @@ statmod_penalty_keys <- function(spec) {
   out <- list()
   for (p in spec@distrib@params) {
     for (nm in names(spec@terms[[p]])) {
+      # a LABELLED term declares no penalty of its own: its coefficients are
+      # covered by the class's, appended below
       ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
       if (!length(ent)) next
       for (e in ent) {
@@ -317,8 +419,261 @@ statmod_penalty_keys <- function(spec) {
       }
     }
   }
+  # one unit per covariance class, over the stacked columns of its members.
+  # `param` is the FIRST piece's, which is what the hyperparameter store is
+  # keyed by and is a convention rather than a fact; `params` carries all of
+  # them, and a reader reporting to a user reads that one.
+  for (cl in statmod_classes(spec@terms)) {
+    out[[length(out) + 1L]] <- list(
+      param = cl$pieces[[1L]]$param, term = cl$key, key = cl$key,
+      within = NULL, penalty = cl$penalty,
+      fixed = list(), n_values = list(), values = list(),
+      min_ratio = numeric(0), search = character(0),
+      class = cl,
+      params = vapply(cl$pieces, function(z) z$param, ""))
+  }
   out
 }
+
+
+#' The Covariance Classes of a Specification
+#'
+#' @description
+#' The groups of terms that share a covariance block: those carrying the same
+#' label and the same grouping variable, collected across the equations.
+#'
+#' @details
+#' # What identifies a class
+#'
+#' A label and a grouping, both. The label comes from
+#' [modelterms7::term_tag()] and the grouping from
+#' [modelterms7::term_group()], which returns the expression, the levels and
+#' the within-group column count. Two terms belong together only if the levels
+#' agree as well as the expression: `droplevels(id)` and `id` are different
+#' expressions for one grouping, and `id` under two subsets is one expression
+#' for two groupings.
+#'
+#' Correlating effects on different groupings means nothing -- they are indexed
+#' by different things and there is no block to estimate -- so a label used on
+#' two groupings is an error naming both.
+#'
+#' # Whose prior it is
+#'
+#' The joint prior belongs to the class and not to any of its members. At most
+#' one term may name a `distrib`, and its dimension must be the class's total;
+#' where none does, the default is a centered multivariate Gaussian on
+#' [parameters7::dr_prod()], whose coordinates are the log standard deviations
+#' and the correlations' angles, so a printed hyperparameter is the quantity it
+#' names. At a total of one column there is no correlation and the default is
+#' the centered univariate Gaussian a single unlabelled term would have built.
+#'
+#' A class whose members carry priors of **different families** -- a Gaussian
+#' intercept correlated with a Student t slope -- is a copula and not an
+#' elliptical family; \pkg{modelterms7} rejects a univariate `distrib` on a
+#' labelled term for that reason, and this function never sees the case.
+#'
+#' @param terms The built terms, a named list of named lists: one element
+#'   per distribution parameter, in the family's order.
+#'
+#' @return A list, one element per class, each with `tag`, `group` (the
+#'   deparsed expression), `levels`, `m`, `dim` (the class total), `penalty`
+#'   and `pieces` -- one per member, with its parameter, its term's name and
+#'   its within-group column count, in the order the equations were walked.
+#'   Empty where no term carries a label.
+#'
+#' @seealso [statmod_penalty_keys()], which turns each into one penalized
+#'   unit; [statmod_penalized()] for the interleaved index it is read at.
+#'
+#' @keywords internal
+statmod_classes <- function(terms) {
+  found <- list()
+  for (p in names(terms)) {
+    for (nm in names(terms[[p]])) {
+      for (pc in label_pieces(terms[[p]][[nm]], p, nm)) {
+        gr <- pc$group
+        tg <- pc$tag
+        key <- sprintf("%s | %s", tg, deparse1(gr$expr))
+        if (is.null(found[[key]])) {
+          found[[key]] <- list(tag = tg, group = deparse1(gr$expr),
+                               levels = gr$levels, m = length(gr$levels),
+                               pieces = list(pc))
+        } else {
+          if (!identical(found[[key]]$levels, gr$levels)) {
+            stop(sprintf(paste0(
+              "the covariance label '%s' is used on two different groupings:\n",
+              "  '%s' in '%s' and '%s' in '%s' write the same expression and\n",
+              "  take different levels. Effects correlated with each other are\n",
+              "  indexed by one grouping."),
+              tg, found[[key]]$pieces[[1L]]$term,
+              found[[key]]$pieces[[1L]]$param, nm, p), call. = FALSE)
+          }
+          found[[key]]$pieces <- c(found[[key]]$pieces, list(pc))
+        }
+      }
+    }
+  }
+  # a label written on two groupings gives two keys, which is a modelling
+  # mistake and not two classes: the effects cannot be correlated
+  tags <- vapply(found, function(z) z$tag, "")
+  dup <- tags[duplicated(tags)]
+  if (length(dup)) {
+    which_ <- names(found)[tags == dup[1L]]
+    stop(sprintf(paste0(
+      "the covariance label '%s' is used on more than one grouping: %s.\n",
+      "  Effects correlated with each other are indexed by one grouping, so\n",
+      "  a label belongs to one of them."),
+      dup[1L], paste(sprintf("'%s'", which_), collapse = " and ")),
+      call. = FALSE)
+  }
+  lapply(stats::setNames(names(found), names(found)), function(key) {
+    cl <- found[[key]]
+    cl$key <- key
+    cl$dim <- sum(vapply(cl$pieces, function(z) as.integer(z$dim), integer(1)))
+    cl$penalty <- class_penalty(cl)
+    cl
+  })
+}
+
+
+#' Every Labelled Effect a Term Carries, Its Sub-Terms Included
+#'
+#' @description
+#' One piece per labelled random effect reachable from a term: the term itself
+#' where it carries a label, and the sub-terms developing its own parameters
+#' otherwise, walked to any depth.
+#'
+#' @details
+#' # Why a sub-term is reachable at all
+#'
+#' `seg(x, psi ~ random(~ 1 | u | id))` develops a break-point over a labelled
+#' random effect. The labelled term is not one of the equation's terms -- the
+#' equation carries one `SegTerm`, whose own label is absent -- and its
+#' coefficients are columns of that term's block. Measured, they are exactly
+#' the ones [modelterms7::term_components()] reports as that component's
+#' `sub_index`, so a piece records them as `within`, positions in the parent's
+#' block, and the design turns them into positions in the stacked vector the
+#' same way it does for any other term.
+#'
+#' That is the whole of what a subformula costs here, and it is why the case is
+#' covered: a labelled effect written in a subformula of an **additive** term
+#' lives in the same vector as one written in an equation. A **structural**
+#' parent is different -- its coefficients are its own parameters and it
+#' contributes no design column -- and is rejected before reaching this, by
+#' [unfittable_reason()].
+#'
+#' # Depth
+#'
+#' A sub-term is an ordinary term and may develop parameters of its own, so the
+#' walk recurses and composes `within` on the way down: a depth-two sub-term's
+#' columns are positions in its parent's block, which are themselves positions
+#' in the equation-level term's.
+#'
+#' A labelled term's own sub-terms are not walked. Its columns are the class's
+#' already, and anything inside it belongs to that block rather than to another.
+#'
+#' @param term One built term.
+#' @param param The distribution parameter its equation belongs to.
+#' @param nm The equation-level term's name, which is what the design is keyed
+#'   by.
+#' @param within The piece's columns in that term's block, or `NULL` at the top
+#'   level, where the piece is the whole of it.
+#'
+#' @return A list of pieces, each with `param`, `term`, `within`, `dim`, `tag`,
+#'   `group` (as [modelterms7::term_group()] returns it) and `distrib`. Empty
+#'   where nothing under the term is labelled.
+#'
+#' @seealso [statmod_classes()], its caller; [class_pieces()] for the mapping
+#'   of `within` onto the stacked vector.
+#'
+#' @keywords internal
+label_pieces <- function(term, param, nm, within = NULL) {
+  tg <- tryCatch(modelterms7::term_tag(term), error = function(e) NA_character_)
+  if (length(tg) == 1L && !is.na(tg)) {
+    gr <- modelterms7::term_group(term)
+    if (is.null(gr)) {
+      stop(sprintf(paste0(
+        "'%s' in '%s' carries the covariance label '%s' but reports no\n",
+        "  grouping variable, and effects are correlated within a grouping."),
+        nm, param, tg), call. = FALSE)
+    }
+    return(list(list(param = param, term = nm, within = within, dim = gr$dim,
+                     tag = tg, group = gr,
+                     distrib = tryCatch(term@distrib, error = function(e) NULL))))
+  }
+  out <- list()
+  comp <- tryCatch(modelterms7::term_components(term), error = function(e) list())
+  for (cp in comp) {
+    for (k in seq_along(cp$subs)) {
+      w <- cp$sub_index[[k]]
+      if (!is.null(within)) w <- within[w]
+      out <- c(out, label_pieces(cp$subs[[k]], param, nm, w))
+    }
+  }
+  out
+}
+
+
+#' The Joint Prior of a Covariance Class
+#'
+#' @description
+#' The penalty over a class's stacked coefficients: the distribution one of its
+#' members named, or the centered multivariate Gaussian that is the default.
+#'
+#' @details
+#' The prior describes the effects of **one group** over every column the label
+#' collects, so its dimension is the class's total and the penalty covers
+#' \eqn{m} such blocks. Which chart the covariance rides is a modeling choice
+#' and is [parameters7::dr_prod()] by default, where a coordinate is the
+#' logarithm of a standard deviation exactly; the alternative, log-Cholesky,
+#' is the same family of matrices written so that only the first coordinate
+#' reads as one.
+#'
+#' Naming a `distrib` on more than one member is an error rather than a
+#' precedence rule: the prior is one object and there is nothing to say which
+#' of two should win.
+#'
+#' @param cl One class, as [statmod_classes()] assembles it before the penalty.
+#'
+#' @return A \pkg{penalties7} penalty over `m * dim` coefficients.
+#'
+#' @seealso [statmod_classes()], its only caller.
+#'
+#' @keywords internal
+class_penalty <- function(cl) {
+  named <- Filter(function(z) !is.null(z$distrib), cl$pieces)
+  if (length(named) > 1L) {
+    stop(sprintf(paste0(
+      "the covariance label '%s' has a 'distrib' on %d of its terms: %s.\n",
+      "  The joint prior belongs to the class and is one object, so it is\n",
+      "  named on one term or on none."),
+      cl$tag, length(named),
+      paste(sprintf("'%s'", vapply(named, function(z) z$term, "")),
+            collapse = ", ")), call. = FALSE)
+  }
+  d <- cl$dim
+  if (length(named)) {
+    pr <- named[[1L]]$distrib
+    if (!identical(pr@n_dim, d)) {
+      stop(sprintf(paste0(
+        "the prior on '%s' is %d-variate and the label '%s' collects %d\n",
+        "  columns per group. A class's prior describes the effects of one\n",
+        "  group over every column the label collects."),
+        named[[1L]]$term, pr@n_dim, cl$tag, d), call. = FALSE)
+    }
+  } else if (d == 1L) {
+    # no correlation to carry at one column: the same object a single
+    # unlabelled term would have built
+    pr <- distributions7::fixed(distributions7::gaussian1_distrib(), mu = 0)
+  } else {
+    mv <- distributions7::mvgaussian1_distrib(d, sigma = parameters7::dr_prod(d))
+    pr <- do.call(distributions7::fixed,
+                  c(list(mv), stats::setNames(as.list(rep(0, d)),
+                                              paste0("mu", seq_len(d)))))
+  }
+  penalties7::distrib_penalty(pr, n_coef = cl$m * d)
+}
+
+
 
 
 #' Which Hyperparameters the Terms Hold

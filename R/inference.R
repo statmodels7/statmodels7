@@ -36,14 +36,23 @@ coef_labels <- function(spec, design) {
     kink <- rep(FALSE, d$npar)
     for (nm in names(d$blocks)) term[d$blocks[[nm]]] <- nm
     for (u in units) {
-      if (!identical(u$param, p)) next
+      # a class is considered under EVERY equation one of its members sits
+      # in; `param` on it is a convention for the hyperparameter store
+      here <- if (is.null(u$pieces)) identical(u$param, p) else
+        any(vapply(u$pieces, function(z) identical(z$param, p), TRUE))
+      if (!here) next
       # a structural unit's penalty sits on the term's OWN parameters,
       # which contribute no column: its cols index the term's parameter
       # vector, and writing them here grew pen past the design and
       # recycled the labels into duplicate rows
       if (isTRUE(u$structural)) next
-      pen[u$cols] <- TRUE
-      kink[u$cols] <- penalty_has_kink(u$penalty)
+      # a covariance class has no columns of its own: its members do, each in
+      # its own equation, so the marks go on the pieces that live in this one
+      cs <- if (is.null(u$pieces)) u$cols else
+        unlist(lapply(Filter(function(z) identical(z$param, p), u$pieces),
+                      function(z) z$cols), use.names = FALSE)
+      pen[cs] <- TRUE
+      kink[cs] <- penalty_has_kink(u$penalty)
     }
     rows[[length(rows) + 1L]] <- data.frame(
       parameter = p, term = term, coefficient = d$coef_names,
@@ -1176,6 +1185,15 @@ term_block_kind <- function(term) {
   # not the quantities of the model, so it wants a section of its own
   # whether or not a development of its coefficients carries a penalty
   if (S7::S7_inherits(term, modelterms7::SegTerm)) return("breakpoint")
+  # a LABELLED random effect is asked about before its penalties too, and
+  # for the same reason: it declares none, its coefficients being covered
+  # by the covariance class's, and read after the penalties it came back
+  # "parametric" -- forty grouping indicators printed one per line under
+  # a heading that says they are an unpenalized block
+  if (S7::S7_inherits(term, modelterms7::RandomTerm) &&
+      !is.na(modelterms7::term_tag(term))) {
+    return("random")
+  }
   ent <- modelterms7::term_penalties(term)
   if (!length(ent)) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
@@ -1397,7 +1415,8 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
-  notes <- c(character(0), frozen_msg)
+  notes <- c(character(0), frozen_msg,
+             tryCatch(class_notes(spec, design), error = function(e) character(0)))
   # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
   # qualifies the fit rather than describing it, so it is a note and not a
   # line of print(): the measured case is a scale that ran to 1e-15 while
@@ -1681,10 +1700,32 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # are not the same number and cannot appear under the same name.
   hyper_parts <- function(nm) {
     ent <- modelterms7::term_penalties(spec@terms[[p]][[nm]])
-    if (!length(ent)) return(list(rows = list(), index = list()))
     des <- statmod_design(spec)
+    # A LABELLED term declares no penalty of its own: the covariance class
+    # carries it. The class's hyperparameters are reported ONCE, under its
+    # first member, and a note names the equations the block spans -- a
+    # class is one penalty and printing it under each member would say
+    # there are several.
+    cl <- class_unit_of(spec, des, p, nm)
+    if (!is.null(cl)) {
+      first <- cl$pieces[[1L]]
+      # under the FIRST member only, so one penalty prints once
+      if (identical(first$param, p) && identical(first$term, nm)) {
+        # ADDED to the term's own entries, never in place of them: a term may
+        # carry a penalty of its own beside a labelled sub-term, and replacing
+        # them would drop it from the page
+        ent <- c(ent, list(list(name = "", penalty = cl$penalty,
+                                index = cl$index, class_key = cl$key)))
+      }
+    }
+    if (!length(ent)) return(list(rows = list(), index = list()))
+    own <- length(ent) - as.integer(!is.null(cl) &&
+                                    identical(cl$pieces[[1L]]$param, p) &&
+                                    identical(cl$pieces[[1L]]$term, nm))
     out <- lapply(ent, function(e) {
-      key <- statmod_entry_key(nm, ent, e)
+      key <- if (is.null(e$class_key)) {
+        statmod_entry_key(nm, utils::head(ent, own), e)
+      } else e$class_key
       th <- fit@hyper[[p]][[key]]
       if (is.null(th) || !length(th)) return(empty)
       u <- statmod_unit(spec, des, p, key)
@@ -2068,6 +2109,79 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       table = tb, head = NULL, components = list())
   }
   blocks
+}
+
+
+#' The Covariance Class One Term Belongs To
+#'
+#' @description
+#' The penalized unit of the covariance class that covers a term's
+#' coefficients, or `NULL` where the term is not labelled.
+#'
+#' @details
+#' A labelled term declares no penalty of its own, the class carrying it, so a
+#' reader asking a term for its hyperparameters has to ask the class instead.
+#' The lookup is by the pair of the equation and the term's name, which is what
+#' a class's pieces record.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param param The distribution parameter the term sits in.
+#' @param nm The term's name in the formula.
+#'
+#' @return One unit, as [statmod_penalized()] returns it, or `NULL`.
+#'
+#' @seealso [statmod_classes()] for the classes, [summary_blocks()] for the
+#'   reader that needs this.
+#'
+#' @keywords internal
+class_unit_of <- function(spec, design, param, nm) {
+  for (u in statmod_penalized(spec, design)) {
+    if (is.null(u$pieces)) next
+    hit <- vapply(u$pieces, function(z)
+      identical(z$param, param) && identical(z$term, nm), TRUE)
+    if (any(hit)) return(u)
+  }
+  NULL
+}
+
+
+#' What a Summary Says About the Covariance Classes
+#'
+#' @description
+#' One note per class spanning more than one term, naming the label, the
+#' grouping and the terms whose coefficients share the block.
+#'
+#' @details
+#' A class's hyperparameters are printed once, under its first member, so
+#' without the note a reader sees a covariance of four coordinates under a
+#' term carrying two columns and nothing saying where the other two came from.
+#'
+#' A class of one member gets no note: there is nothing shared to report, and
+#' its block is the random effect it would have been without a label.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#'
+#' @return A character vector, possibly empty.
+#'
+#' @seealso [summary.StatmodFit()], which collects it.
+#'
+#' @keywords internal
+class_notes <- function(spec, design) {
+  out <- character(0)
+  for (u in tryCatch(statmod_penalized(spec, design),
+                     error = function(e) list())) {
+    if (is.null(u$pieces) || length(u$pieces) < 2L) next
+    who <- vapply(u$pieces, function(z) sprintf("'%s' in '%s'", z$term, z$param),
+                  "")
+    out <- c(out, sprintf(paste0(
+      "The covariance block '%s' is shared by %s: one %d-variate prior over ",
+      "the effects of one level of %s, with the hyperparameters reported ",
+      "under the first of them."),
+      u$key, paste(who, collapse = " and "), u$class$dim, u$class$group))
+  }
+  out
 }
 
 

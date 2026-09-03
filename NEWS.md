@@ -1,3 +1,97 @@
+# statmodels7 0.91.0
+
+* The terms carrying the same covariance label and the same grouping are
+  collected into one class, whose penalty covers their stacked coefficients.
+  `y ~ random(~ 1 + x | b | id) | sigma ~ random(~ 1 + x | b | id)` is a
+  random intercept and slope in the mean correlated with a random intercept
+  and slope in the scale, one covariance block estimated across the two
+  equations. Measured on 60 groups of 15 drawn at standard deviations 0.8 and
+  0.5 and a correlation of 0.75, the fit returns 0.774, 0.502 and 0.759, the
+  effects correlating 0.984 and 0.944 with the ones drawn, and the criterion
+  is -810.59 against the -829.41 of two independent random effects.
+
+  What moves is the penalty and not the coefficients. Each member's block
+  stays in its own equation and `coef()`, `fitted()` and `predict()` are
+  untouched; one penalty now reads columns from more than one of them.
+  `statmod_classes()` collects the classes, `class_index()` interleaves the
+  members' positions group by group -- which is the order a blockwise penalty
+  reads, penalties7 reshaping its argument by row -- and `unit_beta()` is the
+  one place a unit's coefficients are gathered, answering the same vector for
+  an ordinary unit as the per-equation form it replaces.
+
+  The joint prior belongs to the class. Where no member names a `distrib` the
+  default is a centered multivariate gaussian on `parameters7::dr_prod()`,
+  whose coordinates are the log standard deviations and the correlations'
+  angles, so a printed hyperparameter is the quantity it names; at a total of
+  one column there is no correlation and the default is the centered
+  univariate gaussian a single unlabelled term builds, which makes a class of
+  one member the same fit as `random(~ 1 | g)` to the last bit.
+
+  Refused, at the specification and with the reason: a label used on two
+  groupings, a `distrib` named on more than one member, and one whose
+  dimension is not the class's total.
+
+* A label written inside a subformula is refused, naming the parameter the
+  labelled term develops. `term_tags_deep()` reaches it through
+  `modelterms7::term_components()`, a labelled term inside
+  `seg(x, psi ~ ...)` not being one of the equation's terms. The block would
+  have to reach coefficients this layer addresses differently, which is work
+  the shared penalty does not yet do.
+
+* What a fit reports about a covariance class. `hyper()` names every equation
+  the block spans, `mu, sigma` rather than the first of them: `param` on a
+  class's unit is the first member's and is a convention the hyperparameter
+  store is keyed by, which a table a reader reads must not repeat as though
+  it were a fact. `summary()` reports the class's hyperparameters once, under
+  its first member, and adds a note naming the label, the grouping and the
+  terms that share the block; without it a reader sees a covariance of four
+  coordinates under a term carrying two columns and nothing saying where the
+  other two came from. A class of one member shares nothing and gets no note.
+
+  A labelled random effect is also reported AS a random effect. The kind of a
+  block was read after its penalties, and a labelled term declares none, so
+  it came back `parametric`: forty grouping indicators printed one per line
+  under a heading saying they are an unpenalized block, with the covariance
+  that produced them nowhere on the page.
+
+  The effective degrees of freedom needed no change and that was measured,
+  not assumed: `statmod_edf()` reads one smoother matrix assembled over every
+  equation at once, so the class's cross block is already in it. On a shared
+  block over 40 groups the total agrees with the trace computed apart to
+  1.4e-14, and dropping the cross block moves it by 0.2477, which is what
+  says the coupling is really being counted.
+
+* A label written inside the subformula of an additive term joins the class
+  like any other. `y ~ seg(x, psi ~ random(~ 1 | u | id)) | sigma ~ random(~
+  1 | u | id)` is a random break-point correlated with a random scale: the
+  subjects whose break-point comes later are also the noisier ones, and one
+  block estimates it. Measured on 40 subjects of 25 drawn at standard
+  deviations 0.6 and 0.5 and a correlation of 0.6, the fit returns 0.538,
+  0.532 and 0.612.
+
+  It needed no new address space, which is what made it cheap. A labelled
+  effect inside `seg()` or `nl()` occupies columns of that term's block --
+  exactly the ones `modelterms7::term_components()` reports as the
+  component's `sub_index` -- so `label_pieces()` records them as `within` and
+  the design turns them into positions in the stacked vector as it does for
+  any other term. The walk recurses, composing `within` on the way down.
+
+  A label under a STRUCTURAL term is still refused, and the message now says
+  why it is the one shape that cannot be reached: what such a term
+  contributes is its own parameters rather than columns of the design, and
+  only `statmod_marginal_full()` spans both -- for one filter and in one
+  place.
+
+  A parent keeps its own penalties beside a labelled sub-term: the class's
+  entry is added to them and never replaces them.
+
+  ⚠️ Measured, and worth knowing before reading a flag: a random break-point
+  beside a modelled scale reports `converged = FALSE` whether or not the two
+  share a block -- 48.9 s labelled and 6.4 s unlabelled, both not certified,
+  against the same break-point without a modelled scale, which converges in
+  2.0 s, and two labelled random effects without a break-point, which
+  converge in 5.7 s. The label is not what stops it.
+
 # statmodels7 0.90.0
 
 * `ml()` fits a model carrying an anisotropic tensor smooth, where it

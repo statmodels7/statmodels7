@@ -109,6 +109,15 @@ a kink has no second derivative at the mode, so its hyperparameter is chosen
 instead along a path of its own values, from the value that empties the block
 downwards.
 
+Random effects written with the same label and the same grouping share one
+covariance block, whatever equation they sit in, which is `brms`'s second
+bar. `y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)` estimates the
+correlation between a subject's level and its dispersion, and the label
+reaches a subformula too, so `seg(x, psi ~ random(~ 1 | u | id))` beside it
+correlates a random break-point with a random scale. The block is one
+multivariate prior over the effects of one level, on `dr_prod()` by default,
+where a coordinate is the logarithm of a standard deviation exactly.
+
 `rstatmod()` simulates from a model written the same way, which is what a
 simulation study needs: the truth is returned beside the data.
 

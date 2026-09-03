@@ -423,7 +423,7 @@ integrated_basis <- function(spec, design, kind) {
     # design; its directions are appended by statmod_marginal_full()
     if (isTRUE(u$structural)) next
     pen <- u$penalty
-    k <- length(u$cols)
+    k <- length(u$index)
     R <- penalty_range_basis(pen, k, u$param, u$key)
     if (!ncol(R)) next
     M <- matrix(0, total, ncol(R))

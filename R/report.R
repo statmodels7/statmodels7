@@ -891,7 +891,14 @@ hyper <- function(fit, scale = c("parameter", "link")) {
       is_held <- hk %in% held || h %in% names(u$fixed)
       src <- if (is_held) "fixed" else if (kink) spc_kind else outer_kind
       rows[[length(rows) + 1L]] <- data.frame(
-        parameter = u$param, term = u$key, name = h, estimate = v,
+        # A COVARIANCE CLASS has no single parameter. `param` on its unit is
+        # the first member's, which is a convention the hyperparameter store
+        # is keyed by; a table a reader reads says every equation the block
+        # spans, since a shared covariance reported under one of them reads
+        # as that equation's alone.
+        parameter = if (is.null(u$params)) u$param else
+          paste(unique(u$params), collapse = ", "),
+        term = u$key, name = h, estimate = v,
         held = is_held, source = if (is.na(src)) "" else src,
         stringsAsFactors = FALSE)
     }

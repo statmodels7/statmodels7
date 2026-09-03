@@ -323,3 +323,290 @@ test_that("a smooth per level fits the same model in either storage", {
   # m times the block's, the eigenvalues of I (x) P being P's repeated
   expect_identical(penalties7::penalty_rank(pen) %% m, 0L)
 })
+
+
+# A covariance label is recorded and not yet fittable ----------------------
+
+test_that("a labelled random effect becomes one covariance class", {
+  # the terms carrying a label are collected across the equations into one
+  # class, whose penalty covers their stacked columns
+  spec <- statmod_spec(y ~ random(~ 1 | u | g) | sigma ~ random(~ 1 | u | g),
+                       distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  us <- statmod_penalized(spec, des)
+  expect_length(us, 1L)
+  u <- us[[1L]]
+  expect_identical(u$key, "u | g")
+  expect_identical(u$params, c("mu", "sigma"))
+  expect_identical(u$class$dim, 2L)
+  expect_identical(u$class$m, nlevels(dd$g))
+  # the class's index reaches BOTH equations
+  expect_true(any(u$index <= des$mu$npar))
+  expect_true(any(u$index > des$mu$npar))
+  expect_length(u$index, 2L * nlevels(dd$g))
+  # and it is group-major over the union: each group's two columns adjacent
+  expect_identical(u$index[1:2],
+                   c(u$pieces[[1L]]$index[1L], u$pieces[[2L]]$index[1L]))
+})
+
+test_that("term_tags_deep reaches a label inside a subformula", {
+  # the labelled term is not one of the equation's terms: it develops the
+  # break-point of a seg(), so the walk has to go through term_components().
+  # Under an ADDITIVE parent that label is fitted; the walk is what tells the
+  # two parents apart, so it is tested on its own.
+  tm <- modelterms7::term_build(
+    modelterms7::seg(x, psi ~ modelterms7::random(~ 1 | u | g)), dd)
+  lab <- term_tags_deep(tm)
+  expect_identical(unname(lab), "u")
+  expect_match(names(lab), "psi1", fixed = TRUE)
+  # and nothing under an unlabelled one
+  expect_length(term_tags_deep(modelterms7::term_build(
+    modelterms7::seg(x, psi ~ modelterms7::random(~ 1 | g)), dd)), 0L)
+})
+
+test_that("an unlabelled model is untouched", {
+  # the guard reads a property off the term, so a formula that carried no
+  # label before still fits, and the walk costs nothing where there is none
+  expect_length(term_tags_deep(
+    modelterms7::term_build(modelterms7::random(~ 1 | g), dd)), 0L)
+  expect_length(term_tags_deep(
+    modelterms7::term_build(modelterms7::seg(x, psi ~ random(~ 1 | g)), dd)), 0L)
+  expect_no_error(statmod_spec(y ~ x + random(~ 1 | g),
+                               distributions7::gaussian1_distrib(), dd))
+})
+
+
+test_that("a class's index is the interleaving its penalty reads", {
+  # penalties7 reshapes a blockwise penalty's argument by row, so the index
+  # must list, for each group in turn, that group's columns from every member.
+  # Getting it wrong is not a rounding: the value is a different number.
+  spec <- statmod_spec(y ~ random(~ 1 | u | g) | sigma ~ random(~ 1 | u | g),
+                       distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  u <- statmod_penalized(spec, des)[[1L]]
+  m <- u$class$m
+
+  # the joint penalty against the form written out by hand, at a covariance
+  # built from the chart itself so the two describe the same matrix exactly
+  dr <- parameters7::dr_prod(2)
+  v <- c(log(0.8), log(1.3), 0.4)
+  names(v) <- dr@free_names
+  Sig <- parameters7::param_value(dr, v)
+  th <- as.list(stats::setNames(v, u$penalty@params))
+  set.seed(4)
+  b <- stats::rnorm(length(u$index))
+  B <- matrix(b, ncol = 2, byrow = TRUE)
+  manual <- 0.5 * sum(diag(B %*% solve(Sig) %*% t(B))) +
+    (m / 2) * log(det(Sig)) + m * log(2 * pi)
+  expect_equal(penalties7::penalty_value(u$penalty, b, th), manual,
+               tolerance = 1e-12)
+
+  # the negative control: swapping the two members inside each group is a
+  # different number, so the test could fail
+  bad <- as.numeric(t(B[, 2:1]))
+  expect_false(isTRUE(all.equal(penalties7::penalty_value(u$penalty, bad, th),
+                                manual, tolerance = 1e-6)))
+})
+
+test_that("a class of one member is today's random effect exactly", {
+  # a single-member class of one column has no correlation to carry, so its
+  # default prior is the centered univariate gaussian an unlabelled term
+  # builds, and the two fits are the same fit
+  set.seed(202)
+  m <- 25; ni <- 8
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)),
+                   x = stats::rnorm(m * ni))
+  d2$y <- 1 + 0.5 * d2$x + stats::rnorm(m, sd = 0.7)[d2$id] +
+    stats::rnorm(m * ni, sd = 0.5)
+  a <- statmod(y ~ x + random(~ 1 | id),
+               distributions7::gaussian1_distrib(), d2, outer_criterion = reml())
+  b <- statmod(y ~ x + random(~ 1 | u | id),
+               distributions7::gaussian1_distrib(), d2, outer_criterion = reml())
+  expect_identical(as.numeric(logLik(a)), as.numeric(logLik(b)))
+  expect_identical(unlist(coef(a), use.names = FALSE),
+                   unlist(coef(b), use.names = FALSE))
+  expect_identical(hyper(a)$estimate, hyper(b)$estimate)
+  # what differs is only what it is filed under
+  expect_identical(hyper(b)$term, "u | id")
+})
+
+test_that("a shared block is refused where it would mean nothing", {
+  d2 <- dd
+  d2$g2 <- factor(rep(c("p", "q"), length.out = nrow(dd)))
+  # one label, two groupings: the effects are indexed by different things
+  expect_error(
+    statmod_spec(y ~ random(~ 1 | u | g) | sigma ~ random(~ 1 | u | g2),
+                 distributions7::gaussian1_distrib(), d2),
+    "more than one grouping")
+  # the joint prior is one object, so it is named once or not at all
+  mv <- do.call(distributions7::fixed,
+                list(distributions7::mvgaussian1_distrib(2), mu1 = 0, mu2 = 0))
+  expect_error(
+    statmod_spec(y ~ random(~ 1 | u | g, distrib = mv) +
+                   random(~ 0 + x | u | g, distrib = mv),
+                 distributions7::gaussian1_distrib(), dd),
+    "named on one term or on none")
+  # and its dimension is the class's total
+  mv3 <- do.call(distributions7::fixed,
+                 list(distributions7::mvgaussian1_distrib(3),
+                      mu1 = 0, mu2 = 0, mu3 = 0))
+  expect_error(
+    statmod_spec(y ~ random(~ 1 | u | g, distrib = mv3) +
+                   random(~ 0 + x | u | g),
+                 distributions7::gaussian1_distrib(), dd),
+    "collects 2")
+})
+
+test_that("a label inside an additive subformula is fitted, not refused", {
+  # what L4 changed: under an additive parent the labelled effect occupies
+  # columns of that term's block, so it sits in the same vector as one written
+  # in an equation and the class reaches it with no new machinery
+  spec <- statmod_spec(y ~ seg(x, psi ~ random(~ 1 | u | g)),
+                       distributions7::gaussian1_distrib(), dd)
+  u <- Filter(function(z) !is.null(z$pieces),
+              statmod_penalized(spec, statmod_design(spec)))
+  expect_length(u, 1L)
+  expect_identical(u[[1L]]$key, "u | g")
+  expect_false(is.null(u[[1L]]$pieces[[1L]]$within))
+})
+
+
+# What a fit reports about a covariance class ------------------------------
+
+test_that("hyper() names every equation a class spans", {
+  set.seed(404)
+  m <- 20; ni <- 10
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
+  u <- matrix(stats::rnorm(2 * m, sd = 0.6), m, 2)
+  d2$y <- stats::rnorm(m * ni, mean = 1 + u[d2$id, 1],
+                       sd = exp(-0.7 + u[d2$id, 2]))
+  fit <- statmod(y ~ random(~ 1 | b | id) | sigma ~ random(~ 1 | b | id),
+                 distributions7::gaussian1_distrib(), d2,
+                 outer_criterion = reml())
+  h <- hyper(fit)
+  # a class has no single parameter: `param` on its unit is the first
+  # member's, which is a convention the store is keyed by and not a fact
+  expect_true(all(h$parameter == "mu, sigma"))
+  expect_true(all(h$term == "b | id"))
+  expect_identical(nrow(h), 3L)
+
+  # the edf total is the trace of the assembled smoother, cross block and all
+  des <- statmod_design(fit@spec)
+  H <- as.matrix(statmod_information_at(fit@spec, fit@coefficients, des,
+                                        TRUE, "bartlett"))
+  S <- as.matrix(statmod_penalty_at(fit@spec, fit@coefficients, fit@hyper,
+                                    des, "hessian"))
+  expect_equal(sum(fit@edf$edf), sum(diag(solve(H + S) %*% H)),
+               tolerance = 1e-8)
+})
+
+test_that("a labelled random effect is reported as a random effect", {
+  set.seed(505)
+  m <- 15; ni <- 10
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
+  d2$y <- stats::rnorm(m * ni) + stats::rnorm(m, sd = 0.6)[d2$id]
+  fit <- statmod(y ~ random(~ 1 | b | id), distributions7::gaussian1_distrib(),
+                 d2, outer_criterion = reml())
+  # it declares no penalty, so read after the penalties it came back
+  # "parametric" and its grouping indicators were printed one per line
+  expect_identical(term_block_kind(fit@spec@terms$mu[["random(~1 | b | id)"]]),
+                   "random")
+  out <- utils::capture.output(print(summary(fit)))
+  expect_true(any(grepl("^random", out)))
+  expect_false(any(grepl("random.1 ", out, fixed = TRUE)))
+  # and the class's hyperparameter is reported, which reading the term's own
+  # penalties could not do
+  expect_true(any(grepl("sigma", out)))
+})
+
+test_that("a shared block is announced in a note, and a private one is not", {
+  set.seed(606)
+  m <- 20; ni <- 10
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
+  u <- matrix(stats::rnorm(2 * m, sd = 0.6), m, 2)
+  d2$y <- stats::rnorm(m * ni, mean = 1 + u[d2$id, 1],
+                       sd = exp(-0.7 + u[d2$id, 2]))
+  shared <- statmod(y ~ random(~ 1 | b | id) | sigma ~ random(~ 1 | b | id),
+                    distributions7::gaussian1_distrib(), d2,
+                    outer_criterion = reml())
+  nt <- summary(shared)@notes
+  expect_true(any(grepl("covariance block 'b | id' is shared", nt, fixed = TRUE)))
+  expect_true(any(grepl("'mu'", nt, fixed = TRUE) & grepl("'sigma'", nt)))
+  # the hyperparameters are printed ONCE, under the first member
+  out <- utils::capture.output(print(summary(shared)))
+  expect_identical(sum(grepl("cor_v1_v2", out)), 1L)
+  # a class of one member shares nothing and gets no note
+  alone <- statmod(y ~ random(~ 1 | b | id),
+                   distributions7::gaussian1_distrib(), d2,
+                   outer_criterion = reml())
+  expect_false(any(grepl("is shared", summary(alone)@notes)))
+})
+
+
+# A label written inside a subformula --------------------------------------
+
+test_that("a label inside an additive term's subformula joins the class", {
+  set.seed(88)
+  m <- 8; ni <- 15
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)),
+                   x = rep(seq(-3, 3, length.out = ni), m))
+  d2$y <- stats::rnorm(m * ni)
+  spec <- statmod_spec(y ~ seg(x, psi ~ random(~ 1 | u | id)) |
+                         sigma ~ random(~ 1 | u | id),
+                       distributions7::gaussian1_distrib(), d2)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) !is.null(z$pieces), statmod_penalized(spec, des))
+  expect_length(u, 1L)
+  u <- u[[1L]]
+  expect_identical(u$class$dim, 2L)
+
+  # the sub-term's piece is PART of its parent's block, named by `within`,
+  # where the equation-level one is the whole of its term
+  sub <- Filter(function(z) !is.null(z$within), u$pieces)
+  top <- Filter(function(z) is.null(z$within), u$pieces)
+  expect_length(sub, 1L)
+  expect_length(top, 1L)
+  expect_identical(sub[[1L]]$cols,
+                   des$mu$blocks[[sub[[1L]]$term]][sub[[1L]]$within])
+  expect_length(sub[[1L]]$cols, m)
+
+  # and the two are interleaved group by group, as the penalty reads them
+  expect_identical(u$index[1:2],
+                   c(u$pieces[[1L]]$index[1L], u$pieces[[2L]]$index[1L]))
+  expect_length(u$index, 2L * m)
+})
+
+test_that("a label under a structural term is refused for its own reason", {
+  set.seed(89)
+  m <- 6; ni <- 20
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
+  d2$y <- stats::rnorm(m * ni)
+  err <- tryCatch(statmod_spec(y ~ gas(p = 1, q = 1,
+                                       omega ~ random(~ 1 | u | id), by = id),
+                               distributions7::gaussian1_distrib(), d2),
+                  error = conditionMessage)
+  # its coefficients are the term's own parameters and contribute no design
+  # column, so the class's index has nowhere to point
+  expect_match(err, "structural term", fixed = TRUE)
+  expect_match(err, "covariance label 'u'", fixed = TRUE)
+  expect_match(err, "under an ordinary term is fitted", fixed = TRUE)
+})
+
+test_that("a parent keeps its own penalty beside a labelled sub-term", {
+  set.seed(90)
+  m <- 8; ni <- 15
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)),
+                   x = rep(seq(-3, 3, length.out = ni), m),
+                   g = factor(rep(c("a", "b"), length.out = m * ni)))
+  d2$y <- stats::rnorm(m * ni)
+  spec <- statmod_spec(
+    y ~ seg(x, gamma1 ~ 0 + ridge(~ g), psi ~ random(~ 1 | u | id)) |
+      sigma ~ random(~ 1 | u | id),
+    distributions7::gaussian1_distrib(), d2)
+  us <- statmod_penalized(spec, statmod_design(spec))
+  # two units: the term's own ridge and the class, and the class does not
+  # swallow the first
+  expect_length(us, 2L)
+  expect_length(Filter(function(z) is.null(z$pieces), us), 1L)
+  expect_length(Filter(function(z) !is.null(z$pieces), us), 1L)
+})

@@ -361,10 +361,12 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       # not `u`: this function already uses that name for the contraction of
       # the third derivative, and shadowing it fails several frames down
       un <- statmod_unit(spec, design, p, nm)
-      cols <- un$cols
       pos <- un$index
       pen <- un$penalty
-      bt <- coef[[p]][cols]
+      # a covariance class spans more than one equation, so its
+      # coefficients come from the stacked vector; for an ordinary unit
+      # this is what coef[[p]][un$cols] returned
+      bt <- unit_beta(un, coef, params)
       th <- as.list(hyper[[p]][[nm]])
       gt <- penalties7::penalty_grad_theta(pen, bt, th)
       cr <- penalties7::penalty_cross(pen, bt, th)

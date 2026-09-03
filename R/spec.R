@@ -822,6 +822,11 @@ statmod_terms <- function(equations, data, env, response = NULL,
     names(out_terms[[p]]) <- names(out$terms)
   }
   reject_unfittable(out_terms)
+  # the covariance classes are assembled HERE as well as where the penalties
+  # are enumerated, so that a label used on two groupings, or a joint prior
+  # named twice or of the wrong dimension, is reported where the formula was
+  # read rather than at the first evaluation of a criterion
+  statmod_classes(out_terms)
   list(terms = out_terms, intercepts = intercepts)
 }
 
@@ -1080,11 +1085,72 @@ reject_incompatible <- function(terms) {
 }
 
 
+#' The Covariance Labels a Term Carries, Its Sub-Terms Included
+#'
+#' @description
+#' Every covariance label reachable from a term: its own, and those of the
+#' sub-terms developing its own parameters, walked to any depth.
+#'
+#' @details
+#' A label written inside a subformula is not visible where the equation's
+#' terms are enumerated: `seg(x, psi ~ random(~ 1 | u | id))` is one
+#' `SegTerm`, whose own [modelterms7::term_tag()] is `NA`, and the labelled
+#' term is a sub-term of its break-point. The sub-terms are reached through
+#' [modelterms7::term_components()], whose `subs` field is the list of them,
+#' and the walk recurses because a sub-term is an ordinary term and may
+#' develop parameters of its own.
+#'
+#' The names of the result say where each label was found, so a message can
+#' name the sub-term rather than the equation's term alone.
+#'
+#' @param term One built term.
+#' @param what How to name this term in the result's names. Defaults to the
+#'   term itself, and a recursive call passes the path it came by.
+#'
+#' @return A named character vector, empty where no label is reachable.
+#'
+#' @seealso [unfittable_reason()], its caller;
+#'   [modelterms7::term_tag()] for one term's answer.
+#'
+#' @keywords internal
+term_tags_deep <- function(term, what = "it") {
+  out <- character(0)
+  tag <- tryCatch(modelterms7::term_tag(term), error = function(e) NA_character_)
+  if (length(tag) == 1L && !is.na(tag)) {
+    out <- stats::setNames(as.character(tag), what)
+  }
+  comp <- tryCatch(modelterms7::term_components(term), error = function(e) list())
+  for (nm in names(comp)) {
+    subs <- comp[[nm]]$subs
+    if (!length(subs)) next
+    for (s in subs) {
+      out <- c(out, term_tags_deep(
+        s, sprintf("the term developing '%s' inside it", nm)))
+    }
+  }
+  out
+}
+
+
 #' Why a Term Is Outside the Fitting Scheme
 #'
 #' @description
 #' Returns the reason a term cannot be assembled as a fixed design block, or
 #' the empty string when it can.
+#'
+#' @details
+#' Two reasons, and both are read from the term rather than from its class.
+#'
+#' A term carrying a covariance label
+#' ([modelterms7::term_tag()]) says that its coefficients share a block with
+#' those of other terms, which this layer cannot yet build: the penalty would
+#' have to read columns from more than one equation, and every enumeration
+#' here addresses a penalty by the pair of its parameter and its key. The term
+#' is rejected rather than fitted as though the label were absent, which would
+#' be a different model reported under the name of the one that was asked for.
+#'
+#' A structural term implementing neither shape of the contract is rejected
+#' for the reason its message gives.
 #'
 #' @param term One built term.
 #'
@@ -1094,6 +1160,28 @@ reject_incompatible <- function(terms) {
 #'
 #' @keywords internal
 unfittable_reason <- function(term) {
+  # A label under a STRUCTURAL term is the one shape a covariance class cannot
+  # reach. Its coefficients are the term's own parameters, which contribute no
+  # design column and live in the design's structural state; the class's
+  # penalty is read at positions in the stacked coefficient vector, and only
+  # statmod_marginal_full() spans both, for one filter and in one place. Under
+  # an ADDITIVE parent there is nothing extra to do -- measured, a labelled
+  # effect inside seg(x, psi ~ ...) occupies columns of that term's block and
+  # so sits in the same vector as one written in an equation.
+  if (S7::S7_inherits(term, modelterms7::structural_term)) {
+    lab <- term_tags_deep(term)
+    lab <- lab[names(lab) != "it"]
+    if (length(lab)) {
+      return(sprintf(paste("%s carries the covariance label '%s', and this is",
+                           "a structural term: what it contributes is its own",
+                           "parameters and not columns of the design, so a",
+                           "shared covariance block cannot reach them. The",
+                           "same label under an ordinary term is fitted. Drop",
+                           "the middle bar, or move the labelled effect to an",
+                           "equation of its own."),
+                     names(lab)[1L], lab[[1L]]))
+    }
+  }
   if (S7::S7_inherits(term, modelterms7::structural_term)) {
     kind <- structural_kind(term)
     if (identical(kind, "filter") || identical(kind, "loglik")) return("")

@@ -557,13 +557,26 @@ statmod_penalty_at <- function(spec, coef, hyper,
                                                  as.list(hyper[[p]][[u$key]]))
       next
     }
-    b <- coef[[p]][u$cols]
+    # a covariance class spans more than one equation, so its coefficients are
+    # gathered from the stacked vector and its gradient scattered back piece by
+    # piece. For an ordinary unit both reduce to the single-equation form they
+    # replace, the stacked index being that parameter's offset plus its columns
+    b <- unit_beta(u, coef, params)
     th <- as.list(hyper[[p]][[u$key]])
     if (what == "value") {
       value <- value + penalties7::penalty_value(u$penalty, b, th)
     } else if (what == "gradient") {
-      grad[[p]][u$cols] <- grad[[p]][u$cols] +
-        penalties7::penalty_gradient(u$penalty, b, th)
+      g <- penalties7::penalty_gradient(u$penalty, b, th)
+      if (is.null(u$pieces)) {
+        grad[[p]][u$cols] <- grad[[p]][u$cols] + g
+      } else {
+        # the entries of `index` belonging to one piece appear in that piece's
+        # own column order, so the slice lands where it came from
+        for (pc in u$pieces) {
+          take <- match(pc$index, u$index)
+          grad[[pc$param]][pc$cols] <- grad[[pc$param]][pc$cols] + g[take]
+        }
+      }
     } else {
       # the one point the two kinds meet. A penalty that avoids assembling
       # its own matrix -- a smooth repeated over the levels of a factor --
