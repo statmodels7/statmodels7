@@ -285,7 +285,17 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
   rho2 <- matrix(0, nh, nh)
   pair <- matrix("", nh, nh)
 
-  terms <- unique(paste(idx$parameter, idx$term, sep = "\r"))
+  # over the MEMBERS: a shared row stands for several penalties, and the
+  # quantity it needs is the sum of theirs, exactly as the gradient's is.
+  # Where nothing is shared there is one member per row and this is the loop
+  # over rows that was here before.
+  mem <- index_members(idx)
+  shared <- anyDuplicated(mem$row) > 0L
+  for (r in seq_len(nh)) {
+    Sm[[r]] <- matrix(0, total, total)
+    cm[[r]] <- numeric(total)
+  }
+  terms <- unique(paste(mem$parameter, mem$term, sep = "\r"))
   for (s in terms) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
     p <- bits[1L]
@@ -298,14 +308,24 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     th <- as.list(hyper[[p]][[nm]])
     dS <- penalties7::penalty_dhessian(pen, bt, th)
     cr <- penalties7::penalty_cross(pen, bt, th)
-    rows <- which(idx$parameter == p & idx$term == nm)
-    for (r in rows) {
-      Sm[[r]] <- matrix(0, total, total)
-      Sm[[r]][pos, pos] <- as_dense(dS[[idx$name[r]]])
-      cm[[r]] <- numeric(total)
-      cm[[r]][pos] <- as.numeric(cr[[idx$name[r]]])
+    lines <- which(mem$parameter == p & mem$term == nm)
+    for (i in lines) {
+      r <- mem$row[i]
+      Sm[[r]][pos, pos] <- Sm[[r]][pos, pos] + as_dense(dS[[mem$name[i]]])
+      cm[[r]][pos] <- cm[[r]][pos] + as.numeric(cr[[mem$name[i]]])
     }
     if (order < 2L) next
+    # ⚠️ The SECOND order is not written for a shared row. Its tables are
+    # keyed by the pair of hyperparameter NAMES within one term, and a row
+    # standing for members of two terms would want the sum of two such
+    # tables under one key. outer_gradient_ok() refuses order 2 there, so
+    # this is unreachable rather than approximate, and it says so instead of
+    # returning half a curvature.
+    if (shared) {
+      stop("the outer Hessian is not defined over a shared hyperparameter.",
+           call. = FALSE)
+    }
+    rows <- which(idx$parameter == p & idx$term == nm)
     d2S <- penalties7::penalty_d2hessian(pen, bt, th)
     dcr <- penalties7::penalty_dcross(pen, bt, th)
     ht <- penalties7::penalty_hess_theta(pen, bt, th)
@@ -550,9 +570,12 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' @param expected Whether the information is the expected one.
 #' @param approx The approximation for the expected information.
 #'
-#' @return A list with `total`, the scalar correction, and `per`,
-#'   one entry per penalty key. Zero throughout where no hyperparameter was
-#'   estimated.
+#' @return A list with `total`, the scalar correction, `per`, one entry per
+#'   penalty key, and `n_hyper`, how many hyperparameters were estimated.
+#'   Zero throughout where none was; a zero `total` beside a positive
+#'   `n_hyper` means the curvature could not be read, which is what a shared
+#'   hyperparameter leaves, and a caller reporting to a reader has to tell
+#'   the two apart.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -565,13 +588,20 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
                                    expected = TRUE, approx = "bartlett") {
-  zero <- list(total = 0, per = numeric(0))
+  # `n_hyper` is what tells a zero correction from an unavailable one: with
+  # no estimated hyperparameter there is nothing to propagate and zero is the
+  # answer, while with one there is something and zero means the curvature
+  # could not be read -- over a shared group, where the criterion's Hessian
+  # is not defined. A reader told the wrong reason is worse off than one told
+  # nothing.
+  zero <- list(total = 0, per = numeric(0), n_hyper = 0L)
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(zero)
   params <- spec@distrib@params
 
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) return(zero)
+  zero$n_hyper <- nrow(idx)
 
   H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
@@ -581,6 +611,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 
   # J = -Vb %*% d2rho/dbeta dtheta, one column per estimated hyperparameter
   J <- matrix(0, nrow(H), nrow(idx))
+  mem <- index_members(idx)
   for (un in statmod_penalized(spec, design)) {
     cr <- tryCatch(
       penalties7::penalty_cross(un$penalty, unit_beta(un, coef, params),
@@ -589,10 +620,14 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
       error = function(e) NULL)
     if (is.null(cr)) next
     for (h in names(cr)) {
-      k <- which(idx$parameter == un$param & idx$term == un$key &
-                   idx$name == h)
+      # through the MEMBER table: a shared hyperparameter is one column of J
+      # standing for several penalties, so each member writes into the
+      # group's column and they accumulate. Where nothing is shared each
+      # member is its own row and this is the lookup that was here before.
+      k <- mem$row[mem$parameter == un$param & mem$term == un$key &
+                     mem$name == h]
       if (!length(k)) next
-      J[un$index, k] <- as.numeric(cr[[h]])
+      J[un$index, k] <- J[un$index, k] + as.numeric(cr[[h]])
     }
   }
   J <- -Vb %*% J
@@ -614,7 +649,7 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   }, numeric(1))
   per <- tapply(contrib, paste(idx$parameter, idx$term, sep = "\r"), sum)
   total <- sum((J %*% Vth %*% t(J)) * t(H))
-  list(total = total, per = per)
+  list(total = total, per = per, n_hyper = nrow(idx))
 }
 
 
@@ -664,6 +699,13 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) return(NULL)
+  # ⚠️ A SHARED hyperparameter gets no standard error, and the refusal is the
+  # honest answer rather than a conservative one. The curvature comes from
+  # statmod_marginal_hess(), which walks the index's own (parameter, term)
+  # and so would read ONE member of a group: the number would be a curvature
+  # of the wrong function, and a wrong standard error is worse than none.
+  # It is the same gap outer_gradient_ok() refuses at order 2.
+  if (anyDuplicated(index_members(idx)$row)) return(NULL)
   basis <- integrated_basis(spec, design, method@kind)
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method, idx,
                                        basis),

@@ -22,6 +22,8 @@ penalized term sits in.}
 \item{\code{estimate}}{its value, on the scale asked for.}
 \item{\code{held}}{a logical: whether the term fixed it.}
 \item{\code{source}}{what put the value there, as above.}
+\item{\code{id}}{the sharing label, \code{NA} where the hyperparameter is not
+shared.}
 }
 A data frame of no rows, with those columns, where the model carries no
 penalty at all.
@@ -65,6 +67,16 @@ path is the argument of a minimum over a grid, not the root of a
 derivative, so no standard error follows from it. One a marginal criterion
 reached carries one, from the curvature of that criterion, and
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints it.
+}
+
+\section{Why two rows may carry the same number}{
+Terms whose \code{\link[modelterms7:term_ids]{modelterms7::term_ids()}} give the same label estimate one
+value, and that value is written under each of their own keys. So a shared
+hyperparameter appears once per term, with the same estimate and the same
+\code{source}, and the \code{id} column is what says the agreement is the model
+rather than a coincidence. The penalties are not merged, which is why each
+still has a row of its own and why the effective degrees of freedom are
+still counted term by term.
 }
 
 \examples{

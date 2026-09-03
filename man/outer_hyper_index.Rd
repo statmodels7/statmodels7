@@ -12,11 +12,13 @@ outer_hyper_index(spec, blocks)
 \item{blocks}{The block split, as \code{\link[=statmod_blocks]{statmod_blocks()}} returns it.}
 }
 \value{
-A data frame with one row per estimated hyperparameter and three
-character columns, \code{parameter}, \code{term} and \code{name}. The links that carry
-each onto the whole line ride on the \code{"link"} attribute, a list the same
-length as the frame has rows, since a list column would not survive the
-subsetting the search does.
+A data frame with one row per estimated hyperparameter, or per
+group of shared ones, and three character columns, \code{parameter}, \code{term}
+and \code{name}. The links that carry each onto the whole line ride on the
+\code{"links"} attribute, a list the same length as the frame has rows, since
+a list column would not survive the subsetting the search does; the
+\code{"members"} attribute is a data frame of the same three columns plus
+\code{row}, saying which hyperparameters each row stands for.
 }
 \description{
 One row per hyperparameter of a penalized term that is fitted in the joint
@@ -35,8 +37,29 @@ The result is the index the whole outer search runs on. Its row count is
 the dimension of that search, and at zero rows the criterion does not run
 at all.
 }
+\section{Shared hyperparameters}{
+Hyperparameters carrying the same label through
+\code{\link[modelterms7:term_ids]{modelterms7::term_ids()}} are estimated at one value, so they occupy ONE
+row: the search has one coordinate for the group. The row is identified by
+its first member, which is what keeps every lookup that reads
+\code{parameter}/\code{term}/\code{name} working, and the \code{"members"} attribute says which
+hyperparameters that row stands for.
+
+Sharing does not merge the penalties, which stay two objects estimated at
+one value, so the row's derivative is the SUM of its members' and the value
+is written back under each member's own key. Where nothing is shared the
+member table is the index itself, one line per row, and every loop written
+over members is the loop that was there before.
+
+Two members must carry the same link, since one free value has to land in
+both their domains, and a label may not span a smooth penalty and a kinked
+one, which are estimated by two different machines and would be given two
+different values. Both are rejected here, where both sides are visible.
+}
+
 \seealso{
 \code{\link[=hyper_to_eta]{hyper_to_eta()}} for the map those links define,
-\code{\link[=statmod_held]{statmod_held()}} for what is excluded.
+\code{\link[=statmod_held]{statmod_held()}} for what is excluded, \code{\link[=index_members]{index_members()}} for the member
+table.
 }
 \keyword{internal}

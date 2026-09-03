@@ -824,11 +824,21 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' reached carries one, from the curvature of that criterion, and
 #' [summary.StatmodFit()] prints it.
 #'
+#' # Why two rows may carry the same number
+#'
+#' Terms whose [modelterms7::term_ids()] give the same label estimate one
+#' value, and that value is written under each of their own keys. So a shared
+#' hyperparameter appears once per term, with the same estimate and the same
+#' `source`, and the `id` column is what says the agreement is the model
+#' rather than a coincidence. The penalties are not merged, which is why each
+#' still has a row of its own and why the effective degrees of freedom are
+#' still counted term by term.
+#'
 #' @param fit A [StatmodFit()].
 #' @param scale `"parameter"` (the default) or `"link"`. Matched with
 #'   [match.arg()].
 #'
-#' @return A data frame with one row per hyperparameter and six columns:
+#' @return A data frame with one row per hyperparameter and seven columns:
 #'   \describe{
 #'     \item{`parameter`}{the distribution parameter whose equation the
 #'       penalized term sits in.}
@@ -837,6 +847,8 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #'     \item{`estimate`}{its value, on the scale asked for.}
 #'     \item{`held`}{a logical: whether the term fixed it.}
 #'     \item{`source`}{what put the value there, as above.}
+#'     \item{`id`}{the sharing label, `NA` where the hyperparameter is not
+#'       shared.}
 #'   }
 #'   A data frame of no rows, with those columns, where the model carries no
 #'   penalty at all.
@@ -873,7 +885,11 @@ hyper <- function(fit, scale = c("parameter", "link")) {
   spc <- fit@methods$sparse_criterion
   spc_kind <- if (is.null(spc)) NA_character_ else spc@kind
   rows <- list()
-  for (u in statmod_penalty_keys(spec)) {
+  units <- statmod_penalty_keys(spec)
+  # a value one member of a sharing group holds is held for the group, so a
+  # member carrying only the label is held too and says so
+  held_ids <- names(tryCatch(statmod_held_ids(units), error = function(e) list()))
+  for (u in units) {
     th <- fit@hyper[[u$param]][[u$key]]
     if (is.null(th) || !length(th)) next
     kink <- isTRUE(tryCatch(penalty_has_kink(u$penalty),
@@ -888,7 +904,9 @@ hyper <- function(fit, scale = c("parameter", "link")) {
       # same enumeration the outer index asks: a hyperparameter a term fixed
       # is fixed whatever criterion ran beside it.
       hk <- paste(u$param, u$key, h, sep = "\r")
-      is_held <- hk %in% held || h %in% names(u$fixed)
+      lab <- if (h %in% names(u$ids)) u$ids[[h]] else NA_character_
+      is_held <- hk %in% held || h %in% names(u$fixed) ||
+        (!is.na(lab) && lab %in% held_ids)
       src <- if (is_held) "fixed" else if (kink) spc_kind else outer_kind
       rows[[length(rows) + 1L]] <- data.frame(
         # A COVARIANCE CLASS has no single parameter. `param` on its unit is
@@ -900,6 +918,9 @@ hyper <- function(fit, scale = c("parameter", "link")) {
           paste(unique(u$params), collapse = ", "),
         term = u$key, name = h, estimate = v,
         held = is_held, source = if (is.na(src)) "" else src,
+        # WHY two rows carry the same number: they are shared, and the label
+        # is what says so. Without it a reader sees a coincidence.
+        id = lab,
         stringsAsFactors = FALSE)
     }
   }
@@ -907,6 +928,7 @@ hyper <- function(fit, scale = c("parameter", "link")) {
     return(data.frame(parameter = character(0), term = character(0),
                       name = character(0), estimate = numeric(0),
                       held = logical(0), source = character(0),
+                      id = character(0),
                       stringsAsFactors = FALSE))
   }
   out <- do.call(rbind, rows)

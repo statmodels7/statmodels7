@@ -1442,13 +1442,19 @@ summary.StatmodFit <- function(object, level = 0.95,
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
                                           object@hyper, design,
                                           object@methods$outer),
-                   error = function(e) list(total = 0, per = numeric(0)))
+                   error = function(e)
+                     list(total = 0, per = numeric(0), n_hyper = 0L))
     corr <- cc$total
     df <- df + corr
+    nh <- if (is.null(cc$n_hyper)) 0L else cc$n_hyper
     notes <- c(notes, if (corr > 0) sprintf(paste0(
       "The degrees of freedom carry %.3f for the hyperparameters, which ",
       "were\n  estimated rather than given. Without it the criteria are ",
-      "too generous."), corr) else paste0(
+      "too generous."), corr) else if (nh > 0L) paste0(
+      "The correction for the estimated hyperparameters could not be ",
+      "computed\n  here, so the degrees of freedom read them as though they ",
+      "were given.\n  A shared hyperparameter is the case: the criterion's ",
+      "curvature is not\n  defined over a group.") else paste0(
       "No hyperparameter here was estimated by a marginal criterion, so ",
       "there is\n  nothing for the correction to propagate and it is zero."))
   }

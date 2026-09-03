@@ -30,9 +30,12 @@ statmod_edf_correction(
 \item{approx}{The approximation for the expected information.}
 }
 \value{
-A list with \code{total}, the scalar correction, and \code{per},
-one entry per penalty key. Zero throughout where no hyperparameter was
-estimated.
+A list with \code{total}, the scalar correction, \code{per}, one entry per
+penalty key, and \code{n_hyper}, how many hyperparameters were estimated.
+Zero throughout where none was; a zero \code{total} beside a positive
+\code{n_hyper} means the curvature could not be read, which is what a shared
+hyperparameter leaves, and a caller reporting to a reader has to tell
+the two apart.
 }
 \description{
 The amount by which \eqn{\mathrm{tr}[(H+S)^{-1}H]} understates the

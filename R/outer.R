@@ -291,17 +291,40 @@ S7::method(print, OuterMethod) <- print.OuterMethod
 #' the dimension of that search, and at zero rows the criterion does not run
 #' at all.
 #'
+#' # Shared hyperparameters
+#'
+#' Hyperparameters carrying the same label through
+#' [modelterms7::term_ids()] are estimated at one value, so they occupy ONE
+#' row: the search has one coordinate for the group. The row is identified by
+#' its first member, which is what keeps every lookup that reads
+#' `parameter`/`term`/`name` working, and the `"members"` attribute says which
+#' hyperparameters that row stands for.
+#'
+#' Sharing does not merge the penalties, which stay two objects estimated at
+#' one value, so the row's derivative is the SUM of its members' and the value
+#' is written back under each member's own key. Where nothing is shared the
+#' member table is the index itself, one line per row, and every loop written
+#' over members is the loop that was there before.
+#'
+#' Two members must carry the same link, since one free value has to land in
+#' both their domains, and a label may not span a smooth penalty and a kinked
+#' one, which are estimated by two different machines and would be given two
+#' different values. Both are rejected here, where both sides are visible.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param blocks The block split, as [statmod_blocks()] returns it.
 #'
-#' @return A data frame with one row per estimated hyperparameter and three
-#'   character columns, `parameter`, `term` and `name`. The links that carry
-#'   each onto the whole line ride on the `"link"` attribute, a list the same
-#'   length as the frame has rows, since a list column would not survive the
-#'   subsetting the search does.
+#' @return A data frame with one row per estimated hyperparameter, or per
+#'   group of shared ones, and three character columns, `parameter`, `term`
+#'   and `name`. The links that carry each onto the whole line ride on the
+#'   `"links"` attribute, a list the same length as the frame has rows, since
+#'   a list column would not survive the subsetting the search does; the
+#'   `"members"` attribute is a data frame of the same three columns plus
+#'   `row`, saying which hyperparameters each row stands for.
 #'
 #' @seealso [hyper_to_eta()] for the map those links define,
-#'   [statmod_held()] for what is excluded.
+#'   [statmod_held()] for what is excluded, [index_members()] for the member
+#'   table.
 #'
 #' @keywords internal
 outer_hyper_index <- function(spec, blocks) {
@@ -309,25 +332,137 @@ outer_hyper_index <- function(spec, blocks) {
     paste(b$param, b$term, sep = "\r"), character(1))
   rows <- list()
   links <- list()
-  for (u in statmod_penalty_keys(spec)) {
-    if (paste(u$param, u$key, sep = "\r") %in% kinked) next
+  labs <- character(0)
+  kink_labs <- character(0)
+  units <- statmod_penalty_keys(spec)
+  # a label one member holds is held for the group -- see statmod_held_ids()
+  held_ids <- names(statmod_held_ids(units))
+  for (u in units) {
+    lab_of <- function(h) if (h %in% names(u$ids)) u$ids[[h]] else NA_character_
+    if (paste(u$param, u$key, sep = "\r") %in% kinked) {
+      # its label is recorded but its hyperparameters are not, so that a
+      # label spanning the two machines can be caught below
+      for (h in u$penalty@params) {
+        if (h %in% names(u$fixed)) next
+        l <- lab_of(h)
+        if (!is.na(l)) kink_labs <- c(kink_labs, l)
+      }
+      next
+    }
     for (h in u$penalty@params) {
       # HELD by the term, so there is nothing here to estimate. The term is
       # where the penalty is named and where the caller says so.
       if (h %in% names(u$fixed)) next
+      if (lab_of(h) %in% held_ids) next
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = u$param, term = u$key, name = h,
         stringsAsFactors = FALSE)
       links[[length(links) + 1L]] <- u$penalty@link_params[[h]]
+      labs <- c(labs, lab_of(h))
     }
   }
   if (!length(rows)) {
     return(structure(data.frame(parameter = character(0), term = character(0),
                                 name = character(0),
                                 stringsAsFactors = FALSE),
-                     links = list()))
+                     links = list(),
+                     members = data.frame(row = integer(0),
+                                          parameter = character(0),
+                                          term = character(0),
+                                          name = character(0),
+                                          stringsAsFactors = FALSE)))
   }
-  structure(do.call(rbind, rows), links = links)
+  mem <- do.call(rbind, rows)
+  index_group(mem, links, labs, kink_labs)
+}
+
+
+#' Collapse the Shared Hyperparameters of an Index
+#'
+#' @description
+#' Turns the member table into the index the search runs on: one row per
+#' group, identified by the group's first member, with the member table and
+#' the links carried alongside.
+#'
+#' @details
+#' A label ties its members into one coordinate. Two checks run here because
+#' this is where both sides are visible: every member of a group must carry
+#' the same link, one free value having to land in each of their domains, and
+#' no label may span a smooth penalty and a kinked one, which are estimated by
+#' two different machines and would be given two values under one name.
+#'
+#' Where nothing is shared each row is its own group and the member table is
+#' the index, so the result is what this function's caller produced before
+#' sharing existed.
+#'
+#' @param mem A data frame of `parameter`, `term` and `name`, one line per
+#'   estimated hyperparameter.
+#' @param links The links, one per line of `mem`.
+#' @param labs The sharing labels, one per line of `mem`, `NA` where the
+#'   hyperparameter is not shared.
+#' @param kink_labs The labels carried by hyperparameters a path estimates.
+#'
+#' @return The index, with its `"links"` and `"members"` attributes.
+#'
+#' @keywords internal
+index_group <- function(mem, links, labs, kink_labs = character(0)) {
+  bad <- intersect(stats::na.omit(labs), kink_labs)
+  if (length(bad)) {
+    stop(sprintf(paste0("the label '%s' is written on a smooth penalty and",
+                        " on a kinked one.\n  The two are estimated by",
+                        " different machines -- a marginal criterion at the",
+                        "\n  mode, and a path over a grid -- so one value",
+                        " cannot serve both."), bad[1L]), call. = FALSE)
+  }
+  # an unshared hyperparameter is its own group, and is given a key nothing
+  # else can collide with rather than a label of its own
+  key <- ifelse(is.na(labs), paste0("\r", seq_along(labs)), labs)
+  first <- !duplicated(key)
+  row <- match(key, key[first])
+  for (g in which(first)) {
+    same <- which(row == row[g])
+    if (length(same) < 2L) next
+    cls <- vapply(links[same], function(l) class(l)[[1L]], "")
+    if (length(unique(cls)) > 1L) {
+      k <- which(cls != cls[[1L]])[[1L]]
+      stop(sprintf(paste0("the label '%s' ties '%s' of '%s' to '%s' of",
+                          " '%s', whose\n  links differ (%s against %s). One",
+                          " value cannot lie in both domains."),
+                   labs[same[[1L]]], mem$name[same[[1L]]],
+                   mem$term[same[[1L]]], mem$name[same[[k]]],
+                   mem$term[same[[k]]], cls[[1L]], cls[[k]]),
+           call. = FALSE)
+    }
+  }
+  idx <- mem[first, , drop = FALSE]
+  rownames(idx) <- NULL
+  members <- cbind(row = row, mem, stringsAsFactors = FALSE)
+  rownames(members) <- NULL
+  structure(idx, links = links[first], members = members)
+}
+
+
+#' The Hyperparameters Behind Each Row of the Outer Index
+#'
+#' @description
+#' The member table: one line per estimated hyperparameter, with the row of
+#' the index that stands for it.
+#'
+#' @details
+#' Where nothing is shared it is the index itself with a `row` column counting
+#' up, so a loop over members is the loop over rows that was there before
+#' sharing existed. Where a label ties several, they carry the same `row`,
+#' and a quantity accumulated over members lands on the group's coordinate.
+#'
+#' @param idx The index, as [outer_hyper_index()] returns it.
+#'
+#' @return A data frame with columns `row`, `parameter`, `term` and `name`.
+#'
+#' @keywords internal
+index_members <- function(idx) {
+  m <- attr(idx, "members")
+  if (!is.null(m)) return(m)
+  cbind(row = seq_len(nrow(idx)), idx, stringsAsFactors = FALSE)
 }
 
 
@@ -374,9 +509,15 @@ hyper_to_eta <- function(hyper, idx) {
 #' @keywords internal
 eta_to_hyper <- function(eta, idx, hyper) {
   links <- attr(idx, "links")
-  for (i in seq_len(nrow(idx))) {
-    hyper[[idx$parameter[i]]][[idx$term[i]]][[idx$name[i]]] <-
-      linkfunctions7::linkinv(links[[i]], eta[[i]])
+  # ONE value per row, written under EVERY member's own key: sharing does not
+  # merge the penalties, so each goes on being a penalty with a hyperparameter
+  # of its own and every reader of the store finds what it expects there. With
+  # nothing shared there is one member per row and this is the loop over rows.
+  mem <- index_members(idx)
+  for (i in seq_len(nrow(mem))) {
+    r <- mem$row[i]
+    hyper[[mem$parameter[i]]][[mem$term[i]]][[mem$name[i]]] <-
+      linkfunctions7::linkinv(links[[r]], eta[[r]])
   }
   hyper
 }

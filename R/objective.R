@@ -692,14 +692,63 @@ statmod_hyper_start <- function(spec, design = NULL) {
   params <- spec@distrib@params
   if (is.null(design)) design <- statmod_design(spec)
   out <- stats::setNames(lapply(params, function(p) list()), params)
-  for (u in statmod_penalized(spec, design)) {
+  units <- statmod_penalized(spec, design)
+  # A HELD value written on ONE member of a sharing group is the group's:
+  # the members estimate one value, so a caller who fixed it has fixed it for
+  # all of them, and leaving the others free would give one name two numbers.
+  held_by_id <- statmod_held_ids(units)
+  for (u in units) {
     th <- penalty_theta_start(u$penalty)
     # A HELD value is not a start, it is the answer: the term said so, and
     # nothing below estimates it away. A hyperparameter the term did not
     # name keeps the probe value, which is a placeholder until a criterion
     # reaches it.
     for (h in names(u$fixed)) th[[h]] <- as.numeric(u$fixed[[h]])
+    for (h in names(u$ids)) {
+      v <- held_by_id[[u$ids[[h]]]]
+      if (!is.null(v)) th[[h]] <- v
+    }
     out[[u$param]][[u$key]] <- th
+  }
+  out
+}
+
+
+#' The Value Each Sharing Label Is Held At
+#'
+#' @description
+#' One entry per label a member holds its hyperparameter at, keyed by the
+#' label.
+#'
+#' @details
+#' The members of a group estimate one value, so a value written on one of
+#' them is the group's. Two members held at DIFFERENT values are a
+#' contradiction rather than a preference between them, and are rejected here,
+#' at the one place both are visible.
+#'
+#' @param units The penalized units, as [statmod_penalized()] returns them.
+#'
+#' @return A named list of numbers, empty where no label is held.
+#'
+#' @keywords internal
+statmod_held_ids <- function(units) {
+  out <- list()
+  where <- list()
+  for (u in units) {
+    for (h in names(u$ids)) {
+      if (!h %in% names(u$fixed)) next
+      lab <- u$ids[[h]]
+      v <- as.numeric(u$fixed[[h]])
+      if (!is.null(out[[lab]]) && !isTRUE(all.equal(out[[lab]], v))) {
+        stop(sprintf(paste0("the label '%s' is held at %s in '%s' and at %s",
+                            " in '%s'.\n  Its members estimate one value, so",
+                            " one of the two has to go."),
+                     lab, format(out[[lab]]), where[[lab]], format(v), u$key),
+             call. = FALSE)
+      }
+      out[[lab]] <- v
+      where[[lab]] <- u$key
+    }
   }
   out
 }

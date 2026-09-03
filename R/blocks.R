@@ -53,7 +53,11 @@ statmod_blocks <- function(spec, design) {
                           sprintf("The penalty of %s", u$key))) next
     sparse[[length(sparse) + 1L]] <- list(
       param = u$param, term = u$key, cols = u$cols, index = u$index,
-      penalty = u$penalty)
+      penalty = u$penalty,
+      # the sharing labels travel to the path the way the held values travel
+      # to the outer index: it is the path that has to sweep one axis for a
+      # group rather than one per member
+      ids = u$ids)
     taken <- c(taken, u$index)
   }
   list(smooth = setdiff(seq_len(sum(npar)), taken), sparse = sparse)
@@ -415,7 +419,12 @@ statmod_penalty_keys <- function(spec) {
           min_ratio = if (is.null(e$min_ratio)) numeric(0) else
             as.numeric(e$min_ratio),
           search = if (is.null(e$search)) character(0) else
-            as.character(e$search))
+            as.character(e$search),
+          # WHICH of its hyperparameters this entry shares with others, and
+          # under what label. It travels with the entry for the reason the
+          # held values do, so a penalty reached through a sub-term of a
+          # structural one carries it too.
+          ids = if (is.null(e$ids)) character(0) else e$ids)
       }
     }
   }
@@ -428,7 +437,7 @@ statmod_penalty_keys <- function(spec) {
       param = cl$pieces[[1L]]$param, term = cl$key, key = cl$key,
       within = NULL, penalty = cl$penalty,
       fixed = list(), n_values = list(), values = list(),
-      min_ratio = numeric(0), search = character(0),
+      min_ratio = numeric(0), search = character(0), ids = character(0),
       class = cl,
       params = vapply(cl$pieces, function(z) z$param, ""))
   }

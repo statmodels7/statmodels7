@@ -88,7 +88,17 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     # criterion for this to be the derivative of.
     if (structural_penalized(spec, design)) return(FALSE)
   }
-  seen <- unique(paste(idx$parameter, idx$term, sep = "\r"))
+  mem <- index_members(idx)
+  # ⚠️ A SHARED hyperparameter has no exact SECOND derivative here, and it is
+  # refused rather than approximated. The criterion's own Hessian is assembled
+  # from per-term tables keyed by the pair of hyperparameter NAMES, and a row
+  # standing for members of two different terms would need the sum of two such
+  # tables under one key, which that structure cannot hold. The gradient is
+  # exact -- it is the sum of the members' -- so the search falls to lbfgs,
+  # which is what outer_default_optimizer() does wherever only the gradient
+  # exists.
+  if (order >= 2L && anyDuplicated(mem$row)) return(FALSE)
+  seen <- unique(paste(mem$parameter, mem$term, sep = "\r"))
   for (s in seen) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
     u <- statmod_unit(spec, design, bits[1L], bits[2L])
@@ -353,11 +363,16 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
 
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
+  # over the MEMBERS rather than the rows: a shared hyperparameter is one
+  # coordinate standing for several penalties, and the criterion's derivative
+  # in it is the sum of theirs. With nothing shared there is one member per
+  # row and this is the loop that was here before.
+  mem <- index_members(idx)
   for (a in seq_along(params)) {
     p <- params[a]
-    rows <- which(idx$parameter == p)
+    rows <- which(mem$parameter == p)
     if (!length(rows)) next
-    for (nm in unique(idx$term[rows])) {
+    for (nm in unique(mem$term[rows])) {
       # not `u`: this function already uses that name for the contraction of
       # the third derivative, and shadowing it fails several frames down
       un <- statmod_unit(spec, design, p, nm)
@@ -371,8 +386,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       gt <- penalties7::penalty_grad_theta(pen, bt, th)
       cr <- penalties7::penalty_cross(pen, bt, th)
       dS <- penalties7::penalty_dhessian(pen, bt, th)
-      for (r in rows[idx$term[rows] == nm]) {
-        h <- idx$name[r]
+      for (i in rows[mem$term[rows] == nm]) {
+        r <- mem$row[i]
+        h <- mem$name[i]
         # the mode moves by -(H+S)^-1 d2rho/dbeta dtheta, with H the penalized
         # LIKELIHOOD's own curvature -- see mode_curvature()
         c_m <- numeric(total)
@@ -758,10 +774,13 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   keep <- jd$keep
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
-  for (r in seq_len(nrow(idx))) {
-    p <- idx$parameter[r]
-    nm <- idx$term[r]
-    h <- idx$name[r]
+  # over the members, and accumulating: see statmod_marginal_grad()
+  mem <- index_members(idx)
+  for (i in seq_len(nrow(mem))) {
+    r <- mem$row[i]
+    p <- mem$parameter[i]
+    nm <- mem$term[i]
+    h <- mem$name[i]
     un <- statmod_unit(spec, design, p, nm)
     pen <- un$penalty
     if (isTRUE(un$structural)) {

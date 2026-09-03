@@ -671,6 +671,9 @@ path_by_kink <- function(pen, theta, name) {
 path_rows <- function(spec, blocks, hyper, method) {
   rows <- list()
   held <- statmod_held(spec)
+  # a label ONE member holds is held for the group, which is the same rule
+  # outer_hyper_index() applies on the other machine
+  held_ids <- names(statmod_held_ids(statmod_penalty_keys(spec)))
   for (b in blocks$sparse) {
     th <- as.list(hyper[[b$param]][[b$term]])
     # EVERY hyperparameter of the penalty, less the ones the term holds.
@@ -687,17 +690,57 @@ path_rows <- function(spec, blocks, hyper, method) {
         identical(q[[2L]], b$term), logical(1))
     want <- setdiff(b$penalty@params,
                     vapply(parts[mine], `[[`, character(1), 3L))
+    ids <- if (is.null(b$ids)) character(0) else b$ids
     for (h in want) {
+      if (h %in% names(ids) && ids[[h]] %in% held_ids) next
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = b$param, term = b$term, name = h,
+        id = if (h %in% names(ids)) ids[[h]] else NA_character_,
         stringsAsFactors = FALSE)
     }
   }
   if (!length(rows)) {
-    return(data.frame(parameter = character(0), term = character(0),
-                      name = character(0), stringsAsFactors = FALSE))
+    out <- data.frame(parameter = character(0), term = character(0),
+                      name = character(0), stringsAsFactors = FALSE)
+    out$members <- list()
+    return(out)
   }
-  do.call(rbind, rows)
+  path_group(do.call(rbind, rows))
+}
+
+
+#' Collapse the Shared Hyperparameters of a Path
+#'
+#' @description
+#' Turns one line per estimated hyperparameter into one line per axis: those
+#' carrying the same label become a single axis, swept once, whose value is
+#' written into each of them.
+#'
+#' @details
+#' It is [index_group()]'s decision on the other machine. The axis is
+#' identified by its first member, so everything that reads
+#' `parameter`/`term`/`name` -- the block it belongs to, whether it scales the
+#' kink, the history a reader reads -- goes on reading the same fields, and
+#' the `members` list column says which hyperparameters the axis stands for.
+#'
+#' Where nothing is shared each line is its own axis carrying itself as its
+#' single member, so the result is what the caller produced before sharing
+#' existed.
+#'
+#' @param rows One line per estimated hyperparameter, with an `id` column.
+#'
+#' @return One line per axis, with a `members` list column and no `id`.
+#'
+#' @keywords internal
+path_group <- function(rows) {
+  key <- ifelse(is.na(rows$id), paste0("\r", seq_len(nrow(rows))), rows$id)
+  first <- !duplicated(key)
+  grp <- match(key, key[first])
+  out <- rows[first, setdiff(names(rows), "id"), drop = FALSE]
+  rownames(out) <- NULL
+  out$members <- lapply(seq_len(nrow(out)), function(g)
+    rows[grp == g, c("parameter", "term", "name"), drop = FALSE])
+  out
 }
 
 
@@ -765,7 +808,19 @@ hyper_plain <- function(hyper) {
 #'
 #' @keywords internal
 hyper_set <- function(hyper, row, value) {
-  hyper[[row$parameter]][[row$term]][[row$name]] <- value
+  # ONE value written under EVERY member's key: a shared axis is one number
+  # standing for several penalties, which stay several penalties. With nothing
+  # shared the axis carries itself alone and this is the single assignment
+  # that was here before.
+  mem <- row$members
+  if (is.null(mem)) {
+    hyper[[row$parameter]][[row$term]][[row$name]] <- value
+    return(hyper)
+  }
+  mem <- mem[[1L]]
+  for (i in seq_len(nrow(mem))) {
+    hyper[[mem$parameter[i]]][[mem$term[i]]][[mem$name[i]]] <- value
+  }
   hyper
 }
 
@@ -1202,7 +1257,11 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
         r <- tryCatch(fit_at(hyper_set(hy, row, v), at),
                       error = function(e) NULL)
         if (is.null(r)) break
-        if (max(abs(r$par[b$index])) <= 1e-8) break
+        # every MEMBER's block must be empty, not only the first's: one value
+        # multiplies each penalty as it is, so the value that empties one may
+        # leave another full and the sparse end of the path would not be
+        # sparse there
+        if (max(abs(r$par[path_member_index(blocks, row)])) <= 1e-8) break
         tp[[i]] <- tp[[i]] * 2
       }
     }
@@ -1542,6 +1601,32 @@ path_block <- function(blocks, row) {
   }
   stop(sprintf("No penalized block for '%s' in '%s'.", row$term,
                row$parameter), call. = FALSE)
+}
+
+
+#' The Coefficients an Axis Covers, Across Its Members
+#'
+#' @description
+#' The union of the blocks the axis's members penalize, as positions in the
+#' stacked coefficient vector.
+#'
+#' @details
+#' A shared axis is one value multiplying several penalties, so the question
+#' *is the block empty here* is asked of all of them at once. Where nothing is
+#' shared it is the single block's own index.
+#'
+#' @param blocks The block split.
+#' @param row One row of [path_rows()]'s index.
+#'
+#' @return An integer vector of positions.
+#'
+#' @keywords internal
+path_member_index <- function(blocks, row) {
+  mem <- row$members
+  if (is.null(mem)) return(path_block(blocks, row)$index)
+  mem <- mem[[1L]]
+  sort(unique(unlist(lapply(seq_len(nrow(mem)), function(i)
+    path_block(blocks, mem[i, , drop = FALSE])$index), use.names = FALSE)))
 }
 
 
