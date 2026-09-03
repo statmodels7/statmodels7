@@ -25,7 +25,7 @@ hyper(fit, scale = c("parameter", "link"))
 
 ## Value
 
-A data frame with one row per hyperparameter and six columns:
+A data frame with one row per hyperparameter and seven columns:
 
 - `parameter`:
 

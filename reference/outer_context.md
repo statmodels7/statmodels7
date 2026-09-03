@@ -7,7 +7,7 @@ the penalty's Hessian, their sum and its factorization.
 ## Usage
 
 ``` r
-outer_context(spec, design, coef, hyper, approx = "bartlett")
+outer_context(spec, design, coef, hyper, approx = "opg")
 ```
 
 ## Arguments

@@ -13,7 +13,7 @@ qualifications the numbers carry."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.93.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,8 @@ qualifications the numbers carry.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span><span class="op">)</span>,</span>
+<span>  expected <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
 <span>  correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -75,6 +77,19 @@ qualifications the numbers carry.</p>
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Which variance matrix: passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
+
+
+<dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
+<dd><p>Which information the standard errors are read off, passed
+to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>. <code>NULL</code>, the default, takes the expected one where
+the fit inverted it and the family writes it out, and the observed
+Hessian otherwise; <code>TRUE</code> or <code>FALSE</code> names one.</p></dd>
+
+
+<dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
+<dd><p>How the expected information is approximated for a family
+with no closed form, passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>: <code>"opg"</code> (the
+default), <code>"bartlett"</code>, <code>"integrate"</code> or <code>"mc"</code>.</p></dd>
 
 
 <dt id="arg-correct">correct<a class="anchor" aria-label="anchor" href="#arg-correct"></a></dt>
@@ -184,7 +199,7 @@ columns it has. The information criteria are built on that count.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.844138    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.688    cBIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 46 ms   search: converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 38 ms   search: converged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> certificate: CONVERGED   2.21e-11 above the mode</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   the model carries no penalty, so there is no outer gradient; the reading</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode</span>

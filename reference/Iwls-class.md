@@ -33,7 +33,7 @@ Iwls(
 - approx:
 
   How the expected information is approximated for a family with no
-  closed form: `"bartlett"`, `"integrate"` or `"mc"`.
+  closed form: `"opg"`, `"bartlett"`, `"integrate"` or `"mc"`.
 
 - decomposition:
 

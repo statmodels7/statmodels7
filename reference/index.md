@@ -254,7 +254,7 @@ exported, and none is needed to use the package.
 - [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
   : The Distribution a Model Was Fitted With
 - [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
-  : Which Information Matrix a Fit Used
+  : Which Information Matrix a Fit Reports
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   : Fit the Smooth Block
 - [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)

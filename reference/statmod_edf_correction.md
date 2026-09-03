@@ -13,7 +13,7 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "bartlett"
+  approx = "opg"
 )
 ```
 

@@ -6,7 +6,7 @@
 ## Usage
 
 ``` r
-refresh_hessian(spec, design, coef, expected = FALSE, approx = "bartlett")
+refresh_hessian(spec, design, coef, expected = FALSE, approx = "opg")
 ```
 
 ## Arguments

@@ -11,7 +11,7 @@ statmod_objective(
   hyper,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "bartlett"
+  approx = "opg"
 )
 ```
 

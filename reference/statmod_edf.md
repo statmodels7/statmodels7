@@ -5,7 +5,7 @@ Asks each term what it spends, through modelterms7's `edf()`.
 ## Usage
 
 ``` r
-statmod_edf(spec, coef, design, hyper, expected = TRUE, approx = "bartlett")
+statmod_edf(spec, coef, design, hyper, expected = TRUE, approx = "opg")
 ```
 
 ## Arguments

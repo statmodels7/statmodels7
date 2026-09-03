@@ -1,5 +1,41 @@
 # Changelog
 
+## statmodels7 0.93.0
+
+- A family with no closed-form expected information no longer costs a
+  sum over the support at every scoring iteration. `iwls(approx =)`
+  defaults to `"opg"`, the outer product of the observed scores, and so
+  do the twelve internal entry points that carried `"bartlett"` as a
+  hardcoded default – which is what a caller who passes no `approx`,
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) among them, was reading.
+  Measured on `statmod(y ~ x, pig1_distrib())` at n = 500: **89.06 s to
+  0.64 s, 139x**, the same log-likelihood and coefficients agreeing to
+  9.6e-07. The step is unaffected in substance, the score being exact
+  and any positive definite matrix reaching the same stationary point.
+
+- THE STEP AND THE REPORT NOW TAKE DIFFERENT MATRICES, deliberately.
+  [`fit_expected()`](https://statmodels7.github.io/statmodels7/reference/fit_expected.md)
+  answers `TRUE` only where the fit inverted the expected information
+  AND the family writes it out, so
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) falls back to the
+  observed Hessian where the step used an approximation. Measured on the
+  same regression: standard errors 5.7 per cent from those of the exact
+  expectation under the outer product, 0.6 per cent under the observed
+  information.
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html) takes `approx` beside
+  `expected`, and [`summary()`](https://rdrr.io/r/base/summary.html)
+  takes both and passes them on, so which standard errors are computed
+  is the caller’s to say. `expected = NULL`, the default, is the policy
+  above.
+
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)’s
+  page no longer claims that asking for `approx` where it would be
+  ignored is an error. No such check exists, and it cannot live in the
+  constructor: an
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  object is built before it meets a distribution.
+
 ## statmodels7 0.92.0
 
 - Terms carrying the same `id` label are fitted with ONE hyperparameter

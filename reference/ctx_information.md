@@ -5,7 +5,7 @@ The Information at the Context's Point
 ## Usage
 
 ``` r
-ctx_information(ctx, spec, design, coef, hyper, expected, approx = "bartlett")
+ctx_information(ctx, spec, design, coef, hyper, expected, approx = "opg")
 ```
 
 ## Arguments

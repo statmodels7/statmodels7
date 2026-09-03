@@ -16,7 +16,7 @@ Every argument has a default, and the object carries no data: one
 ``` r
 iwls(
   hessian = c("expected", "observed"),
-  approx = c("bartlett", "integrate", "mc", "opg"),
+  approx = c("opg", "bartlett", "integrate", "mc"),
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
   maxit = 100L,
   tol = 1e-06,
@@ -38,7 +38,7 @@ print(x, ...)
 - approx:
 
   How the expected information is approximated for a family with no
-  closed form: `"bartlett"`, `"integrate"` or `"mc"`.
+  closed form: `"opg"`, `"bartlett"`, `"integrate"` or `"mc"`.
 
 - decomposition:
 
@@ -94,9 +94,30 @@ Newton's matrix may be indefinite; Newton converges faster near the
 optimum and is what the exact outer gradient needs.
 
 `approx` reaches distributions7 and is read only where the family has no
-closed expected information. Asking for one where it would be ignored is
-an error: an argument accepted and ignored is worse than one that
-refuses.
+closed expected information; elsewhere the family's own method answers
+and the argument does not enter. It is accepted rather than refused
+there because an `iwls()` object is built before it meets a distribution
+and can be passed to any number of fits, so the question it would be
+refused on cannot be asked at construction.
+[`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
+is the predicate that says which case a family is in.
+
+Its default is `"opg"`, the outer product of the observed scores, which
+costs one gradient. The alternative readings evaluate the expectation
+itself – a sum over the support for a discrete family, a quadrature for
+a continuous one – and are orders of magnitude dearer inside a loop that
+rebuilds the curvature at every iteration: measured on a Poisson-inverse
+gaussian regression at \\n = 500\\,
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+takes 0.64 s under `"opg"` and 89.06 s under `"bartlett"`, reaching the
+same log-likelihood and coefficients agreeing to \\10^{-6}\\. What the
+cheap matrix gives up is variance, not the answer: the score is exact,
+so a scoring step driven by any positive definite matrix reaches the
+same stationary point, and the outer product is positive semidefinite by
+construction where the observed Hessian need not be. A standard error is
+a different question and is read off the observed information instead –
+see
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 ## The decomposition
 

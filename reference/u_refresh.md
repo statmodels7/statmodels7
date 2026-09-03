@@ -18,7 +18,7 @@ u_refresh(
   offs,
   total,
   expected = FALSE,
-  approx = "bartlett",
+  approx = "opg",
   units = NULL,
   Hl = NULL
 )

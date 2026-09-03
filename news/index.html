@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.93.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.93.0" id="statmodels7-0930">statmodels7 0.93.0<a class="anchor" aria-label="anchor" href="#statmodels7-0930"></a></h2>
+<ul><li><p>A family with no closed-form expected information no longer costs a sum over the support at every scoring iteration. <code>iwls(approx =)</code> defaults to <code>"opg"</code>, the outer product of the observed scores, and so do the twelve internal entry points that carried <code>"bartlett"</code> as a hardcoded default – which is what a caller who passes no <code>approx</code>, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> among them, was reading. Measured on <code>statmod(y ~ x, pig1_distrib())</code> at n = 500: <strong>89.06 s to 0.64 s, 139x</strong>, the same log-likelihood and coefficients agreeing to 9.6e-07. The step is unaffected in substance, the score being exact and any positive definite matrix reaching the same stationary point.</p></li>
+<li><p>THE STEP AND THE REPORT NOW TAKE DIFFERENT MATRICES, deliberately. <code><a href="../reference/fit_expected.html">fit_expected()</a></code> answers <code>TRUE</code> only where the fit inverted the expected information AND the family writes it out, so <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> falls back to the observed Hessian where the step used an approximation. Measured on the same regression: standard errors 5.7 per cent from those of the exact expectation under the outer product, 0.6 per cent under the observed information.</p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> takes <code>approx</code> beside <code>expected</code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> takes both and passes them on, so which standard errors are computed is the caller’s to say. <code>expected = NULL</code>, the default, is the policy above.</p></li>
+<li><p><code><a href="../reference/iwls.html">iwls()</a></code>’s page no longer claims that asking for <code>approx</code> where it would be ignored is an error. No such check exists, and it cannot live in the constructor: an <code><a href="../reference/iwls.html">iwls()</a></code> object is built before it meets a distribution.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.92.0" id="statmodels7-0920">statmodels7 0.92.0<a class="anchor" aria-label="anchor" href="#statmodels7-0920"></a></h2>
 <ul><li>

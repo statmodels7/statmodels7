@@ -8,15 +8,7 @@ has to pass the mode.
 ## Usage
 
 ``` r
-statmod_pe(
-  spec,
-  design,
-  coef,
-  hyper,
-  method,
-  approx = "bartlett",
-  active = NULL
-)
+statmod_pe(spec, design, coef, hyper, method, approx = "opg", active = NULL)
 ```
 
 ## Arguments

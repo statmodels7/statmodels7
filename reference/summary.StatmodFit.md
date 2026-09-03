@@ -13,6 +13,8 @@ summary(
   object,
   level = 0.95,
   type = c("bayesian", "frequentist"),
+  expected = NULL,
+  approx = c("opg", "bartlett", "integrate", "mc"),
   correct = FALSE,
   ...
 )
@@ -33,6 +35,21 @@ summary(
 
   Which variance matrix: passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+
+- expected:
+
+  Which information the standard errors are read off, passed to
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  `NULL`, the default, takes the expected one where the fit inverted it
+  and the family writes it out, and the observed Hessian otherwise;
+  `TRUE` or `FALSE` names one.
+
+- approx:
+
+  How the expected information is approximated for a family with no
+  closed form, passed to
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
+  `"opg"` (the default), `"bartlett"`, `"integrate"` or `"mc"`.
 
 - correct:
 
@@ -160,7 +177,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 46 ms   search: converged
+#> fitted in 38 ms   search: converged
 #> certificate: CONVERGED   2.21e-11 above the mode
 #>   the model carries no penalty, so there is no outer gradient; the reading
 #>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode
