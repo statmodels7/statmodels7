@@ -20,7 +20,7 @@ Iwls(
 Newton, a single string.}
 
 \item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
 \item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"}, \code{"chol"} or
 \code{"chol_crossprod"}.}

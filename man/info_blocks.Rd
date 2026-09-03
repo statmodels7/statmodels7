@@ -4,7 +4,7 @@
 \alias{info_blocks}
 \title{The Per-Observation Information Blocks}
 \usage{
-info_blocks(spec, theta, expected = TRUE, approx = "bartlett")
+info_blocks(spec, theta, expected = TRUE, approx = "opg")
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, read for the distribution, the weights and

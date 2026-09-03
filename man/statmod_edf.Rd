@@ -4,7 +4,7 @@
 \alias{statmod_edf}
 \title{Effective Degrees of Freedom, Per Term}
 \usage{
-statmod_edf(spec, coef, design, hyper, expected = TRUE, approx = "bartlett")
+statmod_edf(spec, coef, design, hyper, expected = TRUE, approx = "opg")
 }
 \arguments{
 \item{spec}{The specification.}

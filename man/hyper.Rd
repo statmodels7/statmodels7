@@ -13,7 +13,7 @@ hyper(fit, scale = c("parameter", "link"))
 \code{\link[=match.arg]{match.arg()}}.}
 }
 \value{
-A data frame with one row per hyperparameter and six columns:
+A data frame with one row per hyperparameter and seven columns:
 \describe{
 \item{\code{parameter}}{the distribution parameter whose equation the
 penalized term sits in.}

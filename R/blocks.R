@@ -182,7 +182,7 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' @keywords internal
 sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
                        verbose = FALSE, spec = NULL, design = NULL,
-                       expected = TRUE, approx = "bartlett") {
+                       expected = TRUE, approx = "opg") {
   # a coordinate descent reads the block's own columns and the running
   # residual, which is the model rather than the objective, so it is not an
   # optimizer and lives here. It applies where the penalty can describe its

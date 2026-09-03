@@ -587,7 +587,7 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
-                                   expected = TRUE, approx = "bartlett") {
+                                   expected = TRUE, approx = "opg") {
   # `n_hyper` is what tells a zero correction from an unavailable one: with
   # no estimated hyperparameter there is nothing to propagate and zero is the
   # answer, while with one there is something and zero means the curvature

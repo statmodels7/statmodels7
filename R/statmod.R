@@ -1366,7 +1366,7 @@ statmod_intercepts <- function(spec) {
 #'
 #' @keywords internal
 statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
-                        approx = "bartlett") {
+                        approx = "opg") {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar

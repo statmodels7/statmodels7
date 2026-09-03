@@ -357,7 +357,7 @@ statmod_structural_score <- function(spec, coef,
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
-                                   expected = TRUE, approx = "bartlett") {
+                                   expected = TRUE, approx = "opg") {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   th <- ev$theta
@@ -975,7 +975,7 @@ penalty_theta_start <- function(pen) {
 #'
 #' @keywords internal
 statmod_objective <- function(spec, hyper, design = statmod_design(spec),
-                              expected = TRUE, approx = "bartlett") {
+                              expected = TRUE, approx = "opg") {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar

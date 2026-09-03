@@ -15,7 +15,7 @@ sparse_fit(
   spec = NULL,
   design = NULL,
   expected = TRUE,
-  approx = "bartlett"
+  approx = "opg"
 )
 }
 \arguments{

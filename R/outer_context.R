@@ -36,7 +36,7 @@
 #'   [statmod_marginal_hess()]
 #'
 #' @keywords internal
-outer_context <- function(spec, design, coef, hyper, approx = "bartlett") {
+outer_context <- function(spec, design, coef, hyper, approx = "opg") {
   e <- new.env(parent = emptyenv())
   e$spec <- spec
   e$design <- design
@@ -92,7 +92,7 @@ ctx_usable <- function(ctx, coef, hyper) {
 #'
 #' @keywords internal
 ctx_information <- function(ctx, spec, design, coef, hyper, expected,
-                            approx = "bartlett") {
+                            approx = "opg") {
   if (!ctx_usable(ctx, coef, hyper)) {
     return(statmod_information_at(spec, coef, design, expected, approx))
   }

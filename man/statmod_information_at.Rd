@@ -9,7 +9,7 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "bartlett"
+  approx = "opg"
 )
 }
 \arguments{

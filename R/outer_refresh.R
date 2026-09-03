@@ -89,7 +89,7 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 #'
 #' @keywords internal
 refresh_hessian <- function(spec, design, coef, expected = FALSE,
-                            approx = "bartlett") {
+                            approx = "opg") {
   th <- statmod_eta(spec, design, coef)$theta
   if (expected) {
     distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,

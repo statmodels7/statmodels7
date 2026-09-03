@@ -8,6 +8,8 @@
   object,
   level = 0.95,
   type = c("bayesian", "frequentist"),
+  expected = NULL,
+  approx = c("opg", "bartlett", "integrate", "mc"),
   correct = FALSE,
   ...
 )
@@ -18,6 +20,15 @@
 \item{level}{The confidence level.}
 
 \item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+
+\item{expected}{Which information the standard errors are read off, passed
+to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected one where
+the fit inverted it and the family writes it out, and the observed
+Hessian otherwise; \code{TRUE} or \code{FALSE} names one.}
+
+\item{approx}{How the expected information is approximated for a family
+with no closed form, passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"opg"} (the
+default), \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
 \item{correct}{Whether the degrees of freedom carry what the estimation
 of the hyperparameters cost. The ordinary count reads them as known,

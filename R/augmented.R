@@ -113,7 +113,7 @@ chol_blocks <- function(Om) {
 #'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
-info_blocks <- function(spec, theta, expected = TRUE, approx = "bartlett") {
+info_blocks <- function(spec, theta, expected = TRUE, approx = "opg") {
   params <- spec@distrib@params
   K <- length(params)
   n <- spec@n_obs

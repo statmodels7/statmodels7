@@ -4,7 +4,7 @@
 \alias{ctx_information}
 \title{The Information at the Context's Point}
 \usage{
-ctx_information(ctx, spec, design, coef, hyper, expected, approx = "bartlett")
+ctx_information(ctx, spec, design, coef, hyper, expected, approx = "opg")
 }
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}

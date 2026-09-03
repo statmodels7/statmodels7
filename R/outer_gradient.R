@@ -399,7 +399,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
         dtheta <- -as.numeric(gt[[h]]) -
           (sum(M * dS_m) + sum(u * v)) / 2
         # and onto the free scale the search runs on
-        out[r] <- if (!free) dtheta else {
+        out[r] <- out[r] + if (!free) dtheta else {
           eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
           dtheta * linkfunctions7::dlinkinv(links[[r]], eta)
         }
@@ -504,7 +504,7 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
 #'
 #' @keywords internal
 u_refresh <- function(spec, design, coef, M, params, npar, offs, total,
-                      expected = FALSE, approx = "bartlett", units = NULL,
+                      expected = FALSE, approx = "opg", units = NULL,
                       Hl = NULL) {
   out <- numeric(total)
   if (is.null(units)) {
@@ -803,7 +803,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     dS_m[pos, pos] <- as_dense(dS[[h]])
     chain <- sum(st$u * v) + structural_chain_extra(spec, design, jd, M, st, v)
     dtheta <- -as.numeric(gt[[h]]) - (sum(M * dS_m) + chain) / 2
-    out[r] <- if (!free) dtheta else {
+    out[r] <- out[r] + if (!free) dtheta else {
       eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
       dtheta * linkfunctions7::dlinkinv(links[[r]], eta)
     }

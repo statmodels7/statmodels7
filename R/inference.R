@@ -69,25 +69,42 @@ coef_labels <- function(spec, design) {
 }
 
 
-#' Which Information Matrix a Fit Used
+#' Which Information Matrix a Fit Reports
 #'
 #' @description
-#' `TRUE` when the fit inverted the expected information, as [iwls()] does
-#' unless asked otherwise.
+#' `TRUE` when [vcov.StatmodFit()] should invert the expected information:
+#' when the fit itself inverted it, as [iwls()] does unless asked otherwise,
+#' AND the family writes that information out in closed form.
 #'
 #' @details
-#' [vcov.StatmodFit()]'s default follows this instead of choosing for itself,
-#' so a standard error comes from the same matrix the fit did. A caller who
-#' wants the other one asks for it.
+#' The default follows the fit rather than choosing for itself, so a standard
+#' error comes from the same matrix the step did, and a caller who wants the
+#' other one asks for it.
+#'
+#' The second condition is the part that is not about the fit. Where a family
+#' has no closed expected information the scoring step is driven by an
+#' approximation of it -- the outer product of the observed scores, which
+#' costs one gradient and is positive semidefinite by construction -- and that
+#' is a good matrix to take a step with, the score being exact, but not a good
+#' one to read a standard error off. Measured on a Poisson-inverse gaussian
+#' regression at \eqn{n = 500}: the outer product gives standard errors 5.7
+#' per cent from those of the exact expectation where the observed Hessian
+#' gives 0.6 per cent, for coefficients agreeing to \eqn{10^{-6}}. So the
+#' report falls back to the observed information there, which every family has
+#' and which is exact.
 #'
 #' @param object A [StatmodFit()].
 #'
 #' @return A single logical.
 #'
+#' @seealso [distributions7::expected_hessian_exact()], the predicate this
+#'   reads, and [vcov.StatmodFit()], which follows it.
+#'
 #' @keywords internal
 fit_expected <- function(object) {
   m <- object@methods$smooth
-  if (S7::S7_inherits(m, Iwls)) identical(m@hessian, "expected") else TRUE
+  used <- if (S7::S7_inherits(m, Iwls)) identical(m@hessian, "expected") else TRUE
+  used && distributions7::expected_hessian_exact(object@spec@distrib)
 }
 
 
@@ -115,10 +132,30 @@ fit_expected <- function(object) {
 #' or an MCP left non-zero do get a variance, and it is conditional on that
 #' selection, which [summary.StatmodFit()] says in a note instead of leaving
 #' a reader to assume otherwise.
+#' **Which information.** `expected` says which matrix \eqn{H} is. Its
+#' default is the expected information where the fit inverted it AND the
+#' family writes it out in closed form, and the observed Hessian otherwise
+#' ([fit_expected()]). The two agree asymptotically and not in a sample: one
+#' is the information averaged over the model, the other the curvature of the
+#' likelihood at the data in hand.
+#'
+#' Where the family has no closed form, `expected = TRUE` reaches an
+#' approximation and `approx` says which. `"opg"`, the default, is the outer
+#' product of the observed scores and costs one gradient; `"bartlett"`
+#' evaluates the expectation itself, a sum over the support for a discrete
+#' family and a quadrature for a continuous one, and is orders of magnitude
+#' dearer -- 89.06 s against 0.64 s on a Poisson-inverse gaussian regression
+#' at \eqn{n = 500}. The expensive route is reachable and is not the default.
+#'
 #' @param object A [StatmodFit()].
 #' @param type `"bayesian"` or `"frequentist"`.
-#' @param expected Whether the expected information is used. Defaults to what
-#'   the fit itself inverted.
+#' @param expected Whether the expected information is used. Defaults to
+#'   [fit_expected()]: the expected one where the fit inverted it and the
+#'   family writes it out, the observed Hessian otherwise.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
+#'   or `"mc"`. Read only when `expected` is `TRUE` and the family has no
+#'   closed form.
 #' @param ... Unused.
 #' @return A square matrix over the stacked coefficients, with dimnames
 #'   `parameter:coefficient`.
@@ -131,9 +168,12 @@ fit_expected <- function(object) {
 #' sqrt(diag(vcov(fit)))
 #' @keywords internal
 vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
-                            expected = NULL, readable = TRUE,
+                            expected = NULL,
+                            approx = c("opg", "bartlett", "integrate", "mc"),
+                            readable = TRUE,
                             parameter = NULL, ...) {
   type <- match.arg(type)
+  approx <- match.arg(approx)
   if (is.null(expected)) expected <- fit_expected(object)
   spec <- object@spec
   design <- statmod_design(spec)
@@ -150,7 +190,7 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   # filter nor a mixture over states has an expected information to offer.
   fil <- length(attr(design, "structural")) > 0L
   H <- if (fil) statmod_full_information(spec, coef, design) else
-    statmod_information_at(spec, coef, design, expected)
+    statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, object@hyper, design, "hessian")
   nz <- nrow(H) - total
   if (nz > 0L) {
@@ -1358,6 +1398,13 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @param object A [StatmodFit()].
 #' @param level The confidence level.
 #' @param type Which variance matrix: passed to [vcov.StatmodFit()].
+#' @param expected Which information the standard errors are read off, passed
+#'   to [vcov.StatmodFit()]. `NULL`, the default, takes the expected one where
+#'   the fit inverted it and the family writes it out, and the observed
+#'   Hessian otherwise; `TRUE` or `FALSE` names one.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form, passed to [vcov.StatmodFit()]: `"opg"` (the
+#'   default), `"bartlett"`, `"integrate"` or `"mc"`.
 #' @param correct Whether the degrees of freedom carry what the estimation
 #'   of the hyperparameters cost. The ordinary count reads them as known,
 #'   and they were chosen from the same data, so a criterion built on it is
@@ -1376,8 +1423,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @keywords internal
 summary.StatmodFit <- function(object, level = 0.95,
                                type = c("bayesian", "frequentist"),
+                               expected = NULL,
+                               approx = c("opg", "bartlett", "integrate", "mc"),
                                correct = FALSE, ...) {
   type <- match.arg(type)
+  approx <- match.arg(approx)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
   # rather than once per call to vcov() -- of which this function makes more
   # than one. The condition carries a class of its own, so muffling it cannot
@@ -1396,6 +1446,7 @@ summary.StatmodFit <- function(object, level = 0.95,
   # those keys are not in it, and every delta-method standard error a
   # break-point term reports came back missing.
   ci <- catch_frozen(confint(object, level = level, type = type,
+                             expected = expected, approx = approx,
                              readable = FALSE, ...))
   spec <- object@spec
   design <- statmod_design(spec)
@@ -1405,7 +1456,8 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   # one variance matrix for every block that needs one: a term reported by
   # the quantities it is about carries them across by the delta method
-  V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type, ...),
+  V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type,
+                                  expected = expected, approx = approx, ...),
                              error = function(e) NULL))
   strc <- tryCatch(statmod_structural_table(object, level),
                    error = function(e) NULL)

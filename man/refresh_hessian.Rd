@@ -4,7 +4,7 @@
 \alias{refresh_hessian}
 \title{The Log-Density's Curvature the Refresh Corrections Read}
 \usage{
-refresh_hessian(spec, design, coef, expected = FALSE, approx = "bartlett")
+refresh_hessian(spec, design, coef, expected = FALSE, approx = "opg")
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

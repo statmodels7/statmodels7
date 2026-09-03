@@ -10,7 +10,7 @@ statmod_marginal(
   coef,
   hyper,
   method,
-  approx = "bartlett",
+  approx = "opg",
   basis = NULL,
   ctx = NULL
 )

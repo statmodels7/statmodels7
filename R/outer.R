@@ -805,7 +805,7 @@ structural_range_cols <- function(spec, design, key, free) {
 #'
 #' @keywords internal
 statmod_marginal <- function(spec, design, coef, hyper, method,
-                             approx = "bartlett", basis = NULL, ctx = NULL) {
+                             approx = "opg", basis = NULL, ctx = NULL) {
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
   rho <- statmod_penalty_at(spec, coef, hyper, design, "value")

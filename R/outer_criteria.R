@@ -329,7 +329,7 @@ outer_tau <- function(J, H, active = NULL) {
 #'
 #' @keywords internal
 statmod_pe <- function(spec, design, coef, hyper, method,
-                       approx = "bartlett", active = NULL) {
+                       approx = "opg", active = NULL) {
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
   H <- statmod_information_at(spec, coef, design, expected, approx)
