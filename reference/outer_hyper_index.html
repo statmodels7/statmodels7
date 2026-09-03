@@ -9,7 +9,7 @@ system, with the link that carries it onto the whole line."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,11 +62,13 @@ system, with the link that carries it onto the whole line.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with one row per estimated hyperparameter and three
-character columns, <code>parameter</code>, <code>term</code> and <code>name</code>. The links that carry
-each onto the whole line ride on the <code>"link"</code> attribute, a list the same
-length as the frame has rows, since a list column would not survive the
-subsetting the search does.</p>
+    <p>A data frame with one row per estimated hyperparameter, or per
+group of shared ones, and three character columns, <code>parameter</code>, <code>term</code>
+and <code>name</code>. The links that carry each onto the whole line ride on the
+<code>"links"</code> attribute, a list the same length as the frame has rows, since
+a list column would not survive the subsetting the search does; the
+<code>"members"</code> attribute is a data frame of the same three columns plus
+<code>row</code>, saying which hyperparameters each row stands for.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -81,9 +83,28 @@ the dimension of that search, and at zero rows the criterion does not run
 at all.</p>
     </div>
     <div class="section level2">
+    <h2 id="shared-hyperparameters">Shared hyperparameters<a class="anchor" aria-label="anchor" href="#shared-hyperparameters"></a></h2>
+    <p>Hyperparameters carrying the same label through
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_ids.html" class="external-link">modelterms7::term_ids()</a></code> are estimated at one value, so they occupy ONE
+row: the search has one coordinate for the group. The row is identified by
+its first member, which is what keeps every lookup that reads
+<code>parameter</code>/<code>term</code>/<code>name</code> working, and the <code>"members"</code> attribute says which
+hyperparameters that row stands for.</p>
+<p>Sharing does not merge the penalties, which stay two objects estimated at
+one value, so the row's derivative is the SUM of its members' and the value
+is written back under each member's own key. Where nothing is shared the
+member table is the index itself, one line per row, and every loop written
+over members is the loop that was there before.</p>
+<p>Two members must carry the same link, since one free value has to land in
+both their domains, and a label may not span a smooth penalty and a kinked
+one, which are estimated by two different machines and would be given two
+different values. Both are rejected here, where both sides are visible.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="hyper_to_eta.html">hyper_to_eta()</a></code> for the map those links define,
-<code><a href="statmod_held.html">statmod_held()</a></code> for what is excluded.</p></div>
+<code><a href="statmod_held.html">statmod_held()</a></code> for what is excluded, <code><a href="index_members.html">index_members()</a></code> for the member
+table.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

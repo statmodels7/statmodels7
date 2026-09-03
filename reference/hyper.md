@@ -51,6 +51,10 @@ A data frame with one row per hyperparameter and six columns:
 
   what put the value there, as above.
 
+- `id`:
+
+  the sharing label, `NA` where the hyperparameter is not shared.
+
 A data frame of no rows, with those columns, where the model carries no
 penalty at all.
 
@@ -94,6 +98,17 @@ criterion reached carries one, from the curvature of that criterion, and
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 prints it.
 
+## Why two rows may carry the same number
+
+Terms whose
+[`modelterms7::term_ids()`](https://statmodels7.github.io/modelterms7/reference/term_ids.html)
+give the same label estimate one value, and that value is written under
+each of their own keys. So a shared hyperparameter appears once per
+term, with the same estimate and the same `source`, and the `id` column
+is what says the agreement is the model rather than a coincidence. The
+penalties are not merged, which is why each still has a row of its own
+and why the effective degrees of freedom are still counted term by term.
+
 ## See also
 
 [`coef.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
@@ -113,13 +128,13 @@ d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 # Estimated by REML, which is what source says.
 fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
 hyper(fit)
-#>   parameter        term   name estimate  held source
-#> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml
+#>   parameter        term   name estimate  held source   id
+#> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml <NA>
 
 # The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
-#>   parameter        term   name estimate  held source
-#> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml
+#>   parameter        term   name estimate  held source   id
+#> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml <NA>
 
 # Held by the term instead, and reported as fixed.
 held <- statmod(y ~ s(x, k = 6, lambda = 2),

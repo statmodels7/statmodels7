@@ -111,8 +111,8 @@ reports the hyperparameters and who chose each:
 ``` r
 
 hyper(f3)
-#>   parameter        term   name estimate  held source
-#> 1        mu s(z, k = 8) lambda 1.067872 FALSE   reml
+#>   parameter        term   name estimate  held source   id
+#> 1        mu s(z, k = 8) lambda 1.067872 FALSE   reml <NA>
 ```
 
 A random effect is written the same way and is the same machinery, its
@@ -128,9 +128,9 @@ f4@edf
 #> 3        mu random(~1 | g)           20 18.57777
 #> 4     sigma         linpar            1  1.00000
 hyper(f4)
-#>   parameter           term   name  estimate  held source
-#> 1        mu    s(z, k = 8) lambda 1.0454567 FALSE   reml
-#> 2        mu random(~1 | g)  sigma 0.7061116 FALSE   reml
+#>   parameter           term   name  estimate  held source   id
+#> 1        mu    s(z, k = 8) lambda 1.0454567 FALSE   reml <NA>
+#> 2        mu random(~1 | g)  sigma 0.7061116 FALSE   reml <NA>
 ```
 
 20 group effects spend about 18.6 degrees of freedom here, and the
@@ -196,7 +196,7 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 762 ms   search: converged
+#> fitted in 772 ms   search: converged
 #> certificate: CONVERGED   outer gradient 1.87e-05   5.77e-13 above the mode
 #> 1 note: print(summary(fit), notes = TRUE)
 ```

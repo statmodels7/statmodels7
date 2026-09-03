@@ -530,6 +530,10 @@ exported, and none is needed to use the package.
   : Move Between the Hyperparameters and the Free Vector
 - [`hyper_value()`](https://statmodels7.github.io/statmodels7/reference/hyper_value.md)
   : One Hyperparameter of an Index
+- [`index_group()`](https://statmodels7.github.io/statmodels7/reference/index_group.md)
+  : Collapse the Shared Hyperparameters of an Index
+- [`index_members()`](https://statmodels7.github.io/statmodels7/reference/index_members.md)
+  : The Hyperparameters Behind Each Row of the Outer Index
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
 - [`inner_mode_error()`](https://statmodels7.github.io/statmodels7/reference/inner_mode_error.md)
@@ -629,6 +633,10 @@ exported, and none is needed to use the package.
   : The Values a Caller Wrote Out
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
   : The Values a Path Visits Over a Bounded Hyperparameter
+- [`path_group()`](https://statmodels7.github.io/statmodels7/reference/path_group.md)
+  : Collapse the Shared Hyperparameters of a Path
+- [`path_member_index()`](https://statmodels7.github.io/statmodels7/reference/path_member_index.md)
+  : The Coefficients an Axis Covers, Across Its Members
 - [`path_null_score()`](https://statmodels7.github.io/statmodels7/reference/path_null_score.md)
   : The Largest Score a Kinked Block Has to Beat
 - [`path_pick()`](https://statmodels7.github.io/statmodels7/reference/path_pick.md)
@@ -810,6 +818,8 @@ exported, and none is needed to use the package.
   : How Many Values a Path Visits for One Hyperparameter
 - [`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
   : Which Hyperparameters the Terms Hold
+- [`statmod_held_ids()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.md)
+  : The Value Each Sharing Label Is Held At
 - [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
   : Which Structural Levels a Linear Intercept Already Carries
 - [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)

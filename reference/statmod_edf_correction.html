@@ -9,7 +9,7 @@ complexity of a fit whose hyperparameters were themselves estimated."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,9 +90,12 @@ complexity of a fit whose hyperparameters were themselves estimated.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>total</code>, the scalar correction, and <code>per</code>,
-one entry per penalty key. Zero throughout where no hyperparameter was
-estimated.</p>
+    <p>A list with <code>total</code>, the scalar correction, <code>per</code>, one entry per
+penalty key, and <code>n_hyper</code>, how many hyperparameters were estimated.
+Zero throughout where none was; a zero <code>total</code> beside a positive
+<code>n_hyper</code> means the curvature could not be read, which is what a shared
+hyperparameter leaves, and a caller reporting to a reader has to tell
+the two apart.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

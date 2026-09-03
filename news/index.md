@@ -1,5 +1,53 @@
 # Changelog
 
+## statmodels7 0.92.0
+
+- Terms carrying the same `id` label are fitted with ONE hyperparameter
+  between them, on both machines:
+  [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
+  gives such a group a single row, so a marginal criterion searches one
+  coordinate for it, and
+  [`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)
+  gives it a single axis, so a path sweeps it once. Measured on two
+  smooths whose free smoothing parameters differ by a factor of 180000,
+  sharing lands on one value and costs 28.79 of REML criterion, which is
+  what a restriction must do.
+
+  The value is written back under EVERY member’s own key rather than
+  kept in one home, which is what leaves the twenty-six readers of a
+  hyperparameter untouched: each penalty goes on being a penalty with a
+  hyperparameter of its own,
+  [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
+  reports one row per term with the same number in each, and the
+  effective degrees of freedom are still counted term by term – 10.745
+  against 10.715 on the two smooths above, where a count taken per
+  hyperparameter would have reported them equal.
+
+  The group’s exact gradient is the sum of its members’. Verified
+  against two references sharing no arithmetic with it: the members’ own
+  gradients read from an index built without the label, agreeing to
+  0.0e+00 from values of -3.433 and +2.401, and a central difference of
+  the criterion, 6.2e-07 at h = 3e-3 with clean second-order
+  convergence.
+
+- Two labelled groups are rejected rather than approximated. A label
+  written on a smooth penalty and on a kinked one names two machines and
+  cannot have one value; a label tying hyperparameters whose links
+  differ asks one free value to lie in two domains.
+
+- ⚠️ A shared group has no exact outer HESSIAN, so the search falls to
+  `lbfgs()`. The criterion’s second derivative is assembled from
+  per-term tables keyed by the pair of hyperparameter names, and a row
+  standing for members of two different terms would need the sum of two
+  such tables under one key. The gradient is exact, which is what the
+  search runs on; measured on the two smooths, `lbfgs()`, `bfgs()` and
+  the default reach the same criterion to six decimals as
+  `nelder_mead()`.
+
+- [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
+  gains an `id` column, so a reader seeing the same number twice is told
+  that the agreement is the model rather than a coincidence.
+
 ## statmodels7 0.91.0
 
 - The terms carrying the same covariance label and the same grouping are

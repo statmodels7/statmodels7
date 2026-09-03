@@ -183,8 +183,8 @@ fit <- statmod(y ~ lasso(x, n_lambda = 12),
                distributions7::gaussian1_distrib(), dd,
                outer_criterion = cv(nfolds = 5))
 hyper(fit)
-#>   parameter                    term   name estimate  held source
-#> 1        mu lasso(x, n_lambda = 12) lambda 14.03983 FALSE    bic
+#>   parameter                    term   name estimate  held source   id
+#> 1        mu lasso(x, n_lambda = 12) lambda 14.03983 FALSE    bic <NA>
 
 # The two columns that carry signal are recovered.
 round(coef(fit)$mu[2:3], 3)

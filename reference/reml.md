@@ -140,8 +140,8 @@ fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
 
 # The smoothing parameter was estimated, and hyper() says by what.
 hyper(fit)
-#>   parameter         term   name estimate  held source
-#> 1        mu s(x, k = 10) lambda 3.245098 FALSE   reml
+#>   parameter         term   name estimate  held source   id
+#> 1        mu s(x, k = 10) lambda 3.245098 FALSE   reml <NA>
 
 # ML profiles the unpenalized directions instead of integrating them, so
 # it shrinks a little less. The gap is small here because only two of the

@@ -15,7 +15,7 @@ outer_criterion, or as both."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -202,8 +202,8 @@ Statistical Software</em> 33(1), 1–22.</p>
 <span class="r-in"><span>               <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span>,</span></span>
 <span class="r-in"><span>               outer_criterion <span class="op">=</span> <span class="fu">cv</span><span class="op">(</span>nfolds <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="hyper.html">hyper</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter                    term   name estimate  held source</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu lasso(x, n_lambda = 12) lambda 14.03983 FALSE    bic</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter                    term   name estimate  held source   id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu lasso(x, n_lambda = 12) lambda 14.03983 FALSE    bic &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The two columns that carry signal are recovered.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span><span class="op">[</span><span class="fl">2</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span></span></span>

@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -166,8 +166,8 @@ criterion should count, and never the 7. <code><a href="../reference/hyper.html"
 the hyperparameters and who chose each:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">f3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   parameter        term   name estimate  held source</span></span>
-<span><span class="co">#&gt; 1        mu s(z, k = 8) lambda 1.067872 FALSE   reml</span></span></code></pre></div>
+<span><span class="co">#&gt;   parameter        term   name estimate  held source   id</span></span>
+<span><span class="co">#&gt; 1        mu s(z, k = 8) lambda 1.067872 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
 <p>A random effect is written the same way and is the same machinery,
 its penalty being a Gaussian prior over the group effects:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -179,9 +179,9 @@ its penalty being a Gaussian prior over the group effects:</p>
 <span><span class="co">#&gt; 3        mu random(~1 | g)           20 18.57777</span></span>
 <span><span class="co">#&gt; 4     sigma         linpar            1  1.00000</span></span>
 <span><span class="fu"><a href="../reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   parameter           term   name  estimate  held source</span></span>
-<span><span class="co">#&gt; 1        mu    s(z, k = 8) lambda 1.0454567 FALSE   reml</span></span>
-<span><span class="co">#&gt; 2        mu random(~1 | g)  sigma 0.7061116 FALSE   reml</span></span></code></pre></div>
+<span><span class="co">#&gt;   parameter           term   name  estimate  held source   id</span></span>
+<span><span class="co">#&gt; 1        mu    s(z, k = 8) lambda 1.0454567 FALSE   reml &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2        mu random(~1 | g)  sigma 0.7061116 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
 <p>20 group effects spend about 18.6 degrees of freedom here, and the
 estimated prior scale is close to the 0.6 the groups were drawn at. A
 random intercept is a ridge penalty on an indicator block, which is why
@@ -240,7 +240,7 @@ then says so in its <code>held</code> column.</p>
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -362.579490    effective df 7.28</span></span>
 <span><span class="co">#&gt; cAIC 739.711    cBIC 766.660</span></span>
-<span><span class="co">#&gt; fitted in 762 ms   search: converged</span></span>
+<span><span class="co">#&gt; fitted in 772 ms   search: converged</span></span>
 <span><span class="co">#&gt; certificate: CONVERGED   outer gradient 1.87e-05   5.77e-13 above the mode</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
 <p>Three things in that output are worth naming. The log-likelihood is

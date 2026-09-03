@@ -103,6 +103,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_value.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/index.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/index_group.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/index_members.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/info_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_mode_error.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_settings.html</loc></url>
@@ -153,6 +155,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_fallbacks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_forced.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_grid.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_group.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/path_member_index.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_null_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_pick.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/path_rows.html</loc></url>
@@ -255,6 +259,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_full_information.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>

@@ -13,7 +13,7 @@ net's \(\alpha\) all appear here."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.92.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,6 +88,10 @@ penalized term sits in.</p></dd>
 <dt><code>source</code></dt>
 <dd><p>what put the value there, as above.</p></dd>
 
+<dt><code>id</code></dt>
+<dd><p>the sharing label, <code>NA</code> where the hyperparameter is not
+shared.</p></dd>
+
 
 </dl><p>A data frame of no rows, with those columns, where the model carries no
 penalty at all.</p>
@@ -123,6 +127,16 @@ reached carries one, from the curvature of that criterion, and
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> prints it.</p>
     </div>
     <div class="section level2">
+    <h2 id="why-two-rows-may-carry-the-same-number">Why two rows may carry the same number<a class="anchor" aria-label="anchor" href="#why-two-rows-may-carry-the-same-number"></a></h2>
+    <p>Terms whose <code><a href="https://statmodels7.github.io/modelterms7/reference/term_ids.html" class="external-link">modelterms7::term_ids()</a></code> give the same label estimate one
+value, and that value is written under each of their own keys. So a shared
+hyperparameter appears once per term, with the same estimate and the same
+<code>source</code>, and the <code>id</code> column is what says the agreement is the model
+rather than a coincidence. The penalties are not merged, which is why each
+still has a row of its own and why the effective degrees of freedom are
+still counted term by term.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code> for the coefficients,
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> for the two printed together with standard
@@ -138,13 +152,13 @@ errors, <code><a href="statmod_held.html">statmod_held()</a></code> for which ar
 <span class="r-in"><span><span class="co"># Estimated by REML, which is what source says.</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">6</span><span class="op">)</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hyper</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter        term   name estimate  held source</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter        term   name estimate  held source   id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The same value on the scale the outer search ran on.</span></span></span>
 <span class="r-in"><span><span class="fu">hyper</span><span class="op">(</span><span class="va">fit</span>, scale <span class="op">=</span> <span class="st">"link"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter        term   name estimate  held source</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter        term   name estimate  held source   id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Held by the term instead, and reported as fixed.</span></span></span>
 <span class="r-in"><span><span class="va">held</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">6</span>, lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
