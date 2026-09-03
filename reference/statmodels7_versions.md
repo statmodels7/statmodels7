@@ -57,7 +57,7 @@ v
 #> 1         basis7   0.6.0
 #> 2 distributions7  0.43.0
 #> 3 linkfunctions7   0.3.0
-#> 4    modelterms7  0.65.0
+#> 4    modelterms7  0.66.0
 #> 5    numericals7  0.12.0
 #> 6    optimizers7   0.8.0
 #> 7    parameters7  0.20.0

@@ -147,6 +147,15 @@ exported, and none is needed to use the package.
   : Validate Prior Weights
 - [`chol_blocks()`](https://statmodels7.github.io/statmodels7/reference/chol_blocks.md)
   : Cholesky Factors of Small Blocks, Vectorized Over Observations
+- [`class_notes()`](https://statmodels7.github.io/statmodels7/reference/class_notes.md)
+  : What a Summary Says About the Covariance Classes
+- [`class_penalty()`](https://statmodels7.github.io/statmodels7/reference/class_penalty.md)
+  : The Joint Prior of a Covariance Class
+- [`class_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_pieces.md)
+  [`class_index()`](https://statmodels7.github.io/statmodels7/reference/class_pieces.md)
+  : Where a Covariance Class's Members Sit in the Stacked Vector
+- [`class_unit_of()`](https://statmodels7.github.io/statmodels7/reference/class_unit_of.md)
+  : The Covariance Class One Term Belongs To
 - [`coef(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
   : The Coefficients of a Fitted Model
 - [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
@@ -321,6 +330,8 @@ exported, and none is needed to use the package.
   : The Size of a Penalty's Kink
 - [`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
   : The Hyperparameter That Gives the Kink a Chosen Size
+- [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
+  : Every Labelled Effect a Term Carries, Its Sub-Terms Included
 - [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
   : The Leverage Diagonal Over the Nonzeros of Two Rows
 - [`logLik(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
@@ -528,6 +539,8 @@ exported, and none is needed to use the package.
   : Split a Specification's Terms Into the Smooth Block and the Rest
 - [`statmod_boot_restart()`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md)
   : Restarting Around a Fitted Model, Screened on the Exact Profile
+- [`statmod_classes()`](https://statmodels7.github.io/statmodels7/reference/statmod_classes.md)
+  : The Covariance Classes of a Specification
 - [`statmod_commit_refresh()`](https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.md)
   : Advance the Refresh State
 - [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
@@ -691,6 +704,8 @@ exported, and none is needed to use the package.
   : The Blocks of One Distribution Parameter
 - [`term_block_kind()`](https://statmodels7.github.io/statmodels7/reference/term_block_kind.md)
   : What Kind of Block a Term Reports As
+- [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
+  : The Covariance Labels a Term Carries, Its Sub-Terms Included
 - [`terms_first()`](https://statmodels7.github.io/statmodels7/reference/terms_first.md)
   : Evaluate a Formula's Terms With modelterms7 in Front
 - [`trace_design_form()`](https://statmodels7.github.io/statmodels7/reference/trace_design_form.md)
@@ -703,6 +718,8 @@ exported, and none is needed to use the package.
   : The Trace of the Determinant's Movement With the Coefficients
 - [`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
   : Why a Term Is Outside the Fitting Scheme
+- [`unit_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_beta.md)
+  : The Coefficients a Penalized Unit Covers
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)

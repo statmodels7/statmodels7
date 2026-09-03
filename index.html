@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.90.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.91.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,11 +74,11 @@
 <p>Attaching it attaches the eight member packages.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.90.0</span></span>
+<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.91.0</span></span>
 <span><span class="co">#&gt; v basis7         0.6.0    v numericals7    0.12.0</span></span>
-<span><span class="co">#&gt; v distributions7 0.41.0   v optimizers7    0.8.0</span></span>
-<span><span class="co">#&gt; v linkfunctions7 0.3.0    v parameters7    0.18.0</span></span>
-<span><span class="co">#&gt; v modelterms7    0.64.0   v penalties7     0.19.0</span></span></code></pre></div>
+<span><span class="co">#&gt; v distributions7 0.43.0   v optimizers7    0.8.0</span></span>
+<span><span class="co">#&gt; v linkfunctions7 0.3.0    v parameters7    0.20.0</span></span>
+<span><span class="co">#&gt; v modelterms7    0.66.0   v penalties7     0.20.0</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="fitting-a-model">Fitting a model<a class="anchor" aria-label="anchor" href="#fitting-a-model"></a>
@@ -134,7 +134,7 @@
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -282.115367    effective df 28.35</span></span>
 <span><span class="co">#&gt; cAIC 620.936    cBIC 734.104</span></span>
-<span><span class="co">#&gt; fitted in 2.55 s   search: converged</span></span>
+<span><span class="co">#&gt; fitted in 1.17 s   search: converged</span></span>
 <span><span class="co">#&gt; certificate: CONVERGED   outer gradient 6.79e-07   2.19e-11 above the mode</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
 <p>The last line of that table comes from <code><a href="reference/statmod_certificate.html">statmod_certificate()</a></code>, which is computed at the point the fit reached rather than read off the optimizer’s stopping rule: it reports how far above its own mode the coefficients stopped and whether the hyperparameters are stationary there.</p>
@@ -161,6 +161,7 @@
 </h2>
 <p>Every term <code>modelterms7</code> defines goes in any equation: the parametric block, penalized smooths of one and several covariates, grouped random intercepts and slopes, ridge, lasso, elastic net, SCAD and MCP, a nonlinear parametric term, effects that change at estimated break-points, score-driven dynamics and latent Markov regimes. A term that rewrites the likelihood rather than contributing a design block is fitted in the same system as the coefficients, with the observed information of the joint model behind <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>.</p>
 <p>The hyperparameters of a smooth penalty come from <code><a href="reference/reml.html">reml()</a></code> or <code><a href="reference/reml.html">ml()</a></code>, or from <code><a href="reference/aic.html">aic()</a></code>, <code><a href="reference/aic.html">bic()</a></code> or <code><a href="reference/cv.html">cv()</a></code> on an estimate of prediction error. A penalty with a kink has no second derivative at the mode, so its hyperparameter is chosen instead along a path of its own values, from the value that empties the block downwards.</p>
+<p>Random effects written with the same label and the same grouping share one covariance block, whatever equation they sit in, which is <code>brms</code>’s second bar. <code>y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)</code> estimates the correlation between a subject’s level and its dispersion, and the label reaches a subformula too, so <code>seg(x, psi ~ random(~ 1 | u | id))</code> beside it correlates a random break-point with a random scale. The block is one multivariate prior over the effects of one level, on <code>dr_prod()</code> by default, where a coordinate is the logarithm of a standard deviation exactly.</p>
 <p><code><a href="reference/rstatmod.html">rstatmod()</a></code> simulates from a model written the same way, which is what a simulation study needs: the truth is returned beside the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rstatmod.html">rstatmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>

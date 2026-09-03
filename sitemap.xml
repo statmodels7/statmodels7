@@ -29,6 +29,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_weights.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/chol_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/class_notes.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/class_penalty.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/class_pieces.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/class_unit_of.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_labels.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coef_readable.html</loc></url>
@@ -118,6 +122,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_power.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/kink_solve.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/label_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/leverage_pairs.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/linpar_options.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.html</loc></url>
@@ -232,6 +237,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_certificate.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_classes.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_commit_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_design.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_design_at.html</loc></url>
@@ -317,12 +323,14 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/term_tags_deep.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/trace_design_form.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/trace_refresh4.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unfittable_reason.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/unit_beta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_inner.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_name.html</loc></url>

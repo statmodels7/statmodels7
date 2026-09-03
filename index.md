@@ -22,11 +22,11 @@ Attaching it attaches the eight member packages.
 ``` r
 
 library(statmodels7)
-#> -- Attaching the statmodels7 toolkit 0.90.0
+#> -- Attaching the statmodels7 toolkit 0.91.0
 #> v basis7         0.6.0    v numericals7    0.12.0
-#> v distributions7 0.41.0   v optimizers7    0.8.0
-#> v linkfunctions7 0.3.0    v parameters7    0.18.0
-#> v modelterms7    0.64.0   v penalties7     0.19.0
+#> v distributions7 0.43.0   v optimizers7    0.8.0
+#> v linkfunctions7 0.3.0    v parameters7    0.20.0
+#> v modelterms7    0.66.0   v penalties7     0.20.0
 ```
 
 ## Fitting a model
@@ -102,7 +102,7 @@ summary(fit)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -282.115367    effective df 28.35
 #> cAIC 620.936    cBIC 734.104
-#> fitted in 2.55 s   search: converged
+#> fitted in 1.17 s   search: converged
 #> certificate: CONVERGED   outer gradient 6.79e-07   2.19e-11 above the mode
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
@@ -163,6 +163,16 @@ or from
 an estimate of prediction error. A penalty with a kink has no second
 derivative at the mode, so its hyperparameter is chosen instead along a
 path of its own values, from the value that empties the block downwards.
+
+Random effects written with the same label and the same grouping share
+one covariance block, whatever equation they sit in, which is `brms`’s
+second bar. `y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)`
+estimates the correlation between a subject’s level and its dispersion,
+and the label reaches a subformula too, so
+`seg(x, psi ~ random(~ 1 | u | id))` beside it correlates a random
+break-point with a random scale. The block is one multivariate prior
+over the effects of one level, on `dr_prod()` by default, where a
+coordinate is the logarithm of a standard deviation exactly.
 
 [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
 simulates from a model written the same way, which is what a simulation
