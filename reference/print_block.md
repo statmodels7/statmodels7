@@ -7,7 +7,7 @@ compartment per parameter developed over covariates.
 ## Usage
 
 ``` r
-print_block(b, digits = 4L)
+print_block(b, digits = 4L, n = NULL)
 ```
 
 ## Arguments

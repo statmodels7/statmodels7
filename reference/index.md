@@ -298,6 +298,8 @@ exported, and none is needed to use the package.
   : Move Between the Hyperparameters and the Free Vector
 - [`hyper_value()`](https://statmodels7.github.io/statmodels7/reference/hyper_value.md)
   : One Hyperparameter of an Index
+- [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
+  : The Variance of the Estimated Hyperparameters
 - [`index_group()`](https://statmodels7.github.io/statmodels7/reference/index_group.md)
   : Collapse the Shared Hyperparameters of an Index
 - [`index_members()`](https://statmodels7.github.io/statmodels7/reference/index_members.md)

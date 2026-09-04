@@ -6,7 +6,7 @@ together with the first few coefficients, the rest reported as a count.
 ## Usage
 
 ``` r
-block_rows_shown(tb, cap = 12L, show = 10L)
+block_rows_shown(tb, n = NULL, cap = 12L, show = 10L)
 ```
 
 ## Arguments

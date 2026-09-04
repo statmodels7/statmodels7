@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.95.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,20 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.96.0" id="statmodels7-0960">statmodels7 0.96.0<a class="anchor" aria-label="anchor" href="#statmodels7-0960"></a></h2>
+<ul><li>
+<p><code>print(summary(fit), n = )</code> says how many coefficient rows a block shows, <code>Inf</code> for all of them, defaulting to the option <code>statmodels7.summary_rows</code> and to the 10 that were hard-coded. The two numbers behind the abridgement were reachable from nowhere: a block of forty-six coefficients printed ten and named <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> as the way to the rest, which returns the values without the standard errors and the intervals beside them.</p>
+<p>A HYPERPARAMETER ROW IS NEVER HIDDEN whatever <code>n</code> is. It governs every coefficient under it and each of them is conditional on the value it reached, so a block that showed ten coefficients and dropped the smoothing parameter that produced them would bury the one number the rest depend on. A block short enough to fit in twelve rows is not abridged at all, so raising <code>n</code> changes nothing for a parametric block of ordinary size.</p>
+</li>
+<li>
+<p>A hyperparameter keeps its standard error where its OWN curvature can produce one, instead of losing it because a neighbour’s cannot. <code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> used to refuse the whole matrix when the inverse of the negative outer Hessian had any non-positive diagonal entry, which is one coordinate’s failure charged to every other.</p>
+<p>Measured on a Poisson-inverse gaussian with a random effect in each equation, stopped before a maximum: the negative Hessian has eigenvalues 1.1017 and <strong>-10.38</strong>, so the variance would read (0.9076, <strong>-0.0963</strong>) and both rows printed an estimate and nothing else. The coordinate whose curvature has the wrong sign is now held and the rest inverted, and the first reports 0.9959 with a standard error of 0.9489 and an interval of (0.154, 6.445) while the second still reports its estimate alone.</p>
+<p>⚠️ <strong>What the kept block gives is the variance CONDITIONAL on the held coordinate, and that is tested rather than assumed.</strong> It equals the one the full matrix would give only where the coupling contributes nothing to the kept curvature, so <code><a href="../reference/hyper_variance.html">hyper_variance()</a></code> computes the Schur correction  and compares it against the kept diagonal; above <code>schur</code>, whose default is the size at which the correction cannot move the four significant digits the summary prints, the whole matrix is refused as before. On the measurement above the correction is 5.6e-05 against a diagonal of 1.1017.</p>
+<p>A fit that converges is untouched: the full inverse is usable and is what it was. Checked on a gaussian random intercept and on a two-equation correlated random effect, where every standard deviation, correlation, standard error and interval agrees to every printed digit.</p>
+</li>
+<li><p>The notes say what is true of the fit in front of the reader. The note promising that a hyperparameter marked <code>[reml]</code> or <code>[ml]</code> carries a standard error and an interval was emitted whenever such a hyperparameter existed, whether or not one had been read – so on the fit above it stated the opposite of the table beside it. It is emitted where at least one such row has a standard error, and a second note, where at least one has none, says that the criterion’s curvature in that coordinate’s own direction is not negative and that no variance follows from it. Both may appear together, which is what the change to <code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> makes possible.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.95.0" id="statmodels7-0950">statmodels7 0.95.0<a class="anchor" aria-label="anchor" href="#statmodels7-0950"></a></h2>
 <ul><li>
