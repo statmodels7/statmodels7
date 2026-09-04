@@ -4,7 +4,7 @@
 \alias{print_block}
 \title{Print One Block of a Model Summary}
 \usage{
-print_block(b, digits = 4L)
+print_block(b, digits = 4L, n = NULL)
 }
 \arguments{
 \item{b}{A block record from \code{\link[=summary_blocks]{summary_blocks()}}.}

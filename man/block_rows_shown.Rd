@@ -4,7 +4,7 @@
 \alias{block_rows_shown}
 \title{Which Rows of a Table a Summary Prints}
 \usage{
-block_rows_shown(tb, cap = 12L, show = 10L)
+block_rows_shown(tb, n = NULL, cap = 12L, show = 10L)
 }
 \arguments{
 \item{tb}{A summary table.}

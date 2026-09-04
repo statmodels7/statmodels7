@@ -1,3 +1,60 @@
+# statmodels7 0.96.0
+
+* `print(summary(fit), n = )` says how many coefficient rows a block shows,
+  `Inf` for all of them, defaulting to the option
+  `statmodels7.summary_rows` and to the 10 that were hard-coded. The two
+  numbers behind the abridgement were reachable from nowhere: a block of
+  forty-six coefficients printed ten and named `coef()` as the way to the
+  rest, which returns the values without the standard errors and the
+  intervals beside them.
+
+  A HYPERPARAMETER ROW IS NEVER HIDDEN whatever `n` is. It governs every
+  coefficient under it and each of them is conditional on the value it
+  reached, so a block that showed ten coefficients and dropped the smoothing
+  parameter that produced them would bury the one number the rest depend on.
+  A block short enough to fit in twelve rows is not abridged at all, so
+  raising `n` changes nothing for a parametric block of ordinary size.
+
+* A hyperparameter keeps its standard error where its OWN curvature can
+  produce one, instead of losing it because a neighbour's cannot.
+  `statmod_hyper_vcov()` used to refuse the whole matrix when the inverse
+  of the negative outer Hessian had any non-positive diagonal entry, which
+  is one coordinate's failure charged to every other.
+
+  Measured on a Poisson-inverse gaussian with a random effect in each
+  equation, stopped before a maximum: the negative Hessian has eigenvalues
+  1.1017 and **-10.38**, so the variance would read (0.9076, **-0.0963**)
+  and both rows printed an estimate and nothing else. The coordinate whose
+  curvature has the wrong sign is now held and the rest inverted, and the
+  first reports 0.9959 with a standard error of 0.9489 and an interval of
+  (0.154, 6.445) while the second still reports its estimate alone.
+
+  ⚠️ **What the kept block gives is the variance CONDITIONAL on the held
+  coordinate, and that is tested rather than assumed.** It equals the one
+  the full matrix would give only where the coupling contributes nothing to
+  the kept curvature, so `hyper_variance()` computes the Schur correction
+  \eqn{A_{kb}A_{bb}^{-1}A_{bk}} and compares it against the kept diagonal;
+  above `schur`, whose default is the size at which the correction cannot
+  move the four significant digits the summary prints, the whole matrix is
+  refused as before. On the measurement above the correction is 5.6e-05
+  against a diagonal of 1.1017.
+
+  A fit that converges is untouched: the full inverse is usable and is what
+  it was. Checked on a gaussian random intercept and on a two-equation
+  correlated random effect, where every standard deviation, correlation,
+  standard error and interval agrees to every printed digit.
+
+* The notes say what is true of the fit in front of the reader. The note
+  promising that a hyperparameter marked `[reml]` or `[ml]` carries a
+  standard error and an interval was emitted whenever such a hyperparameter
+  existed, whether or not one had been read -- so on the fit above it stated
+  the opposite of the table beside it. It is emitted where at least one such
+  row has a standard error, and a second note, where at least one has none,
+  says that the criterion's curvature in that coordinate's own direction is
+  not negative and that no variance follows from it. Both may appear
+  together, which is what the change to `statmod_hyper_vcov()` makes
+  possible.
+
 # statmodels7 0.95.0
 
 * `iwls_pieces()` asks the family for its second-derivative components ONCE

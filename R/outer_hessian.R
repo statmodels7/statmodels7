@@ -653,6 +653,63 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 }
 
 
+#' The Variance of the Estimated Hyperparameters
+#'
+#' @description
+#' Inverts the negative of the outer criterion's Hessian, holding any
+#' coordinate whose own curvature cannot produce a variance.
+#'
+#' @details
+#' At a maximum the criterion's Hessian is negative definite and its negative
+#' inverts to a variance. A hyperparameter driven to the edge of its range,
+#' or one the search left before reaching a maximum, has a curvature there
+#' that is zero or of the wrong sign, and no variance follows from it.
+#'
+#' Such a coordinate used to cost every other one its standard error, the
+#' whole matrix being refused. It is held instead and the rest is inverted,
+#' which is the variance CONDITIONAL on it — the same reading `vcov()` gives
+#' a coefficient the information carries nothing about. That is the marginal
+#' variance only where the coupling contributes nothing to the kept
+#' curvature, so the Schur correction \eqn{A_{kb}A_{bb}^{-1}A_{bk}} is
+#' computed and compared against the kept diagonal rather than assumed
+#' negligible; above `schur` the whole matrix is refused as before. The
+#' default is the size at which the correction cannot move the four
+#' significant digits the summary prints.
+#'
+#' @param A The negative of the outer Hessian, with dimnames.
+#' @param schur The largest relative Schur correction a held coordinate may
+#'   contribute to a kept one's curvature.
+#'
+#' @return A matrix of the same shape as `A` with the variance in the kept
+#'   rows and columns and `NA` elsewhere, or `NULL` when no coordinate is
+#'   usable or the coupling is too large to ignore.
+#'
+#' @seealso [statmod_hyper_vcov()], its only caller.
+#'
+#' @keywords internal
+hyper_variance <- function(A, schur = 1e-4) {
+  usable <- function(M) !is.null(M) && all(is.finite(M)) && all(diag(M) > 0)
+  V <- tryCatch(solve(A), error = function(e) NULL)
+  if (usable(V)) return(V)
+  p <- ncol(A)
+  d <- diag(A)
+  bad <- which(!is.finite(d) | d <= 0 |
+                 apply(!is.finite(A), 1L, any))
+  keep <- setdiff(seq_len(p), bad)
+  if (!length(bad) || !length(keep)) return(NULL)
+  W <- tryCatch(solve(A[keep, keep, drop = FALSE]), error = function(e) NULL)
+  if (!usable(W)) return(NULL)
+  Bi <- tryCatch(solve(A[bad, bad, drop = FALSE]), error = function(e) NULL)
+  if (is.null(Bi) || any(!is.finite(Bi))) return(NULL)
+  Akb <- A[keep, bad, drop = FALSE]
+  corr <- diag(as.matrix(Akb %*% Bi %*% t(Akb)))
+  if (any(abs(corr) > schur * d[keep])) return(NULL)
+  out <- matrix(NA_real_, p, p, dimnames = dimnames(A))
+  out[keep, keep] <- W
+  out
+}
+
+
 #' The Variance of the Hyperparameters a Marginal Criterion Estimated
 #'
 #' @description
@@ -715,9 +772,10 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {
   # optimum and the variance is the inverse of its negative. A hyperparameter
   # driven to the edge of its range leaves a curvature that is zero or of the
   # wrong sign there, and no interval follows from it.
-  V <- tryCatch(solve(-as.matrix(Ho)), error = function(e) NULL)
-  if (is.null(V) || any(!is.finite(V)) || any(diag(V) <= 0)) return(NULL)
+  A <- -as.matrix(Ho)
   k <- paste(idx$parameter, idx$term, idx$name, sep = "\r")
-  dimnames(V) <- list(k, k)
+  dimnames(A) <- list(k, k)
+  V <- hyper_variance(A)
+  if (is.null(V)) return(NULL)
   structure(V, idx = idx)
 }

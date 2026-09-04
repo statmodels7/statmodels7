@@ -1725,12 +1725,32 @@ summary.StatmodFit <- function(object, level = 0.95,
              use.names = FALSE)), use.names = FALSE))
     marg <- setdiff(intersect(src, c("reml", "ml")), NA)
     path <- setdiff(intersect(src, c("aic", "bic", "cv")), NA)
-    if (length(marg)) {
+    # WHETHER THE STANDARD ERROR IS THERE, and not merely whether the
+    # criterion was marginal. A hyperparameter the search left before
+    # reaching a maximum has a curvature of the wrong sign in its own
+    # direction and no variance follows from it, so the row carries the
+    # estimate and nothing else -- and a note promising an interval beside
+    # it would be false of the fit in front of the reader.
+    mse <- unlist(lapply(tables, function(bl) unlist(lapply(bl, function(b) {
+      r <- b$table$role %in% "estimated" & b$table$source %in% c("reml", "ml")
+      if (!any(r)) return(logical(0))
+      is.finite(b$table$se[r])
+    }), use.names = FALSE)), use.names = FALSE)
+    if (length(marg) && any(mse)) {
       notes <- c(notes, sprintf(paste0(
         "A hyperparameter marked %s was estimated by that criterion, and its",
         " standard\n  error and interval are read on the free scale its link ",
         "defines and mapped\n  back. Every coefficient beside it is still ",
         "conditional on the value reached."),
+        paste(toupper(marg), collapse = " or ")))
+    }
+    if (length(marg) && any(!mse)) {
+      notes <- c(notes, sprintf(paste0(
+        "A hyperparameter marked %s with no standard error was estimated at ",
+        "a point\n  where the criterion's curvature in its own direction is ",
+        "not negative: the\n  search did not reach a maximum there, so no ",
+        "variance follows from it. Its\n  estimate stands and every ",
+        "coefficient beside it is conditional on it."),
         paste(toupper(marg), collapse = " or ")))
     }
     if (length(path)) {
@@ -2030,6 +2050,11 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
           j <- match(k, rownames(Vh))
           if (is.na(j)) next
           link <- attr(lk, "links")[[j]]
+          # a coordinate the criterion's curvature cannot produce a
+          # variance for is NA here and keeps the row's empty se and
+          # interval; sort() drops an NA, so reaching the ends below with
+          # one would ask for an element that is not there
+          if (!is.finite(Vh[j, j])) next
           se_eta <- sqrt(Vh[j, j])
           eta <- linkfunctions7::linkfun(link, r$estimate[[i]])
           r$se[[i]] <- abs(linkfunctions7::dlinkinv(link, eta)) * se_eta
@@ -2567,11 +2592,19 @@ smoothed_notes <- function(spec, object) {
 #'   state conventions, never facts of the fit, so they read the same
 #'   under every model. They are on the summary's `notes` property
 #'   either way.
+#' @param n How many coefficient rows a block shows, `Inf` or `NA` for all
+#'   of them. Defaults to the option `statmodels7.summary_rows`, and to 10
+#'   where that is unset. A hyperparameter row is shown whatever `n` is: it
+#'   governs the coefficients under it, and every one of them is
+#'   conditional on the value it reached. A block short enough to fit in
+#'   twelve rows is never abridged, so raising `n` changes nothing for a
+#'   parametric block of ordinary size.
 #' @param ... Unused.
 #' @return `x`, invisibly.
 #' @seealso [summary.StatmodFit()]
 #' @keywords internal
-print.StatmodSummary <- function(x, digits = 4L, notes = FALSE, ...) {
+print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
+                                 n = NULL, ...) {
   cat("A statmod fit\n\n")
   cat("Call:  ", paste(deparse(x@call), collapse = "\n        "), "\n\n",
       sep = "")
@@ -2587,7 +2620,7 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE, ...) {
       cat("  (no coefficients)\n")
       next
     }
-    for (b in blocks) print_block(b, digits)
+    for (b in blocks) print_block(b, digits, n)
   }
 
   cat(sprintf("\n%.0f%% intervals, %s variance\n", 100 * x@level, x@type))
@@ -2726,11 +2759,18 @@ format_block_cells <- function(tb, digits = 4L) {
 #' @return An integer vector of row positions.
 #'
 #' @keywords internal
-block_rows_shown <- function(tb, cap = 12L, show = 10L) {
-  if (nrow(tb) <= cap) return(seq_len(nrow(tb)))
+block_rows_shown <- function(tb, n = NULL, cap = 12L, show = 10L) {
+  if (is.null(n)) n <- getOption("statmodels7.summary_rows", show)
+  if (is.na(n) || !is.finite(n)) return(seq_len(nrow(tb)))
+  n <- max(0L, as.integer(n))
+  # A HYPERPARAMETER ROW IS NEVER HIDDEN. It governs every coefficient under
+  # it, and a block that showed ten coefficients and dropped the smoothing
+  # parameter that produced them would bury the one number the rest are
+  # conditional on.
   hyp <- which(tb$role %in% c("fixed", "estimated"))
   rest <- setdiff(seq_len(nrow(tb)), hyp)
-  sort(c(hyp, utils::head(rest, show)))
+  if (nrow(tb) <= max(cap, n + length(hyp))) return(seq_len(nrow(tb)))
+  sort(c(hyp, utils::head(rest, n)))
 }
 
 #' Print One Block of a Model Summary
@@ -2758,7 +2798,7 @@ block_rows_shown <- function(tb, cap = 12L, show = 10L) {
 #' @return `NULL`, invisibly. Called for the printing.
 #'
 #' @keywords internal
-print_block <- function(b, digits = 4L) {
+print_block <- function(b, digits = 4L, n = NULL) {
   head <- if (is.na(b$term)) b$label else b$term
   bits <- character(0)
   if (!identical(b$kind, "parametric")) {
@@ -2791,7 +2831,7 @@ print_block <- function(b, digits = 4L) {
                                       tb = cp$table, lines = cp$lines)
   }
   for (i in seq_along(secs)) {
-    keep <- block_rows_shown(secs[[i]]$tb)
+    keep <- block_rows_shown(secs[[i]]$tb, n)
     secs[[i]]$hidden <- nrow(secs[[i]]$tb) - length(keep)
     secs[[i]]$tb <- secs[[i]]$tb[keep, , drop = FALSE]
   }
