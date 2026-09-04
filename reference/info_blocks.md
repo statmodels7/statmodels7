@@ -8,7 +8,7 @@ scoring step is built from, before any design enters.
 ## Usage
 
 ``` r
-info_blocks(spec, theta, expected = TRUE, approx = "opg")
+info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
 ```
 
 ## Arguments

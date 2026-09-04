@@ -570,6 +570,8 @@ exported, and none is needed to use the package.
   : The Linear Predictors and the Parameters They Give
 - [`statmod_eta_continued()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta_continued.md)
   : Predictors at Rows That Continue the Series
+- [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
+  : The Family's Second-Derivative Components at a Point
 - [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
   : Run the Structural Terms at the Current Parameters
 - [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)

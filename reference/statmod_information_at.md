@@ -11,7 +11,8 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg"
+  approx = "opg",
+  H = NULL
 )
 ```
 
@@ -40,6 +41,13 @@ statmod_information_at(
   How the expected information is approximated for a family with no
   closed form: `"bartlett"`, `"integrate"` or `"mc"`.
 
+- H:
+
+  The second-derivative components at this point, as
+  [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
+  returns them, or `NULL` to ask for them. A mixture over regimes reads
+  a different set per component and ignores this.
+
 ## Value
 
 A symmetric `p x p` matrix over the stacked coefficients, `p` being
@@ -67,4 +75,6 @@ closed expected information.
 [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
 for the first derivative,
 [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
-for the per-observation blocks a square-root route uses instead.
+for the per-observation blocks a square-root route uses instead, and
+[`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
+for the components both read.

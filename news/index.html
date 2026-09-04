@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.94.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.95.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,15 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.95.0" id="statmodels7-0950">statmodels7 0.95.0<a class="anchor" aria-label="anchor" href="#statmodels7-0950"></a></h2>
+<ul><li>
+<p><code><a href="../reference/iwls_pieces.html">iwls_pieces()</a></code> asks the family for its second-derivative components ONCE a point and hands them to both routes, through the new <code><a href="../reference/statmod_family_hessian.html">statmod_family_hessian()</a></code> and an <code>H</code> argument on <code><a href="../reference/info_blocks.html">info_blocks()</a></code> and <code><a href="../reference/statmod_information_at.html">statmod_information_at()</a></code>. It used to let each route ask for itself, which cost one full evaluation an iteration wherever the square-root decomposition is abandoned – and where the expected information IS the outer product of scores that is EVERY point, the per-observation block being , of rank one, so it has no Cholesky factor as soon as the family carries more than one parameter.</p>
+<p>Measured, <code><a href="../reference/chol_blocks.html">chol_blocks()</a></code> returns <code>NULL</code> at every point for <code>pig1</code>, <code>pig2</code> and <code>skewnormal1</code> – the per-observation eigenvalues are  on a pig2 – while a family with a closed-form expected information factors normally. Traced through a fit, the score was evaluated <strong>three times an iteration where twice is the minimum</strong>: once by <code><a href="../reference/statmod_score_at.html">statmod_score_at()</a></code> on the link scale, once by <code><a href="../reference/info_blocks.html">info_blocks()</a></code> and once again by the fallback. It is now twice, and a Poisson-inverse gaussian regression at n = 12096 goes from 1.032 s to 0.944 s with the dispersion held and from 0.848 s to 0.753 s with it modelled, the log-likelihood identical to the printed digit.</p>
+<p>⚠️ <strong>The two that remain cannot be shared as things stand.</strong> The outer product reads the PARAMETER-scale score and <code><a href="../reference/statmod_score_at.html">statmod_score_at()</a></code> reads the LINK-scale one; they run the same compiled kernel, but nothing in the contract returns both, and deriving one from the other here would put ’s chain rule in the modelling layer.</p>
+<p>⚠️ <strong>A mixture over regimes reads a different set of components per regime</strong>, so it is left to ask for its own and <code>H</code> is not passed there.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.94.0" id="statmodels7-0940">statmodels7 0.94.0<a class="anchor" aria-label="anchor" href="#statmodels7-0940"></a></h2>
 <ul><li>

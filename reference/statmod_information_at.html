@@ -9,7 +9,7 @@ distribution's own link-scale second derivatives."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.94.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.95.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@ distribution's own link-scale second derivatives.</p>
 <span>  <span class="va">coef</span>,</span>
 <span>  design <span class="op">=</span> <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span>,</span>
 <span>  expected <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  approx <span class="op">=</span> <span class="st">"opg"</span></span>
+<span>  approx <span class="op">=</span> <span class="st">"opg"</span>,</span>
+<span>  H <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,6 +80,13 @@ negated observed Hessian.</p></dd>
 <dd><p>How the expected information is approximated for a family
 with no closed form: <code>"bartlett"</code>, <code>"integrate"</code> or <code>"mc"</code>.</p></dd>
 
+
+<dt id="arg-h">H<a class="anchor" aria-label="anchor" href="#arg-h"></a></dt>
+<dd><p>The second-derivative components at this point, as
+<code><a href="statmod_family_hessian.html">statmod_family_hessian()</a></code> returns them, or <code>NULL</code> to ask for them.
+A mixture over regimes reads a different set per component and
+ignores this.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -104,7 +112,7 @@ has no closed expected information.</p>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod_score_at.html">statmod_score_at()</a></code> for the first derivative,
 <code><a href="info_blocks.html">info_blocks()</a></code> for the per-observation blocks a square-root route uses
-instead.</p></div>
+instead, and <code><a href="statmod_family_hessian.html">statmod_family_hessian()</a></code> for the components both read.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
