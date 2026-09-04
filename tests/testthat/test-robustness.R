@@ -68,14 +68,35 @@ test_that("convergence is the inner method's, not the absence of blocks", {
 test_that("a singular information names the direction, not a guess", {
   # the message used to offer two causes -- the fit not having reached a
   # maximum, or two columns carrying the same information -- and on this fit
-  # NEITHER was right: the design is full rank and the score is small. The
-  # eigenvector of the smallest eigenvalue says what is actually flat.
+  # NEITHER was right: the design is full rank and the score is small. What
+  # is actually flat is nu, whose coordinates carry the whole of it.
+  #
+  # Since the hold, that is said by a WARNING and not by an error: the
+  # flat coordinates come back missing and every other one keeps its
+  # standard error. The old branch survives for a platform where nothing
+  # can be held, which is where the refusal still speaks.
   fit <- statmod(f3, distributions7::student_t1_distrib(), iris)
-  msg <- tryCatch(vcov(fit), error = function(e) conditionMessage(e))
-  skip_if(!is.character(msg), "the information happened to be definite here")
-  expect_match(msg, "nu")
-  expect_match(msg, "edge of its")
-  expect_false(grepl("two columns of the design", msg))
+  held <- NULL
+  V <- withCallingHandlers(
+    tryCatch(vcov(fit), error = function(e) conditionMessage(e)),
+    statmod_held_coord = function(w) {
+      held <<- conditionMessage(w)
+      invokeRestart("muffleWarning")
+    })
+  if (is.character(V)) {
+    expect_match(V, "nu")
+    expect_match(V, "edge of its")
+    expect_false(grepl("two columns of the design", V))
+  } else {
+    skip_if(is.null(held), "the information happened to be definite here")
+    expect_match(held, "nu")
+    miss <- rownames(V)[is.na(diag(V))]
+    expect_true(length(miss) > 0L)
+    # ONLY nu's coordinates are held, and every other one is reported: that
+    # is the whole point of holding rather than refusing.
+    expect_true(all(startsWith(miss, "nu:")))
+    expect_false(anyNA(diag(V)[!startsWith(rownames(V), "nu:")]))
+  }
 })
 
 test_that("a well-identified model is unharmed by any of it", {

@@ -840,9 +840,18 @@ method_budget <- function(method) {
 #' a tolerance a hundred times tighter than [iwls()]'s own, which cost 26 per
 #' cent in time and answered a question the caller had not asked.
 #'
-#' An \pkg{optimizers7} optimizer says nothing about which information to
-#' use, having no such notion, so it gets the expected one and
-#' `"bartlett"`.
+#' An \pkg{optimizers7} optimizer gets the OBSERVED information. It
+#' minimizes \eqn{-\ell + \rho} and [optimizers7::minimize()] documents `he`
+#' as that function's second derivative, which is what the observed
+#' information is; the expected one is a different matrix, so a method asked
+#' for a Newton step was performing Fisher scoring under another name. Where
+#' a family writes neither out the two also differ in cost by orders: the
+#' route taken before was the exact sum over the support, measured at 211 s
+#' per call on a 12096-cell Poisson-inverse gaussian regression against
+#' 0.041 s for the observed, so `newton()` spent an hour building matrices
+#' and never finished. `approx` is `"opg"` for such a method, which is what
+#' [iwls()] itself defaults to; it is read only where `expected` is `TRUE`,
+#' so for an optimizer it records a default rather than a choice.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #'
@@ -855,10 +864,9 @@ method_budget <- function(method) {
 #' @keywords internal
 inner_settings <- function(method) {
   b <- method_budget(method)
-  list(expected = !S7::S7_inherits(method, Iwls) ||
-         identical(method@hessian, "expected"),
-       approx = if (S7::S7_inherits(method, Iwls)) method@approx else
-         "bartlett",
+  iw <- S7::S7_inherits(method, Iwls)
+  list(expected = iw && identical(method@hessian, "expected"),
+       approx = if (iw) method@approx else "opg",
        maxit = b$maxit, tol = b$tol)
 }
 

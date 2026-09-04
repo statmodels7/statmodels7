@@ -1,3 +1,125 @@
+# statmodels7 0.94.0
+
+* `iwls()`'s sufficient-decrease condition had the WRONG SIGN, and is now
+  `armijo_ok()`, named so that the sign carries a test of its own. The
+  increment solves `(H + S) delta = -g`, so `g'delta` is negative -- measured,
+  in 19 of 19 solves of one fit, over `[-6435, -0.0119]` -- and Armijo's
+  bound `f(x) + c1 s g'delta` therefore sits BELOW `f(x)` and asks for a
+  decrease. Written with that term SUBTRACTED it changes sign and permits an
+  INCREASE of `c1 s |g'delta|` instead, up to 0.6435 a step on that fit,
+  where the loop's own comment said sufficient decrease rather than mere
+  non-increase.
+
+  ⚠️ **It changed no fit measured.** On the model that motivated the
+  investigation, 0 of 18 accepted steps had increased the objective and the
+  trajectory after the fix is identical iteration by iteration; over a
+  battery of seven models nothing moved. That is also why a test over a fit
+  could not have caught it, and why the condition is named: it takes the
+  form it replaced as its negative control, which accepts an increase where
+  this one refuses.
+
+* `iwls()` raises the Levenberg damping where the LINE SEARCH FINDS NO
+  ACCEPTABLE STEP, which is the standard trust-region loop and the exit that
+  a stalling fit actually takes. The loop broke there, so the damping the
+  method already carries -- added for a Student t whose `nu` reached its
+  clamp -- was unreachable on that path; it was raised only from the
+  `stalled` branch, which such a run never sees.
+
+  Measured over the same battery: six of the seven models are unchanged to
+  six decimals in log-likelihood, in flag and in variance matrix. The
+  seventh, a count model whose dispersion runs to its Poisson limit, goes
+  from 18 iterations to 28, its objective from -5239.635133 to -5239.635085
+  and its held coordinates from 6 to 5, at 3.4 s against 6.1 s.
+
+  ⚠️ **It does NOT cure that model's drift**, and the drift is not a failure
+  of the step: measured, every accepted step decreases the objective and the
+  score stays at 9.0e-03 whatever the damping does. What the fit is doing is
+  descending a flat tail -- from `alpha = 100` to infinity the likelihood
+  moves by 0.12 -- and the coordinate is not identified there, which is what
+  `vcov()`'s hold now reports rather than hides.
+
+* Broadening the `stalled` trigger from `step_used < 1e-3` to `step_used < 1`
+  was measured on the same seven models and changed NOTHING, so it was not
+  taken: the depth of the shrink is not what separates the deadlock from a
+  working linearization at its own fixed point, and that separation is
+  already carried by the full step the second one takes.
+
+* `vcov()` HOLDS a coordinate the penalized information carries nothing
+  about and reports the rest, where it refused the whole matrix before. A
+  combination `c'beta` has a finite variance exactly where `c` is orthogonal
+  to the null space of `K`, so a coefficient the null space does not touch
+  keeps its variance whatever happens to the others; the held ones come back
+  `NA`, as `stats::vcov.lm(complete = TRUE)` returns for an aliased column.
+  It runs ONLY where `solve_pd()` has already refused, so a fit whose matrix
+  is invertible is untouched.
+
+  `uninformative_coords()` is the new function and `held_condition()` the
+  classed warning it raises. A candidate is a coordinate with no curvature of
+  its own -- a diagonal that is not finite, which is what a parameter run out
+  of its range leaves and is read by `boundary_coords()`' rule rather than by
+  row, a coordinate at a bound making its whole row non-finite; a diagonal
+  that is not positive; or, among the rest, one carrying the whole of a null
+  direction of the equilibrated matrix.
+
+  **A candidate is held only where holding it disturbs nothing**, and the
+  test has two branches because it has two scales. Where the diagonal is
+  positive the coordinate has a scale of its own and the question is the
+  Schur correction `K_Aj K_jj^-1 K_jA` it removes, which in equilibrated
+  units is `max_k (|K_jk|/sqrt(K_kk))^2 / K_jj` and is dimensionless: a
+  coordinate scaled down by 1e-14 leaves that ratio at one and is not held.
+  Where the diagonal is not positive the ratio is 0/0 and says nothing, so
+  the row is read against the matrix's own scale instead. Measured on a
+  Poisson-inverse gaussian regression whose dispersion left its range,
+  `K_jj` is exactly zero, the row's largest entry is 1.2e-15 against a
+  matrix whose largest is 2562, and `||K_j.||/||K||` is 4.4e-19.
+
+  Where the flat direction is a COMBINATION -- two collinear columns, the
+  null vector `(e_1 - e_2)/sqrt(2)`, each carrying half of it -- nothing is
+  held and the refusal stands: dropping one would report the variance
+  conditional on the other as if it were marginal.
+
+  Measured, holding is the Moore-Penrose inverse restricted to what is kept,
+  to 2.6e-18 and 1.7e-18 on the two shapes the tests pin. On the count model
+  above, `vcov()` goes from an error to 51 usable coordinates of 57, with the
+  45 coefficients of the mean carrying standard errors within 2.6 per cent of
+  `gamlss`'; with the dispersion held inside its range one coordinate is held
+  and they are within **0.17 per cent**.
+
+* `inner_settings()` gives an \pkg{optimizers7} optimizer the OBSERVED
+  information. It minimizes `-loglik + penalty` and `optimizers7::minimize()`
+  documents `he` as that function's second derivative, which is what the
+  observed information is; the expected one is a different matrix, so a
+  method asked for a Newton step was performing Fisher scoring under another
+  name. `approx` is `"opg"` there rather than `"bartlett"`, which is what
+  `iwls()` itself defaults to; it is read only where `expected` is `TRUE`, so
+  for an optimizer it records a default rather than a choice.
+
+  What it cost before is not a constant factor. Where a family writes no
+  closed expected information the `"bartlett"` route is the exact sum over
+  the support: measured on a Poisson-inverse gaussian regression at
+  n = 12096 with 57 coefficients, ONE evaluation of `he` took **211.409 s**
+  against 0.032 s for the outer product and **0.041 s** for the observed
+  information. `newton()` calls `he` once an iteration, so an
+  `inner_optimizer = newton()` fit of that model had not finished after
+  fifty minutes and was stopped. Six families reach that route: pig1, pig2,
+  pseudohuber, skewnormal1, skewnormal2 and skewt.
+
+  Measured before and after in one process, four families by three
+  optimizers, every fit landing in the same place: the log-likelihood agrees
+  to five decimals throughout; the coefficients agree to 5.3e-09
+  (gaussian1), 0 (poisson), 7.4e-09 (gamma1) and 2.5e-07 (pig2) under
+  `newton()`, and **exactly** under `bfgs()` and `lbfgs()`, which never call
+  `he` and are the control. `newton()` on the pig2 model goes from
+  **183.95 s to 0.05 s**, and on a gaussian from 1.07 s to 0.38 s.
+
+* `fit_expected()` follows it: an optimizers7 optimizer no longer counts as
+  having inverted the expected information, so `vcov()` reports the matrix
+  the step used, which is the rule that function's page already stated.
+  Measured on the three families that write a closed expected information --
+  where the report therefore moves from the expected to the observed one --
+  the standard errors change by at most **3.6e-11**: at the mode the score
+  equations make the two sums coincide.
+
 # statmodels7 0.93.0
 
 * A family with no closed-form expected information no longer costs a sum

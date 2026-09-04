@@ -587,19 +587,38 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     delta <- sol$delta
     delta[!is.finite(delta)] <- 0
 
-    # sufficient decrease, not mere non-increase
+    # sufficient decrease, not mere non-increase: see armijo_ok()
+    gd <- sum(g * delta)
     step_used <- 1
     ok <- FALSE
     for (h in seq_len(as.integer(method@step_halving))) {
       cand <- beta + step_used * delta
       vnew <- obj$fn(cand)
-      if (is.finite(vnew) && vnew <= value - 1e-4 * step_used * sum(g * delta)) {
+      if (armijo_ok(vnew, value, step_used, gd)) {
         ok <- TRUE
         break
       }
       step_used <- step_used / 2
     }
-    if (!ok) break
+    # THE LINE SEARCH FOUND NO ACCEPTABLE STEP AT ANY LENGTH. That is the
+    # deadlock in its purest form -- the direction cannot decrease the
+    # objective however short it is made, so the quadratic it came out of is
+    # wrong in some coordinate -- and it is what Levenberg's lambda is for:
+    # the standard trust-region loop raises it on a rejected step and
+    # retries. The loop used to break here, so the damping the method
+    # already carries was never reached on this path, and a count model
+    # whose dispersion runs to its Poisson limit exits exactly this way
+    # after six halvings with the score still at 9.083e-03.
+    if (!ok) {
+      if (damp_tries < 8L) {
+        damp <- iwls_escalate(damp, pc)
+        damp_tries <- damp_tries + 1L
+        next
+      }
+      note <- paste0("the line search found no acceptable step at iteration ",
+                     it, ", damping included")
+      break
+    }
     hist[[length(hist) + 1L]] <- data.frame(
       iteration = it, objective = vnew, score = score, step = step_used,
       rank = sol$rank, route = sol$route, held = length(sol$held),
@@ -633,16 +652,24 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # HERE, where the loop used to give up, so a run that never stalls never
     # sees it and is unchanged; it decays again on every step that moves.
     #
-    # ⚠️ ONLY WHERE THE STEP WAS SHRUNK TO NOTHING, which is the signature of
-    # the deadlock and not of every stall. A term whose block is a working
+    # ⚠️ ONLY WHERE THE STEP WAS SHRUNK, which is the signature of the
+    # deadlock and not of every stall. A term whose block is a working
     # linearization stalls AT ITS OWN FIXED POINT with the full step taken --
     # the gradient there belongs to the working model rather than to the
     # objective -- and damping past it costs iterations and ends a run that
     # had arrived: measured, escalating on every stall turned a converged
     # break-point fit into a non-converged one and moved three exact-gradient
     # checks from machine precision to 1e-3, the mode being left worse
-    # located. The deadlock is the case where the line search had to shrink
-    # the whole step by orders to keep one coordinate admissible.
+    # located.
+    # The deadlock is the case where the line search had to shrink the whole
+    # step by orders to keep one coordinate admissible.
+    #
+    # ⚠️ Broadening this to `step_used < 1` was measured on seven models --
+    # the count model above, a smooth with a random effect, two equations, a
+    # Poisson smooth, a Gamma smooth, a Student t at its boundary and a
+    # break-point term -- and changed NOTHING: the same log-likelihood to
+    # six decimals, the same flags, the same variance matrices. The exit the
+    # runaway takes is the one below, not this one.
     if (stalled) {
       if (step_used < 1e-3 && damp_tries < 8L) {
         damp <- iwls_escalate(damp, pc)
@@ -706,6 +733,42 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   list(par = beta, value = value, converged = converged,
        iterations = it, score = score, note = note,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
+}
+
+
+#' Armijo's Sufficient-Decrease Condition
+#'
+#' @description
+#' Whether a trial point may be accepted: the objective has fallen by at
+#' least a fixed share of what the model predicted over that step.
+#'
+#' @details
+#' \deqn{f(x + s d) \;\le\; f(x) + c_1 s\, g^\top d .}
+#' **The sign of \eqn{g^\top d} is the whole of it.** The increment solves
+#' \eqn{(H + S)\delta = -g}, so \eqn{g^\top\delta = -g^\top(H+S)^{-1}g} is
+#' NEGATIVE -- measured, in 19 of 19 solves of one fit, over
+#' \eqn{[-6435, -0.0119]} -- and the bound therefore sits BELOW \eqn{f(x)}
+#' and asks for a decrease. Written with the term SUBTRACTED it changes sign
+#' and the test permits an INCREASE of \eqn{c_1 s |g^\top\delta|}, which on
+#' that fit was as much as 0.6435 a step, where the loop's own comment said
+#' sufficient decrease rather than mere non-increase. It is named rather than
+#' written inline so that the sign carries a test of its own: a test over a
+#' fit sees the condition only through the steps that fit happens to take,
+#' and none of them relied on the extra licence.
+#'
+#' @param vnew The objective at the trial point.
+#' @param value The objective at the current one.
+#' @param step The step length.
+#' @param gd \eqn{g^\top\delta}, negative for a descent direction.
+#' @param c1 The share of the predicted decrease that is asked for.
+#'
+#' @return A single logical.
+#'
+#' @seealso [iwls_fit()], the loop that asks it.
+#'
+#' @keywords internal
+armijo_ok <- function(vnew, value, step, gd, c1 = 1e-4) {
+  is.finite(vnew) && vnew <= value + c1 * step * gd
 }
 
 

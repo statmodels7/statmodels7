@@ -14,8 +14,9 @@ A single logical.
 }
 \description{
 \code{TRUE} when \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} should invert the expected information:
-when the fit itself inverted it, as \code{\link[=iwls]{iwls()}} does unless asked otherwise,
-AND the family writes that information out in closed form.
+when the fit itself inverted it, which only \code{\link[=iwls]{iwls()}} does and only unless
+asked otherwise, AND the family writes that information out in closed
+form.
 }
 \details{
 The default follows the fit rather than choosing for itself, so a standard

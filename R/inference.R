@@ -73,8 +73,9 @@ coef_labels <- function(spec, design) {
 #'
 #' @description
 #' `TRUE` when [vcov.StatmodFit()] should invert the expected information:
-#' when the fit itself inverted it, as [iwls()] does unless asked otherwise,
-#' AND the family writes that information out in closed form.
+#' when the fit itself inverted it, which only [iwls()] does and only unless
+#' asked otherwise, AND the family writes that information out in closed
+#' form.
 #'
 #' @details
 #' The default follows the fit rather than choosing for itself, so a standard
@@ -103,7 +104,11 @@ coef_labels <- function(spec, design) {
 #' @keywords internal
 fit_expected <- function(object) {
   m <- object@methods$smooth
-  used <- if (S7::S7_inherits(m, Iwls)) identical(m@hessian, "expected") else TRUE
+  # An optimizers7 optimizer is given the observed information by
+  # inner_settings(), so it did not invert the expected one and the report
+  # must not say it did: the rule above is that a standard error comes from
+  # the matrix the step used.
+  used <- S7::S7_inherits(m, Iwls) && identical(m@hessian, "expected")
   used && distributions7::expected_hessian_exact(object@spec@distrib)
 }
 
@@ -222,12 +227,43 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   if (!any(keep)) return(out)
   keep_full <- c(keep, rep(TRUE, nz))
   A <- (H + S)[keep_full, keep_full, drop = FALSE]
+  lb <- c(nm[keep], rep("", nz))
   # what a SMALL eigenvalue means is decided inside solve_pd(), on the
   # equilibrated matrix: a smoothing parameter at 1e15 and a break-point
   # term's annealed working columns both separate the scales without
   # flattening any direction, and per-direction scaling forgives both
-  Vb <- solve_pd(A, "the penalized information",
-                 c(nm[keep], rep("", nz)))
+  Vb <- tryCatch(solve_pd(A, "the penalized information", lb),
+                 error = function(e) e)
+  # A COORDINATE THE INFORMATION CARRIES NOTHING ABOUT IS HELD, and the rest
+  # is reported. A combination c'beta has a finite variance exactly where c
+  # is orthogonal to the null space, so a coefficient the null space does
+  # not touch keeps its variance whatever happens to the others: refusing
+  # the whole matrix loses those, which on a count model whose dispersion
+  # ran to its Poisson limit in one province was 56 standard errors thrown
+  # away for one that does not exist. It runs ONLY where solve_pd() has
+  # already refused, so a fit whose matrix is invertible is untouched, and
+  # where nothing can be held the original message stands.
+  if (inherits(Vb, "error")) {
+    flat <- uninformative_coords(A)
+    if (!length(flat)) stop(conditionMessage(Vb), call. = FALSE)
+    warning(held_condition(sprintf(paste0(
+      "The penalized information carries nothing about %s, so",
+      " %s no
+  variance and %s row%s missing here. The rest of the matrix",
+      " stands:
+  a coefficient is estimable exactly where it is orthogonal",
+      " to the flat
+  direction, and these coordinates carry the whole of",
+      " it."),
+      paste(ifelse(nzchar(lb[flat]), lb[flat], "a structural parameter"),
+            collapse = ", "),
+      if (length(flat) == 1L) "it has" else "they have",
+      if (length(flat) == 1L) "its" else "their",
+      if (length(flat) == 1L) " is" else "s are")))
+    keep_full[which(keep_full)[flat]] <- FALSE
+    A <- (H + S)[keep_full, keep_full, drop = FALSE]
+    Vb <- solve_pd(A, "the penalized information", lb[-flat])
+  }
   V <- if (type == "bayesian") Vb else
     Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
   # THE JOINT INVERSE IS KEPT WHOLE. Its coefficient block is not the
@@ -249,9 +285,8 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
       " uncertainty."),
       paste(unique(lab$term[frz]), collapse = ", "))))
   }
-  ns <- sum(keep)
   out <- matrix(NA_real_, total + nz, total + nz)
-  out[c(keep, rep(TRUE, nz)), c(keep, rep(TRUE, nz))] <- V
+  out[keep_full, keep_full] <- V
   rn <- c(nm, if (nz) rep("", nz) else character(0))
   who <- c(lab$parameter, if (nz) rep(NA_character_, nz) else character(0))
   if (nz) {
@@ -694,6 +729,27 @@ frozen_condition <- function(msg) {
             list(message = msg, call = NULL))
 }
 
+
+#' The Condition a Held Coordinate Warns Through
+#'
+#' @description
+#' A classed warning, so a caller can silence or catch the one raised when
+#' [vcov.StatmodFit()] holds a coordinate the information carries nothing
+#' about, without silencing every other warning of a fit.
+#'
+#' @param msg The message.
+#'
+#' @return A condition of class `statmod_held_coord`.
+#'
+#' @seealso [uninformative_coords()], which finds them, and
+#'   [vcov.StatmodFit()], which raises this.
+#'
+#' @keywords internal
+held_condition <- function(msg) {
+  structure(class = c("statmod_held_coord", "warning", "condition"),
+            list(message = msg, call = NULL))
+}
+
 #' Which Coefficients Belong to a Block That Is Not a Jacobian
 #'
 #' @description
@@ -1080,6 +1136,155 @@ flat_directions <- function(A, labels) {
                  " smallest eigenvalue is %s, against %s at the largest)."),
           paste(hit, collapse = ", "), format(signif(e$values[k], 3)),
           format(signif(max(e$values), 3)))
+}
+
+
+#' Which Coordinates a Singular Information Carries Nothing About
+#'
+#' @description
+#' The positions whose row and column of a penalized information are empty,
+#' so that holding them and inverting the rest reports the variance of every
+#' other coordinate exactly.
+#'
+#' @details
+#' A combination \eqn{c'\hat\beta} has a finite asymptotic variance exactly
+#' where \eqn{c} is orthogonal to the null space \eqn{\mathcal{N}} of
+#' \eqn{K}, and then \eqn{\mathrm{Var}(c'\hat\beta) = c'K^{+}c} with
+#' \eqn{K^{+}} the Moore-Penrose inverse. Reading `diag(K^+)` is therefore
+#' not enough on its own: for a \eqn{c} that is NOT orthogonal it returns a
+#' number where the truth is infinite. The rule is in two parts, invert away
+#' from \eqn{\mathcal{N}} and report nothing on it, and this function is the
+#' second part.
+#'
+#' A candidate is a coordinate with no curvature of its own. Its diagonal is
+#' not finite, which is what a parameter run out of its range leaves behind;
+#' or it is not positive, which is [solve_pd()]'s own reading of that entry
+#' and is a statement about the coordinate whatever scale it is on; or, among
+#' the coordinates whose diagonal IS positive, it carries the whole of a null
+#' direction of the JACOBI-EQUILIBRATED matrix. The equilibration is what
+#' tells a flat direction from scale separation, and requiring one coordinate
+#' to carry the whole direction is what excludes the collinear case, where
+#' the null vector is \eqn{(e_1 - e_2)/\sqrt{2}} and each of the two carries
+#' half of it.
+#'
+#' **A candidate is held only where holding it disturbs nothing**, and the
+#' amount it disturbs is the Schur correction it removes from the others,
+#' \eqn{K_{Aj}K_{jj}^{-1}K_{jA}}. That test has two branches, because it has
+#' two scales.
+#'
+#' Where \eqn{K_{jj}} is POSITIVE the coordinate has a scale of its own and
+#' the correction, read against \eqn{K_{AA}} in equilibrated units where that
+#' block has a unit diagonal, is
+#' \deqn{\max_k \Bigl(\frac{|K_{jk}|}{\sqrt{K_{kk}}}\Bigr)^{2}
+#'       \Big/ K_{jj} \;\le\; \texttt{schur}.}
+#' It is dimensionless and needs no reference: a coordinate measured a
+#' thousand times smaller than its neighbours has a small row AND a small
+#' diagonal, and the ratio sees through both. Scaling one down by
+#' \eqn{10^{-14}} leaves the ratio at one, and nothing is held.
+#'
+#' Where \eqn{K_{jj}} is NOT positive the coordinate has no scale of its own
+#' -- the information in that direction is zero rather than small -- so that
+#' ratio is \eqn{0/0} and says nothing. The only scale left is the matrix's,
+#' and the question becomes whether the row sits at the level its entries
+#' were accumulated to: \eqn{\max_k |K_{jk}| \le \texttt{row\_tol}\max|K|}.
+#' Measured on a count model whose dispersion left its range, \eqn{K_{jj}} is
+#' exactly zero, the row's largest entry is \eqn{1.2\times10^{-15}} against a
+#' matrix whose largest is 2562, and \eqn{\lVert K_{j\cdot}\rVert/\lVert
+#' K\rVert} is \eqn{4.4\times10^{-19}}.
+#'
+#' Where neither branch passes, dropping the coordinate would leave
+#' \eqn{K_{AA}^{-1}}, the variance CONDITIONAL on that coefficient being
+#' known, which is smaller than the marginal one; nothing is held and the
+#' caller's refusal stands.
+#'
+#' @param A A penalized information, over the coefficients and any structural
+#'   tail.
+#' @param tol The relative eigenvalue below which a direction is flat.
+#' @param share How much of the null space one coordinate must carry to be
+#'   held, as a share of one.
+#' @param schur The largest Schur correction, in equilibrated units, that
+#'   counts as no disturbance to the coordinates that are kept, where the
+#'   candidate has a positive diagonal.
+#' @param row_tol The share of the matrix's largest entry below which a row
+#'   is read as accumulated rounding, where the candidate does not.
+#'
+#' @return An integer vector of positions in `A`, possibly empty.
+#'
+#' @seealso [solve_pd()], which refuses the matrix these come from, and
+#'   [vcov.StatmodFit()], which holds them.
+#'
+#' @keywords internal
+uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
+                                 schur = 1e-8, row_tol = 1e-12) {
+  A <- as_dense(A)
+  p <- ncol(A)
+  if (!p) return(integer(0))
+  # BY THE DIAGONAL, which is boundary_coords()' rule: a coordinate at a
+  # bound makes its whole row non-finite, cross terms included, so a row
+  # test marks its neighbours as well. Whatever is left non-finite among
+  # the survivors goes too, there being no matrix there either.
+  bad <- boundary_coords(A)
+  rest <- setdiff(seq_len(p), bad)
+  if (length(rest)) {
+    extra <- rest[apply(!is.finite(A[rest, rest, drop = FALSE]), 1L, any)]
+    bad <- c(bad, extra)
+    rest <- setdiff(rest, extra)
+  }
+  if (!length(rest)) return(sort(bad))
+  d <- diag(A)
+  # A NON-POSITIVE DIAGONAL is the flat case stated directly: that
+  # coordinate has no curvature of its own, whatever scale it is on, and
+  # the sign of an entry at the rounding level is a coin toss. A positive
+  # one equilibrates and is read as a direction of the correlation matrix.
+  cand <- rest[d[rest] <= 0]
+  rest <- setdiff(rest, cand)
+  if (length(rest) >= 2L) {
+    B <- A[rest, rest, drop = FALSE]
+    s <- 1 / sqrt(diag(B))
+    Be <- B * tcrossprod(s)
+    e <- tryCatch(eigen(Be, symmetric = TRUE), error = function(e) NULL)
+    if (!is.null(e)) {
+      ev <- abs(e$values)
+      flat <- ev <= tol * max(ev)
+      if (any(flat)) {
+        # each coordinate's share of the null space: one where the
+        # direction IS that coordinate, a half where two of them share it
+        load <- rowSums(e$vectors[, flat, drop = FALSE]^2)
+        cand <- c(cand, rest[load > share])
+        rest <- setdiff(rest, rest[load > share])
+      }
+    }
+  }
+  if (!length(cand)) return(sort(bad))
+  # HOLDING IS EXACT ONLY WHERE IT DISTURBS NOTHING, and the amount it
+  # disturbs is the Schur correction A_Aj A_jj^-1 A_jA it removes from the
+  # others. Read in equilibrated units, where the kept block has a unit
+  # diagonal, that is max_k (|A_jk|/sqrt(A_kk))^2 / |A_jj|, and it needs no
+  # reference scale: a coordinate measured a thousand times smaller than
+  # its neighbours has a small row AND a small diagonal, and the ratio sees
+  # through both. Where the correction is not negligible, dropping the
+  # coordinate would report the variance CONDITIONAL on it as if it were
+  # the marginal one, so nothing is held and the caller's refusal stands.
+  if (length(rest)) {
+    sk <- sqrt(d[rest])
+    scale <- max(abs(A[rest, rest]))
+    ok <- vapply(cand, function(j) {
+      row <- abs(A[j, rest])
+      if (!all(is.finite(row))) return(FALSE)
+      if (d[j] > 0) {
+        # a scale of its own: the correction is r^2/A_jj, dimensionless
+        r <- max(row / sk)
+        r * r <= schur * d[j]
+      } else {
+        # NO scale of its own, so r^2/A_jj is 0/0 and says nothing. The
+        # only scale left is the matrix's, and the question is whether the
+        # row sits at the level its entries were accumulated to.
+        max(row) <= row_tol * scale
+      }
+    }, logical(1))
+    cand <- cand[ok]
+  }
+  sort(c(bad, cand))
 }
 
 
