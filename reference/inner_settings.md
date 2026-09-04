@@ -31,8 +31,21 @@ at a tolerance a hundred times tighter than
 own, which cost 26 per cent in time and answered a question the caller
 had not asked.
 
-An optimizers7 optimizer says nothing about which information to use,
-having no such notion, so it gets the expected one and `"bartlett"`.
+An optimizers7 optimizer gets the OBSERVED information. It minimizes
+\\-\ell + \rho\\ and
+[`optimizers7::minimize()`](https://statmodels7.github.io/optimizers7/reference/minimize.html)
+documents `he` as that function's second derivative, which is what the
+observed information is; the expected one is a different matrix, so a
+method asked for a Newton step was performing Fisher scoring under
+another name. Where a family writes neither out the two also differ in
+cost by orders: the route taken before was the exact sum over the
+support, measured at 211 s per call on a 12096-cell Poisson-inverse
+gaussian regression against 0.041 s for the observed, so `newton()`
+spent an hour building matrices and never finished. `approx` is `"opg"`
+for such a method, which is what
+[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+itself defaults to; it is read only where `expected` is `TRUE`, so for
+an optimizer it records a default rather than a choice.
 
 ## See also
 

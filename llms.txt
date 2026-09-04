@@ -357,6 +357,8 @@ exported, and none is needed to use the package.
   : Add Two Sets of Offsets
 - [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
   : Does a Term Supply Its Third Derivative?
+- [`armijo_ok()`](https://statmodels7.github.io/statmodels7/reference/armijo_ok.md)
+  : Armijo's Sufficient-Decrease Condition
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
@@ -517,6 +519,8 @@ exported, and none is needed to use the package.
   : Which Coefficients Belong to a Block That Is Not a Jacobian
 - [`frozen_condition()`](https://statmodels7.github.io/statmodels7/reference/frozen_condition.md)
   : The Condition a Frozen Block Raises
+- [`held_condition()`](https://statmodels7.github.io/statmodels7/reference/held_condition.md)
+  : The Condition a Held Coordinate Warns Through
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
 - [`hyper_key()`](https://statmodels7.github.io/statmodels7/reference/hyper_key.md)
@@ -964,6 +968,8 @@ exported, and none is needed to use the package.
   : The Trace of the Determinant's Movement With the Coefficients
 - [`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
   : Why a Term Is Outside the Fitting Scheme
+- [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)
+  : Which Coordinates a Singular Information Carries Nothing About
 - [`unit_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_beta.md)
   : The Coefficients a Penalized Unit Covers
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)

@@ -3,10 +3,10 @@
 `TRUE` when
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
 should invert the expected information: when the fit itself inverted it,
-as
+which only
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-does unless asked otherwise, AND the family writes that information out
-in closed form.
+does and only unless asked otherwise, AND the family writes that
+information out in closed form.
 
 ## Usage
 

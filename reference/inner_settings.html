@@ -9,7 +9,7 @@ method in one place."><meta property="og:image" content="https://statmodels7.git
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.93.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.94.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,9 +68,18 @@ one place keeps a refit inside a path or a fold on the same terms as the
 fit the caller asked for. Hard-coding them instead ran cross-validation at
 a tolerance a hundred times tighter than <code><a href="iwls.html">iwls()</a></code>'s own, which cost 26 per
 cent in time and answered a question the caller had not asked.</p>
-<p>An <span class="pkg">optimizers7</span> optimizer says nothing about which information to
-use, having no such notion, so it gets the expected one and
-<code>"bartlett"</code>.</p>
+<p>An <span class="pkg">optimizers7</span> optimizer gets the OBSERVED information. It
+minimizes \(-\ell + \rho\) and <code><a href="https://statmodels7.github.io/optimizers7/reference/minimize.html" class="external-link">optimizers7::minimize()</a></code> documents <code>he</code>
+as that function's second derivative, which is what the observed
+information is; the expected one is a different matrix, so a method asked
+for a Newton step was performing Fisher scoring under another name. Where
+a family writes neither out the two also differ in cost by orders: the
+route taken before was the exact sum over the support, measured at 211 s
+per call on a 12096-cell Poisson-inverse gaussian regression against
+0.041 s for the observed, so <code>newton()</code> spent an hour building matrices
+and never finished. <code>approx</code> is <code>"opg"</code> for such a method, which is what
+<code><a href="iwls.html">iwls()</a></code> itself defaults to; it is read only where <code>expected</code> is <code>TRUE</code>,
+so for an optimizer it records a default rather than a choice.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

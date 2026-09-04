@@ -16,6 +16,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/add_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/armijo_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bind_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_label.html</loc></url>
@@ -95,6 +96,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/free_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/frozen_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/frozen_condition.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/held_condition.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hess_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_key.html</loc></url>
@@ -335,6 +337,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/u_vector.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unfittable_reason.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/uninformative_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_beta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_inner.html</loc></url>
