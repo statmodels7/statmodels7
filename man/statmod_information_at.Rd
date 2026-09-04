@@ -9,7 +9,8 @@ statmod_information_at(
   coef,
   design = statmod_design(spec),
   expected = TRUE,
-  approx = "opg"
+  approx = "opg",
+  H = NULL
 )
 }
 \arguments{
@@ -24,6 +25,11 @@ negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+
+\item{H}{The second-derivative components at this point, as
+\code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to ask for them.
+A mixture over regimes reads a different set per component and
+ignores this.}
 }
 \value{
 A symmetric \verb{p x p} matrix over the stacked coefficients, \code{p}
@@ -52,6 +58,6 @@ has no closed expected information.
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for the first derivative,
 \code{\link[=info_blocks]{info_blocks()}} for the per-observation blocks a square-root route uses
-instead.
+instead, and \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} for the components both read.
 }
 \keyword{internal}

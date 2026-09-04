@@ -1,3 +1,35 @@
+# statmodels7 0.95.0
+
+* `iwls_pieces()` asks the family for its second-derivative components ONCE
+  a point and hands them to both routes, through the new
+  `statmod_family_hessian()` and an `H` argument on `info_blocks()` and
+  `statmod_information_at()`. It used to let each route ask for itself,
+  which cost one full evaluation an iteration wherever the square-root
+  decomposition is abandoned -- and where the expected information IS the
+  outer product of scores that is EVERY point, the per-observation block
+  being \eqn{-gg'}, of rank one, so it has no Cholesky factor as soon as
+  the family carries more than one parameter.
+
+  Measured, `chol_blocks()` returns `NULL` at every point for `pig1`,
+  `pig2` and `skewnormal1` -- the per-observation eigenvalues are
+  \eqn{(0.47, 8.8\times10^{-47})} on a pig2 -- while a family with a
+  closed-form expected information factors normally. Traced through a fit,
+  the score was evaluated **three times an iteration where twice is the
+  minimum**: once by `statmod_score_at()` on the link scale, once by
+  `info_blocks()` and once again by the fallback. It is now twice, and a
+  Poisson-inverse gaussian regression at n = 12096 goes from 1.032 s to
+  0.944 s with the dispersion held and from 0.848 s to 0.753 s with it
+  modelled, the log-likelihood identical to the printed digit.
+
+  ⚠️ **The two that remain cannot be shared as things stand.** The outer
+  product reads the PARAMETER-scale score and `statmod_score_at()` reads
+  the LINK-scale one; they run the same compiled kernel, but nothing in
+  the contract returns both, and deriving one from the other here would
+  put \pkg{distributions7}'s chain rule in the modelling layer.
+
+  ⚠️ **A mixture over regimes reads a different set of components per
+  regime**, so it is left to ask for its own and `H` is not passed there.
+
 # statmodels7 0.94.0
 
 * `iwls()`'s sufficient-decrease condition had the WRONG SIGN, and is now

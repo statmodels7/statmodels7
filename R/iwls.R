@@ -453,17 +453,29 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
 iwls_pieces <- function(spec, design, coef, hyper, method) {
   expected <- identical(method@hessian, "expected")
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  assembled <- function() {
+  assembled <- function(H = NULL) {
     list(R = NULL, C = NULL,
          A = statmod_information_at(spec, coef, design, expected,
-                                    method@approx) + S)
+                                    method@approx, H = H) + S)
   }
   if (!(method@decomposition %in% c("qr", "svd"))) return(assembled())
-  th <- statmod_eta(spec, design, coef)$theta
-  L <- chol_blocks(info_blocks(spec, th, expected, method@approx))
+  ev <- statmod_eta(spec, design, coef)
+  # THE SQUARE-ROOT ROUTE IS ABANDONED AT EVERY POINT FOR SOME FAMILIES, and
+  # the fallback below used to ask the family for the same components again.
+  # Where the expected information is the outer product of scores the
+  # per-observation block is -g g', of rank one, so it has no Cholesky factor
+  # whenever the family carries more than one parameter -- measured, that is
+  # pig1, pig2, skewnormal1 and skewt, and chol_blocks() returns NULL for
+  # every one of them at every point. Asking once and handing the answer to
+  # both routes is what stops the abandoned one being paid for twice. A
+  # mixture over regimes reads a different set per component, so it is left
+  # to ask for its own.
+  H <- if (length(ev$regimes)) NULL else
+    statmod_family_hessian(spec, ev$theta, expected, method@approx)
+  L <- chol_blocks(info_blocks(spec, ev$theta, expected, method@approx, H = H))
   R <- sqrt_design(statmod_design_at(spec, coef, design), L)
   C <- penalty_sqrt(S)
-  if (is.null(R) || is.null(C)) return(assembled())
+  if (is.null(R) || is.null(C)) return(assembled(H))
   list(R = R, C = C, A = NULL, threads = spec@threads)
 }
 

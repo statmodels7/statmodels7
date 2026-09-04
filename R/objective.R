@@ -318,6 +318,51 @@ statmod_structural_score <- function(spec, coef,
 }
 
 
+#' The Family's Second-Derivative Components at a Point
+#'
+#' @description
+#' Asks the distribution for its Hessian, or for its expected information,
+#' on the link scale at one value of the parameters.
+#'
+#' @details
+#' Written once because two routes read it at the same point. [iwls_pieces()]
+#' builds a square-root decomposition out of the per-observation blocks and
+#' falls back to the assembled information when that decomposition cannot be
+#' formed, and both of those used to ask the family themselves. Where the
+#' expected information IS the outer product of scores the per-observation
+#' block is rank one, so the square-root route is abandoned at every point
+#' and the work done for it was thrown away; passing the components down
+#' instead of recomputing them is what stops that.
+#'
+#' @param spec The specification, read for the distribution, the response and
+#'   the thread count.
+#' @param theta The parameters, one value per observation.
+#' @param expected `TRUE` for the expected information, `FALSE` for the
+#'   observed Hessian.
+#' @param approx The strategy the expected information uses when the family
+#'   has no closed form, passed through to
+#'   [distributions7::distrib_expected_hessian()].
+#'
+#' @return The named list of second-derivative components on the link scale,
+#'   as [distributions7::distrib_hessian()] returns it.
+#'
+#' @seealso [statmod_information_at()] and [info_blocks()], its two readers.
+#'
+#' @keywords internal
+statmod_family_hessian <- function(spec, theta, expected = TRUE,
+                                   approx = "opg") {
+  if (expected) {
+    distributions7::distrib_expected_hessian(spec@distrib, spec@response,
+                                             theta, scale = "link",
+                                             approx = approx,
+                                             threads = spec@threads)
+  } else {
+    distributions7::distrib_hessian(spec@distrib, spec@response, theta,
+                                    scale = "link", threads = spec@threads)
+  }
+}
+
+
 #' The Information of the Weighted Log-Likelihood
 #'
 #' @description
@@ -353,11 +398,17 @@ statmod_structural_score <- function(spec, coef,
 #'
 #' @seealso [statmod_score_at()] for the first derivative,
 #'   [info_blocks()] for the per-observation blocks a square-root route uses
-#'   instead.
+#'   instead, and [statmod_family_hessian()] for the components both read.
+#'
+#' @param H The second-derivative components at this point, as
+#'   [statmod_family_hessian()] returns them, or `NULL` to ask for them.
+#'   A mixture over regimes reads a different set per component and
+#'   ignores this.
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
-                                   expected = TRUE, approx = "opg") {
+                                   expected = TRUE, approx = "opg",
+                                   H = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   th <- ev$theta
@@ -408,13 +459,8 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
     return(-out)
   }
 
-  H <- if (expected) {
-    distributions7::distrib_expected_hessian(spec@distrib, spec@response, th,
-                                             scale = "link", approx = approx, threads = spec@threads)
-  } else {
-    distributions7::distrib_hessian(spec@distrib, spec@response, th,
-                                    scale = "link", threads = spec@threads)
-  }
+  # given by the caller where it has already asked for them at this point
+  if (is.null(H)) H <- statmod_family_hessian(spec, th, expected, approx)
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   total <- sum(npar)

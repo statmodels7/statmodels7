@@ -113,18 +113,13 @@ chol_blocks <- function(Om) {
 #'   [statmod_information_at()] for the assembled \eqn{Z'\Omega Z}.
 #'
 #' @keywords internal
-info_blocks <- function(spec, theta, expected = TRUE, approx = "opg") {
+info_blocks <- function(spec, theta, expected = TRUE, approx = "opg",
+                        H = NULL) {
   params <- spec@distrib@params
   K <- length(params)
   n <- spec@n_obs
-  H <- if (expected) {
-    distributions7::distrib_expected_hessian(spec@distrib, spec@response,
-                                             theta, scale = "link",
-                                             approx = approx, threads = spec@threads)
-  } else {
-    distributions7::distrib_hessian(spec@distrib, spec@response, theta,
-                                    scale = "link", threads = spec@threads)
-  }
+  # given by the caller where it has already asked for them at this point
+  if (is.null(H)) H <- statmod_family_hessian(spec, theta, expected, approx)
   Om <- array(0, dim = c(n, K, K))
   for (a in seq_len(K)) {
     for (b in seq.int(a, K)) {
