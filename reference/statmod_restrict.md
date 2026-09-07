@@ -65,7 +65,16 @@ A list:
 - `information`:
 
   a function of no arguments returning the penalized information at the
-  restricted point.
+  restricted point. It is read at most once however often it is called,
+  and not at all where nothing calls it, which is the ordinary case: the
+  likelihood ratio and the gradient statistic need no matrix.
+
+- `mode_error`:
+
+  a function of no arguments returning
+  [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md),
+  how far above its own mode the refit stopped. It reads the
+  information, so it costs one Hessian.
 
 - `labels`:
 
@@ -73,7 +82,10 @@ A list:
 
 - `converged`:
 
-  a single logical.
+  the inner optimizer's flag, a single logical. Measured, it is
+  anti-correlated with how well the point is located – see
+  [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md),
+  which is the reading to prefer.
 
 ## Details
 
@@ -114,7 +126,7 @@ hold does not reach.
 A coefficient under a penalty that IS twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a
 ridge, a random effect. What such a fit means is stated at
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md).
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
 
 ## See also
 

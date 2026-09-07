@@ -9,7 +9,7 @@ by default the Wald ones and otherwise by inverting a likelihood test."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ by default the Wald ones and otherwise by inverting a likelihood test.</p>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span>
 <span>  readable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"lr"</span>, <span class="st">"score"</span>, <span class="st">"gradient"</span><span class="op">)</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"lr"</span>, <span class="st">"score"</span>, <span class="st">"gradient"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -86,14 +86,14 @@ rather than the raw coordinates. Passed to <code><a href="vcov.StatmodFit.html">
 necessarily <code>FALSE</code> for the three restricted <code>method</code>s.</p></dd>
 
 
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
+
+
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>Which test the interval is the acceptance region of:
 <code>"wald"</code>, the default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each
 inverted by <code><a href="statmod_invert.html">statmod_invert()</a></code>.</p></dd>
-
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -143,7 +143,7 @@ fit's own and stand whatever <code>method</code> is.</p>
 own coordinates, a ridge, a random effect – is inverted like any other,
 and the interval is the credible one <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> already gives it
 under <code>type = "bayesian"</code>, conditional on the hyperparameters the fit
-reached. See <code><a href="statmod_stat.html">statmod_stat()</a></code>.</p>
+reached. See <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p>
 <p>The three restricted methods need <code>readable = FALSE</code>, since a test is
 about one coefficient and a readable quantity is a function of several at
 once.</p>
@@ -151,7 +151,9 @@ once.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>,
-<code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat.html">statmod_stat()</a></code></p></div>
+<code><a href="statmod_test.html">statmod_test()</a></code>, which tests one coefficient against a value of its
+own, and <code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>, the two internals
+an inverted interval is built from</p></div>
     </div>
 
     <div class="section level2">
@@ -174,7 +176,7 @@ once.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept)     sigma linpar (Intercept) -1.04546 0.07905694 -1.200408</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma:(Intercept) -0.8905109</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu:x"</span>, method <span class="op">=</span> <span class="st">"lr"</span>, readable <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu:x"</span>, test <span class="op">=</span> <span class="st">"lr"</span>, readable <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      parameter   term coefficient estimate        se    lower    upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mu:x        mu linpar           x 2.007856 0.1467852 1.716674 2.299038</span>
 </code></pre></div>

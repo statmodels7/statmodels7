@@ -8,7 +8,7 @@ back, leaving the rest of the table as it was.
 ## Usage
 
 ``` r
-invert_rows(fit, out, level, method, type)
+invert_rows(fit, out, level, test, type)
 ```
 
 ## Arguments
@@ -28,7 +28,7 @@ invert_rows(fit, out, level, method, type)
 
   The confidence level.
 
-- method:
+- test:
 
   Which test to invert.
 

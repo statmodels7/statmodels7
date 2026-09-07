@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -262,6 +262,22 @@
         </dt>
         <dd>Format a Duration in the Unit It Deserves</dd>
       </dl></div><div class="section level2">
+      <h2 id="testing-a-coefficient">Testing a coefficient<a class="anchor" aria-label="anchor" href="#testing-a-coefficient"></a></h2>
+
+      <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. The same four are what <code>summary(test =)</code> reports for every row against zero and what <code>confint(test =)</code> inverts; this is the surface that takes a null of its own.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="statmod_test.html">statmod_test()</a></code>
+
+        </dt>
+        <dd>Test One Coefficient Against One Value</dd>
+      </dl></div><div class="section level2">
       <h2 id="installing-and-updating">Installing and updating<a class="anchor" aria-label="anchor" href="#installing-and-updating"></a></h2>
 
       <div class="section-desc"><p>The toolkit is not on CRAN, so the install path is GitHub and the dependencies among the members are resolved by pak.</p></div>
@@ -328,6 +344,13 @@
 
         </dt>
         <dd>A Summary of a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="StatmodTest-class.html">StatmodTest()</a></code>
+
+        </dt>
+        <dd>A Test of One Coefficient Against One Value</dd>
 
         <dt>
 
@@ -1549,6 +1572,13 @@
 
         <dt>
 
+          <code><a href="print.StatmodTest.html">print(<i>&lt;StatmodTest&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a Test</dd>
+
+        <dt>
+
           <code><a href="print.start_strategy.html">print.start_strategy</a></code>
 
         </dt>
@@ -1686,6 +1716,13 @@
 
         </dt>
         <dd>The Residuals of a Fitted Model</dd>
+
+        <dt>
+
+          <code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>
+
+        </dt>
+        <dd>How Far Above Its Mode a Restricted Fit Stopped</dd>
 
         <dt>
 
@@ -2305,7 +2342,7 @@
 
         <dt>
 
-          <code><a href="statmod_stat.html">statmod_stat()</a></code>
+          <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>
 
         </dt>
         <dd>One Likelihood Statistic for One Coefficient</dd>

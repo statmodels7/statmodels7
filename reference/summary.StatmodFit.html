@@ -13,7 +13,7 @@ qualifications the numbers carry."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,7 +110,7 @@ an earlier fit; it is zero where no hyperparameter was estimated.</p></dd>
 <dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
 <dd><p>Which statistic the coefficient tables report: <code>"wald"</code>, the
 default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each of which costs one
-restricted refit per row. See <code><a href="statmod_stat.html">statmod_stat()</a></code>.</p></dd>
+restricted refit per row. See <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p></dd>
 
 
 <dt id="arg-max-coef">max_coef<a class="anchor" aria-label="anchor" href="#arg-max-coef"></a></dt>
@@ -192,7 +192,7 @@ coefficient under a KINKED penalty, an aliased one, any coefficient of a
 model carrying a structural term – reports <code>NA</code> rather than falling back
 on Wald's, so the column never carries two tests at once. Every other row
 is tested, a smooth's own coordinates and a random effect's among them,
-on the penalized objective and with the reading <code><a href="statmod_stat.html">statmod_stat()</a></code> states.</p>
+on the penalized objective and with the reading <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code> states.</p>
 <p><strong>What a Wald p-value means here depends on the row</strong>, and the summary
 says which is which, in place of printing one column and leaving it at
 that.
@@ -208,7 +208,9 @@ columns it has. The information criteria are built on that count.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <code><a href="statmod_stat.html">statmod_stat()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>,
+<code><a href="statmod_test.html">statmod_test()</a></code>, which asks the same four of ONE coefficient against a
+value that need not be zero, and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -242,7 +244,7 @@ columns it has. The information criteria are built on that count.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.844138    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.688    cBIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 21 ms   search: converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 45 ms   search: converged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> certificate: CONVERGED   2.21e-11 above the mode</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   the model carries no penalty, so there is no outer gradient; the reading</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode</span>

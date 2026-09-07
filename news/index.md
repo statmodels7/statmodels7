@@ -1,5 +1,84 @@
 # Changelog
 
+## statmodels7 0.106.0
+
+- TESTING ONE COEFFICIENT AGAINST ONE VALUE IS AN EXPORTED FUNCTION,
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+  RETURNING AN S7 OBJECT. `summary(fit, test =)` reports the same four
+  statistics for every row and always against zero; this asks about one
+  coefficient and any value, which is the question a summary cannot be
+  put – whether a slope is one, whether an elasticity is unity, whether
+  a coefficient matches a value fixed outside the data.
+
+- The result is a `StatmodTest`, an S7 class with declared properties,
+  and not an `htest`. R’s own tests return the second, which is a list
+  with a class attribute: no definition, no validator, no constructor,
+  so nothing can check one and a reader cannot ask it what it carries.
+  Everything a caller of this toolkit receives is an object, and this is
+  no exception.
+
+- ⚠️ WHAT THE RESULT SAYS ABOUT THE RESTRICTED REFIT IS THE MODE ERROR
+  AND NOT THE OPTIMIZER’S FLAG, which is the rule 0.81.0 established for
+  the same question one layer up. The flag says whether a stopping rule
+  fired; whether the point is usable is a matter of distance, and
+  [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)
+  measures it as on the free coordinates, in log-likelihood units
+  against
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
+
+  Measured, the two do not merely disagree, they disagree BACKWARDS.
+  Holding the slope of a Poisson `y ~ x` at nineteen values from 0.6 to
+  1.5, all nineteen refits are at their mode – the worst at 1.04e-11
+  against a limit of 1e-03 – and fifteen report the flag; the four it
+  rejects are **the four best-located of the nineteen**, every one near
+  1e-23. On a gaussian smooth over thirteen held values of `s(x).lin` it
+  is the two best-located of the thirteen, 1.31e-12 against a worst of
+  6.67e-09. Where a refit lands on its mode in one step the objective
+  does not move between iterations and the stall guard fires, so a
+  warning printed off the flag fires loudest where there is least to
+  warn about. Both readings are on the object; only the first is
+  printed.
+
+- ⚠️ `confint(fit, method =)` IS NOW `confint(fit, test =)`, the name
+  [`summary()`](https://rdrr.io/r/base/summary.html) already used for
+  the same four statistics. One set of four under two names was one
+  surface too many. The old spelling reaches the dots here rather than
+  any formal – no formal of
+  [`confint()`](https://rdrr.io/r/stats/confint.html) begins with it –
+  and from there it would have gone to
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html), which has no such
+  argument either, so the request would have been answered with the Wald
+  limits in silence. It is refused by name instead, and a test pins the
+  refusal.
+
+- `statmod_stat()` is
+  [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
+  which says that it reads the statistic AT a value; it stays internal,
+  and it is what [`summary()`](https://rdrr.io/r/base/summary.html), the
+  inverted interval and
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+  are all built on. It gains a `mode_error` argument, `FALSE` by
+  default: reading the mode error costs one Hessian, which is 63 per
+  cent of the refit on a Poisson of twenty-six coefficients and 2.3 per
+  cent on a penalized smooth, and the two loops that call the helper in
+  quantity – [`summary()`](https://rdrr.io/r/base/summary.html), one row
+  at a time, and the interval, five to seven times over – do not read
+  it.
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+  does, being the surface a reader reads one row of. Rao’s score
+  statistic pays nothing either way, reading the same matrix anyway.
+
+- A restricted fit reads its Hessian at most once however often it is
+  asked for it, and not at all where nothing asks: the likelihood ratio
+  and the gradient statistic need no matrix.
+
+- ⚠️
+  [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
+  refuses a held value that is not a single finite number, where one
+  used to reach the hold as a named vector of that length and fail
+  several frames down, inside the objective, on a names assignment – an
+  error naming neither the argument nor the mistake.
+
 ## statmodels7 0.105.0
 
 - HOW MANY COEFFICIENTS A SUMMARY PRINTS IS ASKED OF
@@ -42,10 +121,8 @@
   parts of a smooth – the unpenalized linear column `s(x).lin`, which
   lies in the null space of and is estimated as freely as any parametric
   coefficient, and the rotated coordinates the penalty really does
-  shrink – all reach
-  [`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md),
-  `summary(test =)` and `confint(method =)`. `unpenalized_coords()` is
-  replaced by
+  shrink – all reach `statmod_stat()`, `summary(test =)` and
+  `confint(method =)`. `unpenalized_coords()` is replaced by
   [`kinked_coords()`](https://statmodels7.github.io/statmodels7/reference/kinked_coords.md),
   which asks each penalty for
   [`penalty_has_kink()`](https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.md)
@@ -104,11 +181,9 @@
 ## statmodels7 0.103.0
 
 - THE FOUR LIKELIHOOD STATISTICS, AND CONFIDENCE INTERVALS BY INVERTING
-  THEM.
-  [`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
-  reports Wald’s statistic, the likelihood ratio, Rao’s score and
-  Terrell’s gradient for the hypothesis that one coefficient equals one
-  value, and
+  THEM. `statmod_stat()` reports Wald’s statistic, the likelihood ratio,
+  Rao’s score and Terrell’s gradient for the hypothesis that one
+  coefficient equals one value, and
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
   returns the set of values a chosen one does not reject. Writing for
   the unrestricted estimates, for those with held at , for the score and

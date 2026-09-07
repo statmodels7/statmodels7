@@ -73,7 +73,7 @@ summary(
   Which statistic the coefficient tables report: `"wald"`, the default,
   or `"lr"`, `"score"` or `"gradient"`, each of which costs one
   restricted refit per row. See
-  [`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md).
+  [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
 
 - max_coef:
 
@@ -174,7 +174,7 @@ reports `NA` rather than falling back on Wald's, so the column never
 carries two tests at once. Every other row is tested, a smooth's own
 coordinates and a random effect's among them, on the penalized objective
 and with the reading
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
 states.
 
 **What a Wald p-value means here depends on the row**, and the summary
@@ -195,7 +195,10 @@ columns it has. The information criteria are built on that count.
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md),
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
+[`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+which asks the same four of ONE coefficient against a value that need
+not be zero, and
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
 
 ## Examples
 
@@ -229,7 +232,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 21 ms   search: converged
+#> fitted in 45 ms   search: converged
 #> certificate: CONVERGED   2.21e-11 above the mode
 #>   the model carries no penalty, so there is no outer gradient; the reading
 #>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode

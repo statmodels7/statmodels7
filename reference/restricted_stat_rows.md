@@ -54,5 +54,5 @@ unmarked, is worse than a column with holes in it.
 
 ## See also
 
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md),
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
 which computes one of them.

@@ -13,6 +13,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodFit-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodTest-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/add_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aliased_labels.html</loc></url>
@@ -195,6 +196,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSim.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/print.StatmodTest.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print.start_strategy.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/print_block_head.html</loc></url>
@@ -216,6 +218,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_unfittable.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reml.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/restricted_stat_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/row_nonzeros.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod.html</loc></url>
@@ -318,7 +321,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_select.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_spec.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_start.html</loc></url>
-<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_stat.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.html</loc></url>
@@ -327,6 +330,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_state.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_table.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_terms.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_test.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_theta_shifted.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_unit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_values.html</loc></url>

@@ -70,5 +70,5 @@ few dozen inner fits and no outer search at all.
 
 ## See also
 
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md),
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
 the statistic being inverted.

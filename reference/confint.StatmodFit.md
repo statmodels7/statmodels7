@@ -14,7 +14,7 @@ confint(
   level = 0.95,
   type = c("bayesian", "frequentist", "unconditional"),
   readable = TRUE,
-  method = c("wald", "lr", "score", "gradient"),
+  test = c("wald", "lr", "score", "gradient"),
   ...
 )
 ```
@@ -49,16 +49,16 @@ confint(
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
   and necessarily `FALSE` for the three restricted `method`s.
 
+- ...:
+
+  Passed to
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+
 - method:
 
   Which test the interval is the acceptance region of: `"wald"`, the
   default, or `"lr"`, `"score"` or `"gradient"`, each inverted by
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md).
-
-- ...:
-
-  Passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
 
 ## Value
 
@@ -117,7 +117,7 @@ and the interval is the credible one
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
 already gives it under `type = "bayesian"`, conditional on the
 hyperparameters the fit reached. See
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md).
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
 
 The three restricted methods need `readable = FALSE`, since a test is
 about one coefficient and a readable quantity is a function of several
@@ -127,9 +127,12 @@ at once.
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
+[`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+which tests one coefficient against a value of its own, and
 [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
 and
-[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
+the two internals an inverted interval is built from
 
 ## Examples
 
@@ -152,7 +155,7 @@ confint(fit, "sigma")
 #> sigma:(Intercept)     sigma linpar (Intercept) -1.04546 0.07905694 -1.200408
 #>                        upper
 #> sigma:(Intercept) -0.8905109
-confint(fit, "mu:x", method = "lr", readable = FALSE)
+confint(fit, "mu:x", test = "lr", readable = FALSE)
 #>      parameter   term coefficient estimate        se    lower    upper
 #> mu:x        mu linpar           x 2.007856 0.1467852 1.716674 2.299038
 ```

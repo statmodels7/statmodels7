@@ -11,7 +11,7 @@ coefficients that attain it and the score there."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,13 +97,23 @@ the tolerance; the held one is what the statistics read.</p></dd>
 
 <dt><code>information</code></dt>
 <dd><p>a function of no arguments returning the
-penalized information at the restricted point.</p></dd>
+penalized information at the restricted point. It is read at most
+once however often it is called, and not at all where nothing calls
+it, which is the ordinary case: the likelihood ratio and the
+gradient statistic need no matrix.</p></dd>
+
+<dt><code>mode_error</code></dt>
+<dd><p>a function of no arguments returning
+<code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>, how far above its own mode the refit
+stopped. It reads the information, so it costs one Hessian.</p></dd>
 
 <dt><code>labels</code></dt>
 <dd><p>the stacked coefficient labels.</p></dd>
 
 <dt><code>converged</code></dt>
-<dd><p>a single logical.</p></dd>
+<dd><p>the inner optimizer's flag, a single logical.
+Measured, it is anti-correlated with how well the point is located
+– see <code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>, which is the reading to prefer.</p></dd>
 
 
 </dl></div>
@@ -138,7 +148,7 @@ structural term, whose contribution is a recursion's state rather than
 \(X\beta\) and which the hold does not reach.</p>
 <p>A coefficient under a penalty that IS twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a ridge,
-a random effect. What such a fit means is stated at <code><a href="statmod_stat.html">statmod_stat()</a></code>.</p>
+a random effect. What such a fit means is stated at <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -92,6 +92,17 @@ the elapsed time in the unit it deserves.
 - [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)
   : Format a Duration in the Unit It Deserves
 
+## Testing a coefficient
+
+One coefficient against one value, by Wald’s statistic, the likelihood
+ratio, Rao’s score or Terrell’s gradient. The same four are what
+`summary(test =)` reports for every row against zero and what
+`confint(test =)` inverts; this is the surface that takes a null of its
+own.
+
+- [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+  : Test One Coefficient Against One Value
+
 ## Installing and updating
 
 The toolkit is not on CRAN, so the install path is GitHub and the
@@ -121,6 +132,8 @@ exported, and none is needed to use the package.
   : The Specification of a Model, Before It Is Fitted
 - [`StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.md)
   : A Summary of a Fitted Model
+- [`StatmodTest()`](https://statmodels7.github.io/statmodels7/reference/StatmodTest-class.md)
+  : A Test of One Coefficient Against One Value
 - [`add_offsets()`](https://statmodels7.github.io/statmodels7/reference/add_offsets.md)
   : Add Two Sets of Offsets
 - [`aliased_labels()`](https://statmodels7.github.io/statmodels7/reference/aliased_labels.md)
@@ -480,6 +493,8 @@ exported, and none is needed to use the package.
   : Print a Fitted Model
 - [`print(`*`<StatmodSummary>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
   : Print a Model Summary
+- [`print(`*`<StatmodTest>`*`)`](https://statmodels7.github.io/statmodels7/reference/print.StatmodTest.md)
+  : Print a Test
 - [`print.start_strategy`](https://statmodels7.github.io/statmodels7/reference/print.start_strategy.md)
   : Print a Starting-Value Strategy
 - [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
@@ -521,6 +536,8 @@ exported, and none is needed to use the package.
   : Reject a Term the Fitting Scheme Does Not Cover
 - [`residuals(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
   : The Residuals of a Fitted Model
+- [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)
+  : How Far Above Its Mode a Restricted Fit Stopped
 - [`restricted_stat_rows()`](https://statmodels7.github.io/statmodels7/reference/restricted_stat_rows.md)
   : A Table's Statistics From a Restricted Fit
 - [`row_nonzeros()`](https://statmodels7.github.io/statmodels7/reference/row_nonzeros.md)
@@ -704,7 +721,7 @@ exported, and none is needed to use the package.
   : Estimate the Hyperparameters, by Whichever Route Each One Admits
 - [`statmod_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_start.md)
   : Starting Coefficients
-- [`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
+- [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md)
   : One Likelihood Statistic for One Coefficient
 - [`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
   : Which Terms Rewrite the Likelihood
