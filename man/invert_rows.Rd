@@ -4,7 +4,7 @@
 \alias{invert_rows}
 \title{Replace a Table's Limits by an Inverted Test}
 \usage{
-invert_rows(fit, out, level, method, type)
+invert_rows(fit, out, level, test, type)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -13,7 +13,7 @@ invert_rows(fit, out, level, method, type)
 
 \item{level}{The confidence level.}
 
-\item{method}{Which test to invert.}
+\item{test}{Which test to invert.}
 
 \item{type}{Which variance sets the starting bracket.}
 }

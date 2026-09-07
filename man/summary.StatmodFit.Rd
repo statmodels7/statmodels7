@@ -45,7 +45,7 @@ an earlier fit; it is zero where no hyperparameter was estimated.}
 
 \item{test}{Which statistic the coefficient tables report: \code{"wald"}, the
 default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each of which costs one
-restricted refit per row. See \code{\link[=statmod_stat]{statmod_stat()}}.}
+restricted refit per row. See \code{\link[=statmod_stat_at]{statmod_stat_at()}}.}
 
 \item{max_coef}{How many coefficient rows each block of the printed
 summary shows, \code{Inf} or \code{NA} for all of them. \code{NULL}, the default,
@@ -121,7 +121,7 @@ coefficient under a KINKED penalty, an aliased one, any coefficient of a
 model carrying a structural term -- reports \code{NA} rather than falling back
 on Wald's, so the column never carries two tests at once. Every other row
 is tested, a smooth's own coordinates and a random effect's among them,
-on the penalized objective and with the reading \code{\link[=statmod_stat]{statmod_stat()}} states.
+on the penalized objective and with the reading \code{\link[=statmod_stat_at]{statmod_stat_at()}} states.
 
 \strong{What a Wald p-value means here depends on the row}, and the summary
 says which is which, in place of printing one column and leaving it at
@@ -145,6 +145,8 @@ summary(statmod(y ~ x | sigma ~ x,
                 distributions7::gaussian1_distrib(), dd))
 }
 \seealso{
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=statmod_stat]{statmod_stat()}}
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}},
+\code{\link[=statmod_test]{statmod_test()}}, which asks the same four of ONE coefficient against a
+value that need not be zero, and \code{\link[=statmod_stat_at]{statmod_stat_at()}}
 }
 \keyword{internal}

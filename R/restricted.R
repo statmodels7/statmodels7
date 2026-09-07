@@ -45,7 +45,7 @@
 #'
 #' A coefficient under a penalty that IS twice differentiable is held like
 #' any other: a smooth's linear column and its rotated coordinates, a ridge,
-#' a random effect. What such a fit means is stated at [statmod_stat()].
+#' a random effect. What such a fit means is stated at [statmod_stat_at()].
 #'
 #' @param fit A [StatmodFit()].
 #' @param param The distribution parameter whose equation carries the
@@ -65,15 +65,30 @@
 #'     \item{`at`}{the held coordinate's position in that vector.}
 #'     \item{`par`}{the restricted estimates, stacked.}
 #'     \item{`information`}{a function of no arguments returning the
-#'       penalized information at the restricted point.}
+#'       penalized information at the restricted point. It is read at most
+#'       once however often it is called, and not at all where nothing calls
+#'       it, which is the ordinary case: the likelihood ratio and the
+#'       gradient statistic need no matrix.}
+#'     \item{`mode_error`}{a function of no arguments returning
+#'       [restricted_mode_error()], how far above its own mode the refit
+#'       stopped. It reads the information, so it costs one Hessian.}
 #'     \item{`labels`}{the stacked coefficient labels.}
-#'     \item{`converged`}{a single logical.}
+#'     \item{`converged`}{the inner optimizer's flag, a single logical.
+#'       Measured, it is anti-correlated with how well the point is located
+#'       -- see [restricted_mode_error()], which is the reading to prefer.}
 #'   }
 #'
 #' @seealso [iwls_solve()], which drops the held coordinate from the system.
 #'
 #' @keywords internal
 statmod_restrict <- function(fit, param, coefname, value) {
+  # a value of another length reaches the hold as a named vector of that
+  # length and fails several frames down, inside the objective, on a names
+  # assignment -- which names neither the argument nor the mistake
+  if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
+    stop("'value' is the single finite number the coefficient is held at.",
+         call. = FALSE)
+  }
   spec0 <- fit@spec
   params <- spec0@distrib@params
   if (!param %in% params) {
@@ -127,19 +142,86 @@ statmod_restrict <- function(fit, param, coefname, value) {
                            cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
                            verbosity(0))
   cf <- res$obj$split(res$par)
+  # the objective is a MINIMAND -- the negative log-likelihood plus the
+  # penalty -- so its gradient carries the opposite sign to the score
+  sc <- -res$obj$gr(res$par)
+  # the Hessian is read at most ONCE, and only where a caller asks: the
+  # likelihood ratio and the gradient statistic never do. Measured on a
+  # Poisson of twenty-six coefficients it is 63 per cent of the refit
+  # (0.0044 s against 0.0070); at two coefficients, 2.6 per cent.
+  hess <- NULL
+  info <- function() {
+    # the objective's Hessian IS the penalized information there, the
+    # objective being the negative log-likelihood plus the penalty
+    if (is.null(hess)) hess <<- as_dense(res$obj$he(res$par))
+    hess
+  }
   list(coefficients = cf,
        loglik = statmod_loglik_at(spec, cf, design),
        objective = res$value,
-       # the objective is a MINIMAND -- the negative log-likelihood plus the
-       # penalty -- so its gradient carries the opposite sign to the score
-       score = -res$obj$gr(res$par),
+       score = sc,
        at = at,
        par = res$par,
-       # the objective's Hessian IS the penalized information there, the
-       # objective being the negative log-likelihood plus the penalty
-       information = function() as_dense(res$obj$he(res$par)),
+       information = info,
+       mode_error = function() restricted_mode_error(sc, info(), at),
        labels = rownames(coef_labels(spec, design)),
        converged = isTRUE(res$converged))
+}
+
+
+#' How Far Above Its Mode a Restricted Fit Stopped
+#'
+#' @description
+#' \eqn{\tfrac12 g'K^{-1}g} over the FREE coordinates of a restricted fit:
+#' how much of the penalized objective is still on the table at the point
+#' [statmod_restrict()] returned, in log-likelihood units.
+#'
+#' @details
+#' It is [inner_mode_error()]'s question asked of a restricted fit, and it
+#' is asked for the reason statmodels7 0.81.0 established: the inner
+#' optimizer's flag says whether a stopping rule fired, which is a boolean
+#' about a threshold on a score whose size depends on the model, while
+#' whether a point is at its mode is a matter of distance and has a natural
+#' scale.
+#'
+#' The two come apart here as they do there, and they come apart BACKWARDS:
+#' the flag rejects the points that are located best. Measured on `y ~ x`
+#' with a Poisson response at \eqn{n = 200}, holding the slope at nineteen
+#' values from 0.6 to 1.5, all nineteen are at their mode -- the worst at
+#' 1.04e-11 against a limit of 1e-03 -- and fifteen report the flag. The four
+#' it rejects are **the four best-located of the nineteen**, every one of
+#' them near 1e-23 where the fifteen it accepts run out to 1.04e-11. On a
+#' gaussian smooth holding `s(x).lin` at thirteen values it is the two
+#' best-located of the thirteen, at 1.31e-12 against a worst of 6.67e-09.
+#'
+#' The mechanism is that a stopping rule reads a CHANGE and a distance reads
+#' a POINT: where the refit lands on its mode in one step the objective does
+#' not move between iterations, the objective-stall guard fires, and the run
+#' is labelled stopped rather than converged. The better the point, the
+#' likelier the flag denies it, which is why a warning printed off the flag
+#' would fire loudest where there is least to warn about.
+#'
+#' The held coordinate is excluded because it is not free: its score is the
+#' quantity Rao's statistic reads and does not vanish under the restriction.
+#'
+#' @param score The restricted fit's score, all coordinates.
+#' @param information Its penalized information, all coordinates.
+#' @param at The position of the held coordinate.
+#'
+#' @return A single number, or `NA` where the free block could not be
+#'   inverted there -- which is itself a reason to doubt the point.
+#'
+#' @seealso [mode_error_limit()], the limit it is read against, and
+#'   [inner_mode_error()], the same reading inside a search.
+#'
+#' @keywords internal
+restricted_mode_error <- function(score, information, at) {
+  free <- setdiff(seq_along(score), at)
+  if (!length(free) || !all(is.finite(score[free]))) return(NA_real_)
+  g <- score[free]
+  v <- tryCatch(0.5 * sum(g * solve(information[free, free, drop = FALSE], g)),
+                error = function(e) NA_real_)
+  if (isTRUE(is.finite(v))) v else NA_real_
 }
 
 
@@ -251,16 +333,22 @@ kinked_coords <- function(spec, design) {
 #' @param test One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
 #' @param type Which variance the Wald statistic reads, as
 #'   [vcov.StatmodFit()] takes it.
+#' @param mode_error Whether to read how far above its mode the restricted
+#'   fit stopped ([restricted_mode_error()]). `FALSE` by default, because it
+#'   costs one Hessian where the likelihood ratio and the gradient statistic
+#'   need none, and the two loops that call this in quantity --
+#'   [summary.StatmodFit()], one row at a time, and [statmod_invert()], five
+#'   to seven times per interval -- do not read it.
 #'
-#' @return A list with `test`, `statistic`, `df`, `p.value`, and
-#'   `converged`, which is `NA` for the Wald statistic and the restricted
-#'   fit's flag for the other three.
+#' @return A list with `test`, `statistic`, `df`, `p.value`, `converged` --
+#'   `NA` for the Wald statistic and the restricted fit's flag for the other
+#'   three -- and `mode_error`, `NA` unless it was asked for.
 #'
 #' @seealso [statmod_restrict()], which the three restricted statistics read.
 #'
 #' @keywords internal
-statmod_stat <- function(fit, param, coefname, value = 0, test = "wald",
-                         type = "bayesian") {
+statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
+                         type = "bayesian", mode_error = FALSE) {
   test <- match.arg(test, c("wald", "lr", "score", "gradient"))
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -272,15 +360,15 @@ statmod_stat <- function(fit, param, coefname, value = 0, test = "wald",
   at <- if (is.na(j)) NA_integer_ else offs[[match(param, params)]] + j
   bhat <- if (is.na(j)) NA_real_ else fit@coefficients[[param]][[j]]
 
-  out <- function(s, conv) {
+  out <- function(s, conv, me = NA_real_) {
     list(test = test, statistic = s, df = 1L,
          p.value = stats::pchisq(s, 1L, lower.tail = FALSE),
-         converged = conv)
+         converged = conv, mode_error = me)
   }
 
   if (identical(test, "wald")) {
     # the only one that needs no refit, and the only one a reparametrization
-    # moves
+    # moves. Nothing was refitted, so there is no mode to be above
     V <- stats::vcov(fit, type = type)
     lab <- rownames(coef_labels(spec, design))[at]
     v <- if (is.na(at) || !lab %in% rownames(V)) NA_real_ else V[lab, lab]
@@ -289,6 +377,7 @@ statmod_stat <- function(fit, param, coefname, value = 0, test = "wald",
   }
 
   r <- statmod_restrict(fit, param, coefname, value)
+  me <- if (isTRUE(mode_error)) r$mode_error() else NA_real_
   if (identical(test, "lr")) {
     # 2 times the rise in the PENALIZED OBJECTIVE, which is the function both
     # fits maximize, so the difference is non-negative by construction. Read
@@ -296,18 +385,228 @@ statmod_stat <- function(fit, param, coefname, value = 0, test = "wald",
     # the penalized objective, not the likelihood, so it can sit ABOVE the
     # unrestricted point there -- measured at -0.0379 and -0.1075 on a
     # smooth's own coordinate. With no penalty the two are the same number.
-    return(out(2 * (r$objective - fit@objective), r$converged))
+    return(out(2 * (r$objective - fit@objective), r$converged, me))
   }
   u <- r$score[[r$at]]
   if (identical(test, "gradient")) {
-    return(out(u * (bhat - value), r$converged))
+    return(out(u * (bhat - value), r$converged, me))
   }
   K <- r$information()
   V <- tryCatch(solve_pd(K, "the penalized information at the restricted fit",
                          r$labels),
                 error = function(e) NULL)
-  if (is.null(V)) return(out(NA_real_, r$converged))
-  out(u^2 * V[r$at, r$at], r$converged)
+  if (is.null(V)) return(out(NA_real_, r$converged, me))
+  out(u^2 * V[r$at, r$at], r$converged, me)
+}
+
+
+#' A Test of One Coefficient Against One Value
+#'
+#' @description
+#' The result of testing that one coefficient of a fit equals one value,
+#' carrying the statistic, its distribution, the p-value and what was
+#' tested.
+#'
+#' @details
+#' The four statistics are compared with the same \eqn{\chi^2_1}, so `df` is
+#' always 1 and the object holds one kind of quantity whatever produced it.
+#'
+#' # Whether the refit reached its mode
+#'
+#' `mode_error` and `converged` both describe the restricted refit and both
+#' are `NA` for the Wald statistic, which reads the unrestricted fit and
+#' refits nothing. They answer different questions and only the first is
+#' printed.
+#'
+#' `converged` is the inner optimizer's flag: whether a stopping rule fired,
+#' a boolean about a threshold on a score whose size depends on the model.
+#' `mode_error` is [restricted_mode_error()], how much of the penalized
+#' objective is still on the table at the point the refit returned, in
+#' log-likelihood units against [mode_error_limit()] -- the rule statmodels7
+#' 0.81.0 established for exactly this question.
+#'
+#' The flag is not merely a false negative: it is anti-correlated with the
+#' quality of the point, because a stopping rule reads a change and a
+#' distance reads a point. Measured on `y ~ x` with a Poisson response at
+#' \eqn{n = 200} over nineteen held values, all nineteen are at their mode
+#' and the four the flag rejects are the four best-located of them. See
+#' [restricted_mode_error()].
+#'
+#' A statistic read off a refit that stopped short is the value at wherever
+#' it stopped, and `print()` says so -- reading `mode_error`, so that it says
+#' it where it is true.
+#'
+#' The class exists rather than a bare list because everything a caller of
+#' this toolkit receives is an object with declared properties. R's own
+#' tests return an `htest`, which is a list with a class attribute and no
+#' contract; nothing here can validate one, and a reader cannot ask it what
+#' it carries.
+#'
+#' @param test Which of the four statistics, as [statmod_test()] was asked
+#'   for it.
+#' @param statistic Its value, compared with a \eqn{\chi^2_1}.
+#' @param df One, always.
+#' @param p.value The upper tail of that \eqn{\chi^2_1}.
+#' @param estimate The unrestricted estimate of the coefficient.
+#' @param null_value The value it was tested against.
+#' @param parameter,coefficient Which coefficient of which equation.
+#' @param mode_error How far above its own mode the restricted refit
+#'   stopped, in log-likelihood units; `NA` for the Wald statistic.
+#' @param converged The inner optimizer's flag at the restricted refit;
+#'   `NA` for the Wald statistic.
+#'
+#' @return An object of class `StatmodTest`.
+#'
+#' @seealso [statmod_test()], which builds one, and
+#'   [restricted_mode_error()], which `mode_error` reports.
+#'
+#' @examples
+#' dd <- data.frame(x = seq(-1, 1, length.out = 40))
+#' dd$y <- rpois(40, exp(0.3 + dd$x))
+#' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
+#' S7::S7_inherits(statmod_test(fit, "mu", "x", 1), StatmodTest)
+#'
+#' @name StatmodTest-class
+#' @aliases StatmodTest
+#' @keywords internal
+#' @export
+StatmodTest <- S7::new_class("StatmodTest",
+  properties = list(
+    # which of the four statistics, as `statmod_test()` was asked for it
+    test = S7::class_character,
+    statistic = S7::class_numeric,
+    df = S7::class_integer,
+    p.value = S7::class_numeric,
+    # the unrestricted estimate and the value it was tested against, so the
+    # object says what the null WAS rather than leaving it to the call
+    estimate = S7::class_numeric,
+    null_value = S7::class_numeric,
+    parameter = S7::class_character,
+    coefficient = S7::class_character,
+    # how far above its own mode the restricted refit stopped, and the raw
+    # flag beside it. The first is what print() reads; the second is kept
+    # because it is what the optimizer reported and a reader may want it
+    mode_error = S7::class_numeric,
+    converged = S7::class_logical
+  )
+)
+
+
+#' Print a Test
+#'
+#' @description
+#' The statistic, its degrees of freedom and the p-value on one line, under
+#' a title naming the test, in the layout R uses for a hypothesis test.
+#'
+#' @param x A [StatmodTest()].
+#' @param digits Significant digits.
+#' @param ... Unused.
+#'
+#' @return `x`, invisibly.
+#'
+#' @keywords internal
+print.StatmodTest <- function(x, digits = 4L, ...) {
+  nm <- c(wald = "Wald", lr = "Likelihood-ratio", score = "Rao score",
+          gradient = "Terrell gradient")[[x@test]]
+  cat("\n\t", nm, " test on a statmod fit\n\n", sep = "")
+  cat("coefficient:  ", x@parameter, ":", x@coefficient, "\n", sep = "")
+  cat("X-squared = ", format(x@statistic, digits = digits),
+      ",  df = ", x@df,
+      ",  p-value ", format.pval(x@p.value, digits = digits, eps = 1e-16),
+      "\n", sep = "")
+  cat("alternative hypothesis: true ", x@coefficient, " is not equal to ",
+      format(x@null_value, digits = digits), "\n", sep = "")
+  cat("estimate: ", format(x@estimate, digits = digits), "\n", sep = "")
+  # a statistic read off a refit that stopped short is the value where it
+  # stopped, and saying so is the difference between a number and a result.
+  # What is read is the MODE ERROR and not the optimizer's flag. Measured,
+  # the flag rejects exactly the best-located points -- where the refit lands
+  # on its mode in one step the objective does not move and the stall guard
+  # fires -- so a warning printed off it fires loudest where the refit is
+  # best. See restricted_mode_error().
+  # Wald refits nothing, so there is no mode for it to be above, and
+  # `converged` is NA exactly there
+  refitted <- length(x@converged) == 1L && !is.na(x@converged)
+  me <- if (length(x@mode_error) == 1L) x@mode_error else NA_real_
+  if (refitted && !isTRUE(me <= mode_error_limit())) {
+    cat("\nthe restricted fit stopped above its own mode",
+        if (is.na(me)) "" else
+          sprintf(" (by %s, against %s)", format(me, digits = digits),
+                  format(mode_error_limit(), digits = digits)),
+        ",\n  so the statistic is the value at wherever it stopped\n",
+        sep = "")
+  }
+  invisible(x)
+}
+S7::method(print, StatmodTest) <- print.StatmodTest
+
+
+#' Test One Coefficient Against One Value
+#'
+#' @description
+#' Tests that one coefficient of a fit equals one value, by Wald's
+#' statistic, the likelihood ratio, Rao's score or Terrell's gradient.
+#'
+#' @details
+#' `summary(fit, test =)` reports the same four statistics for every row of
+#' the coefficient tables, and always against zero. This tests ONE
+#' coefficient against ANY value, which is the question a summary cannot be
+#' asked: whether a slope is one, whether an elasticity is unity, whether a
+#' coefficient matches a value fixed outside the data.
+#'
+#' What the statistics are, what they read and what they cost is at
+#' [statmod_stat_at()]; the restricted fit the last three are built on is
+#' [statmod_restrict()], and the interval obtained by inverting one is
+#' [confint.StatmodFit()].
+#'
+#' Reading one row costs one restricted refit, where `summary(test =)` costs
+#' one per row: measured on a Poisson fit of twenty-five covariates, one
+#' statistic is 0.010 s against the summary's 0.220 s over twenty-six rows.
+#' It also reads the refit's mode error, which is one Hessian -- 63 per cent
+#' of the refit on that fit and 2.3 per cent on a penalized smooth, and none
+#' at all for Rao's score, which reads the same matrix anyway. The summary
+#' and the interval do not pay it.
+#'
+#' @param fit A [StatmodFit()].
+#' @param param,coefname Which coefficient, as in [statmod_restrict()]:
+#'   the distribution parameter and the coefficient's name in its equation.
+#' @param value The value under the null, a single number. `0` by default,
+#'   which is what a summary reports.
+#' @param test One of `"wald"`, `"lr"`, `"score"`, `"gradient"`.
+#' @param type Which variance the Wald statistic reads, passed to
+#'   [vcov.StatmodFit()].
+#'
+#' @return A [StatmodTest()].
+#'
+#' @seealso [summary.StatmodFit()] for every row against zero,
+#'   [confint.StatmodFit()] for the interval a test inverts.
+#'
+#' @examples
+#' set.seed(1)
+#' dd <- data.frame(x = rnorm(200))
+#' dd$y <- rpois(200, exp(0.3 + dd$x))
+#' fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
+#' ## the summary asks whether the slope is zero; this asks whether it is one
+#' statmod_test(fit, "mu", "x", 1, "lr")
+#' statmod_test(fit, "mu", "x", 0, "lr")
+#'
+#' @export
+statmod_test <- function(fit, param, coefname, value = 0, test = "wald",
+                         type = "bayesian") {
+  # the mode error is asked for HERE and nowhere else: this is the one
+  # surface a reader reads one row of, so one extra Hessian is affordable,
+  # where the two loops that call the same helper in quantity are not
+  s <- statmod_stat_at(fit, param, coefname, value, test, type,
+                       mode_error = TRUE)
+  design <- statmod_design(fit@spec)
+  nms <- design[[param]]$coef_names
+  j <- match(coefname, nms)
+  est <- if (is.na(j)) NA_real_ else fit@coefficients[[param]][[j]]
+  StatmodTest(test = s$test, statistic = s$statistic, df = s$df,
+              p.value = s$p.value, estimate = est,
+              null_value = as.numeric(value), parameter = param,
+              coefficient = coefname, mode_error = s$mode_error,
+              converged = s$converged)
 }
 
 
@@ -343,7 +642,7 @@ statmod_stat <- function(fit, param, coefname, value = 0, test = "wald",
 #'   could not bracket is `NA`, which is what an unbounded interval looks
 #'   like and is reported rather than guessed at.
 #'
-#' @seealso [statmod_stat()], the statistic being inverted.
+#' @seealso [statmod_stat_at()], the statistic being inverted.
 #'
 #' @keywords internal
 statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
@@ -372,7 +671,7 @@ statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
                                                   upper = NA_real_))
 
   gap <- function(b) {
-    s <- statmod_stat(fit, param, coefname, b, test, type)$statistic
+    s <- statmod_stat_at(fit, param, coefname, b, test, type)$statistic
     if (!isTRUE(is.finite(s))) return(NA_real_)
     s - q
   }

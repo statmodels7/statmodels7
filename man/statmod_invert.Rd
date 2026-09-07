@@ -52,6 +52,6 @@ estimates and run at the fitted hyperparameters, so an interval costs a
 few dozen inner fits and no outer search at all.
 }
 \seealso{
-\code{\link[=statmod_stat]{statmod_stat()}}, the statistic being inverted.
+\code{\link[=statmod_stat_at]{statmod_stat_at()}}, the statistic being inverted.
 }
 \keyword{internal}

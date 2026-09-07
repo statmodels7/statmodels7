@@ -39,6 +39,6 @@ tests, one row apiece and unmarked, is worse than a column with holes in
 it.
 }
 \seealso{
-\code{\link[=statmod_stat]{statmod_stat()}}, which computes one of them.
+\code{\link[=statmod_stat_at]{statmod_stat_at()}}, which computes one of them.
 }
 \keyword{internal}

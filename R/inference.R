@@ -1594,7 +1594,7 @@ deficient_coords <- function(K) {
 #' own coordinates, a ridge, a random effect -- is inverted like any other,
 #' and the interval is the credible one [vcov.StatmodFit()] already gives it
 #' under `type = "bayesian"`, conditional on the hyperparameters the fit
-#' reached. See [statmod_stat()].
+#' reached. See [statmod_stat_at()].
 #'
 #' The three restricted methods need `readable = FALSE`, since a test is
 #' about one coefficient and a readable quantity is a function of several at
@@ -1616,7 +1616,9 @@ deficient_coords <- function(K) {
 #' @return A data frame with the parameter, the term, the coefficient, the
 #'   estimate, its standard error and the two limits.
 #' @seealso [vcov.StatmodFit()], [summary.StatmodFit()],
-#'   [statmod_invert()] and [statmod_stat()]
+#'   [statmod_test()], which tests one coefficient against a value of its
+#'   own, and [statmod_invert()] and [statmod_stat_at()], the two internals
+#'   an inverted interval is built from
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(80))
@@ -1624,15 +1626,24 @@ deficient_coords <- function(K) {
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' confint(fit)
 #' confint(fit, "sigma")
-#' confint(fit, "mu:x", method = "lr", readable = FALSE)
+#' confint(fit, "mu:x", test = "lr", readable = FALSE)
 #' @keywords internal
 confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                                type = c("bayesian", "frequentist", "unconditional"),
                                readable = TRUE,
-                               method = c("wald", "lr", "score", "gradient"),
+                               test = c("wald", "lr", "score", "gradient"),
                                ...) {
+  # `method` was this argument's name in 0.103.0. It is the same choice
+  # summary() spells `test` -- one set of four statistics under two names --
+  # so the two surfaces were aligned. It reaches the dots here rather than
+  # any formal, where it would go to vcov() and be ignored in silence.
+  if ("method" %in% ...names()) {
+    stop("'method' is now 'test', the name summary() already used for the",
+         "\n  same four statistics: confint(fit, test = \"lr\").",
+         call. = FALSE)
+  }
   type <- match.arg(type)
-  method <- match.arg(method)
+  test <- match.arg(test)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
@@ -1640,12 +1651,12 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
   # A TEST IS ABOUT ONE COEFFICIENT and a readable quantity is a function of
   # several at once, so there is no single coordinate to hold: the request is
   # refused rather than answered on the coordinates under the other names.
-  if (!identical(method, "wald") && isTRUE(readable)) {
-    stop(sprintf(paste0("method = \"%s\" inverts a test on one coefficient, ",
+  if (!identical(test, "wald") && isTRUE(readable)) {
+    stop(sprintf(paste0("test = \"%s\" inverts a test on one coefficient, ",
                         "so it needs\n  readable = FALSE. The readable ",
                         "quantities are functions of several\n  ",
                         "coefficients at once and no single one of them can ",
-                        "be held."), method), call. = FALSE)
+                        "be held."), test), call. = FALSE)
   }
   spec <- object@spec
   design <- statmod_design(spec)
@@ -1722,8 +1733,8 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
     }
     out <- out[keep, , drop = FALSE]
   }
-  if (!identical(method, "wald")) {
-    out <- invert_rows(object, out, level, method, type)
+  if (!identical(test, "wald")) {
+    out <- invert_rows(object, out, level, test, type)
   }
   out
 }
@@ -1746,7 +1757,7 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' @param fit A [StatmodFit()].
 #' @param out The table [confint.StatmodFit()] has built, already subset.
 #' @param level The confidence level.
-#' @param method Which test to invert.
+#' @param test Which test to invert.
 #' @param type Which variance sets the starting bracket.
 #'
 #' @return `out` with its `lower` and `upper` columns replaced.
@@ -1754,22 +1765,22 @@ S7::method(confint, StatmodFit) <- confint.StatmodFit
 #' @seealso [statmod_invert()], which does the search.
 #'
 #' @keywords internal
-invert_rows <- function(fit, out, level, method, type) {
+invert_rows <- function(fit, out, level, test, type) {
   ok <- names(testable_coords(fit))
   hit <- rownames(out) %in% ok
   if (!any(hit)) {
     stop(sprintf(paste0("No coefficient asked for can be held at a value, so",
-                        " method = \"%s\" has\n  nothing to invert. A ",
+                        " test = \"%s\" has\n  nothing to invert. A ",
                         "coefficient under a kinked penalty, an aliased one",
                         "\n  and every coefficient of a model carrying a ",
-                        "structural term are all outside it."), method),
+                        "structural term are all outside it."), test),
          call. = FALSE)
   }
   out$lower <- rep(NA_real_, nrow(out))
   out$upper <- rep(NA_real_, nrow(out))
   for (i in which(hit)) {
     ci <- tryCatch(statmod_invert(fit, out$parameter[[i]],
-                                  out$coefficient[[i]], level, method, type),
+                                  out$coefficient[[i]], level, test, type),
                    error = function(e) c(lower = NA_real_, upper = NA_real_))
     out$lower[[i]] <- ci[["lower"]]
     out$upper[[i]] <- ci[["upper"]]
@@ -2003,7 +2014,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' model carrying a structural term -- reports `NA` rather than falling back
 #' on Wald's, so the column never carries two tests at once. Every other row
 #' is tested, a smooth's own coordinates and a random effect's among them,
-#' on the penalized objective and with the reading [statmod_stat()] states.
+#' on the penalized objective and with the reading [statmod_stat_at()] states.
 #'
 #' **What a Wald p-value means here depends on the row**, and the summary
 #' says which is which, in place of printing one column and leaving it at
@@ -2022,7 +2033,7 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' @param level The confidence level.
 #' @param test Which statistic the coefficient tables report: `"wald"`, the
 #'   default, or `"lr"`, `"score"` or `"gradient"`, each of which costs one
-#'   restricted refit per row. See [statmod_stat()].
+#'   restricted refit per row. See [statmod_stat_at()].
 #' @param type Which variance matrix: passed to [vcov.StatmodFit()]. The
 #'   `"unconditional"` one carries the hyperparameters' own uncertainty into
 #'   every standard error under it, where `correct` carries the same
@@ -2051,7 +2062,9 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   already in hand.
 #' @param ... Passed to [vcov.StatmodFit()].
 #' @return A [StatmodSummary()].
-#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()], [statmod_stat()]
+#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()],
+#'   [statmod_test()], which asks the same four of ONE coefficient against a
+#'   value that need not be zero, and [statmod_stat_at()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(120))
@@ -2317,7 +2330,7 @@ S7::method(summary, StatmodFit) <- summary.StatmodFit
 #' @return A list with `statistic`, `p_value` and `note`, the last a
 #'   character vector of what the reader has to be told about the column.
 #'
-#' @seealso [statmod_stat()], which computes one of them.
+#' @seealso [statmod_stat_at()], which computes one of them.
 #'
 #' @keywords internal
 restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
@@ -2327,7 +2340,7 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
   pv <- rep(NA_real_, nrow(ci))
   bad <- 0L
   for (i in which(hit)) {
-    s <- tryCatch(statmod_stat(fit, ci$parameter[[i]], ci$coefficient[[i]],
+    s <- tryCatch(statmod_stat_at(fit, ci$parameter[[i]], ci$coefficient[[i]],
                                0, test, type),
                   error = function(e) NULL)
     if (is.null(s) || !isTRUE(is.finite(s$statistic))) next
@@ -2346,7 +2359,7 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
                          "penalty carries\n  the same conditional reading ",
                          "its bayesian standard error does. The\n  ",
                          "intervals beside it are still Wald's: ",
-                         "confint(method =) inverts this test\n  instead."),
+                         "confint(test =) inverts this test\n  instead."),
                  nm)
   n_no <- sum(!hit)
   if (n_no) {

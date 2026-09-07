@@ -10,7 +10,7 @@
   level = 0.95,
   type = c("bayesian", "frequentist", "unconditional"),
   readable = TRUE,
-  method = c("wald", "lr", "score", "gradient"),
+  test = c("wald", "lr", "score", "gradient"),
   ...
 )
 }
@@ -30,11 +30,11 @@ or \code{"unconditional"}.}
 rather than the raw coordinates. Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, and
 necessarily \code{FALSE} for the three restricted \code{method}s.}
 
+\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+
 \item{method}{Which test the interval is the acceptance region of:
 \code{"wald"}, the default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each
 inverted by \code{\link[=statmod_invert]{statmod_invert()}}.}
-
-\item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
 \value{
 A data frame with the parameter, the term, the coefficient, the
@@ -88,7 +88,7 @@ A coefficient under a penalty that is twice differentiable -- a smooth's
 own coordinates, a ridge, a random effect -- is inverted like any other,
 and the interval is the credible one \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} already gives it
 under \code{type = "bayesian"}, conditional on the hyperparameters the fit
-reached. See \code{\link[=statmod_stat]{statmod_stat()}}.
+reached. See \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
 
 The three restricted methods need \code{readable = FALSE}, since a test is
 about one coefficient and a readable quantity is a function of several at
@@ -102,10 +102,12 @@ dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 confint(fit)
 confint(fit, "sigma")
-confint(fit, "mu:x", method = "lr", readable = FALSE)
+confint(fit, "mu:x", test = "lr", readable = FALSE)
 }
 \seealso{
 \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
-\code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat]{statmod_stat()}}
+\code{\link[=statmod_test]{statmod_test()}}, which tests one coefficient against a value of its
+own, and \code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat_at]{statmod_stat_at()}}, the two internals
+an inverted interval is built from
 }
 \keyword{internal}

@@ -29,9 +29,17 @@ the tolerance; the held one is what the statistics read.}
 \item{\code{at}}{the held coordinate's position in that vector.}
 \item{\code{par}}{the restricted estimates, stacked.}
 \item{\code{information}}{a function of no arguments returning the
-penalized information at the restricted point.}
+penalized information at the restricted point. It is read at most
+once however often it is called, and not at all where nothing calls
+it, which is the ordinary case: the likelihood ratio and the
+gradient statistic need no matrix.}
+\item{\code{mode_error}}{a function of no arguments returning
+\code{\link[=restricted_mode_error]{restricted_mode_error()}}, how far above its own mode the refit
+stopped. It reads the information, so it costs one Hessian.}
 \item{\code{labels}}{the stacked coefficient labels.}
-\item{\code{converged}}{a single logical.}
+\item{\code{converged}}{the inner optimizer's flag, a single logical.
+Measured, it is anti-correlated with how well the point is located
+-- see \code{\link[=restricted_mode_error]{restricted_mode_error()}}, which is the reading to prefer.}
 }
 }
 \description{
@@ -69,7 +77,7 @@ structural term, whose contribution is a recursion's state rather than
 
 A coefficient under a penalty that IS twice differentiable is held like
 any other: a smooth's linear column and its rotated coordinates, a ridge,
-a random effect. What such a fit means is stated at \code{\link[=statmod_stat]{statmod_stat()}}.
+a random effect. What such a fit means is stated at \code{\link[=statmod_stat_at]{statmod_stat_at()}}.
 }
 
 \seealso{

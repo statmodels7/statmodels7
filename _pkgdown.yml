@@ -64,6 +64,16 @@ reference:
   - statmod_latent
   - format_duration
 
+- title: Testing a coefficient
+  desc: >
+    One coefficient against one value, by Wald's statistic, the likelihood
+    ratio, Rao's score or Terrell's gradient. The same four are what
+    `summary(test =)` reports for every row against zero and what
+    `confint(test =)` inverts; this is the surface that takes a null of its
+    own.
+  contents:
+  - statmod_test
+
 - title: Installing and updating
   desc: >
     The toolkit is not on CRAN, so the install path is GitHub and the
