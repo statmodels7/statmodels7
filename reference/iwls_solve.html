@@ -9,7 +9,7 @@ requested decomposition."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ requested decomposition.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span><span class="va">pieces</span>, <span class="va">u</span>, <span class="va">how</span>, damp <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls_solve</span><span class="op">(</span><span class="va">pieces</span>, <span class="va">u</span>, <span class="va">how</span>, damp <span class="op">=</span> <span class="fl">0</span>, frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,6 +70,13 @@ length <code>p</code>.</p></dd>
 <dt id="arg-damp">damp<a class="anchor" aria-label="anchor" href="#arg-damp"></a></dt>
 <dd><p>The Levenberg damping \(\lambda\), a single non-negative
 number. <code>0</code>, the default, is the plain scoring step.</p></dd>
+
+
+<dt id="arg-frozen">frozen<a class="anchor" aria-label="anchor" href="#arg-frozen"></a></dt>
+<dd><p>Positions the caller holds at their current values, an
+integer vector. They are dropped from the system exactly as a
+coordinate whose curvature is not finite is, so the step is that of the
+problem reduced to the rest. Empty by default.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -12,10 +12,12 @@ qualifications the numbers carry.
 summary(
   object,
   level = 0.95,
-  type = c("bayesian", "frequentist"),
+  type = c("bayesian", "frequentist", "unconditional"),
   expected = NULL,
   approx = c("opg", "bartlett", "integrate", "mc"),
   correct = FALSE,
+  test = c("wald", "lr", "score", "gradient"),
+  max_coef = NULL,
   ...
 )
 ```
@@ -35,6 +37,10 @@ summary(
 
   Which variance matrix: passed to
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md).
+  The `"unconditional"` one carries the hyperparameters' own uncertainty
+  into every standard error under it, where `correct` carries the same
+  uncertainty into the degrees of freedom; the two are the same quantity
+  read on two surfaces and can be asked for together.
 
 - expected:
 
@@ -61,6 +67,25 @@ summary(
   Defaults to `FALSE` because it changes a number a reader may be
   comparing with an earlier fit; it is zero where no hyperparameter was
   estimated.
+
+- test:
+
+  Which statistic the coefficient tables report: `"wald"`, the default,
+  or `"lr"`, `"score"` or `"gradient"`, each of which costs one
+  restricted refit per row. See
+  [`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md).
+
+- max_coef:
+
+  How many coefficient rows each block of the printed summary shows,
+  `Inf` or `NA` for all of them. `NULL`, the default, reads the option
+  `statmodels7.summary_max_coef`, and 10 where that is unset. A
+  hyperparameter row is never hidden, whatever this is, and a block of
+  twelve rows or fewer is never abridged. The value is carried on the
+  result, so `summary(fit, max_coef = Inf)` prints in full at the
+  console;
+  [`print.StatmodSummary()`](https://statmodels7.github.io/statmodels7/reference/print.StatmodSummary.md)
+  takes the same argument for an object already in hand.
 
 - ...:
 
@@ -126,6 +151,32 @@ names the criterion and leaves the remaining columns empty: there is no
 curvature at such a point to read a standard error from. One the caller
 set is marked fixed.
 
+**Which test the statistic column reports is `test`'s answer.** By
+default it is Wald's, the estimate over its standard error, which is the
+only one of the four that needs no refit and is read off the
+unrestricted fit alone. The other three – the likelihood ratio, Rao's
+score and Terrell's gradient – hold the coefficient at the null value
+and refit, one refit per row, and are reported as the SIGNED ROOT of
+their \\\chi^2_1\\ statistic with the sign of \\\hat\beta_j - b\\, so
+that the column carries one kind of quantity whatever was asked for and
+Wald's own \\z\\ is the case where that root is exact. The p-value is
+the \\\chi^2_1\\ one either way, and for Wald the two readings agree
+identically.
+
+Only the statistic and its p-value move with `test`: the interval stays
+the Wald one, an inverted interval being some six times the cost of a
+statistic per row.
+[`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
+takes `method` for that, one coefficient at a time. A row the restricted
+fit is not defined for – a coefficient under a KINKED penalty, an
+aliased one, any coefficient of a model carrying a structural term –
+reports `NA` rather than falling back on Wald's, so the column never
+carries two tests at once. Every other row is tested, a smooth's own
+coordinates and a random effect's among them, on the penalized objective
+and with the reading
+[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
+states.
+
 **What a Wald p-value means here depends on the row**, and the summary
 says which is which, in place of printing one column and leaving it at
 that. For an unpenalized coefficient it is the usual thing. For a
@@ -143,7 +194,8 @@ columns it has. The information criteria are built on that count.
 ## See also
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
-[`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
+[`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md),
+[`statmod_stat()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat.md)
 
 ## Examples
 
@@ -177,7 +229,7 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 36 ms   search: converged
+#> fitted in 21 ms   search: converged
 #> certificate: CONVERGED   2.21e-11 above the mode
 #>   the model carries no penalty, so there is no outer gradient; the reading
 #>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode

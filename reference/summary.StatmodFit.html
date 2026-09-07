@@ -13,7 +13,7 @@ qualifications the numbers carry."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,10 +55,12 @@ qualifications the numbers carry.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span><span class="op">)</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span>
 <span>  expected <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
 <span>  correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wald"</span>, <span class="st">"lr"</span>, <span class="st">"score"</span>, <span class="st">"gradient"</span><span class="op">)</span>,</span>
+<span>  max_coef <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -76,7 +78,11 @@ qualifications the numbers carry.</p>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Which variance matrix: passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
+<dd><p>Which variance matrix: passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>. The
+<code>"unconditional"</code> one carries the hyperparameters' own uncertainty into
+every standard error under it, where <code>correct</code> carries the same
+uncertainty into the degrees of freedom; the two are the same quantity
+read on two surfaces and can be asked for together.</p></dd>
 
 
 <dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
@@ -99,6 +105,23 @@ and they were chosen from the same data, so a criterion built on it is
 too generous. See <code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code>. Defaults to
 <code>FALSE</code> because it changes a number a reader may be comparing with
 an earlier fit; it is zero where no hyperparameter was estimated.</p></dd>
+
+
+<dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
+<dd><p>Which statistic the coefficient tables report: <code>"wald"</code>, the
+default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each of which costs one
+restricted refit per row. See <code><a href="statmod_stat.html">statmod_stat()</a></code>.</p></dd>
+
+
+<dt id="arg-max-coef">max_coef<a class="anchor" aria-label="anchor" href="#arg-max-coef"></a></dt>
+<dd><p>How many coefficient rows each block of the printed
+summary shows, <code>Inf</code> or <code>NA</code> for all of them. <code>NULL</code>, the default,
+reads the option <code>statmodels7.summary_max_coef</code>, and 10 where that is
+unset. A hyperparameter row is never hidden, whatever this is, and a
+block of twelve rows or fewer is never abridged. The value is carried
+on the result, so <code>summary(fit, max_coef = Inf)</code> prints in full at the
+console; <code><a href="print.StatmodSummary.html">print.StatmodSummary()</a></code> takes the same argument for an object
+already in hand.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -150,6 +173,26 @@ penalty is the argument of a minimum over a grid, so the row names the
 criterion and leaves the remaining columns empty: there is no curvature at
 such a point to read a standard error from. One the caller set is marked
 fixed.</p>
+<p><strong>Which test the statistic column reports is <code>test</code>'s answer.</strong> By default
+it is Wald's, the estimate over its standard error, which is the only one
+of the four that needs no refit and is read off the unrestricted fit
+alone. The other three – the likelihood ratio, Rao's score and Terrell's
+gradient – hold the coefficient at the null value and refit, one refit
+per row, and are reported as the SIGNED ROOT of their \(\chi^2_1\)
+statistic with the sign of \(\hat\beta_j - b\), so that the column
+carries one kind of quantity whatever was asked for and Wald's own
+\(z\) is the case where that root is exact. The p-value is the
+\(\chi^2_1\) one either way, and for Wald the two readings agree
+identically.</p>
+<p>Only the statistic and its p-value move with <code>test</code>: the interval stays
+the Wald one, an inverted interval being some six times the cost of a
+statistic per row. <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> takes <code>method</code> for that, one
+coefficient at a time. A row the restricted fit is not defined for – a
+coefficient under a KINKED penalty, an aliased one, any coefficient of a
+model carrying a structural term – reports <code>NA</code> rather than falling back
+on Wald's, so the column never carries two tests at once. Every other row
+is tested, a smooth's own coordinates and a random effect's among them,
+on the penalized objective and with the reading <code><a href="statmod_stat.html">statmod_stat()</a></code> states.</p>
 <p><strong>What a Wald p-value means here depends on the row</strong>, and the summary
 says which is which, in place of printing one column and leaving it at
 that.
@@ -165,7 +208,7 @@ columns it has. The information criteria are built on that count.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <code><a href="statmod_stat.html">statmod_stat()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -199,7 +242,7 @@ columns it has. The information criteria are built on that count.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.844138    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.688    cBIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 36 ms   search: converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 21 ms   search: converged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> certificate: CONVERGED   2.21e-11 above the mode</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   the model carries no penalty, so there is no outer gradient; the reading</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   is the inner fit's own, 2.208e-11 log-likelihood units above its mode</span>

@@ -95,8 +95,10 @@ statmod(
   Where the fit begins: a named list of coefficients, a
   [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
   such as
-  [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md),
-  or `NULL` for
+  [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
+  or
+  [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md),
+  which takes the estimates of a model already fitted, or `NULL` for
   [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md).
   A strategy is asked once, before the alternation between the
   coefficients and the hyperparameters begins, which is why a global

@@ -25,6 +25,8 @@ StartRandom(
 )
 
 StartSearch(label = character(0), optimizer = NULL, over = NULL)
+
+StartFrom(label = character(0), fit = NULL, rest = NULL)
 ```
 
 ## Arguments

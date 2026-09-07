@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -162,7 +162,7 @@
       </dl></div><div class="section level2">
       <h2 id="where-a-fit-begins">Where a fit begins<a class="anchor" aria-label="anchor" href="#where-a-fit-begins"></a></h2>
 
-      <div class="section-desc"><p>A starting value as a strategy rather than a vector of numbers, asked once before the fit alternates. The default is the intercept-only fit; what the others offer is a procedure, from a random perturbation to a global search of the likelihood.</p></div>
+      <div class="section-desc"><p>A starting value as a strategy rather than a vector of numbers, asked once before the fit alternates. The default is the intercept-only fit; what the others offer is a procedure, from a random perturbation to a global search of the likelihood to the estimates of a model already fitted.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -210,6 +210,13 @@
 
         </dt>
         <dd>Search the Likelihood for a Starting Point</dd>
+
+        <dt>
+
+          <code><a href="start_from.html">start_from()</a></code>
+
+        </dt>
+        <dd>Start From Another Fit's Estimates</dd>
       </dl></div><div class="section level2">
       <h2 id="reading-a-fit">Reading a fit<a class="anchor" aria-label="anchor" href="#reading-a-fit"></a></h2>
 
@@ -296,7 +303,7 @@
 
         <dt>
 
-          <code><a href="StartIntercepts-class.html">StartIntercepts()</a></code> <code><a href="StartIntercepts-class.html">StartOrigin()</a></code> <code><a href="StartIntercepts-class.html">StartRandom()</a></code> <code><a href="StartIntercepts-class.html">StartSearch()</a></code>
+          <code><a href="StartIntercepts-class.html">StartIntercepts()</a></code> <code><a href="StartIntercepts-class.html">StartOrigin()</a></code> <code><a href="StartIntercepts-class.html">StartRandom()</a></code> <code><a href="StartIntercepts-class.html">StartSearch()</a></code> <code><a href="StartIntercepts-class.html">StartFrom()</a></code>
 
         </dt>
         <dd>S7 Classes for the Shipped Strategies</dd>
@@ -328,6 +335,13 @@
 
         </dt>
         <dd>Add Two Sets of Offsets</dd>
+
+        <dt>
+
+          <code><a href="aliased_labels.html">aliased_labels()</a></code>
+
+        </dt>
+        <dd>Name the Aliased Coefficients of a Fit</dd>
 
         <dt>
 
@@ -387,6 +401,13 @@
 
         <dt>
 
+          <code><a href="block_stem.html">block_stem()</a></code>
+
+        </dt>
+        <dd>The Stem Shared by a Block's Coefficient Names</dd>
+
+        <dt>
+
           <code><a href="blocks_at_kink.html">blocks_at_kink()</a></code>
 
         </dt>
@@ -419,6 +440,13 @@
 
         </dt>
         <dd>Validate Offsets</dd>
+
+        <dt>
+
+          <code><a href="check_trials.html">check_trials()</a></code>
+
+        </dt>
+        <dd>Refuse a Number of Trials That Cannot Follow These Rows</dd>
 
         <dt>
 
@@ -492,6 +520,13 @@
 
         <dt>
 
+          <code><a href="coerce_response.html">coerce_response()</a></code>
+
+        </dt>
+        <dd>Carry a Categorical Response onto the Numeric Scale</dd>
+
+        <dt>
+
           <code><a href="component_count.html">component_count()</a></code>
 
         </dt>
@@ -503,6 +538,13 @@
 
         </dt>
         <dd>The Shift of One Mixture Component</dd>
+
+        <dt>
+
+          <code><a href="conditional_condition.html">conditional_condition()</a></code>
+
+        </dt>
+        <dd>The Condition an Unavailable Correction Warns Through</dd>
 
         <dt>
 
@@ -709,6 +751,13 @@
 
         <dt>
 
+          <code><a href="deficient_coords.html">deficient_coords()</a></code>
+
+        </dt>
+        <dd>The Coordinates a Fit Does Not Identify, Found After the Fact</dd>
+
+        <dt>
+
           <code><a href="deriv3_key.html">deriv3_key()</a></code>
 
         </dt>
@@ -891,6 +940,13 @@
 
         <dt>
 
+          <code><a href="held_positions.html">held_positions()</a></code>
+
+        </dt>
+        <dd>Where a Specification's Held Coefficients Sit in the Stacked Vector</dd>
+
+        <dt>
+
           <code><a href="hess_key.html">hess_key()</a></code>
 
         </dt>
@@ -898,10 +954,24 @@
 
         <dt>
 
+          <code><a href="hyper_correction.html">hyper_correction()</a></code>
+
+        </dt>
+        <dd>What a Hyperparameter's Own Uncertainty Adds to a Variance</dd>
+
+        <dt>
+
           <code><a href="hyper_key.html">hyper_key()</a></code>
 
         </dt>
         <dd>Resolve a Term's Name Against a Specification</dd>
+
+        <dt>
+
+          <code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code>
+
+        </dt>
+        <dd>The Mixed Derivative of the Penalty in the Coefficients and the Hyperparameters</dd>
 
         <dt>
 
@@ -979,6 +1049,20 @@
 
         </dt>
         <dd>The Subspace a Marginal Criterion Integrates Over</dd>
+
+        <dt>
+
+          <code><a href="invert_rows.html">invert_rows()</a></code>
+
+        </dt>
+        <dd>Replace a Table's Limits by an Inverted Test</dd>
+
+        <dt>
+
+          <code><a href="is_parametric_block.html">is_parametric_block()</a></code>
+
+        </dt>
+        <dd>Whether a Term Is the Equation's Parametric Block</dd>
 
         <dt>
 
@@ -1077,6 +1161,13 @@
 
         </dt>
         <dd>The Hyperparameter That Gives the Kink a Chosen Size</dd>
+
+        <dt>
+
+          <code><a href="kinked_coords.html">kinked_coords()</a></code>
+
+        </dt>
+        <dd>Which Stacked Coordinates a Kinked Penalty Covers</dd>
 
         <dt>
 
@@ -1479,6 +1570,13 @@
 
         <dt>
 
+          <code><a href="project_blocks.html">project_blocks()</a></code>
+
+        </dt>
+        <dd>Project a Reference Fit's Predictor onto the Blocks That Did Not Match</dd>
+
+        <dt>
+
           <code><a href="readable_hyper_rows.html">readable_hyper_rows()</a></code>
 
         </dt>
@@ -1591,6 +1689,13 @@
 
         <dt>
 
+          <code><a href="restricted_stat_rows.html">restricted_stat_rows()</a></code>
+
+        </dt>
+        <dd>A Table's Statistics From a Restricted Fit</dd>
+
+        <dt>
+
           <code><a href="row_nonzeros.html">row_nonzeros()</a></code>
 
         </dt>
@@ -1623,6 +1728,13 @@
 
         </dt>
         <dd>The Column a Simulated Response Is Written To</dd>
+
+        <dt>
+
+          <code><a href="same_term_kind.html">same_term_kind()</a></code>
+
+        </dt>
+        <dd>Whether Two Terms Are of the Same Kind</dd>
 
         <dt>
 
@@ -1738,6 +1850,13 @@
 
         <dt>
 
+          <code><a href="split_binomial_matrix.html">split_binomial_matrix()</a></code>
+
+        </dt>
+        <dd>Read a Two-Column Response as Successes and Trials</dd>
+
+        <dt>
+
           <code><a href="split_offsets.html">split_offsets()</a></code>
 
         </dt>
@@ -1749,6 +1868,13 @@
 
         </dt>
         <dd>The Square-Root Design</dd>
+
+        <dt>
+
+          <code><a href="start_at.StartFrom.html">start_at.StartFrom</a></code>
+
+        </dt>
+        <dd>Starting Values From Another Fit</dd>
 
         <dt>
 
@@ -1983,6 +2109,13 @@
 
         <dt>
 
+          <code><a href="statmod_invert.html">statmod_invert()</a></code>
+
+        </dt>
+        <dd>A Confidence Interval by Inverting a Test</dd>
+
+        <dt>
+
           <code><a href="statmod_loglik_at.html">statmod_loglik_at()</a></code>
 
         </dt>
@@ -2067,6 +2200,13 @@
 
         <dt>
 
+          <code><a href="statmod_penalized_at.html">statmod_penalized_at()</a></code>
+
+        </dt>
+        <dd>The Penalized Information at a Point</dd>
+
+        <dt>
+
           <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>
 
         </dt>
@@ -2130,6 +2270,13 @@
 
         <dt>
 
+          <code><a href="statmod_restrict.html">statmod_restrict()</a></code>
+
+        </dt>
+        <dd>Refit With One Coefficient Held at a Value</dd>
+
+        <dt>
+
           <code><a href="statmod_score_at.html">statmod_score_at()</a></code>
 
         </dt>
@@ -2155,6 +2302,13 @@
 
         </dt>
         <dd>Starting Coefficients</dd>
+
+        <dt>
+
+          <code><a href="statmod_stat.html">statmod_stat()</a></code>
+
+        </dt>
+        <dd>One Likelihood Statistic for One Coefficient</dd>
 
         <dt>
 
@@ -2386,6 +2540,13 @@
 
         </dt>
         <dd>Evaluate a Formula's Terms With modelterms7 in Front</dd>
+
+        <dt>
+
+          <code><a href="testable_coords.html">testable_coords()</a></code>
+
+        </dt>
+        <dd>Which Coefficients a Restricted Fit Can Hold</dd>
 
         <dt>
 

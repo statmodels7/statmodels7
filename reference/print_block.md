@@ -7,7 +7,7 @@ compartment per parameter developed over covariates.
 ## Usage
 
 ``` r
-print_block(b, digits = 4L, n = NULL)
+print_block(b, digits = 4L, max_coef = NULL, stat = "z")
 ```
 
 ## Arguments
@@ -20,6 +20,17 @@ print_block(b, digits = 4L, n = NULL)
 - digits:
 
   Significant digits.
+
+- max_coef:
+
+  How many coefficient rows a long block keeps, as
+  [`block_rows_shown()`](https://statmodels7.github.io/statmodels7/reference/block_rows_shown.md)
+  takes it.
+
+- stat:
+
+  What to head the statistic column with: `"z"` for the estimate over
+  its standard error, `"r"` for the signed root of a restricted test.
 
 ## Value
 

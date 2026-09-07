@@ -9,7 +9,7 @@ parameter's block at once."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ parameter's block at once.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'StatmodFit'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span><span class="op">)</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bayesian"</span>, <span class="st">"frequentist"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span>
 <span>  expected <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
 <span>  readable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -66,7 +66,9 @@ parameter's block at once.</p>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p><code>"bayesian"</code> or <code>"frequentist"</code>.</p></dd>
+<dd><p><code>"bayesian"</code>, <code>"frequentist"</code> or <code>"unconditional"</code>. The first
+two are conditional on the hyperparameters; the third carries their own
+uncertainty as well.</p></dd>
 
 
 <dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
@@ -93,7 +95,7 @@ closed form.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Two matrices, and they differ only when something is penalized.</strong>
+    <p><strong>Three matrices, and they differ only when something is penalized.</strong>
 Writing \(H\) for the information of the log-likelihood and \(S\) for
 the second derivative of the penalty,
 $$V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.$$
@@ -104,6 +106,34 @@ variance, and that is why such intervals cover at about their nominal
 rate. The second is the sampling variance of the penalized estimator at a
 fixed penalty, which is smaller and covers less. With no penalty \(S = 0\)
 and both are \(H^{-1}\).</p>
+<p><strong>Both of those are conditional on the hyperparameters</strong>, read at the
+value the outer search stopped at as though it had been known. It was
+estimated from the same data, and the third matrix adds what that costs:
+$$V' = V_b + J V_\theta J', \qquad
+  J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},$$
+with \(V_\theta\) the variance of the estimated hyperparameters on their
+own free scale. It is the delta method applied to the map from the
+hyperparameter to the penalized mode (Wood, Pya and Safken, 2016), and the
+matrix mgcv returns as <code>unconditional = TRUE</code>. The correction is positive
+semi-definite, so \(V'\) is never narrower than \(V_b\); measured on a
+univariate smooth it widens the band of the fitted mean by 1.1 per cent on
+average and 7.6 per cent at its widest point at \(n = 200\), and by 0.2
+and 1.3 per cent at \(n = 2000\). It is where a smoothing parameter is
+poorly determined that it matters: the coordinates a penalty compresses
+widen by as much as 88 per cent on a fit whose \(\log\lambda\) carries a
+standard deviation of 2.4, while the unpenalized coordinates beside them
+move in the sixth decimal.</p>
+<p>It costs four to five times the matrix it is added to – 2.7 ms against
+10.6 ms at \(n = 200\) and 4.0 against 20.0 at \(n = 2000\) – because
+it reads the outer criterion's own curvature, which neither conditional
+matrix asks for.</p>
+<p>Where no hyperparameter was estimated by a differentiable criterion there
+is nothing to propagate, the correction is exactly zero and <code>"unconditional"</code>
+returns \(V_b\) itself. Where one was estimated and its curvature cannot
+be read – a shared hyperparameter, or one the search left at the edge of
+its range – the conditional matrix is returned WITH A WARNING, since a
+reader who asked for the wider matrix and silently received the narrower
+one would report the wrong thing. See <code><a href="hyper_correction.html">hyper_correction()</a></code>.</p>
 <p><strong>A coefficient a kinked penalty has set to zero has no row.</strong> At zero
 the penalty is not twice differentiable, so \(S\) does not exist there and
 no curvature can be read; the entry is <code>NA</code>. The coefficients a lasso
@@ -125,8 +155,15 @@ dearer – 89.06 s against 0.64 s on a Poisson-inverse gaussian regression
 at \(n = 500\). The expensive route is reachable and is not the default.</p>
     </div>
     <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
+selection for general smooth models. <em>Journal of the American
+Statistical Association</em>, 111(516), 1548–1563.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>,
+<code><a href="hyper_correction.html">hyper_correction()</a></code>, which builds the third matrix's correction</p></div>
     </div>
 
     <div class="section level2">
@@ -138,6 +175,16 @@ at \(n = 500\). The expensive route is reachable and is not the default.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    mu:(Intercept)              mu:x sigma:(Intercept) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.08659784        0.14678520        0.07905694 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With a penalized term the three differ, and the widest is the one that</span></span></span>
+<span class="r-in"><span><span class="co"># does not read the smoothing parameter as known.</span></span></span>
+<span class="r-in"><span><span class="va">ds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ds</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">ds</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, sd <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fs</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">ds</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"frequentist"</span>, <span class="st">"bayesian"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>       <span class="kw">function</span><span class="op">(</span><span class="va">ty</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fs</span>, type <span class="op">=</span> <span class="va">ty</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1L</span><span class="op">]</span><span class="op">]</span>, <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   frequentist      bayesian unconditional </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    0.02085794    0.02085794    0.02085794 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

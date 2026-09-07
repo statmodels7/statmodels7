@@ -6,7 +6,7 @@ requested decomposition.
 ## Usage
 
 ``` r
-iwls_solve(pieces, u, how, damp = 0)
+iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
 ```
 
 ## Arguments
@@ -29,6 +29,13 @@ iwls_solve(pieces, u, how, damp = 0)
 
   The Levenberg damping \\\lambda\\, a single non-negative number. `0`,
   the default, is the plain scoring step.
+
+- frozen:
+
+  Positions the caller holds at their current values, an integer vector.
+  They are dropped from the system exactly as a coordinate whose
+  curvature is not finite is, so the step is that of the problem reduced
+  to the rest. Empty by default.
 
 ## Value
 

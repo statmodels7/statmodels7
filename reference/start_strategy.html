@@ -13,7 +13,7 @@ statmod(start =) accepts one, or a plain named list of coefficients."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,13 +88,14 @@ returns one vector per distribution parameter.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="start_intercepts.html">start_intercepts()</a></code> (the default), <code><a href="start_origin.html">start_origin()</a></code>,
-<code><a href="start_random.html">start_random()</a></code> and <code><a href="start_search.html">start_search()</a></code> for the four shipped strategies,
+<code><a href="start_random.html">start_random()</a></code>, <code><a href="start_search.html">start_search()</a></code> and <code><a href="start_from.html">start_from()</a></code> for the five
+shipped strategies,
 <code><a href="start_at.html">start_at()</a></code> for the generic they implement.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># The four shipped strategies all inherit from this.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Every shipped strategy inherits from this.</span></span></span>
 <span class="r-in"><span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/S7_inherits.html" class="external-link">S7_inherits</a></span><span class="op">(</span><span class="fu"><a href="start_origin.html">start_origin</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">start_strategy</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/S7_inherits.html" class="external-link">S7_inherits</a></span><span class="op">(</span><span class="fu"><a href="start_search.html">start_search</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">start_strategy</span><span class="op">)</span></span></span>

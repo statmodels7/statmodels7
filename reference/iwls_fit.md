@@ -8,7 +8,16 @@ the run.
 ## Usage
 
 ``` r
-iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
+iwls_fit(
+  obj,
+  start,
+  method,
+  n,
+  pieces_at,
+  verbose = FALSE,
+  groups = NULL,
+  frozen = integer(0)
+)
 ```
 
 ## Arguments
@@ -46,6 +55,20 @@ iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
 
   `TRUE` to print one line per iteration: the objective, the score, the
   step length and the route taken.
+
+- groups:
+
+  A list of integer index vectors, one per equation, in the numbering of
+  the coefficients handed in. `NULL` treats them as one group, which is
+  right where the whole vector is being fitted.
+
+- frozen:
+
+  Positions held at their starting values, an integer vector in the same
+  numbering. They are dropped from every solve, so the run maximizes
+  over the rest, and the stopping rule reads the free coordinates alone
+  – a held coordinate's score is what the constrained optimum leaves
+  there and does not vanish.
 
 ## Value
 

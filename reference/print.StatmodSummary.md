@@ -7,7 +7,7 @@ freedom, the criteria and the notes.
 
 ``` r
 # S3 method for class 'StatmodSummary'
-print(x, digits = 4L, notes = FALSE, n = NULL, ...)
+print(x, digits = 4L, notes = FALSE, max_coef = NULL, ...)
 ```
 
 ## Arguments
@@ -28,15 +28,17 @@ print(x, digits = 4L, notes = FALSE, n = NULL, ...)
   conventions, never facts of the fit, so they read the same under every
   model. They are on the summary's `notes` property either way.
 
-- n:
+- max_coef:
 
   How many coefficient rows a block shows, `Inf` or `NA` for all of
-  them. Defaults to the option `statmodels7.summary_rows`, and to 10
-  where that is unset. A hyperparameter row is shown whatever `n` is: it
-  governs the coefficients under it, and every one of them is
+  them. `NULL`, the default, reads what
+  [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+  was told; failing that the option `statmodels7.summary_max_coef`, and
+  failing that 10. A hyperparameter row is shown whatever `max_coef` is:
+  it governs the coefficients under it, and every one of them is
   conditional on the value it reached. A block short enough to fit in
-  twelve rows is never abridged, so raising `n` changes nothing for a
-  parametric block of ordinary size.
+  twelve rows is never abridged, so raising `max_coef` changes nothing
+  for a parametric block of ordinary size.
 
 - ...:
 

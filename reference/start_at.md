@@ -51,7 +51,7 @@ family's order, each as long as that parameter's design is wide.
 
 Write a method on your own subclass of
 [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
-to add a strategy. The four shipped methods show the range:
+to add a strategy. The shipped methods show the range:
 [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md)
 reads only the design's widths,
 [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)

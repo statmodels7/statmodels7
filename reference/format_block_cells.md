@@ -7,7 +7,7 @@ each such row carrying what put the value there.
 ## Usage
 
 ``` r
-format_block_cells(tb, digits = 4L)
+format_block_cells(tb, digits = 4L, stat = "z")
 ```
 
 ## Arguments
@@ -19,6 +19,10 @@ format_block_cells(tb, digits = 4L)
 - digits:
 
   Significant digits.
+
+- stat:
+
+  What to head the statistic column with.
 
 ## Value
 

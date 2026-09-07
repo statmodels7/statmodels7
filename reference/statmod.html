@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.96.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.105.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,7 +129,8 @@ the kink.</p></dd>
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
 <dd><p>Where the fit begins: a named list of coefficients, a
-<code><a href="start_strategy.html">start_strategy()</a></code> such as <code><a href="start_search.html">start_search()</a></code>, or
+<code><a href="start_strategy.html">start_strategy()</a></code> such as <code><a href="start_search.html">start_search()</a></code> or <code><a href="start_from.html">start_from()</a></code>, which
+takes the estimates of a model already fitted, or
 <code>NULL</code> for <code><a href="start_intercepts.html">start_intercepts()</a></code>. A strategy is asked once,
 before the alternation between the coefficients and the hyperparameters
 begins, which is why a global search belongs here instead of in

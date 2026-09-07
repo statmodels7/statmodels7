@@ -29,6 +29,7 @@ StatmodSpec(
   newdata = NULL,
   structural = list(),
   linpar = list(),
+  held_coef = list(),
   threads = 1L,
   workers = 1L
 )

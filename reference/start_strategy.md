@@ -51,17 +51,18 @@ parameter.
 [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
 (the default),
 [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md),
-[`start_random()`](https://statmodels7.github.io/statmodels7/reference/start_random.md)
-and
+[`start_random()`](https://statmodels7.github.io/statmodels7/reference/start_random.md),
 [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
-for the four shipped strategies,
+and
+[`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
+for the five shipped strategies,
 [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md)
 for the generic they implement.
 
 ## Examples
 
 ``` r
-# The four shipped strategies all inherit from this.
+# Every shipped strategy inherits from this.
 S7::S7_inherits(start_origin(), start_strategy)
 #> [1] TRUE
 S7::S7_inherits(start_search(), start_strategy)
