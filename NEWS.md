@@ -1,3 +1,601 @@
+# statmodels7 0.105.0
+
+* HOW MANY COEFFICIENTS A SUMMARY PRINTS IS ASKED OF `summary()`, AND THE
+  ARGUMENT IS `max_coef`. An R session prints a summary by evaluating it, so
+  a reader writes `summary(fit)` and never `print(summary(fit), ...)`: the
+  argument 0.96.0 put on `print.StatmodSummary()` alone was, in practice,
+  unreachable. It is taken by `summary.StatmodFit()`, carried on the result
+  as a new `max_coef` property, and read at print time; `print()` still
+  takes it for an object already in hand, and what is named there wins, that
+  being the more specific of the two requests.
+
+  \preformatted{  summary(fit, max_coef = Inf)   # every coefficient
+  summary(fit, max_coef = 3)}
+
+* The name is no longer `n`, which is the sample size in every other
+  context. What it bounds is the COEFFICIENT rows of a block -- a
+  hyperparameter row is never hidden, whatever it is set to -- so `max_coef`
+  says what it does. The option follows the argument and is
+  `statmodels7.summary_max_coef`.
+
+* ⚠️ THE OLD SPELLING DID NOT REACH THE DOTS AND COULD NOT HAVE BEEN CAUGHT
+  THERE. `n` is a prefix of `notes`, so R matches it partially onto that
+  argument: measured, in a function carrying these formals `print(s, n = 4)`
+  sets `notes` to 4 and leaves `...names()` empty, so the old spelling
+  silently asked for the notes and printed ten rows. A guard reading the
+  dots would have found nothing. What catches it is the type -- `notes` is
+  `TRUE` or `FALSE` -- and the error names `max_coef` and says it is on
+  `summary()`. The test pins the partial match itself, so the guard cannot
+  be replaced by one that reads the dots.
+
+# statmodels7 0.104.0
+
+* A COEFFICIENT UNDER A TWICE DIFFERENTIABLE PENALTY IS TESTED AND
+  INTERVALLED LIKE ANY OTHER. 0.103.0 refused every coordinate a penalty
+  covers; the refusal was wider than its own reason, and what remains
+  refused is only the kinked case. A ridge, a random effect and both parts
+  of a smooth -- the unpenalized linear column `s(x).lin`, which lies in the
+  null space of \eqn{\mathrm{diag}(0, 1, \ldots, 1)} and is estimated as
+  freely as any parametric coefficient, and the rotated coordinates the
+  penalty really does shrink -- all reach `statmod_stat()`,
+  `summary(test =)` and `confint(method =)`. `unpenalized_coords()` is
+  replaced by `kinked_coords()`, which asks each penalty for
+  `penalty_has_kink()` rather than asking whether a penalty is there at all.
+
+* THE LIKELIHOOD RATIO READS THE PENALIZED OBJECTIVE, WHICH IS WHAT THE
+  OTHER THREE ALREADY READ. Writing \eqn{\ell_p(\beta) = \ell(\beta) -
+  \rho(\beta; \theta)} for the objective the fit maximizes,
+
+  \deqn{LR = 2\{\ell_p(\hat\beta) - \ell_p(\tilde\beta)\},}
+
+  where 0.103.0 differenced the unpenalized \eqn{\ell}. The restricted fit
+  \eqn{\tilde\beta} maximizes \eqn{\ell_p} under the restriction and not
+  \eqn{\ell}, so the unpenalized difference is not a rise at all and can be
+  NEGATIVE: measured **-0.0379** and **-0.1075** at two held values of one
+  of a smooth's own coordinates. The score, the gradient and Wald's statistic had read the
+  penalized objective from the start, through \eqn{K = H + S} and
+  \eqn{V_b = (H + S)^{-1}}, so the likelihood ratio was the odd one out and
+  the four tested different things on any model carrying a penalty. Where
+  there is no penalty the two objectives are the same number, so every
+  reference check of 0.103.0 -- the `glm()` offset fit, the deviance
+  difference, the profile bisection -- is untouched and still passes.
+
+* WHAT AN INTERVAL ON A SHRUNK COORDINATE MEANS, stated rather than left to
+  be inferred. The penalty there is a log-prior, so \eqn{\ell_p} is a log
+  posterior at the hyperparameters the fit reached and the inverted interval
+  is the credible set -- exactly the reading `vcov(type = "bayesian")`
+  already gives that row, and conditional on the smoothing chosen once in
+  the same way the three restricted statistics are. The Wald interval is its
+  quadratic approximation: measured, the two agree to between **2.55e-04**
+  and **2.50e-03** on a smooth's coordinates.
+
+* A kinked penalty -- a lasso, a SCAD or an MCP -- is still refused, and now
+  for both of its reasons rather than for the fact of being a penalty. Its
+  block is fitted by a coordinate descent, which updates every coordinate of
+  its own block and cannot leave one where it was; and at the kink the
+  objective has no curvature for a statistic to read.
+
+* `coord_fit()` REJECTS A HELD COORDINATE INSTEAD OF MOVING IT SILENTLY.
+  The kernel never read `held_coef`, so a hold that reached it was ignored
+  without a word: measured, a coefficient held at 3 came back at
+  **2.7348**. It is an error now, naming the term, which is what makes the
+  refusal above a property of the code rather than a promise.
+
+* ⚠️ AT AN EXTREME SMOOTHING PARAMETER AN INVERTED INTERVAL IS EXACTLY THE
+  WALD ONE, and that is the reading rather than a defect. Fitted to a linear
+  truth a smooth's \eqn{\lambda} correctly runs to 3.8e+08, its rotated
+  coordinates sit at 1.2e-08, and the objective in them IS the quadratic
+  penalty -- so the inverted interval is symmetric to **1e-06** and agrees
+  with Wald's to **1e-05**. The asymmetry an inverted interval buys is a
+  property of the likelihood's shape, and where the penalty is all there is
+  there is no shape to read. A test carries that limit as an explicit
+  control beside the curved case.
+
+# statmodels7 0.103.0
+
+* THE FOUR LIKELIHOOD STATISTICS, AND CONFIDENCE INTERVALS BY INVERTING
+  THEM. `statmod_stat()` reports Wald's statistic, the likelihood ratio,
+  Rao's score and Terrell's gradient for the hypothesis that one coefficient
+  equals one value, and `statmod_invert()` returns the set of values a
+  chosen one does not reject. Writing \eqn{\hat\beta} for the unrestricted
+  estimates, \eqn{\tilde\beta} for those with \eqn{\beta_j} held at \eqn{b},
+  \eqn{U} for the score and \eqn{K} for the penalized information,
+
+  \deqn{W = \frac{(\hat\beta_j - b)^2}{\widehat{\mathrm{Var}}(\hat\beta_j)},
+  \qquad LR = 2\{\ell(\hat\beta) - \ell(\tilde\beta)\}, \qquad
+  S = U_j(\tilde\beta)^2 [K(\tilde\beta)^{-1}]_{jj}, \qquad
+  T = U_j(\tilde\beta)(\hat\beta_j - b),}
+
+  each compared with a \eqn{\chi^2_1}.
+
+* `summary(fit, test =)` puts one of them in the coefficient tables and
+  `confint(fit, method =)` inverts one. Both default to Wald's, so nothing
+  moves for a caller who names neither.
+
+* THE RESTRICTED FIT HOLDS A COORDINATE IN THE SOLVE AND REWRITES NO
+  FORMULA. `held_coef` is a new property of `StatmodSpec()`,
+  `held_positions()` translates it into positions, and `iwls_solve()` takes
+  `frozen` and drops those coordinates from the system exactly as it already
+  dropped a coordinate at a boundary -- read BY THE DIAGONAL, the machinery
+  0.82.0 built. Rewriting the formula with the held term as an offset would
+  rebuild the design, and a rebuilt basis carries different knots and answers
+  for a different model.
+
+* ⚠️ THE HYPERPARAMETERS ARE HELD TOO, at the values the unrestricted fit
+  reached, and no outer search runs inside a restricted refit. The three
+  restricted statistics are therefore CONDITIONAL on the smoothing the data
+  chose once. That is the honest reading of a penalized fit, and it is also
+  what makes an interval affordable: re-selecting the smoothing at every held
+  value would put a whole outer search inside every step of a root find.
+
+* Validated against three routes that share no arithmetic with ours. The
+  restricted fit reproduces `glm(y ~ z + offset(b * x))` on the
+  log-likelihood and every coefficient at three held values; the likelihood
+  ratio reproduces `glm()`'s deviance difference; the score statistic's
+  single product reproduces the general form \eqn{U'K^{-1}U} summed over
+  every coordinate, which coincides with it only because the free components
+  of \eqn{U} vanish at the restricted maximum, so the agreement is also a
+  statement that the refit converged. Inverting Wald's statistic returns the
+  closed-form Wald interval with a measured gap of **0**, and the
+  likelihood-ratio
+  interval agrees with a profile bisection over `glm()`'s deviance to
+  **1.74e-10**.
+
+* ⚠️ WHAT AN INVERTED INTERVAL BUYS IS ASYMMETRY, and on an ordinary sample
+  that is almost nothing. The Wald interval is symmetric BY CONSTRUCTION,
+  its statistic being a parabola in \eqn{b} with the curvature read once at
+  \eqn{\hat\beta}; the other three read the likelihood at each \eqn{b}. On a
+  Poisson regression at \eqn{n = 500} the four agree to three decimals. At
+  \eqn{n = 25} with a skewed fit the likelihood-ratio interval sits
+  \eqn{0.046} further right than the Wald one and the gradient interval
+  \eqn{0.071}, against a width of \eqn{1.5}.
+
+* ⚠️ WHERE THEY GENUINELY PART IS THE HAUCK-DONNER EFFECT, and it is worth
+  the cost there. On a separated logistic model at a FIXED \eqn{n = 120},
+  the separation widening from 1 to 6, Wald's statistic goes 19.48, 35.03,
+  23.38, 7.94, **0.011** while the likelihood ratio rises 25.06, 78.91,
+  123.68, 152.20, **166.36** -- Wald's curvature being read at
+  \eqn{\hat\beta} rather than under the null, so the evidence against the
+  null appears to vanish as it becomes overwhelming.
+
+* ⚠️ WALD'S NON-INVARIANCE IS TO A NONLINEAR REPARAMETRIZATION AND NOT TO A
+  RESCALING. All four statistics are invariant to \eqn{x \to 10x}, measured,
+  so a probe built on that shows nothing; the practical signature is the
+  interval asymmetry above.
+
+* What it costs, measured on a Poisson regression at \eqn{n = 500} whose fit
+  takes 0.016 s: `summary(test =)` is one restricted refit per row and 4.0
+  to 4.2 times `summary()`, while one inverted interval is 5.7 to 7.4 fits.
+  `confint(method =)` therefore takes its `parm` subset BEFORE the search
+  rather than after, so nothing is paid for that is not reported.
+
+* ⚠️ A ROW THE RESTRICTED FIT IS NOT DEFINED FOR REPORTS `NA` AND NOT THE
+  WALD READING, so one column never carries two tests unmarked. Which rows
+  those are is `testable_coords()`'s answer: a penalized coefficient, whose
+  null is not the one it is fitted under; an aliased one, which has no
+  estimate to test; and every coefficient of a model carrying a structural
+  term, whose contribution is a recursion's state rather than \eqn{X\beta}.
+  A summary says how many rows and why in a note.
+
+* ⚠️ A COORDINATE A PENALTY COVERS IS REFUSED EVEN WHERE THE PENALTY IS FLAT
+  IN IT, which is wider than the reason the refusal gives. The measured case
+  is a smooth's linear column: `s()` is penalized by
+  \eqn{\mathrm{diag}(0, 1, \ldots, 1)}, so `s(x).lin` lies in the null space
+  of its own penalty and is estimated as freely as any parametric
+  coefficient. Narrowing the rule would let a hold reach a block fitted by
+  the kinked scheme, and `coord_fit()` does not read `held_coef` at all: a
+  coefficient held there would be moved by the sweep without a word.
+
+* The statistic a summary prints is the SIGNED ROOT of the
+  \eqn{\chi^2_1} value with the sign of the estimate, so the column carries
+  one kind of quantity whatever produced it and Wald's own \eqn{z} is the
+  case where that root is exact. The header says which, `z` or `r`, and the
+  p-value is the \eqn{\chi^2_1} one either way. Only the statistic and its
+  p-value move with `test`: the interval stays Wald's, `confint(method =)`
+  being where the other one is asked for, one coefficient at a time.
+
+* `StatmodSummary()` gains a `test` property.
+
+# statmodels7 0.102.0
+
+* `start_from()` CARRIES THE FUNCTION WHERE IT CANNOT CARRY THE
+  COEFFICIENTS. A term the two models share written on another basis --
+  `s(x, k = 6)` against `s(x, k = 10)`, a quadratic basis against a cubic
+  one, `te()` at another marginal size -- used to fall to the fallback
+  strategy, its coefficients not being comparable. They still are not; the
+  fitted function is, so those columns are estimated by least squares
+  against the reference's predictor:
+
+  \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
+  r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S}.}
+
+* ⚠️ ONLY THE COLUMNS \eqn{S} THAT DID NOT MATCH ARE ESTIMATED, and \eqn{r}
+  is the PARTIAL RESIDUAL after the blocks already carried across are
+  removed at the values they were given. Re-estimating a parametric
+  coefficient that already exists, or a smooth whose basis has not changed,
+  would be work for no answer: where every block matches, this release
+  performs no arithmetic at all and returns what 0.101.0 returned.
+
+* ⚠️ THE BLOCK KEY IS THE TERM'S DEPARSED CALL, so `s(x, k = 6)` and
+  `s(x, k = 10)` are two keys and never met by name -- which means the
+  all-or-nothing rule 0.101.0 documented for a differing basis was, in that
+  case, unreachable: the block was not found rather than refused. Two blocks
+  are paired by the STEM of their coefficient names (`s(x)` on both sides,
+  taken from the last dot so a covariate called `my.var` keeps its own) and
+  by the term's class.
+
+* ⚠️ WHAT IT BUYS ON A PROJECTED BLOCK IS A DIFFERENT ORDER OF MAGNITUDE ON
+  THE START AND A MODEST ONE IN TIME, and the two are worth separating.
+  Measured at \eqn{n = 4000}, widening `s(x, k = 6)` to `s(x, k = 12)`, the
+  root mean square gap between the starting predictor and the reference's is
+  **3.1e-15 against the fallback's 1.046**; a quadratic basis carried onto a
+  cubic one at the same `k` gives 0.0101 against 1.049, and `te(4, 4)` onto
+  `te(7, 7)` 8.2e-16 against 0.500. In TIME it depends on the family, since
+  what a better start saves is inner iterations: a gaussian on the identity
+  link solves its inner problem in one step whatever the start and gains
+  1.09 to 1.26 times, while a Poisson goes from **18 criterion evaluations
+  to 6 and 1.94 times**, and a Poisson that also drops a covariate 1.71.
+
+* The projection is EXACT where the coarse basis nests in the fine one, and
+  that is verifiable rather than asserted: regressing each column of
+  `s(x, k = 6)`'s block on `s(x, k = 12)`'s leaves a residual of 7.7e-14 --
+  three equally spaced intervals refined into nine -- against 4.6e-03 for
+  `k = 10` and 4.0e-04 for `k = 20`, which are not refinements of it. Where
+  the two bases coincide the projection returns the coefficients it was
+  given, so the name match is a fast path and not a different answer.
+
+* ⚠️ Three conditions gate it, each leaving the block to the fallback: the
+  two responses must be IDENTICAL, which is what says the two designs are
+  read at the same rows -- the projection compares two predictors
+  observation by observation and means nothing across different data --
+  neither model may carry a structural term, whose contribution is a
+  recursion's state rather than \eqn{X\beta}, and neither design may carry
+  an adjustment for that parameter, which is the same condition for a block
+  that moves with its coefficients.
+
+* Whatever the reference explains and the new model has no column for -- a
+  covariate the formula dropped -- stays in \eqn{r} and is absorbed by the
+  projected blocks, which is the closest the new design can come to the
+  predictor it is started from. Measured, that case reaches 0.0042 rather
+  than machine precision, against the fallback's 0.612.
+
+* ⚠️ The property under test is still that the answer does not move: over
+  five shapes the log-likelihood agrees with the unprojected start to
+  between 5e-11 and 4e-05 and the coefficients to 7e-07 or better. `"taken"`
+  gains a column `how`, `matched` or `projected`.
+
+# statmodels7 0.101.0
+
+* `start_from(fit)` IS A FIFTH STARTING STRATEGY: it takes the coefficients a
+  model already fitted found, matches them to the model about to be fitted,
+  and leaves the rest to a second strategy (`rest`, `start_intercepts()` by
+  default). Two models of the same response usually share most of their
+  coefficients -- one drops a covariate, one adds a term, one changes the
+  family -- and there is no reason to find those estimates twice.
+
+  It needed no change to the fitting layer: `start_at()` is a generic on
+  `start_strategy` and the new class implements it like the other four.
+
+* ⚠️ A NAME IS NOT A MEANING, and what a block is matched by depends on which
+  block it is. The parametric block is matched COLUMN BY COLUMN by name,
+  which is the case the feature exists for and is safe because a model
+  matrix names variables, levels and interactions. Every other block is taken
+  only where its coefficient names match EXACTLY, and left to the fallback
+  otherwise.
+
+  The second rule is not caution for its own sake. Measured on one data set,
+  `s(x, k = 6)` and `s(x, k = 10)` share the names `s(x).z1` to `s(x).z4` and
+  mean different coordinates by them: `s(x).z1` is 0.0267 against -0.0277,
+  OPPOSITE IN SIGN, and `s(x).z4` is 0.5415 against 0.3251. The basis is
+  rotated in a space of another dimension, so carrying those across would
+  start the fit further from the answer than the intercepts do. A random
+  effect whose levels differ and a penalized block whose standardization
+  froze a different spread are the same case. The design records only
+  `coef_names` and `npar`, so the discriminant comes from the TERM, through
+  `is_parametric_block()`.
+
+* ⚠️ WHAT IT BUYS IS BETWEEN 1.1 AND 2.1 TIMES, not the order of magnitude
+  the idea suggests, and the reason is that nothing was starting from zero:
+  `start_intercepts()`, the default, already fits the intercept-only model,
+  so a warm start gains on the rest of the journey and not on all of it.
+  Measured: a Poisson at n = 4000 refitted with one covariate dropped is 1.12
+  to 1.57 times depending on where the dropped coefficient is held, a
+  two-equation gaussian 1.89, a negative binomial with 40 columns at
+  n = 20000 **2.05** (0.81 s against 0.40 s), and a negative binomial started
+  from a Poisson's estimates 1.29. It is worth having where the same model is
+  refitted many times over -- a coefficient held at a sequence of values,
+  which is what a confidence interval by inversion walks.
+
+* A distribution parameter the reference does not carry falls back like any
+  unmatched block, so the two families need not agree: a Poisson fit is a
+  legitimate reference for a negative binomial, whose `theta` is new.
+
+* The result of `start_at()` carries an attribute `"taken"`, a data frame
+  naming every coefficient that came from the reference, so a caller can read
+  what was reused instead of inferring it from the fit that follows.
+
+* ⚠️ The property under test is not the speed but that the answer does not
+  move: on a convex problem a fit started from another fit lands where the
+  default lands, to 1e-6 on the coefficients and 1e-8 on the log-likelihood.
+  A starting strategy that changed where a fit ends would be a defect however
+  fast it was.
+
+# statmodels7 0.100.0
+
+* `vcov()` TAKES A THIRD `type`, `"unconditional"`. The two matrices it had
+  are both read at the hyperparameters the outer search stopped at, as though
+  they had been known; they were estimated from the same data, and
+
+  V' = Vb + J Vtheta J',   J = -(H + S)^-1 d2rho/dbeta dtheta
+
+  is what that costs. It is the matrix mgcv returns as
+  `unconditional = TRUE`, and every ingredient of it was already computed:
+  `statmod_edf_correction()` builds `J` and `Vtheta`, contracts them against
+  the information to price a parameter count, and threw the matrix away.
+  `confint()` and `summary()` pass the argument through, so an interval
+  around a penalized term can be asked for without reading its smoothing
+  parameter as known.
+
+  Measured on a univariate smooth at n = 200, 400 and 2000, the band of the
+  fitted mean widens by 1.12, 0.25 and 0.22 per cent on average and by 7.60,
+  1.24 and 1.28 per cent at its widest point, against mgcv's own 2.00/8.54,
+  0.76/1.68 and 0.42/1.72 on the same data. Ours is the smaller correction
+  for the reason already documented on `statmod_edf_correction()`: mgcv adds
+  a second term for the gaussian scale, which it profiles out of the fit and
+  this package models, so that uncertainty is already inside H.
+
+* ⚠️ IT COSTS 4 TO 5 TIMES THE `vcov()` IT IS ADDED TO, which is worth
+  stating because a first reading said otherwise. With a repetition loop
+  sized by elapsed time the two are 2.7 ms against 10.6 ms at n = 200 and
+  4.0 ms against 20.0 ms at n = 2000; a first measurement, taken with one
+  call and Windows' own clock, read the correction as free, which at these
+  sizes is one tick of the timer. What it buys is the same either way -- the
+  absolute cost is tens of milliseconds -- but the ratio is not one, and the
+  dearest part is `statmod_marginal_hess()`, the outer criterion's own
+  curvature, which the conditional matrices never ask for.
+
+* `predict(se = TRUE)` reaches it too, through the dots it already passed to
+  `vcov()`, and that is where it matters most: a band around a penalized term
+  is drawn from the fitted values, which are what a smoothing parameter
+  moves. Measured on the smooth above, `predict(fit, "mu", se = TRUE,
+  type = "unconditional")` widens the interval by 1.1 per cent on average and
+  7.6 at its widest, with the fitted values themselves unchanged.
+
+* ⚠️ WHERE IT SHOWS IS WHERE THE PENALTY BINDS, and the size is worth
+  knowing before reading one. On a smooth beside a score-driven term, whose
+  smoothing parameter is determined so poorly that the standard deviation of
+  its logarithm is 2.4, the two coordinates the penalty compresses widen by
+  80 and 88 per cent while the unpenalized linear component moves by 4e-06
+  and the filter's own parameters by between 3e-04 and 7e-04. That the
+  structural tail moves at all is right rather than spurious: those
+  parameters are estimated jointly with the coefficients, so the mode moves
+  in them too when the smoothing parameter moves. That is not an artifact of the
+  assembly: those are the coordinates whose value depends on the smoothing
+  parameter, and the conditional matrix was hiding the whole of it.
+
+* ⚠️ `Vb` IS PASSED INTO THE CORRECTION RATHER THAN RECOMPUTED. The caller
+  has already settled which information H is, which coordinates are held and
+  which are aliased; a correction built on a second inverse, regularized
+  differently, would not be the movement of the mode whose variance it is
+  added to. `hyper_correction()` therefore takes the matrix and the kept
+  coordinates as arguments.
+
+* ⚠️ ZERO AND UNAVAILABLE ARE DIFFERENT ANSWERS, and the caller is told
+  which. With no hyperparameter estimated by a differentiable criterion there
+  is nothing to propagate, `Vb` IS the unconditional variance and it is
+  returned in silence, `identical()` to the bayesian one -- a kinked
+  penalty's hyperparameter, chosen over a grid, is that case and so is a
+  model with no penalty at all. Where one was estimated and its curvature
+  cannot be read, the conditional matrix is returned WITH A WARNING: a reader
+  who asked for the wider matrix and silently received the narrower one would
+  report the wrong thing. It fires over a shared hyperparameter, whose
+  curvature `statmod_marginal_hess()` cannot produce, which is the same gap
+  `statmod_hyper_vcov()` refuses. The warning carries the class
+  `statmod_conditional_variance`, so `summary()` -- which calls `vcov()` more
+  than once -- reports it as one note instead of repeating it.
+
+* The check that says the mapping is right is that `tr(V' H) - tr(Vb H)`
+  reproduces `statmod_edf_correction()$total` to 7e-16. The two routes share
+  the new `hyper_mode_cross()` and nothing else: one inverts on the kept
+  coordinates through `solve_pd()`, the other on all of them through
+  `solve()`, so their agreeing is a check rather than a tautology.
+
+* `hyper_mode_cross()` is the mixed derivative of the penalty in the
+  coefficients and the hyperparameters, extracted from
+  `statmod_edf_correction()` so that the two consumers of the mode's movement
+  read one copy of it. It also COUNTS what it could not write, where the
+  function it came from passed over it: a penalty over a structural term's
+  own parameters indexes those parameters and not columns of a design, and a
+  correction assembled without it is a lower bound, which `vcov()` now says.
+
+# statmodels7 0.99.0
+
+* THE ALIASING NO LONGER DEPENDS ON WHICH OPTIMIZER RAN. Naming the column
+  a rank-deficient design does not identify was a by-product of the solve:
+  only `iwls()` on a pivoting decomposition reports one, so under an
+  `optimizers7` method, or under `chol`, `svd` or `chol_crossprod`, nothing
+  was named and `vcov()` refused the whole matrix -- the behaviour 0.98.0
+  had just replaced everywhere else. `deficient_coords()` asks the same
+  question after the fact, on the penalized information at the mode, and
+  `statmod()` uses it wherever the fit itself named nothing.
+
+  Measured on one gaussian model with a duplicated column, five routes that
+  reported nothing now report `mu:x3`, return a full variance matrix with
+  that row and column `NA`, and give the three surviving standard errors to
+  within 1e-5 of the pivoted route's. The two mechanisms share no
+  arithmetic, so their agreeing is a check rather than a tautology: they
+  also agree on which coordinate to name on a duplicated column under
+  gaussian, poisson, gamma and bernoulli, and on an over-parametrized
+  `nl(~ a * b * exp(-r * x))`, whose Jacobian is deficient by one at every
+  point.
+
+* ⚠️ WHETHER THERE IS ANYTHING TO NAME IS `solve_pd()`'S VERDICT, and that
+  gate is load-bearing rather than an economy. \eqn{K = H + S} is
+  \eqn{X'X} up to the weights, so it SQUARES the conditioning of the
+  design and a pivot read at `dqrdc2`'s own tolerance is twice as strict
+  there as on the augmented system the fit factorizes. Measured on two
+  columns collinear to within 1e-4 -- an ordinary pair of correlated
+  covariates -- the bare pivot names one of them while `solve_pd()`
+  inverts the matrix without difficulty, so a coefficient the data does
+  identify would have been thrown away. With the gate that case is
+  untouched, at 1e-6 and below the column is named, and the alias can
+  never disagree with the variance reported beside it.
+
+* ⚠️ A COORDINATE AT A BOUNDARY IS NOT AN ALIASING, and the two must not be
+  confused: aliasing reports the coefficient itself as missing, while a
+  parameter at its link's clamp has an estimate that stands and only a
+  variance that does not. The candidates are read BY THE DIAGONAL, which is
+  `boundary_coords()`' rule -- a first version tested the whole row, and one
+  non-finite column then made every row non-finite and left nothing to test,
+  so a fit carrying both a clamp and a duplicated column named neither.
+  Measured on a Student t whose `nu` reaches 1.797e308: nothing is aliased,
+  `coef()` reports `nu` as a number, and `vcov()` holds that one coordinate
+  and reports the rest.
+
+* ⚠️ An assertion in `test-robustness.R` had been DORMANT. The refusal it
+  pinned sat at the end of a block behind that block's own
+  `skip_if(lam < 1e8, ...)`, so on a machine where the criterion does not
+  reach the separation regime it never ran -- and it had gone on asserting a
+  refusal that 0.98.0 already replaced with an alias on the default route.
+  It stands on its own now and asserts what happens instead.
+
+# statmodels7 0.98.0
+
+* A design of less than full rank is ALIASED rather than refused, which is
+  what `lm()` and `glm()` do. The fit already dropped the redundant column:
+  `augmented_solve()`'s pivoted route leaves its coefficient at zero, so on
+  `y ~ x + z + w` with `w = 2 * x` the estimates already matched `glm()` to
+  five decimals. What was missing is that the drop was reported as a count
+  and never as a coordinate, so `coef()` returned an estimate of **zero**
+  where base R returns `NA` -- a reader could not tell a coefficient
+  estimated at zero from a column that was left out -- and `vcov()` then
+  refused the WHOLE matrix, losing three standard errors for the sake of one
+  that does not exist.
+
+  The dropped coordinates now travel from the solve to the fit, which
+  carries them in a new `aliased` property as the labels `coef_labels()`
+  gives. `coef()` and `confint()` report `NA` there, `vcov()` holds them and
+  reports the rest with their row and column `NA` -- which is
+  `stats::vcov(complete = TRUE)` on an aliased `lm()` -- and `summary()`
+  prints `NA` with a note saying how many coefficients were not estimated
+  and which. Measured against `glm()` on the same data: the same column
+  aliased, the same estimates, and standard errors of 0.06273, 0.06518 and
+  0.06017 against 0.06305, 0.06550 and 0.06047, the gap being the
+  conditional-versus-REML scale convention already documented and not the
+  aliasing. On a factor whose levels repeat a grouping, both aliases are the
+  same two `glm()` names.
+
+* The effective degrees of freedom no longer count an aliased column. It is
+  the same defect on a third surface and it reached a number people compare
+  models with: on that design the count read 5 where `glm()`'s rank plus the
+  scale is 4, so every cAIC and cBIC built on the total carried one
+  parameter the fit never estimated.
+
+* ⚠️ THE STORED COEFFICIENT IS LEFT WHERE IT WAS, and that is deliberate. Twenty-one
+  places inside the package read `@coefficients`, against five that call
+  `coef()`; putting `NA` in the stored vector would make `X %*% beta`
+  propagate it through all of them. The missing value is reported at the
+  three surfaces a reader meets and nowhere else, and the fitted values are
+  unchanged -- measured against `glm()` at 3.6e-15, with the
+  log-likelihoods identical.
+
+  ⚠️ AND IT IS NOT A ZERO, which an earlier draft of this entry said.
+  The pivot drops the coordinate from the INCREMENT, so the parameter keeps
+  the value it held at that iterate; on a linear design started at zero,
+  which is the default, that value is zero, and the claim looked general
+  because of the start rather than because of the aliasing. Measured on the
+  same model started with the aliased column at 5: the stored coefficient
+  stays 5, its duplicate absorbs the difference exactly (1.10532 against
+  -3.89468, the two differing by the 5), the log-likelihood is -149.6103
+  either way and the fitted values agree to 6.7e-16. That is the sharper
+  argument for `NA`: the stored number is one point of a flat ridge and not
+  a quantity a reader can compare.
+
+* ⚠️ A PENALIZED coordinate is never aliased, and that falls out of where
+  the test is made rather than being written as a rule: the pivot runs on
+  the augmented system, design and penalty factor together, so a column the
+  design alone does not identify is identified there. Measured on two
+  identical columns, `ridge(~ 0 + x1 + x3)` aliases nothing, returns a full
+  variance matrix and splits the effect evenly between them.
+
+* ⚠️ The aliasing is what a PIVOTED route finds, so it depends on the
+  decomposition: under `iwls(decomposition = "chol")`, `"svd"` or
+  `"chol_crossprod"` nothing is aliased and the old refusal stands. That is
+  stated rather than hidden, and the tests assert both sides of it -- which
+  is also what keeps the refusal itself under test.
+
+# statmodels7 0.97.0
+
+* `cbind(successes, failures)` is read as a response. It is how aggregated
+  binomial data are written in R, and it was not read here: the matrix went
+  down as a vector of twice the length and the run died on *"Parameter
+  dimension mismatch. All parameters should have length 1 or 400"*, a message
+  about a length nobody had asked for. `split_binomial_matrix()` takes the
+  first column as the successes and the row sums as the trials.
+
+  IT NEEDS A FAMILY THAT HAS A NUMBER OF TRIALS -- `binomial_distrib()` or a
+  beta-binomial. `bernoulli_distrib()` is one trial by construction, so there
+  is nothing to write successes and failures onto, and it is refused with the
+  family that should have been used named in the message. So is a matrix with
+  any number of columns but two, and a `size` given to the family that
+  disagrees with the row sums: given twice, only the modeller knows which was
+  meant. A multivariate family keeps its matrix response, where one row is
+  one observation.
+
+  Measured against `glm(cbind(y, fail) ~ x + g, binomial)` on 200 rows with
+  trials between 5 and 40: the coefficients agree to 4.4e-12 and the
+  log-likelihoods to the last printed digit. The two spellings --
+  `cbind(y, fail) ~ x` and `y ~ x` with `size = `, are the same fit to
+  1e-10.
+
+* THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is the
+  half of this worth having beyond the convenience. A `size` handed to
+  `binomial_distrib()` is a vector fixed when the fit is written, so it
+  cannot follow the rows anywhere else, and recycling it there returns a
+  number rather than an error: measured on the density, a size of length 200
+  against 20 observations gives back **200** log-densities summing to
+  -1125.63 and signals nothing. The row sums of a response expression are
+  recomputed wherever that expression is evaluated, so a fold of `cv()` or a
+  prediction gets the trials of ITS rows.
+
+  Where the row sums cannot be had, `check_trials()` now refuses instead of
+  recycling: a fit carrying one number of trials per observation, applied to
+  a different number of rows, signals an error naming both counts and
+  pointing at `cbind()`. The alternative to erroring is not a better number
+  but a guess, since nothing on the fit says which rows those trials were.
+
+* A categorical response is carried onto the numeric scale instead of
+  reaching `stats::dbinom()` untouched. A binary outcome recorded as a factor
+  is how these data are ordinarily written and `glm()` has always accepted
+  one; here the fit died on *"Non-numeric argument to mathematical
+  function"*, a message naming neither the variable nor the cause.
+  `coerce_response()` converts a two-level `factor`, `character` or `logical`
+  to 0 and 1 and leaves everything else alone.
+
+  THE FIRST LEVEL IS THE FAILURE, which is `glm()`'s rule, so a model moved
+  from `glm()` keeps its signs. Measured on 400 observations, the four
+  codings of one response -- 0/1, factor, character, logical -- give the same
+  coefficients and agree with `glm()` to 4.9e-09.
+
+  The conversion is made for EVERY family and not only for the binary ones,
+  and that is where it departs from base R -- in the direction of working.
+  `glm(f ~ x, gaussian)` on a factor does not refuse cleanly: it signals
+  *"NA/NaN/Inf in 'y'"* after three warnings from `Ops.factor`. A two-level
+  factor has one numeric reading, and on a gaussian family the result is the
+  linear probability model, which is what `lm()` gives on
+  `as.numeric(f == "b")` -- checked, identical.
+
+  A factor with any other number of levels is refused by name, saying how
+  many it has and which, rather than coded by a choice this package cannot
+  make on the modeller's behalf.
+
+  The levels travel on the specification as an attribute and
+  `statmod_respec()` reuses them: a character vector does not carry its own
+  levels through a subset, so a `cv()` fold holding only one of the two
+  values would have been coded the other way round and the deviance would
+  have come back wrong without a word. A value the fit never saw is refused
+  rather than coded.
+
 # statmodels7 0.96.0
 
 * `print(summary(fit), n = )` says how many coefficient rows a block shows,

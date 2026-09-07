@@ -4,12 +4,14 @@
 \alias{format_block_cells}
 \title{The Rows of a Block Formatted for Printing}
 \usage{
-format_block_cells(tb, digits = 4L)
+format_block_cells(tb, digits = 4L, stat = "z")
 }
 \arguments{
 \item{tb}{A summary table.}
 
 \item{digits}{Significant digits.}
+
+\item{stat}{What to head the statistic column with.}
 }
 \value{
 A list with \code{cells}, a character matrix of six columns, and

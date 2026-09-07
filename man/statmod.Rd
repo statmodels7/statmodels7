@@ -50,7 +50,8 @@ the kink.}
 \code{NULL} to let the availability of the exact gradient decide.}
 
 \item{start}{Where the fit begins: a named list of coefficients, a
-\code{\link[=start_strategy]{start_strategy()}} such as \code{\link[=start_search]{start_search()}}, or
+\code{\link[=start_strategy]{start_strategy()}} such as \code{\link[=start_search]{start_search()}} or \code{\link[=start_from]{start_from()}}, which
+takes the estimates of a model already fitted, or
 \code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}. A strategy is asked once,
 before the alternation between the coefficients and the hyperparameters
 begins, which is why a global search belongs here instead of in

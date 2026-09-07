@@ -397,7 +397,9 @@ diagonal_sqrt <- function(S, p) {
 augmented_solve <- function(R, C, u, how, threads = 1L) {
   if (isS4(R) || isS4(C)) {
     out <- sparse_augmented_solve(R, C, u, how)
-    if (!is.null(out)) return(out)
+    # it declines rather than dropping anything, so a solve it returns has
+    # nothing aliased
+    if (!is.null(out)) return(c(out, list(dropped = integer(0))))
     # a rank-deficient or unfactorable augmented matrix falls through to the
     # dense route, which reports a rank and can drop columns
     R <- as_dense(R)
@@ -410,8 +412,10 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
     keep <- s$d > tol
     dinv <- numeric(length(s$d))
     dinv[keep] <- 1 / s$d[keep]^2
+    # the svd removes singular DIRECTIONS, which are combinations of columns
+    # and name no coordinate, so nothing is reported aliased on this route
     return(list(delta = as.numeric(s$v %*% (dinv * crossprod(s$v, u))),
-                rank = sum(keep)))
+                rank = sum(keep), dropped = integer(0)))
   }
   # THE THREADED FACTOR. Only the triangular factor is ever read here, so a
   # kernel that produces it and never accumulates Q does the whole job: the
@@ -436,7 +440,8 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
         d <- tryCatch(backsolve(Rt, forwardsolve(t(Rt), u)),
                       error = function(e) NULL)
         if (!is.null(d) && all(is.finite(d))) {
-          fast <- list(delta = as.numeric(d), rank = ncol(A))
+          fast <- list(delta = as.numeric(d), rank = ncol(A),
+                       dropped = integer(0))
         }
       }
     }
@@ -451,7 +456,15 @@ augmented_solve <- function(R, C, u, how, threads = 1L) {
   d <- backsolve(Rf, z)
   delta <- numeric(ncol(A))
   delta[piv] <- d
-  list(delta = delta, rank = qrA$rank)
+  # The coordinates the pivot left out are the ALIASED ones, and this is the
+  # only place in the package where a column is dropped: the sparse route
+  # declines on a rank-deficient matrix and falls through to here, the
+  # threaded factor is engaged only above a full-rank test, and the svd route
+  # removes singular DIRECTIONS rather than columns and so reports none.
+  # Naming them is what lets a fit report NA where base R reports NA instead
+  # of an estimate of zero, which reads as a coefficient that was estimated.
+  list(delta = delta, rank = qrA$rank,
+       dropped = setdiff(seq_len(ncol(A)), piv))
 }
 
 

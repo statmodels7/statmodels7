@@ -4,7 +4,16 @@
 \alias{iwls_fit}
 \title{Fit the Smooth Block by Iterated Weighted Least Squares}
 \usage{
-iwls_fit(obj, start, method, n, pieces_at, verbose = FALSE, groups = NULL)
+iwls_fit(
+  obj,
+  start,
+  method,
+  n,
+  pieces_at,
+  verbose = FALSE,
+  groups = NULL,
+  frozen = integer(0)
+)
 }
 \arguments{
 \item{obj}{The objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it.}
@@ -22,6 +31,16 @@ rule.}
 
 \item{verbose}{\code{TRUE} to print one line per iteration: the objective, the
 score, the step length and the route taken.}
+
+\item{groups}{A list of integer index vectors, one per equation, in the
+numbering of the coefficients handed in. \code{NULL} treats them as one
+group, which is right where the whole vector is being fitted.}
+
+\item{frozen}{Positions held at their starting values, an integer vector
+in the same numbering. They are dropped from every solve, so the run
+maximizes over the rest, and the stopping rule reads the free
+coordinates alone -- a held coordinate's score is what the constrained
+optimum leaves there and does not vanish.}
 }
 \value{
 A list of six:

@@ -439,6 +439,16 @@ StatmodSpec <- S7::new_class("StatmodSpec",
     # that built a dense design where the fit built a sparse one would be
     # fitting a different model's storage, and paying for it.
     linpar = S7::new_property(S7::class_list, default = quote(list())),
+    # COEFFICIENTS HELD AT A VALUE: one entry per distribution parameter, a
+    # named numeric vector keyed by coefficient name. A held coordinate is
+    # written into the starting values and then dropped from every scoring
+    # step's solve, so the rest is fitted CONDITIONALLY on it and the score
+    # in the held direction is what the constrained optimum leaves. That
+    # score is the whole content of the Rao and Terrell statistics, and the
+    # restricted maximum is the whole content of the likelihood ratio; a
+    # hold is how all three are computed without rewriting the formula,
+    # which would rebuild every term and move a basis's knots.
+    held_coef = S7::new_property(S7::class_list, default = quote(list())),
     # the thread count statmod(threads =) was given, carried here because
     # the specification is what every consumer of the assembly already
     # holds. The default keeps every other constructor -- a respec, a fold
@@ -661,6 +671,12 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
          "Fit the observed values, or use distributions7's cdf ",
          "derivatives directly.", call. = FALSE)
   }
+  # cbind(successes, failures) writes the trials onto the family, and a
+  # two-level factor is how a binary outcome is ordinarily recorded: every
+  # distribution wants a number
+  diviso <- split_binomial_matrix(response, distrib)
+  response <- coerce_response(diviso$response)
+  distrib <- diviso$distrib
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
 
@@ -752,14 +768,26 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
          "Fit the observed values, or use distributions7's cdf ",
          "derivatives directly.", call. = FALSE)
   }
+  # The trials are recomputed from THESE rows. That is the whole reason they
+  # are read off the response rather than taken from the family: a `size`
+  # fixed at fitting time cannot follow a fold or a prediction, and recycling
+  # it against a different row count returns a number rather than an error.
+  diviso <- split_binomial_matrix(response, spec@distrib)
+  # The SAME mapping as the fit, not one read off these rows: a fold or a
+  # prediction can hold only one of the two values, and re-reading it there
+  # would code the response the other way round.
+  response <- coerce_response(diviso$response,
+                              levels = attr(spec@response, "response_levels"))
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
+  distrib <- check_trials(diviso$distrib, n)
   # An offset the FORMULA names is re-evaluated here, which is the whole
   # reason the expressions are not carried as numbers: a vector supplied
   # through the `offsets` argument at fitting time has the length of the
   # fitting data and cannot be reused, so prediction used to drop the offset
   # and return the predictor of a model without one.
   S7::set_props(spec, response = response, n_obs = as.integer(n),
+                distrib = distrib,
                 weights = rep(1, n),
                 offsets = eval_offsets(spec@formula, spec@distrib@params,
                                        data, env, n),
@@ -1223,6 +1251,219 @@ refreshes_own_block <- function(term) {
   base <- modelterms7::model_term
   !(identical(attr(owner, "name"), attr(base, "name")) &&
     identical(attr(owner, "package"), attr(base, "package")))
+}
+
+
+#' Read a Two-Column Response as Successes and Trials
+#'
+#' @description
+#' Splits a `cbind(successes, failures)` response into the successes and the
+#' number of trials, returning the response and the distribution the trials
+#' have been written onto.
+#'
+#' @details
+#' `cbind(y, n - y) ~ x` is how aggregated binomial data are written in R, and
+#' it was not read here: the matrix went down as a vector of twice the length
+#' and the run died on *"Parameter dimension mismatch. All parameters should
+#' have length 1 or 400"*, a message about a length nobody had asked for.
+#'
+#' THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is the
+#' half of this worth having. A size handed to the family is a vector fixed at
+#' fitting time, so it cannot follow the rows anywhere else; the row sums of a
+#' response expression are recomputed wherever that expression is evaluated,
+#' which is what makes a fold of [cv()] or a prediction at new data come out
+#' right. That the alternative is not merely awkward but silently wrong is
+#' measured on the density itself: a size of length 200 against 20
+#' observations returns 200 log-densities, summing to -1125.63, and signals
+#' nothing. See [check_trials()], which refuses that case where the row sums
+#' cannot be had.
+#'
+#' A matrix response is left alone for a multivariate family, where it is the
+#' ordinary thing and each row is one observation.
+#'
+#' @param response The evaluated left-hand side.
+#' @param distrib The family.
+#'
+#' @return A list with `response`, the successes, and `distrib`, carrying the
+#'   row sums as its `size`. Both unchanged where the response is not a
+#'   two-column matrix on a univariate family.
+#'
+#' @seealso [coerce_response()], [statmod_spec()], [statmod_respec()]
+#'
+#' @keywords internal
+split_binomial_matrix <- function(response, distrib) {
+  invariato <- list(response = response, distrib = distrib)
+  if (!is.matrix(response)) return(invariato)
+  # a multivariate family reads a matrix response as one observation per row,
+  # which is what it is for
+  if (identical(as.character(distrib@dimension), "multivariate")) return(invariato)
+
+  nome <- distrib@distrib_name
+  if (ncol(response) != 2L) {
+    stop(sprintf(
+      "The response is a matrix with %d columns and '%s' takes one number per
+  observation. Two columns are read as successes and failures, as glm()
+  reads them; anything else has no reading here.",
+      ncol(response), nome), call. = FALSE)
+  }
+  if (!("size" %in% S7::prop_names(distrib))) {
+    stop(sprintf(
+      "A two-column response counts successes and failures, and '%s' has no
+  number of trials to write them onto. Use binomial_distrib() or a
+  beta-binomial, or pass the response as a single column.",
+      nome), call. = FALSE)
+  }
+  if (!is.numeric(response)) {
+    stop("A two-column response must be numeric counts.", call. = FALSE)
+  }
+
+  successi <- response[, 1L]
+  fallimenti <- response[, 2L]
+  if (any(successi < 0 | fallimenti < 0, na.rm = TRUE)) {
+    stop("A two-column response counts successes and failures, and one of
+  them is negative.", call. = FALSE)
+  }
+  prove <- successi + fallimenti
+
+  # A size the caller ALSO gave is not overwritten in silence: it either
+  # agrees with the row sums, and then there is nothing to choose, or the two
+  # statements disagree and only the modeller knows which was meant. The
+  # default of one is not a statement and is replaced.
+  vecchia <- distrib@size
+  predefinita <- length(vecchia) == 1L && isTRUE(vecchia == 1)
+  if (!predefinita &&
+      !isTRUE(all.equal(as.numeric(rep_len(vecchia, length(prove))),
+                        as.numeric(prove)))) {
+    stop("The number of trials is given twice and the two disagree: the
+  response's row sums say one thing and the family's 'size' another.
+  Give it once -- either cbind(successes, failures), or a single-column
+  response with size = .", call. = FALSE)
+  }
+
+  list(response = successi, distrib = S7::set_props(distrib, size = prove))
+}
+
+
+#' Refuse a Number of Trials That Cannot Follow These Rows
+#'
+#' @description
+#' Signals an error where the family carries one number of trials per
+#' observation and the rows it is being applied to are a different number.
+#'
+#' @details
+#' A `size` handed to `binomial_distrib()` is a vector fixed when the fit was
+#' written, so at other rows it is neither right nor obviously wrong: it is
+#' recycled, and the answer comes back with no complaint. Measured directly on
+#' the density, a size of length 200 against 20 observations returns **200**
+#' log-densities summing to -1125.63 and signals nothing -- the response is
+#' recycled against the size, so the number of terms is decided by the family
+#' rather than by the data.
+#'
+#' The alternative to erroring is not a better number, it is a guess: nothing
+#' on the fit says which rows those trials belonged to. What the caller can do
+#' instead is write the response as `cbind(successes, failures)`, whose row
+#' sums are recomputed wherever the expression is evaluated, and the message
+#' says so.
+#'
+#' @param distrib The family.
+#' @param n The number of rows it is about to be applied to.
+#'
+#' @return `distrib`, unchanged.
+#'
+#' @seealso [split_binomial_matrix()], [statmod_respec()]
+#'
+#' @keywords internal
+check_trials <- function(distrib, n) {
+  if (!("size" %in% S7::prop_names(distrib))) return(distrib)
+  taglia <- distrib@size
+  if (length(taglia) <= 1L || length(taglia) == n) return(distrib)
+  stop(sprintf(
+    "The family carries %d numbers of trials and these are %d rows. A 'size'
+  given to the family is fixed when the fit is written and cannot follow
+  other rows: recycled against them it returns a number rather than an
+  error. Write the response as cbind(successes, failures) instead -- its
+  row sums are recomputed wherever the expression is.",
+    length(taglia), n), call. = FALSE)
+}
+
+
+#' Carry a Categorical Response onto the Numeric Scale
+#'
+#' @description
+#' Returns the response as a number, converting a two-level `factor`,
+#' `character` or `logical` to 0 and 1 and leaving anything else alone.
+#'
+#' @details
+#' A binary outcome recorded as a factor is how these data are ordinarily
+#' written, and `glm()` has always accepted one: its binomial family reads the
+#' first level as the failure. Without this the response reached
+#' `stats::dbinom()` untouched and the run died on *"Non-numeric argument to
+#' mathematical function"*, which names neither the variable nor the cause.
+#'
+#' The first level is the failure, which is `glm()`'s rule, so a model moved
+#' from `glm()` keeps its signs. The conversion is made for EVERY family and
+#' not only for the binary ones, which is where this departs from base R --
+#' and it departs in the direction of working: `glm(f ~ x, gaussian)` on a
+#' factor `f` does not refuse cleanly, it signals *"NA/NaN/Inf in 'y'"* after
+#' three warnings from `Ops.factor`. A two-level factor has one numeric
+#' reading and this is it; on a gaussian family the result is the linear
+#' probability model, which is what `as.numeric(f == "b")` would have given.
+#'
+#' The levels used are returned as the attribute `"response_levels"`. That is
+#' what lets [statmod_respec()] reproduce the SAME mapping on other rows: a
+#' factor carries its levels through a subset, but a character vector does
+#' not, so a cross-validation fold holding only one of the two values would
+#' otherwise be coded the other way round and the deviance would come back
+#' wrong without a word.
+#'
+#' @param response The evaluated left-hand side.
+#' @param levels The mapping to reuse, from a previous call's attribute, or
+#'   `NULL` to read it off this response.
+#'
+#' @return `response` unchanged, or a numeric vector of 0 and 1 carrying the
+#'   attribute `"response_levels"`.
+#'
+#' @seealso [statmod_spec()], [statmod_respec()]
+#'
+#' @keywords internal
+coerce_response <- function(response, levels = NULL) {
+  if (is.logical(response)) {
+    out <- as.integer(response)
+    attr(out, "response_levels") <- c("FALSE", "TRUE")
+    return(out)
+  }
+  if (!is.factor(response) && !is.character(response)) return(response)
+
+  lev <- if (!is.null(levels)) levels
+         else if (is.factor(response)) base::levels(response)
+         else sort(unique(response[!is.na(response)]))
+  chr <- as.character(response)
+
+  if (length(lev) != 2L) {
+    stop(sprintf(
+      "The response is a %s with %d level%s (%s), and a distribution needs a
+  number. Two levels are read as 0 and 1, as glm() reads them; anything
+  else has no numeric reading this package can choose for you. Convert it
+  yourself -- as.integer(y == \"<level>\") -- and say which level is the
+  one being modelled.",
+      if (is.factor(response)) "factor" else "character vector",
+      length(lev), if (length(lev) == 1L) "" else "s",
+      paste(utils::head(lev, 5), collapse = ", ")), call. = FALSE)
+  }
+  fuori <- setdiff(unique(chr[!is.na(chr)]), lev)
+  if (length(fuori)) {
+    stop(sprintf(
+      "The response holds %s, which is not among the levels being coded
+  (%s). This happens where a fold or a prediction carries a value the fit
+  never saw.",
+      paste(sprintf("'%s'", utils::head(fuori, 3)), collapse = ", "),
+      paste(lev, collapse = ", ")), call. = FALSE)
+  }
+
+  out <- as.numeric(chr == lev[2L])
+  out[is.na(chr)] <- NA_real_
+  attr(out, "response_levels") <- lev
+  out
 }
 
 

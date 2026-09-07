@@ -49,8 +49,8 @@ test_that("g'delta really is negative in a fit", {
   seen$gd <- numeric(0)
   orig <- iwls_solve
   local_mocked_bindings(
-    iwls_solve = function(pieces, u, how, damp = 0) {
-      out <- orig(pieces, u, how, damp)
+    iwls_solve = function(pieces, u, how, damp = 0, frozen = integer(0)) {
+      out <- orig(pieces, u, how, damp, frozen)
       seen$gd <- c(seen$gd, -sum(u * out$delta))   # u = -g
       out
     })

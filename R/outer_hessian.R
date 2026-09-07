@@ -610,27 +610,8 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   if (is.null(Vb)) return(zero)
 
   # J = -Vb %*% d2rho/dbeta dtheta, one column per estimated hyperparameter
-  J <- matrix(0, nrow(H), nrow(idx))
-  mem <- index_members(idx)
-  for (un in statmod_penalized(spec, design)) {
-    cr <- tryCatch(
-      penalties7::penalty_cross(un$penalty, unit_beta(un, coef, params),
-                                as.list(hyper[[un$param]][[un$key]]),
-                                scale = "link"),
-      error = function(e) NULL)
-    if (is.null(cr)) next
-    for (h in names(cr)) {
-      # through the MEMBER table: a shared hyperparameter is one column of J
-      # standing for several penalties, so each member writes into the
-      # group's column and they accumulate. Where nothing is shared each
-      # member is its own row and this is the lookup that was here before.
-      k <- mem$row[mem$parameter == un$param & mem$term == un$key &
-                     mem$name == h]
-      if (!length(k)) next
-      J[un$index, k] <- J[un$index, k] + as.numeric(cr[[h]])
-    }
-  }
-  J <- -Vb %*% J
+  J <- -Vb %*% hyper_mode_cross(spec, design, coef, hyper, idx,
+                                nrow(as.matrix(H)))$cross
 
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
                                        idx, NULL),
@@ -650,6 +631,185 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   per <- tapply(contrib, paste(idx$parameter, idx$term, sep = "\r"), sum)
   total <- sum((J %*% Vth %*% t(J)) * t(H))
   list(total = total, per = per, n_hyper = nrow(idx))
+}
+
+
+#' The Mixed Derivative of the Penalty in the Coefficients and the
+#' Hyperparameters
+#'
+#' @description
+#' \eqn{\partial^2\rho / \partial\beta \partial\theta}, written into the
+#' stacked coefficient vector with one column per estimated hyperparameter.
+#'
+#' @details
+#' This is the one ingredient of the penalized mode's movement that nothing
+#' else computes, and both consumers of that movement read it here rather than
+#' assembling it each: [statmod_edf_correction()], which contracts it against
+#' the information to price what estimating a hyperparameter cost, and
+#' [hyper_correction()], which keeps the matrix and adds it to a variance.
+#'
+#' A shared hyperparameter is ONE column standing for several penalties, so
+#' each member writes into the group's column and they accumulate. Where
+#' nothing is shared each member is its own row and the lookup is what was
+#' here before the groups existed.
+#'
+#' A penalty over a STRUCTURAL term's own parameters covers positions among
+#' those parameters rather than columns of a design, so there is nothing to
+#' write and it is skipped. It is counted rather than passed over in silence:
+#' a correction assembled without it is incomplete, and a caller reporting to
+#' a reader has to be able to say so.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients.
+#' @param hyper The hyperparameters.
+#' @param idx The hyperparameter index, from [outer_hyper_index()].
+#' @param n How many stacked coefficients the design carries.
+#'
+#' @return A list with `cross`, an `n` by `nrow(idx)` matrix, and `skipped`,
+#'   how many penalties contributed nothing to it.
+#'
+#' @seealso [statmod_edf_correction()], [hyper_correction()],
+#'   [penalties7::penalty_cross()]
+#'
+#' @keywords internal
+hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
+  params <- spec@distrib@params
+  cross <- matrix(0, n, nrow(idx))
+  mem <- index_members(idx)
+  skipped <- 0L
+  for (un in statmod_penalized(spec, design)) {
+    # A structural term's penalty indexes the term's OWN parameters, which
+    # are not columns of any design. Writing it here would land on whichever
+    # coefficients happen to occupy those positions.
+    if (is.null(un$index)) {
+      skipped <- skipped + 1L
+      next
+    }
+    cr <- tryCatch(
+      penalties7::penalty_cross(un$penalty, unit_beta(un, coef, params),
+                                as.list(hyper[[un$param]][[un$key]]),
+                                scale = "link"),
+      error = function(e) NULL)
+    if (is.null(cr)) {
+      skipped <- skipped + 1L
+      next
+    }
+    for (h in names(cr)) {
+      # through the MEMBER table: a shared hyperparameter is one column
+      # standing for several penalties, so each member writes into the
+      # group's column and they accumulate.
+      k <- mem$row[mem$parameter == un$param & mem$term == un$key &
+                     mem$name == h]
+      if (!length(k)) next
+      cross[un$index, k] <- cross[un$index, k] + as.numeric(cr[[h]])
+    }
+  }
+  list(cross = cross, skipped = skipped)
+}
+
+
+#' What a Hyperparameter's Own Uncertainty Adds to a Variance
+#'
+#' @description
+#' \eqn{J V_\theta J'}, the movement of the penalized mode under the estimated
+#' hyperparameters, as a matrix to be added to \eqn{V_b}.
+#'
+#' @details
+#' The two matrices [vcov.StatmodFit()] reports by default are conditional on
+#' the hyperparameters: both are read at the value the outer search stopped
+#' at, as though it had been known. It was estimated from the same data, and
+#' what that costs is
+#' \deqn{V' = V_b + J V_\theta J', \qquad
+#'   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},}
+#' the delta method applied to the map from the hyperparameter to the mode
+#' (Wood, Pya and Safken, 2016). It is the same quantity
+#' [statmod_edf_correction()] contracts against the information to obtain a
+#' count of parameters; here the matrix itself is what is wanted.
+#'
+#' \eqn{V_b} is PASSED IN rather than recomputed, and that is what keeps the
+#' two halves of the sum describing one model. The caller has already settled
+#' which information \eqn{H} is, which coordinates are held and which are
+#' aliased; a correction built on a second inverse, regularized differently,
+#' would not be the movement of the mode whose variance it is added to.
+#'
+#' # Where there is nothing to add, and where it cannot be read
+#'
+#' The correction is exactly zero where no hyperparameter was estimated by a
+#' differentiable criterion. A kinked penalty's is the argument of a minimum
+#' over a grid, which [outer_hyper_index()] skips, and the map from it to the
+#' mode turns a corner whenever a coefficient joins or leaves the active set,
+#' so there is no derivative to propagate. That is a property of the model and
+#' not a failure, and `n_hyper` is zero.
+#'
+#' It is UNAVAILABLE, with `n_hyper` positive and `C` `NULL`, where the
+#' criterion's own Hessian cannot be read: over a shared hyperparameter, whose
+#' curvature would be that of the wrong function, which is the gap
+#' [statmod_hyper_vcov()] refuses for the same reason, and where the search
+#' left a coordinate at the edge of its range.
+#'
+#' It is PARTIAL, with `complete` false, where some of it could be read and
+#' some could not: a hyperparameter [hyper_variance()] held contributes
+#' nothing, and so does a penalty over a structural term's own parameters. The
+#' matrix returned is then a lower bound on the correction rather than the
+#' whole of it.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients.
+#' @param hyper The hyperparameters.
+#' @param method The outer method that estimated them, or `NULL`.
+#' @param Vb The bayesian variance the correction is to be added to, over the
+#'   coordinates `keep` names followed by any structural tail.
+#' @param keep A logical vector over the stacked coefficients, saying which
+#'   ones `Vb` spans.
+#' @param nz How many structural parameters `Vb` carries beyond them.
+#'
+#' @return A list with `C`, the correction or `NULL`, `n_hyper`, how many
+#'   hyperparameters a differentiable criterion estimated, and `complete`,
+#'   whether every one of them contributed.
+#'
+#' @references
+#' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
+#' selection for general smooth models. *Journal of the American
+#' Statistical Association*, 111(516), 1548--1563.
+#'
+#' @seealso [vcov.StatmodFit()], [statmod_edf_correction()],
+#'   [statmod_hyper_vcov()]
+#'
+#' @keywords internal
+hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
+                             nz = 0L) {
+  none <- list(C = NULL, n_hyper = 0L, complete = TRUE)
+  if (is.null(method) || !method@kind %in% c("ml", "reml")) return(none)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  if (!nrow(idx)) return(none)
+  out <- list(C = NULL, n_hyper = nrow(idx), complete = FALSE)
+  if (anyDuplicated(index_members(idx)$row)) return(out)
+
+  cr <- hyper_mode_cross(spec, design, coef, hyper, idx, length(keep))
+  X <- cr$cross[keep, , drop = FALSE]
+  if (nz > 0L) X <- rbind(X, matrix(0, nz, ncol(X)))
+  Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
+                                       idx, NULL),
+                 error = function(e) NULL)
+  if (is.null(Ho)) return(out)
+  # the criterion is a maximand, so its Hessian is negative definite at the
+  # optimum and the variance is the inverse of its negative
+  Vth <- hyper_variance(-as.matrix(Ho))
+  if (is.null(Vth)) return(out)
+  # a coordinate hyper_variance() held has no variance to propagate. Its
+  # column contributes nothing, which makes the correction partial rather
+  # than wrong, and NA would make the whole product missing.
+  ok <- is.finite(diag(Vth))
+  if (!all(ok)) {
+    Vth[!ok, ] <- 0
+    Vth[, !ok] <- 0
+  }
+  J <- -Vb %*% X
+  out$C <- as.matrix(J %*% Vth %*% t(J))
+  out$complete <- all(ok) && cr$skipped == 0L
+  out
 }
 
 

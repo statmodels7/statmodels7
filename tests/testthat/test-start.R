@@ -198,3 +198,196 @@ test_that("an ordinary model's start is untouched", {
   expect_equal(cf$mu[[1L]], eta0[["mu"]])
   expect_true(all(cf$mu[-1L] == 0))
 })
+
+
+# --- start_from(): another fit's estimates ------------------------------
+
+sf <- local({
+  set.seed(31)
+  m <- 400
+  d <- data.frame(x = stats::runif(m, -1, 1), z = stats::runif(m, -1, 1),
+                  w = stats::runif(m, -1, 1))
+  d$y <- stats::rpois(m, exp(0.4 + 0.6 * d$x - 0.3 * d$z))
+  d$ys <- sin(2 * pi * d$x) + stats::rnorm(m, 0, 0.3)
+  list(d = d,
+       full = statmod(y ~ x + z + w, distributions7::poisson_distrib(), d),
+       sm6 = statmod(ys ~ s(x, k = 6), distributions7::gaussian1_distrib(),
+                     d))
+})
+
+test_that("the parametric block is matched column by column", {
+  # adding or dropping a covariate is what this exists for: the columns the
+  # two models share carry their estimates across and the rest falls back
+  spec <- statmod_spec(y ~ z + w, distributions7::poisson_distrib(), sf$d)
+  design <- statmod_design(spec)
+  s <- start_at(start_from(sf$full), spec, design, NULL)
+  took <- attr(s, "taken")
+
+  expect_setequal(took$coefficient, c("(Intercept)", "z", "w"))
+  expect_identical(unique(took$parameter), "mu")
+  # by NAME and not by position: 'z' is the third column of the reference and
+  # the second here, so a positional copy would put 'x' where 'z' belongs
+  ref <- sf$full@coefficients$mu
+  expect_equal(s$mu, c(ref[[1L]], ref[[3L]], ref[[4L]]))
+})
+
+test_that("a start does not move where the fit lands", {
+  # the property that matters most: on a convex problem the answer is the
+  # data's, not the starting point's, and a strategy that changed it would be
+  # a defect however fast it was
+  a <- statmod(y ~ z + w, distributions7::poisson_distrib(), sf$d)
+  b <- statmod(y ~ z + w, distributions7::poisson_distrib(), sf$d,
+               start = start_from(sf$full))
+  expect_equal(unlist(a@coefficients), unlist(b@coefficients),
+               tolerance = 1e-6)
+  expect_equal(as.numeric(logLik(a)), as.numeric(logLik(b)),
+               tolerance = 1e-8)
+})
+
+test_that("a parameter the reference does not have falls back", {
+  # a negative binomial started from a Poisson: the mean's coefficients are
+  # taken and 'theta', which the reference has no counterpart for, is left to
+  # the fallback strategy
+  spec <- statmod_spec(y ~ x + z, distributions7::negbin2_distrib(), sf$d)
+  design <- statmod_design(spec)
+  s <- start_at(start_from(sf$full), spec, design, NULL)
+  took <- attr(s, "taken")
+
+  expect_identical(unique(took$parameter), "mu")
+  expect_false("theta" %in% took$parameter)
+  base <- start_at(start_intercepts(), spec, design, NULL)
+  expect_equal(s$theta, base$theta)
+  expect_length(s$theta, design$theta$npar)
+})
+
+test_that("the same basis is carried across and not re-estimated", {
+  # where the coefficients mean the same coordinates they are copied, which is
+  # exact and costs nothing; re-estimating them would be work for no answer
+  sp6 <- statmod_spec(ys ~ s(x, k = 6),
+                      distributions7::gaussian1_distrib(), sf$d)
+  s6 <- start_at(start_from(sf$sm6), sp6, statmod_design(sp6), NULL)
+  tk <- attr(s6, "taken")
+  expect_true(all(c("s(x).lin", "s(x).z1", "s(x).z4") %in% tk$coefficient))
+  expect_identical(unique(tk$how), "matched")
+  expect_equal(s6$mu, sf$sm6@coefficients$mu)
+})
+
+test_that("a basis of another dimension is projected, not copied", {
+  # s(x, k = 6) and s(x, k = 10) give the same names to different coordinates
+  # -- measured, z1 is 0.0267 against -0.0277, OPPOSITE IN SIGN -- so what
+  # carries across is the fitted FUNCTION and not the numbers. The two blocks
+  # do not even meet by name: a block is keyed by the term's own call, so
+  # 's(x, k = 6)' and 's(x, k = 10)' are two keys, and what pairs them is the
+  # stem of their coefficient names.
+  sp10 <- statmod_spec(ys ~ s(x, k = 10),
+                       distributions7::gaussian1_distrib(), sf$d)
+  de10 <- statmod_design(sp10)
+  s10 <- start_at(start_from(sf$sm6), sp10, de10, NULL)
+  tk <- attr(s10, "taken")
+
+  sm <- tk[startsWith(tk$coefficient, "s(x)"), , drop = FALSE]
+  expect_gt(nrow(sm), 0)
+  expect_identical(unique(sm$how), "projected")
+
+  # NOT the reference's numbers: a copy by name would put z1 in with the
+  # wrong sign, which is why the coefficients are not comparable
+  ref_z1 <- sf$sm6@coefficients$mu[[
+    match("s(x).z1", statmod_design(sf$sm6@spec)$mu$coef_names)]]
+  new_z1 <- s10$mu[[match("s(x).z1", de10$mu$coef_names)]]
+  expect_false(isTRUE(all.equal(new_z1, ref_z1)))
+
+  # what IS reproduced is the function: the starting predictor sits on the
+  # reference's, where the fallback is a whole standard deviation away
+  eta_ref <- stats::predict(sf$sm6, "link")$mu
+  base <- start_at(start_intercepts(), sp10, de10, NULL)
+  rmse <- function(s) sqrt(mean((as.numeric(de10$mu$X %*% s$mu) - eta_ref)^2))
+  expect_lt(rmse(s10), 0.05)
+  expect_gt(rmse(base), 0.3)
+})
+
+test_that("the projection is exact where the coarse basis is nested", {
+  # equally spaced interior knots make s(x, k = 6) a SUBSPACE of s(x, k = 12)
+  # -- three intervals refined into nine -- and there the projection
+  # reproduces the function to machine precision. k = 10 is not a refinement
+  # of k = 6, so there it is a genuine approximation, and the contrast is what
+  # says the exactness is the geometry's and not the harness's.
+  gauss <- distributions7::gaussian1_distrib()
+  eta_ref <- stats::predict(sf$sm6, "link")$mu
+  gap <- function(k) {
+    sp <- statmod_spec(stats::as.formula(sprintf("ys ~ s(x, k = %d)", k)),
+                       gauss, sf$d)
+    de <- statmod_design(sp)
+    s <- start_at(start_from(sf$sm6), sp, de, NULL)
+    sqrt(mean((as.numeric(de$mu$X %*% s$mu) - eta_ref)^2))
+  }
+  expect_lt(gap(12), 1e-8)
+  expect_gt(gap(10), 100 * gap(12))
+})
+
+test_that("a reference read at other rows is not projected", {
+  # the projection compares two predictors observation by observation, so an
+  # identical response is what says the two designs are read at the same rows;
+  # without that the comparison is between functions evaluated at different
+  # points, which means nothing
+  d2 <- sf$d
+  d2$ys <- d2$ys + 1
+  other <- statmod(ys ~ s(x, k = 6), distributions7::gaussian1_distrib(), d2)
+  sp10 <- statmod_spec(ys ~ s(x, k = 10),
+                       distributions7::gaussian1_distrib(), sf$d)
+  s <- start_at(start_from(other), sp10, statmod_design(sp10), NULL)
+  expect_false(any(attr(s, "taken")$how == "projected"))
+})
+
+test_that("a projected start does not move where the fit lands", {
+  # the same property the matched blocks are held to: a starting strategy that
+  # changed the answer would be a defect however close it started
+  gauss <- distributions7::gaussian1_distrib()
+  a <- statmod(ys ~ s(x, k = 10), gauss, sf$d)
+  b <- statmod(ys ~ s(x, k = 10), gauss, sf$d, start = start_from(sf$sm6))
+  expect_equal(unlist(a@coefficients), unlist(b@coefficients),
+               tolerance = 1e-5)
+  expect_equal(as.numeric(logLik(a)), as.numeric(logLik(b)),
+               tolerance = 1e-7)
+})
+
+test_that("the fallback strategy is the caller's", {
+  # I(x^2) is a column the reference does not carry, so it is the fallback
+  # that answers for it: start_origin() leaves it at zero where the default
+  # would too, and the intercept shows the two strategies apart
+  spec <- statmod_spec(y ~ x + I(x^2), distributions7::poisson_distrib(),
+                       sf$d)
+  design <- statmod_design(spec)
+  s <- start_at(start_from(sf$full, rest = start_origin()), spec, design,
+                NULL)
+  expect_equal(s$mu[[3L]], 0)
+  expect_equal(s$mu[[2L]], sf$full@coefficients$mu[[2L]])
+  expect_equal(s$mu[[1L]], sf$full@coefficients$mu[[1L]])
+
+  # and with the default fallback the intercept is still the reference's,
+  # since a taken coefficient overwrites whatever the fallback put there
+  s2 <- start_at(start_from(sf$full), spec, design, NULL)
+  expect_equal(s2$mu[[1L]], sf$full@coefficients$mu[[1L]])
+  expect_equal(s2$mu[[3L]], 0)
+})
+
+test_that("start_from returns a strategy that satisfies the contract", {
+  spec <- statmod_spec(y ~ z + w, distributions7::poisson_distrib(), sf$d)
+  design <- statmod_design(spec)
+  s <- start_at(start_from(sf$full), spec, design, NULL)
+  expect_true(S7::S7_inherits(start_from(sf$full), start_strategy))
+  expect_setequal(names(s), spec@distrib@params)
+  for (p in spec@distrib@params) {
+    expect_length(s[[p]], design[[p]]$npar)
+    expect_true(is.numeric(s[[p]]) && !anyNA(s[[p]]))
+  }
+})
+
+test_that("start_from refuses what it cannot use", {
+  expect_error(start_from(42), "must be a statmod fit")
+  expect_error(start_from(sf$full, rest = "intercepts"),
+               "must be a start strategy")
+  # a chain of references would be resolved in some order and the order would
+  # decide the answer
+  expect_error(start_from(sf$full, rest = start_from(sf$full)),
+               "cannot itself be")
+})

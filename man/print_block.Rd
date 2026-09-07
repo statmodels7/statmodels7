@@ -4,12 +4,18 @@
 \alias{print_block}
 \title{Print One Block of a Model Summary}
 \usage{
-print_block(b, digits = 4L, n = NULL)
+print_block(b, digits = 4L, max_coef = NULL, stat = "z")
 }
 \arguments{
 \item{b}{A block record from \code{\link[=summary_blocks]{summary_blocks()}}.}
 
 \item{digits}{Significant digits.}
+
+\item{max_coef}{How many coefficient rows a long block keeps, as
+\code{\link[=block_rows_shown]{block_rows_shown()}} takes it.}
+
+\item{stat}{What to head the statistic column with: \code{"z"} for the estimate
+over its standard error, \code{"r"} for the signed root of a restricted test.}
 }
 \value{
 \code{NULL}, invisibly. Called for the printing.

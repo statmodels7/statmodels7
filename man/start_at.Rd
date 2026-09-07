@@ -29,7 +29,7 @@ scale, ready for the fit to begin from.
 }
 \details{
 Write a method on your own subclass of \code{\link[=start_strategy]{start_strategy()}} to add a
-strategy. The four shipped methods show the range: \code{\link[=start_origin]{start_origin()}} reads
+strategy. The shipped methods show the range: \code{\link[=start_origin]{start_origin()}} reads
 only the design's widths, \code{\link[=start_intercepts]{start_intercepts()}} fits a small model,
 \code{\link[=start_random]{start_random()}} draws from the caller's generator, and \code{\link[=start_search]{start_search()}}
 runs an optimizer over \code{obj}.

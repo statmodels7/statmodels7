@@ -4,7 +4,7 @@
 \alias{print.StatmodSummary}
 \title{Print a Model Summary}
 \usage{
-\method{print}{StatmodSummary}(x, digits = 4L, notes = FALSE, n = NULL, ...)
+\method{print}{StatmodSummary}(x, digits = 4L, notes = FALSE, max_coef = NULL, ...)
 }
 \arguments{
 \item{x}{A \code{\link[=StatmodSummary]{StatmodSummary()}}.}
@@ -17,13 +17,14 @@ state conventions, never facts of the fit, so they read the same
 under every model. They are on the summary's \code{notes} property
 either way.}
 
-\item{n}{How many coefficient rows a block shows, \code{Inf} or \code{NA} for all
-of them. Defaults to the option \code{statmodels7.summary_rows}, and to 10
-where that is unset. A hyperparameter row is shown whatever \code{n} is: it
-governs the coefficients under it, and every one of them is
+\item{max_coef}{How many coefficient rows a block shows, \code{Inf} or \code{NA}
+for all of them. \code{NULL}, the default, reads what \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
+was told; failing that the option \code{statmodels7.summary_max_coef}, and
+failing that 10. A hyperparameter row is shown whatever \code{max_coef} is:
+it governs the coefficients under it, and every one of them is
 conditional on the value it reached. A block short enough to fit in
-twelve rows is never abridged, so raising \code{n} changes nothing for a
-parametric block of ordinary size.}
+twelve rows is never abridged, so raising \code{max_coef} changes nothing
+for a parametric block of ordinary size.}
 
 \item{...}{Unused.}
 }

@@ -6,6 +6,7 @@
 \alias{StartOrigin}
 \alias{StartRandom}
 \alias{StartSearch}
+\alias{StartFrom}
 \title{S7 Classes for the Shipped Strategies}
 \usage{
 StartIntercepts(label = character(0))
@@ -20,6 +21,8 @@ StartRandom(
 )
 
 StartSearch(label = character(0), optimizer = NULL, over = NULL)
+
+StartFrom(label = character(0), fit = NULL, rest = NULL)
 }
 \arguments{
 \item{fn}{The generator a random start draws from, called as \code{fn(n, ...)}.

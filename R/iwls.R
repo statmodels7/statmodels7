@@ -293,6 +293,10 @@ S7::method(print, Iwls) <- print.Iwls
 #'   `"chol_crossprod"`.
 #' @param damp The Levenberg damping \eqn{\lambda}, a single non-negative
 #'   number. `0`, the default, is the plain scoring step.
+#' @param frozen Positions the caller holds at their current values, an
+#'   integer vector. They are dropped from the system exactly as a
+#'   coordinate whose curvature is not finite is, so the step is that of the
+#'   problem reduced to the rest. Empty by default.
 #'
 #' @return A list of four:
 #'   \describe{
@@ -309,8 +313,16 @@ S7::method(print, Iwls) <- print.Iwls
 #'   argument this serves.
 #'
 #' @keywords internal
-iwls_solve <- function(pieces, u, how, damp = 0) {
+iwls_solve <- function(pieces, u, how, damp = 0, frozen = integer(0)) {
   p <- length(u)
+  # A COORDINATE THE CALLER HOLDS is dropped from the solve exactly as a
+  # coordinate whose curvature is gone: the step is that of the REDUCED
+  # problem, which is what a constrained maximization means. Zeroing the
+  # increment after an unconstrained solve would not do -- that gives the
+  # free components of the full step, whose fixed point is not where the
+  # free scores vanish.
+  froz <- logical(p)
+  if (length(frozen)) froz[frozen] <- TRUE
   # sqrt(lambda) I as further rows of the augmented design, which is how a
   # ridge is added there: [R; C; sqrt(lambda) I] has cross-product
   # K + lambda I and the route keeps its conditioning.
@@ -339,12 +351,13 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
   bad_cols <- function(M) !is.finite(as.numeric(Matrix::colSums(abs(M))))
   held <- integer(0)
   if (how %in% c("qr", "svd") && !is.null(pieces$R) && !is.null(pieces$C)) {
-    bad <- !is.finite(u) | bad_cols(pieces$R) | bad_cols(pieces$C)
+    bad <- froz | !is.finite(u) | bad_cols(pieces$R) | bad_cols(pieces$C)
     if (any(bad)) {
       held <- which(bad)
       keep <- which(!bad)
       if (!length(keep)) {
-        return(list(delta = numeric(p), rank = 0L, route = how, held = held))
+        return(list(delta = numeric(p), rank = 0L, route = how, held = held,
+                    dropped = integer(0)))
       }
       out <- augmented_solve(pieces$R[, keep, drop = FALSE],
                              damp_rows(pieces$C[, keep, drop = FALSE],
@@ -354,7 +367,10 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
                                        else pieces$threads)
       d <- numeric(p)
       d[keep] <- out$delta
-      return(list(delta = d, rank = out$rank, route = how, held = held))
+      # the solve ran on the kept columns, so its coordinates are read back
+      # through them before they mean anything to a caller
+      return(list(delta = d, rank = out$rank, route = how, held = held,
+                  dropped = keep[out$dropped]))
     }
     out <- augmented_solve(pieces$R, damp_rows(pieces$C, p), u, how,
                            threads = if (is.null(pieces$threads)) 1L
@@ -373,7 +389,7 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
     # names the coordinate whose own curvature is gone; dropping its row and
     # column then clears the cross terms, and the loop repeats in case the
     # reduced matrix still carries one from another source.
-    bad <- !is.finite(u) | !is.finite(as.numeric(Matrix::diag(A0)))
+    bad <- froz | !is.finite(u) | !is.finite(as.numeric(Matrix::diag(A0)))
     repeat {
       keep <- which(!bad)
       if (!length(keep)) break
@@ -385,17 +401,20 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
       held <- which(bad)
       keep <- which(!bad)
       if (!length(keep)) {
-        return(list(delta = numeric(p), rank = 0L, route = route, held = held))
+        return(list(delta = numeric(p), rank = 0L, route = route, held = held,
+                    dropped = integer(0)))
       }
       A <- pd_repair(A0[keep, keep, drop = FALSE])
       if (is.null(A)) {
-        return(list(delta = numeric(p), rank = 0L, route = route, held = held))
+        return(list(delta = numeric(p), rank = 0L, route = route, held = held,
+                    dropped = integer(0)))
       }
       if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
       ch <- chol(A)
       d <- numeric(p)
       d[keep] <- as.numeric(backsolve(ch, forwardsolve(t(ch), u[keep])))
-      return(list(delta = d, rank = ncol(A), route = route, held = held))
+      return(list(delta = d, rank = ncol(A), route = route, held = held,
+                  dropped = integer(0)))
     }
   }
   A <- pd_repair(A0)
@@ -403,12 +422,15 @@ iwls_solve <- function(pieces, u, how, damp = 0) {
   # the caller reads a zero step as "this iterate is unusable" and keeps the
   # last good one
   if (is.null(A)) {
-    return(list(delta = numeric(p), rank = 0L, route = route, held = held))
+    return(list(delta = numeric(p), rank = 0L, route = route, held = held,
+                dropped = integer(0)))
   }
   if (damp > 0) Matrix::diag(A) <- Matrix::diag(A) + damp
   ch <- chol(A)
+  # a factorization either succeeds or is repaired: it names no coordinate,
+  # so nothing on this route is reported aliased
   list(delta = as.numeric(backsolve(ch, forwardsolve(t(ch), u))),
-       rank = ncol(A), route = route, held = held)
+       rank = ncol(A), route = route, held = held, dropped = integer(0))
 }
 
 
@@ -526,6 +548,14 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   [iwls_solve()] needs, as [iwls_pieces()] builds it.
 #' @param verbose `TRUE` to print one line per iteration: the objective, the
 #'   score, the step length and the route taken.
+#' @param groups A list of integer index vectors, one per equation, in the
+#'   numbering of the coefficients handed in. `NULL` treats them as one
+#'   group, which is right where the whole vector is being fitted.
+#' @param frozen Positions held at their starting values, an integer vector
+#'   in the same numbering. They are dropped from every solve, so the run
+#'   maximizes over the rest, and the stopping rule reads the free
+#'   coordinates alone -- a held coordinate's score is what the constrained
+#'   optimum leaves there and does not vanish.
 #'
 #' @return A list of six:
 #'   \describe{
@@ -545,10 +575,12 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'
 #' @keywords internal
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
-                     groups = NULL) {
+                     groups = NULL, frozen = integer(0)) {
   beta <- start
   value <- obj$fn(beta)
   hist <- list()
+  # a run that stops before its first solve has dropped nothing
+  aliased <- integer(0)
   converged <- FALSE
   it <- 0L
   score <- Inf
@@ -573,29 +605,41 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   }
   for (it in seq_len(as.integer(method@maxit))) {
     g <- obj$gr(beta)
+    # THE VERDICT READS THE FREE COORDINATES. A coordinate the caller holds
+    # keeps whatever score the constrained optimum leaves in its direction --
+    # that score is the quantity a Rao or a Terrell statistic is made of, so
+    # it does not vanish and must not -- and reading it here would report a
+    # perfectly converged constrained fit as still moving.
+    gf <- g
+    if (length(frozen)) gf[frozen] <- 0
     # a step whose OBJECTIVE is finite can still land where the score is not:
     # the line search below checks the value and nothing checked this, so a
     # non-finite gradient reached `if (score < tol)` and stopped the run with
     # "missing value where TRUE/FALSE needed", naming neither the iteration
     # nor the cause. The point is unusable and the last good one is kept.
-    if (!all(is.finite(g))) {
+    if (!all(is.finite(gf))) {
       note <- paste0("the score is not finite at iteration ", it,
                      ", so the run stopped at the last usable point")
       break
     }
-    score <- max(abs(g)) / n
+    score <- max(abs(gf)) / n
     if (verbose) {
       cat(sprintf("  %-5d %14.6f %12.3e %10s\n", it - 1L, value, score,
                   if (it == 1L) "-" else fmt_step(step_used)))
     }
     if (iwls_met(method, list(iter = it - 1L, f_new = value, f_old = f_old,
-                              x_new = beta, x_old = x_old, gradient = g / n,
+                              x_new = beta, x_old = x_old, gradient = gf / n,
                               stationarity = NULL))) {
       converged <- TRUE
       break
     }
     pc <- pieces_at(beta)
-    sol <- iwls_solve(pc, -g, method@decomposition, damp)
+    sol <- iwls_solve(pc, -g, method@decomposition, damp, frozen)
+    # the coordinates the pivot left out, kept from the LAST step taken: a
+    # design deficient at the fitted point was deficient at every point of
+    # the run, the deficiency being a property of the columns and not of
+    # where the coefficients are
+    aliased <- sol$dropped
     delta <- sol$delta
     delta[!is.finite(delta)] <- 0
 
@@ -743,7 +787,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     if (!is.null(note)) cat("  ", note, "\n", sep = "")
   }
   list(par = beta, value = value, converged = converged,
-       iterations = it, score = score, note = note,
+       iterations = it, score = score, note = note, aliased = aliased,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
 }
 

@@ -8,8 +8,9 @@
   object,
   parm = NULL,
   level = 0.95,
-  type = c("bayesian", "frequentist"),
+  type = c("bayesian", "frequentist", "unconditional"),
   readable = TRUE,
+  method = c("wald", "lr", "score", "gradient"),
   ...
 )
 }
@@ -21,7 +22,17 @@
 
 \item{level}{The confidence level.}
 
-\item{type}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+\item{type}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}: \code{"bayesian"}, \code{"frequentist"}
+or \code{"unconditional"}.}
+
+\item{readable}{Whether to report the quantities the model is written in
+-- a term's own parameters under the names its literature gives them --
+rather than the raw coordinates. Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, and
+necessarily \code{FALSE} for the three restricted \code{method}s.}
+
+\item{method}{Which test the interval is the acceptance region of:
+\code{"wald"}, the default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each
+inverted by \code{\link[=statmod_invert]{statmod_invert()}}.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
@@ -30,7 +41,8 @@ A data frame with the parameter, the term, the coefficient, the
 estimate, its standard error and the two limits.
 }
 \description{
-Wald intervals for the coefficients of every distribution parameter.
+Confidence intervals for the coefficients of every distribution parameter,
+by default the Wald ones and otherwise by inverting a likelihood test.
 }
 \details{
 The interval is symmetric about the estimate and needs no mapping back. A
@@ -41,10 +53,48 @@ quantity lives on. What the interval does not do is respect a bound on the
 parameter itself; for that, map an interval for the predictor through the
 inverse link at the covariate values of interest.
 
-The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same two
+The variance comes from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so the same three
 conventions apply, and a coefficient a kinked penalty set to zero has
-\code{NA} in place of an interval.
+\code{NA} in place of an interval. An interval around a penalized term is worth
+asking for as \code{type = "unconditional"}, which does not read the smoothing
+parameter as though it had been known.
 }
+\section{Inverting a test instead}{
+\code{method} chooses which statistic the interval is the acceptance region of.
+The Wald interval is the set of \eqn{b} the Wald statistic does not
+reject, and it is symmetric BY CONSTRUCTION: that statistic is a parabola
+in \eqn{b}, the curvature having been read once at \eqn{\hat\beta}. The
+other three read the likelihood at each \eqn{b} in turn, so their
+intervals follow its own shape and are not symmetric where it is not.
+Measured on a Poisson regression at \eqn{n = 500}, where the likelihood is
+nearly quadratic, the four agree to three decimals; at \eqn{n = 25} with a
+skewed fit the likelihood-ratio interval sits \eqn{0.046} further right
+than the Wald one and the gradient interval \eqn{0.071}.
+
+Each of the three is found by \code{\link[=statmod_invert]{statmod_invert()}}, which brackets from the
+Wald interval and bisects, so one interval is a few dozen restricted
+refits -- measured, about six times one fit of the model. It is therefore
+asked for one coefficient at a time in practice, through \code{parm}, and the
+subsetting happens BEFORE the search rather than after so that nothing is
+paid for that is not reported.
+
+A row the restricted fit is not defined for keeps \code{NA} limits:
+\code{\link[=testable_coords]{testable_coords()}} says which those are -- a coefficient under a KINKED
+penalty, an aliased one, and every coefficient of a model carrying a
+structural term. The estimate and the standard error in such a row are the
+fit's own and stand whatever \code{method} is.
+
+A coefficient under a penalty that is twice differentiable -- a smooth's
+own coordinates, a ridge, a random effect -- is inverted like any other,
+and the interval is the credible one \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} already gives it
+under \code{type = "bayesian"}, conditional on the hyperparameters the fit
+reached. See \code{\link[=statmod_stat]{statmod_stat()}}.
+
+The three restricted methods need \code{readable = FALSE}, since a test is
+about one coefficient and a readable quantity is a function of several at
+once.
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(80))
@@ -52,8 +102,10 @@ dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 confint(fit)
 confint(fit, "sigma")
+confint(fit, "mu:x", method = "lr", readable = FALSE)
 }
 \seealso{
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=summary.StatmodFit]{summary.StatmodFit()}},
+\code{\link[=statmod_invert]{statmod_invert()}} and \code{\link[=statmod_stat]{statmod_stat()}}
 }
 \keyword{internal}

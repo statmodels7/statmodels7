@@ -69,6 +69,47 @@ coef_labels <- function(spec, design) {
 }
 
 
+#' Name the Aliased Coefficients of a Fit
+#'
+#' @description
+#' Turns the coordinates the scoring step's pivot dropped into the labels a
+#' reader sees.
+#'
+#' @details
+#' A design of less than full rank has no estimate for the columns that
+#' repeat information already carried: only combinations are estimable, and
+#' which column is left out is settled by the pivot, exactly as `lm()` and
+#' `glm()` settle it. Those columns come back from the solve as coordinates
+#' of the coefficient vector; here they become the labels
+#' [coef_labels()] gives, so that nothing downstream has to rebuild a design
+#' to say which coefficient is which.
+#'
+#' A coordinate a penalty covers is never among them, and that falls out of
+#' where the test is made rather than being written as a rule: the pivot runs
+#' on the AUGMENTED system, design and penalty factor together, so a column
+#' the design alone does not identify is identified there and is not dropped.
+#' Measured on two identical columns, `ridge(~ 0 + x + v)` fits and splits the
+#' effect evenly between them, at 0.421897 each, with a full variance matrix.
+#'
+#' @param spec A `statmod_spec`.
+#' @param design The design, as [statmod_design()] builds it.
+#' @param idx Integer coordinates of the coefficient vector, as the
+#'   alternation reports them. `NULL` or empty gives `character(0)`.
+#'
+#' @return A character vector of coefficient labels, possibly empty.
+#'
+#' @seealso [coef_labels()], which supplies the names, and [vcov()], which
+#'   holds these coordinates rather than refusing the whole matrix.
+#' @keywords internal
+aliased_labels <- function(spec, design, idx) {
+  if (is.null(idx) || !length(idx)) return(character(0))
+  nm <- rownames(coef_labels(spec, design))
+  idx <- idx[idx >= 1L & idx <= length(nm)]
+  if (!length(idx)) return(character(0))
+  nm[sort(unique(as.integer(idx)))]
+}
+
+
 #' Which Information Matrix a Fit Reports
 #'
 #' @description
@@ -119,7 +160,7 @@ fit_expected <- function(object) {
 #' The variance of the estimated coefficients, over every distribution
 #' parameter's block at once.
 #' @details
-#' **Two matrices, and they differ only when something is penalized.**
+#' **Three matrices, and they differ only when something is penalized.**
 #' Writing \eqn{H} for the information of the log-likelihood and \eqn{S} for
 #' the second derivative of the penalty,
 #' \deqn{V_b = (H + S)^{-1}, \qquad V_f = (H+S)^{-1} H (H+S)^{-1}.}
@@ -130,6 +171,37 @@ fit_expected <- function(object) {
 #' rate. The second is the sampling variance of the penalized estimator at a
 #' fixed penalty, which is smaller and covers less. With no penalty \eqn{S = 0}
 #' and both are \eqn{H^{-1}}.
+#'
+#' **Both of those are conditional on the hyperparameters**, read at the
+#' value the outer search stopped at as though it had been known. It was
+#' estimated from the same data, and the third matrix adds what that costs:
+#' \deqn{V' = V_b + J V_\theta J', \qquad
+#'   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},}
+#' with \eqn{V_\theta} the variance of the estimated hyperparameters on their
+#' own free scale. It is the delta method applied to the map from the
+#' hyperparameter to the penalized mode (Wood, Pya and Safken, 2016), and the
+#' matrix mgcv returns as `unconditional = TRUE`. The correction is positive
+#' semi-definite, so \eqn{V'} is never narrower than \eqn{V_b}; measured on a
+#' univariate smooth it widens the band of the fitted mean by 1.1 per cent on
+#' average and 7.6 per cent at its widest point at \eqn{n = 200}, and by 0.2
+#' and 1.3 per cent at \eqn{n = 2000}. It is where a smoothing parameter is
+#' poorly determined that it matters: the coordinates a penalty compresses
+#' widen by as much as 88 per cent on a fit whose \eqn{\log\lambda} carries a
+#' standard deviation of 2.4, while the unpenalized coordinates beside them
+#' move in the sixth decimal.
+#'
+#' It costs four to five times the matrix it is added to -- 2.7 ms against
+#' 10.6 ms at \eqn{n = 200} and 4.0 against 20.0 at \eqn{n = 2000} -- because
+#' it reads the outer criterion's own curvature, which neither conditional
+#' matrix asks for.
+#'
+#' Where no hyperparameter was estimated by a differentiable criterion there
+#' is nothing to propagate, the correction is exactly zero and `"unconditional"`
+#' returns \eqn{V_b} itself. Where one was estimated and its curvature cannot
+#' be read -- a shared hyperparameter, or one the search left at the edge of
+#' its range -- the conditional matrix is returned WITH A WARNING, since a
+#' reader who asked for the wider matrix and silently received the narrower
+#' one would report the wrong thing. See [hyper_correction()].
 #'
 #' **A coefficient a kinked penalty has set to zero has no row.** At zero
 #' the penalty is not twice differentiable, so \eqn{S} does not exist there and
@@ -153,7 +225,9 @@ fit_expected <- function(object) {
 #' at \eqn{n = 500}. The expensive route is reachable and is not the default.
 #'
 #' @param object A [StatmodFit()].
-#' @param type `"bayesian"` or `"frequentist"`.
+#' @param type `"bayesian"`, `"frequentist"` or `"unconditional"`. The first
+#'   two are conditional on the hyperparameters; the third carries their own
+#'   uncertainty as well.
 #' @param expected Whether the expected information is used. Defaults to
 #'   [fit_expected()]: the expected one where the fit inverted it and the
 #'   family writes it out, the observed Hessian otherwise.
@@ -164,15 +238,30 @@ fit_expected <- function(object) {
 #' @param ... Unused.
 #' @return A square matrix over the stacked coefficients, with dimnames
 #'   `parameter:coefficient`.
-#' @seealso [confint.StatmodFit()], [summary.StatmodFit()]
+#' @references
+#' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
+#' selection for general smooth models. *Journal of the American
+#' Statistical Association*, 111(516), 1548--1563.
+#' @seealso [confint.StatmodFit()], [summary.StatmodFit()],
+#'   [hyper_correction()], which builds the third matrix's correction
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(80))
 #' dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' sqrt(diag(vcov(fit)))
+#'
+#' # With a penalized term the three differ, and the widest is the one that
+#' # does not read the smoothing parameter as known.
+#' ds <- data.frame(x = runif(200))
+#' ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
+#' fs <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+#' vapply(c("frequentist", "bayesian", "unconditional"),
+#'        function(ty) sqrt(diag(vcov(fs, type = ty)))[[1L]], 0)
 #' @keywords internal
-vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
+vcov.StatmodFit <- function(object,
+                            type = c("bayesian", "frequentist",
+                                     "unconditional"),
                             expected = NULL,
                             approx = c("opg", "bartlett", "integrate", "mc"),
                             readable = TRUE,
@@ -219,6 +308,15 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
   keep[lab$kinked & beta == 0] <- FALSE
   frz <- frozen_block(spec, lab)
   keep[frz] <- FALSE
+  # An ALIASED coordinate carries no information of its own and, unlike the
+  # flat directions handled below, which one it is has already been settled
+  # by the pivot that fitted the model. Leaving it in makes the matrix
+  # singular along a direction that is a COMBINATION of two columns, which
+  # nothing can hold: the whole matrix was then refused, losing every
+  # standard error for one that does not exist. Dropping it here reports the
+  # rest and leaves its row and column NA, which is what `vcov()` on an
+  # aliased `lm()` returns.
+  keep[nm %in% object@aliased] <- FALSE
   # a kinked penalty contributes no curvature away from its kink either, and
   # any non-finite entry would be the kink itself reached by a hair
   S <- zap_nonfinite(S)
@@ -264,8 +362,46 @@ vcov.StatmodFit <- function(object, type = c("bayesian", "frequentist"),
     A <- (H + S)[keep_full, keep_full, drop = FALSE]
     Vb <- solve_pd(A, "the penalized information", lb[-flat])
   }
-  V <- if (type == "bayesian") Vb else
-    Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb
+  V <- switch(type,
+    bayesian = Vb,
+    frequentist = Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb,
+    unconditional = {
+      # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at
+      # the value the search stopped at as though it had been known. This
+      # one adds the movement of the mode under them, and it is Vb that is
+      # handed over rather than recomputed so that the two halves of the sum
+      # describe one model -- the same information, the same held
+      # coordinates, the same aliasing.
+      cc <- tryCatch(hyper_correction(spec, design, coef, object@hyper,
+                                      object@methods$outer, Vb,
+                                      keep_full[seq_len(total)], nz),
+                     error = function(e) list(C = NULL, n_hyper = NA_integer_,
+                                              complete = FALSE))
+      if (is.null(cc$C)) {
+        # zero and unavailable are different answers and the caller is told
+        # which: with nothing estimated by a differentiable criterion there
+        # is nothing to propagate and Vb IS the unconditional variance.
+        if (!identical(cc$n_hyper, 0L)) {
+          warning(conditional_condition(paste0(
+            "The hyperparameters' own uncertainty could not be read here, ",
+            "so what\n  is returned is the conditional variance. It is the ",
+            "outer criterion's\n  Hessian that is missing: a shared ",
+            "hyperparameter carries the curvature of\n  another function, ",
+            "and one the search left at the edge of its range carries\n  ",
+            "none of the right sign.")))
+        }
+        Vb
+      } else {
+        if (!isTRUE(cc$complete)) {
+          warning(conditional_condition(paste0(
+            "Some of the hyperparameters' uncertainty could not be read, so ",
+            "the\n  correction is a lower bound: a coordinate whose own ",
+            "curvature carries no\n  variance contributes nothing, and so ",
+            "does a penalty over a structural\n  term's own parameters.")))
+        }
+        Vb + cc$C
+      }
+    })
   # THE JOINT INVERSE IS KEPT WHOLE. Its coefficient block is not the
   # inverse of the coefficient block wherever the two are correlated, which
   # is why the matrix is built jointly; and the structural block is the
@@ -749,6 +885,34 @@ held_condition <- function(msg) {
   structure(class = c("statmod_held_coord", "warning", "condition"),
             list(message = msg, call = NULL))
 }
+
+
+#' The Condition an Unavailable Correction Warns Through
+#'
+#' @description
+#' A classed warning, so a caller can catch the one raised when
+#' `vcov(type = "unconditional")` cannot read the hyperparameters' own
+#' uncertainty and returns the conditional variance instead.
+#'
+#' @details
+#' It carries a class of its own for the same reason the other two do:
+#' [summary.StatmodFit()] calls [vcov.StatmodFit()] more than once, so
+#' without one the same message would reach the reader several times, and
+#' muffling it by position would swallow whatever else was raised on the way.
+#'
+#' @param msg The message.
+#'
+#' @return A condition of class `statmod_conditional_variance`.
+#'
+#' @seealso [hyper_correction()], which decides whether it fires, and
+#'   [vcov.StatmodFit()], which raises it.
+#'
+#' @keywords internal
+conditional_condition <- function(msg) {
+  structure(class = c("statmod_conditional_variance", "warning", "condition"),
+            list(message = msg, call = NULL))
+}
+
 
 #' Which Coefficients Belong to a Block That Is Not a Jacobian
 #'
@@ -1288,10 +1452,103 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 }
 
 
+#' The Coordinates a Fit Does Not Identify, Found After the Fact
+#'
+#' @description
+#' The coordinates a pivoted decomposition of the penalized information at
+#' the mode leaves out, for a fit whose own solve named none.
+#'
+#' @details
+#' Only [iwls()] on a pivoting decomposition reports which column it
+#' dropped, that being a by-product of the solve that fitted the model. An
+#' `optimizers7` method solves nothing by a pivot, and neither do the
+#' `chol`, `svd` and `chol_crossprod` routes, so a design of less than full
+#' rank left every coordinate unnamed and [vcov.StatmodFit()] refused the
+#' whole matrix. The question a pivot answers is asked here instead, on the
+#' matrix `vcov()` inverts anyway, so the two cannot disagree about which
+#' model is being reported.
+#'
+#' The matrix is \eqn{K = H + S}, which is what makes a PENALIZED coordinate
+#' safe without a clause of its own: the penalty's own curvature is in
+#' \eqn{S}, so a column the design alone does not identify is identified in
+#' \eqn{K}, exactly as it is identified in the augmented system the pivoted
+#' route factorizes. Measured on two identical columns under
+#' `ridge(~ 0 + x1 + x3)`, nothing is named.
+#'
+#' \eqn{K} is EQUILIBRATED to a unit diagonal before the pivot runs, which
+#' is the correction [solve_pd()] and the sparse rank test already carry: a
+#' smoothing parameter a criterion sends to 1e15 and a break-point term's
+#' annealed columns both separate the scales without flattening a direction,
+#' and per-direction scaling forgives either. Measured, a coordinate whose
+#' curvature is 1e-14 of its neighbours' is not named.
+#'
+#' A coordinate is a candidate only where its OWN curvature is finite and
+#' positive, which is [boundary_coords()]' rule read once more: a parameter
+#' at its link's clamp makes its whole row non-finite, and a coordinate the
+#' information carries nothing about has an empty one. Neither is an
+#' aliasing. There the estimate stands and only the variance does not, which
+#' is what [uninformative_coords()] handles and why the two must not be
+#' confused: aliasing reports the coefficient itself as missing.
+#'
+#' WHETHER THERE IS ANYTHING TO NAME IS [solve_pd()]'S VERDICT and not a
+#' tolerance of this function's, so a fit whose information inverts is
+#' untouched and the alias can never disagree with the variance reported
+#' beside it. That gate is load-bearing rather than an economy. \eqn{K} is
+#' \eqn{X'X} up to the weights, so it SQUARES the conditioning of the
+#' design, and a pivoted QR read at `dqrdc2`'s own tolerance is therefore
+#' twice as strict here as it is on the augmented system: measured on two
+#' columns made collinear to within 1e-4 -- an ordinary pair of correlated
+#' covariates -- the bare pivot names one of them while `solve_pd()` inverts
+#' the matrix without difficulty, so the column would have been thrown away
+#' for nothing. With the gate, that case is untouched and the naming runs
+#' only where the whole matrix would otherwise have been refused.
+#'
+#' Which coordinate is then named is the pivot's, as it is in
+#' [augmented_solve()]. Measured against that pivot where both speak, the
+#' two agree on a duplicated column under four families and on an
+#' over-parametrized [modelterms7::nl()] term.
+#'
+#' @param K The penalized information at the mode, \eqn{H + S}.
+#'
+#' @return An integer vector of coordinates of the coefficient vector,
+#'   possibly empty.
+#'
+#' @seealso [uninformative_coords()], which holds a coordinate the
+#'   information carries nothing about rather than aliasing it, and
+#'   [augmented_solve()], whose pivot answers the same question during the
+#'   fit.
+#'
+#' @keywords internal
+deficient_coords <- function(K) {
+  K <- tryCatch(as_dense(K), error = function(e) NULL)
+  if (is.null(K) || !is.matrix(K) || ncol(K) < 2L) return(integer(0))
+  d <- diag(K)
+  # by the DIAGONAL and not by the row: one non-finite column would
+  # otherwise make every row non-finite and leave nothing to test, which
+  # is what a first version did on a fit carrying both a clamp and a
+  # duplicated column
+  rest <- which(is.finite(d) & d > 0)
+  if (length(rest) < 2L) return(integer(0))
+  A <- K[rest, rest, drop = FALSE]
+  if (!all(is.finite(A))) return(integer(0))
+  # nothing is named where the matrix inverts: the pivot on K is twice as
+  # strict as the one on the design, K squaring the conditioning, so read
+  # alone it would alias an ordinary pair of correlated covariates
+  inverts <- tryCatch({ solve_pd(A, "the penalized information"); TRUE },
+                      error = function(e) FALSE)
+  if (inverts) return(integer(0))
+  s <- 1 / sqrt(d[rest])
+  q <- tryCatch(qr(A * tcrossprod(s)), error = function(e) NULL)
+  if (is.null(q) || q$rank >= length(rest)) return(integer(0))
+  sort(rest[setdiff(seq_along(rest), q$pivot[seq_len(q$rank)])])
+}
+
+
 #' @title Confidence Intervals for a Fit
 #' @name confint.StatmodFit
 #' @description
-#' Wald intervals for the coefficients of every distribution parameter.
+#' Confidence intervals for the coefficients of every distribution parameter,
+#' by default the Wald ones and otherwise by inverting a likelihood test.
 #' @details
 #' The interval is symmetric about the estimate and needs no mapping back. A
 #' coefficient of a linear predictor is unbounded whatever the distribution
@@ -1301,18 +1558,65 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 #' parameter itself; for that, map an interval for the predictor through the
 #' inverse link at the covariate values of interest.
 #'
-#' The variance comes from [vcov.StatmodFit()], so the same two
+#' The variance comes from [vcov.StatmodFit()], so the same three
 #' conventions apply, and a coefficient a kinked penalty set to zero has
-#' `NA` in place of an interval.
+#' `NA` in place of an interval. An interval around a penalized term is worth
+#' asking for as `type = "unconditional"`, which does not read the smoothing
+#' parameter as though it had been known.
+#'
+#' # Inverting a test instead
+#'
+#' `method` chooses which statistic the interval is the acceptance region of.
+#' The Wald interval is the set of \eqn{b} the Wald statistic does not
+#' reject, and it is symmetric BY CONSTRUCTION: that statistic is a parabola
+#' in \eqn{b}, the curvature having been read once at \eqn{\hat\beta}. The
+#' other three read the likelihood at each \eqn{b} in turn, so their
+#' intervals follow its own shape and are not symmetric where it is not.
+#' Measured on a Poisson regression at \eqn{n = 500}, where the likelihood is
+#' nearly quadratic, the four agree to three decimals; at \eqn{n = 25} with a
+#' skewed fit the likelihood-ratio interval sits \eqn{0.046} further right
+#' than the Wald one and the gradient interval \eqn{0.071}.
+#'
+#' Each of the three is found by [statmod_invert()], which brackets from the
+#' Wald interval and bisects, so one interval is a few dozen restricted
+#' refits -- measured, about six times one fit of the model. It is therefore
+#' asked for one coefficient at a time in practice, through `parm`, and the
+#' subsetting happens BEFORE the search rather than after so that nothing is
+#' paid for that is not reported.
+#'
+#' A row the restricted fit is not defined for keeps `NA` limits:
+#' [testable_coords()] says which those are -- a coefficient under a KINKED
+#' penalty, an aliased one, and every coefficient of a model carrying a
+#' structural term. The estimate and the standard error in such a row are the
+#' fit's own and stand whatever `method` is.
+#'
+#' A coefficient under a penalty that is twice differentiable -- a smooth's
+#' own coordinates, a ridge, a random effect -- is inverted like any other,
+#' and the interval is the credible one [vcov.StatmodFit()] already gives it
+#' under `type = "bayesian"`, conditional on the hyperparameters the fit
+#' reached. See [statmod_stat()].
+#'
+#' The three restricted methods need `readable = FALSE`, since a test is
+#' about one coefficient and a readable quantity is a function of several at
+#' once.
 #' @param object A [StatmodFit()].
 #' @param parm Which coefficients: a distribution parameter's name, a vector of
 #'   `parameter:coefficient` labels, or `NULL` for all of them.
 #' @param level The confidence level.
-#' @param type Passed to [vcov.StatmodFit()].
+#' @param type Passed to [vcov.StatmodFit()]: `"bayesian"`, `"frequentist"`
+#'   or `"unconditional"`.
+#' @param readable Whether to report the quantities the model is written in
+#'   -- a term's own parameters under the names its literature gives them --
+#'   rather than the raw coordinates. Passed to [vcov.StatmodFit()], and
+#'   necessarily `FALSE` for the three restricted `method`s.
+#' @param method Which test the interval is the acceptance region of:
+#'   `"wald"`, the default, or `"lr"`, `"score"` or `"gradient"`, each
+#'   inverted by [statmod_invert()].
 #' @param ... Passed to [vcov.StatmodFit()].
 #' @return A data frame with the parameter, the term, the coefficient, the
 #'   estimate, its standard error and the two limits.
-#' @seealso [vcov.StatmodFit()], [summary.StatmodFit()]
+#' @seealso [vcov.StatmodFit()], [summary.StatmodFit()],
+#'   [statmod_invert()] and [statmod_stat()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(80))
@@ -1320,14 +1624,28 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 #' fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' confint(fit)
 #' confint(fit, "sigma")
+#' confint(fit, "mu:x", method = "lr", readable = FALSE)
 #' @keywords internal
 confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
-                               type = c("bayesian", "frequentist"),
-                               readable = TRUE, ...) {
+                               type = c("bayesian", "frequentist", "unconditional"),
+                               readable = TRUE,
+                               method = c("wald", "lr", "score", "gradient"),
+                               ...) {
   type <- match.arg(type)
+  method <- match.arg(method)
   if (!is.numeric(level) || length(level) != 1L || level <= 0 || level >= 1) {
     stop("'level' must be a single number strictly between 0 and 1.",
          call. = FALSE)
+  }
+  # A TEST IS ABOUT ONE COEFFICIENT and a readable quantity is a function of
+  # several at once, so there is no single coordinate to hold: the request is
+  # refused rather than answered on the coordinates under the other names.
+  if (!identical(method, "wald") && isTRUE(readable)) {
+    stop(sprintf(paste0("method = \"%s\" inverts a test on one coefficient, ",
+                        "so it needs\n  readable = FALSE. The readable ",
+                        "quantities are functions of several\n  ",
+                        "coefficients at once and no single one of them can ",
+                        "be held."), method), call. = FALSE)
   }
   spec <- object@spec
   design <- statmod_design(spec)
@@ -1357,6 +1675,10 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                       coefficient = rj$name, estimate = est, se = se,
                       lower = lo, upper = hi, stringsAsFactors = FALSE)
     rownames(out) <- rownames(V)
+    if (length(object@aliased)) {
+      al <- rownames(out) %in% object@aliased
+      if (any(al)) out$estimate[al] <- NA_real_
+    }
     if (is.null(parm)) return(out)
     keep <- rownames(out) %in% parm | out$parameter %in% parm |
       out$term %in% parm | out$coefficient %in% parm
@@ -1378,19 +1700,82 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
                     lower = est - z * se, upper = est + z * se,
                     stringsAsFactors = FALSE)
   rownames(out) <- rownames(lab)
-  if (is.null(parm)) return(out)
-
-  keep <- rownames(out) %in% parm | out$parameter %in% parm |
-    out$term %in% parm
-  if (!any(keep)) {
-    stop(sprintf(paste0("'parm' matched nothing. It takes a distribution",
-                        " parameter\n  (%s), a term's name, or a label of",
-                        " the form 'parameter:coefficient'."),
-                 paste(spec@distrib@params, collapse = ", ")), call. = FALSE)
+  # an aliased coordinate has no estimate to report, and the zero the solve
+  # left there would read as one: its standard error and its interval are
+  # already missing, the variance matrix having held it
+  if (length(object@aliased)) {
+    al <- rownames(out) %in% object@aliased
+    if (any(al)) out$estimate[al] <- NA_real_
   }
-  out[keep, , drop = FALSE]
+  # THE SUBSET IS TAKEN FIRST where a test is being inverted, because each
+  # row then costs a few dozen restricted refits: filtering afterwards, as
+  # the Wald route can afford to, would pay for every coefficient of the
+  # model to report one of them.
+  if (!is.null(parm)) {
+    keep <- rownames(out) %in% parm | out$parameter %in% parm |
+      out$term %in% parm
+    if (!any(keep)) {
+      stop(sprintf(paste0("'parm' matched nothing. It takes a distribution",
+                          " parameter\n  (%s), a term's name, or a label of",
+                          " the form 'parameter:coefficient'."),
+                   paste(spec@distrib@params, collapse = ", ")), call. = FALSE)
+    }
+    out <- out[keep, , drop = FALSE]
+  }
+  if (!identical(method, "wald")) {
+    out <- invert_rows(object, out, level, method, type)
+  }
+  out
 }
 S7::method(confint, StatmodFit) <- confint.StatmodFit
+
+
+#' Replace a Table's Limits by an Inverted Test
+#'
+#' @description
+#' Runs [statmod_invert()] on each row a restricted fit is defined for and
+#' writes the two limits back, leaving the rest of the table as it was.
+#'
+#' @details
+#' A row the restricted fit cannot hold keeps `NA` limits rather than the
+#' Wald ones it arrived with, so that one column never carries two different
+#' intervals. Which rows those are is [testable_coords()]'s answer, asked
+#' once; where it is none of them the request is refused, a table of nothing
+#' but missing values being a worse answer than the reason for it.
+#'
+#' @param fit A [StatmodFit()].
+#' @param out The table [confint.StatmodFit()] has built, already subset.
+#' @param level The confidence level.
+#' @param method Which test to invert.
+#' @param type Which variance sets the starting bracket.
+#'
+#' @return `out` with its `lower` and `upper` columns replaced.
+#'
+#' @seealso [statmod_invert()], which does the search.
+#'
+#' @keywords internal
+invert_rows <- function(fit, out, level, method, type) {
+  ok <- names(testable_coords(fit))
+  hit <- rownames(out) %in% ok
+  if (!any(hit)) {
+    stop(sprintf(paste0("No coefficient asked for can be held at a value, so",
+                        " method = \"%s\" has\n  nothing to invert. A ",
+                        "coefficient under a kinked penalty, an aliased one",
+                        "\n  and every coefficient of a model carrying a ",
+                        "structural term are all outside it."), method),
+         call. = FALSE)
+  }
+  out$lower <- rep(NA_real_, nrow(out))
+  out$upper <- rep(NA_real_, nrow(out))
+  for (i in which(hit)) {
+    ci <- tryCatch(statmod_invert(fit, out$parameter[[i]],
+                                  out$coefficient[[i]], level, method, type),
+                   error = function(e) c(lower = NA_real_, upper = NA_real_))
+    out$lower[[i]] <- ci[["lower"]]
+    out$upper[[i]] <- ci[["upper"]]
+  }
+  out
+}
 
 
 #' What Kind of Block a Term Reports As
@@ -1537,6 +1922,17 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     elapsed = S7::class_numeric,
     level = S7::class_numeric,
     type = S7::class_character,
+    # which test the statistic column reports. The default is Wald's, which
+    # is the only one read off the unrestricted fit; the other three cost a
+    # refit per row and are reported as a signed root, so the column keeps
+    # one meaning and the header says which.
+    test = S7::new_property(S7::class_character, default = "wald"),
+    # how many coefficient rows a block prints, or NULL where the caller
+    # said nothing and the option decides. It is carried on the object
+    # rather than asked for at print time because an R session prints a
+    # summary by evaluating it, so summary() is the only place a reader
+    # ever passes an argument.
+    max_coef = S7::class_any,
     notes = S7::class_character,
     # the reading of statmod_certificate(), or NULL where it could not be
     # taken. A list rather than columns: its four readings are of different
@@ -1587,6 +1983,28 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' such a point to read a standard error from. One the caller set is marked
 #' fixed.
 #'
+#' **Which test the statistic column reports is `test`'s answer.** By default
+#' it is Wald's, the estimate over its standard error, which is the only one
+#' of the four that needs no refit and is read off the unrestricted fit
+#' alone. The other three -- the likelihood ratio, Rao's score and Terrell's
+#' gradient -- hold the coefficient at the null value and refit, one refit
+#' per row, and are reported as the SIGNED ROOT of their \eqn{\chi^2_1}
+#' statistic with the sign of \eqn{\hat\beta_j - b}, so that the column
+#' carries one kind of quantity whatever was asked for and Wald's own
+#' \eqn{z} is the case where that root is exact. The p-value is the
+#' \eqn{\chi^2_1} one either way, and for Wald the two readings agree
+#' identically.
+#'
+#' Only the statistic and its p-value move with `test`: the interval stays
+#' the Wald one, an inverted interval being some six times the cost of a
+#' statistic per row. [confint.StatmodFit()] takes `method` for that, one
+#' coefficient at a time. A row the restricted fit is not defined for -- a
+#' coefficient under a KINKED penalty, an aliased one, any coefficient of a
+#' model carrying a structural term -- reports `NA` rather than falling back
+#' on Wald's, so the column never carries two tests at once. Every other row
+#' is tested, a smooth's own coordinates and a random effect's among them,
+#' on the penalized objective and with the reading [statmod_stat()] states.
+#'
 #' **What a Wald p-value means here depends on the row**, and the summary
 #' says which is which, in place of printing one column and leaving it at
 #' that.
@@ -1602,7 +2020,14 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #' columns it has. The information criteria are built on that count.
 #' @param object A [StatmodFit()].
 #' @param level The confidence level.
-#' @param type Which variance matrix: passed to [vcov.StatmodFit()].
+#' @param test Which statistic the coefficient tables report: `"wald"`, the
+#'   default, or `"lr"`, `"score"` or `"gradient"`, each of which costs one
+#'   restricted refit per row. See [statmod_stat()].
+#' @param type Which variance matrix: passed to [vcov.StatmodFit()]. The
+#'   `"unconditional"` one carries the hyperparameters' own uncertainty into
+#'   every standard error under it, where `correct` carries the same
+#'   uncertainty into the degrees of freedom; the two are the same quantity
+#'   read on two surfaces and can be asked for together.
 #' @param expected Which information the standard errors are read off, passed
 #'   to [vcov.StatmodFit()]. `NULL`, the default, takes the expected one where
 #'   the fit inverted it and the family writes it out, and the observed
@@ -1616,9 +2041,17 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'   too generous. See [statmod_edf_correction()]. Defaults to
 #'   `FALSE` because it changes a number a reader may be comparing with
 #'   an earlier fit; it is zero where no hyperparameter was estimated.
+#' @param max_coef How many coefficient rows each block of the printed
+#'   summary shows, `Inf` or `NA` for all of them. `NULL`, the default,
+#'   reads the option `statmodels7.summary_max_coef`, and 10 where that is
+#'   unset. A hyperparameter row is never hidden, whatever this is, and a
+#'   block of twelve rows or fewer is never abridged. The value is carried
+#'   on the result, so `summary(fit, max_coef = Inf)` prints in full at the
+#'   console; [print.StatmodSummary()] takes the same argument for an object
+#'   already in hand.
 #' @param ... Passed to [vcov.StatmodFit()].
 #' @return A [StatmodSummary()].
-#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()]
+#' @seealso [vcov.StatmodFit()], [confint.StatmodFit()], [statmod_stat()]
 #' @examples
 #' set.seed(1)
 #' dd <- data.frame(x = runif(120))
@@ -1627,22 +2060,33 @@ StatmodSummary <- S7::new_class("StatmodSummary",
 #'                 distributions7::gaussian1_distrib(), dd))
 #' @keywords internal
 summary.StatmodFit <- function(object, level = 0.95,
-                               type = c("bayesian", "frequentist"),
+                               type = c("bayesian", "frequentist",
+                                        "unconditional"),
                                expected = NULL,
                                approx = c("opg", "bartlett", "integrate", "mc"),
-                               correct = FALSE, ...) {
+                               correct = FALSE,
+                               test = c("wald", "lr", "score", "gradient"),
+                               max_coef = NULL,
+                               ...) {
   type <- match.arg(type)
   approx <- match.arg(approx)
+  test <- match.arg(test)
   # A TERM WHOSE BLOCK IS A WORKING LINEARIZATION says so ONCE, as a note,
   # rather than once per call to vcov() -- of which this function makes more
   # than one. The condition carries a class of its own, so muffling it cannot
-  # swallow another warning raised on the way.
+  # swallow another warning raised on the way. A variance that could not be
+  # made unconditional is caught the same way and for the same reason.
   frozen_msg <- character(0)
   catch_frozen <- function(expr) {
-    withCallingHandlers(expr, statmod_frozen_block = function(cnd) {
-      frozen_msg <<- unique(c(frozen_msg, conditionMessage(cnd)))
-      invokeRestart("muffleWarning")
-    })
+    withCallingHandlers(expr,
+      statmod_frozen_block = function(cnd) {
+        frozen_msg <<- unique(c(frozen_msg, conditionMessage(cnd)))
+        invokeRestart("muffleWarning")
+      },
+      statmod_conditional_variance = function(cnd) {
+        frozen_msg <<- unique(c(frozen_msg, conditionMessage(cnd)))
+        invokeRestart("muffleWarning")
+      })
   }
   # ON THE RAW COORDINATES, both of them. This function does its own reading
   # of what a term is about -- readable_rows() for a design block, the
@@ -1657,6 +2101,13 @@ summary.StatmodFit <- function(object, level = 0.95,
   design <- statmod_design(spec)
   ci$statistic <- ci$estimate / ci$se
   ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
+  test_msg <- character(0)
+  if (!identical(test, "wald")) {
+    rs <- restricted_stat_rows(object, ci, test, type, spec, design)
+    ci$statistic <- rs$statistic
+    ci$p_value <- rs$p_value
+    test_msg <- rs$note
+  }
   lab <- coef_labels(spec, design)
 
   # one variance matrix for every block that needs one: a term reported by
@@ -1672,7 +2123,18 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
-  notes <- c(character(0), frozen_msg,
+  aliased_msg <- if (length(object@aliased)) {
+    sprintf(paste0("%d coefficient%s not estimated: the design carries the",
+                   " same information in\n  other columns, so the pivot that",
+                   " fitted the model left %s out. %s estimate,\n  standard",
+                   " error and interval are reported as missing (%s)."),
+            length(object@aliased),
+            if (length(object@aliased) == 1L) " is" else "s are",
+            if (length(object@aliased) == 1L) "it" else "them",
+            if (length(object@aliased) == 1L) "Its" else "Their",
+            paste(object@aliased, collapse = ", "))
+  } else character(0)
+  notes <- c(character(0), frozen_msg, aliased_msg, test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
   # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
   # qualifies the fit rather than describing it, so it is a note and not a
@@ -1821,10 +2283,92 @@ summary.StatmodFit <- function(object, level = 0.95,
     aic = -2 * object@loglik + 2 * df,
     bic = -2 * object@loglik + log(spec@n_obs) * df,
     converged = object@converged, elapsed = object@elapsed,
-    level = level, type = type, notes = notes,
-    certificate = cert)
+    level = level, type = type, test = test, max_coef = max_coef,
+    notes = notes, certificate = cert)
 }
 S7::method(summary, StatmodFit) <- summary.StatmodFit
+
+
+#' A Table's Statistics From a Restricted Fit
+#'
+#' @description
+#' The likelihood-ratio, score or gradient statistic for each coefficient a
+#' restricted fit can hold, against the null that it is zero, reported as the
+#' signed root of the \eqn{\chi^2_1} value together with that value's
+#' p-value.
+#'
+#' @details
+#' The root carries the sign of the estimate, so the column holds one kind of
+#' quantity whatever produced it and Wald's own \eqn{z} is the case where the
+#' root is exact. The p-value is the \eqn{\chi^2_1} one and is not recomputed
+#' from the root.
+#'
+#' A row [testable_coords()] does not name keeps `NA` in both columns rather
+#' than the Wald reading it arrived with: a column carrying two different
+#' tests, one row apiece and unmarked, is worse than a column with holes in
+#' it.
+#'
+#' @param fit A [StatmodFit()].
+#' @param ci The flat interval table, with the Wald statistic already in it.
+#' @param test Which statistic: `"lr"`, `"score"` or `"gradient"`.
+#' @param type Which variance the Wald bracket reads, passed on.
+#' @param spec,design The specification and its design.
+#'
+#' @return A list with `statistic`, `p_value` and `note`, the last a
+#'   character vector of what the reader has to be told about the column.
+#'
+#' @seealso [statmod_stat()], which computes one of them.
+#'
+#' @keywords internal
+restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
+  ok <- names(testable_coords(fit, spec, design))
+  hit <- rownames(ci) %in% ok
+  st <- rep(NA_real_, nrow(ci))
+  pv <- rep(NA_real_, nrow(ci))
+  bad <- 0L
+  for (i in which(hit)) {
+    s <- tryCatch(statmod_stat(fit, ci$parameter[[i]], ci$coefficient[[i]],
+                               0, test, type),
+                  error = function(e) NULL)
+    if (is.null(s) || !isTRUE(is.finite(s$statistic))) next
+    if (isFALSE(s$converged)) bad <- bad + 1L
+    st[[i]] <- sign(ci$estimate[[i]]) * sqrt(max(s$statistic, 0))
+    pv[[i]] <- s$p.value
+  }
+  nm <- c(lr = "likelihood-ratio", score = "score",
+          gradient = "gradient")[[test]]
+  note <- sprintf(paste0("The statistic is the %s one, the signed root of ",
+                         "its chi-squared value\n  with the sign of the ",
+                         "estimate, and its p-value is that value's. Each ",
+                         "row cost\n  one refit with the coefficient held ",
+                         "at zero, on the penalized objective and\n  at the ",
+                         "hyperparameters the fit reached, so a row under a ",
+                         "penalty carries\n  the same conditional reading ",
+                         "its bayesian standard error does. The\n  ",
+                         "intervals beside it are still Wald's: ",
+                         "confint(method =) inverts this test\n  instead."),
+                 nm)
+  n_no <- sum(!hit)
+  if (n_no) {
+    note <- c(note, sprintf(paste0("%d row%s no statistic: a coefficient ",
+                                   "under a kinked penalty, an aliased one",
+                                   "\n  and every coefficient of a model ",
+                                   "carrying a structural term cannot be ",
+                                   "held at a\n  value, so the %s statistic ",
+                                   "is not defined for %s."),
+                            n_no, if (n_no == 1L) " has" else "s have", nm,
+                            if (n_no == 1L) "it" else "them"))
+  }
+  if (bad) {
+    note <- c(note, sprintf(paste0("%d restricted refit%s not converge, so ",
+                                   "the statistic read off %s is\n  the ",
+                                   "value at wherever that refit stopped ",
+                                   "rather than at a maximum."),
+                            bad, if (bad == 1L) " did" else "s did not",
+                            if (bad == 1L) "it" else "them"))
+  }
+  list(statistic = st, p_value = pv, note = note)
+}
 
 
 #' The Quantities a Penalty's Hyperparameters Are About
@@ -2592,24 +3136,48 @@ smoothed_notes <- function(spec, object) {
 #'   state conventions, never facts of the fit, so they read the same
 #'   under every model. They are on the summary's `notes` property
 #'   either way.
-#' @param n How many coefficient rows a block shows, `Inf` or `NA` for all
-#'   of them. Defaults to the option `statmodels7.summary_rows`, and to 10
-#'   where that is unset. A hyperparameter row is shown whatever `n` is: it
-#'   governs the coefficients under it, and every one of them is
+#' @param max_coef How many coefficient rows a block shows, `Inf` or `NA`
+#'   for all of them. `NULL`, the default, reads what [summary.StatmodFit()]
+#'   was told; failing that the option `statmodels7.summary_max_coef`, and
+#'   failing that 10. A hyperparameter row is shown whatever `max_coef` is:
+#'   it governs the coefficients under it, and every one of them is
 #'   conditional on the value it reached. A block short enough to fit in
-#'   twelve rows is never abridged, so raising `n` changes nothing for a
-#'   parametric block of ordinary size.
+#'   twelve rows is never abridged, so raising `max_coef` changes nothing
+#'   for a parametric block of ordinary size.
 #' @param ... Unused.
 #' @return `x`, invisibly.
 #' @seealso [summary.StatmodFit()]
 #' @keywords internal
 print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
-                                 n = NULL, ...) {
+                                 max_coef = NULL, ...) {
+  # `n` was this argument's name in 0.96.0 and reads as a sample size
+  # everywhere else, so it was renamed. It does NOT reach the dots: `n` is
+  # a prefix of `notes`, so R matches it there, and the old spelling
+  # silently asked for the notes while leaving the row count at its
+  # default -- measured, `print(s, n = 4)` sets `notes` to 4. Reading the
+  # dots would therefore have caught nothing; the type is what catches it.
+  if (!is.logical(notes)) {
+    stop("'notes' must be TRUE or FALSE. If you meant how many\n  ",
+         "coefficients to print, that argument is 'max_coef', and it is\n  ",
+         "on summary() as well: summary(fit, max_coef = Inf).",
+         call. = FALSE)
+  }
+  # what the caller says here wins over what the summary was built with,
+  # which in turn wins over the option: printing an object already in hand
+  # is the more specific request of the two.
+  if (is.null(max_coef)) max_coef <- x@max_coef
   cat("A statmod fit\n\n")
   cat("Call:  ", paste(deparse(x@call), collapse = "\n        "), "\n\n",
       sep = "")
   cat("Distribution: ", x@distrib_name, "     Observations: ", x@n_obs,
       "\n", sep = "")
+
+  # WHAT THE STATISTIC COLUMN HOLDS is named in the header rather than left
+  # to the footer: `z` is the estimate over its standard error and `r` the
+  # signed root of a restricted test, and the two are different quantities
+  # a reader comparing two summaries would otherwise read as one.
+  tst <- if (length(x@test)) x@test[[1L]] else "wald"
+  stat <- if (identical(tst, "wald")) "z" else "r"
 
   for (p in names(x@tables)) {
     lk <- if (p %in% names(x@links)) x@links[[p]] else ""
@@ -2620,10 +3188,12 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
       cat("  (no coefficients)\n")
       next
     }
-    for (b in blocks) print_block(b, digits, n)
+    for (b in blocks) print_block(b, digits, max_coef, stat)
   }
 
-  cat(sprintf("\n%.0f%% intervals, %s variance\n", 100 * x@level, x@type))
+  cat(sprintf("\n%.0f%% intervals, %s variance%s\n", 100 * x@level, x@type,
+              if (identical(tst, "wald")) "" else
+                sprintf(";  %s test, signed root", tst)))
   # WHICH log-likelihood and WHICH degrees of freedom, because the pairing
   # is what makes the criterion mean anything and the two conventions in
   # common use are not comparable. This one is conditional: the likelihood
@@ -2710,12 +3280,13 @@ S7::method(print, StatmodSummary) <- print.StatmodSummary
 #'
 #' @param tb A summary table.
 #' @param digits Significant digits.
+#' @param stat What to head the statistic column with.
 #'
 #' @return A list with `cells`, a character matrix of six columns, and
 #'   `name`, the row labels.
 #'
 #' @keywords internal
-format_block_cells <- function(tb, digits = 4L) {
+format_block_cells <- function(tb, digits = 4L, stat = "z") {
   hyp <- tb$role %in% c("fixed", "estimated")
   fixed <- hyp & !is.finite(tb$se)
   num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
@@ -2727,11 +3298,15 @@ format_block_cells <- function(tb, digits = 4L) {
                format.pval(tb$p_value, digits = digits, eps = 1e-16)),
     lower = num(tb$lower),
     upper = num(tb$upper))
-  out[fixed, c("se", "z", "p", "lower", "upper")] <- ""
+  # the header says which statistic the column holds: `z` is the estimate
+  # over its standard error and `r` the signed root of a restricted test,
+  # and a column headed `z` carrying the second would be a third thing
+  colnames(out)[[3L]] <- stat
+  out[fixed, c("se", stat, "p", "lower", "upper")] <- ""
   # an estimated one that does carry an interval still has no test: the null
   # a z would report on is that the hyperparameter is zero, the edge of its
   # range rather than an interior hypothesis
-  out[hyp & !fixed, c("z", "p")] <- ""
+  out[hyp & !fixed, c(stat, "p")] <- ""
   src <- if (is.null(tb$source)) tb$role else
     ifelse(nzchar(tb$source), tb$source, tb$role)
   nm <- tb$name
@@ -2759,18 +3334,22 @@ format_block_cells <- function(tb, digits = 4L) {
 #' @return An integer vector of row positions.
 #'
 #' @keywords internal
-block_rows_shown <- function(tb, n = NULL, cap = 12L, show = 10L) {
-  if (is.null(n)) n <- getOption("statmodels7.summary_rows", show)
-  if (is.na(n) || !is.finite(n)) return(seq_len(nrow(tb)))
-  n <- max(0L, as.integer(n))
+block_rows_shown <- function(tb, max_coef = NULL, cap = 12L, show = 10L) {
+  if (is.null(max_coef)) {
+    max_coef <- getOption("statmodels7.summary_max_coef", show)
+  }
+  if (is.na(max_coef) || !is.finite(max_coef)) return(seq_len(nrow(tb)))
+  max_coef <- max(0L, as.integer(max_coef))
   # A HYPERPARAMETER ROW IS NEVER HIDDEN. It governs every coefficient under
   # it, and a block that showed ten coefficients and dropped the smoothing
   # parameter that produced them would bury the one number the rest are
   # conditional on.
   hyp <- which(tb$role %in% c("fixed", "estimated"))
   rest <- setdiff(seq_len(nrow(tb)), hyp)
-  if (nrow(tb) <= max(cap, n + length(hyp))) return(seq_len(nrow(tb)))
-  sort(c(hyp, utils::head(rest, n)))
+  if (nrow(tb) <= max(cap, max_coef + length(hyp))) {
+    return(seq_len(nrow(tb)))
+  }
+  sort(c(hyp, utils::head(rest, max_coef)))
 }
 
 #' Print One Block of a Model Summary
@@ -2794,11 +3373,15 @@ block_rows_shown <- function(tb, n = NULL, cap = 12L, show = 10L) {
 #'
 #' @param b A block record from [summary_blocks()].
 #' @param digits Significant digits.
+#' @param max_coef How many coefficient rows a long block keeps, as
+#'   [block_rows_shown()] takes it.
+#' @param stat What to head the statistic column with: `"z"` for the estimate
+#'   over its standard error, `"r"` for the signed root of a restricted test.
 #'
 #' @return `NULL`, invisibly. Called for the printing.
 #'
 #' @keywords internal
-print_block <- function(b, digits = 4L, n = NULL) {
+print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   head <- if (is.na(b$term)) b$label else b$term
   bits <- character(0)
   if (!identical(b$kind, "parametric")) {
@@ -2831,7 +3414,7 @@ print_block <- function(b, digits = 4L, n = NULL) {
                                       tb = cp$table, lines = cp$lines)
   }
   for (i in seq_along(secs)) {
-    keep <- block_rows_shown(secs[[i]]$tb, n)
+    keep <- block_rows_shown(secs[[i]]$tb, max_coef)
     secs[[i]]$hidden <- nrow(secs[[i]]$tb) - length(keep)
     secs[[i]]$tb <- secs[[i]]$tb[keep, , drop = FALSE]
   }
@@ -2844,7 +3427,7 @@ print_block <- function(b, digits = 4L, n = NULL) {
   # padded to the same widths as the table above it and the columns line up
   # down the block rather than restarting at every section
   fm <- format_block_cells(do.call(rbind, lapply(secs, function(z) z$tb)),
-                           digits)
+                           digits, stat)
   used <- apply(fm$cells, 2L, function(z) any(nzchar(z)))
   used[[1L]] <- TRUE
   fm$cells <- fm$cells[, used, drop = FALSE]

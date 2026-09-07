@@ -15,6 +15,7 @@ StatmodFit(
   edf = NULL,
   fitted = list(),
   converged = logical(0),
+  aliased = character(0),
   elapsed = integer(0),
   criterion = integer(0),
   history = list(),
@@ -47,6 +48,15 @@ distribution parameter.}
 
 \item{converged}{A single logical: whether every loop stopped on its own
 rule.}
+
+\item{aliased}{The labels of the coefficients the design does not
+identify, which the pivot that fitted the model left out, as
+\code{\link[=coef_labels]{coef_labels()}} names them. Empty where the design is of full rank.
+Their estimate, standard error and interval are reported as missing, and
+they are not counted among the degrees of freedom; the stored
+coefficient is left WHERE IT WAS, the pivot dropping the coordinate from
+the increment rather than from the parameter, so every predictor reads
+the vector as before.}
 
 \item{elapsed}{The elapsed time in seconds.}
 

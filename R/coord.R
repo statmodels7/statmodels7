@@ -99,6 +99,21 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   d <- design[[p]]
   th <- as.list(hyper[[p]][[block$term]])
   cols <- block$cols
+  # A HOLD CANNOT BE HONOURED HERE, AND MUST NOT BE IGNORED. This loop
+  # updates one coordinate at a time from the running residual and never
+  # reads `held_coef`, so a coefficient held inside a kinked block would be
+  # moved by the sweep without a word -- measured, held at 3 and returned at
+  # 2.7348. `statmod_restrict()` refuses such a coordinate before it reaches
+  # here; this is what stops that refusal from being the only guard, and it
+  # costs one property read where nothing is held.
+  hf <- held_positions(spec, design, obj, beta)
+  if (length(hf$where) && length(intersect(hf$where, block$index))) {
+    stop(sprintf(paste0("A coefficient of '%s' is held at a value, and a ",
+                        "kinked penalty is\n  fitted by a coordinate ",
+                        "descent, which updates every coordinate of its ",
+                        "own\n  block and cannot leave one where it was."),
+                 block$term), call. = FALSE)
+  }
   # The block is kept in whatever storage it arrived in. A coordinate
   # descent reads one column at a time, so a compressed-column matrix is the
   # storage the method wants rather than one it tolerates, and the kernel

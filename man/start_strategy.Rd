@@ -38,7 +38,7 @@ That method receives the specification, the design and the objective, and
 returns one vector per distribution parameter.
 }
 \examples{
-# The four shipped strategies all inherit from this.
+# Every shipped strategy inherits from this.
 S7::S7_inherits(start_origin(), start_strategy)
 S7::S7_inherits(start_search(), start_strategy)
 
@@ -53,6 +53,7 @@ try(start_strategy("my own"))
 }
 \seealso{
 \code{\link[=start_intercepts]{start_intercepts()}} (the default), \code{\link[=start_origin]{start_origin()}},
-\code{\link[=start_random]{start_random()}} and \code{\link[=start_search]{start_search()}} for the four shipped strategies,
+\code{\link[=start_random]{start_random()}}, \code{\link[=start_search]{start_search()}} and \code{\link[=start_from]{start_from()}} for the five
+shipped strategies,
 \code{\link[=start_at]{start_at()}} for the generic they implement.
 }

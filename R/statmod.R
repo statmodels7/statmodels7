@@ -29,6 +29,14 @@ NULL
 #'   distribution parameter.
 #' @param converged A single logical: whether every loop stopped on its own
 #'   rule.
+#' @param aliased The labels of the coefficients the design does not
+#'   identify, which the pivot that fitted the model left out, as
+#'   [coef_labels()] names them. Empty where the design is of full rank.
+#'   Their estimate, standard error and interval are reported as missing, and
+#'   they are not counted among the degrees of freedom; the stored
+#'   coefficient is left WHERE IT WAS, the pivot dropping the coordinate from
+#'   the increment rather than from the parameter, so every predictor reads
+#'   the vector as before.
 #' @param elapsed The elapsed time in seconds.
 #' @param criterion The marginal criterion at the estimated hyperparameters,
 #'   `NA` when no criterion ran.
@@ -71,6 +79,7 @@ StatmodFit <- S7::new_class("StatmodFit",
     edf = S7::class_any,
     fitted = S7::class_list,
     converged = S7::class_logical,
+    aliased = S7::class_character,
     elapsed = S7::class_numeric,
     criterion = S7::class_numeric,
     history = S7::class_list,
@@ -206,7 +215,8 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' @param outer_optimizer The optimizer that searches over them, or
 #'   `NULL` to let the availability of the exact gradient decide.
 #' @param start Where the fit begins: a named list of coefficients, a
-#'   [start_strategy()] such as [start_search()], or
+#'   [start_strategy()] such as [start_search()] or [start_from()], which
+#'   takes the estimates of a model already fitted, or
 #'   `NULL` for [start_intercepts()]. A strategy is asked once,
 #'   before the alternation between the coefficients and the hyperparameters
 #'   begins, which is why a global search belongs here instead of in
@@ -449,9 +459,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                           res$par, expected, approx, maxit, tol, vb),
         error = function(e) NULL)
       if (!is.null(ro) && is.finite(ro$value)) {
-        res[c("par", "value", "converged", "obj",
+        res[c("par", "value", "converged", "obj", "aliased",
               "hist_blocks", "hist_inner")] <-
-          ro[c("par", "value", "converged", "obj",
+          ro[c("par", "value", "converged", "obj", "aliased",
                "hist_blocks", "hist_inner")]
       }
     }
@@ -468,6 +478,21 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 
   coef <- res$obj$split(res$par)
   fitted <- statmod_eta(spec, design, coef)$theta
+  # WHICH COLUMNS THE MODEL DOES NOT IDENTIFY, from the pivot that fitted it
+  # where there was one and from the information at the mode otherwise. Only
+  # iwls() on a pivoting decomposition reports a dropped column, so an
+  # optimizers7 method and the chol/svd/chol_crossprod routes left a
+  # rank-deficient design entirely unnamed and vcov() refused the whole
+  # matrix. Measured, the after-the-fact test names the SAME coordinate the
+  # pivot names wherever both speak, and costs 0.26 to 0.56 per cent of a
+  # realistic fit -- 3.02 per cent, or 1.2 ms, of the cheapest one there is.
+  alias <- res$aliased
+  if (!length(alias)) {
+    alias <- tryCatch(
+      deficient_coords(statmod_penalized_at(spec, coef, design, hyper,
+                                            expected, approx)),
+      error = function(e) integer(0))
+  }
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
   spec <- statmod_fitted_spec(spec, coef, design)
@@ -476,8 +501,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     structural = statmod_structural_par(spec, design), hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = res$value,
-    edf = statmod_edf(spec, coef, design, hyper, expected, approx),
+    edf = statmod_edf(spec, coef, design, hyper, expected, approx,
+                      alias),
     fitted = fitted, converged = res$converged,
+    aliased = aliased_labels(spec, design, alias),
     elapsed = proc.time()[["elapsed"]] - t0,
     criterion = crit,
     history = list(
@@ -574,6 +601,10 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   value <- obj$fn(beta)
   hist_blocks <- list()
   hist_inner <- list()
+  # the coordinates the scoring step's pivot left out, accumulated over the
+  # passes: a column aliased in one pass is aliased in all of them, the
+  # deficiency being a property of the design
+  aliased <- integer(0)
   converged <- FALSE
   smooth_ok <- TRUE
   smooth_note <- NULL
@@ -652,6 +683,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       value <- res$value
       smooth_ok <- isTRUE(res$converged)
       smooth_note <- res$note
+      aliased <- union(aliased, res$aliased)
       hist_blocks[[length(hist_blocks) + 1L]] <- data.frame(
         pass = pass, block = if (has_frozen) "working" else "smooth",
         objective = value,
@@ -775,7 +807,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     }
   }
   list(par = beta, value = value, converged = converged, obj = obj,
-       note = smooth_note,
+       note = smooth_note, aliased = sort(as.integer(aliased)),
        hist_blocks = hist_blocks, hist_inner = hist_inner)
 }
 
@@ -949,6 +981,18 @@ criterion_tol <- function(crit) {
 #' @keywords internal
 fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   whole <- length(idx) == length(beta)
+  # A HELD COEFFICIENT IS WRITTEN IN HERE and not merely started from: the
+  # constraint is a property of the fit and not of whoever supplied the
+  # starting values, so it is enforced wherever the block is solved.
+  hf <- held_positions(spec, design, obj, beta)
+  if (length(hf$where)) {
+    beta[hf$where] <- hf$value
+    if (!S7::S7_inherits(method, Iwls)) {
+      stop("A coefficient held at a value needs iwls(): an optimizers7 ",
+           "method solves\n  the whole system and has no way to drop a ",
+           "coordinate from it.", call. = FALSE)
+    }
+  }
   fn <- function(b) {
     v <- beta
     v[idx] <- b
@@ -994,19 +1038,74 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     gfull <- obj$split(seq_along(beta))
     groups <- lapply(gfull, function(ix) match(intersect(ix, idx), idx))
     groups <- Filter(length, groups)
+    frozen <- match(intersect(hf$where, idx), idx)
     res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
-                    verbose = vb$inner, groups = groups)
+                    verbose = vb$inner, groups = groups, frozen = frozen)
     out <- beta
     out[idx] <- res$par
+    # the block was solved in its own numbering, so the aliased coordinates
+    # are carried back to the fit's before anything outside reads them
     return(list(par = out, value = obj$fn(out), converged = res$converged,
-                iterations = res$iterations, history = res$history))
+                iterations = res$iterations, history = res$history,
+                aliased = idx[res$aliased]))
   }
 
+  # an optimizers7 method solves nothing by a pivot and names no coordinate
   res <- optimizers7::minimize(method, fn, beta[idx], gr = gr, he = he)
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
-       iterations = res@iterations, history = NULL)
+       iterations = res@iterations, history = NULL, aliased = integer(0))
+}
+
+
+#' Where a Specification's Held Coefficients Sit in the Stacked Vector
+#'
+#' @description
+#' Translates `spec@held_coef`, which names coefficients, into positions in
+#' the stacked coefficient vector the objective works on, with the values
+#' beside them.
+#'
+#' @details
+#' A hold is written by name because a name is what a caller can say and a
+#' position is not: the design's column order is the formula's business, and
+#' a term added to an equation moves every coordinate after it. The
+#' translation is the objective's own split of the stacked vector, so the
+#' answer is in the numbering every consumer of that vector already uses.
+#'
+#' A name that matches no coefficient of its equation is an error rather than
+#' a hold nothing enforces, which is what a silent `NA` would have been.
+#'
+#' @param spec A [StatmodSpec()], read for `held_coef`.
+#' @param design Its design, read for each equation's coefficient names.
+#' @param obj The objective, read for its split of the stacked vector.
+#' @param beta The stacked coefficients, read for their length alone.
+#'
+#' @return A list of two numeric vectors of equal length, `where` (integer
+#'   positions) and `value`. Both are empty where nothing is held.
+#'
+#' @seealso [fit_smooth()], which enforces the hold.
+#'
+#' @keywords internal
+held_positions <- function(spec, design, obj, beta) {
+  hc <- spec@held_coef
+  if (!length(hc)) return(list(where = integer(0), value = numeric(0)))
+  pos <- obj$split(seq_along(beta))
+  where <- integer(0)
+  value <- numeric(0)
+  for (p in names(hc)) {
+    v <- hc[[p]]
+    if (!length(v) || is.null(design[[p]])) next
+    j <- match(names(v), design[[p]]$coef_names)
+    if (anyNA(j)) {
+      stop(sprintf("'%s' names no coefficient of the '%s' equation.",
+                   paste(names(v)[is.na(j)], collapse = ", "), p),
+           call. = FALSE)
+    }
+    where <- c(where, pos[[p]][j])
+    value <- c(value, as.numeric(v))
+  }
+  list(where = where, value = value)
 }
 
 
@@ -1337,6 +1436,44 @@ statmod_intercepts <- function(spec) {
 }
 
 
+#' The Penalized Information at a Point
+#'
+#' @description
+#' \eqn{H + S}, dense, with the penalty's non-finite entries zeroed.
+#'
+#' @details
+#' The matrix a penalized fit's curvature is read from: the model's
+#' information from [statmod_information_at()] and the penalty's Hessian
+#' from [statmod_penalty_at()]. It is written once because three readers
+#' want the same matrix at the same point and must not disagree about it --
+#' [statmod_edf()]'s smoother, [vcov.StatmodFit()]'s variance and
+#' [deficient_coords()]'s rank test.
+#'
+#' A kinked penalty contributes no curvature away from its kink, and any
+#' non-finite entry would be the kink itself reached by a hair, so the
+#' penalty passes through [zap_nonfinite()] as it does everywhere else.
+#'
+#' @param spec The specification.
+#' @param coef A named list of coefficients, one vector per distribution
+#'   parameter.
+#' @param design The design.
+#' @param hyper The hyperparameters.
+#' @param expected Whether the expected information is used.
+#' @param approx How the expected information is approximated.
+#'
+#' @return A dense symmetric matrix over the coefficients of every equation.
+#'
+#' @seealso [statmod_information_at()], [statmod_penalty_at()]
+#'
+#' @keywords internal
+statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
+                                 approx = "opg") {
+  H <- statmod_information_at(spec, coef, design, expected, approx)
+  S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
+  as_dense(H + S)
+}
+
+
 #' Effective Degrees of Freedom, Per Term
 #'
 #' @description
@@ -1374,7 +1511,7 @@ statmod_intercepts <- function(spec) {
 #'
 #' @keywords internal
 statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
-                        approx = "opg") {
+                        approx = "opg", aliased = integer(0)) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -1434,7 +1571,13 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
         st <- statmod_structural_state(design)
         as.numeric(length(setdiff(zn, st$held[[nm]])))
       } else if (!length(ent) && is.null(smoother)) {
-        as.numeric(length(cols))
+        # An ALIASED column is not a parameter the fit spent: the pivot left
+        # it out and its coefficient is reported as missing, so counting it
+        # here would put one degree of freedom too many into every criterion
+        # built on the total. Measured on a design with one duplicated
+        # column, the count read 5 where glm's rank plus the scale is 4.
+        as.numeric(length(cols) -
+                     sum((offs[a] + cols) %in% aliased))
       } else if (!length(ent)) {
         # An unpenalized block is not automatically worth one per column
         # either: coupled to a penalized one it takes whatever share of the

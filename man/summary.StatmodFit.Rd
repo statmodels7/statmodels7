@@ -7,10 +7,12 @@
 \method{summary}{StatmodFit}(
   object,
   level = 0.95,
-  type = c("bayesian", "frequentist"),
+  type = c("bayesian", "frequentist", "unconditional"),
   expected = NULL,
   approx = c("opg", "bartlett", "integrate", "mc"),
   correct = FALSE,
+  test = c("wald", "lr", "score", "gradient"),
+  max_coef = NULL,
   ...
 )
 }
@@ -19,7 +21,11 @@
 
 \item{level}{The confidence level.}
 
-\item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
+\item{type}{Which variance matrix: passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. The
+\code{"unconditional"} one carries the hyperparameters' own uncertainty into
+every standard error under it, where \code{correct} carries the same
+uncertainty into the degrees of freedom; the two are the same quantity
+read on two surfaces and can be asked for together.}
 
 \item{expected}{Which information the standard errors are read off, passed
 to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}. \code{NULL}, the default, takes the expected one where
@@ -36,6 +42,19 @@ and they were chosen from the same data, so a criterion built on it is
 too generous. See \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}. Defaults to
 \code{FALSE} because it changes a number a reader may be comparing with
 an earlier fit; it is zero where no hyperparameter was estimated.}
+
+\item{test}{Which statistic the coefficient tables report: \code{"wald"}, the
+default, or \code{"lr"}, \code{"score"} or \code{"gradient"}, each of which costs one
+restricted refit per row. See \code{\link[=statmod_stat]{statmod_stat()}}.}
+
+\item{max_coef}{How many coefficient rows each block of the printed
+summary shows, \code{Inf} or \code{NA} for all of them. \code{NULL}, the default,
+reads the option \code{statmodels7.summary_max_coef}, and 10 where that is
+unset. A hyperparameter row is never hidden, whatever this is, and a
+block of twelve rows or fewer is never abridged. The value is carried
+on the result, so \code{summary(fit, max_coef = Inf)} prints in full at the
+console; \code{\link[=print.StatmodSummary]{print.StatmodSummary()}} takes the same argument for an object
+already in hand.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.}
 }
@@ -82,6 +101,28 @@ criterion and leaves the remaining columns empty: there is no curvature at
 such a point to read a standard error from. One the caller set is marked
 fixed.
 
+\strong{Which test the statistic column reports is \code{test}'s answer.} By default
+it is Wald's, the estimate over its standard error, which is the only one
+of the four that needs no refit and is read off the unrestricted fit
+alone. The other three -- the likelihood ratio, Rao's score and Terrell's
+gradient -- hold the coefficient at the null value and refit, one refit
+per row, and are reported as the SIGNED ROOT of their \eqn{\chi^2_1}
+statistic with the sign of \eqn{\hat\beta_j - b}, so that the column
+carries one kind of quantity whatever was asked for and Wald's own
+\eqn{z} is the case where that root is exact. The p-value is the
+\eqn{\chi^2_1} one either way, and for Wald the two readings agree
+identically.
+
+Only the statistic and its p-value move with \code{test}: the interval stays
+the Wald one, an inverted interval being some six times the cost of a
+statistic per row. \code{\link[=confint.StatmodFit]{confint.StatmodFit()}} takes \code{method} for that, one
+coefficient at a time. A row the restricted fit is not defined for -- a
+coefficient under a KINKED penalty, an aliased one, any coefficient of a
+model carrying a structural term -- reports \code{NA} rather than falling back
+on Wald's, so the column never carries two tests at once. Every other row
+is tested, a smooth's own coordinates and a random effect's among them,
+on the penalized objective and with the reading \code{\link[=statmod_stat]{statmod_stat()}} states.
+
 \strong{What a Wald p-value means here depends on the row}, and the summary
 says which is which, in place of printing one column and leaving it at
 that.
@@ -104,6 +145,6 @@ summary(statmod(y ~ x | sigma ~ x,
                 distributions7::gaussian1_distrib(), dd))
 }
 \seealso{
-\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, \code{\link[=confint.StatmodFit]{confint.StatmodFit()}}, \code{\link[=statmod_stat]{statmod_stat()}}
 }
 \keyword{internal}

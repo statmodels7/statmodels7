@@ -204,15 +204,25 @@ test_that("a smoothing parameter at 1e15 is scale separation, not singularity", 
   expect_lt(e$edf[startsWith(e$term, "s(")], 1.6)
   out <- capture.output(print(summary(fit)))
   expect_true(any(grepl("estimated", out)))
+})
 
-  # and the refusal still refuses what it exists for: a genuinely flat
-  # direction, two columns carrying the same information
+
+test_that("a genuinely flat direction is named rather than refused", {
+  # This lived at the end of the block above, BEHIND ITS skip_if, so on a
+  # machine where the criterion does not reach the separation regime it
+  # never ran -- and it asserted a refusal that stopped being the behaviour.
+  # It stands on its own now, and asserts what happens instead: the column
+  # is named and the rest of the matrix is reported.
   set.seed(1)
   dd <- data.frame(x = runif(60))
   dd$x2 <- dd$x
   dd$y <- 1 + dd$x + rnorm(60, 0.2)
   f2 <- statmod(y ~ x + x2, distributions7::gaussian1_distrib(), dd)
-  expect_error(vcov(f2), "not positive definite")
+  expect_identical(f2@aliased, "mu:x2")
+  V <- expect_silent(vcov(f2))
+  expect_true(is.na(V["mu:x2", "mu:x2"]))
+  expect_false(anyNA(diag(V)[c("mu:(Intercept)", "mu:x")]))
+  expect_true(is.na(coef(f2)$mu[["x2"]]))
 })
 
 test_that("the condition estimate stands in for the smallest eigenvalue", {

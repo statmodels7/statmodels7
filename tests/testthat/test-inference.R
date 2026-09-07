@@ -226,14 +226,29 @@ test_that("a selection lists the survivors and counts the zeros", {
 })
 
 test_that("a fit whose information is singular says so rather than guessing", {
-  # two identical columns: the data does not identify their difference, and a
-  # pseudo-inverse would report a standard error for a direction it cannot see
+  # Two identical columns: the data does not identify their difference, and a
+  # pseudo-inverse would report a standard error for a direction it cannot
+  # see. The fit ALIASES one of them, as lm() and glm() do -- the model
+  # estimated is then the one without that column, and the variance reported
+  # is that model's. Which column it is comes from the pivot that fitted the
+  # model where there was one, and from deficient_coords() otherwise, so a
+  # decomposition that does not pivot reaches the same answer by a route
+  # that shares no arithmetic with it.
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2), sigma = log(0.4)))$data
   sim$xcopy <- sim$x
-  expect_error(
-    vcov(statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim)),
-    "not positive definite")
+  f <- statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim)
+  expect_identical(f@aliased, "mu:xcopy")
+  V <- vcov(f)
+  expect_true(is.na(V["mu:xcopy", "mu:xcopy"]))
+  expect_false(anyNA(diag(V)[c("mu:(Intercept)", "mu:x")]))
+  expect_true(is.na(coef(f)$mu[["xcopy"]]))
+
+  fc <- statmod(y ~ x + xcopy, distributions7::gaussian1_distrib(), sim,
+                inner_optimizer = iwls(decomposition = "chol"))
+  expect_identical(fc@aliased, "mu:xcopy")
+  expect_equal(sqrt(diag(vcov(fc)))[c("mu:(Intercept)", "mu:x")],
+               sqrt(diag(V))[c("mu:(Intercept)", "mu:x")], tolerance = 1e-5)
 })
 
 
@@ -626,6 +641,71 @@ test_that("a long block is cut and says how much it hid", {
   expect_output(print_block(b), "29 more, in coef()", fixed = TRUE)
 })
 
+
+test_that("how many coefficients print is asked of summary(), not print()", {
+  # AN R SESSION PRINTS A SUMMARY BY EVALUATING IT, so a caller writes
+  # summary(fit, ...) and never print(summary(fit), ...). The argument is
+  # therefore taken by summary(), carried on the object, and read at print
+  # time; print() still takes it for an object already in hand.
+  set.seed(1)
+  n <- 300L
+  d <- data.frame(g = factor(sample(30L, n, replace = TRUE)))
+  d$y <- stats::rnorm(n, stats::model.matrix(~ 0 + g, d) %*%
+                        stats::rnorm(30L, 0, 0.6), 1)
+  fit <- statmod(y ~ 0 + g, distributions7::gaussian1_distrib(), d)
+  shown <- function(o) sum(grepl("^  g[0-9]", o))
+
+  base <- utils::capture.output(print(summary(fit)))
+  expect_identical(shown(base), 10L)
+  expect_true(any(grepl("more, in coef", base, fixed = TRUE)))
+
+  ## the whole point: it reaches the table through summary()
+  full <- utils::capture.output(print(summary(fit, max_coef = Inf)))
+  expect_identical(shown(full), 30L)
+  expect_false(any(grepl("more, in coef", full, fixed = TRUE)))
+  expect_identical(
+    shown(utils::capture.output(print(summary(fit, max_coef = 3)))), 3L)
+
+  ## and print() overrides what the object was built with, being the more
+  ## specific request of the two
+  s <- summary(fit, max_coef = 3)
+  expect_identical(shown(utils::capture.output(print(s, max_coef = Inf))),
+                   30L)
+
+  ## the option decides only where neither said anything
+  old <- options(statmodels7.summary_max_coef = 5)
+  on.exit(options(old), add = TRUE)
+  expect_identical(shown(utils::capture.output(print(summary(fit)))), 5L)
+  ## an explicit value still beats it
+  expect_identical(
+    shown(utils::capture.output(print(summary(fit, max_coef = 8)))), 8L)
+})
+
+
+test_that("the argument's old name is refused rather than ignored", {
+  # `n` was this argument's name in 0.96.0, and it does NOT reach the dots:
+  # it is a prefix of `notes`, so R matches it there and the old spelling
+  # silently asked for the notes while printing ten rows. Measured, in a
+  # function with these formals `n = 4` sets `notes` to 4:
+  probe <- function(x, digits = 4L, notes = FALSE, max_coef = NULL, ...) {
+    list(notes = notes, dots = ...names())
+  }
+  expect_identical(probe(1, n = 4)$notes, 4)
+  ## nothing reached the dots: `...names()` answers NULL where they are
+  ## empty, so the property is the length and not the type
+  expect_length(probe(1, n = 4)$dots, 0L)
+
+  set.seed(2)
+  d <- data.frame(x = stats::runif(60))
+  d$y <- stats::rnorm(60, d$x)
+  s <- summary(statmod(y ~ x, distributions7::gaussian1_distrib(), d))
+  expect_error(print(s, n = 4), "that argument is 'max_coef'", fixed = TRUE)
+  ## and the two controls: a legitimate `notes` still prints, and with
+  ## nothing named the summary is unchanged
+  expect_output(print(s, notes = TRUE), "(Intercept)", fixed = TRUE)
+  expect_output(print(s), "(Intercept)", fixed = TRUE)
+})
+
 test_that("the prefix a term repeats on every row is dropped for printing", {
   expect_identical(drop_common_prefix(c("seg.beta", "seg.gamma1")),
                    c("beta", "gamma1"))
@@ -726,4 +806,138 @@ test_that("a structural term with no development is one flat block", {
   expect_length(b$components, 0L)
   expect_null(b$head)
   expect_identical(b$table$name, c("omega", "alpha1", "beta1"))
+})
+
+
+# --- the third variance: the hyperparameters' own uncertainty ------------
+
+# One fit serves every test below: a smooth whose smoothing parameter is
+# estimated by REML, which is where the correction is defined at all.
+smooth_fit <- local({
+  set.seed(20)
+  d <- data.frame(x = stats::runif(300))
+  d$y <- sin(2 * pi * d$x) + 0.4 * d$x + stats::rnorm(300, sd = 0.3)
+  list(data = d,
+       fit = statmod(y ~ s(x, k = 15), distributions7::gaussian1_distrib(),
+                     d, outer_criterion = reml()))
+})
+
+test_that("the unconditional variance adds a positive semi-definite term", {
+  fit <- smooth_fit$fit
+  Vb <- vcov(fit, readable = FALSE)
+  Vu <- vcov(fit, type = "unconditional", readable = FALSE)
+  Vf <- vcov(fit, type = "frequentist", readable = FALSE)
+
+  # J V_theta J' is a congruence of a variance and cannot be indefinite; the
+  # eigenvalue is asked against the matrix's own scale rather than against 0,
+  # a null direction landing either side of it by rounding
+  ev <- eigen(Vu - Vb, symmetric = TRUE)$values
+  expect_gt(min(ev), -1e-8 * max(ev))
+
+  # so the three orderings hold on every coordinate: the frequentist one is
+  # the narrowest, the unconditional one the widest
+  expect_true(all(diag(Vf) <= diag(Vb) * (1 + 1e-10)))
+  expect_true(all(diag(Vb) <= diag(Vu) * (1 + 1e-10)))
+  expect_gt(max(sqrt(diag(Vu) / diag(Vb))), 1.01)
+})
+
+test_that("the correction is what the edf correction contracts", {
+  # The same quantity read on two surfaces: summary(correct = TRUE) adds
+  # tr(J V_theta J' H) to the parameter count, and this is that matrix. The
+  # two routes share hyper_mode_cross() and nothing else -- one inverts on
+  # the kept coordinates through solve_pd(), the other on all of them
+  # through solve() -- so their agreeing says the mapping is right.
+  fit <- smooth_fit$fit
+  design <- statmod_design(fit@spec)
+  C <- vcov(fit, type = "unconditional", readable = FALSE) -
+    vcov(fit, readable = FALSE)
+  H <- statmod_information_at(fit@spec, fit@coefficients, design,
+                              fit_expected(fit), "opg")
+  want <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper,
+                                 design, fit@methods$outer)$total
+  expect_gt(want, 0)
+  expect_equal(sum(C * t(as.matrix(H))), want, tolerance = 1e-8)
+})
+
+test_that("with nothing estimated the third matrix IS the bayesian one", {
+  # not "agrees to a tolerance": with no hyperparameter estimated by a
+  # differentiable criterion there is nothing to propagate, and a correction
+  # that came out small but non-zero would be arithmetic nobody asked for
+  sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                  par = list(mu = c(1, 2), sigma = log(0.4)))$data
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  expect_identical(vcov(fit, type = "unconditional"), vcov(fit))
+  expect_silent(vcov(fit, type = "unconditional"))
+
+  # and a kinked penalty's hyperparameter is chosen over a grid, which is
+  # the other way there is nothing to propagate
+  X <- matrix(stats::rnorm(nrow(dd) * 5), nrow(dd), 5)
+  dl <- data.frame(y = as.numeric(X %*% c(2, -1.5, 0, 0, 0)) +
+                     stats::rnorm(nrow(dd), sd = 0.5))
+  dl$X <- X
+  lf <- statmod(y ~ lasso(X), distributions7::gaussian1_distrib(), dl)
+  expect_identical(vcov(lf, type = "unconditional"), vcov(lf))
+})
+
+test_that("a shared hyperparameter returns the conditional matrix and says so", {
+  # statmod_marginal_hess() walks the index's own (parameter, term), so over
+  # a group it would read ONE member: the curvature of another function. The
+  # refusal is the same one statmod_hyper_vcov() makes, and what must not
+  # happen is the narrower matrix arriving under the wider one's name.
+  set.seed(11)
+  d <- data.frame(x = stats::runif(200), z = stats::runif(200))
+  d$y <- sin(2 * pi * d$x) + cos(2 * pi * d$z) + stats::rnorm(200, sd = 0.3)
+  fit <- statmod(y ~ s(x, k = 8, id = "a") + s(z, k = 8, id = "a"),
+                 distributions7::gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  expect_warning(V <- vcov(fit, type = "unconditional", readable = FALSE),
+                 class = "statmod_conditional_variance")
+  expect_equal(V, vcov(fit, readable = FALSE))
+})
+
+test_that("confint and summary carry the third convention", {
+  fit <- smooth_fit$fit
+  a <- confint(fit, type = "unconditional", readable = FALSE)
+  b <- confint(fit, readable = FALSE)
+  expect_true(all(a$upper - a$lower >= b$upper - b$lower - 1e-12))
+  expect_gt(max((a$upper - a$lower) / (b$upper - b$lower)), 1.01)
+
+  s <- summary(fit, type = "unconditional")
+  expect_identical(s@type, "unconditional")
+  expect_match(paste(utils::capture.output(print(s)), collapse = "\n"),
+               "unconditional variance", fixed = TRUE)
+})
+
+test_that("the widening is the one mgcv reports as unconditional", {
+  # The comparable quantity across two different bases is the standard error
+  # of the FITTED MEAN, x' V x, which no reparametrization of the basis
+  # moves. What is compared is the RATIO the correction produces, so the
+  # difference between the two bases cancels out of it.
+  skip_if_not_installed("mgcv")
+  skip_on_cran()
+  d <- smooth_fit$data
+  fit <- smooth_fit$fit
+
+  # mgcv's s() cannot be namespace-qualified inside a formula and attaching
+  # mgcv would mask ours, so the gam formula gets an environment where s is
+  # theirs and nothing else is disturbed
+  genv <- new.env(parent = globalenv())
+  genv$s <- mgcv::s
+  g <- mgcv::gam(stats::as.formula("y ~ s(x, bs = 'bs', k = 15)", env = genv),
+                 data = d, method = "REML")
+  pu <- stats::predict(g, se.fit = TRUE, unconditional = TRUE)$se.fit
+  pb <- stats::predict(g, se.fit = TRUE, unconditional = FALSE)$se.fit
+
+  X <- as.matrix(statmod_design(fit@spec)$mu$X)
+  k <- ncol(X)
+  band <- function(V) sqrt(pmax(rowSums((X %*% V[1:k, 1:k]) * X), 0))
+  ob <- band(vcov(fit, readable = FALSE))
+  ou <- band(vcov(fit, type = "unconditional", readable = FALSE))
+
+  # ours is the SMALLER of the two corrections and that is the documented
+  # difference rather than a discrepancy: mgcv adds a second term for the
+  # gaussian scale, which it profiles out of the fit and we model
+  expect_gt(mean(ou / ob), 1)
+  expect_lt(mean(ou / ob), mean(pu / pb) * 1.05)
+  expect_gt(mean(ou / ob), mean(pu / pb) * 0.3)
 })

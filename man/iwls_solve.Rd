@@ -4,7 +4,7 @@
 \alias{iwls_solve}
 \title{Solve One Weighted Least Squares Step}
 \usage{
-iwls_solve(pieces, u, how, damp = 0)
+iwls_solve(pieces, u, how, damp = 0, frozen = integer(0))
 }
 \arguments{
 \item{pieces}{A list with \code{R}, \code{C} and \code{A}, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.
@@ -18,6 +18,11 @@ length \code{p}.}
 
 \item{damp}{The Levenberg damping \eqn{\lambda}, a single non-negative
 number. \code{0}, the default, is the plain scoring step.}
+
+\item{frozen}{Positions the caller holds at their current values, an
+integer vector. They are dropped from the system exactly as a
+coordinate whose curvature is not finite is, so the step is that of the
+problem reduced to the rest. Empty by default.}
 }
 \value{
 A list of four:

@@ -33,11 +33,12 @@ NULL
 #'   inherits.
 #'
 #' @seealso [start_intercepts()] (the default), [start_origin()],
-#'   [start_random()] and [start_search()] for the four shipped strategies,
+#'   [start_random()], [start_search()] and [start_from()] for the five
+#'   shipped strategies,
 #'   [start_at()] for the generic they implement.
 #'
 #' @examples
-#' # The four shipped strategies all inherit from this.
+#' # Every shipped strategy inherits from this.
 #' S7::S7_inherits(start_origin(), start_strategy)
 #' S7::S7_inherits(start_search(), start_strategy)
 #'
@@ -87,7 +88,7 @@ start_strategy_class <- function() start_strategy
 #'
 #' @details
 #' Write a method on your own subclass of [start_strategy()] to add a
-#' strategy. The four shipped methods show the range: [start_origin()] reads
+#' strategy. The shipped methods show the range: [start_origin()] reads
 #' only the design's widths, [start_intercepts()] fits a small model,
 #' [start_random()] draws from the caller's generator, and [start_search()]
 #' runs an optimizer over `obj`.
@@ -328,6 +329,140 @@ start_random <- function(fn = stats::rnorm, ..., center = TRUE) {
 #' @keywords internal
 StartSearch <- S7::new_class("StartSearch", parent = start_strategy,
   properties = list(optimizer = S7::class_any, over = S7::class_any))
+
+#' @rdname StartIntercepts-class
+#' @keywords internal
+StartFrom <- S7::new_class("StartFrom", parent = start_strategy,
+  properties = list(fit = S7::class_any, rest = S7::class_any))
+
+
+#' @title Start From Another Fit's Estimates
+#'
+#' @description
+#' Takes the coefficients a model already fitted found, matches them to the
+#' model about to be fitted, and starts there. What the two models do not
+#' share is left to a second strategy.
+#'
+#' @details
+#' Two models of the same response often share most of their coefficients: one
+#' drops a covariate, one adds a term, one changes the family. The estimates
+#' of the first are then a far better starting point for the second than any
+#' rule that looks only at the response, and there is no reason to find them
+#' twice.
+#'
+#' # What is matched, and what is projected
+#'
+#' The two designs are compared BLOCK BY BLOCK, a block being one term's
+#' columns, and three things can happen to a block:
+#' \describe{
+#'   \item{the parametric block}{is matched COLUMN BY COLUMN, by name. Adding
+#'     or dropping a covariate is the case this exists for, and the names of a
+#'     model matrix are variables, levels and interactions, which mean what
+#'     they say.}
+#'   \item{a block written on the same basis}{is carried across as it stands,
+#'     its coefficient names being the same coordinates. This is exact and
+#'     costs nothing.}
+#'   \item{a block written on ANOTHER basis}{is estimated by least squares
+#'     against what the reference's predictor leaves once the blocks already
+#'     carried across are removed.}
+#' }
+#'
+#' The third rule is what makes two bases comparable at all. A smooth's
+#' coefficients are coordinates in a basis the fit rotates, so `s(x, k = 6)`
+#' and `s(x, k = 10)` carry the names `s(x).z1` to `s(x).z4` in common and
+#' mean something different by each: measured on one data set, `s(x).z1` is
+#' 0.0267 at `k = 6` and -0.0277 at `k = 10`, opposite in sign. What the two
+#' do share is the FUNCTION, so the coefficients are found by projecting it,
+#' \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
+#' r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
+#' over the pending columns \eqn{S} alone. The equality
+#' \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
+#' B_{\mathrm{old}}\beta_{\mathrm{old}}} has no solution unless the old span
+#' sits inside the new one, and the projection is what remains: the closest
+#' the new basis can come to the function it is started from. Where the spans
+#' do nest it is exact, and where the two bases coincide it returns the
+#' coefficients it was given, so the second rule above is a fast path rather
+#' than a different answer.
+#'
+#' Two blocks are paired by the stem of their coefficient names and by the
+#' term's class, not by the block's own key, which is the term's deparsed call
+#' and therefore differs the moment `k` does.
+#'
+#' A distribution parameter the reference does not have -- fitting a negative
+#' binomial from a Poisson, where `theta` is new -- is left to `rest`, so the
+#' families need not agree. So is any block the reference has no counterpart
+#' for, and any block at all when the two responses differ, when either model
+#' carries a structural term, or when the equation carries a block that moves
+#' with its coefficients.
+#'
+#' # What it buys
+#'
+#' On the blocks that MATCH, between 1.1 and 2.1 times, and the honest reading
+#' is that it is not more because nothing was starting from zero:
+#' [start_intercepts()], the default, already fits the intercept-only model.
+#' On a Poisson at \eqn{n = 4000} refitted with one covariate dropped it is
+#' 1.12 to 1.57 times, on a two-equation gaussian 1.89, and on a negative
+#' binomial with 40 columns at \eqn{n = 20000} it is 2.05 -- 0.81 s against
+#' 0.40 s. Fitting a negative binomial from a Poisson's estimates is 1.29.
+#'
+#' On a block that is PROJECTED the starting predictor is a different order of
+#' magnitude closer. Measured at \eqn{n = 4000}, widening `s(x, k = 6)` to
+#' `s(x, k = 12)`, the root mean square gap between the starting predictor and
+#' the reference's is \eqn{3\times 10^{-15}} where leaving the block to the
+#' fallback gives 1.046; a quadratic basis carried onto a cubic one at the
+#' same `k` gives 0.0101 against 1.049. What that is worth in time depends on
+#' the family: a gaussian on the identity link solves its inner problem in one
+#' step whatever the start, so it is 1.09 to 1.26 times, while a Poisson goes
+#' from 18 criterion evaluations to 6 and 1.94 times, and a Poisson that also
+#' drops a covariate 1.71.
+#'
+#' The gain is worth having where the same model is refitted many times over:
+#' a coefficient held at a sequence of values, which is what an interval by
+#' inversion walks, or a model built up one term at a time.
+#'
+#' @param fit A [StatmodFit()] to take the estimates from.
+#' @param rest The strategy for whatever the two models do not share.
+#'   [start_intercepts()] by default, which is what a fit given no strategy
+#'   at all uses.
+#'
+#' @return A `StartFrom` object, inheriting from [start_strategy()].
+#'
+#' @examples
+#' set.seed(1)
+#' dd <- data.frame(x = runif(200), z = runif(200))
+#' dd$y <- rpois(200, exp(0.4 + 0.6 * dd$x - 0.3 * dd$z))
+#' full <- statmod(y ~ x + z, distributions7::poisson_distrib(), dd)
+#'
+#' # the same model with one covariate dropped, started where the other
+#' # one ended
+#' sub <- statmod(y ~ z, distributions7::poisson_distrib(), dd,
+#'                start = start_from(full))
+#' coef(sub)
+#'
+#' # what was taken, and from where
+#' spec <- statmod_spec(y ~ z, distributions7::poisson_distrib(), dd)
+#' attr(start_at(start_from(full), spec, statmod_design(spec), NULL), "taken")
+#'
+#' @seealso [start_intercepts()], the default; [start_at()], the generic.
+#' @export
+start_from <- function(fit, rest = start_intercepts()) {
+  if (!S7::S7_inherits(fit, StatmodFit)) {
+    stop("'fit' must be a statmod fit to take the estimates from.",
+         call. = FALSE)
+  }
+  if (!S7::S7_inherits(rest, start_strategy_class())) {
+    stop("'rest' must be a start strategy, e.g. start_intercepts().",
+         call. = FALSE)
+  }
+  if (S7::S7_inherits(rest, StartFrom)) {
+    # a chain of references would have to be resolved in some order and the
+    # order would decide the answer; one reference and one fallback is the
+    # whole contract
+    stop("'rest' cannot itself be start_from(): name one reference fit.",
+         call. = FALSE)
+  }
+  StartFrom(label = "another fit's estimates", fit = fit, rest = rest)
+}
 
 
 #' @title Search the Likelihood for a Starting Point
@@ -832,3 +967,292 @@ S7::method(start_at, StartSearch) <-
     if (length(idx)) beta0[idx] <- res@par[seq_along(idx)]
     obj$split(beta0)
   }
+
+
+#' @title Starting Values From Another Fit
+#' @name start_at.StartFrom
+#' @description
+#' The reference fit's estimates where the two models share a coefficient,
+#' the fallback strategy's answer everywhere else.
+#' @details
+#' A block is matched by the name the formula gave its term: column by column
+#' for the parametric block, and as a whole for every other where the
+#' coefficient names agree. What is left over -- the same term written on
+#' another basis, paired by [block_stem()] and [same_term_kind()] -- goes to
+#' [project_blocks()], which estimates it against the partial residual of the
+#' reference's predictor. See [start_from()] for why the three rules differ.
+#'
+#' The result carries an attribute `"taken"`, a data frame naming every
+#' coefficient the reference answered for and whether it was `matched` or
+#' `projected`, so a caller can see what was reused rather than infer it from
+#' the fit that follows.
+#' @param strategy A `StartFrom` object.
+#' @param spec,design,obj,... As in [start_at()].
+#' @return A named list of numeric vectors, with the attribute `"taken"`.
+#' @keywords internal
+S7::method(start_at, StartFrom) <-
+  function(strategy, spec, design, obj, ...) {
+    out <- start_at(strategy@rest, spec, design, obj)
+    ref <- strategy@fit
+    rdesign <- statmod_design(ref@spec)
+    took <- list()
+    pending <- list()
+
+    for (p in spec@distrib@params) {
+      # a parameter the reference does not carry is left to the fallback,
+      # which is what lets a negative binomial start from a Poisson
+      if (!p %in% ref@spec@distrib@params) next
+      if (design[[p]]$npar == 0L) next
+      rb <- rdesign[[p]]$blocks
+      rn <- rdesign[[p]]$coef_names
+      rstem <- vapply(names(rb), function(z) block_stem(rn[rb[[z]]]),
+                      character(1))
+      for (nm in names(design[[p]]$blocks)) {
+        idx <- design[[p]]$blocks[[nm]]
+        if (!length(idx)) next
+        here <- design[[p]]$coef_names[idx]
+        if (!nm %in% names(rb)) {
+          # A BLOCK IS KEYED BY THE TERM'S OWN CALL, so `s(x, k = 6)` and
+          # `s(x, k = 10)` are two keys and never meet by name. What they
+          # share is the stem of their coefficient names and the term's
+          # class, which is what pairs them for the projection.
+          if (!is.na(block_stem(here))) {
+            cand <- names(rb)[!is.na(rstem) & rstem == block_stem(here)]
+            if (length(cand) == 1L &&
+                same_term_kind(spec@terms[[p]][[nm]],
+                               ref@spec@terms[[p]][[cand]])) {
+              pending[[p]] <- c(pending[[p]], list(list(nm = nm, idx = idx)))
+            }
+          }
+          next
+        }
+        ridx <- rb[[nm]]
+        if (!length(ridx)) next
+        there <- rn[ridx]
+        take <- if (is_parametric_block(spec, p, nm)) {
+          # BY COLUMN: adding or dropping a covariate is the case this
+          # exists for, and a model matrix names variables and levels
+          k <- match(here, there)
+          data.frame(to = idx[!is.na(k)], from = ridx[k[!is.na(k)]],
+                     name = here[!is.na(k)], stringsAsFactors = FALSE)
+        } else if (identical(here, there)) {
+          # THE SAME BASIS: the coefficients are the same coordinates, so
+          # they are carried across as they stand, which is exact and costs
+          # nothing. Re-estimating them would be work for no answer.
+          data.frame(to = idx, from = ridx, name = here,
+                     stringsAsFactors = FALSE)
+        } else {
+          # THE SAME TERM ON ANOTHER BASIS: a basis the fit rotates gives the
+          # same names to different coordinates, so the coefficients are not
+          # comparable and the FUNCTION is. The block is left to the
+          # projection below rather than to the fallback.
+          pending[[p]] <- c(pending[[p]], list(list(nm = nm, idx = idx)))
+          NULL
+        }
+        if (is.null(take) || !nrow(take)) next
+        out[[p]][take$to] <- ref@coefficients[[p]][take$from]
+        took[[length(took) + 1L]] <-
+          data.frame(parameter = p, term = nm, coefficient = take$name,
+                     value = ref@coefficients[[p]][take$from],
+                     how = "matched", stringsAsFactors = FALSE)
+      }
+    }
+    pr <- project_blocks(spec, design, ref, rdesign, out, pending)
+    out <- pr$start
+    took <- c(took, pr$taken)
+
+    taken <- if (length(took)) do.call(rbind, took) else
+      data.frame(parameter = character(0), term = character(0),
+                 coefficient = character(0), value = numeric(0),
+                 how = character(0), stringsAsFactors = FALSE)
+    rownames(taken) <- NULL
+    structure(out, taken = taken)
+  }
+
+
+#' Project a Reference Fit's Predictor onto the Blocks That Did Not Match
+#'
+#' @description
+#' Estimates the coefficients of the blocks [start_at()]'s `StartFrom` method
+#' left pending -- a term the two models share written on a different basis --
+#' by least squares against the part of the reference's predictor the blocks
+#' already carried across do not explain.
+#'
+#' @details
+#' Two bases of the same term span different subspaces, so
+#' \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} = B_{\mathrm{old}}
+#' \beta_{\mathrm{old}}} has no solution in general and the projection
+#' \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
+#' r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
+#' is what remains: the best the new basis can do at reproducing the fitted
+#' function. Only the pending columns \eqn{S} are estimated, and \eqn{r} is
+#' the partial residual of the reference's predictor after the blocks already
+#' matched by name are removed at the values they were given. Where a block
+#' matched exactly there is nothing to solve, so a refit whose bases all
+#' agree performs no arithmetic here and returns the coefficients it was
+#' handed.
+#'
+#' The projection is exact when the reference's function lies in the span of
+#' the new basis, and reduces to the identity when the two bases coincide,
+#' which is why the name match above is a fast path rather than a different
+#' answer. Whatever the reference explains and the new model has no column
+#' for -- a covariate the formula dropped -- stays in \eqn{r} and is absorbed
+#' by the pending blocks, which is the closest the new design can come to the
+#' predictor it is being started from.
+#'
+#' Three conditions gate it, each returning the coefficients unchanged. The
+#' two responses must be identical, which is what says the two designs are
+#' read at the same rows: the projection compares two predictors pointwise
+#' and means nothing across different data. Neither model may carry a
+#' structural term, whose contribution is a recursion's state rather than
+#' \eqn{X\beta}. And neither design may carry an adjustment for that
+#' parameter, which is the same condition for a block that moves with its
+#' coefficients.
+#'
+#' @param spec The [StatmodSpec()] being started.
+#' @param design Its design.
+#' @param ref The reference [StatmodFit()].
+#' @param rdesign The reference's design.
+#' @param out The starting coefficients as they stand, with the matched
+#'   blocks already written in.
+#' @param pending A list, one entry per distribution parameter, of
+#'   `list(nm, idx)` pairs naming a block and the columns it occupies.
+#'
+#' @return A list with `start`, the coefficients with the pending blocks
+#'   estimated, and `taken`, a list of one-row-per-coefficient data frames
+#'   recording what was projected.
+#'
+#' @seealso [start_from()], whose method calls it.
+#'
+#' @keywords internal
+project_blocks <- function(spec, design, ref, rdesign, out, pending) {
+  taken <- list()
+  if (!length(pending)) return(list(start = out, taken = taken))
+  # the two predictors are compared observation by observation, so they have
+  # to be read at the same rows; an identical response is what says so, and
+  # is what start_from()'s own page asks the caller for
+  if (!identical(spec@response, ref@spec@response)) {
+    return(list(start = out, taken = taken))
+  }
+  if (length(attr(design, "structural")) ||
+      length(attr(rdesign, "structural"))) {
+    return(list(start = out, taken = taken))
+  }
+  for (p in names(pending)) {
+    if (!is.null(design[[p]]$adj) || !is.null(rdesign[[p]]$adj)) next
+    cols <- sort(unique(unlist(lapply(pending[[p]], function(b) b$idx))))
+    A <- design[[p]]$X[, cols, drop = FALSE]
+    # a smooth's block is dense by construction, so this densifies nothing
+    # that was sparse for a reason; the guard is for a factor `by`, where the
+    # block is one copy per level and the projection is not worth a
+    # gigabyte
+    if (prod(dim(A)) > 5e7) next
+    held <- out[[p]]
+    held[cols] <- 0
+    r <- as.numeric(rdesign[[p]]$X %*% ref@coefficients[[p]]) -
+      as.numeric(design[[p]]$X %*% held)
+    b <- tryCatch(qr.coef(qr(as.matrix(A)), r), error = function(e) NULL)
+    if (is.null(b)) next
+    # a column the pivot drops has no least-squares value and keeps whatever
+    # the fallback gave it, which is the same rule vcov() follows for an
+    # aliased coordinate
+    keep <- is.finite(b)
+    if (!any(keep)) next
+    out[[p]][cols[keep]] <- b[keep]
+    for (bl in pending[[p]]) {
+      ok <- bl$idx %in% cols[keep]
+      if (!any(ok)) next
+      taken[[length(taken) + 1L]] <-
+        data.frame(parameter = p, term = bl$nm,
+                   coefficient = design[[p]]$coef_names[bl$idx[ok]],
+                   value = out[[p]][bl$idx[ok]],
+                   how = "projected", stringsAsFactors = FALSE)
+    }
+  }
+  list(start = out, taken = taken)
+}
+
+
+#' The Stem Shared by a Block's Coefficient Names
+#'
+#' @description
+#' Returns the part every coefficient name of a block has in common before
+#' its own suffix, which is what identifies the term across two models
+#' written on different bases.
+#'
+#' @details
+#' A block is keyed in the design by the term's deparsed call, so
+#' `s(x, k = 6)` and `s(x, k = 10)` are two different keys and never meet by
+#' name. Their coefficients, on the other hand, are `s(x).lin`, `s(x).z1`,
+#' ... on both sides, so the stem `s(x)` names the term without naming the
+#' basis. The suffix is taken from the LAST dot rather than the first, so a
+#' covariate whose own name carries one -- `s(my.var)` -- keeps it.
+#'
+#' `NA` is returned where the names carry no suffix at all, which is the
+#' parametric block, whose columns are variables and levels and which is
+#' matched column by column instead.
+#'
+#' @param nms A block's coefficient names.
+#'
+#' @return A single string, or `NA_character_` where the block has no stem.
+#'
+#' @seealso [start_from()], whose method pairs blocks with it.
+#'
+#' @keywords internal
+block_stem <- function(nms) {
+  if (!length(nms)) return(NA_character_)
+  st <- unique(sub("\\.[^.]*$", "", nms))
+  if (length(st) != 1L || !nzchar(st[[1L]]) || identical(st[[1L]], nms[[1L]]))
+    return(NA_character_)
+  st[[1L]]
+}
+
+
+#' Whether Two Terms Are of the Same Kind
+#'
+#' @description
+#' `TRUE` when two built terms have the same class, which is what keeps the
+#' stem of [block_stem()] from pairing a smooth with something else that
+#' happens to name its coefficients the same way.
+#'
+#' @param a,b Two built terms, either of which may be `NULL`.
+#'
+#' @return A single logical.
+#'
+#' @seealso [block_stem()], the other half of the pairing.
+#'
+#' @keywords internal
+same_term_kind <- function(a, b) {
+  if (is.null(a) || is.null(b)) return(FALSE)
+  identical(class(a), class(b))
+}
+
+
+#' Whether a Term Is the Equation's Parametric Block
+#'
+#' @description
+#' `TRUE` for the block of unpenalized parametric columns, which is the one
+#' [start_from()] matches column by column.
+#'
+#' @details
+#' The question is asked of the TERM rather than of its name. A caller may
+#' name a term anything, and what decides is that the block carries ordinary
+#' model-matrix columns whose names are variables and levels -- so a
+#' coefficient of one model means what the coefficient of the same name means
+#' in another. Every other kind of block is a basis, a set of levels or a
+#' standardized design, where a shared name is not a shared meaning.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param param The distribution parameter.
+#' @param nm The term's name in that parameter's equation.
+#'
+#' @return A single logical.
+#'
+#' @seealso [start_from()], which uses it to decide how a block is matched.
+#'
+#' @keywords internal
+is_parametric_block <- function(spec, param, nm) {
+  tm <- spec@terms[[param]][[nm]]
+  if (is.null(tm)) return(FALSE)
+  S7::S7_inherits(tm, modelterms7::LinparTerm)
+}

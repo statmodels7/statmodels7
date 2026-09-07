@@ -513,6 +513,20 @@ coef.StatmodFit <- function(object, readable = TRUE, ...) {
   design <- statmod_design(spec)
   stats::setNames(lapply(params, function(p) {
     v <- stats::setNames(object@coefficients[[p]], design[[p]]$coef_names)
+    # An aliased coordinate has no estimate: the design carries the same
+    # information in another column and the pivot dropped this one, so
+    # whatever the solve leaves there is not an estimate. `lm()` and `glm()`
+    # report NA and so does this. The STORED value is left where it was --
+    # the pivot drops the coordinate from the INCREMENT and not from the
+    # parameter -- which keeps every predictor and every assembled quantity
+    # reading the vector as before, and is the sharper reason for reporting
+    # NA: measured, the same fit started with that column at 5 leaves 5
+    # there and reaches the identical log-likelihood, so the number is one
+    # point of a flat ridge rather than a quantity.
+    if (length(object@aliased)) {
+      na <- paste(p, names(v), sep = ":") %in% object@aliased
+      if (any(na)) v[na] <- NA_real_
+    }
     if (isTRUE(readable)) v <- coef_readable(spec, design, object, p, v)
     c(v, coef_structural(spec, object, p, readable))
   }), params)
