@@ -276,7 +276,11 @@ test_that("a correlated random effect reports variance components", {
                  outer_criterion = reml())
   s <- summary(fit)
   tb <- s@tables$mu[[2L]]$table
-  expect_identical(tb$name[1:3], c("sd_v1", "sd_v2", "cor_v1_v2"))
+  # NAMED FOR THE COLUMNS THEY ARE ABOUT and not for their positions in the
+  # chart: `v2` is the second column of one group's effects, which the
+  # multivariate family cannot know is the slope on x
+  expect_identical(tb$name[1:3],
+                   c("sd[(Intercept)]", "sd[x]", "cor[(Intercept), x]"))
 
   # the quantities, against the covariance the coordinates imply, computed
   # apart from the summary
@@ -349,8 +353,11 @@ test_that("a hyperparameter the readable block does not describe keeps its row",
                  distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
   tb <- summary(fit)@tables$mu[[2L]]$table
+  # the two readings of the scale matrix are named for the columns; `nu` is
+  # not a reading of it at all and keeps the name the family gives it
   expect_identical(tb$name[1:4],
-                   c("scale_sd_v1", "scale_sd_v2", "cor_v1_v2", "nu"))
+                   c("scale_sd[(Intercept)]", "scale_sd[x]",
+                     "cor[(Intercept), x]", "nu"))
   expect_equal(tb$estimate[4L], fit@hyper$mu[[1L]][["nu"]])
 })
 

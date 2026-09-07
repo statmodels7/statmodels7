@@ -4,7 +4,18 @@
 \alias{readable_hyper_rows}
 \title{The Quantities a Penalty's Hyperparameters Are About}
 \usage{
-readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
+readable_hyper_rows(
+  rd,
+  th,
+  Vh,
+  p,
+  key,
+  level,
+  role,
+  src,
+  cols,
+  labels = character(0)
+)
 }
 \arguments{
 \item{rd}{The result of \code{\link[penalties7:penalty_readable]{penalties7::penalty_readable()}}.}
@@ -22,6 +33,12 @@ readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
 \item{role, src}{What the coordinate rows reported.}
 
 \item{cols}{The column names of a summary block.}
+
+\item{labels}{One label per coordinate of the matrix, or nothing. A
+correlation between the second and the third coordinate of a covariance
+is a number about two named effects, and the family that carries the
+chart cannot say which; where the labels are given, they replace the
+positions in the printed name.}
 }
 \value{
 A data frame of rows, in the shape of a summary block.

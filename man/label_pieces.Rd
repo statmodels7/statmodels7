@@ -4,7 +4,7 @@
 \alias{label_pieces}
 \title{Every Labelled Effect a Term Carries, Its Sub-Terms Included}
 \usage{
-label_pieces(term, param, nm, within = NULL)
+label_pieces(term, param, nm, within = NULL, path = character(0))
 }
 \arguments{
 \item{term}{One built term.}
@@ -16,11 +16,17 @@ by.}
 
 \item{within}{The piece's columns in that term's block, or \code{NULL} at the top
 level, where the piece is the whole of it.}
+
+\item{path}{Which of the parent's parameters were developed to reach the
+piece, outermost first, empty at the top level. It says what the effect
+is an effect ON: a labelled random intercept written inside
+\code{seg(x, psi ~ ...)} is an effect on the break-point and not on the mean,
+and a report naming only the equation would be read as the second.}
 }
 \value{
-A list of pieces, each with \code{param}, \code{term}, \code{within}, \code{dim}, \code{tag},
-\code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it) and \code{distrib}. Empty
-where nothing under the term is labelled.
+A list of pieces, each with \code{param}, \code{term}, \code{within}, \code{path},
+\code{dim}, \code{tag}, \code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it) and
+\code{distrib}. Empty where nothing under the term is labelled.
 }
 \description{
 One piece per labelled random effect reachable from a term: the term itself

@@ -1295,11 +1295,25 @@ flat_directions <- function(A, labels) {
   k <- which.min(e$values)
   v <- abs(e$vectors[, k])
   hit <- labels[v > 0.2 * max(v)]
-  if (!length(hit)) return("")
-  sprintf(paste0("\n  It is flat along a direction carried by: %s\n  (its",
-                 " smallest eigenvalue is %s, against %s at the largest)."),
-          paste(hit, collapse = ", "), format(signif(e$values[k], 3)),
-          format(signif(max(e$values), 3)))
+  # A COORDINATE WITH NO NAME IS A STRUCTURAL TERM'S OWN PARAMETER. The
+  # matrix spans those beside the coefficients and only the coefficients are
+  # named, so where the flat direction lies in the tail the list came out
+  # empty and the message read "carried by: , ". Naming what there is to name
+  # and saying where the rest is beats a row of commas.
+  span <- sum(v > 0.2 * max(v))
+  hit <- hit[!is.na(hit) & nzchar(hit)]
+  ev <- sprintf("\n  (its smallest eigenvalue is %s, against %s at the largest).",
+                format(signif(e$values[k], 3)), format(signif(max(e$values), 3)))
+  if (!length(hit)) {
+    if (!span) return("")
+    return(paste0("\n  It is flat along a direction none of the coefficients",
+                  " carry, which leaves\n  a structural term's own",
+                  " parameters: they are inverted together with them.", ev))
+  }
+  paste0("\n  It is flat along a direction carried by: ",
+         paste(hit, collapse = ", "),
+         if (span > length(hit))
+           " (and a structural term's own parameters)" else "", ev)
 }
 
 
@@ -1836,7 +1850,15 @@ term_block_kind <- function(term) {
     return("random")
   }
   ent <- modelterms7::term_penalties(term)
-  if (!length(ent)) return("parametric")
+  # AND THE SAME ONE LEVEL DOWN. A term developing one of its own parameters
+  # over a labelled random effect -- `nl(~ a * exp(-r * x), a ~ 1 +
+  # random(~ 1 | u | id))` -- declares no penalty either, the class carrying
+  # it, and read after the penalties it came back parametric: twelve
+  # predictions printed one per line with a z and a p beside them, under a
+  # heading saying they are an unpenalized block, and the term's own
+  # compartments gone. The question is asked of everything under the term,
+  # so a term written later is covered without an edit here.
+  if (!length(ent) && !length(term_tags_deep(term))) return("parametric")
   if (S7::S7_inherits(term, modelterms7::RandomTerm)) return("random")
   if (S7::S7_inherits(term, modelterms7::SmoothTerm)) return("smooth")
   if (any(vapply(ent, function(e) penalty_has_kink(e$penalty), logical(1)))) {
@@ -1887,6 +1909,9 @@ smooth_linear_cols <- function(term, k) {
 #' @param n_obs The number of observations.
 #' @param tables A named list, one entry per distribution parameter, each a
 #'   list of block records.
+#' @param classes The covariance blocks shared by more than one term, one
+#'   block record each. They belong to no equation and are printed ahead of
+#'   them.
 #' @param edf The per-term degrees of freedom.
 #' @param loglik The maximized log-likelihood.
 #' @param df The effective degrees of freedom in total.
@@ -1917,6 +1942,11 @@ StatmodSummary <- S7::new_class("StatmodSummary",
     distrib_name = S7::class_character,
     n_obs = S7::class_numeric,
     tables = S7::class_list,
+    # THE BLOCKS THAT BELONG TO NO EQUATION: a covariance a label shares
+    # between terms, and where the label crosses a bar, between distribution
+    # parameters. Its coordinates are effects of several equations at once,
+    # so it is not a block of any of them and is carried on its own.
+    classes = S7::new_property(S7::class_list, default = list()),
     # the link each equation is written on, named by parameter. Every
     # coefficient in a block is a coefficient of the LINEAR PREDICTOR, so
     # what it means for the parameter depends on the link, and a summary
@@ -2133,6 +2163,23 @@ summary.StatmodFit <- function(object, level = 0.95,
   tables <- lapply(spec@distrib@params, function(p)
     summary_blocks(object, spec, design, p, ci, level, V, strc))
   names(tables) <- spec@distrib@params
+  # a covariance shared between terms is the property of none of them, and
+  # summary_blocks() held its rows apart for that reason
+  cls <- tryCatch(summary_class_blocks(spec, design, tables, object@edf),
+                  error = function(e) list())
+  # A LINE SAYING "REPORTED ABOVE" IS FALSE WHERE THE SECTION IS NOT THERE.
+  # It cannot happen as the two are written -- every member of a shared class
+  # reaches the block builder and exactly one of them carries the rows -- and
+  # a member that has said where its numbers are and does not show them is
+  # the worst of the three states, so the two views are made to agree here
+  # rather than left to agree by construction. A class block's own note is
+  # its legend and carries no key.
+  shown <- vapply(cls, function(z) z$term, "")
+  tables <- lapply(tables, function(bl) lapply(bl, function(b) {
+    if (!length(b$note) || is.null(names(b$note))) return(b)
+    b$note <- unname(b$note[names(b$note) %in% shown])
+    b
+  }))
 
   ll <- logLik.StatmodFit(object)
   df <- attr(ll, "df")
@@ -2288,7 +2335,7 @@ summary.StatmodFit <- function(object, level = 0.95,
 
   StatmodSummary(
     call = object@call, distrib_name = spec@distrib@distrib_name,
-    n_obs = spec@n_obs, tables = tables, edf = object@edf,
+    n_obs = spec@n_obs, tables = tables, classes = cls, edf = object@edf,
     links = vapply(spec@distrib@link_params,
                    function(g) g@link_name, character(1)),
     structural = strc,
@@ -2417,11 +2464,17 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
 #' @param level The confidence level.
 #' @param role,src What the coordinate rows reported.
 #' @param cols The column names of a summary block.
+#' @param labels One label per coordinate of the matrix, or nothing. A
+#'   correlation between the second and the third coordinate of a covariance
+#'   is a number about two named effects, and the family that carries the
+#'   chart cannot say which; where the labels are given, they replace the
+#'   positions in the printed name.
 #'
 #' @return A data frame of rows, in the shape of a summary block.
 #'
 #' @keywords internal
-readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
+readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
+                                labels = character(0)) {
   nm <- names(th)
   k <- length(rd$value)
   se <- rep(NA_real_, k)
@@ -2454,7 +2507,8 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols) {
     lo[i] <- ends[[1L]]
     hi[i] <- ends[[2L]]
   }
-  out <- data.frame(name = names(rd$value), estimate = v, se = se,
+  out <- data.frame(name = readable_coord_names(names(rd$value), labels),
+                    estimate = v, se = se,
                     statistic = NA_real_, p_value = NA_real_,
                     lower = lo, upper = hi,
                     role = rep(role[[1L]], k), source = rep(src[[1L]], k),
@@ -2533,6 +2587,24 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # WHAT WAS HELD is the terms' answer and nobody else's: a hyperparameter
   # a term fixed is fixed whatever criterion ran beside it.
   held <- tryCatch(statmod_held(spec, design), error = function(e) character(0))
+  # WHERE A TERM'S NUMBERS ARE when they are not under it. A member of a
+  # shared covariance declares no penalty of its own, so its block would
+  # otherwise report nothing at all and say so.
+  class_note <- function(nm) {
+    cl <- class_unit_of(spec, statmod_design(spec), p, nm)
+    if (is.null(cl) || length(cl$pieces) < 2L) return(character(0))
+    # a label written in a SUBFORMULA puts part of a term's block into the
+    # class and leaves the rest where it was, so the two cases are told
+    # apart rather than described by one sentence that fits neither
+    mine <- Filter(function(z) identical(z$param, p) && identical(z$term, nm),
+                   cl$pieces)
+    whole <- length(mine) == 1L && is.null(mine[[1L]]$within)
+    stats::setNames(
+      sprintf("%s in the covariance block '%s', reported above",
+              if (whole) "its effects are" else
+                "some of its coefficients are", cl$key),
+      cl$key)
+  }
   # A term may carry more than one penalty, each filed under a key of its
   # own, so the rows of a term are those of every key belonging to it. Where
   # there are several the hyperparameter is named for the penalty as well:
@@ -2558,7 +2630,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
                                 index = cl$index, class_key = cl$key)))
       }
     }
-    if (!length(ent)) return(list(rows = list(), index = list()))
+    if (!length(ent)) {
+      return(list(rows = list(), index = list(), classes = list()))
+    }
     own <- length(ent) - as.integer(!is.null(cl) &&
                                     identical(cl$pieces[[1L]]$param, p) &&
                                     identical(cl$pieces[[1L]]$term, nm))
@@ -2630,8 +2704,22 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       rd <- tryCatch(penalties7::penalty_readable(u$penalty, th),
                      error = function(e) NULL)
       if (!is.null(rd) && length(rd$value)) {
+        # WHICH EFFECT EACH COORDINATE IS. The chart's coordinates are
+        # numbered by the multivariate family, which is a law on R^d and has
+        # no model to name them after; here they are the within-group columns
+        # of one term, or of several terms across several equations where a
+        # label collects them. The labels are passed only where there are as
+        # many of them as the prior has dimensions, so a penalty of another
+        # shape keeps the names it gives itself.
+        cvl <- if (!is.null(e$class_key)) class_coords(cl)$label else
+          term_coord_labels(entry_owner(spec@terms[[p]][[nm]], e$index))
+        blk <- tryCatch(as.integer(u$penalty@block),
+                        error = function(z) NA_integer_)
+        if (length(blk) != 1L || is.na(blk) || blk != length(cvl)) {
+          cvl <- character(0)
+        }
         rr <- readable_hyper_rows(rd, th, if (marginal) Vh else NULL, p, key,
-                                  level, role, src, cols)
+                                  level, role, src, cols, cvl)
         # A hyperparameter the readable block does not DESCRIBE keeps its own
         # row: a multivariate Student t is about the standard deviations and
         # the correlations of its scale matrix, and its degrees of freedom are
@@ -2654,10 +2742,22 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # term. Which is which is read off the columns rather than off the
     # entry's name, so a term that names its entries differently is covered
     # without an edit.
-    list(rows = out, index = lapply(ent, `[[`, "index"))
+    # A SHARED BLOCK IS NOT THIS TERM'S, and it is held apart here rather
+    # than printed under whichever member the walk reached first. Its
+    # coordinates belong to several terms and, where a label crosses a bar,
+    # to several equations: printed inside one member's block a reader is
+    # told the standard deviation of an effect on `sigma` under the term of
+    # `mu`, and the other member reports nothing at all. The summary collects
+    # these and prints them once, ahead of the equations, where the
+    # coordinates can be named.
+    shared <- vapply(ent, function(e) !is.null(e$class_key) &&
+                       length(cl$pieces) > 1L, TRUE)
+    cls <- out[shared]
+    names(cls) <- vapply(ent[shared], function(e) e$class_key, "")
+    list(rows = out[!shared], index = lapply(ent[!shared], `[[`, "index"),
+         classes = cls)
   }
-  hyper_rows <- function(nm) {
-    hp <- hyper_parts(nm)
+  hp_rows <- function(hp) {
     if (!length(hp$rows)) return(empty)
     do.call(rbind, hp$rows)
   }
@@ -2874,7 +2974,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
          n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
          table = if (is.null(tb)) empty else tb,
          head = if (length(dev)) head_rows(rows_at, dev) else NULL,
-         components = compartments(term, rows_at, dev, hp))
+         components = compartments(term, rows_at, dev, hp),
+         classes = hp$classes, note = class_note(nm))
   }
 
   blocks <- list()
@@ -2928,7 +3029,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         edf = term_edf(nm), n_zero = 0L,
         table = if (is.null(tb)) empty else tb,
         head = head_rows(rows_at, dev),
-        components = compartments(term, rows_at, dev, hp))
+        components = compartments(term, rows_at, dev, hp),
+        classes = hp$classes, note = class_note(nm))
       next
     }
     keep <- switch(kind,
@@ -2946,12 +3048,13 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # the hyperparameters come FIRST in every penalized block: they govern
     # everything below them, and a table that opens with a hundred selected
     # coefficients buries the one number that produced that selection
-    tb <- rbind(hyper_rows(nm), body)
+    tb <- rbind(hp_rows(hp), body)
     blocks[[length(blocks) + 1L]] <- list(
       kind = kind, label = block_label(kind), term = nm, n_coef = k,
       edf = term_edf(nm),
       n_zero = if (identical(kind, "selection")) sum(cr$estimate == 0) else 0L,
-      table = tb, head = NULL, components = list())
+      table = tb, head = NULL, components = list(), classes = hp$classes,
+      note = class_note(nm))
   }
   blocks
 }
@@ -2991,6 +3094,208 @@ class_unit_of <- function(spec, design, param, nm) {
 }
 
 
+#' What Each Coordinate of a Covariance Block Is
+#'
+#' @description
+#' One row per coordinate of a class's covariance, naming the equation it
+#' belongs to, the term that carries it, the within-group column it is, and
+#' the label a summary prints for it.
+#'
+#' @details
+#' The prior of a covariance class describes the effects of **one group** over
+#' every column the label collects, so its dimension is the sum of the members'
+#' within-group widths and its coordinates run over the members in order, each
+#' contributing its own columns in order -- which is exactly how
+#' [class_index()] interleaves them.
+#'
+#' The multivariate family that carries the chart numbers those coordinates
+#' `v1`, `v2`, and so on, and it is right to: it is a law on
+#' \eqn{\mathbb{R}^d} and knows nothing of the model. Which equation and which
+#' term a coordinate belongs to is this layer's answer, and without it a
+#' printed correlation between `v1` and `v3` says nothing at all.
+#'
+#' The label is the shortest one that separates the coordinates: the column
+#' alone where every coordinate comes from one term, the equation and the
+#' column where more than one term is involved, and the term as well where two
+#' terms of one equation write the same column name. A coordinate reached
+#' through a subformula carries the parameter it develops in front of its
+#' column, so that an effect on a break-point is not read as an effect on the
+#' equation the break-point sits in.
+#'
+#' @param u One penalized unit carrying `pieces`, as
+#'   [statmod_penalized()] returns for a covariance class.
+#'
+#' @return A data frame with `param`, `term`, `column` and `label`, one row
+#'   per coordinate.
+#'
+#' @seealso [class_notes()], [summary_class_blocks()], which print it;
+#'   [modelterms7::term_group()], which supplies the column names.
+#'
+#' @keywords internal
+class_coords <- function(u) {
+  cd <- do.call(rbind, lapply(u$pieces, function(pc) {
+    wn <- pc$group$names
+    if (length(wn) != pc$dim) wn <- paste0("column", seq_len(pc$dim))
+    # WHAT THE EFFECT IS AN EFFECT ON. A label written in a subformula puts
+    # the random intercept of a break-point into the block, and a coordinate
+    # called `mu:(Intercept)` there would be read as the mean's own.
+    if (length(pc$path)) {
+      wn <- paste0(paste(pc$path, collapse = ":"), ":", wn)
+    }
+    data.frame(param = rep(pc$param, pc$dim), term = rep(pc$term, pc$dim),
+               column = as.character(wn), stringsAsFactors = FALSE)
+  }))
+  cd$label <- coord_labels_of(cd)
+  cd
+}
+
+#' @rdname class_coords
+#' @param cd The first three columns of the result.
+#' @keywords internal
+coord_labels_of <- function(cd) {
+  one <- length(unique(paste(cd$param, cd$term, sep = "\r"))) == 1L
+  lab <- if (one) cd$column else paste(cd$param, cd$column, sep = ":")
+  if (anyDuplicated(lab)) {
+    lab <- paste(cd$param, cd$term, cd$column, sep = ":")
+  }
+  # two columns of one term cannot share a name, so the third form separates
+  # everything a design can produce; the numbering is the answer of last
+  # resort and exists so that a label is never ambiguous
+  if (anyDuplicated(lab)) lab <- paste0(lab, "#", seq_along(lab))
+  lab
+}
+
+#' Which Sub-Term a Penalty Entry Belongs To
+#'
+#' @description
+#' The term whose own columns an entry of
+#' [modelterms7::term_penalties()] covers: the term itself where the
+#' entry is over its own block, and the sub-term developing one of its
+#' parameters where it is not.
+#'
+#' @details
+#' A term that develops a parameter over another term reports that term's
+#' penalties as its own, each entry naming the columns it covers. Those
+#' columns are the sub-term's block, so a question about the penalty -- what
+#' its coordinates are, above all -- is a question about the sub-term and
+#' answering it from the parent gives nothing: `nl()` has no grouping and a
+#' correlated random effect inside it does.
+#'
+#' The walk recurses, translating the entry's positions into the sub-term's
+#' own on the way down, so a development two levels deep is reached.
+#'
+#' @param term One built term.
+#' @param ii The entry's columns, in the term's own block.
+#'
+#' @return One built term.
+#'
+#' @seealso [term_coord_labels()], its caller.
+#'
+#' @keywords internal
+entry_owner <- function(term, ii) {
+  if (is.null(ii) || !length(ii)) return(term)
+  cp <- tryCatch(modelterms7::term_components(term),
+                 error = function(e) list())
+  for (c1 in cp) {
+    for (k in seq_along(c1$subs)) {
+      si <- c1$sub_index[[k]]
+      if (length(si) && all(ii %in% si)) {
+        return(entry_owner(c1$subs[[k]], match(ii, si)))
+      }
+    }
+  }
+  term
+}
+
+#' The Coordinates of a Term's Own Covariance
+#'
+#' @description
+#' The within-group column names of a random-effect term, which are what the
+#' coordinates of its own multivariate prior are, or nothing for a term that
+#' has no grouping.
+#'
+#' @param term One built term.
+#'
+#' @return A character vector, possibly empty.
+#'
+#' @seealso [class_coords()] for the same question about a shared block,
+#'   [entry_owner()] for the term this is asked of.
+#'
+#' @keywords internal
+term_coord_labels <- function(term) {
+  gr <- tryCatch(modelterms7::term_group(term), error = function(e) NULL)
+  if (is.null(gr) || length(gr$names) != gr$dim) return(character(0))
+  as.character(gr$names)
+}
+
+#' A Coordinate's Name in Place of Its Number
+#'
+#' @description
+#' Rewrites the names a multivariate family gives the quantities of a matrix
+#' parameter -- `sd_v1`, `cor_v1_v2` -- into the same quantities said of the
+#' coordinates this model is written in: `sd[mu:(Intercept)]`,
+#' `cor[mu:(Intercept), sigma:(Intercept)]`.
+#'
+#' @details
+#' The family names its coordinates by position because that is all it has,
+#' and every one of its readings -- a standard deviation, a correlation, a
+#' partial correlation, a conditional scale -- is named `prefix_vi` or
+#' `prefix_vi_vj`. The rewrite is on that shape alone: a name it does not
+#' match, or one whose index no label answers for, is left exactly as it is,
+#' so a family declaring a reading of another kind keeps its own name rather
+#' than being renamed into a wrong one.
+#'
+#' @param nm The names as the family gives them.
+#' @param labels One label per coordinate, in the matrix's own order.
+#'
+#' @return A character vector as long as `nm`.
+#'
+#' @seealso [class_coords()] and [term_coord_labels()] for the labels,
+#'   [distributions7::mv_derived()] for the names being rewritten.
+#'
+#' @keywords internal
+readable_coord_names <- function(nm, labels) {
+  if (!length(labels) || !length(nm)) return(nm)
+  ok <- function(i) !anyNA(i) && all(i >= 1L & i <= length(labels))
+  out <- nm
+  for (k in seq_along(nm)) {
+    z <- regmatches(nm[[k]],
+                    regexec("^(.+?)_v([0-9]+)_v([0-9]+)$", nm[[k]]))[[1L]]
+    if (length(z) == 4L) {
+      i <- suppressWarnings(as.integer(z[3:4]))
+      if (ok(i)) {
+        out[[k]] <- sprintf("%s[%s, %s]", z[[2L]], labels[[i[[1L]]]],
+                            labels[[i[[2L]]]])
+        next
+      }
+    }
+    z <- regmatches(nm[[k]], regexec("^(.+?)_v([0-9]+)$", nm[[k]]))[[1L]]
+    if (length(z) == 3L) {
+      i <- suppressWarnings(as.integer(z[[3L]]))
+      if (ok(i)) out[[k]] <- sprintf("%s[%s]", z[[2L]], labels[[i]])
+    }
+  }
+  out
+}
+
+#' The Legend of a Covariance Block
+#'
+#' @description
+#' One line per coordinate, giving its label and the term it comes from, for
+#' the head of the block a summary prints.
+#'
+#' @param cd The coordinates, as [class_coords()] returns them.
+#'
+#' @return A character vector.
+#'
+#' @keywords internal
+coord_legend <- function(cd) {
+  w <- max(nchar(cd$label))
+  c("coordinates:",
+    sprintf("  %-*s  from %s", w, cd$label, cd$term))
+}
+
+
 #' What a Summary Says About the Covariance Classes
 #'
 #' @description
@@ -2998,9 +3303,10 @@ class_unit_of <- function(spec, design, param, nm) {
 #' grouping and the terms whose coefficients share the block.
 #'
 #' @details
-#' A class's hyperparameters are printed once, under its first member, so
-#' without the note a reader sees a covariance of four coordinates under a
-#' term carrying two columns and nothing saying where the other two came from.
+#' A class's hyperparameters are printed once, at the head of the summary,
+#' where each coordinate is named for the equation and the column it belongs
+#' to. The note says the same thing in one sentence, for a reader who has the
+#' summary object rather than the printed page.
 #'
 #' A class of one member gets no note: there is nothing shared to report, and
 #' its block is the random effect it would have been without a label.
@@ -3010,7 +3316,8 @@ class_unit_of <- function(spec, design, param, nm) {
 #'
 #' @return A character vector, possibly empty.
 #'
-#' @seealso [summary.StatmodFit()], which collects it.
+#' @seealso [summary.StatmodFit()], which collects it;
+#'   [summary_class_blocks()], which prints the numbers.
 #'
 #' @keywords internal
 class_notes <- function(spec, design) {
@@ -3022,9 +3329,80 @@ class_notes <- function(spec, design) {
                   "")
     out <- c(out, sprintf(paste0(
       "The covariance block '%s' is shared by %s: one %d-variate prior over ",
-      "the effects of one level of %s, with the hyperparameters reported ",
-      "under the first of them."),
+      "the effects of one level of %s. It belongs to none of them on its ",
+      "own and is reported once, ahead of the equations, with each ",
+      "coordinate named for the equation and the column it is."),
       u$key, paste(who, collapse = " and "), u$class$dim, u$class$group))
+  }
+  out
+}
+
+
+#' The Covariance Blocks a Summary Prints Ahead of the Equations
+#'
+#' @description
+#' One block record per covariance class spanning more than one term: the
+#' standard deviations and correlations of the shared prior, with each
+#' coordinate named for the equation, the term and the column it belongs to.
+#'
+#' @details
+#' A shared block is the property of no single term. Printed inside one
+#' member's block -- which is where it was, under whichever member the walk
+#' reached first -- it reports the standard deviation of an effect on `sigma`
+#' under a term of `mu`, and the other member's block says there is nothing to
+#' report on its own. Both statements are true of the term and neither is what
+#' a reader wants, so the block is lifted out and printed once, before the
+#' equations, where its coordinates can be given names.
+#'
+#' The rows are the ones [summary_blocks()] held apart, so the numbers are
+#' produced in exactly one place; what is added here is the class's own
+#' heading and the legend saying which term each coordinate came from.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param tables The per-parameter block lists.
+#' @param edf The per-term degrees of freedom, or `NULL`.
+#'
+#' @return A list of block records, in the shape [print_block()] reads, each
+#'   carrying its coordinates in `coords`. Empty where no class spans more
+#'   than one term.
+#'
+#' @seealso [class_coords()] for the naming, [class_notes()] for the note that
+#'   says the same thing in prose.
+#'
+#' @keywords internal
+summary_class_blocks <- function(spec, design, tables, edf = NULL) {
+  rows <- list()
+  for (bl in tables) {
+    for (b in bl) {
+      if (is.null(b$classes)) next
+      for (k in names(b$classes)) rows[[k]] <- b$classes[[k]]
+    }
+  }
+  if (!length(rows)) return(list())
+  out <- list()
+  for (u in statmod_penalized(spec, design)) {
+    if (is.null(u$pieces) || length(u$pieces) < 2L) next
+    tb <- rows[[u$key]]
+    if (is.null(tb) || !nrow(tb)) next
+    cd <- class_coords(u)
+    # the members' counts add up to the class's: each is the trace of the
+    # model's smoother over that member's own columns, and the class is
+    # their union
+    e <- edf
+    ed <- sum(vapply(u$pieces, function(z) {
+      v <- if (is.null(e)) numeric(0) else
+        e$edf[e$parameter == z$param & e$term == z$term]
+      if (length(v)) v[[1L]] else NA_real_
+    }, 0))
+    out[[length(out) + 1L]] <- list(
+      kind = "class", label = u$key, term = u$key,
+      n_coef = length(u$index), edf = NA_real_, n_zero = 0L,
+      bits = c(sprintf("%d levels of %s", u$class$m, u$class$group),
+               sprintf("%d coordinates per level", u$class$dim),
+               if (is.finite(ed)) sprintf("edf %.2f", ed)),
+      note = coord_legend(cd), coords = cd,
+      table = tb, head = NULL, components = list(), classes = list())
   }
   out
 }
@@ -3140,8 +3518,9 @@ smoothed_notes <- function(spec, object) {
 #' @title Print a Model Summary
 #' @name print.StatmodSummary
 #' @description
-#' The call, then each distribution parameter's blocks, then the degrees of
-#' freedom, the criteria and the notes.
+#' The call, then the covariance blocks shared between equations, then each
+#' distribution parameter's blocks, then the degrees of freedom, the criteria
+#' and the notes.
 #' @param x A [StatmodSummary()].
 #' @param digits Significant digits in the tables.
 #' @param notes Whether to print the qualifications the numbers carry.
@@ -3191,6 +3570,14 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
   # a reader comparing two summaries would otherwise read as one.
   tst <- if (length(x@test)) x@test[[1L]] else "wald"
   stat <- if (identical(tst, "wald")) "z" else "r"
+
+  # AHEAD OF THE EQUATIONS, because a covariance a label shares belongs to
+  # none of them: its coordinates are effects of two equations at once, and
+  # under either one of them half of what it says is about the other.
+  if (length(x@classes)) {
+    cat("\n", strrep("=", 3L), " shared covariance blocks\n", sep = "")
+    for (b in x@classes) print_block(b, digits, max_coef, stat)
+  }
 
   for (p in names(x@tables)) {
     lk <- if (p %in% names(x@links)) x@links[[p]] else ""
@@ -3397,7 +3784,13 @@ block_rows_shown <- function(tb, max_coef = NULL, cap = 12L, show = 10L) {
 print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   head <- if (is.na(b$term)) b$label else b$term
   bits <- character(0)
-  if (!identical(b$kind, "parametric")) {
+  if (!is.null(b$bits)) {
+    # a block that is not a term of an equation says what it is on its own
+    # terms: a covariance class is a number of coordinates over a number of
+    # levels, and has neither a coefficient count nor degrees of freedom of
+    # its own, those belonging to the members
+    bits <- b$bits
+  } else if (!identical(b$kind, "parametric")) {
     bits <- c(bits, sprintf("%d %s", b$n_coef,
                             if (identical(b$kind, "structural")) "parameters"
                             else "coefficients"))
@@ -3410,6 +3803,10 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   cat("\n", head, sep = "")
   if (length(bits)) cat("   [", paste(bits, collapse = ", "), "]", sep = "")
   cat("\n")
+  # WHAT THE BLOCK IS PART OF, before its numbers rather than after them: a
+  # term whose coefficients are covered by a shared covariance says so, and a
+  # shared covariance says which coordinate is which.
+  for (z in b$note) cat("  ", z, "\n", sep = "")
 
   if (!is.null(b$head) && nrow(b$head)) {
     print_block_head(b$head, digits)
@@ -3433,7 +3830,9 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   }
   ns <- vapply(secs, function(z) nrow(z$tb), integer(1))
   if (!sum(ns)) {
-    cat("  (nothing to report on its own)\n")
+    # a member of a shared covariance has said where its numbers are, and
+    # "nothing to report" under it would contradict the line above
+    if (!length(b$note)) cat("  (nothing to report on its own)\n")
     return(invisible(NULL))
   }
   # THE WHOLE BLOCK IS FORMATTED AT ONCE, so a compartment's numbers are

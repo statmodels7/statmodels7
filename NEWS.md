@@ -1,3 +1,97 @@
+# statmodels7 0.107.0
+
+* A COVARIANCE SHARED BETWEEN TERMS IS REPORTED AHEAD OF THE EQUATIONS, WITH
+  EACH COORDINATE NAMED FOR THE EQUATION, THE TERM AND THE COLUMN IT IS. A
+  label shared across a bar -- `y ~ x + random(~ 1 | a | id) | sigma ~
+  random(~ 1 | a | id)` -- gives one covariance over effects of two different
+  equations, and it used to be printed inside whichever member the walk
+  reached first, under the names the multivariate family gives its own
+  coordinates:
+
+  \preformatted{  random(~1 | a | id)   [50 coefficients, edf 38.01]
+                      estimate     se   lower  upper
+    sd_v1 [reml]        0.9877 0.1169  0.7831 1.2460
+    sd_v2 [reml]        1.3490 0.1402  1.1000 1.6540
+    cor_v1_v2 [reml]    0.0785 0.1784 -0.2665 0.4057}
+
+  while the other member's block read `(nothing to report on its own)`. Both
+  statements are true of the term and neither is what a reader wants: half of
+  what is printed under `mu` is about `sigma`, and nothing on the page says
+  which half. The block belongs to none of the terms, so it is lifted out of
+  all of them and printed once, before the equations:
+
+  \preformatted{  === shared covariance blocks
+
+    a | id   [12 levels of id, 2 coordinates per level, edf 17.83]
+      coordinates:
+        mu:(Intercept)     from random(~1 | a | id)
+        sigma:(Intercept)  from random(~1 | a | id)
+                                                     estimate     se   lower  upper
+      sd[mu:(Intercept)] [reml]                        0.9877 0.1169  0.7831 1.2460
+      sd[sigma:(Intercept)] [reml]                     1.3490 0.1402  1.1000 1.6540
+      cor[mu:(Intercept), sigma:(Intercept)] [reml]    0.0785 0.1784 -0.2665 0.4057}
+
+  and each member says where its numbers are instead of reporting that there
+  is nothing to report.
+
+* The coordinates of a covariance a term carries ALONE are named the same
+  way, so `random(~ 1 + x | id)` reports `sd[(Intercept)]`, `sd[x]` and
+  `cor[(Intercept), x]` where it reported `sd_v1`, `sd_v2` and `cor_v1_v2`.
+  The equation goes in front of the column only where more than one term is
+  involved, and the term as well where two terms of one equation write the
+  same column name, so a label is the shortest one that separates the
+  coordinates.
+
+  A label written in a subformula carries the parameter it develops:
+  `seg(x, psi ~ random(~ 1 | u | id))` beside `sigma ~ random(~ 1 | u | id)`
+  reports `mu:psi1:(Intercept)` and not `mu:(Intercept)`, the effect being on
+  the break-point rather than on the mean of the equation the break-point
+  sits in.
+
+* Only the shape the multivariate family names by position is rewritten --
+  `prefix_vi` and `prefix_vi_vj` -- and only where there are as many labels
+  as the prior has dimensions. A name of another kind keeps the one the
+  family gives it: a multivariate Student t prior reports
+  `scale_sd[(Intercept)]`, `scale_sd[x]`, `cor[(Intercept), x]` and `nu`,
+  the degrees of freedom being no reading of the scale matrix.
+
+* The coordinates of a covariance carried by a **sub-term** are named from
+  that sub-term's columns. A correlated random effect developing one of a
+  nonlinear term's parameters -- `nl(~ a * exp(-r * x), a ~ 1 +
+  random(~ 1 + z | id))` -- had its coordinates numbered, the question having
+  been asked of the parent: `nl()` has no grouping and the random effect
+  inside it does. `entry_owner()` finds the term an entry belongs to, at any
+  depth of development, and the compartment now reads `sd[(Intercept)]`,
+  `sd[z]`, `cor[(Intercept), z]`.
+
+* A TERM WHOSE ONLY PENALIZED EFFECT IS A LABELLED SUB-TERM IS NO LONGER
+  REPORTED AS AN UNPENALIZED PARAMETRIC BLOCK. It declares no penalty of its
+  own -- the covariance class carries it -- and read after the penalties it
+  came back parametric, so `y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 +
+  random(~ 1 | u | id))` printed twelve predictions one per line with a `z`
+  and a `p` beside them, under a heading saying they are an unpenalized
+  block, with the term's own compartment and its other parameters gone --
+  and the shared block, whose rows are held by that term, disappeared with
+  it while the other member went on saying they were reported above. The
+  question is asked of everything under the term, so a term written later is
+  covered without an edit.
+
+  The fit was never affected: the log-likelihood, the coefficients and the
+  hyperparameters are identical to the printed digit before and after. What
+  was wrong was the reading of the block.
+
+* A member's `reported above` line is dropped where the section could not be
+  built, so the two views cannot contradict each other.
+
+* `summary()` carries the shared blocks in a `classes` property, each with
+  the coordinates in `coords`, so a reader with the object has what the page
+  shows. `print()` takes them from there.
+
+* `vcov()`'s refusal names what it can when the flat direction lies in a
+  structural term's own parameters: the matrix spans those beside the
+  coefficients and only the coefficients are named, so the message used to
+  read `flat along a direction carried by: , `.
+
 # statmodels7 0.106.0
 
 * TESTING ONE COEFFICIENT AGAINST ONE VALUE IS AN EXPORTED FUNCTION,

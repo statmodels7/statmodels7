@@ -10,6 +10,7 @@ StatmodSummary(
   distrib_name = character(0),
   n_obs = integer(0),
   tables = list(),
+  classes = list(),
   links = character(0),
   edf = NULL,
   structural = NULL,
@@ -36,6 +37,10 @@ StatmodSummary(
 
 \item{tables}{A named list, one entry per distribution parameter, each a
 list of block records.}
+
+\item{classes}{The covariance blocks shared by more than one term, one
+block record each. They belong to no equation and are printed ahead of
+them.}
 
 \item{edf}{The per-term degrees of freedom.}
 

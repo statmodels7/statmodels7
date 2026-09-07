@@ -532,9 +532,17 @@ test_that("a shared block is announced in a note, and a private one is not", {
   nt <- summary(shared)@notes
   expect_true(any(grepl("covariance block 'b | id' is shared", nt, fixed = TRUE)))
   expect_true(any(grepl("'mu'", nt, fixed = TRUE) & grepl("'sigma'", nt)))
-  # the hyperparameters are printed ONCE, under the first member
+  # the hyperparameters are printed ONCE, ahead of the equations, and each
+  # coordinate is named for the equation and the column it is
   out <- utils::capture.output(print(summary(shared)))
-  expect_identical(sum(grepl("cor_v1_v2", out)), 1L)
+  expect_identical(sum(grepl("shared covariance blocks", out, fixed = TRUE)),
+                   1L)
+  expect_identical(
+    sum(grepl("cor[mu:(Intercept), sigma:(Intercept)]", out, fixed = TRUE)),
+    1L)
+  # and no member reports it, or says there is nothing to report
+  expect_identical(sum(grepl("reported above", out, fixed = TRUE)), 2L)
+  expect_false(any(grepl("nothing to report", out, fixed = TRUE)))
   # a class of one member shares nothing and gets no note
   alone <- statmod(y ~ random(~ 1 | b | id),
                    distributions7::gaussian1_distrib(), d2,

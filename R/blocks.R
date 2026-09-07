@@ -586,16 +586,22 @@ statmod_classes <- function(terms) {
 #'   by.
 #' @param within The piece's columns in that term's block, or `NULL` at the top
 #'   level, where the piece is the whole of it.
+#' @param path Which of the parent's parameters were developed to reach the
+#'   piece, outermost first, empty at the top level. It says what the effect
+#'   is an effect ON: a labelled random intercept written inside
+#'   `seg(x, psi ~ ...)` is an effect on the break-point and not on the mean,
+#'   and a report naming only the equation would be read as the second.
 #'
-#' @return A list of pieces, each with `param`, `term`, `within`, `dim`, `tag`,
-#'   `group` (as [modelterms7::term_group()] returns it) and `distrib`. Empty
-#'   where nothing under the term is labelled.
+#' @return A list of pieces, each with `param`, `term`, `within`, `path`,
+#'   `dim`, `tag`, `group` (as [modelterms7::term_group()] returns it) and
+#'   `distrib`. Empty where nothing under the term is labelled.
 #'
 #' @seealso [statmod_classes()], its caller; [class_pieces()] for the mapping
 #'   of `within` onto the stacked vector.
 #'
 #' @keywords internal
-label_pieces <- function(term, param, nm, within = NULL) {
+label_pieces <- function(term, param, nm, within = NULL,
+                        path = character(0)) {
   tg <- tryCatch(modelterms7::term_tag(term), error = function(e) NA_character_)
   if (length(tg) == 1L && !is.na(tg)) {
     gr <- modelterms7::term_group(term)
@@ -605,8 +611,8 @@ label_pieces <- function(term, param, nm, within = NULL) {
         "  grouping variable, and effects are correlated within a grouping."),
         nm, param, tg), call. = FALSE)
     }
-    return(list(list(param = param, term = nm, within = within, dim = gr$dim,
-                     tag = tg, group = gr,
+    return(list(list(param = param, term = nm, within = within, path = path,
+                     dim = gr$dim, tag = tg, group = gr,
                      distrib = tryCatch(term@distrib, error = function(e) NULL))))
   }
   out <- list()
@@ -615,7 +621,8 @@ label_pieces <- function(term, param, nm, within = NULL) {
     for (k in seq_along(cp$subs)) {
       w <- cp$sub_index[[k]]
       if (!is.null(within)) w <- within[w]
-      out <- c(out, label_pieces(cp$subs[[k]], param, nm, w))
+      out <- c(out, label_pieces(cp$subs[[k]], param, nm, w,
+                                 c(path, cp$name)))
     }
   }
   out
