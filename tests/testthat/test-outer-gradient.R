@@ -357,6 +357,38 @@ test_that("the structural gradient is right under ml and beside a smooth", {
   expect_equal(h2$gr(eta), ref, tolerance = 1e-3)
 })
 
+test_that("the gradient reaches a covariance class inside a filter", {
+  # A class collecting two developments of one filter carries THREE
+  # hyperparameters where a filter's own penalty carries one -- two scales and
+  # a correlation -- so it is the case that says whether the new addressing is
+  # right in every coordinate. The identity control cannot see it: a class of
+  # one member has a scalar hyperparameter and reproduces the unlabelled
+  # answer whatever the assembly does with a chart.
+  skip_on_cran()
+  dp <- sim_gas_panel(11, 8L, 30L)
+  form <- y ~ 0 + gas(p = 1, q = 1, by = id, time = t,
+                      omega ~ 1 + random(~ 1 | u | id),
+                      alpha1 ~ 1 + random(~ 1 | u | id))
+  h <- struct_harness(form, dp, reml(hessian = "observed"))
+  expect_identical(nrow(h$idx), 3L)
+  expect_true(h$fit0@converged)
+  ref <- central(h$fn, h$eta0)
+  skip_if(anyNA(ref), "the criterion is unavailable at a probe point")
+  expect_equal(h$gr(h$eta0), ref, tolerance = 1e-4)
+
+  # AND IT CONVERGES O(h^2), which is what separates a correct gradient from
+  # one missing a term: measured on a twelve-group panel, 9.8e-06, 8.8e-07 and
+  # 9.8e-08 at h of 1e-2, 3e-3 and 1e-3. A missing term is flat in h, and a
+  # badly located mode grows as 1/h.
+  g <- h$gr(h$eta0)
+  rel <- vapply(c(1e-2, 1e-3), function(hh) {
+    fd <- central(h$fn, h$eta0, h = hh)
+    max(abs(g - fd)) / max(abs(fd), 1)
+  }, 0)
+  skip_if(anyNA(rel), "the criterion is unavailable at a probe point")
+  expect_lt(rel[[2L]], rel[[1L]] / 10)
+})
+
 test_that("an outer step the search takes back moves nothing", {
   # The coefficients were always protected -- `state$beta` is written only
   # once a point is known to be usable -- and a structural term's own

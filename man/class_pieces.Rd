@@ -2,12 +2,18 @@
 % Please edit documentation in R/blocks.R
 \name{class_pieces}
 \alias{class_pieces}
+\alias{class_interleave}
 \alias{class_index}
+\alias{class_zeta_cols}
 \title{Where a Covariance Class's Members Sit in the Stacked Vector}
 \usage{
 class_pieces(cl, design, params, offs)
 
+class_interleave(cl, pos)
+
 class_index(cl, design, params, offs)
+
+class_zeta_cols(cl)
 }
 \arguments{
 \item{cl}{One class, from \code{\link[=statmod_classes]{statmod_classes()}}.}
@@ -17,10 +23,14 @@ class_index(cl, design, params, offs)
 \item{params}{The distribution's parameters, in order.}
 
 \item{offs}{Where each parameter's coefficients start in the stacked vector.}
+
+\item{pos}{One integer vector per member, each group-major, giving that
+member's positions in whichever vector the class is addressed in.}
 }
 \value{
 \code{class_pieces()} a list of lists with \code{param}, \code{term}, \code{cols} and
-\code{index}; \code{class_index()} an integer vector of \code{m * dim} positions.
+\code{index}; \code{class_index()} and \code{class_zeta_cols()} an integer vector of
+\code{m * dim} positions.
 }
 \description{
 \code{class_pieces()} gives one entry per member with its parameter, its columns
@@ -43,6 +53,12 @@ different equations -- so what comes out is a permutation rather than a
 range. Nothing downstream minds: reading and writing a matrix at
 \verb{[index, index]} is correct for any index, provided the penalty's own
 output is in the same order, which is what this ordering arranges.
+
+A class whose members are all inside a structural term is addressed in that
+term's own parameters instead, which is the vector its penalty is read at
+and where the design has no column. \code{class_zeta_cols()} interleaves those
+positions by the same rule, and \code{class_pieces()} is not consulted at all,
+there being no design block to look the columns up in.
 }
 \seealso{
 \code{\link[=statmod_penalized]{statmod_penalized()}}, their caller.

@@ -19,13 +19,17 @@ the empty string when it can.
 \details{
 Two reasons, and both are read from the term rather than from its class.
 
-A term carrying a covariance label
-(\code{\link[modelterms7:term_tag]{modelterms7::term_tag()}}) says that its coefficients share a block with
-those of other terms, which this layer cannot yet build: the penalty would
-have to read columns from more than one equation, and every enumeration
-here addresses a penalty by the pair of its parameter and its key. The term
-is rejected rather than fitted as though the label were absent, which would
-be a different model reported under the name of the one that was asked for.
+A covariance label (\code{\link[modelterms7:term_tag]{modelterms7::term_tag()}}) under a structural term of
+the \strong{likelihood} shape says that a latent the likelihood integrates out
+shares a prior with coefficients that are estimated. The two are integrated
+by different routes and there is no one prior to share, so the term is
+rejected rather than fitted as though the label were absent, which would be
+a different model reported under the name of the one that was asked for. A
+label under a \strong{filter} is fitted: its parameters are numbers estimated
+beside the coefficients, and the block is read among them.
+
+Whether a class is admissible is not a question about one term, and is
+asked where every member is visible, by \code{\link[=class_space]{class_space()}}.
 
 A structural term implementing neither shape of the contract is rejected
 for the reason its message gives.

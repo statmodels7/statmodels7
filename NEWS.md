@@ -1,3 +1,122 @@
+# statmodels7 0.108.0
+
+* A COVARIANCE CLASS MAY SIT INSIDE A SCORE-DRIVEN FILTER. The effects
+  developing a filter's own parameters carry a shared covariance like any
+  others, so the level and the loading of one filter may be correlated across
+  groups:
+
+  \preformatted{  statmod(y ~ 0 + gas(p = 1, q = 1, by = g,
+                        omega  ~ 1 + random(~ 1 | u | g),
+                        alpha1 ~ 1 + random(~ 1 | u | g)), ...)}
+
+  which was refused until now, on the reading that a class is addressed at
+  positions in the stacked coefficient vector and a filter contributes no
+  column to it. That is true of the vector and not of the work: a filter's
+  parameters are estimated beside the coefficients, its own penalties are
+  already read at positions among them, and a class inside one is read at the
+  same positions by the same functions. Nothing new is derived. `penalties7`
+  computes one Hessian over the class's stacked vector, in the class's own
+  order, and what this release adds is where to scatter it.
+
+  The summary reports the block ahead of the equations, as it does for a class
+  spanning two equations, with each coordinate named for the parameter it
+  develops rather than for the equation alone -- both of these are effects
+  inside one term of `mu`. Forty groups, effects drawn with a correlation of
+  0.7 and both scales at 0.5:
+
+  \preformatted{  === shared covariance blocks
+
+    u | g   [40 levels of g, 2 coordinates per level, edf 83.00]
+      coordinates:
+        omega:(Intercept)   from gas(p = 1, q = 1, by = g, ...)
+        alpha1:(Intercept)  from gas(p = 1, q = 1, by = g, ...)
+                                                           estimate
+      sd[omega:(Intercept)] [reml]                           0.6300
+      sd[alpha1:(Intercept)] [reml]                          0.6648
+      cor[omega:(Intercept), alpha1:(Intercept)] [reml]      0.7111}
+
+  The control that says the addressing is right is an identity rather than a
+  tolerance: a class collecting ONE member describes the same prior over the
+  same coordinates as no label at all, and has to reproduce the unlabelled fit
+  exactly. Measured on a panel of ten groups, `gas(alpha1 ~ 1 + random(~ 1 | u
+  | g))` against `gas(alpha1 ~ 1 + random(~ 1 | g))`: the log-likelihood
+  agrees at `0.000e+00` (-1168.705194827967 on both sides), and so do every
+  coefficient, every one of the filter's thirteen parameters, the effective
+  degrees of freedom and the hyperparameter. The two printed summaries differ
+  in three lines, which are the formula text twice and the elapsed time. The
+  derivative route does not move either: the exact outer gradient is available
+  and the exact outer Hessian is refused, which is what a filter's own penalty
+  already gave, so the search is `lbfgs()` as it was.
+
+  ⚠️ AND THE GRADIENT IS CHECKED WHERE THE IDENTITY CONTROL CANNOT REACH.
+  A class collecting one member carries a SCALAR hyperparameter and would
+  reproduce the unlabelled answer whatever the assembly did with a chart;
+  a class collecting two carries three -- two scales and a correlation -- so
+  that is the case that says whether the new addressing is right in every
+  coordinate. Against a central difference of the criterion with the mode
+  refitted, the relative gap is 9.8e-06, 8.8e-07 and 9.8e-08 at steps of
+  1e-2, 3e-3 and 1e-3: clean `O(h^2)`, which is what separates a correct
+  gradient from one missing a term, that being flat in the step.
+
+* ⚠️ A CLASS SPLIT BETWEEN A FILTER AND AN ORDINARY TERM IS REFUSED, and this
+  is the case the request came from -- `random(~ 1 | u | g) + gas(alpha1 ~ 1 +
+  random(~ 1 | u | g))`, one prior over a mean's random intercept and a
+  loading's. Its two halves are positions in two different vectors, and a
+  penalty is read at one index. The joint vector they would be positions in
+  exists -- the inner step, the marginal criterion and the variance all build
+  it -- but the penalty enters each of the three as two diagonal blocks with
+  no cross block between them. The refusal names both members and says which
+  is which, and a label inside a filter shared with another effect of the same
+  filter is the case that is fitted.
+
+* ⚠️ AND A LABEL UNDER A TERM OF THE LIKELIHOOD SHAPE STAYS REFUSED FOR A
+  DIFFERENT REASON, which is the model's rather than the addressing's: what
+  such a term carries is a latent the likelihood integrates out, and a
+  covariance block is a prior over coefficients, so correlating the two would
+  mean one joint prior over quantities integrated two different ways. Neither
+  shipped term of that shape can carry a label -- `regime()` takes no
+  subformula at all and a marginal break-point rejects one in `modelterms7`
+  0.68.0 -- so the guard is unreachable from the formula language and is
+  tested on a term of that shape written for the purpose. A guard nothing can
+  reach is a guard nothing keeps honest.
+
+* ⚠️ The effective degrees of freedom of a shared block counted one row PER
+  MEMBER where the count is filed per term, so two members that are two
+  developments of ONE term read that term's row twice: measured, a class
+  inside a filter reported `edf 44.00` in a model whose whole effective count
+  is 24.00. It counts each distinct term once, and reports 22.00. The defect
+  is not the filter's -- two labelled subformulas of one `nl()` have the same
+  shape -- and no existing case moves, a class whose members are separate
+  terms being unaffected.
+
+* ⚠️ `summary()` looked a class's penalty up twice by two routes that no longer
+  agree. The rows of a term's hyperparameters are built from its own entries
+  PLUS the class's, which `modelterms7::term_penalties()` does not report -- a
+  labelled sub-term declares none, the block being the class's -- while the
+  code pairing each row with its penalty walked `term_penalties()` again and
+  came back one entry shorter. The penalties travel with their rows now.
+
+* ⚠️ `outer_pieces()` asked a structural term's penalty for a derivative at an
+  EMPTY coefficient vector. Everything it builds is placed in a matrix over
+  the stacked coefficients, where such a penalty has no position at all, so it
+  was already contributing nothing -- the writes land at `NULL` positions and
+  are no-ops -- but it reached the penalty first. A univariate prior returns
+  empty in silence and a multivariate one warns, sixteen times per
+  `summary()`. It is skipped explicitly, with the reason, and no number moves:
+  a fit carrying an unlabelled filter is `identical()` across the change.
+
+* ⚠️ What the model costs to estimate is worth stating before it is written:
+  the correlation between a loading deviation and a level deviation is
+  identified by the DATA and not by the construction, the two entering the
+  likelihood by very different routes. Measured against a truth of 0.7, with
+  both scales at 0.5 and forty observations per group: 0.408 at ten groups,
+  0.820 at twenty, and 0.941, 0.493, 0.711 over three seeds at forty. The
+  point estimate is near the truth and its spread is wide; the per-group
+  effects correlate with the ones simulated at 0.96 to 0.98 for the level and
+  0.59 to 0.81 for the loading, which is the same asymmetry from the other
+  side. The model is one that can be written and fitted; it is not one that is
+  easy to estimate, and where it is not the certificate says so.
+
 # statmodels7 0.107.0
 
 * A COVARIANCE SHARED BETWEEN TERMS IS REPORTED AHEAD OF THE EQUATIONS, WITH

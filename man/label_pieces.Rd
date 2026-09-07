@@ -4,7 +4,14 @@
 \alias{label_pieces}
 \title{Every Labelled Effect a Term Carries, Its Sub-Terms Included}
 \usage{
-label_pieces(term, param, nm, within = NULL, path = character(0))
+label_pieces(
+  term,
+  param,
+  nm,
+  within = NULL,
+  path = character(0),
+  structural = NULL
+)
 }
 \arguments{
 \item{term}{One built term.}
@@ -22,11 +29,16 @@ piece, outermost first, empty at the top level. It says what the effect
 is an effect ON: a labelled random intercept written inside
 \code{seg(x, psi ~ ...)} is an effect on the break-point and not on the mean,
 and a report naming only the equation would be read as the second.}
+
+\item{structural}{Whether \code{within} indexes a structural term's own
+parameters rather than columns of the design. \code{NULL} at the top level,
+where it is read from the term; a recursive call passes what it was told.}
 }
 \value{
 A list of pieces, each with \code{param}, \code{term}, \code{within}, \code{path},
-\code{dim}, \code{tag}, \code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it) and
-\code{distrib}. Empty where nothing under the term is labelled.
+\code{dim}, \code{tag}, \code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it),
+\code{structural} and \code{distrib}. Empty where nothing under the term is
+labelled.
 }
 \description{
 One piece per labelled random effect reachable from a term: the term itself
@@ -45,10 +57,15 @@ same way it does for any other term.
 
 That is the whole of what a subformula costs here, and it is why the case is
 covered: a labelled effect written in a subformula of an \strong{additive} term
-lives in the same vector as one written in an equation. A \strong{structural}
-parent is different -- its coefficients are its own parameters and it
-contributes no design column -- and is rejected before reaching this, by
-\code{\link[=unfittable_reason]{unfittable_reason()}}.
+lives in the same vector as one written in an equation.
+
+A \strong{structural} parent addresses its coefficients differently: they are the
+term's own parameters, which contribute no design column and live in the
+design's structural state. The walk is the same and the positions it
+composes are the same numbers -- measured, a labelled effect inside
+\code{gas(alpha1 ~ 1 + random(~ 1 | u | g))} comes out at 3 to 12, exactly the
+\code{cols} the unlabelled sub-term's own penalty is read at -- so what a piece
+records is which vector they index rather than a different arithmetic.
 }
 
 \section{Depth}{

@@ -1169,13 +1169,17 @@ term_tags_deep <- function(term, what = "it") {
 #' @details
 #' Two reasons, and both are read from the term rather than from its class.
 #'
-#' A term carrying a covariance label
-#' ([modelterms7::term_tag()]) says that its coefficients share a block with
-#' those of other terms, which this layer cannot yet build: the penalty would
-#' have to read columns from more than one equation, and every enumeration
-#' here addresses a penalty by the pair of its parameter and its key. The term
-#' is rejected rather than fitted as though the label were absent, which would
-#' be a different model reported under the name of the one that was asked for.
+#' A covariance label ([modelterms7::term_tag()]) under a structural term of
+#' the **likelihood** shape says that a latent the likelihood integrates out
+#' shares a prior with coefficients that are estimated. The two are integrated
+#' by different routes and there is no one prior to share, so the term is
+#' rejected rather than fitted as though the label were absent, which would be
+#' a different model reported under the name of the one that was asked for. A
+#' label under a **filter** is fitted: its parameters are numbers estimated
+#' beside the coefficients, and the block is read among them.
+#'
+#' Whether a class is admissible is not a question about one term, and is
+#' asked where every member is visible, by [class_space()].
 #'
 #' A structural term implementing neither shape of the contract is rejected
 #' for the reason its message gives.
@@ -1188,25 +1192,28 @@ term_tags_deep <- function(term, what = "it") {
 #'
 #' @keywords internal
 unfittable_reason <- function(term) {
-  # A label under a STRUCTURAL term is the one shape a covariance class cannot
-  # reach. Its coefficients are the term's own parameters, which contribute no
-  # design column and live in the design's structural state; the class's
-  # penalty is read at positions in the stacked coefficient vector, and only
-  # statmod_marginal_full() spans both, for one filter and in one place. Under
-  # an ADDITIVE parent there is nothing extra to do -- measured, a labelled
-  # effect inside seg(x, psi ~ ...) occupies columns of that term's block and
-  # so sits in the same vector as one written in an equation.
-  if (S7::S7_inherits(term, modelterms7::structural_term)) {
+  # A label under a structural term of the LIKELIHOOD shape is the one that
+  # cannot be reached, and the obstruction is the model's rather than the
+  # addressing's: what such a term carries is a latent the likelihood
+  # integrates out, and a covariance block is a prior over coefficients, so
+  # correlating the two would mean one joint prior over quantities integrated
+  # two different ways. Under a FILTER the parameters are estimated beside the
+  # coefficients and the block is read among them, and under an ADDITIVE parent
+  # there is nothing extra to do at all -- measured, a labelled effect inside
+  # seg(x, psi ~ ...) occupies columns of that term's block and so sits in the
+  # same vector as one written in an equation.
+  if (S7::S7_inherits(term, modelterms7::structural_term) &&
+      !identical(structural_kind(term), "filter")) {
     lab <- term_tags_deep(term)
     lab <- lab[names(lab) != "it"]
     if (length(lab)) {
-      return(sprintf(paste("%s carries the covariance label '%s', and this is",
-                           "a structural term: what it contributes is its own",
-                           "parameters and not columns of the design, so a",
-                           "shared covariance block cannot reach them. The",
-                           "same label under an ordinary term is fitted. Drop",
-                           "the middle bar, or move the labelled effect to an",
-                           "equation of its own."),
+      return(sprintf(paste("%s carries the covariance label '%s', and this",
+                           "term's contribution is a likelihood mixed over a",
+                           "latent state rather than a predictor. A covariance",
+                           "block is a prior over coefficients, and the latent",
+                           "is integrated out by a different route, so there is",
+                           "no one prior to share. Drop the middle bar, or move",
+                           "the labelled effect to an equation of its own."),
                      names(lab)[1L], lab[[1L]]))
     }
   }

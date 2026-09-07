@@ -2627,11 +2627,13 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         # carry a penalty of its own beside a labelled sub-term, and replacing
         # them would drop it from the page
         ent <- c(ent, list(list(name = "", penalty = cl$penalty,
-                                index = cl$index, class_key = cl$key)))
+                                index = unit_positions(cl),
+                                class_key = cl$key)))
       }
     }
     if (!length(ent)) {
-      return(list(rows = list(), index = list(), classes = list()))
+      return(list(rows = list(), index = list(), penalty = list(),
+                  classes = list()))
     }
     own <- length(ent) - as.integer(!is.null(cl) &&
                                     identical(cl$pieces[[1L]]$param, p) &&
@@ -2754,7 +2756,14 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
                        length(cl$pieces) > 1L, TRUE)
     cls <- out[shared]
     names(cls) <- vapply(ent[shared], function(e) e$class_key, "")
+    # THE PENALTIES TRAVEL WITH THEIR ROWS rather than being looked up again
+    # from the term: the entries here are the term's own plus, where a label
+    # collects part of it, the class's, which term_penalties() does not report
+    # -- a labelled sub-term declares none, the block being the class's. A
+    # second walk would come back one entry shorter and pair each row with the
+    # wrong penalty, or with none.
     list(rows = out[!shared], index = lapply(ent[!shared], `[[`, "index"),
+         penalty = lapply(ent[!shared], `[[`, "penalty"),
          classes = cls)
   }
   hp_rows <- function(hp) {
@@ -2876,13 +2885,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # ONE COMPARTMENT PER DEVELOPED PARAMETER, carrying its own hyperparameter
   # first and then each sub-term's rows in the order the block binds them.
   compartments <- function(term, rows_at, dev, hp) {
-    ent <- modelterms7::term_penalties(term)
     lapply(dev, function(cp) {
       mine <- vapply(hp$index, function(ii) {
         length(ii) > 0L && all(ii %in% cp$index)
       }, logical(1))
       hr <- hp$rows[mine]
-      pens <- lapply(ent[mine], function(e) e$penalty)
+      pens <- hp$penalty[mine]
       for (i in seq_along(hr)) {
         if (!nrow(hr[[i]])) next
         hr[[i]]$name <- vapply(hr[[i]]$name, hyper_label, character(1),
@@ -3388,16 +3396,25 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL) {
     cd <- class_coords(u)
     # the members' counts add up to the class's: each is the trace of the
     # model's smoother over that member's own columns, and the class is
-    # their union
+    # their union.
+    #
+    # ONE COUNT PER TERM, not one per piece. Two members of a class may be two
+    # developments of ONE term -- the loading and the level of one filter, and
+    # measured, two labelled subformulas of one nl() would be the same shape --
+    # and the count is filed by (parameter, term), so a sum over the pieces
+    # reads that term's row twice: on a filter carrying both it reported 44.00
+    # for a class inside a model whose whole effective count is 24.00.
     e <- edf
-    ed <- sum(vapply(u$pieces, function(z) {
+    who <- unique(vapply(u$pieces, function(z)
+      paste(z$param, z$term, sep = "\r"), ""))
+    ed <- sum(vapply(strsplit(who, "\r", fixed = TRUE), function(z) {
       v <- if (is.null(e)) numeric(0) else
-        e$edf[e$parameter == z$param & e$term == z$term]
+        e$edf[e$parameter == z[[1L]] & e$term == z[[2L]]]
       if (length(v)) v[[1L]] else NA_real_
     }, 0))
     out[[length(out) + 1L]] <- list(
       kind = "class", label = u$key, term = u$key,
-      n_coef = length(u$index), edf = NA_real_, n_zero = 0L,
+      n_coef = length(unit_positions(u)), edf = NA_real_, n_zero = 0L,
       bits = c(sprintf("%d levels of %s", u$class$m, u$class$group),
                sprintf("%d coordinates per level", u$class$dim),
                if (is.finite(ed)) sprintf("edf %.2f", ed)),

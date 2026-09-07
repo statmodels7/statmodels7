@@ -272,9 +272,20 @@ statmod_penalized <- function(spec, design) {
     # the equation has one -- so the penalty was evaluated at NA and every
     # quantity built on it was not finite.
     if (!is.null(u$class)) {
+      cl <- u$class
+      # a class inside a structural term is addressed exactly as that term's
+      # own penalties are: positions among its parameters, read from the
+      # design's structural state, with nothing to look up in the design and
+      # no place in the stacked vector
+      if (cl$structural) {
+        return(c(u, list(structural = TRUE, cols = class_zeta_cols(cl),
+                         index = NULL,
+                         pieces = lapply(cl$pieces, function(pc)
+                           c(pc, list(cols = pc$within, index = NULL))))))
+      }
       return(c(u, list(structural = FALSE, cols = NULL,
-                       index = class_index(u$class, design, params, offs),
-                       pieces = class_pieces(u$class, design, params, offs))))
+                       index = class_index(cl, design, params, offs),
+                       pieces = class_pieces(cl, design, params, offs))))
     }
     if (S7::S7_inherits(spec@terms[[u$param]][[u$term]],
                         modelterms7::structural_term)) {
@@ -311,13 +322,20 @@ statmod_penalized <- function(spec, design) {
 #' `[index, index]` is correct for any index, provided the penalty's own
 #' output is in the same order, which is what this ordering arranges.
 #'
+#' A class whose members are all inside a structural term is addressed in that
+#' term's own parameters instead, which is the vector its penalty is read at
+#' and where the design has no column. `class_zeta_cols()` interleaves those
+#' positions by the same rule, and `class_pieces()` is not consulted at all,
+#' there being no design block to look the columns up in.
+#'
 #' @param cl One class, from [statmod_classes()].
 #' @param design The design.
 #' @param params The distribution's parameters, in order.
 #' @param offs Where each parameter's coefficients start in the stacked vector.
 #'
 #' @return `class_pieces()` a list of lists with `param`, `term`, `cols` and
-#'   `index`; `class_index()` an integer vector of `m * dim` positions.
+#'   `index`; `class_index()` and `class_zeta_cols()` an integer vector of
+#'   `m * dim` positions.
 #'
 #' @seealso [statmod_penalized()], their caller.
 #'
@@ -335,17 +353,31 @@ class_pieces <- function(cl, design, params, offs) {
 }
 
 #' @rdname class_pieces
+#' @param pos One integer vector per member, each group-major, giving that
+#'   member's positions in whichever vector the class is addressed in.
 #' @keywords internal
-class_index <- function(cl, design, params, offs) {
-  pcs <- class_pieces(cl, design, params, offs)
+class_interleave <- function(cl, pos) {
   out <- integer(0)
   for (i in seq_len(cl$m)) {
-    for (pc in pcs) {
-      d <- as.integer(pc$dim)
-      out <- c(out, pc$index[(i - 1L) * d + seq_len(d)])
+    for (k in seq_along(pos)) {
+      d <- as.integer(cl$pieces[[k]]$dim)
+      out <- c(out, pos[[k]][(i - 1L) * d + seq_len(d)])
     }
   }
   out
+}
+
+#' @rdname class_pieces
+#' @keywords internal
+class_index <- function(cl, design, params, offs) {
+  class_interleave(cl, lapply(class_pieces(cl, design, params, offs),
+                              function(pc) pc$index))
+}
+
+#' @rdname class_pieces
+#' @keywords internal
+class_zeta_cols <- function(cl) {
+  class_interleave(cl, lapply(cl$pieces, function(pc) pc$within))
 }
 
 
@@ -379,6 +411,33 @@ class_index <- function(cl, design, params, offs) {
 #' @keywords internal
 unit_beta <- function(u, coef, params) {
   unlist(coef[params], use.names = FALSE)[u$index]
+}
+
+
+#' Where a Penalized Unit's Coordinates Are
+#'
+#' @description
+#' The positions the unit's penalty covers, in whichever vector it is
+#' addressed in: the stacked coefficients for an ordinary unit, and the
+#' structural term's own parameters for one whose coefficients are a filter's.
+#'
+#' @details
+#' A reader that only needs to know how many coordinates a penalty covers, or
+#' which of a term's components they belong to, wants the same answer for both
+#' kinds and cannot get it from one field: an ordinary unit leaves `cols` empty
+#' where it spans several equations, and a structural one has no `index` at
+#' all.
+#'
+#' @param u One unit, from [statmod_penalized()], or a class carrying the same
+#'   two fields.
+#'
+#' @return An integer vector.
+#'
+#' @seealso [unit_beta()] for the values at those positions.
+#'
+#' @keywords internal
+unit_positions <- function(u) {
+  if (isTRUE(u$structural)) u$cols else u$index
 }
 
 
@@ -434,7 +493,12 @@ statmod_penalty_keys <- function(spec) {
   # them, and a reader reporting to a user reads that one.
   for (cl in statmod_classes(spec@terms)) {
     out[[length(out) + 1L]] <- list(
-      param = cl$pieces[[1L]]$param, term = cl$key, key = cl$key,
+      # `term` says which of the design's structural terms the class is
+      # addressed in, which is what every structural consumer looks its zeta
+      # up by; for a class among the coefficients there is no such term and
+      # the key stands in its place, as it did before there were any
+      param = cl$pieces[[1L]]$param,
+      term = if (cl$structural) cl$sterm else cl$key, key = cl$key,
       within = NULL, penalty = cl$penalty,
       fixed = list(), n_values = list(), values = list(),
       min_ratio = numeric(0), search = character(0), ids = character(0),
@@ -538,9 +602,59 @@ statmod_classes <- function(terms) {
     cl <- found[[key]]
     cl$key <- key
     cl$dim <- sum(vapply(cl$pieces, function(z) as.integer(z$dim), integer(1)))
+    cl$structural <- class_space(cl)
+    # a class inside a structural term is addressed in that term's own
+    # parameters, and there is at most one such term in a model, so every
+    # piece of it names the same one
+    if (cl$structural) cl$sterm <- cl$pieces[[1L]]$term
     cl$penalty <- class_penalty(cl)
     cl
   })
+}
+
+
+#' Which Vector a Covariance Class Is Addressed In
+#'
+#' @description
+#' `TRUE` where every member sits inside a structural term, `FALSE` where none
+#' does; an error where the members are split between the two.
+#'
+#' @details
+#' A member written in an equation, or in the subformula of an additive term,
+#' has columns in the stacked coefficient vector. A member inside a structural
+#' term has none: its coordinates are that term's own parameters, which the
+#' design carries in its structural state. The two are different vectors, and
+#' a class is read at one index, so which vector it is is a property of the
+#' class rather than of each member.
+#'
+#' A class **split between them** would need a penalty whose index runs partly
+#' over coefficients and partly over a filter's parameters. The joint vector
+#' those would be positions in exists -- the inner step, the marginal criterion
+#' and the variance all build it -- but the penalty enters each of the three as
+#' two diagonal blocks, with no cross block between them, so a mixed class
+#' cannot yet be read. It is rejected rather than fitted as though the label
+#' spanned less than it does.
+#'
+#' @param cl One class, as [statmod_classes()] assembles it.
+#'
+#' @return A single logical.
+#'
+#' @seealso [statmod_classes()], its only caller.
+#'
+#' @keywords internal
+class_space <- function(cl) {
+  st <- vapply(cl$pieces, function(z) isTRUE(z$structural), TRUE)
+  if (all(st) || !any(st)) return(all(st))
+  who <- function(k) sprintf("'%s' in '%s'", cl$pieces[[k]]$term,
+                             cl$pieces[[k]]$param)
+  stop(sprintf(paste0(
+    "the covariance label '%s' is shared between a structural term and an\n",
+    "  ordinary one: %s and %s. What a structural term contributes is its\n",
+    "  own parameters and not columns of the design, so the block would have\n",
+    "  to span two vectors, and a penalty is read at one index. A label\n",
+    "  inside a structural term may be shared with another effect of the\n",
+    "  same term; correlating it with a coefficient is not available."),
+    cl$tag, who(which(st)[[1L]]), who(which(!st)[[1L]])), call. = FALSE)
 }
 
 
@@ -565,10 +679,15 @@ statmod_classes <- function(terms) {
 #'
 #' That is the whole of what a subformula costs here, and it is why the case is
 #' covered: a labelled effect written in a subformula of an **additive** term
-#' lives in the same vector as one written in an equation. A **structural**
-#' parent is different -- its coefficients are its own parameters and it
-#' contributes no design column -- and is rejected before reaching this, by
-#' [unfittable_reason()].
+#' lives in the same vector as one written in an equation.
+#'
+#' A **structural** parent addresses its coefficients differently: they are the
+#' term's own parameters, which contribute no design column and live in the
+#' design's structural state. The walk is the same and the positions it
+#' composes are the same numbers -- measured, a labelled effect inside
+#' `gas(alpha1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly the
+#' `cols` the unlabelled sub-term's own penalty is read at -- so what a piece
+#' records is which vector they index rather than a different arithmetic.
 #'
 #' # Depth
 #'
@@ -591,17 +710,29 @@ statmod_classes <- function(terms) {
 #'   is an effect ON: a labelled random intercept written inside
 #'   `seg(x, psi ~ ...)` is an effect on the break-point and not on the mean,
 #'   and a report naming only the equation would be read as the second.
+#' @param structural Whether `within` indexes a structural term's own
+#'   parameters rather than columns of the design. `NULL` at the top level,
+#'   where it is read from the term; a recursive call passes what it was told.
 #'
 #' @return A list of pieces, each with `param`, `term`, `within`, `path`,
-#'   `dim`, `tag`, `group` (as [modelterms7::term_group()] returns it) and
-#'   `distrib`. Empty where nothing under the term is labelled.
+#'   `dim`, `tag`, `group` (as [modelterms7::term_group()] returns it),
+#'   `structural` and `distrib`. Empty where nothing under the term is
+#'   labelled.
 #'
 #' @seealso [statmod_classes()], its caller; [class_pieces()] for the mapping
 #'   of `within` onto the stacked vector.
 #'
 #' @keywords internal
 label_pieces <- function(term, param, nm, within = NULL,
-                        path = character(0)) {
+                        path = character(0), structural = NULL) {
+  # WHICH VECTOR THE PIECE'S POSITIONS ARE POSITIONS IN, which is a property
+  # of the equation-level term and not of the sub-term carrying the label.
+  # It is read once at the top of the walk and carried down: a labelled
+  # effect inside a filter is addressed among that term's own parameters,
+  # where the design has no column at all.
+  if (is.null(structural)) {
+    structural <- S7::S7_inherits(term, modelterms7::structural_term)
+  }
   tg <- tryCatch(modelterms7::term_tag(term), error = function(e) NA_character_)
   if (length(tg) == 1L && !is.na(tg)) {
     gr <- modelterms7::term_group(term)
@@ -613,6 +744,7 @@ label_pieces <- function(term, param, nm, within = NULL,
     }
     return(list(list(param = param, term = nm, within = within, path = path,
                      dim = gr$dim, tag = tg, group = gr,
+                     structural = structural,
                      distrib = tryCatch(term@distrib, error = function(e) NULL))))
   }
   out <- list()
@@ -622,7 +754,7 @@ label_pieces <- function(term, param, nm, within = NULL,
       w <- cp$sub_index[[k]]
       if (!is.null(within)) w <- within[w]
       out <- c(out, label_pieces(cp$subs[[k]], param, nm, w,
-                                 c(path, cp$name)))
+                                 c(path, cp$name), structural))
     }
   }
   out

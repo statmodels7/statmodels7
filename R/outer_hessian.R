@@ -302,6 +302,16 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     nm <- bits[2L]
     a <- match(p, params)
     un <- statmod_unit(spec, design, p, nm)
+    # A PENALTY OVER A STRUCTURAL TERM'S OWN PARAMETERS acts on none of these
+    # coordinates. Everything here is placed in a matrix over the stacked
+    # COEFFICIENTS, and such a penalty has no position in that vector: its
+    # coordinates are the term's own parameters, which the marginal criterion
+    # spans in a joint matrix this function does not build. It was already
+    # contributing nothing -- the writes below land at NULL positions and are
+    # no-ops -- but it reached the penalty first, at an empty coefficient
+    # vector, and a multivariate prior asked for a derivative at no rows warns
+    # where a univariate one returns empty in silence.
+    if (isTRUE(un$structural)) next
     pos <- un$index
     pen <- un$penalty
     bt <- unit_beta(un, coef, params)

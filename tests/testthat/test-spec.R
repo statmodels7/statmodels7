@@ -584,20 +584,75 @@ test_that("a label inside an additive term's subformula joins the class", {
   expect_length(u$index, 2L * m)
 })
 
-test_that("a label under a structural term is refused for its own reason", {
+test_that("a label inside a filter is addressed in the term's own parameters", {
   set.seed(89)
   m <- 6; ni <- 20
   d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
   d2$y <- stats::rnorm(m * ni)
-  err <- tryCatch(statmod_spec(y ~ gas(p = 1, q = 1,
-                                       omega ~ random(~ 1 | u | id), by = id),
-                               distributions7::gaussian1_distrib(), d2),
+  spec <- statmod_spec(y ~ gas(p = 1, q = 1,
+                               alpha1 ~ 1 + random(~ 1 | u | id), by = id),
+                       distributions7::gaussian1_distrib(), d2)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) !is.null(z$pieces), statmod_penalized(spec, des))
+  expect_length(u, 1L)
+  u <- u[[1L]]
+  # THE OTHER VECTOR: a filter contributes no design column, so the class has
+  # no place in the stacked coefficients and its coordinates are positions
+  # among the term's own parameters, which is where its zeta is read
+  expect_true(u$structural)
+  expect_null(u$index)
+  nm <- names(statmod_structural_state(des)$zeta[[u$term]])
+  expect_identical(nm[u$cols], paste0("alpha1.random.", seq_len(m)))
+  # and `term` names the structural term rather than the class, because that
+  # is what every structural consumer looks its zeta up by
+  expect_true(u$term %in% names(spec@terms$mu))
+})
+
+test_that("a label under a term of the likelihood shape is refused", {
+  # A term whose contribution is a likelihood mixed over a latent state has no
+  # coefficients to share a prior with, and the obstruction is the model's.
+  # Neither shipped term of that shape can carry a label -- regime() takes no
+  # subformula and a marginal break-point rejects one in modelterms7 -- so the
+  # guard is reached here, on a term of that shape written for the purpose.
+  Mixed <- S7::new_class("Mixed", parent = modelterms7::structural_term)
+  # the replacement form cannot take a namespaced name, so each generic is
+  # bound locally first
+  build <- modelterms7::term_build
+  loglik <- modelterms7::term_loglik
+  comps <- modelterms7::term_components
+  S7::method(build, Mixed) <- function(term, data, ...) term
+  S7::method(loglik, Mixed) <-
+    function(term, eta, y, logdens, score, psi, ...) 0
+  d3 <- data.frame(id = factor(rep(seq_len(6L), each = 10L)))
+  sub <- modelterms7::term_build(modelterms7::random(~ 1 | u | id), d3)
+  S7::method(comps, Mixed) <- function(term, ...) {
+    list(psi = list(name = "psi", index = seq_len(6L), subs = list(sub),
+                    sub_index = list(seq_len(6L))))
+  }
+  err <- tryCatch(reject_unfittable(list(mu = list(m = Mixed(label = "m")))),
                   error = conditionMessage)
-  # its coefficients are the term's own parameters and contribute no design
-  # column, so the class's index has nowhere to point
-  expect_match(err, "structural term", fixed = TRUE)
   expect_match(err, "covariance label 'u'", fixed = TRUE)
-  expect_match(err, "under an ordinary term is fitted", fixed = TRUE)
+  expect_match(err, "likelihood mixed over a latent state", fixed = TRUE)
+  # and the same term WITHOUT a label is not caught by it: the guard reads the
+  # label and not the shape alone
+  S7::method(comps, Mixed) <- function(term, ...) list()
+  expect_silent(reject_unfittable(list(mu = list(m = Mixed(label = "m")))))
+})
+
+test_that("a class split between a filter and an ordinary term is refused", {
+  set.seed(91)
+  m <- 6; ni <- 20
+  d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
+  d2$y <- stats::rnorm(m * ni)
+  # the two members would have to be read at one index, and they are positions
+  # in two different vectors
+  err <- tryCatch(statmod_spec(
+    y ~ random(~ 1 | u | id) +
+      gas(p = 1, q = 1, alpha1 ~ 1 + random(~ 1 | u | id), by = id),
+    distributions7::gaussian1_distrib(), d2), error = conditionMessage)
+  expect_match(err, "shared between a structural term and an", fixed = TRUE)
+  expect_match(err, "covariance label 'u'", fixed = TRUE)
+  expect_match(err, "read at one index", fixed = TRUE)
 })
 
 test_that("a parent keeps its own penalty beside a labelled sub-term", {
