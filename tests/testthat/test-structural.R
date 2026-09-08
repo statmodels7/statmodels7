@@ -70,9 +70,31 @@ test_that("a filter beside a random effect meets a SPARSE design", {
   expect_equal(K, t(K), tolerance = 1e-12)
 
   # and the fit runs end to end, which is what a user does
-  fit <- statmod(f, distributions7::gaussian1_distrib(), dd,
-                 outer_criterion = NULL)
+  #
+  # IT WARNS, AND THE WARNING IS EXPECTED HERE. The comment above already
+  # records that this model's penalized information is not positive definite
+  # at a probe hyperparameter, and measured it is INDEFINITE rather than
+  # ill-conditioned -- the joint curvature's smallest eigenvalue is -0.01179,
+  # against 424618 at the largest -- so the model's smoother has no diagonal
+  # and the term's degrees of freedom cannot be read. What the count would
+  # otherwise report is the rule it replaced, a parameter apiece, which is a
+  # different quantity under the same name. Asserted rather than left to
+  # appear, so that the suite carries no warning nobody has explained.
+  # the value is captured by assignment: in the third edition expect_warning()
+  # returns the CONDITION and not the value of its argument, and this fit is
+  # dear enough not to be run twice
+  fit <- NULL
+  expect_warning(
+    fit <- statmod(f, distributions7::gaussian1_distrib(), dd,
+                   outer_criterion = NULL),
+    "cannot be read")
   expect_true(is.finite(as.numeric(logLik(fit))))
+  # the row is missing and the ordinary ones are not
+  expect_true(any(is.na(fit@edf$edf)))
+  expect_true(all(is.finite(fit@edf$edf[fit@edf$term == "linpar"])))
+  # and logLik's df falls back to an upper bound rather than to the term's
+  # column count, which for a structural term is zero
+  expect_gt(attr(logLik(fit), "df"), 2)
 })
 
 test_that("a structural term is left out of the design and routed", {
