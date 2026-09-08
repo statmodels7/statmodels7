@@ -564,11 +564,28 @@ integrated_basis <- function(spec, design, kind) {
     # design; its directions are appended by statmod_marginal_full()
     if (isTRUE(u$structural)) next
     pen <- u$penalty
-    k <- length(u$index)
+    # A MIXED class owns columns for HALF its coordinates, and the split is
+    # exact only because a class prior is proper: penalty_range_basis() is
+    # then the identity, so each coordinate is its own direction and the two
+    # halves go to the two readers unchanged. A class prior that was not
+    # proper would have a range mixing the two spaces, which neither reader
+    # can express, and ml() says so rather than projecting onto half of it.
+    idx_u <- u$index
+    if (isTRUE(u$mixed)) {
+      if (!isTRUE(penalties7::is_proper(pen))) {
+        stop(sprintf(paste0(
+          "ml() cannot read the null space of the covariance block '%s',",
+          " which\n  spans both the coefficients and a filter's own",
+          " parameters. Use reml(),\n  which integrates every coordinate",
+          " and needs no such basis."), u$key), call. = FALSE)
+      }
+      idx_u <- u$beta_index
+    }
+    k <- length(idx_u)
     R <- penalty_range_basis(pen, k, u$param, u$key)
     if (!ncol(R)) next
     M <- matrix(0, total, ncol(R))
-    M[u$index, ] <- R
+    M[idx_u, ] <- R
     cols[[length(cols) + 1L]] <- M
   }
   if (!length(cols) && structural_penalized(spec, design)) {
@@ -656,7 +673,22 @@ penalty_range_basis <- function(pen, k, p, nm) {
 #' @keywords internal
 structural_penalized <- function(spec, design) {
   for (u in statmod_penalized(spec, design)) {
-    if (isTRUE(u$structural)) return(TRUE)
+    # a MIXED class shrinks a filter's own parameters too, half of its
+    # coordinates being among them, so the determinant has to span them for
+    # the same reason. Answering FALSE here sent the criterion to the route
+    # over the coefficients alone, where a mixed class contributes nothing at
+    # all -- statmod_penalty_at() leaves it to joint_penalty_at() -- so the
+    # coefficient block came back unpenalized and singular.
+    if (isTRUE(u$structural) || isTRUE(u$mixed)) return(TRUE)
+  }
+  FALSE
+}
+
+#' @rdname structural_penalized
+#' @keywords internal
+mixed_penalized <- function(spec, design) {
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$mixed)) return(TRUE)
   }
   FALSE
 }
@@ -739,6 +771,9 @@ statmod_marginal_full <- function(spec, design, coef, hyper, basis = NULL) {
     as_dense(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
   ps <- structural_penalty_block(spec, design, hyper, length(free))
   if (!is.null(ps)) S[ix, ix] <- ps
+  # a class split between the two halves is placed whole, cross block and all,
+  # by the one function the joint step and the variance also read
+  S <- S + joint_penalty_at(spec, design, coef, hyper, "hessian", nrow(S))
   S <- zap_nonfinite(S)
   M <- K + S
   if (is.null(basis)) return(M)
@@ -778,6 +813,14 @@ structural_range_cols <- function(spec, design, key, free) {
   nm <- names(sst$zeta[[key]])
   out <- integer(0)
   for (u in statmod_penalized(spec, design)) {
+    # a MIXED class shrinks free parameters too -- its structural half -- and
+    # those directions are integrated over exactly as a structural unit's are
+    if (isTRUE(u$mixed) && identical(u$class$sterm, key)) {
+      zc <- unlist(lapply(Filter(function(z) isTRUE(z$structural), u$pieces),
+                          function(z) z$zcols), use.names = FALSE)
+      out <- c(out, match(nm[zc], free))
+      next
+    }
     if (!isTRUE(u$structural) || !identical(u$term, key)) next
     out <- c(out, match(nm[u$cols], free))
   }
@@ -931,7 +974,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # chosen whole, the rule included, because only this package knows what the
   # criterion it is being pointed at can resolve.
   chose_optimizer <- is.null(optimizer)
-  if (chose_optimizer) optimizer <- outer_default_optimizer(exact, exact2)
+  if (chose_optimizer) {
+    optimizer <- outer_default_optimizer(exact, exact2,
+                                         mixed_penalized(spec, design))
+  }
   # Whether the TRACE prints a gradient. It reports what the search is using,
   # so where the search uses none there is none to report, and asking would
   # compute the quantity the laziness below exists to avoid.
@@ -1526,16 +1572,30 @@ outer_backtracks <- function() 12
 #' The choice is made from what the criterion can supply: its exact Hessian,
 #' its exact gradient, or neither.
 #'
+#' A covariance class split between the coefficients and a filter's own
+#' parameters is the one shape with no exact gradient that still gets
+#' `lbfgs()`, differencing the criterion. Such a class carries at least three
+#' hyperparameters -- two scales and a correlation -- and three is where this
+#' file already records the simplex stalling. Measured on a panel of twelve
+#' groups, both searches reporting convergence: `nelder_mead()` reaches a
+#' criterion of -684.789 in 123 seconds, at a loading scale collapsed to
+#' 2.1e-06 and a correlation of -0.9999, while `lbfgs()` reaches -683.305 in
+#' 27 seconds at scales of 0.647 and 0.389 and a correlation of 0.733 -- which
+#' on data simulated with the two effects INDEPENDENT is the answer the two
+#' separate fits give, to 0.2 of log-likelihood.
+#'
 #' @param exact Whether the criterion has an exact gradient.
 #' @param exact2 Whether it has an exact Hessian as well.
+#' @param mixed Whether the model carries a covariance class spanning the
+#'   coefficients and a structural term's own parameters.
 #'
 #' @return An \pkg{optimizers7} optimizer.
 #'
 #' @seealso [outer_fit()], [outer_gradient_ok()]
 #'
 #' @keywords internal
-outer_default_optimizer <- function(exact, exact2) {
+outer_default_optimizer <- function(exact, exact2, mixed = FALSE) {
   if (exact2) return(optimizers7::newton())
-  if (exact) return(optimizers7::lbfgs())
+  if (exact || mixed) return(optimizers7::lbfgs())
   optimizers7::nelder_mead()
 }

@@ -1,3 +1,109 @@
+# statmodels7 0.109.0
+
+* A COVARIANCE CLASS MAY SPAN A FILTER'S OWN PARAMETERS AND AN ORDINARY
+  TERM'S COEFFICIENTS, which is the case 0.108.0 refused and the one the
+  request came from: one prior over a mean's random intercept and a
+  score-driven loading's, correlated across the groups of a panel.
+
+  \preformatted{  statmod(y ~ random(~ 1 | u | g) +
+                    gas(p = 1, q = 1, by = g,
+                        alpha1 ~ 1 + random(~ 1 | u | g)), ...)}
+
+  That refusal was right about the vector and wrong about the work. The two
+  halves are positions in two different vectors and a penalty is read at one
+  index, but the vector holding both already exists and three places
+  assemble it -- the joint inner step, the marginal criterion and the
+  variance -- as the stacked coefficients followed by the filter's free
+  parameters. What such a class adds to those three is the CROSS BLOCK and
+  nothing else: `penalties7` computes one Hessian over the class's stacked
+  vector exactly as before, and what this release supplies is where each of
+  its entries goes.
+
+  `class_joint_pieces()` gives every piece its positions in that vector, and
+  they are INTERLEAVED group by group -- for each group, that group's
+  coordinate from each member -- which is the order a blockwise prior reads.
+  Measured on twelve groups over fourteen coefficients, the positions open
+  2, 16, 3, 17: the odd ones among the coefficients, the even ones among the
+  filter's own parameters.
+
+  `joint_penalty_at()` scatters the value, the gradient and the Hessian into
+  that layout, reading each coordinate where it lives. Against a
+  multivariate gaussian written out by hand at a point of the joint vector,
+  the value agrees at `0.000e+00`, the gradient and the Hessian at
+  `5.551e-17`, and the cross block -- whose largest entry is 0.1606 -- at
+  `2.776e-17`; against `numDeriv` on the same three, at 5.8e-09, 3.0e-08 and
+  9.8e-09.
+
+  THE CONTROL IS AN IDENTITY RATHER THAN A TOLERANCE. A block-diagonal prior
+  IS the two separate priors, so at a correlation of exactly zero the mixed
+  model is the model with two penalties and every piece of the criterion has
+  to agree. Measured on twelve groups at held scales, the criterion is
+  -684.06658698 on both sides, with gaps of -1.137e-13 on the criterion and
+  on the log-likelihood, -3.553e-15 on the penalty, `0.000e+00` on the
+  Laplace determinant, and the same dimension 28.
+
+  What the fit does, on twelve groups of thirty whose effects are drawn
+  INDEPENDENT: 29.1 s, a log-likelihood of -656.444 with scales 0.647 and
+  0.389 and a correlation of 0.733, against -656.222 with 0.634 and 0.332
+  from the two-penalty model on the same data.
+
+* ⚠️ THE VALUE OF A MIXED CLASS'S PENALTY IS DELEGATED AND NOT SKIPPED, and
+  the difference is a fit that runs away. `statmod_penalty_at()` and
+  `statmod_structural_penalty()` each read one of the two vectors, so both
+  skip a class spanning them and the joint route supplies its derivatives.
+  The VALUE is one number over the whole prior, and the normalizing constant
+  it carries is the only term that makes a large scale expensive: skipped,
+  both scales ran away, to `exp(3.7)` and `exp(14.4)`. The objective reads
+  the value from the joint route, where the two derivative blocks are not.
+
+* ⚠️ THE EXACT OUTER DERIVATIVES ARE REFUSED FOR A MIXED CLASS, and the
+  measurement says the refusal is necessary rather than cautious: the exact
+  gradient returns EXACTLY ZERO in all three coordinates where a central
+  difference of the criterion reads -9.43, -7.80 and +3.29. Its contribution
+  lives in the joint matrix `statmod_marginal_grad()` does not assemble, and
+  a zero gradient reads as stationarity, which is worse than no gradient at
+  all.
+
+  ⚠️ AND WHAT THE SEARCH FALLS TO HAD TO CHANGE WITH IT. The default where
+  no exact derivative exists is the simplex, which at three hyperparameters
+  is where this package already records it stalling. Measured on the same
+  model, `nelder_mead()` stops after 119 s at a criterion of -684.7891 with
+  the loading scale at 2.09e-06 and the correlation at -0.9999, where
+  `lbfgs()` reaches -683.3048 in 27 s at 0.389 and +0.733: 1.48 criterion
+  units, and the difference between a fitted correlation and a boundary.
+  `outer_default_optimizer()` prefers `lbfgs()` wherever a mixed class is
+  present.
+
+* ⚠️ `ml()` REFUSES A MIXED CLASS WHOSE PRIOR IS NOT PROPER rather than
+  projecting onto half of it. `ml()` integrates over the range of the
+  penalty, and for a proper prior `penalty_range_basis()` is the identity,
+  so each coordinate is its own direction and the class's two halves reach
+  the two readers unchanged. A prior that was not proper would have a range
+  mixing the two spaces, which neither reader can express. `reml()`
+  integrates every coordinate and needs no such basis.
+
+* ⚠️ WHAT IS MEASURED AND NOT REPAIRED, stated rather than left to be found.
+  The correlation is weakly identified at these panel sizes: over five seeds
+  at twelve groups, with the truth INDEPENDENT, the estimates are +0.733,
+  -0.265, +0.101, +0.852 and +1.000, and at thirty groups -0.285 and +0.590.
+  The two scales are recovered throughout and agree with the independent
+  fit's to two decimals, so it is the third coordinate alone that is weak.
+  One seed of eight does not fit at all: at thirty groups the inner joint fit
+  fails to converge at the starting hyperparameters, at unit scales with a
+  zero correlation, and at 0.6 -- while the independent model on the same
+  data converges and reports -1705.48, and the mixed one fitted with
+  `outer_criterion = NULL` reaches -1694.40 reporting failure. And the
+  certificate reads `unknown`, there being no exact outer gradient to verify
+  the hyperparameters with.
+
+  ⚠️ The probe a class prior starts from is `penalty_theta_start()`'s
+  midpoint of the bounds, which for an unbounded chart is 1 in every
+  coordinate: for `dr_prod(2)` that reads as two scales of 2.718 with a
+  correlation of -0.664, where an ordinary random effect probes at a scale of
+  1. It is not what stops that seed, the two sensible starting points failing
+  there as well, and it is recorded because it is measured rather than
+  chosen.
+
 # statmodels7 0.108.0
 
 * A COVARIANCE CLASS MAY SIT INSIDE A SCORE-DRIVEN FILTER. The effects

@@ -596,6 +596,9 @@ statmod_penalty_at <- function(spec, coef, hyper,
   sst <- statmod_structural_state(design)
   for (u in statmod_penalized(spec, design)) {
     p <- u$param
+    # a MIXED class is read at positions in the JOINT vector, half of which
+    # this matrix does not span; joint_penalty_at() places the whole of it
+    if (isTRUE(u$mixed)) next
     if (isTRUE(u$structural)) {
       if (what != "value" || is.null(sst)) next
       z <- sst$zeta[[u$term]][u$cols]
@@ -632,6 +635,17 @@ statmod_penalty_at <- function(spec, coef, hyper,
       hess[u$index, u$index] <- hess[u$index, u$index] +
         (if (isS4(hess)) blk else as_dense(blk))
     }
+  }
+  # THE VALUE OF A MIXED CLASS IS A NUMBER and has no placement problem, so
+  # it belongs in the one total every reader of this function already adds up
+  # -- the coefficients' objective, the structural sub-fit's, the marginal
+  # criterion's rho and what aic()/bic() report. Only its DERIVATIVES need the
+  # joint layout, and those are the other two branches of the function called
+  # here. Leaving it out cost the criterion its normalizing constant, which is
+  # the only term that makes a large prior scale expensive: measured, both
+  # scales of a class ran away, to exp(3.7) and exp(14.4).
+  if (what == "value") {
+    value <- value + joint_penalty_at(spec, design, coef, hyper, "value")
   }
   switch(what, value = value, gradient = grad, hessian = hess)
 }
@@ -677,6 +691,10 @@ statmod_structural_penalty <- function(spec, design, hyper,
   if (is.null(sst)) return(list())
   out <- list()
   for (u in statmod_penalized(spec, design)) {
+    # a MIXED class is in neither vector: half of it is coefficients, and
+    # placing the other half here would report a marginal of the prior as
+    # though it were the whole. joint_penalty_at() places all of it at once.
+    if (isTRUE(u$mixed)) next
     if (!isTRUE(u$structural)) next
     z <- sst$zeta[[u$term]]
     b <- as.numeric(z[u$cols])
@@ -1053,4 +1071,91 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
         statmod_penalty_at(spec, cf, hyper, design, "hessian")
     }
   )
+}
+
+
+#' A Covariance Class Split Between the Coefficients and a Filter's Parameters
+#'
+#' @description
+#' The value, gradient and Hessian of every penalty whose coordinates are part
+#' coefficients and part a structural term's own parameters, placed in the
+#' joint vector \eqn{[\beta; \zeta_{\mathrm{free}}]}.
+#'
+#' @details
+#' # Why one function and not two halves
+#'
+#' A class's prior is one object over one stacked vector. \pkg{penalties7}
+#' computes one gradient and one Hessian over that vector, in the class's own
+#' order, and knows nothing of the split -- to it these are \eqn{m} blocks of
+#' \eqn{d} numbers with a covariance in common. Splitting the answer into a
+#' coefficient half and a parameter half would report each as though the other
+#' were not there, and would lose the CROSS block entirely, which is the only
+#' place the correlation between the two enters at all.
+#'
+#' So the scatter is written once and the three assemblies that build the joint
+#' matrix add what it returns: the inner step
+#' ([statmod_fit_joint()]), the marginal criterion
+#' ([statmod_marginal_full()]) and the variance
+#' ([vcov.StatmodFit()]). [statmod_penalty_at()] and
+#' [statmod_structural_penalty()] skip a mixed class for the same reason.
+#'
+#' # Where the values come from
+#'
+#' Each coordinate is read where it lives -- a coefficient from `coef`, a
+#' filter parameter from the design's structural state -- and assembled in the
+#' class's own order, which `joint` on the unit already records. The result is
+#' written back at those same positions, so no ordering is composed twice.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef A named list of coefficient vectors.
+#' @param hyper The hyperparameters.
+#' @param what Which quantity: `"value"`, `"gradient"` or `"hessian"`.
+#' @param n The length of the joint vector, `nb` plus the number of free
+#'   parameters. Read from the caller, which has already computed it.
+#'
+#' @return For `"value"` a single number; for `"gradient"` a numeric vector of
+#'   length `n`; for `"hessian"` an `n` by `n` matrix. Zero throughout where no
+#'   class is mixed.
+#'
+#' @seealso [statmod_penalty_at()] for the coefficients' own penalties,
+#'   [statmod_structural_penalty()] for a filter's.
+#'
+#' @keywords internal
+joint_penalty_at <- function(spec, design, coef, hyper,
+                             what = c("value", "gradient", "hessian"),
+                             n = 0L) {
+  what <- match.arg(what)
+  out <- switch(what, value = 0, gradient = numeric(n),
+                hessian = matrix(0, n, n))
+  sst <- statmod_structural_state(design)
+  if (is.null(sst)) return(out)
+  params <- spec@distrib@params
+  flat <- unlist(coef[params], use.names = FALSE)
+  for (u in statmod_penalized(spec, design)) {
+    if (!isTRUE(u$mixed)) next
+    j <- u$joint
+    b <- numeric(length(j))
+    z <- sst$zeta[[u$class$sterm]]
+    # each coordinate read where it lives and put back in the class's own
+    # order, which `joint` already records: match() rather than a running
+    # offset, so the ordering is composed in one place and not twice
+    for (pc in u$pieces) {
+      b[match(pc$joint, j)] <- if (isTRUE(pc$structural)) {
+        as.numeric(z[pc$zcols])
+      } else {
+        flat[pc$index]
+      }
+    }
+    th <- as.list(hyper[[u$param]][[u$key]])
+    if (what == "value") {
+      out <- out + penalties7::penalty_value(u$penalty, b, th)
+    } else if (what == "gradient") {
+      out[j] <- out[j] + penalties7::penalty_gradient(u$penalty, b, th)
+    } else {
+      out[j, j] <- out[j, j] +
+        as_dense(penalties7::penalty_hessian(u$penalty, b, th))
+    }
+  }
+  out
 }

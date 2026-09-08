@@ -2,9 +2,12 @@
 % Please edit documentation in R/outer.R
 \name{structural_penalized}
 \alias{structural_penalized}
+\alias{mixed_penalized}
 \title{Does a Structural Term Carry a Penalty of Its Own?}
 \usage{
 structural_penalized(spec, design)
+
+mixed_penalized(spec, design)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}

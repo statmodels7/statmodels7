@@ -47,7 +47,12 @@ coef_labels <- function(spec, design) {
       # recycled the labels into duplicate rows
       if (isTRUE(u$structural)) next
       # a covariance class has no columns of its own: its members do, each in
-      # its own equation, so the marks go on the pieces that live in this one
+      # its own equation, so the marks go on the pieces that live in this one.
+      # A member INSIDE a structural term has none either, and carries `cols`
+      # NULL for that reason, so a class split between the two marks its
+      # coefficient half here and nothing for the other -- writing the
+      # structural half's parameter positions would mark whichever design
+      # columns they happen to number.
       cs <- if (is.null(u$pieces)) u$cols else
         unlist(lapply(Filter(function(z) identical(z$param, p), u$pieces),
                       function(z) z$cols), use.names = FALSE)
@@ -301,6 +306,13 @@ vcov.StatmodFit <- function(object,
     # is singular along exactly that direction and nothing can be reported.
     ps <- structural_penalty_block(spec, design, object@hyper, nz)
     if (!is.null(ps)) S[total + seq_len(nz), total + seq_len(nz)] <- ps
+    # and a class split between the coefficients and those parameters is
+    # placed whole by the one function the fit and the criterion also read:
+    # its cross block is what carries the correlation between the two, and
+    # leaving it out would report each half's variance as though the other
+    # were not there
+    S <- S + joint_penalty_at(spec, design, coef, object@hyper, "hessian",
+                              nrow(S))
   }
 
   keep <- rep(TRUE, total)

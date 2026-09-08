@@ -170,3 +170,206 @@ test_that("a model with no label is untouched by the class route", {
   expect_false(any(vapply(us, function(z) isTRUE(z$structural), TRUE)))
   expect_true(fit@converged)
 })
+
+
+# A class split between the coefficients and a filter's own parameters ------
+#
+# Its two halves are positions in two different vectors, and the vector that
+# holds both is the one the inner step, the marginal criterion and the
+# variance already assemble: the stacked coefficients, then the filter's free
+# parameters. What such a class adds to those three is the cross block.
+
+mixed_panel <- function(seed = 77L, m = 8L, ni = 30L, rho = 0) {
+  set.seed(seed)
+  S <- matrix(c(0.36, rho * 0.3, rho * 0.3, 0.25), 2, 2)
+  z <- matrix(stats::rnorm(2 * m), m, 2) %*% chol(S)
+  bi <- z[, 1L]
+  al <- 0.25 * exp(z[, 2L])
+  g <- factor(rep(seq_len(m), each = ni))
+  y <- unlist(lapply(seq_len(m), function(i) {
+    f <- 0
+    out <- numeric(ni)
+    for (t in seq_len(ni)) {
+      mu <- bi[i] + f
+      out[t] <- stats::rnorm(1, mu, 1)
+      f <- al[i] * (out[t] - mu) + 0.6 * f
+    }
+    out
+  }))
+  data.frame(g = g, y = y)
+}
+
+mixed_formula <- y ~ random(~ 1 | u | g) +
+  gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | u | g))
+
+test_that("a mixed class is addressed in the joint vector, interleaved", {
+  dd <- mixed_panel()
+  spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
+  nb <- sum(vapply(des, function(d) d$npar, integer(1)))
+  sst <- statmod_structural_state(des)
+  key <- u$class$sterm
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+
+  # neither vector on its own, so every reader written for one of the two
+  # skips it and only what carries `joint` sees it
+  expect_false(isTRUE(u$structural))
+  expect_null(u$index)
+  expect_null(u$cols)
+  expect_length(u$joint, 2L * nlevels(dd$g))
+  # half among the coefficients, half among the filter's FREE parameters
+  expect_true(all(u$joint[c(TRUE, FALSE)] <= nb))
+  expect_true(all(u$joint[c(FALSE, TRUE)] > nb))
+  expect_true(all(u$joint <= nb + length(free)))
+  # INTERLEAVED group by group, which is the order the prior reads
+  expect_identical(u$joint[1:2],
+                   c(u$pieces[[1L]]$joint[[1L]], u$pieces[[2L]]$joint[[1L]]))
+  # a member inside the filter carries no design column, so a reader marking
+  # design columns from the pieces cannot mark the wrong ones
+  st <- Filter(function(z) isTRUE(z$structural), u$pieces)[[1L]]
+  expect_null(st$cols)
+})
+
+test_that("the joint penalty matches a prior written out by hand", {
+  dd <- mixed_panel()
+  spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
+  nb <- sum(vapply(des, function(d) d$npar, integer(1)))
+  sst <- statmod_structural_state(des)
+  key <- u$class$sterm
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  njoint <- nb + length(free)
+
+  # a point of the joint vector, written into both halves
+  set.seed(5)
+  w <- stats::rnorm(njoint, 0, 0.4)
+  cf <- list(mu = w[seq_len(des$mu$npar)],
+             sigma = w[des$mu$npar + seq_len(des$sigma$npar)])
+  z <- sst$zeta[[key]]
+  z[free] <- w[nb + seq_along(free)]
+  sst$zeta[[key]] <- z
+  sst$key <- NULL
+  sst$value <- NULL
+
+  hy <- statmod_hyper_start(spec, des)
+  th <- hy[[u$param]][[u$key]]
+  Sig <- parameters7::param_value(parameters7::dr_prod(2L), as.numeric(th))
+  B <- matrix(w[u$joint], ncol = 2L, byrow = TRUE)
+  Si <- solve(Sig)
+
+  # THE NORMALIZING CONSTANT IS KEPT, which is what makes a large prior scale
+  # expensive and is the only term standing between the criterion and a
+  # runaway
+  hand_v <- sum(0.5 * rowSums((B %*% Si) * B)) +
+    nrow(B) * 0.5 * log(det(2 * pi * Sig))
+  expect_equal(joint_penalty_at(spec, des, cf, hy, "value"), hand_v,
+               tolerance = 1e-10)
+
+  hand_g <- numeric(njoint)
+  hand_g[u$joint] <- as.numeric(t(B %*% Si))
+  expect_equal(joint_penalty_at(spec, des, cf, hy, "gradient", njoint), hand_g,
+               tolerance = 1e-10)
+
+  hand_h <- matrix(0, njoint, njoint)
+  for (i in seq_len(nrow(B))) {
+    ii <- u$joint[(i - 1L) * 2L + 1:2]
+    hand_h[ii, ii] <- Si
+  }
+  got_h <- joint_penalty_at(spec, des, cf, hy, "hessian", njoint)
+  expect_equal(got_h, hand_h, tolerance = 1e-10)
+
+  # THE CROSS BLOCK is what did not exist before, and it is not zero: it is
+  # the only place the correlation between a coefficient and a filter own
+  # parameter enters at all
+  jb <- u$joint[c(TRUE, FALSE)]
+  jz <- u$joint[c(FALSE, TRUE)]
+  expect_gt(max(abs(got_h[jb, jz])), 0.01)
+  expect_equal(got_h[jb, jz], hand_h[jb, jz], tolerance = 1e-10)
+})
+
+test_that("at zero correlation the mixed model IS the independent one", {
+  # The strongest control available, and an identity rather than a tolerance:
+  # a block-diagonal prior is exactly the two separate priors, so the two
+  # models are the same model and every piece of the criterion has to agree.
+  dd <- mixed_panel()
+  s1 <- 0.55
+  s2 <- 0.40
+  mt <- reml()
+  crit <- function(form, set) {
+    sp <- statmod_spec(form, distributions7::gaussian1_distrib(), dd)
+    hy <- set(statmod_hyper_start(sp, statmod_design(sp)), sp)
+    a <- fit_at_hyper(form, distributions7::gaussian1_distrib(), dd, hy)
+    statmod_marginal(a$spec, a$design, a$coefficients, hy, mt,
+                     basis = integrated_basis(a$spec, a$design, mt@kind))
+  }
+  mix <- crit(mixed_formula, function(hy, sp) {
+    u <- Filter(function(z) isTRUE(z$mixed),
+                statmod_penalized(sp, statmod_design(sp)))[[1L]]
+    hy[[u$param]][[u$key]] <- c(sigma_log_sd1 = log(s1),
+                                sigma_log_sd2 = log(s2), sigma_z2.1 = 0)
+    hy
+  })
+  ind <- crit(y ~ random(~ 1 | g) +
+                gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+              function(hy, sp) {
+                for (u in statmod_penalized(sp, statmod_design(sp))) {
+                  hy[[u$param]][[u$key]][["sigma"]] <-
+                    if (isTRUE(u$structural)) s2 else s1
+                }
+                hy
+              })
+  expect_false(is.null(mix))
+  expect_false(is.null(ind))
+  expect_equal(mix$value, ind$value, tolerance = 1e-9)
+  expect_equal(mix$loglik, ind$loglik, tolerance = 1e-9)
+  expect_equal(mix$penalty, ind$penalty, tolerance = 1e-9)
+  expect_equal(mix$logdet, ind$logdet, tolerance = 1e-9)
+  expect_identical(mix$q, ind$q)
+})
+
+test_that("a class coordinate that is held is refused", {
+  # The prior dimension is fixed when the class is assembled. A coordinate
+  # held afterwards is not in the joint vector at all, so the block would have
+  # one fewer than the prior describes. Not reachable from the formula
+  # language today -- what a linear intercept holds is the DEVELOPMENT own
+  # intercept, never one of the collected effects -- so the guard is exercised
+  # by holding one here.
+  dd <- mixed_panel()
+  spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
+  sst <- statmod_structural_state(des)
+  key <- u$class$sterm
+  hit <- names(sst$zeta[[key]])[
+    Filter(function(z) isTRUE(z$structural), u$pieces)[[1L]]$zcols[[1L]]]
+  sst$held[[key]] <- c(sst$held[[key]], hit)
+  err <- tryCatch(statmod_penalized(spec, des), error = conditionMessage)
+  expect_type(err, "character")
+  expect_match(err, hit, fixed = TRUE)
+  expect_match(err, "which is held", fixed = TRUE)
+})
+
+test_that("the exact outer derivatives are refused for a mixed class", {
+  # Measured: statmod_marginal_grad() returns exactly zero for such a class,
+  # its contribution to dK/dtheta living in the joint matrix that assembly
+  # does not build. A zero gradient reads as stationarity, which is worse
+  # than no gradient, so the search is told there is none -- and falls to
+  # lbfgs() rather than to the simplex, which at three hyperparameters is
+  # where this package already records it stalling.
+  dd <- mixed_panel()
+  spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, des))
+  mt <- reml()
+  expect_identical(nrow(idx), 3L)
+  expect_false(outer_gradient_ok(spec, des, idx, mt, 1L))
+  expect_false(outer_gradient_ok(spec, des, idx, mt, 2L))
+  expect_true(mixed_penalized(spec, des))
+  expect_identical(class(outer_default_optimizer(FALSE, FALSE, TRUE))[[1L]],
+                   class(optimizers7::lbfgs())[[1L]])
+  # and a model with no mixed class keeps the simplex it had
+  expect_identical(class(outer_default_optimizer(FALSE, FALSE, FALSE))[[1L]],
+                   class(optimizers7::nelder_mead())[[1L]])
+})

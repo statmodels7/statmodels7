@@ -311,7 +311,7 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
     # no-ops -- but it reached the penalty first, at an empty coefficient
     # vector, and a multivariate prior asked for a derivative at no rows warns
     # where a univariate one returns empty in silence.
-    if (isTRUE(un$structural)) next
+    if (isTRUE(un$structural) || isTRUE(un$mixed)) next
     pos <- un$index
     pen <- un$penalty
     bt <- unit_beta(un, coef, params)
@@ -933,6 +933,13 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {
   # of the wrong function, and a wrong standard error is worse than none.
   # It is the same gap outer_gradient_ok() refuses at order 2.
   if (anyDuplicated(index_members(idx)$row)) return(NULL)
+  # ⚠️ AND NONE FOR A MIXED CLASS, for the same reason: the curvature comes
+  # from statmod_marginal_hess(), whose assembly is written over the
+  # coefficients and does not carry the cross block such a class contributes.
+  # A wrong standard error is worse than none.
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$mixed)) return(NULL)
+  }
   basis <- integrated_basis(spec, design, method@kind)
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method, idx,
                                        basis),

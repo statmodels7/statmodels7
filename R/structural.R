@@ -989,8 +989,17 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
     sst$key <- NULL
     sst$value <- NULL
   }
+  njoint <- nb + length(free)
+  # A COVARIANCE CLASS SPLIT BETWEEN THE TWO HALVES is placed by one function
+  # rather than by the two blocks below: its Hessian has a cross block, which
+  # is the only place the correlation between a coefficient and a filter's own
+  # parameter enters, and neither half's assembly has anywhere to put it.
+  mixed <- any(vapply(statmod_penalized(spec, design),
+                      function(z) isTRUE(z$mixed), TRUE))
   raw <- function(u) {
     setz(u[ix])
+    # the VALUE of a mixed class arrives through obj$fn, which reads
+    # statmod_penalty_at(); only its derivatives are placed here
     obj$fn(u[seq_len(nb)])
   }
   fn <- function(u) {
@@ -1004,7 +1013,12 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
       g <- -statmod_structural_score(spec, obj$split(b), design)[[key]][free]
       pg <- statmod_structural_penalty(spec, design, hyper, "gradient")
       if (!is.null(pg[[key]])) g <- g + pg[[key]][free]
-      c(obj$gr(b), g)
+      out <- c(obj$gr(b), g)
+      if (mixed) {
+        out <- out + joint_penalty_at(spec, design, obj$split(b), hyper,
+                                      "gradient", njoint)
+      }
+      out
     }, error = function(e) NULL)
     if (is.null(v) || !all(is.finite(v))) numeric(length(u)) else v
   }
@@ -1024,6 +1038,9 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
       as_dense(statmod_penalty_at(spec, cf, hyper, design, "hessian"))
     ph <- statmod_structural_penalty(spec, design, hyper, "hessian")
     if (!is.null(ph[[key]])) P[ix, ix] <- ph[[key]][free, free, drop = FALSE]
+    if (mixed) {
+      P <- P + joint_penalty_at(spec, design, cf, hyper, "hessian", njoint)
+    }
     H + P
   }
 

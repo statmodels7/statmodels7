@@ -277,13 +277,27 @@ statmod_penalized <- function(spec, design) {
       # own penalties are: positions among its parameters, read from the
       # design's structural state, with nothing to look up in the design and
       # no place in the stacked vector
-      if (cl$structural) {
-        return(c(u, list(structural = TRUE, cols = class_zeta_cols(cl),
-                         index = NULL,
+      if (identical(cl$space, "zeta")) {
+        return(c(u, list(structural = TRUE, mixed = FALSE,
+                         cols = class_zeta_cols(cl), index = NULL,
                          pieces = lapply(cl$pieces, function(pc)
                            c(pc, list(cols = pc$within, index = NULL))))))
       }
-      return(c(u, list(structural = FALSE, cols = NULL,
+      # a MIXED class is in neither vector on its own. It has no `index` and
+      # no `cols`, so every reader written for one of the two skips it, and
+      # what it does carry is `joint`: positions in [beta ; zeta_free], which
+      # is the vector the inner step, the criterion and the variance build.
+      if (identical(cl$space, "mixed")) {
+        jp <- class_joint_pieces(cl, design, params, offs)
+        return(c(u, list(structural = FALSE, mixed = TRUE, cols = NULL,
+                         index = NULL,
+                         joint = class_interleave(
+                           cl, lapply(jp, function(z) z$joint)),
+                         beta_index = unlist(lapply(jp, function(z) z$index),
+                                             use.names = FALSE),
+                         pieces = jp)))
+      }
+      return(c(u, list(structural = FALSE, mixed = FALSE, cols = NULL,
                        index = class_index(cl, design, params, offs),
                        pieces = class_pieces(cl, design, params, offs))))
     }
@@ -378,6 +392,79 @@ class_index <- function(cl, design, params, offs) {
 #' @keywords internal
 class_zeta_cols <- function(cl) {
   class_interleave(cl, lapply(cl$pieces, function(pc) pc$within))
+}
+
+
+#' Where a Mixed Covariance Class's Members Sit in the Joint Vector
+#'
+#' @description
+#' One entry per member of a class split between the design's coefficients and
+#' a filter's own parameters, each with its positions in the joint vector
+#' \eqn{[\beta; \zeta_{\mathrm{free}}]} that the inner step, the marginal
+#' criterion and the variance all assemble.
+#'
+#' @details
+#' The joint order is the one those three already write and is not invented
+#' here: the stacked coefficients first, then the free parameters of the one
+#' structural term of the filter shape, in the order the term holds them less
+#' whichever a linear intercept already carries.
+#'
+#' A coefficient member's positions are its parameter's offset plus its
+#' columns, exactly as [class_pieces()] gives them. A structural member's are
+#' `nb` plus its place among the FREE parameters, which is not its place among
+#' all of them: a held one is not in the joint vector at all.
+#'
+#' # A held coordinate cannot be in a class
+#'
+#' The prior's dimension is fixed when the class is assembled, from the members'
+#' widths. If one of the coordinates it collects is then held -- the level of a
+#' filter is, wherever a linear intercept in the same equation already carries
+#' the constant -- the class has fewer coordinates than its prior describes and
+#' there is no honest matrix to estimate. It is rejected here, where the held
+#' set is visible, naming the coordinate and the two ways out.
+#'
+#' @param cl One class, from [statmod_classes()], whose `space` is `"mixed"`.
+#' @param design The design.
+#' @param params The distribution's parameters, in order.
+#' @param offs Where each parameter's coefficients start in the stacked vector.
+#'
+#' @return A list of lists, one per member, each the piece with `joint` added
+#'   and, for a coefficient member, `cols` and `index`.
+#'
+#' @seealso [statmod_penalized()], its caller; [joint_penalty_at()], which
+#'   reads the positions.
+#'
+#' @keywords internal
+class_joint_pieces <- function(cl, design, params, offs) {
+  sst <- statmod_structural_state(design)
+  nb <- sum(vapply(design[params], function(d) d$npar, integer(1)))
+  key <- cl$sterm
+  all_nm <- names(sst$zeta[[key]])
+  free <- setdiff(all_nm, sst$held[[key]])
+  lapply(cl$pieces, function(pc) {
+    if (isTRUE(pc$structural)) {
+      nm <- all_nm[pc$within]
+      j <- match(nm, free)
+      if (anyNA(j)) {
+        stop(sprintf(paste0(
+          "the covariance label '%s' collects '%s', which is held: a linear\n",
+          "  intercept in the same equation already carries it, so it is not\n",
+          "  estimated and the block would have one coordinate fewer than the\n",
+          "  prior describes. Write the equation with `0 +` so the term\n",
+          "  carries its own level, or drop the middle bar on that effect."),
+          cl$tag, nm[is.na(j)][[1L]]), call. = FALSE)
+      }
+      # `cols` stays NULL so that a reader marking DESIGN columns from the
+      # pieces skips this one rather than marking the columns its parameter
+      # positions happen to number
+      return(c(pc, list(cols = NULL, index = NULL, zcols = pc$within,
+                        joint = nb + j)))
+    }
+    a <- match(pc$param, params)
+    cols <- design[[pc$param]]$blocks[[pc$term]]
+    if (!is.null(pc$within)) cols <- cols[pc$within]
+    c(pc, list(cols = cols, index = offs[a] + cols, joint = offs[a] + cols))
+  })
 }
 
 
@@ -602,11 +689,13 @@ statmod_classes <- function(terms) {
     cl <- found[[key]]
     cl$key <- key
     cl$dim <- sum(vapply(cl$pieces, function(z) as.integer(z$dim), integer(1)))
-    cl$structural <- class_space(cl)
-    # a class inside a structural term is addressed in that term's own
+    cl$space <- class_space(cl)
+    cl$structural <- identical(cl$space, "zeta")
+    # a class touching a structural term is addressed in that term's own
     # parameters, and there is at most one such term in a model, so every
-    # piece of it names the same one
-    if (cl$structural) cl$sterm <- cl$pieces[[1L]]$term
+    # structural piece of it names the same one
+    st <- Filter(function(z) isTRUE(z$structural), cl$pieces)
+    if (length(st)) cl$sterm <- st[[1L]]$term
     cl$penalty <- class_penalty(cl)
     cl
   })
@@ -616,45 +705,35 @@ statmod_classes <- function(terms) {
 #' Which Vector a Covariance Class Is Addressed In
 #'
 #' @description
-#' `TRUE` where every member sits inside a structural term, `FALSE` where none
-#' does; an error where the members are split between the two.
+#' Which of the three vectors a class's coordinates are positions in.
 #'
 #' @details
 #' A member written in an equation, or in the subformula of an additive term,
 #' has columns in the stacked coefficient vector. A member inside a structural
 #' term has none: its coordinates are that term's own parameters, which the
-#' design carries in its structural state. The two are different vectors, and
-#' a class is read at one index, so which vector it is is a property of the
-#' class rather than of each member.
+#' design carries in its structural state.
 #'
-#' A class **split between them** would need a penalty whose index runs partly
-#' over coefficients and partly over a filter's parameters. The joint vector
-#' those would be positions in exists -- the inner step, the marginal criterion
-#' and the variance all build it -- but the penalty enters each of the three as
-#' two diagonal blocks, with no cross block between them, so a mixed class
-#' cannot yet be read. It is rejected rather than fitted as though the label
-#' spanned less than it does.
+#' A class whose members are all of one kind is read in that vector. A class
+#' **split between them** is read in the JOINT vector the fit already builds,
+#' \eqn{[\beta; \zeta_{\mathrm{free}}]}: the inner step, the marginal
+#' criterion and the variance all assemble it, with the coefficients first and
+#' a filter's free parameters after them. What such a class adds to those three
+#' is the CROSS block, which the penalty produces on its own -- it is one
+#' Hessian over the class's stacked vector and knows nothing of the split.
 #'
 #' @param cl One class, as [statmod_classes()] assembles it.
 #'
-#' @return A single logical.
+#' @return One of `"coef"`, `"zeta"` or `"mixed"`.
 #'
-#' @seealso [statmod_classes()], its only caller.
+#' @seealso [statmod_classes()], its only caller; [class_joint_pieces()] for
+#'   the positions a mixed class is read at.
 #'
 #' @keywords internal
 class_space <- function(cl) {
   st <- vapply(cl$pieces, function(z) isTRUE(z$structural), TRUE)
-  if (all(st) || !any(st)) return(all(st))
-  who <- function(k) sprintf("'%s' in '%s'", cl$pieces[[k]]$term,
-                             cl$pieces[[k]]$param)
-  stop(sprintf(paste0(
-    "the covariance label '%s' is shared between a structural term and an\n",
-    "  ordinary one: %s and %s. What a structural term contributes is its\n",
-    "  own parameters and not columns of the design, so the block would have\n",
-    "  to span two vectors, and a penalty is read at one index. A label\n",
-    "  inside a structural term may be shared with another effect of the\n",
-    "  same term; correlating it with a coefficient is not available."),
-    cl$tag, who(which(st)[[1L]]), who(which(!st)[[1L]])), call. = FALSE)
+  if (all(st)) return("zeta")
+  if (!any(st)) return("coef")
+  "mixed"
 }
 
 

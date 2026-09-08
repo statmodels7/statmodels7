@@ -639,20 +639,30 @@ test_that("a label under a term of the likelihood shape is refused", {
   expect_silent(reject_unfittable(list(mu = list(m = Mixed(label = "m")))))
 })
 
-test_that("a class split between a filter and an ordinary term is refused", {
+test_that("a class split between a filter and an ordinary term is joint", {
   set.seed(91)
   m <- 6; ni <- 20
   d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
   d2$y <- stats::rnorm(m * ni)
-  # the two members would have to be read at one index, and they are positions
-  # in two different vectors
-  err <- tryCatch(statmod_spec(
+  # its two halves are positions in two different vectors, and the one that
+  # holds both is [beta ; zeta_free], which the inner step, the criterion and
+  # the variance already assemble
+  spec <- statmod_spec(
     y ~ random(~ 1 | u | id) +
       gas(p = 1, q = 1, alpha1 ~ 1 + random(~ 1 | u | id), by = id),
-    distributions7::gaussian1_distrib(), d2), error = conditionMessage)
-  expect_match(err, "shared between a structural term and an", fixed = TRUE)
-  expect_match(err, "covariance label 'u'", fixed = TRUE)
-  expect_match(err, "read at one index", fixed = TRUE)
+    distributions7::gaussian1_distrib(), d2)
+  des <- statmod_design(spec)
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))
+  expect_length(u, 1L)
+  u <- u[[1L]]
+  expect_identical(u$class$space, "mixed")
+  expect_null(u$index)
+  expect_null(u$cols)
+  nb <- sum(vapply(des, function(d) d$npar, integer(1)))
+  expect_length(u$joint, 2L * m)
+  # one half among the coefficients and one among the free parameters
+  expect_true(all(u$joint[c(TRUE, FALSE)] <= nb))
+  expect_true(all(u$joint[c(FALSE, TRUE)] > nb))
 })
 
 test_that("a parent keeps its own penalty beside a labelled sub-term", {

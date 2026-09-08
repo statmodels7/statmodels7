@@ -129,6 +129,14 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # refusing costs 1.3x on those models alone and 3.6x to 7.4x beside a smooth
   # -- the refusal being model-wide, u is shared by every hyperparameter, so
   # the smooth would lose its gradient too.
+  # A MIXED covariance class is refused at both orders in this round. Its
+  # contribution to dK/dtheta lives in the joint matrix, whose cross block is
+  # new, and the contraction here is written over the coefficients; the search
+  # falls to lbfgs() or nelder_mead(), as it already does for a shared
+  # hyperparameter.
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$mixed)) return(FALSE)
+  }
   if (structural_penalized(spec, design)) {
     if (order >= 2L) return(FALSE)
     for (u in statmod_penalized(spec, design)) {

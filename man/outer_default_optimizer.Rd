@@ -4,12 +4,15 @@
 \alias{outer_default_optimizer}
 \title{Which Optimizer the Outer Search Uses When the Caller Names None}
 \usage{
-outer_default_optimizer(exact, exact2)
+outer_default_optimizer(exact, exact2, mixed = FALSE)
 }
 \arguments{
 \item{exact}{Whether the criterion has an exact gradient.}
 
 \item{exact2}{Whether it has an exact Hessian as well.}
+
+\item{mixed}{Whether the model carries a covariance class spanning the
+coefficients and a structural term's own parameters.}
 }
 \value{
 An \pkg{optimizers7} optimizer.
@@ -17,6 +20,18 @@ An \pkg{optimizers7} optimizer.
 \description{
 The choice is made from what the criterion can supply: its exact Hessian,
 its exact gradient, or neither.
+
+A covariance class split between the coefficients and a filter's own
+parameters is the one shape with no exact gradient that still gets
+\code{lbfgs()}, differencing the criterion. Such a class carries at least three
+hyperparameters -- two scales and a correlation -- and three is where this
+file already records the simplex stalling. Measured on a panel of twelve
+groups, both searches reporting convergence: \code{nelder_mead()} reaches a
+criterion of -684.789 in 123 seconds, at a loading scale collapsed to
+2.1e-06 and a correlation of -0.9999, while \code{lbfgs()} reaches -683.305 in
+27 seconds at scales of 0.647 and 0.389 and a correlation of 0.733 -- which
+on data simulated with the two effects INDEPENDENT is the answer the two
+separate fits give, to 0.2 of log-likelihood.
 }
 \seealso{
 \code{\link[=outer_fit]{outer_fit()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

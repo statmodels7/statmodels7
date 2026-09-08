@@ -10,29 +10,27 @@ class_space(cl)
 \item{cl}{One class, as \code{\link[=statmod_classes]{statmod_classes()}} assembles it.}
 }
 \value{
-A single logical.
+One of \code{"coef"}, \code{"zeta"} or \code{"mixed"}.
 }
 \description{
-\code{TRUE} where every member sits inside a structural term, \code{FALSE} where none
-does; an error where the members are split between the two.
+Which of the three vectors a class's coordinates are positions in.
 }
 \details{
 A member written in an equation, or in the subformula of an additive term,
 has columns in the stacked coefficient vector. A member inside a structural
 term has none: its coordinates are that term's own parameters, which the
-design carries in its structural state. The two are different vectors, and
-a class is read at one index, so which vector it is is a property of the
-class rather than of each member.
+design carries in its structural state.
 
-A class \strong{split between them} would need a penalty whose index runs partly
-over coefficients and partly over a filter's parameters. The joint vector
-those would be positions in exists -- the inner step, the marginal criterion
-and the variance all build it -- but the penalty enters each of the three as
-two diagonal blocks, with no cross block between them, so a mixed class
-cannot yet be read. It is rejected rather than fitted as though the label
-spanned less than it does.
+A class whose members are all of one kind is read in that vector. A class
+\strong{split between them} is read in the JOINT vector the fit already builds,
+\eqn{[\beta; \zeta_{\mathrm{free}}]}: the inner step, the marginal
+criterion and the variance all assemble it, with the coefficients first and
+a filter's free parameters after them. What such a class adds to those three
+is the CROSS block, which the penalty produces on its own -- it is one
+Hessian over the class's stacked vector and knows nothing of the split.
 }
 \seealso{
-\code{\link[=statmod_classes]{statmod_classes()}}, its only caller.
+\code{\link[=statmod_classes]{statmod_classes()}}, its only caller; \code{\link[=class_joint_pieces]{class_joint_pieces()}} for
+the positions a mixed class is read at.
 }
 \keyword{internal}
