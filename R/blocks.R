@@ -528,6 +528,50 @@ unit_positions <- function(u) {
 }
 
 
+#' Where a Penalized Unit's Coordinates Are in the Joint Vector
+#'
+#' @description
+#' The same positions as [unit_positions()], carried onto the one vector
+#' \eqn{[\beta; \zeta_{\mathrm{free}}]} that the inner step, the marginal
+#' criterion and the variance all assemble, so that a unit of any of the three
+#' kinds can be read off one diagonal.
+#'
+#' @details
+#' The three kinds are addressed in three different vectors and the caller
+#' that wants a trace wants one. A mixed class already records the answer, its
+#' `joint` field being built by [class_joint_pieces()]. A structural unit
+#' records positions among ALL of a term's parameters, where the joint vector
+#' holds only the free ones, so a held coordinate has to be mapped out rather
+#' than offset past. An ordinary unit's stacked index is already a position in
+#' the joint vector, coefficients coming first and none of them being held.
+#'
+#' Written once because the convention is composed in three places otherwise,
+#' and two of them would agree only by accident.
+#'
+#' @param u One unit, from [statmod_penalized()].
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#'
+#' @return An integer vector of positions, empty where the unit names a
+#'   coordinate the joint vector does not carry.
+#'
+#' @seealso [unit_positions()] for the same coordinates in the unit's own
+#'   vector; [class_joint_pieces()], which builds the mixed case.
+#'
+#' @keywords internal
+unit_joint_positions <- function(u, spec, design) {
+  if (isTRUE(u$mixed)) return(as.integer(u$joint))
+  if (!isTRUE(u$structural)) return(as.integer(u$index))
+  sst <- statmod_structural_state(design)
+  if (is.null(sst) || is.null(sst$zeta[[u$term]])) return(integer(0))
+  nb <- sum(vapply(design[spec@distrib@params], function(d) d$npar,
+                   integer(1)))
+  all_nm <- names(sst$zeta[[u$term]])
+  j <- match(all_nm[u$cols], setdiff(all_nm, sst$held[[u$term]]))
+  if (anyNA(j)) integer(0) else as.integer(nb + j)
+}
+
+
 #' Every Penalty in a Model, Without the Design
 #'
 #' @description

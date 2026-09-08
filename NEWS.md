@@ -1,3 +1,72 @@
+# statmodels7 0.110.0
+
+* THE EFFECTIVE DEGREES OF FREEDOM OF A MODEL CARRYING A FILTER ARE READ ON
+  THE VECTOR THE MODEL ESTIMATES, which is the coefficients of every equation
+  followed by the term's own free parameters, and no longer one degree of
+  freedom per free parameter whatever a prior does to it.
+
+  A term's share of the count is the trace of its own diagonal block of the
+  model's smoother, and where every unknown is a coefficient that matrix is
+  \eqn{(H+S)^{-1}H}, which `statmod_edf()` already read. A filter's parameters
+  are estimated beside the coefficients and, since 0.24.0, may carry a penalty
+  of their own -- a development of a loading over the groups of a panel, a
+  covariance class -- so the same definition wants the joint matrix:
+  `joint_smoother_diag()` reads it off `statmod_full_information()` and
+  `statmod_marginal_full()`, the two the criterion of such a model already
+  assembles.
+
+  The rule this replaces is that same trace restricted to the coordinates no
+  penalty covers, and the identity says so rather than a tolerance: with
+  \eqn{S} carrying a zero row and column outside its own support,
+  \deqn{F = M^{-1}K = M^{-1}(M - S) = I - M^{-1}S,} so a coordinate outside
+  that support has \eqn{F_{jj}} exactly one. Measured on three models, the
+  unpenalized coordinates of a filter come back at 1.000000000000000 with a
+  gap of 0.000e+00, while eight deviations of a developed loading read between
+  0.080 and 0.247 where the count says eight, and sixteen under a covariance
+  class read between -0.0003 and 0.829 where the count says sixteen.
+
+  What it moves, on the three reference panels:
+
+  \tabular{lrr}{
+    \tab reported \tab joint \cr
+    one penalized development, no class \tab 12.0000 \tab 5.3044 \cr
+    a class inside one filter \tab 20.0000 \tab 10.3982 \cr
+    a mixed class \tab 27.0000 \tab 16.1058
+  }
+
+  and on the mixed panel cAIC goes 1068.995 to 1047.207 and cBIC 1173.920 to
+  1109.796.
+
+  A shared covariance block reports what THE CLASS spends, the trace over the
+  coordinates it collects, rather than its members' whole terms added up:
+  `unit_joint_positions()` carries a unit of any of the three kinds onto that
+  one vector. On a class inside a filter it reads 6.40 where the term's own
+  row reads 8.40, the level and the persistence being the term's and not the
+  class's.
+
+  Three things stay where they were, and the first two are measured against
+  the previous release on the same data rather than argued. A model carrying
+  no filter is untouched to the last digit: a smooth reads 8.242789753 on both
+  sides, and a class between two ordinary random effects reads 42.450650498
+  with its block at 40.45, the members' rows added up being exactly the trace
+  over the coordinates that class collects. A term that mixes over latent
+  states keeps one apiece and is right to: `statmod_marginal_full()` has no
+  determinant for it, and `regime()` takes no subformula, so its own
+  parameters carry no penalty and one apiece is what the joint trace would
+  say.
+
+  What does move beside a filter is an ORDINARY term's row, by the coupling:
+  measured, a random effect beside an unpenalized filter goes 6.744459729 to
+  6.535692438 while the filter's own row stays exactly 2.000000000. That is
+  the same definition read consistently -- the model has one smoother, not one
+  per block -- and it is the reason the coefficient half is taken from the
+  joint matrix too.
+
+  The joint route reads the OBSERVED information, there being no expected one
+  for a filter: `statmod_marginal_full()` assembles from
+  `modelterms7::term_curvature()`, and the criterion of such a model already
+  reads that matrix, so the count and the criterion agree with each other.
+
 # statmodels7 0.109.0
 
 * A COVARIANCE CLASS MAY SPAN A FILTER'S OWN PARAMETERS AND AN ORDINARY

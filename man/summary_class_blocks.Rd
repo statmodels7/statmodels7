@@ -4,7 +4,14 @@
 \alias{summary_class_blocks}
 \title{The Covariance Blocks a Summary Prints Ahead of the Equations}
 \usage{
-summary_class_blocks(spec, design, tables, edf = NULL)
+summary_class_blocks(
+  spec,
+  design,
+  tables,
+  edf = NULL,
+  coef = NULL,
+  hyper = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -14,6 +21,12 @@ summary_class_blocks(spec, design, tables, edf = NULL)
 \item{tables}{The per-parameter block lists.}
 
 \item{edf}{The per-term degrees of freedom, or \code{NULL}.}
+
+\item{coef}{The coefficients, or \code{NULL}. With \code{hyper}, they let the block
+report what the class itself spends rather than what its members' terms
+do.}
+
+\item{hyper}{The hyperparameters, or \code{NULL}.}
 }
 \value{
 A list of block records, in the shape \code{\link[=print_block]{print_block()}} reads, each

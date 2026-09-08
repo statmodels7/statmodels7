@@ -1535,23 +1535,35 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   # number of coefficients away from the kink, after Zou, Hastie and
   # Tibshirani, and the curvature this matrix is built from does not exist at
   # a coefficient sitting on it.
+  #
+  # WHERE THE MODEL CARRIES A FILTER the same definition is read on the vector
+  # the model actually estimates, which is the coefficients AND the term's own
+  # free parameters: joint_smoother_diag() below. Its coefficient half stands
+  # in for this one, so every branch underneath is unchanged.
   smoother <- NULL
+  zsmooth <- NULL
   if (any(vapply(statmod_penalized(spec, design),
                  function(u) !penalty_has_kink(u$penalty, u$key),
                  logical(1)))) {
-    smoother <- tryCatch({
-      H <- statmod_information_at(spec, coef, design, expected, approx)
-      S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-      S <- zap_nonfinite(S)
-      # through solve_pd, whose equilibrated test forgives scale
-      # separation from any source: a smoothing parameter a criterion
-      # sends to 1e15 separates the scales without flattening a
-      # direction, and LAPACK's solve on the assembled system reported it
-      # as "computationally singular" -- which left the fit standing with
-      # every edf missing
-      Hd <- as_dense(H)
-      diag(solve_pd(as_dense(H + S), "the penalized information") %*% Hd)
-    }, error = function(e) NULL)
+    js <- joint_smoother_diag(spec, coef, design, hyper)
+    if (!is.null(js)) {
+      smoother <- js$beta
+      zsmooth <- js$zeta
+    } else {
+      smoother <- tryCatch({
+        H <- statmod_information_at(spec, coef, design, expected, approx)
+        S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
+        S <- zap_nonfinite(S)
+        # through solve_pd, whose equilibrated test forgives scale
+        # separation from any source: a smoothing parameter a criterion
+        # sends to 1e15 separates the scales without flattening a
+        # direction, and LAPACK's solve on the assembled system reported it
+        # as "computationally singular" -- which left the fit standing with
+        # every edf missing
+        Hd <- as_dense(H)
+        diag(solve_pd(as_dense(H + S), "the penalized information") %*% Hd)
+      }, error = function(e) NULL)
+    }
   }
   for (a in seq_along(params)) {
     p <- params[a]
@@ -1567,9 +1579,23 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
         # being estimated and unpenalized -- less any level an intercept in
         # the same equation already carries, which is held rather than
         # estimated and is not the model's to pay for twice.
-        zn <- modelterms7::term_params(spec@terms[[p]][[nm]])
-        st <- statmod_structural_state(design)
-        as.numeric(length(setdiff(zn, st$held[[nm]])))
+        #
+        # ONE APIECE IS THE SMOOTHER'S OWN ANSWER FOR AN UNPENALIZED
+        # PARAMETER, and only for one. Since 0.24.0 a filter's own parameters
+        # may carry a penalty -- a development of a loading over groups, a
+        # covariance class -- and there the rule counts a coordinate the prior
+        # has shrunk to nothing as a whole degree of freedom. Measured on the
+        # joint smoother at the fitted point, the unpenalized coordinates come
+        # back at 1.000000000000000 with a gap of 0.000e+00, so the two
+        # readings are the same rule where the old one was right, while eight
+        # shrunk deviations read between 0.080 and 0.247 against a count of
+        # eight, and sixteen under a covariance class read between -0.0003 and
+        # 0.829 against a count of sixteen.
+        if (!is.null(zsmooth)) sum(zsmooth) else {
+          zn <- modelterms7::term_params(spec@terms[[p]][[nm]])
+          st <- statmod_structural_state(design)
+          as.numeric(length(setdiff(zn, st$held[[nm]])))
+        }
       } else if (!length(ent) && is.null(smoother)) {
         # An ALIASED column is not a parameter the fit spent: the pivot left
         # it out and its coefficient is reported as missing, so counting it
@@ -1623,6 +1649,94 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   }
   if (!length(rows)) return(NULL)
   do.call(rbind, rows)
+}
+
+
+#' The Model's Smoother Over the Coefficients and a Filter's Parameters
+#'
+#' @description
+#' The diagonal of \eqn{F = (K+S)^{-1}K} on the vector a model carrying a
+#' score-driven filter actually estimates: the coefficients of every equation
+#' followed by the term's own free parameters.
+#'
+#' @details
+#' The effective degrees of freedom are the trace of the model's smoother and a
+#' term's share is the trace of its own diagonal block. Where every unknown is
+#' a coefficient that matrix is \eqn{(H+S)^{-1}H} and [statmod_edf()] reads it
+#' directly. A filter's parameters are estimated beside the coefficients and
+#' may carry a penalty of their own, so for such a model the same definition is
+#' read on the joint vector: \eqn{K} is [statmod_full_information()] and
+#' \eqn{K+S} the matrix the criterion's own determinant is taken of,
+#' [statmod_marginal_full()].
+#'
+#' # One apiece is this matrix's own answer, exactly
+#'
+#' Writing \eqn{P} for the coordinates some penalty covers, \eqn{S} has a zero
+#' row and a zero column outside \eqn{P}, so
+#' \deqn{F = M^{-1}K = M^{-1}(M - S) = I - M^{-1}S,}
+#' and for \eqn{j} outside \eqn{P} the whole column \eqn{S_{\cdot j}} vanishes,
+#' which makes \eqn{F_{jj}} exactly one. The rule this replaces -- one degree
+#' of freedom per free parameter of a structural term, on the reading that
+#' those are estimated and unpenalized -- is therefore what this matrix says
+#' wherever that rule is right, and measured it is so to the last bit: the
+#' unpenalized coordinates come back at 1.000000000000000 with a gap of
+#' 0.000e+00. What moves is a coordinate a prior shrinks, which since 0.24.0 a
+#' filter's own parameters may be. Measured on a developed loading over eight
+#' groups the eight deviations read between 0.080 and 0.247 where the count
+#' says eight, and under a covariance class over two developed parameters
+#' sixteen of them read between -0.0003 and 0.829 where the count says sixteen.
+#'
+#' A structural term that mixes over latent states rather than shifting the
+#' predictor has no such joint determinant, [statmod_marginal_full()] answering
+#' `NULL` for it, and falls back to the coefficient-only reading.
+#'
+#' The joint route reads the OBSERVED information, there being no expected one
+#' for a filter: [statmod_marginal_full()] assembles from
+#' [modelterms7::term_curvature()], and the criterion of such a model already
+#' reads that same matrix. A model carrying no filter never reaches here and is
+#' untouched.
+#'
+#' @param spec The specification.
+#' @param coef The coefficients.
+#' @param design The design.
+#' @param hyper The hyperparameters.
+#'
+#' @return A list with `beta`, the diagonal over the stacked coefficients, and
+#'   `zeta`, the diagonal over the structural term's free parameters, named as
+#'   the term names them. `NULL` where the model carries no filter or the joint
+#'   matrix cannot be formed.
+#'
+#' @seealso [statmod_edf()], its only caller.
+#'
+#' @keywords internal
+joint_smoother_diag <- function(spec, coef, design, hyper) {
+  sst <- statmod_structural_state(design)
+  if (is.null(sst)) return(NULL)
+  su <- Filter(function(u) identical(u$kind, "filter"),
+               attr(design, "structural"))
+  if (!length(su)) return(NULL)
+  key <- su[[1L]]$term
+  free <- setdiff(names(sst$zeta[[key]]), sst$held[[key]])
+  nb <- sum(vapply(design[spec@distrib@params], function(d) d$npar,
+                   integer(1)))
+  d <- tryCatch({
+    K <- statmod_full_information(spec, coef, design)
+    M <- statmod_marginal_full(spec, design, coef, hyper)
+    if (is.null(K) || is.null(M) || nrow(M) != nb + length(free) ||
+        !identical(dim(K), dim(M))) {
+      NULL
+    } else {
+      # solve_pd for the reason the coefficient route gives: a smoothing
+      # parameter a criterion sends to 1e15 separates the scales without
+      # flattening a direction, and its equilibrated test forgives that
+      diag(solve_pd(as_dense(M), "the joint penalized information") %*%
+             as_dense(K))
+    }
+  }, error = function(e) NULL)
+  if (is.null(d)) return(NULL)
+  z <- d[nb + seq_along(free)]
+  names(z) <- free
+  list(beta = d[seq_len(nb)], zeta = z)
 }
 
 

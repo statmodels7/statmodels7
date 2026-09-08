@@ -2177,7 +2177,8 @@ summary.StatmodFit <- function(object, level = 0.95,
   names(tables) <- spec@distrib@params
   # a covariance shared between terms is the property of none of them, and
   # summary_blocks() held its rows apart for that reason
-  cls <- tryCatch(summary_class_blocks(spec, design, tables, object@edf),
+  cls <- tryCatch(summary_class_blocks(spec, design, tables, object@edf,
+                                       object@coefficients, object@hyper),
                   error = function(e) list())
   # A LINE SAYING "REPORTED ABOVE" IS FALSE WHERE THE SECTION IS NOT THERE.
   # It cannot happen as the two are written -- every member of a shared class
@@ -3382,6 +3383,10 @@ class_notes <- function(spec, design) {
 #' @param design The design.
 #' @param tables The per-parameter block lists.
 #' @param edf The per-term degrees of freedom, or `NULL`.
+#' @param coef The coefficients, or `NULL`. With `hyper`, they let the block
+#'   report what the class itself spends rather than what its members' terms
+#'   do.
+#' @param hyper The hyperparameters, or `NULL`.
 #'
 #' @return A list of block records, in the shape [print_block()] reads, each
 #'   carrying its coordinates in `coords`. Empty where no class spans more
@@ -3391,7 +3396,28 @@ class_notes <- function(spec, design) {
 #'   says the same thing in prose.
 #'
 #' @keywords internal
-summary_class_blocks <- function(spec, design, tables, edf = NULL) {
+summary_class_blocks <- function(spec, design, tables, edf = NULL,
+                                 coef = NULL, hyper = NULL) {
+  # the model's smoother, built at most once and only where a class asks for
+  # it: a summary of a model carrying none must not pay for a factorization
+  smoother <- NULL
+  built <- FALSE
+  get_smoother <- function() {
+    if (built) return(smoother)
+    built <<- TRUE
+    if (is.null(coef) || is.null(hyper)) return(NULL)
+    smoother <<- tryCatch({
+      js <- joint_smoother_diag(spec, coef, design, hyper)
+      if (!is.null(js)) c(js$beta, js$zeta) else {
+        H <- statmod_information_at(spec, coef, design, TRUE, "opg")
+        S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
+                                              "hessian"))
+        diag(solve_pd(as_dense(H + S), "the penalized information") %*%
+               as_dense(H))
+      }
+    }, error = function(e) NULL)
+    smoother
+  }
   rows <- list()
   for (bl in tables) {
     for (b in bl) {
@@ -3410,12 +3436,21 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL) {
     # model's smoother over that member's own columns, and the class is
     # their union.
     #
-    # ONE COUNT PER TERM, not one per piece. Two members of a class may be two
-    # developments of ONE term -- the loading and the level of one filter, and
-    # measured, two labelled subformulas of one nl() would be the same shape --
-    # and the count is filed by (parameter, term), so a sum over the pieces
-    # reads that term's row twice: on a filter carrying both it reported 44.00
-    # for a class inside a model whose whole effective count is 24.00.
+    # WHAT THE CLASS ITSELF SPENDS, which is the trace of the model's own
+    # smoother over the coordinates the class collects and not over whatever
+    # else its members' terms carry. Where every member is an ordinary term
+    # whose block the class covers entirely the two are the same number --
+    # measured, 23.07079 + 17.37986 against 40.45065 -- and where a member is a
+    # filter they are not: the term's row counts its level and its persistence
+    # as well, which the class does not collect.
+    #
+    # ONE COUNT PER TERM in the fallback, not one per piece. Two members of a
+    # class may be two developments of ONE term -- the loading and the level of
+    # one filter, and measured, two labelled subformulas of one nl() would be
+    # the same shape -- and the count is filed by (parameter, term), so a sum
+    # over the pieces reads that term's row twice: on a filter carrying both it
+    # reported 44.00 for a class inside a model whose whole effective count is
+    # 24.00.
     e <- edf
     who <- unique(vapply(u$pieces, function(z)
       paste(z$param, z$term, sep = "\r"), ""))
@@ -3424,6 +3459,11 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL) {
         e$edf[e$parameter == z[[1L]] & e$term == z[[2L]]]
       if (length(v)) v[[1L]] else NA_real_
     }, 0))
+    sm <- get_smoother()
+    if (!is.null(sm)) {
+      pos <- unit_joint_positions(u, spec, design)
+      if (length(pos) && all(pos <= length(sm))) ed <- sum(sm[pos])
+    }
     out[[length(out) + 1L]] <- list(
       kind = "class", label = u$key, term = u$key,
       n_coef = length(unit_positions(u)), edf = NA_real_, n_zero = 0L,
