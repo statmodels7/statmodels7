@@ -351,25 +351,83 @@ test_that("a class coordinate that is held is refused", {
   expect_match(err, "which is held", fixed = TRUE)
 })
 
-test_that("the exact outer derivatives are refused for a mixed class", {
-  # Measured: statmod_marginal_grad() returns exactly zero for such a class,
-  # its contribution to dK/dtheta living in the joint matrix that assembly
-  # does not build. A zero gradient reads as stationarity, which is worse
-  # than no gradient, so the search is told there is none -- and falls to
-  # lbfgs() rather than to the simplex, which at three hyperparameters is
-  # where this package already records it stalling.
+test_that("the exact outer gradient of a mixed class is answered at order 1", {
+  # It used to be refused at both orders, because the member loop of
+  # statmod_structural_grad() addresses a unit by `index` -- which a mixed
+  # class does not have -- so the member passed with an EMPTY scatter and the
+  # gradient came back exactly zero, which reads as stationarity. That
+  # function assembles on the joint vector already, so what such a class
+  # needed was its positions in it. Order 2 stays refused, and not for a
+  # reason of its own: statmod_marginal_hess() is written over the stacked
+  # coefficients and has no joint twin, so every structural model is refused
+  # there.
   dd <- mixed_panel()
   spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, des))
   mt <- reml()
   expect_identical(nrow(idx), 3L)
-  expect_false(outer_gradient_ok(spec, des, idx, mt, 1L))
-  expect_false(outer_gradient_ok(spec, des, idx, mt, 2L))
   expect_true(mixed_penalized(spec, des))
+  expect_true(outer_gradient_ok(spec, des, idx, mt, 1L))
+  expect_false(outer_gradient_ok(spec, des, idx, mt, 2L))
+  # the class's structural half has to answer term_third() like any other, and
+  # it is named on the class rather than on the unit
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
+  expect_false(is.null(find_term(spec, u$class$sterm)))
+
+  expect_identical(class(outer_default_optimizer(TRUE, FALSE, TRUE))[[1L]],
+                   class(optimizers7::lbfgs())[[1L]])
+  # a mixed class whose gradient is unavailable for some further reason still
+  # keeps lbfgs, and a model with no mixed class keeps the simplex it had
   expect_identical(class(outer_default_optimizer(FALSE, FALSE, TRUE))[[1L]],
                    class(optimizers7::lbfgs())[[1L]])
-  # and a model with no mixed class keeps the simplex it had
   expect_identical(class(outer_default_optimizer(FALSE, FALSE, FALSE))[[1L]],
                    class(optimizers7::nelder_mead())[[1L]])
+})
+
+
+test_that("that gradient converges on a difference of the criterion", {
+  skip_on_cran()
+  # THE REFERENCE SHARES NO ARITHMETIC WITH IT: a central difference of the
+  # criterion with the mode refitted from a fresh design at every point, the
+  # design being rebuilt because a structural term's own parameters live in
+  # its state and reusing one reads the criterion off a non-stationary point.
+  # O(h^2) is what separates a correct gradient from one missing a term, which
+  # is flat in h, and from a badly located mode, which grows as 1/h.
+  dd <- mixed_panel()
+  spec0 <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des0 <- statmod_design(spec0)
+  idx <- outer_hyper_index(spec0, statmod_blocks(spec0, des0))
+  mt <- reml()
+  hy0 <- statmod_hyper_start(spec0, des0)
+
+  at <- function(eta) {
+    hy <- eta_to_hyper(eta, idx, hy0)
+    a <- fit_at_hyper(mixed_formula, distributions7::gaussian1_distrib(), dd,
+                      hy)
+    b <- integrated_basis(a$spec, a$design, mt@kind)
+    list(spec = a$spec, design = a$design, coef = a$coefficients, hy = hy,
+         basis = b)
+  }
+  crit <- function(eta) {
+    r <- at(eta)
+    statmod_marginal(r$spec, r$design, r$coef, r$hy, mt, basis = r$basis)$value
+  }
+  r0 <- at(rep(0, nrow(idx)))
+  g <- statmod_marginal_grad(r0$spec, r0$design, r0$coef, r0$hy, mt, idx,
+                             r0$basis)
+  # it is not the zero vector it used to be
+  expect_true(all(abs(g) > 1e-3))
+
+  rel <- vapply(c(3e-3, 1e-3), function(h) {
+    cd <- vapply(seq_len(nrow(idx)), function(k) {
+      ep <- rep(0, nrow(idx)); em <- ep
+      ep[k] <- h; em[k] <- -h
+      (crit(ep) - crit(em)) / (2 * h)
+    }, 0)
+    max(abs(g - cd)) / max(abs(cd))
+  }, 0)
+  expect_lt(rel[[2L]], 1e-5)
+  # and it FALLS as the step does, which a missing term would not
+  expect_lt(rel[[2L]], rel[[1L]] / 3)
 })

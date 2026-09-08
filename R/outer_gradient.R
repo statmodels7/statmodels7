@@ -129,22 +129,56 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # refusing costs 1.3x on those models alone and 3.6x to 7.4x beside a smooth
   # -- the refusal being model-wide, u is shared by every hyperparameter, so
   # the smooth would lose its gradient too.
-  # A MIXED covariance class is refused at both orders in this round. Its
-  # contribution to dK/dtheta lives in the joint matrix, whose cross block is
-  # new, and the contraction here is written over the coefficients; the search
-  # falls to lbfgs() or nelder_mead(), as it already does for a shared
-  # hyperparameter.
-  for (u in statmod_penalized(spec, design)) {
-    if (isTRUE(u$mixed)) return(FALSE)
-  }
+  # A MIXED covariance class is answered at order 1 and refused at order 2,
+  # which is the structural branch's own rule below rather than one of its
+  # own: statmod_structural_grad() assembles on the joint vector already, so
+  # what such a class needed was its positions in it, while
+  # statmod_marginal_hess() is written over the stacked coefficients and has
+  # no joint twin at all. Measured against a central difference of the
+  # criterion with the mode refitted, the order-1 route converges O(h^2) --
+  # 3.1e-05, 2.8e-06, 3.1e-07 at h of 1e-2, 3e-3, 1e-3 -- where it used to
+  # return exactly zero in every coordinate, which reads as stationarity.
   if (structural_penalized(spec, design)) {
     if (order >= 2L) return(FALSE)
     for (u in statmod_penalized(spec, design)) {
-      if (!isTRUE(u$structural)) next
-      if (!answers_term_third(spec@terms[[u$param]][[u$term]])) return(FALSE)
+      # a MIXED class runs through the same chain term, so the term it reaches
+      # has to answer term_third() for the same reason -- and it is named on
+      # the class rather than on the unit, the unit's own `term` being the
+      # class's key
+      tm <- if (isTRUE(u$mixed)) find_term(spec, u$class$sterm)
+            else if (isTRUE(u$structural)) spec@terms[[u$param]][[u$term]]
+            else next
+      if (is.null(tm) || !answers_term_third(tm)) return(FALSE)
     }
   }
   TRUE
+}
+
+
+#' A Term by Its Key, Whichever Equation It Sits In
+#'
+#' @description
+#' The term a key names, searched over every distribution parameter.
+#'
+#' @details
+#' A unit records the parameter its penalty is filed under, which for a
+#' covariance class is the parameter the class is keyed by and not necessarily
+#' the one carrying the structural term the class reaches into. A caller that
+#' has a term's key and wants the term asks here rather than assuming the two
+#' agree.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param key A term's key, its call as written.
+#'
+#' @return The term, or `NULL` where no equation carries that key.
+#'
+#' @keywords internal
+find_term <- function(spec, key) {
+  for (p in spec@distrib@params) {
+    tm <- spec@terms[[p]][[key]]
+    if (!is.null(tm)) return(tm)
+  }
+  NULL
 }
 
 
@@ -780,6 +814,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   st <- structural_grad_parts(spec, design, coef, jd, M)
   params <- jd$params
   keep <- jd$keep
+  flat <- unlist(coef[params], use.names = FALSE)
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
   # over the members, and accumulating: see statmod_marginal_grad()
@@ -791,7 +826,29 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     h <- mem$name[i]
     un <- statmod_unit(spec, design, p, nm)
     pen <- un$penalty
-    if (isTRUE(un$structural)) {
+    if (isTRUE(un$mixed)) {
+      # A CLASS SPLIT BETWEEN THE TWO HALVES is read where each of its
+      # coordinates lives and put back in the class's own interleaved order,
+      # which `joint` records: the same read joint_penalty_at() already does
+      # for the value and the Hessian, so the ordering is composed in one
+      # place. Those positions are ALREADY positions in the vector this
+      # function assembles -- class_joint_pieces() numbers a structural
+      # coordinate among the FREE parameters, which is what
+      # statmod_marginal_full() spans -- so there is nothing to match them
+      # into. Measured, matching them into `keep` a second time shifts the
+      # structural half one place down and leaves the gradient 8.9e-02 out,
+      # flat in the step size, which reads as a missing term and is not one.
+      z <- sst$zeta[[un$class$sterm]]
+      bt <- numeric(length(un$joint))
+      for (pc in un$pieces) {
+        bt[match(pc$joint, un$joint)] <- if (isTRUE(pc$structural)) {
+          as.numeric(z[pc$zcols])
+        } else {
+          flat[pc$index]
+        }
+      }
+      pos <- as.integer(un$joint)
+    } else if (isTRUE(un$structural)) {
       z <- sst$zeta[[un$term]]
       bt <- as.numeric(z[un$cols])
       pos <- match(jd$nb + un$cols, keep)
@@ -799,7 +856,10 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
       bt <- coef[[p]][un$cols]
       pos <- match(un$index, keep)
     }
-    if (anyNA(pos)) next
+    # length zero as well as NA: a unit whose positions this vector does not
+    # carry contributed an EMPTY scatter rather than being skipped, which is
+    # how a mixed class read exactly zero in every coordinate
+    if (!length(pos) || anyNA(pos)) next
     th <- as.list(hyper[[p]][[nm]])
     gt <- penalties7::penalty_grad_theta(pen, bt, th)
     cr <- penalties7::penalty_cross(pen, bt, th)

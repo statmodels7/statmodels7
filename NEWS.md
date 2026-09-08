@@ -67,6 +67,51 @@
   `modelterms7::term_curvature()`, and the criterion of such a model already
   reads that matrix, so the count and the criterion agree with each other.
 
+* THE EXACT OUTER GRADIENT ANSWERS FOR A COVARIANCE CLASS SPANNING A FILTER
+  AND AN ORDINARY TERM, where 0.109.0 refused it at both orders because it
+  came back exactly zero in every coordinate.
+
+  The refusal was necessary and its stated cost was not what it seemed. That
+  release recorded the work as assembling the movement of the joint curvature
+  inside `statmod_marginal_grad()`, "which today works on the coefficients
+  alone". Measured, that is not where the work was: `structural_penalized()`
+  is TRUE for a mixed class, so the gradient already delegates to
+  `statmod_structural_grad()`, which already builds the joint matrix and
+  already scatters every member into it. What was missing is that the member
+  loop addresses an ordinary unit by its `index`, which a mixed class does not
+  carry, so the member was not skipped -- `anyNA(integer(0))` is FALSE -- and
+  passed with an EMPTY scatter, contributing nothing. It is one branch: the
+  class's coordinates read where each of them lives, in the interleaved order
+  `joint_penalty_at()` already reads them in.
+
+  Against a central difference of the criterion with the mode refitted from a
+  fresh design at every point, at two base points: 3.135e-05, 2.822e-06,
+  3.135e-07 and 2.204e-05, 1.984e-06, 2.208e-07 at steps of 1e-2, 3e-3 and
+  1e-3. Clean second order, which is what separates a correct gradient from
+  one missing a term, flat in the step, and from a badly located mode, growing
+  as its inverse.
+
+  On the panel of twelve groups: 105 criterion evaluations and 23.2 seconds
+  become 15 and 8.4, at the same criterion of -532.040118 and the same
+  hyperparameters to five figures. The certificate reads `converged` where
+  0.109.0 records `unknown`, the outer gradient being what verifies the
+  hyperparameters.
+
+  Those positions are ALREADY positions in the vector that function
+  assembles, `class_joint_pieces()` numbering a structural coordinate among
+  the FREE parameters. Matching them into the kept set a second time shifts
+  the structural half one place down and leaves the gradient 8.9e-02 out and
+  FLAT in the step -- which reads as a missing term and is not one, and is
+  recorded because that signature does not distinguish the two.
+
+  Order 2 stays refused, and not for a reason of a mixed class's own:
+  `statmod_marginal_hess()` is written over the stacked coefficients and has
+  no joint twin, so every model carrying a penalized structural term is
+  refused there. Measured, what it would have to beat is small: `newton()`
+  differencing the now-exact gradient reaches the same criterion as `lbfgs()`
+  on it, -532.040118 against -532.040118 and -442.107128 against -442.107128
+  on two panels, in 86 evaluations against 15 and 245 against 112.
+
 # statmodels7 0.109.0
 
 * A COVARIANCE CLASS MAY SPAN A FILTER'S OWN PARAMETERS AND AN ORDINARY
