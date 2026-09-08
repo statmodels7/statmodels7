@@ -1,5 +1,30 @@
 # statmodels7 0.110.0
 
+* A DEGREES-OF-FREEDOM COUNT THAT CANNOT BE READ IS REPORTED MISSING rather
+  than taken from the rule it replaced. Where a model carries a filter the
+  count is the trace of the joint smoother; where that matrix cannot be
+  factorized there is no trace, and returning the old one -- a parameter
+  apiece -- put a different quantity under the same name. Measured on a panel
+  where it fires, 20.00 against a penalized count of 10.40, with nothing
+  saying the definition had changed.
+
+  It fires where the joint matrix is INDEFINITE and not merely
+  ill-conditioned: at one such point its smallest eigenvalue is -7.111e-05,
+  `chol()` refuses it as `solve_pd()` does, and only a plain solve succeeds,
+  returning a diagonal with an entry of -7.56e-05, which is not a smoother's.
+  So there is nothing to relax in the test, and the fit is one that has
+  already failed -- both cases measured report no criterion or do not
+  converge. `joint_smoother_diag()` now distinguishes a model with no joint
+  vector, whose fallback is right for it, from one whose joint vector could
+  not be read, whose count is absent.
+
+  `logLik()`'s own fallback is corrected with it. It replaces a missing count
+  by the term's number of COLUMNS, on the stated reading that this is an
+  upper bound and that dropping the term would flatter every criterion. A
+  structural term has no columns, so that bound was zero and said the
+  opposite of what it means: measured, a filter carrying eighteen free
+  parameters reported a df of 2, and now reports 20.
+
 * THE EFFECTIVE DEGREES OF FREEDOM OF A MODEL CARRYING A FILTER ARE READ ON
   THE VECTOR THE MODEL ESTIMATES, which is the coefficients of every equation
   followed by the term's own free parameters, and no longer one degree of

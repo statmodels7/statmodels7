@@ -99,6 +99,8 @@ test_that("a model with no filter keeps the coefficient-only reading", {
                  outer_criterion = reml())
   design <- statmod_design(fit@spec)
   # there is no joint vector to read, so the route is not even offered
+  # NULL, and not the `failed` marker: there is no joint vector here at all,
+  # which is a different answer from one that could not be read
   expect_null(joint_smoother_diag(fit@spec, fit@coefficients, design,
                                   fit@hyper))
 
@@ -128,6 +130,8 @@ test_that("a term that mixes over states keeps one apiece, and is right to", {
   fit <- statmod(y ~ x + regime(2, time = t),
                  distributions7::gaussian1_distrib(), dd)
   design <- statmod_design(fit@spec)
+  # NULL, and not the `failed` marker: there is no joint vector here at all,
+  # which is a different answer from one that could not be read
   expect_null(joint_smoother_diag(fit@spec, fit@coefficients, design,
                                   fit@hyper))
   zn <- modelterms7::term_params(fit@spec@terms$mu[[2L]])
@@ -162,6 +166,80 @@ test_that("a class counts the coordinates it collects, not its members", {
   expect_length(term_row, 1L)
   expect_lt(ed, term_row - 0.5)
 })
+
+test_that("a count that cannot be read is missing, not the old rule", {
+  # WHERE THE JOINT MATRIX CANNOT BE READ the one-apiece rule is a different
+  # quantity, and returning it under the same name reported 20.00 on a model
+  # whose penalized count is 10.40. Measured, the refusal happens where that
+  # matrix is INDEFINITE -- smallest eigenvalue -7.1e-05, chol() refusing it
+  # too -- so there is nothing to relax and the count is simply absent.
+  #
+  # Driven through a stub rather than through a data set that happens to reach
+  # such a point: which panels do is a property of the sample, and a test that
+  # depended on one would be a test of the sample.
+  dd <- panel()
+  fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
+                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+  design <- statmod_design(fit@spec)
+  orig <- joint_smoother_diag
+  on.exit(utils::assignInNamespace("joint_smoother_diag", orig,
+                                   ns = "statmodels7"), add = TRUE)
+
+  # the reading as it stands, which the stub must differ from
+  ok <- statmod_edf(fit@spec, fit@coefficients, design, fit@hyper)
+  row_ok <- ok$edf[ok$term != "linpar"]
+  expect_length(row_ok, 1L)
+  expect_true(is.finite(row_ok))
+
+  utils::assignInNamespace(
+    "joint_smoother_diag",
+    function(spec, coef, design, hyper) list(beta = NULL, zeta = NULL,
+                                             failed = TRUE),
+    ns = "statmodels7")
+  # the value is captured by assignment: in the third edition expect_warning()
+  # returns the CONDITION and not the value of its argument
+  bad <- NULL
+  expect_warning(
+    bad <- statmod_edf(fit@spec, fit@coefficients, design, fit@hyper),
+    "cannot be read")
+  row_bad <- bad$edf[bad$term != "linpar"]
+  expect_length(row_bad, 1L)
+  expect_true(is.na(row_bad))
+  # and it is NOT the count of the term's free parameters, which is what the
+  # rule it replaces returned
+  zn <- modelterms7::term_params(fit@spec@terms$mu[["gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~1 | g))"]])
+  expect_false(isTRUE(all.equal(row_bad, as.numeric(length(zn) - 1L))))
+  # the ordinary rows still say what they can
+  expect_true(all(is.finite(bad$edf[bad$term == "linpar"])))
+})
+
+
+test_that("logLik's fallback for a missing count is an upper bound", {
+  # logLik() replaces a count it could not obtain by the term's number of
+  # COLUMNS, on the stated reading that this is an upper bound and that
+  # dropping it would flatter every criterion. A structural term has no
+  # columns, so that bound is zero and says the opposite of what it means:
+  # measured, a filter carrying eighteen free parameters reported a df of 2.
+  dd <- panel()
+  fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
+                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+  nm <- fit@edf$term[fit@edf$term != "linpar"]
+  expect_length(nm, 1L)
+  expect_identical(fit@edf$coefficients[fit@edf$term == nm], 0L)
+
+  design <- statmod_design(fit@spec)
+  sp <- statmod_structural_par(fit@spec, design)
+  free <- length(sp[[nm]]$parameter) - length(sp[[nm]]$held)
+  expect_gt(free, 1L)
+
+  broken <- fit
+  broken@edf$edf[broken@edf$term == nm] <- NA_real_
+  df <- attr(stats::logLik(broken), "df")
+  # the free parameters plus the two intercepts, and NOT the two alone
+  expect_equal(df, free + 2)
+  expect_gt(df, 2)
+})
+
 
 test_that("a class of ordinary members counts the same either way", {
   # THE CONTROL for the test above. Where every member is an ordinary term

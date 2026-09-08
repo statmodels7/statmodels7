@@ -3408,7 +3408,7 @@ summary_class_blocks <- function(spec, design, tables, edf = NULL,
     if (is.null(coef) || is.null(hyper)) return(NULL)
     smoother <<- tryCatch({
       js <- joint_smoother_diag(spec, coef, design, hyper)
-      if (!is.null(js)) c(js$beta, js$zeta) else {
+      if (!is.null(js) && !isTRUE(js$failed)) c(js$beta, js$zeta) else {
         H <- statmod_information_at(spec, coef, design, TRUE, "opg")
         S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design,
                                               "hessian"))

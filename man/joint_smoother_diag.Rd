@@ -16,10 +16,14 @@ joint_smoother_diag(spec, coef, design, hyper)
 \item{hyper}{The hyperparameters.}
 }
 \value{
-A list with \code{beta}, the diagonal over the stacked coefficients, and
+A list with \code{beta}, the diagonal over the stacked coefficients,
 \code{zeta}, the diagonal over the structural term's free parameters, named as
-the term names them. \code{NULL} where the model carries no filter or the joint
-matrix cannot be formed.
+the term names them, and \code{failed}. \code{NULL} where the model carries no joint
+vector at all, and a list whose \code{failed} is \code{TRUE} where it carries one
+that could not be read. The two are different answers: the first leaves a
+caller free to fall back on a rule that is right for such a model, and the
+second leaves it with no reading, so that the count is reported missing
+rather than taken from a rule meaning something else.
 }
 \description{
 The diagonal of \eqn{F = (K+S)^{-1}K} on the vector a model carrying a

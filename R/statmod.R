@@ -1542,14 +1542,16 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   # in for this one, so every branch underneath is unchanged.
   smoother <- NULL
   zsmooth <- NULL
+  zfailed <- FALSE
   if (any(vapply(statmod_penalized(spec, design),
                  function(u) !penalty_has_kink(u$penalty, u$key),
                  logical(1)))) {
     js <- joint_smoother_diag(spec, coef, design, hyper)
-    if (!is.null(js)) {
+    if (!is.null(js) && !isTRUE(js$failed)) {
       smoother <- js$beta
       zsmooth <- js$zeta
     } else {
+      zfailed <- isTRUE(js$failed)
       smoother <- tryCatch({
         H <- statmod_information_at(spec, coef, design, expected, approx)
         S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
@@ -1591,7 +1593,23 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
         # shrunk deviations read between 0.080 and 0.247 against a count of
         # eight, and sixteen under a covariance class read between -0.0003 and
         # 0.829 against a count of sixteen.
-        if (!is.null(zsmooth)) sum(zsmooth) else {
+        if (!is.null(zsmooth)) sum(zsmooth)
+        else if (zfailed) {
+          # THE MODEL HAS A JOINT VECTOR AND IT COULD NOT BE READ, so there is
+          # no count here rather than the old one under a new name. Measured,
+          # this fires where the joint matrix is indefinite -- a fit that has
+          # already failed, reporting no criterion -- and the rule it replaces
+          # returned the parameter count, 20.00 on a model whose penalized
+          # count is 10.40, with nothing saying the definition had changed.
+          warning(sprintf(paste0(
+            "the degrees of freedom of '%s' in '%s' cannot be read: the ",
+            "curvature over\n  the coefficients and the term's own parameters ",
+            "is not positive definite at\n  this point, so the model's ",
+            "smoother has no diagonal there. The fit itself\n  stands; what ",
+            "is missing is the count, and every criterion built on it."),
+            nm, p), call. = FALSE)
+          NA_real_
+        } else {
           zn <- modelterms7::term_params(spec@terms[[p]][[nm]])
           st <- statmod_structural_state(design)
           as.numeric(length(setdiff(zn, st$held[[nm]])))
@@ -1701,10 +1719,14 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
 #' @param design The design.
 #' @param hyper The hyperparameters.
 #'
-#' @return A list with `beta`, the diagonal over the stacked coefficients, and
+#' @return A list with `beta`, the diagonal over the stacked coefficients,
 #'   `zeta`, the diagonal over the structural term's free parameters, named as
-#'   the term names them. `NULL` where the model carries no filter or the joint
-#'   matrix cannot be formed.
+#'   the term names them, and `failed`. `NULL` where the model carries no joint
+#'   vector at all, and a list whose `failed` is `TRUE` where it carries one
+#'   that could not be read. The two are different answers: the first leaves a
+#'   caller free to fall back on a rule that is right for such a model, and the
+#'   second leaves it with no reading, so that the count is reported missing
+#'   rather than taken from a rule meaning something else.
 #'
 #' @seealso [statmod_edf()], its only caller.
 #'
@@ -1728,15 +1750,24 @@ joint_smoother_diag <- function(spec, coef, design, hyper) {
     } else {
       # solve_pd for the reason the coefficient route gives: a smoothing
       # parameter a criterion sends to 1e15 separates the scales without
-      # flattening a direction, and its equilibrated test forgives that
+      # flattening a direction, and its equilibrated test forgives that.
+      # Where it refuses, the matrix is measured INDEFINITE rather than
+      # ill-conditioned -- at one such point its smallest eigenvalue is
+      # -7.1e-05, chol() refuses it too, and a plain solve returns a diagonal
+      # with a negative entry, which is not a smoother's -- so the refusal is
+      # right and there is nothing to relax.
       diag(solve_pd(as_dense(M), "the joint penalized information") %*%
              as_dense(K))
     }
   }, error = function(e) NULL)
-  if (is.null(d)) return(NULL)
+  # THE TWO WAYS OF HAVING NOTHING ARE DIFFERENT and the caller must tell them
+  # apart: a model with no joint vector falls back to a rule that is right for
+  # it, while one whose joint matrix cannot be read has no reading at all, and
+  # the old count would be a different quantity reported under the same name.
+  if (is.null(d)) return(list(beta = NULL, zeta = NULL, failed = TRUE))
   z <- d[nb + seq_along(free)]
   names(z) <- free
-  list(beta = d[seq_len(nb)], zeta = z)
+  list(beta = d[seq_len(nb)], zeta = z, failed = FALSE)
 }
 
 

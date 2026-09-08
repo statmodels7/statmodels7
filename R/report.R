@@ -422,8 +422,25 @@ logLik.StatmodFit <- function(object,
     # a term whose count could not be obtained falls back to its number of
     # columns, which is the upper bound: dropping it would understate the
     # dimension of the model and flatter every criterion built on it
+    #
+    # A STRUCTURAL TERM HAS NO COLUMNS, so that bound is zero for it and the
+    # rule above says the opposite of what it means: measured, a model whose
+    # filter carries eighteen free parameters reported a df of 2. Its own
+    # upper bound is the parameters it estimates, which is what the count
+    # would have been had the smoother been readable.
     e <- object@edf
-    sum(ifelse(is.na(e$edf), e$coefficients, e$edf))
+    bound <- e$coefficients
+    if (anyNA(e$edf)) {
+      sp <- tryCatch(statmod_structural_par(object@spec,
+                                            statmod_design(object@spec)),
+                     error = function(err) list())
+      for (nm in names(sp)) {
+        i <- which(e$term == nm)
+        if (length(i))
+          bound[i] <- length(sp[[nm]]$parameter) - length(sp[[nm]]$held)
+      }
+    }
+    sum(ifelse(is.na(e$edf), bound, e$edf))
   }
   structure(object@loglik, df = df, nobs = object@spec@n_obs,
             class = "logLik")
