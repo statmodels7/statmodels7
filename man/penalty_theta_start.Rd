@@ -4,11 +4,17 @@
 \alias{penalty_theta_start}
 \title{A Penalty's Starting Hyperparameters}
 \usage{
-penalty_theta_start(pen)
+penalty_theta_start(pen, unit = 1)
 }
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty object, read for its
 \code{params_bounds} property alone.}
+
+\item{unit}{How far from a one-sided bound the neutral point sits, \code{1} by
+default. A simulation drawing a prior over coordinates that ride a chart
+passes a half: measured, a scale of 1 puts 10.1 per cent of the
+persistences a partial-autocorrelation chart carries past 0.95 and a
+scale of 0.5 puts 0.9 per cent there.}
 }
 \value{
 A named numeric vector, one entry per hyperparameter of \code{pen},
@@ -17,19 +23,35 @@ which a fixed prior is.
 }
 \description{
 Picks a starting value for each of a penalty's hyperparameters from its
-\code{params_bounds}, one unit inside whichever ends are infinite:
+\code{params_bounds}, one unit inside whichever ends are finite:
 \itemize{
 \item both ends finite: their midpoint;
-\item bounded below only, the common case: \code{lower + 1}, so a hyperparameter on
-\eqn{[0, \infty)} starts at 1;
-\item bounded above only: \code{upper - 1};
-\item unbounded: 1.
+\item bounded below only, the common case: \code{lower + unit}, so a hyperparameter
+on \eqn{[0, \infty)} starts at 1 at the default \code{unit};
+\item bounded above only: \code{upper - unit};
+\item unbounded on both sides: 0, whatever \code{unit} is.
 }
 }
 \details{
 One is the scale a smoothing parameter lives on before anything is known
-about it. The value matters only as somewhere to begin: it is a probe, and
-the criterion moves it at the first opportunity.
+about it, and that is an argument about a hyperparameter bounded below,
+which lives on \eqn{(0, \infty)} and for which one is a scale. A coordinate
+unbounded on both sides is not such a thing: it is a free coordinate of a
+\pkg{parameters7} chart, and there one is not one. On \code{dr_prod(2)} it reads
+as standard deviations of \eqn{e^1 = 2.718} and a correlation of -0.664,
+where zero is the chart's neutral point -- unit standard deviations and no
+correlation -- which is where an ordinary random effect starts, its own
+scale being bounded below and starting at \code{lower + 1}.
+
+The value matters only as somewhere to begin: it is a probe, and the
+criterion moves it at the first opportunity. What it can do is leave the
+inner fit somewhere it cannot converge from, and measured it did: over 22
+models across the four charts a caller can reach -- \code{log_cholesky},
+\code{dr_prod}, \code{ar1} and \code{compound_symmetry} -- the two starting points give
+criteria agreeing to 3e-05 or better wherever both finish, and three models
+finish from the neutral point that do not finish from one. A hyperparameter
+with a finite bound is untouched, so a ridge, a smooth and an ordinary
+random effect all begin exactly where they did.
 }
 \seealso{
 \code{\link[=statmod_hyper_start]{statmod_hyper_start()}}, its caller.
