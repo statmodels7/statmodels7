@@ -9,7 +9,7 @@ parametric terms together, and one block per penalized term."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.112.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,17 @@ parametric terms together, and one block per penalized term.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">p</span>, <span class="va">ci</span>, level <span class="op">=</span> <span class="fl">0.95</span>, V <span class="op">=</span> <span class="cn">NULL</span>, st <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">summary_blocks</span><span class="op">(</span></span>
+<span>  <span class="va">fit</span>,</span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">p</span>,</span>
+<span>  <span class="va">ci</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  V <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  st <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  at_edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -90,6 +100,15 @@ are therefore the delta method and no diagonal entry.</p></dd>
 design columns, so its block is built from what it reports, never from
 a block of the design, and its hyperparameter is reported there instead
 of in a block of its own carrying nothing else.</p></dd>
+
+
+<dt id="arg-at-edge">at_edge<a class="anchor" aria-label="anchor" href="#arg-at-edge"></a></dt>
+<dd><p>The <code>boundary_key</code> of <code><a href="statmod_certificate.html">statmod_certificate()</a></code>:
+the hyperparameter coordinates that have run to an edge of their range
+with their own gradient already met. Such a coordinate reports no
+standard error and no interval, and neither does any quantity that
+depends on it; the variance matrix around it is computed and reported
+as it always was.</p></dd>
 
 </dl></div>
     <div class="section level2">

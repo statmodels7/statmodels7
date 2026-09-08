@@ -506,6 +506,9 @@ exported, and none is needed to use the package.
 - [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   : Solve One Weighted Least Squares Step
 
+- [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
+  : Which Readings a Chart's Coordinate Enters
+
 - [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
   : The Rows of the Joint Predictor Derivative
 

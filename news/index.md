@@ -1,5 +1,50 @@
 # Changelog
 
+## statmodels7 0.112.0
+
+- A HYPERPARAMETER AT A BOUNDARY REPORTS NO STANDARD ERROR AND NO
+  INTERVAL, and neither does any quantity that depends on it, while the
+  rest of the variance matrix is computed and reported as usual. Where a
+  chart’s correlation coordinate has run out to where the criterion
+  stops moving in it, the correlation reports its estimate alone and the
+  two standard deviations beside it keep their standard errors and their
+  intervals.
+
+- Which quantities a held coordinate costs is asked of the readable
+  block’s Jacobian rather than of the chart, so a chart of another shape
+  is covered without an edit: on the two-dimensional covariance a class
+  carries, the correlation is the only reading the angle enters.
+
+- ⚠️ AND IT IS ASKED AGAINST EACH ROW’S OWN SCALE, not exactly. A
+  standard deviation is a function of its own log coordinate and of
+  nothing else, so its entry in the correlation column is structurally
+  zero – and at one fitted point that entry came back **1.338e-23**
+  against a row whose own size is 0.5056, a relative 2.6e-23, while at
+  another it came back exactly
+
+  0.  Read exactly, the first blanks a standard error that belongs:
+      measured before the change over sixteen fits of which nine reach
+      the boundary, two lost one, and after it over twenty-four fits of
+      which seven do, none does.
+      [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
+      is the one place the question is asked and its tolerance is
+      `sqrt(.Machine$double.eps)`; the same exact test decided whether a
+      coordinate keeps its own row, one function up, and carried the
+      same hazard.
+
+- The summary says which of the two reasons a blank cell has. A
+  coordinate at a boundary sits at a proper maximum, so the note about a
+  curvature that is not negative would state the opposite of what
+  happened. ⚠️ Both notes are printed where NOTHING carries a standard
+  error, which a boundary cannot explain: it holds the coordinates it
+  names and leaves the rest computed, so a table blank throughout was
+  refused for the other reason.
+
+- A pre-existing gap closed with it: the notes were gathered by walking
+  the equations’ tables alone, and a shared covariance block’s rows are
+  held apart, so a fit whose only penalized rows are a covariance a
+  label collects printed one note where it now prints two.
+
 ## statmodels7 0.111.0
 
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)

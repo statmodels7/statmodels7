@@ -17,7 +17,7 @@ Cholesky diagonal and the entries below it."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.112.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,8 @@ Cholesky diagonal and the entries below it.</p>
 <span>  <span class="va">role</span>,</span>
 <span>  <span class="va">src</span>,</span>
 <span>  <span class="va">cols</span>,</span>
-<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  at_edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -113,6 +114,13 @@ correlation between the second and the third coordinate of a covariance
 is a number about two named effects, and the family that carries the
 chart cannot say which; where the labels are given, they replace the
 positions in the printed name.</p></dd>
+
+
+<dt id="arg-at-edge">at_edge<a class="anchor" aria-label="anchor" href="#arg-at-edge"></a></dt>
+<dd><p>The keys of the hyperparameter coordinates
+<code><a href="statmod_certificate.html">statmod_certificate()</a></code> found at a boundary. A quantity whose
+Jacobian entry on one of them is not structurally zero reports no
+standard error and no interval; every other quantity keeps its own.</p></dd>
 
 </dl></div>
     <div class="section level2">

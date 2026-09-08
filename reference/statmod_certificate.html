@@ -11,7 +11,7 @@ above the penalized mode, and which hyperparameters have run to a boundary."><me
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.112.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,11 @@ decides the label alone and never the verdict; see the details.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>state</code> (<code>"converged"</code>, <code>"boundary"</code>,
 <code>"not converged"</code> or <code>"unknown"</code>), <code>gradient</code>,
-<code>mode_error</code>, <code>boundary</code> and <code>reason</code>.</p>
+<code>mode_error</code>, <code>boundary</code>, <code>boundary_key</code> and <code>reason</code>. <code>boundary_key</code>
+names the same coordinates as <code>boundary</code> does, in the key
+<code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> labels its rows by, which is what
+<code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reads to leave a standard error off a
+coordinate pinned there.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

@@ -110,11 +110,11 @@ names(spec@terms)
 spec@equations
 #> $mu
 #> ~x
-#> <environment: 0x55c875ffa0d8>
+#> <environment: 0x55b927584db0>
 #> 
 #> $sigma
 #> ~z
-#> <environment: 0x55c875ffa0d8>
+#> <environment: 0x55b927584db0>
 #> 
 
 # Unweighted, so the weights are ones.

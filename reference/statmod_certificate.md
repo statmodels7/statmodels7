@@ -31,7 +31,13 @@ statmod_certificate(fit, tol = 0.01, edge = 8)
 ## Value
 
 A list with `state` (`"converged"`, `"boundary"`, `"not converged"` or
-`"unknown"`), `gradient`, `mode_error`, `boundary` and `reason`.
+`"unknown"`), `gradient`, `mode_error`, `boundary`, `boundary_key` and
+`reason`. `boundary_key` names the same coordinates as `boundary` does,
+in the key
+[`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+labels its rows by, which is what
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+reads to leave a standard error off a coordinate pinned there.
 
 ## Details
 
