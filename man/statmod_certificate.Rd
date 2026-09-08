@@ -18,7 +18,11 @@ decides the label alone and never the verdict; see the details.}
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
 \code{"not converged"} or \code{"unknown"}), \code{gradient},
-\code{mode_error}, \code{boundary} and \code{reason}.
+\code{mode_error}, \code{boundary}, \code{boundary_key} and \code{reason}. \code{boundary_key}
+names the same coordinates as \code{boundary} does, in the key
+\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows by, which is what
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads to leave a standard error off a
+coordinate pinned there.
 }
 \description{
 Three readings taken at the reported point and independent of the path the

@@ -14,7 +14,8 @@ readable_hyper_rows(
   role,
   src,
   cols,
-  labels = character(0)
+  labels = character(0),
+  at_edge = character(0)
 )
 }
 \arguments{
@@ -39,6 +40,11 @@ correlation between the second and the third coordinate of a covariance
 is a number about two named effects, and the family that carries the
 chart cannot say which; where the labels are given, they replace the
 positions in the printed name.}
+
+\item{at_edge}{The keys of the hyperparameter coordinates
+\code{\link[=statmod_certificate]{statmod_certificate()}} found at a boundary. A quantity whose
+Jacobian entry on one of them is not structurally zero reports no
+standard error and no interval; every other quantity keeps its own.}
 }
 \value{
 A data frame of rows, in the shape of a summary block.

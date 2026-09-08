@@ -275,3 +275,141 @@ test_that("a covariance of one term stays in its block, renamed", {
   expect_identical(bl$table$name[1:3],
                    c("sd[(Intercept)]", "sd[x]", "cor[(Intercept), x]"))
 })
+
+
+test_that("a Jacobian entry is read against its row's scale, not exactly", {
+  # THE NUMBERS ARE MEASURED ONES, off a class at the boundary: the standard
+  # deviation of the second coordinate came back carrying 1.338246e-23 in the
+  # correlation column, where it is structurally zero, against a row whose own
+  # size is 0.5055750 -- while the same fit on other data gave exactly zero
+  # there. Read exactly, the first blanks a standard error that belongs.
+  # ⚠️ THIS BLOCK IS WHERE THE REPAIR IS PINNED and not the fitted one below:
+  # whether that entry cancels to the last bit is arithmetic, so a fit is not
+  # a reliable way to reach the case. Measured, restoring the exact test
+  # fails one assertion here and none there.
+  J <- rbind(sd_v1     = c(1.4969310, 0.0000000,  0.000000e+00),
+             sd_v2     = c(0.0000000, 0.5055750,  1.338246e-23),
+             cor_v1_v2 = c(0.0000000, 0.0000000, -2.224713e-07))
+  colnames(J) <- c("log_sd1", "log_sd2", "z2.1")
+
+  d <- statmodels7:::jacobian_depends(J)
+  expect_identical(dim(d), dim(J))
+  expect_identical(dimnames(d), dimnames(J))
+
+  # the correlation is the only reading the angle enters
+  expect_false(d[["sd_v1", "z2.1"]])
+  expect_false(d[["sd_v2", "z2.1"]])
+  expect_true(d[["cor_v1_v2", "z2.1"]])
+  # and every quantity still depends on its own coordinate, so the tolerance
+  # has not simply reported independence everywhere
+  expect_true(d[["sd_v1", "log_sd1"]])
+  expect_true(d[["sd_v2", "log_sd2"]])
+
+  # THE NEGATIVE CONTROL: the exact test this replaced answers the opposite
+  # on the one entry that decides the case, so putting it back fails here
+  # rather than passing quietly
+  expect_true((J != 0)[["sd_v2", "z2.1"]])
+
+  # a row that is zero throughout depends on nothing
+  z <- statmodels7:::jacobian_depends(rbind(a = c(0, 0, 0), b = c(1, 0, 0)))
+  expect_false(any(z["a", ]))
+  expect_true(z[["b", 1L]])
+
+  # and an entry that is not finite counts as a dependence: nothing licenses
+  # calling a quantity independent of a coordinate whose derivative is NaN
+  expect_true(statmodels7:::jacobian_depends(rbind(a = c(1, NaN)))[["a", 2L]])
+})
+
+
+test_that("a coordinate at the boundary costs its own readings and no others", {
+  skip_on_cran()
+  # A CORRELATION OF EXACTLY ONE in the truth, so the chart's angle runs out
+  # to where the criterion has stopped moving in it: the scale's effects are
+  # the mean's, up to a factor
+  set.seed(51)
+  m <- 10L
+  ni <- 10L
+  g <- factor(rep(seq_len(m), each = ni))
+  sd_mu <- 1.2
+  sd_sg <- 0.35
+  b <- stats::rnorm(m, 0, sd_mu)
+  u <- sd_sg / sd_mu * b
+  dd <- data.frame(g = g)
+  dd$y <- stats::rnorm(m * ni, mean = 1 + b[as.integer(g)],
+                       sd = exp(-0.3 + u[as.integer(g)]))
+  fit <- statmod(y ~ random(~ 1 | a | g) | sigma ~ random(~ 1 | a | g),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+
+  cert <- statmodels7:::statmod_certificate(fit)
+  expect_length(cert$boundary, 1L)
+  expect_match(cert$boundary, "z2.1", fixed = TRUE)
+
+  s <- summary(fit)
+  tb <- s@classes[[1L]]$table
+  expect_identical(tb$name,
+                   c("sd[mu:(Intercept)]", "sd[sigma:(Intercept)]",
+                     "cor[mu:(Intercept), sigma:(Intercept)]"))
+
+  # THE CORRELATION LOSES ITS NUMBERS, being the only reading the angle
+  # enters, and the estimate itself stands
+  expect_true(is.na(tb$se[[3L]]))
+  expect_true(is.na(tb$lower[[3L]]))
+  expect_true(is.na(tb$upper[[3L]]))
+  # AND BOTH STANDARD DEVIATIONS KEEP THEIRS, which is the other half of the
+  # rule: the rest of the matrix is computed and reported as usual
+  expect_true(all(is.finite(tb$se[1:2])))
+  expect_true(all(is.finite(tb$lower[1:2])))
+  expect_true(all(is.finite(tb$upper[1:2])))
+
+  # the estimate is the number the chart implies, computed apart from the
+  # summary
+  eta <- unlist(fit@hyper$mu[["a | g"]])
+  sig <- parameters7::param_value(parameters7::dr_prod(2L), eta)
+  expect_equal(tb$estimate[[3L]],
+               sig[1, 2] / sqrt(sig[1, 1] * sig[2, 2]), tolerance = 1e-8)
+  expect_gt(tb$estimate[[3L]], 0.999)
+  expect_equal(tb$estimate[[1L]], sqrt(sig[1, 1]), tolerance = 1e-8)
+  expect_equal(tb$estimate[[2L]], sqrt(sig[2, 2]), tolerance = 1e-8)
+
+  # WHICH NOTE ANSWERS FOR THE BLANK CELLS. A coordinate at a boundary sits
+  # at a proper maximum, so the sentence about a curvature that is not
+  # negative would state the opposite of what happened, and the two are not
+  # printed together where the rest of the matrix was read
+  expect_true(any(grepl("edge of its range", s@notes, fixed = TRUE)))
+  expect_false(any(grepl("curvature in its own direction", s@notes,
+                         fixed = TRUE)))
+  # and the note names the coordinate rather than leaving it to be guessed
+  expect_true(any(grepl(cert$boundary, s@notes, fixed = TRUE)))
+})
+
+
+test_that("away from the boundary every reading keeps its numbers", {
+  skip_on_cran()
+  # THE CONTROL, on the same model and data of the same shape whose two sets
+  # of effects are independent: without it the test above is satisfied by a
+  # summary that reports nothing anywhere
+  set.seed(51)
+  m <- 12L
+  ni <- 8L
+  g <- factor(rep(seq_len(m), each = ni))
+  b <- stats::rnorm(m, 0, 1.2)
+  u <- stats::rnorm(m, 0, 0.35)
+  dd <- data.frame(g = g)
+  dd$y <- stats::rnorm(m * ni, mean = 1 + b[as.integer(g)],
+                       sd = exp(-0.3 + u[as.integer(g)]))
+  fit <- statmod(y ~ random(~ 1 | a | g) | sigma ~ random(~ 1 | a | g),
+                 distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml())
+
+  cert <- statmodels7:::statmod_certificate(fit)
+  expect_length(cert$boundary, 0L)
+
+  s <- summary(fit)
+  tb <- s@classes[[1L]]$table
+  expect_true(all(is.finite(tb$se)))
+  expect_true(all(is.finite(tb$lower)))
+  expect_true(all(is.finite(tb$upper)))
+  expect_lt(abs(tb$estimate[[3L]]), 0.5)
+  expect_false(any(grepl("edge of its range", s@notes, fixed = TRUE)))
+})

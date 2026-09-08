@@ -4,7 +4,17 @@
 \alias{summary_blocks}
 \title{The Blocks of One Distribution Parameter}
 \usage{
-summary_blocks(fit, spec, design, p, ci, level = 0.95, V = NULL, st = NULL)
+summary_blocks(
+  fit,
+  spec,
+  design,
+  p,
+  ci,
+  level = 0.95,
+  V = NULL,
+  st = NULL,
+  at_edge = character(0)
+)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -30,6 +40,13 @@ are therefore the delta method and no diagonal entry.}
 design columns, so its block is built from what it reports, never from
 a block of the design, and its hyperparameter is reported there instead
 of in a block of its own carrying nothing else.}
+
+\item{at_edge}{The \code{boundary_key} of \code{\link[=statmod_certificate]{statmod_certificate()}}:
+the hyperparameter coordinates that have run to an edge of their range
+with their own gradient already met. Such a coordinate reports no
+standard error and no interval, and neither does any quantity that
+depends on it; the variance matrix around it is computed and reported
+as it always was.}
 }
 \value{
 A list of block records, each with \code{kind}, \code{label},

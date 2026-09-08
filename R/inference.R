@@ -2165,6 +2165,16 @@ summary.StatmodFit <- function(object, level = 0.95,
   }
   lab <- coef_labels(spec, design)
 
+  # READ BEFORE THE BLOCKS ARE BUILT, and not only because a note below asks
+  # whether the point is a maximum: a hyperparameter the certificate finds at
+  # a boundary carries no standard error, so the blocks have to be given the
+  # verdict rather than reached after it. It costs one outer gradient and one
+  # solve, which is nothing beside a summary that already inverts the
+  # penalized information, and a fold of cv() or a path point that never
+  # prints itself pays nothing at all.
+  cert <- tryCatch(statmod_certificate(object), error = function(e) NULL)
+  at_edge <- if (is.null(cert)) character(0) else cert$boundary_key
+
   # one variance matrix for every block that needs one: a term reported by
   # the quantities it is about carries them across by the delta method
   V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type,
@@ -2173,7 +2183,7 @@ summary.StatmodFit <- function(object, level = 0.95,
   strc <- tryCatch(statmod_structural_table(object, level),
                    error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
-    summary_blocks(object, spec, design, p, ci, level, V, strc))
+    summary_blocks(object, spec, design, p, ci, level, V, strc, at_edge))
   names(tables) <- spec@distrib@params
   # a covariance shared between terms is the property of none of them, and
   # summary_blocks() held its rows apart for that reason
@@ -2218,12 +2228,6 @@ summary.StatmodFit <- function(object, level = 0.95,
     r <- tryCatch(fitted_ranges(object), error = function(e) "")
     if (nzchar(r)) notes <- c(notes, r)
   }
-  # read HERE and not at the end, because a note below asks whether the point
-  # is a maximum and that is the certificate's answer. It costs one outer
-  # gradient and one solve, which is nothing beside a summary that already
-  # inverts the penalized information, and a fold of cv() or a path point
-  # that never prints itself pays nothing at all.
-  cert <- tryCatch(statmod_certificate(object), error = function(e) NULL)
 
   # The count above reads the hyperparameters as though they were known,
   # and they were estimated from the same data. Adding what that costs is
@@ -2254,10 +2258,18 @@ summary.StatmodFit <- function(object, level = 0.95,
     # WHICH criteria were in force, so a reader knows whether the number at
     # the head of a penalized block was chosen or given. The two kinds carry
     # different guarantees and are named separately.
-    src <- unique(unlist(lapply(tables, function(bl)
-      unlist(lapply(bl, function(b) b$table$source[b$table$role %in%
-                                                     c("fixed", "estimated")]),
-             use.names = FALSE)), use.names = FALSE))
+    # ⚠️ A SHARED BLOCK'S ROWS ARE HELD APART, so a walk over `tables` alone
+    # does not reach them -- and a fit whose only penalized rows are a
+    # covariance a label collects printed NONE of the three notes below, not
+    # even the one saying its hyperparameters carry a standard error at all.
+    # Measured before this line existed: such a summary carried one note, the
+    # one naming the shared block. The two are gathered once here and every
+    # question below is asked of both.
+    tabs <- c(unlist(lapply(tables, function(bl) lapply(bl, `[[`, "table")),
+                     recursive = FALSE),
+              lapply(cls, `[[`, "table"))
+    src <- unique(unlist(lapply(tabs, function(tb)
+      tb$source[tb$role %in% c("fixed", "estimated")]), use.names = FALSE))
     marg <- setdiff(intersect(src, c("reml", "ml")), NA)
     path <- setdiff(intersect(src, c("aic", "bic", "cv")), NA)
     # WHETHER THE STANDARD ERROR IS THERE, and not merely whether the
@@ -2266,11 +2278,11 @@ summary.StatmodFit <- function(object, level = 0.95,
     # direction and no variance follows from it, so the row carries the
     # estimate and nothing else -- and a note promising an interval beside
     # it would be false of the fit in front of the reader.
-    mse <- unlist(lapply(tables, function(bl) unlist(lapply(bl, function(b) {
-      r <- b$table$role %in% "estimated" & b$table$source %in% c("reml", "ml")
+    mse <- unlist(lapply(tabs, function(tb) {
+      r <- tb$role %in% "estimated" & tb$source %in% c("reml", "ml")
       if (!any(r)) return(logical(0))
-      is.finite(b$table$se[r])
-    }), use.names = FALSE)), use.names = FALSE)
+      is.finite(tb$se[r])
+    }), use.names = FALSE)
     if (length(marg) && any(mse)) {
       notes <- c(notes, sprintf(paste0(
         "A hyperparameter marked %s was estimated by that criterion, and its",
@@ -2279,7 +2291,20 @@ summary.StatmodFit <- function(object, level = 0.95,
         "conditional on the value reached."),
         paste(toupper(marg), collapse = " or ")))
     }
-    if (length(marg) && any(!mse)) {
+    # ⚠️ THE CURVATURE IS NOT THE ONLY REASON A STANDARD ERROR IS MISSING, and
+    # this note used to be the only one offered. A coordinate at a boundary has
+    # a curvature that is a proper maximum, so printing the sentence below over
+    # its blank cell would state the opposite of what happened -- the shape
+    # this file already records for a note that contradicted the table beside
+    # it. Where a boundary coordinate exists the boundary note answers instead.
+    # ⚠️ EXCEPT WHERE NOTHING AT ALL CARRIES A STANDARD ERROR, which a
+    # boundary cannot explain: it holds the coordinates it names and leaves
+    # the rest of the matrix computed, so a table in which every row is blank
+    # was refused for the other reason and the sentence below is the one that
+    # answers for it. Measured on a class at the boundary whose outer
+    # curvature `hyper_variance()` could not read at all: three blank rows,
+    # of which the boundary note explains one. Both notes are printed there.
+    if (length(marg) && any(!mse) && (!length(at_edge) || !any(mse))) {
       notes <- c(notes, sprintf(paste0(
         "A hyperparameter marked %s with no standard error was estimated at ",
         "a point\n  where the criterion's curvature in its own direction is ",
@@ -2287,6 +2312,19 @@ summary.StatmodFit <- function(object, level = 0.95,
         "variance follows from it. Its\n  estimate stands and every ",
         "coefficient beside it is conditional on it."),
         paste(toupper(marg), collapse = " or ")))
+    }
+    if (length(marg) && any(!mse) && length(at_edge)) {
+      notes <- c(notes, sprintf(paste0(
+        "A hyperparameter marked %s that has run to an edge of its range ",
+        "reports no\n  standard error, and neither does any quantity that ",
+        "depends on it: the\n  criterion has stopped moving in that ",
+        "direction, so the estimate is pinned\n  against the edge rather ",
+        "than located by the data, and an interval around\n  it would ",
+        "describe a curvature that is not the uncertainty. The rest of the\n",
+        "  matrix is computed and reported as usual. The certificate names ",
+        "the\n  coordinates: %s."),
+        paste(toupper(marg), collapse = " or "),
+        paste(cert$boundary, collapse = ", ")))
     }
     if (length(path)) {
       notes <- c(notes, sprintf(paste0(
@@ -2444,6 +2482,58 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
 }
 
 
+#' Which Readings a Chart's Coordinate Enters
+#'
+#' @description
+#' Reads a readable block's Jacobian as a statement about dependence: `TRUE`
+#' where a quantity depends on a coordinate, `FALSE` where the entry is the
+#' floating-point image of a structural zero.
+#'
+#' @details
+#' Two callers ask this question and both used to ask it as `== 0`, which is
+#' an exact test on a quantity the chart arrives at by arithmetic.
+#' ⚠️ **Measured, it is wrong.** On a covariance a class carries, whose chart
+#' is `parameters7::dr_prod(2)`, a standard deviation is a function of its own
+#' log coordinate and of nothing else, so its entry in the correlation column
+#' is structurally zero -- and at one fitted point that entry came back
+#' `1.338e-23` against a row whose own size is `0.5056`, a relative
+#' `2.6e-23`, while at another it came back exactly `0`. Read exactly, the
+#' first blanks the standard deviation's standard error and its interval for
+#' a dependence that is not there.
+#'
+#' The scale a Jacobian entry means anything against is the row's own largest
+#' entry, that row being a gradient, and the tolerance is
+#' `sqrt(.Machine$double.eps)` -- the point past which a differentiated
+#' quantity cannot be told from the rounding of what it was formed from,
+#' which is the constant this toolkit derives for that question everywhere
+#' else. The two errors it arbitrates are wildly asymmetric, which is why the
+#' generous side is the right one: a genuine dependence of relative size
+#' below `sqrt(eps)` read as zero costs a variance contribution of relative
+#' order `1e-16`, while a cancellation artifact read as a dependence costs a
+#' quantity its standard error outright.
+#'
+#' @param J The Jacobian of a readable block, quantities by coordinates.
+#'
+#' @return A logical matrix of the same shape, `TRUE` where the quantity in
+#'   that row depends on the coordinate in that column. A row that is zero
+#'   throughout depends on nothing and comes back all `FALSE`.
+#'
+#' @seealso [readable_hyper_rows()], [summary_blocks()]
+#'
+#' @keywords internal
+jacobian_depends <- function(J) {
+  if (is.null(J) || !length(J)) return(matrix(FALSE, 0L, 0L))
+  J <- as.matrix(J)
+  tol <- sqrt(.Machine$double.eps)
+  scale <- apply(abs(J), 1L, max)
+  scale[!is.finite(scale)] <- 0
+  out <- abs(J) > tol * scale
+  out[!is.finite(J)] <- TRUE
+  dimnames(out) <- dimnames(J)
+  out
+}
+
+
 #' The Quantities a Penalty's Hyperparameters Are About
 #'
 #' @description
@@ -2482,17 +2572,23 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
 #'   is a number about two named effects, and the family that carries the
 #'   chart cannot say which; where the labels are given, they replace the
 #'   positions in the printed name.
+#' @param at_edge The keys of the hyperparameter coordinates
+#'   [statmod_certificate()] found at a boundary. A quantity whose
+#'   Jacobian entry on one of them is not structurally zero reports no
+#'   standard error and no interval; every other quantity keeps its own.
 #'
 #' @return A data frame of rows, in the shape of a summary block.
 #'
 #' @keywords internal
 readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
-                                labels = character(0)) {
+                                labels = character(0),
+                                at_edge = character(0)) {
   nm <- names(th)
   k <- length(rd$value)
   se <- rep(NA_real_, k)
+  kk <- paste(p, key, nm, sep = "\r")
   if (!is.null(Vh)) {
-    j <- match(paste(p, key, nm, sep = "\r"), rownames(Vh))
+    j <- match(kk, rownames(Vh))
     if (!anyNA(j)) {
       vb <- as.matrix(Vh[j, j, drop = FALSE])
       lk <- attr(attr(Vh, "idx"), "links")[j]
@@ -2505,6 +2601,21 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
         se <- sqrt(pmax(diag(jac %*% vb %*% t(jac)), 0))
       }
     }
+  }
+  # WHICH QUANTITIES A COORDINATE AT A BOUNDARY COSTS, and it is asked of the
+  # Jacobian rather than of the chart: a quantity whose column there is
+  # structurally zero does not depend on that coordinate and keeps its
+  # standard error, which is the same question `keep` asks one caller up. On
+  # the two-dimensional covariance a class carries, the correlation is the
+  # only reading the angle enters, so the two standard deviations keep their
+  # numbers and the correlation loses its own -- and a chart of another shape
+  # is covered without an edit.
+  # ⚠️ STRUCTURALLY zero, judged against the row's own scale and not by an
+  # exact comparison: `jacobian_depends()` records what an exact test cost.
+  held <- which(kk %in% at_edge)
+  if (length(held) && !is.null(rd$jacobian)) {
+    dep <- apply(jacobian_depends(rd$jacobian)[, held, drop = FALSE], 1L, any)
+    se[dep] <- NA_real_
   }
   z <- stats::qnorm(1 - (1 - level) / 2)
   v <- as.numeric(rd$value)
@@ -2559,10 +2670,16 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
 #'   design columns, so its block is built from what it reports, never from
 #'   a block of the design, and its hyperparameter is reported there instead
 #'   of in a block of its own carrying nothing else.
+#' @param at_edge The `boundary_key` of [statmod_certificate()]:
+#'   the hyperparameter coordinates that have run to an edge of their range
+#'   with their own gradient already met. Such a coordinate reports no
+#'   standard error and no interval, and neither does any quantity that
+#'   depends on it; the variance matrix around it is computed and reported
+#'   as it always was.
 #'
 #' @keywords internal
 summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
-                           V = NULL, st = NULL) {
+                           V = NULL, st = NULL, at_edge = character(0)) {
   rows <- ci[ci$parameter == p, , drop = FALSE]
   cols <- c("name", "estimate", "se", "statistic", "p_value", "lower",
             "upper", "role")
@@ -2701,6 +2818,18 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
           # interval; sort() drops an NA, so reaching the ends below with
           # one would ask for an element that is not there
           if (!is.finite(Vh[j, j])) next
+          # AND ONE AT A BOUNDARY REPORTS NONE EITHER, for a different reason
+          # and with the variance matrix around it untouched. Its curvature is
+          # a proper maximum, so a number does come out; what has gone is the
+          # quantity's identifiability, and the delta method reads the
+          # collapse the wrong way round -- the derivative onto the reported
+          # scale tends to zero exactly where the estimate stops being
+          # pinned down, so the standard error tends to zero with it. Measured
+          # on a covariance class at the boundary, the correlation printed
+          # 1.0000 with a standard error of 2.6e-05 beside an interval of
+          # (-1, 1): the interval was right and the standard error claimed
+          # five decimals of a quantity the data does not identify.
+          if (k %in% at_edge) next
           se_eta <- sqrt(Vh[j, j])
           eta <- linkfunctions7::linkfun(link, r$estimate[[i]])
           r$se[[i]] <- abs(linkfunctions7::dlinkinv(link, eta)) * se_eta
@@ -2734,14 +2863,17 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
           cvl <- character(0)
         }
         rr <- readable_hyper_rows(rd, th, if (marginal) Vh else NULL, p, key,
-                                  level, role, src, cols, cvl)
+                                  level, role, src, cols, cvl, at_edge)
         # A hyperparameter the readable block does not DESCRIBE keeps its own
         # row: a multivariate Student t is about the standard deviations and
         # the correlations of its scale matrix, and its degrees of freedom are
         # none of those. The question is asked of the Jacobian -- a column that
         # is zero throughout is a coordinate no quantity depends on -- so a
         # family that declares more later is covered without an edit.
-        keep <- apply(rd$jacobian, 2L, function(z) all(z == 0))
+        # ⚠️ Read against each row's own scale rather than exactly: the same
+        # cancellation `jacobian_depends()` records would otherwise take a
+        # coordinate's own row away for an entry of relative size 1e-23.
+        keep <- !apply(jacobian_depends(rd$jacobian), 2L, any)
         if (any(keep)) {
           rr <- rbind(rr, stats::setNames(r[keep, , drop = FALSE],
                                           c(cols, "source")))
@@ -4116,7 +4248,11 @@ drop_common_prefix <- function(nms) {
 #'
 #' @return A list with `state` (`"converged"`, `"boundary"`,
 #'   `"not converged"` or `"unknown"`), `gradient`,
-#'   `mode_error`, `boundary` and `reason`.
+#'   `mode_error`, `boundary`, `boundary_key` and `reason`. `boundary_key`
+#'   names the same coordinates as `boundary` does, in the key
+#'   [statmod_hyper_vcov()] labels its rows by, which is what
+#'   [summary.StatmodFit()] reads to leave a standard error off a
+#'   coordinate pinned there.
 #'
 #' @seealso [statmod()], [mode_error_limit()],
 #'   [criterion_resolution()]
@@ -4130,7 +4266,8 @@ drop_common_prefix <- function(nms) {
 #' @export
 statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   out <- list(state = "unknown", gradient = NA_real_, mode_error = NA_real_,
-              boundary = character(0), reason = character(0))
+              boundary = character(0), boundary_key = character(0),
+              reason = character(0))
   method <- fit@methods$outer
   spec <- fit@spec
   design <- tryCatch(statmod_design(spec), error = function(e) NULL)
@@ -4284,6 +4421,15 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   if (length(at_edge)) {
     out$boundary <- vapply(at_edge, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
+      character(1))
+    # THE SAME COORDINATES IN THE KEY summary() reads its variance matrix by.
+    # It is returned rather than recomposed there because a term's name is a
+    # deparsed call and may carry a slash of its own, so parsing `boundary`
+    # back into three pieces is not an inverse; and because two callers who
+    # each build a key agree by accident, which this file records as a defect
+    # of its own.
+    out$boundary_key <- vapply(at_edge, function(k)
+      paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "\r"),
       character(1))
   }
   interior <- setdiff(seq_along(g), at_edge)
