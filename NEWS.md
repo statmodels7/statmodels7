@@ -37,6 +37,19 @@
   apart, so a fit whose only penalized rows are a covariance a label collects
   printed one note where it now prints two.
 
+* THE FITTED CASE OF THE REGRESSION TEST IS ASKED OF A MEASURED FACT rather
+  than asserted, the repair being pinned by the unit block instead. Whether
+  a search stops past `statmod_certificate()`'s edge of 8 is arithmetic for
+  a covariance class: measured over thirty-eight fits spanning six to thirty
+  groups, eight to fifty observations each and fifteen seeds, the angle
+  stops between 1.73 and 9.49 -- a continuous spread ACROSS that threshold
+  rather than a gap around it -- and enlarging the panel moves it AWAY
+  (-2.26 at twenty groups against -8.14 at ten), so no size and no seed
+  reaches the boundary by a margin. The fit the test builds lands at -8.14
+  here and below 8 on macOS, where seven assertions premised on it failed
+  while the unit block and the control passed. It skips there now, with the
+  reason naming the measurement.
+
 
 # statmodels7 0.111.0
 

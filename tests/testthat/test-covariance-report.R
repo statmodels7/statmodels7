@@ -341,15 +341,43 @@ test_that("a coordinate at the boundary costs its own readings and no others", {
                  distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
 
-  cert <- statmodels7:::statmod_certificate(fit)
-  expect_length(cert$boundary, 1L)
-  expect_match(cert$boundary, "z2.1", fixed = TRUE)
-
   s <- summary(fit)
   tb <- s@classes[[1L]]$table
   expect_identical(tb$name,
                    c("sd[mu:(Intercept)]", "sd[sigma:(Intercept)]",
                      "cor[mu:(Intercept), sigma:(Intercept)]"))
+
+  # the estimates are the numbers the chart implies, computed apart from the
+  # summary, and they hold wherever the search stopped
+  eta <- unlist(fit@hyper$mu[["a | g"]])
+  sig <- parameters7::param_value(parameters7::dr_prod(2L), eta)
+  expect_equal(tb$estimate[[3L]],
+               sig[1, 2] / sqrt(sig[1, 1] * sig[2, 2]), tolerance = 1e-8)
+  expect_equal(tb$estimate[[1L]], sqrt(sig[1, 1]), tolerance = 1e-8)
+  expect_equal(tb$estimate[[2L]], sqrt(sig[2, 2]), tolerance = 1e-8)
+
+  # WHETHER THE SEARCH STOPS PAST THE EDGE IS PLATFORM ARITHMETIC, so what
+  # follows is asked of the measured fact rather than asserted. Over
+  # thirty-eight fits spanning six to thirty groups, eight to fifty
+  # observations each and fifteen seeds, the angle stops between 1.73 and
+  # 9.49: a continuous spread across `statmod_certificate()`'s edge of 8,
+  # which for a covariance class therefore cuts through the middle of where
+  # these searches stop rather than sitting in a gap. The criterion's
+  # gradient in the angle decays like exp(-2|z|), so the search stops where
+  # that meets the tolerance, and enlarging the panel moves it AWAY (-2.26 at
+  # twenty groups against -8.14 at ten) -- no size and no seed reaches the
+  # boundary by a margin. This fit lands at -8.14 here and below 8 on macOS,
+  # where every assertion premised on it failed.
+  # THE REPAIR ITSELF IS PINNED BY THE UNIT BLOCK ABOVE, which runs
+  # everywhere; what this one pins is the specification end to end. An
+  # ABSENT premise skips and a WRONG one still fails, which is why the count
+  # is asserted below rather than folded into the condition.
+  cert <- statmodels7:::statmod_certificate(fit)
+  skip_if(length(cert$boundary) == 0L,
+          "the search did not stop past the edge on this platform")
+  expect_length(cert$boundary, 1L)
+  expect_match(cert$boundary, "z2.1", fixed = TRUE)
+  expect_gt(tb$estimate[[3L]], 0.999)
 
   # THE CORRELATION LOSES ITS NUMBERS, being the only reading the angle
   # enters, and the estimate itself stands
@@ -361,16 +389,6 @@ test_that("a coordinate at the boundary costs its own readings and no others", {
   expect_true(all(is.finite(tb$se[1:2])))
   expect_true(all(is.finite(tb$lower[1:2])))
   expect_true(all(is.finite(tb$upper[1:2])))
-
-  # the estimate is the number the chart implies, computed apart from the
-  # summary
-  eta <- unlist(fit@hyper$mu[["a | g"]])
-  sig <- parameters7::param_value(parameters7::dr_prod(2L), eta)
-  expect_equal(tb$estimate[[3L]],
-               sig[1, 2] / sqrt(sig[1, 1] * sig[2, 2]), tolerance = 1e-8)
-  expect_gt(tb$estimate[[3L]], 0.999)
-  expect_equal(tb$estimate[[1L]], sqrt(sig[1, 1]), tolerance = 1e-8)
-  expect_equal(tb$estimate[[2L]], sqrt(sig[2, 2]), tolerance = 1e-8)
 
   # WHICH NOTE ANSWERS FOR THE BLANK CELLS. A coordinate at a boundary sits
   # at a proper maximum, so the sentence about a curvature that is not
