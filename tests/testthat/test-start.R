@@ -391,3 +391,47 @@ test_that("start_from refuses what it cannot use", {
   expect_error(start_from(sf$full, rest = start_from(sf$full)),
                "cannot itself be")
 })
+
+
+# Where the HYPERPARAMETERS begin ------------------------------------------
+
+test_that("a hyperparameter with a finite bound begins where it did", {
+  # the rule is one unit inside whichever ends are finite, and this is the
+  # half of it that must not move: a ridge, a smooth and an ordinary random
+  # effect all have a hyperparameter bounded below
+  expect_equal(unname(penalty_theta_start(penalties7::ridge_penalty(5L))), 1)
+  expect_equal(unname(penalty_theta_start(penalties7::lasso_penalty(5L))), 1)
+  expect_equal(unname(penalty_theta_start(penalties7::quadratic_penalty(diag(4)))), 1)
+  # both ends finite: the midpoint. The elastic net's alpha lives on [0, 1]
+  en <- penalty_theta_start(penalties7::elasticnet_penalty(5L))
+  expect_equal(unname(en[["alpha"]]), 0.5)
+  expect_equal(unname(en[["lambda"]]), 1)
+  # bounded below at something other than zero
+  expect_equal(unname(penalty_theta_start(penalties7::scad_penalty(5L))[["a"]]), 3)
+})
+
+test_that("a free coordinate of a chart begins at the chart's neutral point", {
+  # A coordinate unbounded on BOTH sides is not a scale a hyperparameter lives
+  # on, it is a free coordinate of a parameters7 chart, and one is not one
+  # there: on dr_prod(2) it reads as standard deviations of e and a
+  # correlation of -0.664, where zero reads as unit standard deviations and no
+  # correlation -- which is what an ordinary random effect starts from.
+  pen <- penalties7::structured_penalty(parameters7::dr_prod(2L))
+  b <- pen@params_bounds
+  expect_true(all(vapply(b, function(z) !is.finite(z[1L]) && !is.finite(z[2L]),
+                         logical(1))))
+  s <- penalty_theta_start(pen)
+  expect_equal(unname(s), rep(0, length(b)))
+
+  # WHAT IT MEANS, read off the chart rather than asserted about the number
+  S0 <- parameters7::param_value(parameters7::dr_prod(2L), unlist(s))
+  expect_equal(unname(sqrt(diag(S0))), c(1, 1), tolerance = 1e-12)
+  expect_equal(S0[1, 2] / sqrt(S0[1, 1] * S0[2, 2]), 0, tolerance = 1e-12)
+
+  # THE NEGATIVE CONTROL, without which the test above passes for any rule
+  # returning zeros: the value it replaces means something else entirely
+  S1 <- parameters7::param_value(parameters7::dr_prod(2L),
+                                 rep(1, length(b)))
+  expect_equal(sqrt(S1[1, 1]), exp(1), tolerance = 1e-6)
+  expect_lt(S1[1, 2] / sqrt(S1[1, 1] * S1[2, 2]), -0.6)
+})

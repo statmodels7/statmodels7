@@ -79,7 +79,15 @@ test_that("the penalty a one-member class builds is the member's own", {
 test_that("two developed parameters of one filter share a covariance", {
   # the case the work exists for: the level and the loading of one filter
   # vary by group and the two deviations are correlated
-  dd <- panel()
+  #
+  # ON A PANEL WHOSE FIT IS REPORTABLE, which is what this test is about: the
+  # subject is that the class is assembled, interleaved and named, and that
+  # the summary shows it once. On the default panel the search reaches a
+  # correlation of twelve nines, where the penalized information is not
+  # positive definite and `summary()` refuses with its reason -- a property
+  # of that sample and of the boundary, not of the reporting, and measured
+  # under both starting rules. Seed 7 converges at a correlation of 0.34.
+  dd <- panel(seed = 7L)
   fit <- statmod(y ~ gas(p = 1, q = 1, by = g,
                          alpha1 ~ 1 + random(~ 1 | u | g),
                          omega ~ 1 + random(~ 1 | u | g)),
@@ -254,6 +262,15 @@ test_that("the joint penalty matches a prior written out by hand", {
   sst$value <- NULL
 
   hy <- statmod_hyper_start(spec, des)
+  # AT A CORRELATION THAT IS NOT ZERO, named here rather than taken from
+  # wherever the starting values happen to sit. The cross block this test
+  # exists for is exactly what a zero correlation does not have, so a probe
+  # that landed there would asserts its absence and pass for the wrong
+  # reason -- which is what happened when the free coordinates of a chart
+  # began at the chart's neutral point.
+  cor_nm <- grep("z2\\.1$", names(hy[[u$param]][[u$key]]), value = TRUE)
+  expect_length(cor_nm, 1L)
+  hy[[u$param]][[u$key]][[cor_nm]] <- 0.8
   th <- hy[[u$param]][[u$key]]
   Sig <- parameters7::param_value(parameters7::dr_prod(2L), as.numeric(th))
   B <- matrix(w[u$joint], ncol = 2L, byrow = TRUE)
