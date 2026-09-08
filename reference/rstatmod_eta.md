@@ -6,7 +6,7 @@ has state – the response it drew and the latent quantity behind it.
 ## Usage
 
 ``` r
-rstatmod_eta(spec, design, coef, structural = NULL)
+rstatmod_eta(spec, design, coef, psi = NULL)
 ```
 
 ## Arguments
@@ -23,9 +23,12 @@ rstatmod_eta(spec, design, coef, structural = NULL)
 
   The coefficients.
 
-- structural:
+- psi:
 
-  The structural term's own parameters, or `NULL`.
+  The structural term's own parameters, drawn once by
+  [`rstatmod_truth()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_truth.md)
+  so that the replicates share them, or `NULL` to read the design's own
+  structural state.
 
 ## Value
 

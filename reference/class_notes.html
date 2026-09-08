@@ -9,7 +9,7 @@ grouping and the terms whose coefficients share the block."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,15 +66,17 @@ grouping and the terms whose coefficients share the block.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A class's hyperparameters are printed once, under its first member, so
-without the note a reader sees a covariance of four coordinates under a
-term carrying two columns and nothing saying where the other two came from.</p>
+    <p>A class's hyperparameters are printed once, at the head of the summary,
+where each coordinate is named for the equation and the column it belongs
+to. The note says the same thing in one sentence, for a reader who has the
+summary object rather than the printed page.</p>
 <p>A class of one member gets no note: there is nothing shared to report, and
 its block is the random effect it would have been without a label.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>, which collects it.</p></div>
+    <div class="dont-index"><p><code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>, which collects it;
+<code><a href="summary_class_blocks.html">summary_class_blocks()</a></code>, which prints the numbers.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

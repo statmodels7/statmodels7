@@ -9,7 +9,7 @@ the empty string when it can."><meta property="og:image" content="https://statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,13 +63,16 @@ the empty string when it can.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Two reasons, and both are read from the term rather than from its class.</p>
-<p>A term carrying a covariance label
-(<code><a href="https://statmodels7.github.io/modelterms7/reference/term_tag.html" class="external-link">modelterms7::term_tag()</a></code>) says that its coefficients share a block with
-those of other terms, which this layer cannot yet build: the penalty would
-have to read columns from more than one equation, and every enumeration
-here addresses a penalty by the pair of its parameter and its key. The term
-is rejected rather than fitted as though the label were absent, which would
-be a different model reported under the name of the one that was asked for.</p>
+<p>A covariance label (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_tag.html" class="external-link">modelterms7::term_tag()</a></code>) under a structural term of
+the <strong>likelihood</strong> shape says that a latent the likelihood integrates out
+shares a prior with coefficients that are estimated. The two are integrated
+by different routes and there is no one prior to share, so the term is
+rejected rather than fitted as though the label were absent, which would be
+a different model reported under the name of the one that was asked for. A
+label under a <strong>filter</strong> is fitted: its parameters are numbers estimated
+beside the coefficients, and the block is read among them.</p>
+<p>Whether a class is admissible is not a question about one term, and is
+asked where every member is visible, by <code><a href="class_space.html">class_space()</a></code>.</p>
 <p>A structural term implementing neither shape of the contract is rejected
 for the reason its message gives.</p>
     </div>

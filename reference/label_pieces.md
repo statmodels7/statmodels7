@@ -7,7 +7,14 @@ parameters otherwise, walked to any depth.
 ## Usage
 
 ``` r
-label_pieces(term, param, nm, within = NULL)
+label_pieces(
+  term,
+  param,
+  nm,
+  within = NULL,
+  path = character(0),
+  structural = NULL
+)
 ```
 
 ## Arguments
@@ -29,13 +36,28 @@ label_pieces(term, param, nm, within = NULL)
   The piece's columns in that term's block, or `NULL` at the top level,
   where the piece is the whole of it.
 
+- path:
+
+  Which of the parent's parameters were developed to reach the piece,
+  outermost first, empty at the top level. It says what the effect is an
+  effect ON: a labelled random intercept written inside
+  `seg(x, psi ~ ...)` is an effect on the break-point and not on the
+  mean, and a report naming only the equation would be read as the
+  second.
+
+- structural:
+
+  Whether `within` indexes a structural term's own parameters rather
+  than columns of the design. `NULL` at the top level, where it is read
+  from the term; a recursive call passes what it was told.
+
 ## Value
 
-A list of pieces, each with `param`, `term`, `within`, `dim`, `tag`,
-`group` (as
+A list of pieces, each with `param`, `term`, `within`, `path`, `dim`,
+`tag`, `group` (as
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html)
-returns it) and `distrib`. Empty where nothing under the term is
-labelled.
+returns it), `structural` and `distrib`. Empty where nothing under the
+term is labelled.
 
 ## Why a sub-term is reachable at all
 
@@ -53,10 +75,16 @@ term.
 That is the whole of what a subformula costs here, and it is why the
 case is covered: a labelled effect written in a subformula of an
 **additive** term lives in the same vector as one written in an
-equation. A **structural** parent is different – its coefficients are
-its own parameters and it contributes no design column – and is rejected
-before reaching this, by
-[`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md).
+equation.
+
+A **structural** parent addresses its coefficients differently: they are
+the term's own parameters, which contribute no design column and live in
+the design's structural state. The walk is the same and the positions it
+composes are the same numbers – measured, a labelled effect inside
+`gas(alpha1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly
+the `cols` the unlabelled sub-term's own penalty is read at – so what a
+piece records is which vector they index rather than a different
+arithmetic.
 
 ## Depth
 

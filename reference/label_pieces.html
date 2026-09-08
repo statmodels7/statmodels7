@@ -11,7 +11,7 @@ otherwise, walked to any depth."><meta property="og:image" content="https://stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,14 @@ otherwise, walked to any depth.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">label_pieces</span><span class="op">(</span><span class="va">term</span>, <span class="va">param</span>, <span class="va">nm</span>, within <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">label_pieces</span><span class="op">(</span></span>
+<span>  <span class="va">term</span>,</span>
+<span>  <span class="va">param</span>,</span>
+<span>  <span class="va">nm</span>,</span>
+<span>  within <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  structural <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,12 +79,27 @@ by.</p></dd>
 <dd><p>The piece's columns in that term's block, or <code>NULL</code> at the top
 level, where the piece is the whole of it.</p></dd>
 
+
+<dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
+<dd><p>Which of the parent's parameters were developed to reach the
+piece, outermost first, empty at the top level. It says what the effect
+is an effect ON: a labelled random intercept written inside
+<code>seg(x, psi ~ ...)</code> is an effect on the break-point and not on the mean,
+and a report naming only the equation would be read as the second.</p></dd>
+
+
+<dt id="arg-structural">structural<a class="anchor" aria-label="anchor" href="#arg-structural"></a></dt>
+<dd><p>Whether <code>within</code> indexes a structural term's own
+parameters rather than columns of the design. <code>NULL</code> at the top level,
+where it is read from the term; a recursive call passes what it was told.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of pieces, each with <code>param</code>, <code>term</code>, <code>within</code>, <code>dim</code>, <code>tag</code>,
-<code>group</code> (as <code><a href="https://statmodels7.github.io/modelterms7/reference/term_group.html" class="external-link">modelterms7::term_group()</a></code> returns it) and <code>distrib</code>. Empty
-where nothing under the term is labelled.</p>
+    <p>A list of pieces, each with <code>param</code>, <code>term</code>, <code>within</code>, <code>path</code>,
+<code>dim</code>, <code>tag</code>, <code>group</code> (as <code><a href="https://statmodels7.github.io/modelterms7/reference/term_group.html" class="external-link">modelterms7::term_group()</a></code> returns it),
+<code>structural</code> and <code>distrib</code>. Empty where nothing under the term is
+labelled.</p>
     </div>
     <div class="section level2">
     <h2 id="why-a-sub-term-is-reachable-at-all">Why a sub-term is reachable at all<a class="anchor" aria-label="anchor" href="#why-a-sub-term-is-reachable-at-all"></a></h2>
@@ -91,10 +113,14 @@ block, and the design turns them into positions in the stacked vector the
 same way it does for any other term.</p>
 <p>That is the whole of what a subformula costs here, and it is why the case is
 covered: a labelled effect written in a subformula of an <strong>additive</strong> term
-lives in the same vector as one written in an equation. A <strong>structural</strong>
-parent is different – its coefficients are its own parameters and it
-contributes no design column – and is rejected before reaching this, by
-<code><a href="unfittable_reason.html">unfittable_reason()</a></code>.</p>
+lives in the same vector as one written in an equation.</p>
+<p>A <strong>structural</strong> parent addresses its coefficients differently: they are the
+term's own parameters, which contribute no design column and live in the
+design's structural state. The walk is the same and the positions it
+composes are the same numbers – measured, a labelled effect inside
+<code>gas(alpha1 ~ 1 + random(~ 1 | u | g))</code> comes out at 3 to 12, exactly the
+<code>cols</code> the unlabelled sub-term's own penalty is read at – so what a piece
+records is which vector they index rather than a different arithmetic.</p>
     </div>
     <div class="section level2">
     <h2 id="depth">Depth<a class="anchor" aria-label="anchor" href="#depth"></a></h2>

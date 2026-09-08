@@ -111,11 +111,11 @@ e$response
 e$equations
 #> $mu
 #> ~x1 + x2
-#> <environment: 0x56283691c758>
+#> <environment: 0x55c8639b9cc0>
 #> 
 #> $sigma
 #> ~z
-#> <environment: 0x56283691c758>
+#> <environment: 0x55c8639b9cc0>
 #> 
 
 # Every parameter gets an equation; the ones not written get an intercept.

@@ -10,7 +10,11 @@ group, which is the order the class's penalty reads.
 ``` r
 class_pieces(cl, design, params, offs)
 
+class_interleave(cl, pos)
+
 class_index(cl, design, params, offs)
+
+class_zeta_cols(cl)
 ```
 
 ## Arguments
@@ -32,10 +36,16 @@ class_index(cl, design, params, offs)
 
   Where each parameter's coefficients start in the stacked vector.
 
+- pos:
+
+  One integer vector per member, each group-major, giving that member's
+  positions in whichever vector the class is addressed in.
+
 ## Value
 
 `class_pieces()` a list of lists with `param`, `term`, `cols` and
-`index`; `class_index()` an integer vector of `m * dim` positions.
+`index`; `class_index()` and `class_zeta_cols()` an integer vector of
+`m * dim` positions.
 
 ## Details
 
@@ -53,6 +63,13 @@ in different equations – so what comes out is a permutation rather than
 a range. Nothing downstream minds: reading and writing a matrix at
 `[index, index]` is correct for any index, provided the penalty's own
 output is in the same order, which is what this ordering arranges.
+
+A class whose members are all inside a structural term is addressed in
+that term's own parameters instead, which is the vector its penalty is
+read at and where the design has no column. `class_zeta_cols()`
+interleaves those positions by the same rule, and `class_pieces()` is
+not consulted at all, there being no design block to look the columns up
+in.
 
 ## See also
 

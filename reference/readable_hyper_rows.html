@@ -17,7 +17,7 @@ Cholesky diagonal and the entries below it."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,18 @@ Cholesky diagonal and the entries below it.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">readable_hyper_rows</span><span class="op">(</span><span class="va">rd</span>, <span class="va">th</span>, <span class="va">Vh</span>, <span class="va">p</span>, <span class="va">key</span>, <span class="va">level</span>, <span class="va">role</span>, <span class="va">src</span>, <span class="va">cols</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">readable_hyper_rows</span><span class="op">(</span></span>
+<span>  <span class="va">rd</span>,</span>
+<span>  <span class="va">th</span>,</span>
+<span>  <span class="va">Vh</span>,</span>
+<span>  <span class="va">p</span>,</span>
+<span>  <span class="va">key</span>,</span>
+<span>  <span class="va">level</span>,</span>
+<span>  <span class="va">role</span>,</span>
+<span>  <span class="va">src</span>,</span>
+<span>  <span class="va">cols</span>,</span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -94,6 +105,14 @@ Cholesky diagonal and the entries below it.</p>
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
 <dd><p>The column names of a summary block.</p></dd>
+
+
+<dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
+<dd><p>One label per coordinate of the matrix, or nothing. A
+correlation between the second and the third coordinate of a covariance
+is a number about two named effects, and the family that carries the
+chart cannot say which; where the labels are given, they replace the
+positions in the printed name.</p></dd>
 
 </dl></div>
     <div class="section level2">

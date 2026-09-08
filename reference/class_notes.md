@@ -26,10 +26,10 @@ A character vector, possibly empty.
 
 ## Details
 
-A class's hyperparameters are printed once, under its first member, so
-without the note a reader sees a covariance of four coordinates under a
-term carrying two columns and nothing saying where the other two came
-from.
+A class's hyperparameters are printed once, at the head of the summary,
+where each coordinate is named for the equation and the column it
+belongs to. The note says the same thing in one sentence, for a reader
+who has the summary object rather than the printed page.
 
 A class of one member gets no note: there is nothing shared to report,
 and its block is the random effect it would have been without a label.
@@ -37,4 +37,6 @@ and its block is the random effect it would have been without a label.
 ## See also
 
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
-which collects it.
+which collects it;
+[`summary_class_blocks()`](https://statmodels7.github.io/statmodels7/reference/summary_class_blocks.md),
+which prints the numbers.

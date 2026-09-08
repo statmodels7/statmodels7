@@ -14,7 +14,6 @@ rstatmod(
   n = NULL,
   n_sim = 1,
   par = NULL,
-  structural = NULL,
   sd = 1,
   offsets = NULL,
   covariates = NULL
@@ -50,21 +49,18 @@ rstatmod(
 
 - par:
 
-  Optional named list, one entry per distribution parameter, each a
-  numeric vector, a single number or a function of the coefficient
-  count. See the details. `NULL` draws every coefficient.
-
-- structural:
-
-  Optional named list of a structural term's own parameters, on the
-  scale
-  [`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
-  names. Strongly recommended when the formula carries such a term.
+  Optional named list of what to hold, over the whole model: a
+  distribution parameter, one of its coefficients or a group of them, a
+  structural term's own parameter or a group of those. Each entry is a
+  numeric vector, a single number or a function of the count. See the
+  details. `NULL`, the default, draws everything.
 
 - sd:
 
-  The standard deviation of the drawn coefficients, `1` by default. Read
-  only for the coefficients `par` does not fix.
+  The width of the draws, `1` by default. A quantity that rides a chart
+  – a structural parameter, a prior's own scale – is drawn at half of
+  it, the chart carrying a width of one onto most of its parameter's
+  range.
 
 - offsets:
 
@@ -103,6 +99,14 @@ An object of class `"StatmodSim"`, a list of seven:
 - `structural`:
 
   such a term's own parameters, or `NULL`.
+
+- `hyper`:
+
+  a data frame of the hyperparameters, one row per penalty and name,
+  with the value drawn or held. Its columns are those of
+  [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
+  as far as they mean the same thing, so a study compares the two
+  directly.
 
 - `n_sim`:
 
@@ -197,25 +201,68 @@ With `n_sim > 1` the per-replicate fields, `data`, `theta` and `latent`,
 come back as lists of that length, while `par` and `structural` stay
 single.
 
-## The coefficients
+## Everything is drawn
 
-`par = NULL` draws every one from `rnorm(1, 0, sd)`, which on the link
-scale gives predictors of order one. A named list fixes them instead,
-one entry per distribution parameter, and an entry may be:
+A call that names nothing draws the whole truth, so writing the model is
+the whole of what getting data from it takes. The rule is that whoever
+knows what a quantity means draws it:
 
-- a numeric vector, as long as that equation has coefficients;
+- a coefficient of a design column has no other owner and comes from
+  `rnorm(1, 0, sd)`, which on the link scale gives predictors of order
+  one;
 
-- a single number, used for every coefficient of the equation;
+- a coordinate some penalty covers is drawn from that penalty read as a
+  prior, through
+  [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html).
+  A Gaussian random effect gives Gaussian effects, a lasso Laplace ones
+  and a heavy-tailed prior heavy-tailed ones. The prior's own scale is
+  drawn as well, on the chart the penalty carries for it, and comes back
+  in `hyper`;
 
-- a **function** of the coefficient count, called once and returning
-  that many values.
+- a structural term's own parameters are drawn by the term, through
+  [`modelterms7::term_draw()`](https://statmodels7.github.io/modelterms7/reference/term_draw.html),
+  which knows the chart each one rides. A loading stays positive and a
+  persistence stationary whatever comes out.
 
-The function is how a structured truth is written without a vocabulary
-for it. `function(k) rnorm(k, 0, 0.3)` is a random effect with its own
-standard deviation, and `function(k) c(1.5, -2, rep(0, k - 2))` is a
-sparse truth for a lasso to find. A function answering with the wrong
-count is refused, R being willing to recycle it into a different model.
-A parameter left out of the list is drawn.
+A hyperparameter the term holds is used rather than drawn, so
+`s(x, lambda = 2)` simulates at the smoothing it names.
+
+What no prior reaches falls back to the plain draw, and it is a short
+list: SCAD and MCP are improper by construction, an anisotropic tensor
+smooth is flat along its null space, and a covariance class spanning a
+filter and an equation at once is in neither vector on its own.
+
+## Holding what you care about
+
+`par` is one named list over the whole model, and a key may be
+
+- a distribution parameter, `mu`, which is that whole equation;
+
+- one of its coefficients or a group of them, `mu.(Intercept)` or
+  `mu.random`, a group being a name the members extend at a dot;
+
+- a structural term's own parameter, `alpha1`, or a group of those,
+  `omega.random`.
+
+A value is a vector of that key's own length, a single number used for
+all of them, or a **function** of the count. The function is how a
+structured truth is written without a vocabulary of its own:
+`function(k) rnorm(k, 0, 0.4)` is a random effect at a scale one chose
+and `function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a
+lasso to find. A function answering with the wrong count is refused, R
+being willing to recycle it into a different model, and a key that
+reaches nothing is refused with what the model does carry.
+
+A structural parameter is named on the scale a reader knows, which is
+[`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)'s:
+a loading is the loading and not its logarithm, a persistence the
+partial autocorrelation its chart carries. A parameter a subformula
+DEVELOPS is different, and it has to be: its coordinates are the
+coefficients of that development, which act on the unconstrained scale
+of the parameter's own chart, so `alpha1` is a loading and
+`alpha1.random.3` is a group's departure on the log scale that loading
+rides. That is what keeps every group's loading positive whatever the
+departure is.
 
 ## A term with state
 
@@ -228,18 +275,14 @@ law the likelihood is written with; a marginal break-point term draws
 each group's positions from their prior. What each drew comes back in
 `latent`, and that is what a recovery check compares against.
 
-Such a term's own parameters are not coefficients of any equation, so
-they are named through `structural`, never through `par`, on the scale
-[`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)
-names: a loading is the loading, not its logarithm, a persistence is the
-partial autocorrelation the chart carries. A formula holds at most one
-such term, so no key is needed.
-
-Left unnamed they take the term's own starting values, which are
-deliberately weak. A score-driven term starts at a loading near 0.1, and
-the series then has almost no dynamics: measured, its level ranged over
-0.64 against 2.40 at named parameters. Name them, or the simulation is
-of a model close to the one with no term at all.
+Such a term's own parameters are not coefficients of any equation and
+are named in `par` alongside them, a formula holding at most one such
+term so that no key is needed. They are drawn like everything else,
+which they were not until version 0.111.0: a filter whose level was
+developed over a hundred groups took its starting values, and those are
+zero for every deviation, so the panel came out with no heterogeneity
+between groups at all – three distinct values of the mean over six
+hundred observations.
 
 ## The response's name
 
@@ -297,7 +340,7 @@ sim3 <- rstatmod(y ~ lasso(~ V1 + V2 + V3 + V4 + V5 + V6),
                  par = list(mu = function(k) c(2, -1.5, rep(0, k - 2)),
                             sigma = log(0.3)))
 head(sim3$data$y, 3)
-#> [1] 1.255760 3.065784 6.383685
+#> [1] 2.108603 3.625229 6.596983
 
 # a model with no covariates at all
 sim4 <- rstatmod(y ~ 1, distributions7::gaussian1_distrib(), n = 20)
@@ -313,14 +356,28 @@ length(study$data)
 vapply(study$data, function(d) coef(statmod(
   y ~ x, distributions7::gaussian1_distrib(), d),
   readable = FALSE)$mu[[2L]], numeric(1))
-#> [1] 2.026176 2.036889 2.078646 2.068472 2.041046
+#> [1] 2.017968 2.036897 2.013920 2.043438 1.935684
 
-# a score-driven series, its own parameters named
+# a score-driven series, its own parameters named beside the equations'
 sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                  distributions7::gaussian1_distrib(),
-                 data.frame(t = 1:100), par = list(sigma = 0),
-                 structural = list(omega = 0.4, alpha1 = 0.3,
-                                   pacf1 = 0.6))
+                 data.frame(t = 1:100),
+                 par = list(sigma = 0, omega = 0.4, alpha1 = 0.3,
+                            pacf1 = 0.6))
 head(sim5$latent, 3)
-#> [1] 1.0000000 0.9164683 0.7841508
+#> [1] 1.0000000 0.6960904 0.6137012
+
+# and a panel whose level varies by group: naming nothing draws the
+# deviations from the prior random() declares, at a scale drawn too
+pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
+sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
+                             by = id, time = t),
+                 distributions7::gaussian1_distrib(), pan)
+sim6$hyper
+#>   parameter                                                              term
+#> 1        mu gas(p = 1, q = 1, omega ~ 1 + random(~1 | id), by = id, time = t)
+#>    name     value  held
+#> 1 sigma 0.6269308 FALSE
+length(unique(round(sim6$theta$mu, 6))) > 6
+#> [1] TRUE
 ```

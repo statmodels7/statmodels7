@@ -8,6 +8,8 @@ of a score-driven filter over a panel are the case.
 
 ``` r
 structural_penalized(spec, design)
+
+mixed_penalized(spec, design)
 ```
 
 ## Arguments

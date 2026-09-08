@@ -196,7 +196,7 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 677 ms   search: converged
+#> fitted in 788 ms   search: converged
 #> certificate: CONVERGED   outer gradient 1.87e-05   5.77e-13 above the mode
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
@@ -291,7 +291,7 @@ sim <- rstatmod(y ~ x, gaussian1_distrib(), da,
                 par = list(mu = c(1, 0.8), sigma = -0.6))
 names(sim)
 #> [1] "data"       "par"        "theta"      "latent"     "structural"
-#> [6] "n_sim"      "call"
+#> [6] "hyper"      "n_sim"      "call"
 head(sim$data, 3)
 #>           x          y
 #> 1 -2.921535 -1.6210728

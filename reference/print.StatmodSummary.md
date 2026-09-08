@@ -1,7 +1,8 @@
 # Print a Model Summary
 
-The call, then each distribution parameter's blocks, then the degrees of
-freedom, the criteria and the notes.
+The call, then the covariance blocks shared between equations, then each
+distribution parameter's blocks, then the degrees of freedom, the
+criteria and the notes.
 
 ## Usage
 

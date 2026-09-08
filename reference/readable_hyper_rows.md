@@ -10,7 +10,18 @@ it.
 ## Usage
 
 ``` r
-readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
+readable_hyper_rows(
+  rd,
+  th,
+  Vh,
+  p,
+  key,
+  level,
+  role,
+  src,
+  cols,
+  labels = character(0)
+)
 ```
 
 ## Arguments
@@ -47,6 +58,14 @@ readable_hyper_rows(rd, th, Vh, p, key, level, role, src, cols)
 - cols:
 
   The column names of a summary block.
+
+- labels:
+
+  One label per coordinate of the matrix, or nothing. A correlation
+  between the second and the third coordinate of a covariance is a
+  number about two named effects, and the family that carries the chart
+  cannot say which; where the labels are given, they replace the
+  positions in the printed name.
 
 ## Value
 

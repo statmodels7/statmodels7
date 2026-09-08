@@ -13,7 +13,7 @@ order the class's penalty reads."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.106.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.111.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,11 @@ order the class's penalty reads.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">class_pieces</span><span class="op">(</span><span class="va">cl</span>, <span class="va">design</span>, <span class="va">params</span>, <span class="va">offs</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">class_index</span><span class="op">(</span><span class="va">cl</span>, <span class="va">design</span>, <span class="va">params</span>, <span class="va">offs</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">class_interleave</span><span class="op">(</span><span class="va">cl</span>, <span class="va">pos</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">class_index</span><span class="op">(</span><span class="va">cl</span>, <span class="va">design</span>, <span class="va">params</span>, <span class="va">offs</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">class_zeta_cols</span><span class="op">(</span><span class="va">cl</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,11 +79,17 @@ order the class's penalty reads.</p>
 <dt id="arg-offs">offs<a class="anchor" aria-label="anchor" href="#arg-offs"></a></dt>
 <dd><p>Where each parameter's coefficients start in the stacked vector.</p></dd>
 
+
+<dt id="arg-pos">pos<a class="anchor" aria-label="anchor" href="#arg-pos"></a></dt>
+<dd><p>One integer vector per member, each group-major, giving that
+member's positions in whichever vector the class is addressed in.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>class_pieces()</code> a list of lists with <code>param</code>, <code>term</code>, <code>cols</code> and
-<code>index</code>; <code>class_index()</code> an integer vector of <code>m * dim</code> positions.</p>
+<code>index</code>; <code>class_index()</code> and <code>class_zeta_cols()</code> an integer vector of
+<code>m * dim</code> positions.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -96,6 +106,11 @@ different equations – so what comes out is a permutation rather than a
 range. Nothing downstream minds: reading and writing a matrix at
 <code>[index, index]</code> is correct for any index, provided the penalty's own
 output is in the same order, which is what this ordering arranges.</p>
+<p>A class whose members are all inside a structural term is addressed in that
+term's own parameters instead, which is the vector its penalty is read at
+and where the design has no column. <code>class_zeta_cols()</code> interleaves those
+positions by the same rule, and <code>class_pieces()</code> is not consulted at all,
+there being no design block to look the columns up in.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

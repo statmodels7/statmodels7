@@ -1,5 +1,565 @@
 # Changelog
 
+## statmodels7 0.111.0
+
+- [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  DRAWS EVERYTHING BY DEFAULT, and what `par` names is held. Writing the
+  model is now the whole of what getting data from it takes.
+
+- The rule is that whoever knows what a quantity means draws it. A
+  coefficient of a design column has no other owner and comes from a
+  normal of width `sd`. A coordinate some penalty covers is drawn from
+  that penalty read as a prior, through
+  [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html),
+  so a Gaussian random effect gives Gaussian effects and a lasso Laplace
+  ones; the prior’s own scale is drawn too and comes back in the new
+  `hyper` field. A structural term’s own parameters are drawn by the
+  term, through
+  [`modelterms7::term_draw()`](https://statmodels7.github.io/modelterms7/reference/term_draw.html),
+  which knows the chart each one rides.
+
+- THE DEFECT THIS CLOSES: a `random()` inside a structural term’s
+  subformula was set to zero, the term’s own starting value, while the
+  same `random()` written in an equation was drawn – the same construct
+  behaving two ways according to where it sat. Measured on a panel of
+  twenty groups by thirty times with the level and the persistence both
+  developed, the simulated data had **three distinct values of the mean
+  over six hundred observations** and a between-group spread of the
+  level of 0.003, which is the realized path and not the model: the
+  parameters were identical across groups. Naming them by hand meant
+  writing two hundred entries. It is now 583 distinct values and a
+  spread of 0.93.
+
+- `structural` is REMOVED and `par` is one namespace over the whole
+  model. A key may be a distribution parameter, one of its coefficients
+  or a group of them (`mu.random`), a structural term’s own parameter
+  (`alpha1`) or a group of those (`omega.random`), and a group is a name
+  its members extend at a dot. The value is a vector, a single number or
+  a function of the count, so a prior’s scale is said with the
+  vocabulary `par` already had:
+  `par = list(omega.random = function(k) rnorm(k, 0, 0.4))`.
+
+- A PRIOR OVER COORDINATES THAT RIDE A CHART is centred half as far from
+  its bound, by the rule `term_draw()` halves its own width by. Measured
+  on a partial-autocorrelation chart, a prior scale of 1 puts 10.1 per
+  cent of the persistences past 0.95 and one of 0.5 puts 0.9 per cent
+  there, the middle ninety running -0.82 to 0.82. On the panel above the
+  difference is a between-group level spread of 6.44 against 0.93 and a
+  response spread of 8.57 against 2.94, with no failures either way;
+  three ordinary shapes – a random intercept, a smooth and a ridge – are
+  unchanged to the digit, which is the control saying the change is
+  confined to the charts.
+
+- A hyperparameter the term holds is used rather than drawn, so
+  `s(x, lambda = 2)` simulates at the smoothing it names.
+
+- What no prior reaches falls back to the plain draw, and it is a short
+  list: SCAD and MCP are improper by construction, an anisotropic tensor
+  smooth is flat along its null space, and a covariance class spanning a
+  filter and an equation at once is in neither vector on its own.
+
+- [`print()`](https://rdrr.io/r/base/print.html) on a simulation
+  collapses a group of coefficients to its count and spread instead of
+  printing every one, and shows the hyperparameters. The panel above
+  used to print two hundred lines of zeros.
+
+- AN UNBOUNDED HYPERPARAMETER STARTS AT ITS CHART’S NEUTRAL POINT.
+  [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
+  returns 0 for a coordinate unbounded on both sides, where it
+  returned 1. One is a scale for a hyperparameter bounded below, which
+  is the argument the page gives; a free coordinate of a `parameters7`
+  chart is not such a thing, and on `dr_prod(2)` one reads as standard
+  deviations of 2.718 and a correlation of -0.664 against the neutral
+  point’s unit scales and no correlation. Measured on 31 fits across the
+  four charts a caller can reach, the two agree to 3e-05 or better
+  wherever both produce a criterion; one model errors from one and fits
+  from zero, one returns no criterion from one, and two converge from
+  zero where they do not from one. The cost is one panel of six where
+  the better criterion sits at a correlation of twelve nines and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) refuses. A
+  hyperparameter with a finite bound is untouched.
+
+- The same function takes the unit its one-sided bound is measured in,
+  `1` as before for every existing caller.
+
+## statmodels7 0.110.0
+
+- A DEGREES-OF-FREEDOM COUNT THAT CANNOT BE READ IS REPORTED MISSING
+  rather than taken from the rule it replaced. Where a model carries a
+  filter the count is the trace of the joint smoother; where that matrix
+  cannot be factorized there is no trace, and returning the old one – a
+  parameter apiece – put a different quantity under the same name.
+  Measured on a panel where it fires, 20.00 against a penalized count of
+  10.40, with nothing saying the definition had changed.
+
+  It fires where the joint matrix is INDEFINITE and not merely
+  ill-conditioned: at one such point its smallest eigenvalue is
+  -7.111e-05, [`chol()`](https://rdrr.io/r/base/chol.html) refuses it as
+  [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
+  does, and only a plain solve succeeds, returning a diagonal with an
+  entry of -7.56e-05, which is not a smoother’s. So there is nothing to
+  relax in the test, and the fit is one that has already failed – both
+  cases measured report no criterion or do not converge.
+  [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
+  now distinguishes a model with no joint vector, whose fallback is
+  right for it, from one whose joint vector could not be read, whose
+  count is absent.
+
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html)’s own fallback is
+  corrected with it. It replaces a missing count by the term’s number of
+  COLUMNS, on the stated reading that this is an upper bound and that
+  dropping the term would flatter every criterion. A structural term has
+  no columns, so that bound was zero and said the opposite of what it
+  means: measured, a filter carrying eighteen free parameters reported a
+  df of 2, and now reports 20.
+
+- THE EFFECTIVE DEGREES OF FREEDOM OF A MODEL CARRYING A FILTER ARE READ
+  ON THE VECTOR THE MODEL ESTIMATES, which is the coefficients of every
+  equation followed by the term’s own free parameters, and no longer one
+  degree of freedom per free parameter whatever a prior does to it.
+
+  A term’s share of the count is the trace of its own diagonal block of
+  the model’s smoother, and where every unknown is a coefficient that
+  matrix is , which
+  [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
+  already read. A filter’s parameters are estimated beside the
+  coefficients and, since 0.24.0, may carry a penalty of their own – a
+  development of a loading over the groups of a panel, a covariance
+  class – so the same definition wants the joint matrix:
+  [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
+  reads it off
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  and
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md),
+  the two the criterion of such a model already assembles.
+
+  The rule this replaces is that same trace restricted to the
+  coordinates no penalty covers, and the identity says so rather than a
+  tolerance: with carrying a zero row and column outside its own
+  support, so a coordinate outside that support has exactly one.
+  Measured on three models, the unpenalized coordinates of a filter come
+  back at 1.000000000000000 with a gap of 0.000e+00, while eight
+  deviations of a developed loading read between 0.080 and 0.247 where
+  the count says eight, and sixteen under a covariance class read
+  between -0.0003 and 0.829 where the count says sixteen.
+
+  What it moves, on the three reference panels:
+
+  and on the mixed panel cAIC goes 1068.995 to 1047.207 and cBIC
+  1173.920 to 1109.796.
+
+  A shared covariance block reports what THE CLASS spends, the trace
+  over the coordinates it collects, rather than its members’ whole terms
+  added up:
+  [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
+  carries a unit of any of the three kinds onto that one vector. On a
+  class inside a filter it reads 6.40 where the term’s own row reads
+  8.40, the level and the persistence being the term’s and not the
+  class’s.
+
+  Three things stay where they were, and the first two are measured
+  against the previous release on the same data rather than argued. A
+  model carrying no filter is untouched to the last digit: a smooth
+  reads 8.242789753 on both sides, and a class between two ordinary
+  random effects reads 42.450650498 with its block at 40.45, the
+  members’ rows added up being exactly the trace over the coordinates
+  that class collects. A term that mixes over latent states keeps one
+  apiece and is right to:
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  has no determinant for it, and `regime()` takes no subformula, so its
+  own parameters carry no penalty and one apiece is what the joint trace
+  would say.
+
+  What does move beside a filter is an ORDINARY term’s row, by the
+  coupling: measured, a random effect beside an unpenalized filter goes
+  6.744459729 to 6.535692438 while the filter’s own row stays exactly
+  2.000000000. That is the same definition read consistently – the model
+  has one smoother, not one per block – and it is the reason the
+  coefficient half is taken from the joint matrix too.
+
+  The joint route reads the OBSERVED information, there being no
+  expected one for a filter:
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  assembles from
+  [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
+  and the criterion of such a model already reads that matrix, so the
+  count and the criterion agree with each other.
+
+- THE EXACT OUTER GRADIENT ANSWERS FOR A COVARIANCE CLASS SPANNING A
+  FILTER AND AN ORDINARY TERM, where 0.109.0 refused it at both orders
+  because it came back exactly zero in every coordinate.
+
+  The refusal was necessary and its stated cost was not what it seemed.
+  That release recorded the work as assembling the movement of the joint
+  curvature inside
+  [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
+  “which today works on the coefficients alone”. Measured, that is not
+  where the work was:
+  [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)
+  is TRUE for a mixed class, so the gradient already delegates to
+  [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md),
+  which already builds the joint matrix and already scatters every
+  member into it. What was missing is that the member loop addresses an
+  ordinary unit by its `index`, which a mixed class does not carry, so
+  the member was not skipped – `anyNA(integer(0))` is FALSE – and passed
+  with an EMPTY scatter, contributing nothing. It is one branch: the
+  class’s coordinates read where each of them lives, in the interleaved
+  order
+  [`joint_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.md)
+  already reads them in.
+
+  Against a central difference of the criterion with the mode refitted
+  from a fresh design at every point, at two base points: 3.135e-05,
+  2.822e-06, 3.135e-07 and 2.204e-05, 1.984e-06, 2.208e-07 at steps of
+  1e-2, 3e-3 and 1e-3. Clean second order, which is what separates a
+  correct gradient from one missing a term, flat in the step, and from a
+  badly located mode, growing as its inverse.
+
+  On the panel of twelve groups: 105 criterion evaluations and 23.2
+  seconds become 15 and 8.4, at the same criterion of -532.040118 and
+  the same hyperparameters to five figures. The certificate reads
+  `converged` where 0.109.0 records `unknown`, the outer gradient being
+  what verifies the hyperparameters.
+
+  Those positions are ALREADY positions in the vector that function
+  assembles,
+  [`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md)
+  numbering a structural coordinate among the FREE parameters. Matching
+  them into the kept set a second time shifts the structural half one
+  place down and leaves the gradient 8.9e-02 out and FLAT in the step –
+  which reads as a missing term and is not one, and is recorded because
+  that signature does not distinguish the two.
+
+  Order 2 stays refused, and not for a reason of a mixed class’s own:
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  is written over the stacked coefficients and has no joint twin, so
+  every model carrying a penalized structural term is refused there.
+  Measured, what it would have to beat is small: `newton()` differencing
+  the now-exact gradient reaches the same criterion as `lbfgs()` on it,
+  -532.040118 against -532.040118 and -442.107128 against -442.107128 on
+  two panels, in 86 evaluations against 15 and 245 against 112.
+
+## statmodels7 0.109.0
+
+- A COVARIANCE CLASS MAY SPAN A FILTER’S OWN PARAMETERS AND AN ORDINARY
+  TERM’S COEFFICIENTS, which is the case 0.108.0 refused and the one the
+  request came from: one prior over a mean’s random intercept and a
+  score-driven loading’s, correlated across the groups of a panel.
+
+  That refusal was right about the vector and wrong about the work. The
+  two halves are positions in two different vectors and a penalty is
+  read at one index, but the vector holding both already exists and
+  three places assemble it – the joint inner step, the marginal
+  criterion and the variance – as the stacked coefficients followed by
+  the filter’s free parameters. What such a class adds to those three is
+  the CROSS BLOCK and nothing else: `penalties7` computes one Hessian
+  over the class’s stacked vector exactly as before, and what this
+  release supplies is where each of its entries goes.
+
+  [`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md)
+  gives every piece its positions in that vector, and they are
+  INTERLEAVED group by group – for each group, that group’s coordinate
+  from each member – which is the order a blockwise prior reads.
+  Measured on twelve groups over fourteen coefficients, the positions
+  open 2, 16, 3, 17: the odd ones among the coefficients, the even ones
+  among the filter’s own parameters.
+
+  [`joint_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.md)
+  scatters the value, the gradient and the Hessian into that layout,
+  reading each coordinate where it lives. Against a multivariate
+  gaussian written out by hand at a point of the joint vector, the value
+  agrees at `0.000e+00`, the gradient and the Hessian at `5.551e-17`,
+  and the cross block – whose largest entry is 0.1606 – at `2.776e-17`;
+  against `numDeriv` on the same three, at 5.8e-09, 3.0e-08 and 9.8e-09.
+
+  THE CONTROL IS AN IDENTITY RATHER THAN A TOLERANCE. A block-diagonal
+  prior IS the two separate priors, so at a correlation of exactly zero
+  the mixed model is the model with two penalties and every piece of the
+  criterion has to agree. Measured on twelve groups at held scales, the
+  criterion is -684.06658698 on both sides, with gaps of -1.137e-13 on
+  the criterion and on the log-likelihood, -3.553e-15 on the penalty,
+  `0.000e+00` on the Laplace determinant, and the same dimension 28.
+
+  What the fit does, on twelve groups of thirty whose effects are drawn
+  INDEPENDENT: 29.1 s, a log-likelihood of -656.444 with scales 0.647
+  and 0.389 and a correlation of 0.733, against -656.222 with 0.634 and
+  0.332 from the two-penalty model on the same data.
+
+- ⚠️ THE VALUE OF A MIXED CLASS’S PENALTY IS DELEGATED AND NOT SKIPPED,
+  and the difference is a fit that runs away.
+  [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
+  and
+  [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
+  each read one of the two vectors, so both skip a class spanning them
+  and the joint route supplies its derivatives. The VALUE is one number
+  over the whole prior, and the normalizing constant it carries is the
+  only term that makes a large scale expensive: skipped, both scales ran
+  away, to `exp(3.7)` and `exp(14.4)`. The objective reads the value
+  from the joint route, where the two derivative blocks are not.
+
+- ⚠️ THE EXACT OUTER DERIVATIVES ARE REFUSED FOR A MIXED CLASS, and the
+  measurement says the refusal is necessary rather than cautious: the
+  exact gradient returns EXACTLY ZERO in all three coordinates where a
+  central difference of the criterion reads -9.43, -7.80 and +3.29. Its
+  contribution lives in the joint matrix
+  [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
+  does not assemble, and a zero gradient reads as stationarity, which is
+  worse than no gradient at all.
+
+  ⚠️ AND WHAT THE SEARCH FALLS TO HAD TO CHANGE WITH IT. The default
+  where no exact derivative exists is the simplex, which at three
+  hyperparameters is where this package already records it stalling.
+  Measured on the same model, `nelder_mead()` stops after 119 s at a
+  criterion of -684.7891 with the loading scale at 2.09e-06 and the
+  correlation at -0.9999, where `lbfgs()` reaches -683.3048 in 27 s at
+  0.389 and +0.733: 1.48 criterion units, and the difference between a
+  fitted correlation and a boundary.
+  [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
+  prefers `lbfgs()` wherever a mixed class is present.
+
+- ⚠️
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  REFUSES A MIXED CLASS WHOSE PRIOR IS NOT PROPER rather than projecting
+  onto half of it.
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  integrates over the range of the penalty, and for a proper prior
+  [`penalty_range_basis()`](https://statmodels7.github.io/statmodels7/reference/penalty_range_basis.md)
+  is the identity, so each coordinate is its own direction and the
+  class’s two halves reach the two readers unchanged. A prior that was
+  not proper would have a range mixing the two spaces, which neither
+  reader can express.
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  integrates every coordinate and needs no such basis.
+
+- ⚠️ WHAT IS MEASURED AND NOT REPAIRED, stated rather than left to be
+  found. The correlation is weakly identified at these panel sizes: over
+  five seeds at twelve groups, with the truth INDEPENDENT, the estimates
+  are +0.733, -0.265, +0.101, +0.852 and +1.000, and at thirty groups
+  -0.285 and +0.590. The two scales are recovered throughout and agree
+  with the independent fit’s to two decimals, so it is the third
+  coordinate alone that is weak. One seed of eight does not fit at all:
+  at thirty groups the inner joint fit fails to converge at the starting
+  hyperparameters, at unit scales with a zero correlation, and at 0.6 –
+  while the independent model on the same data converges and reports
+  -1705.48, and the mixed one fitted with `outer_criterion = NULL`
+  reaches -1694.40 reporting failure. And the certificate reads
+  `unknown`, there being no exact outer gradient to verify the
+  hyperparameters with.
+
+  ⚠️ The probe a class prior starts from is
+  [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)’s
+  midpoint of the bounds, which for an unbounded chart is 1 in every
+  coordinate: for `dr_prod(2)` that reads as two scales of 2.718 with a
+  correlation of -0.664, where an ordinary random effect probes at a
+  scale of
+
+  1.  It is not what stops that seed, the two sensible starting points
+      failing there as well, and it is recorded because it is measured
+      rather than chosen.
+
+## statmodels7 0.108.0
+
+- A COVARIANCE CLASS MAY SIT INSIDE A SCORE-DRIVEN FILTER. The effects
+  developing a filter’s own parameters carry a shared covariance like
+  any others, so the level and the loading of one filter may be
+  correlated across groups:
+
+  which was refused until now, on the reading that a class is addressed
+  at positions in the stacked coefficient vector and a filter
+  contributes no column to it. That is true of the vector and not of the
+  work: a filter’s parameters are estimated beside the coefficients, its
+  own penalties are already read at positions among them, and a class
+  inside one is read at the same positions by the same functions.
+  Nothing new is derived. `penalties7` computes one Hessian over the
+  class’s stacked vector, in the class’s own order, and what this
+  release adds is where to scatter it.
+
+  The summary reports the block ahead of the equations, as it does for a
+  class spanning two equations, with each coordinate named for the
+  parameter it develops rather than for the equation alone – both of
+  these are effects inside one term of `mu`. Forty groups, effects drawn
+  with a correlation of 0.7 and both scales at 0.5:
+
+  The control that says the addressing is right is an identity rather
+  than a tolerance: a class collecting ONE member describes the same
+  prior over the same coordinates as no label at all, and has to
+  reproduce the unlabelled fit exactly. Measured on a panel of ten
+  groups, `gas(alpha1 ~ 1 + random(~ 1 | u | g))` against
+  `gas(alpha1 ~ 1 + random(~ 1 | g))`: the log-likelihood agrees at
+  `0.000e+00` (-1168.705194827967 on both sides), and so do every
+  coefficient, every one of the filter’s thirteen parameters, the
+  effective degrees of freedom and the hyperparameter. The two printed
+  summaries differ in three lines, which are the formula text twice and
+  the elapsed time. The derivative route does not move either: the exact
+  outer gradient is available and the exact outer Hessian is refused,
+  which is what a filter’s own penalty already gave, so the search is
+  `lbfgs()` as it was.
+
+  ⚠️ AND THE GRADIENT IS CHECKED WHERE THE IDENTITY CONTROL CANNOT
+  REACH. A class collecting one member carries a SCALAR hyperparameter
+  and would reproduce the unlabelled answer whatever the assembly did
+  with a chart; a class collecting two carries three – two scales and a
+  correlation – so that is the case that says whether the new addressing
+  is right in every coordinate. Against a central difference of the
+  criterion with the mode refitted, the relative gap is 9.8e-06, 8.8e-07
+  and 9.8e-08 at steps of 1e-2, 3e-3 and 1e-3: clean `O(h^2)`, which is
+  what separates a correct gradient from one missing a term, that being
+  flat in the step.
+
+- ⚠️ A CLASS SPLIT BETWEEN A FILTER AND AN ORDINARY TERM IS REFUSED, and
+  this is the case the request came from –
+  `random(~ 1 | u | g) + gas(alpha1 ~ 1 + random(~ 1 | u | g))`, one
+  prior over a mean’s random intercept and a loading’s. Its two halves
+  are positions in two different vectors, and a penalty is read at one
+  index. The joint vector they would be positions in exists – the inner
+  step, the marginal criterion and the variance all build it – but the
+  penalty enters each of the three as two diagonal blocks with no cross
+  block between them. The refusal names both members and says which is
+  which, and a label inside a filter shared with another effect of the
+  same filter is the case that is fitted.
+
+- ⚠️ AND A LABEL UNDER A TERM OF THE LIKELIHOOD SHAPE STAYS REFUSED FOR
+  A DIFFERENT REASON, which is the model’s rather than the addressing’s:
+  what such a term carries is a latent the likelihood integrates out,
+  and a covariance block is a prior over coefficients, so correlating
+  the two would mean one joint prior over quantities integrated two
+  different ways. Neither shipped term of that shape can carry a label –
+  `regime()` takes no subformula at all and a marginal break-point
+  rejects one in `modelterms7` 0.68.0 – so the guard is unreachable from
+  the formula language and is tested on a term of that shape written for
+  the purpose. A guard nothing can reach is a guard nothing keeps
+  honest.
+
+- ⚠️ The effective degrees of freedom of a shared block counted one row
+  PER MEMBER where the count is filed per term, so two members that are
+  two developments of ONE term read that term’s row twice: measured, a
+  class inside a filter reported `edf 44.00` in a model whose whole
+  effective count is 24.00. It counts each distinct term once, and
+  reports 22.00. The defect is not the filter’s – two labelled
+  subformulas of one `nl()` have the same shape – and no existing case
+  moves, a class whose members are separate terms being unaffected.
+
+- ⚠️ [`summary()`](https://rdrr.io/r/base/summary.html) looked a class’s
+  penalty up twice by two routes that no longer agree. The rows of a
+  term’s hyperparameters are built from its own entries PLUS the
+  class’s, which
+  [`modelterms7::term_penalties()`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
+  does not report – a labelled sub-term declares none, the block being
+  the class’s – while the code pairing each row with its penalty walked
+  `term_penalties()` again and came back one entry shorter. The
+  penalties travel with their rows now.
+
+- ⚠️
+  [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
+  asked a structural term’s penalty for a derivative at an EMPTY
+  coefficient vector. Everything it builds is placed in a matrix over
+  the stacked coefficients, where such a penalty has no position at all,
+  so it was already contributing nothing – the writes land at `NULL`
+  positions and are no-ops – but it reached the penalty first. A
+  univariate prior returns empty in silence and a multivariate one
+  warns, sixteen times per
+  [`summary()`](https://rdrr.io/r/base/summary.html). It is skipped
+  explicitly, with the reason, and no number moves: a fit carrying an
+  unlabelled filter is
+  [`identical()`](https://rdrr.io/r/base/identical.html) across the
+  change.
+
+- ⚠️ What the model costs to estimate is worth stating before it is
+  written: the correlation between a loading deviation and a level
+  deviation is identified by the DATA and not by the construction, the
+  two entering the likelihood by very different routes. Measured against
+  a truth of 0.7, with both scales at 0.5 and forty observations per
+  group: 0.408 at ten groups, 0.820 at twenty, and 0.941, 0.493, 0.711
+  over three seeds at forty. The point estimate is near the truth and
+  its spread is wide; the per-group effects correlate with the ones
+  simulated at 0.96 to 0.98 for the level and 0.59 to 0.81 for the
+  loading, which is the same asymmetry from the other side. The model is
+  one that can be written and fitted; it is not one that is easy to
+  estimate, and where it is not the certificate says so.
+
+## statmodels7 0.107.0
+
+- A COVARIANCE SHARED BETWEEN TERMS IS REPORTED AHEAD OF THE EQUATIONS,
+  WITH EACH COORDINATE NAMED FOR THE EQUATION, THE TERM AND THE COLUMN
+  IT IS. A label shared across a bar –
+  `y ~ x + random(~ 1 | a | id) | sigma ~ random(~ 1 | a | id)` – gives
+  one covariance over effects of two different equations, and it used to
+  be printed inside whichever member the walk reached first, under the
+  names the multivariate family gives its own coordinates:
+
+  while the other member’s block read `(nothing to report on its own)`.
+  Both statements are true of the term and neither is what a reader
+  wants: half of what is printed under `mu` is about `sigma`, and
+  nothing on the page says which half. The block belongs to none of the
+  terms, so it is lifted out of all of them and printed once, before the
+  equations:
+
+  and each member says where its numbers are instead of reporting that
+  there is nothing to report.
+
+- The coordinates of a covariance a term carries ALONE are named the
+  same way, so `random(~ 1 + x | id)` reports `sd[(Intercept)]`, `sd[x]`
+  and `cor[(Intercept), x]` where it reported `sd_v1`, `sd_v2` and
+  `cor_v1_v2`. The equation goes in front of the column only where more
+  than one term is involved, and the term as well where two terms of one
+  equation write the same column name, so a label is the shortest one
+  that separates the coordinates.
+
+  A label written in a subformula carries the parameter it develops:
+  `seg(x, psi ~ random(~ 1 | u | id))` beside
+  `sigma ~ random(~ 1 | u | id)` reports `mu:psi1:(Intercept)` and not
+  `mu:(Intercept)`, the effect being on the break-point rather than on
+  the mean of the equation the break-point sits in.
+
+- Only the shape the multivariate family names by position is rewritten
+  – `prefix_vi` and `prefix_vi_vj` – and only where there are as many
+  labels as the prior has dimensions. A name of another kind keeps the
+  one the family gives it: a multivariate Student t prior reports
+  `scale_sd[(Intercept)]`, `scale_sd[x]`, `cor[(Intercept), x]` and
+  `nu`, the degrees of freedom being no reading of the scale matrix.
+
+- The coordinates of a covariance carried by a **sub-term** are named
+  from that sub-term’s columns. A correlated random effect developing
+  one of a nonlinear term’s parameters –
+  `nl(~ a * exp(-r * x), a ~ 1 + random(~ 1 + z | id))` – had its
+  coordinates numbered, the question having been asked of the parent:
+  `nl()` has no grouping and the random effect inside it does.
+  [`entry_owner()`](https://statmodels7.github.io/statmodels7/reference/entry_owner.md)
+  finds the term an entry belongs to, at any depth of development, and
+  the compartment now reads `sd[(Intercept)]`, `sd[z]`,
+  `cor[(Intercept), z]`.
+
+- A TERM WHOSE ONLY PENALIZED EFFECT IS A LABELLED SUB-TERM IS NO LONGER
+  REPORTED AS AN UNPENALIZED PARAMETRIC BLOCK. It declares no penalty of
+  its own – the covariance class carries it – and read after the
+  penalties it came back parametric, so
+  `y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + random(~ 1 | u | id))` printed
+  twelve predictions one per line with a `z` and a `p` beside them,
+  under a heading saying they are an unpenalized block, with the term’s
+  own compartment and its other parameters gone – and the shared block,
+  whose rows are held by that term, disappeared with it while the other
+  member went on saying they were reported above. The question is asked
+  of everything under the term, so a term written later is covered
+  without an edit.
+
+  The fit was never affected: the log-likelihood, the coefficients and
+  the hyperparameters are identical to the printed digit before and
+  after. What was wrong was the reading of the block.
+
+- A member’s `reported above` line is dropped where the section could
+  not be built, so the two views cannot contradict each other.
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) carries the shared
+  blocks in a `classes` property, each with the coordinates in `coords`,
+  so a reader with the object has what the page shows.
+  [`print()`](https://rdrr.io/r/base/print.html) takes them from there.
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html)’s refusal names what it
+  can when the flat direction lies in a structural term’s own
+  parameters: the matrix spans those beside the coefficients and only
+  the coefficients are named, so the message used to read
+  `flat along a direction carried by: ,`.
+
 ## statmodels7 0.106.0
 
 - TESTING ONE COEFFICIENT AGAINST ONE VALUE IS AN EXPORTED FUNCTION,
