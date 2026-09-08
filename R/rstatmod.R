@@ -82,23 +82,60 @@ NULL
 #' come back as lists of that length, while `par` and `structural` stay
 #' single.
 #'
-#' # The coefficients
+#' # Everything is drawn
 #'
-#' `par = NULL` draws every one from `rnorm(1, 0, sd)`, which on the link
-#' scale gives predictors of order one. A named list fixes them instead, one
-#' entry per distribution parameter, and an entry may be:
+#' A call that names nothing draws the whole truth, so writing the model is
+#' the whole of what getting data from it takes. The rule is that whoever
+#' knows what a quantity means draws it:
 #'
-#' - a numeric vector, as long as that equation has coefficients;
-#' - a single number, used for every coefficient of the equation;
-#' - a **function** of the coefficient count, called once and returning that
-#'   many values.
+#' - a coefficient of a design column has no other owner and comes from
+#'   `rnorm(1, 0, sd)`, which on the link scale gives predictors of order
+#'   one;
+#' - a coordinate some penalty covers is drawn from that penalty read as a
+#'   prior, through [penalties7::penalty_draw()]. A Gaussian random effect
+#'   gives Gaussian effects, a lasso Laplace ones and a heavy-tailed prior
+#'   heavy-tailed ones. The prior's own scale is drawn as well, on the chart
+#'   the penalty carries for it, and comes back in `hyper`;
+#' - a structural term's own parameters are drawn by the term, through
+#'   [modelterms7::term_draw()], which knows the chart each one rides. A
+#'   loading stays positive and a persistence stationary whatever comes out.
 #'
-#' The function is how a structured truth is written without a vocabulary for
-#' it. `function(k) rnorm(k, 0, 0.3)` is a random effect with its own
-#' standard deviation, and `function(k) c(1.5, -2, rep(0, k - 2))` is a
-#' sparse truth for a lasso to find. A function answering with the wrong
-#' count is refused, R being willing to recycle it into a different model. A
-#' parameter left out of the list is drawn.
+#' A hyperparameter the term holds is used rather than drawn, so
+#' `s(x, lambda = 2)` simulates at the smoothing it names.
+#'
+#' What no prior reaches falls back to the plain draw, and it is a short
+#' list: SCAD and MCP are improper by construction, an anisotropic tensor
+#' smooth is flat along its null space, and a covariance class spanning a
+#' filter and an equation at once is in neither vector on its own.
+#'
+#' # Holding what you care about
+#'
+#' `par` is one named list over the whole model, and a key may be
+#'
+#' - a distribution parameter, `mu`, which is that whole equation;
+#' - one of its coefficients or a group of them, `mu.(Intercept)` or
+#'   `mu.random`, a group being a name the members extend at a dot;
+#' - a structural term's own parameter, `alpha1`, or a group of those,
+#'   `omega.random`.
+#'
+#' A value is a vector of that key's own length, a single number used for all
+#' of them, or a **function** of the count. The function is how a structured
+#' truth is written without a vocabulary of its own:
+#' `function(k) rnorm(k, 0, 0.4)` is a random effect at a scale one chose and
+#' `function(k) c(1.5, -2, rep(0, k - 2))` is a sparse truth for a lasso to
+#' find. A function answering with the wrong count is refused, R being
+#' willing to recycle it into a different model, and a key that reaches
+#' nothing is refused with what the model does carry.
+#'
+#' A structural parameter is named on the scale a reader knows, which is
+#' [modelterms7::term_params()]'s: a loading is the loading and not its
+#' logarithm, a persistence the partial autocorrelation its chart carries.
+#' A parameter a subformula DEVELOPS is different, and it has to be: its
+#' coordinates are the coefficients of that development, which act on the
+#' unconstrained scale of the parameter's own chart, so `alpha1` is a loading
+#' and `alpha1.random.3` is a group's departure on the log scale that
+#' loading rides. That is what keeps every group's loading positive whatever
+#' the departure is.
 #'
 #' # A term with state
 #'
@@ -110,17 +147,13 @@ NULL
 #' from their prior. What each drew comes back in `latent`, and that is what
 #' a recovery check compares against.
 #'
-#' Such a term's own parameters are not coefficients of any equation, so they
-#' are named through `structural`, never through `par`, on the scale
-#' [modelterms7::term_params()] names: a loading is the loading, not its
-#' logarithm, a persistence is the partial autocorrelation the chart carries.
-#' A formula holds at most one such term, so no key is needed.
-#'
-#' Left unnamed they take the term's own starting values, which are
-#' deliberately weak. A score-driven term starts at a loading near 0.1, and
-#' the series then has almost no dynamics: measured, its level ranged over
-#' 0.64 against 2.40 at named parameters. Name them, or the simulation is of
-#' a model close to the one with no term at all.
+#' Such a term's own parameters are not coefficients of any equation and are
+#' named in `par` alongside them, a formula holding at most one such term so
+#' that no key is needed. They are drawn like everything else, which they
+#' were not until version 0.111.0: a filter whose level was developed over a
+#' hundred groups took its starting values, and those are zero for every
+#' deviation, so the panel came out with no heterogeneity between groups at
+#' all -- three distinct values of the mean over six hundred observations.
 #'
 #' # The response's name
 #'
@@ -137,14 +170,15 @@ NULL
 #' @param n The number of observations, where `data` is `NULL`. One of the
 #'   two is required.
 #' @param n_sim How many data sets to draw. `1` by default.
-#' @param par Optional named list, one entry per distribution parameter, each
-#'   a numeric vector, a single number or a function of the coefficient
-#'   count. See the details. `NULL` draws every coefficient.
-#' @param structural Optional named list of a structural term's own
-#'   parameters, on the scale [modelterms7::term_params()] names. Strongly
-#'   recommended when the formula carries such a term.
-#' @param sd The standard deviation of the drawn coefficients, `1` by
-#'   default. Read only for the coefficients `par` does not fix.
+#' @param par Optional named list of what to hold, over the whole model: a
+#'   distribution parameter, one of its coefficients or a group of them, a
+#'   structural term's own parameter or a group of those. Each entry is a
+#'   numeric vector, a single number or a function of the count. See the
+#'   details. `NULL`, the default, draws everything.
+#' @param sd The width of the draws, `1` by default. A quantity that rides a
+#'   chart -- a structural parameter, a prior's own scale -- is drawn at half
+#'   of it, the chart carrying a width of one onto most of its parameter's
+#'   range.
 #' @param offsets Optional named list of offsets, one per parameter, as
 #'   [statmod()] takes them.
 #' @param covariates Optional named list of functions of the observation
@@ -161,6 +195,10 @@ NULL
 #'       named list with one vector per parameter.}
 #'     \item{`latent`}{what a term with state drew, or `NULL`.}
 #'     \item{`structural`}{such a term's own parameters, or `NULL`.}
+#'     \item{`hyper`}{a data frame of the hyperparameters, one row per
+#'       penalty and name, with the value drawn or held. Its columns are
+#'       those of [hyper()] as far as they mean the same thing, so a study
+#'       compares the two directly.}
 #'     \item{`n_sim`}{as supplied.}
 #'     \item{`call`}{the matched call.}
 #'   }
@@ -205,17 +243,26 @@ NULL
 #'   y ~ x, distributions7::gaussian1_distrib(), d),
 #'   readable = FALSE)$mu[[2L]], numeric(1))
 #'
-#' # a score-driven series, its own parameters named
+#' # a score-driven series, its own parameters named beside the equations'
 #' sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
 #'                  distributions7::gaussian1_distrib(),
-#'                  data.frame(t = 1:100), par = list(sigma = 0),
-#'                  structural = list(omega = 0.4, alpha1 = 0.3,
-#'                                    pacf1 = 0.6))
+#'                  data.frame(t = 1:100),
+#'                  par = list(sigma = 0, omega = 0.4, alpha1 = 0.3,
+#'                             pacf1 = 0.6))
 #' head(sim5$latent, 3)
+#'
+#' # and a panel whose level varies by group: naming nothing draws the
+#' # deviations from the prior random() declares, at a scale drawn too
+#' pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
+#' sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
+#'                              by = id, time = t),
+#'                  distributions7::gaussian1_distrib(), pan)
+#' sim6$hyper
+#' length(unique(round(sim6$theta$mu, 6))) > 6
 #'
 #' @export
 rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
-                     par = NULL, structural = NULL, sd = 1, offsets = NULL,
+                     par = NULL, sd = 1, offsets = NULL,
                      covariates = NULL) {
   if (!S7::S7_inherits(distrib, distributions7::distrib)) {
     stop("'distrib' must be a distributions7 distribution object.",
@@ -252,9 +299,14 @@ rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
   # differ in what is random -- the response, and the covariates where they
   # are simulated -- and not in what is being estimated. Varying the truth
   # as well is a loop over calls, and reads differently.
-  coef <- draw_coefficients(b$design, params, par, sd)
+  truth <- rstatmod_truth(b$spec, b$design, par, sd)
+  coef <- truth$coef
   names_at <- function(d) lapply(d[params], `[[`, "coef_names")
   cn <- names_at(b$design)
+  # the structural term's parameters are drawn too, so a replicate whose
+  # covariates changed the term's own shape would recycle another model's
+  # truth exactly as a changed design would
+  sn <- names(truth$psi)
 
   dats <- vector("list", n_sim)
   thetas <- vector("list", n_sim)
@@ -266,14 +318,18 @@ rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
       b <- build(data)
       # a design that changed shape cannot take coefficients drawn against
       # the first one, and recycling them would fit a different model
-      if (!identical(names_at(b$design), cn)) {
+      su2 <- attr(b$design, "structural")
+      sn2 <- if (length(su2))
+        modelterms7::term_params(
+          b$spec@terms[[su2[[1L]]$param]][[su2[[1L]]$term]]) else NULL
+      if (!identical(names_at(b$design), cn) || !identical(sn2, sn)) {
         stop("the simulated covariates gave a design of another shape at ",
              "replicate ", r, ".\n  A factor that lost a level is the ",
              "ordinary cause; draw the covariates so that\n  every ",
              "replicate spans the same columns.", call. = FALSE)
       }
     }
-    ep <- rstatmod_eta(b$spec, b$design, coef, structural)
+    ep <- rstatmod_eta(b$spec, b$design, coef, truth$psi)
     y <- ep$y
     if (is.null(y)) y <- distributions7::distrib_rng(distrib, n, ep$theta)
     out <- data
@@ -292,6 +348,7 @@ rstatmod <- function(formula, distrib, data = NULL, n = NULL, n_sim = 1,
                    if (all(vapply(latents, is.null, logical(1)))) NULL
                    else latents,
                  structural = psi,
+                 hyper = truth$hyper,
                  n_sim = n_sim,
                  call = match.call()),
             class = "StatmodSim")
@@ -398,13 +455,24 @@ print.StatmodSim <- function(x, ...) {
   for (p in names(x$par)) {
     v <- x$par[[p]]
     if (!length(v)) next
-    cat(sprintf("  %-10s %s\n", p,
-                paste(format(round(v, 4)), collapse = "  ")))
+    cat(sprintf("  %-10s %s\n", p, sim_values(v)))
   }
   if (length(x$structural)) {
     cat("\n  the term's own parameters\n")
-    for (q in names(x$structural)) {
-      cat(sprintf("  %-10s %s\n", q, format(round(x$structural[[q]], 4))))
+    psi <- unlist(x$structural)
+    for (q in sim_groups(names(psi))) {
+      cat(sprintf("  %-18s %s\n", q$label, sim_values(psi[q$idx])))
+    }
+  }
+  if (!is.null(x$hyper) && nrow(x$hyper)) {
+    cat("\n  the hyperparameters\n")
+    for (i in seq_len(nrow(x$hyper))) {
+      h <- x$hyper[i, ]
+      cat(sprintf("  %-18s %s%s\n",
+                  paste0(short_keys(h$term),
+                         if (nzchar(h$term)) ":" else "", h$name),
+                  format(round(h$value, 4)),
+                  if (isTRUE(h$held)) "  (held)" else ""))
     }
   }
   if (!is.null(x$latent)) {
@@ -419,6 +487,67 @@ print.StatmodSim <- function(x, ...) {
       else
         "\n  the data sets are in $data[[k]], the truth in $par\n")
   invisible(x)
+}
+
+
+#' A Vector of a Simulated Truth, Short Enough to Read
+#'
+#' @description
+#' The values where there are few, and the count with their spread where
+#' there are many.
+#'
+#' @details
+#' A random effect over a hundred groups is a hundred numbers, and printing
+#' them buries the handful a reader came for. What a reader wants of a block
+#' that size is that it is there and how wide it is.
+#'
+#' @param v A numeric vector.
+#'
+#' @return A single string.
+#'
+#' @seealso [print.StatmodSim()]
+#'
+#' @keywords internal
+sim_values <- function(v) {
+  if (length(v) <= 6L) {
+    return(paste(format(round(v, 4)), collapse = "  "))
+  }
+  sprintf("%s ... %d values, sd %s",
+          paste(format(round(v[1:2], 4)), collapse = "  "), length(v),
+          format(round(stats::sd(v), 4)))
+}
+
+
+#' The Groups a Printed Truth Collapses
+#'
+#' @description
+#' One entry per scalar parameter and one per family of names that share a
+#' stem, in the order the names arrive.
+#'
+#' @details
+#' A structural term's parameters are `omega`, `alpha1` and the like where
+#' nothing is developed, and `omega.(Intercept)`, `omega.random.1` and so on
+#' where something is. The first are read one by one and the second are a
+#' block, so the printed form is grouped at the first dot, the scalars coming
+#' out as groups of one and needing no special case.
+#'
+#' @param nm The names.
+#'
+#' @return A list of entries, each with `label` and `idx`.
+#'
+#' @seealso [print.StatmodSim()]
+#'
+#' @keywords internal
+sim_groups <- function(nm) {
+  stem <- sub("[.].*$", "", nm)
+  # a development's coordinates share the parameter's own name, so the stem
+  # groups them and a scalar is a group of one
+  lapply(unique(stem), function(g) {
+    idx <- which(stem == g)
+    lab <- if (length(idx) == 1L) nm[[idx]] else
+      sprintf("%s (%d)", g, length(idx))
+    list(label = lab, idx = idx)
+  })
 }
 
 
@@ -529,7 +658,9 @@ rstatmod_response_name <- function(response) {
 #' @param spec The specification.
 #' @param design Its design.
 #' @param coef The coefficients.
-#' @param structural The structural term's own parameters, or `NULL`.
+#' @param psi The structural term's own parameters, drawn once by
+#'   [rstatmod_truth()] so that the replicates share them, or `NULL` to read
+#'   the design's own structural state.
 #'
 #' @return A list with `eta`, `theta`, `y`, `latent`
 #'   and `structural`.
@@ -537,15 +668,11 @@ rstatmod_response_name <- function(response) {
 #' @seealso [rstatmod()], [statmod_eta()]
 #'
 #' @keywords internal
-rstatmod_eta <- function(spec, design, coef, structural = NULL) {
+rstatmod_eta <- function(spec, design, coef, psi = NULL) {
   params <- spec@distrib@params
   links <- spec@distrib@link_params
   su <- attr(design, "structural")
   if (!length(su)) {
-    if (!is.null(structural)) {
-      stop("'structural' names a term's own parameters and this formula ",
-           "carries no\n  structural term.", call. = FALSE)
-    }
     ep <- statmod_eta(spec, design, coef)
     return(list(eta = ep$eta, theta = ep$theta, y = NULL, latent = NULL,
                 structural = NULL))
@@ -570,9 +697,11 @@ rstatmod_eta <- function(spec, design, coef, structural = NULL) {
     theta[[p]] <- linkfunctions7::linkinv(links[[p]], e)
   }
 
-  st <- statmod_structural_state(design)
   tm <- spec@terms[[u$param]][[u$term]]
-  psi <- rstatmod_psi(tm, structural_psi(tm, st$zeta[[u$term]]), structural)
+  # drawn once by rstatmod_truth(), so the replicates share it
+  if (is.null(psi)) {
+    psi <- structural_psi(tm, statmod_structural_state(design)$zeta[[u$term]])
+  }
   p <- u$param
   lk <- links[[p]]
   n <- spec@n_obs
@@ -599,112 +728,391 @@ rstatmod_eta <- function(spec, design, coef, structural = NULL) {
 }
 
 
-#' Draw or Validate the Coefficients of a Simulation
+#' Draw the Whole Truth of a Simulation
 #'
 #' @description
-#' Returns one coefficient vector per distribution parameter, drawn from a
-#' normal where the caller gave none.
+#' Every coefficient, every hyperparameter and, where the formula carries a
+#' structural term, that term's own parameters: drawn once, then overwritten
+#' by whatever `par` names.
 #'
 #' @details
-#' An entry of `par` may be a vector of the equation's own length, a
-#' single number used for all of them, or a function of the count returning
-#' that many values. The function form is what expresses a structured truth
-#' -- a random effect's standard deviation, a sparse vector for a lasso to
-#' find -- without a vocabulary of its own, and it is checked to have
-#' returned the right number of finite values, since a function that answers
-#' wrongly would otherwise be recycled into a different model.
+#' The rule the whole function is written from is that **whoever knows what a
+#' quantity means draws it**. A coefficient of a design column has no other
+#' owner and is drawn from a normal of width `sd`. A coordinate some penalty
+#' covers is drawn from that penalty read as a prior, so a Gaussian random
+#' effect gives Gaussian effects and a lasso gives Laplace ones; the prior's
+#' own scale is drawn too, on the chart its penalty carries. A structural
+#' term's parameters are drawn by the term, which knows their charts.
 #'
-#' @param design The design blocks.
-#' @param params The parameter names.
-#' @param par A named list, or `NULL`.
-#' @param sd The standard deviation of the drawn coefficients.
+#' The truth is drawn once whatever `n_sim` is, so the replicates differ in
+#' what is random and not in what is being estimated.
 #'
-#' @return A named list of numeric vectors.
+#' A hyperparameter the term holds is used as given rather than drawn:
+#' `s(x, lambda = 2)` says what the smoothing is and the simulation says it
+#' too.
 #'
-#' @seealso [rstatmod()]
+#' @param spec The specification, built against a placeholder response.
+#' @param design Its design.
+#' @param par A named list, or `NULL`. See [rstatmod()] for what a key may be.
+#' @param sd The width of the draws.
+#'
+#' @return A list with `coef`, one numeric vector per distribution parameter;
+#'   `hyper`, a data frame of the hyperparameters drawn or held; and `psi`,
+#'   the structural term's own parameters or `NULL`.
+#'
+#' @seealso [rstatmod()], [penalties7::penalty_draw()],
+#'   [modelterms7::term_draw()]
 #'
 #' @keywords internal
-draw_coefficients <- function(design, params, par, sd) {
-  if (!is.null(par)) {
-    if (!is.list(par) || is.null(names(par))) {
-      stop("'par' must be a named list, one entry per parameter.",
-           call. = FALSE)
+rstatmod_truth <- function(spec, design, par, sd) {
+  params <- spec@distrib@params
+  # AN EQUATION `par` FIXES WHOLE IS NOT DRAWN, so a simulation whose truth
+  # is entirely written consumes the same random numbers it always did and
+  # gives the same data. Every finer key came later and has nothing to
+  # reproduce.
+  fixed_eq <- if (is.list(par)) intersect(names(par), params) else character(0)
+  coef <- stats::setNames(lapply(params, function(p) {
+    if (p %in% fixed_eq) rep(NA_real_, design[[p]]$npar)
+    else stats::rnorm(design[[p]]$npar, 0, sd)
+  }), params)
+  su <- attr(design, "structural")
+  tm <- if (length(su))
+    spec@terms[[su[[1L]]$param]][[su[[1L]]$term]] else NULL
+  psi_z <- if (is.null(tm)) NULL else modelterms7::term_draw(tm, sd = sd)
+
+  units <- statmod_penalized(spec, design)
+  rows <- list()
+  for (u in units) {
+    # A PRIOR OVER COORDINATES THAT RIDE A CHART IS CENTRED HALF AS FAR
+    # from its bound, by the rule term_draw() halves its own width by: a
+    # chart carries a scale of one onto most of its parameter's range.
+    # Measured on a partial-autocorrelation chart, a prior scale of 1 puts
+    # 10.1 per cent of the persistences past 0.95 and one of 0.5 puts 0.9
+    # per cent there, the middle ninety running -0.82 to 0.82.
+    th <- rstatmod_hyper(u$penalty, sd,
+                         unit = if (isTRUE(u$structural)) 0.5 else 1)
+    if (length(u$fixed)) th[names(u$fixed)] <- u$fixed
+    v <- penalties7::penalty_draw(u$penalty, th)
+    if (is.null(v) || all(is.na(v))) next
+    tg <- unit_draw_targets(u, design, params)
+    if (is.null(tg) || length(tg$pos) != length(v)) next
+    ok <- !is.na(v)
+    if (tg$space == "zeta") {
+      if (!is.null(psi_z)) psi_z[tg$pos[ok]] <- v[ok]
+    } else {
+      for (p in setdiff(unique(tg$param[ok]), fixed_eq)) {
+        j <- ok & tg$param == p
+        coef[[p]][tg$pos[j]] <- v[j]
+      }
     }
-    bad <- setdiff(names(par), params)
-    if (length(bad)) {
-      stop(sprintf(paste0("'par' names '%s', which is not a parameter.\n",
-                          "  They are: %s."),
-                   bad[1L], paste(params, collapse = ", ")), call. = FALSE)
+    # A HYPERPARAMETER IS REPORTED ONLY WHERE THE DRAW REACHED ITS
+    # COORDINATES. Where it did not -- SCAD and MCP, which are densities of
+    # nothing, a covariance class spanning two vectors -- those coefficients
+    # came from the plain draw and no scale of the prior describes them, so
+    # a row for it would name a truth the data do not have.
+    for (h in names(th)) {
+      rows[[length(rows) + 1L]] <- data.frame(
+        parameter = if (is.null(u$params)) u$param else
+          paste(unique(u$params), collapse = ", "),
+        term = u$key, name = h, value = as.numeric(th[[h]]),
+        held = h %in% names(u$fixed), stringsAsFactors = FALSE)
     }
   }
-  stats::setNames(lapply(params, function(p) {
-    k <- design[[p]]$npar
-    e <- if (is.null(par)) NULL else par[[p]]
-    if (is.null(e)) return(stats::rnorm(k, 0, sd))
-    if (is.function(e)) {
-      v <- as.numeric(e(k))
-      if (length(v) != k || anyNA(v)) {
-        stop(sprintf(paste0("'par$%s' is a function and returned %d value%s ",
-                            "where '%s' has %d\n  coefficient%s."),
-                     p, length(v), if (length(v) == 1L) "" else "s", p, k,
-                     if (k == 1L) "" else "s"), call. = FALSE)
-      }
-      return(v)
-    }
-    v <- as.numeric(e)
-    if (length(v) == 1L && k > 1L) return(rep(v, k))
-    if (length(v) != k) {
-      stop(sprintf("'par$%s' has length %d but '%s' has %d coefficients.",
-                   p, length(v), p, k), call. = FALSE)
-    }
-    v
-  }), params)
+
+  psi <- if (is.null(tm)) NULL else structural_psi(tm, psi_z)
+  out <- rstatmod_named(coef, psi, design, params, par)
+  hyper <- if (length(rows)) do.call(rbind, rows) else
+    data.frame(parameter = character(0), term = character(0),
+               name = character(0), value = numeric(0), held = logical(0),
+               stringsAsFactors = FALSE)
+  list(coef = out$coef, psi = out$psi, hyper = hyper)
 }
 
 
-#' A Structural Term's Parameters for a Simulation
+#' Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws
 #'
 #' @description
-#' The term's starting values with whatever the caller named written over
-#' them.
+#' One target per coordinate the penalty covers, in the penalty's own order:
+#' which vector it belongs to, which parameter's coefficients, and the
+#' position within them.
 #'
 #' @details
-#' The values are on the scale [modelterms7::term_params()] names,
-#' which is the one a reader knows: a loading is the loading rather than its
-#' logarithm, and a persistence is the partial autocorrelation its chart
-#' carries rather than the autoregressive coefficient that chart produces. A
-#' name the term does not have is reported with the ones it does, since a
-#' misspelled parameter would otherwise leave the term at a starting value and
-#' simulate a model with almost no dynamics.
+#' A penalty over a structural term's own parameters is read among those
+#' parameters, on the unconstrained scale, and a penalty over an equation's
+#' coefficients among those coefficients. A covariance class spans several
+#' members and its penalty reads them interleaved group by group, which is
+#' what its `index` already records, so the stacked positions are turned back
+#' into a parameter and a column with the offsets the design gives.
 #'
-#' @param tm The built structural term.
-#' @param psi Its parameters at the specification's own state.
-#' @param given A named list, or `NULL`.
+#' A class whose halves are in both vectors at once is refused rather than
+#' half-drawn: those coordinates fall back to the plain draw, which is
+#' [rstatmod()]'s rule for everything no prior reaches.
 #'
-#' @return A named list.
+#' @param u One entry of [statmod_penalized()].
+#' @param design The design.
+#' @param params The distribution parameter names.
 #'
-#' @seealso [rstatmod()]
+#' @return A list with `space`, `param` and `pos`, or `NULL` where the entry
+#'   cannot be addressed.
+#'
+#' @seealso [rstatmod_truth()]
 #'
 #' @keywords internal
-rstatmod_psi <- function(tm, psi, given) {
-  if (is.null(given)) return(psi)
-  if (!is.list(given) || is.null(names(given))) {
-    stop("'structural' must be a named list.", call. = FALSE)
+unit_draw_targets <- function(u, design, params) {
+  if (isTRUE(u$mixed)) return(NULL)
+  if (isTRUE(u$structural)) {
+    if (!length(u$cols)) return(NULL)
+    return(list(space = "zeta", param = rep(NA_character_, length(u$cols)),
+                pos = as.integer(u$cols)))
   }
-  nm <- modelterms7::term_params(tm)
-  bad <- setdiff(names(given), nm)
-  if (length(bad)) {
-    stop(sprintf(paste0("'structural' names '%s', which is not a parameter ",
-                        "of this term.\n  They are: %s."),
-                 bad[[1L]], paste(nm, collapse = ", ")), call. = FALSE)
+  if (!is.null(u$cols)) {
+    return(list(space = "beta", param = rep(u$param, length(u$cols)),
+                pos = as.integer(u$cols)))
   }
-  for (q in names(given)) {
-    v <- as.numeric(given[[q]])
-    if (length(v) != 1L || !is.finite(v)) {
-      stop(sprintf("'structural$%s' must be one finite number.", q),
+  # a covariance class: stacked positions, turned back into (parameter,
+  # column) with the same offsets statmod_penalized() built them from
+  if (is.null(u$index) || !length(u$index)) return(NULL)
+  npar <- vapply(design[params], function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  a <- findInterval(u$index - 1L, offs)
+  list(space = "beta", param = params[a], pos = as.integer(u$index - offs[a]))
+}
+
+
+#' Draw One Penalty's Hyperparameters
+#'
+#' @description
+#' A value per hyperparameter, drawn on the chart the penalty carries for it
+#' around the neutral point [penalty_theta_start()] gives.
+#'
+#' @details
+#' The draw is on the unconstrained scale so that whatever comes out is
+#' admissible: a scale stays positive, a correlation stays inside its
+#' interval, and a log-Cholesky coordinate is free on the line already. The
+#' width is half of `sd` for the reason [modelterms7::term_draw()] halves it,
+#' a chart mapping a width of one onto most of its parameter's range.
+#'
+#' `unit` moves the centre away from a ONE-SIDED bound and reaches nothing
+#' else, so a hyperparameter unbounded on both sides -- a coordinate of a
+#' multivariate prior's own chart -- is drawn around that chart's neutral
+#' point whatever the term is. That is the point a fit starts from as well,
+#' and on `dr_prod` it reads as unit standard deviations and no correlation,
+#' so a simulation of a covariance block begins where a reader would put it.
+#'
+#' @param pen A \pkg{penalties7} penalty.
+#' @param sd The width of the draws.
+#' @param unit How far from a one-sided bound the draw is centred, passed to
+#'   [penalty_theta_start()]. Half for a prior over a structural term's own
+#'   parameters, which ride charts.
+#'
+#' @return A named list, empty for a penalty with no hyperparameters.
+#'
+#' @seealso [rstatmod_truth()], [penalty_theta_start()]
+#'
+#' @keywords internal
+rstatmod_hyper <- function(pen, sd, unit = 1) {
+  st <- penalty_theta_start(pen, unit)
+  if (!length(st)) return(list())
+  nm <- names(st)
+  stats::setNames(lapply(nm, function(h) {
+    lk <- pen@link_params[[h]]
+    z <- stats::rnorm(1, 0, sd / 2)
+    if (is.null(lk)) return(as.numeric(st[[h]]) + z)
+    linkfunctions7::linkinv(lk, linkfunctions7::linkfun(lk,
+                                                        as.numeric(st[[h]])) + z)
+  }), nm)
+}
+
+
+#' Hold What a Simulation's Caller Named
+#'
+#' @description
+#' Writes the entries of `par` over the drawn truth, each addressed by a name
+#' the result reports it under.
+#'
+#' @details
+#' One namespace covers the whole model, so a caller names what it cares
+#' about and everything else stays drawn. A key may be a distribution
+#' parameter, which is that whole equation; one of its coefficients or a
+#' group of them, written `parameter.coefficient`; a structural term's own
+#' parameter; or a group of those. A group is a name the members extend at a
+#' dot, so `omega.random` is every deviation a development of `omega` carries
+#' and `mu.s(x)` is every coordinate of that smooth.
+#'
+#' A value may be a vector of the group's own length, a single number used
+#' for all of them, or a function of the count. The function is how a
+#' structured truth is written: `function(k) rnorm(k, 0, 0.4)` is a random
+#' effect at a scale of its own and `function(k) c(2, -1.5, rep(0, k - 2))`
+#' is a sparse truth for a lasso to find.
+#'
+#' A structural parameter is named on the scale a reader knows, which is
+#' [modelterms7::term_params()]'s: a loading is the loading and not its
+#' logarithm.
+#'
+#' @param coef The drawn coefficients.
+#' @param psi The drawn structural parameters, or `NULL`.
+#' @param design The design.
+#' @param params The distribution parameter names.
+#' @param par A named list, or `NULL`.
+#'
+#' @return A list with `coef` and `psi`.
+#'
+#' @seealso [rstatmod()], [rstatmod_truth()]
+#'
+#' @keywords internal
+rstatmod_named <- function(coef, psi, design, params, par) {
+  if (is.null(par) || !length(par)) return(list(coef = coef, psi = psi))
+  if (!is.list(par) || is.null(names(par)) || !all(nzchar(names(par)))) {
+    stop("'par' must be a named list. Name a distribution parameter, one of ",
+         "its\n  coefficients as 'parameter.coefficient', or a structural ",
+         "term's own\n  parameter; what is not named is drawn.", call. = FALSE)
+  }
+  cn <- lapply(params, function(p) design[[p]]$coef_names)
+  names(cn) <- params
+  snm <- names(psi)
+  # A NAME THAT REACHES TWO THINGS IS REFUSED rather than resolved by an
+  # order of precedence nobody would remember. It is the exact collision --
+  # a structural parameter called `mu` -- and the one a group would create,
+  # a structural parameter called `mu.something` against the coefficient
+  # `something` of the equation `mu`. Neither occurs among the shipped
+  # families and terms; both are one line to rule out.
+  # `startsWith()` rejects a NULL, which is what a model with no structural
+  # term has here, so the second half is asked only where there is anything
+  # to ask it of
+  clash <- if (!length(snm)) character(0) else
+    c(intersect(params, snm),
+      unlist(lapply(params, function(p)
+        snm[startsWith(snm, paste0(p, "."))])))
+  if (length(clash)) {
+    stop(sprintf(paste0("'%s' is reachable both as a coefficient of a ",
+                        "distribution parameter\n  and as a parameter of ",
+                        "the structural term, so 'par' cannot say which is ",
+                        "meant."), clash[[1L]]),
+         call. = FALSE)
+  }
+  for (k in names(par)) {
+    tg <- resolve_par_key(k, params, cn, snm)
+    v <- par_values(par[[k]], length(tg$pos), k)
+    if (identical(tg$space, "zeta")) {
+      for (i in seq_along(tg$pos)) psi[[tg$pos[[i]]]] <- v[[i]]
+    } else {
+      coef[[tg$param]][tg$pos] <- v
+    }
+  }
+  list(coef = coef, psi = psi)
+}
+
+
+#' Resolve One Key of a Simulation's `par`
+#'
+#' @description
+#' Turns a name into the vector and the positions it addresses.
+#'
+#' @details
+#' The order is exact matches first and groups after, so a name that is both
+#' a coefficient and the stem of others addresses the coefficient. A group is
+#' recognized at a dot rather than by any prefix, since a coefficient name is
+#' free to begin with the letters of another.
+#'
+#' A key that reaches nothing is reported with what the model does carry.
+#' Guessing would be worse than refusing: a misspelled name would leave the
+#' quantity drawn and the caller would read a simulation of another model.
+#'
+#' @param key The name.
+#' @param params The distribution parameter names.
+#' @param cn A named list of coefficient names, one per parameter.
+#' @param snm The structural parameter names, or `NULL`.
+#'
+#' @return A list with `space`, `param` and `pos`.
+#'
+#' @seealso [rstatmod_named()]
+#'
+#' @keywords internal
+resolve_par_key <- function(key, params, cn, snm) {
+  if (key %in% params) {
+    return(list(space = "beta", param = key,
+                pos = seq_len(length(cn[[key]]))))
+  }
+  if (length(snm)) {
+    if (key %in% snm) {
+      return(list(space = "zeta", param = NA_character_,
+                  pos = match(key, snm)))
+    }
+    g <- which(startsWith(snm, paste0(key, ".")))
+    if (length(g)) {
+      return(list(space = "zeta", param = NA_character_, pos = g))
+    }
+  }
+  for (p in params) {
+    pre <- paste0(p, ".")
+    if (!startsWith(key, pre)) next
+    rest <- substring(key, nchar(pre) + 1L)
+    nmp <- cn[[p]]
+    if (rest %in% nmp) {
+      return(list(space = "beta", param = p, pos = match(rest, nmp)))
+    }
+    g <- which(startsWith(nmp, paste0(rest, ".")))
+    if (length(g)) return(list(space = "beta", param = p, pos = g))
+  }
+  some <- function(x) {
+    if (!length(x)) return("none")
+    paste(c(utils::head(x, 6L), if (length(x) > 6L) "...") , collapse = ", ")
+  }
+  # AN EQUATION MAY HAVE NO COLUMNS AT ALL -- `y ~ 0 + gas(...)` is the
+  # ordinary case -- so the example is taken from the first that has one and
+  # is left out where none does. A message that itself fails is worse than a
+  # terse one.
+  with_cols <- params[vapply(params, function(p) length(cn[[p]]) > 0L,
+                             logical(1))]
+  eg <- if (length(with_cols))
+    sprintf("\n  A coefficient is named 'parameter.coefficient', as in '%s'.",
+            paste0(with_cols[[1L]], ".", cn[[with_cols[[1L]]]][[1L]])) else ""
+  stop(sprintf(paste0("'par' names '%s', which addresses nothing in this ",
+                      "model.\n  The distribution parameters are: %s.%s%s"),
+               key, paste(params, collapse = ", "), eg,
+               if (length(snm))
+                 sprintf("\n  The structural term's own parameters are: %s.",
+                         some(snm)) else ""),
+       call. = FALSE)
+}
+
+
+#' The Values One Entry of `par` Stands For
+#'
+#' @description
+#' A numeric vector of the length the key addresses, from a vector, a single
+#' number or a function of the count.
+#'
+#' @details
+#' A function answering with the wrong count is reported rather than
+#' recycled: R would recycle it without a word and the simulation would be of
+#' another model.
+#'
+#' @param e The entry.
+#' @param k How many values the key addresses.
+#' @param key The name, for the message.
+#'
+#' @return A numeric vector of length `k`.
+#'
+#' @seealso [rstatmod_named()]
+#'
+#' @keywords internal
+par_values <- function(e, k, key) {
+  if (is.function(e)) {
+    v <- as.numeric(e(k))
+    if (length(v) != k || anyNA(v)) {
+      stop(sprintf(paste0("'par$`%s`' is a function and returned %d value%s ",
+                          "where that name\n  addresses %d."),
+                   key, length(v), if (length(v) == 1L) "" else "s", k),
            call. = FALSE)
     }
-    psi[[q]] <- v
+    return(v)
   }
-  psi
+  v <- as.numeric(e)
+  if (length(v) == 1L && k > 1L) return(rep(v, k))
+  if (length(v) != k) {
+    stop(sprintf("'par$`%s`' has length %d where that name addresses %d.",
+                 key, length(v), k), call. = FALSE)
+  }
+  v
 }

@@ -71,7 +71,7 @@ test_that("what rstatmod refuses", {
                "Pass its 'data' field", fixed = TRUE)
   expect_error(rstatmod(y ~ x, "gaussian", dd), "distributions7")
   expect_error(rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
-                        par = list(wrong = 1)), "not a parameter")
+                        par = list(wrong = 1)), "addresses nothing")
   # ONE number is used for every coefficient of the equation, deliberately;
   # what is refused is a length that is neither one nor the equation's own,
   # which R would recycle without a word

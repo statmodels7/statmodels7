@@ -11,7 +11,6 @@ rstatmod(
   n = NULL,
   n_sim = 1,
   par = NULL,
-  structural = NULL,
   sd = 1,
   offsets = NULL,
   covariates = NULL
@@ -31,16 +30,16 @@ two is required.}
 
 \item{n_sim}{How many data sets to draw. \code{1} by default.}
 
-\item{par}{Optional named list, one entry per distribution parameter, each
-a numeric vector, a single number or a function of the coefficient
-count. See the details. \code{NULL} draws every coefficient.}
+\item{par}{Optional named list of what to hold, over the whole model: a
+distribution parameter, one of its coefficients or a group of them, a
+structural term's own parameter or a group of those. Each entry is a
+numeric vector, a single number or a function of the count. See the
+details. \code{NULL}, the default, draws everything.}
 
-\item{structural}{Optional named list of a structural term's own
-parameters, on the scale \code{\link[modelterms7:term_params]{modelterms7::term_params()}} names. Strongly
-recommended when the formula carries such a term.}
-
-\item{sd}{The standard deviation of the drawn coefficients, \code{1} by
-default. Read only for the coefficients \code{par} does not fix.}
+\item{sd}{The width of the draws, \code{1} by default. A quantity that rides a
+chart -- a structural parameter, a prior's own scale -- is drawn at half
+of it, the chart carrying a width of one onto most of its parameter's
+range.}
 
 \item{offsets}{Optional named list of offsets, one per parameter, as
 \code{\link[=statmod]{statmod()}} takes them.}
@@ -60,6 +59,10 @@ design names them.}
 named list with one vector per parameter.}
 \item{\code{latent}}{what a term with state drew, or \code{NULL}.}
 \item{\code{structural}}{such a term's own parameters, or \code{NULL}.}
+\item{\code{hyper}}{a data frame of the hyperparameters, one row per
+penalty and name, with the value drawn or held. Its columns are
+those of \code{\link[=hyper]{hyper()}} as far as they mean the same thing, so a study
+compares the two directly.}
 \item{\code{n_sim}}{as supplied.}
 \item{\code{call}}{the matched call.}
 }
@@ -144,23 +147,61 @@ come back as lists of that length, while \code{par} and \code{structural} stay
 single.
 }
 
-\section{The coefficients}{
-\code{par = NULL} draws every one from \code{rnorm(1, 0, sd)}, which on the link
-scale gives predictors of order one. A named list fixes them instead, one
-entry per distribution parameter, and an entry may be:
+\section{Everything is drawn}{
+A call that names nothing draws the whole truth, so writing the model is
+the whole of what getting data from it takes. The rule is that whoever
+knows what a quantity means draws it:
 \itemize{
-\item a numeric vector, as long as that equation has coefficients;
-\item a single number, used for every coefficient of the equation;
-\item a \strong{function} of the coefficient count, called once and returning that
-many values.
+\item a coefficient of a design column has no other owner and comes from
+\code{rnorm(1, 0, sd)}, which on the link scale gives predictors of order
+one;
+\item a coordinate some penalty covers is drawn from that penalty read as a
+prior, through \code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}}. A Gaussian random effect
+gives Gaussian effects, a lasso Laplace ones and a heavy-tailed prior
+heavy-tailed ones. The prior's own scale is drawn as well, on the chart
+the penalty carries for it, and comes back in \code{hyper};
+\item a structural term's own parameters are drawn by the term, through
+\code{\link[modelterms7:term_draw]{modelterms7::term_draw()}}, which knows the chart each one rides. A
+loading stays positive and a persistence stationary whatever comes out.
 }
 
-The function is how a structured truth is written without a vocabulary for
-it. \code{function(k) rnorm(k, 0, 0.3)} is a random effect with its own
-standard deviation, and \code{function(k) c(1.5, -2, rep(0, k - 2))} is a
-sparse truth for a lasso to find. A function answering with the wrong
-count is refused, R being willing to recycle it into a different model. A
-parameter left out of the list is drawn.
+A hyperparameter the term holds is used rather than drawn, so
+\code{s(x, lambda = 2)} simulates at the smoothing it names.
+
+What no prior reaches falls back to the plain draw, and it is a short
+list: SCAD and MCP are improper by construction, an anisotropic tensor
+smooth is flat along its null space, and a covariance class spanning a
+filter and an equation at once is in neither vector on its own.
+}
+
+\section{Holding what you care about}{
+\code{par} is one named list over the whole model, and a key may be
+\itemize{
+\item a distribution parameter, \code{mu}, which is that whole equation;
+\item one of its coefficients or a group of them, \code{mu.(Intercept)} or
+\code{mu.random}, a group being a name the members extend at a dot;
+\item a structural term's own parameter, \code{alpha1}, or a group of those,
+\code{omega.random}.
+}
+
+A value is a vector of that key's own length, a single number used for all
+of them, or a \strong{function} of the count. The function is how a structured
+truth is written without a vocabulary of its own:
+\code{function(k) rnorm(k, 0, 0.4)} is a random effect at a scale one chose and
+\code{function(k) c(1.5, -2, rep(0, k - 2))} is a sparse truth for a lasso to
+find. A function answering with the wrong count is refused, R being
+willing to recycle it into a different model, and a key that reaches
+nothing is refused with what the model does carry.
+
+A structural parameter is named on the scale a reader knows, which is
+\code{\link[modelterms7:term_params]{modelterms7::term_params()}}'s: a loading is the loading and not its
+logarithm, a persistence the partial autocorrelation its chart carries.
+A parameter a subformula DEVELOPS is different, and it has to be: its
+coordinates are the coefficients of that development, which act on the
+unconstrained scale of the parameter's own chart, so \code{alpha1} is a loading
+and \code{alpha1.random.3} is a group's departure on the log scale that
+loading rides. That is what keeps every group's loading positive whatever
+the departure is.
 }
 
 \section{A term with state}{
@@ -172,17 +213,13 @@ written with; a marginal break-point term draws each group's positions
 from their prior. What each drew comes back in \code{latent}, and that is what
 a recovery check compares against.
 
-Such a term's own parameters are not coefficients of any equation, so they
-are named through \code{structural}, never through \code{par}, on the scale
-\code{\link[modelterms7:term_params]{modelterms7::term_params()}} names: a loading is the loading, not its
-logarithm, a persistence is the partial autocorrelation the chart carries.
-A formula holds at most one such term, so no key is needed.
-
-Left unnamed they take the term's own starting values, which are
-deliberately weak. A score-driven term starts at a loading near 0.1, and
-the series then has almost no dynamics: measured, its level ranged over
-0.64 against 2.40 at named parameters. Name them, or the simulation is of
-a model close to the one with no term at all.
+Such a term's own parameters are not coefficients of any equation and are
+named in \code{par} alongside them, a formula holding at most one such term so
+that no key is needed. They are drawn like everything else, which they
+were not until version 0.111.0: a filter whose level was developed over a
+hundred groups took its starting values, and those are zero for every
+deviation, so the panel came out with no heterogeneity between groups at
+all -- three distinct values of the mean over six hundred observations.
 }
 
 \section{The response's name}{
@@ -226,13 +263,22 @@ vapply(study$data, function(d) coef(statmod(
   y ~ x, distributions7::gaussian1_distrib(), d),
   readable = FALSE)$mu[[2L]], numeric(1))
 
-# a score-driven series, its own parameters named
+# a score-driven series, its own parameters named beside the equations'
 sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                  distributions7::gaussian1_distrib(),
-                 data.frame(t = 1:100), par = list(sigma = 0),
-                 structural = list(omega = 0.4, alpha1 = 0.3,
-                                   pacf1 = 0.6))
+                 data.frame(t = 1:100),
+                 par = list(sigma = 0, omega = 0.4, alpha1 = 0.3,
+                            pacf1 = 0.6))
 head(sim5$latent, 3)
+
+# and a panel whose level varies by group: naming nothing draws the
+# deviations from the prior random() declares, at a scale drawn too
+pan <- data.frame(id = factor(rep(1:6, each = 10)), t = rep(1:10, 6))
+sim6 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, omega ~ 1 + random(~1 | id),
+                             by = id, time = t),
+                 distributions7::gaussian1_distrib(), pan)
+sim6$hyper
+length(unique(round(sim6$theta$mu, 6))) > 6
 
 }
 \seealso{

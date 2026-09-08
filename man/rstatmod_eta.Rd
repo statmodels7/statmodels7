@@ -4,7 +4,7 @@
 \alias{rstatmod_eta}
 \title{The Predictor and Parameters of a Simulation}
 \usage{
-rstatmod_eta(spec, design, coef, structural = NULL)
+rstatmod_eta(spec, design, coef, psi = NULL)
 }
 \arguments{
 \item{spec}{The specification.}
@@ -13,7 +13,9 @@ rstatmod_eta(spec, design, coef, structural = NULL)
 
 \item{coef}{The coefficients.}
 
-\item{structural}{The structural term's own parameters, or \code{NULL}.}
+\item{psi}{The structural term's own parameters, drawn once by
+\code{\link[=rstatmod_truth]{rstatmod_truth()}} so that the replicates share them, or \code{NULL} to read
+the design's own structural state.}
 }
 \value{
 A list with \code{eta}, \code{theta}, \code{y}, \code{latent}

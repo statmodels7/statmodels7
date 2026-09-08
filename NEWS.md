@@ -1,3 +1,75 @@
+# statmodels7 0.111.0
+
+* `rstatmod()` DRAWS EVERYTHING BY DEFAULT, and what `par` names is held.
+  Writing the model is now the whole of what getting data from it takes.
+
+* The rule is that whoever knows what a quantity means draws it. A
+  coefficient of a design column has no other owner and comes from a normal
+  of width `sd`. A coordinate some penalty covers is drawn from that penalty
+  read as a prior, through `penalties7::penalty_draw()`, so a Gaussian
+  random effect gives Gaussian effects and a lasso Laplace ones; the prior's
+  own scale is drawn too and comes back in the new `hyper` field. A
+  structural term's own parameters are drawn by the term, through
+  `modelterms7::term_draw()`, which knows the chart each one rides.
+
+* THE DEFECT THIS CLOSES: a `random()` inside a structural term's subformula
+  was set to zero, the term's own starting value, while the same
+  `random()` written in an equation was drawn -- the same construct behaving
+  two ways according to where it sat. Measured on a panel of twenty groups
+  by thirty times with the level and the persistence both developed, the
+  simulated data had **three distinct values of the mean over six hundred
+  observations** and a between-group spread of the level of 0.003, which is
+  the realized path and not the model: the parameters were identical across
+  groups. Naming them by hand meant writing two hundred entries. It is now
+  583 distinct values and a spread of 0.93.
+
+* `structural` is REMOVED and `par` is one namespace over the whole model. A
+  key may be a distribution parameter, one of its coefficients or a group of
+  them (`mu.random`), a structural term's own parameter (`alpha1`) or a
+  group of those (`omega.random`), and a group is a name its members extend
+  at a dot. The value is a vector, a single number or a function of the
+  count, so a prior's scale is said with the vocabulary `par` already had:
+  `par = list(omega.random = function(k) rnorm(k, 0, 0.4))`.
+
+* A PRIOR OVER COORDINATES THAT RIDE A CHART is centred half as far from its
+  bound, by the rule `term_draw()` halves its own width by. Measured on a
+  partial-autocorrelation chart, a prior scale of 1 puts 10.1 per cent of the
+  persistences past 0.95 and one of 0.5 puts 0.9 per cent there, the middle
+  ninety running -0.82 to 0.82. On the panel above the difference is a
+  between-group level spread of 6.44 against 0.93 and a response spread of
+  8.57 against 2.94, with no failures either way; three ordinary shapes --
+  a random intercept, a smooth and a ridge -- are unchanged to the digit,
+  which is the control saying the change is confined to the charts.
+
+* A hyperparameter the term holds is used rather than drawn, so
+  `s(x, lambda = 2)` simulates at the smoothing it names.
+
+* What no prior reaches falls back to the plain draw, and it is a short
+  list: SCAD and MCP are improper by construction, an anisotropic tensor
+  smooth is flat along its null space, and a covariance class spanning a
+  filter and an equation at once is in neither vector on its own.
+
+* `print()` on a simulation collapses a group of coefficients to its count
+  and spread instead of printing every one, and shows the hyperparameters.
+  The panel above used to print two hundred lines of zeros.
+
+* AN UNBOUNDED HYPERPARAMETER STARTS AT ITS CHART'S NEUTRAL POINT.
+  `penalty_theta_start()` returns 0 for a coordinate unbounded on both sides,
+  where it returned 1. One is a scale for a hyperparameter bounded below,
+  which is the argument the page gives; a free coordinate of a `parameters7`
+  chart is not such a thing, and on `dr_prod(2)` one reads as standard
+  deviations of 2.718 and a correlation of -0.664 against the neutral point's
+  unit scales and no correlation. Measured on 31 fits across the four charts
+  a caller can reach, the two agree to 3e-05 or better wherever both produce
+  a criterion; one model errors from one and fits from zero, one returns no
+  criterion from one, and two converge from zero where they do not from one.
+  The cost is one panel of six where the better criterion sits at a
+  correlation of twelve nines and `vcov()` refuses. A hyperparameter with a
+  finite bound is untouched.
+
+* The same function takes the unit its one-sided bound is measured in, `1` as
+  before for every existing caller.
+
 # statmodels7 0.110.0
 
 * A DEGREES-OF-FREEDOM COUNT THAT CANNOT BE READ IS REPORTED MISSING rather
