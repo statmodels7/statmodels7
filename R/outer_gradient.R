@@ -145,14 +145,24 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # per cent out and flat in the step; on a PENALIZED filter it reads -1.1e-08
   # where the criterion's is -1.971456, which is the case below.
   #
-  # What replaces it is statmod_hess_stencil(), one central difference of the
-  # EXACT gradient, which statmod_marginal_hess() takes for such a model and
-  # the two reporting consumers read. The SEARCH is deliberately left without
-  # it: lbfgs() on the exact gradient is measured better than newton()
-  # differencing it (15 evaluations against 86, 112 against 245), and a
-  # stencil per iteration would pay four refits per hyperparameter for a
-  # direction that is worse.
-  if (order >= 2L && length(attr(design, "structural"))) return(FALSE)
+  # ⚠️ THE PARAGRAPH ABOVE IS THE STATE BEFORE THE FOURTH ORDER EXISTED, and
+  # is kept because what replaced it has to be read against it.
+  # statmod_structural_hess() assembles that Hessian on the JOINT vector,
+  # reading modelterms7::term_fourth() and the family's fifth derivative, so
+  # a term that answers the fourth order is exact at both orders. One that
+  # answers only the third -- and regime(), which answers neither -- keeps
+  # statmod_hess_stencil(), one central difference of the exact gradient.
+  #
+  # The SEARCH is still not given newton() here, and that is a measurement
+  # rather than a limitation: lbfgs() on the exact gradient reaches the same
+  # criterion in 15 evaluations against 86, and 112 against 245, so a second
+  # order would have to beat a method starting three times ahead while paying
+  # a fourth-order recursion per pair at every evaluation. What the analytic
+  # route buys is the REPORTING -- see statmod_structural_hess().
+  if (order >= 2L && length(attr(design, "structural"))) {
+    tm <- structural_term_of(spec, design)
+    if (is.null(tm) || !answers_term_fourth(tm)) return(FALSE)
+  }
   if (structural_penalized(spec, design)) {
     for (u in statmod_penalized(spec, design)) {
       # a MIXED class runs through the same chain term, so the term it reaches
@@ -262,6 +272,68 @@ answers_term_third <- function(term) {
   base <- modelterms7::structural_term
   !(identical(attr(owner, "name"), attr(base, "name")) &&
     identical(attr(owner, "package"), attr(base, "package")))
+}
+
+
+#' Does a Term Supply Its Fourth Derivative?
+#'
+#' @description
+#' [answers_term_third()]'s question one order up, and read the same
+#' way: from the class the method is registered on, never from a list of
+#' class names.
+#'
+#' @details
+#' The criterion's own second derivative reads a fourth order through the
+#' recursion, so a term that has written the third and not the fourth
+#' supplies an exact gradient and no exact Hessian. That is the state
+#' `regime()` is in: it implements neither, and a term implementing only
+#' the third would be answered here with `FALSE` and left to
+#' [statmod_hess_stencil()], which is the same fallback its search
+#' already has.
+#'
+#' @param term A built term.
+#'
+#' @return A single logical.
+#'
+#' @seealso [outer_gradient_ok()], [statmod_structural_hess()]
+#'
+#' @keywords internal
+answers_term_fourth <- function(term) {
+  m <- tryCatch(S7::method(modelterms7::term_fourth, S7::S7_class(term)),
+                error = function(e) NULL)
+  if (is.null(m)) return(FALSE)
+  owner <- attr(m, "signature")[[1]]
+  base <- modelterms7::structural_term
+  !(identical(attr(owner, "name"), attr(base, "name")) &&
+    identical(attr(owner, "package"), attr(base, "package")))
+}
+
+
+#' Which Structural Term a Model Carries, If Any
+#'
+#' @description
+#' The single term of the structural branch, or `NULL` where the model
+#' carries none.
+#'
+#' @details
+#' At most one structural term is admitted per formula, so a caller wanting
+#' to ask that term a question -- does it answer [term_third()], does
+#' it answer [term_fourth()] -- has one to ask. It is looked up through
+#' the design's structural attribute rather than by walking the terms,
+#' which is where the fit records what it built.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#'
+#' @return A built term, or `NULL`.
+#'
+#' @keywords internal
+structural_term_of <- function(spec, design) {
+  su <- attr(design, "structural")
+  if (!length(su)) return(NULL)
+  u <- su[[1L]]
+  tm <- spec@terms[[u$param]][[u$term]]
+  if (is.null(tm)) find_term(spec, u$term) else tm
 }
 
 
@@ -992,7 +1064,10 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
     }
     u <- u - as.numeric(crossprod(Vk[[k]], w * s))
   }
-  list(u = u, V = V, Vk = Vk, VM = VM, H = H, D3 = D3, D4 = D4,
+  # G is the per-observation diagonal of M read between two equations'
+  # rows, which the second order needs as well; it is returned rather than
+  # recomputed there, both readers being at the same point by construction
+  list(u = u, V = V, Vk = Vk, VM = VM, G = G, H = H, D3 = D3, D4 = D4,
        s_at = s_at, c_at = c_at, seed = seed, blocks = mk_blocks,
        blocks_data = bd_data, w = w)
 }
@@ -1078,16 +1153,26 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' differentiating the predictor through the recursion pulls in one more order
 #' of the family.
 #'
+#' With TWO directions the callback serves [modelterms7::term_fourth()]
+#' instead, and carries three quantities more: `Q`, the fourth
+#' derivative with two of its indices on the filter's own equation;
+#' `P`, the FIFTH derivative contracted against both directions, which
+#' is the only place that order enters; and `cppp`, the scalar the
+#' level's own curvature moves by, which no contraction recovers.
+#' `N` is then a list of two, one per direction.
+#'
 #' @param params The distribution's parameter names.
 #' @param ap Which of them carries the filter.
 #' @param Vs The static rows.
-#' @param H,D3,D4 The family's derivatives at the fitted predictors.
+#' @param H,D3,D4,D5 The family's derivatives at the fitted predictors.
+#'   `D5` is needed only where two directions are given.
 #' @param n The number of observations.
 #'
-#' @return A function of the direction returning a `blocks` callback.
+#' @return A function of the direction -- `NULL`, one vector, or a list
+#'   of two -- returning a `blocks` callback.
 #'
 #' @keywords internal
-.structural_blocks <- function(params, ap, Vs, H, D3, D4, n) {
+.structural_blocks <- function(params, ap, Vs, H, D3, D4, n, D5 = NULL) {
   # The components are recycled ONCE, out here, and their keys built once
   # with them. The first version read them through
   # at <- function(x, i) rep_len(x, n)[i] inside the closure below, which
@@ -1121,8 +1206,28 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
       }
     }
   }
+  D5r <- NULL
+  if (!is.null(D5)) {
+    D5r <- vector("list", np)
+    for (r in seq_len(np)) {
+      D5r[[r]] <- vector("list", np)
+      for (r2 in seq_len(np)) {
+        D5r[[r]][[r2]] <- vector("list", np)
+        for (r3 in seq_len(np)) {
+          D5r[[r]][[r2]][[r3]] <- vector("list", np)
+          for (r4 in seq_len(np)) {
+            D5r[[r]][[r2]][[r3]][[r4]] <-
+              rep_len(D5[[deriv5_key(params, ap, r, r2, r3, r4)]], n)
+          }
+        }
+      }
+    }
+  }
   function(vfull) {
-    third <- !is.null(vfull)
+    dirs <- if (is.null(vfull)) list() else
+      if (is.list(vfull)) vfull else list(vfull)
+    third <- length(dirs) >= 1L
+    fourth <- length(dirs) >= 2L
     function(e, i, D, act = NULL) {
       if (is.null(act)) act <- seq_len(ncol(Vs[[1L]]))
       mk <- length(act)
@@ -1140,26 +1245,56 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
         }
       }
       if (!third) return(list(cross = cross, M = M))
-      # the predictor of every equation differentiated along the direction;
+      # the predictor of every equation differentiated along each direction;
       # for the filter's own it is the CURRENT jacobian row, which only the
       # recursion has
-      dv <- vapply(seq_along(params), function(r) sum(vr[[r]] * vfull[act]),
-                   numeric(1))
+      dvs <- lapply(dirs, function(vf)
+        vapply(seq_along(params), function(r) sum(vr[[r]] * vf[act]),
+               numeric(1)))
       dcurv <- numeric(mk)
       for (r in seq_along(params)) {
         dcurv <- dcurv + D3r[[ap]][[r]][i] * vr[[r]]
       }
-      N <- matrix(0, mk, mk)
+      Nof <- function(dv) {
+        N <- matrix(0, mk, mk)
+        for (r in seq_along(params)) {
+          for (r2 in seq_along(params)) {
+            co <- 0
+            for (r3 in seq_along(params)) {
+              co <- co + D4r[[r]][[r2]][[r3]][i] * dv[r3]
+            }
+            if (co != 0) N <- N + co * outer(vr[[r]], vr[[r2]])
+          }
+        }
+        N
+      }
+      if (!fourth) {
+        return(list(cross = cross, M = M, dcurv = dcurv,
+                    N = Nof(dvs[[1L]])))
+      }
+      # the fourth order's three further pieces. `Q` carries two of the
+      # fourth derivative's indices on the filter's own equation, `P` is the
+      # fifth contracted against both directions, and `cppp` is the scalar
+      # the level's own curvature moves by.
+      Q <- matrix(0, mk, mk)
+      P <- matrix(0, mk, mk)
       for (r in seq_along(params)) {
         for (r2 in seq_along(params)) {
-          co <- 0
+          qc <- D4r[[ap]][[r]][[r2]][i]
+          if (qc != 0) Q <- Q + qc * outer(vr[[r]], vr[[r2]])
+          pc <- 0
           for (r3 in seq_along(params)) {
-            co <- co + D4r[[r]][[r2]][[r3]][i] * dv[r3]
+            for (r4 in seq_along(params)) {
+              pc <- pc + D5r[[r]][[r2]][[r3]][[r4]][i] *
+                dvs[[1L]][r3] * dvs[[2L]][r4]
+            }
           }
-          if (co != 0) N <- N + co * outer(vr[[r]], vr[[r2]])
+          if (pc != 0) P <- P + pc * outer(vr[[r]], vr[[r2]])
         }
       }
-      list(cross = cross, M = M, dcurv = dcurv, N = N)
+      list(cross = cross, M = M, dcurv = dcurv,
+           N = list(Nof(dvs[[1L]]), Nof(dvs[[2L]])), Q = Q, P = P,
+           cppp = D3r[[ap]][[ap]][i])
     }
   }
 }

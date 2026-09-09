@@ -1647,6 +1647,24 @@ outer_default_optimizer <- function(exact, use_hess, mixed = FALSE) {
 #' @keywords internal
 outer_newton_ok <- function(spec, design, exact2) {
   if (!isTRUE(exact2)) return(FALSE)
+  # A MODEL CARRYING A STRUCTURAL TERM keeps lbfgs(), and that is a
+  # measurement rather than a limitation. Its Hessian exists now --
+  # statmod_structural_hess() assembles it on the joint vector -- and each
+  # evaluation of it costs one term_fourth() per PAIR of hyperparameters,
+  # which is the dominant term. Measured over five panels, every route
+  # reaches the same criterion to six decimals and newton() takes fewer
+  # evaluations on three of them, yet is slower in wall time on ALL five:
+  # 8 evaluations in 1.54 s against 5 in 2.05, 5 in 1.11 against 5 in 2.92,
+  # 45 in 5.88 against 11 in 10.62, 7 in 2.38 against 9 in 11.10, and 69 in
+  # 3.02 against 45 in 4.06. A Hessian at two hyperparameters costs 0.805 s
+  # where a criterion evaluation costs 0.34, which accounts for the gap
+  # exactly.
+  #
+  # What the Hessian's availability still governs is untouched, exactly as
+  # for the covariance class below: it is supplied to an optimizer the
+  # caller NAMES, it is what statmod_hyper_vcov() and
+  # vcov(type = "unconditional") read, and it is recorded as `exact_hessian`.
+  if (length(attr(design, "structural"))) return(FALSE)
   units <- tryCatch(statmod_penalized(spec, design),
                     error = function(e) list())
   for (u in units) {

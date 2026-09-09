@@ -476,6 +476,36 @@ deriv4_key <- function(params, a, b, c, d) {
 }
 
 
+#' The Name of a Fifth-Derivative Component
+#'
+#' @description
+#' Locates the \eqn{(a, b, c, d, e)} entry of a distribution's
+#' fifth-derivative list, built the same way [deriv4_key()] builds its
+#' own.
+#'
+#' @details
+#' The fifth order is wanted where a filter's FOURTH derivative is, by the
+#' rule the fourth's own page states one order down: the criterion's second
+#' derivative in a pair of hyperparameters reads
+#' [modelterms7::term_fourth()], and the score that recursion is driven
+#' by is read at the predictor it produces.
+#'
+#' It is the one place the fifth order enters, and
+#' [distributions7::distrib_deriv5()] supplies it as ONE central
+#' difference of the analytic fourth rather than in closed form. What that
+#' costs is measured on the page of [statmod_structural_hess()].
+#'
+#' @param params The parameter names, in the family's order.
+#' @param a,b,c,d,e Indices into `params`.
+#'
+#' @return A single string.
+#'
+#' @keywords internal
+deriv5_key <- function(params, a, b, c, d, e) {
+  paste(params[sort(c(a, b, c, d, e))], collapse = "_")
+}
+
+
 #' The Observed Information Over the Coefficients and a Filter's Parameters
 #'
 #' @description

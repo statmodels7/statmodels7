@@ -4,7 +4,7 @@
 \alias{.structural_blocks}
 \title{The Model's Derivative Pieces for a Filter's Recursion}
 \usage{
-.structural_blocks(params, ap, Vs, H, D3, D4, n)
+.structural_blocks(params, ap, Vs, H, D3, D4, n, D5 = NULL)
 }
 \arguments{
 \item{params}{The distribution's parameter names.}
@@ -13,12 +13,14 @@
 
 \item{Vs}{The static rows.}
 
-\item{H, D3, D4}{The family's derivatives at the fitted predictors.}
+\item{H, D3, D4, D5}{The family's derivatives at the fitted predictors.
+\code{D5} is needed only where two directions are given.}
 
 \item{n}{The number of observations.}
 }
 \value{
-A function of the direction returning a \code{blocks} callback.
+A function of the direction -- \code{NULL}, one vector, or a list
+of two -- returning a \code{blocks} callback.
 }
 \description{
 Builds the \code{blocks} callback \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}
@@ -33,5 +35,13 @@ direction and as the factor multiplying the movement of \eqn{V_p}, and
 \code{N} is where the family's fourth derivative enters: each order of
 differentiating the predictor through the recursion pulls in one more order
 of the family.
+
+With TWO directions the callback serves \code{\link[modelterms7:term_fourth]{modelterms7::term_fourth()}}
+instead, and carries three quantities more: \code{Q}, the fourth
+derivative with two of its indices on the filter's own equation;
+\code{P}, the FIFTH derivative contracted against both directions, which
+is the only place that order enters; and \code{cppp}, the scalar the
+level's own curvature moves by, which no contraction recovers.
+\code{N} is then a list of two, one per direction.
 }
 \keyword{internal}

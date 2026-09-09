@@ -800,9 +800,9 @@ test_that("a marginal criterion reaches a penalty on a filter's parameters", {
   # contracted in the one direction the mode moves in
   # (modelterms7::term_third).
   expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 1L))
-  # the criterion's own SECOND derivative would ask for a fourth order
-  # through the recursion, which is not written
-  expect_false(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
+  # and its own SECOND derivative asks for a fourth order through the
+  # recursion, which modelterms7::term_fourth() writes
+  expect_true(outer_gradient_ok(spec, design, idx, reml("observed"), 2L))
   # and the expected information rejects here even though the FAMILY answers
   # distrib_dexpected_hessian(): statmod_marginal_full() assembles the joint
   # curvature from term_curvature(), which is the observed one, so this branch

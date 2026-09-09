@@ -75,28 +75,55 @@ test_that("a model with no structural term is untouched", {
   expect_s3_class(fit@methods$search, class(optimizers7::newton())[[1L]])
 })
 
-test_that("a structural term takes the stencil, and the number is real", {
+test_that("a structural term takes the analytic route, and the number is real", {
   fit <- statmod(y ~ 0 + gas(p = 1, q = 1, by = id, omega ~ 0 + ridge(~ id)),
                  gaussian1_distrib(), stencil_panel(),
                  outer_criterion = reml())
   p <- stencil_parts(fit)
   expect_gt(length(attr(p$design, "structural")), 0L)
-  # order 2 is refused for the SEARCH, so the default stays the gradient-only
-  # optimizer and no stencil is paid per iteration
+  # the term answers term_fourth(), so the criterion has an exact Hessian
   expect_true(outer_gradient_ok(p$spec, p$design, p$idx, p$method, 1L))
-  expect_false(outer_gradient_ok(p$spec, p$design, p$idx, p$method, 2L))
+  expect_true(outer_gradient_ok(p$spec, p$design, p$idx, p$method, 2L))
+  # and the SEARCH is still not steered by it: measured over five panels
+  # newton() reaches the same criterion in fewer evaluations and more wall
+  # time on every one, each of its evaluations paying a term_fourth() per
+  # pair of hyperparameters
   expect_false(inherits(fit@methods$search, class(optimizers7::newton())[[1L]]))
 
   H <- statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper, p$method,
                              p$idx, p$basis)
   expect_false(is.null(H))
   expect_identical(dim(as.matrix(H)), c(1L, 1L))
-  # THE NEGATIVE CONTROL, and it is what the assembled route would fail: over
-  # the stacked coefficients the curvature of this criterion comes out at the
-  # rounding, 1.09e-06 where it is of order one, so a reading near zero is
-  # the defect rather than a small number
+  # THE NEGATIVE CONTROL, and it is what the coefficient-space assembly would
+  # fail: over the stacked coefficients the curvature of this criterion comes
+  # out at the rounding, 1.09e-06 where it is of order one, so a reading near
+  # zero is the defect rather than a small number
   expect_gt(abs(as.numeric(H)), 0.5)
   expect_lt(as.numeric(H), 0)
+  # the two routes are the same quantity, and the analytic one is the more
+  # accurate: against a Richardson limit of the exact gradient's own
+  # difference it reads 1.8e-11 where the stencil reads 2.2e-06
+  S <- statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper, p$method,
+                            p$idx, p$basis, inner = iwls())
+  expect_equal(as.numeric(H), as.numeric(S), tolerance = 1e-4)
+})
+
+test_that("a term with no fourth derivative keeps the stencil", {
+  # regime() bends the predictor and has written neither the third derivative
+  # nor the fourth, so its search is derivative-free and its Hessian is the
+  # stencil. The predicate is asked of the TERM, so a term written later that
+  # implements only the third is answered the same way.
+  set.seed(4)
+  n <- 120L
+  d <- data.frame(x = stats::runif(n, -1, 1),
+                  y = stats::rnorm(n) + rep(c(-1.5, 1.5), each = n / 2))
+  tm <- modelterms7::term_build(modelterms7::regime(k = 2), d)
+  expect_false(answers_term_fourth(tm))
+  expect_false(answers_term_third(tm))
+  # and a gas term answers both, which is what makes the question meaningful
+  gt <- modelterms7::term_build(modelterms7::gas(p = 1, q = 1), d)
+  expect_true(answers_term_fourth(gt))
+  expect_true(answers_term_third(gt))
 })
 
 test_that("the stencil agrees with a second difference of the criterion", {
@@ -159,8 +186,23 @@ test_that("the stencil refuses where the curvature is not resolved", {
   eta <- hyper_to_eta(p$hyper, p$idx)
   skip_if(max(abs(eta)) < statmod_certificate(fit)$edge,
           "this fit did not reach the chart's boundary")
-  expect_null(statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper,
-                                    p$method, p$idx, p$basis))
+  # THE STENCIL ITSELF still refuses, which is the guard this test was
+  # written for and stays under test
+  expect_null(statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper,
+                                   p$method, p$idx, p$basis))
+  # the ANALYTIC route differences nothing, so it returns a matrix here where
+  # the stencil cannot. ⚠️ That matrix is not verifiable at this point: a
+  # difference of the exact gradient does not converge onto it -- measured
+  # 3.7e-02, 4.7e-01 and 1.6e-01 at h of 1e-2, 3e-3 and 1e-3 -- the gradient
+  # itself being 1e-3 where the chart's conditioning is 1e10.
+  H <- statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper, p$method,
+                             p$idx, p$basis)
+  expect_false(is.null(H))
+  # and what a reader is told is unchanged: at a boundary the curvature is
+  # not negative definite -- its smallest eigenvalue reads -2.5e-05 against a
+  # largest of 5.86 -- so no interval follows from it
+  expect_lt(min(eigen(-as.matrix(H), symmetric = TRUE,
+                      only.values = TRUE)$values), 0)
   expect_null(statmod_hyper_vcov(p$spec, p$design, p$coef, p$hyper, p$method))
 })
 

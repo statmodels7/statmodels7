@@ -439,9 +439,9 @@ test_that("the exact route is asked of the term, not of its class", {
   ix <- outer_hyper_index(sp, statmod_blocks(sp, de))
   expect_true(structural_penalized(sp, de))
   expect_true(outer_gradient_ok(sp, de, ix, reml("observed")))
-  # the criterion's own SECOND derivative would ask for a fourth order
-  # through the recursion, which is not written: newton is not offered there
-  expect_false(outer_gradient_ok(sp, de, ix, reml("observed"), order = 2L))
+  # the criterion's own SECOND derivative asks for a fourth order through the
+  # recursion, and a gas term writes it, so order 2 is exact here too
+  expect_true(outer_gradient_ok(sp, de, ix, reml("observed"), order = 2L))
 
   # and the question is put to the term. A gas term answers term_third; an
   # additive one inherits the zero that is right for it; a regime term bends

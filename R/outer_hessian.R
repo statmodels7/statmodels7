@@ -71,18 +71,27 @@ NULL
 statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
                                   basis = NULL, ctx = NULL,
                                   inner = NULL) {
-  # ⚠️ A MODEL CARRYING A STRUCTURAL TERM HAS NO ANALYTIC ROUTE HERE. The
-  # assembly below is written over the stacked coefficients, and a filter's
-  # own parameters move with the hyperparameter beside them, so what it
-  # returns is not the criterion's second derivative -- measured, 0.86 per
-  # cent out on an unpenalized filter beside a smooth and essentially zero on
-  # a penalized one. The analytic route cannot be extended without a fourth
-  # order through the recursion, each order of differentiation pulling in one
-  # more order of the family, and modelterms7 has no term_fourth(). One
-  # central difference of the EXACT gradient answers instead.
-  if (length(attr(design, "structural")))
+  # ⚠️ A MODEL CARRYING A STRUCTURAL TERM IS NOT ANSWERED BY THE ASSEMBLY
+  # BELOW, which is written over the stacked coefficients while a filter's
+  # own parameters move with the hyperparameter beside them -- measured, 0.86
+  # per cent out on an unpenalized filter beside a smooth and essentially
+  # zero on a penalized one. What answers it is the same assembly written on
+  # the JOINT vector, statmod_structural_hess(), which needs a fourth order
+  # through the recursion and the family's fifth derivative with it. A term
+  # that does not supply the fourth -- regime() supplies neither it nor the
+  # third -- keeps statmod_hess_stencil(), one central difference of the
+  # exact gradient.
+  if (length(attr(design, "structural"))) {
+    tm <- structural_term_of(spec, design)
+    if (!is.null(tm) && answers_term_fourth(tm)) {
+      h <- tryCatch(statmod_structural_hess(spec, design, coef, hyper, method,
+                                            idx, basis),
+                    error = function(e) NULL)
+      if (!is.null(h) && all(is.finite(h))) return(h)
+    }
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                 basis, inner))
+  }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
   # assembled on, and for a refreshable term the design as it arrives is the
@@ -1164,4 +1173,494 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
   V <- hyper_variance(A)
   if (is.null(V)) return(NULL)
   structure(V, idx = idx)
+}
+
+
+#' The Joint Derivative of the Penalized Information Along One Direction
+#'
+#' @description
+#' \eqn{\partial K/\partial u\,[v]} assembled as a matrix over the
+#' coefficients and the filter's own parameters, where
+#' [structural_chain_extra()] returns only its trace against \eqn{M}.
+#'
+#' @details
+#' The gradient needs the trace and nothing else, so it never forms this. The
+#' HESSIAN needs the matrix twice over: in \eqn{\mathrm{tr}(M K_l M K_m)},
+#' which no contraction reduces, and as the operator carrying the mode's
+#' second movement. Writing \eqn{V_a} for each equation's rows,
+#' \eqn{\mathrm{d}\varphi = E v} for the filter's own moving, and \eqn{E} for
+#' the second derivative of the predictor the filter produces,
+#'
+#' \deqn{\frac{\partial K}{\partial u}[v] =
+#'   -\sum_i w_i\Big[\sum_{a,b}\Big(\sum_k\ell_{abk}(V_k\cdot v)\Big)
+#'     V_a^\top V_b
+#'   + \sum_b \ell_{pb}\big(\mathrm{d}\varphi\otimes V_b
+#'     + V_b\otimes\mathrm{d}\varphi\big)\Big]
+#'   - W(\kappa_v) - W_3[v],}
+#'
+#' with \eqn{\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)} the weight the level's
+#' own term is re-read at and \eqn{W_3[v]} what
+#' [modelterms7::term_third()] returns. Traced against \eqn{M} it
+#' reproduces [structural_chain_extra()] exactly, which is what a test
+#' asserts of it.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param jd The joint rows, from [joint_design_rows()].
+#' @param st The shared quantities, from [structural_grad_parts()].
+#' @param v The direction, over the estimated coordinates.
+#'
+#' @return A square symmetric matrix over the estimated coordinates.
+#'
+#' @seealso [structural_chain_extra()], [statmod_structural_hess()]
+#'
+#' @keywords internal
+structural_dk_matrix <- function(spec, design, jd, st, v) {
+  params <- jd$params
+  n <- jd$n
+  ap <- jd$ap
+  f <- jd$f
+  w <- st$w
+  keep <- jd$keep
+  nk <- length(keep)
+  vfull <- numeric(jd$mf)
+  vfull[keep] <- v
+  dV <- lapply(st$Vk, function(x) as.numeric(x %*% v))
+
+  cv3 <- modelterms7::term_third(
+    f$tm, f$eta_static, spec@response,
+    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    w * st$s_at, st$seed, st$blocks(vfull), vfull)
+  dphi <- cv3$dphi[, keep, drop = FALSE]
+  out <- -cv3$curvature[keep, keep, drop = FALSE]
+
+  kappa <- numeric(n)
+  for (k in seq_along(params)) {
+    kappa <- kappa + rep_len(st$H[[hess_key(params, ap, k)]], n) * dV[[k]]
+  }
+  cvk <- modelterms7::term_curvature(
+    f$tm, f$eta_static, spec@response,
+    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    w * kappa, st$seed, st$blocks(NULL),
+    score_values = st$s_at, curvature_values = st$c_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
+  out <- out - cvk$curvature[keep, keep, drop = FALSE]
+
+  keys3 <- names(st$D3)
+  for (a in seq_along(params)) {
+    for (b in seq_along(params)) {
+      cab <- numeric(n)
+      for (k in seq_along(params)) {
+        cab <- cab + rep_len(st$D3[[d3_key(params, a, b, k, keys3)]], n) *
+          dV[[k]]
+      }
+      out <- out - crossprod(st$Vk[[a]] * (w * cab), st$Vk[[b]])
+    }
+  }
+  for (b in seq_along(params)) {
+    hb <- rep_len(st$H[[hess_key(params, ap, b)]], n)
+    Z <- crossprod(dphi * (w * hb), st$Vk[[b]])
+    out <- out - Z - t(Z)
+  }
+  (out + t(out)) / 2
+}
+
+
+#' The Joint Second Derivative of the Penalized Information, Traced
+#'
+#' @description
+#' \eqn{\mathrm{tr}(M\,\partial^2 K/\partial u^2[v, w])}: the quantity
+#' [structural_chain_extra()] gives at the first order, one order up
+#' and contracted against a second direction.
+#'
+#' @details
+#' Nine terms, and none of them assembles a matrix over the coefficients: a
+#' term in \eqn{V_a^\top V_b} traces as a weighted sum of the
+#' per-observation diagonal \eqn{G}, a term carrying
+#' \eqn{\mathrm{d}\varphi} traces against the rows \eqn{M} has already been
+#' applied to, and the three terms carrying the recursion's own derivatives
+#' trace against what [modelterms7::term_curvature()],
+#' [modelterms7::term_third()] and [modelterms7::term_fourth()]
+#' return at the right weights.
+#'
+#' The last of those is the fourth derivative of the predictor through the
+#' recursion, which is the object this whole route exists for, and the only
+#' place the family's FIFTH derivative enters is `P` inside its
+#' `blocks` callback.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param jd The joint rows.
+#' @param M The matrix the trace is taken against.
+#' @param st The shared quantities, from [structural_grad_parts()].
+#' @param blk4 The `blocks` factory carrying the family's fifth
+#'   derivative, as [.structural_blocks()] builds it.
+#' @param v,w The two directions, over the estimated coordinates.
+#'
+#' @return A single number.
+#'
+#' @seealso [structural_chain_extra()], [statmod_structural_hess()]
+#'
+#' @keywords internal
+structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
+  params <- jd$params
+  np <- length(params)
+  n <- jd$n
+  ap <- jd$ap
+  f <- jd$f
+  wt <- st$w
+  keep <- jd$keep
+  vfull <- numeric(jd$mf)
+  vfull[keep] <- v
+  wfull <- numeric(jd$mf)
+  wfull[keep] <- w
+  dVv <- lapply(st$Vk, function(x) as.numeric(x %*% v))
+  dVw <- lapply(st$Vk, function(x) as.numeric(x %*% w))
+  H <- st$H
+  D3 <- st$D3
+  D4 <- st$D4
+  keys3 <- names(D3)
+
+  # the recursion's own quantities, along both directions and against both
+  cv4 <- modelterms7::term_fourth(
+    f$tm, f$eta_static, spec@response,
+    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    wt * st$s_at, st$seed, blk4(list(vfull, wfull)), list(vfull, wfull))
+  dphi_v <- cv4$dphi[[1L]][, keep, drop = FALSE]
+  dphi_w <- cv4$dphi[[2L]][, keep, drop = FALSE]
+  dpsi <- cv4$dpsi[, keep, drop = FALSE]
+  # v'E w, one per observation: the predictor's own second derivative read
+  # along the two directions
+  phi_vw <- as.numeric(dphi_w %*% v)
+
+  # (ix) the level's term at the fourth order
+  tot <- sum(M * cv4$curvature[keep, keep, drop = FALSE])
+
+  # (vi) the level's term re-weighted by the second derivative of l_p along
+  # the two directions
+  gk <- numeric(n)
+  for (k in seq_along(params)) {
+    for (k2 in seq_along(params)) {
+      gk <- gk + rep_len(D3[[d3_key(params, ap, k, k2, keys3)]], n) *
+        dVv[[k]] * dVw[[k2]]
+    }
+  }
+  gk <- gk + rep_len(H[[hess_key(params, ap, ap)]], n) * phi_vw
+  cv0 <- modelterms7::term_curvature(
+    f$tm, f$eta_static, spec@response,
+    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    wt * gk, st$seed, st$blocks(NULL),
+    score_values = st$s_at, curvature_values = st$c_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
+  tot <- tot + sum(M * cv0$curvature[keep, keep, drop = FALSE])
+
+  # (vii) and (viii): the level's third derivative along one direction,
+  # weighted by how l_p moves along the other
+  kap <- function(dv) {
+    out <- numeric(n)
+    for (k in seq_along(params)) {
+      out <- out + rep_len(H[[hess_key(params, ap, k)]], n) * dv[[k]]
+    }
+    out
+  }
+  kv <- kap(dVv)
+  kw <- kap(dVw)
+  for (pair in list(list(kv, wfull), list(kw, vfull))) {
+    cv3 <- modelterms7::term_third(
+      f$tm, f$eta_static, spec@response,
+      function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+      wt * pair[[1L]], st$seed, st$blocks(pair[[2L]]), pair[[2L]])
+    tot <- tot + sum(M * cv3$curvature[keep, keep, drop = FALSE])
+  }
+
+  # (i) the family's fifth and fourth derivatives against the leverage
+  # diagonal, which is the u_vector() identity one order up
+  for (a in seq_along(params)) {
+    for (b in seq_along(params)) {
+      co <- numeric(n)
+      for (k in seq_along(params)) {
+        for (k2 in seq_along(params)) {
+          co <- co + rep_len(D4[[deriv4_key(params, a, b, k, k2)]], n) *
+            dVv[[k]] * dVw[[k2]]
+        }
+      }
+      co <- co + rep_len(D3[[d3_key(params, a, b, ap, keys3)]], n) * phi_vw
+      tot <- tot + sum(wt * co * st$G[[a]][[b]])
+    }
+  }
+
+  # (ii) and (iii): V_p moves along one direction inside a third derivative
+  # read along the other
+  for (dd in list(list(dVv, dphi_w), list(dVw, dphi_v))) {
+    for (b in seq_along(params)) {
+      co <- numeric(n)
+      for (k in seq_along(params)) {
+        co <- co + rep_len(D3[[d3_key(params, ap, b, k, keys3)]], n) *
+          dd[[1L]][[k]]
+      }
+      tot <- tot + 2 * sum(wt * co * rowSums(st$VM[[b]] * dd[[2L]]))
+    }
+  }
+
+  # (iv) V_p's own SECOND movement, which is the third derivative of the
+  # predictor contracted against both directions
+  for (b in seq_along(params)) {
+    hb <- rep_len(H[[hess_key(params, ap, b)]], n)
+    tot <- tot + 2 * sum(wt * hb * rowSums(st$VM[[b]] * dpsi))
+  }
+
+  # (v) both movements of V_p at once
+  tot <- tot + 2 * sum(wt * rep_len(H[[hess_key(params, ap, ap)]], n) *
+                         rowSums((dphi_v %*% M) * dphi_w))
+  -tot
+}
+
+
+#' The Penalty's Pieces on the Joint Vector
+#'
+#' @description
+#' [outer_pieces()] over the coefficients AND a filter's own
+#' parameters, which is the vector a marginal criterion's determinant spans
+#' where a penalty covers those parameters.
+#'
+#' @details
+#' The arithmetic is [outer_pieces()]'s and the difference is where each
+#' unit's coordinates live: an ordinary unit is matched into the kept
+#' coefficients, a penalty over a structural term's own parameters is placed
+#' among the filter's free ones, and a MIXED covariance class is read where
+#' each of its coordinates lives and put back in the class's own interleaved
+#' order. Those three readings are the gradient's own, in
+#' [statmod_structural_grad()], and are composed here so the two
+#' cannot disagree about a position.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients.
+#' @param hyper The hyperparameters.
+#' @param idx The outer index.
+#' @param jd The joint rows.
+#'
+#' @return A list with `S`, `c`, `S2`, `c2`, `rho2`
+#'   and `pair`, in the shape [outer_pieces()] returns them.
+#'
+#' @seealso [statmod_structural_hess()], [outer_pieces()]
+#'
+#' @keywords internal
+structural_outer_pieces <- function(spec, design, coef, hyper, idx, jd) {
+  params <- jd$params
+  keep <- jd$keep
+  nk <- length(keep)
+  nh <- nrow(idx)
+  sst <- statmod_structural_state(design)
+  flat <- unlist(coef[params], use.names = FALSE)
+  Sm <- vector("list", nh)
+  cm <- vector("list", nh)
+  for (r in seq_len(nh)) {
+    Sm[[r]] <- matrix(0, nk, nk)
+    cm[[r]] <- numeric(nk)
+  }
+  S2 <- list()
+  c2 <- list()
+  rho2 <- matrix(0, nh, nh)
+  pair <- matrix("", nh, nh)
+
+  mem <- index_members(idx)
+  terms <- unique(paste(mem$parameter, mem$term, sep = "\r"))
+  for (s in terms) {
+    bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
+    p <- bits[1L]
+    nm <- bits[2L]
+    un <- statmod_unit(spec, design, p, nm)
+    if (is.null(un)) next
+    pen <- un$penalty
+    bt <- unit_joint_beta(un, spec, design, coef)
+    pos <- unit_joint_positions(un, spec, design)
+    if (!length(pos) || anyNA(pos) || max(pos) > nk) next
+    th <- as.list(hyper[[p]][[nm]])
+    dS <- penalties7::penalty_dhessian(pen, bt, th)
+    cr <- penalties7::penalty_cross(pen, bt, th)
+    lines <- which(mem$parameter == p & mem$term == nm)
+    for (i in lines) {
+      r <- mem$row[i]
+      Sm[[r]][pos, pos] <- Sm[[r]][pos, pos] + as_dense(dS[[mem$name[i]]])
+      cm[[r]][pos] <- cm[[r]][pos] + as.numeric(cr[[mem$name[i]]])
+    }
+    d2S <- penalties7::penalty_d2hessian(pen, bt, th)
+    dcr <- penalties7::penalty_dcross(pen, bt, th)
+    ht <- penalties7::penalty_hess_theta(pen, bt, th)
+    for (i in lines) {
+      for (j in lines) {
+        r <- mem$row[i]
+        q <- mem$row[j]
+        nk2 <- pair_key(mem$name[i], mem$name[j], names(ht))
+        key <- paste0(r, "_", q)
+        pair[r, q] <- key
+        rho2[r, q] <- rho2[r, q] + as.numeric(ht[[nk2]])[1L]
+        if (is.null(S2[[key]])) {
+          S2[[key]] <- matrix(0, nk, nk)
+          c2[[key]] <- numeric(nk)
+        }
+        S2[[key]][pos, pos] <- S2[[key]][pos, pos] + as_dense(d2S[[nk2]])
+        c2[[key]][pos] <- c2[[key]][pos] + as.numeric(dcr[[nk2]])
+      }
+    }
+  }
+  zeroS <- matrix(0, nk, nk)
+  zeroc <- numeric(nk)
+  for (m in seq_len(nh)) {
+    for (l in seq_len(nh)) {
+      if (nzchar(pair[m, l])) next
+      key <- paste0("\r", m, "_", l)
+      pair[m, l] <- key
+      S2[[key]] <- zeroS
+      c2[[key]] <- zeroc
+    }
+  }
+  list(S = Sm, c = cm, S2 = S2, c2 = c2, rho2 = rho2, pair = pair)
+}
+
+
+#' The Exact Outer Hessian of a Model Carrying a Structural Term
+#'
+#' @description
+#' [statmod_marginal_hess()] over the joint vector of coefficients and
+#' a filter's own parameters, which is what the determinant spans there.
+#'
+#' @details
+#' # Why it needs a fourth order
+#'
+#' Each order of differentiating the predictor through the recursion pulls in
+#' one more order of the response's family, the score the recursion is driven
+#' by being read at the predictor it produces. The gradient reads
+#' \eqn{\partial^3 e/\partial u^3} in one direction through
+#' [modelterms7::term_third()]; the criterion's own second derivative
+#' reads \eqn{\partial^4 e/\partial u^4} in two, through
+#' [modelterms7::term_fourth()], and the family's FIFTH derivative with
+#' it.
+#'
+#' # The shape is [statmod_marginal_hess()]'s
+#'
+#' With \eqn{u} the joint vector, \eqn{K} the penalized information over it
+#' and \eqn{M} the matrix the trace is taken against,
+#'
+#' \deqn{\frac{\partial^2 V}{\partial t_m\partial t_l}
+#'   = -\rho_{ml} + \hat b_m^\top K \hat b_l
+#'   + \tfrac{1}{2}\mathrm{tr}(MK_lMK_m)
+#'   - \tfrac{1}{2}\mathrm{tr}\Big(M\frac{\partial K_m}{\partial t_l}\Big),}
+#'
+#' with \eqn{\hat b_m = -K^{-1}c_m} the mode's movement, \eqn{K_m = S_m +
+#' \partial K/\partial u[\hat b_m]} and the last trace carrying the penalty's
+#' second derivative, the twice-contracted second derivative of \eqn{K} and
+#' the once-contracted one at the mode's second movement. Every piece is the
+#' one the coefficient-space assembly uses, read on the joint vector.
+#'
+#' # What it does not carry
+#'
+#' A block that MOVES with its coefficients -- `nl()`, `seg()` --
+#' beside the filter contributes nothing here, exactly as it contributes
+#' nothing to [statmod_structural_grad()]: that correction is written
+#' in the coefficient-space assembly and has no joint twin. Such a model is
+#' admitted at both orders and the approximation is the gradient's own.
+#'
+#' # Cost
+#'
+#' One [modelterms7::term_fourth()] and three lower recursions per PAIR
+#' of hyperparameters, against the stencil's four refits per hyperparameter.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients at the penalized mode.
+#' @param hyper The hyperparameters.
+#' @param method An [OuterMethod()].
+#' @param idx The outer index.
+#' @param basis The integrated subspace, or `NULL`.
+#'
+#' @return A square matrix on the free scale, one row per row of `idx`,
+#'   or `NULL` where the joint matrix could not be formed.
+#'
+#' @seealso [statmod_structural_grad()], [statmod_marginal_hess()],
+#'   [statmod_hess_stencil()] for the route it replaces.
+#'
+#' @keywords internal
+statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
+                                    basis = NULL) {
+  if (!nrow(idx)) return(NULL)
+  jd <- joint_design_rows(spec, design, coef)
+  if (is.null(jd)) return(NULL)
+  K <- tryCatch(statmod_marginal_full(spec, design, coef, hyper, NULL),
+                error = function(e) NULL)
+  if (is.null(K)) return(NULL)
+  Kfac <- tryCatch(chol(K), error = function(e) NULL)
+  if (is.null(Kfac)) return(NULL)
+  Kinv <- chol2inv(Kfac)
+  sst <- statmod_structural_state(design)
+  keyt <- jd$f$term
+  freep <- setdiff(jd$zn, sst$held[[keyt]])
+  M <- if (is.null(basis)) Kinv else {
+    A <- structural_joint_basis(spec, design, keyt, freep, jd$nb, basis)
+    inner <- tryCatch(chol2inv(chol(crossprod(A, K %*% A))),
+                      error = function(e) NULL)
+    if (is.null(inner)) return(NULL)
+    A %*% inner %*% t(A)
+  }
+  st <- structural_grad_parts(spec, design, coef, jd, M)
+  # the fifth derivative is read HERE and not in structural_grad_parts(),
+  # whose result the gradient shares: the gradient never needs it, and it
+  # costs 2p evaluations of the fourth
+  # no `threads`: the fifth order is ONE central difference of the analytic
+  # fourth, and the count reaches the family's own kernels through those two
+  # calls rather than through this one
+  D5 <- tryCatch(
+    distributions7::distrib_deriv5(spec@distrib, spec@response,
+                                   jd$ev$theta, scale = "link"),
+    error = function(e) NULL)
+  if (is.null(D5)) return(NULL)
+  blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, st$H, st$D3, st$D4,
+                             jd$n, D5)
+
+  nh <- nrow(idx)
+  pieces <- structural_outer_pieces(spec, design, coef, hyper, idx, jd)
+  msolve <- function(z) as.numeric(Kinv %*% z)
+  bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
+  Tm <- lapply(bhat, function(v) structural_dk_matrix(spec, design, jd, st, v))
+  Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
+
+  out <- matrix(0, nh, nh)
+  for (m in seq_len(nh)) {
+    for (l in m:nh) {
+      key <- pieces$pair[m, l]
+      Sml <- pieces$S2[[key]]
+      cml <- pieces$c2[[key]]
+      rhs <- as.numeric(Km[[l]] %*% bhat[[m]]) +
+        as.numeric(pieces$S[[m]] %*% bhat[[l]]) + cml
+      bml <- -msolve(rhs)
+      tr_dKm <- sum(M * Sml) +
+        structural_chain_extra2(spec, design, jd, M, st, blk4,
+                                bhat[[m]], bhat[[l]]) +
+        sum(st$u * bml) +
+        structural_chain_extra(spec, design, jd, M, st, bml)
+      v <- -pieces$rho2[m, l] +
+        sum(bhat[[m]] * as.numeric(K %*% bhat[[l]])) +
+        sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -
+        tr_dKm / 2
+      out[m, l] <- v
+      out[l, m] <- v
+    }
+  }
+
+  # and onto the free scale the search runs on
+  links <- attr(idx, "links")
+  g <- statmod_structural_grad(spec, design, coef, hyper, method, idx, basis,
+                               free = FALSE)
+  h1 <- numeric(nh)
+  h2 <- numeric(nh)
+  for (r in seq_len(nh)) {
+    val <- hyper[[idx$parameter[r]]][[idx$term[r]]][[idx$name[r]]]
+    e <- linkfunctions7::linkfun(links[[r]], val)
+    h1[r] <- linkfunctions7::dlinkinv(links[[r]], e)
+    h2[r] <- linkfunctions7::d2linkinv(links[[r]], e)
+  }
+  out <- out * outer(h1, h1)
+  diag(out) <- diag(out) + h2 * g
+  out
 }
