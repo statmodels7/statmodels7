@@ -572,6 +572,61 @@ unit_joint_positions <- function(u, spec, design) {
 }
 
 
+#' A Unit's Own Coordinates, in the Joint Vector's Order
+#'
+#' @description
+#' The values whose positions [unit_joint_positions()] gives, returned in
+#' the order that function returns those positions in.
+#'
+#' @details
+#' The three kinds are read from two different places. An ordinary unit's
+#' coordinates are coefficients and come from `coef`. A structural unit's
+#' are a filter's own parameters and come from the design's structural state,
+#' on the UNCONSTRAINED scale, which is the scale the recursion is
+#' differentiated on and the one the penalty covers. A mixed class holds some
+#' of each and interleaves them group by group, so its pieces are read
+#' separately and put back in the class's own order, which is what
+#' [class_joint_pieces()] records.
+#'
+#' Written beside [unit_joint_positions()] because a value and its address
+#' are one convention: a caller composing them separately would scatter one
+#' unit's numbers at another's coordinates, and the two would agree only by
+#' accident.
+#'
+#' @param u One unit, from [statmod_penalized()].
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients, one entry per distribution parameter.
+#'
+#' @return A numeric vector as long as [unit_joint_positions()]'s answer.
+#'
+#' @seealso [unit_beta()], the coefficient-only case this generalizes.
+#'
+#' @keywords internal
+unit_joint_beta <- function(u, spec, design, coef) {
+  params <- spec@distrib@params
+  if (!isTRUE(u$structural) && !isTRUE(u$mixed))
+    return(unit_beta(u, coef, params))
+  sst <- statmod_structural_state(design)
+  if (is.null(sst)) return(numeric(0))
+  if (isTRUE(u$structural)) {
+    z <- sst$zeta[[u$term]]
+    return(if (is.null(z)) numeric(0) else as.numeric(z[u$cols]))
+  }
+  z <- sst$zeta[[u$class$sterm]]
+  flat <- unlist(coef[params], use.names = FALSE)
+  bt <- numeric(length(u$joint))
+  for (pc in u$pieces) {
+    bt[match(pc$joint, u$joint)] <- if (isTRUE(pc$structural)) {
+      as.numeric(z[pc$zcols])
+    } else {
+      flat[pc$index]
+    }
+  }
+  bt
+}
+
+
 #' Every Penalty in a Model, Without the Design
 #'
 #' @description

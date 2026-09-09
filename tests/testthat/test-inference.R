@@ -954,3 +954,130 @@ test_that("the widening is the one mgcv reports as unconditional", {
   expect_lt(mean(ou / ob), mean(pu / pb) * 1.05)
   expect_gt(mean(ou / ob), mean(pu / pb) * 0.3)
 })
+
+test_that("a filter's own penalty moves the mode, so the third matrix carries it", {
+  # The correction returned the CONDITIONAL matrix for every model with a
+  # structural term, with the classed warning raised: hyper_mode_cross()
+  # skipped a penalty over such a term's own parameters and the tail of the
+  # matrix was padded with zeros, so the mode moved by nothing in exactly the
+  # coordinates that penalty shrinks. The gap was an address and not a
+  # derivative -- unit_joint_positions() already said where those
+  # coordinates live in the vector vcov() inverts for such a model.
+  fit <- gas_panel_fit()
+  Vb <- vcov(fit, readable = FALSE)
+  seen <- NULL
+  Vu <- withCallingHandlers(
+    vcov(fit, type = "unconditional", readable = FALSE),
+    statmod_conditional_variance = function(c) {
+      seen <<- conditionMessage(c); invokeRestart("muffleWarning")
+    })
+  expect_null(seen)
+  expect_false(identical(Vu, Vb))
+
+  # J V_theta J' is a congruence of a variance and cannot be indefinite; the
+  # eigenvalue is asked against the matrix's own scale, a null direction
+  # landing either side of zero by rounding
+  ev <- eigen(Vu - Vb, symmetric = TRUE)$values
+  expect_gt(min(ev), -1e-8 * max(ev))
+  expect_true(all(diag(Vb) <= diag(Vu) * (1 + 1e-10)))
+  expect_gt(max(sqrt(diag(Vu) / diag(Vb))), 1.001)
+
+  # and nothing is skipped now, which is what `complete` reports and is a
+  # count rather than a tolerance
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  nb <- nrow(coef_labels(spec, design))
+  H <- statmod_full_information(spec, fit@coefficients, design)
+  expect_gt(nrow(H), nb)
+  jt <- hyper_mode_cross(spec, design, fit@coefficients, fit@hyper, idx,
+                         nrow(H), joint = TRUE)
+  expect_identical(jt$skipped, 0L)
+  # the penalty's rows are in the TAIL, which is the whole point: the
+  # coefficient half of that column is not where it was written
+  expect_gt(max(abs(jt$cross[nb + seq_len(nrow(H) - nb), , drop = FALSE])), 0)
+  # asked for the coefficients alone it is skipped exactly as it always was
+  co <- hyper_mode_cross(spec, design, fit@coefficients, fit@hyper, idx, nb)
+  expect_gt(co$skipped, 0L)
+})
+
+test_that("the mode's movement is the one two refits of it give", {
+  # The reference shares no arithmetic with penalty_cross(): the joint mode is
+  # refitted either side of the hyperparameter, from the SAME start, and
+  # differenced. Both probes restore the structural state first, so they
+  # differ in the hyperparameter alone -- a filter's parameters live in an
+  # environment the inner fit writes into as it goes.
+  skip_on_cran()
+  fit <- gas_panel_fit()
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  nb <- nrow(coef_labels(spec, design))
+  H <- statmod_full_information(spec, fit@coefficients, design)
+  nz <- nrow(H) - nb
+  S <- as_dense(statmod_penalty_at(spec, fit@coefficients, fit@hyper, design,
+                                   "hessian"))
+  S <- rbind(cbind(S, matrix(0, nb, nz)), matrix(0, nz, nb + nz))
+  ps <- structural_penalty_block(spec, design, fit@hyper, nz)
+  if (!is.null(ps)) S[nb + seq_len(nz), nb + seq_len(nz)] <- ps
+  J <- -solve(H + zap_nonfinite(S)) %*%
+    hyper_mode_cross(spec, design, fit@coefficients, fit@hyper, idx,
+                     nrow(H), joint = TRUE)$cross
+
+  cfg <- inner_settings(fit@methods$smooth)
+  eta0 <- hyper_to_eta(fit@hyper, idx)
+  beta0 <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
+  sst <- statmod_structural_state(design)
+  z0 <- sst$zeta
+  on.exit(sst$zeta <- z0, add = TRUE)
+  u_at <- function(eta) {
+    sst$zeta <- z0
+    r <- statmod_alternate(spec, design, blocks,
+                           eta_to_hyper(eta, idx, fit@hyper),
+                           fit@methods$smooth, beta0, cfg$expected,
+                           cfg$approx, cfg$maxit, cfg$tol, verbosity(0),
+                           hold_refresh = TRUE)
+    key <- names(sst$zeta)[1L]
+    z <- sst$zeta[[key]]
+    free <- setdiff(names(z), sst$held[[key]])
+    c(unlist(r$obj$split(r$par)[spec@distrib@params], use.names = FALSE),
+      as.numeric(z[free]))
+  }
+  gap <- function(h) {
+    ep <- eta0; ep[[1L]] <- ep[[1L]] + h
+    em <- eta0; em[[1L]] <- em[[1L]] - h
+    b <- (u_at(ep) - u_at(em)) / (2 * h)
+    a <- as.numeric(J[, 1L])
+    list(cos = sum(a * b) / sqrt(sum(a^2) * sum(b^2)),
+         rel = max(abs(a - b)) / max(abs(b)))
+  }
+  g1 <- gap(1e-2)
+  g2 <- gap(1e-3)
+  expect_gt(g2$cos, 0.999)
+  # THE RATE IS THE ASSERTION. A missing term would be flat in the step and a
+  # badly located mode would grow as 1/h; a correct derivative falls as h^2,
+  # so a hundredfold reduction of the step must reduce the gap.
+  expect_lt(g2$rel, g1$rel)
+  expect_lt(g2$rel, 1e-4)
+})
+
+test_that("the frequentist variance survives a sparse design", {
+  # A random effect's block is built sparse, so the information follows the
+  # design's storage and the sandwich Vb H Vb comes back an S4 Matrix.
+  # Writing that into a slice of the base matrix assembled at the end is a
+  # length error rather than a conversion, which is the shape this package
+  # records seven times over.
+  set.seed(11)
+  d <- data.frame(g = factor(rep(seq_len(12), each = 12)))
+  d$x <- stats::runif(nrow(d))
+  d$y <- 1 + 2 * d$x + rep(stats::rnorm(12, 0, 0.6), each = 12) +
+    stats::rnorm(nrow(d), 0, 0.4)
+  f <- statmod(y ~ x + random(~ 1 | g), gaussian1_distrib(), d)
+  V <- vcov(f, type = "frequentist", readable = FALSE)
+  expect_true(is.matrix(V))
+  expect_false(isS4(V))
+  expect_equal(dim(V), dim(vcov(f, readable = FALSE)))
+  # and the ordering the three variances stand in is unchanged by it
+  expect_true(all(diag(V) <= diag(vcov(f, readable = FALSE)) * (1 + 1e-10)))
+})

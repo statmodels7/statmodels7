@@ -5,7 +5,7 @@
 \title{The Mixed Derivative of the Penalty in the Coefficients and the
 Hyperparameters}
 \usage{
-hyper_mode_cross(spec, design, coef, hyper, idx, n)
+hyper_mode_cross(spec, design, coef, hyper, idx, n, joint = FALSE)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -18,7 +18,12 @@ hyper_mode_cross(spec, design, coef, hyper, idx, n)
 
 \item{idx}{The hyperparameter index, from \code{\link[=outer_hyper_index]{outer_hyper_index()}}.}
 
-\item{n}{How many stacked coefficients the design carries.}
+\item{n}{How many rows the matrix carries: the stacked coefficients, and
+with \code{joint} a structural term's free parameters after them.}
+
+\item{joint}{Whether those rows include that tail. \code{FALSE}, the default,
+is the coefficient-only matrix, which is what
+\code{\link[=statmod_edf_correction]{statmod_edf_correction()}} contracts.}
 }
 \value{
 A list with \code{cross}, an \code{n} by \code{nrow(idx)} matrix, and \code{skipped},
@@ -41,10 +46,20 @@ nothing is shared each member is its own row and the lookup is what was
 here before the groups existed.
 
 A penalty over a STRUCTURAL term's own parameters covers positions among
-those parameters rather than columns of a design, so there is nothing to
-write and it is skipped. It is counted rather than passed over in silence:
-a correction assembled without it is incomplete, and a caller reporting to
-a reader has to be able to say so.
+those parameters rather than columns of a design, so where the caller's
+matrix spans the coefficients alone there is nowhere to write it and it is
+skipped. It is counted rather than passed over in silence: a correction
+assembled without it is incomplete, and a caller reporting to a reader has
+to be able to say so.
+
+With \code{joint} the matrix spans the vector the mode really moves in for such
+a model, the coefficients followed by the term's own free parameters, and
+those penalties have rows after all. What they lacked was an address and
+not a derivative: \code{\link[=unit_joint_positions]{unit_joint_positions()}} says where each unit's
+coordinates live in that vector and \code{\link[=unit_joint_beta]{unit_joint_beta()}} reads their values,
+so nothing here is derived. \code{\link[=hyper_correction]{hyper_correction()}} asks for it because
+\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} inverts the joint penalized information; the
+coefficient-space consumer does not, and its answer is unchanged.
 }
 \seealso{
 \code{\link[=statmod_edf_correction]{statmod_edf_correction()}}, \code{\link[=hyper_correction]{hyper_correction()}},

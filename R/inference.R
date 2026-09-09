@@ -376,7 +376,12 @@ vcov.StatmodFit <- function(object,
   }
   V <- switch(type,
     bayesian = Vb,
-    frequentist = Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb,
+    # as_dense() because the information follows the DESIGN's storage: an
+    # equation carrying a random effect has a sparse one, the sandwich then
+    # comes back an S4 Matrix, and writing that into a slice of the base
+    # matrix assembled below is a length error rather than a conversion. The
+    # product is dense whatever H is, Vb being dense, so nothing is given up.
+    frequentist = as_dense(Vb %*% H[keep_full, keep_full, drop = FALSE] %*% Vb),
     unconditional = {
       # THE OTHER TWO ARE CONDITIONAL ON THE HYPERPARAMETERS, both read at
       # the value the search stopped at as though it had been known. This
@@ -384,9 +389,12 @@ vcov.StatmodFit <- function(object,
       # handed over rather than recomputed so that the two halves of the sum
       # describe one model -- the same information, the same held
       # coordinates, the same aliasing.
+      # keep_full WHOLE, not its coefficient head plus a count: the tail is
+      # part of the vector the mode moves in, and the flat-direction branch
+      # above may have dropped a coordinate from it, which a count cannot say
       cc <- tryCatch(hyper_correction(spec, design, coef, object@hyper,
                                       object@methods$outer, Vb,
-                                      keep_full[seq_len(total)], nz),
+                                      keep_full, nz),
                      error = function(e) list(C = NULL, n_hyper = NA_integer_,
                                               complete = FALSE))
       if (is.null(cc$C)) {

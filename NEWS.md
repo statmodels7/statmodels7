@@ -1,3 +1,65 @@
+# statmodels7 0.114.0
+
+* `vcov(type = "unconditional")` CARRIES THE STRUCTURAL HALF. It returned the
+  conditional matrix with the classed warning for every model with a filter,
+  and what was missing is an address rather than a derivative:
+  `hyper_mode_cross()` skipped a penalty over a structural term's own
+  parameters, those parameters being columns of no design, and
+  `hyper_correction()` then padded the tail of the mixed derivative with
+  zeros -- so the mode moved by nothing in exactly the coordinates such a
+  penalty shrinks. The vector it moves in is the one `vcov()` already inverts
+  there, the coefficients followed by the term's free parameters, and
+  `unit_joint_positions()` already said where each unit's coordinates sit in
+  it.
+
+* Measured on a panel of eight groups of twenty-five whose loading is
+  developed over a random effect: the correction is no longer identical to the
+  conditional matrix, no warning is raised, no penalty is skipped, the added
+  term's smallest eigenvalue is -5.7e-18 against a largest of 1.8e-01, and the
+  standard errors widen by up to 11.35 per cent.
+
+* The movement of the mode is checked against a reference sharing no
+  arithmetic with it: the joint mode refitted either side of the
+  hyperparameter, from the same start, and differenced. The cosine is
+  1.0000000 and the relative gap falls 1.075e-05, 9.678e-07, 1.075e-07 at
+  steps of 1e-2, 3e-3 and 1e-3. THE RATE IS THE ASSERTION -- a missing term
+  would be flat in the step and a badly located mode would grow as \eqn{1/h},
+  where this falls as \eqn{h^2}.
+
+* `unit_joint_beta()` is written beside `unit_joint_positions()`, a value and
+  its address being one convention: a caller composing them separately would
+  scatter one unit's numbers at another's coordinates.
+
+* ⚠️ A MODEL WITH NO STRUCTURAL TERM IS UNTOUCHED BIT FOR BIT, by construction
+  rather than by a tolerance: `joint` defaults to `FALSE`, and for an ordinary
+  unit `unit_joint_positions()` returns the stacked index it replaces.
+  Measured over a smooth and a random effect, every field is `identical()` --
+  all three variances, the coefficients, the hyperparameters, the
+  log-likelihood, the effective degrees of freedom, the edf correction and the
+  printed summary.
+
+* ⚠️ `statmod_edf_correction()` is NOT extended, and its correction stays a
+  lower bound for a structural model. It contracts against the
+  coefficient-space information, so making it joint is a change to which
+  matrix a parameter count is read on rather than a change of address, and it
+  would move the reported effective degrees of freedom and every criterion
+  built on them.
+
+* ⚠️ A latent shape mismatch went with it. `hyper_correction()` received the
+  coefficient half of `keep_full` and a COUNT of the tail, so a tail
+  coordinate dropped as a flat direction left the mixed derivative one row
+  longer than the variance it multiplies; the product then raised, and the
+  caller's `tryCatch` read that as no correction being available. It receives
+  the whole logical now.
+
+* `vcov(type = "frequentist")` no longer raises on a sparse design, a defect
+  that predates this release. The information follows the DESIGN's storage, so
+  an equation carrying a random effect makes the sandwich an S4 Matrix, and
+  writing that into a slice of the base matrix assembled at the end is a
+  length error rather than a conversion -- the shape this package records
+  seven times over. Measured on twelve groups of twelve, the call raised where
+  the other two variances returned.
+
 # statmodels7 0.113.0
 
 * THE OUTER HESSIAN OF A MODEL CARRYING A STRUCTURAL TERM IS ONE CENTRAL

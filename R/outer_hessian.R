@@ -844,17 +844,31 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #' here before the groups existed.
 #'
 #' A penalty over a STRUCTURAL term's own parameters covers positions among
-#' those parameters rather than columns of a design, so there is nothing to
-#' write and it is skipped. It is counted rather than passed over in silence:
-#' a correction assembled without it is incomplete, and a caller reporting to
-#' a reader has to be able to say so.
+#' those parameters rather than columns of a design, so where the caller's
+#' matrix spans the coefficients alone there is nowhere to write it and it is
+#' skipped. It is counted rather than passed over in silence: a correction
+#' assembled without it is incomplete, and a caller reporting to a reader has
+#' to be able to say so.
+#'
+#' With `joint` the matrix spans the vector the mode really moves in for such
+#' a model, the coefficients followed by the term's own free parameters, and
+#' those penalties have rows after all. What they lacked was an address and
+#' not a derivative: [unit_joint_positions()] says where each unit's
+#' coordinates live in that vector and [unit_joint_beta()] reads their values,
+#' so nothing here is derived. [hyper_correction()] asks for it because
+#' [vcov.StatmodFit()] inverts the joint penalized information; the
+#' coefficient-space consumer does not, and its answer is unchanged.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param idx The hyperparameter index, from [outer_hyper_index()].
-#' @param n How many stacked coefficients the design carries.
+#' @param n How many rows the matrix carries: the stacked coefficients, and
+#'   with `joint` a structural term's free parameters after them.
+#' @param joint Whether those rows include that tail. `FALSE`, the default,
+#'   is the coefficient-only matrix, which is what
+#'   [statmod_edf_correction()] contracts.
 #'
 #' @return A list with `cross`, an `n` by `nrow(idx)` matrix, and `skipped`,
 #'   how many penalties contributed nothing to it.
@@ -863,21 +877,27 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
 #'   [penalties7::penalty_cross()]
 #'
 #' @keywords internal
-hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
-  params <- spec@distrib@params
+hyper_mode_cross <- function(spec, design, coef, hyper, idx, n,
+                             joint = FALSE) {
   cross <- matrix(0, n, nrow(idx))
   mem <- index_members(idx)
   skipped <- 0L
   for (un in statmod_penalized(spec, design)) {
     # A structural term's penalty indexes the term's OWN parameters, which
-    # are not columns of any design. Writing it here would land on whichever
-    # coefficients happen to occupy those positions.
-    if (is.null(un$index)) {
+    # are not columns of any design. Where this matrix spans the coefficients
+    # alone, writing it would land on whichever coefficients happen to occupy
+    # those positions; where it spans the joint vector those parameters are
+    # its tail and the positions are theirs.
+    own <- isTRUE(un$structural) || isTRUE(un$mixed)
+    pos <- if (own && !joint) integer(0)
+           else unit_joint_positions(un, spec, design)
+    if (!length(pos) || max(pos) > n) {
       skipped <- skipped + 1L
       next
     }
     cr <- tryCatch(
-      penalties7::penalty_cross(un$penalty, unit_beta(un, coef, params),
+      penalties7::penalty_cross(un$penalty,
+                                unit_joint_beta(un, spec, design, coef),
                                 as.list(hyper[[un$param]][[un$key]]),
                                 scale = "link"),
       error = function(e) NULL)
@@ -892,7 +912,7 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
       k <- mem$row[mem$parameter == un$param & mem$term == un$key &
                      mem$name == h]
       if (!length(k)) next
-      cross[un$index, k] <- cross[un$index, k] + as.numeric(cr[[h]])
+      cross[pos, k] <- cross[pos, k] + as.numeric(cr[[h]])
     }
   }
   list(cross = cross, skipped = skipped)
@@ -937,12 +957,15 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
 #' coordinate at the edge of its range.
 #'
 #' It is PARTIAL, with `complete` false, where some of it could be read and
-#'
-#' It is PARTIAL, with `complete` false, where some of it could be read and
 #' some could not: a hyperparameter [hyper_variance()] held contributes
-#' nothing, and so does a penalty over a structural term's own parameters. The
-#' matrix returned is then a lower bound on the correction rather than the
-#' whole of it.
+#' nothing. The matrix returned is then a lower bound on the correction rather
+#' than the whole of it.
+#'
+#' A penalty over a STRUCTURAL term's own parameters no longer makes it
+#' partial. The mode of such a model moves in the joint vector, coefficients
+#' and the term's free parameters together, which is what `Vb` already spans
+#' here, and [hyper_mode_cross()] is asked for the same vector rather than for
+#' the coefficients with a tail of zeros after them.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -950,10 +973,13 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
 #' @param hyper The hyperparameters.
 #' @param method The outer method that estimated them, or `NULL`.
 #' @param Vb The bayesian variance the correction is to be added to, over the
-#'   coordinates `keep` names followed by any structural tail.
-#' @param keep A logical vector over the stacked coefficients, saying which
-#'   ones `Vb` spans.
-#' @param nz How many structural parameters `Vb` carries beyond them.
+#'   coordinates `keep` names.
+#' @param keep A logical vector over the joint vector, the stacked
+#'   coefficients followed by any structural tail, saying which coordinates
+#'   `Vb` spans. It is the caller's whole vector and not its head: a tail
+#'   coordinate dropped as a flat direction leaves `Vb` narrower than the
+#'   count alone would say.
+#' @param nz How many of those coordinates are the structural tail.
 #'
 #' @return A list with `C`, the correction or `NULL`, `n_hyper`, how many
 #'   hyperparameters a differentiable criterion estimated, and `complete`,
@@ -976,9 +1002,14 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
   if (!nrow(idx)) return(none)
   out <- list(C = NULL, n_hyper = nrow(idx), complete = FALSE)
 
-  cr <- hyper_mode_cross(spec, design, coef, hyper, idx, length(keep))
+  # THE MATRIX SPANS WHAT Vb SPANS. For a model carrying a structural term
+  # that is the joint vector, and the tail used to be padded with zeros while
+  # hyper_mode_cross() skipped the penalty belonging in it, so the mode moved
+  # by nothing in exactly the coordinates such a penalty shrinks -- measured,
+  # the correction came back identical to Vb with the warning raised.
+  cr <- hyper_mode_cross(spec, design, coef, hyper, idx, length(keep),
+                         joint = nz > 0L)
   X <- cr$cross[keep, , drop = FALSE]
-  if (nz > 0L) X <- rbind(X, matrix(0, nz, ncol(X)))
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
                                        idx, NULL),
                  error = function(e) NULL)

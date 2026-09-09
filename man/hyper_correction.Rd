@@ -18,12 +18,15 @@ hyper_correction(spec, design, coef, hyper, method, Vb, keep, nz = 0L)
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
 \item{Vb}{The bayesian variance the correction is to be added to, over the
-coordinates \code{keep} names followed by any structural tail.}
+coordinates \code{keep} names.}
 
-\item{keep}{A logical vector over the stacked coefficients, saying which
-ones \code{Vb} spans.}
+\item{keep}{A logical vector over the joint vector, the stacked
+coefficients followed by any structural tail, saying which coordinates
+\code{Vb} spans. It is the caller's whole vector and not its head: a tail
+coordinate dropped as a flat direction leaves \code{Vb} narrower than the
+count alone would say.}
 
-\item{nz}{How many structural parameters \code{Vb} carries beyond them.}
+\item{nz}{How many of those coordinates are the structural tail.}
 }
 \value{
 A list with \code{C}, the correction or \code{NULL}, \code{n_hyper}, how many
@@ -65,12 +68,15 @@ criterion's own Hessian cannot be read, which is where the search left a
 coordinate at the edge of its range.
 
 It is PARTIAL, with \code{complete} false, where some of it could be read and
-
-It is PARTIAL, with \code{complete} false, where some of it could be read and
 some could not: a hyperparameter \code{\link[=hyper_variance]{hyper_variance()}} held contributes
-nothing, and so does a penalty over a structural term's own parameters. The
-matrix returned is then a lower bound on the correction rather than the
-whole of it.
+nothing. The matrix returned is then a lower bound on the correction rather
+than the whole of it.
+
+A penalty over a STRUCTURAL term's own parameters no longer makes it
+partial. The mode of such a model moves in the joint vector, coefficients
+and the term's free parameters together, which is what \code{Vb} already spans
+here, and \code{\link[=hyper_mode_cross]{hyper_mode_cross()}} is asked for the same vector rather than for
+the coefficients with a tail of zeros after them.
 }
 
 \references{
