@@ -763,13 +763,40 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' mode turns a corner whenever a coefficient joins or leaves the active
 #' set, and a delta method needs a derivative that does not exist there.
 #'
+#' **A model carrying a filter.** There the mode moves in the JOINT vector,
+#' the coefficients followed by the structural term's own parameters, which
+#' is what the criterion's determinant spans. A penalty over those
+#' parameters is a column of no design, so read on the coefficients alone
+#' [hyper_mode_cross()] skips it and the mode moves by nothing in exactly
+#' the coordinates that penalty shrinks. Measured on a converged filter
+#' with a penalized loading over ten groups of forty, the correction on the
+#' coefficients was EXACTLY 0 against 1.108889 on the joint vector, a
+#' quarter of that model's whole effective count of 4.4976, moving cAIC by
+#' 2.22 and cBIC by 6.64.
+#'
+#' The count this corrects was ALREADY read on that vector.
+#' [statmod_edf()] takes a structural model's effective degrees of freedom
+#' from `joint_smoother_diag()`, which reads the very same two matrices,
+#' so the base count was joint while its correction was on the
+#' coefficients -- two halves of one number read on two different vectors.
+#'
+#' The two matrices are the ones [statmod_marginal_full()] and
+#' [statmod_full_information()] already build, so there is no second
+#' assembly to disagree with the criterion's. That route reads the
+#' OBSERVED information, a filter having no expected one to offer, so
+#' `expected` and `approx` do not reach it. A model with no structural
+#' term of the filter shape is untouched by construction rather than by
+#' tolerance, [statmod_marginal_full()] returning `NULL` there.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param coef The coefficients.
 #' @param hyper The hyperparameters.
 #' @param design The design.
 #' @param method The outer method that estimated them, or `NULL`.
-#' @param expected Whether the information is the expected one.
-#' @param approx The approximation for the expected information.
+#' @param expected Whether the information is the expected one. Not read
+#'   where the model carries a filter, whose information is observed.
+#' @param approx The approximation for the expected information. Not read
+#'   where the model carries a filter.
 #'
 #' @return A list with `total`, the scalar correction, `per`, one entry per
 #'   penalty key, and `n_hyper`, how many hyperparameters were estimated.
@@ -802,15 +829,49 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   if (!nrow(idx)) return(zero)
   zero$n_hyper <- nrow(idx)
 
-  H <- statmod_information_at(spec, coef, design, expected, approx)
-  S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
-  S <- zap_nonfinite(S)
-  Vb <- tryCatch(solve(H + S), error = function(e) NULL)
+  # THE VECTOR THE MODE MOVES IN is the one the criterion's determinant
+  # spans, and for a model carrying a filter that is the JOINT vector: the
+  # coefficients followed by the term's own parameters. A penalty over those
+  # parameters is a column of no design, so in coefficient space
+  # hyper_mode_cross() skips it and the mode moves by nothing in exactly the
+  # coordinates such a penalty shrinks. Measured on a converged filter with a
+  # penalized loading over ten groups of forty, the correction came back
+  # EXACTLY 0 -- the cross matrix identically zero, one penalty skipped --
+  # where the joint vector gives 1.108889 against a total edf of 4.4976, so
+  # cAIC moved 2.22 and cBIC 6.64. It was not a lower bound slightly low; it
+  # was nothing at all.
+  #
+  # NEITHER MATRIX IS ASSEMBLED HERE. statmod_marginal_full() is the one
+  # place K + S is built on that vector and statmod_full_information() the
+  # one place K is, so this reads the two the criterion and vcov() read --
+  # measured, an assembly written out here is identical() to the first.
+  # The joint route reads the OBSERVED information, there being no expected
+  # one for a filter, so `expected` and `approx` do not reach it.
+  #
+  # A model with NO filter takes the branch that was here before, by
+  # construction rather than by tolerance: statmod_marginal_full() returns
+  # NULL where the design carries no structural term of the filter shape,
+  # and a term of the LIKELIHOOD shape -- regime() -- carries no penalty
+  # over its own parameters for this to have skipped.
+  M <- tryCatch(statmod_marginal_full(spec, design, coef, hyper),
+                error = function(e) NULL)
+  H <- if (is.null(M)) NULL else
+    tryCatch(statmod_full_information(spec, coef, design),
+             error = function(e) NULL)
+  joint <- !is.null(M) && !is.null(H)
+  if (joint) {
+    Vb <- tryCatch(solve(as.matrix(M)), error = function(e) NULL)
+  } else {
+    H <- statmod_information_at(spec, coef, design, expected, approx)
+    S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
+    S <- zap_nonfinite(S)
+    Vb <- tryCatch(solve(H + S), error = function(e) NULL)
+  }
   if (is.null(Vb)) return(zero)
 
   # J = -Vb %*% d2rho/dbeta dtheta, one column per estimated hyperparameter
   J <- -Vb %*% hyper_mode_cross(spec, design, coef, hyper, idx,
-                                nrow(as.matrix(H)))$cross
+                                nrow(as.matrix(H)), joint = joint)$cross
 
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
                                        idx, NULL),

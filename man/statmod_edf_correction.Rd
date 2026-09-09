@@ -25,9 +25,11 @@ statmod_edf_correction(
 
 \item{method}{The outer method that estimated them, or \code{NULL}.}
 
-\item{expected}{Whether the information is the expected one.}
+\item{expected}{Whether the information is the expected one. Not read
+where the model carries a filter, whose information is observed.}
 
-\item{approx}{The approximation for the expected information.}
+\item{approx}{The approximation for the expected information. Not read
+where the model carries a filter.}
 }
 \value{
 A list with \code{total}, the scalar correction, \code{per}, one entry per
@@ -78,6 +80,31 @@ there is nothing to propagate and the correction is zero. That is
 not an approximation: the map from the hyperparameter to the penalized
 mode turns a corner whenever a coefficient joins or leaves the active
 set, and a delta method needs a derivative that does not exist there.
+
+\strong{A model carrying a filter.} There the mode moves in the JOINT vector,
+the coefficients followed by the structural term's own parameters, which
+is what the criterion's determinant spans. A penalty over those
+parameters is a column of no design, so read on the coefficients alone
+\code{\link[=hyper_mode_cross]{hyper_mode_cross()}} skips it and the mode moves by nothing in exactly
+the coordinates that penalty shrinks. Measured on a converged filter
+with a penalized loading over ten groups of forty, the correction on the
+coefficients was EXACTLY 0 against 1.108889 on the joint vector, a
+quarter of that model's whole effective count of 4.4976, moving cAIC by
+2.22 and cBIC by 6.64.
+
+The count this corrects was ALREADY read on that vector.
+\code{\link[=statmod_edf]{statmod_edf()}} takes a structural model's effective degrees of freedom
+from \code{joint_smoother_diag()}, which reads the very same two matrices,
+so the base count was joint while its correction was on the
+coefficients -- two halves of one number read on two different vectors.
+
+The two matrices are the ones \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} and
+\code{\link[=statmod_full_information]{statmod_full_information()}} already build, so there is no second
+assembly to disagree with the criterion's. That route reads the
+OBSERVED information, a filter having no expected one to offer, so
+\code{expected} and \code{approx} do not reach it. A model with no structural
+term of the filter shape is untouched by construction rather than by
+tolerance, \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} returning \code{NULL} there.
 }
 \references{
 Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
