@@ -67,20 +67,21 @@
   exact gradient reads 3.7e-02, 4.7e-01 and 1.6e-01 at of 1e-2, 3e-3 and
   1e-3, which is noise.
 
-- ⚠️ AND WHETHER A CONSUMER THEN DECLINES IS A COIN TOSS AT THAT POINT,
-  which a first version of the test pinned and CI refused. The curvature
-  in the direction the search left at the chart’s edge is numerically
-  zero – measured, -2.503622e-05 against a largest eigenvalue of
-  5.855702, four parts in a million – so its SIGN is the platform’s
-  arithmetic:
+- ⚠️ AND NOTHING ABOUT THAT MATRIX CAN BE ASSERTED, which cost two red
+  CI runs to establish and is a stronger statement than either version
+  that preceded it. The fit is weakly identified and STOPS SOMEWHERE
+  DIFFERENT ON EVERY PLATFORM, so the criterion’s curvature there is not
+  one matrix: the ratio of the smallest eigenvalue of to the largest
+  reads 4e-06 on this machine, 4.15e-02 on ubuntu devel and oldrel-1 and
+  2.25e+08 on macOS, and
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-  returns NULL here and on three of the five CI platforms and a matrix
-  on ubuntu oldrel-1. It is the
-  “[`chol()`](https://rdrr.io/r/base/chol.html) is not a rank test”
-  shape in a new place, and the test asserts the boundary – – rather
-  than the sign. What a READER is told does not turn on it: the
-  certificate names that coordinate a boundary and the summary
-  suppresses its interval whatever the variance matrix holds.
+  follows it – NULL here, on ubuntu release and on macOS, a matrix on
+  oldrel-1. The first correction pinned the sign of one rounding-level
+  eigenvalue and the second pinned the ratio; both are assertions about
+  the platform. What is stable, and is what the test was written for, is
+  that the STENCIL refuses. What a READER is told does not turn on any
+  of it: the certificate names that coordinate a boundary and the
+  summary suppresses its interval whatever the variance matrix holds.
 
 - ⚠️ A block that MOVES with its coefficients – `nl()`, `seg()` – beside
   the filter contributes nothing to this assembly, exactly as it
