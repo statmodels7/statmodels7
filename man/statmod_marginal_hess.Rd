@@ -12,7 +12,8 @@ statmod_marginal_hess(
   method,
   idx,
   basis = NULL,
-  ctx = NULL
+  ctx = NULL,
+  inner = NULL
 )
 }
 \arguments{

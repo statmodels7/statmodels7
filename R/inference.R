@@ -2710,7 +2710,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   outer_ran <- !is.null(fit@methods$outer)
   Vh <- if (outer_ran) tryCatch(
     statmod_hyper_vcov(spec, design, fit@coefficients, fit@hyper,
-                       fit@methods$outer), error = function(e) NULL) else NULL
+                       fit@methods$outer, inner = fit@methods$smooth),
+    error = function(e) NULL) else NULL
   spc <- fit@methods$sparse_criterion
   spc_keys <- fit@methods$sparse_hyper
   if (is.null(spc_keys)) spc_keys <- character(0)

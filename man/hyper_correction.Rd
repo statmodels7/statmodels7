@@ -61,10 +61,10 @@ so there is no derivative to propagate. That is a property of the model and
 not a failure, and \code{n_hyper} is zero.
 
 It is UNAVAILABLE, with \code{n_hyper} positive and \code{C} \code{NULL}, where the
-criterion's own Hessian cannot be read: over a shared hyperparameter, whose
-curvature would be that of the wrong function, which is the gap
-\code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} refuses for the same reason, and where the search
-left a coordinate at the edge of its range.
+criterion's own Hessian cannot be read, which is where the search left a
+coordinate at the edge of its range.
+
+It is PARTIAL, with \code{complete} false, where some of it could be read and
 
 It is PARTIAL, with \code{complete} false, where some of it could be read and
 some could not: a hyperparameter \code{\link[=hyper_variance]{hyper_variance()}} held contributes

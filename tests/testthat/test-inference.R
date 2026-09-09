@@ -886,20 +886,26 @@ test_that("with nothing estimated the third matrix IS the bayesian one", {
   expect_identical(vcov(lf, type = "unconditional"), vcov(lf))
 })
 
-test_that("a shared hyperparameter returns the conditional matrix and says so", {
-  # statmod_marginal_hess() walks the index's own (parameter, term), so over
-  # a group it would read ONE member: the curvature of another function. The
-  # refusal is the same one statmod_hyper_vcov() makes, and what must not
-  # happen is the narrower matrix arriving under the wider one's name.
+test_that("a shared hyperparameter carries the unconditional matrix", {
+  # statmod_marginal_hess() reads the index MEMBER table at both orders now,
+  # so a group is one coordinate whose curvature is the sum of its members.
+  # What this pins is that the wider matrix is genuinely wider: returning the
+  # conditional one under the unconditional name is the failure the classed
+  # warning exists for, and it must not fire here.
   set.seed(11)
   d <- data.frame(x = stats::runif(200), z = stats::runif(200))
   d$y <- sin(2 * pi * d$x) + cos(2 * pi * d$z) + stats::rnorm(200, sd = 0.3)
   fit <- statmod(y ~ s(x, k = 8, id = "a") + s(z, k = 8, id = "a"),
                  distributions7::gaussian1_distrib(), d,
                  outer_criterion = reml())
-  expect_warning(V <- vcov(fit, type = "unconditional", readable = FALSE),
-                 class = "statmod_conditional_variance")
-  expect_equal(V, vcov(fit, readable = FALSE))
+  expect_no_warning(V <- vcov(fit, type = "unconditional",
+                              readable = FALSE))
+  Vb <- vcov(fit, readable = FALSE)
+  expect_identical(dim(V), dim(Vb))
+  expect_false(isTRUE(all.equal(V, Vb)))
+  # the correction is positive semidefinite, so no standard error may shrink
+  expect_true(all(sqrt(diag(V)) >= sqrt(diag(Vb)) - 1e-10))
+  expect_gt(max(sqrt(diag(V)) / sqrt(diag(Vb))), 1.001)
 })
 
 test_that("confint and summary carry the third convention", {

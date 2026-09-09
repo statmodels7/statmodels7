@@ -1,3 +1,74 @@
+# statmodels7 0.113.0
+
+* THE OUTER HESSIAN OF A MODEL CARRYING A STRUCTURAL TERM IS ONE CENTRAL
+  DIFFERENCE OF THE EXACT GRADIENT, `statmod_hess_stencil()`, where the
+  analytic assembly answered with a number that is not the criterion's second
+  derivative. That assembly spans the stacked coefficients, and a filter's own
+  parameters are estimated beside them and move with the hyperparameter too:
+  measured against a second difference of the criterion, it reads -1.927925
+  where the criterion's is -1.944612 on an unpenalized filter beside a smooth,
+  0.86 per cent out and flat in the step, and -1.1e-08 against -1.971456 on a
+  penalized one. The stencil is flat over four decades, reading -1.971435 at
+  every step from 1e-2 down to 3e-5.
+
+* The step and the tolerance are measured rather than taken from a library
+  rule. `numericals7::fd_step()` would give \eqn{\epsilon^{1/3}}, about 6e-6,
+  which is right for differencing a function evaluated to machine precision
+  and wrong for one computed by refitting a mode, where what bounds the step
+  below is that mode's reproducibility. Both are 1e-3: two decades below where
+  truncation still shows, and three orders inside a gap of six that separates
+  a resolved curvature (5.5e-08, 9.3e-07, 1.1e-06) from an unresolved one
+  (6.0e-01, 5.7e-01).
+
+* `statmod_hyper_vcov()` therefore stops refusing a mixed covariance class and
+  a penalty over a structural term's own parameters. What that replaces is a
+  wrong number rather than a missing one: measured on twenty groups whose
+  level is developed over a random effect, the assembled curvature read
+  1.09e-06 where the criterion's is 28.096, so the standard error came out
+  669.2 on the free scale against 0.18866 and the interval covered the whole
+  positive line.
+
+* ⚠️ THE SEARCH IS DELIBERATELY LEFT WITHOUT IT. `outer_gradient_ok()` refuses
+  order 2 wherever a structural term is present, penalized or not: `lbfgs()`
+  on the exact gradient is measured better than `newton()` differencing it,
+  15 evaluations against 86 and 112 against 245, and a stencil per iteration
+  would pay four refits per hyperparameter for a direction that is worse.
+
+* ⚠️ `outer_newton_ok()` separates whether the search should STEER by the
+  exact Hessian from whether one exists. Over a covariance class the
+  criterion's Hessian is strongly indefinite wherever the chart's angle
+  approaches its boundary -- measured on ten groups of ten whose truth carries
+  a correlation of exactly one, the eigenvalues of \eqn{-H} at the point the
+  search reports are 1.13e+07, -1.48e+10 and -4.20e+17 -- so `newton()` takes
+  its eigen-floor branch and the repaired step lands elsewhere, ending at a
+  criterion of -127.6696 against -126.3168 and reporting `not converged` where
+  the shorter run reports `boundary`. Away from the boundary the same shape is
+  merely dearer: 32 evaluations against 85, and 13.4 seconds against 7.0.
+
+* `rstatmod()` LETS A TERM DRAW THE COEFFICIENTS ONLY IT CAN, through
+  `modelterms7::term_coef_draw()`, last of all so that what a term writes is
+  what survives. A break-point is the case: it is a position on the
+  covariate's axis and every other rule describes it wrongly. Measured on
+  fifty groups with the covariate uniform on \eqn{(0, 1)}, thirty-eight of
+  the fifty came back pinned against a confinement limit and twelve strictly
+  interior; now none is pinned and the positions run 0.378 to 0.593.
+
+* Where a term overwrote a penalty's coordinates that penalty's own draw is
+  no longer the truth of them, so the row reported for it carries the width
+  the term used, through `penalty_theta_start()`. Measured, the reported
+  0.0534 against an observed between-group spread of 0.0494. The test is that
+  EVERY covered coordinate was owned: a penalty spanning owned and unowned
+  ones is described by neither width and keeps its drawn row.
+
+* ⚠️ THE FIX IS NECESSARY AND NOT SUFFICIENT FOR A LEGIBLE PICTURE, which is
+  worth saying because the report that prompted it was a scatterplot showing
+  no break. The kink's amplitude goes from 0.0102 to 0.0778 (7.6x), the
+  break-point now having a segment on either side to bend over -- and against
+  a response standard deviation of 4.39, itself drawn, that is still 1.8 per
+  cent. What makes a simulated break-point VISIBLE is the change of slope and
+  the scale, which are measured in the response's units and stay the
+  caller's to write.
+
 # statmodels7 0.112.0
 
 * A HYPERPARAMETER AT A BOUNDARY REPORTS NO STANDARD ERROR AND NO INTERVAL,

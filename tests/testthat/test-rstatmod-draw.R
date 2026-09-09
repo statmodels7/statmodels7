@@ -199,3 +199,110 @@ test_that("a covariance class is drawn group by group, not shuffled", {
     }
   }
 })
+
+# A break-point is a position on the covariate's own axis, so the term draws
+# it and not the plain rule. The checks are that every group's lands strictly
+# inside the confinement, and that the prior covering the deviations is
+# reported at the width the term used rather than at the one it drew.
+
+seg_positions <- function(par, dd, spec) {
+  tm <- modelterms7::term_build(spec, dd)
+  cf <- par[grep("^seg[.]", names(par))]
+  p <- modelterms7::term_refresh(tm, as.numeric(cf))@blueprint$psi
+  list(psi = as.numeric(p), lim = tm@blueprint$lim, term = tm)
+}
+
+test_that("a drawn break-point lands inside the covariate, per group", {
+  set.seed(303)
+  m <- 30
+  dd <- data.frame(id = factor(rep(seq_len(m), each = 25)),
+                   x = runif(m * 25))
+  s <- rstatmod(y ~ seg(x, by = ~ random(~ 1 | id), npsi = 1),
+                gaussian1_distrib(), dd)
+  got <- seg_positions(s$par$mu, dd,
+                       modelterms7::seg(x, by = ~ random(~ 1 | id), npsi = 1))
+  expect_true(all(got$psi > got$lim[1L] + 1e-9))
+  expect_true(all(got$psi < got$lim[2L] - 1e-9))
+  # and they sit about the covariate's middle rather than anywhere
+  expect_equal(mean(got$psi), stats::median(dd$x), tolerance = 0.15)
+
+  # THE NEGATIVE CONTROL: the plain draw this replaces does not. Without it
+  # the assertion above is a statement about the confinement and not about
+  # the draw, the positions being clamped into it either way.
+  set.seed(303)
+  plain <- modelterms7::term_refresh(
+    got$term, stats::rnorm(modelterms7::term_npar(got$term)))@blueprint$psi
+  expect_true(any(plain <= got$lim[1L] + 1e-9 | plain >= got$lim[2L] - 1e-9))
+})
+
+test_that("a prior whose coordinates the term drew is reported at its width", {
+  set.seed(304)
+  m <- 30
+  dd <- data.frame(id = factor(rep(seq_len(m), each = 25)),
+                   x = runif(m * 25))
+  s <- rstatmod(y ~ seg(x, by = ~ random(~ 1 | id), npsi = 1),
+                gaussian1_distrib(), dd)
+  r <- s$hyper[grepl("psi1", s$hyper$term) & s$hyper$name == "sigma", ]
+  expect_identical(nrow(r), 1L)
+
+  got <- seg_positions(s$par$mu, dd,
+                       modelterms7::seg(x, by = ~ random(~ 1 | id), npsi = 1))
+  lim <- got$lim
+  # THE COEFFICIENT-LEVEL WIDTH and not the position's own, a prior over
+  # these coordinates being a prior on the coefficients. The development is
+  # an intercept and one indicator per row, so a row's norm is sqrt(2) and
+  # the derived width w / 6(K + 1) arrives at a position that many times
+  # larger than each coefficient was drawn at.
+  expect_equal(r$value[[1L]], (lim[2L] - lim[1L]) / (12 * sqrt(2)),
+               tolerance = 1e-9)
+  # the negative control: NOT the unit the prior would have been drawn at
+  expect_false(isTRUE(all.equal(r$value[[1L]], 1, tolerance = 0.5)))
+  # and it describes the deviations the prior covers
+  dev <- s$par$mu[grep("^seg[.]psi1[.]random", names(s$par$mu))]
+  expect_length(dev, m)
+  expect_equal(stats::sd(dev), r$value[[1L]], tolerance = 0.4)
+  # while the positions themselves are spread by the derived width
+  pg <- as.numeric(tapply(got$psi, dd$id, function(z) z[[1L]]))
+  expect_equal(stats::sd(pg), (lim[2L] - lim[1L]) / 12, tolerance = 0.4)
+})
+
+test_that("an ordinary term's coefficients are untouched by the term draw", {
+  dd <- data.frame(x = runif(200), z = runif(200))
+  # THE SEED GOES BEFORE THE CALL AND NOT BEFORE THE DATA: building `dd`
+  # consumes 400 draws, so seeding once and re-seeding later starts the two
+  # calls from different states and compares two different simulations.
+  set.seed(305)
+  a <- rstatmod(y ~ x + z, gaussian1_distrib(), dd)
+  set.seed(305)
+  b <- rstatmod(y ~ x + z, gaussian1_distrib(), dd)
+  expect_identical(a$par, b$par)
+  # a model with no term of its own still draws every coefficient at width sd
+  expect_length(a$par$mu, 3L)
+})
+
+test_that("a held scale on a break-point's prior wins over the term's width", {
+  set.seed(306)
+  m <- 30
+  dd <- data.frame(id = factor(rep(seq_len(m), each = 25)),
+                   x = runif(m * 25))
+  s <- rstatmod(
+    y ~ seg(x, psi ~ random(~ 1 | id, hyper = c(sigma = 0.30)), npsi = 1),
+    gaussian1_distrib(), dd)
+  # the model carries one penalty, so one row; the key of an entry written
+  # as an explicit subformula is the term itself and names no parameter
+  r <- s$hyper[s$hyper$name == "sigma", ]
+  expect_identical(nrow(r), 1L)
+  expect_true(r$held[[1L]])
+  expect_equal(r$value[[1L]], 0.30, tolerance = 1e-12)
+
+  # and the deviations really are at the held scale, not at the term's own
+  dev <- s$par$mu[grep("^seg[.]psi1[.]random", names(s$par$mu))]
+  expect_length(dev, m)
+  expect_equal(stats::sd(dev), 0.30, tolerance = 0.4)
+  # the negative control: the term's own width is far from it, so a draw
+  # that ignored the held value would fail this
+  spec <- modelterms7::seg(
+    x, psi ~ random(~ 1 | id, hyper = c(sigma = 0.30)), npsi = 1)
+  lim <- modelterms7::term_build(spec, dd)@blueprint$lim
+  expect_lt((lim[2L] - lim[1L]) / (12 * sqrt(2)), 0.15)
+})

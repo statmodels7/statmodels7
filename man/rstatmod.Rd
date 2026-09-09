@@ -162,11 +162,24 @@ heavy-tailed ones. The prior's own scale is drawn as well, on the chart
 the penalty carries for it, and comes back in \code{hyper};
 \item a structural term's own parameters are drawn by the term, through
 \code{\link[modelterms7:term_draw]{modelterms7::term_draw()}}, which knows the chart each one rides. A
-loading stays positive and a persistence stationary whatever comes out.
+loading stays positive and a persistence stationary whatever comes out;
+\item a coefficient of a design column whose meaning only the term knows is
+drawn by the term, through \code{\link[modelterms7:term_coef_draw]{modelterms7::term_coef_draw()}}, last of all
+so that what it writes is what survives. A break-point is the case: it
+is a position on the covariate's own axis, so a normal of width \code{sd}
+lands outside the data as often as not and the confinement then pins it
+to the interval's edge, where one of the two segments holds a twentieth
+of the rows. Measured over fifty groups with the covariate uniform on
+\eqn{(0, 1)}, thirty-eight of the fifty came back pinned and twelve
+strictly interior.
 }
 
 A hyperparameter the term holds is used rather than drawn, so
-\code{s(x, lambda = 2)} simulates at the smoothing it names.
+\code{s(x, lambda = 2)} simulates at the smoothing it names. A prior whose
+coordinates a term drew is reported at the width the term used, the values
+there no longer being that prior's own draw -- and drawn Gaussian at that
+width, so a heavy-tailed prior over a break-point keeps its family for the
+fitting and not for the simulation.
 
 What no prior reaches falls back to the plain draw, and it is a short
 list: SCAD and MCP are improper by construction, an anisotropic tensor

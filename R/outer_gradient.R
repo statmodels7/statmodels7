@@ -89,15 +89,11 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     if (structural_penalized(spec, design)) return(FALSE)
   }
   mem <- index_members(idx)
-  # ⚠️ A SHARED hyperparameter has no exact SECOND derivative here, and it is
-  # refused rather than approximated. The criterion's own Hessian is assembled
-  # from per-term tables keyed by the pair of hyperparameter NAMES, and a row
-  # standing for members of two different terms would need the sum of two such
-  # tables under one key, which that structure cannot hold. The gradient is
-  # exact -- it is the sum of the members' -- so the search falls to lbfgs,
-  # which is what outer_default_optimizer() does wherever only the gradient
-  # exists.
-  if (order >= 2L && anyDuplicated(mem$row)) return(FALSE)
+  # A SHARED hyperparameter is exact at BOTH orders. The row's derivative
+  # is the sum of its members', and outer_pieces() keys the second order by
+  # the index ROW pair and accumulates, so a row standing for members of two
+  # terms holds the sum of their tables where a key naming the pair of
+  # hyperparameter NAMES could not.
   seen <- unique(paste(mem$parameter, mem$term, sep = "\r"))
   for (s in seen) {
     bits <- strsplit(s, "\r", fixed = TRUE)[[1L]]
@@ -138,8 +134,26 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # criterion with the mode refitted, the order-1 route converges O(h^2) --
   # 3.1e-05, 2.8e-06, 3.1e-07 at h of 1e-2, 3e-3, 1e-3 -- where it used to
   # return exactly zero in every coordinate, which reads as stationarity.
+  # ⚠️ THE ORDER-2 ROUTE IS REFUSED WHEREVER A STRUCTURAL TERM IS PRESENT,
+  # penalized or not, and the unpenalized case is the one this widened. The
+  # assembly is over the stacked COEFFICIENTS, and a filter's own parameters
+  # are estimated beside them and move with the hyperparameter too, so what it
+  # returns is not the criterion's second derivative. Measured against a
+  # SECOND difference of the criterion with the mode refitted: on an
+  # unpenalized filter beside a smooth, where this used to answer TRUE, the
+  # assembled Hessian reads -1.927925 where the criterion's is -1.944612, 0.86
+  # per cent out and flat in the step; on a PENALIZED filter it reads -1.1e-08
+  # where the criterion's is -1.971456, which is the case below.
+  #
+  # What replaces it is statmod_hess_stencil(), one central difference of the
+  # EXACT gradient, which statmod_marginal_hess() takes for such a model and
+  # the two reporting consumers read. The SEARCH is deliberately left without
+  # it: lbfgs() on the exact gradient is measured better than newton()
+  # differencing it (15 evaluations against 86, 112 against 245), and a
+  # stencil per iteration would pay four refits per hyperparameter for a
+  # direction that is worse.
+  if (order >= 2L && length(attr(design, "structural"))) return(FALSE)
   if (structural_penalized(spec, design)) {
-    if (order >= 2L) return(FALSE)
     for (u in statmod_penalized(spec, design)) {
       # a MIXED class runs through the same chain term, so the term it reaches
       # has to answer term_third() for the same reason -- and it is named on

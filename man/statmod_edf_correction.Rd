@@ -33,9 +33,8 @@ statmod_edf_correction(
 A list with \code{total}, the scalar correction, \code{per}, one entry per
 penalty key, and \code{n_hyper}, how many hyperparameters were estimated.
 Zero throughout where none was; a zero \code{total} beside a positive
-\code{n_hyper} means the curvature could not be read, which is what a shared
-hyperparameter leaves, and a caller reporting to a reader has to tell
-the two apart.
+\code{n_hyper} means the curvature could not be read, and a caller
+reporting to a reader has to tell the two apart.
 }
 \description{
 The amount by which \eqn{\mathrm{tr}[(H+S)^{-1}H]} understates the

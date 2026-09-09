@@ -98,10 +98,23 @@ NULL
 #'   the penalty carries for it, and comes back in `hyper`;
 #' - a structural term's own parameters are drawn by the term, through
 #'   [modelterms7::term_draw()], which knows the chart each one rides. A
-#'   loading stays positive and a persistence stationary whatever comes out.
+#'   loading stays positive and a persistence stationary whatever comes out;
+#' - a coefficient of a design column whose meaning only the term knows is
+#'   drawn by the term, through [modelterms7::term_coef_draw()], last of all
+#'   so that what it writes is what survives. A break-point is the case: it
+#'   is a position on the covariate's own axis, so a normal of width `sd`
+#'   lands outside the data as often as not and the confinement then pins it
+#'   to the interval's edge, where one of the two segments holds a twentieth
+#'   of the rows. Measured over fifty groups with the covariate uniform on
+#'   \eqn{(0, 1)}, thirty-eight of the fifty came back pinned and twelve
+#'   strictly interior.
 #'
 #' A hyperparameter the term holds is used rather than drawn, so
-#' `s(x, lambda = 2)` simulates at the smoothing it names.
+#' `s(x, lambda = 2)` simulates at the smoothing it names. A prior whose
+#' coordinates a term drew is reported at the width the term used, the values
+#' there no longer being that prior's own draw -- and drawn Gaussian at that
+#' width, so a heavy-tailed prior over a break-point keeps its family for the
+#' fitting and not for the simulation.
 #'
 #' What no prior reaches falls back to the plain draw, and it is a short
 #' list: SCAD and MCP are improper by construction, an anisotropic tensor
@@ -782,6 +795,7 @@ rstatmod_truth <- function(spec, design, par, sd) {
 
   units <- statmod_penalized(spec, design)
   rows <- list()
+  done <- list()
   for (u in units) {
     # A PRIOR OVER COORDINATES THAT RIDE A CHART IS CENTRED HALF AS FAR
     # from its bound, by the rule term_draw() halves its own width by: a
@@ -810,12 +824,41 @@ rstatmod_truth <- function(spec, design, par, sd) {
     # nothing, a covariance class spanning two vectors -- those coefficients
     # came from the plain draw and no scale of the prior describes them, so
     # a row for it would name a truth the data do not have.
+    done[[length(done) + 1L]] <- list(u = u, th = th, tg = tg, ok = ok, v = v)
+  }
+
+  # THE TERM DRAWS ITS OWN COORDINATES LAST, after the plain draw and after
+  # the priors, so that what it writes is what survives. A break-point is
+  # the case: it is a position on the covariate's axis and nothing else in
+  # the model is measured in those units.
+  td <- rstatmod_term_draw(spec, design, coef, params, fixed_eq, sd)
+  coef <- td$coef
+  for (e in done) {
+    th <- e$th
+    s <- term_drawn_scale(e$tg, e$ok, td$owned)
+    # A HELD HYPERPARAMETER WINS OVER THE TERM'S OWN WIDTH, and the draw is
+    # put back with it: a caller writing `psi ~ random(~1 | id, hyper =
+    # c(sigma = 0.3))` has said what the break-points vary by, which the term
+    # has no way of knowing and no business overruling. What the term keeps
+    # there is the placement, every coordinate no prior covers.
+    if (!is.null(s) && length(e$u$fixed)) {
+      j <- e$ok
+      for (p in setdiff(unique(e$tg$param[j]), fixed_eq)) {
+        k <- j & e$tg$param == p
+        coef[[p]][e$tg$pos[k]] <- e$v[k]
+      }
+      s <- NULL
+    }
+    # WHERE THE TERM OVERWROTE THEM the prior's own draw is no longer the
+    # truth of those coefficients, so what is reported is the width the term
+    # used, carried onto whatever the penalty calls its hyperparameter.
+    if (!is.null(s)) th <- as.list(penalty_theta_start(e$u$penalty, s))
     for (h in names(th)) {
       rows[[length(rows) + 1L]] <- data.frame(
-        parameter = if (is.null(u$params)) u$param else
-          paste(unique(u$params), collapse = ", "),
-        term = u$key, name = h, value = as.numeric(th[[h]]),
-        held = h %in% names(u$fixed), stringsAsFactors = FALSE)
+        parameter = if (is.null(e$u$params)) e$u$param else
+          paste(unique(e$u$params), collapse = ", "),
+        term = e$u$key, name = h, value = as.numeric(th[[h]]),
+        held = h %in% names(e$u$fixed), stringsAsFactors = FALSE)
     }
   }
 
@@ -826,6 +869,106 @@ rstatmod_truth <- function(spec, design, par, sd) {
                name = character(0), value = numeric(0), held = logical(0),
                stringsAsFactors = FALSE)
   list(coef = out$coef, psi = out$psi, hyper = hyper)
+}
+
+
+#' Let Every Term Draw the Coefficients Only It Can
+#'
+#' @description
+#' Walks the terms of every equation and hands each the slice of the drawn
+#' coefficients its block owns, taking back whatever it chose to replace.
+#'
+#' @details
+#' Almost every term replaces nothing: a slope is measured in the response's
+#' units against a covariate's and a normal of the caller's width is as good
+#' a truth as any. A break-point is the exception, being a position on the
+#' covariate's own axis, and [modelterms7::term_coef_draw()] is where a term
+#' says so.
+#'
+#' It runs last, after the plain draw and after the priors, because a
+#' coordinate a term owns is one no other rule describes correctly. Which
+#' coordinates those were comes back so that a prior covering them is
+#' reported at the width the term used rather than at the one it drew.
+#'
+#' An equation `par` fixes whole is skipped: its coefficients are the
+#' caller's and are written over everything afterwards anyway.
+#'
+#' The walk is over the design's blocks and does not descend into a term's
+#' subformulas, so a break-point developing another term's own parameter --
+#' `nl(a ~ 0 + seg(x))` -- is drawn by the plain rule as it was before. The
+#' sub-terms a break-point's own development carries are `linpar()` and
+#' `random()`, which have nothing to say here, so the shapes that reach one
+#' are covered by the block walk.
+#'
+#' @param spec The specification, read for its terms.
+#' @param design The design, read for each term's columns.
+#' @param coef The coefficients drawn so far, a list by parameter.
+#' @param params The distribution parameter names.
+#' @param fixed_eq The parameters `par` fixes whole.
+#' @param sd The width of the draws.
+#'
+#' @return A list with `coef`, the coefficients with each term's own
+#'   replaced, and `owned`, a list by parameter of named numeric vectors
+#'   carrying one width per replaced position, the names being the positions.
+#'
+#' @seealso [rstatmod_truth()], [modelterms7::term_coef_draw()]
+#'
+#' @keywords internal
+rstatmod_term_draw <- function(spec, design, coef, params, fixed_eq, sd) {
+  owned <- stats::setNames(vector("list", length(params)), params)
+  for (p in setdiff(params, fixed_eq)) {
+    blocks <- design[[p]]$blocks
+    if (!length(blocks)) next
+    got <- numeric(0)
+    for (nm in names(blocks)) {
+      tm <- spec@terms[[p]][[nm]]
+      cols <- blocks[[nm]]
+      if (is.null(tm) || !length(cols)) next
+      d <- modelterms7::term_coef_draw(tm, coef[[p]][cols], sd = sd)
+      if (is.null(d) || !length(d$index)) next
+      coef[[p]][cols] <- as.numeric(d$coef)
+      got[as.character(cols[d$index])] <- as.numeric(d$scale)
+    }
+    owned[[p]] <- got
+  }
+  list(coef = coef, owned = owned)
+}
+
+
+#' The Width a Term Drew a Penalty's Coordinates At
+#'
+#' @description
+#' One number where every coordinate a penalty covers was written by the
+#' term that owns it, and `NULL` otherwise.
+#'
+#' @details
+#' A penalty whose coordinates a term overwrote no longer describes them, so
+#' the truth reported for it is the width the term drew at. The test is that
+#' EVERY covered coordinate was owned: a penalty spanning owned and unowned
+#' ones together is described by neither width, and reporting either would
+#' name a truth half the coefficients do not have.
+#'
+#' @param tg The unit's targets, as [unit_draw_targets()] returns them.
+#' @param ok Which of them the prior's draw reached.
+#' @param owned The `owned` element of [rstatmod_term_draw()].
+#'
+#' @return A single number, or `NULL`.
+#'
+#' @seealso [rstatmod_term_draw()]
+#'
+#' @keywords internal
+term_drawn_scale <- function(tg, ok, owned) {
+  if (is.null(tg) || tg$space != "beta" || !any(ok)) return(NULL)
+  pp <- tg$param[ok]
+  ps <- tg$pos[ok]
+  sc <- numeric(0)
+  for (i in seq_along(ps)) {
+    o <- owned[[pp[i]]]
+    k <- as.character(ps[i])
+    if (is.null(o) || !(k %in% names(o))) return(NULL)
+    sc <- c(sc, o[[k]])
+  }
+  if (!length(sc)) NULL else stats::median(sc)
 }
 
 

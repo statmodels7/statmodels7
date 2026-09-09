@@ -4,12 +4,13 @@
 \alias{outer_default_optimizer}
 \title{Which Optimizer the Outer Search Uses When the Caller Names None}
 \usage{
-outer_default_optimizer(exact, exact2, mixed = FALSE)
+outer_default_optimizer(exact, use_hess, mixed = FALSE)
 }
 \arguments{
 \item{exact}{Whether the criterion has an exact gradient.}
 
-\item{exact2}{Whether it has an exact Hessian as well.}
+\item{use_hess}{Whether the search should STEER by the exact Hessian, which
+is not the same question as whether one exists: see \code{\link[=outer_newton_ok]{outer_newton_ok()}}.}
 
 \item{mixed}{Whether the model carries a covariance class spanning the
 coefficients and a structural term's own parameters.}

@@ -69,7 +69,20 @@ NULL
 #'
 #' @keywords internal
 statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
-                                  basis = NULL, ctx = NULL) {
+                                  basis = NULL, ctx = NULL,
+                                  inner = NULL) {
+  # ⚠️ A MODEL CARRYING A STRUCTURAL TERM HAS NO ANALYTIC ROUTE HERE. The
+  # assembly below is written over the stacked coefficients, and a filter's
+  # own parameters move with the hyperparameter beside them, so what it
+  # returns is not the criterion's second derivative -- measured, 0.86 per
+  # cent out on an unpenalized filter beside a smooth and essentially zero on
+  # a penalized one. The analytic route cannot be extended without a fourth
+  # order through the recursion, each order of differentiation pulling in one
+  # more order of the family, and modelterms7 has no term_fourth(). One
+  # central difference of the EXACT gradient answers instead.
+  if (length(attr(design, "structural")))
+    return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
+                                basis, inner))
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
   # assembled on, and for a refreshable term the design as it arrives is the
@@ -290,7 +303,6 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
   # Where nothing is shared there is one member per row and this is the loop
   # over rows that was here before.
   mem <- index_members(idx)
-  shared <- anyDuplicated(mem$row) > 0L
   for (r in seq_len(nh)) {
     Sm[[r]] <- matrix(0, total, total)
     cm[[r]] <- numeric(total)
@@ -325,32 +337,36 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
       cm[[r]][pos] <- cm[[r]][pos] + as.numeric(cr[[mem$name[i]]])
     }
     if (order < 2L) next
-    # ⚠️ The SECOND order is not written for a shared row. Its tables are
-    # keyed by the pair of hyperparameter NAMES within one term, and a row
-    # standing for members of two terms would want the sum of two such
-    # tables under one key. outer_gradient_ok() refuses order 2 there, so
-    # this is unreachable rather than approximate, and it says so instead of
-    # returning half a curvature.
-    if (shared) {
-      stop("the outer Hessian is not defined over a shared hyperparameter.",
-           call. = FALSE)
-    }
-    rows <- which(idx$parameter == p & idx$term == nm)
+    # THE SECOND ORDER IS KEYED BY THE INDEX ROW PAIR, not by the pair of
+    # hyperparameter NAMES within one term, and every entry ACCUMULATES. A
+    # shared row stands for the hyperparameters of several penalties held at
+    # one value, so its second derivative is the sum of theirs exactly as its
+    # first is; and two names of ONE unit may sit in two different rows, which
+    # is why the loop runs over that unit's member LINES and reads the
+    # penalty's own table by name. Nothing outside the unit contributes to the
+    # pairs it writes: the penalty is a sum, so no second derivative mixes two
+    # units. Where nothing is shared each unit's lines map onto rows one for
+    # one and this is the loop that was here before.
     d2S <- penalties7::penalty_d2hessian(pen, bt, th)
     dcr <- penalties7::penalty_dcross(pen, bt, th)
     ht <- penalties7::penalty_hess_theta(pen, bt, th)
-    for (r in rows) {
-      for (q in rows) {
-        key <- pair_key(idx$name[r], idx$name[q], names(ht))
+    for (i in lines) {
+      for (j in lines) {
+        r <- mem$row[i]
+        q <- mem$row[j]
+        nk <- pair_key(mem$name[i], mem$name[j], names(ht))
+        # the ROW pair, so that two units of one group land on one entry. The
+        # (r, q) and (q, r) keys are distinct and each is filled, where a key
+        # naming the pair of names served both at once.
+        key <- paste0(r, "_", q)
         pair[r, q] <- key
-        rho2[r, q] <- as.numeric(ht[[key]])[1L]
+        rho2[r, q] <- rho2[r, q] + as.numeric(ht[[nk]])[1L]
         if (is.null(S2[[key]])) {
           S2[[key]] <- matrix(0, total, total)
-          S2[[key]][pos, pos] <- d2S[[key]]
-          v <- numeric(total)
-          v[pos] <- as.numeric(dcr[[key]])
-          c2[[key]] <- v
+          c2[[key]] <- numeric(total)
         }
+        S2[[key]][pos, pos] <- S2[[key]][pos, pos] + as_dense(d2S[[nk]])
+        c2[[key]][pos] <- c2[[key]][pos] + as.numeric(dcr[[nk]])
       }
     }
   }
@@ -370,6 +386,172 @@ outer_pieces <- function(spec, design, coef, hyper, idx, offs, total,
   }
   list(S = Sm, c = cm, S2 = S2, c2 = c2, rho2 = rho2, pair = pair)
 }
+
+
+#' The Outer Hessian by One Difference of the Exact Gradient
+#'
+#' @description
+#' The criterion's second derivative in the hyperparameters where no analytic
+#' route exists: one central difference of [statmod_marginal_grad()], with the
+#' coefficients refitted at every probe.
+#'
+#' @details
+#' This is what a model carrying a structural term gets, and the reason is
+#' that the analytic assembly of [statmod_marginal_hess()] spans the stacked
+#' coefficients while a filter's own parameters are estimated beside them and
+#' move with the hyperparameter as well. Extending it is not a matter of
+#' bookkeeping: each order of differentiation through the recursion pulls in
+#' one more order of the response's family, so the first derivative reads the
+#' family's fourth through [modelterms7::term_third()] and the second would
+#' read a fifth, which does not exist.
+#'
+#' Differencing an ANALYTIC quantity once is the licence this toolkit already
+#' grants itself for the Student t's degrees of freedom and for the marginal
+#' break-point's prior rows. What it forbids is a difference of a difference,
+#' and there is one layer here.
+#'
+#' # The two probes start from the same place
+#'
+#' Both refit from the coefficients given and from the structural state as it
+#' stands, restored before each probe, so the two differ in the hyperparameter
+#' alone. That is what makes the result stable: the mode's own location error
+#' is nearly the same at \eqn{+h} and \eqn{-h} and cancels in the difference
+#' rather than being amplified by \eqn{1/h}. Measured on a penalized filter
+#' against a second difference of the criterion, the result is FLAT over four
+#' decades of the step -- -1.971435 at every \eqn{h} from 1e-2 down to 3e-5,
+#' against a criterion second difference of -1.971456 -- where the assembled
+#' Hessian reads -1.1e-08.
+#'
+#' # Where it refuses
+#'
+#' A stencil inherits the reproducibility of the quantity it differences,
+#' divided by the step, so where the mode is poorly located the answer is
+#' noise rather than a curvature. It is therefore computed TWICE, at `h` and
+#' at `3 * h`, and refused where the two disagree by more than
+#' [hess_stencil_tol()]. The two regimes are six orders apart and nothing
+#' sits between them: measured, 5.5e-08 on a penalized filter, 9.3e-07 on an
+#' unpenalized one beside a smooth and 1.1e-06 on an ordinary smooth, against
+#' 6.0e-01 and 5.7e-01 on two mixed covariance classes whose correlation the
+#' search left at \eqn{|z| = 8.53}, where the chart's conditioning is 1e10 and
+#' the exact gradient itself reads 1e-3. A refusal there is the answer, and
+#' the consumers already handle `NULL`.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients the probes start from.
+#' @param hyper The hyperparameters.
+#' @param method An [OuterMethod()].
+#' @param idx The hyperparameter index, from [outer_hyper_index()].
+#' @param basis The integrated basis, or `NULL`.
+#' @param inner The inner optimizer the probes refit with; `iwls()` where
+#'   none is given.
+#' @param h The step, on the free scale the search runs on.
+#'
+#' @return The Hessian on the free scale, or `NULL` where a probe could not
+#'   be evaluated or the two steps disagree.
+#'
+#' @seealso [statmod_marginal_hess()], [statmod_marginal_grad()],
+#'   [hess_stencil_step()]
+#'
+#' @keywords internal
+statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
+                                 basis = NULL, inner = NULL,
+                                 h = hess_stencil_step()) {
+  if (!nrow(idx)) return(NULL)
+  if (is.null(inner)) inner <- iwls()
+  cfg <- inner_settings(inner)
+  blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
+  if (is.null(blocks)) return(NULL)
+  eta0 <- hyper_to_eta(hyper, idx)
+  nh <- length(eta0)
+  beta0 <- unlist(coef[spec@distrib@params], use.names = FALSE)
+  # a structural term's own parameters live in an ENVIRONMENT the inner fit
+  # writes into as it goes, so a probe moves them and the next one would
+  # start from wherever the last left them. That is the ratchet outer_fit()
+  # already guards against on a step the search takes back, and it is the
+  # same guard here: the state is restored before every probe and once more
+  # on the way out, so the caller's design is left as it was found.
+  sst <- statmod_structural_state(design)
+  z0 <- if (is.null(sst)) NULL else sst$zeta
+  restore <- function() if (!is.null(z0)) sst$zeta <- z0
+  on.exit(restore(), add = TRUE)
+  grad_at <- function(eta) {
+    restore()
+    hy <- eta_to_hyper(eta, idx, hyper)
+    r <- tryCatch(statmod_alternate(spec, design, blocks, hy, inner, beta0,
+                                    cfg$expected, cfg$approx, cfg$maxit,
+                                    cfg$tol, verbosity(0),
+                                    hold_refresh = TRUE),
+                  error = function(e) NULL)
+    if (is.null(r)) return(NULL)
+    v <- tryCatch(statmod_marginal_grad(spec, design, r$obj$split(r$par), hy,
+                                        method, idx, basis),
+                  error = function(e) NULL)
+    if (is.null(v) || !all(is.finite(v))) NULL else v
+  }
+  at_step <- function(step) {
+    H <- matrix(0, nh, nh)
+    for (m in seq_len(nh)) {
+      ep <- eta0; ep[[m]] <- ep[[m]] + step
+      em <- eta0; em[[m]] <- em[[m]] - step
+      gp <- grad_at(ep)
+      gm <- grad_at(em)
+      if (is.null(gp) || is.null(gm)) return(NULL)
+      H[, m] <- (gp - gm) / (2 * step)
+    }
+    # the criterion's Hessian is symmetric; the two columns of a pair are
+    # computed from different probes and agree only up to what the probes
+    # resolve, so the average is taken rather than one of the two kept
+    (H + t(H)) / 2
+  }
+  A <- at_step(h)
+  if (is.null(A)) return(NULL)
+  B <- at_step(3 * h)
+  if (is.null(B)) return(NULL)
+  sc <- max(abs(A))
+  if (!is.finite(sc) || sc <= 0) return(NULL)
+  if (max(abs(A - B)) / sc > hess_stencil_tol()) return(NULL)
+  A
+}
+
+
+#' The Step and the Tolerance of the Outer Hessian's Stencil
+#'
+#' @description
+#' The step [statmod_hess_stencil()] differences at, and how far its two
+#' readings may disagree before it refuses.
+#'
+#' @details
+#' Both are measured rather than taken from a library rule.
+#' [numericals7::fd_step()] would give \eqn{\epsilon^{1/3}}, about 6e-6, which
+#' is right for differencing a function evaluated to machine precision and
+#' wrong here: the gradient is computed by refitting a mode, so what bounds
+#' the step below is that reproducibility and not the rounding of a double.
+#'
+#' Swept on a penalized filter against a second difference of the criterion,
+#' the result is 8.0e-05 out at \eqn{h = 0.1}, where the truncation still
+#' shows, and then FLAT at 1.06e-05 -- the reference's own error -- for every
+#' \eqn{h} from 1e-2 down to 3e-5. `1e-3` is two decades below where
+#' truncation matters and two above where anything else begins.
+#'
+#' The tolerance separates two regimes that are SIX ORDERS apart, with
+#' nothing between them: 5.5e-08, 9.3e-07 and 1.1e-06 where the mode is well
+#' located, against 6.0e-01 and 5.7e-01 where it is not. `1e-3` sits three
+#' orders above the worst resolved reading and three below the best
+#' unresolved one, and a relative error of that size in the curvature is
+#' 5e-4 in a standard error, under the fourth significant figure a summary
+#' prints.
+#'
+#' @return A single number.
+#'
+#' @seealso [statmod_hess_stencil()]
+#'
+#' @keywords internal
+hess_stencil_step <- function() 1e-3
+
+#' @rdname hess_stencil_step
+#' @keywords internal
+hess_stencil_tol <- function() 1e-3
 
 
 #' The Key of a Hyperparameter Pair
@@ -583,9 +765,8 @@ d4_key <- function(params, a, b, k, q, keys) {
 #' @return A list with `total`, the scalar correction, `per`, one entry per
 #'   penalty key, and `n_hyper`, how many hyperparameters were estimated.
 #'   Zero throughout where none was; a zero `total` beside a positive
-#'   `n_hyper` means the curvature could not be read, which is what a shared
-#'   hyperparameter leaves, and a caller reporting to a reader has to tell
-#'   the two apart.
+#'   `n_hyper` means the curvature could not be read, and a caller
+#'   reporting to a reader has to tell the two apart.
 #'
 #' @references
 #' Wood, S. N., Pya, N. and Safken, B. (2016). Smoothing parameter and model
@@ -601,9 +782,8 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   # `n_hyper` is what tells a zero correction from an unavailable one: with
   # no estimated hyperparameter there is nothing to propagate and zero is the
   # answer, while with one there is something and zero means the curvature
-  # could not be read -- over a shared group, where the criterion's Hessian
-  # is not defined. A reader told the wrong reason is worse off than one told
-  # nothing.
+  # could not be read. A reader told the wrong reason is worse off than
+  # one told nothing.
   zero <- list(total = 0, per = numeric(0), n_hyper = 0L)
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(zero)
   params <- spec@distrib@params
@@ -753,10 +933,10 @@ hyper_mode_cross <- function(spec, design, coef, hyper, idx, n) {
 #' not a failure, and `n_hyper` is zero.
 #'
 #' It is UNAVAILABLE, with `n_hyper` positive and `C` `NULL`, where the
-#' criterion's own Hessian cannot be read: over a shared hyperparameter, whose
-#' curvature would be that of the wrong function, which is the gap
-#' [statmod_hyper_vcov()] refuses for the same reason, and where the search
-#' left a coordinate at the edge of its range.
+#' criterion's own Hessian cannot be read, which is where the search left a
+#' coordinate at the edge of its range.
+#'
+#' It is PARTIAL, with `complete` false, where some of it could be read and
 #'
 #' It is PARTIAL, with `complete` false, where some of it could be read and
 #' some could not: a hyperparameter [hyper_variance()] held contributes
@@ -795,7 +975,6 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   if (!nrow(idx)) return(none)
   out <- list(C = NULL, n_hyper = nrow(idx), complete = FALSE)
-  if (anyDuplicated(index_members(idx)$row)) return(out)
 
   cr <- hyper_mode_cross(spec, design, coef, hyper, idx, length(keep))
   X <- cr$cross[keep, , drop = FALSE]
@@ -910,6 +1089,8 @@ hyper_variance <- function(A, schur = 1e-4) {
 #' @param coef The coefficients at the penalized mode.
 #' @param hyper The hyperparameters.
 #' @param method The outer method that estimated them, or `NULL`.
+#' @param inner The inner optimizer the fit used, which the stencil route
+#'   refits its probes with; `iwls()` where none is given.
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
@@ -921,28 +1102,25 @@ hyper_variance <- function(A, schur = 1e-4) {
 #' @seealso [statmod_marginal_hess()], [summary.StatmodFit()]
 #'
 #' @keywords internal
-statmod_hyper_vcov <- function(spec, design, coef, hyper, method) {
+statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
+                               inner = NULL) {
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) return(NULL)
-  # ⚠️ A SHARED hyperparameter gets no standard error, and the refusal is the
-  # honest answer rather than a conservative one. The curvature comes from
-  # statmod_marginal_hess(), which walks the index's own (parameter, term)
-  # and so would read ONE member of a group: the number would be a curvature
-  # of the wrong function, and a wrong standard error is worse than none.
-  # It is the same gap outer_gradient_ok() refuses at order 2.
-  if (anyDuplicated(index_members(idx)$row)) return(NULL)
-  # ⚠️ AND NONE FOR A MIXED CLASS, for the same reason: the curvature comes
-  # from statmod_marginal_hess(), whose assembly is written over the
-  # coefficients and does not carry the cross block such a class contributes.
-  # A wrong standard error is worse than none.
-  for (u in statmod_penalized(spec, design)) {
-    if (isTRUE(u$mixed)) return(NULL)
-  }
+  # A MIXED CLASS and a penalty over a STRUCTURAL term's own parameters were
+  # both refused here, and neither is refused now: such a model carries a
+  # structural term, so statmod_marginal_hess() answers it with
+  # statmod_hess_stencil(), whose own two-step check refuses where the
+  # curvature is not resolved. What that replaces is a wrong number rather
+  # than a missing one -- measured on a panel of twenty groups whose level is
+  # developed over a random effect, the assembled curvature read 1.09e-06
+  # where the criterion's is 28.096, so the standard error came out 669.2 on
+  # the free scale against 0.18866 and the interval covered the whole
+  # positive line.
   basis <- integrated_basis(spec, design, method@kind)
   Ho <- tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method, idx,
-                                       basis),
+                                       basis, inner = inner),
                  error = function(e) NULL)
   if (is.null(Ho)) return(NULL)
   # the criterion is a maximand, so its Hessian is negative definite at the

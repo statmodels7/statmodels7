@@ -182,17 +182,97 @@ test_that("a fit with no label is untouched by the machinery", {
   expect_true(outer_gradient_ok(sp, de, idx, reml(), 2L))
 })
 
-test_that("a shared group has no exact outer Hessian and says so by falling back", {
+# The Hessian at a shared row, and the identity that judges it. Holding the
+# members of a group at one value makes the shared model the free one read
+# along the diagonal eta -> (eta, eta), so its criterion is a composition and
+# its Hessian is the free one conjugated by the sharing map J. That identity
+# shares no arithmetic with the assembly, and reading ONE member of a group --
+# which is what a table keyed by the pair of hyperparameter names could hold --
+# fails it by a quarter of the entry rather than by a rounding.
+shared_hess <- function(formula, data, eta) {
+  spec <- statmod_spec(formula, gaussian1_distrib(), data)
+  des <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, des))
+  hy <- eta_to_hyper(eta, idx, statmod_hyper_start(spec, des))
+  r <- fit_at_hyper(formula, gaussian1_distrib(), data, hy)
+  as.matrix(statmod_marginal_hess(r$spec, r$design, r$coefficients, hy,
+                                  reml(), idx, NULL))
+}
+
+shared_hess_data <- function(n = 300, seed = 21) {
+  set.seed(seed)
+  d <- data.frame(x = runif(n, 0, 10), z = runif(n, 0, 10),
+                  w = runif(n, 0, 10))
+  d$y <- sin(3 * d$x) + 0.2 * d$z + 0.5 * cos(d$w) + rnorm(n, sd = 0.4)
+  d
+}
+
+test_that("a shared group has an exact outer Hessian at both orders", {
   d <- shared_data()
   sp <- statmod_spec(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
                      gaussian1_distrib(), d)
   de <- statmod_design(sp)
-  bl <- statmod_blocks(sp, de)
-  idx <- outer_hyper_index(sp, bl)
-  # the gradient is exact -- it is the sum of the members' -- and the second
-  # order is refused, so the search falls to the gradient-only optimizer
+  idx <- outer_hyper_index(sp, statmod_blocks(sp, de))
   expect_true(outer_gradient_ok(sp, de, idx, reml(), 1L))
-  expect_false(outer_gradient_ok(sp, de, idx, reml(), 2L))
+  expect_true(outer_gradient_ok(sp, de, idx, reml(), 2L))
+})
+
+test_that("the shared Hessian is the unshared one read along the diagonal", {
+  d <- shared_hess_data()
+  eta <- c(0.5, 0.5)
+  a <- shared_hess(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L") +
+                     s(w, k = 8), d, eta)
+  b <- shared_hess(y ~ s(x, k = 8) + s(z, k = 8) + s(w, k = 8), d,
+                   c(eta[[1L]], eta[[1L]], eta[[2L]]))
+  J <- matrix(c(1, 1, 0, 0, 0, 1), nrow = 3L)
+  expect_equal(a, t(J) %*% b %*% J, tolerance = 1e-10)
+
+  # and the identity is not vacuous: the entry a per-term table could have
+  # held is one member own curvature, which is a different number
+  expect_gt(abs(a[1L, 1L] - b[1L, 1L]), 0.2)
+})
+
+test_that("two hyperparameters of ONE unit may sit in two rows", {
+  # the shape a table keyed by the pair of NAMES could not represent at all:
+  # a tensor smooth whose first margin is shared with another term and whose
+  # second is free, so the within-unit cross derivative spans two rows
+  d <- shared_hess_data(n = 400)
+  eta <- c(0.4, -0.2)
+  fs <- y ~ te(x, z, k = c(5, 5), id = c(lambda1 = "L")) +
+    s(w, k = 8, id = "L")
+  sp <- statmod_spec(fs, gaussian1_distrib(), d)
+  mem <- index_members(outer_hyper_index(sp, statmod_blocks(sp,
+                                          statmod_design(sp))))
+  expect_identical(mem$row, c(1L, 2L, 1L))
+
+  a <- shared_hess(fs, d, eta)
+  b <- shared_hess(y ~ te(x, z, k = c(5, 5)) + s(w, k = 8), d,
+                   c(eta[[1L]], eta[[2L]], eta[[1L]]))
+  J <- matrix(c(1, 0, 1, 0, 1, 0), nrow = 3L)
+  expect_equal(a, t(J) %*% b %*% J, tolerance = 1e-10)
+  # the cross entry is the unit own, and it is not zero
+  expect_gt(abs(a[1L, 2L]), 0.1)
+})
+
+test_that("a shared hyperparameter carries a standard error", {
+  d <- shared_data()
+  fit <- statmod(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+                 gaussian1_distrib(), d, outer_criterion = reml())
+  V <- statmod_hyper_vcov(fit@spec, statmod_design(fit@spec),
+                          fit@coefficients, fit@hyper, fit@methods$outer)
+  expect_false(is.null(V))
+  expect_identical(dim(V), c(1L, 1L))
+  expect_gt(V[[1L, 1L]], 0)
+  # and the summary reports it rather than an empty cell. hyper() carries no
+  # se column at all, so an assertion made there passes on NULL whatever the
+  # fit did; the number a reader sees is in the summary table.
+  bl <- Filter(function(z) identical(z$kind, "smooth"),
+               summary(fit)@tables$mu)[[1L]]
+  r <- bl$table[bl$table$role == "estimated", ]
+  expect_identical(nrow(r), 1L)
+  expect_true(is.finite(r$se))
+  expect_lt(r$lower, r$estimate)
+  expect_gt(r$upper, r$estimate)
 })
 
 test_that("a value held on one member is held for the whole group", {
