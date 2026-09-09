@@ -147,6 +147,9 @@ exported, and none is needed to use the package.
 - [`aliased_labels()`](https://statmodels7.github.io/statmodels7/reference/aliased_labels.md)
   : Name the Aliased Coefficients of a Fit
 
+- [`answers_term_fourth()`](https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.md)
+  : Does a Term Supply Its Fourth Derivative?
+
 - [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
   : Does a Term Supply Its Third Derivative?
 
@@ -345,6 +348,9 @@ exported, and none is needed to use the package.
 
 - [`deriv4_key()`](https://statmodels7.github.io/statmodels7/reference/deriv4_key.md)
   : The Name of a Fourth-Derivative Component
+
+- [`deriv5_key()`](https://statmodels7.github.io/statmodels7/reference/deriv5_key.md)
+  : The Name of a Fifth-Derivative Component
 
 - [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
@@ -1087,6 +1093,9 @@ exported, and none is needed to use the package.
 - [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
   : The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 
+- [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+  : The Exact Outer Hessian of a Model Carrying a Structural Term
+
 - [`statmod_structural_par()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.md)
   : The Structural Terms' Estimated Parameters
 
@@ -1133,6 +1142,13 @@ exported, and none is needed to use the package.
 - [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
   : The Two Pieces of the Chain Term That Read the Direction
 
+- [`structural_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.md)
+  : The Joint Second Derivative of the Penalized Information, Traced
+
+- [`structural_dk_matrix()`](https://statmodels7.github.io/statmodels7/reference/structural_dk_matrix.md)
+  : The Joint Derivative of the Penalized Information Along One
+  Direction
+
 - [`structural_grad_parts()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
   [`structural_grad_parts_impl()`](https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.md)
   : What the Joint Chain Term Needs Before a Direction Is Known
@@ -1145,6 +1161,9 @@ exported, and none is needed to use the package.
 
 - [`structural_memo()`](https://statmodels7.github.io/statmodels7/reference/structural_memo.md)
   : Reuse a Structural Quantity Computed at the Same Point
+
+- [`structural_outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/structural_outer_pieces.md)
+  : The Penalty's Pieces on the Joint Vector
 
 - [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)
   [`mixed_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md)
@@ -1164,6 +1183,9 @@ exported, and none is needed to use the package.
 
 - [`structural_tail_names()`](https://statmodels7.github.io/statmodels7/reference/structural_tail_names.md)
   : The Names of the Structural Tail of the Joint Information
+
+- [`structural_term_of()`](https://statmodels7.github.io/statmodels7/reference/structural_term_of.md)
+  : Which Structural Term a Model Carries, If Any
 
 - [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
   : The Parameters a Structural Term Starts From

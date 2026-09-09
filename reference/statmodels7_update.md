@@ -81,7 +81,7 @@ v <- statmodels7_update()
 #>   basis7           0.6.0
 #>   distributions7   0.52.0
 #>   linkfunctions7   0.4.0
-#>   modelterms7      0.70.0
+#>   modelterms7      0.71.0
 #>   numericals7      0.12.0
 #>   optimizers7      0.8.0
 #>   parameters7      0.20.0

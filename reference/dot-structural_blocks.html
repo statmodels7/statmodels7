@@ -11,7 +11,7 @@ one."><meta property="og:image" content="https://statmodels7.github.io/statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.114.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.115.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ one.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.structural_blocks</span><span class="op">(</span><span class="va">params</span>, <span class="va">ap</span>, <span class="va">Vs</span>, <span class="va">H</span>, <span class="va">D3</span>, <span class="va">D4</span>, <span class="va">n</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.structural_blocks</span><span class="op">(</span><span class="va">params</span>, <span class="va">ap</span>, <span class="va">Vs</span>, <span class="va">H</span>, <span class="va">D3</span>, <span class="va">D4</span>, <span class="va">n</span>, D5 <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,8 +67,9 @@ one.</p>
 <dd><p>The static rows.</p></dd>
 
 
-<dt id="arg-h-d-d-">H, D3, D4<a class="anchor" aria-label="anchor" href="#arg-h-d-d-"></a></dt>
-<dd><p>The family's derivatives at the fitted predictors.</p></dd>
+<dt id="arg-h-d-d-d-">H, D3, D4, D5<a class="anchor" aria-label="anchor" href="#arg-h-d-d-d-"></a></dt>
+<dd><p>The family's derivatives at the fitted predictors.
+<code>D5</code> is needed only where two directions are given.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -77,7 +78,8 @@ one.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A function of the direction returning a <code>blocks</code> callback.</p>
+    <p>A function of the direction – <code>NULL</code>, one vector, or a list
+of two – returning a <code>blocks</code> callback.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -88,6 +90,13 @@ direction and as the factor multiplying the movement of \(V_p\), and
 <code>N</code> is where the family's fourth derivative enters: each order of
 differentiating the predictor through the recursion pulls in one more order
 of the family.</p>
+<p>With TWO directions the callback serves <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>
+instead, and carries three quantities more: <code>Q</code>, the fourth
+derivative with two of its indices on the filter's own equation;
+<code>P</code>, the FIFTH derivative contracted against both directions, which
+is the only place that order enters; and <code>cppp</code>, the scalar the
+level's own curvature moves by, which no contraction recovers.
+<code>N</code> is then a list of two, one per direction.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

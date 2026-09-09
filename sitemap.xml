@@ -17,6 +17,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/add_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aliased_labels.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/armijo_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
@@ -83,6 +84,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deficient_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv4_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/deriv5_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_sparse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.html</loc></url>
@@ -343,6 +345,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_par.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.html</loc></url>
@@ -363,16 +366,20 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_callbacks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_dk_matrix.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_grad_parts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_joint_basis.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_memo.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_outer_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalized.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_penalty_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_psi.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_range_cols.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_se_columns.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_tail_names.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/structural_term_of.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_blocks.html</loc></url>

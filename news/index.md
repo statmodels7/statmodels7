@@ -1,5 +1,124 @@
 # Changelog
 
+## statmodels7 0.115.0
+
+- THE OUTER HESSIAN OF A MODEL CARRYING A STRUCTURAL TERM IS EXACT.
+  [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+  is
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  written on the joint vector of coefficients and a filter’s own
+  parameters, which is what the criterion’s determinant spans there. It
+  reads
+  [`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)
+  and the family’s fifth derivative through
+  [`distributions7::distrib_deriv5()`](https://statmodels7.github.io/distributions7/reference/distrib_deriv5.html),
+  by the rule the gradient’s own page states one order down: each order
+  of differentiating the predictor through the recursion pulls in one
+  more order of the family.
+
+- Measured against a central difference of the EXACT gradient with the
+  mode refitted, at three steps: 2.2142e-04, 1.9931e-05 and 2.2146e-06
+  at of 1e-2, 3e-3 and 1e-3 on a panel of eight groups of twenty-five,
+  and 6.1856e-05, 5.5674e-06 and 6.1860e-07 on twelve of thirty. The
+  ratios are 11.1 and 9.0, which is clean : THE RATE IS THE ASSERTION, a
+  missing term being flat in the step and a badly located mode growing
+  as .
+
+- Against a Richardson limit of that difference, which is neither
+  route’s own answer, the analytic Hessian reads **1.8e-11 and 4.2e-11**
+  where
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
+  reads 2.2e-06 and 3.4e-06 – five orders of magnitude – and it is also
+  1.91x and 2.10x FASTER, the stencil paying refits of the gradient
+  where this pays one `term_fourth()` per pair of hyperparameters.
+
+- ⚠️ THE SEARCH IS NOT GIVEN `newton()`, which is a measurement and not
+  an omission. Over five panels every route reaches the same criterion
+  to six decimals; `newton()` takes fewer evaluations on three of them
+  and is slower in wall time on ALL five – 8 evaluations in 1.54 s
+  against 5 in 2.05, 5 in 1.11 against 5 in 2.92, 45 in 5.88 against 11
+  in 10.62, 7 in 2.38 against 9 in 11.10, and 69 in 3.02 against 45 in
+  4.06. A Hessian at two hyperparameters costs 0.805 s where a criterion
+  evaluation costs 0.34, which accounts for the gap exactly.
+  [`outer_newton_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_newton_ok.md)
+  therefore holds the default at `lbfgs()` for a structural model, as it
+  already does for a covariance class, and what the Hessian’s
+  availability governs is untouched: it is supplied to an optimizer the
+  caller NAMES, it is what
+  [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  and `vcov(type = "unconditional")` read, and it is recorded as
+  `exact_hessian`.
+
+- ⚠️ A MODEL WITH NO STRUCTURAL TERM IS IDENTICAL BIT FOR BIT, and by
+  construction rather than by tolerance: the route is taken on the
+  design’s own answer, so such a model never reaches it. Measured over a
+  smooth and a smooth with a random effect, the log-likelihood, the
+  coefficients, the hyperparameters, the criterion, the evaluation
+  count, the gradient, the Hessian, the effective degrees of freedom,
+  all three variances, the hyperparameter’s own variance, the
+  certificate and the printed summary are every one
+  [`identical()`](https://rdrr.io/r/base/identical.html).
+
+- ⚠️ WHAT IT BUYS WHERE THE STENCIL REFUSES IS A NUMBER AND NOT AN
+  INTERVAL. On a mixed covariance class whose correlation the search
+  leaves at the boundary of the spherical chart, the stencil’s two-step
+  guard refuses and the analytic route returns a matrix, differencing
+  nothing. That matrix is NOT verifiable there – a difference of the
+  exact gradient reads 3.7e-02, 4.7e-01 and 1.6e-01 at of 1e-2, 3e-3 and
+  1e-3, which is noise – and what a reader is told is unchanged: the
+  curvature at a boundary is not negative definite, its smallest
+  eigenvalue reading -2.5e-05 against a largest of 5.86, so
+  [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  still declines and the certificate still says `boundary`.
+
+- ⚠️ A block that MOVES with its coefficients – `nl()`, `seg()` – beside
+  the filter contributes nothing to this assembly, exactly as it
+  contributes nothing to
+  [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md):
+  that correction is written in the coefficient-space assembly and has
+  no joint twin. Such a model is admitted at both orders and the
+  approximation is the gradient’s own, which is stated on the page
+  rather than left to be found.
+
+- [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  opens order 2 where the structural term answers `term_fourth()` and
+  refuses where it does not, which is the rule order 1 already follows
+  with `term_third()`. `regime()` answers neither and keeps
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md),
+  which stays in place as the route for any term that has not written
+  the fourth order.
+
+- [`structural_dk_matrix()`](https://statmodels7.github.io/statmodels7/reference/structural_dk_matrix.md)
+  assembles as a matrix where
+  [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
+  returns only its trace, the Hessian needing the matrix in
+  `tr(MK_lMK_m)` and as the operator carrying the mode’s second
+  movement. The two are held to an IDENTITY rather than a tolerance:
+  traced against the assembled matrix reproduces the trace route to
+  1e-10, and they share the recursion’s own pieces and nothing else.
+
+- [`structural_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.md)
+  is `tr(M\,\partial^2K/\partial u^2[v,w])`, nine terms and no matrix
+  over the coefficients assembled: a term in traces as a weighted sum of
+  the per-observation diagonal, and the three terms carrying the
+  recursion’s own derivatives trace against what `term_curvature()`,
+  `term_third()` and `term_fourth()` return at the right weights.
+
+- ⚠️ A ONE-HYPERPARAMETER CHECK CANNOT SEE A TERM PLACED ON THE WRONG
+  DIRECTION, the two directions coinciding there – the trap the symmetry
+  of an index pair at already records one layer down. Measured: an
+  injection swapping one of the two directions leaves the
+  one-hyperparameter convergence check green and fails only the
+  off-diagonal and the symmetry checks, which is why both exist.
+
+- ⚠️ AND A SECOND DERIVATIVE IS A STATEMENT ABOUT THE POINT IT IS READ
+  AT. The first version of the off-diagonal test used a panel of six
+  groups where the search stops with the outer gradient at **-734**;
+  there the assembled curvature reads 1.8e+06, the stencil refuses, and
+  a difference of the gradient is 80 per cent asymmetric at every step.
+  The test asserts the mode before the arithmetic, so a fit landing
+  elsewhere fails on the premise rather than on the derivative.
+
 ## statmodels7 0.114.0
 
 - `vcov(type = "unconditional")` CARRIES THE STRUCTURAL HALF. It
