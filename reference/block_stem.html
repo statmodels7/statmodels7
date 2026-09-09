@@ -11,7 +11,7 @@ written on different bases."><meta property="og:image" content="https://statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ written on different bases.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A block is keyed in the design by the term's deparsed call, so
-<code>s(x, k = 6)</code> and <code>s(x, k = 10)</code> are two different keys and never meet by
+<code>s(x, bspline_smooth(k = 6))</code> and <code>s(x, bspline_smooth(k = 10))</code> are two different keys and never meet by
 name. Their coefficients, on the other hand, are <code>s(x).lin</code>, <code>s(x).z1</code>,
 ... on both sides, so the stem <code>s(x)</code> names the term without naming the
 basis. The suffix is taken from the LAST dot rather than the first, so a

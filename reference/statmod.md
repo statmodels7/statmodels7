@@ -219,11 +219,12 @@ caller set both and be obeyed by neither.
 ## Every hyperparameter is estimated unless its term holds it
 
 Which ones are held is said by the **term** that carries the penalty:
-`lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, lambda = 2)`,
-`enet(x, alpha = 0.5)`. Everything left `NULL`, which is each term's
-default, is chosen from the data. The term is where the penalty is named
-and so is where that belongs; an argument here saying the same thing
-would be read by nobody whenever the two disagreed.
+`lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`,
+`s(x, bspline_smooth(), hyper = c(lambda = 2))`, `enet(x, alpha = 0.5)`.
+Everything left `NULL`, which is each term's default, is chosen from the
+data. The term is where the penalty is named and so is where that
+belongs; an argument here saying the same thing would be read by nobody
+whenever the two disagreed.
 
 The **smooth** hyperparameters go to `outer_criterion`,
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)

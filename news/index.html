@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.117.0" id="statmodels7-01170">statmodels7 0.117.0<a class="anchor" aria-label="anchor" href="#statmodels7-01170"></a></h2>
+<ul><li><p><strong>The smooths are written on ’s smoother.</strong> How a smooth is built – the basis, the roughness penalty, the null space and the coordinates – is one object now, so <code>s(x, k = 20)</code> becomes <code>s(x, bspline_smooth(k = 20))</code> and <code>s(x, lambda = 2)</code> becomes <code>s(x, hyper = c(lambda = 2))</code>. This package’s own call sites follow; what it buys is in  0.72.0 and  0.8.1, where <code>s(doy, fourier_smooth(k = 9, lower = 0, upper = 365))</code> is a periodic smooth that keeps <code>f(0) = f(1)</code> to 2.2e-16 against the 2.2125 the old route gave.</p></li>
+<li><p>⚠️ <strong>Every fit is unchanged, and what says so is an identity.</strong> Against a battery captured from 0.116.x before the change – fifteen term shapes and twelve fitted models, with and without <code>by</code>, factor and numeric, sparse and dense, tensor products isotropic and not, a distributional model, a held hyperparameter, a shared one and a Poisson – the log-likelihood, the coefficients, the effective degrees of freedom, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, the fitted values and the convergence flag are <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code>: 192 comparisons and no difference.</p></li>
+<li><p>⚠️ <strong><code><a href="../reference/smooth_linear_cols.html">smooth_linear_cols()</a></code> asks the construction rather than a flag.</strong> It read <code>spec$linear</code>, which was the term’s record of the same fact while a smooth was always a B-spline with a second-derivative penalty. It now asks which <strong>leading columns the penalty leaves free</strong>, which is what <code>null_space = "keep"</code> means and which follows the smoother: one column at order 2, two at order 3, none for a periodic basis whose null space is the constant and whose constant belongs to the model’s intercept. Without it a smooth’s summary lost its linear row entirely, printing the smoothing parameter and nothing else.</p></li>
+<li><p>⚠️ <strong>The key a term is filed under now carries the construction</strong> – <code>s(x, bspline_smooth(k = 6))</code> rather than <code>s(x, k = 6)</code> – since it is the deparsed call. <code><a href="../reference/hyper.html">hyper()</a></code>, the outer index and the trace read it, and two smooths of one covariate built differently are no longer indistinguishable by it. The <strong>label</strong> that prefixes the coefficient names does not move, so a coefficient table still reads <code>s(x).lin</code>. Measured, <code><a href="../reference/start_from.html">start_from()</a></code> needs no change for this: it pairs on the label’s stem and projects, and a warm start across a wider basis, another degree, another order, a dropped null space, a Legendre basis or a different family entirely lands on the cold fit’s answer, the log-likelihood gaps running 1.8e-15 to 8.5e-09.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.116.1" id="statmodels7-01161">statmodels7 0.116.1<a class="anchor" aria-label="anchor" href="#statmodels7-01161"></a></h2>
 <ul><li><p>THE BOUNDS <code>test-edf-correction-joint.R</code> PUTS ON THE CORRECTION ARE WIDE ON PURPOSE, and they were not wide enough. Swept over eight samples of the same shape the quantity runs from 0.39 to 1.92 – so the (0.5, 2) it shipped with would have been a bound placed near where THIS machine happened to stop, which is the reading that cost two red CI runs earlier the same day on another test. They are (0.1, 5) now.</p></li>

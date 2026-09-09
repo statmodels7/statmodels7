@@ -41,12 +41,12 @@ a spline's knots, a basis reparametrization.
 reapplies that record to new rows.
 
 Rebuilding instead gives a block of the same shape, multiplying the same
-coefficients, that means something else. Measured on `y ~ s(x, k = 10)`
-at 200 observations: predicting on 40 of the rows the model was fitted
-to differed from the fitted values there by 0.237, and on the 51 rows
-with \\\|x\| \< 0.5\\, where the rebuilt knots move furthest, by 1.19.
-Handing back the whole data agrees exactly, which is why nothing
-noticed.
+coefficients, that means something else. Measured on
+`y ~ s(x, bspline_smooth(k = 10))` at 200 observations: predicting on 40
+of the rows the model was fitted to differed from the fitted values
+there by 0.237, and on the 51 rows with \\\|x\| \< 0.5\\, where the
+rebuilt knots move furthest, by 1.19. Handing back the whole data agrees
+exactly, which is why nothing noticed.
 
 The offsets are re-evaluated against `data` rather than carried across,
 since a vector of the fitting data's length says nothing about other

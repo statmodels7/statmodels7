@@ -142,16 +142,18 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 
-fa <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+fa <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
               outer_criterion = aic())
-fb <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+fb <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
               outer_criterion = bic())
 
 # BIC charges log(n) = 5.3 per degree of freedom against AIC's 2, so it
 # buys a smoother fit: a larger smoothing parameter and fewer edf.
 c(aic = unlist(fa@hyper), bic = unlist(fb@hyper))
-#> aic.mu.s(x, k = 10).lambda bic.mu.s(x, k = 10).lambda 
-#>                  0.5701725                 13.4430917 
+#> aic.mu.s(x, bspline_smooth(k = 10)).lambda 
+#>                                  0.5701725 
+#> bic.mu.s(x, bspline_smooth(k = 10)).lambda 
+#>                                 13.4430917 
 c(aic = sum(fa@edf$edf), bic = sum(fb@edf$edf))
 #>      aic      bic 
 #> 9.916985 7.269979 

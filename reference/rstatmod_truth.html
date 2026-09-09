@@ -11,7 +11,7 @@ by whatever par names."><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,7 @@ term's parameters are drawn by the term, which knows their charts.</p>
 <p>The truth is drawn once whatever <code>n_sim</code> is, so the replicates differ in
 what is random and not in what is being estimated.</p>
 <p>A hyperparameter the term holds is used as given rather than drawn:
-<code>s(x, lambda = 2)</code> says what the smoothing is and the simulation says it
+<code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> says what the smoothing is and the simulation says it
 too.</p>
     </div>
     <div class="section level2">

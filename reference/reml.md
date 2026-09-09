@@ -135,18 +135,18 @@ set.seed(1)
 dd <- data.frame(x = runif(200, -2, 2))
 dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 
-fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
                outer_criterion = reml())
 
 # The smoothing parameter was estimated, and hyper() says by what.
 hyper(fit)
-#>   parameter         term   name estimate  held source   id
-#> 1        mu s(x, k = 10) lambda 3.245098 FALSE   reml <NA>
+#>   parameter                         term   name estimate  held source   id
+#> 1        mu s(x, bspline_smooth(k = 10)) lambda 3.245098 FALSE   reml <NA>
 
 # ML profiles the unpenalized directions instead of integrating them, so
 # it shrinks a little less. The gap is small here because only two of the
 # ten coefficients are unpenalized; it widens with the fixed effects.
-fml <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+fml <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
                outer_criterion = ml())
 c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
 #>     reml       ml 

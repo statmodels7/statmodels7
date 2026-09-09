@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -236,7 +236,7 @@ neither.</p>
     <div class="section level2">
     <h2 id="every-hyperparameter-is-estimated-unless-its-term-holds-it">Every hyperparameter is estimated unless its term holds it<a class="anchor" aria-label="anchor" href="#every-hyperparameter-is-estimated-unless-its-term-holds-it"></a></h2>
     <p>Which ones are held is said by the <strong>term</strong> that carries the penalty:
-<code>lasso(x, lambda = 3)</code>, <code>ridge(x, sigma = 0.5)</code>, <code>s(x, lambda = 2)</code>,
+<code>lasso(x, lambda = 3)</code>, <code>ridge(x, sigma = 0.5)</code>, <code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code>,
 <code>enet(x, alpha = 0.5)</code>. Everything left <code>NULL</code>, which is each term's
 default, is chosen from the data. The term is where the penalty is named
 and so is where that belongs; an argument here saying the same thing would

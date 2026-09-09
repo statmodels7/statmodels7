@@ -118,7 +118,7 @@ for the ones that did not.
 ``` r
 dd <- data.frame(x = runif(120))
 dd$y <- sin(4 * dd$x) + rnorm(120, 0, 0.3)
-statmod_certificate(statmod(y ~ s(x, k = 8),
+statmod_certificate(statmod(y ~ s(x, bspline_smooth(k = 8)),
                             distributions7::gaussian1_distrib(), dd))$state
 #> [1] "converged"
 ```

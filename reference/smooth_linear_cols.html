@@ -9,7 +9,7 @@ effect in, which are the ones worth printing."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,9 +69,18 @@ effect in, which are the ones worth printing.</p>
     <p>The rest of the block are coefficients of an orthonormal basis of the
 wiggly part; individually they say nothing, and what they say jointly is the
 effective degrees of freedom, which the block header reports instead.</p>
-<p>The question is asked of the term's own specification (<code>spec$linear</code>)
-and never of a suffix in a coefficient's name, a name being a label and
-this is a fact about the construction.</p>
+<p>The question is asked of the construction and never of a suffix in a
+coefficient's name, a name being a label. What the construction says is
+the <strong>penalty</strong>: a column the roughness matrix leaves alone is a column
+of the null space the smoother kept, which is what carries the linear
+effect. Read that way the answer follows the smoother rather than a flag:
+an order-2 penalty leaves one column free, an order-3 penalty two, and a
+periodic basis none, its null space being the constant alone and the
+constant belonging to the model's intercept.</p>
+<p>It replaces a reading of <code>spec$linear</code>, which was the term's record of
+the same fact while a smooth was always a B-spline with a second-derivative
+penalty. Under a factor <code>by</code> the block is one copy per level and only the
+first level's column is marked, which is what that reading did too.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -83,7 +83,8 @@ coincide.
 `held` is a logical and says only whether the value moved. `source` says
 what put it there:
 
-- `"fixed"` for one the term itself held, as `s(x, lambda = 2)`.
+- `"fixed"` for one the term itself held, as
+  `s(x, bspline_smooth(), hyper = c(lambda = 2))`.
 
 - the criterion's name, `"reml"` or `"ml"`, for one a marginal criterion
   maximized.
@@ -126,18 +127,18 @@ d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
 # Estimated by REML, which is what source says.
-fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
+fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
 hyper(fit)
-#>   parameter        term   name estimate  held source   id
-#> 1        mu s(x, k = 6) lambda 29.67929 FALSE   reml <NA>
+#>   parameter                        term   name estimate  held source   id
+#> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.67929 FALSE   reml <NA>
 
 # The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
-#>   parameter        term   name estimate  held source   id
-#> 1        mu s(x, k = 6) lambda  3.39045 FALSE   reml <NA>
+#>   parameter                        term   name estimate  held source   id
+#> 1        mu s(x, bspline_smooth(k = 6)) lambda  3.39045 FALSE   reml <NA>
 
 # Held by the term instead, and reported as fixed.
-held <- statmod(y ~ s(x, k = 6, lambda = 2),
+held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
                 distributions7::gaussian1_distrib(), d)
 hyper(held)[, c("name", "estimate", "held", "source")]
 #>     name estimate held source

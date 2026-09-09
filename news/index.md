@@ -1,5 +1,55 @@
 # Changelog
 
+## statmodels7 0.117.0
+
+- **The smooths are written on ’s smoother.** How a smooth is built –
+  the basis, the roughness penalty, the null space and the coordinates –
+  is one object now, so `s(x, k = 20)` becomes
+  `s(x, bspline_smooth(k = 20))` and `s(x, lambda = 2)` becomes
+  `s(x, hyper = c(lambda = 2))`. This package’s own call sites follow;
+  what it buys is in 0.72.0 and 0.8.1, where
+  `s(doy, fourier_smooth(k = 9, lower = 0, upper = 365))` is a periodic
+  smooth that keeps `f(0) = f(1)` to 2.2e-16 against the 2.2125 the old
+  route gave.
+
+- ⚠️ **Every fit is unchanged, and what says so is an identity.**
+  Against a battery captured from 0.116.x before the change – fifteen
+  term shapes and twelve fitted models, with and without `by`, factor
+  and numeric, sparse and dense, tensor products isotropic and not, a
+  distributional model, a held hyperparameter, a shared one and a
+  Poisson – the log-likelihood, the coefficients, the effective degrees
+  of freedom, [`vcov()`](https://rdrr.io/r/stats/vcov.html), the fitted
+  values and the convergence flag are
+  [`identical()`](https://rdrr.io/r/base/identical.html): 192
+  comparisons and no difference.
+
+- ⚠️
+  **[`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
+  asks the construction rather than a flag.** It read `spec$linear`,
+  which was the term’s record of the same fact while a smooth was always
+  a B-spline with a second-derivative penalty. It now asks which
+  **leading columns the penalty leaves free**, which is what
+  `null_space = "keep"` means and which follows the smoother: one column
+  at order 2, two at order 3, none for a periodic basis whose null space
+  is the constant and whose constant belongs to the model’s intercept.
+  Without it a smooth’s summary lost its linear row entirely, printing
+  the smoothing parameter and nothing else.
+
+- ⚠️ **The key a term is filed under now carries the construction** –
+  `s(x, bspline_smooth(k = 6))` rather than `s(x, k = 6)` – since it is
+  the deparsed call.
+  [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md),
+  the outer index and the trace read it, and two smooths of one
+  covariate built differently are no longer indistinguishable by it. The
+  **label** that prefixes the coefficient names does not move, so a
+  coefficient table still reads `s(x).lin`. Measured,
+  [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
+  needs no change for this: it pairs on the label’s stem and projects,
+  and a warm start across a wider basis, another degree, another order,
+  a dropped null space, a Legendre basis or a different family entirely
+  lands on the cold fit’s answer, the log-likelihood gaps running
+  1.8e-15 to 8.5e-09.
+
 ## statmodels7 0.116.1
 
 - THE BOUNDS `test-edf-correction-joint.R` PUTS ON THE CORRECTION ARE

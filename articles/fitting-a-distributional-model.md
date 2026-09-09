@@ -94,12 +94,12 @@ db <- data.frame(z = sort(runif(n, -3, 3)),
                  g = factor(rep(1:20, length.out = n)))
 db$y <- rnorm(n, 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], 0.4)
 
-f3 <- statmod(y ~ s(z, k = 8), gaussian1_distrib(), db)
+f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)), gaussian1_distrib(), db)
 f3@edf
-#>   parameter        term coefficients     edf
-#> 1        mu      linpar            1 1.00000
-#> 2        mu s(z, k = 8)            7 5.27609
-#> 3     sigma      linpar            1 1.00000
+#>   parameter                        term coefficients     edf
+#> 1        mu                      linpar            1 1.00000
+#> 2        mu s(z, bspline_smooth(k = 8))            7 5.27609
+#> 3     sigma                      linpar            1 1.00000
 ```
 
 The smooth carries 7 coefficients and **spends** about 5.3 of them: that
@@ -111,8 +111,8 @@ reports the hyperparameters and who chose each:
 ``` r
 
 hyper(f3)
-#>   parameter        term   name estimate  held source   id
-#> 1        mu s(z, k = 8) lambda 1.067872 FALSE   reml <NA>
+#>   parameter                        term   name estimate  held source   id
+#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.067872 FALSE   reml <NA>
 ```
 
 A random effect is written the same way and is the same machinery, its
@@ -120,17 +120,17 @@ penalty being a Gaussian prior over the group effects:
 
 ``` r
 
-f4 <- statmod(y ~ s(z, k = 8) + random(~ 1 | g), gaussian1_distrib(), db)
+f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g), gaussian1_distrib(), db)
 f4@edf
-#>   parameter           term coefficients      edf
-#> 1        mu         linpar            1  1.00000
-#> 2        mu    s(z, k = 8)            7  6.12777
-#> 3        mu random(~1 | g)           20 18.57777
-#> 4     sigma         linpar            1  1.00000
+#>   parameter                        term coefficients      edf
+#> 1        mu                      linpar            1  1.00000
+#> 2        mu s(z, bspline_smooth(k = 8))            7  6.12777
+#> 3        mu              random(~1 | g)           20 18.57777
+#> 4     sigma                      linpar            1  1.00000
 hyper(f4)
-#>   parameter           term   name  estimate  held source   id
-#> 1        mu    s(z, k = 8) lambda 1.0454567 FALSE   reml <NA>
-#> 2        mu random(~1 | g)  sigma 0.7061116 FALSE   reml <NA>
+#>   parameter                        term   name  estimate  held source   id
+#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454567 FALSE   reml <NA>
+#> 2        mu              random(~1 | g)  sigma 0.7061116 FALSE   reml <NA>
 ```
 
 20 group effects spend about 18.6 degrees of freedom here, and the
@@ -171,7 +171,7 @@ then says so in its `held` column.
 summary(f3)
 #> A statmod fit
 #> 
-#> Call:  statmod(formula = y ~ s(z, k = 8), distrib = gaussian1_distrib(), 
+#> Call:  statmod(formula = y ~ s(z, bspline_smooth(k = 8)), distrib = gaussian1_distrib(), 
 #>             data = db)
 #> 
 #> Distribution: gaussian1     Observations: 300
@@ -182,7 +182,7 @@ summary(f3)
 #>                estimate      se     z       p  lower upper
 #>   (Intercept)    0.9152 0.04678 19.56 < 1e-16 0.8235 1.007
 #> 
-#> s(z, k = 8)   [7 coefficients, edf 5.28]
+#> s(z, bspline_smooth(k = 8))   [7 coefficients, edf 5.28]
 #>                  estimate      se     z        p   lower  upper
 #>   lambda [reml]    1.0680 0.71220                0.28890 3.9470
 #>   lin              0.1389 0.04686 2.964 0.003039 0.04704 0.2307
@@ -196,7 +196,7 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 1.17 s   search: converged
+#> fitted in 925 ms   search: converged
 #> certificate: CONVERGED   outer gradient 1.87e-05   5.77e-13 above the mode
 #> 1 note: print(summary(fit), notes = TRUE)
 ```

@@ -9,7 +9,7 @@ every block is reapplied to those rows rather than rebuilt from them."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,7 @@ there. Every other property is <code>spec</code>'s.</p>
 spline's knots, a basis reparametrization. <code><a href="https://statmodels7.github.io/modelterms7/reference/term_predict.html" class="external-link">modelterms7::term_predict()</a></code>
 reapplies that record to new rows.</p>
 <p>Rebuilding instead gives a block of the same shape, multiplying the same
-coefficients, that means something else. Measured on <code>y ~ s(x, k = 10)</code> at
+coefficients, that means something else. Measured on <code>y ~ s(x, bspline_smooth(k = 10))</code> at
 200 observations: predicting on 40 of the rows the model was fitted to
 differed from the fitted values there by 0.237, and on the 51 rows with
 \(|x| &lt; 0.5\), where the rebuilt knots move furthest, by 1.19. Handing

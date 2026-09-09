@@ -51,8 +51,8 @@ The truth is drawn once whatever `n_sim` is, so the replicates differ in
 what is random and not in what is being estimated.
 
 A hyperparameter the term holds is used as given rather than drawn:
-`s(x, lambda = 2)` says what the smoothing is and the simulation says it
-too.
+`s(x, bspline_smooth(), hyper = c(lambda = 2))` says what the smoothing
+is and the simulation says it too.
 
 ## See also
 

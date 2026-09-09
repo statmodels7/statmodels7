@@ -11,7 +11,7 @@ share is left to a second strategy."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,8 +98,8 @@ carried across are removed.</p></dd>
 
 
 </dl><p>The third rule is what makes two bases comparable at all. A smooth's
-coefficients are coordinates in a basis the fit rotates, so <code>s(x, k = 6)</code>
-and <code>s(x, k = 10)</code> carry the names <code>s(x).z1</code> to <code>s(x).z4</code> in common and
+coefficients are coordinates in a basis the fit rotates, so <code>s(x, bspline_smooth(k = 6))</code>
+and <code>s(x, bspline_smooth(k = 10))</code> carry the names <code>s(x).z1</code> to <code>s(x).z4</code> in common and
 mean something different by each: measured on one data set, <code>s(x).z1</code> is
 0.0267 at <code>k = 6</code> and -0.0277 at <code>k = 10</code>, opposite in sign. What the two
 do share is the FUNCTION, so the coefficients are found by projecting it,
@@ -133,8 +133,8 @@ On a Poisson at \(n = 4000\) refitted with one covariate dropped it is
 binomial with 40 columns at \(n = 20000\) it is 2.05 – 0.81 s against
 0.40 s. Fitting a negative binomial from a Poisson's estimates is 1.29.</p>
 <p>On a block that is PROJECTED the starting predictor is a different order of
-magnitude closer. Measured at \(n = 4000\), widening <code>s(x, k = 6)</code> to
-<code>s(x, k = 12)</code>, the root mean square gap between the starting predictor and
+magnitude closer. Measured at \(n = 4000\), widening <code>s(x, bspline_smooth(k = 6))</code> to
+<code>s(x, bspline_smooth(k = 12))</code>, the root mean square gap between the starting predictor and
 the reference's is \(3\times 10^{-15}\) where leaving the block to the
 fallback gives 1.046; a quadratic basis carried onto a cubic one at the
 same <code>k</code> gives 0.0101 against 1.049. What that is worth in time depends on

@@ -60,14 +60,15 @@ columns, and three things can happen to a block:
 
 The third rule is what makes two bases comparable at all. A smooth's
 coefficients are coordinates in a basis the fit rotates, so
-`s(x, k = 6)` and `s(x, k = 10)` carry the names `s(x).z1` to `s(x).z4`
-in common and mean something different by each: measured on one data
-set, `s(x).z1` is 0.0267 at `k = 6` and -0.0277 at `k = 10`, opposite in
-sign. What the two do share is the FUNCTION, so the coefficients are
-found by projecting it, \$\$\hat\beta_S = \arg\min\_\beta \lVert
-X_S\beta - r\rVert^2, \qquad r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} -
-X\_{-S}\beta\_{-S},\$\$ over the pending columns \\S\\ alone. The
-equality \\B\_{\mathrm{new}}\beta\_{\mathrm{new}} =
+`s(x, bspline_smooth(k = 6))` and `s(x, bspline_smooth(k = 10))` carry
+the names `s(x).z1` to `s(x).z4` in common and mean something different
+by each: measured on one data set, `s(x).z1` is 0.0267 at `k = 6` and
+-0.0277 at `k = 10`, opposite in sign. What the two do share is the
+FUNCTION, so the coefficients are found by projecting it,
+\$\$\hat\beta_S = \arg\min\_\beta \lVert X_S\beta - r\rVert^2, \qquad r
+= X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X\_{-S}\beta\_{-S},\$\$ over
+the pending columns \\S\\ alone. The equality
+\\B\_{\mathrm{new}}\beta\_{\mathrm{new}} =
 B\_{\mathrm{old}}\beta\_{\mathrm{old}}\\ has no solution unless the old
 span sits inside the new one, and the projection is what remains: the
 closest the new basis can come to the function it is started from. Where
@@ -98,15 +99,16 @@ columns at \\n = 20000\\ it is 2.05 – 0.81 s against 0.40 s. Fitting a
 negative binomial from a Poisson's estimates is 1.29.
 
 On a block that is PROJECTED the starting predictor is a different order
-of magnitude closer. Measured at \\n = 4000\\, widening `s(x, k = 6)` to
-`s(x, k = 12)`, the root mean square gap between the starting predictor
-and the reference's is \\3\times 10^{-15}\\ where leaving the block to
-the fallback gives 1.046; a quadratic basis carried onto a cubic one at
-the same `k` gives 0.0101 against 1.049. What that is worth in time
-depends on the family: a gaussian on the identity link solves its inner
-problem in one step whatever the start, so it is 1.09 to 1.26 times,
-while a Poisson goes from 18 criterion evaluations to 6 and 1.94 times,
-and a Poisson that also drops a covariate 1.71.
+of magnitude closer. Measured at \\n = 4000\\, widening
+`s(x, bspline_smooth(k = 6))` to `s(x, bspline_smooth(k = 12))`, the
+root mean square gap between the starting predictor and the reference's
+is \\3\times 10^{-15}\\ where leaving the block to the fallback gives
+1.046; a quadratic basis carried onto a cubic one at the same `k` gives
+0.0101 against 1.049. What that is worth in time depends on the family:
+a gaussian on the identity link solves its inner problem in one step
+whatever the start, so it is 1.09 to 1.26 times, while a Poisson goes
+from 18 criterion evaluations to 6 and 1.94 times, and a Poisson that
+also drops a covariate 1.71.
 
 The gain is worth having where the same model is refitted many times
 over: a coefficient held at a sequence of values, which is what an

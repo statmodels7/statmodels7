@@ -236,11 +236,12 @@ knows what a quantity means draws it:
   pinned and twelve strictly interior.
 
 A hyperparameter the term holds is used rather than drawn, so
-`s(x, lambda = 2)` simulates at the smoothing it names. A prior whose
-coordinates a term drew is reported at the width the term used, the
-values there no longer being that prior's own draw – and drawn Gaussian
-at that width, so a heavy-tailed prior over a break-point keeps its
-family for the fitting and not for the simulation.
+`s(x, bspline_smooth(), hyper = c(lambda = 2))` simulates at the
+smoothing it names. A prior whose coordinates a term drew is reported at
+the width the term used, the values there no longer being that prior's
+own draw – and drawn Gaussian at that width, so a heavy-tailed prior
+over a break-point keeps its family for the fitting and not for the
+simulation.
 
 What no prior reaches falls back to the plain draw, and it is a short
 list: SCAD and MCP are improper by construction, an anisotropic tensor
