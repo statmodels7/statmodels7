@@ -9,7 +9,7 @@ complexity of a fit whose hyperparameters were themselves estimated."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.115.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.116.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,11 +81,13 @@ complexity of a fit whose hyperparameters were themselves estimated.</p>
 
 
 <dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
-<dd><p>Whether the information is the expected one.</p></dd>
+<dd><p>Whether the information is the expected one. Not read
+where the model carries a filter, whose information is observed.</p></dd>
 
 
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
-<dd><p>The approximation for the expected information.</p></dd>
+<dd><p>The approximation for the expected information. Not read
+where the model carries a filter.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -130,6 +132,28 @@ there is nothing to propagate and the correction is zero. That is
 not an approximation: the map from the hyperparameter to the penalized
 mode turns a corner whenever a coefficient joins or leaves the active
 set, and a delta method needs a derivative that does not exist there.</p>
+<p><strong>A model carrying a filter.</strong> There the mode moves in the JOINT vector,
+the coefficients followed by the structural term's own parameters, which
+is what the criterion's determinant spans. A penalty over those
+parameters is a column of no design, so read on the coefficients alone
+<code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code> skips it and the mode moves by nothing in exactly
+the coordinates that penalty shrinks. Measured on a converged filter
+with a penalized loading over ten groups of forty, the correction on the
+coefficients was EXACTLY 0 against 1.108889 on the joint vector, a
+quarter of that model's whole effective count of 4.4976, moving cAIC by
+2.22 and cBIC by 6.64.</p>
+<p>The count this corrects was ALREADY read on that vector.
+<code><a href="statmod_edf.html">statmod_edf()</a></code> takes a structural model's effective degrees of freedom
+from <code><a href="joint_smoother_diag.html">joint_smoother_diag()</a></code>, which reads the very same two matrices,
+so the base count was joint while its correction was on the
+coefficients – two halves of one number read on two different vectors.</p>
+<p>The two matrices are the ones <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> and
+<code><a href="statmod_full_information.html">statmod_full_information()</a></code> already build, so there is no second
+assembly to disagree with the criterion's. That route reads the
+OBSERVED information, a filter having no expected one to offer, so
+<code>expected</code> and <code>approx</code> do not reach it. A model with no structural
+term of the filter shape is untouched by construction rather than by
+tolerance, <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> returning <code>NULL</code> there.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

@@ -42,11 +42,13 @@ statmod_edf_correction(
 
 - expected:
 
-  Whether the information is the expected one.
+  Whether the information is the expected one. Not read where the model
+  carries a filter, whose information is observed.
 
 - approx:
 
-  The approximation for the expected information.
+  The approximation for the expected information. Not read where the
+  model carries a filter.
 
 ## Value
 
@@ -97,6 +99,37 @@ zero. That is not an approximation: the map from the hyperparameter to
 the penalized mode turns a corner whenever a coefficient joins or leaves
 the active set, and a delta method needs a derivative that does not
 exist there.
+
+**A model carrying a filter.** There the mode moves in the JOINT vector,
+the coefficients followed by the structural term's own parameters, which
+is what the criterion's determinant spans. A penalty over those
+parameters is a column of no design, so read on the coefficients alone
+[`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
+skips it and the mode moves by nothing in exactly the coordinates that
+penalty shrinks. Measured on a converged filter with a penalized loading
+over ten groups of forty, the correction on the coefficients was EXACTLY
+0 against 1.108889 on the joint vector, a quarter of that model's whole
+effective count of 4.4976, moving cAIC by 2.22 and cBIC by 6.64.
+
+The count this corrects was ALREADY read on that vector.
+[`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
+takes a structural model's effective degrees of freedom from
+[`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md),
+which reads the very same two matrices, so the base count was joint
+while its correction was on the coefficients – two halves of one number
+read on two different vectors.
+
+The two matrices are the ones
+[`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+and
+[`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+already build, so there is no second assembly to disagree with the
+criterion's. That route reads the OBSERVED information, a filter having
+no expected one to offer, so `expected` and `approx` do not reach it. A
+model with no structural term of the filter shape is untouched by
+construction rather than by tolerance,
+[`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+returning `NULL` there.
 
 ## References
 

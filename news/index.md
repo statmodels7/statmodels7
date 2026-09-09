@@ -1,5 +1,84 @@
 # Changelog
 
+## statmodels7 0.116.0
+
+- THE CORRECTION FOR AN ESTIMATED HYPERPARAMETER IS READ ON THE VECTOR
+  THE MODE MOVES IN, which for a model carrying a filter is the JOINT
+  one – the coefficients followed by the term’s own parameters. A
+  penalty over those parameters is a column of no design, so read on the
+  coefficients alone
+  [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
+  skips it and the mode moves by nothing in exactly the coordinates that
+  penalty shrinks.
+
+- ⚠️ IT WAS NOT A LOWER BOUND SLIGHTLY LOW; IT WAS NOTHING AT ALL.
+  Measured on a converged filter with a penalized loading over ten
+  groups of forty, the hyperparameter moving from its start of 1 to
+  0.1203 in twelve criterion evaluations: the correction came back
+  EXACTLY 0 – one penalty skipped, the movement matrix identically zero
+  – where the joint vector gives 1.108889, a quarter of that model’s
+  whole effective count of 4.4976. cAIC moves 2.22 and cBIC 6.64.
+
+- THE COUNT THIS CORRECTS WAS ALREADY READ ON THAT VECTOR, which is the
+  argument rather than the size of the gap.
+  [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
+  has taken a structural model’s effective degrees of freedom from
+  [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
+  since 0.110.0, and that function reads
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  and
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  on the joint vector – the very two matrices this now reads. The base
+  count was joint and its correction was on the coefficients: two halves
+  of one number read on two different vectors.
+
+- Neither matrix is assembled here.
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  is the one place is built on that vector and
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  the one place is, so there is no second assembly to disagree with the
+  criterion’s – measured, an assembly written out by hand is
+  [`identical()`](https://rdrr.io/r/base/identical.html) to the first.
+  The joint route reads the OBSERVED information, a filter having no
+  expected one to offer, so `expected` and `approx` do not reach it.
+
+- ⚠️ A MODEL WITH NO FILTER IS UNTOUCHED BY CONSTRUCTION rather than by
+  tolerance:
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  returns `NULL` where the design carries no structural term of the
+  filter shape, so `joint` is `FALSE` and the executed lines are the
+  ones that shipped. Against a git worktree of HEAD, over a ridge with a
+  random effect, a two-equation model with both equations penalized, and
+  a model carrying a `regime()`: the coefficients, the log-likelihood,
+  the per-term and total edf, the correction, its per-key entries, the
+  hyperparameters, the criterion, the exact outer gradient, the outer
+  Hessian and all three variances are
+  [`identical()`](https://rdrr.io/r/base/identical.html) – 42 quantities
+  of 42, none differing.
+
+- ⚠️ A TERM OF THE LIKELIHOOD SHAPE IS NOT CLAIMED BY THE JOINT ROUTE.
+  `regime()` contributes a mixed likelihood rather than a predictor,
+  takes no subformula and so declares no penalty over its own
+  parameters;
+  [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
+  filters on the filter shape and returns `NULL` there. Giovanni’s call
+  (2026-09-09), with the measurement: `regime()` is NOT given
+  `term_third()` or `term_fourth()`. Nothing would consume the third –
+  [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
+  is asked only inside
+  [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md),
+  which is `FALSE` for it – and `RegimeTerm` answers none of the filter
+  rungs, not even `term_curvature()` one below, those being derivatives
+  of a filtered predictor it does not have. A regime model already
+  converges on the exact order-1 gradient in six criterion evaluations
+  with its certificate reading `converged`, and already carries a
+  hyperparameter standard error through
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md).
+
+- `test-edf-correction-joint.R` is injection-checked: forcing the
+  coefficient-space route back fails the two value checks and leaves the
+  three structural ones green, which is what says they discriminate.
+
 ## statmodels7 0.115.0
 
 - THE OUTER HESSIAN OF A MODEL CARRYING A STRUCTURAL TERM IS EXACT.
