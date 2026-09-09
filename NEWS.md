@@ -52,11 +52,20 @@
   boundary of the spherical chart, the stencil's two-step guard refuses and
   the analytic route returns a matrix, differencing nothing. That matrix is
   NOT verifiable there -- a difference of the exact gradient reads 3.7e-02,
-  4.7e-01 and 1.6e-01 at \eqn{h} of 1e-2, 3e-3 and 1e-3, which is noise --
-  and what a reader is told is unchanged: the curvature at a boundary is not
-  negative definite, its smallest eigenvalue reading -2.5e-05 against a
-  largest of 5.86, so `statmod_hyper_vcov()` still declines and the
-  certificate still says `boundary`.
+  4.7e-01 and 1.6e-01 at \eqn{h} of 1e-2, 3e-3 and 1e-3, which is noise.
+
+* ⚠️ AND WHETHER A CONSUMER THEN DECLINES IS A COIN TOSS AT THAT POINT, which
+  a first version of the test pinned and CI refused. The curvature in the
+  direction the search left at the chart's edge is numerically zero --
+  measured, -2.503622e-05 against a largest eigenvalue of 5.855702, four
+  parts in a million -- so its SIGN is the platform's arithmetic:
+  `statmod_hyper_vcov()` returns NULL here and on three of the five CI
+  platforms and a matrix on ubuntu oldrel-1. It is the "`chol()` is not a
+  rank test" shape in a new place, and the test asserts the boundary --
+  \eqn{|\lambda_{\min}|/\lambda_{\max} < 10^{-4}} -- rather than the sign.
+  What a READER is told does not turn on it: the certificate names that
+  coordinate a boundary and the summary suppresses its interval whatever the
+  variance matrix holds.
 
 * ⚠️ A block that MOVES with its coefficients -- `nl()`, `seg()` -- beside
   the filter contributes nothing to this assembly, exactly as it contributes
