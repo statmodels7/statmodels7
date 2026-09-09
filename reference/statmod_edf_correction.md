@@ -53,9 +53,8 @@ statmod_edf_correction(
 A list with `total`, the scalar correction, `per`, one entry per penalty
 key, and `n_hyper`, how many hyperparameters were estimated. Zero
 throughout where none was; a zero `total` beside a positive `n_hyper`
-means the curvature could not be read, which is what a shared
-hyperparameter leaves, and a caller reporting to a reader has to tell
-the two apart.
+means the curvature could not be read, and a caller reporting to a
+reader has to tell the two apart.
 
 ## Details
 

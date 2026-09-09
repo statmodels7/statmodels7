@@ -9,7 +9,7 @@ stacked coefficient vector with one column per estimated hyperparameter."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.112.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.114.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ stacked coefficient vector with one column per estimated hyperparameter.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hyper_mode_cross</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">idx</span>, <span class="va">n</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hyper_mode_cross</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">idx</span>, <span class="va">n</span>, joint <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,7 +73,14 @@ stacked coefficient vector with one column per estimated hyperparameter.</p>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>How many stacked coefficients the design carries.</p></dd>
+<dd><p>How many rows the matrix carries: the stacked coefficients, and
+with <code>joint</code> a structural term's free parameters after them.</p></dd>
+
+
+<dt id="arg-joint">joint<a class="anchor" aria-label="anchor" href="#arg-joint"></a></dt>
+<dd><p>Whether those rows include that tail. <code>FALSE</code>, the default,
+is the coefficient-only matrix, which is what
+<code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code> contracts.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -93,10 +100,19 @@ each member writes into the group's column and they accumulate. Where
 nothing is shared each member is its own row and the lookup is what was
 here before the groups existed.</p>
 <p>A penalty over a STRUCTURAL term's own parameters covers positions among
-those parameters rather than columns of a design, so there is nothing to
-write and it is skipped. It is counted rather than passed over in silence:
-a correction assembled without it is incomplete, and a caller reporting to
-a reader has to be able to say so.</p>
+those parameters rather than columns of a design, so where the caller's
+matrix spans the coefficients alone there is nowhere to write it and it is
+skipped. It is counted rather than passed over in silence: a correction
+assembled without it is incomplete, and a caller reporting to a reader has
+to be able to say so.</p>
+<p>With <code>joint</code> the matrix spans the vector the mode really moves in for such
+a model, the coefficients followed by the term's own free parameters, and
+those penalties have rows after all. What they lacked was an address and
+not a derivative: <code><a href="unit_joint_positions.html">unit_joint_positions()</a></code> says where each unit's
+coordinates live in that vector and <code><a href="unit_joint_beta.html">unit_joint_beta()</a></code> reads their values,
+so nothing here is derived. <code><a href="hyper_correction.html">hyper_correction()</a></code> asks for it because
+<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> inverts the joint penalized information; the
+coefficient-space consumer does not, and its answer is unchanged.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

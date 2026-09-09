@@ -6,7 +6,7 @@ free scale their links carry them onto.
 ## Usage
 
 ``` r
-statmod_hyper_vcov(spec, design, coef, hyper, method)
+statmod_hyper_vcov(spec, design, coef, hyper, method, inner = NULL)
 ```
 
 ## Arguments
@@ -31,6 +31,13 @@ statmod_hyper_vcov(spec, design, coef, hyper, method)
 - method:
 
   The outer method that estimated them, or `NULL`.
+
+- inner:
+
+  The inner optimizer the fit used, which the stencil route refits its
+  probes with;
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  where none is given.
 
 ## Value
 

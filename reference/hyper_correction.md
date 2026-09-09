@@ -35,16 +35,19 @@ hyper_correction(spec, design, coef, hyper, method, Vb, keep, nz = 0L)
 - Vb:
 
   The bayesian variance the correction is to be added to, over the
-  coordinates `keep` names followed by any structural tail.
+  coordinates `keep` names.
 
 - keep:
 
-  A logical vector over the stacked coefficients, saying which ones `Vb`
-  spans.
+  A logical vector over the joint vector, the stacked coefficients
+  followed by any structural tail, saying which coordinates `Vb` spans.
+  It is the caller's whole vector and not its head: a tail coordinate
+  dropped as a flat direction leaves `Vb` narrower than the count alone
+  would say.
 
 - nz:
 
-  How many structural parameters `Vb` carries beyond them.
+  How many of those coordinates are the structural tail.
 
 ## Value
 
@@ -86,18 +89,22 @@ propagate. That is a property of the model and not a failure, and
 `n_hyper` is zero.
 
 It is UNAVAILABLE, with `n_hyper` positive and `C` `NULL`, where the
-criterion's own Hessian cannot be read: over a shared hyperparameter,
-whose curvature would be that of the wrong function, which is the gap
-[`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-refuses for the same reason, and where the search left a coordinate at
-the edge of its range.
+criterion's own Hessian cannot be read, which is where the search left a
+coordinate at the edge of its range.
 
 It is PARTIAL, with `complete` false, where some of it could be read and
 some could not: a hyperparameter
 [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
-held contributes nothing, and so does a penalty over a structural term's
-own parameters. The matrix returned is then a lower bound on the
-correction rather than the whole of it.
+held contributes nothing. The matrix returned is then a lower bound on
+the correction rather than the whole of it.
+
+A penalty over a STRUCTURAL term's own parameters no longer makes it
+partial. The mode of such a model moves in the joint vector,
+coefficients and the term's free parameters together, which is what `Vb`
+already spans here, and
+[`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
+is asked for the same vector rather than for the coefficients with a
+tail of zeros after them.
 
 ## References
 

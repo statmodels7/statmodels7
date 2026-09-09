@@ -20,7 +20,7 @@ the two separate fits give, to 0.2 of log-likelihood.
 ## Usage
 
 ``` r
-outer_default_optimizer(exact, exact2, mixed = FALSE)
+outer_default_optimizer(exact, use_hess, mixed = FALSE)
 ```
 
 ## Arguments
@@ -29,9 +29,11 @@ outer_default_optimizer(exact, exact2, mixed = FALSE)
 
   Whether the criterion has an exact gradient.
 
-- exact2:
+- use_hess:
 
-  Whether it has an exact Hessian as well.
+  Whether the search should STEER by the exact Hessian, which is not the
+  same question as whether one exists: see
+  [`outer_newton_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_newton_ok.md).
 
 - mixed:
 

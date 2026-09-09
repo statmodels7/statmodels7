@@ -1,5 +1,166 @@
 # Changelog
 
+## statmodels7 0.114.0
+
+- `vcov(type = "unconditional")` CARRIES THE STRUCTURAL HALF. It
+  returned the conditional matrix with the classed warning for every
+  model with a filter, and what was missing is an address rather than a
+  derivative:
+  [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
+  skipped a penalty over a structural term’s own parameters, those
+  parameters being columns of no design, and
+  [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md)
+  then padded the tail of the mixed derivative with zeros – so the mode
+  moved by nothing in exactly the coordinates such a penalty shrinks.
+  The vector it moves in is the one
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) already inverts there,
+  the coefficients followed by the term’s free parameters, and
+  [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
+  already said where each unit’s coordinates sit in it.
+
+- Measured on a panel of eight groups of twenty-five whose loading is
+  developed over a random effect: the correction is no longer identical
+  to the conditional matrix, no warning is raised, no penalty is
+  skipped, the added term’s smallest eigenvalue is -5.7e-18 against a
+  largest of 1.8e-01, and the standard errors widen by up to 11.35 per
+  cent.
+
+- The movement of the mode is checked against a reference sharing no
+  arithmetic with it: the joint mode refitted either side of the
+  hyperparameter, from the same start, and differenced. The cosine is
+  1.0000000 and the relative gap falls 1.075e-05, 9.678e-07, 1.075e-07
+  at steps of 1e-2, 3e-3 and 1e-3. THE RATE IS THE ASSERTION – a missing
+  term would be flat in the step and a badly located mode would grow as
+  , where this falls as .
+
+- [`unit_joint_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_beta.md)
+  is written beside
+  [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md),
+  a value and its address being one convention: a caller composing them
+  separately would scatter one unit’s numbers at another’s coordinates.
+
+- ⚠️ A MODEL WITH NO STRUCTURAL TERM IS UNTOUCHED BIT FOR BIT, by
+  construction rather than by a tolerance: `joint` defaults to `FALSE`,
+  and for an ordinary unit
+  [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
+  returns the stacked index it replaces. Measured over a smooth and a
+  random effect, every field is
+  [`identical()`](https://rdrr.io/r/base/identical.html) – all three
+  variances, the coefficients, the hyperparameters, the log-likelihood,
+  the effective degrees of freedom, the edf correction and the printed
+  summary.
+
+- ⚠️
+  [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
+  is NOT extended, and its correction stays a lower bound for a
+  structural model. It contracts against the coefficient-space
+  information, so making it joint is a change to which matrix a
+  parameter count is read on rather than a change of address, and it
+  would move the reported effective degrees of freedom and every
+  criterion built on them.
+
+- ⚠️ A latent shape mismatch went with it.
+  [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md)
+  received the coefficient half of `keep_full` and a COUNT of the tail,
+  so a tail coordinate dropped as a flat direction left the mixed
+  derivative one row longer than the variance it multiplies; the product
+  then raised, and the caller’s `tryCatch` read that as no correction
+  being available. It receives the whole logical now.
+
+- `vcov(type = "frequentist")` no longer raises on a sparse design, a
+  defect that predates this release. The information follows the
+  DESIGN’s storage, so an equation carrying a random effect makes the
+  sandwich an S4 Matrix, and writing that into a slice of the base
+  matrix assembled at the end is a length error rather than a conversion
+  – the shape this package records seven times over. Measured on twelve
+  groups of twelve, the call raised where the other two variances
+  returned.
+
+## statmodels7 0.113.0
+
+- THE OUTER HESSIAN OF A MODEL CARRYING A STRUCTURAL TERM IS ONE CENTRAL
+  DIFFERENCE OF THE EXACT GRADIENT,
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md),
+  where the analytic assembly answered with a number that is not the
+  criterion’s second derivative. That assembly spans the stacked
+  coefficients, and a filter’s own parameters are estimated beside them
+  and move with the hyperparameter too: measured against a second
+  difference of the criterion, it reads -1.927925 where the criterion’s
+  is -1.944612 on an unpenalized filter beside a smooth, 0.86 per cent
+  out and flat in the step, and -1.1e-08 against -1.971456 on a
+  penalized one. The stencil is flat over four decades, reading
+  -1.971435 at every step from 1e-2 down to 3e-5.
+
+- The step and the tolerance are measured rather than taken from a
+  library rule.
+  [`numericals7::fd_step()`](https://statmodels7.github.io/numericals7/reference/fd_step.html)
+  would give , about 6e-6, which is right for differencing a function
+  evaluated to machine precision and wrong for one computed by refitting
+  a mode, where what bounds the step below is that mode’s
+  reproducibility. Both are 1e-3: two decades below where truncation
+  still shows, and three orders inside a gap of six that separates a
+  resolved curvature (5.5e-08, 9.3e-07, 1.1e-06) from an unresolved one
+  (6.0e-01, 5.7e-01).
+
+- [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  therefore stops refusing a mixed covariance class and a penalty over a
+  structural term’s own parameters. What that replaces is a wrong number
+  rather than a missing one: measured on twenty groups whose level is
+  developed over a random effect, the assembled curvature read 1.09e-06
+  where the criterion’s is 28.096, so the standard error came out 669.2
+  on the free scale against 0.18866 and the interval covered the whole
+  positive line.
+
+- ⚠️ THE SEARCH IS DELIBERATELY LEFT WITHOUT IT.
+  [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  refuses order 2 wherever a structural term is present, penalized or
+  not: `lbfgs()` on the exact gradient is measured better than
+  `newton()` differencing it, 15 evaluations against 86 and 112 against
+  245, and a stencil per iteration would pay four refits per
+  hyperparameter for a direction that is worse.
+
+- ⚠️
+  [`outer_newton_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_newton_ok.md)
+  separates whether the search should STEER by the exact Hessian from
+  whether one exists. Over a covariance class the criterion’s Hessian is
+  strongly indefinite wherever the chart’s angle approaches its boundary
+  – measured on ten groups of ten whose truth carries a correlation of
+  exactly one, the eigenvalues of at the point the search reports are
+  1.13e+07, -1.48e+10 and -4.20e+17 – so `newton()` takes its
+  eigen-floor branch and the repaired step lands elsewhere, ending at a
+  criterion of -127.6696 against -126.3168 and reporting `not converged`
+  where the shorter run reports `boundary`. Away from the boundary the
+  same shape is merely dearer: 32 evaluations against 85, and 13.4
+  seconds against 7.0.
+
+- [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  LETS A TERM DRAW THE COEFFICIENTS ONLY IT CAN, through
+  [`modelterms7::term_coef_draw()`](https://statmodels7.github.io/modelterms7/reference/term_coef_draw.html),
+  last of all so that what a term writes is what survives. A break-point
+  is the case: it is a position on the covariate’s axis and every other
+  rule describes it wrongly. Measured on fifty groups with the covariate
+  uniform on , thirty-eight of the fifty came back pinned against a
+  confinement limit and twelve strictly interior; now none is pinned and
+  the positions run 0.378 to 0.593.
+
+- Where a term overwrote a penalty’s coordinates that penalty’s own draw
+  is no longer the truth of them, so the row reported for it carries the
+  width the term used, through
+  [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md).
+  Measured, the reported 0.0534 against an observed between-group spread
+  of 0.0494. The test is that EVERY covered coordinate was owned: a
+  penalty spanning owned and unowned ones is described by neither width
+  and keeps its drawn row.
+
+- ⚠️ THE FIX IS NECESSARY AND NOT SUFFICIENT FOR A LEGIBLE PICTURE,
+  which is worth saying because the report that prompted it was a
+  scatterplot showing no break. The kink’s amplitude goes from 0.0102 to
+  0.0778 (7.6x), the break-point now having a segment on either side to
+  bend over – and against a response standard deviation of 4.39, itself
+  drawn, that is still 1.8 per cent. What makes a simulated break-point
+  VISIBLE is the change of slope and the scale, which are measured in
+  the response’s units and stay the caller’s to write.
+
 ## statmodels7 0.112.0
 
 - A HYPERPARAMETER AT A BOUNDARY REPORTS NO STANDARD ERROR AND NO

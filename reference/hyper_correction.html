@@ -9,7 +9,7 @@ hyperparameters, as a matrix to be added to \(V_b\)."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.112.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.114.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,16 +74,19 @@ hyperparameters, as a matrix to be added to \(V_b\).</p>
 
 <dt id="arg-vb">Vb<a class="anchor" aria-label="anchor" href="#arg-vb"></a></dt>
 <dd><p>The bayesian variance the correction is to be added to, over the
-coordinates <code>keep</code> names followed by any structural tail.</p></dd>
+coordinates <code>keep</code> names.</p></dd>
 
 
 <dt id="arg-keep">keep<a class="anchor" aria-label="anchor" href="#arg-keep"></a></dt>
-<dd><p>A logical vector over the stacked coefficients, saying which
-ones <code>Vb</code> spans.</p></dd>
+<dd><p>A logical vector over the joint vector, the stacked
+coefficients followed by any structural tail, saying which coordinates
+<code>Vb</code> spans. It is the caller's whole vector and not its head: a tail
+coordinate dropped as a flat direction leaves <code>Vb</code> narrower than the
+count alone would say.</p></dd>
 
 
 <dt id="arg-nz">nz<a class="anchor" aria-label="anchor" href="#arg-nz"></a></dt>
-<dd><p>How many structural parameters <code>Vb</code> carries beyond them.</p></dd>
+<dd><p>How many of those coordinates are the structural tail.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -119,15 +122,17 @@ mode turns a corner whenever a coefficient joins or leaves the active set,
 so there is no derivative to propagate. That is a property of the model and
 not a failure, and <code>n_hyper</code> is zero.</p>
 <p>It is UNAVAILABLE, with <code>n_hyper</code> positive and <code>C</code> <code>NULL</code>, where the
-criterion's own Hessian cannot be read: over a shared hyperparameter, whose
-curvature would be that of the wrong function, which is the gap
-<code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> refuses for the same reason, and where the search
-left a coordinate at the edge of its range.</p>
+criterion's own Hessian cannot be read, which is where the search left a
+coordinate at the edge of its range.</p>
 <p>It is PARTIAL, with <code>complete</code> false, where some of it could be read and
 some could not: a hyperparameter <code><a href="hyper_variance.html">hyper_variance()</a></code> held contributes
-nothing, and so does a penalty over a structural term's own parameters. The
-matrix returned is then a lower bound on the correction rather than the
-whole of it.</p>
+nothing. The matrix returned is then a lower bound on the correction rather
+than the whole of it.</p>
+<p>A penalty over a STRUCTURAL term's own parameters no longer makes it
+partial. The mode of such a model moves in the joint vector, coefficients
+and the term's free parameters together, which is what <code>Vb</code> already spans
+here, and <code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code> is asked for the same vector rather than for
+the coefficients with a tail of zeros after them.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

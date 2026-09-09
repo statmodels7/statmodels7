@@ -668,6 +668,10 @@ exported, and none is needed to use the package.
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
 
+- [`hess_stencil_step()`](https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.md)
+  [`hess_stencil_tol()`](https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.md)
+  : The Step and the Tolerance of the Outer Hessian's Stencil
+
 - [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md)
   : What a Hyperparameter's Own Uncertainty Adds to a Variance
 
@@ -829,6 +833,9 @@ exported, and none is needed to use the package.
 
 - [`outer_minimize()`](https://statmodels7.github.io/statmodels7/reference/outer_minimize.md)
   : Is a Criterion Minimized?
+
+- [`outer_newton_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_newton_ok.md)
+  : Whether the Default Search Steers by the Exact Hessian
 
 - [`outer_path_defaults()`](https://statmodels7.github.io/statmodels7/reference/outer_path_defaults.md)
   : The Properties Every Criterion Carries
@@ -1039,6 +1046,9 @@ exported, and none is needed to use the package.
 - [`rstatmod_response_name()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_response_name.md)
   : The Column a Simulated Response Is Written To
 
+- [`rstatmod_term_draw()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_term_draw.md)
+  : Let Every Term Draw the Coefficients Only It Can
+
 - [`rstatmod_truth()`](https://statmodels7.github.io/statmodels7/reference/rstatmod_truth.md)
   : Draw the Whole Truth of a Simulation
 
@@ -1197,6 +1207,9 @@ exported, and none is needed to use the package.
 
 - [`statmod_held_levels()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.md)
   : Which Structural Levels a Linear Intercept Already Carries
+
+- [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
+  : The Outer Hessian by One Difference of the Exact Gradient
 
 - [`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
   : Override the Starting Hyperparameters
@@ -1406,6 +1419,9 @@ exported, and none is needed to use the package.
 - [`term_coord_labels()`](https://statmodels7.github.io/statmodels7/reference/term_coord_labels.md)
   : The Coordinates of a Term's Own Covariance
 
+- [`term_drawn_scale()`](https://statmodels7.github.io/statmodels7/reference/term_drawn_scale.md)
+  : The Width a Term Drew a Penalty's Coordinates At
+
 - [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
   : The Covariance Labels a Term Carries, Its Sub-Terms Included
 
@@ -1438,6 +1454,9 @@ exported, and none is needed to use the package.
 
 - [`unit_draw_targets()`](https://statmodels7.github.io/statmodels7/reference/unit_draw_targets.md)
   : Where a Penalty's Coordinates Sit in the Vectors a Simulation Draws
+
+- [`unit_joint_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_beta.md)
+  : A Unit's Own Coordinates, in the Joint Vector's Order
 
 - [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
   : Where a Penalized Unit's Coordinates Are in the Joint Vector

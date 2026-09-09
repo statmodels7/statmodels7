@@ -6,7 +6,7 @@ stacked coefficient vector with one column per estimated hyperparameter.
 ## Usage
 
 ``` r
-hyper_mode_cross(spec, design, coef, hyper, idx, n)
+hyper_mode_cross(spec, design, coef, hyper, idx, n, joint = FALSE)
 ```
 
 ## Arguments
@@ -35,7 +35,15 @@ hyper_mode_cross(spec, design, coef, hyper, idx, n)
 
 - n:
 
-  How many stacked coefficients the design carries.
+  How many rows the matrix carries: the stacked coefficients, and with
+  `joint` a structural term's free parameters after them.
+
+- joint:
+
+  Whether those rows include that tail. `FALSE`, the default, is the
+  coefficient-only matrix, which is what
+  [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
+  contracts.
 
 ## Value
 
@@ -59,10 +67,25 @@ nothing is shared each member is its own row and the lookup is what was
 here before the groups existed.
 
 A penalty over a STRUCTURAL term's own parameters covers positions among
-those parameters rather than columns of a design, so there is nothing to
-write and it is skipped. It is counted rather than passed over in
-silence: a correction assembled without it is incomplete, and a caller
-reporting to a reader has to be able to say so.
+those parameters rather than columns of a design, so where the caller's
+matrix spans the coefficients alone there is nowhere to write it and it
+is skipped. It is counted rather than passed over in silence: a
+correction assembled without it is incomplete, and a caller reporting to
+a reader has to be able to say so.
+
+With `joint` the matrix spans the vector the mode really moves in for
+such a model, the coefficients followed by the term's own free
+parameters, and those penalties have rows after all. What they lacked
+was an address and not a derivative:
+[`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
+says where each unit's coordinates live in that vector and
+[`unit_joint_beta()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_beta.md)
+reads their values, so nothing here is derived.
+[`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md)
+asks for it because
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+inverts the joint penalized information; the coefficient-space consumer
+does not, and its answer is unchanged.
 
 ## See also
 

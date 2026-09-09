@@ -111,6 +111,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/held_condition.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/held_positions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hess_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_correction.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/hyper_key.html</loc></url>
@@ -167,6 +168,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_k.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_minimize.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_newton_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_path_defaults.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_tau.html</loc></url>
@@ -238,6 +240,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod_hyper.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod_named.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod_response_name.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod_term_draw.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/rstatmod_truth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/same_term_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/se_answer.html</loc></url>
@@ -301,6 +304,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_held_levels.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.html</loc></url>
@@ -375,6 +379,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_class_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_block_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_coord_labels.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/term_drawn_scale.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/term_tags_deep.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/terms_first.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/testable_coords.html</loc></url>
@@ -386,6 +391,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/uninformative_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_beta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_draw_targets.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/unit_joint_beta.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unit_positions.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/unknown_what.html</loc></url>
