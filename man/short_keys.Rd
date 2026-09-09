@@ -23,7 +23,7 @@ sub-term it is that call followed by \verb{::parameter::sub-term}. The
 call is what grows: printed in full, one line of an outer trace carried
 the deparsed \code{gas(p = 1, q = 1, time = t, by = ~ridge(~id), links = list(...))} three times over, which is a line no reader can use. Only the
 leading call is shortened, and only past its first argument, so
-\code{s(x, k = 20)} and \code{s(z, k = 8)} stay apart; everything after
+\code{s(x, bspline_smooth(k = 20))} and \code{s(z, bspline_smooth(k = 8))} stay apart; everything after
 \code{::} is kept whole, that being what distinguishes one entry of a term
 from another.
 

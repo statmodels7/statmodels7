@@ -129,9 +129,9 @@ NULL
 #' dd <- data.frame(x = runif(200, -2, 2))
 #' dd$y <- sin(1.4 * dd$x) + rnorm(200, sd = 0.3)
 #'
-#' fa <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+#' fa <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
 #'               outer_criterion = aic())
-#' fb <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+#' fb <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
 #'               outer_criterion = bic())
 #'
 #' # BIC charges log(n) = 5.3 per degree of freedom against AIC's 2, so it

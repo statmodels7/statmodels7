@@ -19,7 +19,7 @@ written on different bases.
 }
 \details{
 A block is keyed in the design by the term's deparsed call, so
-\code{s(x, k = 6)} and \code{s(x, k = 10)} are two different keys and never meet by
+\code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} are two different keys and never meet by
 name. Their coefficients, on the other hand, are \verb{s(x).lin}, \verb{s(x).z1},
 ... on both sides, so the stem \code{s(x)} names the term without naming the
 basis. The suffix is taken from the LAST dot rather than the first, so a

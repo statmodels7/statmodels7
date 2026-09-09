@@ -43,7 +43,7 @@ pe_handles <- function(formula, data, method) {
 }
 
 test_that("the criterion is minus twice the log-likelihood plus k times edf", {
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                  outer_criterion = aic())
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -64,21 +64,21 @@ test_that("the criterion is minus twice the log-likelihood plus k times edf", {
 })
 
 test_that("bic prices a degree of freedom at log n", {
-  a <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = aic())
-  b <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  b <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = bic())
   expect_equal(outer_k(aic(), n), 2)
   expect_equal(outer_k(bic(), n), log(n))
   # the dearer degree of freedom buys a smoother fit
-  expect_gt(b@hyper$mu[["s(x, k = 10)"]][["lambda"]],
-            a@hyper$mu[["s(x, k = 10)"]][["lambda"]])
+  expect_gt(b@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]],
+            a@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]])
   expect_lt(sum(b@edf$edf), sum(a@edf$edf))
 })
 
 test_that("the gradient of aic matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- pe_handles(y ~ s(x, k = 10), dc, aic())
+  h <- pe_handles(y ~ s(x, bspline_smooth(k = 10)), dc, aic())
   for (shift in c(0.5, -1.2)) {
     eta <- h$eta0 + shift
     expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-5)
@@ -87,7 +87,7 @@ test_that("the gradient of aic matches numDeriv", {
 
 test_that("the Hessian of aic matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- pe_handles(y ~ s(x, k = 10), dc, aic())
+  h <- pe_handles(y ~ s(x, bspline_smooth(k = 10)), dc, aic())
   eta <- h$eta0 + 0.4
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)
@@ -97,7 +97,7 @@ test_that("the derivatives match numDeriv with the scale modelled", {
   # a second distribution parameter makes the third derivative three-index and
   # gives the trace a block it would otherwise never see
   skip_if_not_installed("numDeriv")
-  h <- pe_handles(y ~ s(x, k = 8) | sigma ~ z, dc, bic())
+  h <- pe_handles(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dc, bic())
   eta <- h$eta0 + 0.2
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-5)
   expect_equal(as.numeric(h$he(eta)),
@@ -110,7 +110,7 @@ test_that("the derivatives match numDeriv with two smoothing parameters", {
   n2 <- 250
   d2 <- data.frame(a = runif(n2, -2, 2), b = runif(n2, -2, 2))
   d2$y <- sin(1.4 * d2$a) + d2$b^2 + stats::rnorm(n2, sd = 0.3)
-  h <- pe_handles(y ~ s(a, k = 8) + s(b, k = 8), d2, aic())
+  h <- pe_handles(y ~ s(a, bspline_smooth(k = 8)) + s(b, bspline_smooth(k = 8)), d2, aic())
   eta <- h$eta0 + c(0.4, -0.5)
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-5)
   got <- h$he(eta)
@@ -155,13 +155,13 @@ test_that("the search minimizes a prediction-error criterion", {
   expect_true(outer_minimize(bic()))
   expect_false(outer_minimize(reml()))
 
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                  outer_criterion = aic())
   spec <- fit@spec
   design <- statmod_design(spec)
-  nm <- "s(x, k = 10)"
+  nm <- "s(x, bspline_smooth(k = 10))"
   at <- function(v) {
-    f <- statmod(y ~ s(x, k = 10, lambda = v),
+    f <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = v)),
                  distributions7::gaussian1_distrib(), dc)
     statmod_pe(f@spec, statmod_design(f@spec), f@coefficients, f@hyper,
                aic())$value
@@ -176,9 +176,9 @@ test_that("the search minimizes a prediction-error criterion", {
 test_that("aic and reml need not agree, and both are stationary", {
   # they estimate different things, so a difference is not a defect; what has
   # to hold is that each is at rest where it stopped
-  a <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = aic())
-  r <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dc,
+  r <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = reml(hessian = "observed"))
   spec <- a@spec
   design <- statmod_design(spec)
@@ -207,14 +207,14 @@ test_that("the gradient never asks for a second derivative", {
   # a penalty that supplies penalty_dhessian() and nothing beyond it must
   # still give an exact gradient: asking it for a derivative the gradient does
   # not use would reject it for a quantity nobody wanted
-  spec <- statmod_spec(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+  spec <- statmod_spec(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(),
                        dc)
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
 
-  first <- outer_pieces(spec, design, statmod(y ~ s(x, k = 8),
+  first <- outer_pieces(spec, design, statmod(y ~ s(x, bspline_smooth(k = 8)),
                                               distributions7::gaussian1_distrib(),
                                               dc)@coefficients,
                         statmod_hyper_start(spec), idx, offs, sum(npar), 1L)
@@ -254,10 +254,10 @@ test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
     # is disturbed
     genv <- new.env(parent = globalenv())
     genv$s <- mgcv::s
-    g <- mgcv::gam(stats::as.formula("y ~ s(x, bs = 'bs', k = 15)",
+    g <- mgcv::gam(stats::as.formula("y ~ s(x, k = 15, bs = 'bs')",
                                      env = genv),
                    data = dd, method = "REML")
-    u <- statmod(y ~ s(x, k = 15), distributions7::gaussian1_distrib(), dd,
+    u <- statmod(y ~ s(x, bspline_smooth(k = 15)), distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
     got <- summary(u, correct = TRUE)@df - summary(u)@df
     # ABSOLUTE, because the quantity is a fraction of a parameter and what
@@ -353,9 +353,9 @@ test_that("a term's edf is its share of the WHOLE model's smoother", {
     stats::rnorm(n, sd = exp(-1 + 0.8 * sin(2 * pi * dd$z)))
 
   cases <- list(
-    statmod(y ~ s(x, k = 10) | sigma ~ s(z, k = 10),
+    statmod(y ~ s(x, bspline_smooth(k = 10)) | sigma ~ s(z, bspline_smooth(k = 10)),
             distributions7::gaussian1_distrib(), dd, outer_criterion = reml()),
-    statmod(y ~ 1 | sigma ~ s(z, k = 10),
+    statmod(y ~ 1 | sigma ~ s(z, bspline_smooth(k = 10)),
             distributions7::gaussian1_distrib(), dd, outer_criterion = reml())
   )
   for (fit in cases) {

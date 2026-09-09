@@ -843,7 +843,7 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' `held` is a logical and says only whether the value moved. `source` says
 #' what put it there:
 #'
-#' - `"fixed"` for one the term itself held, as `s(x, lambda = 2)`.
+#' - `"fixed"` for one the term itself held, as `s(x, bspline_smooth(), hyper = c(lambda = 2))`.
 #' - the criterion's name, `"reml"` or `"ml"`, for one a marginal criterion
 #'   maximized.
 #' - the criterion that scored the path, `"bic"` and so on, for one chosen
@@ -894,14 +894,14 @@ S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 #' d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 #'
 #' # Estimated by REML, which is what source says.
-#' fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
+#' fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
 #' hyper(fit)
 #'
 #' # The same value on the scale the outer search ran on.
 #' hyper(fit, scale = "link")
 #'
 #' # Held by the term instead, and reported as fixed.
-#' held <- statmod(y ~ s(x, k = 6, lambda = 2),
+#' held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
 #'                 distributions7::gaussian1_distrib(), d)
 #' hyper(held)[, c("name", "estimate", "held", "source")]
 #'
@@ -1032,7 +1032,7 @@ fitted_ranges <- function(x) {
 #' the deparsed `gas(p = 1, q = 1, time = t, by = ~ridge(~id), links =
 #' list(...))` three times over, which is a line no reader can use. Only the
 #' leading call is shortened, and only past its first argument, so
-#' `s(x, k = 20)` and `s(z, k = 8)` stay apart; everything after
+#' `s(x, bspline_smooth(k = 20))` and `s(z, bspline_smooth(k = 8))` stay apart; everything after
 #' `::` is kept whole, that being what distinguishes one entry of a term
 #' from another.
 #'

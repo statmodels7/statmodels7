@@ -156,7 +156,7 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' # Every hyperparameter is estimated unless its term holds it
 #'
 #' Which ones are held is said by the **term** that carries the penalty:
-#' `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, lambda = 2)`,
+#' `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, bspline_smooth(), hyper = c(lambda = 2))`,
 #' `enet(x, alpha = 0.5)`. Everything left `NULL`, which is each term's
 #' default, is chosen from the data. The term is where the penalty is named
 #' and so is where that belongs; an argument here saying the same thing would
@@ -317,7 +317,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       stop(paste0("'hyper' has been removed. A hyperparameter is held in",
                   " the term that\n  carries the penalty --",
                   " lasso(x, lambda = 3), ridge(x, sigma = 0.5),\n",
-                  "  s(x, lambda = 2), enet(x, alpha = 0.5) -- and every",
+                  "  s(x, bspline_smooth(), hyper = c(lambda = 2)), enet(x, alpha = 0.5) -- and every",
                   " one left NULL,\n  which is the default, is",
                   " estimated."), call. = FALSE)
     }

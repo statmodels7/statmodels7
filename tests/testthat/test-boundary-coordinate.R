@@ -97,7 +97,7 @@ test_that("a shape run to its clamp fits instead of stopping the run", {
   eta <- 2 * sin(6 * x) + 1.2 * cos(4 * z) + b[as.integer(g)]
   d <- data.frame(y = eta + rt(n, df = 5) * 0.5, x = x, z = z, g = g)
 
-  fit <- statmod(y ~ s(x, k = 20) + random(~1 | g),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g),
                  distributions7::student_t1_distrib(), d)
   expect_s7_class(fit, StatmodFit)
   expect_true(is.finite(as.numeric(logLik(fit))))
@@ -111,7 +111,7 @@ test_that("a shape run to its clamp fits instead of stopping the run", {
   ## dimension, which moves the criterion by log(2*pi)/2 and sends the two
   ## searches to different hyperparameters -- measured, -1491.8 against
   ## -1494.0. The predictor is what the two models share.
-  gfit <- statmod(y ~ s(x, k = 20) + random(~1 | g),
+  gfit <- statmod(y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g),
                   distributions7::gaussian1_distrib(), d)
   expect_gt(stats::cor(fit@fitted$mu, gfit@fitted$mu), 0.999)
 })

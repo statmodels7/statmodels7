@@ -161,7 +161,7 @@ neither.
 
 \section{Every hyperparameter is estimated unless its term holds it}{
 Which ones are held is said by the \strong{term} that carries the penalty:
-\code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)}, \code{s(x, lambda = 2)},
+\code{lasso(x, lambda = 3)}, \code{ridge(x, sigma = 0.5)}, \code{s(x, bspline_smooth(), hyper = c(lambda = 2))},
 \code{enet(x, alpha = 0.5)}. Everything left \code{NULL}, which is each term's
 default, is chosen from the data. The term is where the penalty is named
 and so is where that belongs; an argument here saying the same thing would

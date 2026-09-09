@@ -55,7 +55,7 @@ searches wants. Where a hyperparameter carries no link the two coincide.
 \code{held} is a logical and says only whether the value moved. \code{source} says
 what put it there:
 \itemize{
-\item \code{"fixed"} for one the term itself held, as \code{s(x, lambda = 2)}.
+\item \code{"fixed"} for one the term itself held, as \code{s(x, bspline_smooth(), hyper = c(lambda = 2))}.
 \item the criterion's name, \code{"reml"} or \code{"ml"}, for one a marginal criterion
 maximized.
 \item the criterion that scored the path, \code{"bic"} and so on, for one chosen
@@ -85,14 +85,14 @@ d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
 # Estimated by REML, which is what source says.
-fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), d)
+fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
 hyper(fit)
 
 # The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
 
 # Held by the term instead, and reported as fixed.
-held <- statmod(y ~ s(x, k = 6, lambda = 2),
+held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),
                 distributions7::gaussian1_distrib(), d)
 hyper(held)[, c("name", "estimate", "held", "source")]
 

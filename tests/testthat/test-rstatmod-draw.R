@@ -103,7 +103,7 @@ test_that("a structural group is held by one name", {
 test_that("a hyperparameter the term holds is used rather than drawn", {
   set.seed(106)
   dd <- data.frame(x = stats::runif(80))
-  s <- rstatmod(y ~ s(x, k = 6, lambda = 3), gaussian1_distrib(), dd)
+  s <- rstatmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 3)), gaussian1_distrib(), dd)
   expect_equal(s$hyper$value[s$hyper$name == "lambda"], 3)
   expect_true(all(s$hyper$held))
 })
@@ -153,7 +153,7 @@ test_that("drawing everything leaves an ordinary model where it was", {
   set.seed(109)
   dd <- data.frame(x = stats::runif(200))
   v <- replicate(30, {
-    s <- rstatmod(y ~ s(x, k = 8), gaussian1_distrib(), dd)
+    s <- rstatmod(y ~ s(x, bspline_smooth(k = 8)), gaussian1_distrib(), dd)
     c(stats::sd(s$data$y), s$hyper$value[[1L]])
   })
   expect_gt(stats::median(v[2L, ]), 0.5)

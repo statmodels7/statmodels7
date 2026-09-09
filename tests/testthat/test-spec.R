@@ -60,7 +60,7 @@ test_that("a design carrying a tensor smooth and an intercept has full rank", {
   set.seed(24)
   dt <- data.frame(a = runif(300, -1, 1), b = runif(300, -1, 1))
   dt$y <- dt$a^2 + dt$b + stats::rnorm(300, sd = 0.3)
-  spec <- statmod_spec(y ~ te(a, b, k = 5),
+  spec <- statmod_spec(y ~ te(a, b, smooths = bspline_smooth(k = 5)),
                        distributions7::gaussian1_distrib(), dt)
   des <- statmod_design(spec)
   X <- des$mu$X
@@ -124,7 +124,7 @@ test_that("our terms win over an attached package's", {
   shim <- statmodels7:::terms_first(globalenv())
   local({
     s <- function(...) stop("this must never be called")
-    spec <- statmod_spec(y ~ s(x, k = 5), distributions7::gaussian1_distrib(),
+    spec <- statmod_spec(y ~ s(x, bspline_smooth(k = 5)), distributions7::gaussian1_distrib(),
                          dd)
     expect_true(any(vapply(spec@terms$mu,
                            function(tm) S7::S7_inherits(tm, modelterms7::SmoothTerm),
@@ -293,9 +293,9 @@ test_that("a smooth per level fits the same model in either storage", {
   # the dense side is asked for EXPLICITLY: left NULL the storage is settled
   # from the size of the block, and 800 rows by 25 levels by a basis of eight
   # is 160000 cells, past the threshold, so the default settles sparse here
-  a <- statmod(y ~ s(x, k = 8, by = g, sparse = FALSE),
+  a <- statmod(y ~ s(x, bspline_smooth(k = 8), by = g, sparse = FALSE),
                distributions7::gaussian1_distrib(), d)
-  s <- statmod(y ~ s(x, k = 8, by = g, sparse = TRUE),
+  s <- statmod(y ~ s(x, bspline_smooth(k = 8), by = g, sparse = TRUE),
                distributions7::gaussian1_distrib(), d)
 
   expect_true(methods::is(statmod_design(s@spec)$mu$X, "sparseMatrix"))

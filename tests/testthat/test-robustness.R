@@ -189,7 +189,7 @@ test_that("a smoothing parameter at 1e15 is scale separation, not singularity", 
   set.seed(38)
   dP <- data.frame(z = runif(400, -2, 2))
   dP$y <- rpois(400, exp(-2 + 0.8 * sin(dP$z)))
-  fit <- statmod(y ~ s(z, k = 8), distributions7::poisson_distrib(), dP)
+  fit <- statmod(y ~ s(z, bspline_smooth(k = 8)), distributions7::poisson_distrib(), dP)
   expect_true(fit@converged)
   lam <- unlist(fit@hyper$mu)
   skip_if(lam < 1e8, "the criterion did not reach the separation regime here")
@@ -298,7 +298,7 @@ test_that("the stopping rule is dimensionless in the response", {
   # the inner rule this test is about.
   fits <- lapply(c(1e-3, 1, 1e4), function(sc) {
     dS$y <- base_y * sc
-    statmod(y ~ s(z, k = 10), distributions7::gaussian1_distrib(), dS,
+    statmod(y ~ s(z, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dS,
             outer_criterion = reml("expected"),
             outer_optimizer = optimizers7::nelder_mead())
   })

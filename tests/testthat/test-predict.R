@@ -222,7 +222,7 @@ test_that("new data reapplies each block instead of rebuilding it", {
   dn <- data.frame(x = stats::runif(n, -2, 2),
                    g = factor(sample(letters[1:3], n, TRUE)))
   dn$y <- sin(1.4 * dn$x) + stats::rnorm(n, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 10) + g, distributions7::gaussian1_distrib(), dn)
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)) + g, distributions7::gaussian1_distrib(), dn)
   full <- predict(fit, "mu")
 
   for (rows in list(1:40, which(abs(dn$x) < 0.5), c(3L, 7L, 100L))) {

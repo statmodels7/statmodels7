@@ -41,7 +41,7 @@ smooth_data <- function(n = 300L, seed = 4) {
 }
 
 smooth_fit <- function(d = smooth_data()) {
-  statmod(y ~ x + s(z, k = 8), distributions7::poisson_distrib(), d)
+  statmod(y ~ x + s(z, bspline_smooth(k = 8)), distributions7::poisson_distrib(), d)
 }
 
 lasso_fit <- function(m = 200L, seed = 7) {
@@ -329,9 +329,9 @@ test_that("a penalized coordinate is tested on the penalized objective", {
   ## an extreme smoothing parameter the objective in a rotated coordinate IS
   ## the quadratic penalty, so the inverted interval is exactly the Wald one
   ## and exactly symmetric. Measured, `s(z).z1` sits at 1.2e-08 there.
-  fl <- statmod(y ~ x + s(z, k = 8), distributions7::poisson_distrib(),
+  fl <- statmod(y ~ x + s(z, bspline_smooth(k = 8)), distributions7::poisson_distrib(),
                 pois_data())
-  expect_gt(fl@hyper$mu[["s(z, k = 8)"]][["lambda"]], 1e6)
+  expect_gt(fl@hyper$mu[["s(z, bspline_smooth(k = 8))"]][["lambda"]], 1e6)
   ## its own names: the two models share a formula, but reading `nms` here
   ## would make that a coincidence rather than a fact of this fit
   nml <- statmod_design(fl@spec)$mu$coef_names

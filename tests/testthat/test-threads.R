@@ -82,8 +82,8 @@ test_that("a fit through the family's parallel kernels agrees too", {
   dd <- data.frame(x = runif(n))
   mu <- exp(1 + sin(2 * pi * dd$x))
   dd$y <- rgamma(n, shape = 1 / 0.3, scale = mu * 0.3)
-  f1 <- statmod(y ~ s(x, k = 10), distributions7::gamma1_distrib(), dd)
-  f2 <- statmod(y ~ s(x, k = 10), distributions7::gamma1_distrib(), dd,
+  f1 <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dd)
+  f2 <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dd,
                 threads = numericals7::n_threads(2))
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
@@ -221,8 +221,8 @@ test_that("a dense penalized fit does not depend on the thread count", {
   n <- 4000
   x <- runif(n, -3, 3)
   d <- data.frame(x = x, y = 1 + sin(x) + rnorm(n, 0, 0.4))
-  f1 <- statmod(y ~ s(x, k = 30), distributions7::gaussian1_distrib(), d)
-  f2 <- statmod(y ~ s(x, k = 30), distributions7::gaussian1_distrib(), d,
+  f1 <- statmod(y ~ s(x, bspline_smooth(k = 30)), distributions7::gaussian1_distrib(), d)
+  f2 <- statmod(y ~ s(x, bspline_smooth(k = 30)), distributions7::gaussian1_distrib(), d,
                 threads = numericals7::n_threads(2))
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f2)),
@@ -273,9 +273,9 @@ test_that("a fit through the leverage kernel does not depend on threads", {
   x <- runif(n, -3, 3)
   g <- factor(sample(120, n, TRUE))
   d <- data.frame(x = x, g = g, y = 1 + sin(x) + rnorm(n, 0, 0.4))
-  f1 <- statmod(y ~ s(x, k = 10) + random(~1 | g),
+  f1 <- statmod(y ~ s(x, bspline_smooth(k = 10)) + random(~1 | g),
                 distributions7::gaussian1_distrib(), d)
-  f2 <- statmod(y ~ s(x, k = 10) + random(~1 | g),
+  f2 <- statmod(y ~ s(x, bspline_smooth(k = 10)) + random(~1 | g),
                 distributions7::gaussian1_distrib(), d,
                 threads = numericals7::n_threads(2))
   expect_equal(f1@coefficients, f2@coefficients, tolerance = 1e-8)

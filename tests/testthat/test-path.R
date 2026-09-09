@@ -169,7 +169,7 @@ test_that("cv is refused where it has nothing to select", {
   # and asking for one where there is no kinked penalty is the symmetric case
   # of reml() on a model with no smooth one: the criterion applies to a family
   # of penalties the model does not carry, so it does not run
-  f <- statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(), dq,
+  f <- statmod(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(), dq,
                sparse_criterion = cv())
   expect_true(f@converged)
   expect_false(is.na(f@criterion))

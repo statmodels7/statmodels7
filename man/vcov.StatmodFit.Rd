@@ -116,7 +116,7 @@ sqrt(diag(vcov(fit)))
 # does not read the smoothing parameter as known.
 ds <- data.frame(x = runif(200))
 ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
-fs <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
 vapply(c("frequentist", "bayesian", "unconditional"),
        function(ty) sqrt(diag(vcov(fs, type = ty)))[[1L]], 0)
 }

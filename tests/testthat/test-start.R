@@ -211,7 +211,7 @@ sf <- local({
   d$ys <- sin(2 * pi * d$x) + stats::rnorm(m, 0, 0.3)
   list(d = d,
        full = statmod(y ~ x + z + w, distributions7::poisson_distrib(), d),
-       sm6 = statmod(ys ~ s(x, k = 6), distributions7::gaussian1_distrib(),
+       sm6 = statmod(ys ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(),
                      d))
 })
 
@@ -263,7 +263,7 @@ test_that("a parameter the reference does not have falls back", {
 test_that("the same basis is carried across and not re-estimated", {
   # where the coefficients mean the same coordinates they are copied, which is
   # exact and costs nothing; re-estimating them would be work for no answer
-  sp6 <- statmod_spec(ys ~ s(x, k = 6),
+  sp6 <- statmod_spec(ys ~ s(x, bspline_smooth(k = 6)),
                       distributions7::gaussian1_distrib(), sf$d)
   s6 <- start_at(start_from(sf$sm6), sp6, statmod_design(sp6), NULL)
   tk <- attr(s6, "taken")
@@ -273,13 +273,13 @@ test_that("the same basis is carried across and not re-estimated", {
 })
 
 test_that("a basis of another dimension is projected, not copied", {
-  # s(x, k = 6) and s(x, k = 10) give the same names to different coordinates
+  # s(x, bspline_smooth(k = 6)) and s(x, bspline_smooth(k = 10)) give the same names to different coordinates
   # -- measured, z1 is 0.0267 against -0.0277, OPPOSITE IN SIGN -- so what
   # carries across is the fitted FUNCTION and not the numbers. The two blocks
   # do not even meet by name: a block is keyed by the term's own call, so
-  # 's(x, k = 6)' and 's(x, k = 10)' are two keys, and what pairs them is the
+  # 's(x, bspline_smooth(k = 6))' and 's(x, bspline_smooth(k = 10))' are two keys, and what pairs them is the
   # stem of their coefficient names.
-  sp10 <- statmod_spec(ys ~ s(x, k = 10),
+  sp10 <- statmod_spec(ys ~ s(x, bspline_smooth(k = 10)),
                        distributions7::gaussian1_distrib(), sf$d)
   de10 <- statmod_design(sp10)
   s10 <- start_at(start_from(sf$sm6), sp10, de10, NULL)
@@ -306,7 +306,7 @@ test_that("a basis of another dimension is projected, not copied", {
 })
 
 test_that("the projection is exact where the coarse basis is nested", {
-  # equally spaced interior knots make s(x, k = 6) a SUBSPACE of s(x, k = 12)
+  # equally spaced interior knots make s(x, bspline_smooth(k = 6)) a SUBSPACE of s(x, bspline_smooth(k = 12))
   # -- three intervals refined into nine -- and there the projection
   # reproduces the function to machine precision. k = 10 is not a refinement
   # of k = 6, so there it is a genuine approximation, and the contrast is what
@@ -314,7 +314,7 @@ test_that("the projection is exact where the coarse basis is nested", {
   gauss <- distributions7::gaussian1_distrib()
   eta_ref <- stats::predict(sf$sm6, "link")$mu
   gap <- function(k) {
-    sp <- statmod_spec(stats::as.formula(sprintf("ys ~ s(x, k = %d)", k)),
+    sp <- statmod_spec(stats::as.formula(sprintf("ys ~ s(x, bspline_smooth(k = %d))", k)),
                        gauss, sf$d)
     de <- statmod_design(sp)
     s <- start_at(start_from(sf$sm6), sp, de, NULL)
@@ -331,8 +331,8 @@ test_that("a reference read at other rows is not projected", {
   # points, which means nothing
   d2 <- sf$d
   d2$ys <- d2$ys + 1
-  other <- statmod(ys ~ s(x, k = 6), distributions7::gaussian1_distrib(), d2)
-  sp10 <- statmod_spec(ys ~ s(x, k = 10),
+  other <- statmod(ys ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d2)
+  sp10 <- statmod_spec(ys ~ s(x, bspline_smooth(k = 10)),
                        distributions7::gaussian1_distrib(), sf$d)
   s <- start_at(start_from(other), sp10, statmod_design(sp10), NULL)
   expect_false(any(attr(s, "taken")$how == "projected"))
@@ -342,8 +342,8 @@ test_that("a projected start does not move where the fit lands", {
   # the same property the matched blocks are held to: a starting strategy that
   # changed the answer would be a defect however close it started
   gauss <- distributions7::gaussian1_distrib()
-  a <- statmod(ys ~ s(x, k = 10), gauss, sf$d)
-  b <- statmod(ys ~ s(x, k = 10), gauss, sf$d, start = start_from(sf$sm6))
+  a <- statmod(ys ~ s(x, bspline_smooth(k = 10)), gauss, sf$d)
+  b <- statmod(ys ~ s(x, bspline_smooth(k = 10)), gauss, sf$d, start = start_from(sf$sm6))
   expect_equal(unlist(a@coefficients), unlist(b@coefficients),
                tolerance = 1e-5)
   expect_equal(as.numeric(logLik(a)), as.numeric(logLik(b)),

@@ -49,7 +49,7 @@ as_hyper_list <- function(hy) {
 
 test_that("the gradient of a single smoothing parameter matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- crit_of_eta(y ~ s(x, k = 10), dg, reml(hessian = "observed"))
+  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, reml(hessian = "observed"))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
   # away from the start, where the mode has genuinely moved
@@ -63,7 +63,7 @@ test_that("the gradient matches numDeriv with the scale modelled too", {
   # components enter u, and a version that summed only the diagonal would
   # pass the previous test and fail this one
   skip_if_not_installed("numDeriv")
-  h <- crit_of_eta(y ~ s(x, k = 8) | sigma ~ z, dg,
+  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dg,
                    reml(hessian = "observed"))
   eta <- h$eta0 + 0.2
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
@@ -74,7 +74,7 @@ test_that("the gradient matches numDeriv with several parameters at once", {
   set.seed(32)
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + sin(3 * dt$x2) + stats::rnorm(200, sd = 0.3)
-  h <- crit_of_eta(y ~ s(x1, k = 8) + s(x2, k = 8), dt,
+  h <- crit_of_eta(y ~ s(x1, bspline_smooth(k = 8)) + s(x2, bspline_smooth(k = 8)), dt,
                    reml(hessian = "observed"))
   eta <- h$eta0 + c(0.5, -0.6)
   g <- h$gr(eta)
@@ -88,13 +88,13 @@ test_that("the gradient matches numDeriv with several parameters at once", {
 
 test_that("the gradient matches numDeriv under ml, on the range space", {
   skip_if_not_installed("numDeriv")
-  h <- crit_of_eta(y ~ s(x, k = 10), dg, ml(hessian = "observed"))
+  h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, ml(hessian = "observed"))
   eta <- h$eta0 + 0.3
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
 })
 
 test_that("the gradient vanishes at the reported optimum", {
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
                  outer_criterion = reml(hessian = "observed"))
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -184,7 +184,7 @@ test_that("the penalty is asked, not measured", {
 })
 
 test_that("the exact route is taken only where it applies", {
-  spec <- statmod_spec(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+  spec <- statmod_spec(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(),
                        dg)
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
@@ -227,13 +227,13 @@ test_that("the exact route is taken only where it applies", {
 test_that("exact and derivative-free reach the same hyperparameter", {
   # the two routes share the criterion and nothing else, so agreeing on where
   # it is largest is a check of the gradient rather than of the optimizer
-  fast <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
+  fast <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
                   outer_criterion = reml(hessian = "observed"))
-  slow <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dg,
+  slow <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
                   outer_criterion = reml(hessian = "observed"),
                   outer_optimizer = optimizers7::nelder_mead())
-  lam_f <- fast@hyper$mu[["s(x, k = 10)"]][["lambda"]]
-  lam_s <- slow@hyper$mu[["s(x, k = 10)"]][["lambda"]]
+  lam_f <- fast@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]
+  lam_s <- slow@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]
   expect_equal(lam_f, lam_s, tolerance = 1e-3)
   expect_equal(fast@criterion, slow@criterion, tolerance = 1e-6)
 })
@@ -345,7 +345,7 @@ test_that("the structural gradient is right under ml and beside a smooth", {
   # gradient goes through the same assembly and must still be right
   dp$z <- stats::runif(nrow(dp), -2, 2)
   dp$y <- dp$y + sin(1.6 * dp$z)
-  f2 <- y ~ x + s(z, k = 6) +
+  f2 <- y ~ x + s(z, bspline_smooth(k = 6)) +
     gas(p = 1, q = 1, omega ~ random(~1 | id), by = id, time = t)
   h2 <- struct_harness(f2, dp, reml(hessian = "observed"))
   expect_identical(nrow(h2$idx), 2L)
@@ -468,7 +468,7 @@ test_that("the gradient pays from the second hyperparameter on", {
   n2 <- 300
   d3 <- data.frame(a = runif(n2, -2, 2), b = runif(n2, -2, 2))
   d3$y <- sin(1.4 * d3$a) + d3$b^2 + stats::rnorm(n2, sd = 0.3)
-  f <- y ~ s(a, k = 8) + s(b, k = 8)
+  f <- y ~ s(a, bspline_smooth(k = 8)) + s(b, bspline_smooth(k = 8))
   fast <- statmod(f, distributions7::gaussian1_distrib(), d3,
                   outer_criterion = reml(hessian = "observed"))
   slow <- statmod(f, distributions7::gaussian1_distrib(), d3,

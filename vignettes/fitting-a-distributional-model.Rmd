@@ -81,7 +81,7 @@ db <- data.frame(z = sort(runif(n, -3, 3)),
                  g = factor(rep(1:20, length.out = n)))
 db$y <- rnorm(n, 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], 0.4)
 
-f3 <- statmod(y ~ s(z, k = 8), gaussian1_distrib(), db)
+f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)), gaussian1_distrib(), db)
 f3@edf
 ```
 
@@ -97,7 +97,7 @@ A random effect is written the same way and is the same machinery, its penalty
 being a Gaussian prior over the group effects:
 
 ```{r}
-f4 <- statmod(y ~ s(z, k = 8) + random(~ 1 | g), gaussian1_distrib(), db)
+f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g), gaussian1_distrib(), db)
 f4@edf
 hyper(f4)
 ```

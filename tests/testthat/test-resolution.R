@@ -14,7 +14,7 @@ test_that("the criterion's resolution is read at the fit and tracks the inner ru
 
   at_tol <- function(tol) {
     inner <- iwls(tol = tol, maxit = 300L)
-    spec <- statmod_spec(y ~ s(x, k = 10),
+    spec <- statmod_spec(y ~ s(x, bspline_smooth(k = 10)),
                          distributions7::gaussian1_distrib(), d, NULL, NULL,
                          linpar = linpar_options())
     design <- statmod_design(spec)
@@ -76,9 +76,9 @@ test_that("the resolution is read off the criterion the SEARCH runs", {
 
   # the two criteria at one point are not the same number, which is what makes
   # reading the wrong one an error rather than an inaccuracy
-  a <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), d,
+  a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), d,
                outer_criterion = aic())
-  r <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), d,
+  r <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), d,
                outer_criterion = reml(hessian = "observed"))
   expect_gt(abs(a@criterion - r@criterion), 1)
 
@@ -86,9 +86,9 @@ test_that("the resolution is read off the criterion the SEARCH runs", {
   # hyperparameter beats the criterion just either side of it
   spec <- a@spec
   design <- statmod_design(spec)
-  nm <- "s(x, k = 10)"
+  nm <- "s(x, bspline_smooth(k = 10))"
   at <- function(v) {
-    f <- statmod(y ~ s(x, k = 10, lambda = v),
+    f <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = v)),
                  distributions7::gaussian1_distrib(), d)
     statmod_pe(f@spec, statmod_design(f@spec), f@coefficients, f@hyper,
                aic())$value

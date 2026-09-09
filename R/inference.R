@@ -260,7 +260,7 @@ fit_expected <- function(object) {
 #' # does not read the smoothing parameter as known.
 #' ds <- data.frame(x = runif(200))
 #' ds$y <- sin(2 * pi * ds$x) + rnorm(200, sd = 0.3)
-#' fs <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+#' fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
 #' vapply(c("frequentist", "bayesian", "unconditional"),
 #'        function(ty) sqrt(diag(vcov(fs, type = ty)))[[1L]], 0)
 #' @keywords internal
@@ -1899,9 +1899,19 @@ term_block_kind <- function(term) {
 #' wiggly part; individually they say nothing, and what they say jointly is the
 #' effective degrees of freedom, which the block header reports instead.
 #'
-#' The question is asked of the term's own specification (`spec$linear`)
-#' and never of a suffix in a coefficient's name, a name being a label and
-#' this is a fact about the construction.
+#' The question is asked of the construction and never of a suffix in a
+#' coefficient's name, a name being a label. What the construction says is
+#' the **penalty**: a column the roughness matrix leaves alone is a column
+#' of the null space the smoother kept, which is what carries the linear
+#' effect. Read that way the answer follows the smoother rather than a flag:
+#' an order-2 penalty leaves one column free, an order-3 penalty two, and a
+#' periodic basis none, its null space being the constant alone and the
+#' constant belonging to the model's intercept.
+#'
+#' It replaces a reading of `spec$linear`, which was the term's record of
+#' the same fact while a smooth was always a B-spline with a second-derivative
+#' penalty. Under a factor `by` the block is one copy per level and only the
+#' first level's column is marked, which is what that reading did too.
 #'
 #' @param term A built smooth term.
 #' @param k The number of columns in its block.
@@ -1911,8 +1921,14 @@ term_block_kind <- function(term) {
 #' @keywords internal
 smooth_linear_cols <- function(term, k) {
   out <- rep(FALSE, k)
-  sp <- tryCatch(term@spec, error = function(e) NULL)
-  if (is.list(sp) && isTRUE(sp$linear) && k > 0L) out[1L] <- TRUE
+  if (k < 1L) return(out)
+  pen <- tryCatch(modelterms7::term_penalty(term), error = function(e) NULL)
+  if (is.null(pen) || !("P" %in% S7::prop_names(pen))) return(out)
+  p <- tryCatch(as.matrix(S7::prop(pen, "P")), error = function(e) NULL)
+  if (is.null(p) || !nrow(p)) return(out)
+  # the LEADING columns no entry of the penalty touches
+  free <- sum(cumprod(colSums(abs(p)) == 0))
+  if (free > 0L) out[seq_len(min(free, k))] <- TRUE
   out
 }
 
@@ -4269,7 +4285,7 @@ drop_common_prefix <- function(nms) {
 #' @examples
 #' dd <- data.frame(x = runif(120))
 #' dd$y <- sin(4 * dd$x) + rnorm(120, 0, 0.3)
-#' statmod_certificate(statmod(y ~ s(x, k = 8),
+#' statmod_certificate(statmod(y ~ s(x, bspline_smooth(k = 8)),
 #'                             distributions7::gaussian1_distrib(), dd))$state
 #'
 #' @export

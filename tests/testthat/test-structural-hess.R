@@ -238,7 +238,7 @@ test_that("a model with no structural term is untouched by the joint route", {
   n <- 200L
   d <- data.frame(x = stats::runif(n, -2, 2))
   d$y <- sin(d$x) + stats::rnorm(n, 0, 0.5)
-  fit <- statmod(y ~ s(x, k = 8), gaussian1_distrib(), d,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8)), gaussian1_distrib(), d,
                  outer_criterion = reml())
   p <- sh_parts(fit)
   expect_identical(length(attr(p$design, "structural")), 0L)

@@ -54,7 +54,7 @@ test_that("the expected route's gradient matches numDeriv on a gamma", {
   # decades, which is what says a reference is not the weak side. It was the
   # mode's movement being read off the criterion's matrix instead of the
   # penalized likelihood's; corrected, the same comparison is 1.8e-08.
-  h <- crit_of_eta_e(y ~ s(x, k = 10), dge, distributions7::gamma1_distrib(),
+  h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
@@ -66,7 +66,7 @@ test_that("it matches with a second penalized equation", {
   # is symmetric in (a, b) and NOT in the parameter differentiated in, so a
   # version keyed like the third derivative would pass the previous test and
   # fail this one
-  h <- crit_of_eta_e(y ~ s(x, k = 8) | phi ~ s(z, k = 6), dge,
+  h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)) | phi ~ s(z, bspline_smooth(k = 6)), dge,
                      distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   eta <- h$eta0 + c(0.3, -0.4)
@@ -81,12 +81,12 @@ test_that("it holds under ml, on the range space", {
   # is the criterion's and projected, the mode's is the penalized likelihood's
   # and full. This is where a version that confused them shows it worst, and
   # every other test in this file is reml.
-  h <- crit_of_eta_e(y ~ s(x, k = 10), dge, distributions7::gamma1_distrib(),
+  h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
                      ml(hessian = "expected"))
   eta <- h$eta0 + 0.4
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
 
-  h2 <- crit_of_eta_e(y ~ s(x, k = 8) | phi ~ s(z, k = 6), dge,
+  h2 <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)) | phi ~ s(z, bspline_smooth(k = 6)), dge,
                       distributions7::gamma1_distrib(),
                       ml(hessian = "expected"))
   eta2 <- h2$eta0 + c(0.3, -0.4)
@@ -103,7 +103,7 @@ test_that("the two routes are one route where the link is canonical", {
   set.seed(42)
   dp <- data.frame(x = runif(400, -2, 2))
   dp$y <- rpois(400, exp(0.5 * sin(1.4 * dp$x) + 1))
-  f <- y ~ s(x, k = 8)
+  f <- y ~ s(x, bspline_smooth(k = 8))
   d <- distributions7::poisson_distrib()
   h <- crit_of_eta_e(f, dp, d, reml(hessian = "expected"))
   eta <- h$eta0 + 0.35
@@ -131,7 +131,7 @@ test_that("the mode's movement is read off the penalized likelihood", {
   # reading it off the criterion's K is wrong by the gap between the two
   # informations -- systematic, and shrinking with n as they converge.
   skip_if_not_installed("numDeriv")
-  h300 <- crit_of_eta_e(y ~ s(x, k = 10), dge,
+  h300 <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge,
                         distributions7::gamma1_distrib(),
                         reml(hessian = "expected"))
   eta <- h300$eta0 + 0.4
@@ -143,7 +143,7 @@ test_that("the mode's movement is read off the penalized likelihood", {
 })
 
 test_that("the expected route is admitted only where the family answers", {
-  h <- crit_of_eta_e(y ~ s(x, k = 8), dge, distributions7::gamma1_distrib(),
+  h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)), dge, distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   expect_true(outer_gradient_ok(h$spec, h$design, h$idx,
                                 reml(hessian = "expected"), 1L))
@@ -162,11 +162,11 @@ test_that("the criterion's own information is the one that is factorized", {
   # ctx_penalized() hard-coded the OBSERVED information, which was right while
   # the exact gradient ran on no other route and became a gradient of the
   # wrong function the moment the expected route was admitted.
-  h <- crit_of_eta_e(y ~ s(x, k = 8), dge, distributions7::gamma1_distrib(),
+  h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)), dge, distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   eta <- h$eta0 + 0.2
   hy <- eta_to_hyper(eta, h$idx, statmod_hyper_start(h$spec, h$design))
-  cf <- fit_at_hyper(y ~ s(x, k = 8), distributions7::gamma1_distrib(), dge,
+  cf <- fit_at_hyper(y ~ s(x, bspline_smooth(k = 8)), distributions7::gamma1_distrib(), dge,
                      hy)$coefficients
   ctx <- outer_context(h$spec, h$design, cf, hy)
   ko <- ctx_penalized(ctx, h$spec, h$design, cf, hy, FALSE)

@@ -9,7 +9,7 @@ shared_data <- function(n = 300, seed = 21) {
 
 test_that("a label collapses the outer index to one row over two members", {
   d <- shared_data()
-  sp <- statmod_spec(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  sp <- statmod_spec(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                      gaussian1_distrib(), d)
   bl <- statmod_blocks(sp, statmod_design(sp))
   idx <- outer_hyper_index(sp, bl)
@@ -22,7 +22,7 @@ test_that("a label collapses the outer index to one row over two members", {
   # and without the label there are two rows, each its own member: the member
   # table is then the index, which is what lets every loop over members be
   # the loop over rows that was there before sharing existed
-  sp2 <- statmod_spec(y ~ s(x, k = 8) + s(z, k = 8), gaussian1_distrib(), d)
+  sp2 <- statmod_spec(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)), gaussian1_distrib(), d)
   bl2 <- statmod_blocks(sp2, statmod_design(sp2))
   idx2 <- outer_hyper_index(sp2, bl2)
   expect_identical(nrow(idx2), 2L)
@@ -34,7 +34,7 @@ test_that("a label collapses the outer index to one row over two members", {
 
 test_that("the estimated value is written under every member's own key", {
   d <- shared_data()
-  fit <- statmod(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                  gaussian1_distrib(), d, outer_criterion = reml())
   h <- hyper(fit)
   expect_identical(nrow(h), 2L)
@@ -44,7 +44,7 @@ test_that("the estimated value is written under every member's own key", {
   expect_false(any(h$held))
 
   # the negative control: unshared, the two are genuinely different
-  free <- statmod(y ~ s(x, k = 8) + s(z, k = 8), gaussian1_distrib(), d,
+  free <- statmod(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)), gaussian1_distrib(), d,
                   outer_criterion = reml())
   hf <- hyper(free)
   expect_gt(abs(diff(log(hf$estimate))), 1)
@@ -52,9 +52,9 @@ test_that("the estimated value is written under every member's own key", {
 
 test_that("sharing is a restriction, so the criterion cannot rise", {
   d <- shared_data()
-  a <- statmod(y ~ s(x, k = 8) + s(z, k = 8), gaussian1_distrib(), d,
+  a <- statmod(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)), gaussian1_distrib(), d,
                outer_criterion = reml())
-  b <- statmod(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  b <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                gaussian1_distrib(), d, outer_criterion = reml())
   expect_gt(a@criterion, b@criterion)
 })
@@ -64,7 +64,7 @@ test_that("the effective degrees of freedom stay per term", {
   # traces differ, and a count taken per hyperparameter would report the two
   # as equal
   d <- shared_data()
-  fit <- statmod(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                  gaussian1_distrib(), d, outer_criterion = reml())
   e <- fit@edf[grepl("^s\\(", fit@edf$term), ]
   expect_identical(nrow(e), 2L)
@@ -79,7 +79,7 @@ test_that("the group's gradient is the sum of its members'", {
   lam <- 0.35
 
   mode_at <- function(v) {
-    f <- bquote(y ~ s(x, k = 8, lambda = .(v)) + s(z, k = 8, lambda = .(v)))
+    f <- bquote(y ~ s(x, bspline_smooth(k = 8), hyper = c(lambda = .(v))) + s(z, bspline_smooth(k = 8), hyper = c(lambda = .(v))))
     statmod(stats::as.formula(f), gaussian1_distrib(), d)@coefficients
   }
   prep <- function(f) {
@@ -104,8 +104,8 @@ test_that("the group's gradient is the sum of its members'", {
                           integrated_basis(pp$spec, pp$design, meth@kind))
   }
 
-  sh <- prep(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"))
-  fr <- prep(y ~ s(x, k = 8) + s(z, k = 8))
+  sh <- prep(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"))
+  fr <- prep(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)))
   g_sh <- grad_at(sh, lam)
   g_fr <- grad_at(fr, lam)
   expect_length(g_sh, 1L)
@@ -172,7 +172,7 @@ test_that("a fit with no label is untouched by the machinery", {
   # the negative control for the whole change: with nothing shared, every
   # quantity is what it was, and the exact Hessian is still available
   d <- shared_data()
-  fit <- statmod(y ~ s(x, k = 8) + s(z, k = 8), gaussian1_distrib(), d,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)), gaussian1_distrib(), d,
                  outer_criterion = reml())
   sp <- fit@spec
   de <- statmod_design(sp)
@@ -209,7 +209,7 @@ shared_hess_data <- function(n = 300, seed = 21) {
 
 test_that("a shared group has an exact outer Hessian at both orders", {
   d <- shared_data()
-  sp <- statmod_spec(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  sp <- statmod_spec(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                      gaussian1_distrib(), d)
   de <- statmod_design(sp)
   idx <- outer_hyper_index(sp, statmod_blocks(sp, de))
@@ -220,9 +220,9 @@ test_that("a shared group has an exact outer Hessian at both orders", {
 test_that("the shared Hessian is the unshared one read along the diagonal", {
   d <- shared_hess_data()
   eta <- c(0.5, 0.5)
-  a <- shared_hess(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L") +
-                     s(w, k = 8), d, eta)
-  b <- shared_hess(y ~ s(x, k = 8) + s(z, k = 8) + s(w, k = 8), d,
+  a <- shared_hess(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L") +
+                     s(w, bspline_smooth(k = 8)), d, eta)
+  b <- shared_hess(y ~ s(x, bspline_smooth(k = 8)) + s(z, bspline_smooth(k = 8)) + s(w, bspline_smooth(k = 8)), d,
                    c(eta[[1L]], eta[[1L]], eta[[2L]]))
   J <- matrix(c(1, 1, 0, 0, 0, 1), nrow = 3L)
   expect_equal(a, t(J) %*% b %*% J, tolerance = 1e-10)
@@ -238,15 +238,15 @@ test_that("two hyperparameters of ONE unit may sit in two rows", {
   # second is free, so the within-unit cross derivative spans two rows
   d <- shared_hess_data(n = 400)
   eta <- c(0.4, -0.2)
-  fs <- y ~ te(x, z, k = c(5, 5), id = c(lambda1 = "L")) +
-    s(w, k = 8, id = "L")
+  fs <- y ~ te(x, z, smooths = bspline_smooth(k = 5), id = c(lambda1 = "L")) +
+    s(w, bspline_smooth(k = 8), id = "L")
   sp <- statmod_spec(fs, gaussian1_distrib(), d)
   mem <- index_members(outer_hyper_index(sp, statmod_blocks(sp,
                                           statmod_design(sp))))
   expect_identical(mem$row, c(1L, 2L, 1L))
 
   a <- shared_hess(fs, d, eta)
-  b <- shared_hess(y ~ te(x, z, k = c(5, 5)) + s(w, k = 8), d,
+  b <- shared_hess(y ~ te(x, z, smooths = bspline_smooth(k = 5)) + s(w, bspline_smooth(k = 8)), d,
                    c(eta[[1L]], eta[[2L]], eta[[1L]]))
   J <- matrix(c(1, 0, 1, 0, 1, 0), nrow = 3L)
   expect_equal(a, t(J) %*% b %*% J, tolerance = 1e-10)
@@ -256,7 +256,7 @@ test_that("two hyperparameters of ONE unit may sit in two rows", {
 
 test_that("a shared hyperparameter carries a standard error", {
   d <- shared_data()
-  fit <- statmod(y ~ s(x, k = 8, id = "L") + s(z, k = 8, id = "L"),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "L") + s(z, bspline_smooth(k = 8), id = "L"),
                  gaussian1_distrib(), d, outer_criterion = reml())
   V <- statmod_hyper_vcov(fit@spec, statmod_design(fit@spec),
                           fit@coefficients, fit@hyper, fit@methods$outer)
@@ -277,7 +277,7 @@ test_that("a shared hyperparameter carries a standard error", {
 
 test_that("a value held on one member is held for the whole group", {
   d <- shared_data()
-  f <- y ~ s(x, k = 8, lambda = 2, id = "L") + s(z, k = 8, id = "L")
+  f <- y ~ s(x, bspline_smooth(k = 8), id = "L", hyper = c(lambda = 2)) + s(z, bspline_smooth(k = 8), id = "L")
   sp <- statmod_spec(f, gaussian1_distrib(), d)
   de <- statmod_design(sp)
 
@@ -302,14 +302,14 @@ test_that("a value held on one member is held for the whole group", {
 test_that("two members held at different values are a contradiction", {
   d <- shared_data()
   expect_error(
-    statmod(y ~ s(x, k = 8, lambda = 2, id = "L") +
-              s(z, k = 8, lambda = 5, id = "L"),
+    statmod(y ~ s(x, bspline_smooth(k = 8), id = "L", hyper = c(lambda = 2)) +
+              s(z, bspline_smooth(k = 8), id = "L", hyper = c(lambda = 5)),
             gaussian1_distrib(), d, outer_criterion = reml()),
     "is held at 2 in")
   # the same value twice says the same thing twice and is fine
   expect_no_error(
-    statmod(y ~ s(x, k = 8, lambda = 2, id = "L") +
-              s(z, k = 8, lambda = 2, id = "L"),
+    statmod(y ~ s(x, bspline_smooth(k = 8), id = "L", hyper = c(lambda = 2)) +
+              s(z, bspline_smooth(k = 8), id = "L", hyper = c(lambda = 2)),
             gaussian1_distrib(), d, outer_criterion = reml()))
 })
 

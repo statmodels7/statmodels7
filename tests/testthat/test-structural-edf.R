@@ -95,7 +95,7 @@ test_that("a model with no filter keeps the coefficient-only reading", {
   n <- 300
   dd <- data.frame(x = stats::runif(n, -3, 3))
   dd$y <- stats::rnorm(n, sin(dd$x), 0.5)
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dd,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
   design <- statmod_design(fit@spec)
   # there is no joint vector to read, so the route is not even offered

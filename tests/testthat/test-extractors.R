@@ -61,7 +61,7 @@ test_that("a held hyperparameter is reported as held", {
   set.seed(11)
   d <- data.frame(z = runif(200, 0, 1))
   d$y <- sin(3 * d$z) + rnorm(200, 0, 0.3)
-  h <- hyper(statmod(y ~ s(z, k = 6, lambda = 10), gaussian1_distrib(), d))
+  h <- hyper(statmod(y ~ s(z, bspline_smooth(k = 6), hyper = c(lambda = 10)), gaussian1_distrib(), d))
   expect_true(h$held)
   expect_identical(h$source, "fixed")
   expect_equal(h$estimate, 10)

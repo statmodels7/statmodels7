@@ -219,7 +219,7 @@ test_that("a smooth term reports an edf between its null space and its rank", {
   n2 <- 300
   ds <- data.frame(x = runif(n2, -2, 2))
   ds$y <- sin(1.4 * ds$x) + stats::rnorm(n2, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
 
   e <- fit@edf
   sm <- e[e$term != "linpar" & e$parameter == "mu", , drop = FALSE]
@@ -231,7 +231,7 @@ test_that("a smooth term reports an edf between its null space and its rank", {
   expect_lt(sm$edf, sm$coefficients + 1e-8)
 
   # a heavier penalty spends less, which is what the number is for
-  hard <- statmod(y ~ s(x, k = 10, lambda = 1e6),
+  hard <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = 1e6)),
                   distributions7::gaussian1_distrib(), ds)
   hs <- hard@edf
   expect_lt(hs$edf[hs$term != "linpar" & hs$parameter == "mu"], sm$edf)
@@ -319,8 +319,8 @@ test_that("the term decides which hyperparameters are estimated", {
   # a smooth answers the same way, through a criterion of the other kind
   ds <- data.frame(x = stats::runif(200))
   ds$y <- sin(6 * ds$x) + stats::rnorm(200, sd = 0.3)
-  est <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds)
-  hel <- statmod(y ~ s(x, k = 10, lambda = 5),
+  est <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds)
+  hel <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = 5)),
                  distributions7::gaussian1_distrib(), ds)
   expect_equal(unname(unlist(hel@hyper$mu[[1L]])), 5)
   expect_false(isTRUE(all.equal(unname(unlist(est@hyper$mu[[1L]])), 5)))

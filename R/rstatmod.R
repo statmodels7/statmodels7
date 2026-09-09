@@ -110,7 +110,7 @@ NULL
 #'   strictly interior.
 #'
 #' A hyperparameter the term holds is used rather than drawn, so
-#' `s(x, lambda = 2)` simulates at the smoothing it names. A prior whose
+#' `s(x, bspline_smooth(), hyper = c(lambda = 2))` simulates at the smoothing it names. A prior whose
 #' coordinates a term drew is reported at the width the term used, the values
 #' there no longer being that prior's own draw -- and drawn Gaussian at that
 #' width, so a heavy-tailed prior over a break-point keeps its family for the
@@ -761,7 +761,7 @@ rstatmod_eta <- function(spec, design, coef, psi = NULL) {
 #' what is random and not in what is being estimated.
 #'
 #' A hyperparameter the term holds is used as given rather than drawn:
-#' `s(x, lambda = 2)` says what the smoothing is and the simulation says it
+#' `s(x, bspline_smooth(), hyper = c(lambda = 2))` says what the smoothing is and the simulation says it
 #' too.
 #'
 #' @param spec The specification, built against a placeholder response.

@@ -717,7 +717,7 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' reapplies that record to new rows.
 #'
 #' Rebuilding instead gives a block of the same shape, multiplying the same
-#' coefficients, that means something else. Measured on `y ~ s(x, k = 10)` at
+#' coefficients, that means something else. Measured on `y ~ s(x, bspline_smooth(k = 10))` at
 #' 200 observations: predicting on 40 of the rows the model was fitted to
 #' differed from the fitted values there by 0.237, and on the 51 rows with
 #' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. Handing

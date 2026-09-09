@@ -38,7 +38,7 @@ test_that("the gate asks the matrix's size and its zeros, and nothing else", {
   expect_false(worth_sparse(K, max_density = 0))
 
   # a small model is refused whatever it is made of
-  expect_false(worth_sparse(penalized_at(y ~ x + s(x, k = 10),
+  expect_false(worth_sparse(penalized_at(y ~ x + s(x, bspline_smooth(k = 10)),
                                          sparse_re(20L, n = 500L))))
 })
 
@@ -124,12 +124,12 @@ test_that("a design with no random effect takes the same route", {
                   y = 3 * rnorm(m, 0, 0.6)[as.integer(g)] + sin(2 * pi * x) +
                     rnorm(n, 0, 0.8))
 
-  K_lin <- penalized_at(y ~ 0 + g + s(x, k = 10), d,
+  K_lin <- penalized_at(y ~ 0 + g + s(x, bspline_smooth(k = 10)), d,
                         linpar = linpar_options(sparse = TRUE))
   expect_true(worth_sparse(K_lin))
   expect_true(isTRUE(pd_factor(K_lin)$sparse))
 
-  f <- statmod(y ~ 0 + g + s(x, k = 10),
+  f <- statmod(y ~ 0 + g + s(x, bspline_smooth(k = 10)),
                distributions7::gaussian1_distrib(), d,
                outer_criterion = reml(),
                linpar_control = linpar_options(sparse = TRUE))

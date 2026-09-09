@@ -43,7 +43,7 @@ test_that("the stencil reproduces the analytic Hessian where one exists", {
   # THE CHECK THAT RESTS ON NOTHING ELSE: on a model with no structural term
   # the assembly is exact, so the difference of the exact gradient has an
   # exact quantity to be compared against rather than a reference of its own.
-  fit <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), stencil_smooth(),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), stencil_smooth(),
                  outer_criterion = reml())
   p <- stencil_parts(fit)
   A <- as.matrix(statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper,
@@ -62,7 +62,7 @@ test_that("the stencil reproduces the analytic Hessian where one exists", {
 test_that("a model with no structural term is untouched", {
   # the route is taken on the design's own answer, so a model carrying no
   # such term must reach the assembly and reach it identically
-  fit <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), stencil_smooth(),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), stencil_smooth(),
                  outer_criterion = reml())
   p <- stencil_parts(fit)
   expect_identical(length(attr(p$design, "structural")), 0L)

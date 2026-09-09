@@ -48,7 +48,7 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
 
 test_that("the Hessian of one smoothing parameter matches numDeriv", {
   skip_if_not_installed("numDeriv")
-  h <- outer_handles(y ~ s(x, k = 10), dh, reml(hessian = "observed"))
+  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, reml(hessian = "observed"))
   for (shift in c(0.4, -1.1)) {
     eta <- h$eta0 + shift
     expect_equal(as.numeric(h$he(eta)),
@@ -58,7 +58,7 @@ test_that("the Hessian of one smoothing parameter matches numDeriv", {
 
 test_that("the Hessian matches numDeriv with the scale modelled", {
   skip_if_not_installed("numDeriv")
-  h <- outer_handles(y ~ s(x, k = 8) | sigma ~ z, dh,
+  h <- outer_handles(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dh,
                      reml(hessian = "observed"))
   eta <- h$eta0 + 0.25
   expect_equal(as.numeric(h$he(eta)),
@@ -71,7 +71,7 @@ test_that("the Hessian matches numDeriv with two smooths", {
   n2 <- 250
   d2 <- data.frame(a = runif(n2, -2, 2), b = runif(n2, -2, 2))
   d2$y <- sin(1.4 * d2$a) + d2$b^2 + stats::rnorm(n2, sd = 0.3)
-  h <- outer_handles(y ~ s(a, k = 8) + s(b, k = 8), d2,
+  h <- outer_handles(y ~ s(a, bspline_smooth(k = 8)) + s(b, bspline_smooth(k = 8)), d2,
                      reml(hessian = "observed"))
   eta <- h$eta0 + c(0.5, -0.4)
   got <- h$he(eta)
@@ -91,7 +91,7 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
   n2 <- 250
   d2 <- data.frame(a = runif(n2, -1, 1), b = runif(n2, -1, 1))
   d2$y <- d2$a^2 + sin(3 * d2$b) + stats::rnorm(n2, sd = 0.3)
-  h <- outer_handles(y ~ te(a, b, k = 4), d2, reml(hessian = "observed"))
+  h <- outer_handles(y ~ te(a, b, smooths = bspline_smooth(k = 4)), d2, reml(hessian = "observed"))
   eta <- h$eta0 + c(0.3, -0.3)
   # the loosest tolerance here, and it is the reference's: a tensor design is
   # the worst conditioned of these, so the mode moves least cleanly with the
@@ -102,7 +102,7 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
 
 test_that("the Hessian matches numDeriv under ml", {
   skip_if_not_installed("numDeriv")
-  h <- outer_handles(y ~ s(x, k = 10), dh, ml(hessian = "observed"))
+  h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, ml(hessian = "observed"))
   eta <- h$eta0 + 0.3
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-5)
@@ -140,7 +140,7 @@ test_that("a Newton step on the exact pair lands where the search does", {
   # a check that owes nothing to numDeriv: the gradient and the Hessian are
   # used to take Newton steps, and they must arrive where an optimizer that
   # only ever sees the value and the gradient arrives
-  ref <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), dh,
+  ref <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dh,
                  outer_criterion = reml(hessian = "observed"))
   spec <- ref@spec
   design <- statmod_design(spec)
@@ -149,7 +149,7 @@ test_that("a Newton step on the exact pair lands where the search does", {
 
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, ref@hyper)
-    f <- statmod(y ~ s(x, k = 10, lambda = exp(eta)),
+    f <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = exp(eta))),
                  distributions7::gaussian1_distrib(), dh)
     list(g = statmod_marginal_grad(spec, design, f@coefficients, hy, method,
                                    idx),
@@ -157,7 +157,7 @@ test_that("a Newton step on the exact pair lands where the search does", {
                                    idx))
   }
 
-  eta <- log(ref@hyper$mu[["s(x, k = 10)"]][["lambda"]]) + 1.5
+  eta <- log(ref@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]) + 1.5
   for (i in 1:8) {
     p <- at(eta)
     # a maximum, so the Hessian is negative there and the step is uphill
@@ -166,7 +166,7 @@ test_that("a Newton step on the exact pair lands where the search does", {
   # the two agree to 4e-5 relative, and Newton's point is the more stationary
   # of them: its gradient is below 1e-6 while the search stopped on its own
   # rule, so the tolerance here is the SEARCH's accuracy and not this pair's
-  expect_equal(exp(eta), ref@hyper$mu[["s(x, k = 10)"]][["lambda"]],
+  expect_equal(exp(eta), ref@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]],
                tolerance = 1e-4)
   expect_lt(abs(at(eta)$g), 1e-6)
   expect_lt(at(eta)$H, 0)
@@ -296,7 +296,7 @@ test_that("a fixed design gets exactly zero from every refresh correction", {
   # the negative control, and it is what says the corrections cannot move a
   # model with no block that moves: they are not small there, they are the
   # zero matrix and the number zero.
-  b <- refresh_bits(y ~ s(x, k = 8), dh)
+  b <- refresh_bits(y ~ s(x, bspline_smooth(k = 8)), dh)
   expect_length(b$units, 0L)
   R <- contract3_refresh(b$spec, b$design, b$params, b$npar, b$offs, b$total,
                          list(), b$Hl, b$units)
@@ -425,7 +425,7 @@ test_that("the twice-contracted fourth derivative matches a second difference", 
   dn$y <- 3 * exp(-0.6 * dn$x) + stats::rnorm(nn, sd = 0.15)
 
   cases <- list(
-    list(y ~ s(x, k = 6), d1, 0L),
+    list(y ~ s(x, bspline_smooth(k = 6)), d1, 0L),
     list(y ~ nl(~ a * x + b * z + a * b * w, a ~ 0 + ridge(~ grp),
                 start = list(b = 0.8)), db, 1L),
     list(y ~ 0 + nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn, 1L))

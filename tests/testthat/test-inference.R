@@ -160,7 +160,7 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   n2 <- 400
   ds <- data.frame(x = runif(n2, -2, 2))
   ds$y <- sin(1.4 * ds$x) + stats::rnorm(n2, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 10, lambda = 5),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = 5)),
                  distributions7::gaussian1_distrib(), ds)
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
@@ -179,7 +179,7 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   # the linear component IS an ordinary coefficient and carries inference
   expect_true(is.finite(b$table$se[2L]))
 
-  expect_output(print(s), "s(x, k = 10, lambda = 5)", fixed = TRUE)
+  expect_output(print(s), "s(x, bspline_smooth(k = 10), hyper = c(lambda = 5))", fixed = TRUE)
   expect_output(print(s), "edf")
   expect_output(print(s), "[fixed]", fixed = TRUE)
 })
@@ -408,7 +408,7 @@ test_that("the certificate is a property of the point, not of the search", {
   d <- data.frame(x = runif(n))
   d$y <- sin(5 * d$x) + rnorm(n, 0, 0.3)
 
-  fit <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), d,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
                  outer_criterion = reml())
   ct <- statmod_certificate(fit)
   expect_identical(ct$state, "converged")
@@ -432,7 +432,7 @@ test_that("the certificate declares a boundary and refuses where it cannot read"
   set.seed(42)
   n <- 300
   d <- data.frame(x = runif(n), y = rnorm(300))
-  noise <- statmod(y ~ s(x, k = 10), gaussian1_distrib(), d,
+  noise <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
                    outer_criterion = reml())
   cn <- statmod_certificate(noise)
   expect_identical(cn$state, "boundary")
@@ -455,7 +455,7 @@ test_that("summary carries the certificate and prints it", {
   n <- 200
   d <- data.frame(x = runif(n))
   d$y <- sin(4 * d$x) + rnorm(n, 0, 0.3)
-  s <- summary(statmod(y ~ s(x, k = 8), gaussian1_distrib(), d,
+  s <- summary(statmod(y ~ s(x, bspline_smooth(k = 8)), gaussian1_distrib(), d,
                        outer_criterion = reml()))
   expect_false(is.null(s@certificate))
   expect_true(s@certificate$state %in%
@@ -525,7 +525,7 @@ test_that("every hyperparameter carries the mark its note speaks of", {
   # described something on screen.
   sim <- rstatmod(y ~ x + z, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))$data
-  s <- summary(statmod(y ~ s(x, k = 8),
+  s <- summary(statmod(y ~ s(x, bspline_smooth(k = 8)),
                        distributions7::gaussian1_distrib(), sim))
   expect_output(print(s), "[reml]", fixed = TRUE)
   # and the note that speaks of it is emitted
@@ -542,7 +542,7 @@ test_that("the note about the point follows the certificate, not the flag", {
   sim <- rstatmod(y ~ x + z, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2, -0.5), sigma = log(0.4)))$data
   for (f in list(statmod(y ~ x + z, distributions7::gaussian1_distrib(), sim),
-                 statmod(y ~ s(x, k = 8),
+                 statmod(y ~ s(x, bspline_smooth(k = 8)),
                          distributions7::gaussian1_distrib(), sim))) {
     s <- summary(f)
     warned <- any(grepl("not certified as a maximum", s@notes, fixed = TRUE))
@@ -825,7 +825,7 @@ smooth_fit <- local({
   d <- data.frame(x = stats::runif(300))
   d$y <- sin(2 * pi * d$x) + 0.4 * d$x + stats::rnorm(300, sd = 0.3)
   list(data = d,
-       fit = statmod(y ~ s(x, k = 15), distributions7::gaussian1_distrib(),
+       fit = statmod(y ~ s(x, bspline_smooth(k = 15)), distributions7::gaussian1_distrib(),
                      d, outer_criterion = reml()))
 })
 
@@ -895,7 +895,7 @@ test_that("a shared hyperparameter carries the unconditional matrix", {
   set.seed(11)
   d <- data.frame(x = stats::runif(200), z = stats::runif(200))
   d$y <- sin(2 * pi * d$x) + cos(2 * pi * d$z) + stats::rnorm(200, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 8, id = "a") + s(z, k = 8, id = "a"),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 8), id = "a") + s(z, bspline_smooth(k = 8), id = "a"),
                  distributions7::gaussian1_distrib(), d,
                  outer_criterion = reml())
   expect_no_warning(V <- vcov(fit, type = "unconditional",
@@ -936,7 +936,7 @@ test_that("the widening is the one mgcv reports as unconditional", {
   # theirs and nothing else is disturbed
   genv <- new.env(parent = globalenv())
   genv$s <- mgcv::s
-  g <- mgcv::gam(stats::as.formula("y ~ s(x, bs = 'bs', k = 15)", env = genv),
+  g <- mgcv::gam(stats::as.formula("y ~ s(x, k = 15, bs = 'bs')", env = genv),
                  data = d, method = "REML")
   pu <- stats::predict(g, se.fit = TRUE, unconditional = TRUE)$se.fit
   pb <- stats::predict(g, se.fit = TRUE, unconditional = FALSE)$se.fit

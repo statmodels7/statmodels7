@@ -9,7 +9,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
   skip_if_not_installed("numDeriv")
   # the observed information is asked for so that numDeriv's Hessian of the
   # penalized objective is the same matrix the criterion uses
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml(hessian = "observed"))
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -40,7 +40,7 @@ test_that("REML is Wood's criterion, reached by the other route", {
   # written the other way round the two forms are apart by exactly
   # (p - r) log 2pi, which here is the intercept, the smooth's linear
   # component and the scale's intercept.
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml())
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -73,14 +73,14 @@ test_that("REML is Wood's criterion, reached by the other route", {
 })
 
 test_that("the reported hyperparameter is where the criterion is best", {
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml())
   nm <- names(fit@hyper$mu)[1L]
   lam <- fit@hyper$mu[[nm]][["lambda"]]
   at <- function(v) {
     h <- fit@hyper
     h$mu[[nm]][["lambda"]] <- v
-    statmod(y ~ s(x, k = 10, lambda = v),
+    statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = v)),
             distributions7::gaussian1_distrib(), ds)
   }
   crit <- function(f) {
@@ -95,7 +95,7 @@ test_that("the reported hyperparameter is where the criterion is best", {
 })
 
 test_that("a smoothing parameter estimated by REML lands on a sane edf", {
-  fit <- statmod(y ~ s(x, k = 12), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 12)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml())
   e <- fit@edf$edf[fit@edf$term != "linpar" & fit@edf$parameter == "mu"]
   # a sine over four periods of the covariate is neither a straight line nor
@@ -142,14 +142,14 @@ test_that("a kinked penalty keeps the hyperparameter it was given", {
   set.seed(23)
   dl <- ds
   for (j in 1:3) dl[[paste0("n", j)]] <- stats::rnorm(n)
-  fit <- statmod(y ~ s(x, k = 10) + lasso(~ n1 + n2 + n3, lambda = 40),
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)) + lasso(~ n1 + n2 + n3, lambda = 40),
                  distributions7::gaussian1_distrib(), dl,
                  outer_criterion = reml())
   ln <- grep("^lasso", names(fit@hyper$mu), value = TRUE)
   expect_equal(unname(fit@hyper$mu[[ln]][["lambda"]]), 40)
   # while the smooth's did move
   expect_false(isTRUE(all.equal(
-    unname(fit@hyper$mu[["s(x, k = 10)"]][["lambda"]]), 1)))
+    unname(fit@hyper$mu[["s(x, bspline_smooth(k = 10))"]][["lambda"]]), 1)))
 })
 
 test_that("the criterion applies to a smooth penalty and to nothing else", {
@@ -175,12 +175,12 @@ test_that("the criterion applies to a smooth penalty and to nothing else", {
   expect_equal(unname(unlist(h@hyper)), 1)
 
   # and where there IS a smooth penalty it acts, without being asked
-  m <- statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(), ds)
+  m <- statmod(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(), ds)
   expect_false(isTRUE(all.equal(
-    unname(m@hyper$mu[["s(x, k = 8)"]][["lambda"]]), 1)))
+    unname(m@hyper$mu[["s(x, bspline_smooth(k = 8))"]][["lambda"]]), 1)))
   expect_false(is.na(m@criterion))
 
-  expect_error(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+  expect_error(statmod(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(),
                        ds, outer_criterion = "reml"),
                "reml(), ml(), aic(), bic(), cv() or NULL", fixed = TRUE)
 })
@@ -194,7 +194,7 @@ test_that("ml reads an additive penalty's null space, and refuses without one", 
   set.seed(24)
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + dt$x2 + stats::rnorm(200, sd = 0.3)
-  fml <- statmod(y ~ te(x1, x2, k = 4),
+  fml <- statmod(y ~ te(x1, x2, smooths = bspline_smooth(k = 4)),
                  distributions7::gaussian1_distrib(), dt,
                  outer_criterion = ml())
   expect_true(is.finite(fml@criterion))
@@ -207,22 +207,22 @@ test_that("ml reads an additive penalty's null space, and refuses without one", 
                "cannot read the null space")
   # and reml, which integrates everything and needs no such basis, agrees with
   # ml about the answer: the two criteria differ, the fits do not
-  fit <- statmod(y ~ te(x1, x2, k = 4),
+  fit <- statmod(y ~ te(x1, x2, smooths = bspline_smooth(k = 4)),
                  distributions7::gaussian1_distrib(), dt,
                  outer_criterion = reml())
   expect_true(is.finite(fit@criterion))
   expect_equal(as.numeric(fitted(fml)), as.numeric(fitted(fit)),
                tolerance = 1e-3)
-  expect_equal(unlist(fml@hyper$mu[["te(x1, x2, k = 4)"]]),
-               unlist(fit@hyper$mu[["te(x1, x2, k = 4)"]]),
+  expect_equal(unlist(fml@hyper$mu[["te(x1, x2, smooths = bspline_smooth(k = 4))"]]),
+               unlist(fit@hyper$mu[["te(x1, x2, smooths = bspline_smooth(k = 4))"]]),
                tolerance = 1e-2)
   # one smoothing parameter per margin, both moved off the probe value
-  th <- fit@hyper$mu[["te(x1, x2, k = 4)"]]
+  th <- fit@hyper$mu[["te(x1, x2, smooths = bspline_smooth(k = 4))"]]
   expect_gte(length(th), 2L)
 })
 
 test_that("the summary marks an estimated hyperparameter as estimated", {
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml())
   s <- summary(fit)
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
@@ -256,7 +256,7 @@ test_that("an unavailable point is a barrier the search steps back from", {
   n <- 300
   dv <- data.frame(x = stats::runif(n, -2, 2))
   dv$y <- sin(1.5 * dv$x) + stats::rnorm(n, sd = 0.3)
-  spec <- statmod_spec(y ~ s(x, k = 10), distributions7::gaussian1_distrib(),
+  spec <- statmod_spec(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(),
                        dv)
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
@@ -277,7 +277,7 @@ test_that("the outer search uses the optimizer it was given", {
   n <- 300
   dv <- data.frame(x = stats::runif(n, -2, 2))
   dv$y <- sin(1.5 * dv$x) + stats::rnorm(n, sd = 0.3)
-  fml <- y ~ s(x, k = 8)
+  fml <- y ~ s(x, bspline_smooth(k = 8))
   for (o in list(optimizers7::nelder_mead(), optimizers7::bfgs(),
                  optimizers7::lbfgs())) {
     f <- statmod(fml, distributions7::gaussian1_distrib(), dv,
@@ -299,11 +299,11 @@ test_that("a trace names the term without repeating its specification", {
   expect_true(endsWith(short, "::omega::ridge(~id)"))
   expect_true(startsWith(short, "gas(p = 1, ...)"))
   # the first argument survives, so two smooths stay apart
-  expect_identical(statmodels7:::short_keys(c("s(x, k = 20)", "s(z, k = 8)")),
+  expect_identical(statmodels7:::short_keys(c("s(x, bspline_smooth(k = 20))", "s(z, bspline_smooth(k = 8))")),
                    c("s(x, ...)", "s(z, ...)"))
   # and where shortening would collide, nothing is shortened
-  expect_identical(statmodels7:::short_keys(c("s(x, k = 20)", "s(x, k = 8)")),
-                   c("s(x, k = 20)", "s(x, k = 8)"))
+  expect_identical(statmodels7:::short_keys(c("s(x, bspline_smooth(k = 20))", "s(x, bspline_smooth(k = 8))")),
+                   c("s(x, bspline_smooth(k = 20))", "s(x, bspline_smooth(k = 8))"))
   # a call with one argument is already short
   expect_identical(statmodels7:::short_keys("random(~1 | g)"), "random(~1 | g)")
 })
@@ -337,7 +337,7 @@ test_that("the hyperparameters head their block", {
   n2 <- 200
   ds <- data.frame(x = runif(n2))
   ds$y <- sin(4 * ds$x) + stats::rnorm(n2, sd = 0.3)
-  s <- summary(statmod(y ~ s(x, k = 8), distributions7::gaussian1_distrib(),
+  s <- summary(statmod(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(),
                        ds, outer_criterion = reml()))
   kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
   b <- s@tables$mu[[which(kinds == "smooth")]]
@@ -349,7 +349,7 @@ test_that("a hyperparameter estimated by REML carries a standard error", {
   n2 <- 200
   ds <- data.frame(x = runif(n2))
   ds$y <- sin(6 * ds$x) + stats::rnorm(n2, sd = 0.3)
-  fit <- statmod(y ~ s(x, k = 10), distributions7::gaussian1_distrib(), ds,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
                  outer_criterion = reml())
   sp <- fit@spec
   de <- statmod_design(sp)
@@ -443,14 +443,14 @@ test_that("the outer line search gets a short backtracking budget", {
   d <- data.frame(x = runif(n), g = factor(rep(1:20, each = 10)))
   d$y <- sin(6 * d$x) + rnorm(20)[as.integer(d$g)] + rnorm(n, 0, 0.3)
 
-  fit <- statmod(y ~ s(x, k = 10) + random(~1 | g), gaussian1_distrib(), d,
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)) + random(~1 | g), gaussian1_distrib(), d,
                  outer_criterion = reml())
   ls <- fit@methods$search@line_search
   expect_identical(ls@max_step, 12)
 
   # AND AN OPTIMIZER THE CALLER NAMED KEEPS ITS OWN, which is the half that
   # makes the rule a rule rather than a global.
-  named <- statmod(y ~ s(x, k = 10) + random(~1 | g), gaussian1_distrib(), d,
+  named <- statmod(y ~ s(x, bspline_smooth(k = 10)) + random(~1 | g), gaussian1_distrib(), d,
                    outer_criterion = reml(), outer_optimizer = newton())
   expect_identical(named@methods$search@line_search@max_step, 30)
 })
@@ -467,7 +467,7 @@ test_that("the short budget costs nothing where nothing was wrong", {
   n <- 300
   d <- data.frame(x = runif(n), g = factor(rep(1:30, each = 10)))
   d$y <- sin(5 * d$x) + rnorm(30, 0, 0.5)[as.integer(d$g)] + rnorm(n, 0, 0.3)
-  form <- y ~ s(x, k = 12) + random(~1 | g)
+  form <- y ~ s(x, bspline_smooth(k = 12)) + random(~1 | g)
 
   at_budget <- function(k) {
     old <- outer_backtracks

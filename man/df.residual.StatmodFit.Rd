@@ -30,7 +30,7 @@ all, so the result is not an integer.
 set.seed(1)
 dd <- data.frame(x = runif(60))
 dd$y <- sin(3 * dd$x) + rnorm(60, sd = 0.3)
-fit <- statmod(y ~ s(x, k = 6), distributions7::gaussian1_distrib(), dd)
+fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), dd)
 df.residual(fit)
 }
 \seealso{

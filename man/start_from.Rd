@@ -45,8 +45,8 @@ carried across are removed.}
 }
 
 The third rule is what makes two bases comparable at all. A smooth's
-coefficients are coordinates in a basis the fit rotates, so \code{s(x, k = 6)}
-and \code{s(x, k = 10)} carry the names \verb{s(x).z1} to \verb{s(x).z4} in common and
+coefficients are coordinates in a basis the fit rotates, so \code{s(x, bspline_smooth(k = 6))}
+and \code{s(x, bspline_smooth(k = 10))} carry the names \verb{s(x).z1} to \verb{s(x).z4} in common and
 mean something different by each: measured on one data set, \verb{s(x).z1} is
 0.0267 at \code{k = 6} and -0.0277 at \code{k = 10}, opposite in sign. What the two
 do share is the FUNCTION, so the coefficients are found by projecting it,
@@ -83,8 +83,8 @@ binomial with 40 columns at \eqn{n = 20000} it is 2.05 -- 0.81 s against
 0.40 s. Fitting a negative binomial from a Poisson's estimates is 1.29.
 
 On a block that is PROJECTED the starting predictor is a different order of
-magnitude closer. Measured at \eqn{n = 4000}, widening \code{s(x, k = 6)} to
-\code{s(x, k = 12)}, the root mean square gap between the starting predictor and
+magnitude closer. Measured at \eqn{n = 4000}, widening \code{s(x, bspline_smooth(k = 6))} to
+\code{s(x, bspline_smooth(k = 12))}, the root mean square gap between the starting predictor and
 the reference's is \eqn{3\times 10^{-15}} where leaving the block to the
 fallback gives 1.046; a quadratic basis carried onto a cubic one at the
 same \code{k} gives 0.0101 against 1.049. What that is worth in time depends on

@@ -356,7 +356,7 @@ test_that("a frozen break-point block composes with an estimated penalty", {
   zr <- stats::runif(n, -2, 2)
   mu <- 1 + sin(1.5 * zr) + 0.4 * xr + 2.5 * (xr >= 6) - 1.2 * pmax(xr - 6, 0)
   dr <- data.frame(y = mu + stats::rnorm(n, sd = 0.5), x = xr, z = zr)
-  fit <- statmod(y ~ s(z, k = 8) + jseg(x, n_boot = 2),
+  fit <- statmod(y ~ s(z, bspline_smooth(k = 8)) + jseg(x, n_boot = 2),
                  distributions7::gaussian1_distrib(), dr)
   expect_true(fit@converged)
   expect_equal(unname(modelterms7::seg_psi(fitted_term(fit, "jseg("))),
