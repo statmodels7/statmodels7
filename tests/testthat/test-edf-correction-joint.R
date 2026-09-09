@@ -38,21 +38,33 @@ test_that("a penalty over a filter's own parameters is priced at all", {
   dz <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
 
-  # the premise: one hyperparameter, estimated, and the fit moved off its
-  # starting value of 1 -- a fit parked at the start has no uncertainty to
-  # propagate and would pass a positivity check for the wrong reason
+  # THE PREMISE, in two parts. The fit must have moved off its starting
+  # scale of 1, since a fit parked at its start has no uncertainty to
+  # propagate and would pass a positivity check for the wrong reason; and
+  # the penalty must still be shrinking something, since a scale driven to
+  # zero leaves the deviations at nothing and there is again nothing to
+  # propagate. The second is not hypothetical -- swept over eight samples of
+  # this shape, one reaches a scale of 1.9e-04 with the whole count back at
+  # 4 and the correction at 5.7e-07, which is the right answer there and not
+  # this test's case.
   expect_equal(nrow(idx), 1L)
   expect_gt(abs(log(hyper(fit)$estimate[[1L]])), 0.5)
+  expect_gt(sum(fit@edf$edf), 4.2)
 
   cc <- statmod_edf_correction(fit@spec, fit@coefficients, fit@hyper, dz,
                                fit@methods$outer)
   expect_equal(cc$n_hyper, 1L)
-  # measured 1.108889 on this panel against a total edf of 4.4976. The
-  # assertion is on the RELATION rather than the value, a fitted quantity
-  # being platform arithmetic: it is a substantial fraction of the count and
-  # is nowhere near the zero the coefficient-space reading gives.
-  expect_gt(cc$total, 0.5)
-  expect_lt(cc$total, 2)
+  # 1.108889 on this panel against a total edf of 4.4976. The bounds are
+  # WIDE ON PURPOSE and assert nothing about the value: a fitted quantity is
+  # platform arithmetic, and over those eight samples this one runs from
+  # 0.39 to 1.92, so a bound placed near the reading would be a bound placed
+  # near where this machine happened to stop. What they exclude is the
+  # EXACTLY ZERO the coefficient-space route gives, which is what the change
+  # is about, and a runaway. The value itself is pinned by the two tests
+  # below, which compare AT THE SAME POINT, where platform arithmetic moves
+  # both sides together.
+  expect_gt(cc$total, 0.1)
+  expect_lt(cc$total, 5)
 })
 
 test_that("the route it replaced returns exactly zero on the same fit", {

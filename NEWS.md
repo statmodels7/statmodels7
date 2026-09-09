@@ -1,3 +1,25 @@
+# statmodels7 0.116.1
+
+* THE BOUNDS `test-edf-correction-joint.R` PUTS ON THE CORRECTION ARE WIDE
+  ON PURPOSE, and they were not wide enough. Swept over eight samples of the
+  same shape the quantity runs from 0.39 to 1.92 -- so the (0.5, 2) it
+  shipped with would have been a bound placed near where THIS machine
+  happened to stop, which is the reading that cost two red CI runs earlier
+  the same day on another test. They are (0.1, 5) now.
+
+* ⚠️ And one of those eight samples drives the scale to 1.9e-04, shrinks
+  the deviations to nothing and gives 5.7e-07. That is the right answer
+  there and not this test's case, so the premise asserts that the penalty is
+  still shrinking something as well as that the fit moved off its starting
+  scale -- the first assertion alone passes on such a fit, the scale having
+  moved a long way in the wrong direction.
+
+* Nothing about the value is given up: it is pinned by the hand assembly and
+  by the identity against `vcov()`, both comparisons AT THE SAME POINT, where
+  platform arithmetic moves both sides together. Injection-checked again --
+  forcing the coefficient-space route back still fails three blocks of six,
+  so the widening cost no discriminating power at all.
+
 # statmodels7 0.116.0
 
 * THE CORRECTION FOR AN ESTIMATED HYPERPARAMETER IS READ ON THE VECTOR THE
@@ -59,7 +81,8 @@
   `statmod_hess_stencil()`.
 
 * `test-edf-correction-joint.R` is injection-checked: forcing the
-  coefficient-space route back fails the two value checks and leaves the
+  coefficient-space route back fails three of its six blocks -- the value,
+  the hand assembly and the identity against `vcov()` -- and leaves the
   three structural ones green, which is what says they discriminate.
 
 # statmodels7 0.115.0
