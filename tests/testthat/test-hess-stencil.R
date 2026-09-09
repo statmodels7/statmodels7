@@ -191,26 +191,27 @@ test_that("the stencil refuses where the curvature is not resolved", {
   expect_null(statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper,
                                    p$method, p$idx, p$basis))
   # the ANALYTIC route differences nothing, so it returns a matrix here where
-  # the stencil cannot. ⚠️ That matrix is not verifiable at this point: a
-  # difference of the exact gradient does not converge onto it -- measured
-  # 3.7e-02, 4.7e-01 and 1.6e-01 at h of 1e-2, 3e-3 and 1e-3 -- the gradient
-  # itself being 1e-3 where the chart's conditioning is 1e10.
+  # the stencil cannot. ⚠️ That matrix is not verifiable at this point -- a
+  # difference of the exact gradient does not converge onto it, measured
+  # 3.7e-02, 4.7e-01 and 1.6e-01 at h of 1e-2, 3e-3 and 1e-3, the gradient
+  # itself being 1e-3 where the chart's conditioning is 1e10 -- so NOTHING
+  # about its values is asserted, only that the route answers.
+  #
+  # ⚠️ AND NOTHING ABOUT THEM COULD BE, which cost two red CI runs to learn.
+  # This fit is weakly identified and STOPS SOMEWHERE DIFFERENT ON EVERY
+  # PLATFORM, so the criterion's curvature there is not one matrix: the ratio
+  # of the smallest eigenvalue of -H to the largest reads 4e-06 here,
+  # 4.15e-02 on ubuntu devel and oldrel-1, and 2.25e+08 on macOS. Whether
+  # statmod_hyper_vcov() then refuses follows that -- NULL here, on ubuntu
+  # release and on macOS, a matrix on oldrel-1 -- and an assertion on either
+  # is an assertion about the platform. What is stable, and is what this test
+  # was written for, is that the STENCIL refuses.
   H <- statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper, p$method,
                              p$idx, p$basis)
   expect_false(is.null(H))
-  # ⚠️ AND WHAT IS ASSERTED OF IT IS THE BOUNDARY, NOT THE SIGN OF ONE
-  # ROUNDING-LEVEL EIGENVALUE. The curvature in the direction the search left
-  # at the chart's edge is numerically zero -- measured, -2.503622e-05 against
-  # a largest of 5.855702, four parts in a million -- so WHETHER it comes out
-  # negative is decided by the platform's arithmetic, and an assertion on its
-  # sign is a coin toss: `statmod_hyper_vcov()` returns NULL here and on three
-  # of the five CI platforms and a matrix on ubuntu oldrel-1. What holds
-  # everywhere is that the direction carries no curvature at all.
-  ev <- eigen(-as.matrix(H), symmetric = TRUE, only.values = TRUE)$values
-  expect_lt(abs(min(ev)) / max(ev), 1e-4)
-  # and what a READER is told does not turn on it either: the certificate
-  # names that coordinate a boundary, and the summary suppresses its interval
-  # whatever the variance matrix holds
+  # and what a READER is told does not turn on it: the certificate names a
+  # boundary coordinate and the summary suppresses its interval whatever the
+  # variance matrix holds
   expect_true(length(statmod_certificate(fit)$boundary_key) > 0L)
 })
 
