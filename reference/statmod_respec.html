@@ -9,7 +9,7 @@ every block is reapplied to those rows rather than rebuilt from them."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.118.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.119.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,6 +84,21 @@ differed from the fitted values there by 0.237, and on the 51 rows with
 back the whole data agrees exactly, which is why nothing noticed.</p>
 <p>The offsets are re-evaluated against <code>data</code> rather than carried across,
 since a vector of the fitting data's length says nothing about other rows.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-rows-are-the-data-s">The rows are the data's<a class="anchor" aria-label="anchor" href="#the-rows-are-the-data-s"></a></h2>
+    <p><code>n_obs</code> is <code>nrow(data)</code> and never the length of whatever the response
+expression evaluates to. <code>eval(expr, data, env)</code> falls through to the
+formula's environment for anything <code>data</code> does not carry, and a
+prediction grid carries the covariates and not the response, so the
+response resolved to whatever variable of that name was in scope –
+in an ordinary session, the fit's own – and the count came back as the
+fitting one. Measured on a fit of 400 rows and a grid of 37,
+<code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code> returned 400 values.</p>
+<p>So a response whose variables are not columns of <code>data</code> is <strong>absent</strong>
+where <code>need_response</code> is <code>FALSE</code>, and one of a length other than
+<code>nrow(data)</code> is an error where it is <code>TRUE</code>, rather than a vector
+recycled into a different model.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.118.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.119.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,16 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.119.0" id="statmodels7-01190">statmodels7 0.119.0<a class="anchor" aria-label="anchor" href="#statmodels7-01190"></a></h2>
+<ul><li>
+<p>⚠️ <strong><code>predict(fit, what, newdata)</code> returned the values at the FITTING rows, in silence, whenever a variable named like the response was in scope.</strong> Which in an ordinary session it is: <code>y &lt;- ...; d &lt;- data.frame(x = x, y = y)</code> leaves <code>y</code> bound, and a prediction grid carries the covariates and not the response, which is what this function’s own page promises. Measured on a fit of 400 rows and a grid of 37: with such a variable in scope the answer had <strong>400</strong> values, without it 37.</p>
+<p>The cause is one line of <code><a href="../reference/statmod_respec.html">statmod_respec()</a></code>. <code>eval(expr, data, env)</code> falls through to the formula’s environment for anything <code>data</code> does not carry, so the response resolved to the fit’s own, <code>n_obs</code> came back as the fitting count, and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>’s parameter branch recycles to <code>n_obs</code>. The row count is <code>nrow(data)</code> now, a response whose variables are not columns of these rows is absent for a prediction, and one of the wrong length is an error where a response is genuinely needed rather than a vector recycled into another model.</p>
+</li>
+<li><p>⚠️ <strong>The old code contradicted itself within one call, which is what would have caught it.</strong> <code>predict(fit, "link", newdata)</code> was already right – its predictor is built from the design, which has the new rows – while <code>predict(fit, "mu", newdata)</code> was wrong, that branch recycling to <code>n_obs</code>. Two targets of one call disagreeing about how many rows there are is the kind of internal contradiction this package’s history says to look for.</p></li>
+<li><p>The regression is injection-checked against a genuinely different binary rather than against a mock: run under the previously released version, five of its assertions fail, and the one asserting that the values are at the NEW rows – predicting at a subset of the fitting rows equals the fitted values there – is what distinguishes a correct answer from one that merely has the right length.</p></li>
+<li><p>It was found while measuring something else, and it blocked that: no question about what a basis does on a grid can be answered by a function that silently answers about other rows.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.118.0" id="statmodels7-01180">statmodels7 0.118.0<a class="anchor" aria-label="anchor" href="#statmodels7-01180"></a></h2>
 <ul><li><p><strong>A smooth shows its linear part whatever penalty it declares.</strong> <code><a href="../reference/smooth_linear_cols.html">smooth_linear_cols()</a></code> decides which coefficient rows of a smooth’s block a summary lists, and it asked <code>term_penalty()</code> – the singular question, which answers only where one penalty covers the whole block. Since  0.73.0 a smooth may declare one penalty over its penalized coordinates alone, where the smoother carries a penalty factory, or one per level of a factor <code>by</code>; in neither case is there a single penalty to fetch, so the block printed its smoothing parameter and nothing else – losing the linear row, which is the one a reader of a smooth most wants. It reads <code>term_penalties()</code> now and marks the leading columns no entry’s penalty touches, whether because no entry indexes them or because the entry that does carries a matrix with a zero column there.</p></li>

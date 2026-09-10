@@ -52,6 +52,23 @@ The offsets are re-evaluated against `data` rather than carried across,
 since a vector of the fitting data's length says nothing about other
 rows.
 
+## The rows are the data's
+
+`n_obs` is `nrow(data)` and never the length of whatever the response
+expression evaluates to. `eval(expr, data, env)` falls through to the
+formula's environment for anything `data` does not carry, and a
+prediction grid carries the covariates and not the response, so the
+response resolved to whatever variable of that name was in scope – in an
+ordinary session, the fit's own – and the count came back as the fitting
+one. Measured on a fit of 400 rows and a grid of 37,
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+returned 400 values.
+
+So a response whose variables are not columns of `data` is **absent**
+where `need_response` is `FALSE`, and one of a length other than
+`nrow(data)` is an error where it is `TRUE`, rather than a vector
+recycled into a different model.
+
 ## See also
 
 [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md),
