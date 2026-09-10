@@ -1940,6 +1940,18 @@ smooth_linear_cols <- function(term, k) {
     pen <- en$penalty
     p <- if (!is.null(pen) && "P" %in% S7::prop_names(pen)) {
       tryCatch(as.matrix(S7::prop(pen, "P")), error = function(e) NULL)
+    } else if (!is.null(pen) && "mats" %in% S7::prop_names(pen)) {
+      # AN ADDITIVE PENALTY CARRIES ITS MATRICES UNDER ANOTHER NAME, one per
+      # smoothing parameter, and a coordinate is free where NO component
+      # touches it. Summing the absolute values answers that exactly and
+      # without an argument about definiteness, which summing the components
+      # themselves would need. Read through the "P" question alone an
+      # adaptive smooth fell into the branch below, written for a penalty
+      # that carries no matrix at all, and reported every coordinate as
+      # shrunk -- losing the linear row, which is the same defect the
+      # singular question produced before this one.
+      tryCatch(as.matrix(Reduce(`+`, lapply(S7::prop(pen, "mats"), abs))),
+               error = function(e) NULL)
     } else {
       NULL
     }
