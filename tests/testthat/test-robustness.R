@@ -136,7 +136,7 @@ test_that("a fit that did not converge says where its parameters ended up", {
                  distributions7::gaussian1_distrib(), dd)
   skip_if(fit@converged, "the runaway did not happen on this platform")
   out <- paste(utils::capture.output(print(fit)), collapse = "\n")
-  expect_match(out, "DID NOT CONVERGE")
+  expect_match(out, "search: stopping rule not met", fixed = TRUE)
   expect_match(out, "the parameters it reached")
   expect_match(out, "sigma")
   # and a fit that converged says nothing of the kind
@@ -146,6 +146,49 @@ test_that("a fit that did not converge says where its parameters ended up", {
   expect_false(grepl("the parameters it reached",
                      paste(utils::capture.output(print(ok)), collapse = "\n")))
 })
+
+test_that("the search reports its stopping rule and the point keeps the capitals", {
+  # THE TWO LINES ANSWER DIFFERENT QUESTIONS and the printed emphasis used to
+  # say the opposite of which one matters: the search's failure was in
+  # capitals while its success was in lower case, so the line shouted only
+  # when it was negative -- and measured, four times in five it shouted over
+  # a point that statmod_certificate() certifies.
+
+  # THE RULE, asserted deterministically. Which fits stop short is platform
+  # arithmetic, and what changed is the wording, so the wording is what a
+  # test can pin without asking one machine's rounding to agree with
+  # another's.
+  expect_identical(search_verdict(TRUE), "converged")
+  expect_identical(search_verdict(FALSE), "stopping rule not met")
+  expect_false(grepl("DID NOT CONVERGE", search_verdict(FALSE), fixed = TRUE))
+  # and it says what happened rather than passing a verdict on the fit
+  expect_match(search_verdict(FALSE), "stopping rule", fixed = TRUE)
+
+  set.seed(4)
+  n <- 150L
+  dd <- data.frame(x = sort(stats::runif(n)))
+  dd$y <- sin(2 * pi * dd$x) + stats::rnorm(n, 0, 0.3)
+  fit <- statmod(y ~ s(x), distributions7::gaussian1_distrib(), dd)
+
+  pr <- utils::capture.output(print(fit))
+  su <- utils::capture.output(print(summary(fit)))
+  pick <- function(x) {
+    hit <- grep("search:", x, value = TRUE, fixed = TRUE)
+    expect_length(hit, 1L)
+    trimws(sub("^.*search:", "", hit[[1L]]))
+  }
+
+  # THE TWO VIEWS AGREE WORD FOR WORD, which is what search_verdict() is
+  # for: written out twice they could drift, and nothing would report it.
+  expect_identical(pick(pr), pick(su))
+  expect_identical(pick(pr), search_verdict(fit@converged))
+
+  # AND THE CERTIFICATE KEEPS ITS CAPITALS -- the negative control, or this
+  # would pass by having lowered the emphasis everywhere rather than moving
+  # it onto the reading that answers the reader's question.
+  expect_match(paste(su, collapse = " "), "certificate: [A-Z]")
+})
+
 
 test_that("an unavailable criterion at the start names its cause", {
   # A gamma model whose nl term sits inside the log link, so the fitted

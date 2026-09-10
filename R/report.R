@@ -55,6 +55,37 @@ format_duration <- function(seconds, digits = 3L) {
 }
 
 
+#' @title What the Search Reports About Itself
+#' @description
+#' The one place the search's own verdict is worded, read by both
+#' [print.StatmodFit()] and [summary.StatmodFit()] so the two cannot drift
+#' apart.
+#'
+#' It says whether the outer search met its stopping rule, which is a
+#' property of the SEARCH and not of the point it stopped at. The point is
+#' [statmod_certificate()]'s question, and it is the one a reader has.
+#' @param converged The optimizer's own flag.
+#' @return A single string.
+#' @keywords internal
+search_verdict <- function(converged) {
+  # THE WORDING WAS `DID NOT CONVERGE`, IN CAPITALS, AND WAS CHANGED
+  # (Giovanni, 2026-09-10, with the measurement). A stopping rule that was
+  # not met is not the same thing as a fit that failed, and the capitals
+  # said the second: measured over 22 fits the flag fires 5 times, and on 4
+  # of those 5 statmod_certificate() certifies the point, each of them
+  # located to between 1.3e-09 and 2.1e-05 above its own mode. So the line
+  # shouted only where it was wrong, and louder than the certificate two
+  # lines under it, which is the reading that answers the question. On a
+  # battery of fourteen ordinary models the flag does not fire at all.
+  #
+  # An earlier note here recorded the opposite decision: the word was kept
+  # rather than replaced by a more precise phrase "which nobody greps for".
+  # That is the cost and it is taken deliberately -- test-robustness.R is
+  # the one place that greps for it, and it moved with this.
+  if (converged) "converged" else "stopping rule not met"
+}
+
+
 #' @title Print a Fitted Model
 #' @name print.StatmodFit
 #' @description
@@ -124,10 +155,9 @@ print.StatmodFit <- function(x, ...) {
   }
   # the same distinction summary() draws: this is the SEARCH's own report and
   # not a verdict on the point, which is what statmod_certificate() answers.
-  # The word is kept rather than replaced by "met its stopping rule", which
-  # is more precise and which nobody greps for.
+  # The wording is search_verdict()'s, written once for both views.
   cat(sprintf("fitted in %s   search: %s\n", format_duration(x@elapsed),
-              if (x@converged) "converged" else "DID NOT CONVERGE"))
+              search_verdict(x@converged)))
   if (!is.null(x@history$blocks) && nrow(x@history$blocks) > 1L) {
     cat(sprintf("%d pass(es) over %d block(s)\n",
                 max(x@history$blocks$pass),

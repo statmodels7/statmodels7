@@ -3876,14 +3876,15 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
                      "\ncAIC %.3f    cBIC %.3f\n"),
               x@loglik, x@df, x@aic, x@bic))
   # ⚠️ THE TWO LINES BELOW ANSWER DIFFERENT QUESTIONS and used to read as a
-  # contradiction: a fit could print DID NOT CONVERGE in capitals and
+  # contradiction: a fit could print a failure in capitals and
   # certificate: CONVERGED two lines under it, with nothing on screen saying
   # why both could be true. The first is a property of the SEARCH -- whether
   # it met its own stopping rule -- and the second of the POINT it stopped
   # at, which is the question a reader has. So the point gets the capitals
-  # and the search says what it is.
+  # and the search says, in words and in lower case, what it is --
+  # search_verdict() carries that wording for both views.
   cat(sprintf("fitted in %s   search: %s\n", format_duration(x@elapsed),
-              if (x@converged) "converged" else "DID NOT CONVERGE"))
+              search_verdict(x@converged)))
   if (!is.null(x@certificate)) {
     ct <- x@certificate
     cat(sprintf("certificate: %s", toupper(ct$state)))
