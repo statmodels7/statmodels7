@@ -1,3 +1,40 @@
+# statmodels7 0.119.0
+
+* ⚠️ **`predict(fit, what, newdata)` returned the values at the FITTING rows,
+  in silence, whenever a variable named like the response was in scope.**
+  Which in an ordinary session it is: `y <- ...; d <- data.frame(x = x, y =
+  y)` leaves `y` bound, and a prediction grid carries the covariates and not
+  the response, which is what this function's own page promises. Measured on
+  a fit of 400 rows and a grid of 37: with such a variable in scope the
+  answer had **400** values, without it 37.
+
+  The cause is one line of `statmod_respec()`. `eval(expr, data, env)` falls
+  through to the formula's environment for anything `data` does not carry,
+  so the response resolved to the fit's own, `n_obs` came back as the
+  fitting count, and `predict()`'s parameter branch recycles to `n_obs`. The
+  row count is `nrow(data)` now, a response whose variables are not columns
+  of these rows is absent for a prediction, and one of the wrong length is
+  an error where a response is genuinely needed rather than a vector
+  recycled into another model.
+
+* ⚠️ **The old code contradicted itself within one call, which is what would
+  have caught it.** `predict(fit, "link", newdata)` was already right --
+  its predictor is built from the design, which has the new rows -- while
+  `predict(fit, "mu", newdata)` was wrong, that branch recycling to `n_obs`.
+  Two targets of one call disagreeing about how many rows there are is the
+  kind of internal contradiction this package's history says to look for.
+
+* The regression is injection-checked against a genuinely different binary
+  rather than against a mock: run under the previously released version,
+  five of its assertions fail, and the one asserting that the values are at
+  the NEW rows -- predicting at a subset of the fitting rows equals the
+  fitted values there -- is what distinguishes a correct answer from one
+  that merely has the right length.
+
+* It was found while measuring something else, and it blocked that: no
+  question about what a basis does on a grid can be answered by a function
+  that silently answers about other rows.
+
 # statmodels7 0.118.0
 
 * **A smooth shows its linear part whatever penalty it declares.**

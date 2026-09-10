@@ -726,6 +726,22 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' The offsets are re-evaluated against `data` rather than carried across,
 #' since a vector of the fitting data's length says nothing about other rows.
 #'
+#' # The rows are the data's
+#'
+#' `n_obs` is `nrow(data)` and never the length of whatever the response
+#' expression evaluates to. `eval(expr, data, env)` falls through to the
+#' formula's environment for anything `data` does not carry, and a
+#' prediction grid carries the covariates and not the response, so the
+#' response resolved to whatever variable of that name was in scope --
+#' in an ordinary session, the fit's own -- and the count came back as the
+#' fitting one. Measured on a fit of 400 rows and a grid of 37,
+#' [predict.StatmodFit()] returned 400 values.
+#'
+#' So a response whose variables are not columns of `data` is **absent**
+#' where `need_response` is `FALSE`, and one of a length other than
+#' `nrow(data)` is an error where it is `TRUE`, rather than a vector
+#' recycled into a different model.
+#'
 #' @param spec The fitted [StatmodSpec()].
 #' @param data The rows to read the model on.
 #' @param need_response `TRUE` where the response must be present, as for a
@@ -753,9 +769,40 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   env <- environment(spec@formula)
   if (is.null(env)) env <- baseenv()
   split <- statmod_equations(spec@formula, spec@distrib@params)
-  response <- tryCatch(eval(split$response, data, env),
-                       error = function(e) if (need_response) stop(e) else NULL)
-  if (is.null(response)) response <- rep(NA_real_, nrow(data))
+  n_rows <- nrow(data)
+  # THE ROW COUNT IS THE DATA'S AND NEVER THE RESPONSE'S. `eval(expr, data,
+  # env)` falls through to the formula's environment for anything `data`
+  # does not carry, and a prediction grid carries the covariates and NOT the
+  # response -- which is what the page of predict() promises. So the
+  # response resolved to whatever variable of that name was in scope, which
+  # in an ordinary session is the fit's own response, and `n_obs` came back
+  # as the FITTING count: predict(fit, "mu", newdata) returned the fitted
+  # values, of the wrong length, in silence. Measured on 37 new rows against
+  # 400 fitted: 37 with no such variable in scope, 400 with one.
+  wanted <- all.vars(split$response)
+  from_here <- !length(wanted) || all(wanted %in% names(data))
+  response <- if (!from_here && !need_response) {
+    NULL
+  } else {
+    tryCatch(eval(split$response, data, env),
+             error = function(e) if (need_response) stop(e) else NULL)
+  }
+  # A response of another length is not these rows' either, whatever it
+  # resolved from, and a caller who needs one is told rather than fitted to
+  # a recycled vector.
+  n_resp <- function(r) if (is.matrix(r)) nrow(r) else length(r)
+  if (!is.null(response) && n_resp(response) != n_rows) {
+    if (need_response) {
+      stop(sprintf(paste0(
+        "the response has %d value%s and 'data' has %d row%s. A response",
+        " that\n  is not a column of 'data' is read from the formula's",
+        " environment, which is\n  where a length like this comes from."),
+        n_resp(response), if (n_resp(response) == 1L) "" else "s",
+        n_rows, if (n_rows == 1L) "" else "s"), call. = FALSE)
+    }
+    response <- NULL
+  }
+  if (is.null(response)) response <- rep(NA_real_, n_rows)
   # A CENSORED RESPONSE IS REFUSED HERE, where it can be named. The pieces
   # of a censored likelihood exist -- `cens()` marks the statuses and
   # distributions7 carries the derivatives of a distribution function --

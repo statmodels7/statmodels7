@@ -246,3 +246,63 @@ test_that("new data reapplies each block instead of rebuilding it", {
   expect_equal(predict(fit, "mu", drop_c),
                full[dn$g != "c"], tolerance = 1e-12)
 })
+
+# A PREDICTION'S ROWS ARE THE NEW DATA'S. `eval(expr, data, env)` falls
+# through to the formula's environment for anything `data` does not carry,
+# and a prediction grid carries the covariates and NOT the response -- which
+# is what this page promises. So the response resolved to whatever variable
+# of that name was in scope, and in an ordinary session that is the fit's own
+# response: `n_obs` came back as the FITTING count and predict() returned the
+# fitted values, of the wrong length, in silence.
+#
+# The variables below are deliberately in scope, because that is the
+# ordinary state of a session and it is what the defect needed.
+py <- NULL
+test_that("newdata settles the rows even with the response in scope", {
+  set.seed(21)
+  nn <- 120
+  x <- sort(stats::runif(nn))
+  y <- sin(2 * pi * x) + stats::rnorm(nn, sd = 0.2)
+  d <- data.frame(x = x, y = y)
+  fit <- statmod(y ~ s(x, basis7::bspline_smooth(k = 8)),
+                 distributions7::gaussian1_distrib(), d)
+  expect_length(fitted(fit), nn)
+
+  # `y` and `x` are bound in this frame, which is what the defect read
+  expect_true(exists("y", inherits = TRUE))
+  g <- data.frame(x = seq(0.05, 0.95, length.out = 37))
+  expect_length(predict(fit, "mu", g), 37L)
+  expect_length(predict(fit, "mean", g), 37L)
+  expect_length(predict(fit, "link", g)$mu, 37L)
+  expect_identical(nrow(predict(fit, "mu", g, se = TRUE)), 37L)
+
+  # a grid that DOES carry the response is unchanged, and gives the same
+  # numbers: the response is not read for a prediction either way
+  g2 <- g
+  g2$y <- 0
+  expect_equal(predict(fit, "mu", g), predict(fit, "mu", g2))
+
+  # AND THE VALUES ARE AT THE NEW ROWS, not merely of the right length:
+  # predicting at a subset of the fitting rows is the fitted values there
+  rows <- c(3L, 17L, 40L, 99L)
+  expect_equal(as.numeric(predict(fit, "mu", d[rows, ])),
+               as.numeric(fitted(fit))[rows], tolerance = 1e-10)
+})
+
+test_that("a response of the wrong length is an error where one is needed", {
+  set.seed(22)
+  nn <- 60
+  x <- stats::runif(nn)
+  y <- 2 * x + stats::rnorm(nn, sd = 0.3)
+  d <- data.frame(x = x, y = y)
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
+  # loglik() NEEDS the response, and its argument is `data`. A frame of ten
+  # rows carrying no response of its own would read the sixty-value `y`
+  # bound in this frame, which is the same fall-through predict() suffered;
+  # here it is refused by length rather than recycled into another model.
+  short <- data.frame(x = x[1:10])
+  expect_error(loglik(fit, data = short), "10 rows")
+  # the same frame carrying its own response is an ordinary subset
+  short$y <- y[1:10]
+  expect_true(is.finite(as.numeric(loglik(fit, data = short))))
+})

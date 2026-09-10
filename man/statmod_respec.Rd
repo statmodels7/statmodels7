@@ -38,6 +38,22 @@ back the whole data agrees exactly, which is why nothing noticed.
 The offsets are re-evaluated against \code{data} rather than carried across,
 since a vector of the fitting data's length says nothing about other rows.
 }
+\section{The rows are the data's}{
+\code{n_obs} is \code{nrow(data)} and never the length of whatever the response
+expression evaluates to. \code{eval(expr, data, env)} falls through to the
+formula's environment for anything \code{data} does not carry, and a
+prediction grid carries the covariates and not the response, so the
+response resolved to whatever variable of that name was in scope --
+in an ordinary session, the fit's own -- and the count came back as the
+fitting one. Measured on a fit of 400 rows and a grid of 37,
+\code{\link[=predict.StatmodFit]{predict.StatmodFit()}} returned 400 values.
+
+So a response whose variables are not columns of \code{data} is \strong{absent}
+where \code{need_response} is \code{FALSE}, and one of a length other than
+\code{nrow(data)} is an error where it is \code{TRUE}, rather than a vector
+recycled into a different model.
+}
+
 \seealso{
 \code{\link[=statmod_design]{statmod_design()}}, which reapplies the terms,
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}, the caller.
