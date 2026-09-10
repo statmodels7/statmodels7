@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.117.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.118.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.118.0" id="statmodels7-01180">statmodels7 0.118.0<a class="anchor" aria-label="anchor" href="#statmodels7-01180"></a></h2>
+<ul><li><p><strong>A smooth shows its linear part whatever penalty it declares.</strong> <code><a href="../reference/smooth_linear_cols.html">smooth_linear_cols()</a></code> decides which coefficient rows of a smooth’s block a summary lists, and it asked <code>term_penalty()</code> – the singular question, which answers only where one penalty covers the whole block. Since  0.73.0 a smooth may declare one penalty over its penalized coordinates alone, where the smoother carries a penalty factory, or one per level of a factor <code>by</code>; in neither case is there a single penalty to fetch, so the block printed its smoothing parameter and nothing else – losing the linear row, which is the one a reader of a smooth most wants. It reads <code>term_penalties()</code> now and marks the leading columns no entry’s penalty touches, whether because no entry indexes them or because the entry that does carries a matrix with a zero column there.</p></li>
+<li><p>⚠️ <strong>Nothing that shipped moves.</strong> The reading was widened rather than replaced: a smooth with one roughness matrix marks the same column it marked before, and a shared factor <code>by</code> still marks the leading free column and no more. Both are asserted beside the two new shapes, so a change to either would fail rather than pass quietly.</p></li>
+<li><p><code><a href="../reference/statmod.html">statmod()</a></code> fits the new shapes with no routing work at all, which is what the entry contract was for. A kinked penalty on a smooth is chosen by the path over <code>sparse_criterion</code> that <code>lasso()</code> and its siblings already take, and one smoothing parameter per level is m entries keyed <code>term::level</code>, which is the shape <code>test-two-penalties.R</code> has pinned since two penalties on one term became possible. Measured on 400 observations: a lasso smooth reaches an effective count of 4.00 against the default’s 7.81 at a log-likelihood 1.16 lower, and a heavy-tailed prior on the same block 5.34.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.117.0" id="statmodels7-01170">statmodels7 0.117.0<a class="anchor" aria-label="anchor" href="#statmodels7-01170"></a></h2>
 <ul><li><p><strong>The smooths are written on ’s smoother.</strong> How a smooth is built – the basis, the roughness penalty, the null space and the coordinates – is one object now, so <code>s(x, k = 20)</code> becomes <code>s(x, bspline_smooth(k = 20))</code> and <code>s(x, lambda = 2)</code> becomes <code>s(x, hyper = c(lambda = 2))</code>. This package’s own call sites follow; what it buys is in  0.72.0 and  0.8.1, where <code>s(doy, fourier_smooth(k = 9, lower = 0, upper = 365))</code> is a periodic smooth that keeps <code>f(0) = f(1)</code> to 2.2e-16 against the 2.2125 the old route gave.</p></li>

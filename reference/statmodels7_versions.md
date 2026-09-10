@@ -54,10 +54,10 @@ to install the members that are behind.
 v <- statmodels7_versions()
 v
 #>          package version
-#> 1         basis7   0.8.1
+#> 1         basis7   0.9.0
 #> 2 distributions7  0.52.0
 #> 3 linkfunctions7   0.4.0
-#> 4    modelterms7  0.72.0
+#> 4    modelterms7  0.73.0
 #> 5    numericals7  0.12.0
 #> 6    optimizers7   0.8.0
 #> 7    parameters7  0.20.0
