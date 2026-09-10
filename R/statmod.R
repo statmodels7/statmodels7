@@ -412,6 +412,17 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     if (nothing) outer_criterion <- NULL
   }
 
+  # A criterion is a Laplace expansion at the penalized mode and reads the
+  # curvature there, so it needs TWO derivatives of the log-density in every
+  # parameter the model carries an equation for.  Where the family has fewer,
+  # the expansion the criterion is built on does not exist, and no accuracy in
+  # the search repairs it.  It is refused HERE, naming the family, the
+  # parameter, the order and the remedy, rather than at the first evaluation,
+  # where the same failure surfaces as an inner fit that did not converge --
+  # which is true and is three layers from the cause.  See R/order.R.
+  assert_criterion_order(spec@distrib, outer_criterion)
+  assert_criterion_order(spec@distrib, sparse_criterion)
+
   # A prediction-error criterion for the SMOOTH penalties cannot be nested
   # inside a path over the kinked ones: it scores the same quantity at two
   # levels, and measured, every point of the path came back NA -- the

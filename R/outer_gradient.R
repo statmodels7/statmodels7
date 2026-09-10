@@ -68,6 +68,11 @@ NULL
 #' @keywords internal
 outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   if (!nrow(idx)) return(FALSE)
+  # THE ORDER THE FAMILY CARRIES.  The exact gradient reads dK/dbeta, which is
+  # the family's THIRD derivative, and the Hessian reads the fourth; a family
+  # with fewer is not refused here, the search falling back on a difference,
+  # so this is a gate and not an error.  See R/order.R for the scale.
+  if (!order_available(spec@distrib, 2L + order)) return(FALSE)
   if (!identical(method@hessian, "observed")) {
     # The expected route asks for the same object in the same place -- the
     # movement of K with the coefficients -- but that object is

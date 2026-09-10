@@ -368,16 +368,30 @@ test_that("a class coordinate that is held is refused", {
   expect_match(err, "which is held", fixed = TRUE)
 })
 
-test_that("the exact outer gradient of a mixed class is answered at order 1", {
+test_that("the exact outer gradient of a mixed class is answered at both orders", {
   # It used to be refused at both orders, because the member loop of
   # statmod_structural_grad() addresses a unit by `index` -- which a mixed
   # class does not have -- so the member passed with an EMPTY scatter and the
   # gradient came back exactly zero, which reads as stationarity. That
   # function assembles on the joint vector already, so what such a class
-  # needed was its positions in it. Order 2 stays refused, and not for a
-  # reason of its own: statmod_marginal_hess() is written over the stacked
-  # coefficients and has no joint twin, so every structural model is refused
-  # there.
+  # needed was its positions in it.
+  #
+  # ORDER 2 WAS REFUSED HERE UNTIL 2026-09-10 and is answered now, by two
+  # changes that met rather than by one: statmod_structural_hess() built the
+  # joint twin statmod_marginal_hess() lacked, so answers_term_fourth() admits
+  # a GasTerm; and penalties7 0.22.0 repaired beta_quadratic() for a
+  # MULTIVARIATE parent, which is what a covariance class declares -- it read
+  # FALSE where the prior is exactly quadratic, so penalty_answers() refused
+  # the order before the structural branch was ever reached.
+  #
+  # ⚠️ NO FIT MOVES, measured: the same model fitted with the route open and
+  # with beta_quadratic forced back to its old answer gives the identical
+  # criterion (-345.4673505), the identical 62 evaluations, the identical
+  # hyperparameters and the identical certificate, because
+  # outer_default_optimizer() holds a mixed class at lbfgs() whatever this
+  # predicate says. So what the order buys today is the REPORTING route, not
+  # the search, and the assertion below records which answer the predicate
+  # gives rather than claiming the Hessian has been validated for this shape.
   dd <- mixed_panel()
   spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
@@ -386,7 +400,7 @@ test_that("the exact outer gradient of a mixed class is answered at order 1", {
   expect_identical(nrow(idx), 3L)
   expect_true(mixed_penalized(spec, des))
   expect_true(outer_gradient_ok(spec, des, idx, mt, 1L))
-  expect_false(outer_gradient_ok(spec, des, idx, mt, 2L))
+  expect_true(outer_gradient_ok(spec, des, idx, mt, 2L))
   # the class's structural half has to answer term_third() like any other, and
   # it is named on the class rather than on the unit
   u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
