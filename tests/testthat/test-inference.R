@@ -184,6 +184,49 @@ test_that("a smooth shows its linear part and its edf, not its basis", {
   expect_output(print(s), "[fixed]", fixed = TRUE)
 })
 
+test_that("a smooth shows its linear part whatever penalty it declares", {
+  # WHICH COLUMNS ARE FREE is asked of the entries a term declares, not of
+  # one penalty over its whole block: a smoother carrying a penalty factory
+  # declares one over the penalized coordinates ALONE, and a factor `by`
+  # under by_hyper = "level" declares one per level. Read through the
+  # singular question, both reported their smoothing parameter and nothing
+  # else -- which is the row a reader of a smooth most wants.
+  set.seed(12)
+  n2 <- 400
+  ds <- data.frame(x = runif(n2, -2, 2),
+                   g = factor(rep(c("a", "b"), length.out = n2)))
+  ds$y <- sin(1.4 * ds$x) + stats::rnorm(n2, sd = 0.3)
+  lin_rows <- function(fit) {
+    s <- summary(fit)
+    kinds <- vapply(s@tables$mu, `[[`, character(1), "kind")
+    b <- s@tables$mu[[which(kinds == "smooth")]]
+    b$table$name[b$table$role == "coefficient"]
+  }
+  base <- statmod(y ~ s(x, bspline_smooth(k = 10)),
+                  distributions7::gaussian1_distrib(), ds)
+  expect_identical(lin_rows(base), "s(x).lin")
+
+  fac <- statmod(y ~ s(x, bspline_smooth(k = 10,
+                                         penalty = penalties7::lasso_penalty)),
+                 distributions7::gaussian1_distrib(), ds)
+  expect_identical(lin_rows(fac), "s(x).lin")
+
+  lev <- statmod(y ~ g + s(x, bspline_smooth(k = 10), by = g,
+                           by_hyper = "level"),
+                 distributions7::gaussian1_distrib(), ds)
+  # the LABEL prefixes a coefficient name, not the key the term is filed
+  # under: the key carries the construction and the label stays `s(x)`
+  expect_identical(lin_rows(lev), "s(x).a.lin")
+
+  # A SHARED FACTOR `by` IS UNCHANGED, which is what says the reading was
+  # widened and not replaced: it marks the leading free column and no more,
+  # exactly as it did before the entries were consulted.
+  sh <- statmod(y ~ g + s(x, bspline_smooth(k = 10), by = g),
+                distributions7::gaussian1_distrib(), ds)
+  expect_length(lin_rows(sh), 1L)
+  expect_true(endsWith(lin_rows(sh), ".a.lin"))
+})
+
 test_that("a random effect shows its variance parameters, not its levels", {
   set.seed(13)
   n2 <- 400

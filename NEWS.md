@@ -1,3 +1,34 @@
+# statmodels7 0.118.0
+
+* **A smooth shows its linear part whatever penalty it declares.**
+  `smooth_linear_cols()` decides which coefficient rows of a smooth's block
+  a summary lists, and it asked `term_penalty()` -- the singular question,
+  which answers only where one penalty covers the whole block. Since
+  \pkg{modelterms7} 0.73.0 a smooth may declare one penalty over its
+  penalized coordinates alone, where the smoother carries a penalty factory,
+  or one per level of a factor `by`; in neither case is there a single
+  penalty to fetch, so the block printed its smoothing parameter and nothing
+  else -- losing the linear row, which is the one a reader of a smooth most
+  wants. It reads `term_penalties()` now and marks the leading columns no
+  entry's penalty touches, whether because no entry indexes them or because
+  the entry that does carries a matrix with a zero column there.
+
+* ⚠️ **Nothing that shipped moves.** The reading was widened rather than
+  replaced: a smooth with one roughness matrix marks the same column it
+  marked before, and a shared factor `by` still marks the leading free
+  column and no more. Both are asserted beside the two new shapes, so a
+  change to either would fail rather than pass quietly.
+
+* `statmod()` fits the new shapes with no routing work at all, which is what
+  the entry contract was for. A kinked penalty on a smooth is chosen by the
+  path over `sparse_criterion` that `lasso()` and its siblings already take,
+  and one smoothing parameter per level is m entries keyed `term::level`,
+  which is the shape `test-two-penalties.R` has pinned since two penalties
+  on one term became possible. Measured on 400 observations: a lasso smooth
+  reaches an effective count of 4.00 against the default's 7.81 at a
+  log-likelihood 1.16 lower, and a heavy-tailed prior on the same block
+  5.34.
+
 # statmodels7 0.117.0
 
 * **The smooths are written on \pkg{basis7}'s smoother.** How a smooth is

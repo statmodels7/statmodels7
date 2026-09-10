@@ -1922,12 +1922,44 @@ term_block_kind <- function(term) {
 smooth_linear_cols <- function(term, k) {
   out <- rep(FALSE, k)
   if (k < 1L) return(out)
-  pen <- tryCatch(modelterms7::term_penalty(term), error = function(e) NULL)
-  if (is.null(pen) || !("P" %in% S7::prop_names(pen))) return(out)
-  p <- tryCatch(as.matrix(S7::prop(pen, "P")), error = function(e) NULL)
-  if (is.null(p) || !nrow(p)) return(out)
-  # the LEADING columns no entry of the penalty touches
-  free <- sum(cumprod(colSums(abs(p)) == 0))
+  # ASKED OF THE ENTRIES AND NOT OF ONE PENALTY. A smooth declares one
+  # penalty over its whole block by default, and there `term_penalty()`
+  # answers the same thing; but it declares one per level of a factor `by`
+  # under by_hyper = "level", and one over the penalized coordinates ALONE
+  # where the smoother carries a penalty factory, and in neither case is
+  # there a single penalty to fetch. Read through the singular question a
+  # factory smooth reported its smoothing parameter and nothing else.
+  ent <- tryCatch(modelterms7::term_penalties(term), error = function(e) list())
+  if (!length(ent)) return(out)
+  covered <- rep(FALSE, k)
+  # `en` and not `e`: the handler of the tryCatch below binds `e` to the
+  # condition, which would shadow the entry for anything written inside it
+  for (en in ent) {
+    idx <- en$index[en$index >= 1L & en$index <= k]
+    if (!length(idx)) next
+    pen <- en$penalty
+    p <- if (!is.null(pen) && "P" %in% S7::prop_names(pen)) {
+      tryCatch(as.matrix(S7::prop(pen, "P")), error = function(e) NULL)
+    } else {
+      NULL
+    }
+    if (is.null(p) || !nrow(p)) {
+      # a penalty carrying no matrix -- a lasso, a heavy-tailed prior --
+      # shrinks every coordinate it indexes, and indexes only its own
+      covered[idx] <- TRUE
+      next
+    }
+    hit <- colSums(abs(p)) != 0
+    # a quadratic penalty may be ONE BLOCK repeated over the levels, its
+    # matrix narrower than the coordinates it covers
+    covered[idx] <- if (length(idx) %% length(hit) == 0L) {
+      rep(hit, length.out = length(idx))
+    } else {
+      rep(TRUE, length(idx))
+    }
+  }
+  # the LEADING columns no penalty touches
+  free <- sum(cumprod(!covered))
   if (free > 0L) out[seq_len(min(free, k))] <- TRUE
   out
 }
