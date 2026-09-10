@@ -1,5 +1,45 @@
 # Changelog
 
+## statmodels7 0.122.0
+
+- **A stopping rule that was not met is not a fit that failed, and the
+  printed line said otherwise.** The convergence line read
+  `search: DID NOT CONVERGE` – in capitals, where its own success reads
+  `converged` in lower case, so it shouted only when it was negative and
+  louder than the `certificate:` line beneath it. Those two answer
+  different questions: the first is a property of the SEARCH, the second
+  of the POINT it stopped at, and the second is the one a reader has. It
+  now reads `search: stopping rule not met`.
+
+  ⚠️ **Measured, the loud line was a false alarm four times in five.**
+  Over 22 fits the flag fires 5 times, and on 4 of those
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  certifies the point – located to between 1.3e-09 and 2.1e-05 above
+  their own mode. The one honest failure is a Student t whose `nu` runs
+  to its chart’s edge, where the certificate agrees and refuses. On a
+  battery of fourteen ordinary models – smooths, tensors, random
+  effects, ridge, Poisson, Gamma, Bernoulli, both equations modelled –
+  the flag does not fire at all, so the wording was misleading exactly
+  on the harder fits a reader most needs to judge.
+
+  ⚠️ **NOTHING ABOUT ANY FIT MOVES**: `converged` carries the same
+  logical, every criterion and every certificate is untouched, and this
+  is the wording of one line in two views.
+
+  ⚠️ **It reverses a decision recorded in the code**, which had kept the
+  old word rather than a more precise phrase “which nobody greps for”.
+  That is the cost and it is taken deliberately: `test-robustness.R` is
+  the one place that grepped for it and moved with the change – an
+  assertion that sits behind a `skip_if` and is dormant on this
+  platform, so it would have gone stale unseen on whichever platform
+  runs it.
+
+  [`search_verdict()`](https://statmodels7.github.io/statmodels7/reference/search_verdict.md)
+  is the one place the wording lives, so
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) cannot drift apart;
+  a test asserts they agree word for word.
+
 ## statmodels7 0.121.0
 
 - ⚠️ **`outer gradient 0` was an absence printed as a measurement.** The

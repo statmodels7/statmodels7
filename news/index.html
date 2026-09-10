@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.121.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.122.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,16 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.122.0" id="statmodels7-01220">statmodels7 0.122.0<a class="anchor" aria-label="anchor" href="#statmodels7-01220"></a></h2>
+<ul><li>
+<p><strong>A stopping rule that was not met is not a fit that failed, and the printed line said otherwise.</strong> The convergence line read <code>search: DID NOT CONVERGE</code> – in capitals, where its own success reads <code>converged</code> in lower case, so it shouted only when it was negative and louder than the <code>certificate:</code> line beneath it. Those two answer different questions: the first is a property of the SEARCH, the second of the POINT it stopped at, and the second is the one a reader has. It now reads <code>search: stopping rule not met</code>.</p>
+<p>⚠️ <strong>Measured, the loud line was a false alarm four times in five.</strong> Over 22 fits the flag fires 5 times, and on 4 of those <code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> certifies the point – located to between 1.3e-09 and 2.1e-05 above their own mode. The one honest failure is a Student t whose <code>nu</code> runs to its chart’s edge, where the certificate agrees and refuses. On a battery of fourteen ordinary models – smooths, tensors, random effects, ridge, Poisson, Gamma, Bernoulli, both equations modelled – the flag does not fire at all, so the wording was misleading exactly on the harder fits a reader most needs to judge.</p>
+<p>⚠️ <strong>NOTHING ABOUT ANY FIT MOVES</strong>: <code>converged</code> carries the same logical, every criterion and every certificate is untouched, and this is the wording of one line in two views.</p>
+<p>⚠️ <strong>It reverses a decision recorded in the code</strong>, which had kept the old word rather than a more precise phrase “which nobody greps for”. That is the cost and it is taken deliberately: <code>test-robustness.R</code> is the one place that grepped for it and moved with the change – an assertion that sits behind a <code>skip_if</code> and is dormant on this platform, so it would have gone stale unseen on whichever platform runs it.</p>
+<p><code><a href="../reference/search_verdict.html">search_verdict()</a></code> is the one place the wording lives, so <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> cannot drift apart; a test asserts they agree word for word.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.121.0" id="statmodels7-01210">statmodels7 0.121.0<a class="anchor" aria-label="anchor" href="#statmodels7-01210"></a></h2>
 <ul><li>

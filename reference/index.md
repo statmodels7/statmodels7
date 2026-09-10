@@ -831,6 +831,9 @@ exported, and none is needed to use the package.
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
 
+- [`search_verdict()`](https://statmodels7.github.io/statmodels7/reference/search_verdict.md)
+  : What the Search Reports About Itself
+
 - [`seg_boot_total()`](https://statmodels7.github.io/statmodels7/reference/seg_boot_total.md)
   : How Many Restarts the Terms Ask For
 
