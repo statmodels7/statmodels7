@@ -1,3 +1,40 @@
+# statmodels7 0.121.0
+
+* ⚠️ **`outer gradient 0` was an absence printed as a measurement.** The
+  certificate excludes a coordinate at a boundary from the gradient test, and
+  where EVERY coordinate is at one the set left to test is empty; the reported
+  gradient was then `0`, which the summary printed. It reads as the gradient
+  vanishing -- a stationary point, the best news a reader could have -- where
+  it means that nothing was checked. It is the empty-result shape recorded
+  elsewhere in this project for a query that returns no rows and for a check
+  that never ran.
+
+  The reading is `NA` there, so `summary()` prints no gradient at all and the
+  `at a boundary` line beneath it names every coordinate instead. Measured on
+  a smooth over a response carrying no signal, where REML sends the one
+  smoothing parameter to 7.6e+07 and it is the whole hyperparameter vector,
+  the line read
+
+  ```
+  certificate: BOUNDARY   outer gradient 0   7.49e-14 above the mode
+    at a boundary: mu/s(x, bspline_smooth(k = 10))/lambda
+  ```
+
+  and now reads
+
+  ```
+  certificate: BOUNDARY   7.49e-14 above the mode
+    at a boundary: mu/s(x, bspline_smooth(k = 10))/lambda
+  ```
+
+  ⚠️ **The verdict is unchanged, and the definition says so rather than a
+  tolerance chosen for the occasion**: a coordinate reaches the boundary set
+  only with its own gradient already at or under `tol`, so where every
+  coordinate is at an edge the largest gradient still under test is vacuously
+  small and the state is `"boundary"` -- which is what the `0` produced. A fit
+  with an interior coordinate reports its gradient exactly as before, which
+  the test asserts as a negative control.
+
 # statmodels7 0.120.0
 
 * ⚠️ **A smooth shows its LINEAR PART whatever CLASS its penalty is.**

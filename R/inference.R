@@ -4502,8 +4502,28 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
       character(1))
   }
   interior <- setdiff(seq_along(g), at_edge)
-  out$gradient <- if (length(interior)) max(abs(g[interior])) else 0
-  if (out$gradient <= tol) {
+  # ⚠️ WITH NO INTERIOR COORDINATE THERE IS NOTHING TO MEASURE, and 0 was the
+  # wrong way to say so: printed as `outer gradient 0` it reads as the
+  # gradient VANISHING -- a stationary point, the best news a reader could
+  # have -- where it means that every coordinate is at a boundary and none
+  # was tested. It is the empty-result shape this file records for a query
+  # that returns no rows and for a check that never ran: an absence reported
+  # as a pass. NA instead, and summary() then prints no gradient at all, the
+  # `at a boundary` line beneath it already naming every coordinate.
+  #
+  # Measured on a smooth over a response carrying no signal, where REML sends
+  # the one smoothing parameter to 7.6e+07 and it is the whole hyperparameter
+  # vector: the line read `outer gradient 0` beside `BOUNDARY` and now reads
+  # nothing, with the state and the mode error unchanged.
+  out$gradient <- if (length(interior)) max(abs(g[interior])) else NA_real_
+  # THE VERDICT IS UNCHANGED, and it is the definition of `at_edge` that says
+  # so rather than a tolerance chosen here: a coordinate reaches that set
+  # only with its own |g| already at or under `tol`, so where every
+  # coordinate is at an edge the largest gradient still under test is
+  # vacuously small and the state is "boundary" -- which is what this branch
+  # returned before, by way of the 0.
+  worst <- if (length(interior)) out$gradient else 0
+  if (worst <= tol) {
     out$state <- if (length(at_edge)) "boundary" else "converged"
   } else {
     out$state <- "not converged"

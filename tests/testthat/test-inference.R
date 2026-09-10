@@ -493,6 +493,65 @@ test_that("the certificate declares a boundary and refuses where it cannot read"
 })
 
 
+test_that("with every coordinate at a boundary the gradient is NA, not 0", {
+  # A REPORTED 0 THERE WOULD BE AN ABSENCE PRINTED AS A MEASUREMENT: `outer
+  # gradient 0` reads as the gradient VANISHING, which is a stationary point
+  # and the best news a reader could have, where it means that every
+  # coordinate is at a boundary and none was tested.
+  #
+  # The construction is the one the certificate test above already
+  # establishes reaches an edge -- a smooth on a response that carries no
+  # signal at all -- with the linear term dropped, so the one smoothing
+  # parameter is the WHOLE hyperparameter vector and the interior set is
+  # empty.
+  set.seed(42)
+  n <- 300
+  d <- data.frame(x = runif(n), y = rnorm(300))
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  ct <- statmod_certificate(fit)
+
+  # THE PREMISE, asserted rather than assumed: this fit must really have its
+  # ONLY coordinate at an edge, or everything below is vacuous. It is
+  # asserted rather than skipped because the margin is wide -- the free
+  # value is 18.2 against the `edge` of 8 -- so a failure here would be a
+  # change of behaviour and not one platform's arithmetic.
+  expect_identical(nrow(hyper(fit)), 1L)
+  expect_length(ct$boundary, 1L)
+
+  expect_true(is.na(ct$gradient))
+  # AND THE VERDICT IS UNCHANGED, which is what makes this a reporting fix
+  # and not a change of behaviour: a coordinate reaches the boundary set only
+  # with its own gradient already under the tolerance, so the state that
+  # followed from the 0 follows from the emptiness just as well.
+  expect_identical(ct$state, "boundary")
+  expect_true(is.finite(ct$mode_error))
+
+  # the printed form says nothing about a gradient, and the boundary line
+  # beneath it names the coordinate instead
+  out <- capture.output(print(summary(fit)))
+  expect_false(any(grepl("outer gradient", out, fixed = TRUE)))
+  expect_true(any(grepl("at a boundary", out, fixed = TRUE)))
+
+  # THE NEGATIVE CONTROL: a fit whose coordinate is INTERIOR still reports
+  # its gradient, or the assertions above would pass by never measuring
+  # anything anywhere. It needs a response that carries a genuine curve,
+  # since a smoothing parameter with nothing to fit runs to an edge whatever
+  # else is in the formula. Its margin is wide the other way -- swept over
+  # ten seeds the free value runs 0.92 to 1.22 against the same edge of 8 --
+  # so this premise is asserted too.
+  set.seed(11)
+  m <- 200
+  dd <- data.frame(x = sort(runif(m)))
+  dd$y <- sin(2 * pi * dd$x) + rnorm(m, 0, 0.3)
+  ok <- statmod(y ~ s(x), gaussian1_distrib(), dd)
+  co <- statmod_certificate(ok)
+  expect_length(co$boundary, 0L)
+  expect_true(is.finite(co$gradient))
+  expect_true(any(grepl("outer gradient",
+                        capture.output(print(summary(ok))), fixed = TRUE)))
+})
+
 test_that("summary carries the certificate and prints it", {
   set.seed(43)
   n <- 200
