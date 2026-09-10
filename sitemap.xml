@@ -20,6 +20,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/armijo_ok.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bind_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_label.html</loc></url>
@@ -162,6 +163,8 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/model.matrix.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/one_sided.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/order_available.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/order_shortfall.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_backtracks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_context.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.html</loc></url>

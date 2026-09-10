@@ -156,6 +156,9 @@ exported, and none is needed to use the package.
 - [`armijo_ok()`](https://statmodels7.github.io/statmodels7/reference/armijo_ok.md)
   : Armijo's Sufficient-Decrease Condition
 
+- [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
+  : Refuse Where a Criterion Cannot Be Computed
+
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 
@@ -579,6 +582,12 @@ exported, and none is needed to use the package.
 
 - [`one_sided()`](https://statmodels7.github.io/statmodels7/reference/one_sided.md)
   : Build a One-Sided Formula From an Expression
+
+- [`order_available()`](https://statmodels7.github.io/statmodels7/reference/order_available.md)
+  : Whether a Family Carries Enough Derivatives
+
+- [`order_shortfall()`](https://statmodels7.github.io/statmodels7/reference/order_shortfall.md)
+  : Why a Consumer Cannot Run on This Family
 
 - [`outer_backtracks()`](https://statmodels7.github.io/statmodels7/reference/outer_backtracks.md)
   : The Outer Line Search's Backtracking Budget

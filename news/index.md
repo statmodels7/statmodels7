@@ -1,5 +1,94 @@
 # Changelog
 
+## statmodels7 0.123.0
+
+- **A criterion refuses a family whose log-density does not carry the
+  curvature it reads, by name and with the remedy, where the question is
+  posed.** `statmod(y ~ random(~1|id), distrib = laplace_distrib())`
+  died with *“the REML criterion is unavailable at the starting
+  hyperparameters: the inner fit did not converge there”* — true, and
+  three layers from the cause. It now names the family, the parameter,
+  the order it needs against the order there is, and what to write
+  instead:
+
+  > the REML criterion needs 2 derivatives of the log-density in every
+  > parameter, and ‘laplace’ has 0 of them in ‘mu’ — its log-density
+  > carries an absolute value of an argument that moves with ‘mu’, so
+  > the curvature the REML criterion reads sits on a set of measure zero
+  > in the response. Fit with outer_criterion = NULL, setting the
+  > hyperparameters yourself through hyper, or model ‘mu’ with a family
+  > that is smooth in it.
+
+- ⚠️ **All five criteria refuse, and that is the behaviour to keep**:
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  on either information,
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  all read `K = -grad^2 l + S`, so all five died on the same line before
+  and all five say so now. The refusal is raised once the criterion is
+  known to have something to do, so a model whose criterion is inert is
+  not refused for a reason that would never have arisen.
+
+- ⚠️ **A fit with no criterion is NOT refused.** What the refusal
+  protects is the criterion, which reads a curvature that is not there;
+  the coefficients are a different question, and on `y ~ x` with a
+  Laplace the layer reaches 3.6e-04 of the exact LAD fit, whose
+  objective it matches to 1.4e-04. So `outer_criterion = NULL` goes on
+  estimating the coefficients at hyperparameters the caller sets, which
+  is what the message points at.
+
+- Each consumer reads the order it needs rather than one blanket rule,
+  on the scale distributions7’s `params_order()` records: 1 for a score
+  continuous in the coefficients, 2 for IWLS,
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) and the determinant of a
+  marginal criterion, 3 for that criterion’s exact gradient, 4 for its
+  exact Hessian, 5 for the fourth derivative of a filtered predictor.
+  [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  gates on 3 and 4 rather than refusing, the search falling back on a
+  difference, so the two kinds of consumer are told apart: at an order
+  of 2 the criterion runs and the exact gradient does not.
+
+- ⚠️ **Nothing else moves.** Against a battery of twelve fitted models —
+  `linpar`, `s`, `te`, `random`, `ridge`, `lasso`, a distributional
+  model, a Poisson, a Gamma, `gas`, `seg` and `regime` — the
+  log-likelihood, the coefficients, the hyperparameters, the effective
+  degrees of freedom, `vcov`, the convergence flag and the certificate
+  are [`identical()`](https://rdrr.io/r/base/identical.html) before and
+  after: 168 comparisons, no difference. A family that answers no order
+  at all is not accused, so a distribution written outside the toolkit
+  behaves as it did.
+
+- ⚠️ **This does not make the model estimable.** It makes it
+  diagnosable, which is the whole of what it claims; a Laplace with a
+  penalised term still cannot have its hyperparameters chosen, because
+  the Laplace expansion those criteria are built on does not exist at a
+  mode that sits on the kink.
+
+- ⚠️ **The exact outer gradient of a MIXED covariance class is now
+  answered at order 2 as well, by two changes of the same day meeting
+  rather than by one.**
+  [`penalty_answers()`](https://statmodels7.github.io/statmodels7/reference/penalty_answers.md)
+  consults
+  [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html),
+  and penalties7 0.22.0 repaired that predicate for a MULTIVARIATE
+  parent – which is what a covariance class declares – from `FALSE` to
+  `TRUE`; with it true the loop stops refusing, and
+  [`answers_term_fourth()`](https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.md)
+  admits a `gas()` since 0.115.0 built the joint twin
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  lacked. Measured, NO FIT MOVES: the same model with the route open and
+  with `beta_quadratic` forced to its old answer gives the identical
+  criterion (-345.4673505), the identical 62 evaluations, the identical
+  hyperparameters and the identical certificate, because
+  [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
+  holds such a model at `lbfgs()` whatever the predicate says. The
+  assertion in `test-covariance-structural.R` records the answer the
+  predicate gives and states that the Hessian has NOT been validated for
+  that shape: the route is reachable and unexercised, which is a
+  different thing from verified.
+
 ## statmodels7 0.122.0
 
 - **A stopping rule that was not met is not a fit that failed, and the
