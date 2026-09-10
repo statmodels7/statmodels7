@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.119.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.120.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.120.0" id="statmodels7-01200">statmodels7 0.120.0<a class="anchor" aria-label="anchor" href="#statmodels7-01200"></a></h2>
+<ul><li>
+<p>⚠️ <strong>A smooth shows its LINEAR PART whatever CLASS its penalty is.</strong> <code><a href="../reference/smooth_linear_cols.html">smooth_linear_cols()</a></code> reads a penalty’s matrix off the property <code>P</code>, which a quadratic penalty carries and an additive one does not – its components live in <code>mats</code>, one per smoothing parameter. Read through the <code>P</code> question alone, a penalty of that class fell into the branch written for a penalty carrying no matrix at all, a lasso or a heavy-tailed prior, which shrinks every coordinate it indexes; the block then printed its smoothing parameters and nothing else, losing the row a reader of a smooth most wants. It is the defect 0.118.0 repaired for the SINGULAR question, one class further along.</p>
+<p>⚠️ <strong>No existing model moves, and the measurement says why rather than a tolerance.</strong> The only penalty class misread is <code>AdditivePenalty</code>, whose one consumer before basis7 0.12.0 was the anisotropic <code>te()</code> – and a tensor product is centered, so it has no free leading column under either class and reports 0 either way. Measured over five shapes, a B-spline smooth and a P-spline smooth report 1 free column before and after, both tensor shapes report 0 before and after, and only <code>adaptive_smooth()</code> moves, from 0 to the 1 it has.</p>
+<p>The reading is a sum of the components’ ABSOLUTE values, which answers “does any component touch this coordinate” exactly and without an argument about definiteness that summing the components themselves would need.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.119.0" id="statmodels7-01190">statmodels7 0.119.0<a class="anchor" aria-label="anchor" href="#statmodels7-01190"></a></h2>
 <ul><li>

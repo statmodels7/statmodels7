@@ -1,5 +1,33 @@
 # Changelog
 
+## statmodels7 0.120.0
+
+- ⚠️ **A smooth shows its LINEAR PART whatever CLASS its penalty is.**
+  [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
+  reads a penalty’s matrix off the property `P`, which a quadratic
+  penalty carries and an additive one does not – its components live in
+  `mats`, one per smoothing parameter. Read through the `P` question
+  alone, a penalty of that class fell into the branch written for a
+  penalty carrying no matrix at all, a lasso or a heavy-tailed prior,
+  which shrinks every coordinate it indexes; the block then printed its
+  smoothing parameters and nothing else, losing the row a reader of a
+  smooth most wants. It is the defect 0.118.0 repaired for the SINGULAR
+  question, one class further along.
+
+  ⚠️ **No existing model moves, and the measurement says why rather than
+  a tolerance.** The only penalty class misread is `AdditivePenalty`,
+  whose one consumer before basis7 0.12.0 was the anisotropic `te()` –
+  and a tensor product is centered, so it has no free leading column
+  under either class and reports 0 either way. Measured over five
+  shapes, a B-spline smooth and a P-spline smooth report 1 free column
+  before and after, both tensor shapes report 0 before and after, and
+  only `adaptive_smooth()` moves, from 0 to the 1 it has.
+
+  The reading is a sum of the components’ ABSOLUTE values, which answers
+  “does any component touch this coordinate” exactly and without an
+  argument about definiteness that summing the components themselves
+  would need.
+
 ## statmodels7 0.119.0
 
 - ⚠️ **`predict(fit, what, newdata)` returned the values at the FITTING
