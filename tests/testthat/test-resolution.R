@@ -20,7 +20,7 @@ test_that("the criterion's resolution is read at the fit and tracks the inner ru
     design <- statmod_design(spec)
     hyper <- statmod_hyper_start(spec, design)
     blocks <- statmod_blocks(spec, design)
-    cfg <- inner_settings(inner)
+    cfg <- inner_settings(inner, spec@distrib)
     obj <- statmod_objective(spec, hyper, design, cfg$expected, cfg$approx)
     beta0 <- statmod_start(spec, design, obj, NULL)
     basis <- integrated_basis(spec, design, meth@kind)

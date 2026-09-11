@@ -4402,11 +4402,47 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
     pen_units <- tryCatch(statmod_penalized(spec, design),
                           error = function(e) list())
     if (length(pen_units)) {
-      out$reason <- paste0(
-        "the only hyperparameters here belong to a penalty with a kink, ",
-        "chosen along a path rather than by a criterion with a derivative; ",
-        "and at a coefficient the penalty has set to zero the score does not ",
-        "vanish, so the mode error is not a reading either")
+      # ⚠️ AND CASES THE TWO ABOVE DO NOT COVER, whose reason used to be the
+      # kinked one whatever the model carried: a prediction-error criterion on
+      # a SMOOTH penalty, and hyperparameters held at their values. Measured on
+      # a gamma smooth under aic(), the reason read "the only hyperparameters
+      # here belong to a penalty with a kink" of a model carrying none. The
+      # state stays unknown -- this certificate reads the outer gradient of
+      # reml() and ml() alone -- and the reason says which case it is.
+      kinked <- vapply(pen_units, function(u)
+        isTRUE(tryCatch(penalty_has_kink(u$penalty, u$key),
+                        error = function(e) FALSE)), logical(1))
+      estimated <- vapply(pen_units, function(u)
+        length(setdiff(u$penalty@params, names(u$fixed))) > 0L, logical(1))
+      first <- if (!any(estimated)) {
+        paste0("every hyperparameter here was held at the value written on its ",
+               "term, so there is no outer gradient to read")
+      } else if (all(kinked[estimated])) {
+        paste0("the only hyperparameters here belong to a penalty with a kink, ",
+               "chosen along a path rather than by a criterion with a derivative")
+      } else if (is.null(method)) {
+        paste0("no criterion was asked for, so the hyperparameters of the smooth ",
+               "penalties stayed at their starting values and there is no outer ",
+               "gradient to read")
+      } else if (method@kind %in% c("aic", "bic")) {
+        sprintf(paste0("the hyperparameters here were chosen by %s(), a ",
+                       "prediction-error criterion, and this certificate reads ",
+                       "the outer gradient of reml() and ml() alone"), method@kind)
+      } else if (identical(method@kind, "cv")) {
+        paste0("the hyperparameters here were chosen by cv(), which refits on ",
+               "folds and has no gradient to read")
+      } else {
+        paste0("no hyperparameter here is estimated by ", method@kind, "(), so ",
+               "there is no outer gradient to read")
+      }
+      second <- if (any(kinked)) {
+        paste0("and at a coefficient the penalty has set to zero the score does ",
+               "not vanish, so the mode error is not a reading either")
+      } else if (is.finite(out$mode_error)) {
+        sprintf("the inner fit is %.4g log-likelihood units above its mode",
+                out$mode_error)
+      }
+      out$reason <- paste(c(first, second), collapse = "; ")
       return(out)
     }
     if (!is.finite(out$mode_error)) {

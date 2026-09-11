@@ -985,7 +985,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     tb <- statmod_blocks(ts, td)
     hs <- statmod_respec(ts, test)
     hd <- statmod_design(hs)
-    cfgs <- inner_settings(inner_optimizer)
+    cfgs <- inner_settings(inner_optimizer, ts@distrib)
     obj <- statmod_objective(ts, hypers[[1L]], td, cfgs$expected, cfgs$approx)
     warm <- statmod_start(ts, td, obj, NULL)
     tbj <- tb

@@ -63,6 +63,35 @@ test_that("the criterion is minus twice the log-likelihood plus k times edf", {
   expect_equal(outer_tau(H2 + S2, H2), 3, tolerance = 1e-10)
 })
 
+test_that("the printed edf reads the information the criterion reads", {
+  # aic() and bic() price a fit as -2 l + k tau, with tau read on the
+  # information their own `hessian` names, and the count printed beside them is
+  # that quantity. It used to read the INNER fit's information whatever the
+  # criterion read, so wherever the two differ the criterion printed above the
+  # count was not -2 l + 2 sum(edf).
+  set.seed(71)
+  n <- 300
+  dg <- data.frame(x = runif(n, -2, 2), z = runif(n))
+  dg$y <- stats::rgamma(n, shape = 2, scale = exp(1 + 0.6 * sin(1.4 * dg$x)) / 2)
+  for (inner_h in c("expected", "observed")) {
+    for (crit_h in c("observed", "expected")) {
+      f <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gamma1_distrib(), dg,
+                   inner_optimizer = iwls(hessian = inner_h),
+                   outer_criterion = aic(hessian = crit_h))
+      ll <- as.numeric(stats::logLik(f))
+      expect_equal(f@criterion, -2 * ll + 2 * sum(f@edf$edf), tolerance = 1e-10,
+                   info = paste("inner", inner_h, "criterion", crit_h))
+      # the reading it replaced, on the inner fit's information, does not
+      # reproduce the criterion where the two informations differ
+      if (!identical(inner_h, crit_h)) {
+        old <- statmod_edf(f@spec, f@coefficients, statmod_design(f@spec), f@hyper,
+                           expected = identical(inner_h, "expected"))
+        expect_gt(abs(f@criterion - (-2 * ll + 2 * sum(old$edf))), 1e-3)
+      }
+    }
+  }
+})
+
 test_that("bic prices a degree of freedom at log n", {
   a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = aic())
@@ -117,6 +146,98 @@ test_that("the derivatives match numDeriv with two smoothing parameters", {
   expect_equal(got, t(got), tolerance = 1e-12)
   expect_equal(as.numeric(got),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)
+})
+
+test_that("the expected route's gradient reads the expected information", {
+  # aic(hessian = "expected") prices tau on the expected information, so its
+  # gradient reads how that information moves with the mode, which is
+  # dE[l'']/deta and not l'''. The route used to differentiate the observed
+  # trace for a criterion reading the expected one. A beta1 smooth is the case
+  # to test on: its expected information has a mean-precision block that is
+  # not zero, so a component read under the wrong key shows, where a gamma's
+  # and a gaussian's orthogonality hide it.
+  skip_if_not_installed("numDeriv")
+  set.seed(81)
+  n <- 250
+  db <- data.frame(x = runif(n, -2, 2))
+  p <- plogis(sin(1.4 * db$x))
+  db$y <- stats::rbeta(n, p * 10, (1 - p) * 10)
+  distrib <- distributions7::beta1_distrib()
+  formula <- y ~ s(x, bspline_smooth(k = 10))
+  # a tight inner tolerance, so the reference differences a well-located mode
+  inner <- iwls(tol = 1e-10)
+  fit0 <- statmod(formula, distrib, db, outer_criterion = NULL, inner_optimizer = inner)
+  spec <- fit0@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  at <- function(eta) {
+    hy <- eta_to_hyper(eta, idx, fit0@hyper)
+    list(hy = hy, fit = fit_at_hyper(formula, distrib, db, hy, inner))
+  }
+  for (m in list(aic(hessian = "expected"), bic(hessian = "expected"))) {
+    fn <- function(eta) {
+      a <- at(eta)
+      statmod_pe(spec, design, a$fit$coefficients, a$hy, m)$value
+    }
+    mo <- m
+    mo@hessian <- "observed"
+    for (shift in c(0.5, -1)) {
+      eta <- hyper_to_eta(fit0@hyper, idx) + shift
+      a <- at(eta)
+      ref <- numDeriv::grad(fn, eta)
+      got <- statmod_pe_derivs(spec, design, a$fit$coefficients, a$hy, m, idx, 1L)$grad
+      # measured 2.3e-08 to 9.2e-08
+      expect_equal(got, ref, tolerance = 1e-6, info = paste(m@kind, shift))
+      # the observed trace's derivative, which the route returned before, is
+      # out by 1.4e-04 to 2.8e-04
+      old <- statmod_pe_derivs(spec, design, a$fit$coefficients, a$hy, mo, idx, 1L)$grad
+      expect_gt(abs(old - ref) / abs(ref), 1e-5)
+    }
+  }
+})
+
+test_that("the expected information's derivative is contracted under its own key", {
+  # The array distrib_dexpected_hessian() returns is symmetric in its first two
+  # positions and not in the third, so contract3() reads it through the key
+  # dexpected_key() builds; read through the observed route's symmetric key it
+  # takes the derivative of one block for another's.
+  set.seed(81)
+  n <- 250
+  db <- data.frame(x = runif(n, -2, 2))
+  p <- plogis(sin(1.4 * db$x))
+  db$y <- stats::rbeta(n, p * 10, (1 - p) * 10)
+  distrib <- distributions7::beta1_distrib()
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distrib, db, outer_criterion = NULL)
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  total <- sum(npar)
+  cf <- fit@coefficients
+  set.seed(2)
+  v <- stats::rnorm(total)
+  tv <- block_predictors(design, params, npar, offs, v)
+  th <- statmod_eta(spec, design, cf)$theta
+  dE <- distributions7::distrib_dexpected_hessian(distrib, spec@response, th,
+                                                  scale = "link")
+  key <- function(a, b, k) distributions7::dexpected_key(params, a, b, k)
+  got <- as_dense(contract3(spec, design, dE, params, npar, offs, total, tv,
+                            key = key))
+  shifted <- function(eps) {
+    out <- cf
+    for (k in seq_along(params)) if (npar[k]) {
+      out[[params[k]]] <- cf[[params[k]]] + eps * v[offs[k] + seq_len(npar[k])]
+    }
+    out
+  }
+  eps <- 1e-4
+  ref <- (as_dense(statmod_information_at(spec, shifted(eps), design, TRUE)) -
+            as_dense(statmod_information_at(spec, shifted(-eps), design, TRUE))) /
+    (2 * eps)
+  expect_lt(max(abs(got - ref)) / max(abs(ref)), 1e-6)
+  wrong <- as_dense(contract3(spec, design, dE, params, npar, offs, total, tv))
+  expect_gt(max(abs(wrong - ref)) / max(abs(ref)), 1e-2)
 })
 
 test_that("a variance component is covered by aic too", {

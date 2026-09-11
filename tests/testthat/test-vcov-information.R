@@ -17,11 +17,16 @@ pig_data <- function(n = 200L, seed = 1L) {
 
 test_that("fit_expected asks the family as well as the fit", {
   dd <- pig_data(120L)
-  # a family with no closed expected information: the step may use an
-  # approximation of it, the report must not
+  # a family with no closed expected information: the step reads the observed
+  # information by default, and where it is asked for the expected one it may
+  # use an approximation of it; the report does not
   f_pig <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
-  expect_identical(f_pig@methods$smooth@hessian, "expected")
+  expect_identical(f_pig@methods$smooth@hessian, "observed")
   expect_false(statmodels7:::fit_expected(f_pig))
+  f_pig_e <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
+                     inner = iwls(hessian = "expected"))
+  expect_identical(f_pig_e@methods$smooth@hessian, "expected")
+  expect_false(statmodels7:::fit_expected(f_pig_e))
 
   # one that writes it out keeps it
   set.seed(2)
@@ -82,9 +87,10 @@ test_that("the cheap and the dear expected information reach the same fit", {
   # is exact, so a scoring iteration driven by either matrix has the same fixed
   # point. Small n, because the bartlett route sums over the support per row.
   dd <- pig_data(60L)
-  f_opg <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  f_opg <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
+                   inner = iwls(hessian = "expected"))
   f_bar <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
-                   inner = iwls(approx = "bartlett"))
+                   inner = iwls(hessian = "expected", approx = "bartlett"))
   expect_equal(unlist(coef(f_opg)), unlist(coef(f_bar)), tolerance = 1e-4)
   expect_equal(as.numeric(logLik(f_opg)), as.numeric(logLik(f_bar)),
                tolerance = 1e-6)

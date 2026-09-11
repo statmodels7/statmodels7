@@ -12,12 +12,14 @@ Iwls(
   maxit = integer(0),
   tol = integer(0),
   criterion = NULL,
-  step_halving = integer(0)
+  step_halving = integer(0),
+  fallback = logical(0)
 )
 }
 \arguments{
-\item{hessian}{\code{"expected"} for Fisher scoring or \code{"observed"} for
-Newton, a single string.}
+\item{hessian}{\code{"expected"} for Fisher scoring, \code{"observed"} for Newton,
+or \code{"auto"}, which \code{\link[=iwls_resolve]{iwls_resolve()}} turns into one of the two once the
+distribution is known. A single string.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
@@ -34,6 +36,11 @@ in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
 \item{step_halving}{How many halvings are allowed before a step is
 abandoned, a single non-negative number.}
+
+\item{fallback}{A single logical: whether the expected information takes
+the step wherever the observed penalized information is not positive
+definite or its step finds no acceptable point. \code{\link[=iwls_resolve]{iwls_resolve()}} sets it,
+for \code{"auto"} on a family whose expected information is not exact.}
 }
 \value{
 An object of class \code{Iwls} with one property per argument above,

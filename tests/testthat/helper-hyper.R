@@ -14,7 +14,7 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls()) {
   spec <- statmod_spec(formula, distrib, data, NULL, NULL)
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
-  cfg <- inner_settings(inner)
+  cfg <- inner_settings(inner, distrib)
   obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
   beta <- statmod_start(spec, design, obj, NULL)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,

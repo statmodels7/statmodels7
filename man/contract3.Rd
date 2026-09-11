@@ -4,18 +4,23 @@
 \alias{contract3}
 \title{The Third Derivative of the Objective Contracted Once}
 \usage{
-contract3(spec, design, d3, params, npar, offs, total, tv)
+contract3(spec, design, d3, params, npar, offs, total, tv, key = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
 \item{design}{The design.}
 
-\item{d3}{The third derivatives in the link scale.}
+\item{d3}{The third derivatives in the link scale, or on the expected route
+the derivative of the expected information.}
 
 \item{params, npar, offs, total}{The block bookkeeping.}
 
 \item{tv}{The predictors of the direction.}
+
+\item{key}{A function of three parameter positions returning the name of the
+component of \code{d3} to read, or \code{NULL} for the observed route's key, which
+is symmetric in all three positions.}
 }
 \value{
 A square matrix.
@@ -28,5 +33,11 @@ coefficients.
 Each block is a weighted crossproduct, the weight being
 \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}: the third derivative never
 appears as an array.
+
+On the expected route \code{d3} is the derivative of the expected information in
+the predictors, \code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}}, and the same
+contraction gives \eqn{(\partial H_E/\partial\beta)\cdot v}; that array is
+symmetric in its first two positions only, so it is read through its own
+\code{key}.
 }
 \keyword{internal}

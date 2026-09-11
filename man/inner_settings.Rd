@@ -4,10 +4,14 @@
 \alias{inner_settings}
 \title{What the Inner Method Says About How to Fit}
 \usage{
-inner_settings(method)
+inner_settings(method, distrib = NULL)
 }
 \arguments{
 \item{method}{\code{\link[=iwls]{iwls()}} or an \pkg{optimizers7} optimizer.}
+
+\item{distrib}{The distribution, read only to settle an \code{\link[=iwls]{iwls()}} left at
+\code{hessian = "auto"} through \code{\link[=iwls_resolve]{iwls_resolve()}}; such a method with no
+distribution is an error rather than a guess.}
 }
 \value{
 A list of four: \code{expected} (a logical), \code{approx} (a string),

@@ -133,3 +133,95 @@ assert_criterion_order <- function(distrib, method) {
   if (!is.null(why)) stop(why, call. = FALSE)
   invisible(NULL)
 }
+
+#' Refuse a Prediction-Error Criterion on a Structural Term's Own Parameters
+#'
+#' @description
+#' Raises an error naming the penalty and the remedy when `aic()`, `bic()` or
+#' `cv()` would have to select a hyperparameter of a penalty over the own
+#' parameters of a structural term: the deviations of a score-driven filter
+#' over a panel, or a covariance class that reaches into one.
+#'
+#' @details
+#' A prediction-error criterion reads the effective degrees of freedom, and
+#' their derivative, over the coefficients alone, where such a penalty covers
+#' nothing. Measured before this refusal existed, the exact gradient of
+#' `aic()` there was exactly 0, the search stopped at its first evaluation
+#' reporting convergence, and the traces it priced were 2 and 1 where the
+#' traces over the joint vector are 7.433 and 22.410. `cv()` and the path a
+#' kinked penalty is swept along are built on the same blocks, and for a lasso
+#' over a filter's parameters the path died on "'from' must be a finite
+#' number". [reml()] and [ml()] span the term's parameters in their
+#' determinant and estimate a twice differentiable penalty there. A penalty
+#' with a kink there has no criterion at all, and holding its hyperparameter
+#' does not fit either: measured, a lasso over a filter's own parameters held
+#' at `lambda = 2` dies inside the coordinate-descent route, in the published
+#' release as well, so the message names no remedy for it.
+#'
+#' Which penalties a criterion reaches depends on its role, and only those are
+#' asked about: an `outer_criterion` reaches the smooth penalties, and the
+#' kinked ones as well when no `sparse_criterion` is given, while a
+#' `sparse_criterion` reaches the kinked ones alone.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param method An [OuterMethod()], or `NULL`.
+#' @param reach Which penalties the criterion selects: `"all"`, `"smooth"` or
+#'   `"kinked"`.
+#'
+#' @return `NULL`, invisibly. Called for the error.
+#'
+#' @examples
+#' dd <- data.frame(x = runif(60))
+#' dd$y <- rnorm(60, dd$x)
+#' spec <- statmodels7:::statmod_spec(y ~ x, distributions7::gaussian1_distrib(),
+#'                                    dd)
+#' statmodels7:::assert_criterion_reach(spec, statmodels7:::statmod_design(spec),
+#'                                      aic())
+#'
+#' @seealso [assert_criterion_order()], [structural_penalized()]
+#' @keywords internal
+assert_criterion_reach <- function(spec, design, method,
+                                   reach = c("all", "smooth", "kinked")) {
+  reach <- match.arg(reach)
+  if (is.null(method) || !method@kind %in% c("aic", "bic", "cv")) {
+    return(invisible(NULL))
+  }
+  held_ids <- names(statmod_held_ids(statmod_penalty_keys(spec)))
+  for (u in statmod_penalized(spec, design)) {
+    if (!isTRUE(u$structural) && !isTRUE(u$mixed)) next
+    kinked <- isTRUE(tryCatch(penalty_has_kink(u$penalty, u$key),
+                              error = function(e) FALSE))
+    if ((identical(reach, "smooth") && kinked) ||
+        (identical(reach, "kinked") && !kinked)) next
+    lab_of <- function(h) if (h %in% names(u$ids)) u$ids[[h]] else NA_character_
+    free <- Filter(function(h) !(h %in% names(u$fixed)) && !(lab_of(h) %in% held_ids),
+                   u$penalty@params)
+    if (!length(free)) next
+    what <- if (identical(method@kind, "cv")) {
+      "cross-validation sweeps a path built over the coefficients alone"
+    } else {
+      paste0("a prediction-error criterion reads the degrees of freedom and ",
+             "their gradient over the coefficients alone")
+    }
+    # ⚠️ NO REMEDY IS NAMED FOR A PENALTY WITH A KINK, and a measurement is
+    # why: holding its hyperparameter at a value written on the term does not
+    # fit either. A lasso over a filter's own parameters held at lambda = 2
+    # dies on "subscript out of bounds" in coord_block(), in the published
+    # 0.124.0 as well, the coordinate-descent route reading the penalized
+    # coordinates as columns of a design, which those parameters are not.
+    remedy <- if (kinked) {
+      paste0("A penalty with a kink there has no criterion that can select ",
+             "it: reml() and ml() read a curvature the kink does not have.")
+    } else {
+      "Use reml() or ml(), whose determinant spans the term's parameters as well."
+    }
+    stop(sprintf(paste0(
+      "%s() cannot select the hyperparameter '%s' of '%s' in '%s': that ",
+      "penalty covers the own parameters of a structural term, and %s, where ",
+      "it covers nothing. %s"),
+      method@kind, free[[1L]], short_keys(u$key), u$param, what, remedy),
+      call. = FALSE)
+  }
+  invisible(NULL)
+}

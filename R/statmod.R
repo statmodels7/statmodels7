@@ -335,6 +335,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   hyper <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)
 
+  # an iwls() left at "auto" is settled against the family once, here, so the
+  # objective, every refit and the fit's own record read the same curvature
+  if (S7::S7_inherits(inner_optimizer, Iwls)) {
+    inner_optimizer <- iwls_resolve(inner_optimizer, spec@distrib)
+  }
   cfg <- inner_settings(inner_optimizer)
   expected <- cfg$expected
   approx <- cfg$approx
@@ -422,6 +427,15 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # which is true and is three layers from the cause.  See R/order.R.
   assert_criterion_order(spec@distrib, outer_criterion)
   assert_criterion_order(spec@distrib, sparse_criterion)
+  # and a prediction-error criterion cannot select a penalty over a structural
+  # term's own parameters, reading its degrees of freedom over the coefficients
+  # alone, where that penalty covers nothing. Refused here, by name, before a
+  # search that would stop at its first evaluation reporting success. An outer
+  # criterion reaches the kinked penalties too when no sparse one is given, the
+  # path then being swept by it. See R/order.R.
+  assert_criterion_reach(spec, design, outer_criterion,
+                         if (is.null(sparse_criterion)) "all" else "smooth")
+  assert_criterion_reach(spec, design, sparse_criterion, "kinked")
 
   # A prediction-error criterion for the SMOOTH penalties cannot be nested
   # inside a path over the kinked ones: it scores the same quantity at two
@@ -507,12 +521,26 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
   spec <- statmod_fitted_spec(spec, coef, design)
+  # WHICH INFORMATION THE PRINTED COUNT READS. aic() and bic() price a fit as
+  # -2 l + k tau, and tau is the trace read on the information their own
+  # `hessian` names; the count printed beside that criterion is the same
+  # quantity, so it reads the same matrix. It used to read the inner fit's
+  # information whatever the criterion read, so under iwls()'s expected
+  # information and aic()'s observed one the two disagreed: 6.754675 against
+  # 6.754023 on one smooth, and the printed count no longer reproduced the
+  # criterion printed above it. At most one criterion reading tau runs, a
+  # prediction-error outer criterion being refused beside a path.
+  tau_reader <- Filter(function(m) !is.null(m) && m@kind %in% c("aic", "bic"),
+                       list(sparse_criterion, outer_criterion))
+  edf_expected <- if (length(tau_reader)) {
+    identical(tau_reader[[1L]]@hessian, "expected")
+  } else expected
   StatmodFit(
     spec = spec, coefficients = coef,
     structural = statmod_structural_par(spec, design), hyper = hyper,
     loglik = statmod_loglik_at(spec, coef, design),
     objective = res$value,
-    edf = statmod_edf(spec, coef, design, hyper, expected, approx,
+    edf = statmod_edf(spec, coef, design, hyper, edf_expected, approx,
                       alias),
     fitted = fitted, converged = res$converged,
     aliased = aliased_labels(spec, design, alias),
@@ -897,6 +925,9 @@ method_budget <- function(method) {
 #' so for an optimizer it records a default rather than a choice.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
+#' @param distrib The distribution, read only to settle an [iwls()] left at
+#'   `hessian = "auto"` through [iwls_resolve()]; such a method with no
+#'   distribution is an error rather than a guess.
 #'
 #' @return A list of four: `expected` (a logical), `approx` (a string),
 #'   `maxit` and `tol`.
@@ -905,9 +936,16 @@ method_budget <- function(method) {
 #'   [iwls()] for where the first two are set.
 #'
 #' @keywords internal
-inner_settings <- function(method) {
+inner_settings <- function(method, distrib = NULL) {
   b <- method_budget(method)
   iw <- S7::S7_inherits(method, Iwls)
+  if (iw && identical(method@hessian, "auto")) {
+    if (is.null(distrib)) {
+      stop("iwls(hessian = \"auto\") is settled by the family: pass 'distrib', ",
+           "or settle it with iwls_resolve() first.", call. = FALSE)
+    }
+    method <- iwls_resolve(method, distrib)
+  }
   list(expected = iw && identical(method@hessian, "expected"),
        approx = if (iw) method@approx else "opg",
        maxit = b$maxit, tol = b$tol)
@@ -1027,6 +1065,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   }
 
   if (S7::S7_inherits(method, Iwls)) {
+    method <- iwls_resolve(method, spec@distrib)
     sub <- list(fn = fn, gr = gr, npar = length(idx),
                 split = obj$split, stack = obj$stack)
     pieces_at <- function(b) {
@@ -1043,6 +1082,24 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
       A <- if (is.null(p$A)) xtx(p$R, spec@threads) + crossprod(p$C) else p$A
       list(R = NULL, C = NULL, A = A[idx, idx, drop = FALSE])
     }
+    # THE EXPECTED INFORMATION STANDS IN where the observed step cannot be
+    # used, on a method iwls_resolve() settled with the fallback: an observed
+    # penalized information that is not positive definite, or an observed
+    # step that finds no acceptable point
+    backup_at <- NULL
+    if (isTRUE(method@fallback)) {
+      m_exp <- method
+      m_exp@hessian <- "expected"
+      m_exp@fallback <- FALSE
+      backup_at <- function(b) {
+        v <- beta
+        v[idx] <- b
+        p <- iwls_pieces(spec, design, obj$split(v), hyper, m_exp)
+        if (whole) return(p)
+        A <- if (is.null(p$A)) xtx(p$R, spec@threads) + crossprod(p$C) else p$A
+        list(R = NULL, C = NULL, A = A[idx, idx, drop = FALSE])
+      }
+    }
     # the equations' coordinate ranges, restated in the subset's own
     # numbering: the stopping rule's scale is per equation, and the
     # objective's split speaks the full vector's coordinates
@@ -1051,7 +1108,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     groups <- Filter(length, groups)
     frozen <- match(intersect(hf$where, idx), idx)
     res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
-                    verbose = vb$inner, groups = groups, frozen = frozen)
+                    verbose = vb$inner, groups = groups, frozen = frozen,
+                    backup_at = backup_at)
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates

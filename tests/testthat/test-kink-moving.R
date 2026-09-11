@@ -69,7 +69,7 @@ test_that("the KKT conditions hold at the point the descent reached", {
       "y ~ nl(~ a * exp(-r * x), a ~ 0 + lasso(~ grp, lambda = %g))", lam)),
       distributions7::gaussian1_distrib(), d, outer_criterion = NULL)
     design <- statmod_design(f@spec)
-    cfg <- inner_settings(iwls())
+    cfg <- inner_settings(iwls(), f@spec@distrib)
     obj <- statmod_objective(f@spec, f@hyper, design, cfg$expected, cfg$approx)
     bh <- unlist(f@coefficients, use.names = FALSE)
     g <- numDeriv::grad(function(b) obj$fn(b), bh)

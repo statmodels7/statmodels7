@@ -136,7 +136,7 @@ test_that("the stencil agrees with a second difference of the criterion", {
                                         p$method, p$idx, p$basis))
   # the reference shares no arithmetic with the gradient: it reads the
   # criterion alone, twice differenced, with the mode refitted at each point
-  cfg <- inner_settings(iwls())
+  cfg <- inner_settings(iwls(), p$spec@distrib)
   blocks <- statmod_blocks(p$spec, p$design)
   eta0 <- hyper_to_eta(p$hyper, p$idx)
   beta0 <- unlist(p$coef[p$spec@distrib@params], use.names = FALSE)

@@ -1267,7 +1267,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # the prediction-error route computes the gradient on the way to the
       # Hessian, so both are kept rather than the second order being asked for
       # twice
-      d <- statmod_pe_derivs(spec, design, st$cf, st$hy, method, idx, order)
+      d <- statmod_pe_derivs(spec, design, st$cf, st$hy, method, idx, order,
+                             approx)
       if (is.null(st$grad)) {
         st$grad <- if (is.null(d$grad)) fallback(1L) else d$grad
       }

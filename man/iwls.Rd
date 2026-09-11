@@ -6,7 +6,7 @@
 \title{Iterated Weighted Least Squares}
 \usage{
 iwls(
-  hessian = c("expected", "observed"),
+  hessian = c("auto", "expected", "observed"),
   approx = c("opg", "bartlett", "integrate", "mc"),
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
   maxit = 100L,
@@ -18,8 +18,9 @@ iwls(
 \method{print}{Iwls}(x, ...)
 }
 \arguments{
-\item{hessian}{\code{"expected"} for Fisher scoring or \code{"observed"} for
-Newton, a single string.}
+\item{hessian}{\code{"expected"} for Fisher scoring, \code{"observed"} for Newton,
+or \code{"auto"}, which \code{\link[=iwls_resolve]{iwls_resolve()}} turns into one of the two once the
+distribution is known. A single string.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
@@ -42,7 +43,8 @@ abandoned, a single non-negative number.}
 \item{...}{Unused.}
 }
 \value{
-An \code{\link[=Iwls]{Iwls()}} object, holding the seven settings above and no data.
+An \code{\link[=Iwls]{Iwls()}} object, holding the seven settings above and no data,
+with \code{fallback} \code{FALSE} until \code{\link[=iwls_resolve]{iwls_resolve()}} settles an \code{"auto"}.
 }
 \description{
 Configures the scoring step \code{statmod()} fits the smooth block with, and
@@ -66,6 +68,19 @@ The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
 optimum and is what the exact outer gradient needs.
+
+\code{"auto"}, the default, is settled against the family when the fit starts,
+by \code{\link[=iwls_resolve]{iwls_resolve()}}: the expected information where the family writes it
+exactly, and otherwise the observed information, with the expected one
+taking the step wherever the observed penalized information is not
+positive definite or its step finds no acceptable point, and a trial point
+whose objective raises an error read as rejected. Measured on 68 fits of
+ten families whose expected information is an approximation, a smooth at
+n = 300 and 1000, the certificate accepts the point reached in 68, against
+63 on the approximation and 60 on the observed information alone, at a
+median time between 0.17 and 0.98 of the approximation's per family. The
+fit records the settled method, so \code{fit@methods$smooth} says which
+curvature ran.
 
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information; elsewhere the family's own method

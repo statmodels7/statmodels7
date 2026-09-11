@@ -72,7 +72,7 @@ sh_parts <- function(fit) {
 # the hyperparameter alone
 sh_grad <- function(fit, p) {
   inner <- iwls()
-  cfg <- inner_settings(inner)
+  cfg <- inner_settings(inner, p$spec@distrib)
   beta0 <- unlist(p$coef[p$spec@distrib@params], use.names = FALSE)
   sst <- statmod_structural_state(p$design)
   z0 <- if (is.null(sst)) NULL else sst$zeta

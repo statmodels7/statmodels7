@@ -359,6 +359,13 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #' and \eqn{\hat\beta_{ml}}, which are the quantities
 #' [statmod_marginal_hess()] already assembles.
 #'
+#' Where `method@hessian` is `"expected"`, \eqn{\tau} reads the expected
+#' information \eqn{H_E}, so its derivative contracts the derivative of
+#' \eqn{H_E} in the predictors, read from
+#' [distributions7::distrib_dexpected_hessian()] under its own key, while the
+#' mode still moves by the observed penalized information. That route has no
+#' Hessian and is refused at order 2.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param coef The coefficients at the penalized mode.
@@ -366,6 +373,8 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #' @param method An [OuterMethod()].
 #' @param idx The outer index.
 #' @param order `1` for the gradient alone, `2` for both.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form. Read only when `method@hessian` is `"expected"`.
 #'
 #' @return A list with `grad` and, at order 2, `hess`; or
 #'   `NULL` where the information is not invertible.
@@ -374,7 +383,7 @@ statmod_pe <- function(spec, design, coef, hyper, method,
 #'
 #' @keywords internal
 statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
-                              order = 1L) {
+                              order = 1L, approx = "opg") {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -382,7 +391,14 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   nh <- nrow(idx)
   n <- spec@n_obs
   kap <- outer_k(method, n)
+  expected <- identical(method@hessian, "expected")
+  if (expected && order >= 2L) {
+    stop("the expected route of a prediction-error criterion has no exact",
+         " Hessian; outer_gradient_ok() refuses order 2 there.", call. = FALSE)
+  }
 
+  # the OBSERVED information whatever the criterion reads: the mode is where
+  # the penalized likelihood's score vanishes, so this is what it moves by
   H <- statmod_information_at(spec, coef, design, expected = FALSE)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S <- zap_nonfinite(S)
@@ -394,13 +410,6 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   P <- chol2inv(Jfac)
 
   th <- statmod_eta(spec, design, coef)$theta
-  d3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
-                                       scale = "link", threads = spec@threads)
-  d4 <- if (order >= 2L) {
-    distributions7::distrib_deriv4(spec@distrib, spec@response, th,
-                                   scale = "link", threads = spec@threads)
-  } else NULL
-
   pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total, order)
   grho <- statmod_penalty_at(spec, coef, hyper, design, "gradient")
   grho <- unlist(grho[params], use.names = FALSE)
@@ -408,6 +417,43 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   bhat <- lapply(seq_len(nh), function(m) -as.numeric(P %*% pieces$c[[m]]))
   tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
                                                   v))
+
+  # ⚠️ THE TRACE ON THE CRITERION'S OWN INFORMATION. aic(hessian = "expected")
+  # prices tau = tr[(H_E + S)^-1 H_E], so its derivative reads H_E and how H_E
+  # moves with the mode, which is dE[l'']/deta and not l''': differentiating an
+  # expectation moves the measure as well as the integrand. Only the trace
+  # changes matrix; the mode's movement above keeps the observed one. Before
+  # this the route differentiated the OBSERVED trace for a criterion reading
+  # the expected one. The array and its key are the ones
+  # statmod_marginal_grad() reads on the same route through ctx_kmove().
+  if (expected) {
+    HE <- statmod_information_at(spec, coef, design, expected = TRUE, approx)
+    JEfac <- tryCatch(chol(as_dense(HE + S)), error = function(e) NULL)
+    if (is.null(JEfac)) return(NULL)
+    PE <- chol2inv(JEfac)
+    dE <- distributions7::distrib_dexpected_hessian(spec@distrib,
+                                                    spec@response, th,
+                                                    scale = "link",
+                                                    approx = approx)
+    keyE <- function(a, b, k) distributions7::dexpected_key(params, a, b, k)
+    PEH <- PE %*% HE
+    g <- numeric(nh)
+    for (m in seq_len(nh)) {
+      BE <- contract3(spec, design, dE, params, npar, offs, total, tv[[m]],
+                      key = keyE)
+      PAE <- PE %*% (pieces$S[[m]] + BE)
+      tau_m <- sum(PE * t(BE)) - sum(PAE * t(PEH))
+      g[m] <- -2 * sum(grho * bhat[[m]]) + kap * tau_m
+    }
+    return(list(grad = free_scale(g, hyper, idx)))
+  }
+
+  d3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
+                                       scale = "link", threads = spec@threads)
+  d4 <- if (order >= 2L) {
+    distributions7::distrib_deriv4(spec@distrib, spec@response, th,
+                                   scale = "link", threads = spec@threads)
+  } else NULL
   Bm <- lapply(tv, function(t) contract3(spec, design, d3, params, npar, offs,
                                          total, t))
   Am <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Bm[[m]])

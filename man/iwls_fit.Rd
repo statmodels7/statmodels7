@@ -12,7 +12,8 @@ iwls_fit(
   pieces_at,
   verbose = FALSE,
   groups = NULL,
-  frozen = integer(0)
+  frozen = integer(0),
+  backup_at = NULL
 )
 }
 \arguments{
@@ -41,9 +42,21 @@ in the same numbering. They are dropped from every solve, so the run
 maximizes over the rest, and the stopping rule reads the free
 coordinates alone -- a held coordinate's score is what the constrained
 optimum leaves there and does not vanish.}
+
+\item{backup_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
+on the expected information, which takes the step where the observed
+penalized information is not positive definite or where the observed step
+finds no acceptable point; a trial point whose objective raises an error
+is then read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method
+\code{\link[=iwls_resolve]{iwls_resolve()}} settled with the fallback.}
 }
 \value{
-A list of six:
+A list of nine: the six below; \code{note}, the reason a run stopped or
+\code{NULL}; \code{aliased}, the coordinates the pivot left out; and \code{fallback}, a
+named integer vector counting the iterations at which the expected pieces
+stepped in for a curvature that was not positive definite (\code{indefinite})
+or for a step that found no acceptable point (\code{search}), and the trial
+points whose objective raised (\code{error}). Of the six:
 \describe{
 \item{\code{par}}{the stacked coefficients reached, a numeric vector.}
 \item{\code{value}}{the penalized objective there, unaveraged.}

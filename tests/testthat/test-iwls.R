@@ -210,5 +210,6 @@ test_that("iwls states what it rejects and prints itself", {
   expect_error(iwls(decomposition = "lu"), "arg")
   expect_error(iwls(maxit = 0), "positive integer")
   expect_error(iwls(tol = -1), "positive number")
-  expect_output(print(iwls()), "expected information, qr")
+  expect_output(print(iwls()), "auto information, qr")
+  expect_output(print(iwls(hessian = "expected")), "expected information, qr")
 })

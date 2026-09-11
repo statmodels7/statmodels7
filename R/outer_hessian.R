@@ -468,6 +468,7 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
                                  h = hess_stencil_step()) {
   if (!nrow(idx)) return(NULL)
   if (is.null(inner)) inner <- iwls()
+  if (S7::S7_inherits(inner, Iwls)) inner <- iwls_resolve(inner, spec@distrib)
   cfg <- inner_settings(inner)
   blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
   if (is.null(blocks)) return(NULL)
@@ -618,17 +619,29 @@ block_predictors <- function(design, params, npar, offs, v) {
 #' \eqn{w_i\sum_k \ell'''_{abk}(X_k v_k)_i}: the third derivative never
 #' appears as an array.
 #'
+#' On the expected route `d3` is the derivative of the expected information in
+#' the predictors, [distributions7::distrib_dexpected_hessian()], and the same
+#' contraction gives \eqn{(\partial H_E/\partial\beta)\cdot v}; that array is
+#' symmetric in its first two positions only, so it is read through its own
+#' `key`.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
-#' @param d3 The third derivatives in the link scale.
+#' @param d3 The third derivatives in the link scale, or on the expected route
+#'   the derivative of the expected information.
 #' @param params,npar,offs,total The block bookkeeping.
 #' @param tv The predictors of the direction.
+#' @param key A function of three parameter positions returning the name of the
+#'   component of `d3` to read, or `NULL` for the observed route's key, which
+#'   is symmetric in all three positions.
 #'
 #' @return A square matrix.
 #'
 #' @keywords internal
-contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
+contract3 <- function(spec, design, d3, params, npar, offs, total, tv,
+                      key = NULL) {
   keys <- names(d3)
+  if (is.null(key)) key <- function(a, b, k) d3_key(params, a, b, k, keys)
   n <- spec@n_obs
   out <- zero_information(design, total)
   for (a in seq_along(params)) {
@@ -638,7 +651,7 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv) {
       w <- numeric(n)
       for (k in seq_along(params)) {
         if (npar[k] == 0L) next
-        w <- w + rep_len(d3[[d3_key(params, a, b, k, keys)]], n) * tv[[k]]
+        w <- w + rep_len(d3[[key(a, b, k)]], n) * tv[[k]]
       }
       blk <- -wcrossprod(design[[params[a]]]$X, spec@weights * w,
                          design[[params[b]]]$X, spec@threads)

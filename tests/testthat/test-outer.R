@@ -523,7 +523,7 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
   design <- statmod_design(spec)
   hyper  <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)
-  io     <- iwls(); cfg <- inner_settings(io); bud <- method_budget(io)
+  io     <- iwls(); cfg <- inner_settings(io, spec@distrib); bud <- method_budget(io)
   method <- reml()
   basis  <- integrated_basis(spec, design, method@kind)
   obj0   <- statmod_objective(spec, hyper, design, cfg$expected, cfg$approx)

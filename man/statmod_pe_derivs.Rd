@@ -4,7 +4,16 @@
 \alias{statmod_pe_derivs}
 \title{The Exact Derivatives of a Prediction-Error Criterion}
 \usage{
-statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
+statmod_pe_derivs(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  idx,
+  order = 1L,
+  approx = "opg"
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -20,6 +29,9 @@ statmod_pe_derivs(spec, design, coef, hyper, method, idx, order = 1L)
 \item{idx}{The outer index.}
 
 \item{order}{\code{1} for the gradient alone, \code{2} for both.}
+
+\item{approx}{How the expected information is approximated for a family
+with no closed form. Read only when \code{method@hessian} is \code{"expected"}.}
 }
 \value{
 A list with \code{grad} and, at order 2, \code{hess}; or
@@ -37,6 +49,13 @@ and the log-likelihood contributes \eqn{(\partial\rho/\partial\beta)'
 \hat\beta_m}. Differentiating once more brings in \eqn{A_{ml}}, \eqn{B_{ml}}
 and \eqn{\hat\beta_{ml}}, which are the quantities
 \code{\link[=statmod_marginal_hess]{statmod_marginal_hess()}} already assembles.
+
+Where \code{method@hessian} is \code{"expected"}, \eqn{\tau} reads the expected
+information \eqn{H_E}, so its derivative contracts the derivative of
+\eqn{H_E} in the predictors, read from
+\code{\link[distributions7:distrib_dexpected_hessian]{distributions7::distrib_dexpected_hessian()}} under its own key, while the
+mode still moves by the observed penalized information. That route has no
+Hessian and is refused at order 2.
 }
 \seealso{
 \code{\link[=aic]{aic()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}}
