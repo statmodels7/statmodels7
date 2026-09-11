@@ -19,7 +19,8 @@ Iwls(
   maxit = integer(0),
   tol = integer(0),
   criterion = NULL,
-  step_halving = integer(0)
+  step_halving = integer(0),
+  fallback = logical(0)
 )
 ```
 
@@ -27,7 +28,10 @@ Iwls(
 
 - hessian:
 
-  `"expected"` for Fisher scoring or `"observed"` for Newton, a single
+  `"expected"` for Fisher scoring, `"observed"` for Newton, or `"auto"`,
+  which
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  turns into one of the two once the distribution is known. A single
   string.
 
 - approx:
@@ -57,6 +61,15 @@ Iwls(
 
   How many halvings are allowed before a step is abandoned, a single
   non-negative number.
+
+- fallback:
+
+  A single logical: whether the expected information takes the step
+  wherever the observed penalized information is not positive definite
+  or its step finds no acceptable point.
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  sets it, for `"auto"` on a family whose expected information is not
+  exact.
 
 ## Value
 

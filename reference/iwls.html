@@ -19,7 +19,7 @@ can be passed to any number of fits."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.124.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.125.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ can be passed to any number of fits.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">iwls</span><span class="op">(</span></span>
-<span>  hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"expected"</span>, <span class="st">"observed"</span><span class="op">)</span>,</span>
+<span>  hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"expected"</span>, <span class="st">"observed"</span><span class="op">)</span>,</span>
 <span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
 <span>  decomposition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qr"</span>, <span class="st">"svd"</span>, <span class="st">"chol"</span>, <span class="st">"chol_crossprod"</span><span class="op">)</span>,</span>
 <span>  maxit <span class="op">=</span> <span class="fl">100L</span>,</span>
@@ -79,8 +79,9 @@ can be passed to any number of fits.</p>
 
 
 <dl><dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p><code>"expected"</code> for Fisher scoring or <code>"observed"</code> for
-Newton, a single string.</p></dd>
+<dd><p><code>"expected"</code> for Fisher scoring, <code>"observed"</code> for Newton,
+or <code>"auto"</code>, which <code><a href="iwls_resolve.html">iwls_resolve()</a></code> turns into one of the two once the
+distribution is known. A single string.</p></dd>
 
 
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
@@ -121,7 +122,8 @@ abandoned, a single non-negative number.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An <code><a href="Iwls-class.html">Iwls()</a></code> object, holding the seven settings above and no data.</p>
+    <p>An <code><a href="Iwls-class.html">Iwls()</a></code> object, holding the seven settings above and no data,
+with <code>fallback</code> <code>FALSE</code> until <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settles an <code>"auto"</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="the-name">The name<a class="anchor" aria-label="anchor" href="#the-name"></a></h2>
@@ -136,6 +138,18 @@ The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
 optimum and is what the exact outer gradient needs.</p>
+<p><code>"auto"</code>, the default, is settled against the family when the fit starts,
+by <code><a href="iwls_resolve.html">iwls_resolve()</a></code>: the expected information where the family writes it
+exactly, and otherwise the observed information, with the expected one
+taking the step wherever the observed penalized information is not
+positive definite or its step finds no acceptable point, and a trial point
+whose objective raises an error read as rejected. Measured on 68 fits of
+ten families whose expected information is an approximation, a smooth at
+n = 300 and 1000, the certificate accepts the point reached in 68, against
+63 on the approximation and 60 on the observed information alone, at a
+median time between 0.17 and 0.98 of the approximation's per family. The
+fit records the settled method, so <code>fit@methods$smooth</code> says which
+curvature ran.</p>
 <p><code>approx</code> reaches <span class="pkg">distributions7</span> and is read only where the family
 has no closed expected information; elsewhere the family's own method
 answers and the argument does not enter. It is accepted rather than
@@ -223,7 +237,7 @@ criteria that can replace it.</p></div>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iwls: expected information, qr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, tol 1e-06</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Newton instead of Fisher scoring, solved through an SVD, which reports a</span></span></span>
@@ -236,7 +250,7 @@ criteria that can replace it.</p></div>
 <span class="r-in"><span><span class="co"># exactly tol = t, the state's gradient being the score per observation.</span></span></span>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_any.html" class="external-link">crit_any</a></span><span class="op">(</span><span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                       <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_rel_obj.html" class="external-link">crit_rel_obj</a></span><span class="op">(</span><span class="fl">1e-12</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iwls: expected information, qr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, gradient (max-norm) &lt; 1e-08 or |df| &lt; 1e-12 (relative)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Both at once is an error: tol would be read by nobody.</span></span></span>

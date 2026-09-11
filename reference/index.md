@@ -159,6 +159,10 @@ exported, and none is needed to use the package.
 - [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
   : Refuse Where a Criterion Cannot Be Computed
 
+- [`assert_criterion_reach()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.md)
+  : Refuse a Prediction-Error Criterion on a Structural Term's Own
+  Parameters
+
 - [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   : Solve a Scoring Step From the Square-Root Design
 
@@ -504,11 +508,21 @@ exported, and none is needed to use the package.
 - [`iwls_info_diag()`](https://statmodels7.github.io/statmodels7/reference/iwls_info_diag.md)
   : The Diagonal of the Information a Step Uses
 
+- [`iwls_line_search()`](https://statmodels7.github.io/statmodels7/reference/iwls_line_search.md)
+  : One Scoring Step and Its Line Search
+
 - [`iwls_met()`](https://statmodels7.github.io/statmodels7/reference/iwls_met.md)
   : Has the Step's Stopping Rule Been Met?
 
 - [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
   : The Pieces One Scoring Step Needs
+
+- [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  :
+
+  Settle the Curvature of an
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  Against a Family
 
 - [`iwls_scale()`](https://statmodels7.github.io/statmodels7/reference/iwls_scale.md)
   : The Curvature's Own Scale at One Point
@@ -704,6 +718,9 @@ exported, and none is needed to use the package.
 
 - [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
   : A Penalty's Starting Hyperparameters
+
+- [`pieces_definite()`](https://statmodels7.github.io/statmodels7/reference/pieces_definite.md)
+  : Whether Scoring Pieces Carry a Positive Definite Curvature
 
 - [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)
   : Pin the Coordinates a Boundary Has Frozen

@@ -9,7 +9,7 @@ coefficients."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.124.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.125.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ coefficients.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">contract3</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">d3</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span>, <span class="va">total</span>, <span class="va">tv</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">contract3</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">d3</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">offs</span>, <span class="va">total</span>, <span class="va">tv</span>, key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -61,7 +61,8 @@ coefficients.</p>
 
 
 <dt id="arg-d-">d3<a class="anchor" aria-label="anchor" href="#arg-d-"></a></dt>
-<dd><p>The third derivatives in the link scale.</p></dd>
+<dd><p>The third derivatives in the link scale, or on the expected route
+the derivative of the expected information.</p></dd>
 
 
 <dt id="arg-params-npar-offs-total">params, npar, offs, total<a class="anchor" aria-label="anchor" href="#arg-params-npar-offs-total"></a></dt>
@@ -70,6 +71,12 @@ coefficients.</p>
 
 <dt id="arg-tv">tv<a class="anchor" aria-label="anchor" href="#arg-tv"></a></dt>
 <dd><p>The predictors of the direction.</p></dd>
+
+
+<dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
+<dd><p>A function of three parameter positions returning the name of the
+component of <code>d3</code> to read, or <code>NULL</code> for the observed route's key, which
+is symmetric in all three positions.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -81,6 +88,11 @@ coefficients.</p>
     <p>Each block is a weighted crossproduct, the weight being
 \(w_i\sum_k \ell'''_{abk}(X_k v_k)_i\): the third derivative never
 appears as an array.</p>
+<p>On the expected route <code>d3</code> is the derivative of the expected information in
+the predictors, <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html" class="external-link">distributions7::distrib_dexpected_hessian()</a></code>, and the same
+contraction gives \((\partial H_E/\partial\beta)\cdot v\); that array is
+symmetric in its first two positions only, so it is read through its own
+<code>key</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

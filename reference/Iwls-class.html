@@ -15,7 +15,7 @@ argument; this raw constructor does not."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.124.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.125.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ argument; this raw constructor does not.</p>
 <span>  maxit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  step_halving <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span>  step_halving <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  fallback <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -70,8 +71,9 @@ argument; this raw constructor does not.</p>
 
 
 <dl><dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p><code>"expected"</code> for Fisher scoring or <code>"observed"</code> for
-Newton, a single string.</p></dd>
+<dd><p><code>"expected"</code> for Fisher scoring, <code>"observed"</code> for Newton,
+or <code>"auto"</code>, which <code><a href="iwls_resolve.html">iwls_resolve()</a></code> turns into one of the two once the
+distribution is known. A single string.</p></dd>
 
 
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
@@ -100,6 +102,13 @@ in place of <code>tol</code>, or <code>NULL</code> for the built-in rule.</p></d
 <dt id="arg-step-halving">step_halving<a class="anchor" aria-label="anchor" href="#arg-step-halving"></a></dt>
 <dd><p>How many halvings are allowed before a step is
 abandoned, a single non-negative number.</p></dd>
+
+
+<dt id="arg-fallback">fallback<a class="anchor" aria-label="anchor" href="#arg-fallback"></a></dt>
+<dd><p>A single logical: whether the expected information takes
+the step wherever the observed penalized information is not positive
+definite or its step finds no acceptable point. <code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it,
+for <code>"auto"</code> on a family whose expected information is not exact.</p></dd>
 
 </dl></div>
     <div class="section level2">

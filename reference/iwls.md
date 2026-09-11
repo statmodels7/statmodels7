@@ -15,7 +15,7 @@ Every argument has a default, and the object carries no data: one
 
 ``` r
 iwls(
-  hessian = c("expected", "observed"),
+  hessian = c("auto", "expected", "observed"),
   approx = c("opg", "bartlett", "integrate", "mc"),
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
   maxit = 100L,
@@ -32,7 +32,10 @@ print(x, ...)
 
 - hessian:
 
-  `"expected"` for Fisher scoring or `"observed"` for Newton, a single
+  `"expected"` for Fisher scoring, `"observed"` for Newton, or `"auto"`,
+  which
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  turns into one of the two once the distribution is known. A single
   string.
 
 - approx:
@@ -77,7 +80,10 @@ print(x, ...)
 
 An
 [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
-object, holding the seven settings above and no data.
+object, holding the seven settings above and no data, with `fallback`
+`FALSE` until
+[`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+settles an `"auto"`.
 
 ## The name
 
@@ -92,6 +98,21 @@ The expected information is positive definite wherever the family is
 regular, so Fisher scoring takes usable steps from a poor start where
 Newton's matrix may be indefinite; Newton converges faster near the
 optimum and is what the exact outer gradient needs.
+
+`"auto"`, the default, is settled against the family when the fit
+starts, by
+[`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md):
+the expected information where the family writes it exactly, and
+otherwise the observed information, with the expected one taking the
+step wherever the observed penalized information is not positive
+definite or its step finds no acceptable point, and a trial point whose
+objective raises an error read as rejected. Measured on 68 fits of ten
+families whose expected information is an approximation, a smooth at n =
+300 and 1000, the certificate accepts the point reached in 68, against
+63 on the approximation and 60 on the observed information alone, at a
+median time between 0.17 and 0.98 of the approximation's per family. The
+fit records the settled method, so `fit@methods$smooth` says which
+curvature ran.
 
 `approx` reaches distributions7 and is read only where the family has no
 closed expected information; elsewhere the family's own method answers
@@ -197,7 +218,7 @@ for the criteria that can replace it.
 
 ``` r
 iwls()
-#> iwls: expected information, qr
+#> iwls: auto information, qr
 #>   maxit 100, tol 1e-06
 
 # Newton instead of Fisher scoring, solved through an SVD, which reports a
@@ -210,7 +231,7 @@ iwls(hessian = "observed", decomposition = "svd")
 # exactly tol = t, the state's gradient being the score per observation.
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
-#> iwls: expected information, qr
+#> iwls: auto information, qr
 #>   maxit 100, gradient (max-norm) < 1e-08 or |df| < 1e-12 (relative)
 
 # Both at once is an error: tol would be read by nobody.

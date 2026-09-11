@@ -156,7 +156,7 @@ c(aic = unlist(fa@hyper), bic = unlist(fb@hyper))
 #>                                 13.4430917 
 c(aic = sum(fa@edf$edf), bic = sum(fb@edf$edf))
 #>      aic      bic 
-#> 9.916985 7.269979 
+#> 9.914047 7.258544 
 
 # The object is a specification and carries no data.
 aic()

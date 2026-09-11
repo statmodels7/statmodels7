@@ -6,7 +6,7 @@ inner method in one place.
 ## Usage
 
 ``` r
-inner_settings(method)
+inner_settings(method, distrib = NULL)
 ```
 
 ## Arguments
@@ -15,6 +15,14 @@ inner_settings(method)
 
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   or an optimizers7 optimizer.
+
+- distrib:
+
+  The distribution, read only to settle an
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  left at `hessian = "auto"` through
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md);
+  such a method with no distribution is an error rather than a guess.
 
 ## Value
 

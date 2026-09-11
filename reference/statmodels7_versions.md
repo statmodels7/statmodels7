@@ -55,10 +55,10 @@ v <- statmodels7_versions()
 v
 #>          package version
 #> 1         basis7  0.13.1
-#> 2 distributions7  0.54.0
+#> 2 distributions7  0.55.0
 #> 3 linkfunctions7   0.4.0
 #> 4    modelterms7  0.74.0
-#> 5    numericals7  0.13.0
+#> 5    numericals7  0.14.1
 #> 6    optimizers7   0.8.0
 #> 7    parameters7  0.20.0
 #> 8     penalties7  0.23.0

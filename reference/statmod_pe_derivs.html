@@ -9,7 +9,7 @@ the free scale of the hyperparameters."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.124.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.125.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,16 @@ the free scale of the hyperparameters.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_pe_derivs</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, <span class="va">method</span>, <span class="va">idx</span>, order <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_pe_derivs</span><span class="op">(</span></span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">coef</span>,</span>
+<span>  <span class="va">hyper</span>,</span>
+<span>  <span class="va">method</span>,</span>
+<span>  <span class="va">idx</span>,</span>
+<span>  order <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  approx <span class="op">=</span> <span class="st">"opg"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -79,6 +88,11 @@ the free scale of the hyperparameters.</p>
 <dt id="arg-order">order<a class="anchor" aria-label="anchor" href="#arg-order"></a></dt>
 <dd><p><code>1</code> for the gradient alone, <code>2</code> for both.</p></dd>
 
+
+<dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
+<dd><p>How the expected information is approximated for a family
+with no closed form. Read only when <code>method@hessian</code> is <code>"expected"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -94,6 +108,12 @@ and the log-likelihood contributes \((\partial\rho/\partial\beta)'
 \hat\beta_m\). Differentiating once more brings in \(A_{ml}\), \(B_{ml}\)
 and \(\hat\beta_{ml}\), which are the quantities
 <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> already assembles.</p>
+<p>Where <code>method@hessian</code> is <code>"expected"</code>, \(\tau\) reads the expected
+information \(H_E\), so its derivative contracts the derivative of
+\(H_E\) in the predictors, read from
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html" class="external-link">distributions7::distrib_dexpected_hessian()</a></code> under its own key, while the
+mode still moves by the observed penalized information. That route has no
+Hessian and is refused at order 2.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

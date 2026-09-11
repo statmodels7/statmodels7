@@ -16,7 +16,8 @@ iwls_fit(
   pieces_at,
   verbose = FALSE,
   groups = NULL,
-  frozen = integer(0)
+  frozen = integer(0),
+  backup_at = NULL
 )
 ```
 
@@ -70,9 +71,26 @@ iwls_fit(
   – a held coordinate's score is what the constrained optimum leaves
   there and does not vanish.
 
+- backup_at:
+
+  `NULL`, or a function like `pieces_at` building the pieces on the
+  expected information, which takes the step where the observed
+  penalized information is not positive definite or where the observed
+  step finds no acceptable point; a trial point whose objective raises
+  an error is then read as rejected.
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  passes one for a method
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  settled with the fallback.
+
 ## Value
 
-A list of six:
+A list of nine: the six below; `note`, the reason a run stopped or
+`NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
+named integer vector counting the iterations at which the expected
+pieces stepped in for a curvature that was not positive definite
+(`indefinite`) or for a step that found no acceptable point (`search`),
+and the trial points whose objective raised (`error`). Of the six:
 
 - `par`:
 
