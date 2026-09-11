@@ -954,7 +954,7 @@ conditional_condition <- function(msg) {
 #' [modelterms7::term_jacobian_block()] and never of its class,
 #' so a construction whose block is a Jacobian keeps its inference: a
 #' continuous [modelterms7::seg()], and a discontinuous one
-#' smoothed by an [penalties7::abs_smoother()], both answer yes.
+#' smoothed by an [numericals7::abs_smoother()], both answer yes.
 #'
 #' @param spec The fitted specification.
 #' @param lab The coefficient labels.
@@ -3723,7 +3723,7 @@ block_label <- function(kind) {
 #'
 #' @return A character vector, possibly empty.
 #'
-#' @seealso [penalties7::abs_smoother()]
+#' @seealso [numericals7::abs_smoother()]
 #'
 #' @keywords internal
 smoothed_notes <- function(spec, object) {
