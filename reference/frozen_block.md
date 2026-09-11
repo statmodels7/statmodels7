@@ -41,5 +41,5 @@ and never of its class, so a construction whose block is a Jacobian
 keeps its inference: a continuous
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 and a discontinuous one smoothed by an
-[`penalties7::abs_smoother()`](https://statmodels7.github.io/penalties7/reference/abs_smoother.html),
+[`numericals7::abs_smoother()`](https://statmodels7.github.io/numericals7/reference/abs_smoother.html),
 both answer yes.

@@ -40,4 +40,4 @@ than given a number of the wrong meaning.
 
 ## See also
 
-[`penalties7::abs_smoother()`](https://statmodels7.github.io/penalties7/reference/abs_smoother.html)
+[`numericals7::abs_smoother()`](https://statmodels7.github.io/numericals7/reference/abs_smoother.html)

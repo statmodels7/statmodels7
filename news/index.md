@@ -1,5 +1,28 @@
 # Changelog
 
+## statmodels7 0.124.0
+
+- The smoothers of the absolute value belong to `numericals7` since
+  0.13.0, and the two help pages that link to them and the tests that
+  build them follow. `DESCRIPTION` requires `numericals7 (>= 0.13.0)`,
+  `modelterms7 (>= 0.74.0)`, whose break-point terms accept the class
+  from its new home, and `penalties7 (>= 0.23.0)`. The last pin keeps an
+  older `penalties7` from being installed beside the new `numericals7`:
+  both would then export the eight smoother names, and
+  [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
+  would report eight masked names at every
+  [`library(statmodels7)`](https://statmodels7.github.io/statmodels7/).
+
+- The fits of the smoothed break-point terms and their summary notes,
+  the smoothing note and the probit’s scale correction on a random
+  change-point included, compare
+  [`identical()`](https://rdrr.io/r/base/identical.html) before and
+  after the move, within the 529 quantities of the net `numericals7`
+  0.13.0’s news describes, and the 168 comparisons that pin the rest of
+  the toolkit’s fits are identical too. The suite passes: 2718
+  expectations in 589 blocks, none failing, with the two skips
+  `test-robustness.R` documents.
+
 ## statmodels7 0.123.0
 
 - **A criterion refuses a family whose log-density does not carry the

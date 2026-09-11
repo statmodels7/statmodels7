@@ -81,11 +81,11 @@ v <- statmodels7_update()
 #>   basis7           0.13.1
 #>   distributions7   0.54.0
 #>   linkfunctions7   0.4.0
-#>   modelterms7      0.73.0
-#>   numericals7      0.12.0
+#>   modelterms7      0.74.0
+#>   numericals7      0.13.0
 #>   optimizers7      0.8.0
 #>   parameters7      0.20.0
-#>   penalties7       0.22.1
+#>   penalties7       0.23.0
 #> 
 #> To install or update every member:
 #>   statmodels7_update("install")

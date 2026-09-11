@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.123.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.124.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.124.0" id="statmodels7-01240">statmodels7 0.124.0<a class="anchor" aria-label="anchor" href="#statmodels7-01240"></a></h2>
+<ul><li><p>The smoothers of the absolute value belong to <code>numericals7</code> since 0.13.0, and the two help pages that link to them and the tests that build them follow. <code>DESCRIPTION</code> requires <code>numericals7 (&gt;= 0.13.0)</code>, <code>modelterms7 (&gt;= 0.74.0)</code>, whose break-point terms accept the class from its new home, and <code>penalties7 (&gt;= 0.23.0)</code>. The last pin keeps an older <code>penalties7</code> from being installed beside the new <code>numericals7</code>: both would then export the eight smoother names, and <code><a href="../reference/statmodels7_conflicts.html">statmodels7_conflicts()</a></code> would report eight masked names at every <code><a href="https://statmodels7.github.io/statmodels7/">library(statmodels7)</a></code>.</p></li>
+<li><p>The fits of the smoothed break-point terms and their summary notes, the smoothing note and the probit’s scale correction on a random change-point included, compare <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> before and after the move, within the 529 quantities of the net <code>numericals7</code> 0.13.0’s news describes, and the 168 comparisons that pin the rest of the toolkit’s fits are identical too. The suite passes: 2718 expectations in 589 blocks, none failing, with the two skips <code>test-robustness.R</code> documents.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.123.0" id="statmodels7-01230">statmodels7 0.123.0<a class="anchor" aria-label="anchor" href="#statmodels7-01230"></a></h2>
 <ul><li>
