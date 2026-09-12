@@ -81,9 +81,19 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # that does not supply the fourth -- regime() supplies neither it nor the
   # third -- keeps statmod_hess_stencil(), one central difference of the
   # exact gradient.
+  # ⚠️ AND ONLY WHERE A PENALTY COVERS THE TERM'S OWN PARAMETERS. The joint
+  # assembly differentiates the criterion whose determinant spans them, which
+  # is the criterion only there; with no such penalty the determinant is over
+  # the coefficients alone, and the joint assembly returns the second
+  # derivative of a different function. Measured on a smooth beside an
+  # unpenalized gas(1, 1): -3.97422 where a second difference of the
+  # criterion with the mode refitted reads -4.00295, -4.00272 and -4.00275 at
+  # h of 3e-2, 1e-2 and 5e-3, 0.71 per cent out and flat; the stencil of the
+  # exact gradient reads -4.00270.
   if (length(attr(design, "structural"))) {
     tm <- structural_term_of(spec, design)
-    if (!is.null(tm) && answers_term_fourth(tm)) {
+    if (!is.null(tm) && answers_term_fourth(tm) &&
+        structural_penalized(spec, design)) {
       h <- tryCatch(statmod_structural_hess(spec, design, coef, hyper, method,
                                             idx, basis),
                     error = function(e) NULL)
@@ -650,7 +660,11 @@ contract3 <- function(spec, design, d3, params, npar, offs, total, tv,
       if (npar[b] == 0L) next
       w <- numeric(n)
       for (k in seq_along(params)) {
-        if (npar[k] == 0L) next
+        # skipped where the direction does not move that equation's predictor,
+        # which for a direction over the coefficients alone is where the
+        # equation has none; over the joint vector a filter moves its
+        # equation's predictor whatever its design holds
+        if (is.null(tv[[k]])) next
         w <- w + rep_len(d3[[key(a, b, k)]], n) * tv[[k]]
       }
       blk <- -wcrossprod(design[[params[a]]]$X, spec@weights * w,

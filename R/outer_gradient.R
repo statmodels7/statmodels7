@@ -73,6 +73,28 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # with fewer is not refused here, the search falling back on a difference,
   # so this is a gate and not an error.  See R/order.R for the scale.
   if (!order_available(spec@distrib, 2L + order)) return(FALSE)
+  # ⚠️ A TERM OF THE LIKELIHOOD SHAPE -- regime() -- IS REFUSED AT BOTH ORDERS,
+  # penalized or not. Its parameters are estimated beside the coefficients and
+  # move with the hyperparameter, and the determinant reads the information at
+  # predictors weighted by the smoothed posterior, so the exact gradient needs
+  # how that posterior moves along the direction the mode moves in, which
+  # modelterms7 does not expose. Read on the coefficients alone it was
+  # admitted and out: measured on a ridge beside regime(k = 2) at 500
+  # observations, 2.17e-04, 2.06e-04 and 2.05e-04 relative at h of 1e-2, 3e-3
+  # and 1e-3 against a central difference of the criterion with the mode
+  # refitted, FLAT in the step; decomposed, -1.04e-03 from the mode's movement,
+  # +1.53e-04 from the posterior weights and +1.24e-05 from the term's own
+  # path, against a gap of -8.71e-04.
+  #
+  # The refusal is not free, and what it costs is stated rather than found:
+  # the search this package chooses becomes nelder_mead(), 8.48 s against
+  # 5.62 s on that model at the same criterion to 1e-6, and
+  # statmod_certificate() answers `unknown` on every model carrying such a
+  # term, there being no exact gradient to read the decrement with. It stays
+  # until the term supplies the derivative of its posterior.
+  for (su in attr(design, "structural")) {
+    if (identical(su$kind, "loglik")) return(FALSE)
+  }
   if (!identical(method@hessian, "observed")) {
     # The expected route asks for the same object in the same place -- the
     # movement of K with the coefficients -- but that object is
@@ -190,6 +212,18 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
   # a fourth-order recursion per pair at every evaluation. What the analytic
   # route buys is the REPORTING -- see statmod_structural_hess().
   if (order >= 2L && length(attr(design, "structural"))) {
+    # ⚠️ AND NOT WHERE THE TERM IS UNPENALIZED, which this used to answer TRUE
+    # for a gas term. statmod_structural_hess() is the second derivative of the
+    # criterion whose determinant spans the term's parameters, and with no
+    # penalty over them the criterion's does not: measured on a smooth beside
+    # an unpenalized gas(1, 1), it read -3.97422 where a second difference of
+    # the criterion reads -4.00272, 0.71 per cent out and flat in the step.
+    # statmod_hess_stencil() on the exact gradient reads -4.00270, so a
+    # certificate there is differenced -- which costs refits the analytic
+    # route did not, and reads the right curvature where that one did not.
+    # The prediction-error route is refused for the same reason: its order-2
+    # assembly is over the stacked coefficients, as the gradient's was.
+    if (!structural_penalized(spec, design)) return(FALSE)
     tm <- structural_term_of(spec, design)
     if (is.null(tm) || !answers_term_fourth(tm)) return(FALSE)
   }
@@ -469,6 +503,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # term at all, because G_ab reads the mu block whatever row is being formed.
   # Refreshed, that row is -21.902535 against a direct numerical
   # tr(M dK/dbeta) of -21.902535.
+  # the design as it arrived carries the structural state, which the joint
+  # movement below reads; the refreshed one differs from it only in its blocks
+  design0 <- design
   design <- statmod_design_at(spec, coef, design)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
@@ -521,12 +558,51 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # parameter against the same leverage diagonal -- so only the array and the
   # key it is read by change.
   km <- ctx_kmove(ctx, spec, design, coef, hyper, method)
-  u <- u_vector(spec, design, coef, M, params, npar, offs, total,
-                d3 = km$deriv, key = km$key,
-                G = ctx_leverage(ctx, design, M, params, npar, offs,
-                                 spec@threads)) +
-    u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
-              ctx_approx(ctx))
+  G <- ctx_leverage(ctx, design, M, params, npar, offs, spec@threads)
+
+  # ⚠️ A FILTER THE DETERMINANT DOES NOT SPAN STILL MOVES WITH THE MODE.
+  # With no penalty over its own parameters the criterion's K is over the
+  # coefficients alone, on the static design, but the predictors it is read
+  # at carry the filter's level, which depends on the coefficients through
+  # the recursion and on the filter's own parameters -- and those are
+  # estimated beside the coefficients and move with the hyperparameter too.
+  # So the mode moves JOINTLY, by the joint penalized curvature, and K moves
+  # along the TOTAL derivative of every predictor, which is u_vector()'s
+  # formula with the joint rows in place of the design. No term_third() is
+  # needed: K is on the static design, so the recursion's own second
+  # derivative (the E_t of the penalized route) is not in it.
+  #
+  # Before this the gradient read the coefficients alone for both, and was
+  # out by three pieces measured on a smooth beside an unpenalized gas(1, 1)
+  # at 400 observations, against a central difference of the criterion with
+  # the mode refitted: -8.49e-03 from the mode's movement, +8.90e-04 from the
+  # determinant read along X v instead of along the total derivative, and
+  # -1.10e-05 from the filter's own path, summing to -7.611e-03 against a gap
+  # of -7.610e-03 -- 7.2e-03 relative and FLAT in the step. With both read
+  # jointly the gap is 5.6e-05, 5.1e-06 and 1.5e-06 at h of 1e-2, 3e-3 and
+  # 1e-3, which is O(h^2) onto the reference's own floor.
+  joint <- NULL
+  if (any(vapply(attr(design0, "structural"),
+                 function(su) identical(su$kind, "filter"), logical(1)))) {
+    joint <- filter_joint_movement(
+      spec, design0, coef, ctx_penalty(ctx, spec, design, coef, hyper), Dm,
+      total, ctx_deriv(ctx, spec, design, coef, hyper, 3L))
+    if (is.null(joint)) return(NULL)
+    msolve <- joint$solve
+  }
+  u <- if (is.null(joint)) {
+    u_vector(spec, design, coef, M, params, npar, offs, total,
+             d3 = km$deriv, key = km$key, G = G) +
+      u_refresh(spec, design, coef, M, params, npar, offs, total, expected,
+                ctx_approx(ctx))
+  } else {
+    uj <- u_vector(spec, design, coef, M, params, npar, offs, total,
+                   d3 = km$deriv, key = km$key, G = G, rows = joint$rows)
+    ib <- seq_len(total)
+    uj[ib] <- uj[ib] + u_refresh(spec, design, coef, M, params, npar, offs,
+                                 total, expected, ctx_approx(ctx))
+    uj
+  }
 
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
@@ -578,6 +654,89 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
     }
   }
   out
+}
+
+
+#' How the Mode Moves Where an Unpenalized Filter Moves With It
+#'
+#' @description
+#' The pieces [statmod_marginal_grad()] reads on the joint vector of
+#' coefficients and a filter's own parameters where no penalty covers those
+#' parameters: a solve with the joint penalized curvature, which is how the
+#' mode moves, and the derivative of every equation's predictor over that
+#' vector, which is what the determinant's movement is read along.
+#'
+#' @details
+#' The mode is where the penalized objective's gradient in the coefficients
+#' AND in the filter's parameters vanishes, so differentiating that condition
+#' in a hyperparameter gives
+#' \deqn{(J + S)\,v = -\partial^2\rho/\partial u\,\partial\theta,}
+#' with \eqn{J} the joint observed information of
+#' [statmod_full_information()] and \eqn{S} the penalty's Hessian placed on the
+#' coefficients, the only coordinates it covers. A block that moves with its
+#' coefficients adds its own second derivative on those coordinates, as it
+#' does on the coefficient route.
+#'
+#' The rows are the static design of every equation, with the equation
+#' carrying the filter replaced by the forward Jacobian of the recursion, read
+#' from [filter_curvature()] at the same memo slot the joint information fills,
+#' so the recursion runs once at a point. A held level is dropped from both,
+#' exactly as the information drops it.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design as it arrived, carrying the structural state.
+#' @param coef The coefficients at the penalized mode.
+#' @param S The penalty's Hessian over the stacked coefficients.
+#' @param Dm The mode's own correction for a block that moves, from
+#'   [mode_curvature()].
+#' @param total The number of stacked coefficients.
+#' @param D3 The family's third derivative on the link scale at the fitted
+#'   predictors, which the recursion reads where the memo misses.
+#'
+#' @return A list with `rows`, one matrix per distribution parameter over the
+#'   estimated coordinates, and `solve`, a function of a vector over the
+#'   coefficients returning the joint solve over every estimated coordinate;
+#'   or `NULL` where the joint curvature cannot be formed or solved.
+#'
+#' @seealso [statmod_marginal_grad()], [filter_curvature()],
+#'   [statmod_full_information()]
+#'
+#' @keywords internal
+filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
+  jd <- joint_design_rows(spec, design, coef)
+  if (is.null(jd)) return(NULL)
+  J <- tryCatch(as_dense(statmod_full_information(spec, coef, design)),
+                error = function(e) NULL)
+  width <- length(jd$keep)
+  if (is.null(J) || nrow(J) != width || !all(is.finite(J))) return(NULL)
+  ib <- seq_len(total)
+  J[ib, ib] <- J[ib, ib] + as_dense(S) + Dm
+  fac <- tryCatch(chol(J), error = function(e) NULL)
+  solver <- if (!is.null(fac)) {
+    function(z) backsolve(fac, forwardsolve(t(fac), z))
+  } else {
+    # the true joint curvature may lose definiteness where it is still
+    # invertible, and a mode's movement is worth having from it: the implicit
+    # function theorem asks for a nonsingular matrix, not a definite one
+    Ji <- tryCatch(solve(J), error = function(e) NULL)
+    if (is.null(Ji)) return(NULL)
+    function(z) Ji %*% z
+  }
+  d <- spec@distrib
+  th <- jd$ev$theta
+  gl <- distributions7::distrib_gradient(d, spec@response, th, scale = "link",
+                                         threads = spec@threads)
+  H <- distributions7::distrib_hessian(d, spec@response, th, scale = "link",
+                                       threads = spec@threads)
+  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3)
+  V <- jd$V
+  V[[jd$ap]] <- cv$jacobian
+  list(rows = lapply(V, function(x) x[, jd$keep, drop = FALSE]),
+       solve = function(z) {
+         zz <- numeric(width)
+         zz[ib] <- z
+         as.numeric(solver(zz))
+       })
 }
 
 
@@ -676,12 +835,21 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
 #' @param M The matrix the trace is taken against.
 #' @param params The distribution's parameter names.
 #' @param npar,offs,total The block sizes, their offsets and the total.
+#' @param d3 The array \eqn{\partial K/\partial\eta} is read from, or `NULL`
+#'   for the family's third derivative at the fitted predictors.
+#' @param G The per-observation diagonals of \eqn{M}, or `NULL`.
+#' @param key The builder of `d3`'s component names, or `NULL`.
+#' @param rows `NULL` for the contraction against each equation's design, or
+#'   one matrix per distribution parameter giving the derivative of that
+#'   equation's predictor in a wider vector, as [filter_joint_movement()]
+#'   returns them. The result is then as long as their common width.
 #'
-#' @return A numeric vector as long as the stacked coefficients.
+#' @return A numeric vector as long as the stacked coefficients, or as the
+#'   width of `rows`.
 #'
 #' @keywords internal
 u_vector <- function(spec, design, coef, M, params, npar, offs, total,
-                     d3 = NULL, G = NULL, key = NULL) {
+                     d3 = NULL, G = NULL, key = NULL, rows = NULL) {
   n <- spec@n_obs
   if (is.null(d3)) {
     th <- statmod_eta(spec, design, coef)$theta
@@ -696,9 +864,13 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
   if (is.null(G)) G <- block_leverage(design, M, params, npar, offs,
                                       spec@threads)
 
-  out <- numeric(total)
+  out <- numeric(if (is.null(rows)) total else ncol(rows[[1L]]))
   for (k in seq_along(params)) {
-    if (npar[k] == 0L) next
+    # an equation with no coefficients has no predictor to move where the
+    # operand is the design; where it is the joint rows, the equation
+    # carrying a filter moves with the filter's own parameters whatever its
+    # design holds
+    if (npar[k] == 0L && is.null(rows)) next
     s <- numeric(n)
     for (a in seq_along(params)) {
       if (npar[a] == 0L) next
@@ -707,8 +879,12 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
         s <- s + rep_len(d3[[key(a, b, k)]], n) * G[[a]][[b]]
       }
     }
-    out[offs[k] + seq_len(npar[k])] <-
-      -as.numeric(crossprod(design[[params[k]]]$X, spec@weights * s))
+    if (is.null(rows)) {
+      out[offs[k] + seq_len(npar[k])] <-
+        -as.numeric(crossprod(design[[params[k]]]$X, spec@weights * s))
+    } else {
+      out <- out - as.numeric(crossprod(rows[[k]], spec@weights * s))
+    }
   }
   out
 }

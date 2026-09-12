@@ -15,7 +15,8 @@ u_vector(
   total,
   d3 = NULL,
   G = NULL,
-  key = NULL
+  key = NULL,
+  rows = NULL
 )
 }
 \arguments{
@@ -30,9 +31,22 @@ u_vector(
 \item{params}{The distribution's parameter names.}
 
 \item{npar, offs, total}{The block sizes, their offsets and the total.}
+
+\item{d3}{The array \eqn{\partial K/\partial\eta} is read from, or \code{NULL}
+for the family's third derivative at the fitted predictors.}
+
+\item{G}{The per-observation diagonals of \eqn{M}, or \code{NULL}.}
+
+\item{key}{The builder of \code{d3}'s component names, or \code{NULL}.}
+
+\item{rows}{\code{NULL} for the contraction against each equation's design, or
+one matrix per distribution parameter giving the derivative of that
+equation's predictor in a wider vector, as \code{\link[=filter_joint_movement]{filter_joint_movement()}}
+returns them. The result is then as long as their common width.}
 }
 \value{
-A numeric vector as long as the stacked coefficients.
+A numeric vector as long as the stacked coefficients, or as the
+width of \code{rows}.
 }
 \description{
 \eqn{u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)}, assembled one

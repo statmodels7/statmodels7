@@ -621,39 +621,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
   # parameters over the same static predictor, so the two agree by
   # construction and the callback need not evaluate the family again.
   #
-  # The assembly itself is written once, in .structural_blocks(): the exact
-  # gradient needs the same cross and M at one order higher, and two copies
-  # would drift the moment either was touched. Given no direction it returns
-  # exactly these two pieces and never looks at a fourth derivative.
-  blocks <- .structural_blocks(params, ap, Vs, H, D3, NULL, n)(NULL)
-
-  # The recursion is re-run here at parameters it has already been run at,
-  # so the predictor it reaches is the one the derivatives above were read
-  # at and the callbacks can LOOK THEM UP rather than ask the family again.
-  # That is the difference between this and the filter itself, where the
-  # score is evaluated at a predictor the recursion has just produced and
-  # cannot be known in advance: measured, it is where the time goes.
-  s_at <- rep_len(gl[[f$param]], n)
-  c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
-  # the same recursion at the same point is asked for by the exact
-  # gradient's shared parts too, so the memo sits on THIS call and both
-  # read one computation; the seed is part of the key, so a caller whose
-  # layout differed would miss the cache rather than take the wrong shape
-  # the same pieces as DATA beside the callback: with them (and the score
-  # and curvature as lookups) an eligible term runs its second-order
-  # recursion compiled, with the callback kept for the cases the kernel
-  # declines (a developed autoregressive chart, the third order)
-  bd_data <- structural_blocks_data(params, ap, Vs, H, D3, n)
-  cv <- structural_memo(design, "curv",
-                        list(zeta = f$psi, eta = f$eta_static,
-                             g = w * s_at, seed = Vs[[ap]]), function() {
-    modelterms7::term_curvature(
-      f$tm, f$eta_static, spec@response,
-      function(e, i) s_at[i], function(e, i) c_at[i], f$psi,
-      w * s_at, Vs[[ap]], blocks,
-      score_values = s_at, curvature_values = c_at,
-      blocks_data = bd_data, threads = spec@threads)
-  })
+  cv <- filter_curvature(spec, design, f, ap, Vs, gl, H, D3)
   Vs[[ap]] <- cv$jacobian
 
   out <- matrix(0, m, m)
@@ -678,6 +646,70 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
     out <- out[-drop, -drop, drop = FALSE]
   }
   out
+}
+
+
+#' A Filter's Second-Order Recursion at the Fitted Point
+#'
+#' @description
+#' [modelterms7::term_curvature()] run at the parameters the filter was
+#' fitted at, with the family's derivatives looked up rather than asked for
+#' again, returning the forward Jacobian of the filtered predictor beside the
+#' contracted second derivative.
+#'
+#' @details
+#' Two readers need it at the same point: [statmod_full_information()], for
+#' the joint information, and [filter_joint_movement()], for the rows along
+#' which the exact outer gradient reads how the mode's movement reaches the
+#' determinant. Both go through the one memo slot, so the recursion runs once
+#' at a point.
+#'
+#' The recursion is re-run here at parameters it has already been run at, so
+#' the predictor it reaches is the one the derivatives were read at and the
+#' callbacks can LOOK THEM UP rather than ask the family again. That is the
+#' difference between this and the filter itself, where the score is
+#' evaluated at a predictor the recursion has just produced and cannot be
+#' known in advance: measured, it is where the time goes. The seed is part of
+#' the memo's key, so a caller whose layout differed would miss the cache
+#' rather than take the wrong shape.
+#'
+#' The assembly of the callback is written once, in `.structural_blocks()`:
+#' the exact gradient of a penalized filter needs the same pieces at one order
+#' higher, and two copies would drift the moment either was touched. The same
+#' pieces are also passed as DATA, with which an eligible term runs its
+#' second-order recursion compiled, the callback being kept for the cases the
+#' kernel declines.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param f The filter's entry of [statmod_eta()]'s `filters`.
+#' @param ap Which distribution parameter the filter sits in.
+#' @param Vs The static rows, one matrix per distribution parameter over the
+#'   coefficients followed by the term's parameters.
+#' @param gl,H,D3 The family's first three derivatives on the link scale at
+#'   the fitted predictors.
+#'
+#' @return The list [modelterms7::term_curvature()] returns.
+#'
+#' @keywords internal
+filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3) {
+  params <- spec@distrib@params
+  n <- spec@n_obs
+  w <- spec@weights
+  blocks <- .structural_blocks(params, ap, Vs, H, D3, NULL, n)(NULL)
+  s_at <- rep_len(gl[[f$param]], n)
+  c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
+  bd_data <- structural_blocks_data(params, ap, Vs, H, D3, n)
+  structural_memo(design, "curv",
+                  list(zeta = f$psi, eta = f$eta_static,
+                       g = w * s_at, seed = Vs[[ap]]), function() {
+    modelterms7::term_curvature(
+      f$tm, f$eta_static, spec@response,
+      function(e, i) s_at[i], function(e, i) c_at[i], f$psi,
+      w * s_at, Vs[[ap]], blocks,
+      score_values = s_at, curvature_values = c_at,
+      blocks_data = bd_data, threads = spec@threads)
+  })
 }
 
 

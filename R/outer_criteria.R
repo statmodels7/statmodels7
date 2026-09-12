@@ -414,9 +414,40 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   grho <- statmod_penalty_at(spec, coef, hyper, design, "gradient")
   grho <- unlist(grho[params], use.names = FALSE)
 
-  bhat <- lapply(seq_len(nh), function(m) -as.numeric(P %*% pieces$c[[m]]))
-  tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
-                                                  v))
+  # ⚠️ AN UNPENALIZED FILTER MOVES WITH THE MODE HERE TOO, for the reason
+  # statmod_marginal_grad() records: the mode moves jointly in the
+  # coefficients and the filter's own parameters, and the information moves
+  # along the total derivative of every predictor. tau reads the information
+  # and nothing else, so the same two pieces are all this needs -- the solve
+  # with the joint curvature and the joint rows -- and the log-likelihood's
+  # term reads the coefficients' part of the movement, the filter's own score
+  # vanishing at the mode. Read on the coefficients alone the gradient was out
+  # by 9.48 under aic() and 2.22 under bic() on a smooth beside an unpenalized
+  # gas(1, 1), relative and FLAT in the step.
+  d3j <- NULL
+  jm <- NULL
+  if (any(vapply(attr(design, "structural"),
+                 function(su) identical(su$kind, "filter"), logical(1)))) {
+    if (order >= 2L) {
+      stop("a prediction-error criterion beside a filter has no exact Hessian;",
+           " outer_gradient_ok() refuses order 2 there.", call. = FALSE)
+    }
+    d3j <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
+                                          scale = "link",
+                                          threads = spec@threads)
+    jm <- filter_joint_movement(spec, design, coef, S,
+                                matrix(0, total, total), total, d3j)
+    if (is.null(jm)) return(NULL)
+  }
+  ib <- seq_len(total)
+  bhat <- lapply(seq_len(nh), function(m) {
+    if (is.null(jm)) -as.numeric(P %*% pieces$c[[m]]) else
+      -jm$solve(pieces$c[[m]])
+  })
+  tv <- lapply(bhat, function(v) {
+    if (is.null(jm)) block_predictors(design, params, npar, offs, v) else
+      lapply(jm$rows, function(R) as.numeric(R %*% v))
+  })
   # how J moves through a penalty whose Hessian moves with the coefficients,
   # which A_m carries beside S_m and T[b_m] -- NULL where every penalty is
   # quadratic in them, and then nothing below changes
@@ -449,13 +480,14 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
                       key = keyE)
       PAE <- PE %*% add_pm(pieces$S[[m]] + BE, m)
       tau_m <- sum(PE * t(BE)) - sum(PAE * t(PEH))
-      g[m] <- -2 * sum(grho * bhat[[m]]) + kap * tau_m
+      g[m] <- -2 * sum(grho * bhat[[m]][ib]) + kap * tau_m
     }
     return(list(grad = free_scale(g, hyper, idx)))
   }
 
-  d3 <- distributions7::distrib_deriv3(spec@distrib, spec@response, th,
-                                       scale = "link", threads = spec@threads)
+  d3 <- if (!is.null(d3j)) d3j else
+    distributions7::distrib_deriv3(spec@distrib, spec@response, th,
+                                   scale = "link", threads = spec@threads)
   d4 <- if (order >= 2L) {
     distributions7::distrib_deriv4(spec@distrib, spec@response, th,
                                    scale = "link", threads = spec@threads)
@@ -471,7 +503,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   g <- numeric(nh)
   for (m in seq_len(nh)) {
     tau_m <- sum(P * t(Bm[[m]])) - sum(PA[[m]] * t(PH))
-    g[m] <- -2 * sum(grho * bhat[[m]]) + kap * tau_m
+    g[m] <- -2 * sum(grho * bhat[[m]][ib]) + kap * tau_m
   }
   if (order < 2L) return(list(grad = free_scale(g, hyper, idx)))
 
