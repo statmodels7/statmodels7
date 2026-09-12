@@ -1,3 +1,27 @@
+# statmodels7 0.126.0
+
+* **`reml()`'s page says where a dispersion is read.** What these criteria
+  estimate are the hyperparameters; everything else is a coefficient, read at
+  the joint mode, and that includes the intercept of a dispersion equation --
+  a negative binomial's `theta`, a Gamma's dispersion, a gaussian's `sigma`.
+  A coefficient read there is a maximum likelihood estimate, and maximum
+  likelihood underestimates a dispersion. The gaussian case states it in
+  closed form: on a mixed model at n = 20000 over 500 groups `sigma(fit)` is
+  `sqrt(rss/n)` to 3.6e-10 relative, where `lme4` reports
+  `sqrt(rss/(n - edf))`, and the factor `sqrt(n/(n - edf))` carries one onto
+  the other to 1.4e-05.
+
+* ⚠️ The difference from `glmmTMB` is WHERE the dispersion is read and not
+  which coefficients the determinant spans, which the two effects separated
+  say rather than an argument: over eight designs, moving the dispersion
+  intercept out of the determinant and leaving it at the joint mode accounts
+  for 0.01 to 1.75 per cent of the gap, and reading it as an outer parameter
+  instead for the other 98 to 100. Our `theta` is the larger by a factor of
+  1.03 to 1.33.
+
+* ⚠️ Nothing computed moves: the release is one section of documentation and
+  its regenerated page.
+
 # statmodels7 0.125.0
 
 * **`iwls()` reads the observed information where a family's expected

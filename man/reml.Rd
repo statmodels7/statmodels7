@@ -57,6 +57,36 @@ mixed model, and \code{reml()} is the default for the same reason: profiling a
 fixed effect leaves the variance estimate biased downwards.
 }
 
+\section{A dispersion is a coefficient, and is read at the joint mode}{
+What these criteria estimate are the HYPERPARAMETERS. Everything else is a
+coefficient, read where the penalized likelihood is maximized, and that
+includes the intercept of a dispersion equation: a negative binomial's
+\eqn{\theta}, a Gamma's dispersion, a gaussian's \eqn{\sigma}. A
+coefficient read there is a maximum likelihood estimate, and maximum
+likelihood underestimates a dispersion.
+
+The gaussian case says it in closed form. On a mixed model at
+\eqn{n = 20000} over 500 groups, \code{sigma(fit)} is \eqn{\sqrt{rss/n}} to
+\eqn{3.6\times10^{-10}} relative -- the conditional ML estimate, on the raw
+residuals \eqn{y - \hat y} and not on what \code{residuals()} returns, which are
+standardized -- where \code{lme4} reports \eqn{\sqrt{rss/(n - \mathrm{edf})}},
+and the factor \eqn{\sqrt{n/(n-\mathrm{edf})}} carries one onto the other to
+\eqn{1.4\times10^{-5}}. The same holds for a count model: measured over
+eight designs against \code{glmmTMB}, which makes the dispersion intercept an
+outer parameter of its own criterion, our \eqn{\theta} is larger by a
+factor of 1.03 to 1.33.
+
+That difference is a matter of WHERE the dispersion is read and not of
+which coefficients the determinant spans. Measured on the same designs, by
+separating the two: moving the dispersion intercept out of the determinant
+and leaving it at the joint mode accounts for 0.01 to 1.75 per cent of the
+gap, and reading it as an outer parameter instead accounts for the other 98
+to 100. The determinant here spans every coefficient of every equation,
+which is what \eqn{A = I} means, and a distributional regression has no
+reason to treat the coefficients of one equation differently from those of
+another.
+}
+
 \section{Which hyperparameters}{
 Those of the terms fitted in one system, meaning those whose penalty is
 twice differentiable. A lasso, a SCAD or an MCP has a kink, its
