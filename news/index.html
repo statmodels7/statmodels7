@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.127.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.128.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,15 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.128.0" id="statmodels7-01280">statmodels7 0.128.0<a class="anchor" aria-label="anchor" href="#statmodels7-01280"></a></h2>
+<ul><li>
+<strong>The exact outer gradient reads how a penalty’s Hessian moves with the mode, where that Hessian depends on the coefficients.</strong> The criterion’s determinant is of , and for a heavy-tailed prior on a random effect  moves with the effects, so the mode’s movement  reaches the determinant through  as well as through the likelihood. The gradient was admitted as exact without that piece. Measured on a Student t prior over 30 groups against a central difference of the criterion with the mode refitted, it was out by <code>4.3e-04</code> under <code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> and by <code>8.6e-03</code> and <code>1.4e-02</code> under <code><a href="../reference/aic.html">aic()</a></code>, FLAT in the step; with the piece the gaps are <code>1.5e-06</code> and <code>3.8e-07</code> under <code><a href="../reference/reml.html">reml()</a></code>, <code>1.7e-05</code> under <code><a href="../reference/aic.html">aic()</a></code> and <code>3.9e-06</code> under <code><a href="../reference/aic.html">bic()</a></code>, which is the reference’s own floor. The prediction-error criteria had the same hole, their  reading  without the penalty’s part.</li>
+<li>The piece is summed over <strong>every</strong> penalty whose Hessian moves, not only the one owning the hyperparameter being differentiated, the mode moving in all of the coefficients at once; and a penalty held at given values is asked as well. It comes from <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html" class="external-link">penalties7::penalty_dhessian_beta()</a></code>, which is zero for every penalty quadratic in the coefficients, so a model carrying only ridges, smooths and Gaussian random effects assembles nothing: over seven such models – a smooth, a random effect, a Poisson with both, a Gamma on the expected information, <code><a href="../reference/aic.html">aic()</a></code>, two equations and a <code>regime()</code> – the log-likelihood, coefficients, hyperparameters, criterion, evaluation count, effective degrees of freedom, certificate state and gradient are <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code>, 84 leaves of 84.</li>
+<li>
+<code><a href="../reference/outer_gradient_ok.html">outer_gradient_ok()</a></code> refuses the exact gradient where a penalty whose Hessian moves cannot supply that movement – a multivariate t prior, a covariance class whose prior is not quadratic – and refuses order 2 for any such penalty, the order-2 assembly being written for a Hessian that does not move.</li>
+<li>Requires <code>penalties7 (&gt;= 0.24.0)</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.127.2" id="statmodels7-01272">statmodels7 0.127.2<a class="anchor" aria-label="anchor" href="#statmodels7-01272"></a></h2>
 <ul><li><p><strong>A coordinate at an edge is NAMED on its free value alone, whatever its own curvature says.</strong> 0.127.1 repaired the branch where no curvature can be read at all and left the deeper half of the same defect: where the analytic route DOES answer, <code>boundary</code> and <code>boundary_key</code> were reported on the conjunction of the value with <code><a href="../reference/coord_decrement.html">coord_decrement()</a></code>, and at a boundary the curvature collapses along with the gradient, so  is a ratio of two quantities going to zero and can come back large – exactly where <code>edge</code> matters most. On a mixed covariance class inside a filter the smallest eigenvalue of  stands to the largest as <code>2.25e+08</code>, and there the coordinate went unnamed while <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> needs that name to leave a standard error off it.</p></li>

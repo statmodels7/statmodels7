@@ -1320,6 +1320,11 @@ exported, and none is needed to use the package.
 - [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md)
   : The Penalty of a Specification at Given Coefficients
 
+- [`statmod_penalty_dbeta()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_dbeta.md)
+  [`penalty_dbeta_trace()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_dbeta.md)
+  [`penalty_dbeta_blocks()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_dbeta.md)
+  : How a Penalty's Hessian Moves With the Mode
+
 - [`statmod_penalty_keys()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.md)
   : Every Penalty in a Model, Without the Design
 

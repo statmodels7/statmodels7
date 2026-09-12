@@ -1,5 +1,52 @@
 # Changelog
 
+## statmodels7 0.128.0
+
+- **The exact outer gradient reads how a penalty’s Hessian moves with
+  the mode, where that Hessian depends on the coefficients.** The
+  criterion’s determinant is of , and for a heavy-tailed prior on a
+  random effect moves with the effects, so the mode’s movement reaches
+  the determinant through as well as through the likelihood. The
+  gradient was admitted as exact without that piece. Measured on a
+  Student t prior over 30 groups against a central difference of the
+  criterion with the mode refitted, it was out by `4.3e-04` under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and by `8.6e-03` and `1.4e-02` under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  FLAT in the step; with the piece the gaps are `1.5e-06` and `3.8e-07`
+  under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  `1.7e-05` under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and `3.9e-06` under
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  which is the reference’s own floor. The prediction-error criteria had
+  the same hole, their reading without the penalty’s part.
+- The piece is summed over **every** penalty whose Hessian moves, not
+  only the one owning the hyperparameter being differentiated, the mode
+  moving in all of the coefficients at once; and a penalty held at given
+  values is asked as well. It comes from
+  [`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html),
+  which is zero for every penalty quadratic in the coefficients, so a
+  model carrying only ridges, smooths and Gaussian random effects
+  assembles nothing: over seven such models – a smooth, a random effect,
+  a Poisson with both, a Gamma on the expected information,
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  two equations and a `regime()` – the log-likelihood, coefficients,
+  hyperparameters, criterion, evaluation count, effective degrees of
+  freedom, certificate state and gradient are
+  [`identical()`](https://rdrr.io/r/base/identical.html), 84 leaves of
+  84.
+- [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  refuses the exact gradient where a penalty whose Hessian moves cannot
+  supply that movement – a multivariate t prior, a covariance class
+  whose prior is not quadratic – and refuses order 2 for any such
+  penalty, the order-2 assembly being written for a Hessian that does
+  not move.
+- Requires `penalties7 (>= 0.24.0)`.
+
 ## statmodels7 0.127.2
 
 - **A coordinate at an edge is NAMED on its free value alone, whatever
