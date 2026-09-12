@@ -308,7 +308,27 @@ test_that("aic and reml need not agree, and both are stationary", {
                           1L)$grad
   gr <- statmod_marginal_grad(spec, design, r@coefficients, r@hyper,
                               reml(hessian = "observed"), idx)
-  expect_lt(abs(ga), 1e-4)
+  # ⚠️ AT REST IS A STATEMENT ABOUT THE POINT AND NOT ABOUT A GRADIENT'S
+  # SIZE, which is the reading 0.127.0 took out of statmod_certificate() for
+  # being unable to mean one thing on every shape. The aic fit is asked the
+  # question the block above asks: does its criterion beat the criterion
+  # either side of it. Measured here it beats lambda * 1.05 and lambda / 1.05
+  # by 3.5e-03 while its own gradient reads 1.4e-04, so the point is at rest
+  # and the gradient is simply not the scale to read it on -- the absolute
+  # 1e-4 this used to ask went from 8e-05 to 1.4e-04 when the search began
+  # stopping on a resolution read across its evaluations rather than at its
+  # luckiest one.
+  at_aic <- function(v) {
+    f <- statmod(eval(bquote(y ~ s(x, bspline_smooth(k = 10),
+                                   hyper = c(lambda = .(v))))),
+                 distributions7::gaussian1_distrib(), dc)
+    statmod_pe(f@spec, statmod_design(f@spec), f@coefficients, f@hyper,
+               aic())$value
+  }
+  la <- a@hyper$mu[[1L]][["lambda"]]
+  expect_lt(a@criterion, at_aic(la * 1.05))
+  expect_lt(a@criterion, at_aic(la / 1.05))
+  expect_lt(abs(ga), 1e-3)
   expect_lt(abs(gr), 1e-4)
   # and they do NOT land in the same place: measured on this data, 12.9
   # against 3.7. A first version of this asserted they would agree within

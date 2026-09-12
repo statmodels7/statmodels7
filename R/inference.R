@@ -3888,7 +3888,20 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
   if (!is.null(x@certificate)) {
     ct <- x@certificate
     cat(sprintf("certificate: %s", toupper(ct$state)))
-    if (is.finite(ct$gradient)) {
+    # THE RISE STILL AVAILABLE is what the verdict is made on, so it is what
+    # the line leads with, and it is in the criterion's own units -- a reader
+    # comparing two fits can read it against the criteria themselves. The
+    # gradient follows where there is no decrement to print, which is a form
+    # whose curvature could not be read at all.
+    if (is.finite(ct$decrement)) {
+      cat(sprintf("   %.3g of criterion still available", ct$decrement))
+      # A VERDICT RESTING ON A DIFFERENCED CURVATURE SAYS SO, on the line
+      # rather than only on the object. It is the distinction this package
+      # draws everywhere else between a quantity it computes and one it
+      # estimates, and the reader of a summary is the one who would
+      # otherwise have to ask.
+      if (identical(ct$curvature, "differenced")) cat(" (curvature differenced)")
+    } else if (is.finite(ct$gradient)) {
       cat(sprintf("   outer gradient %.3g", ct$gradient))
     }
     if (is.finite(ct$mode_error)) {
@@ -4252,26 +4265,46 @@ drop_common_prefix <- function(nms) {
 #' data under [optimizers7::lbfgs()] reached -1664.43 and reported
 #' failure. What a reader wants is a property of the point.
 #'
-#' **The state comes from the gradient and the mode error is reported
-#' beside it, not folded into it.** Measured at the reported point over six
-#' shapes, the outer gradient separates by five orders, 4.7e-07, 7.8e-07,
-#' 5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
-#' that is not, while the mode error does not: it reads 1.8e-16 to 6.1e-12
-#' on
-#' four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
-#' `seg` whose answer is right to a correlation of 0.9932. A number that
-#' does not separate cannot decide a state, and a certificate that says how far
-#' from the mode is worth more than a boolean that hides it.
+#' **The state comes from the rise the criterion would still buy, and the
+#' mode error is reported beside it rather than folded into it.** That rise is
+#' the Newton decrement \eqn{\tfrac{1}{2}g^\top A^{-1}g} of
+#' [joint_decrement()], in the criterion's own units, and `tol` is a
+#' threshold on it. The mode error does not decide a state and could not:
+#' measured over six shapes it reads 1.8e-16 to 6.1e-12 on four fits that are
+#' right, 22.8 on one that is not, and 0.114 on a random-changepoint `seg`
+#' whose answer is right to a correlation of 0.9932. A number that does not
+#' separate cannot decide a state, and a certificate that says how far from
+#' the mode is worth more than a boolean that hides it.
 #'
-#' `tol` is 1e-2 instead of the geometric middle of the two groups: the
-#' two ways of being wrong are not symmetric, and a certificate that says not
-#' converged at a good point is visible and checkable where one that certifies
-#' a bad point is the failure this exists to remove.
+#' **A threshold on the GRADIENT was what this read until 0.127.0, and it is
+#' not scale-free.** The gradient of a criterion summed over \eqn{n}
+#' observations and \eqn{p} penalized coefficients carries both, so one
+#' number cannot serve every shape: measured over 1350 fits against an
+#' independently located optimum, `max|g| > 1e-2` flags **131 of 663 fits
+#' that are within 1e-3 of their own optimum** while finding all 552 that are
+#' more than 1e-2 short of it. The decrement at the same cut flags **0 of the
+#' 663** and finds the same 552. See [joint_decrement()] for the calibration
+#' behind that and for the two scaled gradients that were measured and
+#' rejected.
 #'
-#' **What it costs** is one outer gradient and one solve, once, at a point
-#' the fit already holds. Nothing is refitted: measured, the criterion
-#' reconstructed from `fit@spec` equals the one the fit reports exactly on
-#' every shape, so the reading is of the fitted model and of no other.
+#' `tol` is 1e-2 rather than the middle of the two groups: the two ways of
+#' being wrong are not symmetric, and a certificate that says not converged at
+#' a good point is visible and checkable where one that certifies a bad point
+#' is the failure this exists to remove.
+#'
+#' **What it costs** is one outer gradient, one curvature and one solve, at a
+#' point the fit already holds; the criterion reconstructed from `fit@spec`
+#' equals the one the fit reports exactly on every shape, so the reading is of
+#' the fitted model and of no other. Where the form carries an analytic outer
+#' Hessian nothing is refitted. Where it does not -- a criterion asked for on
+#' the expected information, or a separable penalty -- the curvature comes
+#' from one central difference of the **exact** gradient, which is
+#' \eqn{4n_h} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
+#' cent of the fit itself. [outer_curvature()] says which route was taken, the
+#' result reports it in `curvature`, and [summary.StatmodFit()] says so on the
+#' certificate's own line where it was differenced -- a verdict resting on a
+#' curvature the package estimated rather than computed should not have to be
+#' asked for.
 #'
 #' **Where there is no outer gradient there are two cases, and they get
 #' different answers.** A model with **no penalty**, which covers `linpar`,
@@ -4291,41 +4324,53 @@ drop_common_prefix <- function(nms) {
 #' 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
 #' score is -0.715.
 #'
-#' A form whose criterion has no exact gradient
-#' ([outer_gradient_ok()]) is also `"unknown"` and never
-#' approximated: 2p refits to difference it would cost more than the fit.
+#' A form whose criterion has no exact GRADIENT ([outer_gradient_ok()] at
+#' order 1) is also `"unknown"` and never approximated: 2p refits to
+#' difference it would cost more than the fit. That is not in tension with
+#' [outer_curvature()] differencing a HESSIAN where the analytic one is
+#' missing -- what it differences there is the exact gradient, so the reading
+#' still rests on a derivative the package computes rather than on one it
+#' estimates twice over.
 #'
 #' **The boundary label, and why its threshold needs no derivation.**
 #' A hyperparameter may run to an edge and belong there: on a covariate that
 #' is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 #' genuinely flat, and calling that fit unconverged would be wrong. A
 #' coordinate is reported as sitting at a boundary when its free value
-#' exceeds `edge` AND its own gradient component has already met
-#' `tol`. Because of that second condition the threshold cannot change
-#' the verdict: a coordinate it moves out of the interior set had already
-#' passed the test, so the maximum that decides the state is unaffected, and
-#' both `"converged"` and `"boundary"` are certified. What
-#' `edge` decides is how the point is described. The default separates
-#' the measured cases with room on both sides: coordinates that ran to an
-#' edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
-#' 2.01 for the ones that did not.
+#' exceeds `edge` AND [coord_decrement()], what that coordinate alone would
+#' still buy, has already met `tol`. Because of that second condition the
+#' threshold cannot change the verdict, and since 0.127.0 by an exact
+#' inequality rather than by an argument about a maximum: restricting a
+#' decrement to a subset of the coordinates is that same maximum under a
+#' constraint and so no larger, hence a coordinate moved out of the interior
+#' set cannot raise what decides the state. Both `"converged"` and
+#' `"boundary"` are certified. What `edge` decides is how the point is
+#' described. The default separates the measured cases with room on both
+#' sides: coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the
+#' free scale against 0.13, 0.30 and 2.01 for the ones that did not.
 #'
 #' @param fit A [StatmodFit()].
-#' @param tol The largest outer gradient a certified point may carry.
-#' @param edge The free value beyond which a hyperparameter whose gradient
-#'   has already met `tol` is reported as sitting at a boundary. It
+#' @param tol The largest rise, in the criterion's own units, that a certified
+#'   point may still have available to it. ⚠️ Until 0.127.0 this was a
+#'   threshold on the outer gradient. The default has not moved and its
+#'   meaning has: a caller who set one should read [joint_decrement()].
+#' @param edge The free value beyond which a hyperparameter that has already
+#'   met `tol` on its own is reported as sitting at a boundary. It
 #'   decides the label alone and never the verdict; see the details.
 #'
 #' @return A list with `state` (`"converged"`, `"boundary"`,
-#'   `"not converged"` or `"unknown"`), `gradient`,
-#'   `mode_error`, `boundary`, `boundary_key` and `reason`. `boundary_key`
-#'   names the same coordinates as `boundary` does, in the key
+#'   `"not converged"` or `"unknown"`), `decrement`, `gradient`,
+#'   `mode_error`, `curvature`, `boundary`, `boundary_key` and `reason`.
+#'   `decrement` is what the verdict is made on and `gradient` is reported
+#'   beside it; `curvature` says whether that decrement was read against an
+#'   analytic Hessian or against one differenced from the exact gradient.
+#'   `boundary_key` names the same coordinates as `boundary` does, in the key
 #'   [statmod_hyper_vcov()] labels its rows by, which is what
 #'   [summary.StatmodFit()] reads to leave a standard error off a
 #'   coordinate pinned there.
 #'
-#' @seealso [statmod()], [mode_error_limit()],
-#'   [criterion_resolution()]
+#' @seealso [statmod()], [joint_decrement()], [outer_curvature()],
+#'   [mode_error_limit()], [criterion_resolution()]
 #'
 #' @examples
 #' dd <- data.frame(x = runif(120))
@@ -4335,7 +4380,8 @@ drop_common_prefix <- function(nms) {
 #'
 #' @export
 statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
-  out <- list(state = "unknown", gradient = NA_real_, mode_error = NA_real_,
+  out <- list(state = "unknown", decrement = NA_real_, gradient = NA_real_,
+              mode_error = NA_real_, curvature = NA_character_,
               boundary = character(0), boundary_key = character(0),
               reason = character(0))
   method <- fit@methods$outer
@@ -4504,26 +4550,36 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   }
   # A COORDINATE AT A BOUNDARY is one whose criterion has stopped moving in it
   # while its value has run far from where it started. Both halves are needed:
-  # a small gradient component alone is what convergence looks like, and a
-  # large value alone is an ordinary answer on a wide scale.
+  # a coordinate with nothing left to buy alone is what convergence looks
+  # like, and a large value alone is an ordinary answer on a wide scale.
   #
   # `edge` IS NOT DERIVED FROM ANYTHING, and it does not have to be, because
   # THE CONJUNCTION BELOW IS WHAT MAKES IT SAFE: a coordinate is called an
-  # edge only if it has ALREADY met `tol`, so removing it from `interior`
-  # cannot raise the maximum that decides the verdict. Move the threshold in
-  # either direction and the only thing that changes is whether the state
-  # reads `converged` or `boundary`, both of which are certified. Delete the
-  # `abs(g) <= tol` conjunct, however, and the threshold starts excusing
-  # coordinates from the gradient test, at which point this paragraph is
-  # false and the number needs an argument of its own.
+  # edge only if coord_decrement() says it has ALREADY met `tol` on its own,
+  # so removing it from `interior` cannot raise what decides the verdict --
+  # and since 0.127.0 that is an exact inequality rather than an argument
+  # about a maximum over components, for which see the block below. Move the
+  # threshold in either direction and the only thing that changes is whether
+  # the state reads `converged` or `boundary`, both of which are certified.
+  # Delete the second conjunct, however, and the threshold starts excusing
+  # coordinates from the test, at which point this paragraph is false and the
+  # number needs an argument of its own.
   #
   # What the default separates, measured: the coordinates that ran to an edge
   # sit at |eta| of 9.3, 10.5 and 20.6 -- a smoothing parameter of 9.2e+08 on
   # pure noise, prior scales of 9.2e-05 and 2.8e-05 -- against 0.13, 0.30 and
   # 2.01 for the ones that did not, so 8 sits in a wide gap rather than on a
   # boundary of its own.
+  cv <- outer_curvature(spec, design, cf, hy, method, idx, basis,
+                        fit@methods$smooth)
+  if (is.null(cv$A)) {
+    out$gradient <- max(abs(g))
+    out$reason <- cv$why
+    return(out)
+  }
+  out$curvature <- cv$source
   eta <- hyper_to_eta(hy, idx)
-  at_edge <- which(abs(eta) > edge & abs(g) <= tol)
+  at_edge <- which(abs(eta) > edge & coord_decrement(g, cv$A) <= tol)
   if (length(at_edge)) {
     out$boundary <- vapply(at_edge, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
@@ -4553,20 +4609,46 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   # vector: the line read `outer gradient 0` beside `BOUNDARY` and now reads
   # nothing, with the state and the mode error unchanged.
   out$gradient <- if (length(interior)) max(abs(g[interior])) else NA_real_
-  # THE VERDICT IS UNCHANGED, and it is the definition of `at_edge` that says
-  # so rather than a tolerance chosen here: a coordinate reaches that set
-  # only with its own |g| already at or under `tol`, so where every
-  # coordinate is at an edge the largest gradient still under test is
-  # vacuously small and the state is "boundary" -- which is what this branch
-  # returned before, by way of the 0.
-  worst <- if (length(interior)) out$gradient else 0
-  if (worst <= tol) {
+  # THE VERDICT IS THE NEWTON DECREMENT over the coordinates still under test,
+  # which is how much the criterion would still rise if the point took the
+  # step its own curvature calls for. `tol` is therefore in the criterion's
+  # own units and means the same thing at every sample size and on every
+  # shape, which a threshold on the gradient does not.
+  #
+  # ⚠️ REMOVING A COORDINATE FROM THE INTERIOR SET CANNOT RAISE IT, so the
+  # paragraph that made `edge` safe survives the change of reading, and by an
+  # exact inequality rather than by a measurement. The decrement is
+  # max_x (2 g'x - x'Ax) over the whole vector; restricting to the interior
+  # coordinates is that same maximum under x_E = 0, a constrained maximum of
+  # the same function, hence no larger. The per-coordinate reading `at_edge`
+  # uses is the same maximum restricted to one coordinate, so it too is
+  # bounded by the joint one and a coordinate called an edge had already
+  # passed the test the verdict applies.
+  if (length(interior)) {
+    dec <- joint_decrement(g[interior], cv$A[interior, interior, drop = FALSE])
+  } else {
+    dec <- 0
+  }
+  out$decrement <- if (length(interior)) dec else NA_real_
+  if (!is.finite(dec)) {
+    # the curvature is not negative definite in every direction still under
+    # test, so the point is not a maximum of the criterion in those
+    # coordinates and no decrement follows from it. Saying that is worth more
+    # than a verdict read off a gradient in the wrong units.
+    out$reason <- paste0(
+      "the outer criterion's curvature at the reported point is not negative ",
+      "definite in every coordinate still under test, so the rise its own ",
+      "step would buy cannot be read")
+    return(out)
+  }
+  if (dec <= tol) {
     out$state <- if (length(at_edge)) "boundary" else "converged"
   } else {
     out$state <- "not converged"
-    out$reason <- sprintf(
-      "the outer criterion's gradient is %.4g at the reported point, against %g",
-      out$gradient, tol)
+    out$reason <- sprintf(paste0(
+      "the outer criterion would still rise by %.4g at the reported point, ",
+      "against %g -- that is the step its own curvature calls for, and the ",
+      "gradient there is %.4g"), dec, tol, out$gradient)
   }
   if (is.finite(out$mode_error) && out$mode_error > mode_error_limit()) {
     out$reason <- c(out$reason, sprintf(
@@ -4576,4 +4658,195 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
       out$mode_error))
   }
   out
+}
+
+
+
+#' The Outer Criterion's Curvature at a Reported Point
+#'
+#' @description
+#' \eqn{A = -(H + H^\top)/2}, the matrix a Newton decrement is read against,
+#' from the analytic Hessian where the form has one and from one central
+#' difference of the **exact** gradient where it does not.
+#'
+#' @details
+#' [statmod_certificate()] reads the rise the criterion would still buy, which
+#' needs a curvature and not only a gradient. The analytic route is
+#' [statmod_marginal_hess()], gated by [outer_gradient_ok()] at order 2 --
+#' the gate is load-bearing rather than defensive, since the assembly returns
+#' a number wherever it is called and the wrong one where the order is not
+#' covered.
+#'
+#' **Where the order is not covered the gradient is differenced instead**,
+#' which is [statmod_hess_stencil()] and the same route
+#' [statmod_marginal_hess()] already takes for a model carrying a filter. The
+#' two forms that reach it are a criterion asked for on the **expected**
+#' information, where order 2 is refused because the criterion's own second
+#' derivative would want the next order of \eqn{\partial\mathbb{E}[\ell'']/
+#' \partial\eta}, and a **separable** penalty whose curvature moves with the
+#' coefficient, a heavy-tailed prior on a random effect among them. ⚠️ The
+#' second is not a missing derivative: measured, a t prior answers
+#' [penalties7::penalty_dhessian()], [penalties7::penalty_d2hessian()] and
+#' [penalties7::penalty_dcross()]. What refuses it is
+#' [penalties7::beta_quadratic()], TRUE for a ridge and a gaussian prior and
+#' FALSE here, the order-2 assembly being written for a penalty whose Hessian
+#' in the coefficients does not move with them. Both forms carry an exact
+#' gradient, which is what the difference is taken of.
+#'
+#' The two routes agree where both exist: on a gaussian smooth the decrement
+#' reads `3.01e-10` by either. What the difference costs is measured and is
+#' not nothing -- it is \eqn{4n_h} refits, 0.05 to 0.13 seconds on the three
+#' shapes tried, 5 to 37 per cent of the fit itself, where the analytic route
+#' is below the clock's own resolution. So a fit whose form carries the
+#' analytic Hessian refits nothing, and one that does not pays for its
+#' verdict once, at the summary.
+#'
+#' ⚠️ The difference is a stopgap and not the destination. One gap is a
+#' quantity nobody has written -- the second derivative of an expected
+#' information -- and the other is an assembly written under an assumption
+#' one penalty does not satisfy; until both are closed, a certificate on those
+#' forms rests on a stencil where every other reading in this package rests on
+#' algebra.
+#'
+#' ⚠️ `source` is informative and is not load-bearing, and one case can
+#' mislabel: for a model carrying a filter [statmod_marginal_hess()] falls
+#' back to [statmod_hess_stencil()] itself where the analytic assembly fails,
+#' and that is reported here as `"analytic"`, this function having asked only
+#' whether the order was covered. Nothing reads `source` to decide anything.
+#'
+#' @param spec,design,coef,hyper,method,idx,basis As [statmod_marginal_hess()]
+#'   takes them.
+#' @param inner The inner optimizer, which the differenced route refits with.
+#'
+#' @return A list with `A`, the symmetric negated Hessian or `NULL`;
+#'   `source`, `"analytic"` or `"differenced"`; and `why`, the reason where
+#'   there is no `A`.
+#'
+#' @seealso [statmod_certificate()], [joint_decrement()]
+#'
+#' @keywords internal
+outer_curvature <- function(spec, design, coef, hyper, method, idx,
+                            basis = NULL, inner = NULL) {
+  sym <- function(H) {
+    if (is.null(H)) return(NULL)
+    H <- as.matrix(H)
+    if (!all(is.finite(H))) return(NULL)
+    -(H + t(H)) / 2
+  }
+  if (outer_gradient_ok(spec, design, idx, method, 2L)) {
+    A <- sym(tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
+                                            idx, basis, inner = inner),
+                      error = function(e) NULL))
+    if (!is.null(A)) return(list(A = A, source = "analytic", why = character(0)))
+  }
+  A <- sym(tryCatch(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
+                                         basis, inner),
+                    error = function(e) NULL))
+  if (!is.null(A)) return(list(A = A, source = "differenced", why = character(0)))
+  list(A = NULL, source = NA_character_, why = paste0(
+    "the outer criterion's curvature could not be read at the reported ",
+    "point, by the analytic route or by differencing the exact gradient"))
+}
+
+
+
+#' The Rise a Criterion Would Still Buy at a Point
+#'
+#' @description
+#' The Newton decrement \eqn{\tfrac{1}{2}g^\top A^{-1} g}, in the criterion's
+#' own units.
+#'
+#' @details
+#' Under a quadratic model of the criterion at the reported point, taking the
+#' step \eqn{A^{-1}g} raises it by exactly this, so the decrement answers
+#' "how much is left here" in the units a reader compares criteria in. That is
+#' what a gradient cannot do: measured over 1350 fits of eight shapes at five
+#' sample sizes, against an independently located optimum, the 838 of them
+#' whose gap exceeds `1e-6` give
+#' \deqn{\log_{10}(\mathrm{decrement}) = 0.0161 + 1.0018
+#'   \log_{10}(\mathrm{gap}),\qquad R^2 = 0.9980}
+#' over a gap running from `1.3e-06` to 137 -- **eight** orders of magnitude
+#' -- where the gradient at those same points spans 3.9e-04 to 0.81 on healthy
+#' fits of one shape alone as \eqn{n} runs from 300 to 30000.
+#'
+#' As a reading it separates the two classes completely where the gradient
+#' does not. On 663 fits within `1e-3` of their optimum and 552 stopped more
+#' than `1e-2` short of it:
+#'
+#' | reading | flagged among the healthy | found among the short |
+#' |---|---|---|
+#' | `max|g| > 1e-2` | 131 of 663 | 552 of 552 |
+#' | `max|g| > 1e-2 * sqrt(n)` | 4 of 663 | 458 of 552 |
+#' | `max|g| > 1e-2 * n` | 0 of 663 | 75 of 552 |
+#' | **decrement > 1e-2** | **0 of 663** | **552 of 552** |
+#'
+#' ⚠️ The premise that the gradient grows with \eqn{n}, which the two middle
+#' rows were written for, does not reproduce: at a fixed model structure its
+#' slope in \eqn{\log_{10} n} is -0.42, -0.46 and +0.06 on the three shapes
+#' that have one, and the control is the pair of shapes with the same formula
+#' whose group count is fixed at 40 and proportional to \eqn{n} -- the first
+#' falls at -0.46 where the second rises at 1.24. What makes the gradient
+#' grow is the number of penalized coefficients.
+#'
+#' ⚠️ And the perfect separation rests partly on the margin between the two
+#' classes, healthy at or under `1e-3` against short by more than `1e-2`,
+#' where the decrement's own spread within a class is about 1.5 orders. What
+#' is solid is the calibration above.
+#'
+#' `NA` where \eqn{A} is not positive definite, the point then not being a
+#' maximum in those directions and no rise following from it.
+#'
+#' @param g The outer criterion's gradient, over the coordinates under test.
+#' @param A The negated symmetric curvature over the same coordinates.
+#'
+#' @return A single number, or `NA_real_`.
+#'
+#' @seealso [statmod_certificate()], [outer_curvature()], [coord_decrement()]
+#'
+#' @keywords internal
+joint_decrement <- function(g, A) {
+  if (!length(g)) return(0)
+  if (any(!is.finite(g)) || any(!is.finite(A))) return(NA_real_)
+  ev <- tryCatch(eigen(A, symmetric = TRUE, only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (is.null(ev) || !all(ev > 0)) return(NA_real_)
+  v <- tryCatch(solve(A, g), error = function(e) NULL)
+  if (is.null(v) || any(!is.finite(v))) return(NA_real_)
+  0.5 * sum(g * v)
+}
+
+
+
+#' What One Coordinate Alone Would Buy
+#'
+#' @description
+#' \eqn{g_j^2/(2A_{jj})}, the decrement of the one-coordinate problem.
+#'
+#' @details
+#' [statmod_certificate()] reads it for the boundary label, where a verdict
+#' over the whole vector would say nothing about which coordinate has stopped
+#' moving. It is the same maximum [joint_decrement()] takes, restricted to
+#' one coordinate, so it is bounded by the joint reading and a coordinate it
+#' calls settled had already passed the test the verdict applies -- which is
+#' what keeps `edge` a label and never a verdict.
+#'
+#' As a verdict of its own it is the weaker reading, and that is why it is not
+#' one: over the same 1350 fits it misses 10 of the 552 that the joint
+#' decrement finds.
+#'
+#' `Inf` where the diagonal is not positive, so that such a coordinate is
+#' never called settled.
+#'
+#' @param g The outer criterion's gradient.
+#' @param A The negated symmetric curvature.
+#'
+#' @return A numeric vector as long as `g`.
+#'
+#' @seealso [joint_decrement()], [statmod_certificate()]
+#'
+#' @keywords internal
+coord_decrement <- function(g, A) {
+  d <- as.numeric(diag(as.matrix(A)))
+  out <- ifelse(is.finite(d) & d > 0 & is.finite(g), g^2 / (2 * d), Inf)
+  as.numeric(out)
 }

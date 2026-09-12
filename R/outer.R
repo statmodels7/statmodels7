@@ -1028,11 +1028,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the worst value seen ON THE SEARCH'S OWN SCALE, which is what an
   # unavailable point is made worse than
   state$worst <- NA_real_
-  # What the criterion could resolve at the best-located mode seen so far. It
-  # is a RUNNING MINIMUM rather than the latest reading, and the asymmetry of
-  # the two failures is what chooses that: a resolution smaller than the truth
-  # leaves the search where it was, while one larger stops a healthy search
-  # short. A minimum can only shrink, so it can only become more conservative.
+  # What the criterion can resolve here: every usable reading so far, and the
+  # summary of them resolution_summary() takes. See there for why a summary
+  # and not the smallest.
+  state$res_seen <- numeric(0)
   state$resolution <- NA_real_
 
   # WHICH criterion this search is running, written once. A prediction-error
@@ -1260,8 +1259,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     if (chose_optimizer) {
       r <- criterion_resolution(out, spec, design, method, criterion_at)
       if (is.finite(r) && r > 0) {
-        state$resolution <- if (is.finite(state$resolution))
-          min(state$resolution, r) else r
+        state$res_seen <- c(state$res_seen, r)
+        state$resolution <- resolution_summary(state$res_seen)
       } else if (!is.null(attr(r, "mode_error"))) {
         # REFUSED because the inner fit is not at a mode, and that is worth
         # saying: the search then runs with no resolution at all, which is
@@ -1395,7 +1394,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     if (is.finite(resolution) && resolution > 0) {
       # the RULE keeps the reading from the starting point, being a property of
       # the optimizer object and settled before the run; only the line search,
-      # which is asked again at every iteration, follows the running minimum
+      # which is asked again at every iteration, follows the running summary
       optimizer <- S7::set_props(
         optimizer,
         criterion = optimizers7::crit_any(
@@ -1421,16 +1420,15 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # The criterion's rule is a number settled before the run, so it can only
     # be built from the reading at the starting point -- a cold start, the
     # worst-located mode of the whole fit. The line search reads a CLOSURE over
-    # the running minimum, so it needs no reading now and picks up whatever the
-    # search refines later.
+    # resolution_summary() of every reading so far, so it needs no reading now
+    # and picks up whatever the search refines later.
     #
     # Nesting it inside the test above threw that away: measured on
     # `seg(x, psi ~ random(~1|id))`, whose first reading is refused because the
-    # cold-started mode sits 0.046 above its own minimum while the RUNNING
-    # MINIMUM is 3.1e-11, the fit went from 5 evaluations to 18 and from
-    # converged to not -- at an identical answer, cor 0.9932 and rmse 0.0674
-    # either way. Outside the test the closure serves that fit from the good
-    # readings that follow.
+    # cold-started mode sits 0.046 above its own minimum, the fit went from 5
+    # evaluations to 18 and from converged to not -- at an identical answer,
+    # cor 0.9932 and rmse 0.0674 either way. Outside the test the closure
+    # serves that fit from the good readings that follow.
     #
     # Where no reading is ever usable the closure returns NA, which
     # optimizers7 reads as no resolution at all -- which is the answer for a

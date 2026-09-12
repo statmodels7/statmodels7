@@ -184,7 +184,12 @@ test_that("the stencil refuses where the curvature is not resolved", {
   # the premise of the case, asserted so that a fit landing elsewhere skips
   # rather than passing for the wrong reason
   eta <- hyper_to_eta(p$hyper, p$idx)
-  skip_if(max(abs(eta)) < statmod_certificate(fit)$edge,
+  # ⚠️ `edge` IS AN ARGUMENT OF statmod_certificate() AND NOT A FIELD OF ITS
+  # RESULT, so this read `NULL`, the comparison was logical(0) and the skip
+  # never fired -- the premise written to keep the test from passing for the
+  # wrong reason was itself dormant. It is read from the default, so a change
+  # to that default cannot leave a copy of the number behind here.
+  skip_if(max(abs(eta)) < eval(formals(statmod_certificate)$edge),
           "this fit did not reach the chart's boundary")
   # THE STENCIL ITSELF still refuses, which is the guard this test was
   # written for and stays under test

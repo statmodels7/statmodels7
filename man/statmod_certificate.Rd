@@ -9,17 +9,23 @@ statmod_certificate(fit, tol = 0.01, edge = 8)
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
 
-\item{tol}{The largest outer gradient a certified point may carry.}
+\item{tol}{The largest rise, in the criterion's own units, that a certified
+point may still have available to it. ⚠️ Until 0.127.0 this was a
+threshold on the outer gradient. The default has not moved and its
+meaning has: a caller who set one should read \code{\link[=joint_decrement]{joint_decrement()}}.}
 
-\item{edge}{The free value beyond which a hyperparameter whose gradient
-has already met \code{tol} is reported as sitting at a boundary. It
+\item{edge}{The free value beyond which a hyperparameter that has already
+met \code{tol} on its own is reported as sitting at a boundary. It
 decides the label alone and never the verdict; see the details.}
 }
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
-\code{"not converged"} or \code{"unknown"}), \code{gradient},
-\code{mode_error}, \code{boundary}, \code{boundary_key} and \code{reason}. \code{boundary_key}
-names the same coordinates as \code{boundary} does, in the key
+\code{"not converged"} or \code{"unknown"}), \code{decrement}, \code{gradient},
+\code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key} and \code{reason}.
+\code{decrement} is what the verdict is made on and \code{gradient} is reported
+beside it; \code{curvature} says whether that decrement was read against an
+analytic Hessian or against one differenced from the exact gradient.
+\code{boundary_key} names the same coordinates as \code{boundary} does, in the key
 \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows by, which is what
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads to leave a standard error off a
 coordinate pinned there.
@@ -37,26 +43,46 @@ model the default reported success at a criterion of -1783.47 while the same
 data under \code{\link[optimizers7:lbfgs]{optimizers7::lbfgs()}} reached -1664.43 and reported
 failure. What a reader wants is a property of the point.
 
-\strong{The state comes from the gradient and the mode error is reported
-beside it, not folded into it.} Measured at the reported point over six
-shapes, the outer gradient separates by five orders, 4.7e-07, 7.8e-07,
-5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
-that is not, while the mode error does not: it reads 1.8e-16 to 6.1e-12
-on
-four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
-\code{seg} whose answer is right to a correlation of 0.9932. A number that
-does not separate cannot decide a state, and a certificate that says how far
-from the mode is worth more than a boolean that hides it.
+\strong{The state comes from the rise the criterion would still buy, and the
+mode error is reported beside it rather than folded into it.} That rise is
+the Newton decrement \eqn{\tfrac{1}{2}g^\top A^{-1}g} of
+\code{\link[=joint_decrement]{joint_decrement()}}, in the criterion's own units, and \code{tol} is a
+threshold on it. The mode error does not decide a state and could not:
+measured over six shapes it reads 1.8e-16 to 6.1e-12 on four fits that are
+right, 22.8 on one that is not, and 0.114 on a random-changepoint \code{seg}
+whose answer is right to a correlation of 0.9932. A number that does not
+separate cannot decide a state, and a certificate that says how far from
+the mode is worth more than a boolean that hides it.
 
-\code{tol} is 1e-2 instead of the geometric middle of the two groups: the
-two ways of being wrong are not symmetric, and a certificate that says not
-converged at a good point is visible and checkable where one that certifies
-a bad point is the failure this exists to remove.
+\strong{A threshold on the GRADIENT was what this read until 0.127.0, and it is
+not scale-free.} The gradient of a criterion summed over \eqn{n}
+observations and \eqn{p} penalized coefficients carries both, so one
+number cannot serve every shape: measured over 1350 fits against an
+independently located optimum, \verb{max|g| > 1e-2} flags \strong{131 of 663 fits
+that are within 1e-3 of their own optimum} while finding all 552 that are
+more than 1e-2 short of it. The decrement at the same cut flags \strong{0 of the
+663} and finds the same 552. See \code{\link[=joint_decrement]{joint_decrement()}} for the calibration
+behind that and for the two scaled gradients that were measured and
+rejected.
 
-\strong{What it costs} is one outer gradient and one solve, once, at a point
-the fit already holds. Nothing is refitted: measured, the criterion
-reconstructed from \code{fit@spec} equals the one the fit reports exactly on
-every shape, so the reading is of the fitted model and of no other.
+\code{tol} is 1e-2 rather than the middle of the two groups: the two ways of
+being wrong are not symmetric, and a certificate that says not converged at
+a good point is visible and checkable where one that certifies a bad point
+is the failure this exists to remove.
+
+\strong{What it costs} is one outer gradient, one curvature and one solve, at a
+point the fit already holds; the criterion reconstructed from \code{fit@spec}
+equals the one the fit reports exactly on every shape, so the reading is of
+the fitted model and of no other. Where the form carries an analytic outer
+Hessian nothing is refitted. Where it does not -- a criterion asked for on
+the expected information, or a separable penalty -- the curvature comes
+from one central difference of the \strong{exact} gradient, which is
+\eqn{4n_h} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
+cent of the fit itself. \code{\link[=outer_curvature]{outer_curvature()}} says which route was taken, the
+result reports it in \code{curvature}, and \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} says so on the
+certificate's own line where it was differenced -- a verdict resting on a
+curvature the package estimated rather than computed should not have to be
+asked for.
 
 \strong{Where there is no outer gradient there are two cases, and they get
 different answers.} A model with \strong{no penalty}, which covers \code{linpar},
@@ -76,24 +102,30 @@ error is not a statement about being at a mode. Measured on a lasso, its
 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
 score is -0.715.
 
-A form whose criterion has no exact gradient
-(\code{\link[=outer_gradient_ok]{outer_gradient_ok()}}) is also \code{"unknown"} and never
-approximated: 2p refits to difference it would cost more than the fit.
+A form whose criterion has no exact GRADIENT (\code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at
+order 1) is also \code{"unknown"} and never approximated: 2p refits to
+difference it would cost more than the fit. That is not in tension with
+\code{\link[=outer_curvature]{outer_curvature()}} differencing a HESSIAN where the analytic one is
+missing -- what it differences there is the exact gradient, so the reading
+still rests on a derivative the package computes rather than on one it
+estimates twice over.
 
 \strong{The boundary label, and why its threshold needs no derivation.}
 A hyperparameter may run to an edge and belong there: on a covariate that
 is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 genuinely flat, and calling that fit unconverged would be wrong. A
 coordinate is reported as sitting at a boundary when its free value
-exceeds \code{edge} AND its own gradient component has already met
-\code{tol}. Because of that second condition the threshold cannot change
-the verdict: a coordinate it moves out of the interior set had already
-passed the test, so the maximum that decides the state is unaffected, and
-both \code{"converged"} and \code{"boundary"} are certified. What
-\code{edge} decides is how the point is described. The default separates
-the measured cases with room on both sides: coordinates that ran to an
-edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
-2.01 for the ones that did not.
+exceeds \code{edge} AND \code{\link[=coord_decrement]{coord_decrement()}}, what that coordinate alone would
+still buy, has already met \code{tol}. Because of that second condition the
+threshold cannot change the verdict, and since 0.127.0 by an exact
+inequality rather than by an argument about a maximum: restricting a
+decrement to a subset of the coordinates is that same maximum under a
+constraint and so no larger, hence a coordinate moved out of the interior
+set cannot raise what decides the state. Both \code{"converged"} and
+\code{"boundary"} are certified. What \code{edge} decides is how the point is
+described. The default separates the measured cases with room on both
+sides: coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the
+free scale against 0.13, 0.30 and 2.01 for the ones that did not.
 }
 \examples{
 dd <- data.frame(x = runif(120))
@@ -103,6 +135,6 @@ statmod_certificate(statmod(y ~ s(x, bspline_smooth(k = 8)),
 
 }
 \seealso{
-\code{\link[=statmod]{statmod()}}, \code{\link[=mode_error_limit]{mode_error_limit()}},
-\code{\link[=criterion_resolution]{criterion_resolution()}}
+\code{\link[=statmod]{statmod()}}, \code{\link[=joint_decrement]{joint_decrement()}}, \code{\link[=outer_curvature]{outer_curvature()}},
+\code{\link[=mode_error_limit]{mode_error_limit()}}, \code{\link[=criterion_resolution]{criterion_resolution()}}
 }

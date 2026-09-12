@@ -455,16 +455,19 @@ test_that("the certificate is a property of the point, not of the search", {
                  outer_criterion = reml())
   ct <- statmod_certificate(fit)
   expect_identical(ct$state, "converged")
-  expect_lt(ct$gradient, 1e-2)
+  # the verdict is the rise the criterion would still buy, in its own units;
+  # the gradient is reported beside it. See test-decrement.R for why.
+  expect_lt(ct$decrement, 1e-2)
+  expect_true(is.finite(ct$gradient))
   expect_true(is.finite(ct$mode_error))
   expect_length(ct$boundary, 0L)
   expect_length(ct$reason, 0L)
 
   # IT MUST BE ABLE TO REFUSE, or "converged" says nothing. The same fit
-  # against a tolerance below the gradient it actually carries.
-  strict <- statmod_certificate(fit, tol = ct$gradient / 10)
+  # against a tolerance below the rise it actually has available.
+  strict <- statmod_certificate(fit, tol = ct$decrement / 10)
   expect_identical(strict$state, "not converged")
-  expect_match(strict$reason[1], "gradient")
+  expect_match(strict$reason[1], "would still rise")
 })
 
 
@@ -527,10 +530,11 @@ test_that("with every coordinate at a boundary the gradient is NA, not 0", {
   expect_identical(ct$state, "boundary")
   expect_true(is.finite(ct$mode_error))
 
-  # the printed form says nothing about a gradient, and the boundary line
+  # the printed form says nothing about either reading, and the boundary line
   # beneath it names the coordinate instead
   out <- capture.output(print(summary(fit)))
   expect_false(any(grepl("outer gradient", out, fixed = TRUE)))
+  expect_false(any(grepl("still available", out, fixed = TRUE)))
   expect_true(any(grepl("at a boundary", out, fixed = TRUE)))
 
   # THE NEGATIVE CONTROL: a fit whose coordinate is INTERIOR still reports
@@ -548,7 +552,10 @@ test_that("with every coordinate at a boundary the gradient is NA, not 0", {
   co <- statmod_certificate(ok)
   expect_length(co$boundary, 0L)
   expect_true(is.finite(co$gradient))
-  expect_true(any(grepl("outer gradient",
+  expect_true(is.finite(co$decrement))
+  # what the line leads with is the rise still available, that being what the
+  # verdict is made on; the gradient is on the object beside it
+  expect_true(any(grepl("still available",
                         capture.output(print(summary(ok))), fixed = TRUE)))
 })
 

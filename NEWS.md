@@ -1,3 +1,153 @@
+# statmodels7 0.127.0
+
+* **`statmod_certificate()` reads the rise the criterion would still buy
+  rather than the size of its gradient.** The verdict is the Newton decrement
+  \eqn{\tfrac{1}{2}g^\top A^{-1} g} against the criterion's own curvature, so
+  `tol` is now a threshold in the criterion's units and means the same thing
+  at every sample size and on every shape. The default does not move and its
+  meaning does.
+
+* ⚠️ **A caller who set `tol` should read it again.** The argument keeps its
+  name because it keeps its role -- the largest thing a certified point may
+  still carry -- but the currency has changed, and not in a direction that is
+  safe by itself: measured across the shapes tried the decrement runs some
+  orders below the gradient at the same point (2.4e-10 against 3.6e-05 on a
+  gaussian smooth), so a value written to make the certificate stricter makes
+  it less strict instead. Nothing inside the package sets one, and every
+  caller who does not is unaffected.
+
+* ⚠️ **The threshold it replaces is not scale-free, and one number could not
+  serve every shape.** The gradient of a criterion summed over \eqn{n}
+  observations and \eqn{p} penalized coefficients carries both. Measured over
+  1350 fits of eight shapes at five sample sizes, each against an
+  independently located optimum: `max|g| > 1e-2` flags **131 of the 663 fits
+  that are within 1e-3 of their own optimum** while finding all 552 that are
+  more than 1e-2 short of it; the decrement at the same cut flags **0 of the
+  663** and finds the same 552. Two scaled gradients were measured and
+  rejected -- `1e-2 * sqrt(n)` gives 4 and 458, `1e-2 * n` gives 0 and 75, one
+  of its misses sitting 12.07 criterion units below its own optimum with a
+  gradient of 179.
+
+* The decrement is a reading in criterion units rather than a statistic
+  calibrated to be one: over the 838 of those fits whose gap exceeds `1e-6`,
+  \eqn{\log_{10}(\mathrm{decrement}) = 0.0161 + 1.0018\log_{10}(\mathrm{gap})}
+  with \eqn{R^2 = 0.9980}, over a gap running from `1.3e-06` to 137 -- eight
+  orders of magnitude. ⚠️ The figure recorded when the decision was taken said
+  four orders; re-derived from the saved census for this release it is eight,
+  the slope and the fit reproducing to the digit.
+
+* ⚠️ **The premise that the outer gradient grows with \eqn{n} does not
+  reproduce.** At a fixed model structure its slope in \eqn{\log_{10} n} is
+  -0.42, -0.46 and +0.06 on the three shapes that have one, and the control is
+  a pair of shapes with the same formula whose group count is fixed at 40 and
+  proportional to \eqn{n}: the first falls at -0.46 where the second rises at
+  1.24. What makes the gradient grow is the number of penalized coefficients,
+  which is why scaling it by \eqn{n} misses three quarters of what it should
+  find.
+
+* End to end on the shape where that bites -- a smooth, a factor and a random
+  intercept over \eqn{n/10} groups -- at \eqn{n} of 1000, 3000 and 10000 over
+  four seeds: the gradient reading reports **16 of 20 healthy fits as not
+  converged**, with gradients of 0.02 to 0.42 at points whose gap to an
+  independently located optimum is 0 to 2.9e-04. The decrement reports none of
+  them.
+
+* ⚠️ **The boundary label keeps its own reading and the argument that makes
+  `edge` safe is now an exact inequality.** A coordinate is called an edge
+  when its free value exceeds `edge` and [coord_decrement()], what that
+  coordinate alone would buy, has already met `tol`. Restricting a decrement
+  to a subset of the coordinates is the same maximum under a constraint and so
+  no larger, hence a coordinate moved out of the interior set cannot raise
+  what decides the state -- where before that rested on a maximum over
+  components. As a verdict of its own the per-coordinate reading is the weaker
+  one and is not used for it: over the same 1350 fits it misses 10 of the 552.
+
+* **Where the form carries no analytic outer Hessian the exact gradient is
+  differenced instead** (`outer_curvature()`), which is the route
+  `statmod_marginal_hess()` already takes for a model carrying a filter. Two
+  forms reach it: a criterion asked for on the **expected** information, and a
+  **separable** penalty whose curvature moves with the coefficient, such as a
+  heavy-tailed prior on a random effect. Both carry an exact gradient, so what
+  is differenced is a derivative the package computes. ⚠️ The second is not a
+  missing derivative -- a t prior answers `penalty_dhessian()`,
+  `penalty_d2hessian()` and `penalty_dcross()` -- but
+  `penalties7::beta_quadratic()`, the order-2 assembly being written for a
+  penalty whose Hessian in the coefficients does not move with them. The two routes agree where both exist -- the decrement of a
+  gaussian smooth reads 3.01e-10 either way -- and the result reports which was
+  taken in `curvature`.
+
+* ⚠️ **What the certificate costs has risen, and on both paths.** It is no
+  longer one gradient and one solve: over 40 fits whose form carries the
+  analytic Hessian it goes from 2.4 to 11.4 per cent of the fit itself, and on
+  the eight that difference it, from 3.4 to 26 per cent -- \eqn{4n_h} refits,
+  0.05 to 0.13 seconds on the shapes tried. A fit whose form carries the
+  analytic Hessian still refits nothing.
+
+* ⚠️ **The decrement is a local quadratic reading and can under-read a gap the
+  criterion is not quadratic over.** Measured on the large mixed shape above,
+  where the search stops on the resolution rather than on its own rule, the
+  ratio of the decrement to the true gap runs 0.012 to 0.042 on the fits that
+  stop short -- so `tol = 1e-2` on the decrement is not the same statement as
+  "within 1e-2 of the optimum" on every shape. On the 1350 fits of the census,
+  which are stopped early rather than by a resolution, it is the calibration
+  above.
+
+* **The resolution the outer search is told about is the LARGEST reading taken
+  so far and not the smallest** (`resolution_summary()`). Every reading
+  `criterion_resolution()` returns already comes from a mode within
+  `mode_error_limit()`, so what a resolution has to bound is how far the
+  criterion can move between two acceptable modes, not how little it happened
+  to move at the luckiest evaluation.
+
+* ⚠️ **The criterion's reproducibility does not collapse with the inner
+  solver's order of convergence, and the reading did.** Measured at one
+  hyperparameter reached from six different warm starts on a `pig1` smooth,
+  the criterion's own spread is **2.3e-06** under `iwls(hessian = "expected")`
+  and **4.7e-07** under `"observed"` -- a factor of 5. The readings taken
+  during those searches run 1.8e-07 to 3.5e-06 and **1.1e-10 to 1.2e-07**,
+  because a Newton step stops quadratically below its own tolerance and the
+  inner score varies by three orders from evaluation to evaluation. The
+  largest is within a factor of 4 of the spread in both branches; the smallest
+  is 13 times low in the first and **4300** times low in the second.
+
+* A resolution far below the truth does not stop a search early, it stops it
+  from ever returning: the line search goes on backtracking for improvements
+  the criterion cannot resolve and the run ends by exhausting
+  `outer_backtracks()`. Measured over 60 fits of ten shapes at three seeds
+  each, the largest reading against the smallest: **368 criterion evaluations
+  against 577**, the search's own flag met in **58 against 43**, no flag lost
+  anywhere, and `statmod_certificate()` returning **the same verdict on every
+  one of the 60**. Under `iwls(hessian = "observed")` alone it is 173
+  evaluations and 30 flags of 30 against 334 and 18.
+
+* ⚠️ **It is not an interaction with the `"auto"` curvature of 0.125.0.** The
+  same collapse happens under the expected information wherever the inner fit
+  happens to land well: on the same battery a Poisson smooth goes from 19
+  evaluations to 6 and a tensor product from 17 to 5 under
+  `hessian = "expected"`.
+
+* **The non-regression net of `piano_nonsmooth.txt` lotto 0 -- twelve models,
+  168 comparisons, `identical()` leaf by leaf -- moves 6 leaves and they are
+  all one model.** Eleven of the twelve are identical to the bit: linpar, a
+  smooth, a tensor, a random effect, a lasso, a distributional model, a
+  Poisson, a Gamma, `gas`, `seg` and `regime`. On the `ridge` the smoothing
+  parameter goes 2.39748584 to 2.39752956, a relative **1.8e-05**, the
+  effective degrees of freedom 7.986073590 to 7.986073336, and the
+  certificate's state and the convergence flag do not move -- while the
+  **log-likelihood is identical to twelve decimals and the coefficients to
+  nine**. ⚠️ The capture predates four other packages' releases as well, so
+  the net was run twice: against 0.126.0 it is **168 of 168 identical**,
+  which is what attributes the six to this release rather than to the
+  toolkit around it.
+
+* ⚠️ **What it gives up, measured on the answer rather than on the criterion.**
+  On the large mixed shape the shorter search leaves up to 1.1e-02 of
+  criterion on the table, which is the worst figure anywhere and 100 times the
+  worst on the ten-shape battery. In what a reader reads, over six such fits:
+  the smoothing parameters move by at most **0.8 per cent**, the effective
+  degrees of freedom by at most **0.39 of 600**, the fitted values by at most
+  **4.7e-04** against an rmse to the truth of 0.33, and that rmse is identical
+  to four figures. Elapsed falls from 4.9 to 2.4 seconds on the largest.
 # statmodels7 0.126.0
 
 * **`reml()`'s page says where a dispersion is read.** What these criteria
