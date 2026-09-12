@@ -390,8 +390,8 @@ test_that("the exact outer gradient of a mixed class is answered at both orders"
   # hyperparameters and the identical certificate, because
   # outer_default_optimizer() holds a mixed class at lbfgs() whatever this
   # predicate says. So what the order buys today is the REPORTING route, not
-  # the search, and the assertion below records which answer the predicate
-  # gives rather than claiming the Hessian has been validated for this shape.
+  # the search. The Hessian that route returns is validated for this shape in
+  # the test after the next one, at an interior point.
   dd <- mixed_panel()
   spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
@@ -461,4 +461,70 @@ test_that("that gradient converges on a difference of the criterion", {
   expect_lt(rel[[2L]], 1e-5)
   # and it FALLS as the step does, which a missing term would not
   expect_lt(rel[[2L]], rel[[1L]] / 3)
+})
+
+test_that("the outer Hessian of a mixed class converges on the exact gradient", {
+  skip_on_cran()
+  # outer_gradient_ok() admits a mixed class at order 2 on the observed route
+  # and statmod_marginal_hess() hands it to statmod_structural_hess(). The
+  # reference is a central difference of the EXACT GRADIENT validated in the
+  # test above, the mode refitted from a fresh design at every probe, so the
+  # two share no arithmetic beyond the gradient itself.
+  #
+  # ⚠️ AT AN INTERIOR POINT AND NOT AT THE FIT. Where the search stops on this
+  # panel the correlation may sit near the boundary of the spherical chart,
+  # the fit is weakly identified there and stops somewhere different on every
+  # platform (test-hess-stencil.R records the eigenvalue ratio moving from
+  # 4e-06 to 2.25e+08), so a statement about the curvature at the fit is a
+  # statement about the platform. At the start plus 0.2 in every coordinate
+  # the correlation is -0.156 and nothing is near an edge. Measured there, the
+  # gap falls 3.95e-05, 3.55e-06, 3.95e-07 at h of 1e-2, 3e-3, 1e-3 -- ratios
+  # 11.1 and 9.0, exactly h^2 -- and the stencil agrees at 3.9e-07.
+  dd <- mixed_panel()
+  gd <- distributions7::gaussian1_distrib()
+  spec0 <- statmod_spec(mixed_formula, gd, dd)
+  des0 <- statmod_design(spec0)
+  idx <- outer_hyper_index(spec0, statmod_blocks(spec0, des0))
+  mt <- reml()
+  hy0 <- statmod_hyper_start(spec0, des0)
+  eta0 <- hyper_to_eta(hy0, idx) + 0.2
+  # the premise, so a point that drifted to an edge fails here and not below
+  expect_lt(max(abs(eta0)), eval(formals(statmod_certificate)$edge) / 4)
+
+  at <- function(eta) {
+    hy <- eta_to_hyper(eta, idx, hy0)
+    a <- fit_at_hyper(mixed_formula, gd, dd, hy)
+    list(spec = a$spec, design = a$design, coef = a$coefficients, hy = hy,
+         basis = integrated_basis(a$spec, a$design, mt@kind))
+  }
+  r0 <- at(eta0)
+  expect_true(outer_gradient_ok(r0$spec, r0$design, idx, mt, 2L))
+  H <- statmod_marginal_hess(r0$spec, r0$design, r0$coef, r0$hy, mt, idx,
+                             r0$basis)
+  expect_false(is.null(H))
+  expect_identical(H, statmod_structural_hess(r0$spec, r0$design, r0$coef,
+                                              r0$hy, mt, idx, r0$basis))
+  sc <- max(abs(H))
+  # every off-diagonal is away from zero, so a term placed on the wrong
+  # direction of a pair -- invisible at one hyperparameter -- shows below
+  expect_true(all(abs(H[upper.tri(H)]) / sc > 1e-3))
+
+  grad <- function(eta) {
+    r <- at(eta)
+    statmod_marginal_grad(r$spec, r$design, r$coef, r$hy, mt, idx, r$basis)
+  }
+  nh <- nrow(idx)
+  gaps <- vapply(c(3e-3, 1e-3), function(h) {
+    Hn <- matrix(0, nh, nh)
+    for (m in seq_len(nh)) {
+      ep <- eta0; ep[[m]] <- ep[[m]] + h
+      em <- eta0; em[[m]] <- em[[m]] - h
+      Hn[, m] <- (grad(ep) - grad(em)) / (2 * h)
+    }
+    max(abs(H - (Hn + t(Hn)) / 2)) / sc
+  }, numeric(1))
+  # the RATE and not a tolerance: the two readings stand as 9.0 to one, and a
+  # missing term would be flat in the step
+  expect_gt(gaps[[1L]] / gaps[[2L]], 5)
+  expect_lt(gaps[[2L]], 1e-5)
 })
