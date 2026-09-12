@@ -4336,18 +4336,32 @@ drop_common_prefix <- function(nms) {
 #' A hyperparameter may run to an edge and belong there: on a covariate that
 #' is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 #' genuinely flat, and calling that fit unconverged would be wrong. A
-#' coordinate is reported as sitting at a boundary when its free value
-#' exceeds `edge` AND [coord_decrement()], what that coordinate alone would
-#' still buy, has already met `tol`. Because of that second condition the
-#' threshold cannot change the verdict, and since 0.127.0 by an exact
-#' inequality rather than by an argument about a maximum: restricting a
-#' decrement to a subset of the coordinates is that same maximum under a
-#' constraint and so no larger, hence a coordinate moved out of the interior
-#' set cannot raise what decides the state. Both `"converged"` and
-#' `"boundary"` are certified. What `edge` decides is how the point is
-#' described. The default separates the measured cases with room on both
-#' sides: coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the
-#' free scale against 0.13, 0.30 and 2.01 for the ones that did not.
+#' coordinate is **reported** as sitting at a boundary on its free value
+#' alone, that being a fact about its chart rather than a reading: a
+#' hyperparameter that has run to an edge has no meaningful interval whatever
+#' the criterion's curvature says, which is what `boundary_key` tells
+#' [summary.StatmodFit()].
+#'
+#' What may be **excluded from the verdict** is narrower -- the value together
+#' with [coord_decrement()], what that coordinate alone would still buy,
+#' having already met `tol` -- and that second condition is what keeps `edge`
+#' from deciding the state, by an exact inequality rather than an argument
+#' about a maximum: restricting a decrement to a subset of the coordinates is
+#' that same maximum under a constraint and so no larger, hence a coordinate
+#' moved out of the interior set cannot raise what decides the state. A
+#' coordinate at an edge that has NOT settled stays under test and is named
+#' all the same, which is the honest pair of statements about it. Both
+#' `"converged"` and `"boundary"` are certified.
+#'
+#' ⚠️ The two sets genuinely differ, and exactly where `edge` matters most: at
+#' a boundary the curvature collapses along with the gradient, so the
+#' one-coordinate reading \eqn{g_j^2/(2A_{jj})} is a ratio of two quantities
+#' going to zero and can come back large. Reporting on the conjunction left
+#' such a coordinate unnamed on the one platform where that fit landed there.
+#'
+#' The default separates the measured cases with room on both sides:
+#' coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the free scale
+#' against 0.13, 0.30 and 2.01 for the ones that did not.
 #'
 #' @param fit A [StatmodFit()].
 #' @param tol The largest rise, in the criterion's own units, that a certified
@@ -4598,9 +4612,29 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
     return(out)
   }
   out$curvature <- cv$source
-  at_edge <- which(abs(eta) > edge & coord_decrement(g, cv$A) <= tol)
-  if (length(at_edge)) {
-    out$boundary <- vapply(at_edge, function(k)
+  # ⚠️ TWO SETS AND NOT ONE, and conflating them is what made a coordinate at
+  # a chart's edge stop being NAMED as one. What is REPORTED -- and so what
+  # summary() reads to leave a standard error off a coordinate pinned there --
+  # is the value alone: a hyperparameter that has run to an edge of its own
+  # chart has no meaningful interval whatever the criterion's curvature says,
+  # and that is a fact about the chart rather than about a reading.
+  #
+  # What may be EXCLUDED from the verdict is the narrower set, and it keeps
+  # the second conjunct for the reason it has always had: removing a
+  # coordinate from the interior can only lower the decrement, so a set
+  # chosen by the value alone would let `edge` decide the state.
+  #
+  # Measured, the two genuinely differ, and exactly where `edge` matters most:
+  # at a boundary the curvature collapses with the gradient, so the
+  # one-coordinate reading g_j^2/(2 A_jj) is a ratio of two quantities going
+  # to zero and can come back large. On a mixed covariance class inside a
+  # filter -- weakly identified, and stopping at a different point on every
+  # platform -- the smallest eigenvalue of -H stands to the largest as
+  # 2.25e+08 on macOS, and there the coordinate was excluded from `boundary`
+  # while the fit's own certificate could say nothing else about it.
+  reported <- which(abs(eta) > edge)
+  if (length(reported)) {
+    out$boundary <- vapply(reported, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
       character(1))
     # THE SAME COORDINATES IN THE KEY summary() reads its variance matrix by.
@@ -4609,10 +4643,11 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
     # back into three pieces is not an inverse; and because two callers who
     # each build a key agree by accident, which this file records as a defect
     # of its own.
-    out$boundary_key <- vapply(at_edge, function(k)
+    out$boundary_key <- vapply(reported, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "\r"),
       character(1))
   }
+  at_edge <- which(abs(eta) > edge & coord_decrement(g, cv$A) <= tol)
   interior <- setdiff(seq_along(g), at_edge)
   # ⚠️ WITH NO INTERIOR COORDINATE THERE IS NOTHING TO MEASURE, and 0 was the
   # wrong way to say so: printed as `outer gradient 0` it reads as the

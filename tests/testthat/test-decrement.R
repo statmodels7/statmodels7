@@ -159,6 +159,45 @@ test_that("the decrement certifies a healthy fit the gradient reading refuses", 
 })
 
 
+test_that("a coordinate at an edge is named whatever its own curvature says", {
+  # ⚠️ THE SECOND THING CI FOUND, and the deeper of the two. At a boundary the
+  # curvature collapses along with the gradient, so the one-coordinate reading
+  # g^2/(2A) is a ratio of two quantities going to zero and can come back
+  # LARGE -- exactly where `edge` matters most. Reporting `boundary` on the
+  # conjunction therefore left such a coordinate unnamed, and `boundary_key`
+  # is what summary() reads to leave a standard error off it.
+  #
+  # What is REPORTED is now the value alone; what may be EXCLUDED from the
+  # verdict keeps the conjunction, which is what stops `edge` deciding the
+  # state. The degenerate curvature is built here rather than fitted for, the
+  # model that produces one being weakly identified and landing differently on
+  # every platform -- which is the whole reason this was not seen locally.
+  skip_on_cran()
+  set.seed(42)
+  d <- data.frame(x = runif(300), y = rnorm(300))
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  plain <- statmod_certificate(fit)
+  skip_if(!length(plain$boundary), "this fit did not reach the chart's edge")
+  expect_identical(plain$state, "boundary")
+
+  # the same fit, with a curvature so nearly singular in that coordinate that
+  # its own decrement is far past `tol`
+  local_mocked_bindings(
+    outer_curvature = function(...) list(A = matrix(1e-30, 1L, 1L),
+                                         source = "analytic",
+                                         why = character(0)))
+  ct <- statmod_certificate(fit)
+  # NAMED, exactly as before
+  expect_identical(ct$boundary, plain$boundary)
+  expect_identical(ct$boundary_key, plain$boundary_key)
+  # and NOT excused: it stays under test, so the verdict is not "boundary"
+  expect_gt(ct$decrement, 1e-2)
+  expect_identical(ct$state, "not converged")
+  expect_match(ct$reason[1], "would still rise")
+})
+
+
 test_that("with no curvature at all there is no verdict but still a boundary", {
   # ⚠️ THE REGRESSION CI FOUND AND THIS MACHINE HID. A verdict in criterion
   # units needs a curvature, and where neither the analytic route nor the

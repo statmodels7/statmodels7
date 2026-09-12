@@ -114,18 +114,32 @@ estimates twice over.
 A hyperparameter may run to an edge and belong there: on a covariate that
 is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 genuinely flat, and calling that fit unconverged would be wrong. A
-coordinate is reported as sitting at a boundary when its free value
-exceeds \code{edge} AND \code{\link[=coord_decrement]{coord_decrement()}}, what that coordinate alone would
-still buy, has already met \code{tol}. Because of that second condition the
-threshold cannot change the verdict, and since 0.127.0 by an exact
-inequality rather than by an argument about a maximum: restricting a
-decrement to a subset of the coordinates is that same maximum under a
-constraint and so no larger, hence a coordinate moved out of the interior
-set cannot raise what decides the state. Both \code{"converged"} and
-\code{"boundary"} are certified. What \code{edge} decides is how the point is
-described. The default separates the measured cases with room on both
-sides: coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the
-free scale against 0.13, 0.30 and 2.01 for the ones that did not.
+coordinate is \strong{reported} as sitting at a boundary on its free value
+alone, that being a fact about its chart rather than a reading: a
+hyperparameter that has run to an edge has no meaningful interval whatever
+the criterion's curvature says, which is what \code{boundary_key} tells
+\code{\link[=summary.StatmodFit]{summary.StatmodFit()}}.
+
+What may be \strong{excluded from the verdict} is narrower -- the value together
+with \code{\link[=coord_decrement]{coord_decrement()}}, what that coordinate alone would still buy,
+having already met \code{tol} -- and that second condition is what keeps \code{edge}
+from deciding the state, by an exact inequality rather than an argument
+about a maximum: restricting a decrement to a subset of the coordinates is
+that same maximum under a constraint and so no larger, hence a coordinate
+moved out of the interior set cannot raise what decides the state. A
+coordinate at an edge that has NOT settled stays under test and is named
+all the same, which is the honest pair of statements about it. Both
+\code{"converged"} and \code{"boundary"} are certified.
+
+⚠️ The two sets genuinely differ, and exactly where \code{edge} matters most: at
+a boundary the curvature collapses along with the gradient, so the
+one-coordinate reading \eqn{g_j^2/(2A_{jj})} is a ratio of two quantities
+going to zero and can come back large. Reporting on the conjunction left
+such a coordinate unnamed on the one platform where that fit landed there.
+
+The default separates the measured cases with room on both sides:
+coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the free scale
+against 0.13, 0.30 and 2.01 for the ones that did not.
 }
 \examples{
 dd <- data.frame(x = runif(120))

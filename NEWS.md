@@ -1,3 +1,30 @@
+# statmodels7 0.127.2
+
+* **A coordinate at an edge is NAMED on its free value alone, whatever its
+  own curvature says.** 0.127.1 repaired the branch where no curvature can be
+  read at all and left the deeper half of the same defect: where the analytic
+  route DOES answer, `boundary` and `boundary_key` were reported on the
+  conjunction of the value with `coord_decrement()`, and at a boundary the
+  curvature collapses along with the gradient, so \eqn{g_j^2/(2A_{jj})} is a
+  ratio of two quantities going to zero and can come back large -- exactly
+  where `edge` matters most. On a mixed covariance class inside a filter the
+  smallest eigenvalue of \eqn{-H} stands to the largest as `2.25e+08`, and
+  there the coordinate went unnamed while `summary()` needs that name to
+  leave a standard error off it.
+
+* ⚠️ **What may be EXCLUDED FROM THE VERDICT keeps the conjunction**, which
+  is what it was always for: removing a coordinate can only lower a
+  decrement, so a set chosen by the value alone would let `edge` decide the
+  state. A coordinate at an edge that has not settled therefore stays under
+  test and is named all the same -- the two statements about it are made
+  separately because they are separate. Injection-checked: report on the
+  conjunction again and two assertions go red.
+
+* ⚠️ It was not seen locally for the reason 0.127.1 records about the other
+  half -- the model that produces a degenerate curvature there is weakly
+  identified and lands differently on every platform. The test builds the
+  curvature rather than fitting for it, so it pins the rule on every machine.
+
 # statmodels7 0.127.1
 
 * **The two repairs 0.127.0's own CI asked for**, on the one platform of
