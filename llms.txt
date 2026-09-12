@@ -631,6 +631,12 @@ exported, and none is needed to use the package.
 - [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
   : The Distribution a Model Was Fitted With
 
+- [`filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/filter_curvature.md)
+  : A Filter's Second-Order Recursion at the Fitted Point
+
+- [`filter_joint_movement()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_movement.md)
+  : How the Mode Moves Where an Unpenalized Filter Moves With It
+
 - [`find_term()`](https://statmodels7.github.io/statmodels7/reference/find_term.md)
   : A Term by Its Key, Whichever Equation It Sits In
 

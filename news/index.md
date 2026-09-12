@@ -1,5 +1,86 @@
 # Changelog
 
+## statmodels7 0.129.0
+
+- **The exact outer gradient beside a structural term no penalty covers
+  reads how the mode moves jointly.** With no penalty over a filter’s
+  own parameters the criterion’s determinant is over the coefficients
+  alone, on the static design, but the predictors it is read at carry
+  the filter’s level, which depends on the coefficients through the
+  recursion and on the filter’s parameters, and those are estimated
+  beside the coefficients and move with the hyperparameter too. The
+  gradient read the coefficients alone for both the mode’s movement and
+  the determinant’s. It now solves with the joint penalized curvature,
+  [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
+  plus the penalty on the coefficients, and reads the determinant’s
+  movement along the total derivative of every predictor, the forward
+  Jacobian of the recursion in the filter’s equation. No third
+  derivative of the recursion is needed, the determinant being on the
+  static design. Measured on a smooth beside an unpenalized `gas(1, 1)`
+  at 400 observations against a central difference of the criterion with
+  the mode refitted from a fixed start, the gap was `7.2e-03` relative
+  and flat in the step; it is `5.6e-05`, `5.3e-06` and `1.2e-06` at h of
+  1e-2, 3e-3 and 1e-3 under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  with the same convergence under `reml("expected")` and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
+  Decomposed before the repair, the gap was `-8.49e-03` from the mode’s
+  movement, `+8.90e-04` from the determinant read along the design
+  instead of the total derivative and `-1.10e-05` from the filter’s own
+  path, summing to the measured `-7.61e-03`. On that model the fit goes
+  from 17 criterion evaluations with the search’s flag unmet to 5 with
+  it met, at the same criterion.
+- **[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  had the same hole, much larger**:
+  [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
+  was out by `9.48` and `2.22` relative on the same model, flat in the
+  step. With the same two joint pieces it reads `1.3e-04`, `1.2e-05` and
+  `1.3e-06`, and `lbfgs()` reaches the criterion `nelder_mead()` reaches
+  to every printed digit in 10 evaluations against 35.
+- **The outer Hessian of such a model is the stencil of the exact
+  gradient, not the joint assembly.**
+  [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+  is the second derivative of the criterion whose determinant spans the
+  term’s parameters, which is the criterion only where a penalty covers
+  them, and
+  [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  answered order 2 for an unpenalized `gas()` all the same: it read
+  `-3.97422` where a second difference of the criterion reads
+  `-4.00272`, 0.71 per cent out and flat, while
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
+  reads `-4.00270`. Order 2 is refused there now, on both the marginal
+  and the prediction-error routes, so the certificate’s curvature is
+  differenced; it costs `0.41` s against the joint assembly’s `0.67` s
+  at the fit.
+- **A term of the likelihood shape, `regime()`, is refused at both
+  orders.** Its exact gradient needs how the smoothed posterior moves
+  along the direction the mode moves in, which `modelterms7` does not
+  expose, and read on the coefficients alone it was out by `2.05e-04`,
+  flat in the step. The cost is stated rather than left to be found: the
+  search becomes `nelder_mead()`, measured 8.48 s against 5.62 s at the
+  same criterion, and
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  answers `unknown` on every model carrying such a term. ⚠️
+  [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  and the unconditional variance call
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  directly, which for such a model still differences that gradient: it
+  read `0.50743` where the inverse of a second difference of the
+  criterion reads `0.5077`, `0.5063` and `0.5022` at h of 3e-2, 1e-2 and
+  5e-3, a reference too noisy on this term to separate the two. It is
+  kept, and goes when the term supplies the derivative of its posterior.
+- [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
+  takes the joint rows in place of the design,
+  [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
+  skips an equation where the direction does not move its predictor
+  rather than where it has no coefficients, and the filter’s
+  second-order recursion is
+  [`filter_curvature()`](https://statmodels7.github.io/statmodels7/reference/filter_curvature.md),
+  read by the joint information and by the gradient through one memo
+  slot. None of this moves a model without a filter.
+
 ## statmodels7 0.128.0
 
 - **The exact outer gradient reads how a penalty’s Hessian moves with
