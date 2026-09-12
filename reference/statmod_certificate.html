@@ -11,7 +11,7 @@ above the penalized mode, and which hyperparameters have run to a boundary."><me
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.125.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.127.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,21 +60,27 @@ above the penalized mode, and which hyperparameters have run to a boundary.</p>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>The largest outer gradient a certified point may carry.</p></dd>
+<dd><p>The largest rise, in the criterion's own units, that a certified
+point may still have available to it. ⚠️ Until 0.127.0 this was a
+threshold on the outer gradient. The default has not moved and its
+meaning has: a caller who set one should read <code><a href="joint_decrement.html">joint_decrement()</a></code>.</p></dd>
 
 
 <dt id="arg-edge">edge<a class="anchor" aria-label="anchor" href="#arg-edge"></a></dt>
-<dd><p>The free value beyond which a hyperparameter whose gradient
-has already met <code>tol</code> is reported as sitting at a boundary. It
+<dd><p>The free value beyond which a hyperparameter that has already
+met <code>tol</code> on its own is reported as sitting at a boundary. It
 decides the label alone and never the verdict; see the details.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>state</code> (<code>"converged"</code>, <code>"boundary"</code>,
-<code>"not converged"</code> or <code>"unknown"</code>), <code>gradient</code>,
-<code>mode_error</code>, <code>boundary</code>, <code>boundary_key</code> and <code>reason</code>. <code>boundary_key</code>
-names the same coordinates as <code>boundary</code> does, in the key
+<code>"not converged"</code> or <code>"unknown"</code>), <code>decrement</code>, <code>gradient</code>,
+<code>mode_error</code>, <code>curvature</code>, <code>boundary</code>, <code>boundary_key</code> and <code>reason</code>.
+<code>decrement</code> is what the verdict is made on and <code>gradient</code> is reported
+beside it; <code>curvature</code> says whether that decrement was read against an
+analytic Hessian or against one differenced from the exact gradient.
+<code>boundary_key</code> names the same coordinates as <code>boundary</code> does, in the key
 <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> labels its rows by, which is what
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reads to leave a standard error off a
 coordinate pinned there.</p>
@@ -87,24 +93,43 @@ search. Measured across shapes, it does not order fits by quality: on one
 model the default reported success at a criterion of -1783.47 while the same
 data under <code><a href="https://statmodels7.github.io/optimizers7/reference/lbfgs.html" class="external-link">optimizers7::lbfgs()</a></code> reached -1664.43 and reported
 failure. What a reader wants is a property of the point.</p>
-<p><strong>The state comes from the gradient and the mode error is reported
-beside it, not folded into it.</strong> Measured at the reported point over six
-shapes, the outer gradient separates by five orders, 4.7e-07, 7.8e-07,
-5.8e-05, 7.7e-05 and 3.0e-04 on fits that are right, against 28.8 on one
-that is not, while the mode error does not: it reads 1.8e-16 to 6.1e-12
-on
-four of them, 22.8 on the failing one, and 0.114 on a random-changepoint
-<code>seg</code> whose answer is right to a correlation of 0.9932. A number that
-does not separate cannot decide a state, and a certificate that says how far
-from the mode is worth more than a boolean that hides it.</p>
-<p><code>tol</code> is 1e-2 instead of the geometric middle of the two groups: the
-two ways of being wrong are not symmetric, and a certificate that says not
-converged at a good point is visible and checkable where one that certifies
-a bad point is the failure this exists to remove.</p>
-<p><strong>What it costs</strong> is one outer gradient and one solve, once, at a point
-the fit already holds. Nothing is refitted: measured, the criterion
-reconstructed from <code>fit@spec</code> equals the one the fit reports exactly on
-every shape, so the reading is of the fitted model and of no other.</p>
+<p><strong>The state comes from the rise the criterion would still buy, and the
+mode error is reported beside it rather than folded into it.</strong> That rise is
+the Newton decrement \(\tfrac{1}{2}g^\top A^{-1}g\) of
+<code><a href="joint_decrement.html">joint_decrement()</a></code>, in the criterion's own units, and <code>tol</code> is a
+threshold on it. The mode error does not decide a state and could not:
+measured over six shapes it reads 1.8e-16 to 6.1e-12 on four fits that are
+right, 22.8 on one that is not, and 0.114 on a random-changepoint <code>seg</code>
+whose answer is right to a correlation of 0.9932. A number that does not
+separate cannot decide a state, and a certificate that says how far from
+the mode is worth more than a boolean that hides it.</p>
+<p><strong>A threshold on the GRADIENT was what this read until 0.127.0, and it is
+not scale-free.</strong> The gradient of a criterion summed over \(n\)
+observations and \(p\) penalized coefficients carries both, so one
+number cannot serve every shape: measured over 1350 fits against an
+independently located optimum, <code>max|g| &gt; 1e-2</code> flags <strong>131 of 663 fits
+that are within 1e-3 of their own optimum</strong> while finding all 552 that are
+more than 1e-2 short of it. The decrement at the same cut flags <strong>0 of the
+663</strong> and finds the same 552. See <code><a href="joint_decrement.html">joint_decrement()</a></code> for the calibration
+behind that and for the two scaled gradients that were measured and
+rejected.</p>
+<p><code>tol</code> is 1e-2 rather than the middle of the two groups: the two ways of
+being wrong are not symmetric, and a certificate that says not converged at
+a good point is visible and checkable where one that certifies a bad point
+is the failure this exists to remove.</p>
+<p><strong>What it costs</strong> is one outer gradient, one curvature and one solve, at a
+point the fit already holds; the criterion reconstructed from <code>fit@spec</code>
+equals the one the fit reports exactly on every shape, so the reading is of
+the fitted model and of no other. Where the form carries an analytic outer
+Hessian nothing is refitted. Where it does not – a criterion asked for on
+the expected information, or a separable penalty – the curvature comes
+from one central difference of the <strong>exact</strong> gradient, which is
+\(4n_h\) refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
+cent of the fit itself. <code><a href="outer_curvature.html">outer_curvature()</a></code> says which route was taken, the
+result reports it in <code>curvature</code>, and <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> says so on the
+certificate's own line where it was differenced – a verdict resting on a
+curvature the package estimated rather than computed should not have to be
+asked for.</p>
 <p><strong>Where there is no outer gradient there are two cases, and they get
 different answers.</strong> A model with <strong>no penalty</strong>, which covers <code>linpar</code>,
 <code>nl</code>, <code>seg</code>, <code>jump</code> and <code>jseg</code>, has no hyperparameter for a
@@ -122,28 +147,34 @@ zero the score does not vanish but lies in the subdifferential, so the mode
 error is not a statement about being at a mode. Measured on a lasso, its
 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
 score is -0.715.</p>
-<p>A form whose criterion has no exact gradient
-(<code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code>) is also <code>"unknown"</code> and never
-approximated: 2p refits to difference it would cost more than the fit.</p>
+<p>A form whose criterion has no exact GRADIENT (<code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> at
+order 1) is also <code>"unknown"</code> and never approximated: 2p refits to
+difference it would cost more than the fit. That is not in tension with
+<code><a href="outer_curvature.html">outer_curvature()</a></code> differencing a HESSIAN where the analytic one is
+missing – what it differences there is the exact gradient, so the reading
+still rests on a derivative the package computes rather than on one it
+estimates twice over.</p>
 <p><strong>The boundary label, and why its threshold needs no derivation.</strong>
 A hyperparameter may run to an edge and belong there: on a covariate that
 is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 genuinely flat, and calling that fit unconverged would be wrong. A
 coordinate is reported as sitting at a boundary when its free value
-exceeds <code>edge</code> AND its own gradient component has already met
-<code>tol</code>. Because of that second condition the threshold cannot change
-the verdict: a coordinate it moves out of the interior set had already
-passed the test, so the maximum that decides the state is unaffected, and
-both <code>"converged"</code> and <code>"boundary"</code> are certified. What
-<code>edge</code> decides is how the point is described. The default separates
-the measured cases with room on both sides: coordinates that ran to an
-edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
-2.01 for the ones that did not.</p>
+exceeds <code>edge</code> AND <code><a href="coord_decrement.html">coord_decrement()</a></code>, what that coordinate alone would
+still buy, has already met <code>tol</code>. Because of that second condition the
+threshold cannot change the verdict, and since 0.127.0 by an exact
+inequality rather than by an argument about a maximum: restricting a
+decrement to a subset of the coordinates is that same maximum under a
+constraint and so no larger, hence a coordinate moved out of the interior
+set cannot raise what decides the state. Both <code>"converged"</code> and
+<code>"boundary"</code> are certified. What <code>edge</code> decides is how the point is
+described. The default separates the measured cases with room on both
+sides: coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the
+free scale against 0.13, 0.30 and 2.01 for the ones that did not.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code>, <code><a href="mode_error_limit.html">mode_error_limit()</a></code>,
-<code><a href="criterion_resolution.html">criterion_resolution()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code>, <code><a href="joint_decrement.html">joint_decrement()</a></code>, <code><a href="outer_curvature.html">outer_curvature()</a></code>,
+<code><a href="mode_error_limit.html">mode_error_limit()</a></code>, <code><a href="criterion_resolution.html">criterion_resolution()</a></code></p></div>
     </div>
 
     <div class="section level2">

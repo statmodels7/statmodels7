@@ -278,6 +278,9 @@ exported, and none is needed to use the package.
 - [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
   : Which Way of Holding the Gradient Is Cheaper
 
+- [`coord_decrement()`](https://statmodels7.github.io/statmodels7/reference/coord_decrement.md)
+  : What One Coordinate Alone Would Buy
+
 - [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
   : Fit a Separable Block by Coordinate Descent
 
@@ -536,6 +539,9 @@ exported, and none is needed to use the package.
 - [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
   : Which Readings a Chart's Coordinate Enters
 
+- [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md)
+  : The Rise a Criterion Would Still Buy at a Point
+
 - [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
   : The Rows of the Joint Predictor Derivative
 
@@ -608,6 +614,9 @@ exported, and none is needed to use the package.
 
 - [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
   : One Evaluation Point, Shared
+
+- [`outer_curvature()`](https://statmodels7.github.io/statmodels7/reference/outer_curvature.md)
+  : The Outer Criterion's Curvature at a Reported Point
 
 - [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
   : Which Optimizer the Outer Search Uses When the Caller Names None
@@ -812,6 +821,9 @@ exported, and none is needed to use the package.
 
 - [`residuals(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
   : The Residuals of a Fitted Model
+
+- [`resolution_summary()`](https://statmodels7.github.io/statmodels7/reference/resolution_summary.md)
+  : The Resolution the Search Is Given, Out of the Readings Taken So Far
 
 - [`resolve_par_key()`](https://statmodels7.github.io/statmodels7/reference/resolve_par_key.md)
   :

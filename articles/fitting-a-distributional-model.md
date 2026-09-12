@@ -196,8 +196,8 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 1.28 s   search: converged
-#> certificate: CONVERGED   outer gradient 1.87e-05   5.77e-13 above the mode
+#> fitted in 1.16 s   search: converged
+#> certificate: CONVERGED   7.81e-11 of criterion still available   5.77e-13 above the mode
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
 

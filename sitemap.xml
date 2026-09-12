@@ -59,6 +59,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_call.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_covariance.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/coord_decrement.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_legend.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_offset.html</loc></url>
@@ -146,6 +147,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_score.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/jacobian_depends.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/joint_decrement.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_design_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.html</loc></url>
@@ -170,6 +172,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/order_shortfall.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_backtracks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_context.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/outer_curvature.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.html</loc></url>
@@ -239,6 +242,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reject_unfittable.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/reml.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/resolution_summary.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/resolve_par_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/restricted_stat_rows.html</loc></url>
