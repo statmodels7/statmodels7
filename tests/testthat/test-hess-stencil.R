@@ -103,9 +103,23 @@ test_that("a structural term takes the analytic route, and the number is real", 
   # the two routes are the same quantity, and the analytic one is the more
   # accurate: against a Richardson limit of the exact gradient's own
   # difference it reads 1.8e-11 where the stencil reads 2.2e-06
+  #
+  # ⚠️ THE TOLERANCE IS THE STENCIL'S AND NOT THE ASSEMBLY'S, and 1e-4 was
+  # placed where this machine happens to land. Measured here the two agree at
+  # 6.9e-09 -- identical under 0.126.0 and 0.127.0, same seven evaluations
+  # and the same hyperparameter to ten digits -- while macOS reads 1.7e-04,
+  # and it is the STENCIL that moves there (-1.97109 against -1.971435) and
+  # not the analytic H (-1.97142). What is being compared is an exact
+  # assembly against a difference of refits, so the gap is whatever the
+  # refits at the probe points resolve on that platform.
+  #
+  # 1e-3 keeps every bit of what the check is for: the negative control above
+  # is the coefficient-space assembly, which reads 1.09e-06 where the value
+  # is of order one, so a wrong route is out by SIX ORDERS and a bound three
+  # orders above the worst platform reading still refuses it.
   S <- statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper, p$method,
                             p$idx, p$basis, inner = iwls())
-  expect_equal(as.numeric(H), as.numeric(S), tolerance = 1e-4)
+  expect_equal(as.numeric(H), as.numeric(S), tolerance = 1e-3)
 })
 
 test_that("a term with no fourth derivative keeps the stencil", {

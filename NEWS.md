@@ -1,3 +1,43 @@
+# statmodels7 0.127.1
+
+* **The two repairs 0.127.0's own CI asked for**, on the one platform of
+  five that failed. Nothing else moves: the suite is 0 failures with the 2
+  documented skips and `--as-cran` the expected pair either way.
+
+* ⚠️ **Where NEITHER route produces a curvature there is no verdict, and the
+  boundary coordinates are named all the same.** Returning early with none
+  was a regression CI found and this machine hid: `boundary_key` is what
+  `summary()` reads to leave a standard error off a coordinate pinned at an
+  edge, so it would have been taken away on exactly the fits least able to
+  spare it -- a mixed covariance class inside a filter, where the order-2
+  route is refused and the stencil refuses too. The state stays `"unknown"`
+  and the reason says why, so nothing is certified on a value alone; the
+  second conjunct of the edge test is dropped in that branch and only there,
+  it existing to keep `edge` from deciding a verdict that this branch does
+  not give.
+
+* ⚠️ **A tolerance placed where this machine stops.**
+  `test-hess-stencil.R` compares the analytic structural Hessian against the
+  stencil at `1e-4` and macOS read `1.7e-04`. Measured, the fit is identical
+  under 0.126.0 and 0.127.0 -- seven evaluations and the same hyperparameter
+  to ten digits -- and the two routes agree at `6.9e-09` here, while on macOS
+  it is the **stencil** that moves (-1.97109 against -1.971435) and not the
+  analytic assembly (-1.97142): an exact assembly is being compared against a
+  difference of refits, and the gap is whatever those refits resolve on that
+  platform. Widened to `1e-3`, three orders above the worst platform reading
+  and three below the six-order gap the negative control in the same test
+  gives -- the coefficient-space assembly, which reads `1.09e-06` where the
+  value is of order one.
+
+* ⚠️ **What hid the first one here was this release's own repair of a dormant
+  premise.** The `skip_if` guarding that test read
+  `statmod_certificate(fit)$edge` -- an ARGUMENT of the function and not a
+  field of its result -- so it was `NULL`, the comparison `logical(0)`, and
+  the skip never fired. Repaired in 0.127.0, it now fires wherever the fit
+  stays inside the chart, which is what it does here and not on macOS. A
+  guard made live can move a test from always-running to sometimes-skipped,
+  and the platforms where it still runs become the only ones testing it.
+
 # statmodels7 0.127.0
 
 * **`statmod_certificate()` reads the rise the criterion would still buy

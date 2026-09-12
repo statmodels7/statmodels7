@@ -159,6 +159,41 @@ test_that("the decrement certifies a healthy fit the gradient reading refuses", 
 })
 
 
+test_that("with no curvature at all there is no verdict but still a boundary", {
+  # ⚠️ THE REGRESSION CI FOUND AND THIS MACHINE HID. A verdict in criterion
+  # units needs a curvature, and where neither the analytic route nor the
+  # difference produces one there is none to give -- but `boundary_key` is
+  # what summary() reads to leave a standard error off a coordinate pinned at
+  # an edge, and returning early with none takes that away from a reader on
+  # exactly the fits least able to spare it. The state stays "unknown" and
+  # says why, so nothing is certified on a value alone.
+  #
+  # The branch is reached by mocking the curvature rather than by building
+  # the model that reaches it -- a mixed covariance class inside a filter,
+  # which costs a minute and lands differently on every platform.
+  skip_on_cran()
+  set.seed(42)
+  d <- data.frame(x = runif(300), y = rnorm(300))
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
+                 outer_criterion = reml())
+  plain <- statmod_certificate(fit)
+  # the premise: this fit's one hyperparameter really is past the edge, or
+  # the assertion below would hold for the wrong reason
+  skip_if(!length(plain$boundary), "this fit did not reach the chart's edge")
+
+  local_mocked_bindings(
+    outer_curvature = function(...) list(A = NULL, source = NA_character_,
+                                         why = "mocked: no curvature here"))
+  ct <- statmod_certificate(fit)
+  expect_identical(ct$state, "unknown")
+  expect_identical(ct$boundary, plain$boundary)
+  expect_identical(ct$boundary_key, plain$boundary_key)
+  expect_true(is.finite(ct$gradient))
+  expect_true(is.na(ct$decrement))
+  expect_match(ct$reason, "no curvature here")
+})
+
+
 test_that("the curvature is differenced where the form has no analytic one", {
   # Two forms carry an exact outer GRADIENT and no analytic Hessian: a
   # criterion asked for on the expected information, and a separable penalty.

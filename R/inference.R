@@ -4570,15 +4570,34 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   # pure noise, prior scales of 9.2e-05 and 2.8e-05 -- against 0.13, 0.30 and
   # 2.01 for the ones that did not, so 8 sits in a wide gap rather than on a
   # boundary of its own.
+  eta <- hyper_to_eta(hy, idx)
   cv <- outer_curvature(spec, design, cf, hy, method, idx, basis,
                         fit@methods$smooth)
   if (is.null(cv$A)) {
+    # ⚠️ NO VERDICT, BUT STILL THE BOUNDARY COORDINATES, and leaving them out
+    # was a regression CI found and this machine hid. `boundary_key` is what
+    # summary() reads to leave a standard error off a coordinate pinned at an
+    # edge, so returning early with none takes that away from a reader on
+    # exactly the fits least able to spare it -- a mixed covariance class
+    # inside a filter, where the order-2 route is refused and the stencil
+    # refuses too.
+    #
+    # The SECOND conjunct is dropped here and only here: it exists to keep
+    # `edge` from deciding the verdict, and in a branch that returns no
+    # verdict there is nothing for it to protect. The state stays "unknown"
+    # and the reason says why, so nothing is certified on a value alone.
     out$gradient <- max(abs(g))
+    at_edge <- which(abs(eta) > edge)
+    if (length(at_edge)) {
+      out$boundary <- vapply(at_edge, function(k)
+        paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"), character(1))
+      out$boundary_key <- vapply(at_edge, function(k)
+        paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "\r"), character(1))
+    }
     out$reason <- cv$why
     return(out)
   }
   out$curvature <- cv$source
-  eta <- hyper_to_eta(hy, idx)
   at_edge <- which(abs(eta) > edge & coord_decrement(g, cv$A) <= tol)
   if (length(at_edge)) {
     out$boundary <- vapply(at_edge, function(k)
