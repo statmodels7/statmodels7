@@ -1,5 +1,27 @@
 # Changelog
 
+## statmodels7 0.129.1
+
+- **The outer Hessian of a mixed covariance class is pinned by a test.**
+  [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  admits such a class at order 2 on the observed route and
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  hands it to
+  [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md),
+  whose result had been recorded as reachable and not validated for that
+  shape. At an interior point of the spherical chart, the starting
+  hyperparameters plus 0.2, it converges on a central difference of the
+  exact gradient with the mode refitted: `3.95e-05`, `3.55e-06` and
+  `3.95e-07` relative at h of 1e-2, 3e-3 and 1e-3, ratios of 11.1 and
+  9.0, and `3.9e-07` against
+  [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md).
+  The point is interior on purpose, the fit on that panel being weakly
+  identified near the chart’s boundary and stopping somewhere different
+  on every platform. The test fails under three injections into the
+  assembly – the second-derivative trace of the penalty scaled by 1.01,
+  the fourth-order term dropped, and the mode term read on one direction
+  of the pair – and nothing computed moves.
+
 ## statmodels7 0.129.0
 
 - **The exact outer gradient beside a structural term no penalty covers

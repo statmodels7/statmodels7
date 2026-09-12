@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.129.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.129.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.129.1" id="statmodels7-01291">statmodels7 0.129.1<a class="anchor" aria-label="anchor" href="#statmodels7-01291"></a></h2>
+<ul><li>
+<strong>The outer Hessian of a mixed covariance class is pinned by a test.</strong> <code><a href="../reference/outer_gradient_ok.html">outer_gradient_ok()</a></code> admits such a class at order 2 on the observed route and <code><a href="../reference/statmod_marginal_hess.html">statmod_marginal_hess()</a></code> hands it to <code><a href="../reference/statmod_structural_hess.html">statmod_structural_hess()</a></code>, whose result had been recorded as reachable and not validated for that shape. At an interior point of the spherical chart, the starting hyperparameters plus 0.2, it converges on a central difference of the exact gradient with the mode refitted: <code>3.95e-05</code>, <code>3.55e-06</code> and <code>3.95e-07</code> relative at h of 1e-2, 3e-3 and 1e-3, ratios of 11.1 and 9.0, and <code>3.9e-07</code> against <code><a href="../reference/statmod_hess_stencil.html">statmod_hess_stencil()</a></code>. The point is interior on purpose, the fit on that panel being weakly identified near the chart’s boundary and stopping somewhere different on every platform. The test fails under three injections into the assembly – the second-derivative trace of the penalty scaled by 1.01, the fourth-order term dropped, and the mode term read on one direction of the pair – and nothing computed moves.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.129.0" id="statmodels7-01290">statmodels7 0.129.0<a class="anchor" aria-label="anchor" href="#statmodels7-01290"></a></h2>
 <ul><li>
