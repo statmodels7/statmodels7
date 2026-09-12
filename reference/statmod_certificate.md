@@ -132,20 +132,36 @@ over.
 hyperparameter may run to an edge and belong there: on a covariate that
 is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 genuinely flat, and calling that fit unconverged would be wrong. A
-coordinate is reported as sitting at a boundary when its free value
-exceeds `edge` AND
+coordinate is **reported** as sitting at a boundary on its free value
+alone, that being a fact about its chart rather than a reading: a
+hyperparameter that has run to an edge has no meaningful interval
+whatever the criterion's curvature says, which is what `boundary_key`
+tells
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md).
+
+What may be **excluded from the verdict** is narrower – the value
+together with
 [`coord_decrement()`](https://statmodels7.github.io/statmodels7/reference/coord_decrement.md),
-what that coordinate alone would still buy, has already met `tol`.
-Because of that second condition the threshold cannot change the
-verdict, and since 0.127.0 by an exact inequality rather than by an
-argument about a maximum: restricting a decrement to a subset of the
-coordinates is that same maximum under a constraint and so no larger,
-hence a coordinate moved out of the interior set cannot raise what
-decides the state. Both `"converged"` and `"boundary"` are certified.
-What `edge` decides is how the point is described. The default separates
-the measured cases with room on both sides: coordinates that ran to an
-edge sit at 9.3, 10.5 and 20.6 on the free scale against 0.13, 0.30 and
-2.01 for the ones that did not.
+what that coordinate alone would still buy, having already met `tol` –
+and that second condition is what keeps `edge` from deciding the state,
+by an exact inequality rather than an argument about a maximum:
+restricting a decrement to a subset of the coordinates is that same
+maximum under a constraint and so no larger, hence a coordinate moved
+out of the interior set cannot raise what decides the state. A
+coordinate at an edge that has NOT settled stays under test and is named
+all the same, which is the honest pair of statements about it. Both
+`"converged"` and `"boundary"` are certified.
+
+⚠️ The two sets genuinely differ, and exactly where `edge` matters most:
+at a boundary the curvature collapses along with the gradient, so the
+one-coordinate reading \\g_j^2/(2A\_{jj})\\ is a ratio of two quantities
+going to zero and can come back large. Reporting on the conjunction left
+such a coordinate unnamed on the one platform where that fit landed
+there.
+
+The default separates the measured cases with room on both sides:
+coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the free
+scale against 0.13, 0.30 and 2.01 for the ones that did not.
 
 ## See also
 
