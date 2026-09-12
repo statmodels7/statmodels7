@@ -417,6 +417,12 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   bhat <- lapply(seq_len(nh), function(m) -as.numeric(P %*% pieces$c[[m]]))
   tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
                                                   v))
+  # how J moves through a penalty whose Hessian moves with the coefficients,
+  # which A_m carries beside S_m and T[b_m] -- NULL where every penalty is
+  # quadratic in them, and then nothing below changes
+  Pm <- lapply(bhat, function(v) statmod_penalty_dbeta(spec, design, coef,
+                                                       hyper, v, total))
+  add_pm <- function(A, m) if (is.null(Pm[[m]])) A else A + Pm[[m]]
 
   # ⚠️ THE TRACE ON THE CRITERION'S OWN INFORMATION. aic(hessian = "expected")
   # prices tau = tr[(H_E + S)^-1 H_E], so its derivative reads H_E and how H_E
@@ -441,7 +447,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
     for (m in seq_len(nh)) {
       BE <- contract3(spec, design, dE, params, npar, offs, total, tv[[m]],
                       key = keyE)
-      PAE <- PE %*% (pieces$S[[m]] + BE)
+      PAE <- PE %*% add_pm(pieces$S[[m]] + BE, m)
       tau_m <- sum(PE * t(BE)) - sum(PAE * t(PEH))
       g[m] <- -2 * sum(grho * bhat[[m]]) + kap * tau_m
     }
@@ -456,7 +462,7 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
   } else NULL
   Bm <- lapply(tv, function(t) contract3(spec, design, d3, params, npar, offs,
                                          total, t))
-  Am <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Bm[[m]])
+  Am <- lapply(seq_len(nh), function(m) add_pm(pieces$S[[m]] + Bm[[m]], m))
   PH <- P %*% H
 
   # one per hyperparameter, and the gradient and the Hessian both read them

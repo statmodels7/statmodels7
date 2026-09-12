@@ -93,6 +93,65 @@ test_that("the gradient matches numDeriv under ml, on the range space", {
   expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
 })
 
+test_that("a prior whose Hessian moves with the coefficients is differentiated", {
+  # A Student t prior's Hessian depends on the effects, so the mode's movement
+  # reaches the determinant through it as well as through the likelihood. The
+  # gradient was 4.3e-04 out and FLAT in the step without that piece, which is
+  # the signature of a missing term; the reference refits the mode at every
+  # probe and shares no arithmetic with the assembly.
+  set.seed(41)
+  m <- 30; ni <- 12
+  g <- factor(rep(seq_len(m), each = ni))
+  x <- stats::runif(m * ni, -1, 1)
+  b <- c(stats::rnorm(m - 3, 0, 0.3), 2.5, -2.8, 3.1)
+  dt <- data.frame(y = 1 + 0.8 * x + b[as.integer(g)] +
+                     stats::rnorm(m * ni, 0, 0.5), x = x, g = g)
+  pr <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
+  f <- y ~ x + random(~1 | g, distrib = pr)
+  fam <- distributions7::gaussian1_distrib()
+  fit0 <- statmod(f, fam, dt, outer_criterion = NULL)
+  spec <- fit0@spec
+  design <- statmod_design(spec)
+  idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
+  for (mt in list(reml(hessian = "observed"), aic(), bic())) {
+    expect_true(outer_gradient_ok(spec, design, idx, mt, 1L))
+    expect_false(outer_gradient_ok(spec, design, idx, mt, 2L))
+    at <- function(eta) {
+      hy <- eta_to_hyper(eta, idx, fit0@hyper)
+      list(hy = hy, cf = fit_at_hyper(f, fam, dt, hy)$coefficients)
+    }
+    crit <- function(eta) {
+      p <- at(eta)
+      if (identical(mt@kind, "reml")) {
+        statmod_marginal(spec, design, p$cf, p$hy, mt)$value
+      } else {
+        -statmod_pe(spec, design, p$cf, p$hy, mt)$value
+      }
+    }
+    grad <- function(eta) {
+      p <- at(eta)
+      if (identical(mt@kind, "reml")) {
+        statmod_marginal_grad(spec, design, p$cf, p$hy, mt, idx)
+      } else {
+        -statmod_pe_derivs(spec, design, p$cf, p$hy, mt, idx, 1L)$grad
+      }
+    }
+    eta <- hyper_to_eta(fit0@hyper, idx) + 0.3
+    ge <- grad(eta)
+    h <- 1e-3
+    fd <- vapply(seq_along(eta), function(j) {
+      e1 <- eta; e1[j] <- e1[j] + h
+      e2 <- eta; e2[j] <- e2[j] - h
+      (crit(e1) - crit(e2)) / (2 * h)
+    }, numeric(1))
+    # Measured with the piece: 1.5e-06 under reml, 1.7e-05 under aic and 3.9e-06
+    # under bic, where the reference sits at its own floor -- aic's reads
+    # 9.8e-06 at h = 1e-2 already, so a convergence ratio is not asserted.
+    # Without it: 4.3e-04 under reml and 8.6e-03 under aic, flat in the step.
+    expect_lt(max(abs(ge - fd) / abs(fd)), 5e-5)
+  }
+})
+
 test_that("the gradient vanishes at the reported optimum", {
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
                  outer_criterion = reml(hessian = "observed"))

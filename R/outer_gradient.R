@@ -93,6 +93,31 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     # criterion for this to be the derivative of.
     if (structural_penalized(spec, design)) return(FALSE)
   }
+  # ⚠️ EVERY PENALTY IS ASKED, not only those whose hyperparameters are under
+  # estimation. The mode's movement reaches the determinant through each
+  # penalty whose Hessian moves with the coefficients, a Student t prior held at
+  # given values among them, so one that cannot supply that movement leaves the
+  # gradient without it -- and the order-2 assembly is written for penalties
+  # whose Hessian does not move at all. A MIXED class is read by neither route
+  # in that case, its prior being multivariate, and is refused.
+  for (un in statmod_penalized(spec, design)) {
+    pen <- un$penalty
+    if (is.null(pen)) next
+    ok <- tryCatch({
+      th <- as.list(penalty_theta_start(pen))
+      k <- as.integer(pen@n_coef)
+      if (isTRUE(penalties7::beta_quadratic(pen, th)) ||
+          length(penalties7::penalty_kinks(pen, th))) {
+        TRUE
+      } else if (order >= 2L || isTRUE(un$mixed)) {
+        FALSE
+      } else {
+        penalties7::penalty_dhessian_beta(pen, rep(0.37, k), th, rep(0.21, k))
+        TRUE
+      }
+    }, error = function(e) FALSE)
+    if (!isTRUE(ok)) return(FALSE)
+  }
   mem <- index_members(idx)
   # A SHARED hyperparameter is exact at BOTH orders. The row's derivative
   # is the sum of its members', and outer_pieces() keys the second order by
@@ -367,8 +392,17 @@ penalty_answers <- function(pen, order = 1L) {
   b <- rep(0.37, k)
   ok <- tryCatch({
     penalties7::penalty_dhessian(pen, b, th)
+    bq <- isTRUE(penalties7::beta_quadratic(pen, th))
+    # ⚠️ A PENALTY WHOSE HESSIAN MOVES WITH THE COEFFICIENTS moves the
+    # determinant as the mode moves, so the gradient reads dS/dbeta[v] beside
+    # the log-likelihood's own third derivative. It used to be admitted here
+    # without it: measured on a Student t prior over 30 groups, the gradient was
+    # 4.3e-04 out and FLAT in the step, and adding tr(M dS/dbeta[v]) took it to
+    # 1.5e-06. A penalty that cannot supply it leaves the search without an
+    # exact gradient rather than with one missing that piece.
+    if (!bq) penalties7::penalty_dhessian_beta(pen, b, th, rep(0.21, k))
     if (order >= 2L) {
-      if (!isTRUE(penalties7::beta_quadratic(pen, th))) return(FALSE)
+      if (!bq) return(FALSE)
       penalties7::penalty_d2hessian(pen, b, th)
       penalties7::penalty_dcross(pen, b, th)
     }
@@ -529,8 +563,12 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
         v <- -as.numeric(msolve(c_m))
         dS_m <- matrix(0, total, total)
         dS_m[pos, pos] <- as_dense(dS[[h]])
+        # the mode's movement reaches the determinant through every penalty
+        # whose Hessian moves with the coefficients, not only this one's: see
+        # statmod_penalty_dbeta()
+        trp <- penalty_dbeta_trace(spec, design, coef, hyper, v, M)
         dtheta <- -as.numeric(gt[[h]]) -
-          (sum(M * dS_m) + sum(u * v)) / 2
+          (sum(M * dS_m) + sum(u * v) + trp) / 2
         # and onto the free scale the search runs on
         out[r] <- out[r] + if (!free) dtheta else {
           eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
@@ -538,6 +576,89 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
         }
       }
     }
+  }
+  out
+}
+
+
+#' How a Penalty's Hessian Moves With the Mode
+#'
+#' @description
+#' \eqn{\sum_u \partial S_u/\partial\beta\,[v]} over every penalty on the
+#' stacked coefficients whose Hessian depends on them, placed in the stacked
+#' coefficient space. `penalty_dbeta_trace()` is its trace against a matrix and
+#' `penalty_dbeta_blocks()` the per-penalty pieces both are assembled from.
+#'
+#' @details
+#' A marginal criterion's determinant is of \eqn{H + S}, so the mode's movement
+#' \eqn{v} reaches it through \eqn{S} wherever \eqn{S} depends on the
+#' coefficients, as it does for a heavy-tailed prior on a random effect, and the
+#' piece is \eqn{\mathrm{tr}(M\,\partial S/\partial\beta[v])}. A
+#' prediction-error criterion reads the matrix itself inside its trace. Every
+#' such penalty contributes, not only the one owning the hyperparameter being
+#' differentiated, because the mode moves in all of the coefficients at once.
+#'
+#' A penalty that [penalties7::beta_quadratic()] calls quadratic is skipped,
+#' which is every ridge, smooth and Gaussian random effect, so a model carrying
+#' only those assembles nothing: the matrix is `NULL` and the trace exactly
+#' `0`, which leaves its gradient identical to the bit. A kinked penalty is
+#' skipped as well, and a penalty over a structural term's own parameters
+#' belongs to the joint route.
+#'
+#' Measured on a Student t prior over 30 groups, the gradient without this
+#' piece is 4.3e-04 out and flat in the step; with it, 1.5e-06 against a
+#' central difference of the criterion with the mode refitted.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients at the penalized mode.
+#' @param hyper The hyperparameters.
+#' @param v The direction, over the stacked coefficients.
+#' @param total The stacked width.
+#' @param M The matrix the trace is taken against, `total` square.
+#'
+#' @return `statmod_penalty_dbeta()` a `total` square matrix, or `NULL` where
+#'   no penalty's Hessian moves; `penalty_dbeta_trace()` a single number;
+#'   `penalty_dbeta_blocks()` a list of `pos` and `T` pairs.
+#'
+#' @seealso [statmod_marginal_grad()], [statmod_pe_derivs()],
+#'   [penalties7::penalty_dhessian_beta()]
+#'
+#' @keywords internal
+statmod_penalty_dbeta <- function(spec, design, coef, hyper, v, total) {
+  bl <- penalty_dbeta_blocks(spec, design, coef, hyper, v)
+  if (!length(bl)) return(NULL)
+  out <- matrix(0, total, total)
+  for (b in bl) out[b$pos, b$pos] <- out[b$pos, b$pos] + b$T
+  out
+}
+
+#' @rdname statmod_penalty_dbeta
+#' @keywords internal
+penalty_dbeta_trace <- function(spec, design, coef, hyper, v, M) {
+  s <- 0
+  for (b in penalty_dbeta_blocks(spec, design, coef, hyper, v)) {
+    s <- s + sum(as_dense(M[b$pos, b$pos, drop = FALSE]) * b$T)
+  }
+  s
+}
+
+#' @rdname statmod_penalty_dbeta
+#' @keywords internal
+penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
+  params <- spec@distrib@params
+  out <- list()
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
+        !length(u$index)) next
+    pen <- u$penalty
+    th <- as.list(hyper[[u$param]][[u$key]])
+    if (isTRUE(penalties7::beta_quadratic(pen, th))) next
+    if (length(penalties7::penalty_kinks(pen, th))) next
+    pos <- u$index
+    bt <- unit_beta(u, coef, params)
+    out[[length(out) + 1L]] <- list(pos = pos, T = as_dense(
+      penalties7::penalty_dhessian_beta(pen, bt, th, v[pos])))
   }
   out
 }
@@ -906,6 +1027,32 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
   params <- jd$params
   keep <- jd$keep
   flat <- unlist(coef[params], use.names = FALSE)
+  # the joint twin of penalty_dbeta_trace(): every penalty whose Hessian moves
+  # with what it covers moves the determinant as the mode moves, whether it
+  # covers coefficients or a structural term's own parameters, each read where
+  # it lives in the joint vector. A MIXED class is not read here: its prior is
+  # multivariate, and outer_gradient_ok() refuses one that is not quadratic.
+  jpd <- function(v) {
+    s <- 0
+    for (u in statmod_penalized(spec, design)) {
+      if (isTRUE(u$mixed) || is.null(u$penalty)) next
+      th <- as.list(hyper[[u$param]][[u$key]])
+      pen <- u$penalty
+      if (isTRUE(penalties7::beta_quadratic(pen, th))) next
+      if (length(penalties7::penalty_kinks(pen, th))) next
+      if (isTRUE(u$structural)) {
+        bt <- as.numeric(sst$zeta[[u$term]][u$cols])
+        pos <- match(jd$nb + u$cols, keep)
+      } else {
+        bt <- unit_beta(u, coef, params)
+        pos <- match(u$index, keep)
+      }
+      if (!length(pos) || anyNA(pos)) next
+      Tm <- as_dense(penalties7::penalty_dhessian_beta(pen, bt, th, v[pos]))
+      s <- s + sum(as_dense(M[pos, pos, drop = FALSE]) * Tm)
+    }
+    s
+  }
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
   # over the members, and accumulating: see statmod_marginal_grad()
@@ -961,7 +1108,7 @@ statmod_structural_grad <- function(spec, design, coef, hyper, method, idx,
     dS_m <- matrix(0, length(keep), length(keep))
     dS_m[pos, pos] <- as_dense(dS[[h]])
     chain <- sum(st$u * v) + structural_chain_extra(spec, design, jd, M, st, v)
-    dtheta <- -as.numeric(gt[[h]]) - (sum(M * dS_m) + chain) / 2
+    dtheta <- -as.numeric(gt[[h]]) - (sum(M * dS_m) + chain + jpd(v)) / 2
     out[r] <- out[r] + if (!free) dtheta else {
       eta <- linkfunctions7::linkfun(links[[r]], hyper[[p]][[nm]][[h]])
       dtheta * linkfunctions7::dlinkinv(links[[r]], eta)
