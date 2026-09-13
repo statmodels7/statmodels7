@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.129.1
+Version: 0.130.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -25,7 +25,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     basis7 (>= 0.12.0),
-    distributions7 (>= 0.54.0),
+    distributions7 (>= 0.58.0),
     linkfunctions7,
     Matrix (>= 1.6.2),
     methods,
@@ -34,7 +34,7 @@ Imports:
     optimizers7,
     parallel,
     parameters7,
-    penalties7 (>= 0.24.0),
+    penalties7 (>= 0.25.0),
     Rcpp,
     RcppParallel,
     S7,

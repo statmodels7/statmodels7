@@ -45,15 +45,12 @@ which is \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}} and the sam
 two forms that reach it are a criterion asked for on the \strong{expected}
 information, where order 2 is refused because the criterion's own second
 derivative would want the next order of \eqn{\partial\mathbb{E}[\ell'']/
-\partial\eta}, and a \strong{separable} penalty whose curvature moves with the
-coefficient, a heavy-tailed prior on a random effect among them. ⚠️ The
-second is not a missing derivative: measured, a t prior answers
-\code{\link[penalties7:penalty_dhessian]{penalties7::penalty_dhessian()}}, \code{\link[penalties7:penalty_d2hessian]{penalties7::penalty_d2hessian()}} and
-\code{\link[penalties7:penalty_dcross]{penalties7::penalty_dcross()}}. What refuses it is
-\code{\link[penalties7:beta_quadratic]{penalties7::beta_quadratic()}}, TRUE for a ridge and a gaussian prior and
-FALSE here, the order-2 assembly being written for a penalty whose Hessian
-in the coefficients does not move with them. Both forms carry an exact
-gradient, which is what the difference is taken of.
+\partial\eta}, and a penalty whose Hessian moves with the coefficients --
+a heavy-tailed prior on a random effect -- placed beside a structural term,
+where \code{\link[=statmod_structural_hess]{statmod_structural_hess()}} reads no movement of that Hessian. The
+same prior without a structural term is analytic since 0.130.0, through
+\code{\link[=statmod_penalty_second]{statmod_penalty_second()}}. Both forms carry an exact gradient, which is
+what the difference is taken of.
 
 The two routes agree where both exist: on a gaussian smooth the decrement
 reads \code{3.01e-10} by either. What the difference costs is measured and is

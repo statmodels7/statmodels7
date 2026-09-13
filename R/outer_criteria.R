@@ -533,6 +533,12 @@ statmod_pe_derivs <- function(spec, design, coef, hyper, method, idx,
                        block_predictors(design, params, npar, offs, bml))
       Bml <- Bml + Tml
       Aml <- pieces$S2[[key]] + Bml
+      # J moves through a penalty whose Hessian depends on the coefficients as
+      # well as through H, so its second derivative carries that penalty's
+      # second movement; H's does not, so Bml is left as it is
+      E2 <- statmod_penalty_second(spec, design, coef, hyper, idx, m, l,
+                                   bhat[[m]], bhat[[l]], bml, total)
+      if (!is.null(E2)) Aml <- Aml + E2
 
       # -2 l(b(t)) : the second derivative carries the curvature of the
       # log-likelihood along the two directions and the mode's own second

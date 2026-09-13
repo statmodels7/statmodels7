@@ -75,7 +75,8 @@ point the fit already holds; the criterion reconstructed from \code{fit@spec}
 equals the one the fit reports exactly on every shape, so the reading is of
 the fitted model and of no other. Where the form carries an analytic outer
 Hessian nothing is refitted. Where it does not -- a criterion asked for on
-the expected information, or a separable penalty -- the curvature comes
+the expected information, or a penalty whose Hessian moves with the
+coefficients beside a structural term -- the curvature comes
 from one central difference of the \strong{exact} gradient, which is
 \eqn{4n_h} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
 cent of the fit itself. \code{\link[=outer_curvature]{outer_curvature()}} says which route was taken, the

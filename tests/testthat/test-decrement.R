@@ -235,7 +235,8 @@ test_that("with no curvature at all there is no verdict but still a boundary", {
 
 test_that("the curvature is differenced where the form has no analytic one", {
   # Two forms carry an exact outer GRADIENT and no analytic Hessian: a
-  # criterion asked for on the expected information, and a separable penalty.
+  # criterion asked for on the expected information, and a penalty whose
+  # Hessian moves with the coefficients beside a structural term.
   # Both are certified, by differencing the exact gradient, and the route is
   # reported so a reader can tell which was taken.
   skip_on_cran()

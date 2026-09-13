@@ -4297,7 +4297,8 @@ drop_common_prefix <- function(nms) {
 #' equals the one the fit reports exactly on every shape, so the reading is of
 #' the fitted model and of no other. Where the form carries an analytic outer
 #' Hessian nothing is refitted. Where it does not -- a criterion asked for on
-#' the expected information, or a separable penalty -- the curvature comes
+#' the expected information, or a penalty whose Hessian moves with the
+#' coefficients beside a structural term -- the curvature comes
 #' from one central difference of the **exact** gradient, which is
 #' \eqn{4n_h} refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
 #' cent of the fit itself. [outer_curvature()] says which route was taken, the
@@ -4737,15 +4738,12 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
 #' two forms that reach it are a criterion asked for on the **expected**
 #' information, where order 2 is refused because the criterion's own second
 #' derivative would want the next order of \eqn{\partial\mathbb{E}[\ell'']/
-#' \partial\eta}, and a **separable** penalty whose curvature moves with the
-#' coefficient, a heavy-tailed prior on a random effect among them. ⚠️ The
-#' second is not a missing derivative: measured, a t prior answers
-#' [penalties7::penalty_dhessian()], [penalties7::penalty_d2hessian()] and
-#' [penalties7::penalty_dcross()]. What refuses it is
-#' [penalties7::beta_quadratic()], TRUE for a ridge and a gaussian prior and
-#' FALSE here, the order-2 assembly being written for a penalty whose Hessian
-#' in the coefficients does not move with them. Both forms carry an exact
-#' gradient, which is what the difference is taken of.
+#' \partial\eta}, and a penalty whose Hessian moves with the coefficients --
+#' a heavy-tailed prior on a random effect -- placed beside a structural term,
+#' where [statmod_structural_hess()] reads no movement of that Hessian. The
+#' same prior without a structural term is analytic since 0.130.0, through
+#' [statmod_penalty_second()]. Both forms carry an exact gradient, which is
+#' what the difference is taken of.
 #'
 #' The two routes agree where both exist: on a gaussian smooth the decrement
 #' reads `3.01e-10` by either. What the difference costs is measured and is

@@ -115,7 +115,9 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   for (mt in list(reml(hessian = "observed"), aic(), bic())) {
     expect_true(outer_gradient_ok(spec, design, idx, mt, 1L))
-    expect_false(outer_gradient_ok(spec, design, idx, mt, 2L))
+    # Order 2 is exact here since 0.130.0; test-moving-penalty-hessian.R
+    # validates it.
+    expect_true(outer_gradient_ok(spec, design, idx, mt, 2L))
     at <- function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
       list(hy = hy, cf = fit_at_hyper(f, fam, dt, hy)$coefficients)

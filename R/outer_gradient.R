@@ -131,10 +131,25 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
       if (isTRUE(penalties7::beta_quadratic(pen, th)) ||
           length(penalties7::penalty_kinks(pen, th))) {
         TRUE
-      } else if (order >= 2L || isTRUE(un$mixed)) {
+      } else if (isTRUE(un$mixed)) {
+        FALSE
+      } else if (order >= 2L && length(attr(design, "structural"))) {
+        # the joint order-2 assembly, statmod_structural_hess(), reads no
+        # movement of the penalty's Hessian, so a moving penalty beside a
+        # structural term keeps the stencil there
         FALSE
       } else {
-        penalties7::penalty_dhessian_beta(pen, rep(0.37, k), th, rep(0.21, k))
+        b <- rep(0.37, k)
+        v <- rep(0.21, k)
+        penalties7::penalty_dhessian_beta(pen, b, th, v)
+        if (order >= 2L) {
+          # ⚠️ ORDER 2 READS THE SECOND MOVEMENT of that Hessian, along two
+          # directions and in each hyperparameter -- statmod_penalty_second().
+          # Without it the assembled Hessian on a Student t prior over 30
+          # groups was 122 per cent out and flat in the step.
+          penalties7::penalty_d2hessian_beta(pen, b, th, v, rep(-0.13, k))
+          penalties7::penalty_dhessian_beta_theta(pen, b, th, v)
+        }
         TRUE
       }
     }, error = function(e) FALSE)
@@ -436,7 +451,11 @@ penalty_answers <- function(pen, order = 1L) {
     # exact gradient rather than with one missing that piece.
     if (!bq) penalties7::penalty_dhessian_beta(pen, b, th, rep(0.21, k))
     if (order >= 2L) {
-      if (!bq) return(FALSE)
+      if (!bq) {
+        penalties7::penalty_d2hessian_beta(pen, b, th, rep(0.21, k),
+                                           rep(-0.13, k))
+        penalties7::penalty_dhessian_beta_theta(pen, b, th, rep(0.21, k))
+      }
       penalties7::penalty_d2hessian(pen, b, th)
       penalties7::penalty_dcross(pen, b, th)
     }
@@ -818,6 +837,84 @@ penalty_dbeta_blocks <- function(spec, design, coef, hyper, v) {
     bt <- unit_beta(u, coef, params)
     out[[length(out) + 1L]] <- list(pos = pos, T = as_dense(
       penalties7::penalty_dhessian_beta(pen, bt, th, v[pos])))
+  }
+  out
+}
+
+
+#' How a Moving Penalty Hessian Enters the Criterion's Second Derivative
+#'
+#' @description
+#' The part of \eqn{\partial K_m/\partial t_l} that a penalty whose Hessian
+#' depends on the coefficients contributes, placed in the stacked coefficient
+#' space, where \eqn{K_m = S_m + T[b_m]} is the determinant's matrix
+#' differentiated in hyperparameter \eqn{m}.
+#'
+#' @details
+#' Differentiating \eqn{S_m(\beta, t) + \partial S/\partial\beta\,[b_m]} once
+#' more along \eqn{t_l}, with \eqn{\beta} moving by \eqn{b_l}, gives
+#' \deqn{\frac{\partial S_m}{\partial\beta}[b_l]
+#'   + \frac{\partial S_l}{\partial\beta}[b_m]
+#'   + \frac{\partial^2 S}{\partial\beta^2}[b_l, b_m]
+#'   + \frac{\partial S}{\partial\beta}[b_{ml}]}
+#' beside \eqn{S_{ml}}, which [outer_pieces()] already carries. The first two
+#' are one quantity by the symmetry of mixed partials, read from
+#' [penalties7::penalty_dhessian_beta_theta()] for the hyperparameters a
+#' penalty owns; the third is [penalties7::penalty_d2hessian_beta()] and the
+#' fourth [penalties7::penalty_dhessian_beta()]. A penalty that
+#' [penalties7::beta_quadratic()] calls quadratic contributes nothing, so a
+#' model carrying only those gets `NULL` and its Hessian is untouched.
+#'
+#' Measured on a Student t prior over 30 groups before it was written, the
+#' assembly without these pieces is 122 per cent out and flat in the step, and
+#' with them it converges on a central difference of the exact gradient as
+#' \eqn{h^2} down to the reference's own floor.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients at the penalized mode.
+#' @param hyper The hyperparameters.
+#' @param idx The outer index.
+#' @param m,l The two rows of the index.
+#' @param bm,bl,bml The mode's movement along each and along the pair.
+#' @param total The stacked width.
+#'
+#' @return A `total` square matrix, or `NULL` where no penalty's Hessian
+#'   moves with the coefficients.
+#'
+#' @seealso [statmod_penalty_dbeta()], [statmod_marginal_hess()],
+#'   [statmod_pe_derivs()]
+#'
+#' @keywords internal
+statmod_penalty_second <- function(spec, design, coef, hyper, idx, m, l, bm,
+                                   bl, bml, total) {
+  params <- spec@distrib@params
+  mem <- index_members(idx)
+  out <- NULL
+  for (u in statmod_penalized(spec, design)) {
+    if (isTRUE(u$structural) || isTRUE(u$mixed) || is.null(u$penalty) ||
+        !length(u$index)) next
+    pen <- u$penalty
+    th <- as.list(hyper[[u$param]][[u$key]])
+    if (isTRUE(penalties7::beta_quadratic(pen, th))) next
+    if (length(penalties7::penalty_kinks(pen, th))) next
+    pos <- u$index
+    bt <- unit_beta(u, coef, params)
+    E <- as_dense(penalties7::penalty_d2hessian_beta(pen, bt, th, bl[pos],
+                                                     bm[pos])) +
+      as_dense(penalties7::penalty_dhessian_beta(pen, bt, th, bml[pos]))
+    # the hyperparameters of row r this penalty owns, one member line apiece;
+    # a row owned by another penalty moves this one's Hessian by nothing
+    owned <- function(r, v) {
+      nms <- mem$name[mem$row == r & mem$parameter == u$param &
+                        mem$term == u$key]
+      if (!length(nms)) return(0)
+      D <- penalties7::penalty_dhessian_beta_theta(pen, bt, th, v[pos])
+      Reduce(`+`, lapply(nms, function(nm) as_dense(D[[nm]])))
+    }
+    E <- E + owned(m, bl) + owned(l, bm)
+    if (is.null(out)) out <- matrix(0, total, total)
+    out[pos, pos] <- out[pos, pos] + E
   }
   out
 }

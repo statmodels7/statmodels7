@@ -22,11 +22,12 @@ NULL
 #
 #   b_ml = -J^-1 ( (S_l + T[b_l]) b_m + S_m b_l + c_ml ).
 #
-# Every term of dK_m/dt_l that would carry a third or fourth derivative of the
-# PENALTY in beta is absent because the route requires beta_quadratic(); what
-# is left of T and U is the log-likelihood's own third and fourth derivatives
-# in the link-scale predictors, which distributions7 carries in closed form for
-# every family.
+# T and U are the log-likelihood's own third and fourth derivatives in the
+# link-scale predictors, which distributions7 carries in closed form for every
+# family, plus -- for a penalty whose Hessian depends on the coefficients --
+# the penalty's: dS/dbeta[v] inside T, and in dK_m/dt_l the second movement
+# d2S/dbeta2[b_l, b_m] and dS_m/dbeta[b_l] + dS_l/dbeta[b_m], which
+# statmod_penalty_second() assembles.
 
 #' The Exact Hessian of the Marginal Criterion
 #'
@@ -211,6 +212,12 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
                            Hl, units)
     Tb + R + t(R)
   })
+  # a penalty whose Hessian moves with the coefficients moves K along b_m too;
+  # NULL, and nothing added, where every penalty is quadratic in them
+  Tm <- lapply(seq_len(nh), function(m) {
+    P <- statmod_penalty_dbeta(spec, design, coef, hyper, bhat[[m]], total)
+    if (is.null(P)) Tm[[m]] else Tm[[m]] + P
+  })
   Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
 
   out <- matrix(0, nh, nh)
@@ -252,6 +259,9 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
           trace_refresh4(spec, M, params, npar, Hl, dref[[l]], dref[[m]],
                          units, G, d3, bhat[[l]], f2, acurv)
       }
+      E2 <- statmod_penalty_second(spec, design, coef, hyper, idx, m, l,
+                                   bhat[[m]], bhat[[l]], bml, total)
+      if (!is.null(E2)) tr_dKm <- tr_dKm + sum(M * E2)
       v <- -pieces$rho2[m, l] +
         sum(bhat[[m]] * as.numeric(Jmat %*% bhat[[l]])) +
         sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -
