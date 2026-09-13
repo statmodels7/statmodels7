@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.130.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.131.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.131.0" id="statmodels7-01310">statmodels7 0.131.0<a class="anchor" aria-label="anchor" href="#statmodels7-01310"></a></h2>
+<ul><li>
+<strong>The outer Hessian’s stencil refits its probes at a tolerance of <code>1e-10</code></strong> (<code><a href="../reference/hess_stencil_step.html">hess_stencil_inner_tol()</a></code>), with a budget of at least 500 iterations and without the fit’s own stopping rule. At the fit’s <code>1e-6</code> a probe could stop where it started, the score there being already under the threshold, and the difference then missed the mode’s movement by an amount constant in the step, which the check at three times the step passed. Measured at <code>n = 4000</code> on one smooth against the analytic Hessian: <code>4.8e-02</code> on a gaussian, where the check refused and the certificate on the expected information had no curvature to read, <code>1.6e-04</code> on a gamma and a negative binomial and <code>9.1e-03</code> on a Student t prior over a random effect, all accepted; now <code>4.5e-06</code>, <code>2.8e-06</code>, <code>5.7e-06</code> and <code>2.8e-04</code>. A penalized filter reads <code>2.6e-08</code> either way and a mixed covariance class at the boundary of its chart is still refused. The stencil costs 1.1 to 1.9 times what it did, paid only where a curvature is differenced. The step stays <code>1e-3</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.130.0" id="statmodels7-01300">statmodels7 0.130.0<a class="anchor" aria-label="anchor" href="#statmodels7-01300"></a></h2>
 <ul><li>

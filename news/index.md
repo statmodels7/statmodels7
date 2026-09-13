@@ -1,5 +1,25 @@
 # Changelog
 
+## statmodels7 0.131.0
+
+- **The outer Hessian’s stencil refits its probes at a tolerance of
+  `1e-10`**
+  ([`hess_stencil_inner_tol()`](https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.md)),
+  with a budget of at least 500 iterations and without the fit’s own
+  stopping rule. At the fit’s `1e-6` a probe could stop where it
+  started, the score there being already under the threshold, and the
+  difference then missed the mode’s movement by an amount constant in
+  the step, which the check at three times the step passed. Measured at
+  `n = 4000` on one smooth against the analytic Hessian: `4.8e-02` on a
+  gaussian, where the check refused and the certificate on the expected
+  information had no curvature to read, `1.6e-04` on a gamma and a
+  negative binomial and `9.1e-03` on a Student t prior over a random
+  effect, all accepted; now `4.5e-06`, `2.8e-06`, `5.7e-06` and
+  `2.8e-04`. A penalized filter reads `2.6e-08` either way and a mixed
+  covariance class at the boundary of its chart is still refused. The
+  stencil costs 1.1 to 1.9 times what it did, paid only where a
+  curvature is differenced. The step stays `1e-3`.
+
 ## statmodels7 0.130.0
 
 - **The exact outer Hessian beside a penalty whose Hessian moves with
