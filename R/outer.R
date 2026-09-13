@@ -1006,7 +1006,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   chose_optimizer <- is.null(optimizer)
   if (chose_optimizer) {
     optimizer <- outer_default_optimizer(
-      exact, outer_newton_ok(spec, design, exact2), mixed_penalized(spec, design))
+      exact, outer_newton_ok(spec, design, exact2, method),
+      mixed_penalized(spec, design))
   }
   # Whether the TRACE prints a gradient. It reports what the search is using,
   # so where the search uses none there is none to report, and asking would
@@ -1674,8 +1675,18 @@ outer_default_optimizer <- function(exact, use_hess, mixed = FALSE) {
 #' @seealso [outer_default_optimizer()], [outer_gradient_ok()]
 #'
 #' @keywords internal
-outer_newton_ok <- function(spec, design, exact2) {
+outer_newton_ok <- function(spec, design, exact2, method = NULL) {
   if (!isTRUE(exact2)) return(FALSE)
+  # THE EXPECTED ROUTE keeps lbfgs(), measured before its order 2 was opened
+  # and decided with that measurement (piano_derivate_esatte.txt, D5). With the
+  # exact Hessian emulated by the stencil and the search chosen by this
+  # package, newton() reaches the criterion lbfgs() reaches to 3e-6 on six
+  # models and is slower or level in wall time on all six, each of its
+  # evaluations paying a Hessian: 0.39 against 0.34 s on a gaussian smooth,
+  # 0.41 against 0.25 on a Poisson one, 1.11 against 0.99 on a gamma, 0.80
+  # against 0.69 on a negative binomial, 1.26 against 1.25 on a beta, 4.50
+  # against 3.44 on three smooths beside a random effect.
+  if (!is.null(method) && identical(method@hessian, "expected")) return(FALSE)
   # A MODEL CARRYING A STRUCTURAL TERM keeps lbfgs(), and that is a
   # measurement rather than a limitation. Its Hessian exists now --
   # statmod_structural_hess() assembles it on the joint vector -- and each

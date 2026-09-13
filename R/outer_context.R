@@ -609,6 +609,46 @@ ctx_kmove <- function(ctx, spec, design, coef, hyper, method) {
 }
 
 
+#' How the Expected Information Moves With the Coefficients, Twice
+#'
+#' @description
+#' \eqn{\partial^2\,\mathbb{E}[\ell'']/\partial\eta^2}, the array the expected
+#' route's outer Hessian traces twice-contracted against the leverage diagonal,
+#' together with its key builder.
+#'
+#' @details
+#' It is read only on the expected route, where [outer_gradient_ok()] has
+#' already asked [expected_deriv2_ok()]. The components are symmetric in the
+#' information's pair and in the pair differentiated in, separately, so they are
+#' read through [distributions7::d2expected_key()] and never through the
+#' observed route's sorted quadruple.
+#'
+#' @param ctx A context, or `NULL`.
+#' @param spec,design,coef,hyper The fallback arguments.
+#'
+#' @return A list with `deriv` and `key`.
+#'
+#' @seealso [ctx_kmove()], [statmod_marginal_hess()]
+#'
+#' @keywords internal
+ctx_kmove2 <- function(ctx, spec, design, coef, hyper) {
+  params <- spec@distrib@params
+  build <- function() {
+    th <- ctx_theta(ctx, spec, design, coef, hyper)
+    distributions7::distrib_d2expected_hessian(spec@distrib, spec@response, th,
+                                               scale = "link",
+                                               threads = spec@threads)
+  }
+  v <- if (ctx_usable(ctx, coef, hyper)) {
+    if (is.null(ctx$d2exp)) ctx$d2exp <- build()
+    ctx$d2exp
+  } else build()
+  list(deriv = v,
+       key = function(a, b, k, q)
+         distributions7::d2expected_key(params, a, b, k, q))
+}
+
+
 #' The Approximation a Context Was Built With
 #'
 #' @param ctx A context, or `NULL`.

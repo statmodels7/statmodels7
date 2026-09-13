@@ -103,11 +103,21 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     # wherever the family writes its expected information out and refuses
     # elsewhere, so the family is ASKED rather than tested.
     #
-    # Order 2 is not extended: the criterion's own second derivative would
-    # want the next order of the same object, and lbfgs on the exact gradient
-    # already buys most of what newton would -- which is the same judgement
-    # the structural branch below records.
-    if (order >= 2L) return(FALSE)
+    # ORDER 2 reads the next order of the same object,
+    # d2E[l'']/deta^2, which a family supplies only where it wrote it out
+    # (distributions7::distrib_d2expected_hessian(), five families in a
+    # compiled kernel). It is admitted there for the marginal criteria alone:
+    # the prediction-error route's order-2 assembly is written for the
+    # observed information, a block that moves with its coefficients would
+    # need the expected information's movement through dX/dbeta, which nothing
+    # supplies, and a structural term's criterion has no expected twin.
+    # Everywhere else statmod_marginal_hess() differences the exact gradient.
+    if (order >= 2L) {
+      if (!method@kind %in% c("ml", "reml")) return(FALSE)
+      if (length(attr(design, "refresh"))) return(FALSE)
+      if (length(attr(design, "structural"))) return(FALSE)
+      if (!expected_deriv2_ok(spec@distrib)) return(FALSE)
+    }
     if (!expected_deriv_ok(spec@distrib)) return(FALSE)
     # and not where a structural term is penalized: there the criterion is
     # statmod_marginal_full(), which assembles the joint curvature from
@@ -317,6 +327,43 @@ expected_deriv_ok <- function(distrib) {
   if (is.null(y)) return(FALSE)
   ok <- tryCatch({
     distributions7::distrib_dexpected_hessian(distrib, y, th, scale = "link")
+    TRUE
+  }, error = function(e) FALSE)
+  isTRUE(ok)
+}
+
+
+#' Does the Family Supply the Expected Information's Second Derivative?
+#'
+#' @description
+#' Whether [distributions7::distrib_d2expected_hessian()] answers for this
+#' family, asked at a probe.
+#'
+#' @details
+#' There is no numerical default in \pkg{distributions7} -- a difference of the
+#' first derivative, itself a difference for most families, would be the nested
+#' differencing that package forbids -- so the families that answer are the
+#' ones that wrote the derivative out: `gaussian1_distrib()`,
+#' `poisson_distrib()`, `gamma1_distrib()`, `negbin2_distrib()` and
+#' `beta1_distrib()`. Every other family keeps the expected route's order 2 on
+#' [statmod_hess_stencil()].
+#'
+#' @param distrib A \pkg{distributions7} distribution.
+#'
+#' @return A single logical.
+#'
+#' @seealso [outer_gradient_ok()], [expected_deriv_ok()]
+#'
+#' @keywords internal
+expected_deriv2_ok <- function(distrib) {
+  th <- tryCatch(distributions7::generate_random_theta(distrib),
+                 error = function(e) NULL)
+  if (is.null(th)) return(FALSE)
+  y <- tryCatch(distributions7::distrib_rng(distrib, 1L, th),
+                error = function(e) NULL)
+  if (is.null(y)) return(FALSE)
+  ok <- tryCatch({
+    distributions7::distrib_d2expected_hessian(distrib, y, th, scale = "link")
     TRUE
   }, error = function(e) FALSE)
   isTRUE(ok)
@@ -1970,15 +2017,25 @@ leverage_pairs <- function(ta, tb, Mab, n, threads = 1L) {
 #' @param tv The direction the derivative is contracted in.
 #' @param tu A second direction, for a fourth derivative; `NULL` for a
 #'   third.
+#' @param key A function of the three or four parameter positions returning
+#'   the component of `deriv` to read, or `NULL` for the observed route's keys,
+#'   which are symmetric in every position. On the expected route `deriv` is
+#'   the derivative of the expected information, symmetric in its first pair
+#'   and in its second separately, and carries its own builder.
 #'
 #' @return A single number.
 #'
 #' @seealso [contract3()], [contract4()]
 #'
 #' @keywords internal
-trace_design_form <- function(spec, G, deriv, params, npar, tv, tu = NULL) {
+trace_design_form <- function(spec, G, deriv, params, npar, tv, tu = NULL,
+                              key = NULL) {
   n <- spec@n_obs
   keys <- names(deriv)
+  if (is.null(key)) {
+    key <- if (is.null(tu)) function(a, b, k) d3_key(params, a, b, k, keys)
+           else function(a, b, k, q) d4_key(params, a, b, k, q, keys)
+  }
   total <- 0
   for (a in seq_along(params)) {
     if (npar[a] == 0L) next
@@ -1988,11 +2045,11 @@ trace_design_form <- function(spec, G, deriv, params, npar, tv, tu = NULL) {
       for (k in seq_along(params)) {
         if (npar[k] == 0L) next
         if (is.null(tu)) {
-          w <- w + rep_len(deriv[[d3_key(params, a, b, k, keys)]], n) * tv[[k]]
+          w <- w + rep_len(deriv[[key(a, b, k)]], n) * tv[[k]]
         } else {
           for (q in seq_along(params)) {
             if (npar[q] == 0L) next
-            w <- w + rep_len(deriv[[d4_key(params, a, b, k, q, keys)]], n) *
+            w <- w + rep_len(deriv[[key(a, b, k, q)]], n) *
               tv[[k]] * tu[[q]]
           }
         }

@@ -1,3 +1,50 @@
+# statmodels7 0.132.0
+
+* **The exact outer Hessian on the expected information**, for `reml()` and
+  `ml()` wherever the family writes out the second derivative of its expected
+  information -- `gaussian1_distrib()`, `poisson_distrib()`,
+  `gamma1_distrib()`, `negbin2_distrib()` and `beta1_distrib()` since
+  distributions7 0.59.0, read through the new `ctx_kmove2()`.
+  `outer_gradient_ok()` admits order 2 there and nowhere else on that route: a
+  prediction-error criterion, a block that moves with its coefficients and a
+  structural term keep the stencil. The assembly in `statmod_marginal_hess()`
+  reads TWO matrices, which on the observed route coincide: the criterion's
+  \eqn{K = H_{exp} + S} for the determinant -- \eqn{M}, the leverage diagonal,
+  \eqn{\mathrm{tr}(MK_lMK_m)} and \eqn{\mathrm{tr}(M\,\partial K_m/\partial t_l)}
+  with the derivatives of the expected information -- and
+  \eqn{J = H_{obs} + S} for how the mode moves, \eqn{b_m}, \eqn{b_{ml}}, the
+  observed third derivative in the right-hand side of \eqn{b_{ml}} and
+  \eqn{b_m'Jb_l}. Against a central difference of the exact gradient with the
+  mode refitted, on two penalized equations at 600 observations, the gap at
+  steps `1e-2`, `3e-3` and `1e-3` is `1.6e-06`, `7.1e-07`, `7.9e-07` on a
+  gamma, `2.0e-06`, `1.7e-07`, `2.9e-07` on a beta and `8.6e-07`, `7.8e-08`,
+  `8.7e-09` on a Poisson -- floors of the size the observed route's own
+  analytic Hessian reaches on the same data (`1.8e-06`, `7.7e-07`, `8.7e-07`
+  on the gamma) -- and at the 4000
+  observations of a single smooth it converges O(h^2), `1.4e-05`, `1.1e-06`,
+  `3.5e-08`, where the stencil the certificate used to read sits `7.6e-05`
+  away. Reading one matrix for both, in either direction, fails the new test.
+* **The certificate on the expected route no longer differences.** Measured at
+  4000 observations on one smooth, its share of the fit goes from 49 to 16 per
+  cent on a gaussian, 42 to 12 on a Poisson, 47 to 16 on a gamma, 48 to 18 on
+  a negative binomial, 29 to 10 on a beta, and from 94 to 11 per cent -- 3.14 s
+  to 0.38 s -- on three smooths beside a random effect over 40 levels.
+* **`statmod_hyper_vcov()`, `hyper_correction()` and
+  `statmod_edf_correction()` on the expected route read a curvature that is the
+  criterion's.** They call `statmod_marginal_hess()` without the order-2 gate,
+  and on the expected route the assembly traced the OBSERVED third and fourth
+  derivatives against the EXPECTED penalized matrix: 1e-4 to 3e-4 relative
+  against a second difference of the criterion at 4000 observations, 1.6 per
+  cent on a hyperparameter's variance at 400, exact only on the Poisson. A
+  family that answers now reads the analytic Hessian, any other the stencil of
+  the exact gradient.
+* The search on the expected route keeps `lbfgs()` (`outer_newton_ok()` takes
+  the method): with the exact Hessian emulated and the search chosen by the
+  package, `newton()` reaches the same criterion to `3e-6` on six models and is
+  slower or level in wall time on all six.
+* Negative control: the lots 0-2 battery, every model on the observed route,
+  is identical to 0.131.0 on all 168 leaves.
+
 # statmodels7 0.131.0
 
 * **The outer Hessian's stencil refits its probes at a tolerance of `1e-10`**

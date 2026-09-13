@@ -235,10 +235,12 @@ test_that("with no curvature at all there is no verdict but still a boundary", {
 
 test_that("the curvature is differenced where the form has no analytic one", {
   # Two forms carry an exact outer GRADIENT and no analytic Hessian: a
-  # criterion asked for on the expected information, and a penalty whose
-  # Hessian moves with the coefficients beside a structural term.
-  # Both are certified, by differencing the exact gradient, and the route is
-  # reported so a reader can tell which was taken.
+  # criterion asked for on the expected information of a family that does not
+  # write out its second derivative, and a penalty whose Hessian moves with the
+  # coefficients beside a structural term. Both are certified, by differencing
+  # the exact gradient, and the route is reported so a reader can tell which
+  # was taken. A gaussian1 writes that derivative out, so the expected route is
+  # asked of a gaussian2, the same law in mean and variance.
   skip_on_cran()
   set.seed(41)
   n <- 300
@@ -247,7 +249,7 @@ test_that("the curvature is differenced where the form has no analytic one", {
   f <- y ~ s(x, bspline_smooth(k = 10))
 
   obs <- statmod(f, gaussian1_distrib(), d, outer_criterion = reml())
-  exp_ <- statmod(f, gaussian1_distrib(), d, outer_criterion = reml("expected"))
+  exp_ <- statmod(f, gaussian2_distrib(), d, outer_criterion = reml("expected"))
   co <- statmod_certificate(obs)
   ce <- statmod_certificate(exp_)
   expect_identical(co$curvature, "analytic")

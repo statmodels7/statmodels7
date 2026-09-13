@@ -103,6 +103,22 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                 basis, inner))
   }
+  # ⚠️ ON THE EXPECTED ROUTE THE ASSEMBLY BELOW IS THE CRITERION'S SECOND
+  # DERIVATIVE ONLY WHERE outer_gradient_ok() ADMITS ORDER 2, which asks the
+  # family for d2E[l'']/deta^2. It used to run ungated for the three callers
+  # that reach it without that gate -- statmod_hyper_vcov(),
+  # hyper_correction() and statmod_edf_correction() -- and there it traced the
+  # OBSERVED third and fourth derivatives against the EXPECTED penalized
+  # matrix. Measured on one smooth at 4000 observations, 1e-4 to 3e-4 relative
+  # against a second difference of the criterion (gamma1 -2.90522 against
+  # -2.90568, beta1 -3.24139 against -3.24222), exact only on the Poisson,
+  # whose log link is canonical. Where order 2 is not admitted the exact
+  # gradient is differenced instead.
+  expected <- identical(method@hessian, "expected")
+  if (expected && !outer_gradient_ok(spec, design, idx, method, 2L)) {
+    return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
+                                basis, inner))
+  }
   # the block AT THE MODE, for the reason statmod_marginal_grad() records: the
   # leverage diagonal and the contractions must read the same block K was
   # assembled on, and for a refreshable term the design as it arrives is the
@@ -116,20 +132,30 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
 
   # one assembly and one factorization for the criterion, this Hessian and the
   # gradient it reads at the end, where there used to be three and two
-  # order 2 is refused on the expected route by outer_gradient_ok(), so this
-  # reads the observed matrix; it is passed rather than assumed so that a
-  # caller reaching here directly gets the criterion's own.
-  pen <- ctx_penalized(ctx, spec, design, coef, hyper,
-                       identical(method@hessian, "expected"))
+  # ⚠️ TWO MATRICES ON THE EXPECTED ROUTE, and this assembly reads each in the
+  # places it belongs. The determinant is of the criterion's K = H_exp + S, so
+  # M, the traces tr(M K_l M K_m) and tr(M dK_m/dt_l), and the leverage
+  # diagonal are read off it, with dK/dbeta the derivative of the expected
+  # information (dE, d2E). The mode is where the penalized LIKELIHOOD's score
+  # vanishes, so how it moves -- b_m, b_ml, the right-hand side of b_ml with
+  # the observed third derivative, and b_m' J b_l -- is governed by
+  # J = H_obs + S whatever the criterion's matrix is. On the observed route
+  # the two coincide, which is why one T served both.
+  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected)
   if (is.null(pen)) return(NULL)
-  K <- pen$K
-  Kinv <- pen$inv
-  M <- ctx_trace_matrix(ctx, pen, basis,
-                        identical(method@hessian, "expected"))
+  mode_pen <- if (expected) {
+    ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
+  } else pen
+  if (is.null(mode_pen)) return(NULL)
+  K <- mode_pen$K
+  Kinv <- mode_pen$inv
+  M <- ctx_trace_matrix(ctx, pen, basis, expected)
   if (is.null(M)) return(NULL)
 
   d3 <- ctx_deriv(ctx, spec, design, coef, hyper, 3L)
-  d4 <- ctx_deriv(ctx, spec, design, coef, hyper, 4L)
+  d4 <- if (expected) NULL else ctx_deriv(ctx, spec, design, coef, hyper, 4L)
+  kE <- if (expected) ctx_kmove(ctx, spec, design, coef, hyper, method) else NULL
+  kE2 <- if (expected) ctx_kmove2(ctx, spec, design, coef, hyper) else NULL
   G <- ctx_leverage(ctx, design, M, params, npar, offs, spec@threads)
 
   # ⚠️ dX/dbeta reaches this assembly in THREE places -- the matrix dK/dt_m
@@ -214,11 +240,23 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   })
   # a penalty whose Hessian moves with the coefficients moves K along b_m too;
   # NULL, and nothing added, where every penalty is quadratic in them
+  Pm <- lapply(seq_len(nh), function(m)
+    statmod_penalty_dbeta(spec, design, coef, hyper, bhat[[m]], total))
   Tm <- lapply(seq_len(nh), function(m) {
-    P <- statmod_penalty_dbeta(spec, design, coef, hyper, bhat[[m]], total)
-    if (is.null(P)) Tm[[m]] else Tm[[m]] + P
+    if (is.null(Pm[[m]])) Tm[[m]] else Tm[[m]] + Pm[[m]]
   })
-  Km <- lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
+  # the determinant's matrix moves by the derivative of ITS information, which
+  # on the expected route is dE and not the observed third derivative Tm holds
+  Km <- if (expected) {
+    lapply(seq_len(nh), function(m) {
+      TE <- contract3(spec, design, kE$deriv, params, npar, offs, total,
+                      tv[[m]], key = kE$key)
+      if (!is.null(Pm[[m]])) TE <- TE + Pm[[m]]
+      pieces$S[[m]] + TE
+    })
+  } else {
+    lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
+  }
 
   out <- matrix(0, nh, nh)
   for (m in seq_len(nh)) {
@@ -250,10 +288,19 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       # per-observation diagonal G. Measured at 8000 observations and 69
       # coefficients, forming the matrix and tracing costs 25.5 ms where the
       # sum costs 0.031 ms, and the pair loop does it twice per pair.
-      tr_dKm <- sum(M * Sml) +
-        trace_design_form(spec, G, d4, params, npar, tv[[l]], tv[[m]]) +
-        trace_design_form(spec, G, d3, params, npar,
-                          block_predictors(design, params, npar, offs, bml))
+      tr_dKm <- if (expected) {
+        sum(M * Sml) +
+          trace_design_form(spec, G, kE2$deriv, params, npar, tv[[l]], tv[[m]],
+                            key = kE2$key) +
+          trace_design_form(spec, G, kE$deriv, params, npar,
+                            block_predictors(design, params, npar, offs, bml),
+                            key = kE$key)
+      } else {
+        sum(M * Sml) +
+          trace_design_form(spec, G, d4, params, npar, tv[[l]], tv[[m]]) +
+          trace_design_form(spec, G, d3, params, npar,
+                            block_predictors(design, params, npar, offs, bml))
+      }
       if (length(units)) {
         tr_dKm <- tr_dKm + sum(uref * bml) +
           trace_refresh4(spec, M, params, npar, Hl, dref[[l]], dref[[m]],

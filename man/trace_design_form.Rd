@@ -4,7 +4,7 @@
 \alias{trace_design_form}
 \title{The Trace Against a Contraction, Without Forming It}
 \usage{
-trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL)
+trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL, key = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -19,6 +19,12 @@ trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL)
 
 \item{tu}{A second direction, for a fourth derivative; \code{NULL} for a
 third.}
+
+\item{key}{A function of the three or four parameter positions returning
+the component of \code{deriv} to read, or \code{NULL} for the observed route's keys,
+which are symmetric in every position. On the expected route \code{deriv} is
+the derivative of the expected information, symmetric in its first pair
+and in its second separately, and carries its own builder.}
 }
 \value{
 A single number.

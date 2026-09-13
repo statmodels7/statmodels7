@@ -4,7 +4,7 @@
 \alias{outer_newton_ok}
 \title{Whether the Default Search Steers by the Exact Hessian}
 \usage{
-outer_newton_ok(spec, design, exact2)
+outer_newton_ok(spec, design, exact2, method = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
