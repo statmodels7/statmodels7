@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.131.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.132.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,17 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.132.0" id="statmodels7-01320">statmodels7 0.132.0<a class="anchor" aria-label="anchor" href="#statmodels7-01320"></a></h2>
+<ul><li>
+<strong>The exact outer Hessian on the expected information</strong>, for <code><a href="../reference/reml.html">reml()</a></code> and <code><a href="../reference/reml.html">ml()</a></code> wherever the family writes out the second derivative of its expected information – <code>gaussian1_distrib()</code>, <code>poisson_distrib()</code>, <code>gamma1_distrib()</code>, <code>negbin2_distrib()</code> and <code>beta1_distrib()</code> since distributions7 0.59.0, read through the new <code><a href="../reference/ctx_kmove2.html">ctx_kmove2()</a></code>. <code><a href="../reference/outer_gradient_ok.html">outer_gradient_ok()</a></code> admits order 2 there and nowhere else on that route: a prediction-error criterion, a block that moves with its coefficients and a structural term keep the stencil. The assembly in <code><a href="../reference/statmod_marginal_hess.html">statmod_marginal_hess()</a></code> reads TWO matrices, which on the observed route coincide: the criterion’s  for the determinant – , the leverage diagonal,  and  with the derivatives of the expected information – and  for how the mode moves, , , the observed third derivative in the right-hand side of  and . Against a central difference of the exact gradient with the mode refitted, on two penalized equations at 600 observations, the gap at steps <code>1e-2</code>, <code>3e-3</code> and <code>1e-3</code> is <code>1.6e-06</code>, <code>7.1e-07</code>, <code>7.9e-07</code> on a gamma, <code>2.0e-06</code>, <code>1.7e-07</code>, <code>2.9e-07</code> on a beta and <code>8.6e-07</code>, <code>7.8e-08</code>, <code>8.7e-09</code> on a Poisson – floors of the size the observed route’s own analytic Hessian reaches on the same data (<code>1.8e-06</code>, <code>7.7e-07</code>, <code>8.7e-07</code> on the gamma) – and at the 4000 observations of a single smooth it converges O(h^2), <code>1.4e-05</code>, <code>1.1e-06</code>, <code>3.5e-08</code>, where the stencil the certificate used to read sits <code>7.6e-05</code> away. Reading one matrix for both, in either direction, fails the new test.</li>
+<li>
+<strong>The certificate on the expected route no longer differences.</strong> Measured at 4000 observations on one smooth, its share of the fit goes from 49 to 16 per cent on a gaussian, 42 to 12 on a Poisson, 47 to 16 on a gamma, 48 to 18 on a negative binomial, 29 to 10 on a beta, and from 94 to 11 per cent – 3.14 s to 0.38 s – on three smooths beside a random effect over 40 levels.</li>
+<li>
+<strong><code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code>, <code><a href="../reference/hyper_correction.html">hyper_correction()</a></code> and <code><a href="../reference/statmod_edf_correction.html">statmod_edf_correction()</a></code> on the expected route read a curvature that is the criterion’s.</strong> They call <code><a href="../reference/statmod_marginal_hess.html">statmod_marginal_hess()</a></code> without the order-2 gate, and on the expected route the assembly traced the OBSERVED third and fourth derivatives against the EXPECTED penalized matrix: 1e-4 to 3e-4 relative against a second difference of the criterion at 4000 observations, 1.6 per cent on a hyperparameter’s variance at 400, exact only on the Poisson. A family that answers now reads the analytic Hessian, any other the stencil of the exact gradient.</li>
+<li>The search on the expected route keeps <code>lbfgs()</code> (<code><a href="../reference/outer_newton_ok.html">outer_newton_ok()</a></code> takes the method): with the exact Hessian emulated and the search chosen by the package, <code>newton()</code> reaches the same criterion to <code>3e-6</code> on six models and is slower or level in wall time on all six.</li>
+<li>Negative control: the lots 0-2 battery, every model on the observed route, is identical to 0.131.0 on all 168 leaves.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.131.0" id="statmodels7-01310">statmodels7 0.131.0<a class="anchor" aria-label="anchor" href="#statmodels7-01310"></a></h2>
 <ul><li>

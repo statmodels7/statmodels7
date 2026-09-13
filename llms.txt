@@ -550,6 +550,9 @@ exported, and none is needed to use the package.
 - [`ctx_kmove()`](https://statmodels7.github.io/statmodels7/reference/ctx_kmove.md)
   : How the Penalized Matrix Moves With the Coefficients
 
+- [`ctx_kmove2()`](https://statmodels7.github.io/statmodels7/reference/ctx_kmove2.md)
+  : How the Expected Information Moves With the Coefficients, Twice
+
 - [`ctx_leverage()`](https://statmodels7.github.io/statmodels7/reference/ctx_leverage.md)
   : The Per-Observation Diagonals at the Context's Point
 
@@ -624,6 +627,9 @@ exported, and none is needed to use the package.
 
 - [`eval_offsets()`](https://statmodels7.github.io/statmodels7/reference/eval_offsets.md)
   : Evaluate the Offsets a Formula Names
+
+- [`expected_deriv2_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.md)
+  : Does the Family Supply the Expected Information's Second Derivative?
 
 - [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
   : Does the Family Supply the Expected Information's Derivative?

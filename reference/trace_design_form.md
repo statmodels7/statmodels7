@@ -6,7 +6,7 @@ penalized objective contracted once, or the fourth contracted twice.
 ## Usage
 
 ``` r
-trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL)
+trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL, key = NULL)
 ```
 
 ## Arguments
@@ -36,6 +36,14 @@ trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL)
 - tu:
 
   A second direction, for a fourth derivative; `NULL` for a third.
+
+- key:
+
+  A function of the three or four parameter positions returning the
+  component of `deriv` to read, or `NULL` for the observed route's keys,
+  which are symmetric in every position. On the expected route `deriv`
+  is the derivative of the expected information, symmetric in its first
+  pair and in its second separately, and carries its own builder.
 
 ## Value
 

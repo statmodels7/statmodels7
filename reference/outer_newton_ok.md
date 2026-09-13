@@ -8,7 +8,7 @@ whether the Hessian exists.
 ## Usage
 
 ``` r
-outer_newton_ok(spec, design, exact2)
+outer_newton_ok(spec, design, exact2, method = NULL)
 ```
 
 ## Arguments

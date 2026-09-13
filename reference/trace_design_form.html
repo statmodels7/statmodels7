@@ -9,7 +9,7 @@ penalized objective contracted once, or the fourth contracted twice."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.131.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.132.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ penalized objective contracted once, or the fourth contracted twice.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">trace_design_form</span><span class="op">(</span><span class="va">spec</span>, <span class="va">G</span>, <span class="va">deriv</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">tv</span>, tu <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">trace_design_form</span><span class="op">(</span><span class="va">spec</span>, <span class="va">G</span>, <span class="va">deriv</span>, <span class="va">params</span>, <span class="va">npar</span>, <span class="va">tv</span>, tu <span class="op">=</span> <span class="cn">NULL</span>, key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,6 +75,14 @@ penalized objective contracted once, or the fourth contracted twice.</p>
 <dt id="arg-tu">tu<a class="anchor" aria-label="anchor" href="#arg-tu"></a></dt>
 <dd><p>A second direction, for a fourth derivative; <code>NULL</code> for a
 third.</p></dd>
+
+
+<dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
+<dd><p>A function of the three or four parameter positions returning
+the component of <code>deriv</code> to read, or <code>NULL</code> for the observed route's keys,
+which are symmetric in every position. On the expected route <code>deriv</code> is
+the derivative of the expected information, symmetric in its first pair
+and in its second separately, and carries its own builder.</p></dd>
 
 </dl></div>
     <div class="section level2">
