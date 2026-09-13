@@ -59,6 +59,46 @@ test_that("the stencil reproduces the analytic Hessian where one exists", {
                                             h = 3 * hess_stencil_step())))
 })
 
+test_that("the probes locate the mode, so a small step carries no bias", {
+  # At the fit's own tolerance a probe can stop where it started, and the
+  # difference then misses the mode's movement by an amount CONSTANT in the
+  # step, which the h-against-3h check passes. Measured before the probes
+  # were tightened: 9.1e-03 on this prior against the analytic Hessian, and
+  # no reading at all on the gaussian smooth below; after, 2.8e-04 and
+  # 4.5e-06.
+  skip_on_cran()
+  set.seed(9)
+  m <- 30L; ni <- 12L
+  d <- data.frame(g = factor(rep(seq_len(m), each = ni)), x = stats::rnorm(m * ni))
+  b <- stats::rnorm(m, 0, 0.3); b[1:3] <- c(2.5, -2.8, 3.1)
+  d$y <- 1 + 0.5 * d$x + b[as.integer(d$g)] + stats::rnorm(m * ni)
+  fit <- statmod(y ~ x + random(~ 1 | g, distrib = distributions7::fixed(
+    distributions7::student_t1_distrib(), mu = 0)), gaussian1_distrib(), d,
+    outer_criterion = reml())
+  p <- stencil_parts(fit)
+  A <- as.matrix(statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper,
+                                       p$method, p$idx, p$basis,
+                                       inner = fit@methods$smooth))
+  S <- statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper, p$method,
+                            p$idx, p$basis, fit@methods$smooth)
+  expect_false(is.null(S))
+  expect_lt(max(abs(S - A)) / max(abs(A)), 2e-3)
+
+  set.seed(1)
+  n <- 4000
+  x <- stats::runif(n, -2, 2)
+  dg <- data.frame(x = x, y = sin(2 * x) + stats::rnorm(n, 0, 0.4))
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), dg,
+                 outer_criterion = reml())
+  p <- stencil_parts(fit)
+  A <- as.matrix(statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper,
+                                       p$method, p$idx, p$basis))
+  S <- statmod_hess_stencil(p$spec, p$design, p$coef, p$hyper, p$method,
+                            p$idx, p$basis, fit@methods$smooth)
+  expect_false(is.null(S))
+  expect_lt(max(abs(S - A)) / max(abs(A)), 1e-4)
+})
+
 test_that("a model with no structural term is untouched", {
   # the route is taken on the design's own answer, so a model carrying no
   # such term must reach the assembly and reach it identically

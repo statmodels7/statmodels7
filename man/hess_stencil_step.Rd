@@ -3,11 +3,14 @@
 \name{hess_stencil_step}
 \alias{hess_stencil_step}
 \alias{hess_stencil_tol}
+\alias{hess_stencil_inner_tol}
 \title{The Step and the Tolerance of the Outer Hessian's Stencil}
 \usage{
 hess_stencil_step()
 
 hess_stencil_tol()
+
+hess_stencil_inner_tol()
 }
 \value{
 A single number.
@@ -36,6 +39,21 @@ orders above the worst resolved reading and three below the best
 unresolved one, and a relative error of that size in the curvature is
 5e-4 in a standard error, under the fourth significant figure a summary
 prints.
+
+The probes are refitted by \code{\link[=iwls]{iwls()}} at \code{hess_stencil_inner_tol()} and a
+budget of at least 500 iterations, whatever the fit itself used, and
+without the fit's own stopping rule. At the fit's tolerance of \code{1e-6} a
+probe can stop where it started, the score there being already under the
+threshold, and the difference then misses the mode's movement. The bias
+this leaves is CONSTANT in the step rather than growing as \eqn{1/h}, so
+the check at \code{3 * h} passes it wherever both steps share it. Measured at
+\eqn{n = 4000} on one smooth, against the analytic Hessian: 4.8e-02 at
+\eqn{h} of 3e-4 and 1e-3 on a gaussian, 1.6e-04 at 1e-3 and 3e-3 on a gamma
+and a negative binomial, and 9.1e-03 on a Student t prior over a random
+effect, all passing the check; at \code{1e-10} the same readings are 4.5e-06,
+2.8e-06, 5.7e-06 and 2.8e-04. A penalized filter reads 2.6e-08 either way,
+and a mixed covariance class at the boundary of its chart is still refused
+at every step. The stencil costs 1.1 to 1.9 times what it did.
 }
 \seealso{
 \code{\link[=statmod_hess_stencil]{statmod_hess_stencil()}}

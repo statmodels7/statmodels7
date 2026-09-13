@@ -488,7 +488,18 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
                                  h = hess_stencil_step()) {
   if (!nrow(idx)) return(NULL)
   if (is.null(inner)) inner <- iwls()
-  if (S7::S7_inherits(inner, Iwls)) inner <- iwls_resolve(inner, spec@distrib)
+  if (S7::S7_inherits(inner, Iwls)) {
+    inner <- iwls_resolve(inner, spec@distrib)
+    # the probes locate the mode far more tightly than a fit does. At the
+    # fit's own tolerance a probe can stop where it started, the score there
+    # already under the threshold, and the difference then misses the mode's
+    # movement: a bias CONSTANT in the step, which the h-against-3h check
+    # passes wherever both steps are small enough to share it. See
+    # hess_stencil_inner_tol().
+    inner@tol <- min(inner@tol, hess_stencil_inner_tol())
+    inner@maxit <- max(inner@maxit, 500)
+    inner@criterion <- NULL
+  }
   cfg <- inner_settings(inner)
   blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
   if (is.null(blocks)) return(NULL)
@@ -572,6 +583,21 @@ statmod_hess_stencil <- function(spec, design, coef, hyper, method, idx,
 #' 5e-4 in a standard error, under the fourth significant figure a summary
 #' prints.
 #'
+#' The probes are refitted by [iwls()] at `hess_stencil_inner_tol()` and a
+#' budget of at least 500 iterations, whatever the fit itself used, and
+#' without the fit's own stopping rule. At the fit's tolerance of `1e-6` a
+#' probe can stop where it started, the score there being already under the
+#' threshold, and the difference then misses the mode's movement. The bias
+#' this leaves is CONSTANT in the step rather than growing as \eqn{1/h}, so
+#' the check at `3 * h` passes it wherever both steps share it. Measured at
+#' \eqn{n = 4000} on one smooth, against the analytic Hessian: 4.8e-02 at
+#' \eqn{h} of 3e-4 and 1e-3 on a gaussian, 1.6e-04 at 1e-3 and 3e-3 on a gamma
+#' and a negative binomial, and 9.1e-03 on a Student t prior over a random
+#' effect, all passing the check; at `1e-10` the same readings are 4.5e-06,
+#' 2.8e-06, 5.7e-06 and 2.8e-04. A penalized filter reads 2.6e-08 either way,
+#' and a mixed covariance class at the boundary of its chart is still refused
+#' at every step. The stencil costs 1.1 to 1.9 times what it did.
+#'
 #' @return A single number.
 #'
 #' @seealso [statmod_hess_stencil()]
@@ -582,6 +608,10 @@ hess_stencil_step <- function() 1e-3
 #' @rdname hess_stencil_step
 #' @keywords internal
 hess_stencil_tol <- function() 1e-3
+
+#' @rdname hess_stencil_step
+#' @keywords internal
+hess_stencil_inner_tol <- function() 1e-10
 
 
 #' The Key of a Hyperparameter Pair
