@@ -16,8 +16,9 @@ dge$y <- rgamma(ng, shape = 4,
                 rate = 4 / exp(0.4 * sin(1.4 * dge$x) + 1))
 
 # the criterion as a function of the free hyperparameters, the mode refitted
-# from a FIXED start at each -- the same shape as test-outer-gradient.R's
-# harness, with the family and the information as parameters
+# from a FIXED start at each and polished by Newton steps -- the same shape as
+# test-outer-gradient.R's harness, with the family and the information as
+# parameters
 crit_of_eta_e <- function(formula, data, distrib, method) {
   fit0 <- statmod(formula, distrib, data, outer_criterion = NULL)
   spec <- fit0@spec
@@ -28,7 +29,8 @@ crit_of_eta_e <- function(formula, data, distrib, method) {
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
     list(hy = hy, cf = fit_at_hyper(formula, distrib, data, hy,
-                                    iwls(tol = 1e-9))$coefficients)
+                                    iwls(tol = 1e-9),
+                                    polish = TRUE)$coefficients)
   }
   list(idx = idx,
        fn = function(eta) {
@@ -57,7 +59,7 @@ test_that("the expected route's gradient matches numDeriv on a gamma", {
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   eta <- h$eta0 + 0.4
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
 
 test_that("it matches with a second penalized equation", {
@@ -70,7 +72,7 @@ test_that("it matches with a second penalized equation", {
                      distributions7::gamma1_distrib(),
                      reml(hessian = "expected"))
   eta <- h$eta0 + c(0.3, -0.4)
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-5)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
 
 test_that("it holds under ml, on the range space", {
@@ -84,13 +86,13 @@ test_that("it holds under ml, on the range space", {
   h <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 10)), dge, distributions7::gamma1_distrib(),
                      ml(hessian = "expected"))
   eta <- h$eta0 + 0.4
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 
   h2 <- crit_of_eta_e(y ~ s(x, bspline_smooth(k = 8)) | phi ~ s(z, bspline_smooth(k = 6)), dge,
                       distributions7::gamma1_distrib(),
                       ml(hessian = "expected"))
   eta2 <- h2$eta0 + c(0.3, -0.4)
-  expect_equal(h2$gr(eta2), numDeriv::grad(h2$fn, eta2), tolerance = 1e-5)
+  expect_equal(h2$gr(eta2), numDeriv::grad(h2$fn, eta2), tolerance = 1e-7)
 })
 
 test_that("the two routes are one route where the link is canonical", {
@@ -139,7 +141,7 @@ test_that("the mode's movement is read off the penalized likelihood", {
   fd <- numDeriv::grad(h300$fn, eta)
   # the wrong reading gave 1.9e-03 here; anything of that size is the
   # conflation coming back
-  expect_lt(max(abs(g - fd) / abs(fd)), 1e-5)
+  expect_lt(max(abs(g - fd) / abs(fd)), 1e-7)
 })
 
 test_that("the expected route is admitted only where the family answers", {

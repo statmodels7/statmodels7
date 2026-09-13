@@ -10,17 +10,21 @@ dh$y <- sin(1.4 * dh$x) + stats::rnorm(n, sd = 0.3)
 # GRADIENT numerically is one stencil on an analytic quantity, which is the
 # reference the toolkit sanctions; the value under test shares none of its
 # arithmetic.
-outer_handles <- function(formula, data, method, distrib = NULL) {
+outer_handles <- function(formula, data, method, distrib = NULL,
+                          polish = TRUE) {
   if (is.null(distrib)) distrib <- distributions7::gaussian1_distrib()
   # The reference differentiates a gradient read at the penalized MODE, so
-  # whatever the inner fit leaves short of stationarity is noise the numerical
-  # derivative amplifies, and that sets how tightly the two can be compared.
-  # Asking the inner fit for more is NOT the remedy: the stall guard on the
-  # objective (a decrease under 1e-12 of its own magnitude is rounding, not
-  # progress) fires before a tighter score rule can, so a tighter tolerance
-  # only makes where the run stops vary with the hyperparameter -- measured
-  # twice, at 1e-12 under the absolute rule and again at 1e-8 under a
-  # dimensionless one.
+  # whatever the inner fit leaves short of stationarity reaches it. Asking the
+  # inner fit for more is NOT the remedy: the stall guard on the objective (a
+  # decrease under 1e-12 of its own magnitude is rounding, not progress) fires
+  # before a tighter score rule can. What the inner fit leaves is a smooth
+  # function of the hyperparameter, so differenced it is a bias FLAT in the
+  # step rather than noise, and it set these tolerances at 1e-5 to 1e-3. The
+  # mode is therefore polished by Newton steps on the exact penalized Hessian
+  # (fit_at_hyper(polish = TRUE)), which the gradient still resolves where the
+  # objective no longer does: measured, every comparison below goes from
+  # 6e-09..4e-06 to 1e-11..2e-09. A block that moves with its coefficients has
+  # no such Hessian in the objective, and those tests keep the old reference.
   inner <- iwls()
   fit0 <- statmod(formula, distrib, data, inner_optimizer = inner)
   spec <- fit0@spec
@@ -29,7 +33,8 @@ outer_handles <- function(formula, data, method, distrib = NULL) {
   basis <- integrated_basis(spec, design, method@kind)
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
-    list(hy = hy, fit = fit_at_hyper(formula, distrib, data, hy, inner))
+    list(hy = hy, fit = fit_at_hyper(formula, distrib, data, hy, inner,
+                                     polish))
   }
   list(
     idx = idx,
@@ -52,7 +57,7 @@ test_that("the Hessian of one smoothing parameter matches numDeriv", {
   for (shift in c(0.4, -1.1)) {
     eta <- h$eta0 + shift
     expect_equal(as.numeric(h$he(eta)),
-                 as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-5)
+                 as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
   }
 })
 
@@ -62,7 +67,7 @@ test_that("the Hessian matches numDeriv with the scale modelled", {
                      reml(hessian = "observed"))
   eta <- h$eta0 + 0.25
   expect_equal(as.numeric(h$he(eta)),
-               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-5)
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
 })
 
 test_that("the Hessian matches numDeriv with two smooths", {
@@ -80,7 +85,7 @@ test_that("the Hessian matches numDeriv with two smooths", {
   # so that it comes out symmetric rather than being symmetrized afterwards
   expect_equal(got, t(got), tolerance = 1e-12)
   expect_equal(as.numeric(got), as.numeric(numDeriv::jacobian(h$gr, eta)),
-               tolerance = 1e-5)
+               tolerance = 1e-7)
 })
 
 test_that("the Hessian of an anisotropic tensor matches numDeriv", {
@@ -93,11 +98,11 @@ test_that("the Hessian of an anisotropic tensor matches numDeriv", {
   d2$y <- d2$a^2 + sin(3 * d2$b) + stats::rnorm(n2, sd = 0.3)
   h <- outer_handles(y ~ te(a, b, smooths = bspline_smooth(k = 4)), d2, reml(hessian = "observed"))
   eta <- h$eta0 + c(0.3, -0.3)
-  # the loosest tolerance here, and it is the reference's: a tensor design is
-  # the worst conditioned of these, so the mode moves least cleanly with the
-  # hyperparameter and the difference of the gradient carries most noise
+  # this was the loosest tolerance here, 1e-3, on the reading that a tensor
+  # design moves its mode least cleanly; with the mode polished it agrees to
+  # 1.3e-10, so the looseness was the unpolished reference's (2e-06, flat)
   expect_equal(as.numeric(h$he(eta)),
-               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
 })
 
 test_that("the Hessian matches numDeriv under ml", {
@@ -105,7 +110,7 @@ test_that("the Hessian matches numDeriv under ml", {
   h <- outer_handles(y ~ s(x, bspline_smooth(k = 10)), dh, ml(hessian = "observed"))
   eta <- h$eta0 + 0.3
   expect_equal(as.numeric(h$he(eta)),
-               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-5)
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
 })
 
 test_that("a variance component is covered, penalty and all", {
@@ -120,6 +125,8 @@ test_that("a variance component is covered, penalty and all", {
   dr$y <- 1 + 2 * dr$x + u[as.integer(dr$g)] + stats::rnorm(200, sd = 0.4)
   h <- outer_handles(y ~ x + random(~ 1 | g), dr, reml(hessian = "observed"))
   eta <- h$eta0 + 0.2
+  # the first comparison's reference is statmod() itself, unpolished, so it
+  # keeps its tolerance; the second's is the polished gradient
   expect_equal(h$gr(eta), numDeriv::grad(function(e) {
     # the criterion itself, differenced, as an independent check that the
     # gradient this Hessian is built on is the right one for THIS penalty
@@ -133,7 +140,7 @@ test_that("a variance component is covered, penalty and all", {
     # wrong chart -- is off by a factor, not by a rounding
   }, eta), tolerance = 1e-4)
   expect_equal(as.numeric(h$he(eta)),
-               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)
+               as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
 })
 
 test_that("a Newton step on the exact pair lands where the search does", {
@@ -207,7 +214,7 @@ test_that("a variance component's Hessian is exact now, not differenced", {
   for (shift in c(0.2, -0.4)) {
     eta <- h$eta0 + shift
     expect_equal(as.numeric(h$he(eta)),
-                 as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
+                 as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-7)
   }
   # and the fit runs through newton(), which needs the Hessian at every step
   f <- statmod(y ~ x + random(~ 1 | g),
@@ -269,7 +276,7 @@ test_that("the Hessian covers a block that moves with its coefficients", {
   a_g <- 3 + stats::rnorm(m, sd = 0.4)
   dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
   h <- outer_handles(y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp)), dn,
-                     reml(hessian = "observed"))
+                     reml(hessian = "observed"), polish = FALSE)
   eta <- h$eta0 + 0.35
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-3)
@@ -286,7 +293,7 @@ test_that("a break-point term's Hessian is covered too", {
                    id = factor(rep(seq_len(6), length.out = ns)))
   ds$y <- 1 + 0.3 * ds$x + 1.5 * pmax(ds$x - 5, 0) + stats::rnorm(ns, sd = 0.4)
   h <- outer_handles(y ~ seg(x, gamma1 ~ 0 + ridge(~ id)), ds,
-                     reml(hessian = "observed"))
+                     reml(hessian = "observed"), polish = FALSE)
   eta <- h$eta0 + 0.3
   expect_equal(as.numeric(h$he(eta)),
                as.numeric(numDeriv::jacobian(h$gr, eta)), tolerance = 1e-4)

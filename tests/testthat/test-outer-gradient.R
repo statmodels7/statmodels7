@@ -9,11 +9,16 @@ dg$y <- sin(1.4 * dg$x) + stats::rnorm(n, sd = 0.3)
 # coefficients at each: this is what the outer search minimizes, and
 # differentiating it numerically shares no arithmetic with the assembly the
 # gradient uses.
-crit_of_eta <- function(formula, data, method) {
+crit_of_eta <- function(formula, data, method, polish = TRUE) {
   # the base point is the PROBE value, not the estimated optimum: this
   # differentiates the criterion at a point where its gradient is not zero,
   # which is the only place a relative comparison against numDeriv means
-  # anything
+  # anything.
+  # The mode is polished (fit_at_hyper(polish = TRUE)): the inner fit stops on
+  # its stall guard with a residual score smooth in the hyperparameter, which a
+  # difference turns into a bias flat in the step. Measured, the comparisons
+  # below go from 7e-08..1.3e-06 to 4e-10..1e-09. A block that moves with its
+  # coefficients is refused by the polish and keeps the unpolished reference.
   fit0 <- statmod(formula, distributions7::gaussian1_distrib(), data,
                   outer_criterion = NULL)
   spec <- fit0@spec
@@ -26,13 +31,13 @@ crit_of_eta <- function(formula, data, method) {
     fn = function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
       cf <- fit_at_hyper(formula, distributions7::gaussian1_distrib(),
-                         data, hy)$coefficients
+                         data, hy, polish = polish)$coefficients
       statmod_marginal(spec, design, cf, hy, method, basis = basis)$value
     },
     gr = function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
       cf <- fit_at_hyper(formula, distributions7::gaussian1_distrib(),
-                         data, hy)$coefficients
+                         data, hy, polish = polish)$coefficients
       statmod_marginal_grad(spec, design, cf, hy, method, idx, basis)
     },
     eta0 = hyper_to_eta(fit0@hyper, idx)
@@ -51,10 +56,10 @@ test_that("the gradient of a single smoothing parameter matches numDeriv", {
   skip_if_not_installed("numDeriv")
   h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, reml(hessian = "observed"))
   eta <- h$eta0 + 0.4
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
   # away from the start, where the mode has genuinely moved
   eta2 <- h$eta0 - 1.3
-  expect_equal(h$gr(eta2), numDeriv::grad(h$fn, eta2), tolerance = 1e-6)
+  expect_equal(h$gr(eta2), numDeriv::grad(h$fn, eta2), tolerance = 1e-7)
 })
 
 test_that("the gradient matches numDeriv with the scale modelled too", {
@@ -66,7 +71,7 @@ test_that("the gradient matches numDeriv with the scale modelled too", {
   h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 8)) | sigma ~ z, dg,
                    reml(hessian = "observed"))
   eta <- h$eta0 + 0.2
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
 
 test_that("the gradient matches numDeriv with several parameters at once", {
@@ -79,18 +84,16 @@ test_that("the gradient matches numDeriv with several parameters at once", {
   eta <- h$eta0 + c(0.5, -0.6)
   g <- h$gr(eta)
   expect_length(g, 2L)
-  # the reference refits the mode at every perturbation, so it carries the
-  # inner tolerance; measured here, 2.2021349 against 2.2021371 and 2.1755400
-  # against 2.1755434, which is 1.5e-6 relative. It passed at 1e-6 while the
-  # fits started somewhere else, which was luck rather than accuracy.
-  expect_equal(g, numDeriv::grad(h$fn, eta), tolerance = 1e-5)
+  # the reference refits the mode at every perturbation; unpolished it read
+  # 1.3e-06 here and the tolerance was 1e-5, polished it reads 7.2e-10
+  expect_equal(g, numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
 
 test_that("the gradient matches numDeriv under ml, on the range space", {
   skip_if_not_installed("numDeriv")
   h <- crit_of_eta(y ~ s(x, bspline_smooth(k = 10)), dg, ml(hessian = "observed"))
   eta <- h$eta0 + 0.3
-  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-6)
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-7)
 })
 
 test_that("a prior whose Hessian moves with the coefficients is differentiated", {
@@ -120,7 +123,8 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
     expect_true(outer_gradient_ok(spec, design, idx, mt, 2L))
     at <- function(eta) {
       hy <- eta_to_hyper(eta, idx, fit0@hyper)
-      list(hy = hy, cf = fit_at_hyper(f, fam, dt, hy)$coefficients)
+      list(hy = hy, cf = fit_at_hyper(f, fam, dt, hy,
+                                      polish = TRUE)$coefficients)
     }
     crit <- function(eta) {
       p <- at(eta)
@@ -146,11 +150,12 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
       e2 <- eta; e2[j] <- e2[j] - h
       (crit(e1) - crit(e2)) / (2 * h)
     }, numeric(1))
-    # Measured with the piece: 1.5e-06 under reml, 1.7e-05 under aic and 3.9e-06
-    # under bic, where the reference sits at its own floor -- aic's reads
-    # 9.8e-06 at h = 1e-2 already, so a convergence ratio is not asserted.
-    # Without it: 4.3e-04 under reml and 8.6e-03 under aic, flat in the step.
-    expect_lt(max(abs(ge - fd) / abs(fd)), 5e-5)
+    # Measured with the piece and the mode polished: 6.6e-08 under reml,
+    # 7.3e-08 under aic and 2.1e-07 under bic, each 100 times its reading at
+    # h = 1e-2, i.e. the difference's own truncation. Unpolished the reference
+    # sat at 1.5e-06, 1.7e-05 and 3.9e-06, which is what 5e-5 was set against.
+    # Without the piece: 4.3e-04 under reml and 8.6e-03 under aic, flat.
+    expect_lt(max(abs(ge - fd) / abs(fd)), 1e-6)
   }
 })
 
@@ -181,7 +186,7 @@ test_that("the gradient is exact where the block moves with the coefficients", {
   dn$y <- a_g[dn$grp] * exp(-0.6 * dn$x) + stats::rnorm(nrow(dn), sd = 0.15)
   f <- y ~ nl(~ a * exp(-r * x), a ~ 0 + ridge(~ grp))
   for (hh in c("observed", "expected")) {
-    h <- crit_of_eta(f, dn, reml(hessian = hh))
+    h <- crit_of_eta(f, dn, reml(hessian = hh), polish = FALSE)
     eta <- h$eta0 + 0.35
     # the reference refits the mode at the inner default, so it carries that
     # tolerance; the gradient itself measures 4.0e-09 against a mode located

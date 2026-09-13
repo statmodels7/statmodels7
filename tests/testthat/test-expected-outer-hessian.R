@@ -15,7 +15,10 @@ d_eh$yn <- rnbinom(n_eh, size = 3, mu = f_eh)
 d_eh$yr <- sin(1.4 * d_eh$x) + rnorm(n_eh, 0, 0.5)
 
 # the criterion's exact gradient and Hessian as functions of the free
-# hyperparameters, the mode refitted from a FIXED start at a tight tolerance
+# hyperparameters, the mode refitted from a FIXED start and then POLISHED by
+# Newton steps: the inner fit stops on its stall guard with a residual score
+# that is a smooth function of the hyperparameter, and differenced that is a
+# bias flat in the step (see helper-hyper.R)
 eh_harness <- function(formula, data, distrib, method) {
   fit0 <- statmod(formula, distrib, data, outer_criterion = NULL)
   spec <- fit0@spec
@@ -25,7 +28,8 @@ eh_harness <- function(formula, data, distrib, method) {
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
     list(hy = hy, cf = fit_at_hyper(formula, distrib, data, hy,
-                                    iwls(tol = 1e-10, maxit = 500))$coefficients)
+                                    iwls(tol = 1e-10, maxit = 500),
+                                    polish = TRUE)$coefficients)
   }
   list(spec = spec, design = design, idx = idx, basis = basis, at = at,
        gr = function(eta) {
@@ -53,12 +57,12 @@ eh_fd <- function(h, eta, step) {
 test_that("the expected route's Hessian is the derivative of its gradient", {
   skip_on_cran()
   # Two penalized equations, so the off-diagonal entry and the keying of
-  # d2E[l_ab]/deta_c deta_d by two separate pairs are both exercised. Measured
-  # at 600 observations the gap to a difference of the exact gradient is
-  # 1.6e-06, 7.1e-07 and 7.9e-07 at steps 1e-2, 3e-3 and 1e-3 -- the floor the
-  # observed route's own analytic Hessian reaches on the same data (1.8e-06,
-  # 7.7e-07, 8.7e-07) -- where the assembly that traced the OBSERVED third and
-  # fourth derivatives against the expected matrix was out by 1e-4 to 3e-4.
+  # d2E[l_ab]/deta_c deta_d by two separate pairs are both exercised. With the
+  # mode polished the gap to a difference of the exact gradient is 8.2e-08 at
+  # h = 1e-3 and to numDeriv 2.0e-10, where the assembly that traced the
+  # OBSERVED third and fourth derivatives against the expected matrix was out
+  # by 1e-4 to 3e-4. Unpolished the reference sat at a flat 4e-06, which is
+  # what the earlier bound of 2e-5 was set against.
   h <- eh_harness(yg ~ s(x, bspline_smooth(k = 8)) |
                     phi ~ s(z, bspline_smooth(k = 6)),
                   d_eh, distributions7::gamma1_distrib(), reml("expected"))
@@ -66,7 +70,7 @@ test_that("the expected route's Hessian is the derivative of its gradient", {
   eta <- h$eta0 + c(0.3, -0.4)
   Ha <- h$he(eta)
   Hf <- eh_fd(h, eta, 1e-3)
-  expect_lt(max(abs(Ha - Hf)) / max(abs(Hf)), 2e-5)
+  expect_lt(max(abs(Ha - Hf)) / max(abs(Hf)), 1e-6)
   # and it is not the observed route's Hessian under another name: the two
   # criteria differ at this sample size by far more than the gap above
   Ho <- h$he(eta, reml("observed"))
@@ -84,7 +88,31 @@ test_that("it holds under ml and on a sum over the support", {
   eta <- h$eta0 + 0.4
   Ha <- h$he(eta)
   Hf <- eh_fd(h, eta, 1e-3)
-  expect_lt(max(abs(Ha - Hf)) / max(abs(Hf)), 1e-4)
+  expect_lt(max(abs(Ha - Hf)) / max(abs(Hf)), 1e-6)
+})
+
+test_that("with the dispersion modelled it converges O(h^2) onto the assembly", {
+  skip_on_cran()
+  # A negative binomial with a smooth in each equation is where the
+  # UNPOLISHED reference stopped hardest: the inner fit leaves a residual score
+  # of 1.6e-04 there, and differenced it read a gap of 9.5e-06 FLAT in the
+  # step, the same on the observed route, which looks like a missing term and
+  # is not. Polished, the gap falls by the square of the step (5.4e-07 and
+  # 6.0e-08 at 3e-3 and 1e-3 on 600 observations). A floor could never pass
+  # the ratio asserted here; a missing term would not either.
+  h <- eh_harness(yn ~ s(x, bspline_smooth(k = 8)) |
+                    theta ~ s(z, bspline_smooth(k = 6)),
+                  d_eh, distributions7::negbin2_distrib(), reml("expected"))
+  expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+  eta <- h$eta0 + c(0.3, -0.4)
+  Ha <- h$he(eta)
+  gap <- vapply(c(3e-3, 1e-3), function(s) {
+    Hf <- eh_fd(h, eta, s)
+    max(abs(Ha - Hf)) / max(abs(Hf))
+  }, 0)
+  expect_lt(gap[[2L]], 1e-6)
+  expect_gt(gap[[1L]] / gap[[2L]], 5)
+  expect_lt(gap[[1L]] / gap[[2L]], 15)
 })
 
 test_that("a family that does not write the second derivative is differenced", {
