@@ -11,7 +11,7 @@ above the penalized mode, and which hyperparameters have run to a boundary."><me
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.129.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.130.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,7 +122,8 @@ point the fit already holds; the criterion reconstructed from <code>fit@spec</co
 equals the one the fit reports exactly on every shape, so the reading is of
 the fitted model and of no other. Where the form carries an analytic outer
 Hessian nothing is refitted. Where it does not – a criterion asked for on
-the expected information, or a separable penalty – the curvature comes
+the expected information, or a penalty whose Hessian moves with the
+coefficients beside a structural term – the curvature comes
 from one central difference of the <strong>exact</strong> gradient, which is
 \(4n_h\) refits and was measured at 0.05 to 0.13 seconds, 5 to 37 per
 cent of the fit itself. <code><a href="outer_curvature.html">outer_curvature()</a></code> says which route was taken, the

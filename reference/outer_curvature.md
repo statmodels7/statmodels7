@@ -58,19 +58,14 @@ already takes for a model carrying a filter. The two forms that reach it
 are a criterion asked for on the **expected** information, where order 2
 is refused because the criterion's own second derivative would want the
 next order of \\\partial\mathbb{E}\[\ell''\]/ \partial\eta\\, and a
-**separable** penalty whose curvature moves with the coefficient, a
-heavy-tailed prior on a random effect among them. ⚠️ The second is not a
-missing derivative: measured, a t prior answers
-[`penalties7::penalty_dhessian()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html),
-[`penalties7::penalty_d2hessian()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html)
-and
-[`penalties7::penalty_dcross()`](https://statmodels7.github.io/penalties7/reference/penalty_dcross.html).
-What refuses it is
-[`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html),
-TRUE for a ridge and a gaussian prior and FALSE here, the order-2
-assembly being written for a penalty whose Hessian in the coefficients
-does not move with them. Both forms carry an exact gradient, which is
-what the difference is taken of.
+penalty whose Hessian moves with the coefficients – a heavy-tailed prior
+on a random effect – placed beside a structural term, where
+[`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+reads no movement of that Hessian. The same prior without a structural
+term is analytic since 0.130.0, through
+[`statmod_penalty_second()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.md).
+Both forms carry an exact gradient, which is what the difference is
+taken of.
 
 The two routes agree where both exist: on a gaussian smooth the
 decrement reads `3.01e-10` by either. What the difference costs is

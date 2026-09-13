@@ -1,5 +1,54 @@
 # Changelog
 
+## statmodels7 0.130.0
+
+- **The exact outer Hessian beside a penalty whose Hessian moves with
+  the coefficients.** A heavy-tailed prior on a random effect has ,
+  which depends on the effects, and the second derivative of the
+  criterion reads how itself moves: along a second direction and in each
+  hyperparameter.
+  [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+  refused order 2 there, so the certificate differenced the exact
+  gradient – and on a Student t prior over 30 groups that stencil
+  refused on every one of four samples, leaving the certificate
+  `unknown` and
+  [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
+  `NULL`. The assembly in
+  [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
+  and in
+  [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
+  now carries inside , and
+  [`statmod_penalty_second()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.md)
+  adds , and , read from
+  [`penalties7::penalty_d2hessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html),
+  `penalty_dhessian_beta()` and `penalty_dhessian_beta_theta()`. Against
+  a central difference of the exact gradient with the mode refitted, the
+  assembly without these pieces is 1.22 relative at every step; with
+  them `3.7e-03`, `5.6e-04` and `1.8e-04` at h of 0.08, 0.04 and 0.02
+  under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  down to the reference’s own floor, and `1.6e-03`, `3.9e-04`,
+  `9.6e-05`, `2.2e-05` under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md).
+  The certificate there reads `converged` on the analytic curvature, and
+  the prior’s hyperparameters carry a variance.
+- Beside a structural term a moving penalty keeps the stencil at order
+  2,
+  [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+  reading no movement of the penalty’s Hessian.
+- Opening order 2 lets the search this package chooses be `newton()` on
+  such a model, where it was `lbfgs()`. Measured over six samples,
+  against the criterion evaluated from a fixed start and minimized by a
+  Nelder-Mead oracle: under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  newton stops within `2.2e-06` of the optimum in 5 or 6 evaluations and
+  lbfgs within `6.9e-06` in 38 to 202, newton the closer on five of six;
+  under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  newton is the closer on three of four interior fits.
+- Nothing moves where no penalty’s Hessian depends on the coefficients:
+  a battery of seven models, 84 leaves, is identical to 0.129.0.
+
 ## statmodels7 0.129.1
 
 - **The outer Hessian of a mixed covariance class is pinned by a test.**

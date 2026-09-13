@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.129.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.130.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,14 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.130.0" id="statmodels7-01300">statmodels7 0.130.0<a class="anchor" aria-label="anchor" href="#statmodels7-01300"></a></h2>
+<ul><li>
+<strong>The exact outer Hessian beside a penalty whose Hessian moves with the coefficients.</strong> A heavy-tailed prior on a random effect has , which depends on the effects, and the second derivative of the criterion reads how  itself moves: along a second direction and in each hyperparameter. <code><a href="../reference/outer_gradient_ok.html">outer_gradient_ok()</a></code> refused order 2 there, so the certificate differenced the exact gradient – and on a Student t prior over 30 groups that stencil refused on every one of four samples, leaving the certificate <code>unknown</code> and <code><a href="../reference/statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> <code>NULL</code>. The assembly in <code><a href="../reference/statmod_marginal_hess.html">statmod_marginal_hess()</a></code> and in <code><a href="../reference/statmod_pe_derivs.html">statmod_pe_derivs()</a></code> now carries  inside , and <code><a href="../reference/statmod_penalty_second.html">statmod_penalty_second()</a></code> adds ,  and , read from <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html" class="external-link">penalties7::penalty_d2hessian_beta()</a></code>, <code>penalty_dhessian_beta()</code> and <code>penalty_dhessian_beta_theta()</code>. Against a central difference of the exact gradient with the mode refitted, the assembly without these pieces is 1.22 relative at every step; with them <code>3.7e-03</code>, <code>5.6e-04</code> and <code>1.8e-04</code> at h of 0.08, 0.04 and 0.02 under <code><a href="../reference/reml.html">reml()</a></code>, down to the reference’s own floor, and <code>1.6e-03</code>, <code>3.9e-04</code>, <code>9.6e-05</code>, <code>2.2e-05</code> under <code><a href="../reference/aic.html">aic()</a></code>. The certificate there reads <code>converged</code> on the analytic curvature, and the prior’s hyperparameters carry a variance.</li>
+<li>Beside a structural term a moving penalty keeps the stencil at order 2, <code><a href="../reference/statmod_structural_hess.html">statmod_structural_hess()</a></code> reading no movement of the penalty’s Hessian.</li>
+<li>Opening order 2 lets the search this package chooses be <code>newton()</code> on such a model, where it was <code>lbfgs()</code>. Measured over six samples, against the criterion evaluated from a fixed start and minimized by a Nelder-Mead oracle: under <code><a href="../reference/reml.html">reml()</a></code> newton stops within <code>2.2e-06</code> of the optimum in 5 or 6 evaluations and lbfgs within <code>6.9e-06</code> in 38 to 202, newton the closer on five of six; under <code><a href="../reference/aic.html">aic()</a></code> newton is the closer on three of four interior fits.</li>
+<li>Nothing moves where no penalty’s Hessian depends on the coefficients: a battery of seven models, 84 leaves, is identical to 0.129.0.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.129.1" id="statmodels7-01291">statmodels7 0.129.1<a class="anchor" aria-label="anchor" href="#statmodels7-01291"></a></h2>
 <ul><li>

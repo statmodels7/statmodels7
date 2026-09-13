@@ -11,7 +11,7 @@ difference of the exact gradient where it does not."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.129.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.130.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,15 +93,12 @@ which is <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></c
 two forms that reach it are a criterion asked for on the <strong>expected</strong>
 information, where order 2 is refused because the criterion's own second
 derivative would want the next order of \(\partial\mathbb{E}[\ell'']/
-\partial\eta\), and a <strong>separable</strong> penalty whose curvature moves with the
-coefficient, a heavy-tailed prior on a random effect among them. ⚠️ The
-second is not a missing derivative: measured, a t prior answers
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalties7::penalty_dhessian()</a></code>, <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalties7::penalty_d2hessian()</a></code> and
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalties7::penalty_dcross()</a></code>. What refuses it is
-<code><a href="https://statmodels7.github.io/penalties7/reference/beta_quadratic.html" class="external-link">penalties7::beta_quadratic()</a></code>, TRUE for a ridge and a gaussian prior and
-FALSE here, the order-2 assembly being written for a penalty whose Hessian
-in the coefficients does not move with them. Both forms carry an exact
-gradient, which is what the difference is taken of.</p>
+\partial\eta\), and a penalty whose Hessian moves with the coefficients –
+a heavy-tailed prior on a random effect – placed beside a structural term,
+where <code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code> reads no movement of that Hessian. The
+same prior without a structural term is analytic since 0.130.0, through
+<code><a href="statmod_penalty_second.html">statmod_penalty_second()</a></code>. Both forms carry an exact gradient, which is
+what the difference is taken of.</p>
 <p>The two routes agree where both exist: on a gaussian smooth the decrement
 reads <code>3.01e-10</code> by either. What the difference costs is measured and is
 not nothing – it is \(4n_h\) refits, 0.05 to 0.13 seconds on the three

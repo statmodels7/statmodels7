@@ -1334,6 +1334,10 @@ exported, and none is needed to use the package.
 - [`statmod_penalty_keys()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_keys.md)
   : Every Penalty in a Model, Without the Design
 
+- [`statmod_penalty_second()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.md)
+  : How a Moving Penalty Hessian Enters the Criterion's Second
+  Derivative
+
 - [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
   : Have the Refreshable Terms Settled?
 

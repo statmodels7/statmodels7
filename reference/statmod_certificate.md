@@ -91,10 +91,11 @@ a point the fit already holds; the criterion reconstructed from
 `fit@spec` equals the one the fit reports exactly on every shape, so the
 reading is of the fitted model and of no other. Where the form carries
 an analytic outer Hessian nothing is refitted. Where it does not – a
-criterion asked for on the expected information, or a separable penalty
-– the curvature comes from one central difference of the **exact**
-gradient, which is \\4n_h\\ refits and was measured at 0.05 to 0.13
-seconds, 5 to 37 per cent of the fit itself.
+criterion asked for on the expected information, or a penalty whose
+Hessian moves with the coefficients beside a structural term – the
+curvature comes from one central difference of the **exact** gradient,
+which is \\4n_h\\ refits and was measured at 0.05 to 0.13 seconds, 5 to
+37 per cent of the fit itself.
 [`outer_curvature()`](https://statmodels7.github.io/statmodels7/reference/outer_curvature.md)
 says which route was taken, the result reports it in `curvature`, and
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
