@@ -137,6 +137,60 @@ interval there under-covers.
 terms, so a penalized term counts what it spends instead of how many
 columns it has. The information criteria are built on that count.
 }
+\section{Reading the foot}{
+Below the criteria the summary describes the point the fit stopped at with
+up to five numbers from \code{\link[=statmod_certificate]{statmod_certificate()}}. No verdict is printed:
+the numbers are the point itself, and each is dimensionless, so it does
+not move with the units of a coefficient or with the sample size.
+\describe{
+\item{\verb{inner   max |grad|/se}}{the largest
+\eqn{|g_j|/\sqrt{A_{jj}}} over the coefficients, where \eqn{g} is the
+gradient of the penalized objective and \eqn{A} its curvature, the
+penalized information. \eqn{1/\sqrt{A_{jj}}} is the standard error of
+coefficient \eqn{j} CONDITIONAL on the others, which is smaller than
+the marginal one the tables print, and the ratio equals
+\eqn{\sqrt{2\Delta_j}} with \eqn{\Delta_j = g_j^2/(2A_{jj})} the
+log-likelihood a Newton step in that coordinate alone would still buy.
+At a mode it is small: fits located to their optimum read between
+1e-11 and 1e-2, a fit stopped after one iteration 0.84. For a model
+carrying a score-driven filter it covers the filter's own parameters
+as well. It leaves out a coefficient a kinked penalty set to zero, a
+frozen working block of \code{\link[modelterms7:jump]{modelterms7::jump()}} or
+\code{\link[modelterms7:jseg]{modelterms7::jseg()}}, and an aliased column.}
+\item{\verb{inner   min eigen}}{the smallest eigenvalue of
+\eqn{D^{-1/2}AD^{-1/2}} with \eqn{D = \mathrm{diag}(A)}, the curvature
+rescaled to a unit diagonal. It is at most one. Near one the
+coordinates are well separated; near zero some combination of them is
+barely identified, as two nearly collinear covariates or an intercept
+beside a random effect make it; below zero the point is not a mode.}
+\item{\verb{zeros   max |score|/kink}}{printed only where a kinked penalty
+(a lasso, an elastic net, a SCAD or an MCP) set coefficients exactly to
+zero, together with how many. At a zero the penalty has no derivative
+and the coefficient no standard error, so the condition for an optimum
+is \eqn{|s_j| \le \kappa_j}: the derivative of the log-likelihood in
+that coefficient within the size of the kink, \eqn{\lambda} for a
+lasso. The number is the largest \eqn{|s_j|/\kappa_j}. At or below one
+every zero is an optimum; above one a coefficient would improve the
+objective by leaving zero. A reading of 0.89 says the coefficient the
+data pull hardest is held by the kink with 11 per cent to spare, so
+with the other coefficients fixed it would leave zero at a
+\eqn{\lambda} about 11 per cent smaller; along a path the others move
+too, and the threshold moves with them. It is not a test of
+significance, only of whether the zeros agree with the \eqn{\lambda}
+of the fit, and values close to one are ordinary where \eqn{\lambda}
+was chosen on a grid, the next coefficient to enter being close to its
+threshold by construction.}
+\item{\verb{outer   max |grad|/se} and \verb{min eigen}}{the same two readings for
+the criterion that estimated the hyperparameters, on the free scale
+their links define, printed only where \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}} ran. The
+curvature is the negated Hessian of the criterion. A hyperparameter
+that ran to the edge of its chart is left out, its curvature
+collapsing with its gradient; where every one did the line reads
+\verb{not available: at a boundary}. A hyperparameter chosen along a path
+has no gradient, and there is no outer line.}
+}
+}
+
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(120))

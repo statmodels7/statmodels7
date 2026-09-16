@@ -25,10 +25,14 @@ curvature \eqn{D^{-1/2} A D^{-1/2}} with \eqn{D = |\mathrm{diag}(A)|}.
 \details{
 Both are dimensionless, so neither moves with the units of a coefficient
 or with the sample size. \eqn{|g_j|/\sqrt{A_{jj}}} is the length of the
-one-coordinate Newton step measured in that coordinate's own standard
-error. The equilibrated matrix has a unit diagonal, so its smallest
-eigenvalue is at most one: near zero it reports a direction the curvature
-barely identifies, and below zero a point that is not an optimum.
+one-coordinate Newton step measured in that coordinate's standard error
+conditional on the others, \eqn{1/\sqrt{A_{jj}}}, which is smaller than the
+marginal one; equivalently it is \eqn{\sqrt{2\Delta_j}}, with
+\eqn{\Delta_j = g_j^2/(2A_{jj})} what that step alone would still buy in
+the objective's own units. The equilibrated matrix has a unit diagonal, so
+its smallest eigenvalue is at most one: near zero it reports a direction
+the curvature barely identifies, and below zero a point that is not an
+optimum.
 
 \code{A} is the curvature with the sign that makes an optimum positive
 definite: the penalized information for the inner fit, the negated outer

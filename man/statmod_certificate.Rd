@@ -29,6 +29,13 @@ analytic Hessian or against one differenced from the exact gradient.
 \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}} labels its rows by, which is what
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} reads to leave a standard error off a
 coordinate pinned there.
+
+Three further fields are what \code{\link[=summary.StatmodFit]{summary.StatmodFit()}} prints, and its
+page says how they are read: \code{inner} and \code{outer}, each a named vector
+with \code{gradient} and \code{eigen} from \code{\link[=certificate_readings]{certificate_readings()}} (\code{NA} where
+there is nothing to read), and \code{zeros}, \code{NULL} where no coefficient sits
+at the kink of a penalty and otherwise a named vector with \code{ratio} and
+\code{n} from \code{\link[=zero_readings]{zero_readings()}}.
 }
 \description{
 Three readings taken at the reported point and independent of the path the

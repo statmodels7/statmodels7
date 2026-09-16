@@ -604,6 +604,44 @@ test_that("the printed readings are dimensionless and see a saddle", {
   expect_true(all(is.na(certificate_readings(numeric(0), matrix(0, 0, 0)))))
 })
 
+test_that("the zeros of a kinked penalty are checked against their kink", {
+  set.seed(6)
+  X <- matrix(stats::rnorm(200 * 20), 200, 20)
+  ls <- data.frame(y = X[, 1] - X[, 2] + stats::rnorm(200))
+  ls$X <- X
+  ls$Xm1 <- X[, -1]
+  fit <- statmod(y ~ lasso(X, lambda = 5), gaussian1_distrib(), ls)
+  ct <- statmod_certificate(fit)
+
+  # AT THE OPTIMUM every zero sits inside its kink: the ratio is at most one,
+  # and the coefficients counted are the ones the fit set to zero
+  expect_false(is.null(ct$zeros))
+  expect_lte(ct$zeros[["ratio"]], 1 + 1e-6)
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  lab <- coef_labels(spec, design)
+  b <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
+  expect_identical(as.integer(ct$zeros[["n"]]), sum(lab$kinked & b == 0))
+  out <- capture.output(print(summary(fit)))
+  expect_true(any(grepl("^zeros +max \\|score\\|/kink", out)))
+
+  # THE NEGATIVE CONTROL: X1, whose coefficient is about 1, forced to zero
+  # and every other coefficient refitted without it, so the only defect of
+  # the point is that zero -- and the inner reading cannot see it
+  g2 <- statmod(y ~ lasso(Xm1, lambda = 5), gaussian1_distrib(), ls)
+  cf <- fit@coefficients
+  cf$mu[] <- c(g2@coefficients$mu[1], 0, g2@coefficients$mu[-1])
+  cf$sigma[] <- g2@coefficients$sigma
+  obj <- statmod_objective(spec, fit@hyper, design, FALSE, "bartlett")
+  bad <- zero_readings(spec, design, obj, cf, fit@hyper, lab)
+  expect_gt(bad[["ratio"]], 5)
+
+  # a model with no kinked penalty has no zeros line
+  ok <- statmod(y ~ X, gaussian1_distrib(), ls)
+  expect_null(statmod_certificate(ok)$zeros)
+  expect_false(any(grepl("^zeros", capture.output(print(summary(ok))))))
+})
+
 test_that("the inner reading of a filter covers its own parameters", {
   set.seed(1)
   n <- 800
