@@ -4,14 +4,18 @@ The call, then the covariance blocks shared between equations, then each
 distribution parameter's blocks, then the degrees of freedom, the
 criteria and the notes.
 
-Below the criteria the point is described by four dimensionless numbers
-from
-[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md),
-computed by
-[`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md):
+Below the criteria the point is described by dimensionless numbers from
+[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md):
 for the inner fit, and for the outer criterion where there is one, the
-largest gradient in standard-error units and the smallest eigenvalue of
-the equilibrated curvature. No verdict is printed.
+largest gradient in conditional standard errors and the smallest
+eigenvalue of the equilibrated curvature
+([`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md)),
+and for the coefficients a kinked penalty set to zero the largest ratio
+of the likelihood's pull to the kink
+([`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md)).
+No verdict is printed. How each is read is on the page of
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
+under "Reading the foot".
 
 ## Usage
 

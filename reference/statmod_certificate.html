@@ -11,7 +11,7 @@ above the penalized mode, and which hyperparameters have run to a boundary."><me
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.133.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,6 +84,12 @@ analytic Hessian or against one differenced from the exact gradient.
 <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> labels its rows by, which is what
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reads to leave a standard error off a
 coordinate pinned there.</p>
+<p>Three further fields are what <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> prints, and its
+page says how they are read: <code>inner</code> and <code>outer</code>, each a named vector
+with <code>gradient</code> and <code>eigen</code> from <code><a href="certificate_readings.html">certificate_readings()</a></code> (<code>NA</code> where
+there is nothing to read), and <code>zeros</code>, <code>NULL</code> where no coefficient sits
+at the kink of a penalty and otherwise a named vector with <code>ratio</code> and
+<code>n</code> from <code><a href="zero_readings.html">zero_readings()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

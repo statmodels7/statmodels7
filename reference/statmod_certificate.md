@@ -46,6 +46,16 @@ labels its rows by, which is what
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 reads to leave a standard error off a coordinate pinned there.
 
+Three further fields are what
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+prints, and its page says how they are read: `inner` and `outer`, each a
+named vector with `gradient` and `eigen` from
+[`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md)
+(`NA` where there is nothing to read), and `zeros`, `NULL` where no
+coefficient sits at the kink of a penalty and otherwise a named vector
+with `ratio` and `n` from
+[`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md).
+
 ## Details
 
 **Why a certificate and not the optimizer's flag.** The flag says

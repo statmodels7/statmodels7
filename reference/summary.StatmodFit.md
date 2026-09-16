@@ -191,6 +191,76 @@ under-covers.
 terms, so a penalized term counts what it spends instead of how many
 columns it has. The information criteria are built on that count.
 
+## Reading the foot
+
+Below the criteria the summary describes the point the fit stopped at
+with up to five numbers from
+[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md).
+No verdict is printed: the numbers are the point itself, and each is
+dimensionless, so it does not move with the units of a coefficient or
+with the sample size.
+
+- `inner max |grad|/se`:
+
+  the largest \\\|g_j\|/\sqrt{A\_{jj}}\\ over the coefficients, where
+  \\g\\ is the gradient of the penalized objective and \\A\\ its
+  curvature, the penalized information. \\1/\sqrt{A\_{jj}}\\ is the
+  standard error of coefficient \\j\\ CONDITIONAL on the others, which
+  is smaller than the marginal one the tables print, and the ratio
+  equals \\\sqrt{2\Delta_j}\\ with \\\Delta_j = g_j^2/(2A\_{jj})\\ the
+  log-likelihood a Newton step in that coordinate alone would still buy.
+  At a mode it is small: fits located to their optimum read between
+  1e-11 and 1e-2, a fit stopped after one iteration 0.84. For a model
+  carrying a score-driven filter it covers the filter's own parameters
+  as well. It leaves out a coefficient a kinked penalty set to zero, a
+  frozen working block of
+  [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+  or
+  [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
+  and an aliased column.
+
+- `inner min eigen`:
+
+  the smallest eigenvalue of \\D^{-1/2}AD^{-1/2}\\ with \\D =
+  \mathrm{diag}(A)\\, the curvature rescaled to a unit diagonal. It is
+  at most one. Near one the coordinates are well separated; near zero
+  some combination of them is barely identified, as two nearly collinear
+  covariates or an intercept beside a random effect make it; below zero
+  the point is not a mode.
+
+- `zeros max |score|/kink`:
+
+  printed only where a kinked penalty (a lasso, an elastic net, a SCAD
+  or an MCP) set coefficients exactly to zero, together with how many.
+  At a zero the penalty has no derivative and the coefficient no
+  standard error, so the condition for an optimum is \\\|s_j\| \le
+  \kappa_j\\: the derivative of the log-likelihood in that coefficient
+  within the size of the kink, \\\lambda\\ for a lasso. The number is
+  the largest \\\|s_j\|/\kappa_j\\. At or below one every zero is an
+  optimum; above one a coefficient would improve the objective by
+  leaving zero. A reading of 0.89 says the coefficient the data pull
+  hardest is held by the kink with 11 per cent to spare, so with the
+  other coefficients fixed it would leave zero at a \\\lambda\\ about 11
+  per cent smaller; along a path the others move too, and the threshold
+  moves with them. It is not a test of significance, only of whether the
+  zeros agree with the \\\lambda\\ of the fit, and values close to one
+  are ordinary where \\\lambda\\ was chosen on a grid, the next
+  coefficient to enter being close to its threshold by construction.
+
+- `outer max |grad|/se` and `min eigen`:
+
+  the same two readings for the criterion that estimated the
+  hyperparameters, on the free scale their links define, printed only
+  where
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  ran. The curvature is the negated Hessian of the criterion. A
+  hyperparameter that ran to the edge of its chart is left out, its
+  curvature collapsing with its gradient; where every one did the line
+  reads `not available: at a boundary`. A hyperparameter chosen along a
+  path has no gradient, and there is no outer line.
+
 ## See also
 
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
@@ -232,6 +302,6 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 23 ms
+#> fitted in 38 ms
 #> inner   max |grad|/se 3.1e-06   min eigen 0.11
 ```

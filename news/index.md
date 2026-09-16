@@ -1,5 +1,31 @@
 # Changelog
 
+## statmodels7 0.134.0
+
+- **A coefficient a kinked penalty set to zero is checked on a line of
+  its own.** There the penalty has no derivative and the coefficient no
+  standard error, so the `inner` reading leaves it out; the condition
+  for an optimum is , the log-likelihood’s derivative within the size of
+  the kink. [`summary()`](https://rdrr.io/r/base/summary.html) prints
+  `zeros max |score|/kink` with the number of such coefficients, from
+  the new
+  [`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md),
+  and
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  returns it as `zeros`. The kink is read from the penalty’s gradient
+  just to the right of zero, so no formula is written per family.
+  Measured on 200 observations of 20 columns: 0.83 to 0.89 on fitted
+  lasso, MCP, elastic net and standardized lasso models, and 20.1 at a
+  point where one true coefficient was forced to zero and every other
+  refitted without it, a point whose `inner` reading is 2.7e-04.
+- **How to read the foot is documented** on the page of
+  [`summary()`](https://rdrr.io/r/base/summary.html), under “Reading the
+  foot”: what each of the `inner`, `zeros` and `outer` numbers measures,
+  the ranges a located fit reads, that `max |grad|/se` is in standard
+  errors conditional on the other coefficients, and that
+  `max |score|/kink` is a check of the zeros against the fit’s and not a
+  test of significance.
+
 ## statmodels7 0.133.0
 
 - **[`summary()`](https://rdrr.io/r/base/summary.html) prints four

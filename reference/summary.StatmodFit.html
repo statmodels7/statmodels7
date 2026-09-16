@@ -13,7 +13,7 @@ qualifications the numbers carry."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.133.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,6 +207,66 @@ terms, so a penalized term counts what it spends instead of how many
 columns it has. The information criteria are built on that count.</p>
     </div>
     <div class="section level2">
+    <h2 id="reading-the-foot">Reading the foot<a class="anchor" aria-label="anchor" href="#reading-the-foot"></a></h2>
+    <p>Below the criteria the summary describes the point the fit stopped at with
+up to five numbers from <code><a href="statmod_certificate.html">statmod_certificate()</a></code>. No verdict is printed:
+the numbers are the point itself, and each is dimensionless, so it does
+not move with the units of a coefficient or with the sample size.</p><dl><dt><code>inner   max |grad|/se</code></dt>
+<dd><p>the largest
+\(|g_j|/\sqrt{A_{jj}}\) over the coefficients, where \(g\) is the
+gradient of the penalized objective and \(A\) its curvature, the
+penalized information. \(1/\sqrt{A_{jj}}\) is the standard error of
+coefficient \(j\) CONDITIONAL on the others, which is smaller than
+the marginal one the tables print, and the ratio equals
+\(\sqrt{2\Delta_j}\) with \(\Delta_j = g_j^2/(2A_{jj})\) the
+log-likelihood a Newton step in that coordinate alone would still buy.
+At a mode it is small: fits located to their optimum read between
+1e-11 and 1e-2, a fit stopped after one iteration 0.84. For a model
+carrying a score-driven filter it covers the filter's own parameters
+as well. It leaves out a coefficient a kinked penalty set to zero, a
+frozen working block of <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, and an aliased column.</p></dd>
+
+<dt><code>inner   min eigen</code></dt>
+<dd><p>the smallest eigenvalue of
+\(D^{-1/2}AD^{-1/2}\) with \(D = \mathrm{diag}(A)\), the curvature
+rescaled to a unit diagonal. It is at most one. Near one the
+coordinates are well separated; near zero some combination of them is
+barely identified, as two nearly collinear covariates or an intercept
+beside a random effect make it; below zero the point is not a mode.</p></dd>
+
+<dt><code>zeros   max |score|/kink</code></dt>
+<dd><p>printed only where a kinked penalty
+(a lasso, an elastic net, a SCAD or an MCP) set coefficients exactly to
+zero, together with how many. At a zero the penalty has no derivative
+and the coefficient no standard error, so the condition for an optimum
+is \(|s_j| \le \kappa_j\): the derivative of the log-likelihood in
+that coefficient within the size of the kink, \(\lambda\) for a
+lasso. The number is the largest \(|s_j|/\kappa_j\). At or below one
+every zero is an optimum; above one a coefficient would improve the
+objective by leaving zero. A reading of 0.89 says the coefficient the
+data pull hardest is held by the kink with 11 per cent to spare, so
+with the other coefficients fixed it would leave zero at a
+\(\lambda\) about 11 per cent smaller; along a path the others move
+too, and the threshold moves with them. It is not a test of
+significance, only of whether the zeros agree with the \(\lambda\)
+of the fit, and values close to one are ordinary where \(\lambda\)
+was chosen on a grid, the next coefficient to enter being close to its
+threshold by construction.</p></dd>
+
+<dt><code>outer   max |grad|/se</code> and <code>min eigen</code></dt>
+<dd><p>the same two readings for
+the criterion that estimated the hyperparameters, on the free scale
+their links define, printed only where <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> ran. The
+curvature is the negated Hessian of the criterion. A hyperparameter
+that ran to the edge of its chart is left out, its curvature
+collapsing with its gradient; where every one did the line reads
+<code>not available: at a boundary</code>. A hyperparameter chosen along a path
+has no gradient, and there is no outer line.</p></dd>
+
+
+</dl></div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>,
 <code><a href="statmod_test.html">statmod_test()</a></code>, which asks the same four of ONE coefficient against a
@@ -244,7 +304,7 @@ value that need not be zero, and <code><a href="statmod_stat_at.html">statmod_st
 <span class="r-out co"><span class="r-pr">#&gt;</span> 95% intervals, bayesian variance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> conditional log-likelihood -55.844138    effective df 4.00</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cAIC 119.688    cBIC 130.838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 23 ms</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> fitted in 38 ms</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> inner   max |grad|/se 3.1e-06   min eigen 0.11</span>
 </code></pre></div>
     </div>

@@ -11,7 +11,7 @@ curvature \(D^{-1/2} A D^{-1/2}\) with \(D = |\mathrm{diag}(A)|\)."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.133.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,10 +76,14 @@ is nothing to read.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Both are dimensionless, so neither moves with the units of a coefficient
 or with the sample size. \(|g_j|/\sqrt{A_{jj}}\) is the length of the
-one-coordinate Newton step measured in that coordinate's own standard
-error. The equilibrated matrix has a unit diagonal, so its smallest
-eigenvalue is at most one: near zero it reports a direction the curvature
-barely identifies, and below zero a point that is not an optimum.</p>
+one-coordinate Newton step measured in that coordinate's standard error
+conditional on the others, \(1/\sqrt{A_{jj}}\), which is smaller than the
+marginal one; equivalently it is \(\sqrt{2\Delta_j}\), with
+\(\Delta_j = g_j^2/(2A_{jj})\) what that step alone would still buy in
+the objective's own units. The equilibrated matrix has a unit diagonal, so
+its smallest eigenvalue is at most one: near zero it reports a direction
+the curvature barely identifies, and below zero a point that is not an
+optimum.</p>
 <p><code>A</code> is the curvature with the sign that makes an optimum positive
 definite: the penalized information for the inner fit, the negated outer
 Hessian for the criterion. A coordinate with zero curvature reads an

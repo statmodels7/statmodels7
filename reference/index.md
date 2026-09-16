@@ -1358,3 +1358,7 @@ exported, and none is needed to use the package.
 
 - [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
   : Zero the Non-Finite Entries of a Penalty's Hessian
+
+- [`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md)
+  : The Optimality Check of the Coefficients a Kinked Penalty Set to
+  Zero

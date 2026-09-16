@@ -34,11 +34,14 @@ nothing to read.
 
 Both are dimensionless, so neither moves with the units of a coefficient
 or with the sample size. \\\|g_j\|/\sqrt{A\_{jj}}\\ is the length of the
-one-coordinate Newton step measured in that coordinate's own standard
-error. The equilibrated matrix has a unit diagonal, so its smallest
-eigenvalue is at most one: near zero it reports a direction the
-curvature barely identifies, and below zero a point that is not an
-optimum.
+one-coordinate Newton step measured in that coordinate's standard error
+conditional on the others, \\1/\sqrt{A\_{jj}}\\, which is smaller than
+the marginal one; equivalently it is \\\sqrt{2\Delta_j}\\, with
+\\\Delta_j = g_j^2/(2A\_{jj})\\ what that step alone would still buy in
+the objective's own units. The equilibrated matrix has a unit diagonal,
+so its smallest eigenvalue is at most one: near zero it reports a
+direction the curvature barely identifies, and below zero a point that
+is not an optimum.
 
 `A` is the curvature with the sign that makes an optimum positive
 definite: the penalized information for the inner fit, the negated outer
