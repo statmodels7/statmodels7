@@ -1,5 +1,37 @@
 # Changelog
 
+## statmodels7 0.133.0
+
+- **[`summary()`](https://rdrr.io/r/base/summary.html) prints four
+  numbers about the point and no verdict.** The search’s flag and the
+  certificate’s state and reasons are gone from the foot, and so is the
+  `search:` line of [`print()`](https://rdrr.io/r/base/print.html). In
+  their place, for the inner fit and, where there is one, the outer
+  criterion: the largest gradient in standard-error units, , and the
+  smallest eigenvalue of the equilibrated curvature . Both are
+  dimensionless, so neither moves with a coefficient’s units or with the
+  sample size, which an absolute gradient does.
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  returns them as `inner` and `outer`, computed by the new
+  [`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md),
+  and still decides which standard errors
+  [`summary()`](https://rdrr.io/r/base/summary.html) leaves off a
+  coordinate at a boundary. The inner reading covers the coordinates
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) reports – not a
+  coefficient a kinked penalty set to zero, a frozen working block or an
+  aliased column – and, for a model carrying a filter, the filter’s own
+  parameters beside the coefficients, read from
+  [`statmod_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.md),
+  the closures the joint inner step minimizes. The outer reading covers
+  the coordinates the decrement reads; where none remains the foot says
+  `outer not available: at a boundary`. Measured on ten shapes: healthy
+  fits read an inner gradient of 1.4e-11 to 6.2e-03 standard errors and
+  an outer one of 2.4e-06 to 1.8e-02, against 0.84 on an inner fit
+  stopped after one iteration and 2.6 on an outer search stopped after
+  one; a gas volatility model reads 4.3e-13 and a minimum eigenvalue of
+  0.034, where the coefficient-only reading gave exactly 1.
+  `search_verdict()` is removed.
+
 ## statmodels7 0.132.0
 
 - **The exact outer Hessian on the expected information**, for
@@ -850,8 +882,7 @@
   platform, so it would have gone stale unseen on whichever platform
   runs it.
 
-  [`search_verdict()`](https://statmodels7.github.io/statmodels7/reference/search_verdict.md)
-  is the one place the wording lives, so
+  `search_verdict()` is the one place the wording lives, so
   [`print()`](https://rdrr.io/r/base/print.html) and
   [`summary()`](https://rdrr.io/r/base/summary.html) cannot drift apart;
   a test asserts they agree word for word.

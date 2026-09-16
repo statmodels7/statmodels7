@@ -32,6 +32,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/blocks_at_kink.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/boundary_coords.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bounded_bump.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/certificate_readings.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_covariates.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/check_trials.html</loc></url>
@@ -262,7 +263,6 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/same_term_kind.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/se_answer.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/search_coords.html</loc></url>
-<url><loc>https://statmodels7.github.io/statmodels7/reference/search_verdict.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/seg_boot_total.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/seg_grid_start.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/select_parameter.html</loc></url>
@@ -329,6 +329,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_information_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_invert.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_latent.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/statmod_marginal.html</loc></url>

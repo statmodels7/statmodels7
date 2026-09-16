@@ -193,6 +193,9 @@ exported, and none is needed to use the package.
 - [`bounded_bump()`](https://statmodels7.github.io/statmodels7/reference/bounded_bump.md)
   : Move a Hyperparameter Without Leaving Its Interval
 
+- [`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md)
+  : The Two Readings a Summary Prints About a Point
+
 - [`check_covariates()`](https://statmodels7.github.io/statmodels7/reference/check_covariates.md)
   : The Covariate Generators of a Simulation
 
@@ -882,9 +885,6 @@ exported, and none is needed to use the package.
 - [`search_coords()`](https://statmodels7.github.io/statmodels7/reference/search_coords.md)
   : Which Coefficients a Search Should Cover
 
-- [`search_verdict()`](https://statmodels7.github.io/statmodels7/reference/search_verdict.md)
-  : What the Search Reports About Itself
-
 - [`seg_boot_total()`](https://statmodels7.github.io/statmodels7/reference/seg_boot_total.md)
   : How Many Restarts the Terms Ask For
 
@@ -1052,6 +1052,9 @@ exported, and none is needed to use the package.
 
 - [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md)
   : A Confidence Interval by Inverting a Test
+
+- [`statmod_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.md)
+  : The Joint Objective Over the Coefficients and a Filter's Parameters
 
 - [`statmod_loglik_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.md)
   : The Weighted Log-Likelihood of a Specification at Given Coefficients

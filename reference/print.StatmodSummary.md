@@ -4,6 +4,15 @@ The call, then the covariance blocks shared between equations, then each
 distribution parameter's blocks, then the degrees of freedom, the
 criteria and the notes.
 
+Below the criteria the point is described by four dimensionless numbers
+from
+[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md),
+computed by
+[`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md):
+for the inner fit, and for the outer criterion where there is one, the
+largest gradient in standard-error units and the smallest eigenvalue of
+the equilibrated curvature. No verdict is printed.
+
 ## Usage
 
 ``` r

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.132.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.133.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.133.0" id="statmodels7-01330">statmodels7 0.133.0<a class="anchor" aria-label="anchor" href="#statmodels7-01330"></a></h2>
+<ul><li>
+<strong><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints four numbers about the point and no verdict.</strong> The search’s flag and the certificate’s state and reasons are gone from the foot, and so is the <code>search:</code> line of <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>. In their place, for the inner fit and, where there is one, the outer criterion: the largest gradient in standard-error units, , and the smallest eigenvalue of the equilibrated curvature . Both are dimensionless, so neither moves with a coefficient’s units or with the sample size, which an absolute gradient does. <code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> returns them as <code>inner</code> and <code>outer</code>, computed by the new <code><a href="../reference/certificate_readings.html">certificate_readings()</a></code>, and still decides which standard errors <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> leaves off a coordinate at a boundary. The inner reading covers the coordinates <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> reports – not a coefficient a kinked penalty set to zero, a frozen working block or an aliased column – and, for a model carrying a filter, the filter’s own parameters beside the coefficients, read from <code><a href="../reference/statmod_joint_pieces.html">statmod_joint_pieces()</a></code>, the closures the joint inner step minimizes. The outer reading covers the coordinates the decrement reads; where none remains the foot says <code>outer   not available: at a boundary</code>. Measured on ten shapes: healthy fits read an inner gradient of 1.4e-11 to 6.2e-03 standard errors and an outer one of 2.4e-06 to 1.8e-02, against 0.84 on an inner fit stopped after one iteration and 2.6 on an outer search stopped after one; a gas volatility model reads 4.3e-13 and a minimum eigenvalue of 0.034, where the coefficient-only reading gave exactly 1. <code>search_verdict()</code> is removed.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.132.0" id="statmodels7-01320">statmodels7 0.132.0<a class="anchor" aria-label="anchor" href="#statmodels7-01320"></a></h2>
 <ul><li>
@@ -161,7 +166,7 @@
 <p>⚠️ <strong>Measured, the loud line was a false alarm four times in five.</strong> Over 22 fits the flag fires 5 times, and on 4 of those <code><a href="../reference/statmod_certificate.html">statmod_certificate()</a></code> certifies the point – located to between 1.3e-09 and 2.1e-05 above their own mode. The one honest failure is a Student t whose <code>nu</code> runs to its chart’s edge, where the certificate agrees and refuses. On a battery of fourteen ordinary models – smooths, tensors, random effects, ridge, Poisson, Gamma, Bernoulli, both equations modelled – the flag does not fire at all, so the wording was misleading exactly on the harder fits a reader most needs to judge.</p>
 <p>⚠️ <strong>NOTHING ABOUT ANY FIT MOVES</strong>: <code>converged</code> carries the same logical, every criterion and every certificate is untouched, and this is the wording of one line in two views.</p>
 <p>⚠️ <strong>It reverses a decision recorded in the code</strong>, which had kept the old word rather than a more precise phrase “which nobody greps for”. That is the cost and it is taken deliberately: <code>test-robustness.R</code> is the one place that grepped for it and moved with the change – an assertion that sits behind a <code>skip_if</code> and is dormant on this platform, so it would have gone stale unseen on whichever platform runs it.</p>
-<p><code><a href="../reference/search_verdict.html">search_verdict()</a></code> is the one place the wording lives, so <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> cannot drift apart; a test asserts they agree word for word.</p>
+<p><code>search_verdict()</code> is the one place the wording lives, so <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> cannot drift apart; a test asserts they agree word for word.</p>
 </li>
 </ul></div>
     <div class="section level2">
