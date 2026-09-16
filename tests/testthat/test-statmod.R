@@ -138,7 +138,9 @@ test_that("print says what the fit is", {
   expect_false(any(grepl("log-likelihood", out)))
   expect_true(any(grepl("conditional log-likelihood",
                         utils::capture.output(print(summary(fit))))))
-  expect_true(any(grepl("converged", out)))
+  # and no verdict on the search since 0.133.0, only the time
+  expect_true(any(grepl("^fitted in ", out)))
+  expect_false(any(grepl("converged", out)))
 })
 
 test_that("prior weights change the fit the way they should", {
