@@ -1,3 +1,29 @@
+# statmodels7 0.133.0
+
+* **`summary()` prints four numbers about the point and no verdict.** The
+  search's flag and the certificate's state and reasons are gone from the
+  foot, and so is the `search:` line of `print()`. In their place, for the
+  inner fit and, where there is one, the outer criterion: the largest
+  gradient in standard-error units, \eqn{\max_j |g_j|/\sqrt{A_{jj}}}, and the
+  smallest eigenvalue of the equilibrated curvature
+  \eqn{D^{-1/2}AD^{-1/2}}. Both are dimensionless, so neither moves with a
+  coefficient's units or with the sample size, which an absolute gradient
+  does. `statmod_certificate()` returns them as `inner` and `outer`, computed
+  by the new `certificate_readings()`, and still decides which standard
+  errors `summary()` leaves off a coordinate at a boundary. The inner reading
+  covers the coordinates `vcov()` reports -- not a coefficient a kinked
+  penalty set to zero, a frozen working block or an aliased column -- and, for
+  a model carrying a filter, the filter's own parameters beside the
+  coefficients, read from `statmod_joint_pieces()`, the closures the joint
+  inner step minimizes. The outer reading covers the coordinates the
+  decrement reads; where none remains the foot says
+  `outer   not available: at a boundary`. Measured on ten shapes: healthy fits
+  read an inner gradient of 1.4e-11 to 6.2e-03 standard errors and an outer
+  one of 2.4e-06 to 1.8e-02, against 0.84 on an inner fit stopped after one
+  iteration and 2.6 on an outer search stopped after one; a gas volatility
+  model reads 4.3e-13 and a minimum eigenvalue of 0.034, where the
+  coefficient-only reading gave exactly 1. `search_verdict()` is removed.
+
 # statmodels7 0.132.0
 
 * **The exact outer Hessian on the expected information**, for `reml()` and

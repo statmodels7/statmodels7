@@ -1035,13 +1035,45 @@ structural_penalty_block <- function(spec, design, hyper, nfree = NULL) {
 #' @keywords internal
 statmod_fit_joint <- function(spec, design, obj, beta, hyper,
                               optimizer = NULL, verbose = FALSE) {
+  jp <- statmod_joint_pieces(spec, design, obj, hyper)
+  u0 <- c(beta, jp$zeta())
+  jp$raw(u0)
+  if (is.null(optimizer)) optimizer <- optimizers7::newton()
+  res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, he = jp$he)
+  jp$setz(res@par[jp$ix])
+  if (verbose) {
+    vb_say("%d coefficients and %d parameters of %s: %d iterations, converged %s",
+           jp$nb, length(jp$free), short_keys(jp$key),
+           as.integer(res@iterations), res@converged)
+  }
+  list(par = res@par[seq_len(jp$nb)], value = res@value,
+       converged = isTRUE(res@converged), iterations = res@iterations)
+}
+
+
+#' The Joint Objective Over the Coefficients and a Filter's Parameters
+#'
+#' @description
+#' The objective, gradient and exact information [statmod_fit_joint()]
+#' minimizes, over the coefficients followed by the filter's free
+#' parameters, returned as closures so [statmod_certificate()] reads the same
+#' ones at a fitted point.
+#'
+#' @param spec,design,obj,hyper As [statmod_fit_joint()] takes them.
+#'
+#' @return A list with `fn`, `gr`, `he`, `raw`, `setz` (writes the filter's
+#'   free parameters into the design's structural state), `zeta` (reads
+#'   them), `ix`, `nb`, `free` and `key`.
+#'
+#' @keywords internal
+statmod_joint_pieces <- function(spec, design, obj, hyper) {
   sst <- statmod_structural_state(design)
   su <- Filter(function(u) identical(u$kind, "filter"),
                attr(design, "structural"))
   key <- su[[1L]]$term
   nm <- names(sst$zeta[[key]])
   free <- setdiff(nm, sst$held[[key]])
-  nb <- length(beta)
+  nb <- sum(obj$npar)
   ix <- nb + seq_along(free)
 
   setz <- function(z) {
@@ -1106,18 +1138,9 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
     H + P
   }
 
-  u0 <- c(beta, as.numeric(sst$zeta[[key]][free]))
-  raw(u0)
-  if (is.null(optimizer)) optimizer <- optimizers7::newton()
-  res <- optimizers7::minimize(optimizer, fn, u0, gr = gr, he = he)
-  setz(res@par[ix])
-  if (verbose) {
-    vb_say("%d coefficients and %d parameters of %s: %d iterations, converged %s",
-           nb, length(free), short_keys(key), as.integer(res@iterations),
-           res@converged)
-  }
-  list(par = res@par[seq_len(nb)], value = res@value,
-       converged = isTRUE(res@converged), iterations = res@iterations)
+  list(fn = fn, gr = gr, he = he, raw = raw, setz = setz,
+       zeta = function() as.numeric(sst$zeta[[key]][free]),
+       ix = ix, nb = nb, free = free, key = key)
 }
 
 

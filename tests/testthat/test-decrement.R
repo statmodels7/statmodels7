@@ -256,12 +256,13 @@ test_that("the curvature is differenced where the form has no analytic one", {
   expect_identical(ce$curvature, "differenced")
   expect_true(is.finite(ce$decrement))
   expect_identical(ce$state, "converged")
-  # and the printed line says which route it rested on, so a reader of a
-  # summary does not have to ask the object
-  po <- capture.output(print(summary(obs)))
+  # the summary prints the readings and no label since 0.133.0; which route
+  # the curvature took is on the object, and both routes still give a reading
+  expect_true(all(is.finite(co$outer)))
+  expect_true(all(is.finite(ce$outer)))
   pe <- capture.output(print(summary(exp_)))
-  expect_false(any(grepl("curvature differenced", po, fixed = TRUE)))
-  expect_true(any(grepl("curvature differenced", pe, fixed = TRUE)))
+  expect_false(any(grepl("curvature differenced", pe, fixed = TRUE)))
+  expect_true(any(grepl("^outer +max \\|grad\\|/se", pe)))
 
   # THE TWO ROUTES AGREE WHERE BOTH EXIST, which is what licenses the second
   # one. The analytic Hessian of the observed fit against one differenced

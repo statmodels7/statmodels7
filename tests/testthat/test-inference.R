@@ -530,12 +530,13 @@ test_that("with every coordinate at a boundary the gradient is NA, not 0", {
   expect_identical(ct$state, "boundary")
   expect_true(is.finite(ct$mode_error))
 
-  # the printed form says nothing about either reading, and the boundary line
-  # beneath it names the coordinate instead
+  # the printed form reports no outer number and says why, rather than
+  # dropping the line and reading like a model with no criterion
   out <- capture.output(print(summary(fit)))
-  expect_false(any(grepl("outer gradient", out, fixed = TRUE)))
-  expect_false(any(grepl("still available", out, fixed = TRUE)))
-  expect_true(any(grepl("at a boundary", out, fixed = TRUE)))
+  expect_false(any(grepl("^outer +max", out)))
+  expect_true(any(grepl("outer   not available: at a boundary", out,
+                        fixed = TRUE)))
+  expect_true(all(is.na(ct$outer)))
 
   # THE NEGATIVE CONTROL: a fit whose coordinate is INTERIOR still reports
   # its gradient, or the assertions above would pass by never measuring
@@ -553,10 +554,10 @@ test_that("with every coordinate at a boundary the gradient is NA, not 0", {
   expect_length(co$boundary, 0L)
   expect_true(is.finite(co$gradient))
   expect_true(is.finite(co$decrement))
-  # what the line leads with is the rise still available, that being what the
-  # verdict is made on; the gradient is on the object beside it
-  expect_true(any(grepl("still available",
-                        capture.output(print(summary(ok))), fixed = TRUE)))
+  # and the printed outer line carries the two numbers
+  expect_true(all(is.finite(co$outer)))
+  expect_true(any(grepl("^outer +max \\|grad\\|/se",
+                        capture.output(print(summary(ok))))))
 })
 
 test_that("summary carries the certificate and prints it", {
@@ -570,7 +571,56 @@ test_that("summary carries the certificate and prints it", {
   expect_true(s@certificate$state %in%
                 c("converged", "boundary", "not converged", "unknown"))
   out <- utils::capture.output(print(s))
-  expect_true(any(grepl("certificate:", out, fixed = TRUE)))
+  # four numbers and no verdict: neither the certificate's state nor the
+  # search's flag is printed
+  expect_true(any(grepl("^inner +max \\|grad\\|/se", out)))
+  expect_true(any(grepl("^outer +max \\|grad\\|/se", out)))
+  expect_false(any(grepl("certificate:", out, fixed = TRUE)))
+  expect_false(any(grepl("search:", out, fixed = TRUE)))
+})
+
+test_that("the printed readings are dimensionless and see a saddle", {
+  # a quadratic of curvature A at a gradient g: the gradient in standard
+  # errors is |g_j|/sqrt(A_jj) and the equilibrated matrix has unit diagonal
+  A <- matrix(c(4, 1, 1, 9), 2)
+  g <- c(0.2, -0.3)
+  r <- certificate_readings(g, A)
+  expect_equal(r[["gradient"]], max(abs(g) / sqrt(diag(A))), tolerance = 1e-14)
+  E <- A / tcrossprod(sqrt(diag(A)))
+  expect_equal(r[["eigen"]], min(eigen(E)$values), tolerance = 1e-14)
+
+  # THE UNITS DO NOT MOVE THEM: rescaling a coordinate by 1e6 rescales its
+  # gradient and curvature, and neither reading changes
+  D <- diag(c(1e6, 1))
+  r2 <- certificate_readings(as.numeric(D %*% g), D %*% A %*% D)
+  expect_equal(r2, r, tolerance = 1e-12)
+
+  # a saddle reads a negative eigenvalue, a flat direction one near zero
+  expect_lt(certificate_readings(g, matrix(c(1, 2, 2, 1), 2))[["eigen"]], 0)
+  expect_lt(certificate_readings(g, matrix(c(1, 1 - 1e-9, 1 - 1e-9, 1), 2))[["eigen"]],
+            1e-8)
+  # a coordinate left out is not read, and nothing to read is NA
+  expect_equal(certificate_readings(c(0.2, 1e3), A, 1L)[["gradient"]], 0.1)
+  expect_true(all(is.na(certificate_readings(numeric(0), matrix(0, 0, 0)))))
+})
+
+test_that("the inner reading of a filter covers its own parameters", {
+  set.seed(1)
+  n <- 800
+  f <- numeric(n); r <- numeric(n); f[1] <- -1
+  for (t in seq_len(n)) {
+    r[t] <- stats::rnorm(1, 0, exp(f[t]))
+    if (t < n) f[t + 1] <- -0.02 + 0.05 * (r[t]^2 / exp(2 * f[t]) - 1) + 0.97 * f[t]
+  }
+  dd <- data.frame(ret = r, time = seq_len(n))
+  fit <- statmod(ret ~ 1 | sigma ~ 0 + gas(p = 1, q = 1, time = time),
+                 gaussian1_distrib(), dd)
+  ct <- statmod_certificate(fit)
+  # read on the one intercept alone the equilibrated eigenvalue is exactly 1
+  # whatever the filter does; over the joint vector it is not
+  expect_true(all(is.finite(ct$inner)))
+  expect_lt(ct$inner[["eigen"]], 1 - 1e-6)
+  expect_lt(ct$inner[["gradient"]], 1e-3)
 })
 
 

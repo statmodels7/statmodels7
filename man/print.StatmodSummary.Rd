@@ -35,6 +35,12 @@ for a parametric block of ordinary size.}
 The call, then the covariance blocks shared between equations, then each
 distribution parameter's blocks, then the degrees of freedom, the criteria
 and the notes.
+
+Below the criteria the point is described by four dimensionless numbers
+from \code{\link[=statmod_certificate]{statmod_certificate()}}, computed by \code{\link[=certificate_readings]{certificate_readings()}}: for
+the inner fit, and for the outer criterion where there is one, the
+largest gradient in standard-error units and the smallest eigenvalue of
+the equilibrated curvature. No verdict is printed.
 }
 \seealso{
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}

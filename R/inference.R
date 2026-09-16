@@ -3791,6 +3791,12 @@ smoothed_notes <- function(spec, object) {
 #' The call, then the covariance blocks shared between equations, then each
 #' distribution parameter's blocks, then the degrees of freedom, the criteria
 #' and the notes.
+#'
+#' Below the criteria the point is described by four dimensionless numbers
+#' from [statmod_certificate()], computed by [certificate_readings()]: for
+#' the inner fit, and for the outer criterion where there is one, the
+#' largest gradient in standard-error units and the smallest eigenvalue of
+#' the equilibrated curvature. No verdict is printed.
 #' @param x A [StatmodSummary()].
 #' @param digits Significant digits in the tables.
 #' @param notes Whether to print the qualifications the numbers carry.
@@ -3875,46 +3881,32 @@ print.StatmodSummary <- function(x, digits = 4L, notes = FALSE,
   cat(sprintf(paste0("conditional log-likelihood %.6f    effective df %.2f",
                      "\ncAIC %.3f    cBIC %.3f\n"),
               x@loglik, x@df, x@aic, x@bic))
-  # ⚠️ THE TWO LINES BELOW ANSWER DIFFERENT QUESTIONS and used to read as a
-  # contradiction: a fit could print a failure in capitals and
-  # certificate: CONVERGED two lines under it, with nothing on screen saying
-  # why both could be true. The first is a property of the SEARCH -- whether
-  # it met its own stopping rule -- and the second of the POINT it stopped
-  # at, which is the question a reader has. So the point gets the capitals
-  # and the search says, in words and in lower case, what it is --
-  # search_verdict() carries that wording for both views.
-  cat(sprintf("fitted in %s   search: %s\n", format_duration(x@elapsed),
-              search_verdict(x@converged)))
+  # FOUR NUMBERS AND NO VERDICT (Giovanni, 2026-09-16). The block this
+  # replaces printed the search's own flag and the certificate's state with a
+  # paragraph of reasons, and both are readings a reader has to interpret --
+  # the flag was wrong four times in five where it fired. What is printed now
+  # is the point itself, twice over where there is a criterion: how far the
+  # gradient is from zero in standard errors, and whether the curvature is
+  # that of an optimum, both dimensionless. The certificate still decides
+  # what summary() suppresses at a boundary; it is no longer printed.
+  cat(sprintf("fitted in %s\n", format_duration(x@elapsed)))
   if (!is.null(x@certificate)) {
     ct <- x@certificate
-    cat(sprintf("certificate: %s", toupper(ct$state)))
-    # THE RISE STILL AVAILABLE is what the verdict is made on, so it is what
-    # the line leads with, and it is in the criterion's own units -- a reader
-    # comparing two fits can read it against the criteria themselves. The
-    # gradient follows where there is no decrement to print, which is a form
-    # whose curvature could not be read at all.
-    if (is.finite(ct$decrement)) {
-      cat(sprintf("   %.3g of criterion still available", ct$decrement))
-      # A VERDICT RESTING ON A DIFFERENCED CURVATURE SAYS SO, on the line
-      # rather than only on the object. It is the distinction this package
-      # draws everywhere else between a quantity it computes and one it
-      # estimates, and the reader of a summary is the one who would
-      # otherwise have to ask.
-      if (identical(ct$curvature, "differenced")) cat(" (curvature differenced)")
-    } else if (is.finite(ct$gradient)) {
-      cat(sprintf("   outer gradient %.3g", ct$gradient))
+    line <- function(label, r) {
+      if (is.null(r) || !any(is.finite(r))) return(invisible())
+      cat(sprintf("%-7s max |grad|/se %s   min eigen %s\n", label,
+                  if (is.finite(r[["gradient"]]))
+                    format(signif(r[["gradient"]], 2)) else "NA",
+                  if (is.finite(r[["eigen"]]))
+                    format(signif(r[["eigen"]], 2)) else "NA"))
     }
-    if (is.finite(ct$mode_error)) {
-      cat(sprintf("   %.3g above the mode", ct$mode_error))
-    }
-    cat("\n")
-    if (length(ct$boundary)) {
-      cat("  at a boundary: ", paste(ct$boundary, collapse = ", "), "\n",
-          sep = "")
-    }
-    for (r in ct$reason) {
-      cat(paste0("  ", strwrap(r, width = 74L)), sep = "\n")
-      cat("\n")
+    line("inner", ct$inner)
+    line("outer", ct$outer)
+    # a criterion whose every coordinate ran to an edge, or a coefficient at
+    # its link's clamp, leaves nothing to read; a silent absence would read
+    # the same as a model with no criterion at all
+    if (!any(is.finite(ct$outer)) && length(ct$boundary)) {
+      cat("outer   not available: at a boundary\n")
     }
   }
   # THE NOTES ARE COUNTED AND NOT PRINTED. Almost every one of them states a
@@ -4398,7 +4390,9 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   out <- list(state = "unknown", decrement = NA_real_, gradient = NA_real_,
               mode_error = NA_real_, curvature = NA_character_,
               boundary = character(0), boundary_key = character(0),
-              reason = character(0))
+              reason = character(0),
+              inner = c(gradient = NA_real_, eigen = NA_real_),
+              outer = c(gradient = NA_real_, eigen = NA_real_))
   method <- fit@methods$outer
   spec <- fit@spec
   design <- tryCatch(statmod_design(spec), error = function(e) NULL)
@@ -4426,6 +4420,38 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
                        error = function(e) NULL)
         if (!is.null(db) && all(is.finite(db))) {
           out$mode_error <- 0.5 * sum(sc * db)
+        }
+      }
+      # THE TWO NUMBERS summary() PRINTS for the inner fit, over the
+      # coordinates vcov() reports: a coefficient a kinked penalty set to zero
+      # has a score that lies in the subdifferential rather than vanishing, a
+      # frozen working block is not a Jacobian, and an aliased column has no
+      # curvature of its own, so each would read as a failure it is not.
+      if (!is.null(sc)) {
+        lab <- tryCatch(coef_labels(spec, design), error = function(e) NULL)
+        keep <- seq_along(sc)
+        if (!is.null(lab) && nrow(lab) == length(sc)) {
+          beta <- unlist(cf[spec@distrib@params], use.names = FALSE)
+          drop <- (lab$kinked & beta == 0) | frozen_block(spec, lab) |
+            rownames(lab) %in% fit@aliased
+          keep <- which(!drop)
+        }
+        out$inner <- tryCatch(certificate_readings(sc, pen$K, keep),
+                              error = function(e) out$inner)
+        # A FILTER'S OWN PARAMETERS ARE ESTIMATED BESIDE THE COEFFICIENTS, in
+        # one system, so the inner reading is over that joint vector: read on
+        # the coefficients alone, a model whose equation is one intercept and
+        # a gas() term reports an equilibrated eigenvalue of exactly 1 whatever
+        # the filter's curvature is. The closures are the fit's own.
+        su <- attr(design, "structural")
+        if (length(su) && !is.null(obj) &&
+            all(vapply(su, function(u) identical(u$kind, "filter"), TRUE))) {
+          out$inner <- tryCatch({
+            jp <- statmod_joint_pieces(spec, design, obj, hy)
+            u <- c(obj$stack(cf), jp$zeta())
+            if (!is.finite(jp$raw(u))) stop("not evaluable")
+            certificate_readings(jp$gr(u), jp$he(u), c(keep, jp$ix))
+          }, error = function(e) c(gradient = NA_real_, eigen = NA_real_))
         }
       }
     }
@@ -4664,6 +4690,10 @@ statmod_certificate <- function(fit, tol = 1e-2, edge = 8) {
   # vector: the line read `outer gradient 0` beside `BOUNDARY` and now reads
   # nothing, with the state and the mode error unchanged.
   out$gradient <- if (length(interior)) max(abs(g[interior])) else NA_real_
+  # the outer pair summary() prints, over the same coordinates the verdict
+  # reads: one that ran to an edge has a curvature collapsing with its
+  # gradient, and its equilibrated reading would say nothing about the rest
+  out$outer <- certificate_readings(g, cv$A, interior)
   # THE VERDICT IS THE NEWTON DECREMENT over the coordinates still under test,
   # which is how much the criterion would still rise if the point took the
   # step its own curvature calls for. `tol` is therefore in the criterion's
@@ -4901,4 +4931,57 @@ coord_decrement <- function(g, A) {
   d <- as.numeric(diag(as.matrix(A)))
   out <- ifelse(is.finite(d) & d > 0 & is.finite(g), g^2 / (2 * d), Inf)
   as.numeric(out)
+}
+
+
+
+#' The Two Readings a Summary Prints About a Point
+#'
+#' @description
+#' The largest gradient in standard-error units, \eqn{\max_j
+#' |g_j|/\sqrt{|A_{jj}|}}, and the smallest eigenvalue of the equilibrated
+#' curvature \eqn{D^{-1/2} A D^{-1/2}} with \eqn{D = |\mathrm{diag}(A)|}.
+#'
+#' @details
+#' Both are dimensionless, so neither moves with the units of a coefficient
+#' or with the sample size. \eqn{|g_j|/\sqrt{A_{jj}}} is the length of the
+#' one-coordinate Newton step measured in that coordinate's own standard
+#' error. The equilibrated matrix has a unit diagonal, so its smallest
+#' eigenvalue is at most one: near zero it reports a direction the curvature
+#' barely identifies, and below zero a point that is not an optimum.
+#'
+#' `A` is the curvature with the sign that makes an optimum positive
+#' definite: the penalized information for the inner fit, the negated outer
+#' Hessian for the criterion. A coordinate with zero curvature reads an
+#' infinite gradient where its gradient is not zero, and keeps a unit scale
+#' in the equilibration.
+#'
+#' @param g The gradient.
+#' @param A The curvature, a matrix of the same order.
+#' @param keep The coordinates to read.
+#'
+#' @return A named numeric vector, `gradient` and `eigen`, `NA` where there
+#'   is nothing to read.
+#'
+#' @seealso [statmod_certificate()], [joint_decrement()]
+#'
+#' @keywords internal
+certificate_readings <- function(g, A, keep = seq_along(g)) {
+  out <- c(gradient = NA_real_, eigen = NA_real_)
+  if (is.null(A)) return(out)
+  keep <- keep[is.finite(g[keep])]
+  if (!length(keep)) return(out)
+  A <- as.matrix(A)[keep, keep, drop = FALSE]
+  g <- g[keep]
+  if (any(!is.finite(A))) return(out)
+  A <- (A + t(A)) / 2
+  s <- sqrt(abs(diag(A)))
+  ratio <- ifelse(g == 0, 0, abs(g) / s)
+  out[["gradient"]] <- max(ratio)
+  s[s == 0] <- 1
+  ev <- tryCatch(eigen(A / tcrossprod(s), symmetric = TRUE,
+                       only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (!is.null(ev) && all(is.finite(ev))) out[["eigen"]] <- min(ev)
+  out
 }
