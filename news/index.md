@@ -1,5 +1,140 @@
 # Changelog
 
+## statmodels7 0.138.0
+
+- **The coordinate descent reads the column curvatures of the columns it
+  visits.**
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  computed on every column of the block at every iteration, where the
+  strong rule keeps a few. They are computed on the kept columns by the
+  new
+  [`coord_curv()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md),
+  and the check that every one would be finite and positive is decided
+  by
+  [`coord_curv_bounded()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md)
+  from the block’s cached column norms and the range of the weights;
+  outside those bounds the whole vector is computed and checked as
+  before.
+- **skips the columns whose coefficient is zero**, through the new
+  [`x_times_b()`](https://statmodels7.github.io/statmodels7/reference/x_times_b.md),
+  in
+  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+  and in the strong rule’s residual. A zero coefficient adds exactly
+  zero to the sum, so the result is the same.
+- **The list of penalties and the penalized block are kept on the
+  design.**
+  [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+  returns the enumeration from the design’s `eta_memo` environment where
+  the terms and the family’s parameters are the ones it was built for,
+  and
+  [`coord_block_at()`](https://statmodels7.github.io/statmodels7/reference/coord_block_at.md)
+  keeps the block’s copy.
+- Every fit is [`identical()`](https://rdrr.io/r/base/identical.html) to
+  0.137.0 – under
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) on
+  a gaussian, a Poisson, a Bernoulli and a two-equation gaussian lasso,
+  and under
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  – and so are the lotto0, D1 and F2 nets. Measured in CPU time,
+  alternated against 0.137.0:
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) on
+  a Poisson lasso 64.1 s to 55.2 s and on a gaussian one 32.8 s to 31.2
+  s;
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  on a lasso over both equations of a gaussian 25.8 s to 24.0 s.
+
+## statmodels7 0.137.0
+
+- **A fit over a few coefficients reads the score over those columns
+  only.**
+  [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
+  takes `index`, and the objective carries `gr_sub()`, which
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  uses on a subset: the family’s derivatives are the same, and only the
+  final products over the design’s other columns are skipped. Each entry
+  is its own column’s product, so the gradient is
+  [`identical()`](https://rdrr.io/r/base/identical.html) to the full one
+  read at those positions, checked on nine shapes including a moving
+  block, a filter and a regime.
+- [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
+  reads the one diagonal entry of the information it uses, where it
+  built the whole array and took a slice. The family still computes
+  every component, which is where the cost is; the array was under 1 per
+  cent of a fit.
+- Measured in CPU time, the minimum of three alternated runs against
+  0.136.0: a gaussian lasso path 7.85 s to 6.96 s, a lasso on both
+  equations of a gaussian 29.82 s to 25.82 s, of a gamma 48.90 s to
+  48.69 s. Every fit is
+  [`identical()`](https://rdrr.io/r/base/identical.html), and so are the
+  lotto0, D1 and F2 nets.
+
+## statmodels7 0.136.0
+
+- **The predictors are not recomputed at a point just read.**
+  [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+  keeps the last point it computed in an environment
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  attaches to the design, and returns it when asked again at the same
+  coefficients. On a lasso path over two equations 2950 of 5007 calls
+  repeated the call before. A design with a term that recomputes its own
+  block, or with a structural term, has no such memo: its blocks move
+  with the coefficients, and a filter already keeps its own.
+- **The information is bound once from its blocks** by the new
+  [`assemble_blocks()`](https://statmodels7.github.io/statmodels7/reference/assemble_blocks.md),
+  where each block used to be written into a zero matrix. With a sparse
+  design every such write rebuilt the compressed columns. The result is
+  [`identical()`](https://rdrr.io/r/base/identical.html) to the old one,
+  stored zeros dropped so the sparsity pattern CHOLMOD orders by is the
+  same.
+- Measured in CPU time, the minimum of three alternated runs against
+  0.135.0: a gaussian lasso path 8.62 s to 7.61 s, a lasso on both
+  equations of a gaussian 37.01 s to 29.63 s, a lasso beside a random
+  intercept 209.1 s to 191.5 s. Every fit is
+  [`identical()`](https://rdrr.io/r/base/identical.html), and so are the
+  lotto0, D1 and F2 nets.
+
+## statmodels7 0.135.0
+
+- **A lasso fit forms the information only over the coordinates it
+  moves.**
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  on a subset of the coefficients no longer builds the square-root
+  design over the whole model:
+  [`subset_pieces()`](https://statmodels7.github.io/statmodels7/reference/subset_pieces.md)
+  assembles from the requested columns alone through the new `index`
+  argument of
+  [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
+  and
+  [`information_subset()`](https://statmodels7.github.io/statmodels7/reference/information_subset.md),
+  and
+  [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
+  reads the effective degrees of freedom on the active coordinates only.
+  Measured at 5000 observations and 200 columns with the hyperparameter
+  chosen by
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md):
+  a gaussian path 24.95 s to 7.95 s, a Poisson path 24.98 s to 11.27 s,
+  a Bernoulli path 11.45 s to 7.10 s, a lasso on both equations of a
+  gaussian 203.1 s to 37.3 s and of a gamma 153.6 s to 60.1 s, and a
+  lasso beside a random intercept over 500 groups 738.4 s to 311.9 s.
+  The fits are the same: coefficients within 1.6e-15, the chosen
+  hyperparameters, log-likelihood and effective degrees of freedom
+  identical.
+- **A kinked block falls back to the expected information where the
+  observed curvature is not positive**, instead of leaving the compiled
+  coordinate descent for the proximal route. Along a path the working
+  weights are read on the observed information, and for a negative
+  binomial the dispersion’s observed curvature is negative at some
+  observations, so most of the dispersion block’s fits had been going to
+  `prox_grad()`. With a lasso on the mean and on the dispersion of a
+  `negbin2_distrib()`, at 1500 observations the fit goes from 486.9 s to
+  20.5 s and at 5000 from 1519 s to 52.0 s, with the same support,
+  hyperparameters and effective degrees of freedom. Where the observed
+  curvature is positive nothing moves: five other shapes are
+  [`identical()`](https://rdrr.io/r/base/identical.html) to before.
+  Reading the expected information always was measured and not taken,
+  costing 1.6x to 1.8x on a gaussian or a gamma with a modelled
+  dispersion.
+
 ## statmodels7 0.134.0
 
 - **A coefficient a kinked penalty set to zero is checked on a line of

@@ -20,6 +20,11 @@ statmod_design(spec)
 
 A named list with one entry per parameter, each a list with `X`,
 `coef_names`, `npar` and `blocks` (the column range each term occupies).
+Where no term moves with the coefficients and none is structural, the
+attribute `eta_memo` is an environment holding the last predictors
+[`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
+computed on this design, so a second call at the same coefficients
+returns them without recomputing.
 
 ## See also
 

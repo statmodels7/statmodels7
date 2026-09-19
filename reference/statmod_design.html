@@ -9,7 +9,7 @@ coefficients they carry."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.138.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,10 @@ coefficients they carry.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with one entry per parameter, each a list with
 <code>X</code>, <code>coef_names</code>, <code>npar</code> and <code>blocks</code> (the column
-range each term occupies).</p>
+range each term occupies). Where no term moves with the coefficients
+and none is structural, the attribute <code>eta_memo</code> is an environment
+holding the last predictors <code><a href="statmod_eta.html">statmod_eta()</a></code> computed on this design, so a
+second call at the same coefficients returns them without recomputing.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

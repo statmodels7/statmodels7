@@ -392,6 +392,9 @@ exported, and none is needed to use the package.
 - [`armijo_ok()`](https://statmodels7.github.io/statmodels7/reference/armijo_ok.md)
   : Armijo's Sufficient-Decrease Condition
 
+- [`assemble_blocks()`](https://statmodels7.github.io/statmodels7/reference/assemble_blocks.md)
+  : A Symmetric Matrix From Its Upper Blocks
+
 - [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
   : Refuse Where a Criterion Cannot Be Computed
 
@@ -511,11 +514,18 @@ exported, and none is needed to use the package.
 - [`coord_block()`](https://statmodels7.github.io/statmodels7/reference/coord_block.md)
   : The Penalized Block, in the Storage It Arrived In
 
+- [`coord_block_at()`](https://statmodels7.github.io/statmodels7/reference/coord_block_at.md)
+  : The Penalized Block, Kept on the Design
+
 - [`coord_call()`](https://statmodels7.github.io/statmodels7/reference/coord_call.md)
   : Run the Compiled Coordinate Descent on Either Storage
 
 - [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
   : Which Way of Holding the Gradient Is Cheaper
+
+- [`coord_curv_bounded()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md)
+  [`coord_curv()`](https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.md)
+  : Whether Every Column Curvature Is Finite and Positive, Without Them
 
 - [`coord_decrement()`](https://statmodels7.github.io/statmodels7/reference/coord_decrement.md)
   : What One Coordinate Alone Would Buy
@@ -738,6 +748,9 @@ exported, and none is needed to use the package.
 
 - [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   : The Per-Observation Information Blocks
+
+- [`information_subset()`](https://statmodels7.github.io/statmodels7/reference/information_subset.md)
+  : The Information Over Some of the Coefficients
 
 - [`inner_mode_error()`](https://statmodels7.github.io/statmodels7/reference/inner_mode_error.md)
   : How Far Above Its Mode the Inner Fit Stopped
@@ -1328,6 +1341,7 @@ exported, and none is needed to use the package.
   : The Exact Derivatives of a Prediction-Error Criterion
 
 - [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
+  [`statmod_penalized_units()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
   : Every Penalized Unit of a Specification
 
 - [`statmod_penalized_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized_at.md)
@@ -1492,6 +1506,9 @@ exported, and none is needed to use the package.
 - [`structural_zeta_start()`](https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.md)
   : The Parameters a Structural Term Starts From
 
+- [`subset_pieces()`](https://statmodels7.github.io/statmodels7/reference/subset_pieces.md)
+  : The Scoring Pieces of a Subset of the Coefficients
+
 - [`summary(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
   : Summarize a Fitted Model
 
@@ -1584,6 +1601,9 @@ exported, and none is needed to use the package.
 
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
   : Is a Matrix Worth Factorizing Sparsely?
+
+- [`x_times_b()`](https://statmodels7.github.io/statmodels7/reference/x_times_b.md)
+  : A Design Times Coefficients, Over the Nonzero Ones
 
 - [`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
   [`wxsq()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)

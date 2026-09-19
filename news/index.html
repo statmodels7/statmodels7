@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.138.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,39 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.138.0" id="statmodels7-01380">statmodels7 0.138.0<a class="anchor" aria-label="anchor" href="#statmodels7-01380"></a></h2>
+<ul><li>
+<strong>The coordinate descent reads the column curvatures of the columns it visits.</strong> <code><a href="../reference/coord_fit.html">coord_fit()</a></code> computed  on every column of the block at every iteration, where the strong rule keeps a few. They are computed on the kept columns by the new <code><a href="../reference/coord_curv_bounded.html">coord_curv()</a></code>, and the check that every one would be finite and positive is decided by <code><a href="../reference/coord_curv_bounded.html">coord_curv_bounded()</a></code> from the block’s cached column norms and the range of the weights; outside those bounds the whole vector is computed and checked as before.</li>
+<li>
+<strong> skips the columns whose coefficient is zero</strong>, through the new <code><a href="../reference/x_times_b.html">x_times_b()</a></code>, in <code><a href="../reference/statmod_eta.html">statmod_eta()</a></code> and in the strong rule’s residual. A zero coefficient adds exactly zero to the sum, so the result is the same.</li>
+<li>
+<strong>The list of penalties and the penalized block are kept on the design.</strong> <code><a href="../reference/statmod_penalized.html">statmod_penalized()</a></code> returns the enumeration from the design’s <code>eta_memo</code> environment where the terms and the family’s parameters are the ones it was built for, and <code><a href="../reference/coord_block_at.html">coord_block_at()</a></code> keeps the block’s copy.</li>
+<li>Every fit is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to 0.137.0 – under <code><a href="../reference/cv.html">cv()</a></code> on a gaussian, a Poisson, a Bernoulli and a two-equation gaussian lasso, and under <code><a href="../reference/aic.html">bic()</a></code> – and so are the lotto0, D1 and F2 nets. Measured in CPU time, alternated against 0.137.0: <code><a href="../reference/cv.html">cv()</a></code> on a Poisson lasso 64.1 s to 55.2 s and on a gaussian one 32.8 s to 31.2 s; <code><a href="../reference/aic.html">bic()</a></code> on a lasso over both equations of a gaussian 25.8 s to 24.0 s.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.137.0" id="statmodels7-01370">statmodels7 0.137.0<a class="anchor" aria-label="anchor" href="#statmodels7-01370"></a></h2>
+<ul><li>
+<strong>A fit over a few coefficients reads the score over those columns only.</strong> <code><a href="../reference/statmod_score_at.html">statmod_score_at()</a></code> takes <code>index</code>, and the objective carries <code>gr_sub()</code>, which <code><a href="../reference/fit_smooth.html">fit_smooth()</a></code> uses on a subset: the family’s derivatives are the same, and only the final products over the design’s other columns are skipped. Each entry is its own column’s product, so the gradient is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to the full one read at those positions, checked on nine shapes including a moving block, a filter and a regime.</li>
+<li>
+<code><a href="../reference/coord_working.html">coord_working()</a></code> reads the one diagonal entry of the information it uses, where it built the whole  array and took a slice. The family still computes every component, which is where the cost is; the array was under 1 per cent of a fit.</li>
+<li>Measured in CPU time, the minimum of three alternated runs against 0.136.0: a gaussian lasso path 7.85 s to 6.96 s, a lasso on both equations of a gaussian 29.82 s to 25.82 s, of a gamma 48.90 s to 48.69 s. Every fit is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code>, and so are the lotto0, D1 and F2 nets.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.136.0" id="statmodels7-01360">statmodels7 0.136.0<a class="anchor" aria-label="anchor" href="#statmodels7-01360"></a></h2>
+<ul><li>
+<strong>The predictors are not recomputed at a point just read.</strong> <code><a href="../reference/statmod_eta.html">statmod_eta()</a></code> keeps the last point it computed in an environment <code><a href="../reference/statmod_design.html">statmod_design()</a></code> attaches to the design, and returns it when asked again at the same coefficients. On a lasso path over two equations 2950 of 5007 calls repeated the call before. A design with a term that recomputes its own block, or with a structural term, has no such memo: its blocks move with the coefficients, and a filter already keeps its own.</li>
+<li>
+<strong>The information is bound once from its blocks</strong> by the new <code><a href="../reference/assemble_blocks.html">assemble_blocks()</a></code>, where each block used to be written into a zero matrix. With a sparse design every such write rebuilt the compressed columns. The result is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to the old one, stored zeros dropped so the sparsity pattern CHOLMOD orders by is the same.</li>
+<li>Measured in CPU time, the minimum of three alternated runs against 0.135.0: a gaussian lasso path 8.62 s to 7.61 s, a lasso on both equations of a gaussian 37.01 s to 29.63 s, a lasso beside a random intercept 209.1 s to 191.5 s. Every fit is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code>, and so are the lotto0, D1 and F2 nets.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.135.0" id="statmodels7-01350">statmodels7 0.135.0<a class="anchor" aria-label="anchor" href="#statmodels7-01350"></a></h2>
+<ul><li>
+<strong>A lasso fit forms the information only over the coordinates it moves.</strong> <code><a href="../reference/fit_smooth.html">fit_smooth()</a></code> on a subset of the coefficients no longer builds the square-root design over the whole model: <code><a href="../reference/subset_pieces.html">subset_pieces()</a></code> assembles  from the requested columns alone through the new <code>index</code> argument of <code><a href="../reference/statmod_information_at.html">statmod_information_at()</a></code> and <code><a href="../reference/information_subset.html">information_subset()</a></code>, and <code><a href="../reference/statmod_pe.html">statmod_pe()</a></code> reads the effective degrees of freedom on the active coordinates only. Measured at 5000 observations and 200 columns with the hyperparameter chosen by <code><a href="../reference/aic.html">bic()</a></code>: a gaussian path 24.95 s to 7.95 s, a Poisson path 24.98 s to 11.27 s, a Bernoulli path 11.45 s to 7.10 s, a lasso on both equations of a gaussian 203.1 s to 37.3 s and of a gamma 153.6 s to 60.1 s, and a lasso beside a random intercept over 500 groups 738.4 s to 311.9 s. The fits are the same: coefficients within 1.6e-15, the chosen hyperparameters, log-likelihood and effective degrees of freedom identical.</li>
+<li>
+<strong>A kinked block falls back to the expected information where the observed curvature is not positive</strong>, instead of leaving the compiled coordinate descent for the proximal route. Along a path the working weights are read on the observed information, and for a negative binomial the dispersion’s observed curvature is negative at some observations, so most of the dispersion block’s fits had been going to <code>prox_grad()</code>. With a lasso on the mean and on the dispersion of a <code>negbin2_distrib()</code>, at 1500 observations the fit goes from 486.9 s to 20.5 s and at 5000 from 1519 s to 52.0 s, with the same support, hyperparameters and effective degrees of freedom. Where the observed curvature is positive nothing moves: five other shapes are <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to before. Reading the expected information always was measured and not taken, costing 1.6x to 1.8x on a gaussian or a gamma with a modelled dispersion.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.134.0" id="statmodels7-01340">statmodels7 0.134.0<a class="anchor" aria-label="anchor" href="#statmodels7-01340"></a></h2>
 <ul><li>

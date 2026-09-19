@@ -12,7 +12,8 @@ statmod_information_at(
   design = statmod_design(spec),
   expected = TRUE,
   approx = "opg",
-  H = NULL
+  H = NULL,
+  index = NULL
 )
 ```
 
@@ -48,6 +49,12 @@ statmod_information_at(
   returns them, or `NULL` to ask for them. A mixture over regimes reads
   a different set per component and ignores this.
 
+- index:
+
+  `NULL` for the whole matrix, or integer positions in the stacked
+  coefficients: the submatrix over those positions, in the order given,
+  assembled from those columns alone.
+
 ## Value
 
 A symmetric `p x p` matrix over the stacked coefficients, `p` being
@@ -69,6 +76,10 @@ the optimum may be indefinite.
 
 `approx` reaches distributions7 and is read only where the family has no
 closed expected information.
+
+With `index` only the requested columns of each design enter a cross
+product, so a caller that reads a few rows and columns does not pay for
+\\X'WX\\ over every coefficient.
 
 ## See also
 

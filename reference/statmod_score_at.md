@@ -12,7 +12,7 @@ chained onto that scale.
 ## Usage
 
 ``` r
-statmod_score_at(spec, coef, design = statmod_design(spec))
+statmod_score_at(spec, coef, design = statmod_design(spec), index = NULL)
 ```
 
 ## Arguments
@@ -30,10 +30,17 @@ statmod_score_at(spec, coef, design = statmod_design(spec))
 
   The design, refreshed at `coef` if any term needs it.
 
+- index:
+
+  `NULL` for every coefficient, or integer positions in the stacked
+  coefficients: only those columns enter the final products, which is
+  what a fit over a few coordinates of a wide model reads.
+
 ## Value
 
 A named list of numeric vectors, one per distribution parameter in the
-family's order, each as long as that equation's design is wide.
+family's order, each as long as that equation's design is wide. With
+`index`, a numeric vector over those positions, in the order given.
 
 ## Details
 

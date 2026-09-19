@@ -20,6 +20,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/armijo_ok.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/assemble_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
@@ -58,8 +59,10 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract3_refresh.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/contract4.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_block.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/coord_block_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_call.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_covariance.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/coord_curv_bounded.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_decrement.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_fit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/coord_legend.html</loc></url>
@@ -135,6 +138,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/index_group.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/index_members.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/info_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/information_subset.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_mode_error.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_settings.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/integrated_basis.html</loc></url>
@@ -400,6 +404,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_tail_names.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_term_of.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/structural_zeta_start.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/subset_pieces.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_blocks.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/summary_class_blocks.html</loc></url>
@@ -431,6 +436,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worker_map.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worth_sparse.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/x_times_b.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/xtv.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/xtx.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.html</loc></url>

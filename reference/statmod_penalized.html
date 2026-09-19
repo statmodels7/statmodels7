@@ -9,7 +9,7 @@ or not that term has more than one."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.134.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.138.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,9 @@ or not that term has more than one.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_penalized</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_penalized</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">statmod_penalized_units</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -82,6 +84,11 @@ appended after <code>::</code> when the term carries more than one. Two
 which they already were; a term with one penalty over the whole of itself
 keys exactly as before, so nothing that reads a hyperparameter by term name
 changes.</p>
+<p><code>statmod_penalized_units()</code> builds the list. <code>statmod_penalized()</code>
+returns it from the design's <code>eta_memo</code> environment where the design has
+one and the terms and the family's parameters are the ones it was built
+for, which is what an objective evaluated many times over one design
+reads.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
