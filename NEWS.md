@@ -1,3 +1,23 @@
+# statmodels7 0.136.0
+
+* **The predictors are not recomputed at a point just read.** `statmod_eta()`
+  keeps the last point it computed in an environment `statmod_design()`
+  attaches to the design, and returns it when asked again at the same
+  coefficients. On a lasso path over two equations 2950 of 5007 calls
+  repeated the call before. A design with a term that recomputes its own
+  block, or with a structural term, has no such memo: its blocks move with
+  the coefficients, and a filter already keeps its own.
+* **The information is bound once from its blocks** by the new
+  `assemble_blocks()`, where each block used to be written into a zero
+  matrix. With a sparse design every such write rebuilt the compressed
+  columns. The result is `identical()` to the old one, stored zeros dropped
+  so the sparsity pattern CHOLMOD orders by is the same.
+* Measured in CPU time, the minimum of three alternated runs against 0.135.0:
+  a gaussian lasso path 8.62 s to 7.61 s, a lasso on both equations of a
+  gaussian 37.01 s to 29.63 s, a lasso beside a random intercept 209.1 s to
+  191.5 s. Every fit is `identical()`, and so are the lotto0, D1 and F2
+  nets.
+
 # statmodels7 0.135.0
 
 * **A lasso fit forms the information only over the coordinates it moves.**

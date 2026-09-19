@@ -12,7 +12,10 @@ statmod_design(spec)
 \value{
 A named list with one entry per parameter, each a list with
 \code{X}, \code{coef_names}, \code{npar} and \code{blocks} (the column
-range each term occupies).
+range each term occupies). Where no term moves with the coefficients
+and none is structural, the attribute \code{eta_memo} is an environment
+holding the last predictors \code{\link[=statmod_eta]{statmod_eta()}} computed on this design, so a
+second call at the same coefficients returns them without recomputing.
 }
 \description{
 Returns, per parameter, the terms' blocks side by side and the names of the

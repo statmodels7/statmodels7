@@ -375,6 +375,54 @@ zero_information <- function(design, total) {
   }
 }
 
+
+#' A Symmetric Matrix From Its Upper Blocks
+#'
+#' @description
+#' Binds a symmetric matrix out of the blocks on and above its block
+#' diagonal, the ones below being the transposes of those above.
+#'
+#' @details
+#' It replaces writing each block into a zero accumulator. With a sparse
+#' design that accumulator is a `dgCMatrix`, and a sub-assignment into it
+#' rebuilds the compressed columns every time: measured on a lasso over 200
+#' columns beside a random intercept over 500 groups, the three assignments
+#' of one information cost 0.07 s against 0.19 s for the products
+#' themselves. Binding the blocks once does no arithmetic on them, so the
+#' entries are the ones the products gave.
+#'
+#' @param blocks A list of lists, `blocks[[a]][[b]]` the block of rows `a`
+#'   and columns `b` for `b >= a`. Entries below the diagonal are not read.
+#' @param sparse Whether the result is a `dgCMatrix`, as
+#'   [design_sparse()] decides for the accumulator it replaces.
+#'
+#' @return The assembled matrix, without dimnames: a `dgCMatrix` when
+#'   `sparse` is `TRUE`, otherwise a base matrix.
+#'
+#' @seealso [zero_information()], the accumulator this replaces where every
+#'   block is written exactly once.
+#'
+#' @keywords internal
+assemble_blocks <- function(blocks, sparse) {
+  K <- length(blocks)
+  get <- function(a, b) {
+    m <- if (b >= a) blocks[[a]][[b]] else t(blocks[[b]][[a]])
+    if (sparse) methods::as(methods::as(m, "CsparseMatrix"), "generalMatrix")
+    else as.matrix(m)
+  }
+  rows <- lapply(seq_len(K), function(a) {
+    r <- lapply(seq_len(K), function(b) get(a, b))
+    if (sparse) Reduce(Matrix::cbind2, r) else do.call(cbind, r)
+  })
+  # a zero block written into the accumulator it replaces stored nothing,
+  # and the pattern decides CHOLMOD's ordering, so stored zeros are dropped
+  out <- if (sparse) Matrix::drop0(Reduce(Matrix::rbind2, rows)) else
+    do.call(rbind, rows)
+  # the accumulator it replaces carried no names, and the products do
+  dimnames(out) <- NULL
+  out
+}
+
 #' The Specification of a Model, Before It Is Fitted
 #'
 #' @description
@@ -1607,7 +1655,10 @@ check_offsets <- function(offsets, params, n) {
 #'
 #' @return A named list with one entry per parameter, each a list with
 #'   `X`, `coef_names`, `npar` and `blocks` (the column
-#'   range each term occupies).
+#'   range each term occupies). Where no term moves with the coefficients
+#'   and none is structural, the attribute `eta_memo` is an environment
+#'   holding the last predictors [statmod_eta()] computed on this design, so a
+#'   second call at the same coefficients returns them without recomputing.
 #'
 #' @seealso [statmod_spec()]
 #'
@@ -1702,6 +1753,14 @@ statmod_design <- function(spec) {
     st$value <- NULL
     attr(out, "refresh") <- rf
     attr(out, "state") <- st
+  }
+  # the last point statmod_eta() was asked for, where nothing in the design
+  # moves with the coefficients; an environment for the reason above
+  if (!length(su) && !length(rf)) {
+    mm <- new.env(parent = emptyenv())
+    mm$key <- NULL
+    mm$value <- NULL
+    attr(out, "eta_memo") <- mm
   }
   out
 }

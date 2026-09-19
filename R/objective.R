@@ -64,6 +64,17 @@ statmod_eta <- function(spec, design, coef) {
     key <- list(unlist(coef, use.names = FALSE), sst$zeta)
     if (!is.null(sst$key) && identical(sst$key, key)) return(sst$value)
   }
+  # The same point is asked for again more often than not: the objective, its
+  # gradient, the information and a line search's accepted trial all read
+  # the predictors at one set of coefficients, and measured on a lasso path
+  # over two equations 2950 of 5007 calls repeated the call before. A design
+  # that recomputes its own blocks, or carries a filter, has no memo here --
+  # its blocks move with the coefficients, and a filter has its own above.
+  mm <- attr(design, "eta_memo")
+  if (!is.null(mm)) {
+    mkey <- list(unlist(coef, use.names = FALSE), spec@offsets, links)
+    if (!is.null(mm$key) && identical(mm$key, mkey)) return(mm$value)
+  }
   design <- statmod_design_at(spec, coef, design)
   eta <- stats::setNames(vector("list", length(params)), params)
   theta <- eta
@@ -106,7 +117,12 @@ statmod_eta <- function(spec, design, coef) {
     sst$value <- out
     return(out)
   }
-  list(eta = eta, theta = theta, filters = filters, regimes = regimes)
+  out <- list(eta = eta, theta = theta, filters = filters, regimes = regimes)
+  if (!is.null(mm)) {
+    mm$key <- mkey
+    mm$value <- out
+  }
+  out
 }
 
 
@@ -475,23 +491,25 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   total <- sum(npar)
-  out <- zero_information(design, total)
-  for (a in seq_along(params)) {
-    if (npar[a] == 0L) next
-    for (b in seq_along(params)) {
-      if (npar[b] == 0L || b < a) next
+  if (!total) return(-zero_information(design, 0L))
+  # each block is computed once and the matrix bound once: writing blocks
+  # into a sparse accumulator rebuilt its compressed columns at every
+  # assignment, a third of the call on a lasso beside a random intercept
+  live <- which(npar > 0L)
+  blocks <- lapply(live, function(a) {
+    out <- vector("list", length(live))
+    for (j in seq_along(live)) {
+      b <- live[j]
+      if (b < a) next
       key <- hess_key(params, a, b)
       wv <- spec@weights * rep_len(H[[key]], spec@n_obs)
-      blk <- wcrossprod(design[[params[a]]]$X, wv,
-                        design[[params[b]]]$X, spec@threads)
-      ra <- offs[a] + seq_len(npar[a])
-      rb <- offs[b] + seq_len(npar[b])
-      out[ra, rb] <- blk
-      if (a != b) out[rb, ra] <- t(blk)
+      out[[j]] <- wcrossprod(design[[params[a]]]$X, wv,
+                             design[[params[b]]]$X, spec@threads)
     }
-  }
+    out
+  })
   # the information is minus the Hessian
-  -out
+  -assemble_blocks(blocks, design_sparse(design))
 }
 
 
