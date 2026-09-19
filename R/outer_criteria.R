@@ -332,10 +332,21 @@ statmod_pe <- function(spec, design, coef, hyper, method,
                        approx = "opg", active = NULL) {
   expected <- identical(method@hessian, "expected")
   ll <- statmod_loglik_at(spec, coef, design)
-  H <- statmod_information_at(spec, coef, design, expected, approx)
   S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
   S <- zap_nonfinite(S)
-  tau <- outer_tau(H + S, H, active)
+  # the trace reads the active coordinates alone, so the information is
+  # formed over those columns and not over every coefficient
+  if (is.null(active)) {
+    H <- statmod_information_at(spec, coef, design, expected, approx)
+    tau <- outer_tau(H + S, H, NULL)
+  } else if (!any(active)) {
+    tau <- 0
+  } else {
+    act <- which(active)
+    H <- statmod_information_at(spec, coef, design, expected, approx,
+                                index = act)
+    tau <- outer_tau(H + S[act, act, drop = FALSE], H, NULL)
+  }
   if (!is.finite(tau)) return(NULL)
   k <- outer_k(method, spec@n_obs)
   list(value = -2 * ll + k * tau, loglik = ll,

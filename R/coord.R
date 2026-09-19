@@ -170,6 +170,18 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     if (moves) X <- coord_block(dd$X, cols)
     ep <- statmod_eta(spec, design, coef)
     wq <- coord_working(spec, ep, coef, design, p, expected, approx)
+    # Where the OBSERVED curvature of this equation is not positive at some
+    # observation there are no working weights to read, and abandoning the
+    # descent sends the block to the proximal route. The expected information
+    # stands in instead, as iwls(hessian = "auto") does for the smooth block:
+    # the mode is the same, only the weights of the step change. Measured on
+    # a negbin2 lasso over mu and theta at n = 1500, 164 of 198 theta-block
+    # fits fell back and the fit took 486.9 s; it takes 20.5 s, and where the
+    # observed curvature is positive nothing moves, identical() on five other
+    # shapes. Always reading the expected one instead costs 1.6x to 1.8x on a
+    # gaussian or gamma with a modelled dispersion, so it stays a fallback.
+    if (is.null(wq) && !expected)
+      wq <- coord_working(spec, ep, coef, design, p, TRUE, approx)
     if (is.null(wq)) return(NULL)
     off <- if (length(other))
       as.numeric(dd$X[, other, drop = FALSE] %*% coef[[p]][other]) else

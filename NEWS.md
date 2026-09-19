@@ -1,3 +1,33 @@
+# statmodels7 0.135.0
+
+* **A lasso fit forms the information only over the coordinates it moves.**
+  `fit_smooth()` on a subset of the coefficients no longer builds the
+  square-root design over the whole model: `subset_pieces()` assembles
+  \eqn{X'WX} from the requested columns alone through the new `index`
+  argument of `statmod_information_at()` and `information_subset()`, and
+  `statmod_pe()` reads the effective degrees of freedom on the active
+  coordinates only. Measured at 5000 observations and 200 columns with the
+  hyperparameter chosen by `bic()`: a gaussian path 24.95 s to 7.95 s, a
+  Poisson path 24.98 s to 11.27 s, a Bernoulli path 11.45 s to 7.10 s, a
+  lasso on both equations of a gaussian 203.1 s to 37.3 s and of a gamma
+  153.6 s to 60.1 s, and a lasso beside a random intercept over 500 groups
+  738.4 s to 311.9 s. The fits are the same: coefficients within 1.6e-15,
+  the chosen hyperparameters, log-likelihood and effective degrees of
+  freedom identical.
+* **A kinked block falls back to the expected information where the
+  observed curvature is not positive**, instead of leaving the compiled
+  coordinate descent for the proximal route. Along a path the working
+  weights are read on the observed information, and for a negative binomial
+  the dispersion's observed curvature is negative at some observations, so
+  most of the dispersion block's fits had been going to `prox_grad()`. With
+  a lasso on the mean and on the dispersion of a `negbin2_distrib()`, at
+  1500 observations the fit goes from 486.9 s to 20.5 s and at 5000 from
+  1519 s to 52.0 s, with the same support, hyperparameters and effective
+  degrees of freedom. Where the observed curvature is positive nothing
+  moves: five other shapes are `identical()` to before. Reading the expected
+  information always was measured and not taken, costing 1.6x to 1.8x on a
+  gaussian or a gamma with a modelled dispersion.
+
 # statmodels7 0.134.0
 
 * **A coefficient a kinked penalty set to zero is checked on a line of its

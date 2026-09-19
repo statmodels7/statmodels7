@@ -10,7 +10,8 @@ statmod_information_at(
   design = statmod_design(spec),
   expected = TRUE,
   approx = "opg",
-  H = NULL
+  H = NULL,
+  index = NULL
 )
 }
 \arguments{
@@ -30,6 +31,10 @@ with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 \code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to ask for them.
 A mixture over regimes reads a different set per component and
 ignores this.}
+
+\item{index}{\code{NULL} for the whole matrix, or integer positions in the
+stacked coefficients: the submatrix over those positions, in the order
+given, assembled from those columns alone.}
 }
 \value{
 A symmetric \verb{p x p} matrix over the stacked coefficients, \code{p}
@@ -54,6 +59,10 @@ optimum may be indefinite.
 
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information.
+
+With \code{index} only the requested columns of each design enter a cross
+product, so a caller that reads a few rows and columns does not pay for
+\eqn{X'WX} over every coefficient.
 }
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for the first derivative,

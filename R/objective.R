@@ -384,6 +384,10 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' `approx` reaches \pkg{distributions7} and is read only where the family
 #' has no closed expected information.
 #'
+#' With `index` only the requested columns of each design enter a cross
+#' product, so a caller that reads a few rows and columns does not pay for
+#' \eqn{X'WX} over every coefficient.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design, refreshed at `coef` if any term needs it.
@@ -404,15 +408,22 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'   [statmod_family_hessian()] returns them, or `NULL` to ask for them.
 #'   A mixture over regimes reads a different set per component and
 #'   ignores this.
+#' @param index `NULL` for the whole matrix, or integer positions in the
+#'   stacked coefficients: the submatrix over those positions, in the order
+#'   given, assembled from those columns alone.
 #'
 #' @keywords internal
 statmod_information_at <- function(spec, coef, design = statmod_design(spec),
                                    expected = TRUE, approx = "opg",
-                                   H = NULL) {
+                                   H = NULL, index = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   th <- ev$theta
   design <- statmod_design_at(spec, coef, design)
+  if (!is.null(index)) {
+    return(information_subset(spec, design, ev, expected, approx, H,
+                              as.integer(index)))
+  }
 
   # For a likelihood mixed over states the matrix assembled here is the
   # COMPLETE-DATA information, the ordinary one averaged over the smoothed
@@ -480,6 +491,86 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
     }
   }
   # the information is minus the Hessian
+  -out
+}
+
+
+#' The Information Over Some of the Coefficients
+#'
+#' @description
+#' The rows and columns of [statmod_information_at()] at the given positions,
+#' assembled from those columns of the designs alone.
+#'
+#' @details
+#' Block \eqn{(a, b)} of the result is \eqn{X_{a,J_a}'\,\mathrm{diag}(w\,
+#' h_{ab})\,X_{b,J_b}} over the columns \eqn{J_a} and \eqn{J_b} the
+#' positions select in each equation, which is exactly the corresponding
+#' submatrix of the whole information and costs a cross product over those
+#' columns instead of over all of them. A mixture over regimes sums the
+#' components' blocks as the whole matrix does.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, already refreshed at the coefficients.
+#' @param ev What [statmod_eta()] returns at the coefficients.
+#' @param expected,approx As in [statmod_information_at()].
+#' @param H The second-derivative components, or `NULL` to ask for them.
+#' @param index Integer positions in the stacked coefficients.
+#'
+#' @return A symmetric matrix over `index`, in that order: a \pkg{Matrix}
+#'   object when any equation's design is sparse, a base matrix otherwise.
+#'
+#' @seealso [statmod_information_at()]
+#'
+#' @keywords internal
+information_subset <- function(spec, design, ev, expected, approx, H, index) {
+  params <- spec@distrib@params
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  total <- sum(npar)
+  if (anyNA(index) || any(index < 1L | index > total)) {
+    stop("'index' must be positions among the ", total, " coefficients.",
+         call. = FALSE)
+  }
+  eq <- vapply(index, function(j) which(j > offs & j <= offs + npar)[1L],
+               integer(1))
+  loc <- index - offs[eq]
+  eqs <- sort(unique(eq))
+  out <- zero_information(design, length(index))
+  add <- function(comp, scale) {
+    for (a in eqs) {
+      ja <- which(eq == a)
+      for (b in eqs) {
+        if (b < a) next
+        jb <- which(eq == b)
+        wv <- scale * rep_len(comp[[hess_key(params, a, b)]], spec@n_obs)
+        blk <- wcrossprod(design[[params[a]]]$X[, loc[ja], drop = FALSE], wv,
+                          design[[params[b]]]$X[, loc[jb], drop = FALSE],
+                          spec@threads)
+        out[ja, jb] <<- out[ja, jb] + blk
+        if (a != b) out[jb, ja] <<- out[jb, ja] + t(blk)
+      }
+    }
+  }
+  if (length(ev$regimes)) {
+    r <- ev$regimes[[1L]]
+    for (k in seq_len(component_count(r$mu))) {
+      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
+                                   component_shift(r$mu, k))
+      Hk <- if (expected) {
+        distributions7::distrib_expected_hessian(spec@distrib, spec@response,
+                                                 thk, scale = "link",
+                                                 approx = approx,
+                                                 threads = spec@threads)
+      } else {
+        distributions7::distrib_hessian(spec@distrib, spec@response, thk,
+                                        scale = "link", threads = spec@threads)
+      }
+      add(Hk, spec@weights * r$gamma[, k])
+    }
+  } else {
+    if (is.null(H)) H <- statmod_family_hessian(spec, ev$theta, expected, approx)
+    add(H, spec@weights)
+  }
   -out
 }
 
