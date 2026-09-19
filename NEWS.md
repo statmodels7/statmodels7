@@ -1,3 +1,20 @@
+# statmodels7 0.140.0
+
+* **The coordinate descent stops when its working problem has not moved.**
+  Where a sweep's working weights are identical to the previous one's and
+  its working response differs only by rounding, the previous call to the
+  kernel already solved it, and `coord_fit()` ends instead of calling again
+  to confirm. It fires on a gaussian mean, whose working response is the
+  response itself; a block that moves with its coefficients is never
+  skipped. The fit stops at a point differing from the confirmed one by at
+  most the confirming sweep's move, well inside the tolerance: measured on
+  gaussian lasso paths, coefficients within 2.4e-13 to 2.7e-11, with the
+  same lambda, support and effective degrees of freedom, and a Poisson, a
+  Bernoulli and a gamma untouched. The lotto0 net moves on its lasso model
+  alone, log-likelihood by 8.5e-14. CPU time, alternated against 0.139.0: a
+  gaussian lasso path 3.60 s to 3.07 s, a lasso on both equations of a
+  gaussian 15.34 s to 13.49 s.
+
 # statmodels7 0.139.0
 
 * **The effective degrees of freedom of a lasso are counted, not traced.**
