@@ -457,8 +457,10 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ep$theta,
                                         scale = "link", threads = spec@threads)
   s <- spec@weights * rep_len(g[[p]], n)
-  Om <- info_blocks(spec, ep$theta, expected, approx)
-  h <- Om[, a, a]
+  # the one diagonal entry, read where info_blocks() would have filed it in
+  # an n x K x K array this function then took one slice of
+  H <- statmod_family_hessian(spec, ep$theta, expected, approx)
+  h <- -spec@weights * rep_len(H[[hess_key(params, a, a)]], n)
   if (any(!is.finite(h)) || any(h <= 0) || any(!is.finite(s))) return(NULL)
   list(w = h, z = rep_len(ep$eta[[p]], n) + s / h)
 }

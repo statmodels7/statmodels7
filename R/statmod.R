@@ -1050,7 +1050,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   gr <- function(b) {
     v <- beta
     v[idx] <- b
-    obj$gr(v)[idx]
+    if (whole || is.null(obj$gr_sub)) obj$gr(v)[idx] else obj$gr_sub(v, idx)
   }
   # The objective carries an EXACT second derivative -- the information plus
   # the penalty's Hessian -- and it was not being offered, so an optimizer

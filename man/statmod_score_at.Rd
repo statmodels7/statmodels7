@@ -4,7 +4,7 @@
 \alias{statmod_score_at}
 \title{The Score of the Weighted Log-Likelihood}
 \usage{
-statmod_score_at(spec, coef, design = statmod_design(spec))
+statmod_score_at(spec, coef, design = statmod_design(spec), index = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -12,10 +12,15 @@ statmod_score_at(spec, coef, design = statmod_design(spec))
 \item{coef}{A named list of coefficient vectors.}
 
 \item{design}{The design, refreshed at \code{coef} if any term needs it.}
+
+\item{index}{\code{NULL} for every coefficient, or integer positions in the
+stacked coefficients: only those columns enter the final products, which
+is what a fit over a few coordinates of a wide model reads.}
 }
 \value{
 A named list of numeric vectors, one per distribution parameter in
-the family's order, each as long as that equation's design is wide.
+the family's order, each as long as that equation's design is wide. With
+\code{index}, a numeric vector over those positions, in the order given.
 }
 \description{
 Computes the score of the weighted log-likelihood in the coefficients, one

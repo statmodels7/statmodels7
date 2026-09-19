@@ -1,3 +1,22 @@
+# statmodels7 0.137.0
+
+* **A fit over a few coefficients reads the score over those columns only.**
+  `statmod_score_at()` takes `index`, and the objective carries `gr_sub()`,
+  which `fit_smooth()` uses on a subset: the family's derivatives are the
+  same, and only the final products over the design's other columns are
+  skipped. Each entry is its own column's product, so the gradient is
+  `identical()` to the full one read at those positions, checked on nine
+  shapes including a moving block, a filter and a regime.
+* `coord_working()` reads the one diagonal entry of the information it
+  uses, where it built the whole \eqn{n 	imes K 	imes K} array and took a
+  slice. The family still computes every component, which is where the cost
+  is; the array was under 1 per cent of a fit.
+* Measured in CPU time, the minimum of three alternated runs against
+  0.136.0: a gaussian lasso path 7.85 s to 6.96 s, a lasso on both
+  equations of a gaussian 29.82 s to 25.82 s, of a gamma 48.90 s to
+  48.69 s. Every fit is `identical()`, and so are the lotto0, D1 and F2
+  nets.
+
 # statmodels7 0.136.0
 
 * **The predictors are not recomputed at a point just read.** `statmod_eta()`

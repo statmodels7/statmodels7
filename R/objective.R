@@ -194,20 +194,47 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design, refreshed at `coef` if any term needs it.
+#' @param index `NULL` for every coefficient, or integer positions in the
+#'   stacked coefficients: only those columns enter the final products, which
+#'   is what a fit over a few coordinates of a wide model reads.
 #'
 #' @return A named list of numeric vectors, one per distribution parameter in
-#'   the family's order, each as long as that equation's design is wide.
+#'   the family's order, each as long as that equation's design is wide. With
+#'   `index`, a numeric vector over those positions, in the order given.
 #'
 #' @seealso [statmod_loglik_at()] for the value,
 #'   [statmod_information_at()] for the curvature,
 #'   [statmod_structural_score()] for a filter's own parameters.
 #'
 #' @keywords internal
-statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
+statmod_score_at <- function(spec, coef, design = statmod_design(spec),
+                             index = NULL) {
   params <- spec@distrib@params
   ev <- statmod_eta(spec, design, coef)
   design <- statmod_design_at(spec, coef, design)
   n <- spec@n_obs
+  # the last step, X_p' g_p per equation; with `index` only the columns asked
+  # for, which on a lasso path is a handful of the model's hundreds. Each
+  # entry is its own column's dot product, so it is the same number either way
+  project <- function(gv) {
+    if (is.null(index)) {
+      return(stats::setNames(lapply(params, function(p) {
+        d <- design[[p]]
+        if (d$npar == 0L) return(numeric(0))
+        as.numeric(crossprod(d$X, gv[[p]]))
+      }), params))
+    }
+    npar <- vapply(design, function(d) d$npar, integer(1))
+    offs <- cumsum(npar) - npar
+    out <- numeric(length(index))
+    for (a in seq_along(params)) {
+      j <- which(index > offs[a] & index <= offs[a] + npar[a])
+      if (!length(j)) next
+      X <- design[[params[a]]]$X[, index[j] - offs[a], drop = FALSE]
+      out[j] <- as.numeric(crossprod(X, gv[[params[a]]]))
+    }
+    out
+  }
 
   # Fisher's identity: the derivative of a likelihood mixed over states is
   # the posterior-weighted derivative of the ordinary one, in EVERY
@@ -225,11 +252,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
         gv[[p]] <- gv[[p]] + r$gamma[, k] * spec@weights * rep_len(gk[[p]], n)
       }
     }
-    return(stats::setNames(lapply(params, function(p) {
-      d <- design[[p]]
-      if (d$npar == 0L) return(numeric(0))
-      as.numeric(crossprod(d$X, gv[[p]]))
-    }), params))
+    return(project(gv))
   }
 
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
@@ -258,11 +281,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec)) {
     for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
   }
 
-  stats::setNames(lapply(params, function(p) {
-    d <- design[[p]]
-    if (d$npar == 0L) return(numeric(0))
-    as.numeric(crossprod(d$X, gv[[p]]))
-  }), params)
+  project(gv)
 }
 
 
@@ -1194,6 +1213,14 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
       s <- statmod_score_at(spec, cf, design)
       pg <- statmod_penalty_at(spec, cf, hyper, design, "gradient")
       stack(Map(function(a, b) -a + b, s, pg))
+    },
+    # the same gradient at the positions `idx` alone, for a fit that moves
+    # only those: the score's products over the other columns are skipped
+    gr_sub = function(v, idx) {
+      cf <- split(v)
+      s <- statmod_score_at(spec, cf, design, index = idx)
+      pg <- stack(statmod_penalty_at(spec, cf, hyper, design, "gradient"))
+      -s + pg[idx]
     },
     he = function(v) {
       cf <- split(v)
