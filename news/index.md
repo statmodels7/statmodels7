@@ -1,5 +1,45 @@
 # Changelog
 
+## statmodels7 0.140.0
+
+- **The coordinate descent stops when its working problem has not
+  moved.** Where a sweep’s working weights are identical to the previous
+  one’s and its working response differs only by rounding, the previous
+  call to the kernel already solved it, and
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  ends instead of calling again to confirm. It fires on a gaussian mean,
+  whose working response is the response itself; a block that moves with
+  its coefficients is never skipped. The fit stops at a point differing
+  from the confirmed one by at most the confirming sweep’s move, well
+  inside the tolerance: measured on gaussian lasso paths, coefficients
+  within 2.4e-13 to 2.7e-11, with the same lambda, support and effective
+  degrees of freedom, and a Poisson, a Bernoulli and a gamma untouched.
+  The lotto0 net moves on its lasso model alone, log-likelihood by
+  8.5e-14. CPU time, alternated against 0.139.0: a gaussian lasso path
+  3.60 s to 3.07 s, a lasso on both equations of a gaussian 15.34 s to
+  13.49 s.
+
+## statmodels7 0.139.0
+
+- **The effective degrees of freedom of a lasso are counted, not
+  traced.** Where the penalty’s Hessian is zero on the whole active
+  block – a lasso with nothing else penalizing those coordinates –
+  [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
+  returns , which is exactly, without forming . On a gaussian lasso path
+  over 5000 x 200 that product was 2.3 s of 7.0. A ridge, a random
+  effect or a smooth among the active coordinates keeps the full trace.
+  Measured on ten models placing a lasso beside or inside other terms,
+  nine are [`identical()`](https://rdrr.io/r/base/identical.html) to
+  before.
+- ⚠️ **The tenth moves, and the old answer was not a number.**
+  `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))` gives its parameter an
+  intercept and a lasso over indicators that sum to it, so the active
+  columns are dependent and is singular: the trace does not exist, and
+  it had been computed from a factorization that succeeds on rounding,
+  5.3 away from the count. The chosen goes 0.787 to 3.65. The degrees of
+  freedom there are , which the count overstates by the deficiency; that
+  is an open item.
+
 ## statmodels7 0.138.0
 
 - **The coordinate descent reads the column curvatures of the columns it
