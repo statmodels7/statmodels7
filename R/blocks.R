@@ -248,6 +248,12 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #' keys exactly as before, so nothing that reads a hyperparameter by term name
 #' changes.
 #'
+#' `statmod_penalized_units()` builds the list. `statmod_penalized()`
+#' returns it from the design's `eta_memo` environment where the design has
+#' one and the terms and the family's parameters are the ones it was built
+#' for, which is what an objective evaluated many times over one design
+#' reads.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, as [statmod_design()] returns it.
 #'
@@ -261,6 +267,28 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #'
 #' @keywords internal
 statmod_penalized <- function(spec, design) {
+  params <- spec@distrib@params
+  # a function of the terms, the family's parameters and the design alone,
+  # and asked at every evaluation of the objective: where the design keeps a
+  # memo the enumeration is kept there, keyed on what it reads
+  mm <- attr(design, "eta_memo")
+  if (!is.null(mm) && !is.null(mm$pen_value) &&
+      identical(mm$pen_terms, spec@terms) &&
+      identical(mm$pen_params, params)) {
+    return(mm$pen_value)
+  }
+  out <- statmod_penalized_units(spec, design)
+  if (!is.null(mm)) {
+    mm$pen_terms <- spec@terms
+    mm$pen_params <- params
+    mm$pen_value <- out
+  }
+  out
+}
+
+#' @rdname statmod_penalized
+#' @keywords internal
+statmod_penalized_units <- function(spec, design) {
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar

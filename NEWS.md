@@ -1,3 +1,27 @@
+# statmodels7 0.138.0
+
+* **The coordinate descent reads the column curvatures of the columns it
+  visits.** `coord_fit()` computed \eqn{\sum_i w_i x_{ij}^2} on every column
+  of the block at every iteration, where the strong rule keeps a few. They
+  are computed on the kept columns by the new `coord_curv()`, and the check
+  that every one would be finite and positive is decided by
+  `coord_curv_bounded()` from the block's cached column norms and the range
+  of the weights; outside those bounds the whole vector is computed and
+  checked as before.
+* **\eqn{X\beta} skips the columns whose coefficient is zero**, through the
+  new `x_times_b()`, in `statmod_eta()` and in the strong rule's residual. A
+  zero coefficient adds exactly zero to the sum, so the result is the same.
+* **The list of penalties and the penalized block are kept on the design.**
+  `statmod_penalized()` returns the enumeration from the design's
+  `eta_memo` environment where the terms and the family's parameters are
+  the ones it was built for, and `coord_block_at()` keeps the block's copy.
+* Every fit is `identical()` to 0.137.0 -- under `cv()` on a gaussian, a
+  Poisson, a Bernoulli and a two-equation gaussian lasso, and under `bic()`
+  -- and so are the lotto0, D1 and F2 nets. Measured in CPU time,
+  alternated against 0.137.0: `cv()` on a Poisson lasso 64.1 s to 55.2 s
+  and on a gaussian one 32.8 s to 31.2 s; `bic()` on a lasso over both
+  equations of a gaussian 25.8 s to 24.0 s.
+
 # statmodels7 0.137.0
 
 * **A fit over a few coefficients reads the score over those columns only.**

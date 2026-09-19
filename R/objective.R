@@ -81,7 +81,7 @@ statmod_eta <- function(spec, design, coef) {
   for (p in params) {
     d <- design[[p]]
     e <- if (d$npar == 0L) rep(0, spec@n_obs) else
-      as.numeric(d$X %*% coef[[p]])
+      x_times_b(d$X, coef[[p]])
     # what a term contributes is not always its block times its coefficients:
     # where the block is a Jacobian the two differ, and the difference is
     # carried here so that every crossprod elsewhere still reads the block
@@ -1315,4 +1315,38 @@ joint_penalty_at <- function(spec, design, coef, hyper,
     }
   }
   out
+}
+
+
+#' A Design Times Coefficients, Over the Nonzero Ones
+#'
+#' @description
+#' Computes \eqn{X\beta} reading only the columns whose coefficient is not
+#' zero, which after a lasso is most of a block.
+#'
+#' @details
+#' A term \eqn{0 \cdot x_{ij}} adds exactly zero to the running sum, so
+#' leaving those columns out gives the same number, the remaining products
+#' being summed in the same column order. The design is subset only where
+#' fewer than all the coefficients are nonzero; with none, the result is a
+#' vector of zeros. A non-finite coefficient keeps the full product. The
+#' design itself is taken to be finite, as a model matrix is: an infinite
+#' entry in a column whose coefficient is zero would make the full product
+#' `NaN` and this one not.
+#'
+#' @param X A design block, dense or a \pkg{Matrix} class.
+#' @param b Its coefficients, `ncol(X)` numbers.
+#'
+#' @return A numeric vector of `nrow(X)` entries.
+#'
+#' @seealso [statmod_eta()], [coord_screen()]
+#'
+#' @keywords internal
+x_times_b <- function(X, b) {
+  nz <- which(b != 0)
+  if (length(nz) == length(b) || any(!is.finite(b))) {
+    return(as.numeric(X %*% b))
+  }
+  if (!length(nz)) return(numeric(nrow(X)))
+  as.numeric(X[, nz, drop = FALSE] %*% b[nz])
 }

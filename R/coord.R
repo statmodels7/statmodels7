@@ -122,7 +122,7 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   # the built block, which answers the two questions asked before the loop --
   # how many columns there are, and whether this penalty has a table at all.
   # Inside the loop it is read again at the current coefficients.
-  X <- coord_block(d$X, cols)
+  X <- coord_block_at(design, p, d$X, cols)
   if (!ncol(X)) return(NULL)
   other <- setdiff(seq_len(d$npar), cols)
   # whether anything in this model recomputes its own block as the
@@ -191,13 +191,24 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # beyond its block, which statmod_eta() has already put into `z`
     adj <- if (is.null(dd$adj)) 0 else dd$adj
     z <- wq$z - off - coord_offset(spec, p, n) - adj
-    v <- wxsq(X, wq$w, spec@threads)
-    if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
+    # The column curvatures are read only on the columns the descent visits,
+    # which the strong rule keeps to a few of the block. What the full vector
+    # was also for is the check that every one is finite and positive, and
+    # where the design stands still that is decided from its cached column
+    # norms and the range of the weights, a sufficient condition; outside it
+    # the whole vector is computed and checked as before.
+    v <- rep(NA_real_, ncol(X))
+    if (!coord_curv_bounded(X, wq$w, design, p, cols, moves)) {
+      v <- wxsq(X, wq$w, spec@threads)
+      if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
+    }
     b0 <- coef[[p]][cols]
     s_now <- kink_scale(block$penalty, th)
     keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink, spec@threads)
 
     repeat {
+      need <- keep[is.na(v[keep])]
+      if (length(need)) v[need] <- coord_curv(X, wq$w, need, spec@threads)
       tab <- penalties7::penalty_prox_spec(block$penalty, th, 1 / v[keep])
       if (is.null(tab)) return(NULL)
       out <- coord_call(X, z, wq$w, b0, tab, as.integer(keep - 1L), tol,
@@ -265,7 +276,7 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
       s_now <= 0) {
     return(seq_len(p))
   }
-  r <- z - as.numeric(X %*% beta)
+  r <- z - x_times_b(X, beta)
   g <- abs(xtv(X, w * r, threads))
   keep <- which(g >= 2 * s_now - s_prev | beta != 0)
   if (!length(keep)) keep <- which.max(g)
@@ -498,4 +509,111 @@ coord_offset <- function(spec, p, n) {
   o <- spec@offsets[[p]]
   if (is.null(o) || !length(o)) return(rep(0, n))
   rep_len(as.numeric(o), n)
+}
+
+
+#' Whether Every Column Curvature Is Finite and Positive, Without Them
+#'
+#' @description
+#' `coord_curv_bounded()` decides whether every column curvature
+#' \eqn{v_j = \sum_i w_i x_{ij}^2} of a block would be finite and positive,
+#' from the block's column norms and the range of the weights, so that
+#' [coord_fit()] need not compute the curvatures of columns it never visits.
+#' `coord_curv()` computes them on the columns asked for.
+#'
+#' @details
+#' The condition is sufficient and not necessary. With the weights finite and
+#' positive, which [coord_working()] has already checked, a column's
+#' curvature is at least its largest term, which is at least
+#' \eqn{\min_i w_i\, \lVert x_j\rVert^2 / n}, and at most
+#' \eqn{n \max_i w_i \max_i x_{ij}^2}. So where every column norm is
+#' positive and \eqn{\min w \min_j \lVert x_j\rVert^2 > 10^{-200}} and
+#' \eqn{\max w \max_j \lVert x_j\rVert^2 < 10^{200}}, no curvature can be
+#' zero, underflow or overflow. Where any of this fails, `FALSE` sends the
+#' caller to the full computation and its own check, so the outcome is the
+#' one the full vector would have given.
+#'
+#' The norms are cached in the design's `eta_memo` environment, keyed by the
+#' equation and the block's columns. A design whose blocks move with the
+#' coefficients carries no such environment, and there the answer is always
+#' `FALSE`.
+#'
+#' `coord_curv()` takes the route [wxsq()] would take for the whole block:
+#' each curvature is its own column's sum, so it is the same number either
+#' way.
+#'
+#' @param X The block, dense or `dgCMatrix`.
+#' @param w The working weights, finite and positive.
+#' @param design The design the block was read from.
+#' @param p The equation, a parameter name.
+#' @param cols The block's column positions within the equation.
+#' @param moves Whether any term recomputes its block with the coefficients.
+#' @param k Integer column positions within `X`.
+#' @param threads The thread count [wxsq()] would be given.
+#'
+#' @return `coord_curv_bounded()` gives a single logical. `coord_curv()`
+#'   gives a numeric vector of `length(k)` curvatures.
+#'
+#' @seealso [coord_fit()], [wxsq()]
+#'
+#' @keywords internal
+coord_curv_bounded <- function(X, w, design, p, cols, moves) {
+  mm <- attr(design, "eta_memo")
+  if (moves || is.null(mm)) return(FALSE)
+  key <- paste0("colsq:", p)
+  cq <- mm[[key]]
+  if (is.null(cq) || !identical(cq$cols, cols)) {
+    s <- if (isS4(X)) Matrix::colSums(X^2) else colSums(X^2)
+    cq <- list(cols = cols, ok = length(s) > 0L && all(is.finite(s)) &&
+                 all(s > 0), lo = min(s), hi = max(s))
+    assign(key, cq, envir = mm)
+  }
+  if (!isTRUE(cq$ok)) return(FALSE)
+  lo <- min(w) * cq$lo
+  hi <- max(w) * cq$hi
+  is.finite(lo) && is.finite(hi) && lo > 1e-200 && hi < 1e200
+}
+
+#' @rdname coord_curv_bounded
+#' @keywords internal
+coord_curv <- function(X, w, k, threads = 1L) {
+  big <- threads > 1L && is.matrix(X) && length(w) == nrow(X) &&
+    as.double(nrow(X)) * ncol(X) >= 2e5
+  Xk <- X[, k, drop = FALSE]
+  if (big) return(wxsq_cpp(Xk, w, threads))
+  as.numeric(crossprod(w, Xk^2))
+}
+
+
+#' The Penalized Block, Kept on the Design
+#'
+#' @description
+#' [coord_block()] of an equation's columns, kept in the design's `eta_memo`
+#' environment so a descent called many times over one design copies the
+#' block once.
+#'
+#' @details
+#' Only a design whose blocks do not move with the coefficients carries that
+#' environment; any other gets a fresh [coord_block()] at each call, as
+#' before. The entry is keyed on the equation and the columns.
+#'
+#' @param design The design.
+#' @param p The equation, a parameter name.
+#' @param X The equation's design, `design[[p]]$X`.
+#' @param cols The block's column positions within it.
+#'
+#' @return What [coord_block()] returns for `X` and `cols`.
+#'
+#' @seealso [coord_block()], [coord_fit()]
+#'
+#' @keywords internal
+coord_block_at <- function(design, p, X, cols) {
+  mm <- attr(design, "eta_memo")
+  if (is.null(mm)) return(coord_block(X, cols))
+  key <- paste0("block:", p)
+  hit <- mm[[key]]
+  if (!is.null(hit) && identical(hit$cols, cols)) return(hit$X)
+  B <- coord_block(X, cols)
+  assign(key, list(cols = cols, X = B), envir = mm)
+  B
 }

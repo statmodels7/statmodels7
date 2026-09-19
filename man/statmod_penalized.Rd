@@ -2,9 +2,12 @@
 % Please edit documentation in R/blocks.R
 \name{statmod_penalized}
 \alias{statmod_penalized}
+\alias{statmod_penalized_units}
 \title{Every Penalized Unit of a Specification}
 \usage{
 statmod_penalized(spec, design)
+
+statmod_penalized_units(spec, design)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -37,6 +40,12 @@ appended after \code{::} when the term carries more than one. Two
 which they already were; a term with one penalty over the whole of itself
 keys exactly as before, so nothing that reads a hyperparameter by term name
 changes.
+
+\code{statmod_penalized_units()} builds the list. \code{statmod_penalized()}
+returns it from the design's \code{eta_memo} environment where the design has
+one and the terms and the family's parameters are the ones it was built
+for, which is what an objective evaluated many times over one design
+reads.
 }
 \seealso{
 \code{\link[=statmod_blocks]{statmod_blocks()}},
