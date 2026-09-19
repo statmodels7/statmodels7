@@ -8,7 +8,7 @@
   `identical()` to the full one read at those positions, checked on nine
   shapes including a moving block, a filter and a regime.
 * `coord_working()` reads the one diagonal entry of the information it
-  uses, where it built the whole \eqn{n 	imes K 	imes K} array and took a
+  uses, where it built the whole \eqn{n \times K \times K} array and took a
   slice. The family still computes every component, which is where the cost
   is; the array was under 1 per cent of a fit.
 * Measured in CPU time, the minimum of three alternated runs against
