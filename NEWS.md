@@ -1,3 +1,22 @@
+# statmodels7 0.139.0
+
+* **The effective degrees of freedom of a lasso are counted, not traced.**
+  Where the penalty's Hessian is zero on the whole active block -- a lasso
+  with nothing else penalizing those coordinates -- `statmod_pe()` returns
+  \eqn{|A|}, which is \eqn{\mathrm{tr}(H_{AA}^{-1}H_{AA})} exactly, without
+  forming \eqn{H_{AA}}. On a gaussian lasso path over 5000 x 200 that
+  product was 2.3 s of 7.0. A ridge, a random effect or a smooth among the
+  active coordinates keeps the full trace. Measured on ten models placing a
+  lasso beside or inside other terms, nine are `identical()` to before.
+* ⚠️ **The tenth moves, and the old answer was not a number.**
+  `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))` gives its parameter an
+  intercept and a lasso over indicators that sum to it, so the active
+  columns are dependent and \eqn{H_{AA}} is singular: the trace does not
+  exist, and it had been computed from a factorization that succeeds on
+  rounding, 5.3 away from the count. The chosen \eqn{\lambda} goes 0.787 to
+  3.65. The degrees of freedom there are \eqn{\mathrm{rank}(X_A)}, which the
+  count overstates by the deficiency; that is an open item.
+
 # statmodels7 0.138.0
 
 * **The coordinate descent reads the column curvatures of the columns it

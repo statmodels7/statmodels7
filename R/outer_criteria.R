@@ -302,6 +302,24 @@ outer_tau <- function(J, H, active = NULL) {
 #' criterion. A prediction-error criterion prices the fit's complexity
 #' through \eqn{\tau}, not through the size of the penalty.
 #'
+#' Where the penalty's Hessian is exactly zero on the active coordinates --
+#' a lasso and nothing else penalizing them -- the trace is
+#' \eqn{\mathrm{tr}(H_{AA}^{-1}H_{AA}) = |A|}, the count of Zou, Hastie and
+#' Tibshirani (2007), and it is returned as that count without forming
+#' \eqn{H_{AA}}. That product was a third of a lasso path's time. The
+#' condition is on the whole active block, so a ridge, a random effect or a
+#' smooth among the active coordinates puts its \eqn{\lambda} into
+#' \eqn{S_{AA}} and the full trace is computed as before.
+#'
+#' Where the active columns are linearly dependent \eqn{H_{AA}} is singular
+#' and the trace does not exist; the degrees of freedom are then
+#' \eqn{\mathrm{rank}(X_A)} (Tibshirani and Taylor, 2012), which the count
+#' overstates by the deficiency. It happens where a development carries its
+#' own intercept beside a lasso over indicators that sum to it. Before, the
+#' trace was computed there anyway, from a factorization that succeeds on
+#' rounding, and came out as far as 5.3 from the count, or `NA` and the point
+#' left unscored.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, refreshed at `coef` if any term needs it.
 #' @param coef A named list of coefficient vectors, one per distribution
@@ -343,9 +361,14 @@ statmod_pe <- function(spec, design, coef, hyper, method,
     tau <- 0
   } else {
     act <- which(active)
-    H <- statmod_information_at(spec, coef, design, expected, approx,
-                                index = act)
-    tau <- outer_tau(H + S[act, act, drop = FALSE], H, NULL)
+    S_aa <- S[act, act, drop = FALSE]
+    if (!any(as_dense(S_aa) != 0)) {
+      tau <- length(act)
+    } else {
+      H <- statmod_information_at(spec, coef, design, expected, approx,
+                                  index = act)
+      tau <- outer_tau(H + S_aa, H, NULL)
+    }
   }
   if (!is.finite(tau)) return(NULL)
   k <- outer_k(method, spec@n_obs)
