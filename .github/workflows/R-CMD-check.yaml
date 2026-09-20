@@ -20,7 +20,12 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
+          # CRAN's macOS build machine began compressing its binaries with
+          # zstd on 2026-09-16 while still naming them .tgz, and pak reads
+          # gzip, bzip2 and xz only, so every package CRAN has rebuilt
+          # since then fails to install with "unknown archive type". The
+          # Posit package manager serves the same binaries gzipped.
+          - {os: macos-latest,   r: 'release', cran: 'https://packagemanager.posit.co/cran/latest'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
@@ -39,6 +44,9 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
+          # empty for every platform but macOS, where an unset input falls
+          # back to the default mirror
+          cran: ${{ matrix.config.cran }}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
