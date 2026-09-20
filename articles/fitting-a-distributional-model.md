@@ -196,7 +196,7 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 1.24 s
+#> fitted in 486 ms
 #> inner   max |grad|/se 6.7e-07   min eigen 0.96
 #> outer   max |grad|/se 1.2e-05   min eigen 1
 #> 1 note: print(summary(fit), notes = TRUE)

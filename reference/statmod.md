@@ -182,6 +182,21 @@ The terms available are modelterms7's:
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 and the rest. Bare covariates collapse into one parametric block.
 
+A structural term whose level adds a constant to the predictor, the
+\\\omega\\ of
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
+or the first level of
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
+is confounded with an intercept in the same equation. The intercept is
+kept and the level held at zero, reported as `omega (held)`; writing
+`0 + gas(...)` estimates the level instead. The two spellings are the
+same model with the same log-likelihood, and the constants differ
+because they measure different quantities: for a score-driven term the
+intercept is the stationary level \\\omega / (1 - \sum_j b_j)\\, which
+is \\\omega\\ divided by one minus the persistence. The page of
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
+gives the identity.
+
 ## The fitting scheme
 
 The terms split in two by a property each one already reports.

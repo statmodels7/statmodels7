@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.141.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.142.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -202,6 +202,16 @@ formula the last term alone.</p>
 <code><a href="https://statmodels7.github.io/modelterms7/reference/lasso.html" class="external-link">modelterms7::lasso()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> and the rest. Bare covariates collapse into one
 parametric block.</p>
+<p>A structural term whose level adds a constant to the predictor, the
+\(\omega\) of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> or the first level of
+<code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>, is confounded with an intercept in the same
+equation. The intercept is kept and the level held at zero, reported as
+<code>omega (held)</code>; writing <code>0 + gas(...)</code> estimates the level instead. The
+two spellings are the same model with the same log-likelihood, and the
+constants differ because they measure different quantities: for a
+score-driven term the intercept is the stationary level
+\(\omega / (1 - \sum_j b_j)\), which is \(\omega\) divided by one minus
+the persistence. The page of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code> gives the identity.</p>
     </div>
     <div class="section level2">
     <h2 id="the-fitting-scheme">The fitting scheme<a class="anchor" aria-label="anchor" href="#the-fitting-scheme"></a></h2>

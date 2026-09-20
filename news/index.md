@@ -1,5 +1,21 @@
 # Changelog
 
+## statmodels7 0.142.0
+
+- [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)’s
+  page says what happens where a structural term’s level meets an
+  intercept in the same equation. The intercept is kept and the level
+  held at zero, which a summary reports as `omega (held)`; written
+  without the intercept, as `0 + gas(...)`, the level is estimated
+  instead. The two spellings are one model with the same log-likelihood,
+  and the constants are not the same quantity: for a score-driven term
+  the intercept estimates the stationary level . The identity is on the
+  page of
+  [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html).
+  Nothing computed reads it, so the pin on that package does not move.
+
+- Documentation only. Nothing computed moves.
+
 ## statmodels7 0.141.0
 
 - **The count of the active coordinates is taken only where it is their
