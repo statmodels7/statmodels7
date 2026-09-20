@@ -124,6 +124,17 @@ The terms available are \pkg{modelterms7}'s: \code{\link[modelterms7:s]{modelter
 \code{\link[modelterms7:lasso]{modelterms7::lasso()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}}, \code{\link[modelterms7:nl]{modelterms7::nl()}},
 \code{\link[modelterms7:gas]{modelterms7::gas()}} and the rest. Bare covariates collapse into one
 parametric block.
+
+A structural term whose level adds a constant to the predictor, the
+\eqn{\omega} of \code{\link[modelterms7:gas]{modelterms7::gas()}} or the first level of
+\code{\link[modelterms7:regime]{modelterms7::regime()}}, is confounded with an intercept in the same
+equation. The intercept is kept and the level held at zero, reported as
+\code{omega (held)}; writing \code{0 + gas(...)} estimates the level instead. The
+two spellings are the same model with the same log-likelihood, and the
+constants differ because they measure different quantities: for a
+score-driven term the intercept is the stationary level
+\eqn{\omega / (1 - \sum_j b_j)}, which is \eqn{\omega} divided by one minus
+the persistence. The page of \code{\link[modelterms7:gas]{modelterms7::gas()}} gives the identity.
 }
 
 \section{The fitting scheme}{
