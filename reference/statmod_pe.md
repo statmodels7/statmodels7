@@ -95,10 +95,29 @@ Where the active columns are linearly dependent \\H\_{AA}\\ is singular
 and the trace does not exist; the degrees of freedom are then
 \\\mathrm{rank}(X_A)\\ (Tibshirani and Taylor, 2012), which the count
 overstates by the deficiency. It happens where a development carries its
-own intercept beside a lasso over indicators that sum to it. Before, the
-trace was computed there anyway, from a factorization that succeeds on
-rounding, and came out as far as 5.3 from the count, or `NA` and the
-point left unscored.
+own intercept beside a lasso over indicators that sum to it: measured on
+`nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))`, 14 of 26 evaluations have a
+deficiency of 1 or 2. The count is therefore taken only where
+[`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
+certifies that every active subset has full rank, and
+[`active_rank()`](https://statmodels7.github.io/statmodels7/reference/active_rank.md)
+answers everywhere else. Before this, the trace was computed there
+anyway, from a factorization that succeeds on rounding, and came out as
+far as 5.3 from the count, or `NA` and the point left unscored.
+
+The certificate costs one pivoted decomposition per equation and is read
+once where the design stands still, so a lasso path pays it at its first
+evaluation and not at the other twenty-five. Measured on a dense lasso
+at \\n = 5000\\ and \\p = 200\\, two rounds alternated: 3.87 and 3.92
+seconds of processor time with the bare count, 3.91 and 3.91 with the
+certificate, 5.02 and 5.08 with \\\mathrm{rank}(X_A)\\ read at every
+evaluation, and 5.89 and 5.90 with the trace this replaced. What it buys
+is exactness rather than a different fit: over seven models that reach
+the branch, four ordinary and three carrying the dependence, the two
+routes give the same log-likelihood, the same effective degrees of
+freedom, the same count of non-zero coefficients and the same
+hyperparameter to every printed digit. What the count overstates is the
+criterion at path points the selection does not stop at.
 
 ## See also
 

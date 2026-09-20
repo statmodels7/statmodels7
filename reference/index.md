@@ -141,6 +141,9 @@ exported, and none is needed to use the package.
 - [`StatmodTest()`](https://statmodels7.github.io/statmodels7/reference/StatmodTest-class.md)
   : A Test of One Coefficient Against One Value
 
+- [`active_rank()`](https://statmodels7.github.io/statmodels7/reference/active_rank.md)
+  : The Rank of the Active Columns
+
 - [`add_offsets()`](https://statmodels7.github.io/statmodels7/reference/add_offsets.md)
   : Add Two Sets of Offsets
 
@@ -171,6 +174,9 @@ exported, and none is needed to use the package.
 
 - [`bind_blocks()`](https://statmodels7.github.io/statmodels7/reference/bind_blocks.md)
   : Bind a Model's Term Blocks Side by Side
+
+- [`block_column_rank()`](https://statmodels7.github.io/statmodels7/reference/block_column_rank.md)
+  : The Column Rank of One Design Block
 
 - [`block_label()`](https://statmodels7.github.io/statmodels7/reference/block_label.md)
   : The Heading a Block of Each Kind Is Printed Under
@@ -377,6 +383,9 @@ exported, and none is needed to use the package.
 
 - [`deriv5_key()`](https://statmodels7.github.io/statmodels7/reference/deriv5_key.md)
   : The Name of a Fifth-Derivative Component
+
+- [`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
+  : Is the Count of the Active Coordinates Their Rank?
 
 - [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
   [`as_dense()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
@@ -940,6 +949,9 @@ exported, and none is needed to use the package.
 - [`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)
   : Fit One Non-Smooth Block, the Others Held Fixed
 
+- [`sparse_fit_structural()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit_structural.md)
+  : Fit a Kinked Penalty Over a Structural Term's Own Parameters
+
 - [`sparse_lmin()`](https://statmodels7.github.io/statmodels7/reference/sparse_lmin.md)
   : The Smallest Eigenvalue of a Sparse Factor's Matrix, Estimated
 
@@ -1353,6 +1365,9 @@ exported, and none is needed to use the package.
 
 - [`verbosity()`](https://statmodels7.github.io/statmodels7/reference/verbosity.md)
   : Resolve the Verbosity Setting
+
+- [`warn_aliased()`](https://statmodels7.github.io/statmodels7/reference/warn_aliased.md)
+  : Report a Model Whose Columns Are Not All Identified
 
 - [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
   : The Weighted Cross Product of the Assembly

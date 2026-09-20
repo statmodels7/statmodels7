@@ -14,6 +14,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodSummary-class.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/StatmodTest-class.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/active_rank.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/add_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aic.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/aliased_labels.html</loc></url>
@@ -25,6 +26,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/bind_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/block_column_rank.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_label.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_leverage.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/block_predictors.html</loc></url>
@@ -93,6 +95,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv3_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv4_key.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/deriv5_key.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/design_count_exact.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/design_sparse.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.html</loc></url>
@@ -281,6 +284,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/solve_pd.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_fit_structural.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/sparse_lmin.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/spec_at.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/split_binomial_matrix.html</loc></url>
@@ -432,6 +436,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vb_say.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/verbosity.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/warn_aliased.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/wcrossprod.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/worker_map.html</loc></url>
