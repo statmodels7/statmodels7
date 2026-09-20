@@ -518,6 +518,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                                             expected, approx)),
       error = function(e) integer(0))
   }
+  # A READER WHO DOES NOT PRINT THE SUMMARY IS STILL TOLD. The `NA` that
+  # follows is base R's convention and is right, but on its own it reports a
+  # non-identified model by omission.
+  warn_aliased(aliased_labels(spec, design, alias))
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
   spec <- statmod_fitted_spec(spec, coef, design)

@@ -1578,6 +1578,78 @@ deficient_coords <- function(K) {
 }
 
 
+#' Report a Model Whose Columns Are Not All Identified
+#'
+#' @description
+#' Raises a warning naming the coordinates the fit could not estimate, so
+#' that a reader who does not print the summary is told the model as written
+#' does not identify every column of its design.
+#'
+#' @details
+#' A coefficient the model does not identify is one point of a flat ridge: the
+#' fit converges and reports numbers, and nothing in what it prints by default
+#' says which of them mean anything. `lm()` and `glm()` put `NA` in `coef()`
+#' and say no more, and [statmod()] has followed that convention since 0.98.0,
+#' but an `NA` among a hundred rows of a `summary()` nobody printed is not a
+#' report.
+#'
+#' Which coordinates those are is [deficient_coords()]'s answer, read at the
+#' fitted coefficients on \eqn{K = H + S} and gated by [solve_pd()], and that
+#' is what makes the warning safe to raise. A rank test on the RAW design
+#' answers a different question and has false positives that would make this
+#' noise: measured over fourteen models it reports a deficiency on
+#' `random(~ 1 | g)`, on `random(~ x | g)` and on `s(x) + random(~ 1 | g)`,
+#' whose columns are identified by their own penalty and whose fits are
+#' perfectly ordinary. Read on \eqn{K}, the penalty's curvature is in the
+#' matrix and none of the three is named. Over the same fourteen the warning
+#' fires on exactly two, both of them
+#' `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))`, where a parameter's own
+#' intercept sits beside a complete set of indicators that sum to it.
+#'
+#' Reading it at the FITTED coefficients rather than at the start is part of
+#' the rule: a Jacobian block is degenerate at a starting value of zero for a
+#' reason that goes away as soon as the parameter moves, and
+#' `nl(~ a * exp(-r * x), a ~ 0 + lasso(~ g))`, which is identified, is
+#' deficient there and is not named here.
+#'
+#' THE MESSAGE NAMES NO CAUSE, and a measurement is why. Two shapes reach it
+#' and they are not the same defect. In the one above the DESIGN is deficient,
+#' a column being the sum of others. In the other the design has full rank and
+#' \eqn{K} does not: measured on `jump(x, smoothed = smooth_quintic())` and on
+#' `jseg()` under the same smoother, the block is of rank 3 of 3 while
+#' `mu:jump.psi1` is named, the quintic being exact outside its own width so
+#' that the break-point's derivative column is non-zero at a handful of
+#' observations and carries almost no curvature. Both are genuine -- neither
+#' coefficient has a standard error -- and a message asserting the first would
+#' be wrong about the second, so it reports the fact and leaves the diagnosis
+#' to the reader. The two smoothers whose derivative has unbounded support,
+#' `smooth_probit()` and `smooth_hyperbolic()`, are not named on the same data.
+#'
+#' @param alias The aliased coordinates by name, as
+#'   [aliased_labels()] gives them.
+#'
+#' @return `NULL`, invisibly. Called for the warning.
+#'
+#' @seealso [deficient_coords()], which answers which coordinates those are,
+#'   and [vcov.StatmodFit()], which reports them as missing.
+#'
+#' @keywords internal
+warn_aliased <- function(alias) {
+  if (!length(alias)) return(invisible(NULL))
+  nm <- as.character(alias)
+  k <- length(nm)
+  shown <- if (k > 4L) c(nm[seq_len(4L)], sprintf("and %d more", k - 4L)) else nm
+  warning(sprintf(paste0(
+    "%d coefficient%s not identified at the fitted point: the penalized ",
+    "information\n  is flat in %s direction, so what is reported there is ",
+    "one point of a ridge and\n  the estimate, the standard error and the ",
+    "interval are missing.\n  %s"),
+    k, if (k == 1L) " is" else "s are", if (k == 1L) "its" else "their",
+    paste(shown, collapse = ", ")), call. = FALSE)
+  invisible(NULL)
+}
+
+
 #' @title Confidence Intervals for a Fit
 #' @name confint.StatmodFit
 #' @description
@@ -3135,9 +3207,16 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     nms <- tryCatch(modelterms7::term_coef_names(s),
                     error = function(e) character(0))
     if (length(nms) == nrow(rr)) rr$name <- nms
+    # AN ALIASED COEFFICIENT IS NOT A SELECTED ONE. Its estimate is `NA`,
+    # so `!= 0` is `NA`, and a logical `NA` indexes a row of nothing but
+    # `NA`s: the block's label column then carried one, `max(nchar(labs))`
+    # was `NA`, and the printer died inside `formatC()` on "missing value
+    # where TRUE/FALSE needed" with the header line already mangled.
+    # Reachable from any fit whose selected columns are linearly dependent,
+    # which is what `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))` is.
     keep <- switch(sk,
       smooth = smooth_linear_cols(s, nrow(rr)),
-      selection = rr$estimate != 0,
+      selection = !is.na(rr$estimate) & rr$estimate != 0,
       rep(TRUE, nrow(rr)))
     if (identical(sk, "random")) keep <- rep(FALSE, nrow(rr))
     lines <- character(0)

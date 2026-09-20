@@ -54,6 +54,14 @@ statmod_blocks <- function(spec, design) {
     sparse[[length(sparse) + 1L]] <- list(
       param = u$param, term = u$key, cols = u$cols, index = u$index,
       penalty = u$penalty,
+      # A STRUCTURAL UNIT IS ADDRESSED IN ANOTHER VECTOR, and both routes
+      # below need to know it: `cols` are positions among the TERM's own
+      # parameters rather than columns of any design, and `index` is empty
+      # because such a penalty covers no coefficient. `zterm` is the term's
+      # own name, which the design's structural state is keyed by, where
+      # `term` is the penalty's key and carries `::entry` where the term
+      # declares more than one.
+      structural = isTRUE(u$structural), zterm = u$term,
       # the sharing labels travel to the path the way the held values travel
       # to the outer index: it is the path that has to sweep one axis for a
       # group rather than one per member
@@ -183,6 +191,16 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
                        verbose = FALSE, spec = NULL, design = NULL,
                        expected = TRUE, approx = "opg") {
+  # A PENALTY OVER A STRUCTURAL TERM'S OWN PARAMETERS COVERS NO COLUMN AND NO
+  # ENTRY OF `beta`, so neither route below can address it: the coordinate
+  # descent reads `cols` as columns of a design, which those positions are
+  # not, and the proximal branch reads `beta[block$index]`, which is empty.
+  # Measured, a lasso held there died on "subscript out of bounds" inside
+  # coord_block(), in the published 0.124.0 as well.
+  if (isTRUE(block$structural)) {
+    return(sparse_fit_structural(obj, beta, block, hyper, spec, design,
+                                 maxit = maxit, tol = tol, verbose = verbose))
+  }
   # a coordinate descent reads the block's own columns and the running
   # residual, which is the model rather than the objective, so it is not an
   # optimizer and lives here. It applies where the penalty can describe its

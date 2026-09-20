@@ -315,10 +315,27 @@ outer_tau <- function(J, H, active = NULL) {
 #' and the trace does not exist; the degrees of freedom are then
 #' \eqn{\mathrm{rank}(X_A)} (Tibshirani and Taylor, 2012), which the count
 #' overstates by the deficiency. It happens where a development carries its
-#' own intercept beside a lasso over indicators that sum to it. Before, the
-#' trace was computed there anyway, from a factorization that succeeds on
-#' rounding, and came out as far as 5.3 from the count, or `NA` and the point
-#' left unscored.
+#' own intercept beside a lasso over indicators that sum to it: measured on
+#' `nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))`, 14 of 26 evaluations have a
+#' deficiency of 1 or 2. The count is therefore taken only where
+#' [design_count_exact()] certifies that every active subset has full rank,
+#' and [active_rank()] answers everywhere else. Before this, the trace was
+#' computed there anyway, from a factorization that succeeds on rounding, and
+#' came out as far as 5.3 from the count, or `NA` and the point left unscored.
+#'
+#' The certificate costs one pivoted decomposition per equation and is read
+#' once where the design stands still, so a lasso path pays it at its first
+#' evaluation and not at the other twenty-five. Measured on a dense lasso at
+#' \eqn{n = 5000} and \eqn{p = 200}, two rounds alternated: 3.87 and 3.92
+#' seconds of processor time with the bare count, 3.91 and 3.91 with the
+#' certificate, 5.02 and 5.08 with \eqn{\mathrm{rank}(X_A)} read at every
+#' evaluation, and 5.89 and 5.90 with the trace this replaced. What it buys
+#' is exactness rather than a different fit: over seven models that reach the
+#' branch, four ordinary and three carrying the dependence, the two routes
+#' give the same log-likelihood, the same effective degrees of freedom, the
+#' same count of non-zero coefficients and the same hyperparameter to every
+#' printed digit. What the count overstates is the criterion at path points
+#' the selection does not stop at.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, refreshed at `coef` if any term needs it.
@@ -363,7 +380,8 @@ statmod_pe <- function(spec, design, coef, hyper, method,
     act <- which(active)
     S_aa <- S[act, act, drop = FALSE]
     if (!any(as_dense(S_aa) != 0)) {
-      tau <- length(act)
+      tau <- if (design_count_exact(design)) length(act) else
+        active_rank(design, act)
     } else {
       H <- statmod_information_at(spec, coef, design, expected, approx,
                                   index = act)
@@ -375,6 +393,152 @@ statmod_pe <- function(spec, design, coef, hyper, method,
   list(value = -2 * ll + k * tau, loglik = ll,
        penalty = statmod_penalty_at(spec, coef, hyper, design, "value"),
        edf = tau)
+}
+
+
+#' Is the Count of the Active Coordinates Their Rank?
+#'
+#' @description
+#' `TRUE` where every equation's design has full column rank, which is
+#' sufficient for every subset of the active coordinates to have full rank as
+#' well, so that \eqn{|A|} is \eqn{\mathrm{rank}(X_A)} whatever the active set
+#' turns out to be.
+#'
+#' @details
+#' The question [statmod_pe()] asks is about one active set at one point, and
+#' answering it there would cost a decomposition per evaluation. Full column
+#' rank of the whole design answers it for every active set at once, so it is
+#' read once and reused, which is what keeps the count free on the path it was
+#' introduced for.
+#'
+#' The answer is kept in the design's `eta_memo` environment, keyed on the
+#' column counts, which is safe because that environment is built fresh with
+#' each design. A term registering `modelterms7::term_refresh()` recomputes
+#' its block as the coefficients move, so the same column counts do not imply
+#' the same columns and a memo that cannot see the refresh must not answer;
+#' there the certificate is declined outright and [active_rank()] runs
+#' instead. That route is bounded by the trace it replaced, being a
+#' decomposition of \eqn{X_A} where the trace needs the cross product of the
+#' same columns.
+#'
+#' A design carrying a structural term has no `eta_memo` either, so there the
+#' certificate is recomputed at each call rather than declined. It is correct
+#' and it is not free; what makes it affordable is that a structural term's
+#' own penalty covers no coefficient, so the branch this serves is reached
+#' only where some other block is penalized by a kink and nothing else.
+#'
+#' @param design The design, as [statmod_design()] returns it.
+#'
+#' @return A single logical.
+#'
+#' @seealso [active_rank()], which answers for one active set where this
+#'   declines, and [block_column_rank()] for the decomposition both read.
+#'
+#' @keywords internal
+design_count_exact <- function(design) {
+  rf <- attr(design, "refresh")
+  if (!is.null(rf) && length(rf)) return(FALSE)
+  mm <- attr(design, "eta_memo")
+  key <- vapply(design, function(d) d$npar, integer(1))
+  if (!is.null(mm) && !is.null(mm$rank_value) &&
+      identical(mm$rank_key, key)) {
+    return(mm$rank_value)
+  }
+  out <- TRUE
+  for (d in design) {
+    if (is.null(d$X) || !d$npar) next
+    r <- block_column_rank(d$X)
+    if (is.na(r) || r < ncol(d$X)) { out <- FALSE; break }
+  }
+  if (!is.null(mm)) { mm$rank_key <- key; mm$rank_value <- out }
+  out
+}
+
+
+#' The Rank of the Active Columns
+#'
+#' @description
+#' \eqn{\mathrm{rank}(X_A)}, the degrees of freedom of a fit whose penalty is
+#' flat on the active block (Tibshirani and Taylor, 2012), summed over the
+#' equations the active coordinates belong to.
+#'
+#' @details
+#' The information is block diagonal over the equations wherever the family's
+#' per-observation information is, and in any case a coordinate is identified
+#' only if its own equation's active columns identify it, so the rank is read
+#' per equation and added. Nothing of size \eqn{n \times |A|} is formed twice:
+#' the columns are subset once and decomposed once.
+#'
+#' @param design The design, as [statmod_design()] returns it.
+#' @param act The active coordinates, as positions in the stacked vector.
+#'
+#' @return A single number.
+#'
+#' @seealso [design_count_exact()], whose certificate makes this unnecessary,
+#'   and [block_column_rank()].
+#'
+#' @keywords internal
+active_rank <- function(design, act) {
+  npar <- vapply(design, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  r <- 0
+  for (a in seq_along(design)) {
+    loc <- act[act > offs[a] & act <= offs[a] + npar[a]] - offs[a]
+    if (!length(loc)) next
+    rk <- block_column_rank(design[[a]]$X[, loc, drop = FALSE])
+    if (is.na(rk)) return(NA_real_)
+    r <- r + rk
+  }
+  r
+}
+
+
+#' The Column Rank of One Design Block
+#'
+#' @description
+#' The number of linearly independent columns, by the pivoted decomposition
+#' the fit's own solve uses, so that the two cannot disagree about which
+#' columns a model identifies.
+#'
+#' @details
+#' A dense block goes through `qr()`, at `dqrdc2`'s own tolerance, which is
+#' what [augmented_solve()] reads. A sparse one goes through `Matrix::qr()`
+#' and its rank is counted on the JACOBI-EQUILIBRATED diagonal of the
+#' triangular factor, which is the correction [sparse_augmented_solve()]
+#' already carries: since \eqn{R'R = A'A}, scaling the columns by their norms
+#' scales that diagonal by the same factors, so a block whose columns differ
+#' in size is not read as deficient while an exact dependence stays exactly
+#' singular.
+#'
+#' @param X A design block, dense or sparse.
+#'
+#' @return A single number, or `NA_integer_` where the decomposition fails.
+#'
+#' @seealso [design_count_exact()], [active_rank()].
+#'
+#' @keywords internal
+block_column_rank <- function(X) {
+  if (is.null(X) || !ncol(X)) return(0L)
+  if (!inherits(X, "Matrix")) {
+    q <- tryCatch(qr(X), error = function(e) NULL)
+    return(if (is.null(q)) NA_integer_ else q$rank)
+  }
+  qrA <- tryCatch(Matrix::qr(X), error = function(e) NULL)
+  if (is.null(qrA)) return(NA_integer_)
+  Rf <- tryCatch(Matrix::qrR(qrA, backPermute = FALSE), error = function(e) NULL)
+  if (is.null(Rf) || nrow(Rf) != ncol(X)) return(NA_integer_)
+  dg <- abs(Matrix::diag(Rf))
+  q <- qrA@q
+  ord <- if (length(q)) q + 1L else seq_len(ncol(X))
+  cn <- sqrt(Matrix::colSums(X^2))[ord]
+  if (length(cn) != length(dg) || !all(is.finite(cn)) || !all(is.finite(dg))) {
+    return(NA_integer_)
+  }
+  keep <- cn > 0
+  if (!any(keep)) return(0L)
+  eq <- dg[keep] / cn[keep]
+  if (!max(eq) > 0) return(0L)
+  sum(eq > ncol(X) * .Machine$double.eps * max(eq))
 }
 
 

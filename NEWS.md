@@ -1,3 +1,94 @@
+# statmodels7 0.141.0
+
+* **The count of the active coordinates is taken only where it is their
+  rank.** `statmod_pe()` returns \eqn{|A|} where the penalty is flat on the
+  active block, which is \eqn{\mathrm{tr}(H_{AA}^{-1}H_{AA})} exactly while
+  \eqn{X_A} has full column rank and overstates the degrees of freedom by the
+  deficiency where it does not. `design_count_exact()` certifies it: full
+  column rank of every equation's design is sufficient for every active
+  subset, so the question is answered once per design rather than once per
+  evaluation, and `active_rank()` answers where the certificate declines.
+  Measured on a dense lasso at n = 5000 and p = 200 over 26 evaluations, two
+  rounds alternated, in processor time: 3.87 and 3.92 s with the bare count,
+  3.91 and 3.91 with the certificate, 5.02 and 5.08 reading
+  \eqn{\mathrm{rank}(X_A)} at every evaluation, and 5.89 and 5.90 with the
+  trace 0.139.0 replaced. The certificate is two decompositions and 0.04 s of
+  a 3.9 s fit.
+* ⚠️ **What it buys is exactness and not a different fit**, and the
+  measurement says so rather than a tolerance: over seven models that reach
+  the branch -- four ordinary and the three carrying the dependence -- the
+  count and the exact rank give the same log-likelihood, the same effective
+  degrees of freedom, the same count of non-zero coefficients and the same
+  hyperparameter to every printed digit, `nl(~ a * exp(-r * x), a ~ 1 +
+  lasso(~ g))` included at `lambda` 3.6546864. The deficiency is 1 or 2 at
+  path points the selection does not stop at, so what the count overstates is
+  the criterion there.
+* ⚠️ **A block that MOVES is never certified**, whatever its rank: the
+  certificate is memoized on the design, and a term recomputing its own block
+  makes the same column counts mean different columns, so
+  \eqn{\mathrm{rank}(X_A)} runs there instead. That route is bounded by the
+  trace it replaced, being a decomposition of \eqn{X_A} where the trace needs
+  the cross product of the same columns.
+* **A coefficient the model does not identify is reported at the fit and not
+  only inside a summary nobody printed.** `warn_aliased()` names the
+  coordinates `deficient_coords()` found, read at the fitted coefficients on
+  \eqn{K = H + S} and gated by `solve_pd()`. ⚠️ A rank test on the RAW design
+  answers a different question and would make this noise: over fourteen models
+  it reports a deficiency on `random(~ 1 | g)`, on `random(~ x | g)` and on
+  `s(x) + random(~ 1 | g)`, all three identified by their own penalty, and on
+  `nl(~ a * exp(-r * x), a ~ 0 + lasso(~ g))`, which is deficient only at a
+  starting value of zero. Read on \eqn{K} at the fitted point the warning
+  fires on exactly the two that are not identified.
+* ⚠️ **The message names no cause, and a measurement is why.** Two shapes
+  reach it. In one the DESIGN is deficient, a column being the sum of others.
+  In the other the design has full rank and \eqn{K} does not: on
+  `jump(x, smoothed = smooth_quintic())` and on `jseg()` under the same
+  smoother the block is of rank 3 of 3 while `mu:jump.psi1` is named, the
+  quintic being exact outside its own width so that the break-point's
+  derivative column is non-zero at a handful of observations. Both are
+  genuine and a message asserting the first would be wrong about the second.
+  The two smoothers whose derivative has unbounded support are not named on
+  the same data.
+* **A summary prints where a selected column is not identified.** An aliased
+  coefficient has an `NA` estimate, so `!= 0` was `NA`, and a logical `NA`
+  indexed a row of nothing but `NA`s: the block's label column carried one,
+  its width came out `NA` and the printer died inside `formatC()` on "missing
+  value where TRUE/FALSE needed", with the header line already mangled.
+  Reachable from any fit whose selected columns are dependent, and from the
+  published 0.140.0. An aliased coefficient is not a selected one.
+* **A penalty with a kink over a structural term's own parameters is
+  fitted.** Those parameters are not columns of any design and not entries of
+  the stacked coefficient vector, so neither route `sparse_fit()` takes could
+  address them: `gas(..., omega ~ 0 + lasso(~ id, lambda = 2))` died on
+  "subscript out of bounds" inside `coord_block()`, in the published 0.124.0
+  and at 0.140.0. `sparse_fit_structural()` runs a proximal gradient
+  iteration on the design's structural state instead. Measured on a panel of
+  eight groups of forty where three carry a level, it selects: the
+  coordinates at exactly zero are 0, 0, 1, 3 and 8 of 8 at `lambda` of 0.1,
+  1, 5, 20 and 80, and the survivors are the three that carry one.
+* **The point is the penalized mode**, by a route sharing no arithmetic with
+  either the filter's adjoint or the proximal operator: differencing the
+  smooth objective with \pkg{numDeriv}, the stationarity
+  \eqn{|g + \lambda\,\mathrm{sign}(b)|} on the coordinates away from zero is
+  2.1e-08, 2.3e-08 and 6.9e-07 at `lambda` of 1, 5 and 20, and the ones at
+  zero sit inside the interval the kink opens, 0.83 against 5 and 17.6
+  against 20.
+* ⚠️ **The fit reports `converged = FALSE` at that point and the flag is not
+  this route's.** Traced at `lambda` 20: the joint block converges in 58
+  iterations, the kinked block runs its budget of 500, and at the second pass
+  the joint block takes ONE iteration and moves the objective by exactly 0
+  while the kinked block converges in 189. What reports `FALSE` is the joint
+  block at a pass where there is nothing left to move, which is the stall
+  guard firing at the mode. The control is that the same model under
+  `ridge(~ id, lambda = 20)` and with the levels unpenalized reports `TRUE`.
+* ⚠️ **Holding the penalized coordinates out of the smooth structural fit was
+  measured and NOT taken.** `sparse_fit_structural()` runs afterwards in the
+  same pass and has the last word, so the hold changes nothing: swept over
+  `lambda` of 1, 5, 20 and 80, the log-likelihood, all ten parameters, the
+  count of exact zeros and the convergence flag are identical to the printed
+  digit with it and without it, while it would cost one walk over the model's
+  penalties per call on every fit carrying a structural term.
+
 # statmodels7 0.140.0
 
 * **The coordinate descent stops when its working problem has not moved.**

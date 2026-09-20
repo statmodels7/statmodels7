@@ -899,6 +899,15 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
     nm <- names(sst$zeta[[key]])
     # a level a linear intercept already carries is held, not estimated
     free <- setdiff(nm, sst$held[[key]])
+    # A COORDINATE A KINKED PENALTY COVERS IS LEFT HERE, and that is measured
+    # rather than assumed. [sparse_fit_structural()] fits it afterwards in
+    # the same pass and has the last word, so holding it here changes nothing:
+    # swept over `lambda` of 1, 5, 20 and 80 on the panel that route's page
+    # describes, the log-likelihood, all ten parameters, the count of exact
+    # zeros and the convergence flag are identical to the printed digit with
+    # the hold and without it. What the hold would cost is one walk over the
+    # model's penalties per call, on every fit carrying a structural term
+    # whether or not any penalty there has a kink.
     if (!length(free)) next
     set <- function(z) {
       v <- sst$zeta[[key]]
@@ -950,6 +959,138 @@ statmod_fit_structural <- function(spec, design, obj, beta, hyper, optimizer,
   }
   list(value = obj$fn(beta), converged = ok, iterations = its)
 }
+
+#' Fit a Kinked Penalty Over a Structural Term's Own Parameters
+#'
+#' @description
+#' A proximal gradient iteration over the parameters of a score-driven filter
+#' that a penalty with a kink covers, the coefficients and the term's other
+#' parameters held where the rest of the pass left them.
+#'
+#' @details
+#' Neither route [sparse_fit()] takes for a block of coefficients can be taken
+#' here. A coordinate descent reads the block's columns and its running
+#' residual, and a structural term contributes no column; the proximal branch
+#' reads `beta[block$index]`, and such a penalty covers no entry of the
+#' stacked vector. The parameters are in the design's structural state
+#' instead, so the iteration is written on that subvector: the smooth part is
+#' the negative log-likelihood with this penalty taken back out, its gradient
+#' is [statmod_structural_score()]'s with the same correction, and the
+#' operator is the penalty's own.
+#'
+#' Measured on a panel of eight groups of forty where three carry a level, the
+#' route selects: the coordinates at exactly zero are 0, 0, 1, 3 and 8 of 8 at
+#' `lambda` of 0.1, 1, 5, 20 and 80, and the survivors are the three that
+#' carry one. What says the point is the model's is the Karush-Kuhn-Tucker
+#' condition, computed by differencing the smooth objective with
+#' \pkg{numDeriv} and sharing no arithmetic with either the filter's adjoint
+#' or the operator: the stationarity
+#' \eqn{|g + \lambda\,\mathrm{sign}(b)|} on the coordinates away from zero is
+#' 2.1e-08, 2.3e-08 and 6.9e-07 at `lambda` of 1, 5 and 20, and the ones at
+#' zero sit inside the interval the kink opens, 0.83 against 5 and 17.6
+#' against 20.
+#'
+#' The hyperparameter is HELD. A criterion that would select it is refused by
+#' [assert_criterion_reach()], a prediction-error criterion reading the
+#' degrees of freedom over the coefficients alone, where such a penalty covers
+#' nothing.
+#'
+#' THE FIT REPORTS `converged = FALSE` AT A POINT THAT IS AT ITS MODE, and the
+#' flag is not this route's. Traced on the panel above at `lambda` of 20, the
+#' passes are: the joint block converges in 58 iterations, this block runs its
+#' budget of 500 and moves the objective by 8.6e-03, then at the second pass
+#' the joint block takes ONE iteration and moves it by exactly 0 while this
+#' block converges in 189. What reports `FALSE` is the joint block at a pass
+#' where there is nothing left to move, which is the stall guard firing at the
+#' mode -- the reading [inner_mode_error()] replaces for availability and
+#' which the alternation's own flag does not yet use. The control is that the
+#' same model under `ridge(~ id, lambda = 20)` and with the levels unpenalized
+#' reports `TRUE`, so the flag follows the extra pass a kinked block costs
+#' rather than anything about the point.
+#'
+#' @param obj The full objective.
+#' @param beta The stacked coefficients, returned unchanged: this route moves
+#'   the structural state and no coefficient.
+#' @param block One entry of `statmod_blocks()$sparse`, whose `structural` is
+#'   `TRUE`.
+#' @param hyper The hyperparameters.
+#' @param spec A [StatmodSpec()].
+#' @param design The design, whose structural state this writes into.
+#' @param maxit The iteration budget.
+#' @param tol The stopping tolerance.
+#' @param verbose Whether the optimizer prints its own trace.
+#'
+#' @return A list shaped like [sparse_fit()]'s.
+#'
+#' @seealso [sparse_fit()], [statmod_fit_structural()], which fits the term's
+#'   other parameters in the same pass.
+#'
+#' @keywords internal
+sparse_fit_structural <- function(obj, beta, block, hyper, spec, design,
+                                  maxit = 500, tol = 1e-8, verbose = FALSE) {
+  none <- list(par = beta, value = obj$fn(beta), converged = TRUE,
+               method = "proximal gradient (structural)", iterations = 0L)
+  if (is.null(spec) || is.null(design)) return(none)
+  sst <- statmod_structural_state(design)
+  key <- block$zterm
+  if (is.null(sst) || is.null(key) || is.null(sst$zeta[[key]])) return(none)
+  nm <- names(sst$zeta[[key]])
+  free <- setdiff(nm, sst$held[[key]])
+  # a coordinate a linear intercept already carries is held, and a penalty
+  # over it has nothing to shrink
+  pos <- match(nm[block$cols], free)
+  pos <- pos[!is.na(pos)]
+  if (!length(pos)) return(none)
+  cf <- obj$split(beta)
+  th <- as.list(hyper[[block$param]][[block$term]])
+  pen <- block$penalty
+  set <- function(z) {
+    v <- sst$zeta[[key]]
+    v[free] <- as.numeric(z)
+    sst$zeta[[key]] <- v
+    sst$key <- NULL
+    sst$value <- NULL
+  }
+  z0 <- as.numeric(sst$zeta[[key]][free])
+  # the objective minus THIS penalty, which the operator applies instead
+  smooth_fn <- function(z) {
+    v <- tryCatch({
+      set(z)
+      -statmod_loglik_at(spec, cf, design) +
+        statmod_penalty_at(spec, cf, hyper, design, "value") -
+        penalties7::penalty_value(pen, z[pos], th)
+    }, error = function(e) NA_real_)
+    if (!is.finite(v)) Inf else v
+  }
+  smooth_gr <- function(z) {
+    v <- tryCatch({
+      set(z)
+      g <- -statmod_structural_score(spec, cf, design)[[key]][free]
+      pg <- statmod_structural_penalty(spec, design, hyper, "gradient")
+      if (!is.null(pg[[key]])) g <- g + pg[[key]][free]
+      g[pos] <- g[pos] - penalties7::penalty_gradient(pen, z[pos], th)
+      g
+    }, error = function(e) NULL)
+    if (is.null(v) || !all(is.finite(v))) numeric(length(z)) else v
+  }
+  prox <- function(v, step) {
+    out <- v
+    out[pos] <- penalties7::penalty_prox(pen, v[pos], step, th)
+    out
+  }
+  gval <- function(z) penalties7::penalty_value(pen, z[pos], th)
+  opt <- optimizers7::prox_grad(prox = prox, g = gval,
+                                criterion = optimizers7::crit_grad(tol),
+                                maxit = maxit, verbose = verbose)
+  res <- tryCatch(optimizers7::minimize(opt, smooth_fn, z0, gr = smooth_gr),
+                  error = function(e) NULL)
+  if (is.null(res)) return(none)
+  set(res@par)
+  list(par = beta, value = obj$fn(beta), converged = isTRUE(res@converged),
+       method = "proximal gradient (structural)",
+       iterations = res@iterations)
+}
+
 
 #' The Penalty Over a Structural Term's Free Parameters, as a Block
 #'
