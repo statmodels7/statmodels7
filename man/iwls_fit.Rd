@@ -13,7 +13,8 @@ iwls_fit(
   verbose = FALSE,
   groups = NULL,
   frozen = integer(0),
-  backup_at = NULL
+  backup_at = NULL,
+  damp_on_reject = TRUE
 )
 }
 \arguments{
@@ -49,6 +50,14 @@ penalized information is not positive definite or where the observed step
 finds no acceptable point; a trial point whose objective raises an error
 is then read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method
 \code{\link[=iwls_resolve]{iwls_resolve()}} settled with the fallback.}
+
+\item{damp_on_reject}{Whether a line search that finds no acceptable step
+raises the Levenberg damping and retries (the default) or ends the run.
+\code{\link[=fit_smooth]{fit_smooth()}} passes \code{FALSE} where the design carries a sharp
+break-point term, whose objective has a kink in the break-point at the
+observations: there every Gauss-Newton step from the minimum is
+rejected, and escalating the damping eight times at every inner fit
+costs iterations without reaching anything a stop would not.}
 }
 \value{
 A list of nine: the six below; \code{note}, the reason a run stopped or

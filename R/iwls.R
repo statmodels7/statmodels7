@@ -629,6 +629,13 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   finds no acceptable point; a trial point whose objective raises an error
 #'   is then read as rejected. [fit_smooth()] passes one for a method
 #'   [iwls_resolve()] settled with the fallback.
+#' @param damp_on_reject Whether a line search that finds no acceptable step
+#'   raises the Levenberg damping and retries (the default) or ends the run.
+#'   [fit_smooth()] passes `FALSE` where the design carries a sharp
+#'   break-point term, whose objective has a kink in the break-point at the
+#'   observations: there every Gauss-Newton step from the minimum is
+#'   rejected, and escalating the damping eight times at every inner fit
+#'   costs iterations without reaching anything a stop would not.
 #'
 #' @return A list of nine: the six below; `note`, the reason a run stopped or
 #'   `NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
@@ -653,7 +660,8 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'
 #' @keywords internal
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
-                     groups = NULL, frozen = integer(0), backup_at = NULL) {
+                     groups = NULL, frozen = integer(0), backup_at = NULL,
+                     damp_on_reject = TRUE) {
   beta <- start
   value <- obj$fn(beta)
   hist <- list()
@@ -753,13 +761,21 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # whose dispersion runs to its Poisson limit exits exactly this way
     # after six halvings with the score still at 9.083e-03.
     if (!ok) {
-      if (damp_tries < 8L) {
+      # ⚠️ NOT AT A KINK. A sharp break-point's objective is not
+      # differentiable in the break-point at the observations, so at its
+      # minimum every Gauss-Newton step is rejected whatever the damping:
+      # measured on seg(x, psi ~ random(~1 | id)), the right and left slopes
+      # there are +6.00 and -1.63 and the objective rises on both sides, and
+      # escalating to a damping of 7.5e10 at every inner fit took the outer
+      # search from 6 evaluations and 5.4 s of processor time to 28 and 25.1
+      # s at an unchanged verdict. See piano_stabilita.txt 28d-28e.
+      if (damp_on_reject && damp_tries < 8L) {
         damp <- iwls_escalate(damp, pc)
         damp_tries <- damp_tries + 1L
         next
       }
       note <- paste0("the line search found no acceptable step at iteration ",
-                     it, ", damping included")
+                     it, if (damp_on_reject) ", damping included")
       break
     }
     hist[[length(hist) + 1L]] <- data.frame(

@@ -1114,7 +1114,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     frozen <- match(intersect(hf$where, idx), idx)
     res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
                     verbose = vb$inner, groups = groups, frozen = frozen,
-                    backup_at = backup_at)
+                    backup_at = backup_at,
+                    damp_on_reject = !has_sharp_breakpoint(spec))
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates
@@ -1930,4 +1931,38 @@ verbosity <- function(verbose) {
   lv <- as.integer(verbose)
   list(outer = lv >= 1L, blocks = lv >= 1L, inner = lv >= 2L,
        optimizer = lv >= 3L)
+}
+
+
+#' Whether a Model Carries a Sharp Break-Point Term
+#'
+#' @description
+#' `TRUE` where some equation carries [modelterms7::seg()], [modelterms7::jump()]
+#' or [modelterms7::jseg()] without `smoothed`, whose contribution has a kink
+#' in the break-point at the observations.
+#'
+#' @details
+#' [fit_smooth()] reads it to keep [iwls_fit()] from escalating the
+#' Levenberg damping on a rejected step: at the minimum of an objective with
+#' a kink every Gauss-Newton step is rejected whatever the damping, so the
+#' escalation spends eight attempts at every inner fit and ends where a stop
+#' would have.
+#'
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A single logical.
+#'
+#' @seealso [iwls_fit()], [fit_smooth()]
+#'
+#' @keywords internal
+has_sharp_breakpoint <- function(spec) {
+  for (p in names(spec@terms)) {
+    for (tm in spec@terms[[p]]) {
+      if (S7::S7_inherits(tm, modelterms7::SegTerm) &&
+          is.null(tm@spec$smoothed) && !isTRUE(tm@spec$marginal)) {
+        return(TRUE)
+      }
+    }
+  }
+  FALSE
 }
