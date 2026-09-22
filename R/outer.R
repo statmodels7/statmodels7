@@ -1023,6 +1023,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   state <- new.env(parent = emptyenv())
   state$beta <- beta
   state$inner <- NULL
+  # the INCUMBENT: the best usable point so far, which is the iterate a
+  # monotone line search stands on. See the warm start in evaluate().
+  state$best_v <- Inf
+  state$best_beta <- NULL
+  state$best_zeta <- NULL
   state$rows <- list()
   state$evals <- 0L
   state$key <- NULL
@@ -1079,10 +1084,30 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # thirty backtracked points was unavailable, including points beside the
     # start that had converged at the first evaluation.
     sst <- statmod_structural_state(design)
+    # ⚠️ EVERY TRIAL WARM-STARTS FROM THE INCUMBENT, not from the last point
+    # tried. The search's accept/reject happens inside optimizers7 and is not
+    # visible here, so writing the warm start at every USABLE point let a
+    # rejected trial move it; where the inner problem is multimodal the chain
+    # then left the incumbent's basin and could not come back. Measured on a
+    # gas panel with a developed loading: the first evaluation, at sigma = 1,
+    # read -1367.360; every later one -- the backtracks converging back onto
+    # sigma = 1 included -- read -1370.656 from a rejected trial's filter
+    # state, so the line search compared against a value it could no longer
+    # reproduce, backtracked to exhaustion on all three routes and reported
+    # the start at the WORSE of the two values.
+    warm <- state$beta
+    if (!is.null(state$best_beta)) {
+      warm <- state$best_beta
+      if (!is.null(sst) && !is.null(state$best_zeta)) {
+        sst$zeta <- state$best_zeta
+        sst$key <- NULL
+        sst$value <- NULL
+      }
+    }
     z_save <- if (is.null(sst)) NULL else sst$zeta
     body <- function() {
       res <<- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
-                                state$beta, expected, approx, maxit, tol,
+                                warm, expected, approx, maxit, tol,
                                 vb_inner(vb), hold_refresh = TRUE)
       cf <<- res$obj$split(res$par)
       # Both criteria are read AT THE MODE -- a Laplace approximation there,
@@ -1218,6 +1243,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     state$inner <- res
     state$hyper <- hy
     vfn <- sgn * m$value
+    if (is.finite(vfn) && vfn < state$best_v) {
+      state$best_v <- vfn
+      state$best_beta <- res$par
+      state$best_zeta <- if (is.null(sst)) NULL else sst$zeta
+    }
     if (is.finite(vfn)) {
       state$worst <- if (is.finite(state$worst)) max(state$worst, vfn) else vfn
     }
@@ -1452,10 +1482,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # evaluations, which is that budget burned twice.
     #
     # ⚠️ WHAT IT BUYS IS SMALLER THAN THE EVALUATION COUNT SUGGESTS, and the
-    # reason is in evaluate() above: `state$beta` is written only after a
-    # point is known usable, so every trial of a line search warm-starts from
-    # the last ACCEPTED point, and as the step shrinks the trial begins at
-    # very nearly its own answer. Measured, removing 22 of 38 evaluations
+    # reason is in evaluate() above: every trial of a line search warm-starts
+    # from the INCUMBENT, the best usable point so far, and as the step
+    # shrinks the trial begins at very nearly its own answer. Measured, removing 22 of 38 evaluations
     # removed 2.8 s of 30.8 -- 0.13 s each against an average evaluation's
     # 0.81. An evaluation count is not a cost here.
     #
@@ -1495,8 +1524,21 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
   hy <- eta_to_hyper(res@par, idx, hyper)
+  # from the incumbent, as every trial was: the reported point is the one the
+  # search stands on, and refitting it from a rejected trial's state is what
+  # reported a worse mode than the search had found
+  warm <- state$beta
+  if (!is.null(state$best_beta)) {
+    warm <- state$best_beta
+    sst <- statmod_structural_state(design)
+    if (!is.null(sst) && !is.null(state$best_zeta)) {
+      sst$zeta <- state$best_zeta
+      sst$key <- NULL
+      sst$value <- NULL
+    }
+  }
   inner <- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
-                             state$beta, expected, approx, maxit, tol, vb,
+                             warm, expected, approx, maxit, tol, vb,
                              hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
   m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx,

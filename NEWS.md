@@ -1,3 +1,29 @@
+# statmodels7 0.145.0
+
+* **The outer search warm-starts every trial from the incumbent.** The
+  search's accept/reject happens inside optimizers7 and is not visible to
+  `evaluate()`, which wrote the warm start -- the coefficients and a
+  structural term's own state -- at every USABLE point, so a rejected trial
+  moved it; where the inner problem is multimodal the chain left the
+  incumbent's basin and could not come back. It now starts from the best
+  usable point so far, which is the iterate a monotone line search stands
+  on, and so does the refit at the reported point. The comment that already
+  said "the last ACCEPTED point" now describes the code. Measured on the
+  widened reference battery's `gas(p = 1, q = 1, by = g, alpha1 ~ 1 +
+  random(~1 | g))`: the first evaluation read -1367.360 at the starting
+  hyperparameter and every later one -1370.656 from a rejected trial's
+  filter state, so all three routes backtracked to exhaustion and the fit
+  reported the start at the worse value; the default and `newton()` routes
+  now reach -1360.942 and a boundary, with the error of the fitted mean
+  against the truth falling from 0.98 to 0.46.
+* ⚠️ **It is not an identity, and one case moves the wrong way.** On a sharp
+  break-point with a random position, whose objective has a kink at the
+  minimum, the criterion read depends on the warm start by about the size of
+  the mode error the certificate prints there: `seg(x, psi ~ random(~1 |
+  id))` reads -224.449 where it read -224.363, 0.064 below the `lbfgs()`
+  route. Over the 43 cases the verdicts are otherwise unchanged; the
+  convergence flag moves on three smooth fits whose criteria agree to 1e-5.
+
 # statmodels7 0.144.0
 
 * **A rejected inner step does not escalate the damping at a kink.**
