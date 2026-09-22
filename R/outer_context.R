@@ -258,12 +258,16 @@ pin_boundary <- function(K) {
   j <- boundary_coords(K)
   if (!length(j)) {
     attr(K, "held") <- 0L
+    attr(K, "held_at") <- integer(0)
     return(K)
   }
   K[j, ] <- 0
   K[, j] <- 0
   K[cbind(j, j)] <- 1
   attr(K, "held") <- length(j)
+  # the positions as well as the count: the criterion's gradient must know
+  # WHICH rows are constant, see statmod_marginal_grad()
+  attr(K, "held_at") <- j
   K
 }
 
@@ -489,7 +493,22 @@ resolution_summary <- function(x) {
 #'
 #' @keywords internal
 ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
-  if (is.null(basis)) return(pen$inv)
+  # ⚠️ A COORDINATE pin_boundary() HELD IS A CONSTANT OF THE CRITERION, so
+  # every derivative of log|K| reads M with its row and column zeroed: the
+  # pinned block is the identity whatever the coefficients are, and
+  # differentiates to zero. Read through the identity, the trace multiplies
+  # the family's derivative at a parameter on its link's clamp -- NaN there --
+  # by one. Zeroed here, where M is made, so the gradient and the Hessian,
+  # which share the leverage built from it, cannot disagree about it.
+  held <- attr(pen$K, "held_at")
+  unpin <- function(M) {
+    if (is.null(M) || !length(held)) return(M)
+    M <- as_dense(M)
+    M[held, ] <- 0
+    M[, held] <- 0
+    M
+  }
+  if (is.null(basis)) return(unpin(pen$inv))
   build <- function() {
     # K may now be sparse, and the projection onto a dense basis is dense
     # whatever it was; the result is read as a full matrix by
@@ -499,7 +518,7 @@ ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
                                                       pen$K %*% basis)))),
                       error = function(e) NULL)
     if (is.null(inner)) return(NULL)
-    basis %*% inner %*% t(basis)
+    unpin(basis %*% inner %*% t(basis))
   }
   if (is.null(ctx)) return(build())
   slot <- if (expected) "trace_expected" else "trace_observed"

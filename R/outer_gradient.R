@@ -617,6 +617,20 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   }
   M <- ctx_trace_matrix(ctx, pen, basis, expected)
   if (is.null(M)) return(NULL)
+  # ⚠️ THE CRITERION PINS A SATURATED COORDINATE, SO ITS GRADIENT MUST TOO.
+  # pin_boundary() replaces the row and column of a coordinate whose curvature
+  # is not finite by the identity's, so in the criterion that block is a
+  # CONSTANT and differentiates to zero. ctx_trace_matrix() has already zeroed
+  # M there; what is left is that the coordinate's own entry of u is zero too.
+  # Read through the identity instead, the trace multiplied the family's third
+  # derivative at a parameter on its link's clamp -- NaN there, a Student t's
+  # nu at double.xmax -- by 1, and the whole gradient came back NaN. Measured
+  # on the reference battery's fam-studentt, every route then stopped after
+  # ONE evaluation at the starting hyperparameters (criterion -1550.286),
+  # where with the gradient of the pinned criterion -- which a central
+  # difference of that criterion confirms, -18.09516 against -18.09511 and
+  # -18.09516 at h of 3e-3 and 1e-3 -- all three reach -1544.442 and certify.
+  held <- union(attr(pen$K, "held_at"), attr(mode_pen$K, "held_at"))
 
   # dK/dbeta is the third derivative of the log-likelihood on the observed
   # route and the derivative of the expected information on the expected one.
@@ -669,6 +683,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
                                  total, expected, ctx_approx(ctx))
     uj
   }
+  if (length(held)) u[held] <- 0
 
   out <- numeric(nrow(idx))
   links <- attr(idx, "links")
@@ -1020,6 +1035,11 @@ u_vector <- function(spec, design, coef, M, params, npar, offs, total,
       if (npar[a] == 0L) next
       for (b in seq_along(params)) {
         if (npar[b] == 0L) next
+        # a block of the leverage that is exactly zero contributes nothing,
+        # and must not be multiplied by a component that is NaN: that is
+        # what a coordinate held at its link's clamp leaves in the family's
+        # third derivative, and 0 * NaN is NaN
+        if (!any(G[[a]][[b]] != 0)) next
         s <- s + rep_len(d3[[key(a, b, k)]], n) * G[[a]][[b]]
       }
     }

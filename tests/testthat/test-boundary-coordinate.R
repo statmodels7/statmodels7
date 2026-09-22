@@ -150,3 +150,87 @@ test_that("a shape APPROACHING its clamp no longer deadlocks the step", {
   expect_gt(min(h$score[seq_len(first - 1L)]), 1e-3)
   expect_lt(min(h$score[first:nrow(h)]), 1e-4)
 })
+
+test_that("the trace matrix is zero on a pinned coordinate and nowhere else", {
+  ## pin_boundary() makes the held block the identity whatever the
+  ## coefficients are, so in the criterion it is a CONSTANT and every
+  ## derivative of log|K| reads M with that row and column zeroed. Read
+  ## through the identity, the trace multiplies the family's derivative at a
+  ## parameter on its link's clamp -- NaN there -- by one.
+  K <- diag(c(4, 5, 6))
+  K[1, 2] <- K[2, 1] <- 1
+  K[3, ] <- NaN
+  K[, 3] <- NaN
+  P <- pin_boundary(K)
+  expect_identical(attr(P, "held_at"), 3L)
+  M <- ctx_trace_matrix(NULL, list(K = P, inv = solve(P)), NULL)
+  expect_true(all(M[3, ] == 0) && all(M[, 3] == 0))
+  expect_equal(M[1:2, 1:2], solve(K[1:2, 1:2]))
+  ## and a matrix with nothing held is returned exactly as it came
+  F <- crossprod(matrix(c(2, 1, 0, 1, 3, 1, 0, 1, 4), 3))
+  Q <- pin_boundary(F)
+  expect_identical(attr(Q, "held_at"), integer(0))
+  expect_identical(ctx_trace_matrix(NULL, list(K = Q, inv = solve(Q)), NULL),
+                   solve(Q))
+})
+
+test_that("the outer gradient beside a clamped shape is the pinned criterion's", {
+  skip_on_cran()
+  ## The data of the reference battery's fam-studentt, where nu runs to its
+  ## link's clamp. Until 0.143.0 the exact outer gradient read the family's
+  ## third derivative at nu = double.xmax through the pinned coordinate's
+  ## unit diagonal, came back NaN, and every route stopped after ONE
+  ## evaluation at the starting hyperparameters -- measured, the criterion at
+  ## -1550.286 where the three routes now reach -1544.442.
+  set.seed(7)
+  n <- 1000
+  g <- factor(rep_len(seq_len(30), n))
+  x <- runif(n)
+  z <- runif(n)
+  b <- rnorm(30, 0, 0.5)
+  eta <- 2 * sin(6 * x) + 1.2 * cos(4 * z) + b[as.integer(g)]
+  d <- data.frame(y = eta + rt(n, df = 5) * 0.5, x = x, z = z, g = g)
+  form <- y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g)
+  dt <- distributions7::student_t1_distrib()
+  fit <- statmod(form, dt, d)
+  ## the premise: nu at the clamp, which is where the NaN lived. Absent, the
+  ## case this test is about has not been reached, and it says so.
+  skip_if(fit@fitted$nu[1] < 1e300, "nu did not reach its clamp here")
+
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  blocks <- statmod_blocks(spec, design)
+  idx <- outer_hyper_index(spec, blocks)
+  method <- fit@methods$outer
+  basis <- integrated_basis(spec, design, method@kind)
+  eta0 <- hyper_to_eta(fit@hyper, idx)
+  ## the search MOVED: a gradient of NaN left both hyperparameters at 1
+  expect_true(all(abs(eta0) > 0.1))
+
+  ## the gradient against a central difference of the criterion, read at a
+  ## probe point away from the optimum and with the mode refitted at each
+  ## side from the same start
+  inner <- iwls(maxit = 10000, tol = 1e-10)
+  at <- function(e) {
+    hy <- eta_to_hyper(e, idx, fit@hyper)
+    list(hy = hy, cf = fit_at_hyper(form, dt, d, hy, inner = inner)$coefficients)
+  }
+  fn <- function(e) {
+    p <- at(e)
+    statmod_marginal(spec, design, p$cf, p$hy, method, basis = basis)$value
+  }
+  e1 <- eta0 + c(0.5, -0.5)
+  p1 <- at(e1)
+  gr <- statmod_marginal_grad(spec, design, p1$cf, p1$hy, method, idx, basis)
+  expect_true(all(is.finite(gr)))
+  h <- 1e-3
+  fd <- vapply(seq_along(e1), function(j) {
+    dd <- replace(0 * e1, j, h)
+    (fn(e1 + dd) - fn(e1 - dd)) / (2 * h)
+  }, numeric(1))
+  expect_equal(gr, fd, tolerance = 1e-4)
+  ## and the certificate can read the point it could not read before
+  ct <- statmod_certificate(fit)
+  expect_true(is.finite(ct$decrement))
+  expect_true(ct$state %in% c("converged", "boundary"))
+})

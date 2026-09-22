@@ -1,3 +1,34 @@
+# statmodels7 0.143.0
+
+* **The exact outer gradient is the derivative of the criterion the search
+  runs, at a coordinate the criterion pins.** `pin_boundary()` replaces the
+  row and column of a coordinate whose curvature is not finite -- a
+  parameter at the clamp its link keeps it strictly inside -- by the
+  identity's, so in the criterion that block is a constant and differentiates
+  to zero. The gradient read it through the identity instead, multiplying the
+  family's third derivative there by one, and at a Student t's `nu` on its
+  clamp that derivative is `NaN`. `ctx_trace_matrix()` now zeroes the pinned
+  rows and columns of the matrix the trace is taken against, the
+  coordinate's own entry of the contraction is zero, and `u_vector()` skips
+  a leverage block that is exactly zero rather than multiplying it by a
+  `NaN`. Measured on the reference battery's `fam-studentt`: every route
+  used to stop after ONE evaluation at the starting hyperparameters, at a
+  criterion of -1550.286, and the recorded "best criterion of three routes,
+  gap 0" was three routes stuck at the same start; all three now reach
+  -1544.442 within 4.9e-04 of each other and the certificate reads
+  `converged`. A central difference of the pinned criterion agrees with the
+  exact gradient, -18.09516 against -18.09511 and -18.09516 at steps of
+  3e-3 and 1e-3.
+* ⚠️ **Nothing moves where nothing is pinned**, by construction: the matrix
+  is returned as it came where `pin_boundary()` held no coordinate. The
+  reference battery goes from 26 of 29 to 27 of 29 with no other verdict,
+  state, flag, criterion or recovery moving.
+* ⚠️ The Student t's third and fourth link-scale derivatives are still not
+  finite at the clamp, and between `nu` of about 1e100 and 1e150, where
+  nothing is pinned, the third carries a wrong sign silently -- a defect of
+  distributions7 this release routes around at the clamp and does not
+  repair.
+
 # statmodels7 0.142.0
 
 * `statmod()`'s page says what happens where a structural term's level meets
