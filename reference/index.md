@@ -473,6 +473,9 @@ exported, and none is needed to use the package.
 - [`frozen_condition()`](https://statmodels7.github.io/statmodels7/reference/frozen_condition.md)
   : The Condition a Frozen Block Raises
 
+- [`has_sharp_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/has_sharp_breakpoint.md)
+  : Whether a Model Carries a Sharp Break-Point Term
+
 - [`held_condition()`](https://statmodels7.github.io/statmodels7/reference/held_condition.md)
   : The Condition a Held Coordinate Warns Through
 

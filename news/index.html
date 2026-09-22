@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.143.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.144.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.144.0" id="statmodels7-01440">statmodels7 0.144.0<a class="anchor" aria-label="anchor" href="#statmodels7-01440"></a></h2>
+<ul><li>
+<strong>A rejected inner step does not escalate the damping at a kink.</strong> <code><a href="../reference/iwls_fit.html">iwls_fit()</a></code> raises the Levenberg damping and retries where the line search finds no acceptable step (0.94.0), and a sharp break-point term’s objective has a kink in the break-point at the observations, so at its minimum every Gauss-Newton step is rejected whatever the damping: the escalation spent eight attempts at every inner fit, reaching a damping of 7.5e10, and ended where a stop would have. <code><a href="../reference/fit_smooth.html">fit_smooth()</a></code> passes <code>damp_on_reject = FALSE</code> where <code><a href="../reference/has_sharp_breakpoint.html">has_sharp_breakpoint()</a></code> says the model carries <code>seg()</code>, <code>jump()</code> or <code>jseg()</code> without <code>smoothed</code>. Measured on the reference battery’s <code>seg(x, psi ~ random(~1 | id))</code>: 28 outer evaluations and 16.7 s become 6 and 2.9 s, and the criterion returns to -224.3627, the value of 0.93.0; over the 43 cases no other verdict, state, flag, criterion or recovery moves. The cost was located by bisecting the releases between 0.83.0 and 0.127.2 on the current upstreams, 0.93.0 giving 6 evaluations and 0.94.0 28, and within 0.94.0 by separating its Armijo repair from the damping.</li>
+<li>⚠️ At the reported point the one-sided slopes in the break-point read +6.00 and -1.63 with the objective rising on both sides, so the inner mode error of 0.11 the certificate prints there is a smooth-mode reading at a kink rather than a mode left unlocated; it is the same with the damping and without it (0.110 and 0.114).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.143.0" id="statmodels7-01430">statmodels7 0.143.0<a class="anchor" aria-label="anchor" href="#statmodels7-01430"></a></h2>
 <ul><li>

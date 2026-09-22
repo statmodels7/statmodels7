@@ -1,5 +1,33 @@
 # Changelog
 
+## statmodels7 0.144.0
+
+- **A rejected inner step does not escalate the damping at a kink.**
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  raises the Levenberg damping and retries where the line search finds
+  no acceptable step (0.94.0), and a sharp break-point term’s objective
+  has a kink in the break-point at the observations, so at its minimum
+  every Gauss-Newton step is rejected whatever the damping: the
+  escalation spent eight attempts at every inner fit, reaching a damping
+  of 7.5e10, and ended where a stop would have.
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  passes `damp_on_reject = FALSE` where
+  [`has_sharp_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/has_sharp_breakpoint.md)
+  says the model carries `seg()`, `jump()` or `jseg()` without
+  `smoothed`. Measured on the reference battery’s
+  `seg(x, psi ~ random(~1 | id))`: 28 outer evaluations and 16.7 s
+  become 6 and 2.9 s, and the criterion returns to -224.3627, the value
+  of 0.93.0; over the 43 cases no other verdict, state, flag, criterion
+  or recovery moves. The cost was located by bisecting the releases
+  between 0.83.0 and 0.127.2 on the current upstreams, 0.93.0 giving 6
+  evaluations and 0.94.0 28, and within 0.94.0 by separating its Armijo
+  repair from the damping.
+- ⚠️ At the reported point the one-sided slopes in the break-point read
+  +6.00 and -1.63 with the objective rising on both sides, so the inner
+  mode error of 0.11 the certificate prints there is a smooth-mode
+  reading at a kink rather than a mode left unlocated; it is the same
+  with the damping and without it (0.110 and 0.114).
+
 ## statmodels7 0.143.0
 
 - **The exact outer gradient is the derivative of the criterion the

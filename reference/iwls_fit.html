@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.143.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.144.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,8 @@ coefficients and the history of the run.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  backup_at <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  backup_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  damp_on_reject <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -114,6 +115,16 @@ penalized information is not positive definite or where the observed step
 finds no acceptable point; a trial point whose objective raises an error
 is then read as rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method
 <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled with the fallback.</p></dd>
+
+
+<dt id="arg-damp-on-reject">damp_on_reject<a class="anchor" aria-label="anchor" href="#arg-damp-on-reject"></a></dt>
+<dd><p>Whether a line search that finds no acceptable step
+raises the Levenberg damping and retries (the default) or ends the run.
+<code><a href="fit_smooth.html">fit_smooth()</a></code> passes <code>FALSE</code> where the design carries a sharp
+break-point term, whose objective has a kink in the break-point at the
+observations: there every Gauss-Newton step from the minimum is
+rejected, and escalating the damping eight times at every inner fit
+costs iterations without reaching anything a stop would not.</p></dd>
 
 </dl></div>
     <div class="section level2">

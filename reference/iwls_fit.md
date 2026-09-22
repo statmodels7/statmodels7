@@ -17,7 +17,8 @@ iwls_fit(
   verbose = FALSE,
   groups = NULL,
   frozen = integer(0),
-  backup_at = NULL
+  backup_at = NULL,
+  damp_on_reject = TRUE
 )
 ```
 
@@ -82,6 +83,17 @@ iwls_fit(
   passes one for a method
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
   settled with the fallback.
+
+- damp_on_reject:
+
+  Whether a line search that finds no acceptable step raises the
+  Levenberg damping and retries (the default) or ends the run.
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  passes `FALSE` where the design carries a sharp break-point term,
+  whose objective has a kink in the break-point at the observations:
+  there every Gauss-Newton step from the minimum is rejected, and
+  escalating the damping eight times at every inner fit costs iterations
+  without reaching anything a stop would not.
 
 ## Value
 
