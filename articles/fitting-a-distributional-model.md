@@ -125,12 +125,12 @@ f4@edf
 #>   parameter                        term coefficients      edf
 #> 1        mu                      linpar            1  1.00000
 #> 2        mu s(z, bspline_smooth(k = 8))            7  6.12777
-#> 3        mu              random(~1 | g)           20 18.57777
+#> 3        mu              random(~1 | g)           20 18.57787
 #> 4     sigma                      linpar            1  1.00000
 hyper(f4)
 #>   parameter                        term   name  estimate  held source   id
-#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454567 FALSE   reml <NA>
-#> 2        mu              random(~1 | g)  sigma 0.7061116 FALSE   reml <NA>
+#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454563 FALSE   reml <NA>
+#> 2        mu              random(~1 | g)  sigma 0.7061974 FALSE   reml <NA>
 ```
 
 20 group effects spend about 18.6 degrees of freedom here, and the
@@ -196,7 +196,7 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.579490    effective df 7.28
 #> cAIC 739.711    cBIC 766.660
-#> fitted in 479 ms
+#> fitted in 456 ms
 #> inner   max |grad|/se 6.7e-07   min eigen 0.96
 #> outer   max |grad|/se 1.2e-05   min eigen 1
 #> 1 note: print(summary(fit), notes = TRUE)
@@ -223,7 +223,7 @@ asks for?
 cert <- statmod_certificate(f4)
 c(state = cert$state, mode_error = signif(cert$mode_error, 3))
 #>       state  mode_error 
-#> "converged"  "5.91e-11"
+#> "converged"  "3.55e-11"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit
@@ -243,9 +243,9 @@ nd <- data.frame(z = c(-1, 0, 1),
                  g = factor(c(1, 2, 3), levels = levels(db$g)))
 predict(f4, newdata = nd, se = TRUE)$mu
 #>          fit        se      lower       upper
-#> 1 -0.2844637 0.1137421 -0.5073941 -0.06153321
-#> 2  1.8482711 0.1147791  1.6233081  2.07323404
-#> 3  2.4667234 0.1167143  2.2379676  2.69547925
+#> 1 -0.2844652 0.1137424 -0.5073962 -0.06153423
+#> 2  1.8482754 0.1147794  1.6233119  2.07323891
+#> 3  2.4667260 0.1167146  2.2379697  2.69548230
 ```
 
 Prediction **reapplies** each term’s blueprint rather than rebuilding
@@ -259,7 +259,7 @@ The `stats` generics behave as they read:
 
 c(nobs = nobs(f4), df.residual = df.residual(f4))
 #>        nobs df.residual 
-#>    300.0000    273.2945
+#>    300.0000    273.2944
 length(sigma(f4))
 #> [1] 300
 ```

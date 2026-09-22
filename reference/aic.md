@@ -153,7 +153,7 @@ c(aic = unlist(fa@hyper), bic = unlist(fb@hyper))
 #> aic.mu.s(x, bspline_smooth(k = 10)).lambda 
 #>                                  0.5706846 
 #> bic.mu.s(x, bspline_smooth(k = 10)).lambda 
-#>                                 13.4456284 
+#>                                 13.4456276 
 c(aic = sum(fa@edf$edf), bic = sum(fb@edf$edf))
 #>      aic      bic 
 #> 9.913454 7.258357 

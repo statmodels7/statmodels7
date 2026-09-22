@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.144.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.145.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,12 +176,12 @@ its penalty being a Gaussian prior over the group effects:</p>
 <span><span class="co">#&gt;   parameter                        term coefficients      edf</span></span>
 <span><span class="co">#&gt; 1        mu                      linpar            1  1.00000</span></span>
 <span><span class="co">#&gt; 2        mu s(z, bspline_smooth(k = 8))            7  6.12777</span></span>
-<span><span class="co">#&gt; 3        mu              random(~1 | g)           20 18.57777</span></span>
+<span><span class="co">#&gt; 3        mu              random(~1 | g)           20 18.57787</span></span>
 <span><span class="co">#&gt; 4     sigma                      linpar            1  1.00000</span></span>
 <span><span class="fu"><a href="../reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   parameter                        term   name  estimate  held source   id</span></span>
-<span><span class="co">#&gt; 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454567 FALSE   reml &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 2        mu              random(~1 | g)  sigma 0.7061116 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454563 FALSE   reml &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2        mu              random(~1 | g)  sigma 0.7061974 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
 <p>20 group effects spend about 18.6 degrees of freedom here, and the
 estimated prior scale is close to the 0.6 the groups were drawn at. A
 random intercept is a ridge penalty on an indicator block, which is why
@@ -240,7 +240,7 @@ then says so in its <code>held</code> column.</p>
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -362.579490    effective df 7.28</span></span>
 <span><span class="co">#&gt; cAIC 739.711    cBIC 766.660</span></span>
-<span><span class="co">#&gt; fitted in 479 ms</span></span>
+<span><span class="co">#&gt; fitted in 456 ms</span></span>
 <span><span class="co">#&gt; inner   max |grad|/se 6.7e-07   min eigen 0.96</span></span>
 <span><span class="co">#&gt; outer   max |grad|/se 1.2e-05   min eigen 1</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
@@ -264,7 +264,7 @@ is the point reported the one the model asks for?</p>
 <code class="sourceCode R"><span><span class="va">cert</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>state <span class="op">=</span> <span class="va">cert</span><span class="op">$</span><span class="va">state</span>, mode_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">cert</span><span class="op">$</span><span class="va">mode_error</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       state  mode_error </span></span>
-<span><span class="co">#&gt; "converged"  "5.91e-11"</span></span></code></pre></div>
+<span><span class="co">#&gt; "converged"  "3.55e-11"</span></span></code></pre></div>
 <p><code>mode_error</code> is how far above its own penalized mode the
 inner fit stopped, in log-likelihood units, so one limit serves every
 model whatever its scale. The <code>state</code> is
@@ -282,9 +282,9 @@ on request:</p>
 <span>                 g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">db</span><span class="op">$</span><span class="va">g</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">f4</span>, newdata <span class="op">=</span> <span class="va">nd</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">mu</span></span>
 <span><span class="co">#&gt;          fit        se      lower       upper</span></span>
-<span><span class="co">#&gt; 1 -0.2844637 0.1137421 -0.5073941 -0.06153321</span></span>
-<span><span class="co">#&gt; 2  1.8482711 0.1147791  1.6233081  2.07323404</span></span>
-<span><span class="co">#&gt; 3  2.4667234 0.1167143  2.2379676  2.69547925</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 -0.2844652 0.1137424 -0.5073962 -0.06153423</span></span>
+<span><span class="co">#&gt; 2  1.8482754 0.1147794  1.6233119  2.07323891</span></span>
+<span><span class="co">#&gt; 3  2.4667260 0.1167146  2.2379697  2.69548230</span></span></code></pre></div>
 <p>Prediction <strong>reapplies</strong> each term’s blueprint rather
 than rebuilding it, so the knots of a smooth and the levels of a factor
 are the ones the model was fitted with. The identity that pins it is
@@ -294,7 +294,7 @@ there.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>nobs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span>, df.residual <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/df.residual.html" class="external-link">df.residual</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        nobs df.residual </span></span>
-<span><span class="co">#&gt;    300.0000    273.2945</span></span>
+<span><span class="co">#&gt;    300.0000    273.2944</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 300</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> returns a <strong>vector</strong>, because the
