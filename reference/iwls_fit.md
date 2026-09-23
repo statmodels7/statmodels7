@@ -18,7 +18,8 @@ iwls_fit(
   groups = NULL,
   frozen = integer(0),
   backup_at = NULL,
-  damp_on_reject = TRUE
+  damp_on_reject = TRUE,
+  kinks_at = NULL
 )
 ```
 
@@ -94,6 +95,16 @@ iwls_fit(
   there every Gauss-Newton step from the minimum is rejected, and
   escalating the damping eight times at every inner fit costs iterations
   without reaching anything a stop would not.
+
+- kinks_at:
+
+  `NULL`, or a function of the coefficients returning the positions at
+  which the objective has a kink there, as
+  [`kink_positions()`](https://statmodels7.github.io/statmodels7/reference/kink_positions.md)
+  finds them. Where a line search rejects every step length those
+  positions are held and the step is retried on the rest; once the run
+  has converged with them held, one step on every coordinate is tried,
+  and taken if it decreases the objective.
 
 ## Value
 

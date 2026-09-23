@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.145.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.146.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,11 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.146.0" id="statmodels7-01460">statmodels7 0.146.0<a class="anchor" aria-label="anchor" href="#statmodels7-01460"></a></h2>
+<ul><li>
+<strong>A scoring step at a kink holds the coordinates that move it.</strong> Where a sharp <code>seg()</code> break-point sits on an observation the objective is not differentiable in the coordinates that move it, the scoring direction crosses the kink, and no length of it decreases the objective. Since 0.144.0 the inner fit stopped there, and it stopped with every OTHER coordinate wherever it happened to be: measured on the reference battery’s <code>seg(x, psi ~ random(~1 | id))</code>, the other groups’ deviations at scores up to 1.6 and the penalized objective 0.010 above the mode, so the criterion was read at a point that is not the one it is defined at. Restoring the Levenberg damping does not help – measured, it stops where it started. <code><a href="../reference/iwls_fit.html">iwls_fit()</a></code> now asks <code><a href="https://statmodels7.github.io/modelterms7/reference/term_kinks.html" class="external-link">modelterms7::term_kinks()</a></code>, through <code><a href="../reference/kink_positions.html">kink_positions()</a></code>, which coordinates sit on a kink, holds them and retries; once the run has converged with them held it tries one step on every coordinate and takes it if the objective falls. From the stopped point the mode is reached in four iterations. With modelterms7 0.77.0 reading an observation on the break-point on one side, the three routes of that case agree at -224.38909, -224.38912 and -224.38909, where they read -224.449, -224.385 and -224.449: the battery’s last unexplained failure. ⚠️ The cost is stated: 13 criterion evaluations and 6.2 s against 6 and 2.5 s on the default route. The four other sharp break-point cases do not reach it and are unchanged, and the lots 0 and D1 nets are identical to the previous release.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.145.0" id="statmodels7-01450">statmodels7 0.145.0<a class="anchor" aria-label="anchor" href="#statmodels7-01450"></a></h2>
 <ul><li>

@@ -599,6 +599,9 @@ exported, and none is needed to use the package.
 - [`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
   : Which Hyperparameters Set the Size of the Kink
 
+- [`kink_positions()`](https://statmodels7.github.io/statmodels7/reference/kink_positions.md)
+  : Where the Objective Has a Kink, in the Stacked Coefficients
+
 - [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
   : How the Size of the Kink Scales With a Hyperparameter
 

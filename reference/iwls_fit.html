@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.145.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.146.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ coefficients and the history of the run.</p>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  backup_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  damp_on_reject <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  damp_on_reject <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  kinks_at <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -125,6 +126,15 @@ break-point term, whose objective has a kink in the break-point at the
 observations: there every Gauss-Newton step from the minimum is
 rejected, and escalating the damping eight times at every inner fit
 costs iterations without reaching anything a stop would not.</p></dd>
+
+
+<dt id="arg-kinks-at">kinks_at<a class="anchor" aria-label="anchor" href="#arg-kinks-at"></a></dt>
+<dd><p><code>NULL</code>, or a function of the coefficients returning the
+positions at which the objective has a kink there, as
+<code><a href="kink_positions.html">kink_positions()</a></code> finds them. Where a line search rejects every step
+length those positions are held and the step is retried on the rest;
+once the run has converged with them held, one step on every coordinate
+is tried, and taken if it decreases the objective.</p></dd>
 
 </dl></div>
     <div class="section level2">
