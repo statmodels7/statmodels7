@@ -636,6 +636,12 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   observations: there every Gauss-Newton step from the minimum is
 #'   rejected, and escalating the damping eight times at every inner fit
 #'   costs iterations without reaching anything a stop would not.
+#' @param kinks_at `NULL`, or a function of the coefficients returning the
+#'   positions at which the objective has a kink there, as
+#'   [kink_positions()] finds them. Where a line search rejects every step
+#'   length those positions are held and the step is retried on the rest;
+#'   once the run has converged with them held, one step on every coordinate
+#'   is tried, and taken if it decreases the objective.
 #'
 #' @return A list of nine: the six below; `note`, the reason a run stopped or
 #'   `NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
@@ -661,7 +667,7 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' @keywords internal
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      groups = NULL, frozen = integer(0), backup_at = NULL,
-                     damp_on_reject = TRUE) {
+                     damp_on_reject = TRUE, kinks_at = NULL) {
   beta <- start
   value <- obj$fn(beta)
   hist <- list()
@@ -682,6 +688,9 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   damp_tries <- 0L
   # how often the expected pieces stepped in, and for what
   fallback <- c(indefinite = 0L, search = 0L, error = 0L)
+  # the positions held because the objective has a kink there, apart from
+  # the ones the caller holds
+  kinked <- integer(0)
   # the equations' coordinate ranges, for the dimensionless reading of the
   # final verdict; the caller says them where the coefficients it hands in
   # are a subset, since the objective's own split maps the full vector
@@ -718,6 +727,25 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     if (iwls_met(method, list(iter = it - 1L, f_new = value, f_old = f_old,
                               x_new = beta, x_old = x_old, gradient = gf / n,
                               stationarity = NULL))) {
+      # HELD AT A KINK IS HELD FOR THIS STEP AND NOT FOREVER. The other
+      # coordinates have settled with those positions where they are, and
+      # where the kink is not the minimum in them any more, one step on every
+      # coordinate now decreases the objective and the run goes on from it.
+      if (length(kinked)) {
+        fr0 <- setdiff(frozen, kinked)
+        st0 <- iwls_line_search(obj, beta, value, g, pieces_at(beta), method,
+                                damp, fr0, guard = !is.null(backup_at))
+        if (st0$ok && value - st0$vnew > 1e-12 * max(1, abs(value))) {
+          frozen <- fr0
+          kinked <- integer(0)
+          x_old <- beta
+          f_old <- value
+          beta <- st0$cand
+          value <- st0$vnew
+          step_used <- st0$step_used
+          next
+        }
+      }
       converged <- TRUE
       break
     }
@@ -769,6 +797,24 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       # escalating to a damping of 7.5e10 at every inner fit took the outer
       # search from 6 evaluations and 5.4 s of processor time to 28 and 25.1
       # s at an unchanged verdict. See piano_stabilita.txt 28d-28e.
+      # A KINK, and the step that belongs there. Where the design carries a
+      # sharp break-point sitting on an observation, the objective is not
+      # differentiable in the coordinates that move it, the scoring direction
+      # crosses the kink and no length of it decreases the objective -- while
+      # every OTHER coordinate may still be far from its own optimum. Measured
+      # on seg(x, psi ~ random(~1 | id)): the run stopped here with the other
+      # groups' deviations at scores up to 1.6 and the objective 0.010 above
+      # the mode, and holding the two coordinates that move the kinked
+      # break-point reached the mode in four iterations. Damping does not
+      # reach it: measured from the same point, it stops where it started.
+      if (!is.null(kinks_at)) {
+        kk <- setdiff(kinks_at(beta), frozen)
+        if (length(kk)) {
+          frozen <- c(frozen, kk)
+          kinked <- c(kinked, kk)
+          next
+        }
+      }
       if (damp_on_reject && damp_tries < 8L) {
         damp <- iwls_escalate(damp, pc)
         damp_tries <- damp_tries + 1L

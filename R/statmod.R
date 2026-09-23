@@ -1105,6 +1105,19 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
         subset_pieces(spec, design, obj$split(v), hyper, m_exp, idx)
       }
     }
+    # WHERE A SHARP BREAK-POINT SITS ON AN OBSERVATION the objective has a
+    # kink, and iwls_fit() holds the coordinates that move it once a line
+    # search rejects every step: see there
+    kinks_at <- NULL
+    if (has_sharp_breakpoint(spec)) {
+      sp <- obj$split(seq_along(beta))
+      kinks_at <- function(b) {
+        v <- beta
+        v[idx] <- b
+        k <- kink_positions(spec, design, obj$split(v), sp)
+        match(intersect(k, idx), idx)
+      }
+    }
     # the equations' coordinate ranges, restated in the subset's own
     # numbering: the stopping rule's scale is per equation, and the
     # objective's split speaks the full vector's coordinates
@@ -1115,7 +1128,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     res <- iwls_fit(sub, beta[idx], method, spec@n_obs, pieces_at,
                     verbose = vb$inner, groups = groups, frozen = frozen,
                     backup_at = backup_at,
-                    damp_on_reject = !has_sharp_breakpoint(spec))
+                    damp_on_reject = !has_sharp_breakpoint(spec),
+                    kinks_at = kinks_at)
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates

@@ -14,7 +14,8 @@ iwls_fit(
   groups = NULL,
   frozen = integer(0),
   backup_at = NULL,
-  damp_on_reject = TRUE
+  damp_on_reject = TRUE,
+  kinks_at = NULL
 )
 }
 \arguments{
@@ -58,6 +59,13 @@ break-point term, whose objective has a kink in the break-point at the
 observations: there every Gauss-Newton step from the minimum is
 rejected, and escalating the damping eight times at every inner fit
 costs iterations without reaching anything a stop would not.}
+
+\item{kinks_at}{\code{NULL}, or a function of the coefficients returning the
+positions at which the objective has a kink there, as
+\code{\link[=kink_positions]{kink_positions()}} finds them. Where a line search rejects every step
+length those positions are held and the step is retried on the rest;
+once the run has converged with them held, one step on every coordinate
+is tried, and taken if it decreases the objective.}
 }
 \value{
 A list of nine: the six below; \code{note}, the reason a run stopped or

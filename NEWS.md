@@ -1,3 +1,27 @@
+# statmodels7 0.146.0
+
+* **A scoring step at a kink holds the coordinates that move it.** Where a
+  sharp `seg()` break-point sits on an observation the objective is not
+  differentiable in the coordinates that move it, the scoring direction
+  crosses the kink, and no length of it decreases the objective. Since 0.144.0
+  the inner fit stopped there, and it stopped with every OTHER coordinate
+  wherever it happened to be: measured on the reference battery's
+  `seg(x, psi ~ random(~1 | id))`, the other groups' deviations at scores up to
+  1.6 and the penalized objective 0.010 above the mode, so the criterion was
+  read at a point that is not the one it is defined at. Restoring the Levenberg
+  damping does not help -- measured, it stops where it started. `iwls_fit()`
+  now asks `modelterms7::term_kinks()`, through `kink_positions()`, which
+  coordinates sit on a kink, holds them and retries; once the run has
+  converged with them held it tries one step on every coordinate and takes it
+  if the objective falls. From the stopped point the mode is reached in four
+  iterations. With modelterms7 0.77.0 reading an observation on the
+  break-point on one side, the three routes of that case agree at -224.38909,
+  -224.38912 and -224.38909, where they read -224.449, -224.385 and -224.449:
+  the battery's last unexplained failure. ⚠️ The cost is stated: 13 criterion
+  evaluations and 6.2 s against 6 and 2.5 s on the default route. The four
+  other sharp break-point cases do not reach it and are unchanged, and the
+  lots 0 and D1 nets are identical to the previous release.
+
 # statmodels7 0.145.0
 
 * **The outer search warm-starts every trial from the incumbent.** The

@@ -73,6 +73,45 @@ refresh_units <- function(spec, design, coef, params, npar, offs) {
 }
 
 
+#' Where the Objective Has a Kink, in the Stacked Coefficients
+#'
+#' @description
+#' Asks every term that recomputes its own block where, among its own
+#' coefficients, the objective is not differentiable at the coefficients
+#' given, through [modelterms7::term_kinks()], and carries the answer into
+#' the positions of the stacked vector. [iwls_fit()] holds those positions
+#' where a line search rejects every step length.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param coef The coefficients, a named list with one numeric vector per
+#'   parameter.
+#' @param split The stacked positions of each parameter's coefficients, a
+#'   named list as the objective's `split` returns it for `seq_along()` of the
+#'   stacked vector.
+#'
+#' @return An integer vector of stacked positions, possibly empty.
+#'
+#' @seealso [iwls_fit()], [refresh_units()].
+#'
+#' @keywords internal
+kink_positions <- function(spec, design, coef, split) {
+  rf <- attr(design, "refresh")
+  st <- attr(design, "state")
+  if (is.null(rf) || !length(rf) || is.null(st)) return(integer(0))
+  out <- integer(0)
+  for (r in rf) {
+    p <- r$param
+    cols <- design[[p]]$blocks[[r$term]]
+    tm <- st$terms[[p]][[r$term]]
+    if (!length(cols) || is.null(tm)) next
+    k <- modelterms7::term_kinks(tm, coef = coef[[p]][cols])
+    if (length(k)) out <- c(out, split[[p]][cols[k]])
+  }
+  sort(unique(as.integer(out)))
+}
+
+
 #' The Log-Density's Curvature the Refresh Corrections Read
 #'
 #' @description
