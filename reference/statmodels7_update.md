@@ -79,10 +79,10 @@ for the members installed.
 v <- statmodels7_update()
 #> statmodels7 toolkit, installed versions:
 #>   basis7           0.13.1
-#>   distributions7   0.61.0
+#>   distributions7   0.62.0
 #>   linkfunctions7   0.4.0
 #>   modelterms7      0.77.0
-#>   numericals7      0.14.1
+#>   numericals7      0.15.0
 #>   optimizers7      0.8.0
 #>   parameters7      0.20.0
 #>   penalties7       0.27.0

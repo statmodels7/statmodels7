@@ -1,5 +1,41 @@
 # Changelog
 
+## statmodels7 0.147.0
+
+- **The exact outer Hessian on the expected information reaches every
+  family that writes its expected information out, 33 where it reached
+  five.** It is read through
+  [`distributions7::distrib_d2expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d2expected_hessian.html),
+  which distributions7 0.62.0 supplies analytically for 28 more
+  families, so nothing in this package’s assembly moves:
+  [`expected_deriv2_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.md)
+  asks the family and the family now answers. Where it did not,
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  differenced the exact gradient, `4 n_h` refits of the mode.
+
+- What it buys, measured at n = 4000 with one smooth in the first
+  parameter under `reml("expected")`: the certificate goes from a median
+  of 38.9 to 14.3 per cent of the fit over 31 families, every one read
+  analytically where 29 were differenced – the Bernoulli 57.9 to 4.5 per
+  cent, the Student t 60.2 to 24.3, the beta-binomial 70.9 to 20.4, the
+  von Mises 31.5 to 2.5 – and `vonmises2_distrib()`’s certificate reads
+  `converged` where it read `unknown`. A beta-binomial smooth by its
+  shapes, which could not be fitted under REML because its expected
+  information was wrong wherever the shapes varied, fits.
+
+- The check is the one D4(b) set: against a difference of the exact
+  gradient with the mode refitted and polished
+  (`fit_at_hyper(polish = TRUE)`), the analytic Hessian on the expected
+  route converges as O(h^2), the gap falling by a factor of nine between
+  steps of 3e-3 and 1e-3. A test pins it on the Bernoulli, the gamma by
+  its variance and the beta by its shapes, and the test that asserts the
+  stencil where a family answers no second derivative now builds that
+  family by mocking the method away rather than naming a family that has
+  since gained one. Three more tests named a gaussian2 or a gamma2 as
+  the family without that derivative and failed on this release for that
+  reason alone; they inject the refusal the same way, and one now also
+  asserts that a gaussian2 is admitted at order 2.
+
 ## statmodels7 0.146.0
 
 - **A scoring step at a kink holds the coordinates that move it.** Where
