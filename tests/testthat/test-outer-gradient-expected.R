@@ -150,11 +150,15 @@ test_that("the expected route is admitted only where the family answers", {
   expect_true(outer_gradient_ok(h$spec, h$design, h$idx,
                                 reml(hessian = "expected"), 1L))
   # order 2 where the family writes out the next order of the same object,
-  # which a gamma1 does and a gamma2 does not
+  # which a gamma1 does; since distributions7 0.62.0 every family whose
+  # expected information is written out does, so the refusal is injected
   expect_true(outer_gradient_ok(h$spec, h$design, h$idx,
                                 reml(hessian = "expected"), 2L))
   expect_true(expected_deriv2_ok(distributions7::gamma1_distrib()))
-  expect_false(expected_deriv2_ok(distributions7::gamma2_distrib()))
+  testthat::with_mocked_bindings(
+    expect_false(expected_deriv2_ok(distributions7::gamma2_distrib())),
+    distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
+    .package = "distributions7")
   # and a family that approximates its expected information leaves the search
   # derivative-free rather than reporting a gradient it cannot compute
   expect_false(expected_deriv_ok(distributions7::skewt_distrib()))

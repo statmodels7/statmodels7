@@ -239,9 +239,13 @@ test_that("the curvature is differenced where the form has no analytic one", {
   # write out its second derivative, and a penalty whose Hessian moves with the
   # coefficients beside a structural term. Both are certified, by differencing
   # the exact gradient, and the route is reported so a reader can tell which
-  # was taken. A gaussian1 writes that derivative out, so the expected route is
-  # asked of a gaussian2, the same law in mean and variance.
+  # was taken. Since distributions7 0.62.0 every family whose expected
+  # information is written out answers that derivative, so the expected route
+  # is asked of a gaussian2 with the refusal injected.
   skip_on_cran()
+  local_mocked_bindings(
+    distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
+    .package = "distributions7")
   set.seed(41)
   n <- 300
   d <- data.frame(x = runif(n))

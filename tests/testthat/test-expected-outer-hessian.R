@@ -1,7 +1,7 @@
 # The exact outer Hessian on the EXPECTED information.
 #
 # Order 2 reads the second derivative of the expected information in the
-# predictors, which distributions7 writes out for five families. The assembly
+# predictors, which distributions7 writes out family by family. The assembly
 # reads two matrices: the criterion's K = H_exp + S for the determinant, and
 # J = H_obs + S for how the mode moves. Reading one for both is the defect this
 # file exists to catch.
@@ -120,7 +120,12 @@ test_that("a family that does not write the second derivative is differenced", {
   # The three callers that reach the assembly without outer_gradient_ok()'s
   # gate -- statmod_hyper_vcov(), hyper_correction(), statmod_edf_correction()
   # -- used to get the mixed assembly on the expected route; they get the
-  # stencil of the exact gradient now, by identity.
+  # stencil of the exact gradient now, by identity. Every family whose
+  # expected information is written out answers the second derivative, so
+  # the refusal is injected rather than taken from a family.
+  local_mocked_bindings(
+    distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
+    .package = "distributions7")
   h <- eh_harness(yr ~ s(x, bspline_smooth(k = 8)), d_eh,
                   distributions7::gaussian2_distrib(), reml("expected"))
   expect_false(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
@@ -146,4 +151,37 @@ test_that("the search on the expected route keeps lbfgs", {
   expect_true(outer_newton_ok(spec, design, TRUE, reml("observed")))
   cert <- statmod_certificate(fit)
   expect_identical(cert$curvature, "analytic")
+})
+
+test_that("the families of the elementary kernels converge O(h^2) onto the assembly", {
+  skip_on_cran()
+  # One family per shape of kernel: one parameter (a rational term), a gamma
+  # by its variance (the polygamma remainders), and a beta by its two shapes
+  # (the polygamma differences), the second parameter modelled where there is
+  # one. Measured, the gap falls by exactly 9 between the steps 3e-3 and 1e-3
+  # on all sixteen families of distributions7 0.62.0, onto 5e-9 .. 2e-7.
+  set.seed(11)
+  n <- 400; x <- runif(n); z <- runif(n); f <- sin(2 * pi * x)
+  cases <- list(
+    list(y ~ s(x, bspline_smooth(k = 8)), distributions7::bernoulli_distrib(),
+         data.frame(x = x, z = z, y = rbinom(n, 1, plogis(0.3 + 0.5 * f)))),
+    list(y ~ s(x, bspline_smooth(k = 8)) | sigma2 ~ s(z, bspline_smooth(k = 6)),
+         distributions7::gamma2_distrib(),
+         data.frame(x = x, z = z, y = rgamma(n, 4, 4 / exp(1 + 0.5 * f)))),
+    list(y ~ s(x, bspline_smooth(k = 8)) | beta ~ s(z, bspline_smooth(k = 6)),
+         distributions7::beta2_distrib(),
+         data.frame(x = x, z = z, y = rbeta(n, exp(1 + 0.5 * f), 4))))
+  for (cs in cases) {
+    h <- eh_harness(cs[[1]], cs[[3]], cs[[2]], reml("expected"))
+    expect_true(outer_gradient_ok(h$spec, h$design, h$idx, reml("expected"), 2L))
+    eta <- h$eta0 + seq(0.3, -0.4, length.out = length(h$eta0))
+    Ha <- h$he(eta)
+    gap <- vapply(c(3e-3, 1e-3), function(s) {
+      Hf <- eh_fd(h, eta, s)
+      max(abs(Ha - Hf)) / max(abs(Hf))
+    }, 0)
+    expect_lt(gap[[2L]], 1e-6)
+    expect_gt(gap[[1L]] / gap[[2L]], 5)
+    expect_lt(gap[[1L]] / gap[[2L]], 15)
+  }
 })

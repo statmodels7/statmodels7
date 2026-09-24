@@ -261,14 +261,20 @@ test_that("the exact route is taken only where it applies", {
   # and the route is available wherever the family answers -- a gaussian does.
   expect_true(outer_gradient_ok(spec, design, idx, reml("expected")))
   # and at order 2 where the family writes out the next order of the same
-  # object, d2E[l'']/deta^2 -- a gaussian1 does, a gaussian2 does not
+  # object, d2E[l'']/deta^2 -- a gaussian1 does, and so since distributions7
+  # 0.62.0 does a gaussian2, so the family that does not is built by
+  # injecting the refusal
   expect_true(outer_gradient_ok(spec, design, idx, reml("expected"), 2L))
   spec2 <- statmod_spec(y ~ s(x, bspline_smooth(k = 8)),
                         distributions7::gaussian2_distrib(), dg)
   design2 <- statmod_design(spec2)
   idx2 <- outer_hyper_index(spec2, statmod_blocks(spec2, design2))
   expect_true(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 1L))
-  expect_false(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 2L))
+  expect_true(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 2L))
+  testthat::with_mocked_bindings(
+    expect_false(outer_gradient_ok(spec2, design2, idx2, reml("expected"), 2L)),
+    distrib_d2expected_hessian = function(...) stop("no analytic second derivative"),
+    .package = "distributions7")
 
   # a random effect's penalty is built from a density, and it is covered: its
   # derivatives come from penalties7's generics, which read the parent's

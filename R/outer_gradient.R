@@ -105,8 +105,8 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
     #
     # ORDER 2 reads the next order of the same object,
     # d2E[l'']/deta^2, which a family supplies only where it wrote it out
-    # (distributions7::distrib_d2expected_hessian(), five families in a
-    # compiled kernel). It is admitted there for the marginal criteria alone:
+    # (distributions7::distrib_d2expected_hessian(), from compiled kernels;
+    # the rest refuse). It is admitted there for the marginal criteria alone:
     # the prediction-error route's order-2 assembly is written for the
     # observed information, a block that moves with its coefficients would
     # need the expected information's movement through dX/dbeta, which nothing
