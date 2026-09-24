@@ -19,7 +19,7 @@ default."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.147.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.148.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,8 +71,16 @@ default.</p>
 
 <dl><dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
 <dd><p>Which information enters the determinant: <code>"observed"</code> (the
-default) or <code>"expected"</code>. Matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. The observed one
-is what the exact gradient needs.</p></dd>
+default), the curvature of the log-likelihood at the data, which makes
+the criterion the Laplace approximation, or <code>"expected"</code>, the Fisher
+information, a function of the parameters alone. Matched with
+<code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. Both carry an exact outer gradient and Hessian wherever the
+family writes its expected information out. A family that does not – the
+Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
+– would read the outer product of its scores at the data under the
+default <code>iwls(approx = "opg")</code>, which is not an expectation, and
+<code><a href="statmod.html">statmod()</a></code> rejects <code>"expected"</code> there: see
+<code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

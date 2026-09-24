@@ -23,7 +23,7 @@ bic() charges \(\log n\). Both are minimized."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.147.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.148.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,8 +86,12 @@ the sample size being unknown until then.</p></dd>
 <dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
 <dd><p>Which information the criterion is built on, <code>"observed"</code>
 (the default) or <code>"expected"</code>. Matched with <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. The exact
-gradient and Hessian of the criterion need the observed one; with
-<code>"expected"</code> the outer search is derivative-free.</p></dd>
+gradient is available on either wherever the family writes its expected
+information out; the Hessian is exact on the observed one and differenced
+on the expected one. A family that does not write it out would read the
+outer product of its scores at the data under the default
+<code>iwls(approx = "opg")</code>, and <code><a href="statmod.html">statmod()</a></code> rejects <code>"expected"</code> there: see
+<code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

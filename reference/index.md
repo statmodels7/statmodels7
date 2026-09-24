@@ -162,6 +162,10 @@ exported, and none is needed to use the package.
 - [`assemble_blocks()`](https://statmodels7.github.io/statmodels7/reference/assemble_blocks.md)
   : A Symmetric Matrix From Its Upper Blocks
 
+- [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md)
+  : Refuse an Expected-Information Criterion That Would Read the Scores'
+  Outer Product
+
 - [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
   : Refuse Where a Criterion Cannot Be Computed
 
@@ -420,6 +424,9 @@ exported, and none is needed to use the package.
 - [`expected_deriv_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.md)
   : Does the Family Supply the Expected Information's Derivative?
 
+- [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
+  : Does the Family's Expected Information Depend on the Response?
+
 - [`family(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.md)
   : The Distribution a Model Was Fitted With
 
@@ -536,6 +543,9 @@ exported, and none is needed to use the package.
 
 - [`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)
   : The Subspace a Marginal Criterion Integrates Over
+
+- [`intercept_start_from_data()`](https://statmodels7.github.io/statmodels7/reference/intercept_start_from_data.md)
+  : Replace an Intercept Where the Family Reads Its Start Off the Data
 
 - [`invert_rows()`](https://statmodels7.github.io/statmodels7/reference/invert_rows.md)
   : Replace a Table's Limits by an Inverted Test

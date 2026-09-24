@@ -35,8 +35,14 @@ bic(hessian = c("observed", "expected"))
   Which information the criterion is built on, `"observed"` (the
   default) or `"expected"`. Matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html). The exact
-  gradient and Hessian of the criterion need the observed one; with
-  `"expected"` the outer search is derivative-free.
+  gradient is available on either wherever the family writes its
+  expected information out; the Hessian is exact on the observed one and
+  differenced on the expected one. A family that does not write it out
+  would read the outer product of its scores at the data under the
+  default `iwls(approx = "opg")`, and
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  rejects `"expected"` there: see
+  [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md).
 
 ## Value
 

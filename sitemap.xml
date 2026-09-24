@@ -22,6 +22,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/answers_term_third.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/armijo_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assemble_blocks.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/augmented_solve.html</loc></url>
@@ -106,6 +107,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/eval_offsets.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/expected_deriv_ok.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/expected_is_opg.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/family.StatmodFit.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/filter_curvature.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/filter_joint_movement.html</loc></url>
@@ -146,6 +148,7 @@
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_mode_error.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/inner_settings.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/integrated_basis.html</loc></url>
+<url><loc>https://statmodels7.github.io/statmodels7/reference/intercept_start_from_data.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/invert_rows.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/is_parametric_block.html</loc></url>
 <url><loc>https://statmodels7.github.io/statmodels7/reference/iwls.html</loc></url>
