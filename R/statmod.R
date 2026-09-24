@@ -438,6 +438,13 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # which is true and is three layers from the cause.  See R/order.R.
   assert_criterion_order(spec@distrib, outer_criterion)
   assert_criterion_order(spec@distrib, sparse_criterion)
+  # and a criterion on the expected information needs an expectation: where
+  # the family does not write it out, the default approx = "opg" would put the
+  # outer product of the scores AT THE DATA in the determinant, which is
+  # neither the Laplace curvature nor the Fisher information and has no exact
+  # outer derivatives. Refused here with the remedy. See R/order.R.
+  assert_criterion_information(spec@distrib, outer_criterion, approx)
+  assert_criterion_information(spec@distrib, sparse_criterion, approx)
   # and a prediction-error criterion cannot select a penalty over a structural
   # term's own parameters, reading its degrees of freedom over the coefficients
   # alone, where that penalty covers nothing. Refused here, by name, before a
@@ -1552,7 +1559,8 @@ statmod_intercepts <- function(spec) {
   if (!is.null(fd)) {
     e <- tryCatch(stats::coef(fd, scale = "link"), error = function(e) NULL)
     if (!is.null(e) && length(e) == length(params) && all(is.finite(e))) {
-      return(stats::setNames(as.list(as.numeric(e)), params))
+      return(intercept_start_from_data(
+        spec, stats::setNames(as.list(as.numeric(e)), params)))
     }
   }
 
@@ -1561,11 +1569,50 @@ statmod_intercepts <- function(spec) {
     error = function(e) NULL)
   if (is.null(th) || !length(th)) return(none)
   th1 <- th[[1L]]
-  stats::setNames(lapply(params, function(p) {
+  intercept_start_from_data(spec, stats::setNames(lapply(params, function(p) {
     v <- th1[[p]]
     if (is.null(v) || !is.finite(v[[1L]])) return(NULL)
     linkfunctions7::linkfun(links[[p]], v[[1L]])
-  }), params)
+  }), params))
+}
+
+#' Replace an Intercept Where the Family Reads Its Start Off the Data
+#'
+#' @description
+#' Overwrites, in the list [statmod_intercepts()] builds, the intercept of each
+#' parameter [distributions7::distrib_intercept_start()] answers for, carried
+#' onto that parameter's own link.
+#'
+#' @details
+#' The intercept-only fit is the right start for almost every family, and the
+#' wrong one for the mixing weight of [distributions7::zero_inflated()]:
+#' without covariates the parent's overdispersion can absorb the excess zeros,
+#' the weight goes to the edge of its domain, and the link is flat there, so a
+#' model with covariates started from it never leaves -- measured on a
+#' negative binomial with a true weight of 0.25, the fit reported convergence
+#' at a weight of zero, 7.6 log-likelihood units below the interior maximum.
+#' The family answers with the observed proportion of zeros, and the value is
+#' mapped through the parameter's link, so a probit or a cloglog chart gets its
+#' own linear predictor and not a logit.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param eta The named list of link-scale intercepts.
+#'
+#' @return `eta`, with the answered entries replaced.
+#'
+#' @seealso [statmod_intercepts()]
+#' @keywords internal
+intercept_start_from_data <- function(spec, eta) {
+  ov <- tryCatch(distributions7::distrib_intercept_start(spec@distrib,
+                                                         spec@response),
+                 error = function(e) list())
+  links <- spec@distrib@link_params
+  for (p in intersect(names(ov), names(eta))) {
+    v <- tryCatch(linkfunctions7::linkfun(links[[p]], ov[[p]]),
+                  error = function(e) NULL)
+    if (!is.null(v) && length(v) == 1L && is.finite(v)) eta[[p]] <- v
+  }
+  eta
 }
 
 

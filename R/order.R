@@ -134,6 +134,138 @@ assert_criterion_order <- function(distrib, method) {
   invisible(NULL)
 }
 
+#' Refuse an Expected-Information Criterion That Would Read the Scores' Outer Product
+#'
+#' @description
+#' Raises an error naming the family and the remedy when a criterion asked for
+#' on the expected information would read, for this family, the outer product
+#' of the scores at the data instead of an expectation.
+#'
+#' @details
+#' A criterion on the expected information replaces the observed curvature of
+#' each observation, \eqn{-\partial^2\ell_i/\partial\eta\,\partial\eta^\top}
+#' at \eqn{y_i}, with the Fisher information
+#' \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
+#' \partial\eta^\top]}, a function of the parameters alone. Where a family
+#' writes that information out, [distributions7::expected_hessian_exact()]
+#' answers `TRUE` and nothing is asked here. Where it does not -- the
+#' Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
+#' among the shipped families -- the family falls back on the strategy `approx`
+#' names, and the default, `"opg"`, returns
+#' \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
+#' estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
+#' information itself: it depends on the response, as the observed curvature
+#' does, and it is neither of them. The criterion built on it is neither the
+#' Laplace approximation nor its Fisher variant, and it has no exact outer
+#' gradient, so its search is derivative-free and [statmod_certificate()]
+#' answers `unknown`.
+#'
+#' Measured at 4000 observations with a smooth on the first parameter, all six
+#' families fit on the observed information in 3 to 5 criterion evaluations
+#' with a Newton search and an analytic certificate, where the outer-product
+#' route took 12 to 22 evaluations of a simplex. Its outer Hessian agrees with
+#' a difference of the exact gradient at a polished mode to between 3.8e-08
+#' and 7.3e-08 on five of them, converging as \eqn{h^2}; on the skew t it
+#' stops near 1e-06, its derivatives in \eqn{\nu} being single stencils.
+#'
+#' The expectation is asked for by name with another `approx` in [iwls()], and
+#' that is not refused: `"bartlett"` sums or integrates over the support and
+#' is a genuine expected information, at a cost measured between 66 and 1930
+#' seconds per evaluation at 4000 observations.
+#'
+#' @param distrib A distributions7 family.
+#' @param method An [OuterMethod()], or `NULL`.
+#' @param approx The approximation the fit reads the expected information
+#'   with, from [inner_settings()].
+#'
+#' @return `NULL`, invisibly. Called for the error.
+#'
+#' @examples
+#' statmodels7:::assert_criterion_information(
+#'   distributions7::gaussian1_distrib(), reml("expected"), "opg")
+#' try(statmodels7:::assert_criterion_information(
+#'   distributions7::pig1_distrib(), reml("expected"), "opg"))
+#'
+#' @seealso [expected_is_opg()], the predicate, and [assert_criterion_order()].
+#' @keywords internal
+assert_criterion_information <- function(distrib, method, approx) {
+  if (is.null(method) || !identical(method@hessian, "expected")) {
+    return(invisible(NULL))
+  }
+  if (!expected_is_opg(distrib, approx)) return(invisible(NULL))
+  crit <- sprintf("%s(hessian = \"expected\")", method@kind)
+  stop(sprintf(paste0(
+    "%s reads the expected information, which '%s' does not write out: with ",
+    "approx = \"opg\" it would read the outer product of the scores at the ",
+    "data, which depends on the response and is not an expectation, so the ",
+    "criterion would be neither the Laplace approximation nor its Fisher ",
+    "variant and would have no exact outer derivatives. Use ",
+    "%s(hessian = \"observed\"), whose outer gradient and Hessian are exact on ",
+    "this family, or ask for the expectation by name with ",
+    "iwls(approx = \"bartlett\"), which sums or integrates over the support at ",
+    "a cost of minutes per evaluation."),
+    crit, distrib@distrib_name, method@kind), call. = FALSE)
+}
+
+#' Does the Family's Expected Information Depend on the Response?
+#'
+#' @description
+#' `TRUE` where [distributions7::distrib_expected_hessian()], called with
+#' `approx`, returns a matrix that changes with the response at fixed
+#' parameters, which an expectation cannot do.
+#'
+#' @details
+#' Asked at a probe rather than read from a list of families, so a family
+#' written later is covered: two distinct responses drawn at one parameter
+#' value, and the two answers compared. A family that
+#' [distributions7::expected_hessian_exact()] reports as writing its
+#' information out is never probed, and neither is any `approx` other than
+#' `"opg"`, the only strategy that reads the response. A truncated family reports
+#' `FALSE` to that predicate although its expected information is a quadrature
+#' that does not depend on the response, so it answers `FALSE` here: that is
+#' why the probe, and not the predicate, decides. The caller's random stream is
+#' restored.
+#'
+#' @param distrib A distributions7 family.
+#' @param approx The approximation, a string.
+#'
+#' @return A single logical.
+#'
+#' @seealso [assert_criterion_information()]
+#' @keywords internal
+expected_is_opg <- function(distrib, approx) {
+  if (!identical(approx, "opg")) return(FALSE)
+  if (S7::S7_inherits(distrib, distributions7::multivariate_distrib)) return(FALSE)
+  exact <- tryCatch(distributions7::expected_hessian_exact(distrib),
+                    error = function(e) TRUE)
+  if (isTRUE(exact)) return(FALSE)
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old, envir = globalenv()), add = TRUE)
+  } else {
+    on.exit(if (exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+      rm(".Random.seed", envir = globalenv()), add = TRUE)
+  }
+  set.seed(20260924L)
+  th <- tryCatch(distributions7::generate_random_theta(distrib),
+                 error = function(e) NULL)
+  if (is.null(th)) return(FALSE)
+  y <- tryCatch(unique(distributions7::distrib_rng(distrib, 20L, th)),
+                error = function(e) NULL)
+  y <- y[is.finite(y)]
+  if (length(y) < 2L) return(FALSE)
+  at <- function(v) {
+    tryCatch(unlist(distributions7::distrib_expected_hessian(distrib, v, th,
+                                                             approx = approx)),
+             error = function(e) NULL)
+  }
+  e1 <- at(y[[1L]])
+  e2 <- at(y[[2L]])
+  if (is.null(e1) || is.null(e2) || length(e1) != length(e2)) return(FALSE)
+  if (!all(is.finite(e1)) || !all(is.finite(e2))) return(FALSE)
+  !isTRUE(all.equal(e1, e2, tolerance = 1e-8, check.attributes = FALSE))
+}
+
 #' Refuse a Prediction-Error Criterion on a Structural Term's Own Parameters
 #'
 #' @description

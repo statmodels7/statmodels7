@@ -18,8 +18,12 @@ the sample size being unknown until then.}
 
 \item{hessian}{Which information the criterion is built on, \code{"observed"}
 (the default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The exact
-gradient and Hessian of the criterion need the observed one; with
-\code{"expected"} the outer search is derivative-free.}
+gradient is available on either wherever the family writes its expected
+information out; the Hessian is exact on the observed one and differenced
+on the expected one. A family that does not write it out would read the
+outer product of its scores at the data under the default
+\code{iwls(approx = "opg")}, and \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
+\code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object with properties \code{kind} (\code{"aic"} or

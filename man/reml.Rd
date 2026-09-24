@@ -11,8 +11,16 @@ ml(hessian = c("observed", "expected"))
 }
 \arguments{
 \item{hessian}{Which information enters the determinant: \code{"observed"} (the
-default) or \code{"expected"}. Matched with \code{\link[=match.arg]{match.arg()}}. The observed one
-is what the exact gradient needs.}
+default), the curvature of the log-likelihood at the data, which makes
+the criterion the Laplace approximation, or \code{"expected"}, the Fisher
+information, a function of the parameters alone. Matched with
+\code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
+family writes its expected information out. A family that does not -- the
+Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
+-- would read the outer product of its scores at the data under the
+default \code{iwls(approx = "opg")}, which is not an expectation, and
+\code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
+\code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, with

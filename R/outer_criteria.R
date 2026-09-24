@@ -105,8 +105,12 @@ NULL
 #'   the sample size being unknown until then.
 #' @param hessian Which information the criterion is built on, `"observed"`
 #'   (the default) or `"expected"`. Matched with [match.arg()]. The exact
-#'   gradient and Hessian of the criterion need the observed one; with
-#'   `"expected"` the outer search is derivative-free.
+#'   gradient is available on either wherever the family writes its expected
+#'   information out; the Hessian is exact on the observed one and differenced
+#'   on the expected one. A family that does not write it out would read the
+#'   outer product of its scores at the data under the default
+#'   `iwls(approx = "opg")`, and [statmod()] rejects `"expected"` there: see
+#'   [assert_criterion_information()].
 #'
 #' @return An [OuterMethod()] object with properties `kind` (`"aic"` or
 #'   `"bic"`), `hessian` as supplied, `k` (the number given, or `NA_real_`

@@ -1,3 +1,63 @@
+# statmodels7 0.148.0
+
+* **A criterion on the expected information is rejected where the family's
+  "expected information" would be the outer product of its scores at the
+  data.** `reml()`, `ml()`, `aic()` and `bic()` with `hessian = "expected"`
+  read the Fisher information in the Laplace determinant. Six shipped families
+  do not write it out -- `pig1_distrib()`, `pig2_distrib()`,
+  `skewnormal1_distrib()`, `skewnormal2_distrib()`, `skewt_distrib()` and
+  `pseudohuber_distrib()` -- and under the default `iwls(approx = "opg")` what
+  they return is \eqn{s_i s_i^\top}, measured equal to
+  `expected_by_opg()` on five of them (exactly on four, to 1.6e-15 on the
+  skewnormal2 chain) and on the sixth with the two components that vanish by
+  symmetry set to zero. That depends on the response, so the
+  criterion was neither the Laplace approximation nor its Fisher variant, had
+  no exact outer derivatives, searched with `nelder_mead()` in 12 to 22
+  evaluations and left `statmod_certificate()` at `unknown`. `statmod()` now
+  stops at the start, naming the family and `reml(hessian = "observed")` as
+  the remedy.
+
+* Whether a family is one of these is asked at a probe, not read from a list:
+  `expected_is_opg()` evaluates the expected information at two responses and
+  one parameter value, which an expectation cannot tell apart. Over the 40
+  univariate constructors it answers `TRUE` on exactly the six, and on the
+  wrappers that inherit it (`fixed(skewt_distrib(), nu = 6)`,
+  `zero_inflated(pig1_distrib())`); `truncated()`, which reports no closed
+  form either, returns a quadrature and is not caught. The caller's random
+  stream is restored. An expectation asked for by name,
+  `iwls(approx = "bartlett")`, is not refused: it is a genuine expected
+  information, at 66 to 1930 seconds per evaluation at 4000 observations.
+
+* The observed route is exact on all six, which is what makes the refusal a
+  redirection rather than a loss. At 4000 observations with a smooth on the
+  first parameter it fits in 3 to 5 criterion evaluations with `newton()` and
+  an analytic certificate; its outer Hessian against a difference of the exact
+  gradient at a polished mode converges as \eqn{h^2} to 3.8e-08 to 7.3e-08 on
+  five families. On the skew t it stays near 1e-06 at every step, its
+  derivatives in `nu` being single stencils, and the fit costs 13.7 s where the
+  outer-product route cost 2.9 s.
+
+* The pages of `reml()` and `aic()` said the exact gradient needs the observed
+  information and that the expected route is derivative-free. Neither has been
+  true since the expected information's derivatives reached 33 families; both
+  pages now say which route is exact where.
+
+* **A zero-inflated model's mixing weight starts at the proportion of zeros,
+  on its own link**, read through `distributions7::distrib_intercept_start()`
+  (distributions7 0.63.0, now required). The intercept-only fit puts the
+  weight at the edge of its domain wherever the parent's overdispersion
+  absorbs the excess zeros -- \eqn{\pi = 2.2 \times 10^{-308}} on a negative
+  binomial with a true 0.25 -- and a model with covariates started there
+  never left: the link is flat, and the fit reported convergence at
+  \eqn{\pi = 0}, 7.6 log-likelihood units below the interior maximum at
+  0.202. Starts with a linear predictor between -5 and -1.1 all reached it,
+  starts at -7 or below none did. The value goes through the parameter's
+  own link, so a probit or a cloglog weight starts at its own linear
+  predictor; on that sample all three reach -2396.02. Over three parents,
+  with and without inflation, three samples each, it is never worse than
+  the intercept-only start and better on three samples without inflation
+  (by 0.43, 0.05 and 3.03), converging in all eighteen.
+
 # statmodels7 0.147.0
 
 * **The exact outer Hessian on the expected information reaches every family
