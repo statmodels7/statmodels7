@@ -7,8 +7,12 @@ test_that("an auto iwls() is settled by the family and a named one is not", {
   g <- iwls_resolve(a, distributions7::gaussian1_distrib())
   expect_identical(g@hessian, "expected")
   expect_false(g@fallback)
-  for (d in list(distributions7::pig1_distrib(), distributions7::skewnormal1_distrib(),
-                 distributions7::truncated(distributions7::gaussian1_distrib(), lower = 0))) {
+  # an approximated expected information, and an exact one that costs a
+  # quadrature per distinct shape, both settle on the observed information
+  for (d in list(distributions7::pig1_distrib(), distributions7::pig2_distrib(),
+                 distributions7::truncated(distributions7::gaussian1_distrib(), lower = 0),
+                 distributions7::skewnormal1_distrib(), distributions7::skewt_distrib(),
+                 distributions7::pseudohuber_distrib())) {
     r <- iwls_resolve(a, d)
     expect_identical(r@hessian, "observed")
     expect_true(r@fallback)

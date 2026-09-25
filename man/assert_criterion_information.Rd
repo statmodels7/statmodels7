@@ -29,10 +29,9 @@ at \eqn{y_i}, with the Fisher information
 \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 \partial\eta^\top]}, a function of the parameters alone. Where a family
 writes that information out, \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}
-answers \code{TRUE} and nothing is asked here. Where it does not -- the
-Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
-among the shipped families -- the family falls back on the strategy \code{approx}
-names, and the default, \code{"opg"}, returns
+answers \code{TRUE} and nothing is asked here. Where it does not -- the two
+Poisson-inverse gaussians among the shipped families -- the family falls
+back on the strategy \code{approx} names, and the default, \code{"opg"}, returns
 \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
 estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
 information itself: it depends on the response, as the observed curvature
@@ -41,13 +40,12 @@ Laplace approximation nor its Fisher variant, and it has no exact outer
 gradient, so its search is derivative-free and \code{\link[=statmod_certificate]{statmod_certificate()}}
 answers \code{unknown}.
 
-Measured at 4000 observations with a smooth on the first parameter, all six
-families fit on the observed information in 3 to 5 criterion evaluations
-with a Newton search and an analytic certificate, where the outer-product
-route took 12 to 22 evaluations of a simplex. Its outer Hessian agrees with
-a difference of the exact gradient at a polished mode to between 3.8e-08
-and 7.3e-08 on five of them, converging as \eqn{h^2}; on the skew t it
-stops near 1e-06, its derivatives in \eqn{\nu} being single stencils.
+Measured at 4000 observations with a smooth on the first parameter, on the
+six families this applied to before \pkg{distributions7} 0.64.0 gave four of
+them an exact expected information, every one fit on the observed
+information in 3 to 5 criterion evaluations with a Newton search and an
+analytic certificate, where the outer-product route took 12 to 22
+evaluations of a simplex.
 
 The expectation is asked for by name with another \code{approx} in \code{\link[=iwls]{iwls()}}, and
 that is not refused: \code{"bartlett"} sums or integrates over the support and

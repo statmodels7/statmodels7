@@ -16,8 +16,8 @@ the criterion the Laplace approximation, or \code{"expected"}, the Fisher
 information, a function of the parameters alone. Matched with
 \code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
 family writes its expected information out. A family that does not -- the
-Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
--- would read the outer product of its scores at the data under the
+two Poisson-inverse gaussians -- would read the outer product of its
+scores at the data under the
 default \code{iwls(approx = "opg")}, which is not an expectation, and
 \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}.}

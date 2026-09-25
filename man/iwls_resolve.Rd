@@ -35,6 +35,16 @@ positive definite, or where its step finds no acceptable point, in 68 of
 family and a REML criterion within \eqn{[-3.7 \times 10^{-5},
 1.9 \times 10^{-4}]} of it. The expected information stood in 52 times over
 those fits, every time for a curvature that was not positive definite.
+
+A family whose expected information is exact but computed by a quadrature
+per distinct shape, which \code{\link[distributions7:expected_hessian_by_quadrature]{distributions7::expected_hessian_by_quadrature()}}
+reports, is settled on the observed information as well. Measured at 1000
+observations with a smooth on the location and the shape developed over a
+covariate, the expected route reaches the same estimate at 7 to 21 times the
+cost: 3.5 against 24.3 seconds for the skew normal, 0.3 against 27.5 for the
+pseudo-Huber, 10.2 against 214.7 for the skew t. The expected information is
+still read where the observed one cannot take the step, and in full where a
+method or a criterion names it.
 }
 \seealso{
 \code{\link[=iwls]{iwls()}}, \code{\link[=fit_smooth]{fit_smooth()}}, which reads \code{fallback}.

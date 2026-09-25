@@ -232,8 +232,8 @@ outer_path_defaults <- function() {
 #'   information, a function of the parameters alone. Matched with
 #'   [match.arg()]. Both carry an exact outer gradient and Hessian wherever the
 #'   family writes its expected information out. A family that does not -- the
-#'   Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
-#'   -- would read the outer product of its scores at the data under the
+#'   two Poisson-inverse gaussians -- would read the outer product of its
+#'   scores at the data under the
 #'   default `iwls(approx = "opg")`, which is not an expectation, and
 #'   [statmod()] rejects `"expected"` there: see
 #'   [assert_criterion_information()].

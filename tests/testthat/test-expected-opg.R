@@ -1,21 +1,26 @@
 # A criterion on the expected information needs an expectation.
 #
-# Six shipped families do not write their expected information out, and under
-# the default iwls(approx = "opg") what they return is the outer product of
-# the scores at the data, which depends on the response. A criterion built on
-# it is neither the Laplace approximation nor its Fisher variant and has no
-# exact outer derivatives, so statmod() rejects it and names the observed
-# route, which is exact on all six.
+# The two Poisson-inverse gaussians do not write their expected information
+# out, and under the default iwls(approx = "opg") what they return is the
+# outer product of the scores at the data, which depends on the response. A
+# criterion built on it is neither the Laplace approximation nor its Fisher
+# variant and has no exact outer derivatives, so statmod() rejects it and
+# names the observed route, which is exact.
 
 test_that("the probe finds the families whose expected information reads the data", {
-  six <- list(distributions7::pig1_distrib(), distributions7::pig2_distrib(),
-              distributions7::skewnormal1_distrib(),
-              distributions7::skewnormal2_distrib(),
-              distributions7::skewt_distrib(), distributions7::pseudohuber_distrib())
-  for (d in six) expect_true(expected_is_opg(d, "opg"), label = d@distrib_name)
+  for (d in list(distributions7::pig1_distrib(), distributions7::pig2_distrib())) {
+    expect_true(expected_is_opg(d, "opg"), label = d@distrib_name)
+  }
+  # the location-scale families compute theirs by quadrature and are not probed
+  for (d in list(distributions7::skewnormal1_distrib(),
+                 distributions7::skewnormal2_distrib(),
+                 distributions7::skewt_distrib(),
+                 distributions7::pseudohuber_distrib())) {
+    expect_false(expected_is_opg(d, "opg"), label = d@distrib_name)
+  }
   # a wrapper inherits it from its parent
   expect_true(expected_is_opg(
-    distributions7::fixed(distributions7::skewt_distrib(), nu = 6), "opg"))
+    distributions7::fixed(distributions7::pig2_distrib(), alpha = 2), "opg"))
   expect_true(expected_is_opg(
     distributions7::zero_inflated(distributions7::pig1_distrib()), "opg"))
   # a family that writes it out is not probed, and a truncated family, which
@@ -30,7 +35,7 @@ test_that("the probe finds the families whose expected information reads the dat
   expect_false(expected_is_opg(distributions7::pig1_distrib(), "bartlett"))
   # and the caller's random stream is left where it was
   set.seed(3); before <- .Random.seed
-  expected_is_opg(distributions7::skewt_distrib(), "opg")
+  expected_is_opg(distributions7::pig2_distrib(), "opg")
   expect_identical(.Random.seed, before)
 })
 
