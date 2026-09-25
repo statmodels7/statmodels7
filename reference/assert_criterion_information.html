@@ -11,7 +11,7 @@ of the scores at the data instead of an expectation."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.148.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.149.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,10 +80,9 @@ at \(y_i\), with the Fisher information
 \(\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 \partial\eta^\top]\), a function of the parameters alone. Where a family
 writes that information out, <code><a href="https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html" class="external-link">distributions7::expected_hessian_exact()</a></code>
-answers <code>TRUE</code> and nothing is asked here. Where it does not – the
-Poisson-inverse gaussian, the skew normal, the skew t and the pseudo-Huber
-among the shipped families – the family falls back on the strategy <code>approx</code>
-names, and the default, <code>"opg"</code>, returns
+answers <code>TRUE</code> and nothing is asked here. Where it does not – the two
+Poisson-inverse gaussians among the shipped families – the family falls
+back on the strategy <code>approx</code> names, and the default, <code>"opg"</code>, returns
 \(s_i s_i^\top\) with \(s_i\) the score at \(y_i\). That is an unbiased
 estimate of \(\mathcal{I}(\theta_i)\) from one observation, not the
 information itself: it depends on the response, as the observed curvature
@@ -91,13 +90,12 @@ does, and it is neither of them. The criterion built on it is neither the
 Laplace approximation nor its Fisher variant, and it has no exact outer
 gradient, so its search is derivative-free and <code><a href="statmod_certificate.html">statmod_certificate()</a></code>
 answers <code>unknown</code>.</p>
-<p>Measured at 4000 observations with a smooth on the first parameter, all six
-families fit on the observed information in 3 to 5 criterion evaluations
-with a Newton search and an analytic certificate, where the outer-product
-route took 12 to 22 evaluations of a simplex. Its outer Hessian agrees with
-a difference of the exact gradient at a polished mode to between 3.8e-08
-and 7.3e-08 on five of them, converging as \(h^2\); on the skew t it
-stops near 1e-06, its derivatives in \(\nu\) being single stencils.</p>
+<p>Measured at 4000 observations with a smooth on the first parameter, on the
+six families this applied to before <span class="pkg">distributions7</span> 0.64.0 gave four of
+them an exact expected information, every one fit on the observed
+information in 3 to 5 criterion evaluations with a Newton search and an
+analytic certificate, where the outer-product route took 12 to 22
+evaluations of a simplex.</p>
 <p>The expectation is asked for by name with another <code>approx</code> in <code><a href="iwls.html">iwls()</a></code>, and
 that is not refused: <code>"bartlett"</code> sums or integrates over the support and
 is a genuine expected information, at a cost measured between 66 and 1930

@@ -1,5 +1,39 @@
 # Changelog
 
+## statmodels7 0.149.0
+
+- **A criterion on the expected information reaches the skew normals,
+  the skew t and the pseudo-Huber.** distributions7 0.64.0 computes
+  their expected information exactly, by one quadrature over the
+  standardized response per distinct shape, together with its first and
+  second derivatives, so
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  and
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  with `hessian = "expected"` are no longer refused on them and carry
+  the exact outer gradient and Hessian. Measured at 1000 observations
+  with a smooth on the location and the shape held constant,
+  `reml("expected")` converges with an analytic certificate on all four,
+  at 0.6 to 1.2 times the cost of `reml("observed")`. The refusal of
+  0.148.0 now applies to `pig1_distrib()` and `pig2_distrib()` alone.
+
+- `iwls(hessian = "auto")` stays on the observed information for these
+  four families, reading
+  [`distributions7::expected_hessian_by_quadrature()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_by_quadrature.html)
+  beside `expected_hessian_exact()`. The expected information is exact
+  there but costs one integral per distinct shape, and with the shape
+  modelled that is one per observation. Measured at 1000 observations
+  with the shape developed over a covariate, a fit taking the scoring
+  step on it reaches the same estimate at 7 to 21 times the cost: 3.5
+  against 24.3 seconds for the skew normal, 0.3 against 27.5 for the
+  pseudo-Huber, 10.2 against 214.7 for the skew t. The expected
+  information still takes the step where the observed one cannot, and is
+  used throughout where a method or a criterion names it.
+
+- Requires `distributions7 (>= 0.64.0)`.
+
 ## statmodels7 0.148.0
 
 - **A criterion on the expected information is rejected where the

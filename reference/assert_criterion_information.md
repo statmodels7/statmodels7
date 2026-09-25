@@ -41,11 +41,10 @@ the Fisher information \\\mathcal{I}(\theta_i) =
 function of the parameters alone. Where a family writes that information
 out,
 [`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
-answers `TRUE` and nothing is asked here. Where it does not – the
-Poisson-inverse gaussian, the skew normal, the skew t and the
-pseudo-Huber among the shipped families – the family falls back on the
-strategy `approx` names, and the default, `"opg"`, returns \\s_i
-s_i^\top\\ with \\s_i\\ the score at \\y_i\\. That is an unbiased
+answers `TRUE` and nothing is asked here. Where it does not – the two
+Poisson-inverse gaussians among the shipped families – the family falls
+back on the strategy `approx` names, and the default, `"opg"`, returns
+\\s_i s_i^\top\\ with \\s_i\\ the score at \\y_i\\. That is an unbiased
 estimate of \\\mathcal{I}(\theta_i)\\ from one observation, not the
 information itself: it depends on the response, as the observed
 curvature does, and it is neither of them. The criterion built on it is
@@ -54,14 +53,12 @@ exact outer gradient, so its search is derivative-free and
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
 answers `unknown`.
 
-Measured at 4000 observations with a smooth on the first parameter, all
-six families fit on the observed information in 3 to 5 criterion
-evaluations with a Newton search and an analytic certificate, where the
-outer-product route took 12 to 22 evaluations of a simplex. Its outer
-Hessian agrees with a difference of the exact gradient at a polished
-mode to between 3.8e-08 and 7.3e-08 on five of them, converging as
-\\h^2\\; on the skew t it stops near 1e-06, its derivatives in \\\nu\\
-being single stencils.
+Measured at 4000 observations with a smooth on the first parameter, on
+the six families this applied to before distributions7 0.64.0 gave four
+of them an exact expected information, every one fit on the observed
+information in 3 to 5 criterion evaluations with a Newton search and an
+analytic certificate, where the outer-product route took 12 to 22
+evaluations of a simplex.
 
 The expectation is asked for by name with another `approx` in
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
