@@ -507,6 +507,12 @@ path_steps <- function(spec, design, block, beta, split) {
     if (is.null(wq)) return(NULL)
     v <- wxsq(X, wq$w, spec@threads)
     if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
+    # the step coord_fit() will take: on a block solved with its intercept
+    # profiled out that is the centered column's, see coord_centers()
+    if (coord_centers(spec, design, block$param, list(split = split), beta)) {
+      m <- as.numeric(xtv(X, wq$w, spec@threads)) / sum(wq$w)
+      v <- coord_colsq(X, wq$w, seq_len(ncol(X)), m)
+    }
     1 / v
   }, error = function(e) NULL)
   out

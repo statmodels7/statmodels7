@@ -4,7 +4,7 @@
 \alias{coord_call}
 \title{Run the Compiled Coordinate Descent on Either Storage}
 \usage{
-coord_call(X, z, w, b0, tab, screen, tol, covariance)
+coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
 }
 \arguments{
 \item{X}{The block, \verb{n x p}, dense or \code{dgCMatrix}.}

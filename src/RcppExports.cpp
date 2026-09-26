@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // coord_descent
-List coord_descent(NumericMatrix X, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance);
-RcppExport SEXP _statmodels7_coord_descent(SEXP XSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP) {
+List coord_descent(NumericMatrix X, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance, NumericVector means);
+RcppExport SEXP _statmodels7_coord_descent(SEXP XSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP, SEXP meansSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,13 +27,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< bool >::type covariance(covarianceSEXP);
-    rcpp_result_gen = Rcpp::wrap(coord_descent(X, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance));
+    Rcpp::traits::input_parameter< NumericVector >::type means(meansSEXP);
+    rcpp_result_gen = Rcpp::wrap(coord_descent(X, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance, means));
     return rcpp_result_gen;
 END_RCPP
 }
 // coord_descent_sparse
-List coord_descent_sparse(IntegerVector Ai, IntegerVector Ap, NumericVector Ax, int nrow, int ncol, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance);
-RcppExport SEXP _statmodels7_coord_descent_sparse(SEXP AiSEXP, SEXP ApSEXP, SEXP AxSEXP, SEXP nrowSEXP, SEXP ncolSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP) {
+List coord_descent_sparse(IntegerVector Ai, IntegerVector Ap, NumericVector Ax, int nrow, int ncol, NumericVector z, NumericVector w, NumericVector beta0, NumericMatrix cut, NumericMatrix slope, NumericMatrix icept, IntegerVector screen, int maxit, double tol, bool covariance, NumericVector means);
+RcppExport SEXP _statmodels7_coord_descent_sparse(SEXP AiSEXP, SEXP ApSEXP, SEXP AxSEXP, SEXP nrowSEXP, SEXP ncolSEXP, SEXP zSEXP, SEXP wSEXP, SEXP beta0SEXP, SEXP cutSEXP, SEXP slopeSEXP, SEXP iceptSEXP, SEXP screenSEXP, SEXP maxitSEXP, SEXP tolSEXP, SEXP covarianceSEXP, SEXP meansSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,7 +53,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< bool >::type covariance(covarianceSEXP);
-    rcpp_result_gen = Rcpp::wrap(coord_descent_sparse(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance));
+    Rcpp::traits::input_parameter< NumericVector >::type means(meansSEXP);
+    rcpp_result_gen = Rcpp::wrap(coord_descent_sparse(Ai, Ap, Ax, nrow, ncol, z, w, beta0, cut, slope, icept, screen, maxit, tol, covariance, means));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -155,8 +157,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 11},
-    {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 15},
+    {"_statmodels7_coord_descent", (DL_FUNC) &_statmodels7_coord_descent, 12},
+    {"_statmodels7_coord_descent_sparse", (DL_FUNC) &_statmodels7_coord_descent_sparse, 16},
     {"_statmodels7_chol_rcond_cpp", (DL_FUNC) &_statmodels7_chol_rcond_cpp, 2},
     {"_statmodels7_leverage_pairs_cpp", (DL_FUNC) &_statmodels7_leverage_pairs_cpp, 11},
     {"_statmodels7_qr_factor_cpp", (DL_FUNC) &_statmodels7_qr_factor_cpp, 2},

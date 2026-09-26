@@ -114,6 +114,16 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
                         "own\n  block and cannot leave one where it was."),
                  block$term), call. = FALSE)
   }
+  # whether the block is solved with its equation's intercept profiled out,
+  # which is what keeps the alternation with that intercept from zig-zagging
+  # on columns that are not centered: see coord_centers(). Where it is, the
+  # intercept is set to the value the profiling implies after every sweep,
+  # so the step is a joint step in the block and the intercept and it lowers
+  # the objective as a step in the block alone would.
+  ctr <- coord_centers(spec, design, p, obj, beta)
+  i0 <- if (ctr) {
+    obj$split(seq_along(beta))[[p]][parametric_intercept(spec, design, p)]
+  } else NA_integer_
   # The block is kept in whatever storage it arrived in. A coordinate
   # descent reads one column at a time, so a compressed-column matrix is the
   # storage the method wants rather than one it tolerates, and the kernel
@@ -184,6 +194,10 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     if (is.null(wq) && !expected)
       wq <- coord_working(spec, ep, coef, design, p, TRUE, approx)
     if (is.null(wq)) return(NULL)
+    # the weighted column means the kernel centers with; none where the block
+    # is solved as it stands
+    mw <- if (ctr) as.numeric(xtv(X, wq$w, spec@threads)) / sum(wq$w) else
+      numeric(0)
     off <- if (length(other))
       as.numeric(dd$X[, other, drop = FALSE] %*% coef[[p]][other]) else
       rep(0, n)
@@ -203,11 +217,15 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # point that differs from the confirmed one by that much. A block that
     # moves with its coefficients changes the problem through the design,
     # where the weights and the response cannot see it, and is never skipped.
+    # A centered block does not see a constant added to the response, and the
+    # intercept moved at the end of the previous sweep adds exactly that, so
+    # the comparison is made on the centered response.
+    zc <- if (ctr) z - sum(wq$w * z) / sum(wq$w) else z
     if (!moves && !is.null(prev) && identical(wq$w, prev$w) &&
-        max(abs(z - prev$z)) <= 64 * .Machine$double.eps * max(abs(z))) {
+        max(abs(zc - prev$z)) <= 64 * .Machine$double.eps * max(abs(z))) {
       break
     }
-    prev <- list(w = wq$w, z = z)
+    prev <- list(w = wq$w, z = zc)
     # The column curvatures are read only on the columns the descent visits,
     # which the strong rule keeps to a few of the block. What the full vector
     # was also for is the check that every one is finite and positive, and
@@ -219,17 +237,24 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
       v <- wxsq(X, wq$w, spec@threads)
       if (any(!is.finite(v)) || any(v <= 0)) return(NULL)
     }
+    # a centered coordinate's curvature is its centered sum of squares, read
+    # on the columns the descent visits like the uncentered one
+    if (ctr) v <- rep(NA_real_, ncol(X))
     b0 <- coef[[p]][cols]
     s_now <- kink_scale(block$penalty, th)
-    keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink, spec@threads)
+    keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink, spec@threads,
+                         center = ctr)
 
     repeat {
       need <- keep[is.na(v[keep])]
-      if (length(need)) v[need] <- coord_curv(X, wq$w, need, spec@threads)
+      if (length(need)) {
+        v[need] <- if (ctr) coord_colsq(X, wq$w, need, mw) else
+          coord_curv(X, wq$w, need, spec@threads)
+      }
       tab <- penalties7::penalty_prox_spec(block$penalty, th, 1 / v[keep])
       if (is.null(tab)) return(NULL)
       out <- coord_call(X, z, wq$w, b0, tab, as.integer(keep - 1L), tol,
-                        coord_covariance(n, length(keep)))
+                        coord_covariance(n, length(keep)), means = mw)
       sweeps <- sweeps + as.integer(out$sweeps)
       # a strong rule is a heuristic: a coordinate it discarded whose gradient
       # exceeds the kink belongs in the fit, and only this comparison makes
@@ -242,6 +267,10 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     }
     moved <- max(abs(out$beta - b0))
     cur[block$index] <- out$beta
+    # The intercept the profiling implies: the weighted mean of the working
+    # response net of the block, which `z` carries with the intercept's old
+    # value already taken off.
+    if (ctr) cur[i0] <- cur[i0] + sum(wq$w * z) / sum(wq$w) - sum(mw * out$beta)
     if (moved < tol) break
   }
   list(par = cur, value = obj$fn(cur), converged = TRUE,
@@ -282,7 +311,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' @seealso [coord_fit()]
 #'
 #' @keywords internal
-coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
+coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L,
+                         center = FALSE) {
   p <- ncol(X)
   # With no previous point there is nothing to screen against, and the rule in
   # its global form -- the reference being the kink that empties the block --
@@ -294,6 +324,9 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L) {
     return(seq_len(p))
   }
   r <- z - x_times_b(X, beta)
+  # with the block centered the gradient is that of the centered columns,
+  # which is X'W r once r is taken to weighted mean zero
+  if (center) r <- r - sum(w * r) / sum(w)
   g <- abs(xtv(X, w * r, threads))
   keep <- which(g >= 2 * s_now - s_prev | beta != 0)
   if (!length(keep)) keep <- which.max(g)
@@ -371,14 +404,15 @@ coord_block <- function(X, cols) {
 #' @seealso [coord_block()]
 #'
 #' @keywords internal
-coord_call <- function(X, z, w, b0, tab, screen, tol, covariance) {
+coord_call <- function(X, z, w, b0, tab, screen, tol, covariance,
+                       means = numeric(0)) {
   if (isS4(X)) {
     return(coord_descent_sparse(X@i, X@p, X@x, nrow(X), ncol(X), z, w, b0,
                                 tab$cut, tab$slope, tab$icept, screen, 500L,
-                                tol, covariance))
+                                tol, covariance, means))
   }
   coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, screen, 500L,
-                tol, covariance)
+                tol, covariance, means)
 }
 
 
@@ -461,6 +495,15 @@ coord_covariance <- function(n, m) {
 #' one pass answers the problem. Elsewhere it is the local approximation a
 #' scoring step works on, and the weights are rebuilt at each iteration.
 #'
+#' Where the design carries a structural term, the predictor of an equation
+#' includes a part that belongs to that term, and no column of a block
+#' carries it. The working response is then built on the static predictor,
+#' with \eqn{s_i} the score of the model from [statmod_score_obs()], so the
+#' quadratic has the gradient of the log-likelihood at the current
+#' coefficients. The weights stay the family's curvature at the whole
+#' predictor. Another positive weight would change the path of the descent
+#' and would leave its fixed point where it is.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param ep The linear predictors and the parameters they imply, as
 #'   [statmod_eta()] returns them.
@@ -482,15 +525,36 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
   n <- spec@n_obs
   params <- spec@distrib@params
   a <- match(p, params)
-  g <- distributions7::distrib_gradient(spec@distrib, spec@response, ep$theta,
-                                        scale = "link", threads = spec@threads)
-  s <- spec@weights * rep_len(g[[p]], n)
+  # A STRUCTURAL TERM ADDS TO THE PREDICTOR A PART THAT NO COLUMN OF THE
+  # BLOCK CARRIES: a filter's level, or the posterior mean of the shifts of a
+  # likelihood mixed over latent states. The working response is then built
+  # on the static predictor, from the score of the model rather than the
+  # family's score at the whole predictor, and statmod_score_obs() supplies
+  # that score through the filter's reverse recursion or Fisher's identity.
+  # Built on the whole predictor, as it was until 0.154.0, it carried that
+  # part and the descent solved a different problem: with a lasso held at a
+  # fixed lambda, an active coefficient's score sat 38, 27 and 57 from its
+  # KKT value beside gas(1, 1), regime(2) and a marginal jump(), and beside
+  # regime(2) with a Poisson response the fit diverged to a log-likelihood
+  # of -129223. The weights stay the family's curvature at the whole
+  # predictor: any positive weight leaves the fixed point where the score
+  # puts it.
+  if (is.null(ep$eta_static)) {
+    g <- distributions7::distrib_gradient(spec@distrib, spec@response,
+                                          ep$theta, scale = "link",
+                                          threads = spec@threads)
+    s <- spec@weights * rep_len(g[[p]], n)
+    e0 <- rep_len(ep$eta[[p]], n)
+  } else {
+    s <- statmod_score_obs(spec, coef, design)[[p]]
+    e0 <- rep_len(ep$eta_static[[p]], n)
+  }
   # the one diagonal entry, read where info_blocks() would have filed it in
   # an n x K x K array this function then took one slice of
   H <- statmod_family_hessian(spec, ep$theta, expected, approx)
   h <- -spec@weights * rep_len(H[[hess_key(params, a, a)]], n)
   if (any(!is.finite(h)) || any(h <= 0) || any(!is.finite(s))) return(NULL)
-  list(w = h, z = rep_len(ep$eta[[p]], n) + s / h)
+  list(w = h, z = e0 + s / h)
 }
 
 
@@ -633,4 +697,120 @@ coord_block_at <- function(design, p, X, cols) {
   B <- coord_block(X, cols)
   assign(key, list(cols = cols, X = B), envir = mm)
   B
+}
+
+
+#' Whether a Penalized Block Is Solved with Its Equation's Intercept Profiled
+#'
+#' @description
+#' `TRUE` where the equation carries an unpenalized intercept that is free to
+#' move, in which case [coord_fit()] centers the block's columns with the
+#' working weights and solves it with the intercept profiled out.
+#'
+#' @details
+#' The block is fitted with the other columns of its equation held, and the
+#' intercept is one of them. Where the columns are not centered, each change
+#' of a coefficient moves the mean of the fit, which only the intercept can
+#' take back, and the intercept is updated in another block. The alternation
+#' between the two then converges at a rate set by how close each column is
+#' to the constant. Measured on `MASS::UScrime`, whose columns have means up
+#' to 33 times their spread, a lasso on the fifteen raw predictors of
+#' `log(y)` stopped at a fixed \eqn{\lambda} of 17.4 with the objective
+#' \eqn{-\ell + \rho} at -17.84 where its minimum is -21.93, six
+#' coefficients against nine, reporting `converged = FALSE`, and the path
+#' chose the empty model at \eqn{\lambda = 374.5}. With the columns centered
+#' the path chooses nine of them at \eqn{\lambda = 17.4}, the point it
+#' reaches with the predictors centered in the data, in 7.0 seconds of
+#' processor time against 38.2.
+#'
+#' Solving with the intercept profiled out is the Frisch-Waugh-Lovell
+#' reading of an unpenalized constant: the coefficients of the block are
+#' those of the centered columns against the centered working response, and
+#' they do not depend on the value the intercept holds. [coord_fit()] then
+#' sets the intercept to the value that goes with them, the weighted mean of
+#' the working response net of the block, so its step is a joint step in the
+#' block and the intercept. A held intercept cannot take that value, so an
+#' intercept named in `held_coef` leaves the block uncentered, and so does an
+#' equation with no intercept at all.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design.
+#' @param p The equation, a parameter name.
+#' @param obj The objective, as [statmod_objective()] returns it.
+#' @param beta The stacked coefficients.
+#'
+#' @return `TRUE` or `FALSE`.
+#'
+#' @seealso [coord_fit()], [coord_colsq()], [parametric_intercept()]
+#'
+#' @keywords internal
+coord_centers <- function(spec, design, p, obj, beta) {
+  j <- parametric_intercept(spec, design, p)
+  if (is.na(j)) return(FALSE)
+  hf <- held_positions(spec, design, obj, beta)
+  if (!length(hf$where)) return(TRUE)
+  !(obj$split(seq_along(beta))[[p]][j] %in% hf$where)
+}
+
+
+#' Weighted Sums of Squares of Centered Columns
+#'
+#' @description
+#' \eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} asked for,
+#' which is the curvature a coordinate of a centered block has.
+#'
+#' @details
+#' It is computed as the sum it is, not as
+#' \eqn{\sum_i w_i x_{ik}^2 - W m_k^2}, which is the same number in exact
+#' arithmetic and loses as many digits as the mean exceeds the spread. On a
+#' sparse block the sum runs over the stored entries and adds
+#' \eqn{m_k^2} times the weight of the rows the column does not store,
+#' which is what a stored zero would contribute, so the block is never
+#' densified.
+#'
+#' A column that is constant over the rows is the intercept itself once
+#' centered, and its sum is rounding. Where it falls below \eqn{10^{-10}}
+#' of the uncentered sum the uncentered one is returned instead: the kernel
+#' leaves such a coordinate where it is, and the value here only has to be
+#' a usable step for the table.
+#'
+#' @param X The block, dense or `dgCMatrix`.
+#' @param w The working weights, length `nrow(X)`.
+#' @param k The columns, one-based.
+#' @param m The weighted means of every column of the block.
+#'
+#' @return A numeric vector, one entry per column in `k`.
+#'
+#' @seealso [coord_centers()], [coord_fit()]
+#'
+#' @keywords internal
+coord_colsq <- function(X, w, k, m) {
+  Xk <- X[, k, drop = FALSE]
+  mk <- m[k]
+  if (isS4(Xk)) {
+    Xk <- methods::as(Xk, "CsparseMatrix")
+    cnt <- diff(Xk@p)
+    ci <- rep(seq_along(k), cnt)
+    ri <- Xk@i + 1L
+    d <- Xk@x - mk[ci]
+    s <- numeric(length(k))
+    nzw <- numeric(length(k))
+    raw <- numeric(length(k))
+    if (length(ci)) {
+      s[] <- vapply(split(w[ri] * d * d, factor(ci, levels = seq_along(k))),
+                    sum, numeric(1))
+      nzw[] <- vapply(split(w[ri], factor(ci, levels = seq_along(k))),
+                      sum, numeric(1))
+      raw[] <- vapply(split(w[ri] * Xk@x^2, factor(ci, levels = seq_along(k))),
+                      sum, numeric(1))
+    }
+    s <- s + mk^2 * (sum(w) - nzw)
+  } else {
+    D <- sweep(Xk, 2L, mk)
+    s <- as.numeric(crossprod(w, D^2))
+    raw <- as.numeric(crossprod(w, Xk^2))
+  }
+  deg <- s <= 1e-10 * raw
+  s[deg] <- raw[deg]
+  s
 }

@@ -41,6 +41,33 @@ using namespace Rcpp;
 // property of the arithmetic rather than luck: skipping a structural zero
 // omits `s += w[i] * 0.0 * y[i]`, and adding zero to a running sum is exact.
 // The tests assert identity, so a reordering would fail them.
+//
+// CENTERING, WHEN THE EQUATION CARRIES AN INTERCEPT. The block is solved with
+// the other columns of its equation held, and the intercept is one of them.
+// Where the columns are not centered, a change in one coefficient moves the
+// mean of the fit, which only the intercept can take back, and the intercept
+// is updated in another block: the alternation between the two then zig-zags,
+// at a rate set by how close each column is to the constant. Measured on the
+// UScrime data, whose columns have means up to 33 times their spread, a
+// lasso at a fixed lambda of 17.4 stopped with the objective -l + rho at
+// -17.84 where its minimum is -21.93, and the path chose the empty model.
+//
+// Given `means` (one weighted mean per column, the weights being the working
+// ones) the kernel solves the block with the intercept profiled out, which is
+// the Frisch-Waugh-Lovell reading of an unpenalized constant: every column is
+// taken as x - m and the working response as z - zbar. The coefficients
+// found here do not depend on the value the intercept holds, and coord_fit()
+// then sets the intercept to the value that goes with them, so the step is a
+// joint step in the block and the intercept.
+//
+// The centering is IMPLICIT, as glmnet's is, so a sparse column stays sparse.
+// The centered residual is held as r - c, with r the uncentered residual and c
+// a scalar, and every sum a column needs is still a walk over its own
+// entries: sum_i w_i (x_ij - m_j) r~_i is sum_i w_i x_ij r~_i because r~ has
+// weighted mean zero, and v_j = sum_i w_i (x_ij - m_j)^2 is the walk over the
+// stored entries plus m_j^2 times the weight of the rows it does not store.
+// With `means` empty every correction is a zero: m_j = 0, c = 0 and
+// zbar = 0, so the arithmetic is the uncentered one to the last bit.
 
 static inline double apply_table(double u, int j, const NumericMatrix& cut,
                                  const NumericMatrix& slope,
@@ -89,15 +116,44 @@ template <class ACC>
 List coord_run(const ACC& A, NumericVector z, NumericVector w,
                NumericVector beta0, NumericMatrix cut, NumericMatrix slope,
                NumericMatrix icept, IntegerVector screen, int maxit,
-               double tol, bool covariance) {
+               double tol, bool covariance, NumericVector means) {
   const int n = A.n, p = A.p, m = screen.size();
   NumericVector beta = clone(beta0);
   std::vector<double> v(p, 0.0);
 
+  // the column means and the weighted mean of the working response; all zero
+  // where the block is not centered, which leaves every sum below unchanged
+  const bool center = means.size() == p && p > 0;
+  std::vector<double> mu(p, 0.0);
+  double W = 0.0, zbar = 0.0;
+  if (center) {
+    for (int j = 0; j < p; j++) mu[j] = means[j];
+    double sz = 0.0;
+    for (int i = 0; i < n; i++) { W += w[i]; sz += w[i] * z[i]; }
+    zbar = sz / W;
+  }
+
   for (int a = 0; a < m; a++) {
     int j = screen[a];
-    double s = 0.0;
-    A.each(j, [&](int i, double x) { s += w[i] * x * x; });
+    const double mj = mu[j];
+    double s = 0.0, sraw = 0.0, nzw = 0.0;
+    // centered, the rows a column does not store are added at the end, so a
+    // dense walk skips its zeros too and the two paths stay the same
+    // arithmetic; uncentered, the sum is the one it always was
+    A.each(j, [&](int i, double x) {
+      if (!center) { s += w[i] * x * x; return; }
+      if (x == 0.0) return;
+      double d = x - mj;
+      s += w[i] * d * d;
+      sraw += w[i] * x * x;
+      nzw += w[i];
+    });
+    if (center) {
+      s += mj * mj * (W - nzw);
+      // a column that is constant over the rows is the intercept itself once
+      // centered, and its curvature is rounding: it is left where it is
+      if (s <= 1e-10 * sraw) s = 0.0;
+    }
     v[j] = s;
   }
 
@@ -108,10 +164,17 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
   // rather than n. Cleared through the same walk that filled it.
   std::vector<double> work(covariance ? n : 0, 0.0);
 
+  // the scalar that turns the uncentered residual into the centered one,
+  // r~ = r - c with c = zbar - m'beta; zero where nothing is centered
+  double c = zbar;
+  if (center) for (int j = 0; j < p; j++) c -= mu[j] * beta[j];
+
   if (covariance) {
+    // sum_i w_i (x_ij - m_j)(z_i - zbar) is sum_i w_i x_ij (z_i - zbar), the
+    // centered response having weighted mean zero
     for (int a = 0; a < m; a++) {
       double s = 0.0;
-      A.each(screen[a], [&](int i, double x) { s += w[i] * x * z[i]; });
+      A.each(screen[a], [&](int i, double x) { s += w[i] * x * (z[i] - zbar); });
       g[a] = s;
     }
     for (int b = 0; b < m; b++) {
@@ -123,7 +186,7 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
         for (int a = 0; a < m; a++) {
           double s = 0.0;
           A.each(screen[a], [&](int i, double x) { s += w[i] * x * work[i]; });
-          gram[b][a] = s;
+          gram[b][a] = s - W * mu[screen[a]] * mu[screen[b]];
         }
         A.each(screen[b], [&](int i, double) { work[i] = 0.0; });
       }
@@ -154,7 +217,7 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
         gj = g[a];
       } else {
         gj = 0.0;
-        A.each(j, [&](int i, double x) { gj += w[i] * x * r[i]; });
+        A.each(j, [&](int i, double x) { gj += w[i] * x * (r[i] - c); });
       }
       double u = beta[j] + gj / v[j];
       double nb = apply_table(u, a, cut, slope, icept);
@@ -169,7 +232,7 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
               A.each(screen[b], [&](int i, double x) {
                 s += w[i] * x * work[i];
               });
-              gram[a][b] = s;
+              gram[a][b] = s - W * mu[j] * mu[screen[b]];
             }
             A.each(j, [&](int i, double) { work[i] = 0.0; });
           }
@@ -177,6 +240,7 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
         } else {
           A.each(j, [&](int i, double x) { r[i] -= x * d; });
         }
+        c -= mu[j] * d;
         beta[j] = nb;
         double ad = std::abs(d);
         if (ad > delta) delta = ad;
@@ -205,14 +269,16 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
   if (m < p) {
     std::vector<double> res(n);
     for (int i = 0; i < n; i++) res[i] = z[i];
+    double cf = zbar;
     for (int j = 0; j < p; j++) {
       double bj = beta[j];
       if (bj == 0.0) continue;
       A.each(j, [&](int i, double x) { res[i] -= x * bj; });
+      cf -= mu[j] * bj;
     }
     for (int j = 0; j < p; j++) {
       double s = 0.0;
-      A.each(j, [&](int i, double x) { s += w[i] * x * res[i]; });
+      A.each(j, [&](int i, double x) { s += w[i] * x * (res[i] - cf); });
       grad[j] = s;
     }
   }
@@ -225,9 +291,10 @@ List coord_run(const ACC& A, NumericVector z, NumericVector w,
 List coord_descent(NumericMatrix X, NumericVector z, NumericVector w,
                    NumericVector beta0, NumericMatrix cut, NumericMatrix slope,
                    NumericMatrix icept, IntegerVector screen, int maxit,
-                   double tol, bool covariance) {
+                   double tol, bool covariance,
+                   NumericVector means = NumericVector::create()) {
   return coord_run(DenseCols(X), z, w, beta0, cut, slope, icept, screen,
-                   maxit, tol, covariance);
+                   maxit, tol, covariance, means);
 }
 
 // The slots of a dgCMatrix, passed as they are stored. Taking the S4 object
@@ -240,7 +307,8 @@ List coord_descent_sparse(IntegerVector Ai, IntegerVector Ap,
                           NumericVector beta0, NumericMatrix cut,
                           NumericMatrix slope, NumericMatrix icept,
                           IntegerVector screen, int maxit, double tol,
-                          bool covariance) {
+                          bool covariance,
+                          NumericVector means = NumericVector::create()) {
   return coord_run(SparseCols(Ai, Ap, Ax, nrow, ncol), z, w, beta0, cut,
-                   slope, icept, screen, maxit, tol, covariance);
+                   slope, icept, screen, maxit, tol, covariance, means);
 }

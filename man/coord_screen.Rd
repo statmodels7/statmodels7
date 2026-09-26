@@ -4,7 +4,7 @@
 \alias{coord_screen}
 \title{Which Coordinates a Path Point Has to Visit}
 \usage{
-coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
+coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 }
 \arguments{
 \item{X}{The block's own columns, \verb{n x p}, dense or \code{dgCMatrix}.}

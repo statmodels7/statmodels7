@@ -210,9 +210,8 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 statmod_score_at <- function(spec, coef, design = statmod_design(spec),
                              index = NULL) {
   params <- spec@distrib@params
-  ev <- statmod_eta(spec, design, coef)
+  gv <- statmod_score_obs(spec, coef, design)
   design <- statmod_design_at(spec, coef, design)
-  n <- spec@n_obs
   # the last step, X_p' g_p per equation; with `index` only the columns asked
   # for, which on a lasso path is a handful of the model's hundreds. Each
   # entry is its own column's dot product, so it is the same number either way
@@ -236,6 +235,51 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec),
     out
   }
 
+  project(gv)
+}
+
+
+#' The Score of the Weighted Log-Likelihood, Observation by Observation
+#'
+#' @description
+#' Computes, for every observation, the derivative of its weighted
+#' log-likelihood in the static predictor of each equation.
+#' [statmod_score_at()] projects these vectors onto the columns of the
+#' design, and [coord_working()] builds from them the working response of a
+#' block that is fitted by coordinate descent.
+#'
+#' @details
+#' The static predictor of an equation is the sum of its columns times their
+#' coefficients, with the offset and the adjustment of a block that moves
+#' with its coefficients. In an ordinary model it is the whole predictor, and
+#' the derivative is the family's score on the link scale times the
+#' observation weight.
+#'
+#' A structural term adds to the static predictor a part of its own, and the
+#' derivative then carries more than the family's score at the whole
+#' predictor. Where a filter drives an equation, a coefficient also reaches
+#' the filter's level through the scores at earlier times, and the reverse
+#' recursion of `modelterms7::term_adjoint()` adds that part. Where the
+#' likelihood is a mixture over latent states, Fisher's identity gives the
+#' derivative as the posterior-weighted average of the ordinary score over
+#' the states.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param coef A named list of coefficient vectors.
+#' @param design The design, refreshed at `coef` if any term needs it.
+#'
+#' @return A named list of numeric vectors of length `spec@n_obs`, one per
+#'   distribution parameter in the family's order. Each entry already carries
+#'   the observation weights.
+#'
+#' @seealso [statmod_score_at()], [coord_working()]
+#'
+#' @keywords internal
+statmod_score_obs <- function(spec, coef, design) {
+  params <- spec@distrib@params
+  ev <- statmod_eta(spec, design, coef)
+  n <- spec@n_obs
+
   # Fisher's identity: the derivative of a likelihood mixed over states is
   # the posterior-weighted derivative of the ordinary one, in EVERY
   # predictor and not only the one the regimes shift. K vectorized passes
@@ -252,7 +296,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec),
         gv[[p]] <- gv[[p]] + r$gamma[, k] * spec@weights * rep_len(gk[[p]], n)
       }
     }
-    return(project(gv))
+    return(gv)
   }
 
   g <- distributions7::distrib_gradient(spec@distrib, spec@response, ev$theta,
@@ -281,7 +325,7 @@ statmod_score_at <- function(spec, coef, design = statmod_design(spec),
     for (q in params) gv[[q]] <- gv[[q]] + add[[q]]
   }
 
-  project(gv)
+  gv
 }
 
 

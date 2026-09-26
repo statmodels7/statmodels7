@@ -35,6 +35,17 @@ at a loading scale collapsed to 2.1e-06 and a correlation of -0.9999, while
 scales of 0.647 and 0.389 and a correlation of 0.733 -- which on data
 simulated with the two effects INDEPENDENT is the answer the two separate
 fits give, to 0.2 of log-likelihood.
+
+\code{newton()} is given \code{max_length = 5}, which bounds every component of a
+step on the free scale, as \code{maxNstep} does in mgcv. Where the criterion
+flattens as a smoothing parameter grows, the curvature at the start can be
+small enough for the Newton step to jump past the maximum onto that
+plateau, where the gradient is close to zero and the search stops.
+Measured on a ridge over the fifteen predictors of \code{MASS::UScrime},
+standardized by the term, the first step went from \eqn{\lambda = 1} to
+\eqn{1.6\times10^{10}}, a length of 23.5, and the fit reported the empty
+model at a criterion of -65.40, where the maximum is -53.30 near
+\eqn{\lambda = 91.5}.
 }
 \seealso{
 \code{\link[=outer_fit]{outer_fit()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

@@ -81,7 +81,11 @@ test_that("the compiled kernel is the R twin", {
 
 test_that("coordinate descent and the proximal route reach the same point", {
   # they share the objective and nothing else: one reads the block's columns
-  # and the running residual, the other the whole model through fn and gr
+  # and the running residual, the other the whole model through fn and gr.
+  # The descent solves the block with the equation's intercept profiled out
+  # and moves the intercept with it, while the proximal route holds every
+  # coordinate outside the block. So the proximal route is run at the
+  # intercept the descent chose, where the two block problems are the same.
   cases <- list(
     list(f = y ~ lasso(x), nm = "lasso(x)", th = c(lambda = 8)),
     list(f = y ~ enet(x), nm = "enet(x)", th = c(lambda = 8, alpha = 0.6)),
@@ -91,8 +95,14 @@ test_that("coordinate descent and the proximal route reach the same point", {
     b <- setup_block(cs$f, cs$nm, cs$th)
     cd <- sparse_fit(b$obj, b$beta, b$block, b$hyper, spec = b$spec,
                      design = b$design)
-    px <- sparse_fit(b$obj, b$beta, b$block, b$hyper)
+    i0 <- b$obj$split(seq_along(b$beta))$mu[
+      parametric_intercept(b$spec, b$design, "mu")]
+    b1 <- b$beta
+    b1[i0] <- cd$par[i0]
+    px <- sparse_fit(b$obj, b1, b$block, b$hyper)
     expect_false(is.null(cd), label = cs$nm)
+    # the joint step lowers the objective, as a step in the block alone does
+    expect_lt(cd$value, b$obj$fn(b$beta), label = cs$nm)
     # The objective is what the two routes share, and it is the quantity
     # that survives a change of platform. Near the optimum the excess
     # F(b) - F(bhat) is the quadratic form in the block's own curvature,
@@ -126,7 +136,11 @@ test_that("a response that is not gaussian rebuilds the working quadratic", {
   b0 <- statmod_start(spec, design, obj, NULL)
   cd <- sparse_fit(obj, b0, blocks$sparse[[1L]], hy, spec = spec,
                    design = design)
-  px <- sparse_fit(obj, b0, blocks$sparse[[1L]], hy)
+  # at the intercept the descent chose, for the reason the test above gives
+  i0 <- obj$split(seq_along(b0))$mu[parametric_intercept(spec, design, "mu")]
+  b1 <- b0
+  b1[i0] <- cd$par[i0]
+  px <- sparse_fit(obj, b1, blocks$sparse[[1L]], hy)
   # Looser on the coefficients than the gaussian case above, and the reason is
   # in the subject of the test: here the working quadratic is rebuilt, so the
   # two routes' difference compounds over the passes rather than being bounded
@@ -312,4 +326,82 @@ test_that("screening along a path does not change where the path lands", {
     expect_equal(b[[j]], a[[j]], tolerance = 1e-7,
                  label = sprintf("point %d of the path", j))
   }
+})
+
+
+test_that("the kernel centers the columns implicitly, in both storages", {
+  # With an intercept in the equation the lasso is solved on columns centered
+  # at their weighted means. The kernel does this without forming the
+  # centered matrix: it carries the means and the weighted mean of the
+  # residual, so a sparse block stays sparse. The reference is the same
+  # kernel on columns and a response centered explicitly, which shares the
+  # update and not the bookkeeping. The sparse accessor has to give the dense
+  # one bit for bit, because skipping a zero omits an exact addition of zero.
+  set.seed(3)
+  n <- 200L
+  p <- 8L
+  X <- matrix(stats::rnorm(n * p, mean = 5), n, p)
+  X[sample(n * p, 800L)] <- 0
+  w <- stats::runif(n, 0.5, 2)
+  z <- stats::rnorm(n, 3)
+  Xs <- methods::as(Matrix::Matrix(X, sparse = TRUE), "CsparseMatrix")
+  m <- as.numeric(crossprod(X, w)) / sum(w)
+  Xc <- sweep(X, 2L, m)
+  zc <- z - sum(w * z) / sum(w)
+  v <- coord_colsq(X, w, seq_len(p), m)
+  expect_equal(v, as.numeric(crossprod(w, Xc^2)), tolerance = 1e-12)
+  expect_equal(coord_colsq(Xs, w, seq_len(p), m), v, tolerance = 1e-12)
+  pen <- penalties7::lasso_penalty(n_coef = p)
+  tab <- penalties7::penalty_prox_spec(pen, list(lambda = 5), 1 / v)
+  cols <- seq_len(p) - 1L
+  for (cv in c(FALSE, TRUE)) {
+    a <- coord_descent(X, z, w, numeric(p), tab$cut, tab$slope, tab$icept,
+                       cols, 500L, 1e-12, cv, m)
+    b <- coord_descent_sparse(Xs@i, Xs@p, Xs@x, n, p, z, w, numeric(p),
+                              tab$cut, tab$slope, tab$icept, cols, 500L,
+                              1e-12, cv, m)
+    r <- coord_descent(Xc, zc, w, numeric(p), tab$cut, tab$slope, tab$icept,
+                       cols, 500L, 1e-12, cv)
+    expect_identical(a$beta, b$beta)
+    expect_equal(a$beta, r$beta, tolerance = 1e-10)
+    # the penalty leaves both zero and non-zero coefficients to compare
+    expect_gt(sum(a$beta != 0), 0L)
+    expect_gt(sum(a$beta == 0), 0L)
+  }
+})
+
+test_that("a lasso fit does not depend on where its covariates are centered", {
+  # The intercept is not penalized, so shifting a covariate by a constant
+  # moves the intercept and nothing else. Before the columns were centered,
+  # the descent on the uncentered block alternated with the intercept, moved
+  # in a zig-zag between the two, and reported convergence at another point:
+  # measured on this data, five coefficients against four and a coefficient
+  # gap of 0.049. The covariates have means fifty times their spread, as
+  # many real covariates do.
+  set.seed(7)
+  n <- 80L
+  p <- 10L
+  X <- sapply(seq_len(p), function(j) stats::rnorm(n, mean = 50 * j, sd = j))
+  y <- 3 + 0.8 * (X[, 1L] - 50) - 0.3 * (X[, 3L] - 150) + stats::rnorm(n)
+  d <- data.frame(y = y)
+  d$X <- X
+  dc <- data.frame(y = y)
+  dc$X <- scale(X, center = TRUE, scale = FALSE)
+  ds <- data.frame(y = y)
+  ds$X <- methods::as(Matrix::Matrix(X, sparse = TRUE), "CsparseMatrix")
+  g <- distributions7::gaussian1_distrib()
+  fit <- function(dat) {
+    statmod(y ~ lasso(X, standardize = TRUE, lambda = 10), g, dat)
+  }
+  a <- fit(d)
+  b <- fit(dc)
+  s <- fit(ds)
+  ba <- a@coefficients$mu[-1L]
+  bb <- b@coefficients$mu[-1L]
+  expect_identical(ba != 0, bb != 0)
+  expect_equal(ba, bb, tolerance = 1e-4)
+  expect_equal(s@coefficients$mu[-1L], ba, tolerance = 1e-8)
+  # the two intercepts differ by the shift, which is what an intercept is for
+  expect_equal(a@coefficients$mu[[1L]] + sum(colMeans(X) * ba),
+               b@coefficients$mu[[1L]], tolerance = 1e-4)
 })

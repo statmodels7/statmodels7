@@ -495,6 +495,8 @@ test_that("the default optimizer is chosen from what the criterion supplies", {
   # off both the resolution and the short backtracking budget, so a comparison
   # made that way compares two different things.
   expect_s3_class(outer_default_optimizer(TRUE, TRUE), "optimizers7::Newton")
+  # and its step is bounded, as mgcv bounds its own: see the test below
+  expect_identical(outer_default_optimizer(TRUE, TRUE)@max_length, 5)
   expect_s3_class(outer_default_optimizer(TRUE, FALSE), "optimizers7::Lbfgs")
   expect_s3_class(outer_default_optimizer(FALSE, FALSE),
                   "optimizers7::NelderMead")
@@ -563,4 +565,30 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
   st3$score <- st$score * 1e-3
   r3 <- criterion_resolution(st3, spec, design, method, crit_at)
   expect_true(is.finite(r3) && r3 > 0)
+})
+
+
+test_that("a long first Newton step does not carry the search onto the plateau", {
+  # Where a ridge penalty is light, the REML criterion rises almost linearly
+  # in log(lambda), so its curvature is small and the Newton step is long.
+  # On this data the unbounded step from lambda = 1 goes to about 1.7e9,
+  # onto the plateau where every coefficient is shrunk to zero and the
+  # gradient vanishes, and the search stops there 1.56 below the maximum.
+  # The default Newton step is bounded at 5 on the free scale and reaches
+  # the maximum near lambda = 74.
+  set.seed(2)
+  n <- 50L
+  p <- 15L
+  Z <- matrix(stats::rnorm(n * p), n, p)
+  y <- 1 + as.numeric(Z %*% stats::rnorm(p, 0, 0.12)) + stats::rnorm(n)
+  d <- data.frame(y = y)
+  d$Z <- scale(Z)
+  g <- distributions7::gaussian1_distrib()
+  def <- statmod(y ~ ridge(Z), g, d)
+  free <- statmod(y ~ ridge(Z), g, d, outer_optimizer = optimizers7::newton())
+  # the case exercises the bound: without it the search lands on the plateau
+  expect_gt(hyper(free)$estimate, 1e6)
+  expect_lt(hyper(def)$estimate, 1e3)
+  expect_gt(def@criterion, free@criterion + 1)
+  expect_identical(statmod_certificate(def)$state, "converged")
 })

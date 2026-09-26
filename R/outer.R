@@ -1667,6 +1667,17 @@ outer_backtracks <- function() 12
 #' simulated with the two effects INDEPENDENT is the answer the two separate
 #' fits give, to 0.2 of log-likelihood.
 #'
+#' `newton()` is given `max_length = 5`, which bounds every component of a
+#' step on the free scale, as `maxNstep` does in mgcv. Where the criterion
+#' flattens as a smoothing parameter grows, the curvature at the start can be
+#' small enough for the Newton step to jump past the maximum onto that
+#' plateau, where the gradient is close to zero and the search stops.
+#' Measured on a ridge over the fifteen predictors of `MASS::UScrime`,
+#' standardized by the term, the first step went from \eqn{\lambda = 1} to
+#' \eqn{1.6\times10^{10}}, a length of 23.5, and the fit reported the empty
+#' model at a criterion of -65.40, where the maximum is -53.30 near
+#' \eqn{\lambda = 91.5}.
+#'
 #' @param exact Whether the criterion has an exact gradient.
 #' @param use_hess Whether the search should STEER by the exact Hessian, which
 #'   is not the same question as whether one exists: see [outer_newton_ok()].
@@ -1679,7 +1690,11 @@ outer_backtracks <- function() 12
 #'
 #' @keywords internal
 outer_default_optimizer <- function(exact, use_hess, mixed = FALSE) {
-  if (use_hess) return(optimizers7::newton())
+  # the step is bounded at 5 on the free scale, mgcv's maxNstep: a Newton
+  # step set by a small curvature can otherwise jump past the maximum onto
+  # the plateau where a smoothing parameter runs to infinity. See the
+  # details above.
+  if (use_hess) return(optimizers7::newton(max_length = 5))
   if (exact || mixed) return(optimizers7::lbfgs())
   optimizers7::nelder_mead()
 }

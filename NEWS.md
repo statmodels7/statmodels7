@@ -1,3 +1,88 @@
+# statmodels7 0.154.0
+
+* **A kinked penalty's block is solved with its equation's intercept
+  profiled out.** The coordinate descent fits the block with the other
+  columns of its equation held, and the intercept is one of them. Where the
+  columns are not centered, a change of one coefficient moves the mean of
+  the fit, which only the intercept can take back, and the intercept is
+  updated in another block. The alternation between the two blocks then
+  converged at a rate set by how close each column is to the constant.
+  Measured on `MASS::UScrime`, whose predictors have means up to 33 times
+  their spread, a lasso on the fifteen raw predictors of `log(y)` at
+  lambda = 17.4 stopped with the objective at -17.84 where its minimum is
+  -21.93, with six coefficients against nine, reporting
+  `converged = FALSE`, and the path chose the empty model at
+  lambda = 374.5.
+* The kernel now centers the columns with the working weights, and it does
+  so implicitly, as glmnet does: it carries the weighted means of the
+  columns and the weighted mean of the residual, so a sparse block stays
+  sparse. `coord_fit()` then sets the intercept to the value that goes with
+  the block's coefficients, so each step is a joint step in the block and
+  the intercept. On `MASS::UScrime` the path now chooses nine predictors at
+  lambda = 17.4 from the raw columns, the point it reaches with the
+  predictors centered in the data, in 7.0 seconds of processor time where
+  it took 38.2. A held intercept, or an equation with no intercept, leaves
+  the block uncentered as before.
+* **The default outer optimizer bounds a Newton step.** Where the exact
+  outer Hessian exists the search is `newton(max_length = 5)` from
+  optimizers7 0.9.0, which bounds every component of a step on the free
+  scale, as `maxNstep` does in mgcv. Where a penalty is light the REML
+  criterion rises almost linearly in the logarithm of the smoothing
+  parameter, so its curvature is small and the Newton step is long enough
+  to jump past the maximum onto the plateau where every coefficient is
+  shrunk to zero. There the gradient is close to zero and the search
+  stopped. Measured on a ridge over the fifteen predictors of
+  `MASS::UScrime`, standardized by the term, the first step went from
+  lambda = 1 to 1.6e10 and the fit reported the empty model after two
+  evaluations: criterion -65.40, 2.00 effective degrees of freedom, and the
+  certificate `unknown`. With the bound the search reaches lambda = 91.48 in
+  four evaluations, at a criterion of -53.30 and 12.93 effective degrees of
+  freedom, and the certificate reads `converged`. On six simulated ridge
+  fits with fifteen predictors and fifty observations, two stopped on the
+  plateau before and none does now, and the four that converged before need
+  5 to 8 evaluations where they needed 12 to 20. An optimizer named by the
+  caller keeps its own settings, so `outer_optimizer = newton()` is
+  unbounded as before.
+* The bound also binds on the first step of an ordinary smooth. On the data
+  of the smoother net the Newton step of `y ~ s(x)` from lambda = 1 reaches
+  a free value of 8.05, where the maximum is at 1.97. The search now takes a
+  step of 5 and reaches the same maximum by another path, so it stops at a
+  different point within the criterion's resolution: on two gaussian smooths
+  lambda moves by 0.02 per cent, the effective degrees of freedom by 2e-4
+  and 4e-4, and the log-likelihood by 1.3e-4 and 4.2e-4, while the searches
+  take 6 and 5 evaluations against 7 and 8 and the certificate reads
+  `converged` in both releases.
+* **A kinked block beside a structural term is solved on the working
+  response of the model.** The coordinate descent built its working
+  response from the family's score at the whole predictor of the equation.
+  A structural term adds to that predictor a part that no column of the
+  block carries: the level of a filter, or the posterior mean of the shifts
+  of a likelihood mixed over latent states. The working response therefore
+  carried that part as well, and the descent solved a different problem.
+  It now reads the static predictor and the score of the model, which
+  Fisher's identity gives for a mixture and the reverse recursion gives for
+  a filter. Measured with a lasso held at a fixed lambda, the largest
+  distance of an active coefficient's score from its KKT value was 38
+  beside `gas(1, 1)`, 27 beside `regime(2)` and 57 beside
+  `jump(x, psi ~ random(~1 | id), marginal = TRUE)`, and it is now 6.9e-07,
+  1.5e-06 and 5.0e-08, the reference being the derivative of the
+  log-likelihood taken by numDeriv. Beside `regime(2)` with a Poisson
+  response the fit diverged to an intercept of -309 and a log-likelihood
+  of -129223 in 238 seconds. It now converges in 5 seconds at a
+  log-likelihood of -795.35, with the coefficient of the signal column at
+  0.497 against a truth of 0.5.
+* The same defect met the intercept step above. Beside the marginal
+  break-point term the intercept took the posterior mean of the jump at
+  every sweep, and the lasso path chose the empty model at a log-likelihood
+  of -198.61, where 0.153.0 reached -72.25. The fit now reaches -71.32 at
+  the lambda that 0.153.0 chose.
+* Beside `gas(1, 1)` the fit now stops at its KKT point and reports
+  `converged = FALSE`, where 0.153.0 reported `TRUE` at a point that was
+  not a KKT point. The flag comes from the smooth block: at the second pass
+  it takes one step at a point with nothing left to move, and its stall
+  guard fires.
+* Requires optimizers7 0.9.0.
+
 # statmodels7 0.153.0
 
 * **`statmod_certificate()` names a hyperparameter a boundary where the
