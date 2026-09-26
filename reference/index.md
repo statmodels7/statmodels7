@@ -1367,6 +1367,9 @@ exported, and none is needed to use the package.
 - [`unknown_what()`](https://statmodels7.github.io/statmodels7/reference/unknown_what.md)
   : The Message for an Unrecognized Prediction Target
 
+- [`vanished_coords()`](https://statmodels7.github.io/statmodels7/reference/vanished_coords.md)
+  : Coordinates Whose Design Column Has Vanished
+
 - [`vb_inner()`](https://statmodels7.github.io/statmodels7/reference/vb_inner.md)
   : The Verbosity of an Inner Fit Inside the Outer Search
 

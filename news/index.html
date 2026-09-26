@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.151.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,12 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.152.0" id="statmodels7-01520">statmodels7 0.152.0<a class="anchor" aria-label="anchor" href="#statmodels7-01520"></a></h2>
+<ul><li>
+<strong>A coefficient whose own design column has vanished is named as not identified.</strong> <code><a href="../reference/vanished_coords.html">vanished_coords()</a></code> reads the design at the fitted coefficients and names a coordinate whose column norm is at most <code>eps</code> times the largest of its equation’s and whose diagonal of the penalized information is at most <code>eps^2</code> times the largest. It is united with what the fit’s pivot or <code><a href="../reference/deficient_coords.html">deficient_coords()</a></code> named, so <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> reports <code>NA</code> there and <code><a href="../reference/warn_aliased.html">warn_aliased()</a></code> names it. The case is a break-point run out of the data: written by hand as a sharp step or a truncated line inside <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, the fit parked the break-point at 1.9e+12 or 1.5e+33 with the change’s column at 2e-67 and the position’s at 2e-23, reported <code>converged = TRUE</code>, and the warning named one of the two flat coefficients or, on the truncated line, neither – the change’s diagonal having underflowed to exactly zero, which <code><a href="../reference/deficient_coords.html">deficient_coords()</a></code> reads as a parameter at a boundary. Both are now named on the four fits measured. The two conditions are required together (Giovanni): at a boundary the design column is alive and only the working weight vanishes, and the estimate stands with its variance held, as since 0.94.0; a level of a random effect with no observations has an empty column that its prior identifies. The flag <code>converged</code> is unchanged, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>.</li>
+<li>Requires modelterms7 0.79.0, where a parameter of <code>nl()</code> may be developed over a break-point term. Nothing in the fitting layer needed to change for it: measured end to end, <code><a href="../reference/reml.html">reml()</a></code> over <code>r ~ jump(t, psi ~ random(~1 | id), smoothed = ...)</code> on twelve subjects converges in 5 s with the certificate <code>converged</code>, the position’s random-effect sd at 0.584 against a truth of 0.6 and the per-subject positions at a correlation of 0.995 with the truth; the exact outer gradient and Hessian agree with a difference of the criterion at 5e-07 and 1e-06, the floor that reference has on a block that moves. A fitting layer’s bootstrap restarts reach only the break-point terms written in an equation; a nested one relies on the term’s own start search.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.151.0" id="statmodels7-01510">statmodels7 0.151.0<a class="anchor" aria-label="anchor" href="#statmodels7-01510"></a></h2>
 <ul><li>
