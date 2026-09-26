@@ -1,3 +1,36 @@
+# statmodels7 0.152.0
+
+* **A coefficient whose own design column has vanished is named as not
+  identified.** `vanished_coords()` reads the design at the fitted
+  coefficients and names a coordinate whose column norm is at most `eps`
+  times the largest of its equation's and whose diagonal of the penalized
+  information is at most `eps^2` times the largest. It is united with what
+  the fit's pivot or `deficient_coords()` named, so `coef()` reports `NA`
+  there and `warn_aliased()` names it. The case is a break-point run out of
+  the data: written by hand as a sharp step or a truncated line inside
+  `modelterms7::nl()`, the fit parked the break-point at 1.9e+12 or 1.5e+33
+  with the change's column at 2e-67 and the position's at 2e-23, reported
+  `converged = TRUE`, and the warning named one of the two flat coefficients
+  or, on the truncated line, neither -- the change's diagonal having
+  underflowed to exactly zero, which `deficient_coords()` reads as a
+  parameter at a boundary. Both are now named on the four fits measured. The
+  two conditions are required together (Giovanni): at a boundary the design
+  column is alive and only the working weight vanishes, and the estimate
+  stands with its variance held, as since 0.94.0; a level of a random effect
+  with no observations has an empty column that its prior identifies. The
+  flag `converged` is unchanged, as in `lm()`.
+* Requires modelterms7 0.79.0, where a parameter of `nl()` may be developed
+  over a break-point term. Nothing in the fitting layer needed to change for
+  it: measured end to end, `reml()` over `r ~ jump(t, psi ~ random(~1 | id),
+  smoothed = ...)` on twelve subjects converges in 5 s with the certificate
+  `converged`, the position's random-effect sd at 0.584 against a truth of
+  0.6 and the per-subject positions at a correlation of 0.995 with the truth;
+  the exact outer gradient and Hessian agree with a difference of the
+  criterion at 5e-07 and 1e-06, the floor that reference has on a block that
+  moves. A fitting layer's bootstrap restarts reach only the break-point
+  terms written in an equation; a nested one relies on the term's own start
+  search.
+
 # statmodels7 0.151.0
 
 * **A working phase that has run out of step control is ended, and the fit

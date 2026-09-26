@@ -1577,6 +1577,75 @@ deficient_coords <- function(K) {
   sort(rest[setdiff(seq_along(rest), q$pivot[seq_len(q$rank)])])
 }
 
+#' Coordinates Whose Design Column Has Vanished
+#'
+#' @description
+#' The coordinates of the stacked coefficient vector whose column of the
+#' design, read at the fitted coefficients, has vanished: its norm is at most
+#' `eps` times the largest column norm of its own equation, and the penalized
+#' information carries nothing on its diagonal either.
+#'
+#' @details
+#' It answers the one case [deficient_coords()] leaves unnamed by design. That
+#' function reads \eqn{K} alone, and an empty row of \eqn{K} is two different
+#' things a matrix cannot tell apart. At a parameter's boundary the design
+#' column is alive and the working weight vanishes: the estimate stands and
+#' only its variance does not, which is [uninformative_coords()]' business.
+#' Where a coefficient's own column vanishes, nothing in the data moves with it
+#' and it is not identified at all -- a break-point run out of the data, whose
+#' change and position columns are identically zero there. Measured on a
+#' sharp step and a truncated line written into [modelterms7::nl()], the fit
+#' parked the break-point at 1.9e+12 with the change's column at 2e-67 and the
+#' position's at 2e-23, and without this rule one of the two, or neither, was
+#' named.
+#'
+#' Both conditions are required. The design column alone would name a
+#' penalized coordinate whose column is empty -- a level of a random effect
+#' with no observations, which its prior identifies -- and the diagonal alone
+#' would name a coordinate at a boundary. The column is compared with its own
+#' equation's largest, since two equations' designs need not share a scale,
+#' and the diagonal with \eqn{\epsilon^2} times the largest, the square of the
+#' same resolution.
+#'
+#' @param spec The fitted specification.
+#' @param coef The coefficients, one vector per distribution parameter.
+#' @param design The design [statmod_design()] built.
+#' @param K The penalized information at `coef`, as [deficient_coords()]
+#'   reads it.
+#'
+#' @return An integer vector of coordinates of the stacked coefficient
+#'   vector, possibly empty.
+#'
+#' @seealso [deficient_coords()] for a column the others span,
+#'   [uninformative_coords()] for a coordinate at a boundary.
+#'
+#' @keywords internal
+vanished_coords <- function(spec, coef, design, K) {
+  K <- tryCatch(as_dense(K), error = function(e) NULL)
+  if (is.null(K) || !is.matrix(K)) return(integer(0))
+  d <- diag(K)
+  fin <- is.finite(d)
+  top <- max(c(0, d[fin & d > 0]))
+  flat_k <- fin & d >= 0 & d <= .Machine$double.eps^2 * top
+  if (!any(flat_k)) return(integer(0))
+  da <- statmod_design_at(spec, coef, design)
+  out <- integer(0)
+  off <- 0L
+  for (p in spec@distrib@params) {
+    m <- design[[p]]$npar
+    if (m == 0L) next
+    X <- da[[p]]$X
+    nr <- sqrt(as.numeric(if (inherits(X, "Matrix")) Matrix::colSums(X^2)
+                          else colSums(X^2)))
+    top_x <- max(c(0, nr[is.finite(nr)]))
+    gone <- which(is.finite(nr) & nr <= .Machine$double.eps * top_x)
+    out <- c(out, off + gone)
+    off <- off + m
+  }
+  out <- out[out <= length(d)]
+  sort(out[flat_k[out]])
+}
+
 
 #' Report a Model Whose Columns Are Not All Identified
 #'

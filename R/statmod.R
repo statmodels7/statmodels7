@@ -530,11 +530,19 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # pivot names wherever both speak, and costs 0.26 to 0.56 per cent of a
   # realistic fit -- 3.02 per cent, or 1.2 ms, of the cheapest one there is.
   alias <- res$aliased
-  if (!length(alias)) {
-    alias <- tryCatch(
-      deficient_coords(statmod_penalized_at(spec, coef, design, hyper,
-                                            expected, approx)),
-      error = function(e) integer(0))
+  Kmode <- tryCatch(statmod_penalized_at(spec, coef, design, hyper,
+                                         expected, approx),
+                    error = function(e) NULL)
+  if (!length(alias) && !is.null(Kmode)) {
+    alias <- tryCatch(deficient_coords(Kmode), error = function(e) integer(0))
+  }
+  # and a coefficient whose own design column has vanished -- a break-point
+  # run out of the data -- is named whatever the pivot said: the pivot names
+  # one of two collinear columns, and here both are empty
+  if (!is.null(Kmode)) {
+    alias <- sort(unique(c(alias, tryCatch(
+      vanished_coords(spec, coef, design, Kmode),
+      error = function(e) integer(0)))))
   }
   # A READER WHO DOES NOT PRINT THE SUMMARY IS STILL TOLD. The `NA` that
   # follows is base R's convention and is right, but on its own it reports a

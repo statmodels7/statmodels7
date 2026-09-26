@@ -195,6 +195,32 @@ test_that("the gradient is exact where the block moves with the coefficients", {
   }
 })
 
+test_that("the gradient is exact over a break-point nested in nl()", {
+  skip_if_not_installed("numDeriv")
+  # the parameter's own design moves with the break-point term's block, and
+  # the nl() term supplies the sub-term's derivatives through the chain rule;
+  # measured 4.7e-07 against the criterion refitted, the floor that reference
+  # has on a block that moves
+  set.seed(4)
+  m <- 8
+  ni <- 40
+  dn <- data.frame(id = factor(rep(seq_len(m), each = ni)),
+                   t = rep(seq(0, 10, length.out = ni), m),
+                   x = stats::runif(m * ni, 0, 3))
+  psi_i <- 6 + stats::rnorm(m, sd = 0.6)
+  dn$y <- 5 * exp(-exp(log(0.5) + 0.875 * (dn$t > psi_i[dn$id])) * dn$x) +
+    stats::rnorm(nrow(dn), sd = 0.2)
+  f <- y ~ 0 + nl(~ a * exp(-r * x),
+                  r ~ jump(t, psi ~ random(~1 | id),
+                           smoothed = numericals7::smooth_probit()),
+                  links = list(r = linkfunctions7::log_link()),
+                  start = list(a = 4))
+  h <- crit_of_eta(f, dn, reml(hessian = "observed"), polish = FALSE)
+  eta <- hyper_to_eta(statmod(f, distributions7::gaussian1_distrib(), dn,
+                              outer_criterion = NULL)@hyper, h$idx) + 0.3
+  expect_equal(h$gr(eta), numDeriv::grad(h$fn, eta), tolerance = 1e-4)
+})
+
 test_that("a penalty inside a refreshable term reaches the same optimum", {
   # ⚠️ KNOWN LIMITATION, pinned by its CONSEQUENCE rather than by its size.
   # nl(), seg(), jump() and jseg() register term_refresh(), so their design
