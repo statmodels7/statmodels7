@@ -272,6 +272,12 @@ test_that("a break-point term whose psi is not named starts on a grid", {
   held <- statmod(y ~ jseg(x, psi = 5, n_boot = 0),
                   distributions7::gaussian1_distrib(), dj)
   expect_lt(psi_of(held), 5.8)
+  # from this start the scaling factor reaches its floor with the
+  # break-point still moving, so the working phase is ended rather than
+  # repeated at every pass: two passes, where running out of the pass
+  # budget took a hundred and about 250 s
+  expect_false(held@converged)
+  expect_lte(max(held@history$blocks$pass), 5)
   # and it is the worse optimum, which is the point of the grid
   expect_gt(as.numeric(logLik(fit)), as.numeric(logLik(held)))
   # with the restarts left at their default the same start is rescued:

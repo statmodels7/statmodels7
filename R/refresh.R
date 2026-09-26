@@ -327,6 +327,43 @@ statmod_refresh_settled <- function(spec, design, which = "all") {
 }
 
 
+#' Have the Refreshable Terms Run Out of Step Control?
+#'
+#' @description
+#' `TRUE` when at least one refreshable term reports, through
+#' [modelterms7::term_stalled()], that it has not settled and has no step
+#' control left, and every other term asked has either settled or reports
+#' the same. [fit_working()] reads it to end a working phase that cannot
+#' settle.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design The design, whose refresh state holds the terms asked.
+#' @param which Which entries to ask, as in [statmod_refresh_settled()].
+#'
+#' @return A single logical, `FALSE` when there is nothing to ask.
+#'
+#' @seealso [statmod_refresh_settled()], [fit_working()]
+#'
+#' @keywords internal
+statmod_refresh_stalled <- function(spec, design, which = "all") {
+  rf <- attr(design, "refresh")
+  if (is.null(rf) || !length(rf)) return(FALSE)
+  st <- attr(design, "state")
+  any_stalled <- FALSE
+  for (r in rf) {
+    if (identical(which, "jacobian") && isTRUE(r$frozen)) next
+    if (identical(which, "frozen") && !isTRUE(r$frozen)) next
+    tm <- st$terms[[r$param]][[r$term]]
+    if (isTRUE(modelterms7::term_stalled(tm))) {
+      any_stalled <- TRUE
+    } else if (!isTRUE(modelterms7::term_converged(tm))) {
+      return(FALSE)
+    }
+  }
+  any_stalled
+}
+
+
 #' The Terms as the Fit Left Them
 #'
 #' @description

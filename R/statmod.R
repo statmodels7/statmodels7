@@ -676,6 +676,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   has_structural <- length(attr(design, "structural")) > 0L
   terms_ok <- TRUE
   frozen_ok <- TRUE
+  frozen_stalled <- FALSE
   struct_ok <- TRUE
 
   # A structural term of the FILTER shape is fitted in the same system as the
@@ -731,6 +732,7 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
         res <- fit_working(obj, beta, blocks$smooth, spec, design, hyper,
                            inner_optimizer, vb, tol, budget = working_budget)
         frozen_ok <- isTRUE(res$converged)
+        frozen_stalled <- isTRUE(res$stalled)
       } else {
         if (vb$blocks) {
           vb_rule(sprintf("inner pass %d: smooth block, %d coefficients",
@@ -842,6 +844,13 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     # iteration. The alternation is still entered where a term of the
     # LIKELIHOOD shape (a regime) is present, or a sparse block, or a term
     # that recomputes its own design, because those really do alternate.
+    # a working phase that stopped for want of step control will stop the
+    # same way at the next pass, the schedule staying at its floor, so the
+    # alternation ends here too instead of repeating it up to maxit times
+    if (frozen_stalled) {
+      converged <- FALSE
+      break
+    }
     lone <- !length(blocks$sparse) && !has_refresh &&
       (!has_structural || isTRUE(joint))
     if (lone) {
@@ -1297,6 +1306,26 @@ held_positions <- function(spec, design, obj, beta) {
 #' contribution of a good working value can sit orders of magnitude off
 #' the data. Running out of the budget reports `FALSE`.
 #'
+#' A phase that cannot settle is ended early and reports `FALSE` as well:
+#' where every break-point that has not settled sits at the floor of its
+#' scaling factor ([modelterms7::term_stalled()]) for `stall_limit`
+#' consecutive working fits, the factor can shrink no further and nothing is
+#' left to bring the break-point to rest. The profile objective of a
+#' discontinuous term is constant between consecutive observations, so such
+#' a break-point passes from one observation to the next for as long as the
+#' budget lasts: measured on `jseg(x, psi = 5, n_boot = 0)` at
+#' \eqn{n = 400}, the factor reached its floor of 1.8e-8 in the second pass
+#' and the break-point then wandered through a hundred passes of 500 working
+#' fits, 245 s, without converging. Four of those passes did end on the
+#' stall or cycle rule, after 58, 116, 349 and 349 working fits at the
+#' floor, which is a wandering break-point landing on a step small enough
+#' by chance and not a settled one. In the phases that settle the longest
+#' run at the floor measured is 7 working fits (three break-points at
+#' \eqn{n = 10000}); the default of 20 sits between the two, and the stall
+#' and cycle rules are read first at every working fit. With it the fit
+#' above ends in 1.7 s, and with the restarts left on it reaches the same
+#' optimum as the grid start in 1.3 s where it took 250 s.
+#'
 #' @param obj The objective.
 #' @param beta The current stacked coefficients.
 #' @param idx The smooth block's indices.
@@ -1308,9 +1337,12 @@ held_positions <- function(spec, design, obj, beta) {
 #' @param tol The alternation's tolerance, read for the objective-stall rule.
 #' @param budget How many working fits at most. The default covers the
 #'   measured runs (69 to 165 iterations on three break-points) with room.
+#' @param stall_limit How many consecutive working fits with every unsettled
+#'   break-point at its scaling floor end the phase.
 #'
 #' @return As [fit_smooth()], plus `fasola`, the number of
-#'   working fits taken.
+#'   working fits taken, and `stalled`, `TRUE` where the phase was ended by
+#'   `stall_limit`.
 #'
 #' @references
 #' Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
@@ -1321,7 +1353,7 @@ held_positions <- function(spec, design, obj, beta) {
 #'
 #' @keywords internal
 fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
-                        budget = 500L) {
+                        budget = 500L, stall_limit = 20L) {
   st <- attr(design, "state")
   rf <- attr(design, "refresh")
   # The working fit covers the EQUATIONS that carry a frozen block and
@@ -1346,6 +1378,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
     # nothing to iterate over, so the ordinary fit is the whole answer
     res <- fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
     res$fasola <- 0L
+    res$stalled <- FALSE
     return(res)
   }
   conv <- FALSE
@@ -1353,6 +1386,8 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
   w_prev2 <- Inf
   stall <- 0L
   cyc <- 0L
+  floor_run <- 0L
+  stalled <- FALSE
   it_total <- 0L
   it <- 0L
   for (it in seq_len(budget)) {
@@ -1397,6 +1432,15 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
       conv <- TRUE
       break
     }
+    # a break-point still moving with its scaling factor at the floor is
+    # under no step control, and one that has stayed there this long
+    # settles only by chance: the profile is constant between observations
+    floor_run <- if (statmod_refresh_stalled(spec, design, which = "frozen"))
+      floor_run + 1L else 0L
+    if (floor_run >= stall_limit) {
+      stalled <- TRUE
+      break
+    }
     w_prev2 <- w_prev
     w_prev <- w
   }
@@ -1410,10 +1454,13 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
   }
   if (vb$blocks) {
     vb_say("%d working fits, %s", it,
-           if (conv) "settled" else "budget exhausted", indent = 5L)
+           if (conv) "settled" else if (stalled)
+             "stopped: the scaling factor is at its floor and a break-point is still moving"
+           else "budget exhausted", indent = 5L)
   }
   list(par = beta, value = obj$fn(beta), converged = conv,
-       iterations = it_total, history = NULL, note = NULL, fasola = it)
+       iterations = it_total, history = NULL, note = NULL, fasola = it,
+       stalled = stalled)
 }
 
 

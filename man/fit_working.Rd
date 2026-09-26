@@ -14,7 +14,8 @@ fit_working(
   method,
   vb,
   tol,
-  budget = 500L
+  budget = 500L,
+  stall_limit = 20L
 )
 }
 \arguments{
@@ -38,10 +39,14 @@ fit_working(
 
 \item{budget}{How many working fits at most. The default covers the
 measured runs (69 to 165 iterations on three break-points) with room.}
+
+\item{stall_limit}{How many consecutive working fits with every unsettled
+break-point at its scaling floor end the phase.}
 }
 \value{
 As \code{\link[=fit_smooth]{fit_smooth()}}, plus \code{fasola}, the number of
-working fits taken.
+working fits taken, and \code{stalled}, \code{TRUE} where the phase was ended by
+\code{stall_limit}.
 }
 \description{
 The iteration of \cite{fasola2018} for a term whose block is a working
@@ -88,6 +93,26 @@ fixed point does the working objective coincide with the model's, which
 is why no best-so-far iterate is kept: mid-travel the committed
 contribution of a good working value can sit orders of magnitude off
 the data. Running out of the budget reports \code{FALSE}.
+
+A phase that cannot settle is ended early and reports \code{FALSE} as well:
+where every break-point that has not settled sits at the floor of its
+scaling factor (\code{\link[modelterms7:term_stalled]{modelterms7::term_stalled()}}) for \code{stall_limit}
+consecutive working fits, the factor can shrink no further and nothing is
+left to bring the break-point to rest. The profile objective of a
+discontinuous term is constant between consecutive observations, so such
+a break-point passes from one observation to the next for as long as the
+budget lasts: measured on \code{jseg(x, psi = 5, n_boot = 0)} at
+\eqn{n = 400}, the factor reached its floor of 1.8e-8 in the second pass
+and the break-point then wandered through a hundred passes of 500 working
+fits, 245 s, without converging. Four of those passes did end on the
+stall or cycle rule, after 58, 116, 349 and 349 working fits at the
+floor, which is a wandering break-point landing on a step small enough
+by chance and not a settled one. In the phases that settle the longest
+run at the floor measured is 7 working fits (three break-points at
+\eqn{n = 10000}); the default of 20 sits between the two, and the stall
+and cycle rules are read first at every working fit. With it the fit
+above ends in 1.7 s, and with the restarts left on it reaches the same
+optimum as the grid start in 1.3 s where it took 250 s.
 }
 \references{
 Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
