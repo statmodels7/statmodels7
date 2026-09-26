@@ -161,7 +161,8 @@ test_that("the expected route is admitted only where the family answers", {
     .package = "distributions7")
   # and a family that approximates its expected information leaves the search
   # derivative-free rather than reporting a gradient it cannot compute
-  expect_false(expected_deriv_ok(distributions7::pig1_distrib()))
+  expect_false(expected_deriv_ok(pig_bare_distrib()))
+  expect_true(expected_deriv_ok(distributions7::pig1_distrib()))
   expect_true(expected_deriv_ok(distributions7::gamma1_distrib()))
 })
 

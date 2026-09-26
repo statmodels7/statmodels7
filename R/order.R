@@ -148,9 +148,9 @@ assert_criterion_order <- function(distrib, method) {
 #' \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 #' \partial\eta^\top]}, a function of the parameters alone. Where a family
 #' writes that information out, [distributions7::expected_hessian_exact()]
-#' answers `TRUE` and nothing is asked here. Where it does not -- the two
-#' Poisson-inverse gaussians among the shipped families -- the family falls
-#' back on the strategy `approx` names, and the default, `"opg"`, returns
+#' answers `TRUE` and nothing is asked here. Every shipped family does since
+#' \pkg{distributions7} 0.65.0; where a family written outside the toolkit
+#' does not, it falls back on the strategy `approx` names, and the default, `"opg"`, returns
 #' \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
 #' estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
 #' information itself: it depends on the response, as the observed curvature
@@ -160,8 +160,8 @@ assert_criterion_order <- function(distrib, method) {
 #' answers `unknown`.
 #'
 #' Measured at 4000 observations with a smooth on the first parameter, on the
-#' six families this applied to before \pkg{distributions7} 0.64.0 gave four of
-#' them an exact expected information, every one fit on the observed
+#' six families this applied to before \pkg{distributions7} 0.64.0 and 0.65.0
+#' gave all of them an exact expected information, every one fit on the observed
 #' information in 3 to 5 criterion evaluations with a Newton search and an
 #' analytic certificate, where the outer-product route took 12 to 22
 #' evaluations of a simplex.
@@ -181,8 +181,9 @@ assert_criterion_order <- function(distrib, method) {
 #' @examples
 #' statmodels7:::assert_criterion_information(
 #'   distributions7::gaussian1_distrib(), reml("expected"), "opg")
-#' try(statmodels7:::assert_criterion_information(
-#'   distributions7::pig1_distrib(), reml("expected"), "opg"))
+#' # the Poisson-inverse Gaussian computes its expected information exactly
+#' statmodels7:::assert_criterion_information(
+#'   distributions7::pig1_distrib(), reml("expected"), "opg")
 #'
 #' @seealso [expected_is_opg()], the predicate, and [assert_criterion_order()].
 #' @keywords internal

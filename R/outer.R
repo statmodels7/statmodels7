@@ -231,8 +231,9 @@ outer_path_defaults <- function() {
 #'   the criterion the Laplace approximation, or `"expected"`, the Fisher
 #'   information, a function of the parameters alone. Matched with
 #'   [match.arg()]. Both carry an exact outer gradient and Hessian wherever the
-#'   family writes its expected information out. A family that does not -- the
-#'   two Poisson-inverse gaussians -- would read the outer product of its
+#'   family writes its expected information out, which every shipped family
+#'   does since distributions7 0.65.0. A family that does not would read the
+#'   outer product of its
 #'   scores at the data under the
 #'   default `iwls(approx = "opg")`, which is not an expectation, and
 #'   [statmod()] rejects `"expected"` there: see

@@ -17,16 +17,24 @@ pig_data <- function(n = 200L, seed = 1L) {
 
 test_that("fit_expected asks the family as well as the fit", {
   dd <- pig_data(120L)
-  # a family with no closed expected information: the step reads the observed
-  # information by default, and where it is asked for the expected one it may
-  # use an approximation of it; the report does not
-  f_pig <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  # a family that approximates its expected information: the step reads the
+  # observed information by default, and where it is asked for the expected
+  # one it uses the approximation; the report does not
+  f_pig <- statmod(y ~ x, pig_bare_distrib(), dd)
   expect_identical(f_pig@methods$smooth@hessian, "observed")
   expect_false(statmodels7:::fit_expected(f_pig))
-  f_pig_e <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
+  f_pig_e <- statmod(y ~ x, pig_bare_distrib(), dd,
                      inner = iwls(hessian = "expected"))
   expect_identical(f_pig_e@methods$smooth@hessian, "expected")
   expect_false(statmodels7:::fit_expected(f_pig_e))
+  # a family whose expected information is exact but costly: observed by
+  # default, and the expected one reported where it is asked for
+  f_p1 <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  expect_identical(f_p1@methods$smooth@hessian, "observed")
+  expect_false(statmodels7:::fit_expected(f_p1))
+  f_p1e <- statmod(y ~ x, distributions7::pig1_distrib(), dd,
+                   inner = iwls(hessian = "expected"))
+  expect_true(statmodels7:::fit_expected(f_p1e))
 
   # one that writes it out keeps it
   set.seed(2)
@@ -51,8 +59,10 @@ test_that("the default report is the observed information where the expected one
 test_that("vcov takes approx and it reaches the family", {
   # The two readings of the identity differ, which is what says the argument
   # is not being swallowed. bartlett is the dear route, so this runs small.
+  # The family must approximate its expected information for approx to mean
+  # anything: pig1 computes its own exactly since distributions7 0.65.0.
   dd <- pig_data(60L)
-  fit <- statmod(y ~ x, distributions7::pig1_distrib(), dd)
+  fit <- statmod(y ~ x, pig_bare_distrib(), dd)
   V_opg <- vcov(fit, expected = TRUE, approx = "opg")
   V_bar <- vcov(fit, expected = TRUE, approx = "bartlett")
   expect_false(isTRUE(all.equal(V_opg, V_bar)))

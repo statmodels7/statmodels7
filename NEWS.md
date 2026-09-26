@@ -1,3 +1,25 @@
+# statmodels7 0.150.0
+
+* **A criterion on the expected information reaches the two Poisson-inverse
+  Gaussians, and no shipped family is refused there any longer.**
+  distributions7 0.65.0 computes their expected information exactly, with its
+  first and second derivatives, by one pass over the support per
+  observation, so the refusal of `reml()`, `ml()`, `aic()` and `bic()` with
+  `hessian = "expected"` no longer applies to them: `expected_is_opg()`
+  answers `FALSE`, and a fit on that route carries an analytic certificate.
+  The refusal stays for a family that approximates its expected information,
+  which only a family written outside the toolkit now does; the tests use one
+  written for the purpose, borrowing pig1's mass and derivatives.
+
+* `iwls(hessian = "auto")` stays on the observed information for the two
+  families (Giovanni), reading `distributions7::expected_hessian_costly()`,
+  the predicate formerly called `expected_hessian_by_quadrature()`. Measured
+  at 1000 observations with the dispersion developed over a covariate, the
+  expected route reaches the same estimate at 3.9 s against 0.7 s for pig1 and
+  2.4 s against 0.4 s for pig2, and costs far more where a fit passes through
+  a large \eqn{\sigma\mu}, where one pass sums a number of terms growing as
+  that product.
+
 # statmodels7 0.149.0
 
 * **A criterion on the expected information reaches the skew normals, the

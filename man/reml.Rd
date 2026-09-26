@@ -15,8 +15,9 @@ default), the curvature of the log-likelihood at the data, which makes
 the criterion the Laplace approximation, or \code{"expected"}, the Fisher
 information, a function of the parameters alone. Matched with
 \code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
-family writes its expected information out. A family that does not -- the
-two Poisson-inverse gaussians -- would read the outer product of its
+family writes its expected information out, which every shipped family
+does since distributions7 0.65.0. A family that does not would read the
+outer product of its
 scores at the data under the
 default \code{iwls(approx = "opg")}, which is not an expectation, and
 \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
