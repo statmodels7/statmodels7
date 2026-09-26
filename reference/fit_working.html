@@ -17,7 +17,7 @@ settles or the working objective stops moving."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.150.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.151.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,8 @@ settles or the working objective stops moving.</p>
 <span>  <span class="va">method</span>,</span>
 <span>  <span class="va">vb</span>,</span>
 <span>  <span class="va">tol</span>,</span>
-<span>  budget <span class="op">=</span> <span class="fl">500L</span></span>
+<span>  budget <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  stall_limit <span class="op">=</span> <span class="fl">20L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -115,11 +116,17 @@ settles or the working objective stops moving.</p>
 <dd><p>How many working fits at most. The default covers the
 measured runs (69 to 165 iterations on three break-points) with room.</p></dd>
 
+
+<dt id="arg-stall-limit">stall_limit<a class="anchor" aria-label="anchor" href="#arg-stall-limit"></a></dt>
+<dd><p>How many consecutive working fits with every unsettled
+break-point at its scaling floor end the phase.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>As <code><a href="fit_smooth.html">fit_smooth()</a></code>, plus <code>fasola</code>, the number of
-working fits taken.</p>
+working fits taken, and <code>stalled</code>, <code>TRUE</code> where the phase was ended by
+<code>stall_limit</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -157,6 +164,25 @@ fixed point does the working objective coincide with the model's, which
 is why no best-so-far iterate is kept: mid-travel the committed
 contribution of a good working value can sit orders of magnitude off
 the data. Running out of the budget reports <code>FALSE</code>.</p>
+<p>A phase that cannot settle is ended early and reports <code>FALSE</code> as well:
+where every break-point that has not settled sits at the floor of its
+scaling factor (<code><a href="https://statmodels7.github.io/modelterms7/reference/term_stalled.html" class="external-link">modelterms7::term_stalled()</a></code>) for <code>stall_limit</code>
+consecutive working fits, the factor can shrink no further and nothing is
+left to bring the break-point to rest. The profile objective of a
+discontinuous term is constant between consecutive observations, so such
+a break-point passes from one observation to the next for as long as the
+budget lasts: measured on <code>jseg(x, psi = 5, n_boot = 0)</code> at
+\(n = 400\), the factor reached its floor of 1.8e-8 in the second pass
+and the break-point then wandered through a hundred passes of 500 working
+fits, 245 s, without converging. Four of those passes did end on the
+stall or cycle rule, after 58, 116, 349 and 349 working fits at the
+floor, which is a wandering break-point landing on a step small enough
+by chance and not a settled one. In the phases that settle the longest
+run at the floor measured is 7 working fits (three break-points at
+\(n = 10000\)); the default of 20 sits between the two, and the stall
+and cycle rules are read first at every working fit. With it the fit
+above ends in 1.7 s, and with the restarts left on it reaches the same
+optimum as the grid start in 1.3 s where it took 250 s.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

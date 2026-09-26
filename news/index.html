@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.150.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.151.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,13 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.151.0" id="statmodels7-01510">statmodels7 0.151.0<a class="anchor" aria-label="anchor" href="#statmodels7-01510"></a></h2>
+<ul><li>
+<strong>A working phase that has run out of step control is ended, and the fit reports it as not converged.</strong> <code><a href="../reference/fit_working.html">fit_working()</a></code>, the alternation of exact working fits and read-offs that fits <code>jump()</code> and <code>jseg()</code>, ends the phase once every break-point that has not settled has sat at the floor of its scaling factor for <code>stall_limit</code> consecutive working fits, reading <code><a href="https://statmodels7.github.io/modelterms7/reference/term_stalled.html" class="external-link">modelterms7::term_stalled()</a></code>, and the alternation ends with it rather than repeating the phase at every pass. Measured on <code>jseg(x, psi = 5, n_boot = 0)</code> over 400 observations, the fit went through about a hundred passes of 500 working fits in 245 s and ended not converged at a break-point of 5.44 against a truth of 6; it now ends in 1.7 s, not converged, at 5.41, a point of the same plateau. With the restarts left on, the same start reaches the grid start’s optimum in 1.3 s where it took 250 s, and the test suite runs in 839 s where it took 1279 s.</li>
+<li>The default of <code>stall_limit</code> is 20 (Giovanni). In the phases that settle the longest run at the floor measured is 7 working fits, on three break-points at 10000 observations; in the pathological fit above four passes did end on the stall or cycle rule, after 58, 116, 349 and 349 working fits at the floor, which is a wandering break-point landing on a small step by chance. The three-break-point fits from four starts, with and without restarts, are unchanged in convergence, log-likelihood and break-points.</li>
+<li>Requires modelterms7 0.78.0.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.150.0" id="statmodels7-01500">statmodels7 0.150.0<a class="anchor" aria-label="anchor" href="#statmodels7-01500"></a></h2>
 <ul><li><p><strong>A criterion on the expected information reaches the two Poisson-inverse Gaussians, and no shipped family is refused there any longer.</strong> distributions7 0.65.0 computes their expected information exactly, with its first and second derivatives, by one pass over the support per observation, so the refusal of <code><a href="../reference/reml.html">reml()</a></code>, <code><a href="../reference/reml.html">ml()</a></code>, <code><a href="../reference/aic.html">aic()</a></code> and <code><a href="../reference/aic.html">bic()</a></code> with <code>hessian = "expected"</code> no longer applies to them: <code><a href="../reference/expected_is_opg.html">expected_is_opg()</a></code> answers <code>FALSE</code>, and a fit on that route carries an analytic certificate. The refusal stays for a family that approximates its expected information, which only a family written outside the toolkit now does; the tests use one written for the purpose, borrowing pig1’s mass and derivatives.</p></li>

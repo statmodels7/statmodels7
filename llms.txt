@@ -1393,6 +1393,9 @@ exported, and none is needed to use the package.
 - [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
   : Have the Refreshable Terms Settled?
 
+- [`statmod_refresh_stalled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_stalled.md)
+  : Have the Refreshable Terms Run Out of Step Control?
+
 - [`statmod_refreshable()`](https://statmodels7.github.io/statmodels7/reference/statmod_refreshable.md)
   : Which Terms Recompute Their Own Block
 

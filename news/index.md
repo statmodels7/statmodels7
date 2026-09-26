@@ -1,5 +1,33 @@
 # Changelog
 
+## statmodels7 0.151.0
+
+- **A working phase that has run out of step control is ended, and the
+  fit reports it as not converged.**
+  [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md),
+  the alternation of exact working fits and read-offs that fits `jump()`
+  and `jseg()`, ends the phase once every break-point that has not
+  settled has sat at the floor of its scaling factor for `stall_limit`
+  consecutive working fits, reading
+  [`modelterms7::term_stalled()`](https://statmodels7.github.io/modelterms7/reference/term_stalled.html),
+  and the alternation ends with it rather than repeating the phase at
+  every pass. Measured on `jseg(x, psi = 5, n_boot = 0)` over 400
+  observations, the fit went through about a hundred passes of 500
+  working fits in 245 s and ended not converged at a break-point of 5.44
+  against a truth of 6; it now ends in 1.7 s, not converged, at 5.41, a
+  point of the same plateau. With the restarts left on, the same start
+  reaches the grid start’s optimum in 1.3 s where it took 250 s, and the
+  test suite runs in 839 s where it took 1279 s.
+- The default of `stall_limit` is 20 (Giovanni). In the phases that
+  settle the longest run at the floor measured is 7 working fits, on
+  three break-points at 10000 observations; in the pathological fit
+  above four passes did end on the stall or cycle rule, after 58, 116,
+  349 and 349 working fits at the floor, which is a wandering
+  break-point landing on a small step by chance. The three-break-point
+  fits from four starts, with and without restarts, are unchanged in
+  convergence, log-likelihood and break-points.
+- Requires modelterms7 0.78.0.
+
 ## statmodels7 0.150.0
 
 - **A criterion on the expected information reaches the two
