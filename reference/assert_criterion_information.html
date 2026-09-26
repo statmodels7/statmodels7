@@ -11,7 +11,7 @@ of the scores at the data instead of an expectation."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.149.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.150.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,9 +80,9 @@ at \(y_i\), with the Fisher information
 \(\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 \partial\eta^\top]\), a function of the parameters alone. Where a family
 writes that information out, <code><a href="https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html" class="external-link">distributions7::expected_hessian_exact()</a></code>
-answers <code>TRUE</code> and nothing is asked here. Where it does not – the two
-Poisson-inverse gaussians among the shipped families – the family falls
-back on the strategy <code>approx</code> names, and the default, <code>"opg"</code>, returns
+answers <code>TRUE</code> and nothing is asked here. Every shipped family does since
+<span class="pkg">distributions7</span> 0.65.0; where a family written outside the toolkit
+does not, it falls back on the strategy <code>approx</code> names, and the default, <code>"opg"</code>, returns
 \(s_i s_i^\top\) with \(s_i\) the score at \(y_i\). That is an unbiased
 estimate of \(\mathcal{I}(\theta_i)\) from one observation, not the
 information itself: it depends on the response, as the observed curvature
@@ -91,8 +91,8 @@ Laplace approximation nor its Fisher variant, and it has no exact outer
 gradient, so its search is derivative-free and <code><a href="statmod_certificate.html">statmod_certificate()</a></code>
 answers <code>unknown</code>.</p>
 <p>Measured at 4000 observations with a smooth on the first parameter, on the
-six families this applied to before <span class="pkg">distributions7</span> 0.64.0 gave four of
-them an exact expected information, every one fit on the observed
+six families this applied to before <span class="pkg">distributions7</span> 0.64.0 and 0.65.0
+gave all of them an exact expected information, every one fit on the observed
 information in 3 to 5 criterion evaluations with a Newton search and an
 analytic certificate, where the outer-product route took 12 to 22
 evaluations of a simplex.</p>
@@ -110,9 +110,9 @@ seconds per evaluation at 4000 observations.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">statmodels7</span><span class="fu">:::</span><span class="fu">assert_criterion_information</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="st">"expected"</span><span class="op">)</span>, <span class="st">"opg"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">statmodels7</span><span class="fu">:::</span><span class="fu">assert_criterion_information</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/pig1_distrib.html" class="external-link">pig1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="st">"expected"</span><span class="op">)</span>, <span class="st">"opg"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : reml(hessian = "expected") reads the expected information, which 'poisson-inverse gaussian' does not write out: with approx = "opg" it would read the outer product of the scores at the data, which depends on the response and is not an expectation, so the criterion would be neither the Laplace approximation nor its Fisher variant and would have no exact outer derivatives. Use reml(hessian = "observed"), whose outer gradient and Hessian are exact on this family, or ask for the expectation by name with iwls(approx = "bartlett"), which sums or integrates over the support at a cost of minutes per evaluation.</span>
+<span class="r-in"><span><span class="co"># the Poisson-inverse Gaussian computes its expected information exactly</span></span></span>
+<span class="r-in"><span><span class="fu">statmodels7</span><span class="fu">:::</span><span class="fu">assert_criterion_information</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/pig1_distrib.html" class="external-link">pig1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="reml.html">reml</a></span><span class="op">(</span><span class="st">"expected"</span><span class="op">)</span>, <span class="st">"opg"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

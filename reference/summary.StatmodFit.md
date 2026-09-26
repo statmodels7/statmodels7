@@ -302,6 +302,6 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -55.844138    effective df 4.00
 #> cAIC 119.688    cBIC 130.838
-#> fitted in 45 ms
+#> fitted in 38 ms
 #> inner   max |grad|/se 3.1e-06   min eigen 0.11
 ```

@@ -30,10 +30,10 @@ ml(hessian = c("observed", "expected"))
   information, a function of the parameters alone. Matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html). Both carry an
   exact outer gradient and Hessian wherever the family writes its
-  expected information out. A family that does not – the two
-  Poisson-inverse gaussians – would read the outer product of its scores
-  at the data under the default `iwls(approx = "opg")`, which is not an
-  expectation, and
+  expected information out, which every shipped family does since
+  distributions7 0.65.0. A family that does not would read the outer
+  product of its scores at the data under the default
+  `iwls(approx = "opg")`, which is not an expectation, and
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   rejects `"expected"` there: see
   [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md).
