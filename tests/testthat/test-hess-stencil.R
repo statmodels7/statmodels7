@@ -270,7 +270,17 @@ test_that("the stencil refuses where the curvature is not resolved", {
   expect_false(is.null(H))
   # and what a READER is told does not turn on it: the certificate names a
   # boundary coordinate and the summary suppresses its interval whatever the
-  # variance matrix holds
+  # variance matrix holds.
+  #
+  # ⚠️ SINCE 0.153.0 THE NAME READS THE CURVATURE, which at this point is the
+  # platform's arithmetic -- 7.3e-09 in the correlation here, against a
+  # `flat` of 2e-3 -- so the premise is asserted on it rather than on the
+  # value, and a platform where the curvature came back resolved skips.
+  cv <- outer_curvature(p$spec, p$design, p$coef, p$hyper, p$method, p$idx,
+                        p$basis, fit@methods$smooth)
+  skip_if(!is.null(cv$A) &&
+            !any(abs(diag(cv$A)) <= eval(formals(statmod_certificate)$flat)),
+          "the curvature at this point was resolved on this platform")
   expect_true(length(statmod_certificate(fit)$boundary_key) > 0L)
 })
 

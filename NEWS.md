@@ -1,3 +1,28 @@
+# statmodels7 0.153.0
+
+* **`statmod_certificate()` names a hyperparameter a boundary where the
+  criterion no longer moves with it**, that is where its own curvature
+  `|A_jj|` in the free value is at most the new argument
+  `flat = 2e-3`, and no longer where the free value exceeds `edge = 8`
+  (Giovanni). The size of a smoothing parameter depends on how its penalty
+  is normalized and on the units of the response: on the reference battery
+  one smooth beside a random effect sits at a free value of -0.20, 9.01 and
+  -13.96 as the response is multiplied by 1, 0.01 and 1000, while its
+  curvature reads 2.50, 2.50 and 2.71. On `MASS::mcycle`, `accel ~
+  s(times, bspline_smooth(k = 20))` put the mean's smoothing parameter at
+  -9.57, named it a boundary and printed it with no standard error, while
+  its curvature is 5.57 and the effective degrees of freedom move by 1.63
+  per unit of it; it now carries a standard error and an interval. Over the
+  battery, the lotto 0 and D1 nets and those fits, the coordinates that
+  really sit at an edge read a curvature of 4.2e-07 to 2.6e-04 and the
+  interior ones 1.5e-02 to 168, and the rule also names three coordinates
+  the value never reached: a random slope's scale at -6.27 and two prior
+  scales of a hierarchical break-point model at -7.26 and -5.81.
+* What may be excluded from the verdict is unchanged in form, the named set
+  intersected with the coordinates whose own decrement already meets `tol`,
+  so the threshold decides the label and never the state. Where no
+  curvature can be read the label still falls back on `edge`.
+
 # statmodels7 0.152.0
 
 * **A coefficient whose own design column has vanished is named as not

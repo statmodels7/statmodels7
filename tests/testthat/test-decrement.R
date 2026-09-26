@@ -198,6 +198,41 @@ test_that("a coordinate at an edge is named whatever its own curvature says", {
 })
 
 
+test_that("the boundary label reads the curvature and not the free value", {
+  # ⚠️ UNTIL 0.153.0 THE LABEL READ |eta| > 8, and a smoothing parameter's
+  # size carries the units of the response: the same smooth on a response
+  # multiplied by 1000 has its free value moved by log(1e6) and nothing else.
+  # The criterion's curvature in that coordinate does not move, and it is
+  # what says whether the fit still moves with the hyperparameter.
+  skip_on_cran()
+  set.seed(8)
+  d <- data.frame(x = runif(200))
+  d$y <- sin(6 * d$x) + rnorm(200, 0, 0.3)
+  fits <- lapply(c(1, 1e3), function(s) {
+    d$ys <- s * d$y
+    statmod(ys ~ s(x, bspline_smooth(k = 12)), gaussian1_distrib(), d,
+            outer_criterion = reml())
+  })
+  eta <- vapply(fits, function(f) log(f@hyper$mu[[1]][["lambda"]]), numeric(1))
+  # the premise: at the large scale the value alone would have named it
+  expect_gt(abs(eta[2]), eval(formals(statmod_certificate)$edge))
+  for (f in fits) {
+    ct <- statmod_certificate(f)
+    expect_identical(ct$boundary, character(0))
+    expect_identical(ct$state, "converged")
+  }
+
+  # and a coordinate the criterion is flat in is named wherever its value is
+  local_mocked_bindings(
+    outer_curvature = function(...) list(A = matrix(1e-4, 1L, 1L),
+                                         source = "analytic",
+                                         why = character(0)))
+  expect_lt(abs(eta[1]), eval(formals(statmod_certificate)$edge))
+  ct <- statmod_certificate(fits[[1]])
+  expect_length(ct$boundary_key, 1L)
+})
+
+
 test_that("with no curvature at all there is no verdict but still a boundary", {
   # ⚠️ THE REGRESSION CI FOUND AND THIS MACHINE HID. A verdict in criterion
   # units needs a curvature, and where neither the analytic route nor the

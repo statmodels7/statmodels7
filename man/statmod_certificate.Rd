@@ -4,7 +4,7 @@
 \alias{statmod_certificate}
 \title{What the Fit Certifies About the Point It Reports}
 \usage{
-statmod_certificate(fit, tol = 0.01, edge = 8)
+statmod_certificate(fit, tol = 0.01, flat = 0.002, edge = 8)
 }
 \arguments{
 \item{fit}{A \code{\link[=StatmodFit]{StatmodFit()}}.}
@@ -14,9 +14,13 @@ point may still have available to it. ⚠️ Until 0.127.0 this was a
 threshold on the outer gradient. The default has not moved and its
 meaning has: a caller who set one should read \code{\link[=joint_decrement]{joint_decrement()}}.}
 
-\item{edge}{The free value beyond which a hyperparameter that has already
-met \code{tol} on its own is reported as sitting at a boundary. It
-decides the label alone and never the verdict; see the details.}
+\item{flat}{The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
+criterion in a hyperparameter's free value at which that hyperparameter
+is reported as sitting at a boundary. It decides the label alone and
+never the verdict; see the details.}
+
+\item{edge}{The free value beyond which a hyperparameter is reported as
+sitting at a boundary where no curvature can be read, and only there.}
 }
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
@@ -118,15 +122,30 @@ missing -- what it differences there is the exact gradient, so the reading
 still rests on a derivative the package computes rather than on one it
 estimates twice over.
 
-\strong{The boundary label, and why its threshold needs no derivation.}
+\strong{The boundary label.}
 A hyperparameter may run to an edge and belong there: on a covariate that
 is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
 genuinely flat, and calling that fit unconverged would be wrong. A
-coordinate is \strong{reported} as sitting at a boundary on its free value
-alone, that being a fact about its chart rather than a reading: a
-hyperparameter that has run to an edge has no meaningful interval whatever
-the criterion's curvature says, which is what \code{boundary_key} tells
+coordinate is \strong{reported} as sitting at a boundary where the criterion no
+longer moves with it, that is where its own curvature
+\eqn{\lvert A_{jj}\rvert} is at most \code{flat}. Such a hyperparameter has no
+meaningful interval, \eqn{1/\sqrt{A_{jj}}} being the conditional standard
+error of its free value, and that is what \code{boundary_key} tells
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}.
+
+Until 0.153.0 the label read the free value alone, \eqn{\lvert\eta_j\rvert >
+8}, and the size of a smoothing parameter depends on how its penalty is
+normalized and on the units of the response. Measured on the reference
+battery, one smooth beside a random effect puts its smoothing parameter at
+\eqn{\eta} of \eqn{-0.20}, \eqn{9.01} and \eqn{-13.96} as the response is
+multiplied by 1, 0.01 and 1000, while its curvature reads 2.50, 2.50 and
+2.71; and on \code{MASS::mcycle} a mean smooth at \eqn{\eta = -9.57} was named a
+boundary while its curvature is 5.57 and its effective degrees of freedom
+move by 1.63 per unit of \eqn{\eta}. Over the battery, the lotto 0 and D1
+nets and those fits, the coordinates that really sit at an edge read
+\eqn{A_{jj}} of 4.2e-07 to 2.6e-04 and the interior ones 1.5e-02 to 168,
+so the default of 2e-3 sits in a gap of a factor 57 and reads as a
+conditional standard error of the free value above 22.
 
 What may be \strong{excluded from the verdict} is narrower -- the value together
 with \code{\link[=coord_decrement]{coord_decrement()}}, what that coordinate alone would still buy,
@@ -145,9 +164,9 @@ one-coordinate reading \eqn{g_j^2/(2A_{jj})} is a ratio of two quantities
 going to zero and can come back large. Reporting on the conjunction left
 such a coordinate unnamed on the one platform where that fit landed there.
 
-The default separates the measured cases with room on both sides:
-coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the free scale
-against 0.13, 0.30 and 2.01 for the ones that did not.
+Where no curvature can be read at all -- neither route produces one, and
+the state is then \code{"unknown"} -- the label falls back on the free value,
+\code{edge}, there being nothing else to read.
 }
 \examples{
 dd <- data.frame(x = runif(120))
