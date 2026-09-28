@@ -1,3 +1,29 @@
+# statmodels7 0.158.0
+
+* Where the fit alternates between blocks (a penalty with a kink, a
+  structural term, or both), its verdict is read at the point it reached and
+  no longer off the inner optimizers' flags. The smooth part, with a
+  structural term's own parameters beside it, is read by the Newton decrement
+  \eqn{\tfrac12 g^\top K^{-1} g}, and every coefficient a kinked penalty
+  holds at zero by the KKT decrement
+  \eqn{\max(0, \lvert s_j\rvert - \kappa_j)^2 / (2 c_j)}, with
+  \eqn{\kappa_j} the size of the kink and \eqn{c_j} the diagonal of the
+  information; both are in log-likelihood units and are compared with
+  `mode_error_limit()`. Beside `gas(1, 1)` a lasso fit at its KKT point read
+  `converged = FALSE`, because the joint block, already at its mode, took one
+  step that moved the objective by a relative 4.7e-15 and its stall guard
+  fired. It now reads `TRUE`, with a decrement of 1.2e-04 and a KKT decrement
+  of 0. Measured over eight models (a lasso beside `gas()` and beside
+  `regime()`, a lasso chosen by BIC, a lasso beside a random effect, SCAD, a
+  lasso on the scale's equation, and `gas()` and `regime()` alone), that is
+  the only flag that moves, and no log-likelihood moves. The readings cost
+  0.00 to 0.11 s per fit.
+
+* `alternation_readings()` and `alternation_settled()` are the internal
+  functions that compute the readings. `statmod_joint_pieces()` takes
+  `kinds`, so the joint vector can be read beside a mixture over latent
+  states as well as beside a filter.
+
 # statmodels7 0.157.0
 
 * A structural term that returns several starts through

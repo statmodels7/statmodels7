@@ -4,10 +4,14 @@
 \alias{statmod_joint_pieces}
 \title{The Joint Objective Over the Coefficients and a Filter's Parameters}
 \usage{
-statmod_joint_pieces(spec, design, obj, hyper)
+statmod_joint_pieces(spec, design, obj, hyper, kinds = "filter")
 }
 \arguments{
 \item{spec, design, obj, hyper}{As \code{\link[=statmod_fit_joint]{statmod_fit_joint()}} takes them.}
+
+\item{kinds}{The kinds of structural unit to take the term from: \code{"filter"}
+for the joint step, and \code{"loglik"} as well where a mixture over latent
+states is read at a fitted point.}
 }
 \value{
 A list with \code{fn}, \code{gr}, \code{he}, \code{raw}, \code{setz} (writes the filter's

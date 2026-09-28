@@ -1014,13 +1014,136 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
       else if (!length(blocks$sparse) && !has_structural) {
         converged <- isTRUE(smooth_ok)
       }
-      converged <- converged && isTRUE(struct_ok)
+      # Where there is something to alternate between, the verdict is read at
+      # the point and not off the inner optimizers' flags: a block already at
+      # its mode takes one step that moves the objective by a relative 1e-15,
+      # and its stall guard then reports it as not converged. Measured beside
+      # gas(1, 1), a lasso fit at its KKT point to 7e-07 read FALSE for that
+      # reason alone. See alternation_readings().
+      if (length(blocks$sparse) || has_structural) {
+        converged <- converged &&
+          alternation_settled(spec, design, obj, beta, hyper, expected,
+                              approx, aliased)
+      }
       break
     }
   }
   list(par = beta, value = value, converged = converged, obj = obj,
        note = smooth_note, aliased = sort(as.integer(aliased)),
        hist_blocks = hist_blocks, hist_inner = hist_inner)
+}
+
+
+#' Whether the Alternation Has Reached Its Point
+#'
+#' @description
+#' Reads, at the point the alternation reached, how far the smooth part is
+#' from its mode and how far each coefficient a kinked penalty set to zero is
+#' from its optimality condition, both in log-likelihood units, and compares
+#' them with [mode_error_limit()].
+#'
+#' @details
+#' The smooth part is every coordinate that is not a zero of a kinked
+#' penalty, not in a frozen working block, not aliased and not held, together
+#' with a structural term's own free parameters where the model carries one.
+#' Its reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g}, with
+#' \eqn{g} the gradient of the penalized objective and \eqn{K = H + S} the
+#' penalized information over those coordinates (the joint one, through
+#' [statmod_joint_pieces()], beside a structural term). A coefficient a
+#' kinked penalty holds at zero is optimal where the pull of the likelihood,
+#' \eqn{s_j}, does not exceed the size \eqn{\kappa_j} of the kink, and its
+#' reading is the KKT decrement
+#' \deqn{\frac{\max(0,\ \lvert s_j\rvert - \kappa_j)^2}{2\,c_j},}
+#' the gain a Newton step on that coordinate alone would predict, with
+#' \eqn{c_j} the diagonal of the unpenalized information. The largest such
+#' decrement is reported.
+#'
+#' A reading that cannot be computed is `NA`, and [alternation_settled()]
+#' reads `NA` on the smooth part as not settled.
+#'
+#' @param spec,design,obj,beta,hyper The fit's specification, design,
+#'   objective, stacked coefficients and hyperparameters.
+#' @param expected,approx Which information the fit uses.
+#' @param aliased The positions the scoring step's pivot left out.
+#'
+#' @return `alternation_readings()` a named vector of `mode` and `kkt`, the
+#'   second `NA` where no coefficient sits at a kink; `alternation_settled()`
+#'   a single logical.
+#'
+#' @seealso [statmod_alternate()], [zero_readings()], [inner_mode_error()]
+#'
+#' @keywords internal
+alternation_readings <- function(spec, design, obj, beta, hyper, expected,
+                                 approx, aliased = integer(0)) {
+  out <- c(mode = NA_real_, kkt = NA_real_)
+  cf <- obj$split(beta)
+  nb <- length(beta)
+  lab <- tryCatch(coef_labels(spec, design), error = function(e) NULL)
+  if (is.null(lab) || nrow(lab) != nb) return(out)
+  zero <- lab$kinked & beta == 0
+  drop <- zero | frozen_block(spec, lab) | seq_len(nb) %in% aliased |
+    seq_len(nb) %in% pinned_coords(spec, design)
+  su <- attr(design, "structural")
+  pieces <- tryCatch({
+    if (length(su)) {
+      jp <- statmod_joint_pieces(spec, design, obj, hyper,
+                                 kinds = c("filter", "loglik"))
+      u <- c(beta, jp$zeta())
+      g <- jp$gr(u)
+      # the joint gradient returns zeros where it cannot be evaluated, which
+      # would read as a stationary point
+      if (!length(g) || all(g == 0)) stop("no gradient")
+      list(g = g, K = as_dense(jp$he(u)), keep = c(which(!drop), jp$ix))
+    } else {
+      list(g = obj$gr(beta),
+           K = statmod_penalized_at(spec, cf, design, hyper, expected, approx),
+           keep = which(!drop))
+    }
+  }, error = function(e) NULL)
+  if (is.null(pieces)) return(out)
+  g <- pieces$g
+  K <- pieces$K
+  keep <- pieces$keep
+  keep <- keep[is.finite(g[keep]) & is.finite(diag(K)[keep])]
+  if (!length(keep)) {
+    out[["mode"]] <- 0
+  } else {
+    A <- K[keep, keep, drop = FALSE]
+    A <- (A + t(A)) / 2
+    sol <- tryCatch(solve(A, g[keep]), error = function(e) NULL)
+    if (!is.null(sol) && all(is.finite(sol))) {
+      out[["mode"]] <- 0.5 * sum(g[keep] * sol)
+    }
+  }
+  z <- which(zero)
+  if (length(z)) {
+    kk <- tryCatch({
+      flat <- function(c) unlist(statmod_penalty_at(spec, c, hyper, design,
+                                                    "gradient"),
+                                 use.names = FALSE)
+      pull <- g[z] - flat(cf)[z]
+      bp <- beta
+      bp[z] <- sqrt(.Machine$double.eps) * .Machine$double.eps
+      kink <- flat(obj$split(bp))[z]
+      H <- statmod_information_at(spec, cf, design, expected, approx)
+      cj <- as.numeric(Matrix::diag(H))[z]
+      dec <- pmax(0, abs(pull) - abs(kink))^2 / (2 * cj)
+      dec <- dec[is.finite(dec)]
+      if (length(dec)) max(dec) else NA_real_
+    }, error = function(e) NA_real_)
+    out[["kkt"]] <- kk
+  }
+  out
+}
+
+#' @rdname alternation_readings
+#' @keywords internal
+alternation_settled <- function(spec, design, obj, beta, hyper, expected,
+                                approx, aliased = integer(0)) {
+  r <- alternation_readings(spec, design, obj, beta, hyper, expected, approx,
+                            aliased)
+  lim <- mode_error_limit()
+  isTRUE(r[["mode"]] <= lim) && (is.na(r[["kkt"]]) || r[["kkt"]] <= lim)
 }
 
 

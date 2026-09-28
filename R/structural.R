@@ -1228,16 +1228,18 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #' ones at a fitted point.
 #'
 #' @param spec,design,obj,hyper As [statmod_fit_joint()] takes them.
+#' @param kinds The kinds of structural unit to take the term from: `"filter"`
+#'   for the joint step, and `"loglik"` as well where a mixture over latent
+#'   states is read at a fitted point.
 #'
 #' @return A list with `fn`, `gr`, `he`, `raw`, `setz` (writes the filter's
 #'   free parameters into the design's structural state), `zeta` (reads
 #'   them), `ix`, `nb`, `free` and `key`.
 #'
 #' @keywords internal
-statmod_joint_pieces <- function(spec, design, obj, hyper) {
+statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
   sst <- statmod_structural_state(design)
-  su <- Filter(function(u) identical(u$kind, "filter"),
-               attr(design, "structural"))
+  su <- Filter(function(u) u$kind %in% kinds, attr(design, "structural"))
   key <- su[[1L]]$term
   nm <- names(sst$zeta[[key]])
   free <- setdiff(nm, sst$held[[key]])
