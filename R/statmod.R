@@ -560,6 +560,16 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     }
     list(res = res, hyper = hyper, crit = crit, spec_h = spec_h)
   }
+  # SCAD and MCP are scaled by the curvature of the likelihood in each of
+  # their coordinates, read once at the starting coefficients, so that the
+  # knee sits at a lambda / c_j. The blocks are rebuilt from the scaled
+  # penalties: left as they were, the coordinate descent would minimize the
+  # unscaled penalty while the objective reads the scaled one.
+  sc <- statmod_curv(spec, design, beta, expected, approx)
+  if (!is.null(sc)) {
+    spec <- sc
+    blocks <- statmod_blocks(spec, design)
+  }
   f1 <- fit_once(beta)
   res <- f1$res
   hyper <- f1$hyper
@@ -1144,6 +1154,66 @@ alternation_settled <- function(spec, design, obj, beta, hyper, expected,
                             aliased)
   lim <- mode_error_limit()
   isTRUE(r[["mode"]] <= lim) && (is.na(r[["kkt"]]) || r[["kkt"]] <= lim)
+}
+
+
+#' The Curvature a SCAD or MCP Penalty Is Scaled By
+#'
+#' @description
+#' Writes into every SCAD and MCP penalty of the model the curvature of the
+#' likelihood in each of its coordinates, read at the given coefficients.
+#'
+#' @details
+#' The curvature of coordinate \eqn{j} is the diagonal
+#' \eqn{c_j = \sum_i w_i x_{ij}^2} of the information, the working weights
+#' being the family's information per observation for the predictor of the
+#' coordinate's own equation. Under a diagonal map \eqn{u = D\beta} it is
+#' divided by \eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty
+#' under any other map, or reached through a sub-term, is left as it is.
+#'
+#' @param spec,design The specification and its design.
+#' @param coef The coefficients, split by parameter.
+#' @param expected,approx Which information.
+#'
+#' @return The specification with the curvature written into the terms, or
+#'   `NULL` where no penalty was written, so that the caller rebuilds its
+#'   blocks only when a penalty changed.
+#'
+#' @keywords internal
+statmod_curv <- function(spec, design, coef, expected, approx) {
+  units <- statmod_penalized(spec, design)
+  todo <- Filter(function(u) {
+    pen <- u$penalty
+    (S7::S7_inherits(pen, penalties7::ScadPenalty) ||
+       S7::S7_inherits(pen, penalties7::McpPenalty)) &&
+      is.null(u$class) && !isTRUE(u$structural) && !is.null(u$index) &&
+      identical(u$key, u$term)
+  }, units)
+  if (!length(todo)) return(NULL)
+  if (!is.list(coef)) {
+    np <- vapply(design[spec@distrib@params], function(d) d$npar, integer(1))
+    coef <- split(coef, rep(factor(names(np), levels = names(np)), np))
+  }
+  H <- statmod_information_at(spec, coef, design, expected, approx)
+  dh <- as.numeric(Matrix::diag(H))
+  terms <- spec@terms
+  wrote <- FALSE
+  for (u in todo) {
+    pen <- u$penalty
+    cj <- dh[u$index]
+    if (!is.null(pen@map)) {
+      if (!methods::is(pen@map, "diagonalMatrix")) next
+      cj <- cj / as.numeric(Matrix::diag(pen@map))^2
+    }
+    if (length(cj) != pen@n_coef || any(!is.finite(cj)) || any(cj <= 0)) next
+    tm <- terms[[u$param]][[u$term]]
+    tm@penalty <- S7::set_props(pen, curv = cj)
+    terms[[u$param]][[u$term]] <- tm
+    wrote <- TRUE
+  }
+  if (!wrote) return(NULL)
+  spec@terms <- terms
+  spec
 }
 
 

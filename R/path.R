@@ -988,12 +988,17 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       return(list(dev = dev_f, err = ts))
     }
     td <- statmod_design(ts)
-    tb <- statmod_blocks(ts, td)
-    hs <- statmod_respec(ts, test)
-    hd <- statmod_design(hs)
     cfgs <- inner_settings(inner_optimizer, ts@distrib)
     obj <- statmod_objective(ts, hypers[[1L]], td, cfgs$expected, cfgs$approx)
     warm <- statmod_start(ts, td, obj, NULL)
+    # a fold scales its SCAD and MCP penalties as statmod() scales the whole
+    # data's, at its own starting coefficients: left unscaled, the path would
+    # score a different penalty from the one the fit it selects for
+    tc <- statmod_curv(ts, td, warm, cfgs$expected, cfgs$approx)
+    if (!is.null(tc)) ts <- tc
+    tb <- statmod_blocks(ts, td)
+    hs <- statmod_respec(ts, test)
+    hd <- statmod_design(hs)
     tbj <- tb
     warm0 <- warm
     for (j in seq_len(m)) {

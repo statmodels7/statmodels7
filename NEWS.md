@@ -1,3 +1,33 @@
+# statmodels7 0.159.0
+
+* **SCAD and MCP are scaled by the curvature of the likelihood in each of
+  their coordinates**, read once at the starting coefficients:
+  \eqn{c_j = \sum_i w_i x_{ij}^2}, with \eqn{w_i} the information per
+  observation of the coordinate's own equation, divided by \eqn{d_j^2} under
+  `standardize`. The penalty is \eqn{\sum_j c_j\,\rho(\beta_j;\ \lambda/c_j)},
+  so the slope at zero stays \eqn{\lambda} and the knee sits at
+  \eqn{a\lambda/c_j}. The penalty was written on the canonical problem with
+  unit curvature, and a gaussian likelihood carries \eqn{1/(2\sigma^2)} on the
+  squared residuals, so on `MASS::UScrime` the knee sat at 64 against
+  coefficients of at most 0.30 and SCAD returned the lasso's fit to the
+  printed digit. For a gaussian mean with standardized columns
+  \eqn{c_j = n/\sigma^2}, which is ncvreg's convention. It holds in every
+  equation, a dispersion or a shape included, and a cross-validation fold
+  scales at its own starting coefficients.
+
+* Measured on 18 simulated sparse regressions (gaussian, Bernoulli and
+  Poisson, SCAD and MCP, three seeds): all 72 true coefficients kept, 15
+  false positives against 31, mean rmse 0.1127 against 0.1332. On UScrime
+  SCAD and MCP keep 9 predictors where they kept 10. A lasso, a ridge and a
+  fit with no SCAD or MCP penalty are untouched: the nets are identical and
+  the reference battery unchanged.
+
+* The curvature is read once, at the start. Reading it again at the fitted
+  coefficients was measured at about twice the cost with 10 false positives
+  and mean rmse 0.1175, and three gaussian SCAD fits of 18 stopped with the
+  proximal operator's condition \eqn{s c_j < a - 1} violated; it is not the
+  default and is recorded as an open question.
+
 # statmodels7 0.158.0
 
 * Where the fit alternates between blocks (a penalty with a kink, a

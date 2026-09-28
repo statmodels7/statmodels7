@@ -77,7 +77,16 @@ test_that("scad and mcp reach a point that satisfies the KKT conditions", {
     # the penalty selects: on a design of pure noise at this lambda most of
     # the twenty columns are dropped, where the joint system dropped none
     expect_lt(sum(nz), 20L)
-    expect_lt(max(abs(g[nz] + cs$d(sl[nz], lam, cs$th[[2L]]))), 1e-5)
+    # each coordinate is scaled by the curvature c_j the fit read at its
+    # start, so the penalty is sum_j c_j rho(b_j; lambda / c_j) and its
+    # derivative c_j rho'(b_j; lambda / c_j); the slope at zero stays lambda
+    tn <- grep(sub("(x)", "(", cs$nm, fixed = TRUE),
+               names(fit@spec@terms$mu), fixed = TRUE, value = TRUE)
+    expect_length(tn, 1L)
+    cvj <- modelterms7::term_penalty(fit@spec@terms$mu[[tn]])@curv
+    expect_length(cvj, 20L)
+    expect_lt(max(abs(g[nz] + cvj[nz] * cs$d(sl[nz], lam / cvj[nz],
+                                            cs$th[[2L]]))), 1e-5)
     if (any(!nz)) expect_lt(max(abs(g[!nz])), lam)
   }
 })
