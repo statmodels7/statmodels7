@@ -161,6 +161,33 @@ structural_zeta_start <- function(term, target = NULL) {
 }
 
 
+#' The Starting Points a Structural Term Asks For
+#'
+#' @description
+#' The starts [modelterms7::term_starts()] gives for the model's structural
+#' term, where it gives more than one and the specification carries no values
+#' a fit arrived at.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design, as [statmod_design()] returns it.
+#'
+#' @return `NULL` where there is nothing to try, otherwise a list with `term`,
+#'   the unit's key, and `zeta`, the list of starts, the first being the one
+#'   [statmod_design()] already used.
+#'
+#' @keywords internal
+structural_multistarts <- function(spec, design) {
+  su <- attr(design, "structural")
+  for (u in su) {
+    if (!is.null(spec@structural[[u$term]])) next
+    z <- modelterms7::term_starts(spec@terms[[u$param]][[u$term]],
+                                  target = predictor_target(spec, u$param))
+    if (length(z) > 1L) return(list(term = u$term, zeta = z))
+  }
+  NULL
+}
+
+
 #' From the Unconstrained Scale to the Term's Parameters
 #'
 #' @param term A built structural term.

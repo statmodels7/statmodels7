@@ -485,71 +485,119 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                 " 'hyper'."), call. = FALSE)
   }
 
-  spec_h <- spec
-  if (is.null(outer_criterion) && is.null(sparse_criterion)) {
-    res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer, beta,
-                             expected, approx, maxit, tol, vb)
-    crit <- NA_real_
-  } else {
-    res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                          outer_criterion, outer_optimizer, beta, approx, maxit,
-                          tol, vb, data, weights, offsets, sparse_criterion)
-    hyper <- res$hyper
-    crit <- res$criterion
-    # the coefficients the criterion estimated stay where it put them in
-    # every refit below; the specification the fit returns holds nothing
-    spec_h <- if (length(res$held_coef)) {
-      S7::set_props(spec, held_coef = res$held_coef)
-    } else spec
-    # Everything inside the selection held the frozen break-point blocks at
-    # their committed positions -- a break-point moving between criterion
-    # evaluations makes the criterion path-dependent, and the phase's own
-    # flags read as unavailable points to the search -- so the positions are
-    # refined here, once, at the chosen hyperparameters.
-    frozen <- any(vapply(attr(design, "refresh"),
-                         function(r) isTRUE(r$frozen), logical(1)))
-    if (frozen) {
-      ro <- tryCatch(
-        statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
-                          res$par, expected, approx, maxit, tol, vb),
-        error = function(e) NULL)
-      if (!is.null(ro) && is.finite(ro$value)) {
-        res[c("par", "value", "converged", "obj", "aliased",
-              "hist_blocks", "hist_inner")] <-
-          ro[c("par", "value", "converged", "obj", "aliased",
-               "hist_blocks", "hist_inner")]
+  # ONE FIT, FROM ONE START. Written as a function so a structural term that
+  # asks for several starts is fitted from each exactly as from the first:
+  # the same branch, the same refinements, the same restarts.
+  hyper0 <- hyper
+  fit_once <- function(beta_start) {
+    hyper <- hyper0
+    spec_h <- spec
+    if (is.null(outer_criterion) && is.null(sparse_criterion)) {
+      res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+                               beta_start, expected, approx, maxit, tol, vb)
+      crit <- NA_real_
+    } else {
+      res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                            outer_criterion, outer_optimizer, beta_start,
+                            approx, maxit, tol, vb, data, weights, offsets,
+                            sparse_criterion)
+      hyper <- res$hyper
+      crit <- res$criterion
+      # the coefficients the criterion estimated stay where it put them in
+      # every refit below; the specification the fit returns holds nothing
+      spec_h <- if (length(res$held_coef)) {
+        S7::set_props(spec, held_coef = res$held_coef)
+      } else spec
+      # Everything inside the selection held the frozen break-point blocks at
+      # their committed positions -- a break-point moving between criterion
+      # evaluations makes the criterion path-dependent, and the phase's own
+      # flags read as unavailable points to the search -- so the positions are
+      # refined here, once, at the chosen hyperparameters.
+      frozen <- any(vapply(attr(design, "refresh"),
+                           function(r) isTRUE(r$frozen), logical(1)))
+      if (frozen) {
+        ro <- tryCatch(
+          statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
+                            res$par, expected, approx, maxit, tol, vb),
+          error = function(e) NULL)
+        if (!is.null(ro) && is.finite(ro$value)) {
+          res[c("par", "value", "converged", "obj", "aliased",
+                "hist_blocks", "hist_inner")] <-
+            ro[c("par", "value", "converged", "obj", "aliased",
+                 "hist_blocks", "hist_inner")]
+        }
       }
     }
-  }
 
-  # The bootstrap restarting the break-point terms declare, run ONCE at the
-  # top level -- inside an outer search it would multiply by the number of
-  # criterion evaluations -- and at the hyperparameters the fit ended at.
-  nb <- seg_boot_total(spec)
-  if (nb > 0L && length(attr(design, "refresh"))) {
-    before <- res$par
-    res <- statmod_boot_restart(spec_h, design, blocks, hyper, inner_optimizer,
-                                res, expected, approx, maxit, tol, vb, nb)
-    # A RESTART THAT MOVES THE FIT MOVES THE COEFFICIENTS THE CRITERION
-    # ESTIMATES TOO. The search above read the criterion in the basin its
-    # warm starts stayed in, and the restart may leave that basin; a
-    # coefficient held at the old optimum is then the optimum of another
-    # model. Measured on a smoothed jump, sigma stayed at 0.661 after the
-    # restart had moved the break-point from 6.46 to 6.09, where the criterion
-    # puts it at 0.561. The search is run once more from the restarted point.
-    if (length(res$held_coef) && !identical(before, res$par)) {
-      r2 <- tryCatch(
-        statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                       outer_criterion, outer_optimizer, res$par, approx,
-                       maxit, tol, vb, data, weights, offsets,
-                       sparse_criterion),
-        error = function(e) NULL)
-      if (!is.null(r2)) {
-        res <- r2
-        hyper <- res$hyper
-        crit <- res$criterion
+    # The bootstrap restarting the break-point terms declare, run ONCE at the
+    # top level -- inside an outer search it would multiply by the number of
+    # criterion evaluations -- and at the hyperparameters the fit ended at.
+    nb <- seg_boot_total(spec)
+    if (nb > 0L && length(attr(design, "refresh"))) {
+      before <- res$par
+      res <- statmod_boot_restart(spec_h, design, blocks, hyper, inner_optimizer,
+                                  res, expected, approx, maxit, tol, vb, nb)
+      # A RESTART THAT MOVES THE FIT MOVES THE COEFFICIENTS THE CRITERION
+      # ESTIMATES TOO. The search above read the criterion in the basin its
+      # warm starts stayed in, and the restart may leave that basin; a
+      # coefficient held at the old optimum is then the optimum of another
+      # model. Measured on a smoothed jump, sigma stayed at 0.661 after the
+      # restart had moved the break-point from 6.46 to 6.09, where the criterion
+      # puts it at 0.561. The search is run once more from the restarted point.
+      if (length(res$held_coef) && !identical(before, res$par)) {
+        r2 <- tryCatch(
+          statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                         outer_criterion, outer_optimizer, res$par, approx,
+                         maxit, tol, vb, data, weights, offsets,
+                         sparse_criterion),
+          error = function(e) NULL)
+        if (!is.null(r2)) {
+          res <- r2
+          hyper <- res$hyper
+          crit <- res$criterion
+        }
       }
     }
+    list(res = res, hyper = hyper, crit = crit, spec_h = spec_h)
+  }
+  f1 <- fit_once(beta)
+  res <- f1$res
+  hyper <- f1$hyper
+  crit <- f1$crit
+  spec_h <- f1$spec_h
+
+  # SEVERAL STARTS, WHERE A STRUCTURAL TERM ASKS FOR THEM. The likelihood of
+  # a regime model has several maxima and one start reaches the basin it lies
+  # in: measured on MASS::geyser with three regimes, eight starts reach five
+  # maxima, from -1053.39 to -1210.49. modelterms7::term_starts() says where
+  # to start, the first start being the one already fitted; each further one
+  # is a whole fit from the fresh coefficient start, and the best is kept by
+  # the rule the edge restarts below use. Run before the edge check, so the
+  # point that check reads is the winner.
+  ms <- structural_multistarts(spec, design)
+  if (length(ms$zeta) > 1L) {
+    sst <- statmod_structural_state(design)
+    zbest <- sst$zeta
+    su <- attr(design, "structural")
+    for (s in seq.int(2L, length(ms$zeta))) {
+      sst$zeta[[ms$term]] <- ms$zeta[[s]]
+      structural_start_fixups(spec, sst, su,
+                              vapply(su, function(u) u$term == ms$term,
+                                     logical(1)))
+      f2 <- tryCatch(fit_once(beta), error = function(e) NULL)
+      if (!is.null(f2) && edge_restart_better(f2$res, res, crit,
+                                              outer_criterion,
+                                              sparse_criterion)) {
+        res <- f2$res
+        hyper <- f2$hyper
+        crit <- f2$crit
+        spec_h <- f2$spec_h
+        zbest <- sst$zeta
+      } else {
+        sst$zeta <- zbest
+      }
+    }
+    sst$zeta <- zbest
   }
 
   # A COORDINATE AT THE EDGE OF ITS CHART CAN LOOK STATIONARY WITHOUT BEING

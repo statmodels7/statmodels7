@@ -1,3 +1,20 @@
+# statmodels7 0.157.0
+
+* A structural term that returns several starts through
+  `modelterms7::term_starts()` is fitted from each, and the fit keeps the
+  best by the rule the edge restarts use: the criterion where one was
+  maximized, the penalized objective otherwise. Every start is a whole fit
+  from the fresh coefficient start, run before the check at the edge of the
+  charts, so that check reads the winner. `regime(n_start = 8)` on
+  `MASS::geyser` costs about eight fits (21.9 s against 2.3 s with two
+  regimes, 29.8 s against 4.7 s with three). With `n_start = 1`, the default,
+  nothing changes. Requires modelterms7 0.82.0.
+* The adjustments a fresh structural start receives once the design is known
+  (a level held by an intercept starts at zero, an unheld level at zero
+  starts at the equation's intercept) are one function,
+  `structural_start_fixups()`, which `statmod_design()` and the further
+  starts both call.
+
 # statmodels7 0.156.0
 
 * A coordinate at the edge of its chart is checked for a maximum on the

@@ -1695,52 +1695,9 @@ statmod_design <- function(spec) {
     # asked once the blocks exist, since what it compares is the equation's
     # column space against the constant
     sst$held <- statmod_held_levels(spec, out)
-    # a HELD coordinate is held at zero, the value the intercept beside it
-    # takes over from: a term's start may read the data and put the level
-    # elsewhere, and a held level left there would shift every regime by a
-    # constant the fit can never remove
-    for (u in su) {
-      if (!is.null(spec@structural[[u$term]])) next
-      h <- sst$held[[u$term]]
-      if (length(h)) sst$zeta[[u$term]][h] <- 0
-    }
-    # An UNHELD level starts at the equation's own data-based intercept
-    # rather than at zero -- the mirror of "the intercept wins": held, the
-    # intercept carries the response's scale and zero is the right start;
-    # unheld, which is the volatility spelling `sigma ~ gas(...) - 1`, the
-    # level itself must absorb it, and a filter started at zero on a
-    # response of another scale reads a score of y^2/sigma^2 at its first
-    # step and leaves the representable range before the search's guard
-    # can step back (measured: sigma = NaN at y scaled by 100, where the
-    # intercept spelling of the same model fits). Only a FRESH start is
-    # touched: a specification a fit has been through keeps the parameters
-    # it arrived at.
     fresh <- vapply(su, function(u) is.null(spec@structural[[u$term]]),
                     logical(1))
-    lvl_all <- lapply(su, function(u)
-      modelterms7::term_level_param(spec@terms[[u$param]][[u$term]]))
-    need <- vapply(seq_along(su), function(i) {
-      fresh[i] && length(lvl_all[[i]]) &&
-        !all(lvl_all[[i]] %in% sst$held[[su[[i]]$term]])
-    }, logical(1))
-    if (any(need)) {
-      eta0 <- statmod_intercepts(spec)
-      for (i in which(need)) {
-        u <- su[[i]]
-        v <- eta0[[u$param]]
-        if (is.null(v) || !is.finite(v)) next
-        tm <- spec@terms[[u$param]][[u$term]]
-        lvl <- setdiff(lvl_all[[i]], sst$held[[u$term]])[1L]
-        # a term whose own start already read the data keeps it: a regime
-        # term places its first level at a low quantile of the response,
-        # which the intercept-only fit would move to the mean
-        if (!isTRUE(sst$zeta[[u$term]][[lvl]] == 0)) next
-        lk <-modelterms7::term_links(tm)[[lvl]]
-        z <- tryCatch(linkfunctions7::linkfun(lk, v),
-                      error = function(e) NA_real_)
-        if (is.finite(z)) sst$zeta[[u$term]][[lvl]] <- z
-      }
-    }
+    structural_start_fixups(spec, sst, su, fresh)
   }
   rf <- statmod_refreshable(spec)
   if (length(rf)) {
@@ -1776,6 +1733,80 @@ statmod_design <- function(spec) {
     attr(out, "eta_memo") <- mm
   }
   out
+}
+
+
+#' Settle a Fresh Start of a Structural Term Against Its Equation
+#'
+#' @description
+#' The two adjustments a start of a structural term's own parameters needs
+#' once the design is known: a level held by an intercept in the same
+#' equation starts at zero, and an unheld level that the term's own start
+#' left at zero starts at the equation's data-based intercept.
+#'
+#' @details
+#' [statmod_design()] applies them to the start [modelterms7::term_start()]
+#' gives, and [statmod()] applies them again to every further start
+#' [modelterms7::term_starts()] gives, so each start of a multistart fit is
+#' treated as the first one is.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param sst The design's structural state, an environment carrying `zeta`
+#'   and `held`.
+#' @param su The structural units, as `attr(design, "structural")`.
+#' @param fresh A logical vector, one per unit: `TRUE` where the unit's
+#'   values are a fresh start rather than values a fit arrived at.
+#'
+#' @return `NULL`, invisibly; `sst$zeta` is modified in place.
+#'
+#' @keywords internal
+structural_start_fixups <- function(spec, sst, su, fresh) {
+  # a HELD coordinate is held at zero, the value the intercept beside it
+  # takes over from: a term's start may read the data and put the level
+  # elsewhere, and a held level left there would shift every regime by a
+  # constant the fit can never remove
+  for (i in seq_along(su)) {
+    u <- su[[i]]
+    if (!fresh[i]) next
+    h <- sst$held[[u$term]]
+    if (length(h)) sst$zeta[[u$term]][h] <- 0
+  }
+  # An UNHELD level starts at the equation's own data-based intercept
+  # rather than at zero -- the mirror of "the intercept wins": held, the
+  # intercept carries the response's scale and zero is the right start;
+  # unheld, which is the volatility spelling `sigma ~ gas(...) - 1`, the
+  # level itself must absorb it, and a filter started at zero on a
+  # response of another scale reads a score of y^2/sigma^2 at its first
+  # step and leaves the representable range before the search's guard
+  # can step back (measured: sigma = NaN at y scaled by 100, where the
+  # intercept spelling of the same model fits). Only a FRESH start is
+  # touched: a specification a fit has been through keeps the parameters
+  # it arrived at.
+  lvl_all <- lapply(su, function(u)
+    modelterms7::term_level_param(spec@terms[[u$param]][[u$term]]))
+  need <- vapply(seq_along(su), function(i) {
+    fresh[i] && length(lvl_all[[i]]) &&
+      !all(lvl_all[[i]] %in% sst$held[[su[[i]]$term]])
+  }, logical(1))
+  if (any(need)) {
+    eta0 <- statmod_intercepts(spec)
+    for (i in which(need)) {
+      u <- su[[i]]
+      v <- eta0[[u$param]]
+      if (is.null(v) || !is.finite(v)) next
+      tm <- spec@terms[[u$param]][[u$term]]
+      lvl <- setdiff(lvl_all[[i]], sst$held[[u$term]])[1L]
+      # a term whose own start already read the data keeps it: a regime
+      # term places its first level at a low quantile of the response,
+      # which the intercept-only fit would move to the mean
+      if (!isTRUE(sst$zeta[[u$term]][[lvl]] == 0)) next
+      lk <-modelterms7::term_links(tm)[[lvl]]
+      z <- tryCatch(linkfunctions7::linkfun(lk, v),
+                    error = function(e) NA_real_)
+      if (is.finite(z)) sst$zeta[[u$term]][[lvl]] <- z
+    }
+  }
+  invisible(NULL)
 }
 
 
