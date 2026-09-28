@@ -552,6 +552,53 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     }
   }
 
+  # A COORDINATE AT THE EDGE OF ITS CHART CAN LOOK STATIONARY WITHOUT BEING
+  # AT A MAXIMUM: its score is the bounded-scale derivative times the chart's
+  # own, and the second vanishes there. Measured on MASS::geyser,
+  # `waiting ~ regime(k = 2)` stopped with a transition probability at
+  # 2.8e-12, a mode error of 1.1e-04 and a log-likelihood of -1134.01, while
+  # moving that probability to 3.4e-4 raises it by 0.06 and the fit restarted
+  # from there reaches -1099.63. A violation moves the coordinate back to the
+  # edge and refits, at most three times; one that survives is recorded and
+  # statmod_certificate() reports it.
+  kkt <- edge_violations(spec_h, design, res$obj$split(res$par))
+  for (attempt in seq_len(3L)) {
+    if (!nrow(kkt)) break
+    sst <- statmod_structural_state(design)
+    zsave <- if (is.null(sst)) NULL else sst$zeta
+    cf <- res$obj$split(res$par)
+    for (r in seq_len(nrow(kkt))) {
+      if (kkt$kind[r] == "structural") {
+        sst$zeta[[kkt$term[r]]][[kkt$name[r]]] <- kkt$target[r]
+      } else {
+        j <- match(kkt$name[r], design[[kkt$param[r]]]$coef_names)
+        cf[[kkt$param[r]]][[j]] <- kkt$target[r]
+      }
+    }
+    r2 <- tryCatch(
+      if (is.null(outer_criterion) && is.null(sparse_criterion)) {
+        statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
+                          res$obj$stack(cf), expected, approx, maxit, tol, vb)
+      } else {
+        statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                       outer_criterion, outer_optimizer, res$obj$stack(cf),
+                       approx, maxit, tol, vb, data, weights, offsets,
+                       sparse_criterion)
+      }, error = function(e) NULL)
+    if (is.null(r2) || !edge_restart_better(r2, res, crit, outer_criterion,
+                                            sparse_criterion)) {
+      if (!is.null(sst)) sst$zeta <- zsave
+      break
+    }
+    res <- r2
+    if (!is.null(r2$hyper)) hyper <- r2$hyper
+    if (!is.null(r2$criterion)) crit <- r2$criterion
+    if (length(r2$held_coef)) {
+      spec_h <- S7::set_props(spec, held_coef = r2$held_coef)
+    }
+    kkt <-edge_violations(spec_h, design, res$obj$split(res$par))
+  }
+
   coef <- res$obj$split(res$par)
   fitted <- statmod_eta(spec, design, coef)$theta
   # WHICH COLUMNS THE MODEL DOES NOT IDENTIFY, from the pivot that fitted it
@@ -621,6 +668,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                    # the coordinates the marginal criterion left out of its
                    # determinant, which statmod_certificate() and vcov() read
                    pinned = res$pinned,
+                   # coordinates at the edge of their chart that still point
+                   # inward after the restarts; see edge_violations()
+                   kkt = kkt,
                    sparse = vapply(blocks$sparse, function(b)
                      paste(b$param, b$term, sep = "/"), character(1)),
                    # which criterion swept the kinked penalties, and exactly

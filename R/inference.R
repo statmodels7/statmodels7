@@ -4633,6 +4633,37 @@ drop_common_prefix <- function(nms) {
 #'
 #' @export
 statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
+  out <- certificate_core(fit, tol, flat, edge)
+  # A COORDINATE AT THE EDGE OF ITS CHART THAT POINTS INWARD makes the point
+  # something other than a maximum, whatever the readings above say: they
+  # are taken on the free scale, where the chart's own derivative vanishes
+  # at the edge and takes the score with it. statmod() records what
+  # edge_violations() found after its restarts, and a violation that
+  # survived them is reported here.
+  kk <- fit@methods$kkt
+  if (is.data.frame(kk) && nrow(kk)) {
+    out$state <- "not converged"
+    out$reason <- c(sprintf(paste0(
+      "%s sits at the edge of its chart (free value %.4g) and moving it back",
+      " to %g raises the log-likelihood by %.4g, so the point is not a",
+      " maximum"), ifelse(nzchar(kk$term),
+                          paste0(kk$param, ":", kk$term, ":", kk$name),
+                          paste0(kk$param, ":", kk$name)),
+      kk$eta, kk$target, kk$gain), out$reason)
+  }
+  out
+}
+
+#' The Certificate's Readings Before the Edge Check
+#'
+#' @description
+#' Everything [statmod_certificate()] computes except the check at the edge
+#' of a chart, which that function applies to the result.
+#'
+#' @inheritParams statmod_certificate
+#' @return The list [statmod_certificate()] returns.
+#' @keywords internal
+certificate_core <- function(fit, tol, flat, edge) {
   out <- list(state = "unknown", decrement = NA_real_, gradient = NA_real_,
               mode_error = NA_real_, curvature = NA_character_,
               boundary = character(0), boundary_key = character(0),

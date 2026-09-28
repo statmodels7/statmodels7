@@ -1,3 +1,30 @@
+# statmodels7 0.156.0
+
+* A coordinate at the edge of its chart is checked for a maximum on the
+  bounded scale. Its score is the bounded-scale derivative times the chart's
+  own, and the second vanishes at the edge, so a fit could stop there with
+  a vanishing score while moving back inside raised the log-likelihood. At
+  the end of a fit every coordinate past a free value of 8 that
+  `modelterms7::term_charted()` names, or that is the intercept of an
+  equation with no other column and a link other than the identity, is
+  moved to 8 with the rest held; where the log-likelihood rises by more than
+  `mode_error_limit()` the fit restarts from there, at most three times, and
+  a violation that survives makes `statmod_certificate()` report the point
+  as not converged, naming the coordinate. Measured on `MASS::geyser` with
+  the old start, `waiting ~ regime(k = 2)` stopped at -1134.01 with a
+  transition probability at 2.8e-12 and a certificate reading `converged`;
+  moving it to 3.4e-4 gains 0.06, and the restarted fit reaches -1099.63.
+  Over the structural cases of the reference battery three coordinates sit
+  at an edge and all three point outward (slopes -1.24, -425 and a flat
+  one), so nothing there moves. Requires modelterms7 0.81.0.
+* A structural coordinate that an intercept in the same equation holds
+  starts at zero whatever the term's own start says, and a free level is
+  replaced by the intercept-only fit only where the term's start left it at
+  zero. With modelterms7 0.81.0 a regime term reads its levels off the
+  response, and without this the held level kept that value (0.059 on a
+  simulated panel) and shifted every regime by a constant the fit could not
+  remove.
+
 # statmodels7 0.155.0
 
 * **`reml()` and `ml()` take `marginal`, and by default they estimate a

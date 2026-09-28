@@ -495,7 +495,11 @@ test_that("a regime model reports the observed information, not the EM one", {
                        distributions7::gaussian1_distrib(), dd)
   fit <- statmod(y ~ x + regime(2, time = t) - 1 | sigma ~ 1,
                  distributions7::gaussian1_distrib(), dd)
-  expect_true(fit@converged)
+  # the premise is that the fit is at its mode, which the certificate reads;
+  # from the quantile start of modelterms7 0.81.0 the alternation's own
+  # flag ends on its stall guard at the same point (logLik -450.593721 and
+  # the same term parameters either way, mode error 2.6e-08)
+  expect_identical(statmod_certificate(fit)$state, "converged")
 
   spec <- fit@spec
   design <- statmod_design(spec)
