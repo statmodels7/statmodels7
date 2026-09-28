@@ -137,8 +137,11 @@ test_that("a model with no filter takes the branch that was there before", {
   y <- sin(2 * pi * x) + stats::rnorm(20, sd = 0.5)[g] +
     stats::rnorm(n, sd = 0.4)
   d <- data.frame(y = y, x = x, g = g)
+  # sigma read at the joint mode: estimated on the criterion, the correction
+  # takes the branch over the estimated coefficients
   fit <- statmod(y ~ ridge(~ x + I(x^2) + I(x^3)) + random(~ 1 | g),
-                 gaussian1_distrib(), d, outer_criterion = reml())
+                 gaussian1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"))
   dz <- statmod_design(fit@spec)
 
   expect_null(statmod_marginal_full(fit@spec, dz, fit@coefficients,

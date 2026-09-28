@@ -192,7 +192,9 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
                          ctx_approx(ctx))
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
-    K <- pin_boundary(K)
+    # a coefficient the marginal criterion holds is not integrated, and is
+    # left out of K exactly as a boundary coordinate is
+    K <- pin_boundary(K, pinned_coords(spec, design))
     fac <- pd_factor(K)
     if (!isTRUE(fac$ok)) return(NULL)
     inv <- if (isTRUE(fac$sparse)) {
@@ -254,11 +256,14 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
 #' @seealso [ctx_penalized()], [iwls_solve()]
 #'
 #' @keywords internal
-pin_boundary <- function(K) {
-  j <- boundary_coords(K)
+pin_boundary <- function(K, hold = integer(0)) {
+  b <- boundary_coords(K)
+  j <- sort(unique(c(b, as.integer(hold))))
   if (!length(j)) {
     attr(K, "held") <- 0L
     attr(K, "held_at") <- integer(0)
+    attr(K, "boundary_at") <- integer(0)
+    attr(K, "hold_at") <- integer(0)
     return(K)
   }
   K[j, ] <- 0
@@ -268,6 +273,13 @@ pin_boundary <- function(K) {
   # the positions as well as the count: the criterion's gradient must know
   # WHICH rows are constant, see statmod_marginal_grad()
   attr(K, "held_at") <- j
+  # and which of them are a BOUNDARY rather than a coefficient the marginal
+  # criterion holds. Both are left out of the determinant, but only the first
+  # is a constant of the criterion: a held coefficient moves the information
+  # through the fitted predictors, so the criterion's derivative in it reads
+  # its row of the contraction. See statmod_marginal_grad().
+  attr(K, "boundary_at") <- b
+  attr(K, "hold_at") <- setdiff(j, b)
   K
 }
 
@@ -509,6 +521,7 @@ ctx_trace_matrix <- function(ctx, pen, basis, expected = FALSE) {
     M
   }
   if (is.null(basis)) return(unpin(pen$inv))
+  if (!ncol(basis)) return(matrix(0, nrow(basis), nrow(basis)))
   build <- function() {
     # K may now be sparse, and the projection onto a dense basis is dense
     # whatever it was; the result is read as a full matrix by

@@ -97,8 +97,11 @@ test_that("a shape run to its clamp fits instead of stopping the run", {
   eta <- 2 * sin(6 * x) + 1.2 * cos(4 * z) + b[as.integer(g)]
   d <- data.frame(y = eta + rt(n, df = 5) * 0.5, x = x, z = z, g = g)
 
+  ## nu read at the joint mode, which is where it runs to the clamp; the
+  ## marginal criterion stops it at a finite value
   fit <- statmod(y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g),
-                 distributions7::student_t1_distrib(), d)
+                 distributions7::student_t1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"))
   expect_s7_class(fit, StatmodFit)
   expect_true(is.finite(as.numeric(logLik(fit))))
   ## nu is at the clamp, and the OTHER coordinates were fitted there rather
@@ -192,7 +195,9 @@ test_that("the outer gradient beside a clamped shape is the pinned criterion's",
   d <- data.frame(y = eta + rt(n, df = 5) * 0.5, x = x, z = z, g = g)
   form <- y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g)
   dt <- distributions7::student_t1_distrib()
-  fit <- statmod(form, dt, d)
+  ## nu read at the joint mode, where it runs to the clamp; the marginal
+  ## criterion stops it at a finite value and the case is not reached
+  fit <- statmod(form, dt, d, outer_criterion = reml(marginal = "none"))
   ## the premise: nu at the clamp, which is where the NaN lived. Absent, the
   ## case this test is about has not been reached, and it says so.
   skip_if(fit@fitted$nu[1] < 1e300, "nu did not reach its clamp here")

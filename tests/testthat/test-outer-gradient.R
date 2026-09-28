@@ -161,12 +161,13 @@ test_that("a prior whose Hessian moves with the coefficients is differentiated",
 
 test_that("the gradient vanishes at the reported optimum", {
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dg,
-                 outer_criterion = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed", marginal = "none"))
   spec <- fit@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   g <- statmod_marginal_grad(spec, design, fit@coefficients, fit@hyper,
-                             reml(hessian = "observed"), idx)
+                             reml(hessian = "observed", marginal = "none"),
+                             idx)
   expect_lt(max(abs(g)), 1e-4)
 })
 
@@ -251,8 +252,12 @@ test_that("a penalty inside a refreshable term reaches the same optimum", {
                 outer_optimizer = optimizers7::nelder_mead())
   expect_equal(unlist(lapply(fe@hyper, unlist)),
                unlist(lapply(fd@hyper, unlist)), tolerance = 5e-3)
+  # the two stop at one criterion, 112.483192 on both, and the log-likelihood
+  # moves along it: with sigma estimated on the criterion the two readings
+  # are 2e-4 apart, 1.3e-6 relative, where the criteria agree to 1e-6
+  expect_equal(fe@criterion, fd@criterion, tolerance = 1e-8)
   expect_equal(as.numeric(logLik(fe)), as.numeric(logLik(fd)),
-               tolerance = 1e-6)
+               tolerance = 1e-5)
   # and the exact route is what it is for: fewer evaluations
   expect_lt(nrow(fe@history$outer), nrow(fd@history$outer))
 })

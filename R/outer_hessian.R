@@ -62,6 +62,11 @@ NULL
 #' @param method An [OuterMethod()].
 #' @param idx The outer index.
 #' @param basis The integrated subspace, or `NULL`.
+#' @param ctx The evaluation context, or `NULL`.
+#' @param inner The inner optimizer, read by the differenced route.
+#' @param gam The coefficients the criterion estimates, from
+#'   [marginal_coords()], or `NULL`. Their rows and columns follow those of
+#'   the hyperparameters.
 #'
 #' @return A square matrix, one row per row of `idx`, or `NULL` where
 #'   the determinant does not exist.
@@ -71,7 +76,8 @@ NULL
 #' @keywords internal
 statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
                                   basis = NULL, ctx = NULL,
-                                  inner = NULL) {
+                                  inner = NULL, gam = NULL) {
+  ng <- if (is.null(gam)) 0L else length(gam$where)
   # ⚠️ A MODEL CARRYING A STRUCTURAL TERM IS NOT ANSWERED BY THE ASSEMBLY
   # BELOW, which is written over the stacked coefficients while a filter's
   # own parameters move with the hyperparameter beside them -- measured, 0.86
@@ -115,7 +121,8 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # whose log link is canonical. Where order 2 is not admitted the exact
   # gradient is differenced instead.
   expected <- identical(method@hessian, "expected")
-  if (expected && !outer_gradient_ok(spec, design, idx, method, 2L)) {
+  if (expected && !outer_gradient_ok(spec, design, idx, method, 2L,
+                                     gamma = ng > 0L)) {
     return(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                 basis, inner))
   }
@@ -203,6 +210,14 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   Dm <- if (length(units)) {
     mode_curvature(spec, design, coef, params, npar, offs, total)
   } else NULL
+  # the coordinates pinned in K other than at a boundary: the coefficients the
+  # criterion estimates and those the model does not identify. The mode does
+  # not move in them, so every solve below leaves them at zero.
+  hold <- setdiff(attr(K, "held_at"), attr(K, "boundary_at"))
+  if (length(hold) && !is.null(Dm)) {
+    Dm[hold, ] <- 0
+    Dm[, hold] <- 0
+  }
   Jmat <- K
   msolve <- function(z) as.numeric(Kinv %*% z)
   if (!is.null(Dm) && any(Dm != 0)) {
@@ -221,17 +236,38 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # the pieces each hyperparameter owns, in the stacked coefficient space
   pieces <- outer_pieces(spec, design, coef, hyper, idx, offs, total)
   bhat <- lapply(seq_len(nh), function(m) -msolve(pieces$c[[m]]))
+  # THE COEFFICIENTS THE CRITERION ESTIMATES are outer coordinates with no
+  # penalty of their own: S_j, c_j and every second-order penalty piece are
+  # zero, and the direction the mode moves in carries the coordinate itself,
+  # b_j = e_j - P K_m e_j, with K_m the mode's full curvature.
+  Hm <- NULL
+  if (ng) {
+    Hm <- as_dense(ctx_information(ctx, spec, design, coef, hyper, FALSE,
+                                   ctx_approx(ctx))) +
+      as_dense(ctx_penalty(ctx, spec, design, coef, hyper))
+    if (!is.null(Dm)) Hm <- Hm + Dm
+    for (w in gam$where) {
+      col <- Hm[, w]
+      col[hold] <- 0
+      b <- -msolve(col)
+      b[hold] <- 0
+      b[w] <- 1
+      bhat[[length(bhat) + 1L]] <- b
+    }
+    pieces$S <- c(pieces$S, rep(list(matrix(0, total, total)), ng))
+  }
+  nv <- nh + ng
   tv <- lapply(bhat, function(v) block_predictors(design, params, npar, offs,
                                                  v))
   # what each direction costs a moving block, once per hyperparameter: both
   # quantities depend on ONE direction, so building them inside the pair loop
   # would repeat an O(np^2) product for every pair
   dref <- if (length(units)) {
-    lapply(seq_len(nh), function(m)
+    lapply(seq_len(nv), function(m)
       refresh_direction(spec, design, M, params, npar, offs, d3, tv[[m]],
                         bhat[[m]], units))
   } else NULL
-  Tm <- lapply(seq_len(nh), function(m) {
+  Tm <- lapply(seq_len(nv), function(m) {
     Tb <- contract3(spec, design, d3, params, npar, offs, total, tv[[m]])
     if (!length(units)) return(Tb)
     R <- contract3_refresh(spec, design, params, npar, offs, total, dref[[m]],
@@ -240,30 +276,39 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   })
   # a penalty whose Hessian moves with the coefficients moves K along b_m too;
   # NULL, and nothing added, where every penalty is quadratic in them
-  Pm <- lapply(seq_len(nh), function(m)
+  Pm <- lapply(seq_len(nv), function(m)
     statmod_penalty_dbeta(spec, design, coef, hyper, bhat[[m]], total))
-  Tm <- lapply(seq_len(nh), function(m) {
+  Tm <- lapply(seq_len(nv), function(m) {
     if (is.null(Pm[[m]])) Tm[[m]] else Tm[[m]] + Pm[[m]]
   })
   # the determinant's matrix moves by the derivative of ITS information, which
   # on the expected route is dE and not the observed third derivative Tm holds
   Km <- if (expected) {
-    lapply(seq_len(nh), function(m) {
+    lapply(seq_len(nv), function(m) {
       TE <- contract3(spec, design, kE$deriv, params, npar, offs, total,
                       tv[[m]], key = kE$key)
       if (!is.null(Pm[[m]])) TE <- TE + Pm[[m]]
       pieces$S[[m]] + TE
     })
   } else {
-    lapply(seq_len(nh), function(m) pieces$S[[m]] + Tm[[m]])
+    lapply(seq_len(nv), function(m) pieces$S[[m]] + Tm[[m]])
   }
 
-  out <- matrix(0, nh, nh)
-  for (m in seq_len(nh)) {
-    for (l in m:nh) {
-      key <- pieces$pair[m, l]
-      Sml <- pieces$S2[[key]]
-      cml <- pieces$c2[[key]]
+  out <- matrix(0, nv, nv)
+  for (m in seq_len(nv)) {
+    for (l in m:nv) {
+      # a pair touching an estimated coefficient has no penalty piece
+      both_hyper <- m <= nh && l <= nh
+      if (both_hyper) {
+        key <- pieces$pair[m, l]
+        Sml <- pieces$S2[[key]]
+        cml <- pieces$c2[[key]]
+        rho2 <- pieces$rho2[m, l]
+      } else {
+        Sml <- 0
+        cml <- 0
+        rho2 <- 0
+      }
       # the block's SECOND derivative in the pair's two directions, read once
       # and consumed twice: the mode's second movement below and the
       # twice-contracted fourth derivative further down
@@ -282,7 +327,9 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
         rhs <- rhs + refresh_mode_third(spec, params, npar, units, Hl, glref,
                                         tv[[l]], dref[[m]], f2, total)
       }
+      if (length(hold)) rhs[hold] <- 0
       bml <- -msolve(rhs)
+      if (length(hold)) bml[hold] <- 0
       # dK_m/dt_l enters ONLY through its trace against M, so the two
       # contractions are never assembled: tr(M X'WX) is a weighted sum of the
       # per-observation diagonal G. Measured at 8000 observations and 69
@@ -309,8 +356,17 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
       E2 <- statmod_penalty_second(spec, design, coef, hyper, idx, m, l,
                                    bhat[[m]], bhat[[l]], bml, total)
       if (!is.null(E2)) tr_dKm <- tr_dKm + sum(M * E2)
-      v <- -pieces$rho2[m, l] +
-        sum(bhat[[m]] * as.numeric(Jmat %*% bhat[[l]])) +
+      # the second derivative of l_p at the mode is -E_a'K_m b_b - r_a'b_b
+      # - rho_ab; for two hyperparameters E vanishes and -r_m'b_l is
+      # b_m'J b_l, the form kept here
+      first <- if (both_hyper) {
+        sum(bhat[[m]] * as.numeric(Jmat %*% bhat[[l]]))
+      } else if (m > nh) {
+        -sum(Hm[gam$where[m - nh], ] * bhat[[l]])
+      } else {
+        -sum(Hm[gam$where[l - nh], ] * bhat[[m]])
+      }
+      v <- -rho2 + first +
         sum((M %*% Km[[l]]) * t(M %*% Km[[m]])) / 2 -
         tr_dKm / 2
       out[m, l] <- v
@@ -321,9 +377,10 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # and onto the free scale the search runs on
   links <- attr(idx, "links")
   g <- statmod_marginal_grad(spec, design, coef, hyper, method, idx, basis,
-                             free = FALSE, ctx = ctx)
-  h1 <- numeric(nh)
-  h2 <- numeric(nh)
+                             free = FALSE, ctx = ctx, gam = gam)
+  # an estimated coefficient is on its own scale already
+  h1 <- rep(1, nv)
+  h2 <- numeric(nv)
   for (r in seq_len(nh)) {
     v <- hyper[[idx$parameter[r]]][[idx$term[r]]][[idx$name[r]]]
     e <- linkfunctions7::linkfun(links[[r]], v)
@@ -911,6 +968,8 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'   where the model carries a filter, whose information is observed.
 #' @param approx The approximation for the expected information. Not read
 #'   where the model carries a filter.
+#' @param pinned The coordinates the fit left out of the criterion's
+#'   determinant, as it records them in `methods$pinned`.
 #'
 #' @return A list with `total`, the scalar correction, `per`, one entry per
 #'   penalty key, and `n_hyper`, how many hyperparameters were estimated.
@@ -928,7 +987,8 @@ d4_key <- function(params, a, b, k, q, keys) {
 #'
 #' @keywords internal
 statmod_edf_correction <- function(spec, coef, hyper, design, method,
-                                   expected = TRUE, approx = "opg") {
+                                   expected = TRUE, approx = "opg",
+                                   pinned = NULL) {
   # `n_hyper` is what tells a zero correction from an unavailable one: with
   # no estimated hyperparameter there is nothing to propagate and zero is the
   # answer, while with one there is something and zero means the curvature
@@ -942,6 +1002,14 @@ statmod_edf_correction <- function(spec, coef, hyper, design, method,
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) return(zero)
   zero$n_hyper <- nrow(idx)
+  # where the criterion estimated coefficients, the mode moves with a
+  # hyperparameter at those coefficients held, and the hyperparameter's
+  # variance is read over (eta, gamma)
+  mc <- fit_marginal_context(spec, design, coef, method, pinned)
+  if (length(mc$gam$where)) {
+    return(marginal_edf_correction(mc, coef, hyper, method, idx, expected,
+                                   approx, zero))
+  }
 
   # THE VECTOR THE MODE MOVES IN is the one the criterion's determinant
   # spans, and for a model carrying a filter that is the JOINT vector: the
@@ -1306,6 +1374,8 @@ hyper_variance <- function(A, schur = 1e-4) {
 #' @param method The outer method that estimated them, or `NULL`.
 #' @param inner The inner optimizer the fit used, which the stencil route
 #'   refits its probes with; `iwls()` where none is given.
+#' @param pinned The coordinates the fit left out of the criterion's
+#'   determinant, as it records them in `methods$pinned`.
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
@@ -1318,11 +1388,30 @@ hyper_variance <- function(A, schur = 1e-4) {
 #'
 #' @keywords internal
 statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
-                               inner = NULL) {
+                               inner = NULL, pinned = NULL) {
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
   if (!nrow(idx)) return(NULL)
+  # on the criterion the fit maximized: where it estimated coefficients too,
+  # the hyperparameters' variance is the eta block of the inverse over
+  # (eta, gamma), so the coefficients' own uncertainty reaches it
+  mc <- fit_marginal_context(spec, design, coef, method, pinned)
+  ng <- length(mc$gam$where)
+  if (ng) {
+    basis <- integrated_basis(mc$spec, mc$design, method@kind, gamma = TRUE)
+    Ho <- tryCatch(statmod_marginal_hess(mc$spec, mc$design, coef, hyper,
+                                         method, idx, basis, inner = inner,
+                                         gam = mc$gam),
+                   error = function(e) NULL)
+    if (is.null(Ho) || !all(is.finite(Ho))) return(NULL)
+    Vv <- hyper_variance(-as.matrix(Ho))
+    if (is.null(Vv)) return(NULL)
+    k <- paste(idx$parameter, idx$term, idx$name, sep = "\r")
+    V <- Vv[seq_len(nrow(idx)), seq_len(nrow(idx)), drop = FALSE]
+    dimnames(V) <- list(k, k)
+    return(structure(V, idx = idx))
+  }
   # A MIXED CLASS and a penalty over a STRUCTURAL term's own parameters were
   # both refused here, and neither is refused now: such a model carries a
   # structural term, so statmod_marginal_hess() answers it with

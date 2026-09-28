@@ -13,7 +13,8 @@ statmod_marginal_grad(
   idx,
   basis = NULL,
   free = TRUE,
-  ctx = NULL
+  ctx = NULL,
+  gam = NULL
 )
 }
 \arguments{
@@ -34,10 +35,15 @@ statmod_marginal_grad(
 \item{free}{Whether to carry the result onto the free scale. The Hessian
 asks for the parameter scale, having its own second-order chain rule to
 apply.}
+
+\item{ctx}{The evaluation context, or \code{NULL}.}
+
+\item{gam}{The coefficients the criterion estimates, from
+\code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}.}
 }
 \value{
-A numeric vector, one entry per row of \code{idx}, or \code{NULL}
-where the determinant does not exist.
+A numeric vector, one entry per row of \code{idx} followed by one per
+position of \code{gam$where}, or \code{NULL} where the determinant does not exist.
 }
 \description{
 \eqn{\partial V/\partial\eta} at the penalized mode, over the free scale of

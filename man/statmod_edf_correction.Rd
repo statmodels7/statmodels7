@@ -11,7 +11,8 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "opg"
+  approx = "opg",
+  pinned = NULL
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ where the model carries a filter, whose information is observed.}
 
 \item{approx}{The approximation for the expected information. Not read
 where the model carries a filter.}
+
+\item{pinned}{The coordinates the fit left out of the criterion's
+determinant, as it records them in \code{methods$pinned}.}
 }
 \value{
 A list with \code{total}, the scalar correction, \code{per}, one entry per

@@ -113,12 +113,13 @@ test_that("the certificate's verdict is the decrement and its cost is stated", {
 })
 
 
-test_that("the decrement certifies a healthy fit the gradient reading refuses", {
+test_that("the decrement certifies a healthy fit", {
   # THE CASE THE CHANGE EXISTS FOR. The outer gradient of a criterion summed
   # over n observations and p penalized coefficients carries both, so one
   # absolute threshold cannot serve every shape: a random intercept over
-  # n/10 groups beside a smooth reaches gradients of 0.02 to 0.4 at points
-  # that are at their own optimum. Measured over 1350 fits against an
+  # n/10 groups beside a smooth reached gradients of 0.02 to 0.4 at points
+  # that are at their own optimum (before 0.155.0; see the end of this test).
+  # Measured over 1350 fits against an
   # independently located optimum, `max|g| > 1e-2` flags 131 of 663 fits
   # within 1e-3 of theirs while the decrement at the same cut flags none.
   #
@@ -138,8 +139,12 @@ test_that("the decrement certifies a healthy fit the gradient reading refuses", 
                   x = x, id = id)
   f <- y ~ random(~ 1 | id) + s(x, bspline_smooth(k = 10))
 
-  fit <- statmod(f, gaussian1_distrib(), d)
+  # sigma read at the joint mode: the gradient reading below is the one the
+  # decrement replaced, and it reads the smoothing parameter alone
+  fit <- statmod(f, gaussian1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"))
   ref <- statmod(f, gaussian1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"),
                  outer_optimizer = optimizers7::newton(
                    criterion = optimizers7::crit_grad(1e-8),
                    line_search = optimizers7::armijo(max_step = 15),
@@ -154,8 +159,13 @@ test_that("the decrement certifies a healthy fit the gradient reading refuses", 
   ct <- statmod_certificate(fit)
   expect_identical(ct$state, "converged")
   expect_lt(ct$decrement, 1e-2)
-  # and the reading it replaces would have refused this point
-  expect_gt(ct$gradient, 1e-2)
+  # This test also asserted that the gradient reading the decrement replaced
+  # would have refused this point (gradient above 1e-2). Since 0.155.0 iwls
+  # stops on the Newton decrement as well, the inner mode is located better,
+  # and the outer gradient here reads 2.2e-03. Over five seeds at n = 1000 and
+  # n = 3000 it reads 1e-6 to 5e-3 under both conventions of reml(), so most
+  # of the gradients recorded against this shape (0.02 to 0.42) came from the
+  # inner mode error. The contrast no longer holds and is not asserted.
 })
 
 
@@ -175,8 +185,9 @@ test_that("a coordinate at an edge is named whatever its own curvature says", {
   skip_on_cran()
   set.seed(42)
   d <- data.frame(x = runif(300), y = rnorm(300))
+  # one outer coordinate, which is what the mock below replaces
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
-                 outer_criterion = reml())
+                 outer_criterion = reml(marginal = "none"))
   plain <- statmod_certificate(fit)
   skip_if(!length(plain$boundary), "this fit did not reach the chart's edge")
   expect_identical(plain$state, "boundary")
@@ -211,7 +222,7 @@ test_that("the boundary label reads the curvature and not the free value", {
   fits <- lapply(c(1, 1e3), function(s) {
     d$ys <- s * d$y
     statmod(ys ~ s(x, bspline_smooth(k = 12)), gaussian1_distrib(), d,
-            outer_criterion = reml())
+            outer_criterion = reml(marginal = "none"))
   })
   eta <- vapply(fits, function(f) log(f@hyper$mu[[1]][["lambda"]]), numeric(1))
   # the premise: at the large scale the value alone would have named it
@@ -248,8 +259,9 @@ test_that("with no curvature at all there is no verdict but still a boundary", {
   skip_on_cran()
   set.seed(42)
   d <- data.frame(x = runif(300), y = rnorm(300))
+  # one outer coordinate, which is what the mock below replaces
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
-                 outer_criterion = reml())
+                 outer_criterion = reml(marginal = "none"))
   plain <- statmod_certificate(fit)
   # the premise: this fit's one hyperparameter really is past the edge, or
   # the assertion below would hold for the wrong reason
@@ -287,8 +299,12 @@ test_that("the curvature is differenced where the form has no analytic one", {
   d$y <- sin(5 * d$x) + rnorm(n, 0, 0.3)
   f <- y ~ s(x, bspline_smooth(k = 10))
 
-  obs <- statmod(f, gaussian1_distrib(), d, outer_criterion = reml())
-  exp_ <- statmod(f, gaussian2_distrib(), d, outer_criterion = reml("expected"))
+  # the stencil differences the gradient in the hyperparameters alone, so the
+  # scale is read at the joint mode
+  obs <- statmod(f, gaussian1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"))
+  exp_ <- statmod(f, gaussian2_distrib(), d,
+                  outer_criterion = reml("expected", marginal = "none"))
   co <- statmod_certificate(obs)
   ce <- statmod_certificate(exp_)
   expect_identical(co$curvature, "analytic")

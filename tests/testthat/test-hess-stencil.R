@@ -74,7 +74,7 @@ test_that("the probes locate the mode, so a small step carries no bias", {
   d$y <- 1 + 0.5 * d$x + b[as.integer(d$g)] + stats::rnorm(m * ni)
   fit <- statmod(y ~ x + random(~ 1 | g, distrib = distributions7::fixed(
     distributions7::student_t1_distrib(), mu = 0)), gaussian1_distrib(), d,
-    outer_criterion = reml())
+    outer_criterion = reml(marginal = "none"))
   p <- stencil_parts(fit)
   A <- as.matrix(statmod_marginal_hess(p$spec, p$design, p$coef, p$hyper,
                                        p$method, p$idx, p$basis,

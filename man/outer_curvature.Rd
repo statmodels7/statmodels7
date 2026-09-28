@@ -12,7 +12,8 @@ outer_curvature(
   method,
   idx,
   basis = NULL,
-  inner = NULL
+  inner = NULL,
+  gam = NULL
 )
 }
 \arguments{
@@ -20,6 +21,9 @@ outer_curvature(
 takes them.}
 
 \item{inner}{The inner optimizer, which the differenced route refits with.}
+
+\item{gam}{The coefficients the criterion estimates, from
+\code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}.}
 }
 \value{
 A list with \code{A}, the symmetric negated Hessian or \code{NULL};

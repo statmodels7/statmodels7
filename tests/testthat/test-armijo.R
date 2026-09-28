@@ -69,7 +69,10 @@ test_that("no accepted step increases the objective", {
   n <- 300
   dd <- data.frame(x = stats::runif(n, -2, 2))
   dd$y <- stats::rgamma(n, shape = 3, rate = 3 / exp(0.5 + 0.6 * dd$x))
-  fit <- statmod(y ~ x | phi ~ 1, distributions7::gamma1_distrib(), dd)
+  # with phi read at the joint mode no outer criterion runs, and the history
+  # is the inner loop's own
+  fit <- statmod(y ~ x | phi ~ 1, distributions7::gamma1_distrib(), dd,
+                 outer_criterion = reml(marginal = "none"))
   hh <- fit@history$inner
   expect_s3_class(hh, "data.frame")
   expect_true(nrow(hh) > 1L)

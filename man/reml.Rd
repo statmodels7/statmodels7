@@ -5,9 +5,9 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("observed", "expected"))
+reml(hessian = c("observed", "expected"), marginal = NULL)
 
-ml(hessian = c("observed", "expected"))
+ml(hessian = c("observed", "expected"), marginal = NULL)
 }
 \arguments{
 \item{hessian}{Which information enters the determinant: \code{"observed"} (the
@@ -22,10 +22,18 @@ scores at the data under the
 default \code{iwls(approx = "opg")}, which is not an expectation, and
 \code{\link[=statmod]{statmod()}} rejects \code{"expected"} there: see
 \code{\link[=assert_criterion_information]{assert_criterion_information()}}.}
+
+\item{marginal}{Which distribution parameters have their unpenalized
+coefficients estimated by maximizing this criterion, instead of being
+read at the joint mode (\code{ml()}) or integrated (\code{reml()}). \code{NULL}, the
+default, names every parameter except the position, which is the
+family's first parameter. \code{"none"} names no parameter, \code{"all"} names
+every one, and a character vector names the parameters listed. With
+\code{"all"}, \code{reml()} and \code{ml()} are the same criterion.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, with
-\code{hessian} as supplied and the path settings unused.
+\code{hessian} and \code{marginal} as supplied and the path settings unused.
 }
 \description{
 Build the object that tells \code{\link[=statmod]{statmod()}} to choose a model's smooth
@@ -52,48 +60,67 @@ Wood's (2011) REML criterion term for term.
 }
 
 \section{What each one integrates}{
-\code{reml()} takes \eqn{A = I}: every coefficient is integrated, the
-unpenalized ones under the flat prior their absence of a penalty amounts
-to.
+Write \eqn{\gamma} for the unpenalized coefficients of the parameters that
+\code{marginal} names, and \eqn{u} for every other coefficient. The criterion
+is maximized in \eqn{\gamma} together with the hyperparameters. At each
+value of \eqn{\gamma}, the coefficients \eqn{u} are set to the penalized
+mode.
 
-\code{ml()} takes \eqn{A} spanning the range space of the penalty, so an
-unpenalized coefficient is profiled. An ordinary covariate is one; so is
-the linear component of a Demmler-Reinsch smooth, which that smooth's
-penalty leaves alone.
+\code{reml()} integrates every coefficient in \eqn{u}. An unpenalized one is
+integrated under a flat prior, which is what the absence of a penalty
+amounts to. \code{ml()} integrates only the directions in the range space of the
+penalty, so an unpenalized coefficient in \eqn{u} is read at the mode. An
+ordinary covariate is unpenalized. The linear component of a
+Demmler-Reinsch smooth is unpenalized too, because the penalty of that
+smooth does not act on it.
 
-This is the distinction between REML and ML for a variance component in a
-mixed model, and \code{reml()} is the default for the same reason: profiling a
-fixed effect leaves the variance estimate biased downwards.
+With \code{marginal = "all"}, \eqn{\gamma} holds every unpenalized
+coefficient. The two criteria then integrate the same directions, and they
+are the same function: measured on six families with a random intercept,
+the two maxima and the two sets of coefficients agree exactly.
+
+A coefficient that the model does not identify at the first fit is left
+out of the determinant for the whole search, and it stays free in the
+inner fit. This is how \code{\link[stats:lm]{stats::lm()}} computes its REML criterion, with the
+rank of the design instead of its number of columns.
 }
 
-\section{A dispersion is a coefficient, and is read at the joint mode}{
-What these criteria estimate are the HYPERPARAMETERS. Everything else is a
-coefficient, read where the penalized likelihood is maximized, and that
-includes the intercept of a dispersion equation: a negative binomial's
-\eqn{\theta}, a Gamma's dispersion, a gaussian's \eqn{\sigma}. A
-coefficient read there is a maximum likelihood estimate, and maximum
-likelihood underestimates a dispersion.
+\section{Where a dispersion and a shape are estimated}{
+By default \code{marginal} names every parameter except the position, which is
+the family's first parameter: the location, or the scale for a family with
+no location, such as \code{\link[distributions7:weibull1_distrib]{distributions7::weibull1_distrib()}}. For a gaussian
+mixed model this is the REML of \code{lme} and \code{glmmTMB}. The coefficients of
+the mean are integrated, and \eqn{\sigma} is maximized on the criterion.
+Without any penalty, \code{reml()} returns the \eqn{\sigma} of \code{\link[stats:lm]{stats::lm()}},
+\eqn{\sqrt{\mathrm{rss}/(n-p)}}, and its criterion equals
+\code{logLik(lm(...), REML = TRUE)}. \code{ml()} returns \eqn{\sqrt{\mathrm{rss}/n}}.
+On \code{nlme::Orthodont}, \code{distance ~ agec + random(~ agec | Subject)} gives
+\eqn{\sigma} = 1.310039, standard deviations 2.134332 and 0.226429, and a
+criterion of -221.31834, which are the values of \code{lme} to six digits.
 
-The gaussian case says it in closed form. On a mixed model at
-\eqn{n = 20000} over 500 groups, \code{sigma(fit)} is \eqn{\sqrt{rss/n}} to
-\eqn{3.6\times10^{-10}} relative -- the conditional ML estimate, on the raw
-residuals \eqn{y - \hat y} and not on what \code{residuals()} returns, which are
-standardized -- where \code{lme4} reports \eqn{\sqrt{rss/(n - \mathrm{edf})}},
-and the factor \eqn{\sqrt{n/(n-\mathrm{edf})}} carries one onto the other to
-\eqn{1.4\times10^{-5}}. The same holds for a count model: measured over
-eight designs against \code{glmmTMB}, which makes the dispersion intercept an
-outer parameter of its own criterion, our \eqn{\theta} is larger by a
-factor of 1.03 to 1.33.
+\code{marginal = "none"} gives the convention of \code{gamlss} and of mgcv's
+\code{gaulss}: every parameter of the distribution is read at the joint mode of
+the penalized likelihood. That estimate ignores the degrees of freedom of
+the coefficients estimated beside it, so a dispersion read there is biased
+downwards. Measured over 20 replicates of 40 groups of 8, a gamma
+dispersion with a random effect of its own is biased by -8.0 per cent at the
+joint mode and by -2.6 per cent on the criterion, and a Weibull shape with
+a random intercept by +8.7 and +1.1 per cent.
 
-That difference is a matter of WHERE the dispersion is read and not of
-which coefficients the determinant spans. Measured on the same designs, by
-separating the two: moving the dispersion intercept out of the determinant
-and leaving it at the joint mode accounts for 0.01 to 1.75 per cent of the
-gap, and reading it as an outer parameter instead accounts for the other 98
-to 100. The determinant here spans every coefficient of every equation,
-which is what \eqn{A = I} means, and a distributional regression has no
-reason to treat the coefficients of one equation differently from those of
-another.
+Where some coefficients of the location are integrated, the estimate
+depends on the parametrization of the family. The dispersion of
+\code{\link[distributions7:gamma1_distrib]{distributions7::gamma1_distrib()}} and the variance of
+\code{\link[distributions7:gamma2_distrib]{distributions7::gamma2_distrib()}}, \eqn{\sigma^2 = \phi\mu^2}, differ
+by about one per cent under \code{reml()}, because the second contains the
+integrated mean. With \code{"all"} the criterion does not depend on the
+parametrization.
+
+Five configurations are not covered yet, and \code{\link[=marginal_coords]{marginal_coords()}} lists
+them: a structural term, a block that moves with its coefficients, a
+penalty with a kink, a block that is a working linearization (a sharp
+\code{\link[modelterms7:jump]{modelterms7::jump()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}), and a penalty whose null
+space is not spanned by coordinates. In each case a parameter that the default names keeps the
+convention of \code{"none"}, and a parameter named explicitly is refused.
 }
 
 \section{Which hyperparameters}{

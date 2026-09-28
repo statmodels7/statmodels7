@@ -374,7 +374,13 @@ vcov.StatmodFit <- function(object,
     A <- (H + S)[keep_full, keep_full, drop = FALSE]
     Vb <- solve_pd(A, "the penalized information", lb[-flat])
   }
-  V <- switch(type,
+  # the coefficients the marginal criterion estimated carry its curvature in
+  # place of their Schur complement; see marginal_vcov()
+  Vm <- if (type %in% c("bayesian", "unconditional")) {
+    tryCatch(marginal_vcov(object, design, A, keep_full, type),
+             error = function(e) NULL)
+  } else NULL
+  V <- if (!is.null(Vm)) Vm else switch(type,
     bayesian = Vb,
     # as_dense() because the information follows the DESIGN's storage: an
     # equation carrying a random effect has a sparse one, the sandwich then
@@ -2500,7 +2506,8 @@ summary.StatmodFit <- function(object, level = 0.95,
   if (isTRUE(correct)) {
     cc <- tryCatch(statmod_edf_correction(spec, object@coefficients,
                                           object@hyper, design,
-                                          object@methods$outer),
+                                          object@methods$outer,
+                                          pinned = object@methods$pinned),
                    error = function(e)
                      list(total = 0, per = numeric(0), n_hyper = 0L))
     corr <- cc$total
@@ -2973,7 +2980,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   outer_ran <- !is.null(fit@methods$outer)
   Vh <- if (outer_ran) tryCatch(
     statmod_hyper_vcov(spec, design, fit@coefficients, fit@hyper,
-                       fit@methods$outer, inner = fit@methods$smooth),
+                       fit@methods$outer, inner = fit@methods$smooth,
+                       pinned = fit@methods$pinned),
     error = function(e) NULL) else NULL
   spc <- fit@methods$sparse_criterion
   spc_keys <- fit@methods$sparse_hyper
@@ -4641,6 +4649,19 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   }
   cf <- fit@coefficients
   hy <- fit@hyper
+  # THE COEFFICIENTS THE CRITERION ESTIMATED are outer coordinates: they are
+  # held in the inner fit, so their score is not a mode error, and they are
+  # read beside the hyperparameters in the outer gradient and curvature. The
+  # coordinates the model does not identify stay out of the determinant, as
+  # they did during the search.
+  gam <- tryCatch(marginal_coords(spec, design, method),
+                  error = function(e) marginal_coords(spec, design, NULL))
+  ng <- length(gam$where)
+  if (ng) {
+    beta_all <- unlist(cf[spec@distrib@params], use.names = FALSE)
+    spec <- statmod_hold(spec, gam, beta_all[gam$where])
+  }
+  if (length(fit@methods$pinned)) attr(design, "pinned") <- fit@methods$pinned
   ctx <- tryCatch(outer_context(spec, design, cf, hy, "bartlett"),
                   error = function(e) NULL)
 
@@ -4654,6 +4675,7 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
                       error = function(e) NULL)
       sc <- if (is.null(obj)) NULL else
         tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
+      if (!is.null(sc) && ng) sc[gam$where] <- 0
       if (!is.null(sc) && all(is.finite(sc))) {
         db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% sc),
                        error = function(e) NULL)
@@ -4703,7 +4725,7 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   blocks <- tryCatch(statmod_blocks(spec, design), error = function(e) NULL)
   idx <- if (is.null(blocks)) NULL else outer_hyper_index(spec, blocks)
   no_outer <- is.null(method) || !method@kind %in% c("ml", "reml") ||
-    is.null(idx) || !nrow(idx)
+    is.null(idx) || (!nrow(idx) && !ng)
   if (no_outer) {
     # ⚠️ TWO QUITE DIFFERENT WAYS TO HAVE NO OUTER GRADIENT, and they call for
     # different answers. Measured over the reference battery, seven cases of
@@ -4787,13 +4809,13 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
       "mode against %g"), out$mode_error, mode_error_limit())
     return(out)
   }
-  if (!outer_gradient_ok(spec, design, idx, method, 1L)) {
+  if (!outer_gradient_ok(spec, design, idx, method, 1L, gamma = ng > 0L)) {
     out$reason <- "this form has no exact outer gradient, and differencing it would cost more than the fit"
     return(out)
   }
-  basis <- integrated_basis(spec, design, method@kind)
+  basis <- integrated_basis(spec, design, method@kind, gamma = ng > 0L)
   g <- tryCatch(statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
-                                      ctx = ctx),
+                                      ctx = ctx, gam = gam),
                 error = function(e) NULL)
   if (is.null(g) || !all(is.finite(g))) {
     # ⚠️ A NON-FINITE OUTER GRADIENT AT A BOUNDARY IS NOT THE SAME COMPLAINT,
@@ -4853,7 +4875,7 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   # scale at eta -5.32. 2e-3 is the geometric middle of that gap.
   eta <- hyper_to_eta(hy, idx)
   cv <- outer_curvature(spec, design, cf, hy, method, idx, basis,
-                        fit@methods$smooth)
+                        fit@methods$smooth, gam = gam)
   if (is.null(cv$A)) {
     # ⚠️ NO VERDICT, BUT STILL THE BOUNDARY COORDINATES, and leaving them out
     # was a regression CI found and this machine hid. `boundary_key` is what
@@ -4895,18 +4917,30 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
   # one-coordinate reading g_j^2/(2 A_jj) is a ratio of two quantities going
   # to zero and can come back large. Such a coordinate is named and stays
   # under test.
+  # An estimated coefficient has an edge too: a Student t's nu estimated on
+  # the criterion runs to its gaussian limit, where the curvature in it is
+  # 3e-13 and the certificate otherwise read nothing at all. It is named by
+  # its equation and its coefficient, and only a hyperparameter carries a
+  # key, which is what summary() reads for a hyperparameter's row.
   reported <- which(abs(diag(cv$A)) <= flat)
+  rep_h <- reported[reported <= nrow(idx)]
+  rep_g <- reported[reported > nrow(idx)] - nrow(idx)
   if (length(reported)) {
-    out$boundary <- vapply(reported, function(k)
-      paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
-      character(1))
+    out$boundary <- c(
+      vapply(rep_h, function(k)
+        paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "/"),
+        character(1)),
+      vapply(rep_g, function(k) paste(gam$param[k], gam$name[k], sep = "/"),
+             character(1)))
+  }
+  if (length(rep_h)) {
     # THE SAME COORDINATES IN THE KEY summary() reads its variance matrix by.
     # It is returned rather than recomposed there because a term's name is a
     # deparsed call and may carry a slash of its own, so parsing `boundary`
     # back into three pieces is not an inverse; and because two callers who
     # each build a key agree by accident, which this file records as a defect
     # of its own.
-    out$boundary_key <- vapply(reported, function(k)
+    out$boundary_key <- vapply(rep_h, function(k)
       paste(idx$parameter[k], idx$term[k], idx$name[k], sep = "\r"),
       character(1))
   }
@@ -5035,6 +5069,8 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
 #' @param spec,design,coef,hyper,method,idx,basis As [statmod_marginal_hess()]
 #'   takes them.
 #' @param inner The inner optimizer, which the differenced route refits with.
+#' @param gam The coefficients the criterion estimates, from
+#'   [marginal_coords()], or `NULL`.
 #'
 #' @return A list with `A`, the symmetric negated Hessian or `NULL`;
 #'   `source`, `"analytic"` or `"differenced"`; and `why`, the reason where
@@ -5044,18 +5080,27 @@ statmod_certificate <- function(fit, tol = 1e-2, flat = 2e-3, edge = 8) {
 #'
 #' @keywords internal
 outer_curvature <- function(spec, design, coef, hyper, method, idx,
-                            basis = NULL, inner = NULL) {
+                            basis = NULL, inner = NULL, gam = NULL) {
+  ng <- if (is.null(gam)) 0L else length(gam$where)
   sym <- function(H) {
     if (is.null(H)) return(NULL)
     H <- as.matrix(H)
     if (!all(is.finite(H))) return(NULL)
     -(H + t(H)) / 2
   }
-  if (outer_gradient_ok(spec, design, idx, method, 2L)) {
+  if (outer_gradient_ok(spec, design, idx, method, 2L, gamma = ng > 0L)) {
     A <- sym(tryCatch(statmod_marginal_hess(spec, design, coef, hyper, method,
-                                            idx, basis, inner = inner),
+                                            idx, basis, inner = inner,
+                                            gam = gam),
                       error = function(e) NULL))
     if (!is.null(A)) return(list(A = A, source = "analytic", why = character(0)))
+  }
+  # the differenced route perturbs the hyperparameters alone
+  if (ng) {
+    return(list(A = NULL, source = NA_character_, why = paste0(
+      "the outer criterion's curvature over the coefficients it estimates ",
+      "has no analytic form here, and differencing covers the ",
+      "hyperparameters alone")))
   }
   A <- sym(tryCatch(statmod_hess_stencil(spec, design, coef, hyper, method, idx,
                                          basis, inner),

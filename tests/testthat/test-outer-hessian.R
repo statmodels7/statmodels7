@@ -131,7 +131,8 @@ test_that("a variance component is covered, penalty and all", {
     # the criterion itself, differenced, as an independent check that the
     # gradient this Hessian is built on is the right one for THIS penalty
     a <- statmod(y ~ x + random(~ 1 | g, hyper = c(sigma = exp(e))),
-                 distributions7::gaussian1_distrib(), dr)
+                 distributions7::gaussian1_distrib(), dr,
+                 outer_criterion = reml(marginal = "none"))
     statmod_marginal(a@spec, statmod_design(a@spec), a@coefficients,
                      a@hyper, reml(hessian = "observed"))$value
     # the reference REFITS the mode at every probe, so its own accuracy is
@@ -148,16 +149,17 @@ test_that("a Newton step on the exact pair lands where the search does", {
   # used to take Newton steps, and they must arrive where an optimizer that
   # only ever sees the value and the gradient arrives
   ref <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dh,
-                 outer_criterion = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed", marginal = "none"))
   spec <- ref@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
-  method <- reml(hessian = "observed")
+  method <- reml(hessian = "observed", marginal = "none")
 
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, ref@hyper)
     f <- statmod(y ~ s(x, bspline_smooth(k = 10), hyper = c(lambda = exp(eta))),
-                 distributions7::gaussian1_distrib(), dh)
+                 distributions7::gaussian1_distrib(), dh,
+                 outer_criterion = method)
     list(g = statmod_marginal_grad(spec, design, f@coefficients, hy, method,
                                    idx),
          H = statmod_marginal_hess(spec, design, f@coefficients, hy, method,

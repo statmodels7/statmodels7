@@ -13,7 +13,13 @@ test_that("a gaussian fit is least squares", {
   ref <- stats::lm(y ~ x + g, dd)
   expect_true(fit@converged)
   expect_equal(fit@coefficients$mu, unname(stats::coef(ref)), tolerance = 1e-10)
-  expect_equal(fit@loglik, as.numeric(stats::logLik(ref)), tolerance = 1e-10)
+  # sigma on the REML criterion is lm()'s
+  expect_equal(exp(fit@coefficients$sigma), summary(ref)$sigma,
+               tolerance = 1e-8)
+  # and at the joint mode it is the MLE, with lm()'s log-likelihood
+  f0 <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), dd,
+                outer_criterion = reml(marginal = "none"))
+  expect_equal(f0@loglik, as.numeric(stats::logLik(ref)), tolerance = 1e-10)
 })
 
 test_that("loglik() and logLik() agree to the last digit", {
@@ -25,7 +31,9 @@ test_that("loglik() and logLik() agree to the last digit", {
 })
 
 test_that("the model is callable at other parameters and other data", {
-  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
+  # at the joint mode, where the whole gradient vanishes
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml(marginal = "none"))
   at_zero <- loglik(fit, par = list(mu = c(0, 0), sigma = 0))
   expect_lt(at_zero, loglik(fit))
   # on a subset, the log-likelihood is a sum over fewer observations

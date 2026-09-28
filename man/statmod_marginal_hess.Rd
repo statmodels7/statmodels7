@@ -13,7 +13,8 @@ statmod_marginal_hess(
   idx,
   basis = NULL,
   ctx = NULL,
-  inner = NULL
+  inner = NULL,
+  gam = NULL
 )
 }
 \arguments{
@@ -30,6 +31,14 @@ statmod_marginal_hess(
 \item{idx}{The outer index.}
 
 \item{basis}{The integrated subspace, or \code{NULL}.}
+
+\item{ctx}{The evaluation context, or \code{NULL}.}
+
+\item{inner}{The inner optimizer, read by the differenced route.}
+
+\item{gam}{The coefficients the criterion estimates, from
+\code{\link[=marginal_coords]{marginal_coords()}}, or \code{NULL}. Their rows and columns follow those of
+the hyperparameters.}
 }
 \value{
 A square matrix, one row per row of \code{idx}, or \code{NULL} where

@@ -10,7 +10,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
   # the observed information is asked for so that numDeriv's Hessian of the
   # penalized objective is the same matrix the criterion uses
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), ds,
-                 outer_criterion = reml(hessian = "observed"))
+                 outer_criterion = reml(hessian = "observed", marginal = "none"))
   spec <- fit@spec
   design <- statmod_design(spec)
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
@@ -23,7 +23,7 @@ test_that("the criterion is the Laplace formula, assembled independently", {
     determinant(M, logarithm = TRUE)$modulus[[1L]] / 2
 
   m <- statmod_marginal(spec, design, fit@coefficients, fit@hyper,
-                        reml(hessian = "observed"))
+                        reml(hessian = "observed", marginal = "none"))
   expect_equal(m$value, as.numeric(by_hand), tolerance = 1e-5)
   expect_equal(m$value, fit@criterion, tolerance = 1e-8)
   expect_identical(m$q, length(b))
@@ -153,16 +153,20 @@ test_that("a kinked penalty keeps the hyperparameter it was given", {
 })
 
 test_that("the criterion applies to a smooth penalty and to nothing else", {
-  # It comes into play if and only if the model carries one, which is a
-  # property of the MODEL and not of how the argument was written: a model
-  # with no penalty fits and estimates nothing, whether or not the default
-  # was typed out.
+  # It comes into play if and only if the model carries one or estimates a
+  # coefficient on it, which is a property of the MODEL and not of how the
+  # argument was written: whether or not the default was typed out, a model
+  # with no penalty estimates sigma on the criterion and nothing else, and
+  # with sigma read at the joint mode it estimates nothing.
   a <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds)
   b <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds,
                outer_criterion = reml())
   expect_equal(a@coefficients, b@coefficients)
   expect_length(unlist(a@hyper), 0L)
-  expect_true(is.na(a@criterion))
+  expect_true(is.finite(a@criterion))
+  n0 <- statmod(y ~ x, distributions7::gaussian1_distrib(), ds,
+                outer_criterion = reml(marginal = "none"))
+  expect_true(is.na(n0@criterion))
 
   # a kinked penalty is not a marginal criterion's business: it is chosen by
   # `sparse_criterion`, a path over its own values, which is bic() by default
@@ -194,9 +198,11 @@ test_that("ml reads an additive penalty's null space, and refuses without one", 
   set.seed(24)
   dt <- data.frame(x1 = runif(200, -1, 1), x2 = runif(200, -1, 1))
   dt$y <- dt$x1^2 + dt$x2 + stats::rnorm(200, sd = 0.3)
+  # sigma read at the joint mode on both, so the two criteria differ only in
+  # what they integrate of the mean
   fml <- statmod(y ~ te(x1, x2, smooths = bspline_smooth(k = 4)),
                  distributions7::gaussian1_distrib(), dt,
-                 outer_criterion = ml())
+                 outer_criterion = ml(marginal = "none"))
   expect_true(is.finite(fml@criterion))
 
   # the guard is still there for a penalty that genuinely exposes none: scad
@@ -209,7 +215,7 @@ test_that("ml reads an additive penalty's null space, and refuses without one", 
   # ml about the answer: the two criteria differ, the fits do not
   fit <- statmod(y ~ te(x1, x2, smooths = bspline_smooth(k = 4)),
                  distributions7::gaussian1_distrib(), dt,
-                 outer_criterion = reml())
+                 outer_criterion = reml(marginal = "none"))
   expect_true(is.finite(fit@criterion))
   expect_equal(as.numeric(fitted(fml)), as.numeric(fitted(fit)),
                tolerance = 1e-3)
@@ -584,8 +590,9 @@ test_that("a long first Newton step does not carry the search onto the plateau",
   d <- data.frame(y = y)
   d$Z <- scale(Z)
   g <- distributions7::gaussian1_distrib()
-  def <- statmod(y ~ ridge(Z), g, d)
-  free <- statmod(y ~ ridge(Z), g, d, outer_optimizer = optimizers7::newton())
+  def <- statmod(y ~ ridge(Z), g, d, outer_criterion = reml(marginal = "none"))
+  free <- statmod(y ~ ridge(Z), g, d, outer_criterion = reml(marginal = "none"),
+                  outer_optimizer = optimizers7::newton())
   # the case exercises the bound: without it the search lands on the plateau
   expect_gt(hyper(free)$estimate, 1e6)
   expect_lt(hyper(def)$estimate, 1e3)

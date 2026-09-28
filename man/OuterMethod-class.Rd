@@ -11,7 +11,8 @@ OuterMethod(
   k = integer(0),
   nfolds = integer(0),
   rule = character(0),
-  folds = integer(0)
+  folds = integer(0),
+  marginal = NULL
 )
 }
 \arguments{
@@ -33,6 +34,11 @@ degree of freedom.}
 
 \item{folds}{A fold number per observation, or \code{integer(0)} for folds
 drawn at fit time. Read by \code{"cv"} alone.}
+
+\item{marginal}{Which distribution parameters have their unpenalized
+coefficients estimated on the marginal criterion: \code{NULL} for every
+parameter except the position, \code{"none"}, \code{"all"}, or a vector of
+names. Read by \code{"reml"} and \code{"ml"} alone; see \code{\link[=reml]{reml()}}.}
 }
 \value{
 An object of class \code{OuterMethod} with one property per argument

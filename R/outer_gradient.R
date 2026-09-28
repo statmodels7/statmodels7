@@ -60,14 +60,18 @@ NULL
 #' @param idx The outer index, from [outer_hyper_index()].
 #' @param method An [OuterMethod()].
 #' @param order `1` for the gradient, `2` for the Hessian as well.
+#' @param gamma `TRUE` where the outer vector also carries coefficients the
+#'   criterion estimates ([marginal_coords()]), so an empty index is not a
+#'   reason to answer `FALSE`.
 #'
 #' @return `TRUE` or `FALSE`.
 #'
 #' @seealso [statmod_marginal_grad()]
 #'
 #' @keywords internal
-outer_gradient_ok <- function(spec, design, idx, method, order = 1L) {
-  if (!nrow(idx)) return(FALSE)
+outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
+                              gamma = FALSE) {
+  if (!nrow(idx) && !isTRUE(gamma)) return(FALSE)
   # THE ORDER THE FAMILY CARRIES.  The exact gradient reads dK/dbeta, which is
   # the family's THIRD derivative, and the Hessian reads the fourth; a family
   # with fewer is not refused here, the search falling back on a difference,
@@ -544,15 +548,19 @@ penalty_answers <- function(pen, order = 1L) {
 #' @param free Whether to carry the result onto the free scale. The Hessian
 #'   asks for the parameter scale, having its own second-order chain rule to
 #'   apply.
+#' @param ctx The evaluation context, or `NULL`.
+#' @param gam The coefficients the criterion estimates, from
+#'   [marginal_coords()], or `NULL`.
 #'
-#' @return A numeric vector, one entry per row of `idx`, or `NULL`
-#'   where the determinant does not exist.
+#' @return A numeric vector, one entry per row of `idx` followed by one per
+#'   position of `gam$where`, or `NULL` where the determinant does not exist.
 #'
 #' @seealso [statmod_marginal()], [reml()]
 #'
 #' @keywords internal
 statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
-                                  basis = NULL, free = TRUE, ctx = NULL) {
+                                  basis = NULL, free = TRUE, ctx = NULL,
+                                  gam = NULL) {
   if (structural_penalized(spec, design)) {
     return(statmod_structural_grad(spec, design, coef, hyper, method, idx,
                                    basis, free))
@@ -601,6 +609,14 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # how the mode moves: the penalized likelihood's own curvature, which for a
   # refreshable block is not the Gauss-Newton matrix the design gives
   Dm <- mode_curvature(spec, design, coef, params, npar, offs, total)
+  # a coordinate pinned in K other than at a boundary (a coefficient the
+  # criterion estimates, one the model does not identify) stays pinned when a
+  # moving block's own curvature is added to it
+  pinned <- setdiff(attr(mode_pen$K, "held_at"), attr(mode_pen$K, "boundary_at"))
+  if (length(pinned)) {
+    Dm[pinned, ] <- 0
+    Dm[, pinned] <- 0
+  }
   msolve <- NULL
   if (any(Dm != 0)) {
     Km <- as_dense(mode_pen$K) + Dm
@@ -630,7 +646,7 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # where with the gradient of the pinned criterion -- which a central
   # difference of that criterion confirms, -18.09516 against -18.09511 and
   # -18.09516 at h of 3e-3 and 1e-3 -- all three reach -1544.442 and certify.
-  held <- union(attr(pen$K, "held_at"), attr(mode_pen$K, "held_at"))
+  held <- union(attr(pen$K, "boundary_at"), attr(mode_pen$K, "boundary_at"))
 
   # dK/dbeta is the third derivative of the log-likelihood on the observed
   # route and the derivative of the expected information on the expected one.
@@ -734,7 +750,33 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
       }
     }
   }
-  out
+  if (is.null(gam) || !length(gam$where)) return(out)
+  # THE COEFFICIENTS THE CRITERION ESTIMATES. The inner fit holds each one,
+  # so the mode moves with it by b = e_j - P K_m e_j, P the inverse of the
+  # mode's curvature over the free coordinates -- which is what the pinned
+  # inverse behind msolve() is. The penalty does not depend on such a
+  # coefficient, its row of S being zero, so the envelope leaves the
+  # log-likelihood's own score, and the determinant moves along b.
+  Hm <- as_dense(ctx_information(ctx, spec, design, coef, hyper, FALSE,
+                                 ctx_approx(ctx))) +
+    as_dense(ctx_penalty(ctx, spec, design, coef, hyper)) + Dm
+  sc <- statmod_score_at(spec, coef, design, index = gam$where)
+  gout <- numeric(length(gam$where))
+  # every coordinate the mode's curvature pins other than a boundary: the
+  # estimated coefficients and the ones the model does not identify
+  hold <- setdiff(attr(mode_pen$K, "held_at"), attr(mode_pen$K, "boundary_at"))
+  for (i in seq_along(gam$where)) {
+    w <- gam$where[i]
+    col <- Hm[, w]
+    col[hold] <- 0
+    v <- -as.numeric(msolve(col))
+    v[hold] <- 0
+    b <- v
+    b[w] <- 1
+    trp <- penalty_dbeta_trace(spec, design, coef, hyper, b, M)
+    gout[i] <- sc[i] - (sum(u * b) + trp) / 2
+  }
+  c(out, gout)
 }
 
 

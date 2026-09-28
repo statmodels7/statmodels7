@@ -4,7 +4,7 @@
 \alias{pin_boundary}
 \title{Pin the Coordinates a Boundary Has Frozen}
 \usage{
-pin_boundary(K)
+pin_boundary(K, hold = integer(0))
 }
 \arguments{
 \item{K}{The penalized information.}

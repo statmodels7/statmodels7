@@ -83,7 +83,11 @@ test_that("statmod() rejects it at the start and the observed route is exact", {
   # a model with nothing for the criterion to estimate is not refused: the
   # criterion is inert there and the check runs after it is dropped
   expect_no_error(statmod(y ~ x, pig_bare_distrib(), dd,
-                          outer_criterion = reml("expected")))
+                          outer_criterion = reml("expected",
+                                                 marginal = "none")))
+  # while by default it estimates sigma, and is refused like any other
+  expect_error(statmod(y ~ x, pig_bare_distrib(), dd,
+                       outer_criterion = reml("expected")), "pig bare")
   # and the shipped family, exact since distributions7 0.65.0, is fitted on
   # the expected route with an analytic certificate
   fe <- statmod(fo, distributions7::pig1_distrib(), dd,

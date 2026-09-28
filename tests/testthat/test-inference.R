@@ -13,23 +13,36 @@ test_that("an unpenalized gaussian fit reproduces the closed-form variance", {
   fit <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim)
   V <- vcov(fit)
 
+  # sigma is estimated on the REML criterion, so the variance is lm()'s own,
+  # with the residual variance on n - p
   lm_fit <- stats::lm(y ~ x + g, sim)
-  s2 <- sum(stats::residuals(lm_fit)^2) / n   # the MLE, not the unbiased one
-  V_lm <- s2 * solve(crossprod(stats::model.matrix(lm_fit)))
+  V_lm <- stats::vcov(lm_fit)
 
   idx <- grep("^mu:", rownames(V))
   expect_equal(unname(V[idx, idx]), unname(V_lm), tolerance = 1e-6)
 
-  # and the scale block: eta = log(sigma), so the information is 2n and the
-  # standard error 1/sqrt(2n) whatever sigma is
+  # and the scale block: eta = log(sigma), and the criterion's curvature in
+  # it is 2(n - p) whatever sigma is
   expect_equal(unname(sqrt(V["sigma:(Intercept)", "sigma:(Intercept)"])),
+               1 / sqrt(2 * (n - 3)), tolerance = 1e-6)
+
+  # read at the joint mode, the MLE and the information 2n
+  f0 <- statmod(y ~ x + g, distributions7::gaussian1_distrib(), sim,
+                outer_criterion = reml(marginal = "none"))
+  V0 <- vcov(f0)
+  s2 <- sum(stats::residuals(lm_fit)^2) / n
+  expect_equal(unname(V0[idx, idx]),
+               unname(s2 * solve(crossprod(stats::model.matrix(lm_fit)))),
+               tolerance = 1e-6)
+  expect_equal(unname(sqrt(V0["sigma:(Intercept)", "sigma:(Intercept)"])),
                1 / sqrt(2 * n), tolerance = 1e-6)
 })
 
 test_that("with no penalty the two conventions are the same matrix", {
   sim <- rstatmod(y ~ x, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2), sigma = log(0.4)))$data
-  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim)
+  fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), sim,
+                 outer_criterion = reml(marginal = "none"))
   expect_equal(vcov(fit, "bayesian"), vcov(fit, "frequentist"),
                tolerance = 1e-10)
 })
@@ -37,7 +50,8 @@ test_that("with no penalty the two conventions are the same matrix", {
 test_that("a ridge makes the bayesian variance the larger of the two", {
   sim <- rstatmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2, -1), sigma = log(0.5)))$data
-  fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), sim)
+  fit <- statmod(y ~ ridge(~ x + z), distributions7::gaussian1_distrib(), sim,
+                 outer_criterion = reml(marginal = "none"))
   vb <- diag(vcov(fit, "bayesian"))
   vf <- diag(vcov(fit, "frequentist"))
   expect_true(all(vb >= vf - 1e-12))
@@ -55,7 +69,8 @@ test_that("vcov agrees with a numerical Hessian of the objective", {
   skip_if_not_installed("numDeriv")
   sim <- rstatmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), dd,
                   par = list(mu = c(1, 2), sigma = c(-1, 0.8)))$data
-  fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim)
+  fit <- statmod(y ~ x | sigma ~ z, distributions7::gaussian1_distrib(), sim,
+                 outer_criterion = reml(marginal = "none"))
   spec <- fit@spec
   design <- statmod_design(spec)
   obj <- statmod_objective(spec, fit@hyper, design, expected = FALSE)
@@ -510,8 +525,10 @@ test_that("with every coordinate at a boundary the gradient is NA, not 0", {
   set.seed(42)
   n <- 300
   d <- data.frame(x = runif(n), y = rnorm(300))
+  # sigma read at the joint mode, so the smoothing parameter is the whole
+  # outer vector
   fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), gaussian1_distrib(), d,
-                 outer_criterion = reml())
+                 outer_criterion = reml(marginal = "none"))
   ct <- statmod_certificate(fit)
 
   # THE PREMISE, asserted rather than assumed: this fit must really have its

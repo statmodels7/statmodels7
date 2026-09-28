@@ -423,8 +423,14 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # hyperparameter's own values and so reaches a KINKED penalty too, which is
   # how a lasso's lambda is chosen; for those, having nothing to do means
   # carrying no penalized term at all.
+  # and it has something to do where a distribution parameter's unpenalized
+  # coefficients are estimated on it, which reml() and ml() do by default for
+  # every parameter but the position: a model with no penalty at all still
+  # runs the criterion when it carries a dispersion or a shape. Asking here
+  # also checks an explicit `marginal` against the family before any fit.
   if (!is.null(outer_criterion)) {
-    nothing <- !nrow(outer_hyper_index(spec, blocks))
+    nothing <- !nrow(outer_hyper_index(spec, blocks)) &&
+      !length(marginal_coords(spec, design, outer_criterion)$where)
     if (nothing) outer_criterion <- NULL
   }
 
@@ -479,6 +485,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                 " 'hyper'."), call. = FALSE)
   }
 
+  spec_h <- spec
   if (is.null(outer_criterion) && is.null(sparse_criterion)) {
     res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer, beta,
                              expected, approx, maxit, tol, vb)
@@ -489,6 +496,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                           tol, vb, data, weights, offsets, sparse_criterion)
     hyper <- res$hyper
     crit <- res$criterion
+    # the coefficients the criterion estimated stay where it put them in
+    # every refit below; the specification the fit returns holds nothing
+    spec_h <- if (length(res$held_coef)) {
+      S7::set_props(spec, held_coef = res$held_coef)
+    } else spec
     # Everything inside the selection held the frozen break-point blocks at
     # their committed positions -- a break-point moving between criterion
     # evaluations makes the criterion path-dependent, and the phase's own
@@ -498,7 +510,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                          function(r) isTRUE(r$frozen), logical(1)))
     if (frozen) {
       ro <- tryCatch(
-        statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+        statmod_alternate(spec_h, design, blocks, hyper, inner_optimizer,
                           res$par, expected, approx, maxit, tol, vb),
         error = function(e) NULL)
       if (!is.null(ro) && is.finite(ro$value)) {
@@ -515,8 +527,29 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # criterion evaluations -- and at the hyperparameters the fit ended at.
   nb <- seg_boot_total(spec)
   if (nb > 0L && length(attr(design, "refresh"))) {
-    res <- statmod_boot_restart(spec, design, blocks, hyper, inner_optimizer,
+    before <- res$par
+    res <- statmod_boot_restart(spec_h, design, blocks, hyper, inner_optimizer,
                                 res, expected, approx, maxit, tol, vb, nb)
+    # A RESTART THAT MOVES THE FIT MOVES THE COEFFICIENTS THE CRITERION
+    # ESTIMATES TOO. The search above read the criterion in the basin its
+    # warm starts stayed in, and the restart may leave that basin; a
+    # coefficient held at the old optimum is then the optimum of another
+    # model. Measured on a smoothed jump, sigma stayed at 0.661 after the
+    # restart had moved the break-point from 6.46 to 6.09, where the criterion
+    # puts it at 0.561. The search is run once more from the restarted point.
+    if (length(res$held_coef) && !identical(before, res$par)) {
+      r2 <- tryCatch(
+        statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                       outer_criterion, outer_optimizer, res$par, approx,
+                       maxit, tol, vb, data, weights, offsets,
+                       sparse_criterion),
+        error = function(e) NULL)
+      if (!is.null(r2)) {
+        res <- r2
+        hyper <- res$hyper
+        crit <- res$criterion
+      }
+    }
   }
 
   coef <- res$obj$split(res$par)
@@ -585,6 +618,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     ),
     methods = list(smooth = inner_optimizer, outer = outer_criterion,
                    search = res$optimizer,
+                   # the coordinates the marginal criterion left out of its
+                   # determinant, which statmod_certificate() and vcov() read
+                   pinned = res$pinned,
                    sparse = vapply(blocks$sparse, function(b)
                      paste(b$param, b$term, sep = "/"), character(1)),
                    # which criterion swept the kinked penalties, and exactly
@@ -1075,10 +1111,11 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   hf <- held_positions(spec, design, obj, beta)
   if (length(hf$where)) {
     beta[hf$where] <- hf$value
+    # an optimizers7 method sees only the block it is handed, so a held
+    # coordinate is left out of that block; iwls() drops it from its own solve
     if (!S7::S7_inherits(method, Iwls)) {
-      stop("A coefficient held at a value needs iwls(): an optimizers7 ",
-           "method solves\n  the whole system and has no way to drop a ",
-           "coordinate from it.", call. = FALSE)
+      idx <- setdiff(idx, hf$where)
+      whole <- FALSE
     }
   }
   fn <- function(b) {

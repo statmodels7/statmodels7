@@ -60,8 +60,11 @@ test_that("convergence is the inner method's, not the absence of blocks", {
   expect_true(ok@converged)
 
   # one iteration is not enough for this model, and the fit says so
+  # with sigma and nu read at the joint mode, so no outer search warm-starts
+  # the inner fit toward convergence one iteration at a time
   short <- statmod(f3, distributions7::student_t1_distrib(), iris,
-                   inner_optimizer = iwls(maxit = 1L))
+                   inner_optimizer = iwls(maxit = 1L),
+                   outer_criterion = reml(marginal = "none"))
   expect_false(short@converged)
 })
 
@@ -192,8 +195,12 @@ test_that("an unavailable criterion at the start names its cause", {
   fml <- y ~ nl(~ a * exp(-r * x), a ~ ridge(~g),
                 links = list(r = linkfunctions7::log_link()),
                 start = list(a = 2, r = 1)) - 1
+  # phi read at the joint mode: estimated on the criterion, the flat
+  # coordinate is left out of the determinant and the fit proceeds, with
+  # nl.r reported as not identified
   expect_error(statmod(fml, distributions7::gamma1_distrib(), dd,
-                       start = start_origin()),
+                       start = start_origin(),
+                       outer_criterion = reml(marginal = "none")),
                "unavailable at the starting hyperparameters")
   # held, the same model fits and reports where its parameters ended up
   f0 <- suppressWarnings(statmod(fml, distributions7::gamma1_distrib(), dd,

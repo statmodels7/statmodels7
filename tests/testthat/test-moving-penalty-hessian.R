@@ -93,7 +93,7 @@ test_that("order 2 is answered beside a heavy-tailed prior", {
 
 test_that("the REML Hessian converges on a difference of the exact gradient", {
   skip_on_cran()
-  p <- mp_parts(reml())
+  p <- mp_parts(reml(marginal = "none"))
   r <- mp_check(p)
   expect_identical(r$H, t(r$H))
   # the RATE: 3.7e-03 and 5.6e-04 measured, O(h^2), where the assembly

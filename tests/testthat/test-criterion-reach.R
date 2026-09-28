@@ -72,7 +72,10 @@ test_that("the certificate says which case a fit without an outer gradient is", 
   fb <- statmod(form, g1, ds, outer_criterion = bic())
   expect_match(statmod_certificate(fb)$reason, "chosen by bic\\(\\)")
 
-  fh <- statmod(y ~ s(x, bspline_smooth(k = 8), hyper = c(lambda = 2)), g1, ds)
+  # sigma read at the joint mode, so nothing is left for a criterion to
+  # estimate
+  fh <- statmod(y ~ s(x, bspline_smooth(k = 8), hyper = c(lambda = 2)), g1, ds,
+                outer_criterion = reml(marginal = "none"))
   expect_match(statmod_certificate(fh)$reason, "every hyperparameter here was held")
 
   fn <- statmod(form, g1, ds, outer_criterion = NULL)

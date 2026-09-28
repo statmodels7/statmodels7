@@ -741,9 +741,27 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       cat(sprintf("  %-5d %14.6f %12.3e %10s\n", it - 1L, value, score,
                   if (it == 1L) "-" else fmt_step(step_used)))
     }
-    if (iwls_met(method, list(iter = it - 1L, f_new = value, f_old = f_old,
-                              x_new = beta, x_old = x_old, gradient = gf / n,
-                              stationarity = NULL))) {
+    met <- iwls_met(method, list(iter = it - 1L, f_new = value, f_old = f_old,
+                                 x_new = beta, x_old = x_old, gradient = gf / n,
+                                 stationarity = NULL))
+    # THE MODE IS LOCATED IN LOG-LIKELIHOOD UNITS AS WELL. The score per
+    # observation carries the units of the response: where the curvature
+    # n / sigma^2 is small, a score under `tol` still leaves the mode far
+    # away. Measured on a smooth with a random effect at a response of scale
+    # 1000, the rule was met with the Newton decrement at 1.5e-02, and an
+    # outer criterion read there differed between two searches by 0.017.
+    # The built-in rule therefore also asks the decrement g'(H+S)^-1 g / 2,
+    # which is scale-free, to be under iwls_decrement_limit(). A caller's
+    # criterion is left as the caller wrote it.
+    pc_met <- NULL
+    if (met && is.null(method@criterion)) {
+      pc_met <- pieces_at(beta)
+      pcd <- if (!is.null(backup_at) && !pieces_definite(pc_met))
+        backup_at(beta) else pc_met
+      dec <- iwls_decrement(pcd, g, method, damp, frozen)
+      if (is.finite(dec) && dec > iwls_decrement_limit()) met <- FALSE
+    }
+    if (met) {
       # HELD AT A KINK IS HELD FOR THIS STEP AND NOT FOREVER. The other
       # coordinates have settled with those positions where they are, and
       # where the kink is not the minimum in them any more, one step on every
@@ -766,7 +784,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       converged <- TRUE
       break
     }
-    pc <- pieces_at(beta)
+    pc <- if (is.null(pc_met)) pieces_at(beta) else pc_met
     # THE EXPECTED PIECES TAKE THE STEP where the observed ones cannot, on a
     # method iwls_resolve() settled with the fallback: an observed penalized
     # information that is not positive definite, or an observed step that
@@ -1156,6 +1174,48 @@ iwls_escalate <- function(damp, pieces) {
   if (damp > 0) return(damp * 100)
   iwls_scale(pieces) * 1e-8
 }
+
+
+#' The Newton Decrement of a Scoring Step
+#'
+#' @description
+#' `iwls_decrement()` is \eqn{\tfrac{1}{2} g^\top (H+S)^{-1} g} over the free
+#' coordinates, read from the step [iwls_solve()] takes: the decrease in the
+#' penalized log-likelihood that a full scoring step predicts.
+#' `iwls_decrement_limit()` is the value under which [iwls_fit()]'s built-in
+#' rule reads the mode as located.
+#'
+#' @details
+#' It is in log-likelihood units, so it does not depend on the scale of the
+#' response, where the score per observation does. The limit is
+#' \eqn{10^{-6}}, three orders under [mode_error_limit()], which is the
+#' reading the outer search uses to decide whether a criterion is usable.
+#'
+#' @param pc Scoring pieces at the current coefficients.
+#' @param g The gradient of the objective there.
+#' @param method An [Iwls()] object.
+#' @param damp The current Levenberg damping.
+#' @param frozen Positions held out of the step.
+#'
+#' @return `iwls_decrement()`: a number, `NA` where the solve fails.
+#'   `iwls_decrement_limit()`: a number.
+#'
+#' @keywords internal
+iwls_decrement <- function(pc, g, method, damp, frozen) {
+  sol <- tryCatch(iwls_solve(pc, -g, method@decomposition, damp, frozen),
+                  error = function(e) NULL)
+  if (is.null(sol)) return(NA_real_)
+  delta <- sol$delta
+  delta[!is.finite(delta)] <- 0
+  gf <- g
+  if (length(frozen)) gf[frozen] <- 0
+  -0.5 * sum(gf * delta)
+}
+
+
+#' @rdname iwls_decrement
+#' @keywords internal
+iwls_decrement_limit <- function() 1e-6
 
 
 #' Has the Step's Stopping Rule Been Met?

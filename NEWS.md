@@ -1,3 +1,100 @@
+# statmodels7 0.155.0
+
+* **`reml()` and `ml()` take `marginal`, and by default they estimate a
+  dispersion and a shape on the criterion.** The argument names the
+  distribution parameters whose unpenalized coefficients are maximized on
+  the marginal criterion together with the hyperparameters, instead of
+  being read at the joint mode of the penalized likelihood. `NULL`, the
+  default, names every parameter except the position, which is the family's
+  first parameter. `"none"` gives the convention of the previous releases,
+  which is also that of gamlss and of mgcv's `gaulss`. `"all"` names every
+  parameter, and then `reml()` and `ml()` are the same criterion.
+* With the default, a gaussian model without penalties returns the sigma of
+  `lm()`, `sqrt(rss/(n - p))`, and its criterion equals
+  `logLik(lm(...), REML = TRUE)`; `ml()` returns `sqrt(rss/n)`. On
+  `nlme::Orthodont`, `distance ~ agec + random(~ agec | Subject)` returns
+  sigma 1.310039, standard deviations 2.134332 and 0.226429 and a criterion
+  of -221.31834, the values of `lme` to six digits, where the previous
+  release returned 1.217, 2.101, 0.117 and a correlation of 0.998. The
+  standard errors of the fixed effects agree with those of `lme` to six
+  digits.
+* **What moves.** Every fit of a family with a dispersion or a shape moves
+  its estimate of that parameter, and with it the log-likelihood, the
+  information criteria and the standard errors. A Poisson or a Bernoulli
+  fit does not move. A model with no penalty now runs the criterion when it
+  carries such a parameter. `marginal = "none"` reproduces the previous
+  release: the lotto 0 and D1 nets are identical, 168 of 168 and 529 of 529
+  comparisons.
+* The exact outer gradient and the exact outer Hessian cover the estimated
+  coefficients. Measured against a central difference with the mode
+  refitted, both converge as O(h^2), to 2e-6 and 6e-7 relative at h = 1e-3
+  on a gaussian and a gamma model with a random effect and a dispersion
+  regression.
+* `vcov()` gives the estimated coefficients the curvature of the criterion
+  in place of their Schur complement, for `type = "bayesian"` and
+  `type = "unconditional"`. On a gaussian model without penalties the block
+  of the mean equals `vcov(lm())` and the variance of `log(sigma)` is
+  `1/(2(n - p))`.
+* The standard error of a hyperparameter is read on the inverse of the
+  criterion's Hessian over the hyperparameters and the estimated
+  coefficients together, so the uncertainty of sigma reaches it. On
+  `nlme::Orthodont` the intervals of the two standard deviations and of
+  the correlation agree with `nlme::intervals()` to four digits.
+  `summary(correct = TRUE)` adds `tr((V_u - V_b) H)`, the part of the
+  unconditional variance that the hyperparameters add to the block
+  variance, so the identity with `vcov()` holds.
+* A coefficient the model does not identify at the first fit is left out of
+  the criterion's determinant and stays free in the inner fit, as `lm()`
+  computes its REML criterion with the rank of the design.
+* Where the bootstrap restarts of a break-point term move the fit, the
+  outer search runs once more from the restarted point, so the estimated
+  coefficients belong to the basin the fit ends in.
+* Not covered yet, where the default keeps the convention of `"none"` and an
+  explicit request is refused: a model with a structural term, an equation
+  with a block that moves with its coefficients, a model with a kinked
+  penalty, a block that is a working linearization rather than a Jacobian
+  (a sharp `jump()` or `jseg()`), a penalty whose null space is not spanned
+  by coordinates (`te()`), and multivariate families. Beside a sharp
+  `jseg()` the determinant over the block's columns reads no curvature:
+  two fits reaching the same break-point read REML criteria of -132.9 and
+  -109.8 according to where they began.
+* A fit that went through the outer search reports the columns the pivot
+  of its final refit left out, as a fit without one always did; before, it
+  was read only on the information at the mode.
+* An `optimizers7` inner method now respects a held coefficient by leaving
+  it out of the block it fits, where it used to be refused.
+* The exact outer gradient of a correlated random effect is exact near a
+  singular covariance. On the battery's `random-slope` case the search
+  drove the log-Cholesky coordinate `log L22` to -11.5, where the trace of
+  the penalty's derivative against the inverse of the penalized information
+  read -23.37 against -21.53 by a difference of the log-determinant. The
+  inverse was not the cause: the derivative of the prior's precision was,
+  formed as `-Sigma^-1 A Sigma^-1` in distributions7. With distributions7
+  0.66.0 the trace agrees with the difference to 6e-05, which is the
+  difference's own noise, and the case is certified `boundary` at a gap of
+  0 with no unavailable point, where it read `unknown` with twelve.
+* `iwls()`'s built-in rule also requires the Newton decrement
+  `g'(H+S)^-1 g / 2` to be under `1e-6` before it reads the mode as located.
+  The score per observation carries the units of the response, so where the
+  curvature `n / sigma^2` is small a score under `tol` still leaves the mode
+  far away. On the battery's `scale-1000` case the rule was met with the
+  decrement at 1.5e-02, and the outer criterion read there differed by 0.017
+  between two searches; with the decrement both reach -8367.433577, which is
+  better than either reached before, and `scale-1` is unchanged. A caller's
+  `criterion =` is left as the caller wrote it.
+* With the mode located this way, the outer gradient at a fitted point is
+  small where it used to look large. On a random intercept over n/10 groups
+  beside a smooth, five seeds at n = 1000 and n = 3000 give outer gradients
+  from 1e-6 to 5e-3 under both conventions of `reml()`, where the census of 2026-09-12
+  recorded 0.02 to 0.42 on the same shape. Most of that was the inner mode
+  error. A test in `test-decrement.R` asserted the larger reading and no
+  longer does.
+* Requires distributions7 0.66.0 and modelterms7 0.80.0. The second makes the
+  block of a break-point against its confinement limit the Jacobian of its
+  contribution, so the inner gradient of a smoothed `jseg()` whose
+  break-point ran out of the data is no longer 145 where the objective is
+  flat.
+
 # statmodels7 0.154.0
 
 * **A kinked penalty's block is solved with its equation's intercept

@@ -4,7 +4,7 @@
 \alias{integrated_basis}
 \title{The Subspace a Marginal Criterion Integrates Over}
 \usage{
-integrated_basis(spec, design, kind)
+integrated_basis(spec, design, kind, gamma = FALSE)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -12,6 +12,10 @@ integrated_basis(spec, design, kind)
 \item{design}{The design.}
 
 \item{kind}{\code{"reml"} or \code{"ml"}.}
+
+\item{gamma}{\code{TRUE} where the criterion also estimates coefficients
+(\code{\link[=marginal_coords]{marginal_coords()}}); a model with no penalized direction then gets an
+empty basis rather than an error.}
 }
 \value{
 \code{NULL} for \code{"reml"}, which integrates every direction and needs no

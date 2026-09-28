@@ -45,6 +45,10 @@ NULL
 #' @param rule `"min"` or `"1se"`. Read by `"cv"` alone.
 #' @param folds A fold number per observation, or `integer(0)` for folds
 #'   drawn at fit time. Read by `"cv"` alone.
+#' @param marginal Which distribution parameters have their unpenalized
+#'   coefficients estimated on the marginal criterion: `NULL` for every
+#'   parameter except the position, `"none"`, `"all"`, or a vector of
+#'   names. Read by `"reml"` and `"ml"` alone; see [reml()].
 #'
 #' @return An object of class `OuterMethod` with one property per argument
 #'   above.
@@ -70,7 +74,9 @@ OuterMethod <- S7::new_class("OuterMethod",
     k = S7::class_numeric,
     nfolds = S7::class_numeric,
     rule = S7::class_character,
-    folds = S7::class_numeric
+    folds = S7::class_numeric,
+    marginal = S7::new_property(S7::new_union(NULL, S7::class_character),
+                                default = NULL)
   ),
   validator = function(self) {
     if (!identical(length(self@kind), 1L) ||
@@ -88,6 +94,13 @@ OuterMethod <- S7::new_class("OuterMethod",
     }
     if (length(self@nfolds) != 1L || self@nfolds < 2) {
       return("Property 'nfolds' must be a single number, at least 2.")
+    }
+    if (!is.null(self@marginal) &&
+        (!length(self@marginal) || anyNA(self@marginal) ||
+         any(!nzchar(self@marginal)))) {
+      return(paste0("Property 'marginal' must be NULL or a non-empty ",
+                    "character vector of parameter names, \"none\" or ",
+                    "\"all\"."))
     }
     NULL
   }
@@ -150,48 +163,67 @@ outer_path_defaults <- function() {
 #'
 #' # What each one integrates
 #'
-#' `reml()` takes \eqn{A = I}: every coefficient is integrated, the
-#' unpenalized ones under the flat prior their absence of a penalty amounts
-#' to.
+#' Write \eqn{\gamma} for the unpenalized coefficients of the parameters that
+#' `marginal` names, and \eqn{u} for every other coefficient. The criterion
+#' is maximized in \eqn{\gamma} together with the hyperparameters. At each
+#' value of \eqn{\gamma}, the coefficients \eqn{u} are set to the penalized
+#' mode.
 #'
-#' `ml()` takes \eqn{A} spanning the range space of the penalty, so an
-#' unpenalized coefficient is profiled. An ordinary covariate is one; so is
-#' the linear component of a Demmler-Reinsch smooth, which that smooth's
-#' penalty leaves alone.
+#' `reml()` integrates every coefficient in \eqn{u}. An unpenalized one is
+#' integrated under a flat prior, which is what the absence of a penalty
+#' amounts to. `ml()` integrates only the directions in the range space of the
+#' penalty, so an unpenalized coefficient in \eqn{u} is read at the mode. An
+#' ordinary covariate is unpenalized. The linear component of a
+#' Demmler-Reinsch smooth is unpenalized too, because the penalty of that
+#' smooth does not act on it.
 #'
-#' This is the distinction between REML and ML for a variance component in a
-#' mixed model, and `reml()` is the default for the same reason: profiling a
-#' fixed effect leaves the variance estimate biased downwards.
+#' With `marginal = "all"`, \eqn{\gamma} holds every unpenalized
+#' coefficient. The two criteria then integrate the same directions, and they
+#' are the same function: measured on six families with a random intercept,
+#' the two maxima and the two sets of coefficients agree exactly.
 #'
-#' # A dispersion is a coefficient, and is read at the joint mode
+#' A coefficient that the model does not identify at the first fit is left
+#' out of the determinant for the whole search, and it stays free in the
+#' inner fit. This is how [stats::lm()] computes its REML criterion, with the
+#' rank of the design instead of its number of columns.
 #'
-#' What these criteria estimate are the HYPERPARAMETERS. Everything else is a
-#' coefficient, read where the penalized likelihood is maximized, and that
-#' includes the intercept of a dispersion equation: a negative binomial's
-#' \eqn{\theta}, a Gamma's dispersion, a gaussian's \eqn{\sigma}. A
-#' coefficient read there is a maximum likelihood estimate, and maximum
-#' likelihood underestimates a dispersion.
+#' # Where a dispersion and a shape are estimated
 #'
-#' The gaussian case says it in closed form. On a mixed model at
-#' \eqn{n = 20000} over 500 groups, `sigma(fit)` is \eqn{\sqrt{rss/n}} to
-#' \eqn{3.6\times10^{-10}} relative -- the conditional ML estimate, on the raw
-#' residuals \eqn{y - \hat y} and not on what `residuals()` returns, which are
-#' standardized -- where `lme4` reports \eqn{\sqrt{rss/(n - \mathrm{edf})}},
-#' and the factor \eqn{\sqrt{n/(n-\mathrm{edf})}} carries one onto the other to
-#' \eqn{1.4\times10^{-5}}. The same holds for a count model: measured over
-#' eight designs against `glmmTMB`, which makes the dispersion intercept an
-#' outer parameter of its own criterion, our \eqn{\theta} is larger by a
-#' factor of 1.03 to 1.33.
+#' By default `marginal` names every parameter except the position, which is
+#' the family's first parameter: the location, or the scale for a family with
+#' no location, such as [distributions7::weibull1_distrib()]. For a gaussian
+#' mixed model this is the REML of `lme` and `glmmTMB`. The coefficients of
+#' the mean are integrated, and \eqn{\sigma} is maximized on the criterion.
+#' Without any penalty, `reml()` returns the \eqn{\sigma} of [stats::lm()],
+#' \eqn{\sqrt{\mathrm{rss}/(n-p)}}, and its criterion equals
+#' `logLik(lm(...), REML = TRUE)`. `ml()` returns \eqn{\sqrt{\mathrm{rss}/n}}.
+#' On `nlme::Orthodont`, `distance ~ agec + random(~ agec | Subject)` gives
+#' \eqn{\sigma} = 1.310039, standard deviations 2.134332 and 0.226429, and a
+#' criterion of -221.31834, which are the values of `lme` to six digits.
 #'
-#' That difference is a matter of WHERE the dispersion is read and not of
-#' which coefficients the determinant spans. Measured on the same designs, by
-#' separating the two: moving the dispersion intercept out of the determinant
-#' and leaving it at the joint mode accounts for 0.01 to 1.75 per cent of the
-#' gap, and reading it as an outer parameter instead accounts for the other 98
-#' to 100. The determinant here spans every coefficient of every equation,
-#' which is what \eqn{A = I} means, and a distributional regression has no
-#' reason to treat the coefficients of one equation differently from those of
-#' another.
+#' `marginal = "none"` gives the convention of `gamlss` and of mgcv's
+#' `gaulss`: every parameter of the distribution is read at the joint mode of
+#' the penalized likelihood. That estimate ignores the degrees of freedom of
+#' the coefficients estimated beside it, so a dispersion read there is biased
+#' downwards. Measured over 20 replicates of 40 groups of 8, a gamma
+#' dispersion with a random effect of its own is biased by -8.0 per cent at the
+#' joint mode and by -2.6 per cent on the criterion, and a Weibull shape with
+#' a random intercept by +8.7 and +1.1 per cent.
+#'
+#' Where some coefficients of the location are integrated, the estimate
+#' depends on the parametrization of the family. The dispersion of
+#' [distributions7::gamma1_distrib()] and the variance of
+#' [distributions7::gamma2_distrib()], \eqn{\sigma^2 = \phi\mu^2}, differ
+#' by about one per cent under `reml()`, because the second contains the
+#' integrated mean. With `"all"` the criterion does not depend on the
+#' parametrization.
+#'
+#' Five configurations are not covered yet, and [marginal_coords()] lists
+#' them: a structural term, a block that moves with its coefficients, a
+#' penalty with a kink, a block that is a working linearization (a sharp
+#' [modelterms7::jump()] or [modelterms7::jseg()]), and a penalty whose null
+#' space is not spanned by coordinates. In each case a parameter that the default names keeps the
+#' convention of `"none"`, and a parameter named explicitly is refused.
 #'
 #' # Which hyperparameters
 #'
@@ -239,8 +271,16 @@ outer_path_defaults <- function() {
 #'   [statmod()] rejects `"expected"` there: see
 #'   [assert_criterion_information()].
 #'
+#' @param marginal Which distribution parameters have their unpenalized
+#'   coefficients estimated by maximizing this criterion, instead of being
+#'   read at the joint mode (`ml()`) or integrated (`reml()`). `NULL`, the
+#'   default, names every parameter except the position, which is the
+#'   family's first parameter. `"none"` names no parameter, `"all"` names
+#'   every one, and a character vector names the parameters listed. With
+#'   `"all"`, `reml()` and `ml()` are the same criterion.
+#'
 #' @return An [OuterMethod()] object of kind `"reml"` or `"ml"`, with
-#'   `hessian` as supplied and the path settings unused.
+#'   `hessian` and `marginal` as supplied and the path settings unused.
 #'
 #' @references
 #' Wood, S. N. (2011). Fast stable restricted maximum likelihood and marginal
@@ -275,16 +315,48 @@ outer_path_defaults <- function() {
 #' logLik(fit, type = "marginal")
 #'
 #' @export
-reml <- function(hessian = c("observed", "expected")) {
+reml <- function(hessian = c("observed", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
-                             k = NA_real_), outer_path_defaults()))
+                             k = NA_real_,
+                             marginal = check_marginal_arg(marginal)),
+                         outer_path_defaults()))
 }
 
 #' @rdname reml
 #' @export
-ml <- function(hessian = c("observed", "expected")) {
+ml <- function(hessian = c("observed", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
-                             k = NA_real_), outer_path_defaults()))
+                             k = NA_real_,
+                             marginal = check_marginal_arg(marginal)),
+                         outer_path_defaults()))
+}
+
+
+#' Check the `marginal` Argument of a Marginal Criterion
+#'
+#' @description
+#' Checks the shape of `marginal` before any family is known: `NULL`, or a
+#' character vector with no missing and no empty entry. Whether the names
+#' belong to the family is checked by [marginal_params()], at fit time.
+#'
+#' @param marginal The argument as given.
+#'
+#' @return `marginal`, unchanged, or an error naming the argument.
+#'
+#' @keywords internal
+check_marginal_arg <- function(marginal) {
+  if (is.null(marginal)) return(NULL)
+  if (!is.character(marginal) || !length(marginal) || anyNA(marginal) ||
+      any(!nzchar(marginal))) {
+    stop(paste0("'marginal' must be NULL, \"none\", \"all\" or a character",
+                " vector of\n  distribution parameter names."),
+         call. = FALSE)
+  }
+  if (length(marginal) > 1L && any(marginal %in% c("none", "all"))) {
+    stop("'marginal' takes \"none\" or \"all\" alone, not beside names.",
+         call. = FALSE)
+  }
+  unique(marginal)
 }
 
 
@@ -581,6 +653,9 @@ eta_to_hyper <- function(eta, idx, hyper) {
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param kind `"reml"` or `"ml"`.
+#' @param gamma `TRUE` where the criterion also estimates coefficients
+#'   ([marginal_coords()]); a model with no penalized direction then gets an
+#'   empty basis rather than an error.
 #'
 #' @return `NULL` for `"reml"`, which integrates every direction and needs no
 #'   basis. For `"ml"`, a `p x r` matrix with orthonormal columns spanning
@@ -591,7 +666,7 @@ eta_to_hyper <- function(eta, idx, hyper) {
 #'   [reml()] and [ml()] for the distinction this implements.
 #'
 #' @keywords internal
-integrated_basis <- function(spec, design, kind) {
+integrated_basis <- function(spec, design, kind, gamma = FALSE) {
   if (identical(kind, "reml")) return(NULL)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
@@ -627,7 +702,9 @@ integrated_basis <- function(spec, design, kind) {
     M[idx_u, ] <- R
     cols[[length(cols) + 1L]] <- M
   }
-  if (!length(cols) && structural_penalized(spec, design)) {
+  # nothing penalized and coefficients the criterion estimates: ml() is then
+  # the profile likelihood, and the subspace it integrates over is empty
+  if (!length(cols) && (structural_penalized(spec, design) || isTRUE(gamma))) {
     return(matrix(0, total, 0))
   }
   if (!length(cols)) {
@@ -931,8 +1008,15 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
   # t whose nu had reached double.xmax, the criterion went from unavailable
   # -- which stopped the whole fit at its first evaluation -- to a finite
   # value at a converged mode. See pin_boundary().
-  M <- pin_boundary(M)
+  M <- pin_boundary(M, if (is.null(basis)) pinned_coords(spec, design) else
+                      integer(0))
   held <- attr(M, "held")
+  # nothing left to integrate: ml() with every unpenalized direction
+  # estimated by the criterion and no penalty, the profile likelihood
+  if (!nrow(M)) {
+    return(list(value = ll - rho, loglik = ll, penalty = rho, logdet = 0,
+                q = 0L))
+  }
   ld <- pd_logdet(M)
   if (!isTRUE(ld$ok)) return(NULL)
   q <- nrow(M) - (if (is.null(held)) 0L else held)
@@ -985,7 +1069,15 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                       optimizer, beta, approx, maxit, tol, vb) {
   idx <- outer_hyper_index(spec, blocks)
-  if (!nrow(idx)) {
+  # the coefficients the criterion estimates beside the hyperparameters: the
+  # outer vector is (eta, gamma), eta first, so every consumer that reads the
+  # first nrow(idx) entries as hyperparameters goes on doing so
+  gam <- if (outer_minimize(method)) marginal_coords(spec, design, NULL) else
+    marginal_coords(spec, design, method)
+  nh <- nrow(idx)
+  ng <- length(gam$where)
+  nv <- nh + ng
+  if (!nh && !ng) {
     # statmod() does not reach this: a criterion applies to the smooth
     # penalties and comes into play only where there is one, so a model with
     # none leaves it unused rather than failing. What this guards is the
@@ -998,16 +1090,33 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
          call. = FALSE)
   }
   expected <- identical(method@hessian, "expected")
-  basis <- integrated_basis(spec, design, method@kind)
-  labels <- paste(idx$parameter, idx$term, idx$name, sep = "/")
+  basis <- integrated_basis(spec, design, method@kind, gamma = ng > 0L)
+  labels <- c(paste(idx$parameter, idx$term, idx$name, sep = "/"),
+              paste(gam$param, gam$name, sep = "/"))
   # what the TRACE prints. The full label names the column of hist_outer,
   # where it has to stay unique and reconstructible; a reader of a running
   # fit needs the term and not its whole specification.
-  shown <- paste(idx$parameter, short_keys(idx$term), idx$name, sep = "/")
+  shown <- c(paste(idx$parameter, short_keys(idx$term), idx$name, sep = "/"),
+             paste(gam$param, gam$name, sep = "/"))
+  # the value of the j-th coordinate of v on the scale a reader reads: a
+  # hyperparameter on its own scale, a coefficient as it is
+  v_value <- function(hy, v, j) {
+    if (j <= nh) hyper_value(hy, idx, j) else v[[j]]
+  }
+  # the specification with the estimated coefficients held at v's values
+  spec_at <- function(v) statmod_hold(spec, gam, v[nh + seq_len(ng)])
+  # the inner objective's gradient with the held coordinates left out: at the
+  # held mode their score is not zero, and a mode error or a resolution is a
+  # statement about the free coordinates alone
+  free_score <- function(g) {
+    if (!is.null(g) && ng) g[gam$where] <- 0
+    g
+  }
   pe <- outer_minimize(method)
   basis <- if (pe) NULL else basis
-  exact <- outer_gradient_ok(spec, design, idx, method, 1L)
-  exact2 <- exact && outer_gradient_ok(spec, design, idx, method, 2L)
+  exact <- outer_gradient_ok(spec, design, idx, method, 1L, gamma = ng > 0L)
+  exact2 <- exact && outer_gradient_ok(spec, design, idx, method, 2L,
+                                       gamma = ng > 0L)
   # whether the STOPPING RULE is this package's business too. An optimizer
   # given by name comes with its own rule and keeps it; one chosen here is
   # chosen whole, the rule included, because only this package knows what the
@@ -1054,22 +1163,26 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # them takes the integrated basis, so a second reader that picked for itself
   # would answer for the wrong quantity -- which is what
   # criterion_resolution() did on an aic() fit before this existed.
-  criterion_at <- function(cf, hy, par, ctx = NULL) {
+  criterion_at <- function(cf, hy, par, ctx = NULL, sp = state$sp) {
+    if (is.null(sp)) sp <- spec
     if (pe) {
-      statmod_pe(spec, design, cf, hy, method, approx,
-                 statmod_active(spec, blocks, par, hy))
+      statmod_pe(sp, design, cf, hy, method, approx,
+                 statmod_active(sp, blocks, par, hy))
     } else {
-      statmod_marginal(spec, design, cf, hy, method, approx, basis, ctx)
+      statmod_marginal(sp, design, cf, hy, method, approx, basis, ctx)
     }
   }
 
   # one inner fit serves the value and the gradient: an optimizer asks for
   # both at the same point, and refitting for the second would double the cost
   # of every step
-  evaluate <- function(eta) {
-    key <- paste(format(eta, digits = 17), collapse = ",")
+  evaluate <- function(v) {
+    key <- paste(format(v, digits = 17), collapse = ",")
     if (identical(state$key, key)) return(state$last)
+    eta <- v[seq_len(nh)]
     hy <- eta_to_hyper(eta, idx, hyper)
+    sp <- spec_at(v)
+    state$sp <- sp
     # a hyperparameter far enough out takes the model somewhere its own
     # machinery cannot go -- a variance beyond what a density can represent,
     # a curvature that is no longer definite. That is a step the search should
@@ -1114,8 +1227,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       }
     }
     z_save <- if (is.null(sst)) NULL else sst$zeta
+    if (ng) warm[gam$where] <- v[nh + seq_len(ng)]
     body <- function() {
-      res <<- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
+      res <<- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
                                 warm, expected, approx, maxit, tol,
                                 vb_inner(vb), hold_refresh = TRUE)
       cf <<- res$obj$split(res$par)
@@ -1132,7 +1246,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # read the same information, the same penalty and the same factorization
       # instead of each assembling its own. It is built BEFORE the point is
       # judged, because what judges it reads that same factorization.
-      ctx <<- outer_context(spec, design, cf, hy, approx)
+      ctx <<- outer_context(sp, design, cf, hy, approx)
       # ⚠️ AND THE FLAG IS NOT WHAT DECIDES, because it answers another
       # question. The flag says whether the inner stopping rule fired;
       # availability asks whether the criterion, a Laplace expansion AT THE
@@ -1154,9 +1268,10 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # direction, and piano_stabilita.txt 13d measured it and withdrew it:
       # it cost a false negative on a good fit.
       if (!isTRUE(res$converged)) {
-        q <- inner_mode_error(ctx, spec, design, cf, hy,
-                              tryCatch(res$obj$gr(res$par),
-                                       error = function(e) NULL), expected)
+        q <- inner_mode_error(ctx, sp, design, cf, hy,
+                              free_score(tryCatch(res$obj$gr(res$par),
+                                                  error = function(e) NULL)),
+                              expected)
         if (!is.finite(q) || q > mode_error_limit()) {
           m <<- NULL
           return(invisible(NULL))
@@ -1176,6 +1291,31 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
     if (state$evals == 0L) {
       body()
+      # A COORDINATE THE MODEL DOES NOT IDENTIFY IS LEFT OUT OF THE
+      # DETERMINANT, as lm() computes its REML criterion with the rank rather
+      # than with the number of columns. Where the criterion estimates a
+      # coefficient, it runs on a model with no smooth hyperparameter as
+      # well, and there a flat direction of K -- which the fit only warned
+      # about before -- makes log|K| undefined at the start. The set is read
+      # ONCE, at this first fit, and held for the whole search, so the
+      # criterion does not change dimension from one point to the next.
+      if (is.null(m) && ng && !is.null(res)) {
+        Kf <- tryCatch(statmod_penalized_at(sp, cf, design, hy, expected,
+                                            approx),
+                       error = function(e) NULL)
+        fl <- if (is.null(Kf)) integer(0) else
+          sort(unique(c(deficient_coords(Kf),
+                        vanished_coords(sp, cf, design, Kf))))
+        fl <- setdiff(fl, gam$where)
+        if (length(fl)) {
+          # left free in the inner fit, where the objective still depends on
+          # them, and out of the determinant alone: the design carries them,
+          # and pinned_coords() reads them wherever K is pinned
+          attr(design, "pinned") <<- fl
+          m <<- NULL
+          body()
+        }
+      }
     } else {
       err <- tryCatch({
         body()
@@ -1241,8 +1381,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       # simply rejected.
       w <- if (is.finite(state$worst)) state$worst else 1
       bar <- w + abs(w) + 1
-      out <- list(value = sgn * bar, grad = rep(0, nh),
-                  hess = if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL,
+      out <- list(value = sgn * bar, grad = rep(0, nv),
+                  hess = if (exact2) diag(if (pe) 1 else -1, nv, nv) else NULL,
                   ok = FALSE)
       state$key <- key
       state$last <- out
@@ -1263,7 +1403,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     row <- data.frame(evaluation = state$evals, criterion = m$value,
                       loglik = m$loglik, penalty = m$penalty)
     for (j in seq_along(labels)) {
-      row[[labels[j]]] <- hyper_value(hy, idx, j)
+      row[[labels[j]]] <- v_value(hy, v, j)
     }
     state$rows[[length(state$rows) + 1L]] <- row
     if (vb$outer) {
@@ -1280,7 +1420,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         sprintf("%12.4g", max(abs(gv))) else sprintf("%12s", "--")
       cat(sprintf("  %6d %16.6f %s   %s\n", state$evals, m$value, gmax,
                   paste(signif(vapply(seq_along(labels), function(j)
-                    hyper_value(hy, idx, j), numeric(1)), 5), collapse = ", ")))
+                    v_value(hy, v, j), numeric(1)), 5), collapse = ", ")))
     }
     # `par`, `split` and `score` are carried for criterion_resolution(), which
     # needs the mode the criterion was read at and the score the inner fit
@@ -1288,7 +1428,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # against a whole inner fit, so it is not worth deferring.
     out <- list(value = m$value, ok = TRUE, ctx = ctx, cf = cf, hy = hy,
                 par = res$par, split = res$obj$split,
-                score = res$obj$gr(res$par))
+                score = free_score(res$obj$gr(res$par)), sp = sp)
     state$key <- key
     state$last <- out
     # RECOMPUTED AT EVERY USABLE POINT rather than once at the start. The mode
@@ -1297,7 +1437,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # after it. One criterion assembly per evaluation against a whole inner
     # fit is what it costs.
     if (chose_optimizer) {
-      r <- criterion_resolution(out, spec, design, method, criterion_at)
+      r <- criterion_resolution(out, sp, design, method, criterion_at)
       if (is.finite(r) && r > 0) {
         state$res_seen <- c(state$res_seen, r)
         state$resolution <- resolution_summary(state$res_seen)
@@ -1322,16 +1462,15 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # they belong to. `order` is 1 for the gradient and 2 for the Hessian.
   derivs <- function(order) {
     st <- state$last
-    nh <- nrow(idx)
     slot <- if (order == 1L) "grad" else "hess"
     if (!is.null(st[[slot]])) return(st[[slot]])
     if (!isTRUE(st$ok)) {
       # an unavailable point keeps the barrier's own answers
-      return(if (order == 1L) rep(0, nh) else
-        if (exact2) diag(if (pe) 1 else -1, nh, nh) else NULL)
+      return(if (order == 1L) rep(0, nv) else
+        if (exact2) diag(if (pe) 1 else -1, nv, nv) else NULL)
     }
-    fallback <- function(o) if (o == 1L) rep(0, nh) else
-      diag(if (pe) 1 else -1, nh, nh)
+    fallback <- function(o) if (o == 1L) rep(0, nv) else
+      diag(if (pe) 1 else -1, nv, nv)
     if (pe) {
       # the prediction-error route computes the gradient on the way to the
       # Hessian, so both are kept rather than the second order being asked for
@@ -1343,12 +1482,12 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       }
       if (order >= 2L) st$hess <- if (is.null(d$hess)) fallback(2L) else d$hess
     } else if (order == 1L) {
-      v <- statmod_marginal_grad(spec, design, st$cf, st$hy, method, idx,
-                                 basis, ctx = st$ctx)
+      v <- statmod_marginal_grad(st$sp, design, st$cf, st$hy, method, idx,
+                                 basis, ctx = st$ctx, gam = gam)
       st$grad <- if (is.null(v)) fallback(1L) else v
     } else {
-      v <- statmod_marginal_hess(spec, design, st$cf, st$hy, method, idx,
-                                 basis, ctx = st$ctx)
+      v <- statmod_marginal_hess(st$sp, design, st$cf, st$hy, method, idx,
+                                 basis, ctx = st$ctx, gam = gam)
       st$hess <- if (is.null(v)) fallback(2L) else v
     }
     state$last <- st
@@ -1394,7 +1533,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                   paste0("h1..h", length(shown))))
   }
 
-  eta0 <- hyper_to_eta(hyper, idx)
+  eta0 <- c(hyper_to_eta(hyper, idx), beta[gam$where])
 
   # THE CRITERION HAS A RESOLUTION AND THE STOPPING RULE HAS TO KNOW IT.
   # Every evaluation refits the coefficients from the RUNNING warm start, so
@@ -1532,7 +1671,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
 
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
-  hy <- eta_to_hyper(res@par, idx, hyper)
+  hy <- eta_to_hyper(res@par[seq_len(nh)], idx, hyper)
+  sp <- spec_at(res@par)
   # from the incumbent, as every trial was: the reported point is the one the
   # search stands on, and refitting it from a rejected trial's state is what
   # reported a worse mode than the search had found
@@ -1546,18 +1686,24 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       sst$value <- NULL
     }
   }
-  inner <- statmod_alternate(spec, design, blocks, hy, inner_optimizer,
+  if (ng) warm[gam$where] <- res@par[nh + seq_len(ng)]
+  inner <- statmod_alternate(sp, design, blocks, hy, inner_optimizer,
                              warm, expected, approx, maxit, tol, vb,
                              hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
-  m <- if (pe) statmod_pe(spec, design, cff, hy, method, approx,
-                          statmod_active(spec, blocks, inner$par, hy)) else
-    statmod_marginal(spec, design, cff, hy, method, approx, basis)
+  m <- if (pe) statmod_pe(sp, design, cff, hy, method, approx,
+                          statmod_active(sp, blocks, inner$par, hy)) else
+    statmod_marginal(sp, design, cff, hy, method, approx, basis)
   list(par = inner$par, hyper = hy, value = inner$value,
        criterion = if (is.null(m)) NA_real_ else m$value,
        converged = res@converged && inner$converged,
        obj = inner$obj, hist_blocks = inner$hist_blocks,
        hist_inner = inner$hist_inner,
+       # the columns the final refit's pivot left out, which statmod() reports
+       # as not identified; without them a fit that went through the search
+       # was read only on the information at the mode, where a column the
+       # pivot drops at its tolerance can still be inverted
+       aliased = inner$aliased,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
        iterations = res@iterations, evaluations = state$evals,
@@ -1566,7 +1712,12 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        # one was given and otherwise the one chosen from what the criterion
        # can supply: a fit says what fitted it rather than leaving a reader
        # to reconstruct the default
-       optimizer = optimizer)
+       optimizer = optimizer,
+       # the coefficients the criterion estimated, which a refit after the
+       # search has to go on holding: see statmod()
+       held_coef = if (ng) sp@held_coef else list(),
+       marginal = gam,
+       pinned = as.integer(attr(design, "pinned")))
 }
 
 

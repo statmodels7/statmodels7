@@ -4,7 +4,7 @@
 \alias{outer_gradient_ok}
 \title{Can the Exact Gradient Be Computed Here?}
 \usage{
-outer_gradient_ok(spec, design, idx, method, order = 1L)
+outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -16,6 +16,10 @@ outer_gradient_ok(spec, design, idx, method, order = 1L)
 \item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 
 \item{order}{\code{1} for the gradient, \code{2} for the Hessian as well.}
+
+\item{gamma}{\code{TRUE} where the outer vector also carries coefficients the
+criterion estimates (\code{\link[=marginal_coords]{marginal_coords()}}), so an empty index is not a
+reason to answer \code{FALSE}.}
 }
 \value{
 \code{TRUE} or \code{FALSE}.

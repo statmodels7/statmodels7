@@ -300,14 +300,15 @@ test_that("aic and reml need not agree, and both are stationary", {
   a <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
                outer_criterion = aic())
   r <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distrib(), dc,
-               outer_criterion = reml(hessian = "observed"))
+               outer_criterion = reml(hessian = "observed", marginal = "none"))
   spec <- a@spec
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))
   ga <- statmod_pe_derivs(spec, design, a@coefficients, a@hyper, aic(), idx,
                           1L)$grad
   gr <- statmod_marginal_grad(spec, design, r@coefficients, r@hyper,
-                              reml(hessian = "observed"), idx)
+                              reml(hessian = "observed", marginal = "none"),
+                              idx)
   # ⚠️ AT REST IS A STATEMENT ABOUT THE POINT AND NOT ABOUT A GRADIENT'S
   # SIZE, which is the reading 0.127.0 took out of statmod_certificate() for
   # being unable to mean one thing on every shape. The aic fit is asked the
@@ -398,8 +399,11 @@ test_that("the edf correction reproduces mgcv's smoothing-parameter term", {
     g <- mgcv::gam(stats::as.formula("y ~ s(x, k = 15, bs = 'bs')",
                                      env = genv),
                    data = dd, method = "REML")
+    # sigma read at the joint mode: with it estimated on the criterion, the
+    # part of Var(log sp) that is sigma's own given lambda goes to the
+    # bayesian variance and not to this correction, where mgcv's Vc1 keeps it
     u <- statmod(y ~ s(x, bspline_smooth(k = 15)), distributions7::gaussian1_distrib(), dd,
-                 outer_criterion = reml())
+                 outer_criterion = reml(marginal = "none"))
     got <- summary(u, correct = TRUE)@df - summary(u)@df
     # ABSOLUTE, because the quantity is a fraction of a parameter and what
     # is left between the two packages is the difference between their

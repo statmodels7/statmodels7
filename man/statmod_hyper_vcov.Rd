@@ -4,7 +4,15 @@
 \alias{statmod_hyper_vcov}
 \title{The Variance of the Hyperparameters a Marginal Criterion Estimated}
 \usage{
-statmod_hyper_vcov(spec, design, coef, hyper, method, inner = NULL)
+statmod_hyper_vcov(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  inner = NULL,
+  pinned = NULL
+)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -19,6 +27,9 @@ statmod_hyper_vcov(spec, design, coef, hyper, method, inner = NULL)
 
 \item{inner}{The inner optimizer the fit used, which the stencil route
 refits its probes with; \code{iwls()} where none is given.}
+
+\item{pinned}{The coordinates the fit left out of the criterion's
+determinant, as it records them in \code{methods$pinned}.}
 }
 \value{
 A square matrix, one row per estimated hyperparameter, whose
