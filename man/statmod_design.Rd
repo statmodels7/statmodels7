@@ -4,10 +4,16 @@
 \alias{statmod_design}
 \title{The Design of a Specification}
 \usage{
-statmod_design(spec)
+statmod_design(spec, unseen = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+
+\item{unseen}{A named list, one entry per distribution parameter, of the
+keys of the \code{\link[modelterms7:random]{modelterms7::random()}} terms whose rows of a level the fit
+never saw are given zeros instead of an error; \code{NULL} (the default) for
+none. It is how \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} reads a new group under
+\code{random = "zero"} or \code{"marginal"}.}
 }
 \value{
 A named list with one entry per parameter, each a list with

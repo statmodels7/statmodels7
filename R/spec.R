@@ -1652,6 +1652,11 @@ check_offsets <- function(offsets, params, n) {
 #' coefficients they carry.
 #'
 #' @param spec A [StatmodSpec()].
+#' @param unseen A named list, one entry per distribution parameter, of the
+#'   keys of the [modelterms7::random()] terms whose rows of a level the fit
+#'   never saw are given zeros instead of an error; `NULL` (the default) for
+#'   none. It is how [predict.StatmodFit()] reads a new group under
+#'   `random = "zero"` or `"marginal"`.
 #'
 #' @return A named list with one entry per parameter, each a list with
 #'   `X`, `coef_names`, `npar` and `blocks` (the column
@@ -1668,8 +1673,8 @@ check_offsets <- function(offsets, params, n) {
 #' vapply(statmod_design(d), function(z) z$npar, integer(1))
 #'
 #' @export
-statmod_design <- function(spec) {
-  out <- statmod_design_blocks(spec)
+statmod_design <- function(spec, unseen = NULL) {
+  out <- statmod_design_blocks(spec, unseen)
   su <- statmod_structural(spec)
   if (length(su)) {
     sst <- new.env(parent = emptyenv())
@@ -1817,12 +1822,14 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
 #' coefficients.
 #'
 #' @param spec A [StatmodSpec()].
+#' @param unseen As in [statmod_design()].
 #'
 #' @return A named list, one entry per distribution parameter.
 #'
 #' @keywords internal
-statmod_design_blocks <- function(spec) {
-  lapply(spec@terms, function(tms) {
+statmod_design_blocks <- function(spec, unseen = NULL) {
+  stats::setNames(lapply(names(spec@terms), function(p) {
+    tms <- spec@terms[[p]]
     # a structural term contributes no columns at all
     tms <- tms[!vapply(tms, S7::S7_inherits, logical(1),
                        modelterms7::structural_term)]
@@ -1835,7 +1842,12 @@ statmod_design_blocks <- function(spec) {
     # building again would give a block of the same shape multiplying the same
     # coefficients and meaning something else
     mats <- if (is.null(spec@newdata)) lapply(tms, modelterms7::term_matrix)
-      else lapply(tms, modelterms7::term_predict, newdata = spec@newdata)
+      else stats::setNames(lapply(names(tms), function(k) {
+        if (k %in% unseen[[p]]) {
+          modelterms7::term_predict(tms[[k]], newdata = spec@newdata,
+                                    unseen = "zero")
+        } else modelterms7::term_predict(tms[[k]], newdata = spec@newdata)
+      }), names(tms))
     nms <- lapply(tms, modelterms7::term_coef_names)
     widths <- vapply(mats, ncol, integer(1))
     ends <- cumsum(widths)
@@ -1849,5 +1861,5 @@ statmod_design_blocks <- function(spec) {
           if (widths[j] == 0L) integer(0) else seq.int(starts[j], ends[j])),
         names(tms))
     )
-  })
+  }), names(spec@terms))
 }

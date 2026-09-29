@@ -4,10 +4,12 @@
 \alias{statmod_design_blocks}
 \title{The Blocks of a Design}
 \usage{
-statmod_design_blocks(spec)
+statmod_design_blocks(spec, unseen = NULL)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+
+\item{unseen}{As in \code{\link[=statmod_design]{statmod_design()}}.}
 }
 \value{
 A named list, one entry per distribution parameter.

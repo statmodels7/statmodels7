@@ -10,6 +10,7 @@
   newdata = NULL,
   se = FALSE,
   level = 0.95,
+  random = "conditional",
   ...
 )
 }
@@ -28,6 +29,15 @@ covariates the model names but not the response.}
 
 \item{level}{The interval's level, \code{0.95} by default. Read only where \code{se}
 is \code{TRUE}.}
+
+\item{random}{How a \code{\link[modelterms7:random]{modelterms7::random()}} term is read:
+\code{"conditional"} (the default) with each group's own estimated effect, so
+a level the fit never saw signals an error; \code{"zero"} with every effect at
+zero, the typical group; \code{"marginal"} averaged over the prior the fit
+estimated, the population average \eqn{E_b[h^{-1}(\eta + z^\top b)]}.
+A single string applies to every such term; a character vector named by
+the terms' keys chooses term by term, the rest staying conditional. See
+the section on new groups.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} where \code{se} is \code{TRUE}. That is
 where \code{type} chooses between the Bayesian variance, the frequentist one
@@ -100,6 +110,32 @@ filter must be run, never continued.
 Beyond the data the score sits at its conditional mean of zero, which the
 model's own definition guarantees, so the continuation is the
 deterministic recursion and involves no simulation.
+}
+
+\section{A new group, and the typical one}{
+A random-effect term predicts a group the fit saw with that group's
+estimated effect. A group it never saw has none, and \code{random} says what to
+put in its place. \code{"zero"} sets every effect of the term to zero, at every
+row, which is the prediction for the typical group (lme4's and
+glmmTMB's \code{re.form = NA}). \code{"marginal"} averages over the prior instead,
+\eqn{E_b[h^{-1}(\eta_0 + z^\top b)]}, which is the population average.
+With an identity link the two agree for the mean; with a log link the
+marginal mean is \eqn{\exp(\eta_0 + \sigma_b^2/2)}, and with a logit it is
+pulled towards one half. A moment is averaged by the law of total
+expectation and the variance adds the variance of the conditional mean,
+so a random effect on the scale enters the marginal variance of the
+response.
+
+The average is a Gauss-Hermite product grid where every prior is Gaussian
+and there are at most three coordinates in all, and 10000 draws from the
+prior otherwise, on a seed of their own. A prior that is not Gaussian is
+integrated only where the inverse link is bounded: a Student t has no
+moment generating function, so under a log link the average does not
+exist, and such a request signals an error. A term that shares a covariance
+with others through a label has no prior of its own and is read at
+\code{"zero"} only. The standard error of a marginal parameter is the delta
+method on the fixed part, conditional on the prior's scale; a prediction
+interval for a new group, which would include that scale, is not given.
 
 A forecast reports \strong{no standard error}. \code{se = TRUE} gives the
 uncertainty of the parameters, while a forecast carries the uncertainty of
@@ -131,6 +167,16 @@ head(predict(fit, "mu", se = TRUE))
 
 # Every parameter at once, on either scale.
 str(predict(fit, "parameter"))
+
+# A new group: the typical one, and the population average.
+gg <- data.frame(g = factor(rep(letters[1:12], each = 10)),
+                 x = rnorm(120))
+gg$y <- rpois(120, exp(0.5 + 0.3 * gg$x + rnorm(12, sd = 0.6)[gg$g]))
+fg <- statmod(y ~ x + random(~ 1 | g), distributions7::poisson_distrib(),
+              gg)
+new <- data.frame(g = "new", x = 0)
+predict(fg, "mu", new, random = "zero")
+predict(fg, "mu", new, random = "marginal")
 
 # A name the family does not have is refused, and the message says what
 # is available.

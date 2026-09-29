@@ -1,3 +1,46 @@
+# statmodels7 0.160.0
+
+* **`predict()` takes `random`**, which says how a `random()` term is read:
+  `"conditional"` (the default) with each group's own estimated effect, so a
+  level the fit never saw still signals an error, whose message now names
+  this argument; `"zero"` with every effect at zero at every row, the
+  typical group, which is lme4's and glmmTMB's `re.form = NA`; and
+  `"marginal"` averaged over the prior the fit estimated,
+  \eqn{E_b[h^{-1}(\eta_0 + z^\top b)]}, the population average. A single
+  string applies to every such term, and a character vector named by the
+  terms' keys chooses term by term.
+
+* The average is a Gauss-Hermite product grid where every prior is Gaussian
+  and there are at most three coordinates in all, with
+  \eqn{\min(40, \lfloor 8000^{1/D}\rfloor)} nodes per coordinate, and 10000
+  draws from `penalties7::penalty_draw()` otherwise, on a seed of their own
+  and leaving the caller's random stream where it was. Checked against
+  references sharing no arithmetic with the grid: under a log link it is
+  \eqn{\exp(\eta_0 + \sigma_b^2/2)} to 1e-15, under a logit
+  `stats::integrate()` to 1e-15, and a correlated random slope under a log
+  link \eqn{\exp(\eta_0 + z^\top\Sigma z/2)} to 3e-15. A moment is averaged
+  by the law of total expectation and the variance adds the variance of the
+  conditional mean; under an identity link the marginal variance exceeds
+  the typical group's by \eqn{\sigma_b^2} to 8e-16.
+
+* A prior that is not Gaussian is integrated only where the inverse link is
+  bounded. A Student t has no moment generating function, so under a log
+  link \eqn{E[e^b]} is infinite: measured on a Poisson random intercept at
+  \eqn{\nu = 3.04}, 10000 draws gave 31.5, 2.9, 28.7, 57.9 and 331 on five
+  seeds, against 1.81 at a zero effect, where under a logit the same draws
+  gave 0.628 to 0.631. Such a request signals an error naming `"zero"`.
+
+* With `se = TRUE` a marginal parameter's standard error is the delta method
+  on the fixed part, conditional on the prior's scale, and its interval is
+  the fixed part's carried through the average. A prediction interval for a
+  new group, which would include the prior's scale, is not given. A term
+  sharing a covariance through a label is read at `"zero"` only, and neither
+  mode is available beside a structural term, whose recursion reads the
+  predictor.
+
+* `statmod_design()` takes `unseen`, the keys of the random-effect terms
+  whose unseen levels are given zero rows. Requires modelterms7 0.83.0.
+
 # statmodels7 0.159.0
 
 * **SCAD and MCP are scaled by the curvature of the likelihood in each of

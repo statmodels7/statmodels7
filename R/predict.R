@@ -89,6 +89,32 @@ predict_moments <- function() {
 #' model's own definition guarantees, so the continuation is the
 #' deterministic recursion and involves no simulation.
 #'
+#' # A new group, and the typical one
+#'
+#' A random-effect term predicts a group the fit saw with that group's
+#' estimated effect. A group it never saw has none, and `random` says what to
+#' put in its place. `"zero"` sets every effect of the term to zero, at every
+#' row, which is the prediction for the typical group (lme4's and
+#' glmmTMB's `re.form = NA`). `"marginal"` averages over the prior instead,
+#' \eqn{E_b[h^{-1}(\eta_0 + z^\top b)]}, which is the population average.
+#' With an identity link the two agree for the mean; with a log link the
+#' marginal mean is \eqn{\exp(\eta_0 + \sigma_b^2/2)}, and with a logit it is
+#' pulled towards one half. A moment is averaged by the law of total
+#' expectation and the variance adds the variance of the conditional mean,
+#' so a random effect on the scale enters the marginal variance of the
+#' response.
+#'
+#' The average is a Gauss-Hermite product grid where every prior is Gaussian
+#' and there are at most three coordinates in all, and 10000 draws from the
+#' prior otherwise, on a seed of their own. A prior that is not Gaussian is
+#' integrated only where the inverse link is bounded: a Student t has no
+#' moment generating function, so under a log link the average does not
+#' exist, and such a request signals an error. A term that shares a covariance
+#' with others through a label has no prior of its own and is read at
+#' `"zero"` only. The standard error of a marginal parameter is the delta
+#' method on the fixed part, conditional on the prior's scale; a prediction
+#' interval for a new group, which would include that scale, is not given.
+#'
 #' A forecast reports **no standard error**. `se = TRUE` gives the
 #' uncertainty of the parameters, while a forecast carries the uncertainty of
 #' the future scores as well, which is the larger part and is no delta
@@ -104,6 +130,14 @@ predict_moments <- function() {
 #'   `FALSE` by default.
 #' @param level The interval's level, `0.95` by default. Read only where `se`
 #'   is `TRUE`.
+#' @param random How a [modelterms7::random()] term is read:
+#'   `"conditional"` (the default) with each group's own estimated effect, so
+#'   a level the fit never saw signals an error; `"zero"` with every effect at
+#'   zero, the typical group; `"marginal"` averaged over the prior the fit
+#'   estimated, the population average \eqn{E_b[h^{-1}(\eta + z^\top b)]}.
+#'   A single string applies to every such term; a character vector named by
+#'   the terms' keys chooses term by term, the rest staying conditional. See
+#'   the section on new groups.
 #' @param ... Passed to [vcov.StatmodFit()] where `se` is `TRUE`. That is
 #'   where `type` chooses between the Bayesian variance, the frequentist one
 #'   and the unconditional one. A band around a penalized term is where the
@@ -146,12 +180,23 @@ predict_moments <- function() {
 #' # Every parameter at once, on either scale.
 #' str(predict(fit, "parameter"))
 #'
+#' # A new group: the typical one, and the population average.
+#' gg <- data.frame(g = factor(rep(letters[1:12], each = 10)),
+#'                  x = rnorm(120))
+#' gg$y <- rpois(120, exp(0.5 + 0.3 * gg$x + rnorm(12, sd = 0.6)[gg$g]))
+#' fg <- statmod(y ~ x + random(~ 1 | g), distributions7::poisson_distrib(),
+#'               gg)
+#' new <- data.frame(g = "new", x = 0)
+#' predict(fg, "mu", new, random = "zero")
+#' predict(fg, "mu", new, random = "marginal")
+#'
 #' # A name the family does not have is refused, and the message says what
 #' # is available.
 #' try(predict(fit, "median"))
 #' @keywords internal
 predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
-                               se = FALSE, level = 0.95, ...) {
+                               se = FALSE, level = 0.95,
+                               random = "conditional", ...) {
   if (is.data.frame(what)) {
     stop(paste0("The second argument of statmod's predict() is 'what', not\n",
                 "  'newdata': a fit has several parameters and several\n",
@@ -162,8 +207,42 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   if (!is.character(what) || length(what) != 1L) {
     stop("'what' must be a single string.", call. = FALSE)
   }
+  rm <- random_modes(object@spec, random)
+  aside <- rm[rm$mode != "conditional", , drop = FALSE]
+  if (nrow(aside) && length(statmod_structural(object@spec))) {
+    stop("random = \"zero\" or \"marginal\" is not available beside a ",
+         "structural term: its\n  level is a recursion read at the ",
+         "predictor, so setting a random effect aside\n  would move the ",
+         "recursion as well.", call. = FALSE)
+  }
   spec <- spec_at(object, newdata, need_response = FALSE)
-  design <- statmod_design(spec)
+  design <- withCallingHandlers(
+    statmod_design(spec, if (nrow(aside))
+      split(aside$key, aside$param) else NULL),
+    error = function(e) {
+      if (grepl("was not present at build time", conditionMessage(e),
+                fixed = TRUE)) {
+        stop(paste0(conditionMessage(e), "\n  A group the fit never saw ",
+                    "has no effect of its own: predict(random = \"zero\")\n",
+                    "  reads it as the typical group and random = ",
+                    "\"marginal\" averages over the prior."),
+             call. = FALSE)
+      }
+    })
+  # a random effect set aside contributes nothing to the predictor at ANY
+  # row, a group the fit saw included: its columns are zero, so its
+  # coefficients enter neither the predictor nor the delta method
+  for (i in seq_len(nrow(aside))) {
+    idx <- design[[aside$param[i]]]$blocks[[aside$key[i]]]
+    if (length(idx)) design[[aside$param[i]]]$X[, idx] <- 0
+  }
+  mt <- aside[aside$mode == "marginal", , drop = FALSE]
+  nodes <- NULL
+  if (nrow(mt)) {
+    priors <- lapply(seq_len(nrow(mt)), function(i)
+      random_prior(spec, design, object, mt$param[i], mt$key[i]))
+    nodes <- random_nodes(priors)
+  }
   # A STRUCTURAL TERM HAS NO BLOCK TO REAPPLY: its contribution is the state
   # a recursion has reached, so new rows CONTINUE the series rather than
   # being read on their own. Running the ordinary assembly there returned
@@ -183,7 +262,29 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   params <- spec@distrib@params
   if (isTRUE(se)) {
     su <- predict_se(object, spec, design, ep, level, ...)
+    # a marginal parameter is averaged over the effects: the fit and the ends
+    # of the interval are the fixed part's carried through that average,
+    # which is monotone in the predictor, and the standard error multiplies
+    # the predictor's by the averaged derivative of the inverse link
+    for (p in unique(mt$param)) {
+      eta_at <- function(col) {
+        e <- ep$eta
+        e[[p]] <- su[[p]][[col]]
+        e
+      }
+      su[[p]]$fit <- random_marginal(spec, design, ep, mt, nodes, p)
+      su[[p]]$se <- abs(random_marginal(spec, design, ep, mt, nodes, p,
+                                        deriv = TRUE)) * su[[p]]$se_eta
+      ends <- cbind(
+        random_marginal(spec, design, ep, mt, nodes, p, eta_at("eta_lower")),
+        random_marginal(spec, design, ep, mt, nodes, p, eta_at("eta_upper")))
+      su[[p]]$lower <- pmin(ends[, 1L], ends[, 2L])
+      su[[p]]$upper <- pmax(ends[, 1L], ends[, 2L])
+    }
     return(se_answer(su, what, params, spec))
+  }
+  if (nrow(mt) && !identical(what, "link") && !startsWith(what, "link:")) {
+    return(random_marginal(spec, design, ep, mt, nodes, what))
   }
 
   if (identical(what, "link")) return(ep$eta)
