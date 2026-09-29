@@ -305,6 +305,12 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                     verbose = 0, threads = numericals7::n_threads(), ...) {
   t0 <- proc.time()[["elapsed"]]
   cl <- match.call()
+  # THE PRIOR WEIGHTS ARE LOOKED UP IN `data` FIRST, then where statmod() was
+  # called, as glm() and lm() look them up: `weights = wt` naming a column
+  # is the spelling a reader coming from those functions writes, and it used
+  # to fail with "object 'wt' not found".
+  weights <- eval(substitute(weights),
+                  if (is.list(data)) data else NULL, parent.frame())
   # The count is validated once and travels DOWN on the specification; the
   # process-level RcppParallel setting is sized here and restored when this
   # frame exits, so a fit never leaves it moved for the code that runs
@@ -428,6 +434,18 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # every parameter but the position: a model with no penalty at all still
   # runs the criterion when it carries a dispersion or a shape. Asking here
   # also checks an explicit `marginal` against the family before any fit.
+  # A FAMILY WITHOUT THE TWO DERIVATIVES the criterion reads keeps its
+  # dispersion at the joint mode when the criterion would be there for that
+  # alone: the default reml() carries no smooth hyperparameter to estimate,
+  # and refusing `y ~ x` with a Laplace response for the sake of the
+  # dispersion's intercept would refuse a model that needs no criterion at
+  # all. A criterion the caller named is still refused below, by name.
+  if (!is.null(outer_criterion) && !asked &&
+      is.null(outer_criterion@marginal) &&
+      !nrow(outer_hyper_index(spec, blocks)) &&
+      !is.null(order_shortfall(spec@distrib, 2L, "the REML criterion"))) {
+    outer_criterion <- NULL
+  }
   if (!is.null(outer_criterion)) {
     nothing <- !nrow(outer_hyper_index(spec, blocks)) &&
       !length(marginal_coords(spec, design, outer_criterion)$where)

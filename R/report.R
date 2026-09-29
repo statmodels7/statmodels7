@@ -700,6 +700,13 @@ S7::method(coef, StatmodFit) <- coef.StatmodFit
 #' \eqn{(F(y_i^-), F(y_i))} and the residual is \eqn{\Phi^{-1}(u_i)}. Exact
 #' again, at the price of being random, so two calls give two answers.
 #'
+#' Where \eqn{F(y_i)} exceeds one half the residual is read from the survival
+#' function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)} with \eqn{1 - u_i}
+#' computed as \eqn{1 - F} directly, so a count far in the upper tail, where
+#' \eqn{F} rounds to one, gets a finite residual. A family whose
+#' distribution function does not take `lower.tail` keeps the lower-tail
+#' reading.
+#'
 #' This applies to every discrete family, and at the atom alone to a mixed
 #' one, which is the zero-adjusted wrapper of a continuous parent. `seed`
 #' makes a call reproducible without disturbing the caller's stream; left
@@ -805,9 +812,36 @@ residuals.StatmodFit <- function(object,
         }
       }, add = TRUE)
     }
-    u[jump] <- stats::runif(sum(jump), lo[jump], fy[jump])
+    v <- stats::runif(sum(jump))
+    u[jump] <- lo[jump] + v * (fy[jump] - lo[jump])
   }
-  stats::qnorm(pmin(pmax(u, 0), 1))
+  r <- stats::qnorm(pmin(pmax(u, 0), 1))
+  # IN THE UPPER TAIL THE RESIDUAL IS READ FROM THE SURVIVAL FUNCTION.
+  # There F(y) rounds to 1 long before the residual is large: a Poisson
+  # count of 67 at a mean of 15 has F(y - 1) = 1 in double precision and
+  # came back Inf, where its residual is 9.9. A family whose distribution
+  # function takes `lower.tail` returns S = 1 - F with its own digits; one
+  # that ignores the argument returns F again, and the check S + F = 1 is
+  # what tells the two apart, so such a family keeps the lower-tail reading.
+  up <- which(fy > 0.5)
+  if (length(up)) {
+    sv <- tryCatch(as.numeric(distributions7::distrib_cdf(d, y, th,
+                                                        lower.tail = FALSE)),
+                   error = function(e) NULL)
+    if (!is.null(sv) && length(sv) == length(fy)) {
+      ok <- up[is.finite(sv[up]) & abs(sv[up] + fy[up] - 1) <= 1e-8]
+      if (length(ok)) {
+        w <- sv
+        jj <- ok[jump[ok]]
+        if (length(jj)) {
+          vj <- v[match(jj, which(jump))]
+          w[jj] <- sv[jj] + (1 - vj) * pmin(py[jj], fy[jj])
+        }
+        r[ok] <- stats::qnorm(pmin(pmax(w[ok], 0), 1), lower.tail = FALSE)
+      }
+    }
+  }
+  r
 }
 S7::method(residuals, StatmodFit) <- residuals.StatmodFit
 

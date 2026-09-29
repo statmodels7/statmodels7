@@ -119,6 +119,25 @@ marginal_coords <- function(spec, design, method) {
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
   units <- statmod_penalized(spec, design)
+  # BESIDE A PENALTY WITH A KINK THE DEFAULT NAMES NOTHING. Its coordinates
+  # stay at the joint mode, and a coefficient moved on the criterion moves
+  # that mode with it: a lasso's lambda is chosen by a path that scores the
+  # model with every other coefficient at the joint mode, and reading them on
+  # the criterion afterwards returned another model -- on UScrime a SCAD
+  # scored with 7 covariates came back with 6 and not converged, the
+  # criterion jumping where the active set changes. A parameter the caller
+  # names is still estimated on the criterion.
+  if (!mp$explicit) {
+    kinked <- any(vapply(units, function(u)
+      isTRUE(tryCatch(penalty_has_kink(u$penalty), error = function(e) FALSE)),
+      logical(1)))
+    if (kinked) {
+      empty$skipped <- stats::setNames(
+        rep("the model carries a penalty with a kink", length(mp$named)),
+        mp$named)
+      return(empty)
+    }
+  }
   structural <- length(attr(design, "structural")) > 0L
   refresh <- vapply(attr(design, "refresh"), function(r) r$param,
                     character(1))

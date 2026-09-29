@@ -693,6 +693,19 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
     stop("'distrib' must be a distributions7 distribution object.",
          call. = FALSE)
   }
+  # A MULTIVARIATE FAMILY IS REJECTED HERE, BY NAME. Its parameters are one
+  # value for the whole sample, so a model that lets them vary by observation
+  # is a branch this layer does not have; without this check the fit reached
+  # distributions7's own parameter check three layers down, whose message
+  # tells the caller to use a model -- which is what they were doing.
+  if (S7::S7_inherits(distrib, distributions7::multivariate_distrib)) {
+    stop(sprintf(paste0(
+      "statmod() does not fit a multivariate response: '%s' describes a ",
+      "vector of\n  responses, and this layer models one response per ",
+      "observation. The family\n  can be fitted with constant parameters by ",
+      "distributions7::fit_distrib()."),
+      distrib@distrib_name), call. = FALSE)
+  }
   params <- distrib@params
   split <- statmod_equations(formula, params)
 

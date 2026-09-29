@@ -59,6 +59,13 @@ The construction is randomized: \eqn{u_i} is drawn uniformly on
 \eqn{(F(y_i^-), F(y_i))} and the residual is \eqn{\Phi^{-1}(u_i)}. Exact
 again, at the price of being random, so two calls give two answers.
 
+Where \eqn{F(y_i)} exceeds one half the residual is read from the survival
+function, \eqn{\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)} with \eqn{1 - u_i}
+computed as \eqn{1 - F} directly, so a count far in the upper tail, where
+\eqn{F} rounds to one, gets a finite residual. A family whose
+distribution function does not take \code{lower.tail} keeps the lower-tail
+reading.
+
 This applies to every discrete family, and at the atom alone to a mixed
 one, which is the zero-adjusted wrapper of a continuous parent. \code{seed}
 makes a call reproducible without disturbing the caller's stream; left

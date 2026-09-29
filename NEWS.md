@@ -1,3 +1,57 @@
+# statmodels7 0.166.0
+
+Seven repairs, found while measuring the claims of the book's chapter on
+choosing a model, each decided with the measurement beside it.
+
+* **Beside a penalty with a kink the default `marginal` names nothing.**
+  Since 0.163.0 the default `reml()` put the unpenalized coefficients of
+  every parameter but the position on the criterion while the kinked
+  coordinates stayed at the joint mode. Along the path that chooses a
+  lasso, SCAD or MCP each point then ran a search on those coefficients,
+  and where the active set jumps the search did not converge and the point
+  was scored NA and skipped: 2 of 25 on UScrime for SCAD and MCP, 18 of 25
+  for SCAD in the equation of a Student t's nu, and under `scad(a = 30)` the
+  point skipped was the best, BIC 30.40 against the 37.25 chosen. Reading
+  them on the criterion once, at the chosen lambda, returned another model
+  than the one the path had scored in 4 of 5 cases measured (a SCAD scored
+  with 7 covariates came back with 6 and not converged, the criterion
+  jumping in log sigma where the active set changes). Every parameter is
+  now read at the joint mode, along the path and in the returned fit. A
+  parameter named in `marginal` is still estimated on the criterion.
+* **A kinked block's step is halved until the penalized objective falls.**
+  The coordinate descent took each proximal Newton step whole. Where the
+  working quadratic is not the model -- a penalty in the equation of a
+  gaussian's sigma -- the step raised the objective at 922 of 1900 steps on
+  UScrime, the block ran out of its budget at 50000 sweeps and did not
+  converge; with the search of the first item a lasso path there took more
+  than 15 minutes, and it takes 9 seconds. A scaled SCAD or MCP, whose curvature is damped towards the
+  current step's at every iteration, keeps the whole step, its objective
+  moving with the curvature. The points of such a path that remain unscored
+  are where the model degenerates, a fitted sigma falling to 1e-5 and the
+  penalized likelihood rising without bound. A block that exhausts its
+  budget is now reported as not converged.
+* **A Newton search this package chose and that did not settle is run
+  again by `lbfgs()`, from the same start, and the better one is kept.** On
+  GAGurine with a Student t and `nu ~ s(Age)` the default stopped at a REML
+  criterion of -845.09 with the curvature not negative definite; it now
+  reaches -816.59, the smoothing parameter of nu at its edge, state
+  `boundary`.
+* **A family without two derivatives keeps its dispersion at the joint mode
+  when the default criterion would be there for that alone.** Since 0.155.0
+  `statmod(y ~ x, laplace_distrib())` was rejected, the default `reml()`
+  reading two derivatives in `mu`. It fits again. A `reml()` or `ml()`
+  passed by name is still rejected, and so is a model whose smooth
+  hyperparameters need the criterion.
+* **`weights` naming a column of `data` is read there**, as `glm()` and
+  `lm()` read it; `weights = wt` failed with "object 'wt' not found".
+* **A multivariate family is rejected by name** in `statmod_spec()`, where
+  the fit used to reach distributions7's parameter check and a message
+  telling the caller to use a model.
+* **The quantile residual is read from the survival function in the upper
+  tail.** A Poisson count of 67 at a mean of 15 had F(y - 1) = 1 in double
+  precision and a residual of Inf; it is 9.9. Where F is at most one half
+  nothing moves.
+
 # statmodels7 0.165.0
 
 * **The likelihood ratio reads a dispersion at its joint mode on both

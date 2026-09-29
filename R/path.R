@@ -1190,11 +1190,22 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # THEIR OWN criterion, which is not the path's: a smoothing parameter is
   # read at the mode by reml() while a lasso's lambda is swept by bic()
   inner_crit <- if (is.null(nested_method)) method else nested_method
-  # a marginal criterion reached through the coefficients it estimates is
-  # searched at every point of the path too, as a smoothing parameter is
-  gam_here <- !is.null(inner_crit) && !outer_minimize(inner_crit) &&
+  # A DISPERSION IS READ AT THE JOINT MODE ALONG THE PATH, and on the
+  # criterion once, at the value the path chose. A marginal criterion also
+  # estimates the unpenalized coefficients of a dispersion or a shape, and
+  # searching them at every point failed where the active set jumps: on
+  # UScrime two SCAD points of 25 did not converge and were scored NA, and
+  # under scad(a = 30) the point skipped was the best, BIC 30.40 against the
+  # 37.25 chosen. The smooth hyperparameters, where there are any, are
+  # still estimated inside each point.
+  path_crit <- inner_crit
+  if (!is.null(path_crit) && !outer_minimize(path_crit)) {
+    path_crit@marginal <- "none"
+  }
+  gam_final <- !is.null(inner_crit) && !outer_minimize(inner_crit) &&
+    !identical(inner_crit@kind, "cv") &&
     length(marginal_coords(spec, design, inner_crit)$where) > 0L
-  nested <- (nrow(smooth_idx) > 0L || gam_here) && !is.null(inner_crit) &&
+  nested <- nrow(smooth_idx) > 0L && !is.null(inner_crit) &&
     !identical(inner_crit@kind, "cv")
   obj0 <- statmod_objective(spec, hyper, design, expected, approx)
 
@@ -1205,10 +1216,11 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # PROCESS must fit on a single thread, the two levels of
   # numericals7::n_threads() not nesting, while every other call here runs
   # in this process and uses the count the caller asked for.
-  fit_at <- function(hy, warm, bk = blocks, sp = spec) {
-    if (nested) {
+  fit_at <- function(hy, warm, bk = blocks, sp = spec, final = FALSE) {
+    if (nested || (final && gam_final)) {
+      crit <- if (final) inner_crit else path_crit
       r <- tryCatch(outer_fit(sp, design, bk, hy, inner_optimizer,
-                              inner_crit, optimizer, warm, approx, maxit, tol,
+                              crit, optimizer, warm, approx, maxit, tol,
                               vb_inner(vb)), error = function(e) NULL)
       if (!is.null(r)) return(r)
     }
@@ -1590,7 +1602,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
     if (!moved) break
   }
 
-  final <- fit_at(cur, beta)
+  final <- fit_at(cur, beta, final = TRUE)
   cf <- final$obj$split(final$par)
   act <- statmod_active(spec, blocks, final$par, final$hyper)
   crit <- if (is_cv) best$value else {

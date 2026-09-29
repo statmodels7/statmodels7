@@ -233,29 +233,35 @@ test_that("reml() on a modelled dispersion is the REML of Verbyla (1993)", {
   expect_true(all(eigen(numDeriv::hessian(lr, g))$values < 0))
 })
 
-test_that("a kinked penalty no longer takes the dispersion off the criterion", {
+test_that("a kinked penalty takes the dispersion off the criterion only when named", {
   d <- verbyla_data(n = 200, seed = 7, pz = 6)
   g <- distributions7::gaussian1_distrib()
   fml <- y ~ x1 + x2 | sigma ~ lasso(~ z1 + z2 + z3 + z4 + z5 + z6, lambda = 20)
   spec <- statmod_spec(fml, g, d)
   design <- statmod_design(spec)
-  mc <- marginal_coords(spec, design, reml())
-  # the dispersion's intercept, and not its six penalized slopes
+  # beside a kink the default names nothing (0.166.0): the path scores the
+  # model at the joint mode, and the fit returned is the model it scored
+  m0 <- marginal_coords(spec, design, reml())
+  expect_length(m0$where, 0L)
+  expect_identical(unname(m0$skipped), "the model carries a penalty with a kink")
+  f0 <- statmod(fml, g, d)
+  f00 <- statmod(fml, g, d, outer_criterion = reml(marginal = "none"))
+  expect_identical(f0@coefficients, f00@coefficients)
+  # a name the caller writes still puts the dispersion's intercept, and not
+  # its six penalized slopes, on the criterion
+  mc <- marginal_coords(spec, design, reml(marginal = "sigma"))
   expect_identical(mc$param, "sigma")
   expect_identical(mc$name, "(Intercept)")
   expect_length(mc$skipped, 0L)
-  f <- statmod(fml, g, d)
+  f <- statmod(fml, g, d, outer_criterion = reml(marginal = "sigma"))
   expect_true(f@converged)
-  # a name the caller writes is accepted rather than refused
-  f2 <- statmod(fml, g, d, outer_criterion = reml(marginal = "sigma"))
-  expect_equal(f2@coefficients$sigma, f@coefficients$sigma, tolerance = 1e-8)
   # the intercept maximizes the criterion, the rest of the model refitted at
   # every value it is held at: the kinked slopes go back to the joint mode
   crit_at <- function(a) {
     sp <- statmod_hold(spec, mc, a)
     ds <- statmod_design(sp)
     cf <- fit_at_hyper_spec(sp, ds, f@hyper, g)
-    statmod_marginal(sp, ds, cf, f@hyper, reml())$value
+    statmod_marginal(sp, ds, cf, f@hyper, reml(marginal = "sigma"))$value
   }
   a0 <- f@coefficients$sigma[[1]]
   c0 <- crit_at(a0)

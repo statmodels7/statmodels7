@@ -729,10 +729,14 @@ test_that("a kinked hyperparameter is refused rather than read", {
   expect_false(grepl("no penalty", ct$reason[1], fixed = TRUE))
   # the mode error is read over the coordinates the kink leaves free
   expect_lt(ct$mode_error, mode_error_limit())
-  # with the dispersion's intercept on the criterion, as the default reml()
-  # puts it, there is a coordinate with a gradient, and it is read
-  fit2 <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d)
+  # with the dispersion's intercept on the criterion, which a caller asks
+  # for by naming it, there is a coordinate with a gradient, and it is read
+  fit2 <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d,
+                  outer_criterion = reml(marginal = "sigma"))
   expect_identical(statmod_certificate(fit2)$state, "converged")
+  # the default names nothing beside a kink (0.166.0), so it reads as above
+  fit3 <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d)
+  expect_identical(statmod_certificate(fit3)$state, "unknown")
 })
 
 

@@ -29,7 +29,16 @@ read at the joint mode (\code{ml()}) or integrated (\code{reml()}). \code{NULL},
 default, names every parameter except the position, which is the
 family's first parameter. \code{"none"} names no parameter, \code{"all"} names
 every one, and a character vector names the parameters listed. With
-\code{"all"}, \code{reml()} and \code{ml()} are the same criterion.}
+\code{"all"}, \code{reml()} and \code{ml()} are the same criterion.
+Where the model carries a penalty with a kink (a lasso, an elastic
+net, a SCAD or an MCP, in any equation), \code{NULL} names no parameter:
+the path that chooses the kinked penalty scores the model at the joint
+mode, and the fit returned is the model it scored. A parameter named
+explicitly is still estimated on the criterion, at the value the path
+chose. Where the family lacks the two derivatives the criterion reads
+in some parameter (a Laplace response) and the model carries no smooth
+hyperparameter, the default criterion is not run at all, and a
+\code{reml()} or \code{ml()} passed by name is rejected.}
 }
 \value{
 An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"reml"} or \code{"ml"}, with

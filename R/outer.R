@@ -278,6 +278,15 @@ outer_path_defaults <- function() {
 #'   family's first parameter. `"none"` names no parameter, `"all"` names
 #'   every one, and a character vector names the parameters listed. With
 #'   `"all"`, `reml()` and `ml()` are the same criterion.
+#'   Where the model carries a penalty with a kink (a lasso, an elastic
+#'   net, a SCAD or an MCP, in any equation), `NULL` names no parameter:
+#'   the path that chooses the kinked penalty scores the model at the joint
+#'   mode, and the fit returned is the model it scored. A parameter named
+#'   explicitly is still estimated on the criterion, at the value the path
+#'   chose. Where the family lacks the two derivatives the criterion reads
+#'   in some parameter (a Laplace response) and the model carries no smooth
+#'   hyperparameter, the default criterion is not run at all, and a
+#'   `reml()` or `ml()` passed by name is rejected.
 #'
 #' @return An [OuterMethod()] object of kind `"reml"` or `"ml"`, with
 #'   `hessian` and `marginal` as supplied and the path settings unused.
@@ -1694,6 +1703,38 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       dec <- joint_decrement(g, (A + t(A)) / 2)
       is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
     }, error = function(e) FALSE))
+  }
+
+  # A NEWTON SEARCH THIS PACKAGE CHOSE AND THAT DID NOT SETTLE IS RUN AGAIN BY
+  # LBFGS, from the same start, and the better of the two is kept.
+  # Where the criterion's curvature is indefinite the Newton direction is a
+  # repaired one and the search can crawl: on GAGurine with a Student t and
+  # nu ~ s(Age) it stopped at a REML criterion of -845.09 with the curvature
+  # not negative definite, where lbfgs() and nelder_mead() reach -816.59 --
+  # the smoothing parameter of nu at its edge, so nu constant in age.
+  if (chose_optimizer && !settled && exact &&
+      inherits(optimizer, "optimizers7::Newton")) {
+    # with its own stopping rule and line search: the measured search that
+    # reaches the maximum is lbfgs() as a caller names it, and the budget and
+    # resolution this function gives its own choice stopped it at -818.63
+    alt <- optimizers7::lbfgs()
+    res2 <- tryCatch(optimizers7::minimize(alt, fn, eta0, gr = gr),
+                     error = function(e) NULL)
+    if (!is.null(res2) && is.finite(res2@value) &&
+        res2@value < res@value - 1e-8 * max(1, abs(res@value))) {
+      res <- res2
+      optimizer <- alt
+      settled <- isTRUE(res@converged)
+      if (!settled && exact2) {
+        settled <- isTRUE(tryCatch({
+          evaluate(res@par)
+          g <- derivs(1L)
+          A <- sgn * derivs(2L)
+          dec <- joint_decrement(g, (A + t(A)) / 2)
+          is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+        }, error = function(e) FALSE))
+      }
+    }
   }
 
   # the last evaluation is not necessarily the optimum, so the fit is taken at
