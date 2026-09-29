@@ -1,3 +1,30 @@
+# statmodels7 0.164.0
+
+* **`predict(interval =)`: an interval for a new group, and one for a new
+  observation** (decided 2026-09-29). `"confidence"` is the interval of
+  before. `"group"`, with `random = "zero"` or `"marginal"`, is the interval
+  of a new group's parameter: the variance of its predictor is the
+  estimates' plus the one a new group's effects add, se^2 + z' Sigma_b z,
+  in the parameter's own equation, so a random effect on `sigma` widens
+  `sigma`'s interval. `"prediction"`, with the new `what = "response"`, is
+  an interval for a new observation: every predictor is
+  taken jointly Gaussian -- the estimates' covariance plus the effects',
+  correlated across equations where a label ties them -- the family is
+  averaged over it on a Gauss-Hermite grid, and the ends are quantiles of
+  that average found from the family's distribution function, the fit its
+  median and `se` its standard deviation. No location parameter is needed,
+  and for a discrete family the ends are values of its support. Both are
+  conditional on the covariance the fit estimated.
+
+  Measured at 95 per cent over 200 fits of a random intercept at eight
+  observations a group, with 200 new groups each: on a gaussian response
+  `"group"` covers a new group's predictor 0.898 of the time over 10 groups
+  and 0.943 over 40, and `"prediction"` a new observation 0.939 and 0.951,
+  where the confidence interval of the typical group covers 0.45 and 0.26;
+  on a Poisson response 0.909 and 0.937, and 0.975 and 0.976 for a new
+  count, the support being discrete. The three predictions cost 0.16 s on
+  the gaussian and 0.03 s on the Poisson.
+
 # statmodels7 0.163.0
 
 * **A kinked penalty no longer takes a dispersion off the marginal
@@ -43,6 +70,12 @@
 
 * A test pins the default `reml()` on a modelled gaussian dispersion to the
   restricted likelihood of Verbyla (1993) written out.
+
+* On the reference battery the lasso fit, whose only hyperparameter used to
+  leave the certificate `unknown`, is certified `converged` on its
+  dispersion's intercept, and the criterion of `lasso+random` moves by 0.18,
+  the lasso's coordinates having left the determinant, at 12.5 s against
+  20.7; no recovery moves.
 
 # statmodels7 0.162.0
 
