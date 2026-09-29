@@ -148,11 +148,10 @@ statmod_marginal_hess <- function(spec, design, coef, hyper, method, idx,
   # the observed third derivative, and b_m' J b_l -- is governed by
   # J = H_obs + S whatever the criterion's matrix is. On the observed route
   # the two coincide, which is why one T served both.
-  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected)
+  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected,
+                       laplace = TRUE)
   if (is.null(pen)) return(NULL)
-  mode_pen <- if (expected) {
-    ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
-  } else pen
+  mode_pen <- ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
   if (is.null(mode_pen)) return(NULL)
   K <- mode_pen$K
   Kinv <- mode_pen$inv

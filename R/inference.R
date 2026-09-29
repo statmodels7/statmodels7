@@ -4531,15 +4531,16 @@ drop_common_prefix <- function(nms) {
 #' reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
 #' against 1.215 on a `jump` fitted to data carrying a slope and a slope
 #' change it has no term for. A model whose only hyperparameters are
-#' **kinked**,
-#' `lasso`, `scad`, `mcp`, swept along a path because a Laplace
-#' a Laplace approximation at a mode sitting on the kink having no meaning,
-#' gets neither
-#' reading and stays `"unknown"`: at a coefficient the penalty has set to
-#' zero the score does not vanish but lies in the subdifferential, so the mode
-#' error is not a statement about being at a mode. Measured on a lasso, its
-#' 4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
-#' score is -0.715.
+#' **kinked**, `lasso`, `scad`, `mcp`, swept along a path because a
+#' Laplace approximation at a mode sitting on the kink has no meaning, stays `"unknown"`: its hyperparameter
+#' is the argument of a minimum over a grid and there is no gradient to read.
+#' Its mode error is reported over the coordinates the kink leaves free
+#' ([free_of_kinks()]): at a coefficient the penalty has set to zero the score
+#' does not vanish but lies in the subdifferential, and read there it put a
+#' lasso's fit 4.7e-03 above its mode on a coordinate whose coefficient is
+#' exactly 0 and whose score is -0.715. Where the default [reml()] also
+#' estimates a dispersion's unpenalized coefficients beside the kink, those
+#' carry a gradient and the certificate reads it as usual.
 #'
 #' A form whose criterion has no exact GRADIENT ([outer_gradient_ok()] at
 #' order 1) is also `"unknown"` and never approximated: 2p refits to
@@ -4710,6 +4711,7 @@ certificate_core <- function(fit, tol, flat, edge) {
       sc <- if (is.null(obj)) NULL else
         tryCatch(obj$gr(obj$stack(cf)), error = function(e) NULL)
       if (!is.null(sc) && ng) sc[gam$where] <- 0
+      if (!is.null(sc)) sc <- free_of_kinks(sc, spec, design, cf)
       if (!is.null(sc) && all(is.finite(sc))) {
         db <- tryCatch(as.numeric(as.matrix(pen$inv) %*% sc),
                        error = function(e) NULL)
@@ -4821,9 +4823,10 @@ certificate_core <- function(fit, tol, flat, edge) {
         paste0("no hyperparameter here is estimated by ", method@kind, "(), so ",
                "there is no outer gradient to read")
       }
-      second <- if (any(kinked)) {
-        paste0("and at a coefficient the penalty has set to zero the score does ",
-               "not vanish, so the mode error is not a reading either")
+      second <- if (any(kinked) && is.finite(out$mode_error)) {
+        sprintf(paste0("the inner fit is %.4g log-likelihood units above its ",
+                       "mode over the coordinates the kink leaves free"),
+                out$mode_error)
       } else if (is.finite(out$mode_error)) {
         sprintf("the inner fit is %.4g log-likelihood units above its mode",
                 out$mode_error)

@@ -4,19 +4,25 @@
 \alias{ctx_penalized}
 \title{The Penalized Matrix and Its Inverse}
 \usage{
-ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
+ctx_penalized(
+  ctx,
+  spec,
+  design,
+  coef,
+  hyper,
+  expected = FALSE,
+  laplace = FALSE
+)
 }
 \arguments{
 \item{ctx}{A context, or \code{NULL}.}
 
 \item{spec, design, coef, hyper}{The fallback arguments.}
 
-\item{expected}{Whether \eqn{H} is the expected information, as the
-criterion carries under \code{reml(hessian = "expected")}. It used to
-be hard-coded to the observed one, correctly, because the exact gradient
-ran on no other route; admitting the expected route makes the criterion's
-determinant a different matrix, and reading the wrong one would be a
-gradient of the wrong function.}
+\item{expected}{Whether the information is the expected one.}
+
+\item{laplace}{Whether the matrix is the criterion's, with the kinked
+coordinates left out, or the mode's.}
 }
 \value{
 A list with \code{K}, \code{inv} and \code{logdet}, or \code{NULL}.
@@ -56,6 +62,14 @@ of producing it.
 
 \code{NULL} is returned where the matrix is not positive definite, which is
 the answer both callers already gave there.
+
+\strong{Two matrices, where a penalty has a kink.} The criterion's determinant
+leaves out every coordinate a kinked penalty covers (\code{\link[=laplace_pinned]{laplace_pinned()}}),
+which is what \code{laplace = TRUE} asks for. The default is the mode's own
+curvature, which leaves out only the coordinates a kinked penalty holds at
+ZERO (\code{\link[=zero_kinked]{zero_kinked()}}): those stay at zero when a hyperparameter moves, and
+a Newton correction of the mode does not move them either. Where no
+penalty has a kink the two are one matrix and one cache entry.
 }
 \seealso{
 \code{\link[=pd_factor]{pd_factor()}}

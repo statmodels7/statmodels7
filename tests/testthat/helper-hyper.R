@@ -51,3 +51,17 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
   }
   list(coefficients = r$obj$split(par), spec = spec, design = design)
 }
+
+# The coefficients of a given specification at given hyperparameters, for a
+# check that holds coefficients through statmod_hold() and so cannot rebuild
+# the specification from a formula as fit_at_hyper() does.
+fit_at_hyper_spec <- function(spec, design, hy, distrib,
+                              inner = iwls(tol = 1e-11, maxit = 500)) {
+  blocks <- statmod_blocks(spec, design)
+  cfg <- inner_settings(inner, distrib)
+  obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
+  beta <- statmod_start(spec, design, obj, NULL)
+  r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
+                         cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
+  r$obj$split(r$par)
+}

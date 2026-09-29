@@ -104,15 +104,16 @@ reached its mode, and the mode error answers it: measured over the
 reference battery it reads 5.2e-11 to 7.9e-05 on fits that are right
 against 1.215 on a \code{jump} fitted to data carrying a slope and a slope
 change it has no term for. A model whose only hyperparameters are
-\strong{kinked},
-\code{lasso}, \code{scad}, \code{mcp}, swept along a path because a Laplace
-a Laplace approximation at a mode sitting on the kink having no meaning,
-gets neither
-reading and stays \code{"unknown"}: at a coefficient the penalty has set to
-zero the score does not vanish but lies in the subdifferential, so the mode
-error is not a statement about being at a mode. Measured on a lasso, its
-4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and whose
-score is -0.715.
+\strong{kinked}, \code{lasso}, \code{scad}, \code{mcp}, swept along a path because a
+Laplace approximation at a mode sitting on the kink has no meaning, stays \code{"unknown"}: its hyperparameter
+is the argument of a minimum over a grid and there is no gradient to read.
+Its mode error is reported over the coordinates the kink leaves free
+(\code{\link[=free_of_kinks]{free_of_kinks()}}): at a coefficient the penalty has set to zero the score
+does not vanish but lies in the subdifferential, and read there it put a
+lasso's fit 4.7e-03 above its mode on a coordinate whose coefficient is
+exactly 0 and whose score is -0.715. Where the default \code{\link[=reml]{reml()}} also
+estimates a dispersion's unpenalized coefficients beside the kink, those
+carry a gradient and the certificate reads it as usual.
 
 A form whose criterion has no exact GRADIENT (\code{\link[=outer_gradient_ok]{outer_gradient_ok()}} at
 order 1) is also \code{"unknown"} and never approximated: 2p refits to

@@ -720,12 +720,19 @@ test_that("a kinked hyperparameter is refused rather than read", {
   X <- matrix(runif(n * 4), n, 4)
   d <- data.frame(x1 = X[, 1], x2 = X[, 2], x3 = X[, 3], x4 = X[, 4])
   d$y <- 2 * d$x1 + rnorm(n, 0, 0.3)
-  fit <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d)
+  fit <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d,
+                 outer_criterion = reml(marginal = "none"))
   ct <- statmod_certificate(fit)
   expect_identical(ct$state, "unknown")
   expect_match(ct$reason[1], "kink")
   # the distinction is the point: this reason is NOT the no-penalty one
   expect_false(grepl("no penalty", ct$reason[1], fixed = TRUE))
+  # the mode error is read over the coordinates the kink leaves free
+  expect_lt(ct$mode_error, mode_error_limit())
+  # with the dispersion's intercept on the criterion, as the default reml()
+  # puts it, there is a coordinate with a gradient, and it is read
+  fit2 <- statmod(y ~ lasso(~ x1 + x2 + x3 + x4), gaussian1_distrib(), d)
+  expect_identical(statmod_certificate(fit2)$state, "converged")
 })
 
 

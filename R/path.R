@@ -1190,7 +1190,11 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # THEIR OWN criterion, which is not the path's: a smoothing parameter is
   # read at the mode by reml() while a lasso's lambda is swept by bic()
   inner_crit <- if (is.null(nested_method)) method else nested_method
-  nested <- nrow(smooth_idx) > 0L && !is.null(inner_crit) &&
+  # a marginal criterion reached through the coefficients it estimates is
+  # searched at every point of the path too, as a smoothing parameter is
+  gam_here <- !is.null(inner_crit) && !outer_minimize(inner_crit) &&
+    length(marginal_coords(spec, design, inner_crit)$where) > 0L
+  nested <- (nrow(smooth_idx) > 0L || gam_here) && !is.null(inner_crit) &&
     !identical(inner_crit@kind, "cv")
   obj0 <- statmod_objective(spec, hyper, design, expected, approx)
 
@@ -1479,7 +1483,10 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
               j <- idxs[[k]]
               r <- fit_at(hys[[j]], warm, bk, sp = run_spec)
               bk <- blocks_at_kink(blocks, hys[[j]])
-              if (!isTRUE(r$converged)) next
+              # a nested search whose stopping rule did not fire is scored
+              # where its decrement says it stands at the optimum, see
+              # outer_fit()
+              if (!isTRUE(r$converged) && !isTRUE(r$settled)) next
               warm <- r$par
               out[[k]] <- score_at(r, r$hyper)
             }
@@ -1591,7 +1598,8 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
     if (is.null(m)) NA_real_ else m$value
   }
   list(par = final$par, hyper = final$hyper, value = final$value,
-       criterion = crit, converged = isTRUE(final$converged),
+       criterion = crit,
+       converged = isTRUE(final$converged) || isTRUE(final$settled),
        obj = final$obj, hist_blocks = final$hist_blocks,
        hist_inner = final$hist_inner,
        hist_outer = do.call(rbind, hist),

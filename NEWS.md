@@ -1,3 +1,49 @@
+# statmodels7 0.163.0
+
+* **A kinked penalty no longer takes a dispersion off the marginal
+  criterion** (decided 2026-09-29). `reml()` and `ml()` estimate the
+  unpenalized coefficients of the parameters `marginal` names on the
+  criterion also where the model carries a lasso, a SCAD or an MCP, and the
+  coordinates a kinked penalty covers stay at the joint mode and are left out
+  of the Laplace determinant (`laplace_pinned()`), which is the restricted
+  likelihood of Verbyla (1993) with those coefficients treated as known; for
+  `ml()` they are left out of the integrated basis. `reml(marginal = "sigma")`
+  beside a kink was refused and is accepted. A path over a kinked
+  hyperparameter now searches the criterion at every point, as it did for a
+  smoothing parameter. Measured on `y ~ x1 + ... + x20 | sigma ~ lasso(~ z1
+  + ... + z10)` at 200 observations over 15 samples, the dispersion's
+  intercept is off by +0.003 on average (root mean square 0.048) against
+  -0.057 (0.073) before, with 1.9 slopes of seven selected wrongly against
+  1.2, and all 60 fits of four shapes converge. The cost is about four times
+  the fit: 3.8 to 5.7 s against 1.0 to 1.4 s on those shapes.
+
+* **The mode's movement holds a coordinate a kink keeps at zero.** The exact
+  outer gradient and Hessian moved it as a free coordinate, and they were out
+  by a relative 3.3e-05 on a smooth beside a lasso in the mean and 1.4e-04
+  with the lasso on the dispersion, flat in the step. With the coordinate
+  held they converge onto a difference of the criterion as the square of the
+  step, 3.8e-08 and 8.5e-07 at a step of 1e-3.
+
+* **The mode error reads the free coordinates.** At a coordinate a kink
+  keeps at zero the smooth part's gradient is the likelihood's score, which
+  the kink's interval contains, and it was read as a residual by the mode
+  error, the criterion's resolution and the certificate: on a lasso over a
+  dispersion it put a fit at its mode 2.47 log-likelihood units above it,
+  against 4.5e-08 over the free coordinates (`free_of_kinks()`). A nested
+  search refused a resolution for that reason ran out of backtracks at the
+  optimum.
+
+* **A path point counts where its nested search stands at the optimum.**
+  `outer_fit()` reports `settled`, the Newton decrement at the reported
+  point against the certificate's tolerance, and a path scores a point whose
+  search's stopping rule did not fire when it is settled, which is the rule
+  availability already follows for an inner fit. On `y ~ s(x) + lasso(...)`
+  over six samples the path left 3 to 11 of its 25 points unscored, and none
+  now. The search's own flag is unchanged.
+
+* A test pins the default `reml()` on a modelled gaussian dispersion to the
+  restricted likelihood of Verbyla (1993) written out.
+
 # statmodels7 0.162.0
 
 * **A kinked penalty under a strong rule is solved on its own coordinates.**

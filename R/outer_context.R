@@ -178,23 +178,40 @@ ctx_penalty <- function(ctx, spec, design, coef, hyper) {
 #' `NULL` is returned where the matrix is not positive definite, which is
 #' the answer both callers already gave there.
 #'
+#' **Two matrices, where a penalty has a kink.** The criterion's determinant
+#' leaves out every coordinate a kinked penalty covers ([laplace_pinned()]),
+#' which is what `laplace = TRUE` asks for. The default is the mode's own
+#' curvature, which leaves out only the coordinates a kinked penalty holds at
+#' ZERO ([zero_kinked()]): those stay at zero when a hyperparameter moves, and
+#' a Newton correction of the mode does not move them either. Where no
+#' penalty has a kink the two are one matrix and one cache entry.
+#'
 #' @param ctx A context, or `NULL`.
 #' @param spec,design,coef,hyper The fallback arguments.
+#' @param expected Whether the information is the expected one.
+#' @param laplace Whether the matrix is the criterion's, with the kinked
+#'   coordinates left out, or the mode's.
 #'
 #' @return A list with `K`, `inv` and `logdet`, or `NULL`.
 #'
 #' @seealso [pd_factor()]
 #'
 #' @keywords internal
-ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
+ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
+                          laplace = FALSE) {
+  kinked <- length(kinked_coords(spec, design)) > 0L
+  if (laplace && !kinked) laplace <- FALSE
   build <- function() {
     H <- ctx_information(ctx, spec, design, coef, hyper, expected,
                          ctx_approx(ctx))
     S <- ctx_penalty(ctx, spec, design, coef, hyper)
     K <- H + S
     # a coefficient the marginal criterion holds is not integrated, and is
-    # left out of K exactly as a boundary coordinate is
-    K <- pin_boundary(K, pinned_coords(spec, design))
+    # left out of K exactly as a boundary coordinate is; so, in the
+    # criterion's matrix, is a coefficient a kinked penalty covers
+    K <- pin_boundary(K, if (laplace) laplace_pinned(spec, design) else
+                           c(pinned_coords(spec, design),
+                             if (kinked) zero_kinked(spec, design, coef)))
     fac <- pd_factor(K)
     if (!isTRUE(fac$ok)) return(NULL)
     inv <- if (isTRUE(fac$sparse)) {
@@ -217,7 +234,8 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE) {
   # the two informations give two different matrices, so they are two cache
   # entries: a criterion reading the expected one must not be handed the
   # observed one's factorization because a previous reader asked for it first
-  slot <- if (expected) "penalized_expected" else "penalized_observed"
+  slot <- paste0(if (expected) "penalized_expected" else "penalized_observed",
+                 if (laplace) "_laplace" else "")
   if (is.null(ctx[[slot]])) {
     # the miss is recorded so a second reader does not retry a factorization
     # that has already failed
@@ -373,6 +391,7 @@ criterion_resolution <- function(st, spec, design, method, criterion_at) {
     return(NA_real_)
   }
   if (!all(is.finite(st$score))) return(NA_real_)
+  st$score <- free_of_kinks(st$score, spec, design, st$cf)
   expected <- identical(method@hessian, "expected")
   pen <- ctx_penalized(st$ctx, spec, design, st$cf, st$hy, expected)
   if (is.null(pen)) return(NA_real_)
@@ -814,6 +833,7 @@ inner_mode_error <- function(ctx, spec, design, coef, hyper, score,
   if (is.null(score) || !length(score) || !all(is.finite(score))) {
     return(NA_real_)
   }
+  score <- free_of_kinks(score, spec, design, coef)
   pen <- tryCatch(ctx_penalized(ctx, spec, design, coef, hyper, expected),
                   error = function(e) NULL)
   if (is.null(pen)) return(NA_real_)

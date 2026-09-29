@@ -590,7 +590,8 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # context when there is one, so a criterion, a gradient and a Hessian read
   # at the same point assemble them once between them
   expected <- identical(method@hessian, "expected")
-  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected)
+  pen <- ctx_penalized(ctx, spec, design, coef, hyper, expected,
+                       laplace = TRUE)
   if (is.null(pen)) return(NULL)
   # ⚠️ TWO different matrices, and they coincide only on the observed route.
   # The determinant is of the CRITERION's K, so M and u are read off that one;
@@ -603,8 +604,9 @@ statmod_marginal_grad <- function(spec, design, coef, hyper, method, idx,
   # smooth at 300, 1000 and 3000 observations, 1.9e-03, 1.4e-03 and 1.1e-04
   # against a finite difference of the criterion, and FLAT in the inner
   # tolerance, which is what said it was not the mode's location.
-  mode_pen <- if (!expected) pen else
-    ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
+  # and a third reason for two: the criterion leaves a kinked penalty's
+  # coordinates out of its determinant, while the mode moves in all of them
+  mode_pen <- ctx_penalized(ctx, spec, design, coef, hyper, FALSE)
   if (is.null(mode_pen)) return(NULL)
   # how the mode moves: the penalized likelihood's own curvature, which for a
   # refreshable block is not the Gauss-Newton matrix the design gives

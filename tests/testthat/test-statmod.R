@@ -76,7 +76,11 @@ test_that("a differentiable penalty joins the smooth block", {
 })
 
 test_that("a penalty with a kink is fitted apart, and the fit alternates", {
-  fit <- statmod(y ~ x + lasso(L), distributions7::gaussian1_distrib(), dd)
+  # the subject is the alternation, so the dispersion is read at the joint
+  # mode: estimated on the criterion, the history would be the refit at the
+  # point the search reports, warm-started from its own answer
+  fit <- statmod(y ~ x + lasso(L), distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml(marginal = "none"))
   expect_true(fit@converged)
   h <- fit@history$blocks
   expect_true(all(c("smooth", "mu/lasso(L)") %in% h$block))
@@ -288,12 +292,14 @@ test_that("the alternation obeys the method's budget", {
   dl$noise <- stats::rnorm(nrow(dl))
   one <- statmod(y ~ x + lasso(~ noise, lambda = 5),
                  distributions7::gaussian1_distrib(), dl,
-                 inner_optimizer = iwls(maxit = 1L))
+                 inner_optimizer = iwls(maxit = 1L),
+                 outer_criterion = reml(marginal = "none"))
   expect_identical(max(one@history$blocks$pass), 1L)
   expect_false(one@converged)
 
   many <- statmod(y ~ x + lasso(~ noise, lambda = 5),
-                  distributions7::gaussian1_distrib(), dl)
+                  distributions7::gaussian1_distrib(), dl,
+                  outer_criterion = reml(marginal = "none"))
   expect_true(many@converged)
   expect_gt(max(many@history$blocks$pass), 1L)
 })

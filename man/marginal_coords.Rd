@@ -33,7 +33,13 @@ spanned by coordinates. The free columns of \code{\link[modelterms7:s]{modelterm
 second case: the Demmler-Reinsch penalty is \eqn{\mathrm{diag}(0, 1,
 \ldots, 1)}, so its null space is the linear column.
 
-Five configurations are not covered yet, and for each one a parameter
+A coefficient a penalty with a kink covers (lasso, SCAD, MCP) is not
+one of them: it stays at the joint mode, and the criterion leaves it out
+of its determinant (\code{\link[=laplace_pinned]{laplace_pinned()}}). The unpenalized coefficients
+beside it are estimated on the criterion as anywhere else, which corrects
+a dispersion's intercept for the columns of the mean it is fitted with.
+
+Four configurations are not covered yet, and for each one a parameter
 the caller named is refused while a parameter the default named keeps the
 convention of the criterion without the argument:
 \itemize{
@@ -42,8 +48,6 @@ convention of the criterion without the argument:
 \item an equation carrying a block that moves with its coefficients
 (\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the other break-point
 terms);
-\item a model carrying a penalty with a kink (lasso, SCAD, MCP), in
-any equation;
 \item a model carrying a block that is a working linearization rather
 than a Jacobian, which is the case of a sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
 and \code{\link[modelterms7:jseg]{modelterms7::jseg()}}, in any equation: the determinant over its

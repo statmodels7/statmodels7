@@ -678,6 +678,12 @@ integrated_basis <- function(spec, design, kind, gamma = FALSE) {
     # design; its directions are appended by statmod_marginal_full()
     if (isTRUE(u$structural)) next
     pen <- u$penalty
+    # a kinked penalty's coordinates stay at the joint mode and are not
+    # integrated, which is laplace_pinned()'s rule for reml()
+    if (!isTRUE(u$mixed) &&
+        isTRUE(tryCatch(penalty_has_kink(pen), error = function(e) TRUE))) {
+      next
+    }
     # A MIXED class owns columns for HALF its coordinates, and the split is
     # exact only because a class prior is proper: penalty_range_basis() is
     # then the identity, so each coordinate is its own direction and the two
@@ -1008,7 +1014,7 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
   # t whose nu had reached double.xmax, the criterion went from unavailable
   # -- which stopped the whole fit at its first evaluation -- to a finite
   # value at a converged mode. See pin_boundary().
-  M <- pin_boundary(M, if (is.null(basis)) pinned_coords(spec, design) else
+  M <- pin_boundary(M, if (is.null(basis)) laplace_pinned(spec, design) else
                       integer(0))
   held <- attr(M, "held")
   # nothing left to integrate: ml() with every unpenalized direction
@@ -1669,6 +1675,27 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     optimizers7::minimize(optimizer, fn, eta0)
   }
 
+  # WHETHER THE REPORTED POINT IS THE OPTIMUM, which the search's flag does
+  # not say: the flag says whether its stopping rule fired. Beside a kinked
+  # block the criterion carries the coordinate descent's own rounding, of
+  # order 1e-8, which criterion_resolution() does not see, and a line search
+  # asked for a smaller decrease runs out of backtracks at the optimum. The
+  # Newton decrement at the point answers the question in the criterion's
+  # units, as statmod_certificate() does, and a path reads it to decide
+  # whether a point is scored -- the rule inner_mode_error() applies to an
+  # inner fit, one level up. Measured on y ~ s(x) + lasso(...) over six
+  # samples, the path lost 3 to 11 of its 25 points to that message.
+  settled <- isTRUE(res@converged)
+  if (!settled && exact2) {
+    settled <- isTRUE(tryCatch({
+      evaluate(res@par)
+      g <- derivs(1L)
+      A <- sgn * derivs(2L)
+      dec <- joint_decrement(g, (A + t(A)) / 2)
+      is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+    }, error = function(e) FALSE))
+  }
+
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
   hy <- eta_to_hyper(res@par[seq_len(nh)], idx, hyper)
@@ -1699,6 +1726,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   list(par = inner$par, hyper = hy, value = inner$value,
        criterion = if (is.null(m)) NA_real_ else m$value,
        converged = res@converged && inner$converged,
+       settled = settled && inner$converged,
        obj = inner$obj, hist_blocks = inner$hist_blocks,
        hist_inner = inner$hist_inner,
        # the columns the final refit's pivot left out, which statmod() reports
