@@ -1228,8 +1228,12 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
   score_at <- function(r, hy) {
     cf <- r$obj$split(r$par)
     at <- if (!is.null(r$hyper)) r$hyper else hy
-    act <- statmod_active(spec, blocks, r$par, at)
-    m <- statmod_pe(spec, design, cf, at, method, approx, act)
+    # the specification the point was fitted under: a scaled SCAD or MCP
+    # carries the curvature the alternation settled at there, and the degrees
+    # of freedom have to read that one and not the curvature at the start
+    sp <- if (!is.null(r$spec)) r$spec else spec
+    act <- statmod_active(sp, blocks, r$par, at)
+    m <- statmod_pe(sp, design, cf, at, method, approx, act)
     if (is.null(m)) NA_real_ else m$value
   }
 

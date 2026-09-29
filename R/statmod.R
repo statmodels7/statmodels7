@@ -658,6 +658,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   }
 
   coef <- res$obj$split(res$par)
+  # a scaled SCAD or MCP carries the curvature at the fitted coefficients, so
+  # that what the fit reports -- the objective, the degrees of freedom, the
+  # summary -- reads the scaling the alternation settled at
+  sc <- statmod_curv(spec, design, coef, expected, approx)
+  if (!is.null(sc)) spec <- sc
   fitted <- statmod_eta(spec, design, coef)$theta
   # WHICH COLUMNS THE MODEL DOES NOT IDENTIFY, from the pivot that fitted it
   # where there was one and from the information at the mode otherwise. Only
@@ -841,7 +846,26 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
     all(vapply(attr(design, "structural"),
                function(u) identical(u$kind, "filter"), logical(1)))
 
+  # A SCAD or MCP scaled by the curvature of the likelihood is scaled
+  # self-consistently: the curvature is read again at the start of every
+  # pass, at the coefficients the previous pass reached, and the objective and
+  # the blocks are rebuilt from it, so the point the alternation settles at is
+  # one where the scaling is the curvature there. See statmod_curv().
+  curv_scaled <- any(vapply(blocks$sparse, function(bl) {
+    pen <- bl$penalty
+    "curv" %in% S7::prop_names(pen) && length(pen@curv) > 0L
+  }, logical(1)))
+
   for (pass in seq_len(as.integer(maxit))) {
+    if (curv_scaled) {
+      sc <- statmod_curv(spec, design, obj$split(beta), expected, approx)
+      if (!is.null(sc)) {
+        spec <- sc
+        blocks <- curv_blocks(blocks, spec, design)
+        obj <- statmod_objective(spec, hyper, design, expected, approx)
+        value <- obj$fn(beta)
+      }
+    }
     before <- value
 
     if (joint) {
@@ -1040,7 +1064,44 @@ statmod_alternate <- function(spec, design, blocks, hyper, inner_optimizer, beta
   }
   list(par = beta, value = value, converged = converged, obj = obj,
        note = smooth_note, aliased = sort(as.integer(aliased)),
-       hist_blocks = hist_blocks, hist_inner = hist_inner)
+       hist_blocks = hist_blocks, hist_inner = hist_inner, spec = spec)
+}
+
+
+#' The Blocks With the Penalties a Specification Now Carries
+#'
+#' @description
+#' Replaces the penalty of every kinked block with the one the specification
+#' carries under the same key, leaving everything else the block records
+#' where it was.
+#'
+#' @details
+#' [statmod_alternate()] rewrites a scaled SCAD or MCP's curvature at every
+#' pass. Rebuilding the blocks with [statmod_blocks()] would lose what a path
+#' has written onto them, the previous point's kink among it, so only the
+#' penalty is replaced.
+#'
+#' @param blocks The blocks, as [statmod_blocks()] returns them.
+#' @param spec,design The specification carrying the new penalties, and its
+#'   design.
+#'
+#' @return `blocks`, with the `penalty` of each kinked entry replaced.
+#'
+#' @seealso [statmod_alternate()], [statmod_curv()]
+#'
+#' @keywords internal
+curv_blocks <- function(blocks, spec, design) {
+  units <- statmod_penalized(spec, design)
+  for (i in seq_along(blocks$sparse)) {
+    bl <- blocks$sparse[[i]]
+    for (u in units) {
+      if (identical(u$param, bl$param) && identical(u$key, bl$term)) {
+        blocks$sparse[[i]]$penalty <- u$penalty
+        break
+      }
+    }
+  }
+  blocks
 }
 
 
@@ -1164,10 +1225,24 @@ alternation_settled <- function(spec, design, obj, beta, hyper, expected,
 #' likelihood in each of its coordinates, read at the given coefficients.
 #'
 #' @details
-#' The curvature of coordinate \eqn{j} is the diagonal
-#' \eqn{c_j = \sum_i w_i x_{ij}^2} of the information, the working weights
-#' being the family's information per observation for the predictor of the
-#' coordinate's own equation. Under a diagonal map \eqn{u = D\beta} it is
+#' The curvature of coordinate \eqn{j} is the one the coordinate descent steps
+#' with: \eqn{c_j = \sum_i w_i (x_{ij} - \bar x_j)^2}, the working weights
+#' being the ones [coord_working()] returns for the coordinate's own equation
+#' and \eqn{\bar x_j} the column's weighted mean where the equation's
+#' intercept is profiled out of the descent ([coord_centers()]), and
+#' \eqn{\sum_i w_i x_{ij}^2} where it is not. Reading the uncentered diagonal
+#' of the information instead, as 0.159.0 did, gave a curvature the centered
+#' step does not have: on `MASS::UScrime` with raw predictors, whose means
+#' reach 33 standard deviations, the ratio of the two reached 1138 and the
+#' step condition failed on every fit.
+#'
+#' It is called at every pass of [statmod_alternate()] and once more at the
+#' fitted coefficients, which makes the scaling SELF-CONSISTENT (decided
+#' 2026-09-29): at the fit, \eqn{c_j} is the curvature at the fit. Measured on
+#' 60 simulated sparse regressions it gives 44 false positives against the
+#' 58 of a curvature read once at the start, and it cannot fail the step
+#' condition, [coord_table_penalty()] writing the current step's curvature
+#' into the table. Under a diagonal map \eqn{u = D\beta} the curvature is
 #' divided by \eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty
 #' under any other map, or reached through a sub-term, is left as it is.
 #'
@@ -1194,13 +1269,26 @@ statmod_curv <- function(spec, design, coef, expected, approx) {
     np <- vapply(design[spec@distrib@params], function(d) d$npar, integer(1))
     coef <- split(coef, rep(factor(names(np), levels = names(np)), np))
   }
-  H <- statmod_information_at(spec, coef, design, expected, approx)
-  dh <- as.numeric(Matrix::diag(H))
+  moves <- length(attr(design, "refresh")) > 0L
+  ep <- statmod_eta(spec, design, coef)
+  dat <- if (moves) statmod_design_at(spec, coef, design) else design
   terms <- spec@terms
   wrote <- FALSE
   for (u in todo) {
     pen <- u$penalty
-    cj <- dh[u$index]
+    p <- u$param
+    wq <- coord_working(spec, ep, coef, design, p, expected, approx)
+    if (is.null(wq) && !expected) {
+      wq <- coord_working(spec, ep, coef, design, p, TRUE, approx)
+    }
+    if (is.null(wq)) next
+    X <- coord_block(dat[[p]]$X, u$cols)
+    cj <- if (curv_centered(spec, design, p)) {
+      coord_colsq(X, wq$w, seq_len(ncol(X)),
+                  as.numeric(xtv(X, wq$w, spec@threads)) / sum(wq$w))
+    } else {
+      as.numeric(wxsq(X, wq$w, spec@threads))
+    }
     if (!is.null(pen@map)) {
       if (!methods::is(pen@map, "diagonalMatrix")) next
       cj <- cj / as.numeric(Matrix::diag(pen@map))^2
@@ -1214,6 +1302,36 @@ statmod_curv <- function(spec, design, coef, expected, approx) {
   if (!wrote) return(NULL)
   spec@terms <- terms
   spec
+}
+
+
+#' Whether a Kinked Block's Curvature Is Read Centered
+#'
+#' @description
+#' Answers, for an equation, the question [coord_centers()] answers for a
+#' coordinate descent: whether its parametric intercept is profiled out of
+#' the descent, so that a column's curvature is its centered weighted sum of
+#' squares.
+#'
+#' @details
+#' The intercept is profiled out where the equation has one and it is not
+#' held at a value. [coord_centers()] asks the same of the positions a hold
+#' reaches through the objective; this asks it of the specification's
+#' `held_coef` directly, which is what [statmod_curv()] has in hand.
+#'
+#' @param spec,design The specification and its design.
+#' @param p The equation, a parameter name.
+#'
+#' @return `TRUE` or `FALSE`.
+#'
+#' @seealso [coord_centers()], [statmod_curv()]
+#'
+#' @keywords internal
+curv_centered <- function(spec, design, p) {
+  j <- parametric_intercept(spec, design, p)
+  if (is.na(j)) return(FALSE)
+  hc <- spec@held_coef[[p]]
+  !(design[[p]]$coef_names[j] %in% names(hc))
 }
 
 

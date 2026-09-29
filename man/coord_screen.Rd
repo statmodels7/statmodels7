@@ -16,10 +16,11 @@ coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 \item{beta}{The block's coefficients at the previous point of the path,
 length \code{p}.}
 
-\item{s_now}{The size of the kink at this point, a single number.}
+\item{s_now}{The size of the kink at this point, one number per column
+(a single number is recycled).}
 
-\item{s_prev}{The size of the kink at the previous point, or \code{NULL} when
-there is no previous point.}
+\item{s_prev}{The size of the kink at the previous point, one number per
+column, or \code{NULL} when there is no previous point.}
 
 \item{threads}{The thread count the gradient read may use, a plain
 integer.}

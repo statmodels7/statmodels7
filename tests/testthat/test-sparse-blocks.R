@@ -77,9 +77,9 @@ test_that("scad and mcp reach a point that satisfies the KKT conditions", {
     # the penalty selects: on a design of pure noise at this lambda most of
     # the twenty columns are dropped, where the joint system dropped none
     expect_lt(sum(nz), 20L)
-    # each coordinate is scaled by the curvature c_j the fit read at its
-    # start, so the penalty is sum_j c_j rho(b_j; lambda / c_j) and its
-    # derivative c_j rho'(b_j; lambda / c_j); the slope at zero stays lambda
+    # each coordinate is scaled by the curvature c_j at the fit, so the
+    # penalty is sum_j c_j rho(b_j; lambda / c_j) and its derivative
+    # c_j rho'(b_j; lambda / c_j); the slope at zero stays lambda
     tn <- grep(sub("(x)", "(", cs$nm, fixed = TRUE),
                names(fit@spec@terms$mu), fixed = TRUE, value = TRUE)
     expect_length(tn, 1L)
@@ -102,12 +102,14 @@ test_that("the shrinkage answers the smoothing parameter", {
   expect_identical(keep[[3L]], 0L)
 })
 
-test_that("the point beats ncvreg's on the objective they share", {
-  # both are stationary points of a non-convex problem, so the comparison is
-  # of the objective. Measured, ours is lower on both -- 52.9966 against
-  # 53.5323 for scad and 52.9948 against 53.6638 for mcp -- and starting our
-  # iteration FROM their point moves 6e-2 back to ours. The same shape as
-  # ncvfit's MCP point in the modelterms7 comparison.
+test_that("the point is ncvreg's", {
+  # With the curvature self-consistent (0.162.0) the scaled penalty
+  # c_j rho(b_j; lambda / c_j) is the problem ncvfit() solves on columns it
+  # does not standardize, its threshold reading each column's own sum of
+  # squares, so the two land on one point: measured, 9e-12 apart on the
+  # coefficients with the same objective to fifteen digits, for scad and for
+  # mcp. With the curvature read once at the start they were two stationary
+  # points of two different problems.
   skip_if_not_installed("ncvreg")
   n <- nrow(ds)
   xc <- scale(xs, center = TRUE, scale = FALSE)
@@ -133,6 +135,7 @@ test_that("the point beats ncvreg's on the objective they share", {
     cv <- ncvreg::ncvfit(xc, yc, penalty = toupper(cs$nm),
                          lambda = lam * s^2 / n, gamma = cs$sh,
                          eps = 1e-12, max.iter = 1e6)
-    expect_lt(obj(b), obj(as.numeric(cv$beta)))
+    expect_lt(max(abs(b - as.numeric(cv$beta))), 1e-7)
+    expect_equal(obj(b), obj(as.numeric(cv$beta)), tolerance = 1e-10)
   }
 })

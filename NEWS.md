@@ -1,3 +1,52 @@
+# statmodels7 0.162.0
+
+* **A kinked penalty under a strong rule is solved on its own coordinates.**
+  The compiled coordinate descent reads row a of the proximal table for
+  coordinate keep[a], the a-th coordinate the strong rule kept, and the table
+  was built from the whole penalty with the kept coordinates' steps, so row a
+  carried coordinate a's map entry and curvature. Under `standardize = TRUE`
+  a lasso or an elastic net therefore soft-thresholded each kept coordinate
+  at another coordinate's scale along a path, and since 0.158.0, whose
+  verdict reads the KKT conditions, those points were reported as not
+  converged and dropped from the path: on `MASS::UScrime` 19 of the 27 path
+  fits of `lasso(X, standardize = TRUE)`, the path then choosing all 15
+  predictors at lambda 0.037. Over six simulated regressions with columns
+  of spreads from 0.14 to 7.4 and three true effects the gaussian paths chose
+  19 to 30 of 30 columns and the logistic ones none. The table is now built
+  on the penalty restricted to the kept coordinates (`coord_table_penalty()`),
+  every path fit converges, UScrime chooses 9 predictors at lambda 17.4, the
+  gaussian simulations 3 to 5 and the logistic ones 3 or 4. The strong rule
+  and the check that puts back what it discarded compare each coordinate's
+  gradient with its own kink (`coord_kinks()`), lambda |d_j| under a map,
+  where they read the first coordinate's.
+
+* **SCAD and MCP are scaled by a self-consistent curvature** (decided
+  2026-09-29). c_j is the curvature the coordinate descent steps with, the
+  weighted sum of squares of the column centered where the equation's
+  intercept is profiled out, read again at every pass of the alternation and
+  at the fitted coefficients, and inside the descent the table takes the
+  current step's curvature damped as the geometric mean with the previous
+  one. 0.159.0 read the uncentered diagonal of the information once at the
+  start, which failed the step condition on columns far from centered
+  (`scad(X)` and `mcp(X)` on raw `MASS::UScrime` stopped, with or without
+  `standardize`), and with the table misaligned failed it on a logistic
+  SCAD too. Over 60 simulated regressions (gaussian, logistic, Poisson, SCAD
+  and MCP, n = 300, p = 20, four true effects) the false positives go from
+  58 to 44 at a mean coefficient rmse of 0.065 against 0.063, with no
+  failure and every fit converged. The damping is what makes a strong-effect
+  logistic SCAD settle: undamped, a coefficient between the two knees
+  alternated between 1.009 and 1.496 and 3 fits of 16 did not converge;
+  damped, all 16 converge with the KKT conditions at the fit's curvature
+  met to 5e-8. The objective and the degrees of freedom read the curvature
+  at the point, a fit carrying it at its coefficients.
+  The descent does not stop while the damped curvature is still moving, a
+  gaussian mean at a held scale otherwise stopping at its second iteration
+  with a KKT residual of 1e-3. Validated against `ncvreg::ncvfit()`, whose
+  threshold reads each column's own sum of squares: on twenty noise columns
+  the two land on one point, 9e-12 apart on the coefficients with the same
+  objective to fifteen digits, for SCAD and for MCP, where with the curvature
+  read once at the start they were two stationary points of two problems.
+
 # statmodels7 0.161.0
 
 * Requires numericals7 0.16.0, whose `smooth_quintic()` resolves its width

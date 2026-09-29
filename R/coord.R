@@ -156,6 +156,13 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
   cur <- beta
   sweeps <- 0L
   prev <- NULL
+  # the curvature the previous table used, which a scaled SCAD or MCP damps
+  # towards the current step's: see coord_table_penalty()
+  pen0 <- block$penalty
+  c_prev <- if ("curv" %in% S7::prop_names(pen0) && length(pen0@curv)) {
+    pen0@curv
+  }
+  c_gap <- 0
   for (it in seq_len(maxit)) {
     coef <- obj$split(cur)
     # THE BLOCK AT THE CURRENT COEFFICIENTS, not the block as it was built.
@@ -222,7 +229,8 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # the comparison is made on the centered response.
     zc <- if (ctr) z - sum(wq$w * z) / sum(wq$w) else z
     if (!moves && !is.null(prev) && identical(wq$w, prev$w) &&
-        max(abs(zc - prev$z)) <= 64 * .Machine$double.eps * max(abs(z))) {
+        max(abs(zc - prev$z)) <= 64 * .Machine$double.eps * max(abs(z)) &&
+        c_gap <= 1e-10) {
       break
     }
     prev <- list(w = wq$w, z = zc)
@@ -241,8 +249,17 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # on the columns the descent visits like the uncentered one
     if (ctr) v <- rep(NA_real_, ncol(X))
     b0 <- coef[[p]][cols]
-    s_now <- kink_scale(block$penalty, th)
-    keep <- coord_screen(X, wq$w, z, b0, s_now, prev_kink, spec@threads,
+    # The size of the kink COORDINATE BY COORDINATE. Under a diagonal map,
+    # which is what `standardize` writes, coordinate j's kink is lambda
+    # |d_j|, and reading the first coordinate's for all of them screened and
+    # rechecked every other coordinate against a threshold that was not its
+    # own. The previous point's kinks are this point's scaled by the ratio
+    # the path recorded, every coordinate's kink moving with lambda alike.
+    s_now <- coord_kinks(block$penalty, th)
+    s_prev <- if (!is.null(prev_kink) && s_now[[1L]] > 0) {
+      s_now * (prev_kink / s_now[[1L]])
+    }
+    keep <- coord_screen(X, wq$w, z, b0, s_now, s_prev, spec@threads,
                          center = ctr)
 
     repeat {
@@ -251,7 +268,28 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
         v[need] <- if (ctr) coord_colsq(X, wq$w, need, mw) else
           coord_curv(X, wq$w, need, spec@threads)
       }
-      tab <- penalties7::penalty_prox_spec(block$penalty, th, 1 / v[keep])
+      # THE TABLE IS BUILT FOR THE KEPT COORDINATES, because the kernel reads
+      # its row a for coordinate keep[a]. Built from the whole penalty with the
+      # kept coordinates' steps, row a carried coordinate a's map entry and
+      # curvature: under a strong rule that screened anything out, a
+      # standardized lasso soft-thresholded coordinate keep[a] at another
+      # coordinate's scale, and a SCAD or MCP read a curvature 13 to 28 per
+      # cent off, enough to fail the step condition. See coord_table_penalty().
+      tp <- coord_table_penalty(block$penalty, keep, v, c_prev)
+      if (!is.null(c_prev) && length(tp@curv) == length(keep)) {
+        # how far the damped curvature still is from the current step's, in
+        # log units: where the working problem has not moved -- a gaussian
+        # mean at a held scale -- the damping still has to reach it before
+        # the loop may stop, or the fit is optimal for a curvature it does
+        # not report (measured: KKT residuals of 1e-3 at the fit's curvature)
+        tgt <- v[keep]
+        if (!is.null(pen0@map)) {
+          tgt <- tgt / as.numeric(Matrix::diag(pen0@map))[keep]^2
+        }
+        c_gap <- max(abs(log(tp@curv / tgt)))
+        c_prev[keep] <- tp@curv
+      }
+      tab <- penalties7::penalty_prox_spec(tp, th, 1 / v[keep])
       if (is.null(tab)) return(NULL)
       out <- coord_call(X, z, wq$w, b0, tab, as.integer(keep - 1L), tol,
                         coord_covariance(n, length(keep)), means = mw)
@@ -271,7 +309,7 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
     # response net of the block, which `z` carries with the intercept's old
     # value already taken off.
     if (ctr) cur[i0] <- cur[i0] + sum(wq$w * z) / sum(wq$w) - sum(mw * out$beta)
-    if (moved < tol) break
+    if (moved < tol && c_gap <= 1e-10) break
   }
   list(par = cur, value = obj$fn(cur), converged = TRUE,
        iterations = sweeps, method = "coordinate descent")
@@ -295,9 +333,10 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #' @param z The working response, length `n`.
 #' @param beta The block's coefficients at the previous point of the path,
 #'   length `p`.
-#' @param s_now The size of the kink at this point, a single number.
-#' @param s_prev The size of the kink at the previous point, or `NULL` when
-#'   there is no previous point.
+#' @param s_now The size of the kink at this point, one number per column
+#'   (a single number is recycled).
+#' @param s_prev The size of the kink at the previous point, one number per
+#'   column, or `NULL` when there is no previous point.
 #' @param threads The thread count the gradient read may use, a plain
 #'   integer.
 #'
@@ -319,8 +358,8 @@ coord_screen <- function(X, w, z, beta, s_now, s_prev, threads = 1L,
   # discards nothing at any smoothing parameter worth fitting at, since
   # 2s - max|g| is negative there. Measured at a single value it cost one
   # crossprod and saved no coordinate, so it is not attempted.
-  if (is.null(s_prev) || !is.finite(s_prev) || !is.finite(s_now) ||
-      s_now <= 0) {
+  if (is.null(s_prev) || any(!is.finite(s_prev)) || any(!is.finite(s_now)) ||
+      any(s_now <= 0)) {
     return(seq_len(p))
   }
   r <- z - x_times_b(X, beta)
@@ -413,6 +452,122 @@ coord_call <- function(X, z, w, b0, tab, screen, tol, covariance,
   }
   coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept, screen, 500L,
                 tol, covariance, means)
+}
+
+
+#' The Size of the Kink in Each Coordinate
+#'
+#' @description
+#' Returns, for every coordinate of a kinked penalty, the jump of its
+#' derivative at the kink, which is the threshold a coordinate's gradient is
+#' compared with to decide whether it can stay at zero.
+#'
+#' @details
+#' [kink_scale()] reads the first coordinate only, which is what a path needs
+#' to place its grid. A coordinate descent needs every coordinate's: under a
+#' diagonal map \eqn{D}, which is what `standardize` writes, coordinate
+#' \eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The jump is measured as in
+#' [kink_scale()], by a Richardson extrapolation of the one-sided derivatives,
+#' on every coordinate at once. A scaled SCAD or MCP has its kink at
+#' \eqn{\lambda\lvert d_j\rvert} whatever its curvature, the scaling leaving
+#' the slope at the origin where it was.
+#'
+#' @param pen A kinked penalty.
+#' @param theta Its hyperparameters.
+#' @param eps The step of the one-sided derivatives.
+#'
+#' @return A numeric vector with one entry per coordinate of `pen`, all zero
+#'   where the penalty reports no finite kink. Its first entry is
+#'   [kink_scale()]'s answer.
+#'
+#' @seealso [kink_scale()], [coord_screen()], [coord_fit()]
+#'
+#' @keywords internal
+coord_kinks <- function(pen, theta, eps = 1e-4) {
+  th <- as.list(theta)
+  p <- max(1L, as.integer(pen@n_coef))
+  k <- penalties7::penalty_kinks(pen, th)
+  k <- k[is.finite(k)]
+  if (!length(k)) return(rep(0, p))
+  at <- function(h) {
+    up <- penalties7::penalty_gradient(pen, rep(k[[1L]] + h, p), th)
+    dn <- penalties7::penalty_gradient(pen, rep(k[[1L]] - h, p), th)
+    as.numeric(up - dn) / 2
+  }
+  2 * at(eps / 2) - at(eps)
+}
+
+
+#' The Penalty a Coordinate Descent Builds Its Table From
+#'
+#' @description
+#' Restricts a kinked penalty to the coordinates the strong rule kept, and
+#' writes into a scaled SCAD or MCP the curvature of the current step.
+#'
+#' @details
+#' The compiled descent reads row \eqn{a} of the table for coordinate
+#' \eqn{k_a}, the \eqn{a}-th kept one. A table built from the whole penalty
+#' pairs row \eqn{a} with coordinate \eqn{a} instead, so the restriction is
+#' what makes the two agree: every per-coordinate property is subset, the
+#' map's diagonal and the curvature among them. It is done only where a
+#' coordinate was screened out or a curvature is written, and a penalty under
+#' a map that is not diagonal is returned as it stands, having no table.
+#'
+#' A SCAD or MCP carrying a curvature is scaled SELF-CONSISTENTLY: at the
+#' point the descent settles at, its curvature is the one the step is taken
+#' with, \eqn{c_j = v_j}, the (centered) weighted sum of squares of the column
+#' at the current working weights, divided by \eqn{d_j^2} under a diagonal map,
+#' the penalty being written on \eqn{u = D\beta}. On the way there it is
+#' DAMPED, \eqn{c_j \leftarrow \sqrt{c_j^{\mathrm{prev}} v_j}}: taken
+#' undamped, a coefficient between the two knees of a logistic SCAD
+#' alternated between 1.009 and 1.496 with its curvature between 21.8 and
+#' 30.7 and never settled, 3 fits of 16 not converging on a strong-effect
+#' probe; damped, all 16 converge with the KKT conditions at the fit's
+#' curvature met to \eqn{5 \times 10^{-8}}. The scaled step is
+#' \eqn{\sqrt{c^{\mathrm{prev}}_j / v_j}}, one where the weights have not
+#' moved, so the step condition \eqn{t c_j < a - 1} (SCAD) or
+#' \eqn{t c_j < \gamma} (MCP) holds unless they moved by a factor of
+#' \eqn{(a-1)^2}. [statmod_curv()] writes the undamped quantity into the
+#' specification at every pass of the alternation, so the objective and the
+#' degrees of freedom read it too.
+#'
+#' @param pen The block's penalty.
+#' @param keep The kept coordinates, one-based.
+#' @param v The column curvatures, one per coordinate of the block, with at
+#'   least the kept ones filled in.
+#' @param prev `NULL`, or the curvature the previous table used, on the scale
+#'   of \eqn{u}, one per coordinate of the block; the new one is its geometric
+#'   mean with the current step's.
+#'
+#' @return A penalty over `length(keep)` coordinates, or `pen` itself where
+#'   nothing needs to change.
+#'
+#' @seealso [coord_fit()], [statmod_curv()]
+#'
+#' @keywords internal
+coord_table_penalty <- function(pen, keep, v, prev = NULL) {
+  if (!is.null(pen@map) && !methods::is(pen@map, "diagonalMatrix")) {
+    return(pen)
+  }
+  q <- as.integer(pen@n_coef)
+  sub <- !(length(keep) == q && all(keep == seq_len(q)))
+  scaled <- "curv" %in% S7::prop_names(pen) && length(pen@curv) > 0L
+  props <- list()
+  if (sub) {
+    props$n_coef <- length(keep)
+    if (!is.null(pen@map)) props$map <- pen@map[keep, keep, drop = FALSE]
+  }
+  if (scaled) {
+    cj <- v[keep]
+    if (!is.null(pen@map)) {
+      cj <- cj / as.numeric(Matrix::diag(pen@map))[keep]^2
+    }
+    if (!is.null(prev)) cj <- sqrt(prev[keep] * cj)
+    if (all(is.finite(cj)) && all(cj > 0)) props$curv <- cj
+    else if (sub) props$curv <- pen@curv[keep]
+  }
+  if (!length(props)) return(pen)
+  do.call(S7::set_props, c(list(pen), props))
 }
 
 

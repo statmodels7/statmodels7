@@ -1691,6 +1691,8 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
                              warm, expected, approx, maxit, tol, vb,
                              hold_refresh = TRUE)
   cff <- inner$obj$split(inner$par)
+  # a scaled SCAD or MCP is read at the curvature the refit settled at
+  if (!is.null(inner$spec)) sp <- inner$spec
   m <- if (pe) statmod_pe(sp, design, cff, hy, method, approx,
                           statmod_active(sp, blocks, inner$par, hy)) else
     statmod_marginal(sp, design, cff, hy, method, approx, basis)
@@ -1703,7 +1705,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        # as not identified; without them a fit that went through the search
        # was read only on the information at the mode, where a column the
        # pivot drops at its tolerance can still be inverted
-       aliased = inner$aliased,
+       aliased = inner$aliased, spec = inner$spec,
        hist_outer = if (length(state$rows)) do.call(rbind, state$rows) else
          NULL,
        iterations = res@iterations, evaluations = state$evals,
