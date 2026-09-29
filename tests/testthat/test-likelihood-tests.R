@@ -581,3 +581,35 @@ test_that("a held value of another length is refused where it is passed", {
   expect_error(statmod_test(fit, "mu", "x", numeric(0), "lr"), "'value'",
                fixed = TRUE)
 })
+
+test_that("the likelihood ratio reads a dispersion at its joint mode on both sides", {
+  # the default reml() estimates sigma's intercept on the criterion, so the
+  # fitted point is not the joint mode the restricted refit reaches; the
+  # statistic is the ML likelihood ratio lm() gives, and zero at the estimate
+  set.seed(1)
+  n <- 40
+  d <- data.frame(x = stats::runif(n), z = stats::runif(n))
+  d$y <- 1 + 0.5 * d$x + 0.3 * d$z + stats::rnorm(n, sd = 0.5)
+  fit <- statmod(y ~ x + z, distributions7::gaussian1_distrib(), d)
+  m1 <- stats::lm(y ~ x + z, d)
+  m0 <- stats::lm(y ~ x, d)
+  ref <- as.numeric(2 * (stats::logLik(m1, REML = FALSE) -
+                           stats::logLik(m0, REML = FALSE)))
+  expect_equal(statmod_test(fit, "mu", "z", 0, "lr")@statistic, ref,
+               tolerance = 1e-6)
+  zhat <- coef(fit)$mu[["z"]]
+  expect_lt(abs(statmod_test(fit, "mu", "z", zhat, "lr")@statistic), 1e-8)
+  # at the ends of the inverted interval the ML profile, computed with lm()
+  # at the held value as an offset, is the chi-squared quantile
+  ci <- confint(fit, test = "lr", readable = FALSE)
+  ci <- ci[ci$coefficient == "z", ]
+  prof <- function(b) {
+    as.numeric(stats::logLik(stats::lm(y ~ x + offset(b * z), d),
+                             REML = FALSE))
+  }
+  lmax <- as.numeric(stats::logLik(m1, REML = FALSE))
+  expect_equal(2 * (lmax - prof(ci$lower)), stats::qchisq(0.95, 1),
+               tolerance = 1e-5)
+  expect_equal(2 * (lmax - prof(ci$upper)), stats::qchisq(0.95, 1),
+               tolerance = 1e-5)
+})

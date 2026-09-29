@@ -339,6 +339,9 @@ kinked_coords <- function(spec, design) {
 #'   need none, and the two loops that call this in quantity --
 #'   [summary.StatmodFit()], one row at a time, and [statmod_invert()], five
 #'   to seven times per interval -- do not read it.
+#' @param objective0 The penalized objective at the unrestricted joint mode,
+#'   as [joint_objective()] returns it, for a caller that reads the
+#'   likelihood ratio many times on one fit. `NULL` computes it here.
 #'
 #' @return A list with `test`, `statistic`, `df`, `p.value`, `converged` --
 #'   `NA` for the Wald statistic and the restricted fit's flag for the other
@@ -348,7 +351,8 @@ kinked_coords <- function(spec, design) {
 #'
 #' @keywords internal
 statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
-                         type = "bayesian", mode_error = FALSE) {
+                         type = "bayesian", mode_error = FALSE,
+                         objective0 = NULL) {
   test <- match.arg(test, c("wald", "lr", "score", "gradient"))
   spec <- fit@spec
   design <- statmod_design(spec)
@@ -385,7 +389,13 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
     # the penalized objective, not the likelihood, so it can sit ABOVE the
     # unrestricted point there -- measured at -0.0379 and -0.1075 on a
     # smooth's own coordinate. With no penalty the two are the same number.
-    return(out(2 * (r$objective - fit@objective), r$converged, me))
+    # The unrestricted side is the JOINT mode, which is what the restricted
+    # refit reaches: where the criterion estimated some coefficients -- a
+    # dispersion by REML, the default -- the fitted point is not that mode,
+    # and differencing against it subtracted 2 (l_ML - l_REML), 0.118 on a
+    # linear regression at n = 40, negative at the estimate itself.
+    o0 <- if (is.null(objective0)) joint_objective(fit) else objective0
+    return(out(2 * (r$objective - o0), r$converged, me))
   }
   u <- r$score[[r$at]]
   if (identical(test, "gradient")) {
@@ -397,6 +407,56 @@ statmod_stat_at <- function(fit, param, coefname, value = 0, test = "wald",
                 error = function(e) NULL)
   if (is.null(V)) return(out(NA_real_, r$converged, me))
   out(u^2 * V[r$at, r$at], r$converged, me)
+}
+
+
+#' The Penalized Objective at the Unrestricted Joint Mode
+#'
+#' @description
+#' The minimum of the penalized objective over every coefficient at the
+#' fitted hyperparameters, which is the unrestricted side of the likelihood
+#' ratio [statmod_stat_at()] computes.
+#'
+#' @details
+#' The restricted fit of [statmod_restrict()] holds one coefficient and takes
+#' every other one to the joint mode of the penalized likelihood. The
+#' unrestricted side has to be read at the same kind of point, or the
+#' statistic compares two fits whose other coefficients were chosen by
+#' different rules. Where the outer criterion estimated some coefficients
+#' itself -- by default, [reml()] estimates a dispersion's unpenalized
+#' coefficients on the criterion ([marginal_coords()]) -- the point the fit
+#' returned is not the joint mode, and `fit@objective` is not its minimum.
+#' Measured on a gaussian linear regression at \eqn{n = 40}, differencing
+#' against it gave a likelihood ratio of 1.0458 against the 1.1643 that
+#' [stats::lm()] gives, and -0.118 at the estimate itself.
+#'
+#' The full model is therefore refitted with nothing held, from the fitted
+#' coefficients, which are already close to the joint mode, at the fitted
+#' hyperparameters. Where the criterion estimated nothing the fit IS at the
+#' joint mode and `fit@objective` is returned unchanged, so every such
+#' statistic is what it was.
+#'
+#' @param fit A [StatmodFit()].
+#'
+#' @return A single number, on the scale of `fit@objective`.
+#'
+#' @seealso [statmod_stat_at()], [statmod_restrict()].
+#'
+#' @keywords internal
+joint_objective <- function(fit) {
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  gam <- tryCatch(marginal_coords(spec, design, fit@methods$outer),
+                  error = function(e) marginal_coords(spec, design, NULL))
+  if (!length(gam$where)) return(fit@objective)
+  blocks <- statmod_blocks(spec, design)
+  method <- fit@methods$smooth
+  cfg <- inner_settings(method)
+  beta <- unlist(fit@coefficients[spec@distrib@params], use.names = FALSE)
+  res <- statmod_alternate(spec, design, blocks, fit@hyper, method, beta,
+                           cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                           verbosity(0))
+  res$value
 }
 
 
@@ -670,8 +730,10 @@ statmod_invert <- function(fit, param, coefname, level = 0.95, test = "lr",
   if (!isTRUE(is.finite(se)) || se <= 0) return(c(lower = NA_real_,
                                                   upper = NA_real_))
 
+  o0 <- if (identical(test, "lr")) joint_objective(fit) else NULL
   gap <- function(b) {
-    s <- statmod_stat_at(fit, param, coefname, b, test, type)$statistic
+    s <- statmod_stat_at(fit, param, coefname, b, test, type,
+                         objective0 = o0)$statistic
     if (!isTRUE(is.finite(s))) return(NA_real_)
     s - q
   }

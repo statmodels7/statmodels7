@@ -2710,9 +2710,10 @@ restricted_stat_rows <- function(fit, ci, test, type, spec, design) {
   st <- rep(NA_real_, nrow(ci))
   pv <- rep(NA_real_, nrow(ci))
   bad <- 0L
+  o0 <- if (identical(test, "lr") && any(hit)) joint_objective(fit) else NULL
   for (i in which(hit)) {
     s <- tryCatch(statmod_stat_at(fit, ci$parameter[[i]], ci$coefficient[[i]],
-                               0, test, type),
+                               0, test, type, objective0 = o0),
                   error = function(e) NULL)
     if (is.null(s) || !isTRUE(is.finite(s$statistic))) next
     if (isFALSE(s$converged)) bad <- bad + 1L

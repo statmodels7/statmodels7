@@ -11,7 +11,8 @@ statmod_stat_at(
   value = 0,
   test = "wald",
   type = "bayesian",
-  mode_error = FALSE
+  mode_error = FALSE,
+  objective0 = NULL
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ costs one Hessian where the likelihood ratio and the gradient statistic
 need none, and the two loops that call this in quantity --
 \code{\link[=summary.StatmodFit]{summary.StatmodFit()}}, one row at a time, and \code{\link[=statmod_invert]{statmod_invert()}}, five
 to seven times per interval -- do not read it.}
+
+\item{objective0}{The penalized objective at the unrestricted joint mode,
+as \code{\link[=joint_objective]{joint_objective()}} returns it, for a caller that reads the
+likelihood ratio many times on one fit. \code{NULL} computes it here.}
 }
 \value{
 A list with \code{test}, \code{statistic}, \code{df}, \code{p.value}, \code{converged} --

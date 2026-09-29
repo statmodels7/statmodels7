@@ -1,3 +1,25 @@
+# statmodels7 0.165.0
+
+* **The likelihood ratio reads a dispersion at its joint mode on both
+  sides.** Since 0.155.0 the default `reml()` estimates the unpenalized
+  coefficients of a dispersion on the criterion, so the point a fit returns
+  is not the joint mode of the penalized likelihood. The restricted refit of
+  `statmod_test()`, `summary(test = "lr")` and `confint(test = "lr")` goes
+  to that joint mode, and the statistic differenced the two, subtracting
+  2(l_ML - l_REML): on a gaussian linear regression at n = 40 it read 1.0458
+  where `lm()` gives 1.1643, and -0.118 at the estimate itself, so an
+  inverted interval was too narrow and a signed root was not a number near
+  the estimate. The unrestricted side is now the full model refitted with
+  nothing held, from the fitted coefficients and at the fitted
+  hyperparameters (`joint_objective()`), and it is computed once for an
+  interval or a summary. The statistic is `lm()`'s to the printed digit and
+  zero at the estimate; at the ends of the likelihood-ratio interval for K
+  in the Michaelis-Menten model the ML profile computed with `lm()` is
+  3.84146, the chi-squared quantile. A model with nothing estimated on the
+  criterion -- a Poisson, or `marginal = "none"` -- is unchanged, the fit
+  being at the joint mode already. The score and gradient statistics read
+  only the restricted fit and were never affected.
+
 # statmodels7 0.164.0
 
 * **`predict(interval =)`: an interval for a new group, and one for a new
