@@ -69,3 +69,25 @@ test_that("the smoothed jseg fits the random changepoint the sharp one
   expect_match(nt, "smoothed \\(probit")
   expect_match(nt, "corrected")
 })
+
+test_that("a quintic jump keeps its break-point identified", {
+  # The quintic is exact outside [-h, h], so a break-point with no observation
+  # within h of it has no curvature. At one median spacing that left it
+  # unidentified on these four samples; numericals7 0.16.0 resolves the width
+  # at 5/(2 log 2) spacings, and the control keeps the old width.
+  for (s in c(1, 3, 5, 7)) {
+    set.seed(200000 + s)
+    x <- stats::runif(200, 0, 10)
+    dd <- data.frame(x = x, y = 1 + 2 * (x > 5) + stats::rnorm(200, sd = 0.5))
+    fit <- statmod(y ~ jump(x, smoothed = numericals7::smooth_quintic()),
+                   distributions7::gaussian1_distrib(), dd)
+    expect_false(any(grepl("psi", fit@aliased)))
+    expect_equal(as.numeric(modelterms7::seg_psi(fitted_term(fit, "jump("))),
+                 5, tolerance = 0.02)
+    g <- stats::median(diff(sort(x)))
+    old <- suppressWarnings(statmod(
+      y ~ jump(x, smoothed = numericals7::smooth_quintic(h = g)),
+      distributions7::gaussian1_distrib(), dd))
+    expect_true(any(grepl("psi", old@aliased)))
+  }
+})

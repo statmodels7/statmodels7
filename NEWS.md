@@ -1,3 +1,12 @@
+# statmodels7 0.161.0
+
+* Requires numericals7 0.16.0, whose `smooth_quintic()` resolves its width
+  at 5/(2 log 2) spacings. A test pins that `jump(x, smoothed =
+  smooth_quintic())` keeps its break-point identified on four samples where
+  the width of one spacing left it unidentified, and that the old width still
+  does, and the page of `warn_aliased()` says where that case remains
+  reachable.
+
 # statmodels7 0.160.0
 
 * **`predict()` takes `random`**, which says how a `random()` term is read:

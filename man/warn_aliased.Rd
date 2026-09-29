@@ -48,11 +48,14 @@ deficient there and is not named here.
 THE MESSAGE NAMES NO CAUSE, and a measurement is why. Two shapes reach it
 and they are not the same defect. In the one above the DESIGN is deficient,
 a column being the sum of others. In the other the design has full rank and
-\eqn{K} does not: measured on \code{jump(x, smoothed = smooth_quintic())} and on
-\code{jseg()} under the same smoother, the block is of rank 3 of 3 while
-\code{mu:jump.psi1} is named, the quintic being exact outside its own width so
-that the break-point's derivative column is non-zero at a handful of
-observations and carries almost no curvature. Both are genuine -- neither
+\eqn{K} does not: measured on \code{jump(x, smoothed = smooth_quintic(h = g))}
+at one median spacing \eqn{g}, and on \code{jseg()} under the same smoother, the
+block is of rank 3 of 3 while \code{mu:jump.psi1} is named, the quintic being
+exact outside its own width so that where no observation falls within
+\eqn{h} of the break-point its derivative column carries no curvature.
+Since numericals7 0.16.0 the quintic resolves its width at
+\eqn{5/(2\log 2)} spacings, which removes this on a uniform covariate, and
+the case remains reachable with a width supplied by hand. Both are genuine -- neither
 coefficient has a standard error -- and a message asserting the first would
 be wrong about the second, so it reports the fact and leaves the diagnosis
 to the reader. The two smoothers whose derivative has unbounded support,
