@@ -1,3 +1,26 @@
+# statmodels7 0.170.0
+
+* `predict()` of a binomial fit written with `cbind(successes, failures)`
+  works at rows that carry no response. The probability of a binomial is a
+  function of the linear predictor alone, but the family carried the numbers
+  of trials of the fitting rows, and `statmod_respec()` refused them against
+  a grid of another length: `predict(fit, what = "mu", newdata = grid)` with
+  five rows against a fit of twelve stopped on *"the family carries 12
+  numbers of trials and these are 5 rows"*, and the same call was right only
+  if the grid carried made-up columns for the response. The numbers of trials
+  are now missing at such rows, the parameters are predicted, and a moment of
+  the response (`what = "mean"`, `"variance"`, ...) or a prediction interval
+  says that it needs the trials and how to supply them. A family given a
+  constant `size` is unchanged.
+
+* A response matrix at new rows is no longer compared with the numbers of
+  trials of the fit. They are the row sums of the fitting rows, written by
+  the same function, so a prediction at rows whose trials differed from the
+  fitting rows' (with the response columns present) stopped on *"the number
+  of trials is given twice and the two disagree"*. The new rows bring their
+  own row sums. A `size` the caller gave the family, with a single-column
+  response, is still checked against the rows.
+
 # statmodels7 0.169.0
 
 * The certificate's boundary label for a coefficient that the criterion

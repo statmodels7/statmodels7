@@ -346,6 +346,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   }
   params <- spec@distrib@params
   if (identical(interval, "prediction")) {
+    check_trials_known(spec@distrib, "A prediction interval")
     blocks <- random_blocks(spec, design, object, aside)
     pc <- predictive_cov(object, spec, design, blocks, ...)
     return(predictive_response(spec, ep$eta, pc$fixed + pc$random, level))
@@ -417,6 +418,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
 
   mom <- predict_moments()
   if (what %in% names(mom)) {
+    check_trials_known(spec@distrib, sprintf("The %s of the response", what))
     # only a missing method becomes the friendly message: a catch-all here
     # would report any failure as "this family has no such moment", which is
     # the shape of error the toolkit records as worse than none

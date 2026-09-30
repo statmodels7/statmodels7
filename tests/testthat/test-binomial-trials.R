@@ -103,3 +103,42 @@ test_that("a multivariate family keeps its matrix response", {
   expect_identical(out$response, Y)
   expect_identical(out$distrib, fam)
 })
+
+test_that("a parameter is predicted at rows that carry no response", {
+  # the probability of a binomial is a function of the predictor alone, so
+  # a grid of covariates is enough; the trials it carried were those of the
+  # fitting rows and cannot follow the grid
+  s <- statmod(cbind(y, fail) ~ x + g, distributions7::binomial_distrib(),
+               dd)
+  grid <- data.frame(x = c(-1, 0, 1), g = factor("a", levels = levels(dd$g)))
+  p <- predict(s, what = "mu", newdata = grid)
+  expect_length(p, 3L)
+  # the same values as with the response columns present
+  grid2 <- transform(grid, y = 0, fail = 7)
+  expect_equal(p, predict(s, what = "mu", newdata = grid2), tolerance = 1e-12)
+  expect_equal(predict(s, what = "mu", newdata = grid, se = TRUE)$fit, p,
+               tolerance = 1e-12)
+  expect_equal(p, unname(plogis(coef(s)$mu[["(Intercept)"]] +
+                                  coef(s)$mu[["x"]] * grid$x)),
+               tolerance = 1e-12)
+})
+
+test_that("a quantity that needs the trials says so where they are missing", {
+  s <- statmod(cbind(y, fail) ~ x, distributions7::binomial_distrib(), dd)
+  grid <- data.frame(x = c(-1, 0, 1))
+  expect_error(predict(s, what = "mean", newdata = grid),
+               "needs the number of trials")
+  expect_error(predict(s, what = "response", newdata = grid,
+                       interval = "prediction"),
+               "needs the number of trials")
+  # with the response columns the moment is the trials times the probability
+  grid2 <- transform(grid, y = 0, fail = 10)
+  p <- predict(s, what = "mu", newdata = grid)
+  expect_equal(predict(s, what = "mean", newdata = grid2), 10 * p,
+               tolerance = 1e-10)
+  # a constant size given to the family needs no response at all
+  b <- statmod(y ~ x, distributions7::binomial_distrib(size = 20),
+               data = transform(dd, y = rbinom(n, 20, 0.4)))
+  expect_equal(predict(b, what = "mean", newdata = grid),
+               20 * predict(b, what = "mu", newdata = grid), tolerance = 1e-10)
+})

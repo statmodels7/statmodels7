@@ -863,7 +863,8 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
     }
     response <- NULL
   }
-  if (is.null(response)) response <- rep(NA_real_, n_rows)
+  absent <- is.null(response)
+  if (absent) response <- rep(NA_real_, n_rows)
   # A CENSORED RESPONSE IS REFUSED HERE, where it can be named. The pieces
   # of a censored likelihood exist -- `cens()` marks the statuses and
   # distributions7 carries the derivatives of a distribution function --
@@ -880,7 +881,17 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   # are read off the response rather than taken from the family: a `size`
   # fixed at fitting time cannot follow a fold or a prediction, and recycling
   # it against a different row count returns a number rather than an error.
-  diviso <- split_binomial_matrix(response, spec@distrib)
+  # The size the fitted family carries is the row sums of the FITTING rows,
+  # written there by the same function. A response matrix at these rows
+  # brings its own row sums, so it is compared with nothing: measured, a
+  # prediction at rows whose trials differ from the fitting rows' stopped on
+  # "the number of trials is given twice and the two disagree".
+  famiglia <- spec@distrib
+  if (is.matrix(response) && "size" %in% S7::prop_names(famiglia) &&
+      !identical(as.character(famiglia@dimension), "multivariate")) {
+    famiglia <- S7::set_props(famiglia, size = 1)
+  }
+  diviso <- split_binomial_matrix(response, famiglia)
   # The SAME mapping as the fit, not one read off these rows: a fold or a
   # prediction can hold only one of the two values, and re-reading it there
   # would code the response the other way round.
@@ -888,7 +899,19 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
                               levels = attr(spec@response, "response_levels"))
   n <- if (is.matrix(response)) nrow(response) else length(response)
   if (n == 0L) stop("The response is empty.", call. = FALSE)
-  distrib <- check_trials(diviso$distrib, n)
+  distrib <- diviso$distrib
+  # A prediction at rows that carry no response has no trials either. The
+  # parameters do not depend on them -- the probability of a binomial is a
+  # function of the predictor alone -- so the numbers of trials the fit
+  # carried are replaced by missing values, which a quantity that does need
+  # them (a moment, a prediction interval) refuses through
+  # check_trials_known(), and nothing is recycled against the wrong rows.
+  if (absent && !need_response && "size" %in% S7::prop_names(distrib) &&
+      length(distrib@size) > 1L) {
+    distrib <- S7::set_props(distrib, size = rep(NA_real_, n))
+  } else {
+    distrib <- check_trials(distrib, n)
+  }
   # An offset the FORMULA names is re-evaluated here, which is the whole
   # reason the expressions are not carried as numbers: a vector supplied
   # through the `offsets` argument at fitting time has the length of the
@@ -1499,6 +1522,41 @@ check_trials <- function(distrib, n) {
   error. Write the response as cbind(successes, failures) instead -- its
   row sums are recomputed wherever the expression is.",
     length(taglia), n), call. = FALSE)
+}
+
+
+#' Refuse a Quantity That Needs Trials the Rows Do Not Carry
+#'
+#' @description
+#' Signals an error where the family's numbers of trials are missing, which
+#' is what [statmod_respec()] leaves when a prediction is asked at rows with
+#' no response.
+#'
+#' @details
+#' A parameter of a binomial family, its probability, is a function of the
+#' linear predictor alone and is predicted at any rows. A moment of the
+#' response or a prediction interval for a new observation depends on the
+#' number of trials, and at rows that carry no `cbind(successes, failures)`
+#' there is none to read.
+#'
+#' @param distrib The family, as [statmod_respec()] returns it.
+#' @param what The quantity asked for, in words, for the message.
+#'
+#' @return `distrib`, unchanged.
+#'
+#' @seealso [check_trials()], [statmod_respec()], [predict.StatmodFit()]
+#'
+#' @keywords internal
+check_trials_known <- function(distrib, what) {
+  if (!("size" %in% S7::prop_names(distrib))) return(distrib)
+  if (!anyNA(distrib@size)) return(distrib)
+  stop(sprintf(
+    "%s needs the number of trials of each row, and 'newdata' has no
+  response to read it from. Add to 'newdata' the variables that the
+  response is written with, cbind(successes, failures) in the formula, with
+  the real numbers of trials in them; the parameters themselves need no
+  response.", what),
+    call. = FALSE)
 }
 
 
