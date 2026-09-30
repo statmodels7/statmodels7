@@ -1762,6 +1762,66 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
   }
 
+  # A HYPERPARAMETER AT THE EDGE OF ITS CHART IS PROBED FROM INSIDE. On the
+  # free scale the criterion's slope carries the chart's own derivative, which
+  # vanishes at the edge, so a search can stop there with a vanishing gradient
+  # at a point that is not a maximum. Measured on nlme::Machines with
+  # random(~1 | Worker) + random(~1 | Worker:Machine), the default search
+  # stopped with the Worker sd at 0.00025 and a REML criterion of -110.63,
+  # where lme() reaches -107.84; with the Worker sd held, the criterion rises
+  # steadily from 0 to 4.78. The probe moves each coordinate past `edge` back
+  # towards its starting value, at four fractions of the distance, with the
+  # rest held, and restarts the search from the best probe where it gains more
+  # than mode_error_limit(). Four fractions and not one: an AR(1) correlation
+  # that ran to rho = 1 gains nothing at rho = 0.985 and loses 23 at its start
+  # of zero, and gains 0.21 at rho = 0.84. See edge_probe_hyper().
+  if (chose_optimizer && nh) {
+    for (attempt in seq_len(3L)) {
+      # a probe that gains less than the threshold is not taken, and must
+      # leave no trace: evaluate() makes any better point the incumbent the
+      # final refit warm-starts from, and on a model with a multimodal inner
+      # problem that moved the convergence flag of a fit whose point and
+      # criterion were unchanged
+      keep <- mget(c("best_v", "best_beta", "best_zeta", "beta"), envir = state)
+      restore <- function() {
+        for (k in names(keep)) assign(k, keep[[k]], envir = state)
+        # and the point the search reported is evaluated once more, so the
+        # design's own state (the blocks refreshed at the last point read)
+        # is that point's and the history ends on it, as it did before
+        tryCatch(evaluate(res@par), error = function(e) NULL)
+      }
+      pr <- edge_probe_hyper(res@par, eta0, nh, res@value, fn)
+      if (is.null(pr)) {
+        restore()
+        break
+      }
+      res2 <- tryCatch(
+        if (exact2) {
+          optimizers7::minimize(optimizer, fn, pr, gr = gr, he = he)
+        } else if (exact) {
+          optimizers7::minimize(optimizer, fn, pr, gr = gr)
+        } else {
+          optimizers7::minimize(optimizer, fn, pr)
+        }, error = function(e) NULL)
+      if (is.null(res2) || !is.finite(res2@value) ||
+          !(res2@value < res@value - mode_error_limit())) {
+        restore()
+        break
+      }
+      res <- res2
+      settled <- isTRUE(res@converged)
+      if (!settled && exact2) {
+        settled <- isTRUE(tryCatch({
+          evaluate(res@par)
+          g <- derivs(1L)
+          A <- sgn * derivs(2L)
+          dec <- joint_decrement(g, (A + t(A)) / 2)
+          is.finite(dec) && dec <= eval(formals(statmod_certificate)$tol)
+        }, error = function(e) FALSE))
+      }
+    }
+  }
+
   # the last evaluation is not necessarily the optimum, so the fit is taken at
   # the reported point rather than at whatever was tried last
   hy <- eta_to_hyper(res@par[seq_len(nh)], idx, hyper)
@@ -1814,6 +1874,67 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
        held_coef = if (ng) sp@held_coef else list(),
        marginal = gam,
        pinned = as.integer(attr(design, "pinned")))
+}
+
+
+#' Probe the Hyperparameters at the Edge of Their Chart From Inside
+#'
+#' @description
+#' Moves each hyperparameter whose free value has run past `edge` back
+#' towards its starting value, with the other coordinates held, and returns
+#' the free vector of the best probe where it improves the criterion by more
+#' than `tol`.
+#'
+#' @details
+#' A hyperparameter lives on a chart such as \eqn{\sigma = e^\eta} or
+#' \eqn{\rho = \tanh(\eta/2)}, and the slope of the criterion in \eqn{\eta}
+#' is its slope in the bounded quantity times \eqn{d\sigma/d\eta} or
+#' \eqn{d\rho/d\eta}, which tend to zero at the edge. A search can therefore
+#' stop at the edge with a vanishing gradient where the criterion still rises
+#' towards the inside. A finite step reads that rise where a derivative
+#' cannot: on the free scale the step to \eqn{\eta = \pm 8} is still at the
+#' edge (a standard deviation of 3.4e-4), so each coordinate is tried at
+#' three quarters, one half, one quarter and the whole of the way back to its
+#' starting value. A coordinate that really sits at an edge, such as the
+#' smoothing parameter of a smooth of noise, loses criterion at every probe
+#' and is left where it is; what that costs is four evaluations of the
+#' criterion, one inner fit each.
+#'
+#' @param par The point the search reported: the free values of the
+#'   hyperparameters first, then any coefficients the criterion estimates.
+#' @param start The starting point of the search, of the same length.
+#' @param nh The number of hyperparameters at the head of `par`.
+#' @param value The value of the search's objective at `par`, which it
+#'   minimizes.
+#' @param fn The search's objective.
+#' @param edge The free value past which a coordinate is at the edge, the
+#'   default of [statmod_certificate()].
+#' @param tol The gain, in the criterion's units, that counts:
+#'   [mode_error_limit()].
+#'
+#' @return The free vector of the best probe, or `NULL` where no coordinate
+#'   is at the edge or no probe gains more than `tol`.
+#'
+#' @keywords internal
+edge_probe_hyper <- function(par, start, nh, value, fn, edge = 8,
+                             tol = mode_error_limit()) {
+  at_edge <- which(abs(par[seq_len(nh)]) > edge)
+  if (!length(at_edge) || !is.finite(value)) return(NULL)
+  best <- NULL
+  best_v <- value - tol
+  for (j in at_edge) {
+    s <- if (abs(start[[j]]) <= edge) start[[j]] else 0
+    for (f in c(0.75, 0.5, 0.25, 0)) {
+      v <- par
+      v[[j]] <- s + f * (par[[j]] - s)
+      fv <- tryCatch(fn(v), error = function(e) NA_real_)
+      if (is.finite(fv) && fv < best_v) {
+        best_v <- fv
+        best <- v
+      }
+    }
+  }
+  best
 }
 
 

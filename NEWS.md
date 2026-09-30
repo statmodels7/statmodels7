@@ -1,3 +1,26 @@
+# statmodels7 0.172.0
+
+* A hyperparameter whose free value has run past the edge of its chart is
+  probed from inside when the search is the one this package chose. On the
+  free scale the slope of the criterion carries the chart's own derivative,
+  which vanishes at the edge, so the search could stop there at a point that
+  is not a maximum. On `nlme::Machines`,
+  `score ~ Machine + random(~1 | Worker) + random(~1 | Worker:Machine)`
+  stopped with the Worker standard deviation at 0.00025 and a REML criterion
+  of -110.63, the certificate reading `unknown`; `lme()` reaches -107.84, and
+  with the Worker standard deviation held the criterion rises steadily from 0
+  to 4.78. An AR(1) covariance over the four ages of `Orthodont` stopped at
+  a correlation of 0.99988 and -218.756, where glmmTMB reaches -218.197 at
+  0.93. Each coordinate past a free value of 8 is moved three quarters, one
+  half, one quarter and the whole of the way back to its starting value with
+  the rest held, and the search restarts from the best probe where it gains
+  more than `mode_error_limit()`. Both models now reach the reference
+  packages' criterion, with the certificate `converged`. A coordinate that
+  really sits at an edge, such as the smoothing parameter of a smooth of
+  noise, loses criterion at every probe and stays where it was, at a cost of
+  four evaluations of the criterion and a fifth at the reported point, which
+  leaves the search's state and the last row of `history$outer` at that point.
+
 # statmodels7 0.171.0
 
 * Two terms of one equation that give their coefficients the same names are
