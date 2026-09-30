@@ -1,3 +1,12 @@
+# statmodels7 0.168.0
+
+* `rstatmod()` no longer reports a hyperparameter whose coefficients `par`
+  writes. Such a hyperparameter governs nothing in the truth: with
+  `par = coef(fit)` the call simulates from a fitted model, and the print
+  used to list smoothing parameters drawn beside it (0.468 and 0.853 on the
+  motorcycle model, whose fitted values are 6.7e-05 and 0.364). It is still
+  drawn, so the random stream and the simulated data do not change.
+
 # statmodels7 0.167.0
 
 * `iwls()` takes the Newton step on the full Hessian where a block moves

@@ -833,7 +833,16 @@ rstatmod_truth <- function(spec, design, par, sd) {
   # the model is measured in those units.
   td <- rstatmod_term_draw(spec, design, coef, params, fixed_eq, sd)
   coef <- td$coef
+  # A HYPERPARAMETER WHOSE COORDINATES `par` WROTE IS NOT REPORTED. It is
+  # still drawn, so the random stream and the data do not move, but it
+  # governs nothing in the truth: `par = coef(fit)` simulates from a fitted
+  # model, and a row for a smoothing parameter drawn beside it would name a
+  # truth the data do not have.
+  written <- par_written(par, design, params,
+                         if (is.null(tm)) NULL else
+                           names(structural_psi(tm, psi_z)))
   for (e in done) {
+    if (targets_written(e$tg, e$ok, written)) next
     th <- e$th
     s <- term_drawn_scale(e$tg, e$ok, td$owned)
     # A HELD HYPERPARAMETER WINS OVER THE TERM'S OWN WIDTH, and the draw is
@@ -869,6 +878,77 @@ rstatmod_truth <- function(spec, design, par, sd) {
                name = character(0), value = numeric(0), held = logical(0),
                stringsAsFactors = FALSE)
   list(coef = out$coef, psi = out$psi, hyper = hyper)
+}
+
+
+#' The Coordinates a Simulation's `par` Writes
+#'
+#' @description
+#' Marks, for every distribution parameter and for the structural term's own
+#' parameters, the positions that some key of `par` addresses.
+#'
+#' @details
+#' It reads the keys through [resolve_par_key()], the function that
+#' [rstatmod_named()] uses to write them, so the two cannot disagree about
+#' what a key reaches. A key that reaches nothing signals the same error
+#' here that it would signal there.
+#'
+#' @param par A named list, or `NULL`.
+#' @param design The design.
+#' @param params The distribution parameter names.
+#' @param snm The structural parameter names, or `NULL`.
+#'
+#' @return A list with `beta`, one logical vector per distribution parameter,
+#'   and `zeta`, a logical vector over the structural parameters.
+#'
+#' @seealso [rstatmod_truth()], [targets_written()]
+#'
+#' @keywords internal
+par_written <- function(par, design, params, snm) {
+  beta <- stats::setNames(lapply(params, function(p)
+    logical(design[[p]]$npar)), params)
+  zeta <- logical(length(snm))
+  if (!is.list(par) || !length(par) || is.null(names(par))) {
+    return(list(beta = beta, zeta = zeta))
+  }
+  cn <- stats::setNames(lapply(params, function(p) design[[p]]$coef_names),
+                        params)
+  for (k in names(par)) {
+    if (!nzchar(k)) next
+    tg <- resolve_par_key(k, params, cn, snm)
+    if (identical(tg$space, "zeta")) {
+      zeta[tg$pos] <- TRUE
+    } else {
+      beta[[tg$param]][tg$pos] <- TRUE
+    }
+  }
+  list(beta = beta, zeta = zeta)
+}
+
+
+#' Whether `par` Wrote Every Coordinate a Prior Drew
+#'
+#' @description
+#' `TRUE` where every coordinate that a penalty's draw reached was then
+#' written by `par`, so that the penalty's hyperparameters govern nothing in
+#' the truth.
+#'
+#' @param tg The targets, from [unit_draw_targets()].
+#' @param ok Which of them the draw reached.
+#' @param written The result of [par_written()].
+#'
+#' @return A single logical.
+#'
+#' @seealso [rstatmod_truth()]
+#'
+#' @keywords internal
+targets_written <- function(tg, ok, written) {
+  if (!any(ok)) return(FALSE)
+  pos <- tg$pos[ok]
+  if (identical(tg$space, "zeta")) return(all(written$zeta[pos]))
+  prm <- tg$param[ok]
+  all(vapply(seq_along(pos), function(i)
+    isTRUE(written$beta[[prm[[i]]]][[pos[[i]]]]), logical(1)))
 }
 
 

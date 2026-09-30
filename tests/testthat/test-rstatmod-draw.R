@@ -108,6 +108,28 @@ test_that("a hyperparameter the term holds is used rather than drawn", {
   expect_true(all(s$hyper$held))
 })
 
+test_that("a hyperparameter whose coefficients par writes is not reported", {
+  set.seed(108)
+  dd <- data.frame(x = stats::runif(80), id = factor(rep(1:8, each = 10)))
+  f <- y ~ s(x, bspline_smooth(k = 6)) + random(~ 1 | id)
+  s0 <- rstatmod(f, gaussian1_distrib(), dd)
+  # the equation written whole: neither prior governs the truth any more
+  set.seed(109)
+  s1 <- rstatmod(f, gaussian1_distrib(), dd, par = list(mu = s0$par$mu))
+  expect_identical(nrow(s1$hyper), 0L)
+  expect_identical(s1$par$mu, s0$par$mu)
+  # the random effects written, the smooth drawn: only the smooth's row stays
+  set.seed(109)
+  s2 <- rstatmod(f, gaussian1_distrib(), dd,
+                 par = list(mu.random = function(k) rep(0.1, k)))
+  expect_identical(s2$hyper$name, "lambda")
+  # the data do not move: the prior is still drawn, only not reported
+  set.seed(109)
+  s3 <- rstatmod(f, gaussian1_distrib(), dd, par = list(mu = s0$par$mu))
+  expect_identical(s3$data$y, s1$data$y)
+  expect_false(any(grepl("hyperparameters", utils::capture.output(print(s1)))))
+})
+
 test_that("the truth is drawn once and shared across replicates", {
   set.seed(107)
   dd <- data.frame(id = factor(rep(1:20, each = 5)))
