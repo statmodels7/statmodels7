@@ -1,3 +1,27 @@
+# statmodels7 0.169.0
+
+* The certificate's boundary label for a coefficient that the criterion
+  estimates (the argument `marginal` of `reml()` and `ml()`) reads its
+  curvature times max(1, gamma^2), so it is the same in any units. It read
+  the bare curvature, which carries the units of the parameter and of its
+  covariate: on `cars`, a constant `sigma` on the identity link read 15.38
+  with a standard error of 1.54 and was not named, the same fit with the
+  distance multiplied by 100 read 1538 with 154 and was named `boundary`
+  with no outer gradient, and so was a variance of 236.5 with a standard
+  error of 48.3 under `gaussian2_distrib(link_sigma2 = identity_link())`. A
+  Student t's `nu` at its gaussian limit, the case the label exists for, is
+  still named.
+
+* Where the criterion estimates coefficients, the default outer search gives
+  `newton()` a typical size for each of them: its conditional standard error
+  at the start, where that exceeds one (hyperparameters keep 1). The bound of
+  5 and the length-one scaling of a repaired direction were read in the
+  coefficients' own units: the variance above, started at 651 where the
+  restricted likelihood is not concave in it, moved one unit per evaluation
+  for 185 evaluations, and the standard deviation of 1538 took 201 and
+  stopped 0.9 per cent short. Both now take 7. A fit whose standard errors
+  at the start are all at most one is unchanged. Requires optimizers7 0.10.0.
+
 # statmodels7 0.168.0
 
 * `rstatmod()` no longer reports a hyperparameter whose coefficients `par`

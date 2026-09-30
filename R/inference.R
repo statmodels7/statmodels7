@@ -4593,6 +4593,21 @@ drop_common_prefix <- function(nms) {
 #' going to zero and can come back large. Reporting on the conjunction left
 #' such a coordinate unnamed on the one platform where that fit landed there.
 #'
+#' A **coefficient** that the criterion estimates beside the hyperparameters
+#' (the argument `marginal` of [reml()] and [ml()]) is read the same way, with
+#' its curvature multiplied by \eqn{\max(1, \gamma_j^2)}: it is reported at a
+#' boundary where its conditional standard error exceeds \eqn{22} times
+#' \eqn{\max(1, \lvert\gamma_j\rvert)}. A coefficient carries the units of
+#' its parameter and of its covariate, which a hyperparameter's free value
+#' does not, and the bare curvature then depends on them: on `cars`, the
+#' intercept of a constant \eqn{\sigma} on the identity link reads 15.38 with
+#' a standard error of 1.54 and the same fit with the distance in centimeters
+#' reads 1538 with 154, and only the second fell under 2e-3; so did a
+#' variance \eqn{\sigma^2 = 236.5} with a standard error of 48.3. The ratio of
+#' the two is the same in any units. A Student \eqn{t}'s degrees of freedom
+#' at their gaussian limit, which is the case the label exists for, has a
+#' curvature of 3e-13 at a free value above 13 and is still named.
+#'
 #' Where no curvature can be read at all -- neither route produces one, and
 #' the state is then `"unknown"` -- the label falls back on the free value,
 #' `edge`, there being nothing else to read.
@@ -4604,8 +4619,9 @@ drop_common_prefix <- function(nms) {
 #'   meaning has: a caller who set one should read [joint_decrement()].
 #' @param flat The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 #'   criterion in a hyperparameter's free value at which that hyperparameter
-#'   is reported as sitting at a boundary. It decides the label alone and
-#'   never the verdict; see the details.
+#'   is reported as sitting at a boundary; for a coefficient the criterion
+#'   estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It decides the
+#'   label alone and never the verdict; see the details.
 #' @param edge The free value beyond which a hyperparameter is reported as
 #'   sitting at a boundary where no curvature can be read, and only there.
 #'
@@ -4960,7 +4976,17 @@ certificate_core <- function(fit, tol, flat, edge) {
   # 3e-13 and the certificate otherwise read nothing at all. It is named by
   # its equation and its coefficient, and only a hyperparameter carries a
   # key, which is what summary() reads for a hyperparameter's row.
-  reported <- which(abs(diag(cv$A)) <= flat)
+  #
+  # ⚠️ A COEFFICIENT CARRIES UNITS, which a hyperparameter's free value does
+  # not, so its bare curvature is not a statement about an edge: a constant
+  # sigma on the identity link with the response in centimeters read 1538
+  # with a standard error of 154 and was named a boundary, while the same fit
+  # in meters was not. Its curvature is multiplied by max(1, gamma^2), which
+  # reads the standard error against the size of the coefficient and is the
+  # same in any units.
+  rel_scale <- rep(1, length(g))
+  if (ng) rel_scale[nrow(idx) + seq_len(ng)] <- pmax(1, beta_all[gam$where]^2)
+  reported <- which(abs(diag(cv$A)) * rel_scale <= flat)
   rep_h <- reported[reported <= nrow(idx)]
   rep_g <- reported[reported > nrow(idx)] - nrow(idx)
   if (length(reported)) {

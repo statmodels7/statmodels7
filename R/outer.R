@@ -1674,6 +1674,31 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
         line_search = S7::set_props(optimizer@line_search,
                                     max_step = outer_backtracks()))
     }
+    # A TYPICAL SIZE PER COORDINATE where the criterion also estimates
+    # coefficients. newton() reads its lengths in the parameters' own units --
+    # the bound of 5, and the length-one scaling of a direction it had to
+    # repair -- and a hyperparameter's free value carries no units while a
+    # coefficient carries those of its parameter and of its covariate.
+    # Measured on `dist ~ speed` with gaussian2 on the identity link, started
+    # at a variance of 651 where the restricted likelihood is not concave in
+    # it, the repaired steps moved the variance by one unit per evaluation,
+    # 185 evaluations in all; a standard deviation of 1538 on the identity
+    # link took 201 and stopped 0.9 per cent short. A coefficient's typical
+    # size is its conditional standard error at the start, where that exceeds
+    # one, which is the same size in any units; the Hessian is the one the
+    # first iteration reads anyway.
+    if (ng && exact2 && "typical" %in% S7::prop_names(optimizer) &&
+        is.null(optimizer@typical)) {
+      H0 <- tryCatch(he(eta0), error = function(e) NULL)
+      if (!is.null(H0)) {
+        se0 <- 1 / sqrt(abs(diag(as.matrix(H0)))[nh + seq_len(ng)])
+        se0[!is.finite(se0)] <- 1
+        if (any(se0 > 1)) {
+          optimizer <- S7::set_props(
+            optimizer, typical = c(rep(1, nh), pmax(1, se0)))
+        }
+      }
+    }
   }
 
   res <- if (exact2) {
