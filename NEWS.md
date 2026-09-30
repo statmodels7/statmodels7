@@ -1,3 +1,20 @@
+# statmodels7 0.171.0
+
+* Two terms of one equation that give their coefficients the same names are
+  rejected when the formula is read, naming the terms and the argument
+  `label`. Two smooths of the same covariate with different constructions,
+  `s(x, bspline_smooth(k = 10)) + s(x, pspline_smooth(k = 12))`, stopped
+  inside the fit on "duplicate 'row.names' are not allowed", and
+  `s(x) + s(x, by = z)` fitted with duplicated names in `coef()` and
+  `vcov()`. The second no longer collides, modelterms7 0.86.0 labelling the
+  varying coefficient `s(x):z`.
+
+* Requires basis7 0.14.0, whose `pspline_smooth()` and `adaptive_smooth()`
+  take their differences on the Eilers-Marx coefficients (the fits of
+  mgcv's `bs = "ps"` and `bs = "ad"`), and modelterms7 0.86.0, whose smooth
+  with a numeric `by` keeps its constant (the fit of mgcv's `by`). Every fit
+  with one of these terms moves.
+
 # statmodels7 0.170.0
 
 * `predict()` of a binomial fit written with `cbind(successes, failures)`

@@ -981,12 +981,54 @@ statmod_terms <- function(equations, data, env, response = NULL,
     names(out_terms[[p]]) <- names(out$terms)
   }
   reject_unfittable(out_terms)
+  reject_duplicate_names(out_terms)
   # the covariance classes are assembled HERE as well as where the penalties
   # are enumerated, so that a label used on two groupings, or a joint prior
   # named twice or of the wrong dimension, is reported where the formula was
   # read rather than at the first evaluation of a criterion
   statmod_classes(out_terms)
   list(terms = out_terms, intercepts = intercepts)
+}
+
+#' Reject Two Terms of One Equation That Name Their Coefficients Alike
+#'
+#' @description
+#' The coefficients of an equation are addressed by name in `coef()`,
+#' `vcov()`, `confint()` and the summary, so two terms of one equation must
+#' not give their coefficients the same names. A term prefixes its names
+#' with its label, which for `s()` and `te()` is built from the covariates:
+#' two smooths of the same covariate with different constructions, such as
+#' `s(x, bspline_smooth(k = 10)) + s(x, pspline_smooth())`, would share it.
+#' Such a formula is rejected here, naming the terms and the argument
+#' `label` that separates them.
+#'
+#' @param terms The built terms, a list with one element per distribution
+#'   parameter, each a named list of terms as [statmod_terms()] builds them.
+#'
+#' @return `NULL`, invisibly. Called for the error.
+#'
+#' @keywords internal
+reject_duplicate_names <- function(terms) {
+  for (p in names(terms)) {
+    tms <- terms[[p]]
+    tms <- tms[!vapply(tms, S7::S7_inherits, logical(1),
+                       modelterms7::structural_term)]
+    if (length(tms) < 2L) next
+    nms <- lapply(tms, modelterms7::term_coef_names)
+    owner <- rep(names(tms), lengths(nms))
+    all_nm <- unlist(nms, use.names = FALSE)
+    dup <- unique(all_nm[duplicated(all_nm)])
+    if (!length(dup)) next
+    who <- unique(owner[all_nm %in% dup])
+    stop(sprintf(paste0(
+      "the terms %s of '%s' give their coefficients the same names",
+      " (%s).\n  Give one of them its own prefix with the argument",
+      " 'label', for example label = \"%s2\"."),
+      paste(sprintf("'%s'", who), collapse = " and "), p,
+      paste(dup[seq_len(min(3L, length(dup)))], collapse = ", "),
+      sub("\\..*$", "", dup[[1L]])), call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 
