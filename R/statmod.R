@@ -1606,6 +1606,27 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
         match(intersect(k, idx), idx)
       }
     }
+    # THE FULL HESSIAN WHERE A BLOCK IS THE JACOBIAN OF ITS TERM. The scoring
+    # pieces leave out the score times the block's own derivative, which
+    # mode_curvature() builds; iwls_fit() reads the sum only where a scoring
+    # step is rejected or shrunk below a tenth. A frozen working
+    # linearization (a sharp jump() or jseg()) has no such derivative and is
+    # left to the scoring step.
+    newton_at <- NULL
+    rf <- attr(design, "refresh")
+    if (length(rf) && !any(vapply(rf, function(r) isTRUE(r$frozen),
+                                  logical(1)))) {
+      params <- spec@distrib@params
+      npar <- vapply(params, function(p) design[[p]]$npar, integer(1))
+      offs <- cumsum(npar) - npar
+      newton_at <- function(b) {
+        v <- beta
+        v[idx] <- b
+        D <- mode_curvature(spec, design, obj$split(v), params, npar, offs,
+                            sum(npar))
+        he(b) + D[idx, idx, drop = FALSE]
+      }
+    }
     # the equations' coordinate ranges, restated in the subset's own
     # numbering: the stopping rule's scale is per equation, and the
     # objective's split speaks the full vector's coordinates
@@ -1617,7 +1638,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
                     verbose = vb$inner, groups = groups, frozen = frozen,
                     backup_at = backup_at,
                     damp_on_reject = !has_sharp_breakpoint(spec),
-                    kinks_at = kinks_at)
+                    kinks_at = kinks_at, newton_at = newton_at)
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates

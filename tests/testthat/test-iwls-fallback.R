@@ -98,5 +98,6 @@ test_that("the expected pieces take the step where the observed ones cannot", {
 
   # and a run that never needed it reports none
   r4 <- iwls_fit(toy(), c(0, 0), iwls(hessian = "observed"), 1, pd, backup_at = pd)
-  expect_identical(r4$fallback, c(indefinite = 0L, search = 0L, error = 0L))
+  expect_identical(r4$fallback, c(indefinite = 0L, search = 0L, error = 0L,
+                                 newton = 0L))
 })

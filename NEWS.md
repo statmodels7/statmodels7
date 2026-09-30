@@ -1,3 +1,24 @@
+# statmodels7 0.167.0
+
+* `iwls()` takes the Newton step on the full Hessian where a block moves
+  with its coefficients and the scoring step is rejected or shrunk below a
+  tenth. The scoring pieces carry the Gauss-Newton matrix, which leaves out
+  the score times the block's own derivative, and on a smoothed break-point
+  that term can be most of the curvature: measured on a `jump()` under
+  `smooth_quintic()`, the curvature in the break-point is 6.1 by
+  Gauss-Newton and 7853 in truth, so the scoring step in it was thousands of
+  times too long, the line search shrank it to 0.001 and the run stalled
+  0.066 above the mode, where the Gauss-Newton reading of the mode error was
+  1.5e-05. The full Hessian is the one the exact outer gradient already reads
+  (`mode_curvature()`), and it agrees with a difference of the analytic
+  gradient to 1e-7; an indefinite one is repaired by flooring the absolute
+  eigenvalues, as `optimizers7::newton()` does. A run whose scoring steps are
+  accepted never takes it. On that battery case the default route goes from
+  34 s and one criterion evaluation, certificate `not converged`, to 2.9 s,
+  three evaluations and `converged`. Over 180 fits of smoothed `seg()`,
+  `jump()` and `jseg()` under three smoothers the stall was rare before the
+  repair: none above 1e-3 of the mode, the largest 5.8e-5.
+
 # statmodels7 0.166.0
 
 Seven repairs, found while measuring the claims of the book's chapter on

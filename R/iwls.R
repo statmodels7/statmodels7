@@ -659,13 +659,21 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   length those positions are held and the step is retried on the rest;
 #'   once the run has converged with them held, one step on every coordinate
 #'   is tried, and taken if it decreases the objective.
+#' @param newton_at `NULL`, or a function of the coefficients returning the
+#'   full Hessian of the objective, the scoring pieces' curvature plus the
+#'   term a block moving with its coefficients adds. Where the scoring step
+#'   is rejected or shrunk below a tenth, the Newton step on it is tried by
+#'   [iwls_newton_step()] and the one that decreases the objective more is
+#'   taken.
 #'
 #' @return A list of nine: the six below; `note`, the reason a run stopped or
 #'   `NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
 #'   named integer vector counting the iterations at which the expected pieces
 #'   stepped in for a curvature that was not positive definite (`indefinite`)
-#'   or for a step that found no acceptable point (`search`), and the trial
-#'   points whose objective raised (`error`). Of the six:
+#'   or for a step that found no acceptable point (`search`), the trial
+#'   points whose objective raised (`error`), and the iterations at which the
+#'   Newton step on the full Hessian was taken in place of the scoring step
+#'   (`newton`). Of the six:
 #'   \describe{
 #'     \item{`par`}{the stacked coefficients reached, a numeric vector.}
 #'     \item{`value`}{the penalized objective there, unaveraged.}
@@ -684,7 +692,8 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' @keywords internal
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      groups = NULL, frozen = integer(0), backup_at = NULL,
-                     damp_on_reject = TRUE, kinks_at = NULL) {
+                     damp_on_reject = TRUE, kinks_at = NULL,
+                     newton_at = NULL) {
   beta <- start
   value <- obj$fn(beta)
   hist <- list()
@@ -704,7 +713,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   damp <- 0
   damp_tries <- 0L
   # how often the expected pieces stepped in, and for what
-  fallback <- c(indefinite = 0L, search = 0L, error = 0L)
+  fallback <- c(indefinite = 0L, search = 0L, error = 0L, newton = 0L)
   # the positions held because the objective has a kink there, apart from
   # the ones the caller holds
   kinked <- integer(0)
@@ -803,6 +812,26 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       st <- iwls_line_search(obj, beta, value, g, pc, method, damp, frozen,
                              guard = TRUE)
       fallback[["error"]] <- fallback[["error"]] + st$errors
+    }
+    # THE FULL CURVATURE WHERE A BLOCK MOVES WITH ITS COEFFICIENTS. The
+    # scoring pieces carry the Gauss-Newton matrix, which leaves out the
+    # score times the block's own derivative, and on a smoothed break-point
+    # that term can be most of the curvature: measured on a jump() under the
+    # quintic, the curvature in the break-point is 6.1 by Gauss-Newton and
+    # 7853 in truth, so the scoring step in it is thousands of times too long,
+    # the line search shrinks the whole step to 0.001, and the run crawls and
+    # stalls 0.066 above the mode. Where the scoring step was shrunk that far
+    # or rejected, the Newton step on the full Hessian is tried as well and
+    # the better of the two is taken, so a run whose scoring steps are
+    # accepted never sees it.
+    if (!is.null(newton_at) && (!st$ok || st$step_used < 0.1)) {
+      nt <- iwls_newton_step(obj, beta, value, g, newton_at(beta), frozen,
+                             method@step_halving)
+      if (!is.null(nt) && nt$ok && (!st$ok || nt$vnew < st$vnew)) {
+        st[c("ok", "cand", "vnew", "step_used")] <-
+          nt[c("ok", "cand", "vnew", "step_used")]
+        fallback[["newton"]] <- fallback[["newton"]] + 1L
+      }
     }
     sol <- st$sol
     # the coordinates the pivot left out, kept from the LAST step taken: a
@@ -1099,6 +1128,60 @@ pieces_definite <- function(pc, rel = 1e-8) {
 #' @keywords internal
 armijo_ok <- function(vnew, value, step, gd, c1 = 1e-4) {
   is.finite(vnew) && vnew <= value + c1 * step * gd
+}
+
+
+#' One Newton Step on the Full Hessian and Its Line Search
+#'
+#' @description
+#' Solves for the Newton increment on a given Hessian over the free
+#' coordinates and halves the step until Armijo's condition holds or the
+#' budget of halvings is spent.
+#'
+#' @details
+#' The Hessian of an objective whose design moves with its coefficients need
+#' not be positive definite away from the mode, so its eigenvalues are
+#' replaced by their absolute values and floored at \eqn{10^{-8}} times the
+#' largest, the repair [optimizers7::newton()] makes, which keeps the
+#' increment a descent direction.
+#'
+#' @param obj The objective.
+#' @param beta The current coefficients.
+#' @param value The objective there.
+#' @param g The gradient there.
+#' @param H The full Hessian there.
+#' @param frozen The held positions.
+#' @param halvings The budget of step halvings.
+#'
+#' @return `NULL` where the Hessian is not usable, and otherwise a list of
+#'   `ok`, `cand`, `vnew` and `step_used`.
+#'
+#' @seealso [iwls_fit()], its caller.
+#'
+#' @keywords internal
+iwls_newton_step <- function(obj, beta, value, g, H, frozen, halvings) {
+  H <- tryCatch(as_dense(H), error = function(e) NULL)
+  if (is.null(H) || !all(is.finite(H))) return(NULL)
+  free <- setdiff(seq_along(beta), frozen)
+  if (!length(free)) return(NULL)
+  e <- eigen((H[free, free, drop = FALSE] + t(H[free, free, drop = FALSE])) / 2,
+             symmetric = TRUE)
+  lam <- abs(e$values)
+  if (!length(lam) || max(lam) <= 0) return(NULL)
+  lam <- pmax(lam, 1e-8 * max(lam))
+  delta <- numeric(length(beta))
+  delta[free] <- -as.numeric(e$vectors %*% (crossprod(e$vectors, g[free]) / lam))
+  gd <- sum(g * delta)
+  step_used <- 1
+  for (h in seq_len(as.integer(halvings))) {
+    cand <- beta + step_used * delta
+    vnew <- tryCatch(obj$fn(cand), error = function(e) Inf)
+    if (armijo_ok(vnew, value, step_used, gd)) {
+      return(list(ok = TRUE, cand = cand, vnew = vnew, step_used = step_used))
+    }
+    step_used <- step_used / 2
+  }
+  list(ok = FALSE, cand = beta, vnew = value, step_used = step_used)
 }
 
 

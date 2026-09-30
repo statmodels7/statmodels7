@@ -15,7 +15,8 @@ iwls_fit(
   frozen = integer(0),
   backup_at = NULL,
   damp_on_reject = TRUE,
-  kinks_at = NULL
+  kinks_at = NULL,
+  newton_at = NULL
 )
 }
 \arguments{
@@ -66,14 +67,23 @@ positions at which the objective has a kink there, as
 length those positions are held and the step is retried on the rest;
 once the run has converged with them held, one step on every coordinate
 is tried, and taken if it decreases the objective.}
+
+\item{newton_at}{\code{NULL}, or a function of the coefficients returning the
+full Hessian of the objective, the scoring pieces' curvature plus the
+term a block moving with its coefficients adds. Where the scoring step
+is rejected or shrunk below a tenth, the Newton step on it is tried by
+\code{\link[=iwls_newton_step]{iwls_newton_step()}} and the one that decreases the objective more is
+taken.}
 }
 \value{
 A list of nine: the six below; \code{note}, the reason a run stopped or
 \code{NULL}; \code{aliased}, the coordinates the pivot left out; and \code{fallback}, a
 named integer vector counting the iterations at which the expected pieces
 stepped in for a curvature that was not positive definite (\code{indefinite})
-or for a step that found no acceptable point (\code{search}), and the trial
-points whose objective raised (\code{error}). Of the six:
+or for a step that found no acceptable point (\code{search}), the trial
+points whose objective raised (\code{error}), and the iterations at which the
+Newton step on the full Hessian was taken in place of the scoring step
+(\code{newton}). Of the six:
 \describe{
 \item{\code{par}}{the stacked coefficients reached, a numeric vector.}
 \item{\code{value}}{the penalized objective there, unaveraged.}
