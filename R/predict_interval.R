@@ -41,7 +41,8 @@ random_within <- function(spec, param, key) {
 #' variance is that prior's, at the hyperparameters the fit reached; the
 #' uncertainty of those hyperparameters is not propagated, which the page of
 #' [predict.StatmodFit()] states. A prior that is not Gaussian has no
-#' covariance to read here and is rejected by name.
+#' covariance to read here and is rejected by name; a prediction interval
+#' reaches such a prior through [predictive_mixture()] instead.
 #'
 #' Where a label ties terms together, the prior is one multivariate Gaussian
 #' over the coordinates of all of them, and every member has to be set aside:
@@ -238,8 +239,10 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #'
 #' @param spec The specification at the rows predicted.
 #' @param comps A list of components, each a list with `eta`, a named list of
-#'   the predictors' means, and `C`, their covariance as an array
-#'   `P x P x n`.
+#'   the predictors' means, `C`, their covariance as an array `P x P x n` or
+#'   `NULL` for none, and optionally `weight`, equal weights otherwise. An
+#'   attribute `infinite_variance` set to `TRUE` reports the standard
+#'   deviation as `NA`.
 #' @param level The interval's level.
 #'
 #' @return A data frame with `fit` (the median), `se`, `lower` and `upper`.
@@ -262,31 +265,35 @@ predictive_response <- function(spec, comps, level) {
   for (cc in seq_along(comps)) {
     C <- comps[[cc]]$C
     eta0 <- comps[[cc]]$eta
+    wt <- comps[[cc]]$weight
+    if (is.null(wt)) wt <- 1 / length(comps)
     # a component with no covariance at any row is its mean alone, so one
     # node carries it rather than a grid of coincident ones
-    point <- all(is.finite(C)) && !any(C != 0)
+    point <- is.null(C) || (all(is.finite(C)) && !any(C != 0))
     x <- if (point) matrix(0, 1L, P) else x_gh
     wc <- if (point) 1 else w_gh
     K <- nrow(x)
     M <- matrix(vapply(params, function(p) rep_len(as.numeric(eta0[[p]]), n),
                        numeric(n)), n, P)
     e <- array(NA_real_, c(n, K, P))
-    for (i in seq_len(n)) {
-      Ci <- C[, , i]
-      if (!all(is.finite(Ci)) || !all(is.finite(M[i, ]))) {
-        bad[i] <- TRUE
-        next
+    if (point) {
+      fin <- apply(is.finite(M), 1L, all)
+      bad[!fin] <- TRUE
+      e[, 1L, ] <- M
+    } else {
+      for (i in seq_len(n)) {
+        Ci <- C[, , i]
+        if (!all(is.finite(Ci)) || !all(is.finite(M[i, ]))) {
+          bad[i] <- TRUE
+          next
+        }
+        ev <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
+        L <- ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), P)
+        e[i, , ] <- sweep(x %*% t(L), 2L, M[i, ], "+")
       }
-      if (point) {
-        e[i, 1L, ] <- M[i, ]
-        next
-      }
-      ev <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
-      L <- ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), P)
-      e[i, , ] <- sweep(x %*% t(L), 2L, M[i, ], "+")
     }
     pieces[[cc]] <- e
-    w <- c(w, wc / length(comps))
+    w <- c(w, wc * wt)
   }
   K <- length(w)
   eta <- array(NA_real_, c(n, K, P))
@@ -351,6 +358,9 @@ predictive_response <- function(spec, comps, level) {
     s2 <- as.numeric(vv %*% w) + as.numeric(mu^2 %*% w) - m1^2
     ifelse(is.finite(s2) & s2 >= 0, sqrt(s2), NA_real_)
   }, error = function(e) rep(NA_real_, n))
+  # a Student t prior with nu <= 2 has no variance, and the mixture over its
+  # quadrature nodes or its draws would report a finite one
+  if (isTRUE(attr(comps, "infinite_variance"))) sdv <- rep(NA_real_, n)
   out <- data.frame(fit = med, se = sdv, lower = lower, upper = upper)
   out[bad, ] <- NA_real_
   out

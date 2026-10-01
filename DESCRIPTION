@@ -97,6 +97,7 @@ Collate:
     'predict_random.R'
     'predict_interval.R'
     'predict_bootstrap.R'
+    'predict_prior.R'
     'refresh.R'
     'restricted.R'
     'rstatmod.R'

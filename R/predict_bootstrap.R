@@ -101,6 +101,7 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
   # hyperparameters through object@hyper in bootstrap_refit()
   beta0 <- unlist(object@coefficients[params], use.names = FALSE)
   comps <- list()
+  inf_var <- FALSE
   failed <- 0L
   for (b in seq_len(n_boot)) {
     y <- draw()
@@ -121,10 +122,12 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
     }
     fit_b <- S7::set_props(object, coefficients = r$coefficients,
                            hyper = r$hyper)
-    blocks <- random_blocks(spec, design, fit_b, aside)
-    C <- predictive_cov(fit_b, spec, design, blocks, fixed = FALSE)$random
-    comps[[length(comps) + 1L]] <- list(
-      eta = statmod_eta(spec, design, r$coefficients)$eta, C = C)
+    cb <- predictive_mixture(fit_b, spec, design, aside,
+                             statmod_eta(spec, design, r$coefficients)$eta,
+                             NULL, weight = 1,
+                             n_draw = max(1L, ceiling(2000 / n_boot)))
+    inf_var <- inf_var || isTRUE(attr(cb, "infinite_variance"))
+    comps <- c(comps, cb)
   }
   if (!length(comps)) {
     stop("No bootstrap replica could be refitted.", call. = FALSE)
@@ -134,6 +137,14 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
                            "refitted and are left out."), failed, n_boot),
             call. = FALSE)
   }
+  # every replica carries weight one among its own components, so the
+  # replicas count alike however many components each has
+  nb <- n_boot - failed
+  comps <- lapply(comps, function(cc) {
+    cc$weight <- cc$weight / nb
+    cc
+  })
+  attr(comps, "infinite_variance") <- inf_var
   comps
 }
 

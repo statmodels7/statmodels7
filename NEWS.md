@@ -25,9 +25,26 @@
   `predictive_response()` reads a list of components, and `outer_fit()`
   takes `hold_hyper`. A term whose block moves with its coefficients, a
   response that is not one number per observation and a cross-validated
-  criterion under `boot_refit = "full"` are rejected by name. A new group
-  under a prior that is not Gaussian is rejected with a message that no
-  longer names `random = "zero"` as the remedy to a caller who used it.
+  criterion under `boot_refit = "full"` are rejected by name.
+* A prediction interval for a NEW group (`random = "zero"` or
+  `"marginal"`) reaches a prior that is not Gaussian, where it was rejected:
+  the quantiles of the mixture exist whatever the prior.
+  `predictive_mixture()` reads a Student t prior (univariate on one
+  coefficient a group, or multivariate) as a scale mixture of Gaussians,
+  b | w ~ N(0, Sigma/w) with w ~ Gamma(nu/2, nu/2), over a trapezoidal rule
+  in log w (`gamma_nodes()`, 64 nodes), and any other prior (a Laplace) by
+  Monte Carlo with `penalties7::penalty_draw()`, 2000 draws, so that interval
+  depends on the seed. Against a brute-force simulation of 2e5 draws, a
+  univariate t at nu = 2.54 gives -2.113 and 5.282 against -2.125 and
+  5.297, a multivariate t -1.849 and 5.083 against -1.849 and 5.091, a
+  Laplace 0.572 and 2.886 against 0.574 and 2.900. The rule in log w was
+  chosen over Gauss-Laguerre in w by measurement: the integrand is not
+  smooth at w = 0, and at nu = 1 the error is 2e-08 with 80 nodes against
+  1.2e-02 with 96. The standard deviation is `NA` under a t with nu <= 2. A
+  prior is Gaussian only if its Hessian is constant AND it has no kink, a
+  Laplace prior having a constant zero Hessian. `interval = "group"` still
+  rejects a prior that is not Gaussian, with a message that no longer names
+  `random = "zero"` as the remedy to a caller who used it.
 
 # statmodels7 0.173.0
 

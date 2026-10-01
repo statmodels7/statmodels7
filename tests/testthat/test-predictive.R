@@ -87,8 +87,8 @@ test_that("a prior that is not Gaussian is drawn for an observed group", {
   gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
   gg$y <- 1 + gg$x + 0.8 * rt(12, df = 3)[gg$g] + rnorm(60, sd = 0.4)
   tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
-  fit <- statmod(y ~ x + random(~ 1 | g, distrib = tp),
-                 distributions7::gaussian1_distrib(), gg)
+  fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = tp),
+                                  distributions7::gaussian1_distrib(), gg))
   old <- data.frame(x = 0, g = "3")
   set.seed(2)
   b <- predict(fit, "response", old, interval = "prediction",
@@ -97,11 +97,65 @@ test_that("a prior that is not Gaussian is drawn for an observed group", {
   expect_true(is.finite(b$lower) && is.finite(b$upper))
   # the observed group keeps its effect, so the two intervals are of one size
   expect_lt(abs(log((b$upper - b$lower) / (a$upper - a$lower))), 0.5)
-  # a new group under that prior has no covariance to read, and the message
-  # does not send the caller to the mode they already asked for
-  expect_error(predict(fit, "response", data.frame(x = 0, g = "new"),
-                       random = "zero", interval = "prediction"),
-               "not Gaussian")
+})
+
+test_that("a new group under a Student t prior is a scale mixture", {
+  set.seed(8)
+  gg <- data.frame(g = factor(rep(1:30, each = 5)), x = rnorm(150))
+  gg$y <- 1 + gg$x + 0.8 * rt(30, df = 1.5)[gg$g] + rnorm(150, sd = 0.4)
+  tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
+  fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = tp),
+                                  distributions7::gaussian1_distrib(), gg))
+  nw <- data.frame(x = 0.5, g = "new")
+  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
+               predictive = "plugin")
+  h <- fit@hyper$mu[[1]]
+  m <- predict(fit, "mu", nw, random = "zero")
+  s <- predict(fit, "sigma", nw, random = "zero")
+  # the mixture's distribution function at the reported ends, by adaptive
+  # quadrature over the mixing variable, which shares nothing with the rule
+  Fy <- function(y) stats::integrate(function(w)
+    stats::pnorm((y - m) / sqrt(s^2 + h[["sigma"]]^2 / w)) *
+      stats::dgamma(w, h[["nu"]] / 2, h[["nu"]] / 2), 0, Inf,
+    rel.tol = 1e-10)$value
+  # the rule in log w is exact to 1e-07 here; what remains, 4e-05 in
+  # probability, is the 20-node Gauss-Hermite grid over the predictor,
+  # whose spread under a small w is far wider than sigma
+  expect_lt(abs(Fy(p$lower) - 0.025), 1e-4)
+  expect_lt(abs(Fy(p$upper) - 0.975), 1e-4)
+})
+
+test_that("a new group under another prior is averaged by Monte Carlo", {
+  set.seed(8)
+  gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
+  gg$y <- 1 + gg$x + rnorm(12)[gg$g] + rnorm(60, sd = 0.4)
+  lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
+  fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = lp),
+                                  distributions7::gaussian1_distrib(), gg))
+  nw <- data.frame(x = 0.5, g = "new")
+  set.seed(1)
+  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
+               predictive = "plugin")
+  sb <- fit@hyper$mu[[1]][["sigma"]]
+  m <- predict(fit, "mu", nw, random = "zero")
+  s <- predict(fit, "sigma", nw, random = "zero")
+  set.seed(2)
+  k <- 2e5
+  yb <- m + stats::rexp(k, 1 / sb) * sample(c(-1, 1), k, TRUE) +
+    stats::rnorm(k, 0, s)
+  expect_equal(c(p$lower, p$upper),
+               unname(stats::quantile(yb, c(0.025, 0.975))), tolerance = 0.03)
+})
+
+test_that("a prior with no variance reports none", {
+  sp <- gauss_fit()@spec
+  sp <- statmodels7:::spec_at(gauss_fit(), data.frame(x = 0.5),
+                              need_response = FALSE)
+  comps <- list(list(eta = list(mu = 1, sigma = 0), C = NULL, weight = 1))
+  attr(comps, "infinite_variance") <- TRUE
+  r <- predictive_response(sp, comps, 0.95)
+  expect_true(is.na(r$se))
+  expect_true(is.finite(r$lower))
 })
 
 test_that("predictive is refused where it is not read", {

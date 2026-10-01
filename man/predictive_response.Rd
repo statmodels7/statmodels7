@@ -10,8 +10,10 @@ predictive_response(spec, comps, level)
 \item{spec}{The specification at the rows predicted.}
 
 \item{comps}{A list of components, each a list with \code{eta}, a named list of
-the predictors' means, and \code{C}, their covariance as an array
-\verb{P x P x n}.}
+the predictors' means, \code{C}, their covariance as an array \verb{P x P x n} or
+\code{NULL} for none, and optionally \code{weight}, equal weights otherwise. An
+attribute \code{infinite_variance} set to \code{TRUE} reports the standard
+deviation as \code{NA}.}
 
 \item{level}{The interval's level.}
 }

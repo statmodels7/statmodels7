@@ -232,10 +232,13 @@ group's predictor is covered 0.898 of the time over 10 groups and 0.943
 over 40 by \code{"group"}, and a new observation 0.939 and 0.951 by
 \code{"prediction"}, where the confidence interval of the typical group covers
 0.45 and 0.26; on a Poisson response the same read 0.909 and 0.937 and,
-the support being discrete, 0.975 and 0.976. A prior that is not Gaussian
-has no covariance to read, and
-a term that shares a label with an effect read with its own estimate, or
-with one written inside a subformula, is rejected.
+the support being discrete, 0.975 and 0.976. For \code{interval = "group"}
+a prior that is not Gaussian has no covariance to read and is rejected;
+\code{interval = "prediction"} reads its quantiles instead, a Student t
+prior as a scale mixture of Gaussians and any other prior by Monte
+Carlo (see \code{\link[=predictive_mixture]{predictive_mixture()}}). A term that shares a label with an
+effect read with its own estimate, or with one written inside a
+subformula, is rejected.
 
 A forecast reports \strong{no standard error}. \code{se = TRUE} gives the
 uncertainty of the parameters, while a forecast carries the uncertainty of
