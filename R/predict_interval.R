@@ -202,14 +202,21 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #'
 #' @description
 #' The median, the ends of an interval and the standard deviation of the
-#' response at each row, averaged over the uncertainty of every predictor.
+#' response at each row, under a mixture of the family over the predictors.
 #'
 #' @details
-#' At row \eqn{i} the predictors are taken jointly Gaussian with the mean the
-#' fit gives and the covariance of [predictive_cov()], and the distribution
-#' of \eqn{Y} is the mixture of the family over them,
-#' \deqn{G_i(y) = E_\eta[F(y \mid h^{-1}(\eta))],}
-#' evaluated on a Gauss-Hermite product grid of at most 400 nodes. A quantile
+#' Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
+#' \eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
+#' taken jointly Gaussian within it. The distribution of \eqn{Y} is the
+#' equally weighted mixture of the family over the components and, within
+#' each, over the predictors,
+#' \deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
+#'   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
+#' each expectation evaluated on a Gauss-Hermite product grid of at most 400
+#' nodes, or at the single node \eqn{\eta_{ci}} where \eqn{C_{ci}} is zero
+#' at every row. One component carries the default interval, two
+#' sources of variation being folded into its covariance; the parametric
+#' bootstrap gives one component per replica. A quantile
 #' of \eqn{G_i} lies between the smallest and the largest quantile of the
 #' conditional laws at the nodes, a mixture's distribution function being an
 #' average of theirs, and is found there by bisection -- on the integers for
@@ -220,38 +227,63 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' `NA` where the family's mean or variance does not exist.
 #'
 #' @param spec The specification at the rows predicted.
-#' @param eta0 A named list of the predictors' means.
-#' @param C The covariance, an array `P x P x n`.
+#' @param comps A list of components, each a list with `eta`, a named list of
+#'   the predictors' means, and `C`, their covariance as an array
+#'   `P x P x n`.
 #' @param level The interval's level.
 #'
 #' @return A data frame with `fit` (the median), `se`, `lower` and `upper`.
 #'
 #' @keywords internal
-predictive_response <- function(spec, eta0, C, level) {
+predictive_response <- function(spec, comps, level) {
   d <- spec@distrib
   params <- d@params
   links <- d@link_params
   P <- length(params)
   n <- spec@n_obs
-  k <- max(2L, min(20L, floor(400^(1 / P))))
-  q <- gauss_hermite(k)
-  grid <- as.matrix(expand.grid(rep(list(seq_len(k)), P)))
-  x <- matrix(q$x[grid], nrow(grid), P) * sqrt(2)
-  w <- apply(matrix(q$w[grid], nrow(grid), P), 1L, prod) / pi^(P / 2)
-  K <- nrow(x)
-  M <- matrix(vapply(params, function(p) rep_len(as.numeric(eta0[[p]]), n),
-                     numeric(n)), n, P)
-  eta <- array(NA_real_, c(n, K, P))
+  kk <- max(2L, min(20L, floor(400^(1 / P))))
+  q <- gauss_hermite(kk)
+  grid <- as.matrix(expand.grid(rep(list(seq_len(kk)), P)))
+  x_gh <- matrix(q$x[grid], nrow(grid), P) * sqrt(2)
+  w_gh <- apply(matrix(q$w[grid], nrow(grid), P), 1L, prod) / pi^(P / 2)
   bad <- rep(FALSE, n)
-  for (i in seq_len(n)) {
-    Ci <- C[, , i]
-    if (!all(is.finite(Ci))) {
-      bad[i] <- TRUE
-      next
+  pieces <- vector("list", length(comps))
+  w <- numeric(0)
+  for (cc in seq_along(comps)) {
+    C <- comps[[cc]]$C
+    eta0 <- comps[[cc]]$eta
+    # a component with no covariance at any row is its mean alone, so one
+    # node carries it rather than a grid of coincident ones
+    point <- all(is.finite(C)) && !any(C != 0)
+    x <- if (point) matrix(0, 1L, P) else x_gh
+    wc <- if (point) 1 else w_gh
+    K <- nrow(x)
+    M <- matrix(vapply(params, function(p) rep_len(as.numeric(eta0[[p]]), n),
+                       numeric(n)), n, P)
+    e <- array(NA_real_, c(n, K, P))
+    for (i in seq_len(n)) {
+      Ci <- C[, , i]
+      if (!all(is.finite(Ci)) || !all(is.finite(M[i, ]))) {
+        bad[i] <- TRUE
+        next
+      }
+      if (point) {
+        e[i, 1L, ] <- M[i, ]
+        next
+      }
+      ev <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
+      L <- ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), P)
+      e[i, , ] <- sweep(x %*% t(L), 2L, M[i, ], "+")
     }
-    e <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
-    L <- e$vectors %*% diag(sqrt(pmax(e$values, 0)), P)
-    eta[i, , ] <- sweep(x %*% t(L), 2L, M[i, ], "+")
+    pieces[[cc]] <- e
+    w <- c(w, wc / length(comps))
+  }
+  K <- length(w)
+  eta <- array(NA_real_, c(n, K, P))
+  at <- 0L
+  for (e in pieces) {
+    eta[, at + seq_len(dim(e)[2L]), ] <- e
+    at <- at + dim(e)[2L]
   }
   theta <- stats::setNames(lapply(seq_len(P), function(j)
     as.numeric(linkfunctions7::linkinv(links[[params[j]]],

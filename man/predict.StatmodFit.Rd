@@ -12,6 +12,9 @@
   level = 0.95,
   random = "conditional",
   interval = c("confidence", "group", "prediction"),
+  predictive = c("averaged", "plugin", "bootstrap"),
+  n_boot = 200L,
+  boot_refit = c("coefficients", "full"),
   ...
 )
 }
@@ -42,6 +45,17 @@ the section on new groups.}
 
 \item{interval}{\code{"confidence"} (the default), \code{"group"} or
 \code{"prediction"}. See the section on intervals.}
+
+\item{predictive}{With \code{interval = "prediction"}, what the family is
+averaged over: \code{"averaged"} (the default), \code{"plugin"} or \code{"bootstrap"}.
+See the section on the predictive distribution.}
+
+\item{n_boot}{The number of bootstrap replicas, \code{200} by default. Read only
+where \code{predictive = "bootstrap"}.}
+
+\item{boot_refit}{\code{"coefficients"} (the default), refitting each replica
+at the fit's hyperparameters, or \code{"full"}, choosing them again. Read only
+where \code{predictive = "bootstrap"}.}
 
 \item{...}{Passed to \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} where \code{se} is \code{TRUE}. That is
 where \code{type} chooses between the Bayesian variance, the frequentist one
@@ -163,18 +177,54 @@ interval is the predictor's, carried through the link; the fit stays
 what \code{random} asks for, the typical group's value or the population
 average. Implies \code{se = TRUE}.}
 \item{\code{"prediction"}}{an interval for a new observation of the response,
-with \code{what = "response"}. Every predictor is taken jointly Gaussian,
-with the covariance of the estimates plus the one the effects set aside
-add -- correlated across equations where a label ties them -- and
-\eqn{Y} is the family averaged over it. The interval's ends are
-quantiles of that average and the fit is its median, which every family
-has, so no location parameter is needed; \code{se} is the standard deviation
-of the average, \code{NA} where the family's variance does not exist. For a
+with \code{what = "response"}. The family is averaged over the predictors of
+every parameter, taken jointly Gaussian -- correlated across equations
+where a label ties them -- and the interval's ends are quantiles of that
+average and the fit is its median, which every family has, so no
+location parameter is needed; \code{se} is the standard deviation of the
+average, \code{NA} where the family's variance does not exist. For a
 discrete family the ends are values of the support, so the coverage is
 at least the level rather than equal to it. Effects read
 \code{"conditional"} enter with their own estimates, so this is also the
-interval of a new observation of a group the fit saw.}
+interval of a new observation of a group the fit saw. What the average
+is over is \code{predictive}, below.}
 }
+}
+
+\section{The predictive distribution}{
+A new observation varies for three reasons: the family itself, the effects
+of a new group where \code{random} sets them aside, and the error in the
+estimates. The first two are random in the model and always enter. The
+third is what \code{predictive} decides, for every parameter alike, whether the
+family has one parameter (a Poisson) or several, modelled or not.
+\describe{
+\item{\code{"averaged"}}{the default. The family is averaged over the
+predictors at the fit's estimates with the covariance of the estimates
+from \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} plus the one the effects add. This is the
+normal approximation to the parametric bootstrap predictive
+distribution of Harris (1989): the estimates are averaged over their
+approximate sampling distribution, centred at the fit. For a Gaussian
+with a constant \eqn{\sigma = e^{\gamma_0}}, \eqn{\hat\gamma_0} of
+variance \eqn{v}, the variance of a new observation is
+\eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, the
+last term being the average of \eqn{\hat\sigma^{*2}} over that
+distribution.}
+\item{\code{"plugin"}}{the family at the estimates, averaged over the effects
+alone: the estimative interval, which ignores the error in the
+estimates and so covers less than the level in a small sample.}
+\item{\code{"bootstrap"}}{the parametric bootstrap predictive distribution
+itself: \code{n_boot} responses simulated from the fit, with the random
+effects drawn afresh, each refitted, and the family at each refit
+averaged over the effects. \code{boot_refit = "coefficients"} refits at the
+fit's hyperparameters; \code{"full"} chooses them again on every replica, so
+their uncertainty enters too, at the cost of a whole fit each. See
+\code{\link[=predictive_bootstrap]{predictive_bootstrap()}}.}
+}
+Measured at 95 per cent over 400 samples, the coverage of a new
+observation is 0.887 (plug-in) against 0.925 (averaged) for a Gaussian
+regression at \eqn{n = 12} (over a further 200 samples, 0.900, 0.950 and
+0.945 with the bootstrap), and 0.935 against 0.948 for a Gamma with its
+dispersion modelled at \eqn{n = 25}.
 Both intervals for a new group are conditional on the covariance the fit
 estimated: its uncertainty is not propagated. Measured at 95 per cent over
 200 fits of a random intercept at eight observations a group, a new
@@ -230,11 +280,17 @@ predict(fg, "mu", new, random = "marginal")
 
 # The interval of a new group's mean, and of a new count from it.
 predict(fg, "mu", new, random = "zero", interval = "group")
+predict(fg, "response", new, random = "zero", interval = "prediction",
+        predictive = "plugin")
 predict(fg, "response", new, random = "zero", interval = "prediction")
 
 # A name the family does not have is refused, and the message says what
 # is available.
 try(predict(fit, "median"))
+}
+\references{
+Harris, I. R. (1989). Predictive fit for natural exponential
+families. \emph{Biometrika}, 76, 675--684.
 }
 \seealso{
 \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} for one parameter's fitted values,

@@ -481,19 +481,32 @@ outer_hyper_index <- function(spec, blocks) {
       labs <- c(labs, lab_of(h))
     }
   }
-  if (!length(rows)) {
-    return(structure(data.frame(parameter = character(0), term = character(0),
-                                name = character(0),
-                                stringsAsFactors = FALSE),
-                     links = list(),
-                     members = data.frame(row = integer(0),
-                                          parameter = character(0),
-                                          term = character(0),
-                                          name = character(0),
-                                          stringsAsFactors = FALSE)))
-  }
+  if (!length(rows)) return(outer_hyper_index_none())
   mem <- do.call(rbind, rows)
   index_group(mem, links, labs, kink_labs)
+}
+
+
+#' The Outer Index With No Hyperparameter
+#'
+#' @description
+#' The empty index [outer_hyper_index()] returns where nothing is estimated,
+#' with the same columns and attributes as a full one.
+#'
+#' @return A data frame of zero rows with columns `parameter`, `term` and
+#'   `name`, and the attributes `links` and `members`.
+#'
+#' @examples
+#' nrow(statmodels7:::outer_hyper_index_none())
+#'
+#' @keywords internal
+outer_hyper_index_none <- function() {
+  structure(data.frame(parameter = character(0), term = character(0),
+                       name = character(0), stringsAsFactors = FALSE),
+            links = list(),
+            members = data.frame(row = integer(0), parameter = character(0),
+                                 term = character(0), name = character(0),
+                                 stringsAsFactors = FALSE))
 }
 
 
@@ -1074,6 +1087,8 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #' @param approx The approximation for the expected information.
 #' @param maxit,tol The alternation's budget and tolerance.
 #' @param vb The resolved verbosity.
+#' @param hold_hyper `TRUE` to hold the hyperparameters at `hyper` and
+#'   search over the criterion's own coefficients alone.
 #'
 #' @return A list with `par`, `hyper`, `value`, `criterion`,
 #'   `converged`, `history` and the inner results.
@@ -1082,8 +1097,13 @@ statmod_marginal <- function(spec, design, coef, hyper, method,
 #'
 #' @keywords internal
 outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
-                      optimizer, beta, approx, maxit, tol, vb) {
+                      optimizer, beta, approx, maxit, tol, vb,
+                      hold_hyper = FALSE) {
+  # with the hyperparameters held the search runs over the criterion's own
+  # coefficients alone, which is what a bootstrap replica refitted at the
+  # fit's hyperparameters needs
   idx <- outer_hyper_index(spec, blocks)
+  if (isTRUE(hold_hyper)) idx <- outer_hyper_index_none()
   # the coefficients the criterion estimates beside the hyperparameters: the
   # outer vector is (eta, gamma), eta first, so every consumer that reads the
   # first nrow(idx) entries as hyperparameters goes on doing so

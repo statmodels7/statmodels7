@@ -16,7 +16,8 @@ outer_fit(
   approx,
   maxit,
   tol,
-  vb
+  vb,
+  hold_hyper = FALSE
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ availability of the exact gradient decide.}
 \item{maxit, tol}{The alternation's budget and tolerance.}
 
 \item{vb}{The resolved verbosity.}
+
+\item{hold_hyper}{\code{TRUE} to hold the hyperparameters at \code{hyper} and
+search over the criterion's own coefficients alone.}
 }
 \value{
 A list with \code{par}, \code{hyper}, \code{value}, \code{criterion},

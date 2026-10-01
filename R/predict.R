@@ -135,18 +135,54 @@ predict_moments <- function() {
 #'     what `random` asks for, the typical group's value or the population
 #'     average. Implies `se = TRUE`.}
 #'   \item{`"prediction"`}{an interval for a new observation of the response,
-#'     with `what = "response"`. Every predictor is taken jointly Gaussian,
-#'     with the covariance of the estimates plus the one the effects set aside
-#'     add -- correlated across equations where a label ties them -- and
-#'     \eqn{Y} is the family averaged over it. The interval's ends are
-#'     quantiles of that average and the fit is its median, which every family
-#'     has, so no location parameter is needed; `se` is the standard deviation
-#'     of the average, `NA` where the family's variance does not exist. For a
+#'     with `what = "response"`. The family is averaged over the predictors of
+#'     every parameter, taken jointly Gaussian -- correlated across equations
+#'     where a label ties them -- and the interval's ends are quantiles of that
+#'     average and the fit is its median, which every family has, so no
+#'     location parameter is needed; `se` is the standard deviation of the
+#'     average, `NA` where the family's variance does not exist. For a
 #'     discrete family the ends are values of the support, so the coverage is
 #'     at least the level rather than equal to it. Effects read
 #'     `"conditional"` enter with their own estimates, so this is also the
-#'     interval of a new observation of a group the fit saw.}
+#'     interval of a new observation of a group the fit saw. What the average
+#'     is over is `predictive`, below.}
 #' }
+#'
+#' # The predictive distribution
+#'
+#' A new observation varies for three reasons: the family itself, the effects
+#' of a new group where `random` sets them aside, and the error in the
+#' estimates. The first two are random in the model and always enter. The
+#' third is what `predictive` decides, for every parameter alike, whether the
+#' family has one parameter (a Poisson) or several, modelled or not.
+#' \describe{
+#'   \item{`"averaged"`}{the default. The family is averaged over the
+#'     predictors at the fit's estimates with the covariance of the estimates
+#'     from [vcov.StatmodFit()] plus the one the effects add. This is the
+#'     normal approximation to the parametric bootstrap predictive
+#'     distribution of Harris (1989): the estimates are averaged over their
+#'     approximate sampling distribution, centred at the fit. For a Gaussian
+#'     with a constant \eqn{\sigma = e^{\gamma_0}}, \eqn{\hat\gamma_0} of
+#'     variance \eqn{v}, the variance of a new observation is
+#'     \eqn{\mathrm{se}_0^2 + z^\top\Sigma_b z + \hat\sigma^2 e^{2v}}, the
+#'     last term being the average of \eqn{\hat\sigma^{*2}} over that
+#'     distribution.}
+#'   \item{`"plugin"`}{the family at the estimates, averaged over the effects
+#'     alone: the estimative interval, which ignores the error in the
+#'     estimates and so covers less than the level in a small sample.}
+#'   \item{`"bootstrap"`}{the parametric bootstrap predictive distribution
+#'     itself: `n_boot` responses simulated from the fit, with the random
+#'     effects drawn afresh, each refitted, and the family at each refit
+#'     averaged over the effects. `boot_refit = "coefficients"` refits at the
+#'     fit's hyperparameters; `"full"` chooses them again on every replica, so
+#'     their uncertainty enters too, at the cost of a whole fit each. See
+#'     [predictive_bootstrap()].}
+#' }
+#' Measured at 95 per cent over 400 samples, the coverage of a new
+#' observation is 0.887 (plug-in) against 0.925 (averaged) for a Gaussian
+#' regression at \eqn{n = 12} (over a further 200 samples, 0.900, 0.950 and
+#' 0.945 with the bootstrap), and 0.935 against 0.948 for a Gamma with its
+#' dispersion modelled at \eqn{n = 25}.
 #' Both intervals for a new group are conditional on the covariance the fit
 #' estimated: its uncertainty is not propagated. Measured at 95 per cent over
 #' 200 fits of a random intercept at eight observations a group, a new
@@ -184,6 +220,14 @@ predict_moments <- function() {
 #'   the section on new groups.
 #' @param interval `"confidence"` (the default), `"group"` or
 #'   `"prediction"`. See the section on intervals.
+#' @param predictive With `interval = "prediction"`, what the family is
+#'   averaged over: `"averaged"` (the default), `"plugin"` or `"bootstrap"`.
+#'   See the section on the predictive distribution.
+#' @param n_boot The number of bootstrap replicas, `200` by default. Read only
+#'   where `predictive = "bootstrap"`.
+#' @param boot_refit `"coefficients"` (the default), refitting each replica
+#'   at the fit's hyperparameters, or `"full"`, choosing them again. Read only
+#'   where `predictive = "bootstrap"`.
 #' @param ... Passed to [vcov.StatmodFit()] where `se` is `TRUE`. That is
 #'   where `type` chooses between the Bayesian variance, the frequentist one
 #'   and the unconditional one. A band around a penalized term is where the
@@ -242,17 +286,25 @@ predict_moments <- function() {
 #'
 #' # The interval of a new group's mean, and of a new count from it.
 #' predict(fg, "mu", new, random = "zero", interval = "group")
+#' predict(fg, "response", new, random = "zero", interval = "prediction",
+#'         predictive = "plugin")
 #' predict(fg, "response", new, random = "zero", interval = "prediction")
 #'
 #' # A name the family does not have is refused, and the message says what
 #' # is available.
 #' try(predict(fit, "median"))
+#' @references Harris, I. R. (1989). Predictive fit for natural exponential
+#'   families. *Biometrika*, 76, 675--684.
 #' @keywords internal
 predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
                                se = FALSE, level = 0.95,
                                random = "conditional",
                                interval = c("confidence", "group",
-                                            "prediction"), ...) {
+                                            "prediction"),
+                               predictive = c("averaged", "plugin",
+                                              "bootstrap"),
+                               n_boot = 200L,
+                               boot_refit = c("coefficients", "full"), ...) {
   if (is.data.frame(what)) {
     stop(paste0("The second argument of statmod's predict() is 'what', not\n",
                 "  'newdata': a fit has several parameters and several\n",
@@ -264,6 +316,19 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     stop("'what' must be a single string.", call. = FALSE)
   }
   interval <- match.arg(interval)
+  predictive <- match.arg(predictive)
+  boot_refit <- match.arg(boot_refit)
+  if (!identical(predictive, "averaged") && !identical(interval, "prediction")) {
+    stop(paste0("'predictive' says what a prediction interval averages over, ",
+                "and is read only
+  with interval = \"prediction\"."),
+         call. = FALSE)
+  }
+  if (identical(predictive, "bootstrap") &&
+      (!is.numeric(n_boot) || length(n_boot) != 1L || !is.finite(n_boot) ||
+       n_boot < 1 || n_boot != round(n_boot))) {
+    stop("'n_boot' must be a single positive whole number.", call. = FALSE)
+  }
   rm <- random_modes(object@spec, random)
   aside <- rm[rm$mode != "conditional", , drop = FALSE]
   if (identical(what, "response") && !identical(interval, "prediction")) {
@@ -348,8 +413,18 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   if (identical(interval, "prediction")) {
     check_trials_known(spec@distrib, "A prediction interval")
     blocks <- random_blocks(spec, design, object, aside)
-    pc <- predictive_cov(object, spec, design, blocks, ...)
-    return(predictive_response(spec, ep$eta, pc$fixed + pc$random, level))
+    comps <- switch(predictive,
+      averaged = {
+        pc <- predictive_cov(object, spec, design, blocks, ...)
+        list(list(eta = ep$eta, C = pc$fixed + pc$random))
+      },
+      plugin = {
+        pc <- predictive_cov(object, spec, design, blocks, fixed = FALSE)
+        list(list(eta = ep$eta, C = pc$random))
+      },
+      bootstrap = predictive_bootstrap(object, spec, design, aside,
+                                       as.integer(n_boot), boot_refit))
+    return(predictive_response(spec, comps, level))
   }
   if (isTRUE(se)) {
     su <- predict_se(object, spec, design, ep, level, ...)

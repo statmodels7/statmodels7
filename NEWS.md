@@ -1,3 +1,27 @@
+# statmodels7 0.174.0
+
+* `predict(interval = "prediction")` takes `predictive`, which says what the
+  family is averaged over besides the family itself and a new group's
+  effects: `"averaged"` (the default and the previous behaviour) averages
+  over the estimates' approximate normal sampling distribution, the normal
+  approximation to the parametric bootstrap predictive distribution of
+  Harris (1989); `"plugin"` holds the estimates at their values; and
+  `"bootstrap"` simulates `n_boot` responses from the fit, with the random
+  effects drawn afresh from their estimated prior, refits each and averages
+  over the refits. `boot_refit = "coefficients"` refits at the fit's
+  hyperparameters, a coefficient the fit estimated on its criterion (a
+  dispersion under `reml()`) being estimated there again; `"full"` chooses
+  the hyperparameters again on every replica. It holds for every family and
+  every parameter alike. Measured at 95 per cent on a Gaussian regression at
+  n = 12, over 200 samples: plug-in 0.900, averaged 0.950, bootstrap 0.945;
+  over 400 samples of a Gamma with its dispersion modelled at n = 25, plug-in
+  0.935 and averaged 0.948. A replica costs one inner fit, about 0.28 s on
+  `sleepstudy` with a random slope, and a full one about 0.9 s.
+  `predictive_response()` reads a list of components, and `outer_fit()`
+  takes `hold_hyper`. A term whose block moves with its coefficients, a
+  response that is not one number per observation and a cross-validated
+  criterion under `boot_refit = "full"` are rejected by name.
+
 # statmodels7 0.173.0
 
 * A multivariate Student t distribution for a block of random effects has an

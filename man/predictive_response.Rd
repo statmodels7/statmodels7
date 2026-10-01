@@ -4,14 +4,14 @@
 \alias{predictive_response}
 \title{The Predictive Distribution of the Response}
 \usage{
-predictive_response(spec, eta0, C, level)
+predictive_response(spec, comps, level)
 }
 \arguments{
 \item{spec}{The specification at the rows predicted.}
 
-\item{eta0}{A named list of the predictors' means.}
-
-\item{C}{The covariance, an array \verb{P x P x n}.}
+\item{comps}{A list of components, each a list with \code{eta}, a named list of
+the predictors' means, and \code{C}, their covariance as an array
+\verb{P x P x n}.}
 
 \item{level}{The interval's level.}
 }
@@ -20,14 +20,21 @@ A data frame with \code{fit} (the median), \code{se}, \code{lower} and \code{upp
 }
 \description{
 The median, the ends of an interval and the standard deviation of the
-response at each row, averaged over the uncertainty of every predictor.
+response at each row, under a mixture of the family over the predictors.
 }
 \details{
-At row \eqn{i} the predictors are taken jointly Gaussian with the mean the
-fit gives and the covariance of \code{\link[=predictive_cov]{predictive_cov()}}, and the distribution
-of \eqn{Y} is the mixture of the family over them,
-\deqn{G_i(y) = E_\eta[F(y \mid h^{-1}(\eta))],}
-evaluated on a Gauss-Hermite product grid of at most 400 nodes. A quantile
+Each component \eqn{c} gives, at row \eqn{i}, the predictors' mean
+\eqn{\eta_{ci}} and their covariance \eqn{C_{ci}}, the predictors being
+taken jointly Gaussian within it. The distribution of \eqn{Y} is the
+equally weighted mixture of the family over the components and, within
+each, over the predictors,
+\deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
+  \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
+each expectation evaluated on a Gauss-Hermite product grid of at most 400
+nodes, or at the single node \eqn{\eta_{ci}} where \eqn{C_{ci}} is zero
+at every row. One component carries the default interval, two
+sources of variation being folded into its covariance; the parametric
+bootstrap gives one component per replica. A quantile
 of \eqn{G_i} lies between the smallest and the largest quantile of the
 conditional laws at the nodes, a mixture's distribution function being an
 average of theirs, and is found there by bisection -- on the integers for
