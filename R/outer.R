@@ -1585,7 +1585,18 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   if (chose_optimizer) {
     fn(eta0)
     resolution <- state$resolution
-    if (is.finite(resolution) && resolution > 0) {
+    # ⚠️ NOT FOR A DERIVATIVE-FREE SEARCH. A simplex or a compass search
+    # reports the best vertex, which stays where it is over every iteration
+    # that only reshapes the simplex, so a rule reading a CHANGE in the
+    # objective fires at the first such iteration whatever the resolution.
+    # Measured on a multivariate t prior over the random slopes of
+    # `sleepstudy`, the default nelder_mead() stopped after 10 evaluations at a
+    # criterion of -898.17, two iterations from its start, where the same
+    # search without the rule runs 773 evaluations. Such a method declares
+    # "stationarity" rather than "gradient", which is what is read here.
+    derivative_free <- identical(optimizers7::optimizer_provides(optimizer),
+                                 "stationarity")
+    if (is.finite(resolution) && resolution > 0 && !derivative_free) {
       # the RULE keeps the reading from the starting point, being a property of
       # the optimizer object and settled before the run; only the line search,
       # which is asked again at every iteration, follows the running summary

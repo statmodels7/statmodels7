@@ -1,3 +1,29 @@
+# statmodels7 0.173.0
+
+* A multivariate Student t distribution for a block of random effects has an
+  exact outer gradient and Hessian, its penalty now supplying how its Hessian
+  moves with the coefficients (penalties7 0.30.0). Without them the search
+  fell to the simplex. On the random slopes of `sleepstudy` with
+  `random(~ Days | Subject, distrib = fixed(mvstudent_t1_distrib(2), mu1 = 0,
+  mu2 = 0))` the search took 10 evaluations and stopped at a REML criterion
+  of -898.17 with \eqn{\nu} near its start of 1, certificate `unknown`; it
+  now takes 53 evaluations and 4.6 s, reaches -871.8143, the gaussian
+  criterion of `lmer()` (-871.8141), with \eqn{\nu} at its gaussian limit and
+  the certificate `boundary`. Against a central difference of the criterion
+  with the mode refitted the gradient is 5.5e-07 out under `reml()` and
+  2.9e-06 under `aic()` at a step of 1e-3, a hundredth of the reading at 1e-2.
+
+* A search this package chose that reads no gradient (the simplex,
+  `nelder_mead()`) is no longer given the stopping rule built from the
+  criterion's resolution. That rule reads a change in the objective, and the
+  best vertex of a simplex does not move over an iteration that only reshapes
+  the simplex, so the rule ended the search at the first such iteration. It
+  was the reason the search above stopped after 10 evaluations. The line
+  search keeps its resolution. On `y ~ ridge(~ 0 + z) + regime(k = 2)` the
+  search takes 21 evaluations where it took 8, at the same criterion
+  (-407.6311). Requires distributions7 0.67.0 and penalties7 0.30.0.
+
+
 # statmodels7 0.172.0
 
 * A hyperparameter whose free value has run past the edge of its chart is
