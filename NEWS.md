@@ -8,7 +8,12 @@
   Harris (1989); `"plugin"` holds the estimates at their values; and
   `"bootstrap"` simulates `n_boot` responses from the fit, with the random
   effects drawn afresh from their estimated prior, refits each and averages
-  over the refits. `boot_refit = "coefficients"` refits at the fit's
+  over the refits. Only the effects of a term `random` sets aside are drawn
+  afresh, with `penalties7::penalty_draw()`, so a prior that is not Gaussian
+  (a multivariate Student t with an AR(1) scale) is drawn too; a term read
+  `"conditional"` keeps its estimated effects, the prediction being about
+  those groups. Every refit starts at the fit's optimum.
+  `boot_refit = "coefficients"` refits at the fit's
   hyperparameters, a coefficient the fit estimated on its criterion (a
   dispersion under `reml()`) being estimated there again; `"full"` chooses
   the hyperparameters again on every replica. It holds for every family and
@@ -20,7 +25,9 @@
   `predictive_response()` reads a list of components, and `outer_fit()`
   takes `hold_hyper`. A term whose block moves with its coefficients, a
   response that is not one number per observation and a cross-validated
-  criterion under `boot_refit = "full"` are rejected by name.
+  criterion under `boot_refit = "full"` are rejected by name. A new group
+  under a prior that is not Gaussian is rejected with a message that no
+  longer names `random = "zero"` as the remedy to a caller who used it.
 
 # statmodels7 0.173.0
 

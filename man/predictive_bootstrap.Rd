@@ -28,12 +28,15 @@ response simulated from the fitted model, read at the rows predicted with
 no estimation uncertainty of its own.
 }
 \details{
-A replica draws the effects of every \code{\link[modelterms7:random]{modelterms7::random()}} term afresh
-from the Gaussian prior the fit estimated, keeps every other coefficient at
-its estimate, and draws the response from the family at the parameters
-this gives, so the groups of the data are new groups in every replica, as
-they are in the sampling distribution the bootstrap stands in for. The
-replica is then refitted in one of two ways:
+A replica draws the response from the family at the fitted model. The
+effects of a \code{\link[modelterms7:random]{modelterms7::random()}} term that \code{random} sets aside are
+drawn afresh from the prior the fit estimated, so the groups of the data
+are new groups in every replica, as they are in the sampling distribution
+of the population-level estimates a new group's prediction rests on. The
+effects of a term read \code{"conditional"} keep their estimates: the
+prediction is about those groups, and their effects are the quantity
+predicted rather than a source of variation. Every other coefficient keeps
+its estimate. The replica is then refitted in one of two ways:
 \describe{
 \item{\code{"coefficients"}}{at the hyperparameters the fit reached, every
 coefficient re-estimated. A coefficient the fit estimated on its

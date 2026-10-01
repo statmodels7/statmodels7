@@ -10,12 +10,15 @@ NULL
 #' no estimation uncertainty of its own.
 #'
 #' @details
-#' A replica draws the effects of every [modelterms7::random()] term afresh
-#' from the Gaussian prior the fit estimated, keeps every other coefficient at
-#' its estimate, and draws the response from the family at the parameters
-#' this gives, so the groups of the data are new groups in every replica, as
-#' they are in the sampling distribution the bootstrap stands in for. The
-#' replica is then refitted in one of two ways:
+#' A replica draws the response from the family at the fitted model. The
+#' effects of a [modelterms7::random()] term that `random` sets aside are
+#' drawn afresh from the prior the fit estimated, so the groups of the data
+#' are new groups in every replica, as they are in the sampling distribution
+#' of the population-level estimates a new group's prediction rests on. The
+#' effects of a term read `"conditional"` keep their estimates: the
+#' prediction is about those groups, and their effects are the quantity
+#' predicted rather than a source of variation. Every other coefficient keeps
+#' its estimate. The replica is then refitted in one of two ways:
 #' \describe{
 #'   \item{`"coefficients"`}{at the hyperparameters the fit reached, every
 #'     coefficient re-estimated. A coefficient the fit estimated on its
@@ -90,7 +93,7 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
                 "boot_refit = \"coefficients\" holds them at the fit's ",
                 "values."), call. = FALSE)
   }
-  draw <- bootstrap_simulator(object, spec0, design0)
+  draw <- bootstrap_simulator(object, spec0, design0, aside)
   params <- spec0@distrib@params
   method <- sm$smooth
   cfg <- inner_settings(method)
@@ -102,8 +105,16 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
   for (b in seq_len(n_boot)) {
     y <- draw()
     spec_b <- S7::set_props(spec0, response = y)
-    r <- tryCatch(bootstrap_refit(object, spec_b, refit, method, cfg, beta0),
-                  error = function(e) NULL)
+    # a trial point of a refit may meet a penalized information the sparse
+    # factorization reports as not positive definite; the refit steps away
+    # from it, and the warning says nothing about the replica
+    r <- tryCatch(withCallingHandlers(
+      bootstrap_refit(object, spec_b, refit, method, cfg, beta0),
+      warning = function(w) {
+        if (grepl("CHOLMOD", conditionMessage(w), fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      }), error = function(e) NULL)
     if (is.null(r)) {
       failed <- failed + 1L
       next
@@ -131,12 +142,22 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
 #'
 #' @description
 #' Returns a function of no arguments that draws one response at the fitting
-#' rows: the effects of every [modelterms7::random()] term from the Gaussian
+#' rows: the effects of the [modelterms7::random()] terms in `aside` from the
 #' prior the fit estimated, every other coefficient at its estimate, and the
 #' response from the family at the parameters that gives.
 #'
+#' @details
+#' The effects are drawn with [penalties7::penalty_draw()], the penalty read
+#' as a prior at the fit's hyperparameters, and placed by the map
+#' [rstatmod()] uses, so a structured covariance (an AR(1), a compound
+#' symmetry), a covariance a label shares between terms and a prior that is
+#' not Gaussian (a multivariate Student t, a Laplace) are drawn alike. A
+#' smooth or a ridge is not a random effect and keeps its estimate.
+#'
 #' @param object The [StatmodFit()].
 #' @param spec0,design0 Its specification and design at the fitting rows.
+#' @param aside The rows of [random_modes()] whose effects are redrawn, the
+#'   others keeping their estimates.
 #'
 #' @return A function returning a numeric vector of `spec0@n_obs` values.
 #'
@@ -146,38 +167,47 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
 #' gg$y <- 1 + gg$x + rnorm(8)[gg$g] + rnorm(40)
 #' fit <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(),
 #'                gg)
+#' rm <- statmodels7:::random_modes(fit@spec, "zero")
 #' draw <- statmodels7:::bootstrap_simulator(fit, fit@spec,
-#'                                           statmod_design(fit@spec))
+#'                                           statmod_design(fit@spec), rm)
 #' length(draw())
 #'
 #' @keywords internal
-bootstrap_simulator <- function(object, spec0, design0) {
-  rm <- random_modes(spec0, "zero")
-  rm <- rm[rm$mode != "conditional", , drop = FALSE]
-  bl <- if (nrow(rm)) random_blocks(spec0, design0, object, rm) else list()
-  # the square root of each block's covariance, read once: an eigenvalue
-  # floor rather than chol(), a covariance at the edge of its chart being
-  # singular to the last digit
-  roots <- lapply(bl, function(b) {
-    ev <- eigen((b$Sigma + t(b$Sigma)) / 2, symmetric = TRUE)
-    ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), nrow(b$Sigma))
+bootstrap_simulator <- function(object, spec0, design0, aside) {
+  params <- spec0@distrib@params
+  set_aside <- paste(aside$param, aside$key)
+  is_random <- function(u) {
+    if (!is.null(u$class)) {
+      return(any(vapply(u$class$pieces, function(pc)
+        paste(pc$param, pc$term) %in% set_aside, logical(1))))
+    }
+    tm <- spec0@terms[[u$param]][[u$term]]
+    !is.null(tm) && S7::S7_inherits(tm, modelterms7::RandomTerm) &&
+      paste(u$param, u$term) %in% set_aside
+  }
+  units <- Filter(function(u) !isTRUE(u$structural) && is_random(u),
+                  statmod_penalized(spec0, design0))
+  draws <- lapply(units, function(u) {
+    tg <- unit_draw_targets(u, design0, params)
+    if (is.null(tg) || tg$space != "beta") {
+      stop(sprintf(paste0("The effects of '%s' cannot be drawn for a ",
+                          "bootstrap replica."), u$key), call. = FALSE)
+    }
+    list(pen = u$penalty, th = as.list(object@hyper[[u$param]][[u$key]]),
+         tg = tg)
   })
   cf0 <- object@coefficients
   function() {
     cf <- cf0
-    for (j in seq_along(bl)) {
-      mem <- bl[[j]]$members
-      D <- sum(mem$dim)
-      idx1 <- design0[[mem$param[1L]]]$blocks[[mem$key[1L]]]
-      m <- length(idx1) %/% mem$dim[1L]
-      # one row per group, the members' coordinates side by side
-      B <- t(roots[[j]] %*% matrix(stats::rnorm(D * m), D, m))
-      at <- cumsum(c(0L, mem$dim))
-      for (k in seq_len(nrow(mem))) {
-        idx <- design0[[mem$param[k]]]$blocks[[mem$key[k]]]
-        # the coefficients are group-major: a group's d coordinates together
-        cf[[mem$param[k]]][idx] <- as.vector(
-          t(B[, at[k] + seq_len(mem$dim[k]), drop = FALSE]))
+    for (d in draws) {
+      v <- penalties7::penalty_draw(d$pen, d$th)
+      if (length(v) != length(d$tg$pos) || anyNA(v)) {
+        stop("A random effect's prior did not give a draw for every effect.",
+             call. = FALSE)
+      }
+      for (p in unique(d$tg$param)) {
+        j <- d$tg$param == p
+        cf[[p]][d$tg$pos[j]] <- v[j]
       }
     }
     th <- statmod_eta(spec0, design0, cf)$theta

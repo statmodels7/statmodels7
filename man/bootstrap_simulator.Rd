@@ -4,21 +4,32 @@
 \alias{bootstrap_simulator}
 \title{A Simulator of the Response From a Fitted Model}
 \usage{
-bootstrap_simulator(object, spec0, design0)
+bootstrap_simulator(object, spec0, design0, aside)
 }
 \arguments{
 \item{object}{The \code{\link[=StatmodFit]{StatmodFit()}}.}
 
 \item{spec0, design0}{Its specification and design at the fitting rows.}
+
+\item{aside}{The rows of \code{\link[=random_modes]{random_modes()}} whose effects are redrawn, the
+others keeping their estimates.}
 }
 \value{
 A function returning a numeric vector of \code{spec0@n_obs} values.
 }
 \description{
 Returns a function of no arguments that draws one response at the fitting
-rows: the effects of every \code{\link[modelterms7:random]{modelterms7::random()}} term from the Gaussian
+rows: the effects of the \code{\link[modelterms7:random]{modelterms7::random()}} terms in \code{aside} from the
 prior the fit estimated, every other coefficient at its estimate, and the
 response from the family at the parameters that gives.
+}
+\details{
+The effects are drawn with \code{\link[penalties7:penalty_draw]{penalties7::penalty_draw()}}, the penalty read
+as a prior at the fit's hyperparameters, and placed by the map
+\code{\link[=rstatmod]{rstatmod()}} uses, so a structured covariance (an AR(1), a compound
+symmetry), a covariance a label shares between terms and a prior that is
+not Gaussian (a multivariate Student t, a Laplace) are drawn alike. A
+smooth or a ridge is not a random effect and keeps its estimate.
 }
 \examples{
 set.seed(3)
@@ -26,8 +37,9 @@ gg <- data.frame(g = factor(rep(1:8, each = 5)), x = rnorm(40))
 gg$y <- 1 + gg$x + rnorm(8)[gg$g] + rnorm(40)
 fit <- statmod(y ~ x + random(~ 1 | g), distributions7::gaussian1_distrib(),
                gg)
+rm <- statmodels7:::random_modes(fit@spec, "zero")
 draw <- statmodels7:::bootstrap_simulator(fit, fit@spec,
-                                          statmod_design(fit@spec))
+                                          statmod_design(fit@spec), rm)
 length(draw())
 
 }

@@ -71,11 +71,21 @@ random_blocks <- function(spec, design, fit, aside) {
     tm <- spec@terms[[p]][[k]]
     tag <- modelterms7::term_tag(tm)
     if (is.na(tag)) {
-      pr <- random_prior(spec, design, fit, p, k)
+      # random_prior() is written for the marginal average and its refusal of
+      # a heavy-tailed prior under an unbounded link names random = "zero"
+      # as the remedy, which is what a caller here has already asked for
+      pr <- tryCatch(random_prior(spec, design, fit, p, k), error = function(e) {
+        if (grepl("is not Gaussian", conditionMessage(e), fixed = TRUE)) {
+          return(list(gaussian = FALSE))
+        }
+        stop(e)
+      })
       if (!isTRUE(pr$gaussian)) {
         stop(sprintf(paste0("The prior of '%s' is not Gaussian, so a new ",
                             "group's interval has no\n  covariance to read. ",
-                            "interval = \"confidence\" is available."), k),
+                            "interval = \"confidence\" is available, and a ",
+                            "group the fit\n  saw is predicted with random = ",
+                            "\"conditional\"."), k),
              call. = FALSE)
       }
       out[[length(out) + 1L]] <- list(
