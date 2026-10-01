@@ -2060,8 +2060,9 @@ term_block_kind <- function(term) {
 #'
 #' It replaces a reading of `spec$linear`, which was the term's record of
 #' the same fact while a smooth was always a B-spline with a second-derivative
-#' penalty. Under a factor `by` the block is one copy per level and only the
-#' first level's column is marked, which is what that reading did too.
+#' penalty. Under a factor `by` the block is one copy per level and the free
+#' columns of every level are marked, whether the levels share a smoothing
+#' parameter or not.
 #'
 #' @param term A built smooth term.
 #' @param k The number of columns in its block.
@@ -2120,10 +2121,13 @@ smooth_linear_cols <- function(term, k) {
       rep(TRUE, length(idx))
     }
   }
-  # the LEADING columns no penalty touches
-  free <- sum(cumprod(!covered))
-  if (free > 0L) out[seq_len(min(free, k))] <- TRUE
-  out
+  # EVERY column no penalty touches, not only the leading run. Under a factor
+  # `by` the block is one copy per level, level-major, so the free straight
+  # line of level j sits at the start of its copy and not at the start of the
+  # block; reading the leading run alone printed the line of the first level
+  # and dropped the others, which on four diets left three of the four
+  # slopes a reader of the summary wants off the page.
+  !covered
 }
 
 

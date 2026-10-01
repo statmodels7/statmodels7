@@ -1,3 +1,15 @@
+# statmodels7 0.181.0
+
+* `summary()` prints the free straight line of every level of a smooth with
+  a factor `by`, where it printed the line of the first level only. The block
+  is level-major, so the free column of level j sits at the start of its own
+  copy, and the rule marked the leading run of free columns of the whole
+  block. `smooth_linear_cols()` now marks every column no penalty touches, so
+  `s(Time, by = Diet)` over four diets shows `1.lin`, `2.lin`, `3.lin` and
+  `4.lin`, under `by_hyper = "shared"` and `"level"` alike. A smooth without
+  a `by` is unchanged. The coefficient names are unchanged too: the level
+  stays before the column, as in `random.18.Time`.
+
 # statmodels7 0.180.0
 
 * A hyperparameter estimated by `reml()` or `ml()` gets a standard error

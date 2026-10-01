@@ -231,15 +231,14 @@ test_that("a smooth shows its linear part whatever penalty it declares", {
                  distributions7::gaussian1_distrib(), ds)
   # the LABEL prefixes a coefficient name, not the key the term is filed
   # under: the key carries the construction and the label stays `s(x)`
-  expect_identical(lin_rows(lev), "s(x).a.lin")
+  expect_identical(lin_rows(lev), c("s(x).a.lin", "s(x).b.lin"))
 
-  # A SHARED FACTOR `by` IS UNCHANGED, which is what says the reading was
-  # widened and not replaced: it marks the leading free column and no more,
-  # exactly as it did before the entries were consulted.
+  # A SHARED FACTOR `by` shows the free line of EVERY level too: the block is
+  # level-major, so the line of the second level is not in the leading run
+  # of free columns, and a reading of that run alone printed the first only.
   sh <- statmod(y ~ g + s(x, bspline_smooth(k = 10), by = g),
                 distributions7::gaussian1_distrib(), ds)
-  expect_length(lin_rows(sh), 1L)
-  expect_true(endsWith(lin_rows(sh), ".a.lin"))
+  expect_identical(lin_rows(sh), c("s(x).a.lin", "s(x).b.lin"))
 })
 
 test_that("a random effect shows its variance parameters, not its levels", {
