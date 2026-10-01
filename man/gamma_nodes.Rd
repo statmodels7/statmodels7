@@ -4,12 +4,14 @@
 \alias{gamma_nodes}
 \title{Nodes and Weights for a Gamma(a, a) Mixing Variable}
 \usage{
-gamma_nodes(a, k = 64L)
+gamma_nodes(a, h = 0.6, k_min = 40L)
 }
 \arguments{
 \item{a}{The shape, \eqn{\nu/2}.}
 
-\item{k}{The number of nodes.}
+\item{h}{The spacing of the nodes in \eqn{\log w}.}
+
+\item{k_min}{The smallest number of nodes.}
 }
 \value{
 A list with \code{w}, the nodes, and \code{a}, the weights, which sum to one.
@@ -30,10 +32,17 @@ around a Student t effect falls below the 2.5 per cent quantile, against
 adaptive quadrature: at \eqn{\nu = 1} the error is 1e-04 with 40 nodes and
 2e-08 with 80, against 1.2e-02 for Gauss-Laguerre with 96; at
 \eqn{\nu = 2.54} it is 1e-07 and 4e-13, against 5e-05.
+
+The range widens as \eqn{\nu} falls (25 units of \eqn{\log w} at
+\eqn{\nu = 2.54}, 62 at 0.95, 190 at 0.3), so the rule fixes the spacing
+of the nodes rather than their number. At a spacing of 0.6 the error is at
+most 2e-08 from \eqn{\nu = 0.3} to 2.54, against 7e-05 with 64 nodes at
+\eqn{\nu = 0.5}; at least 40 nodes are used, which covers a large
+\eqn{\nu}, where the range is short.
 }
 \examples{
 q <- statmodels7:::gamma_nodes(1.5)
-c(sum(q$a), sum(q$a * q$w))
+c(length(q$w), sum(q$a), sum(q$a * q$w))
 
 }
 \keyword{internal}

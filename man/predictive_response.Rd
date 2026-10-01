@@ -32,17 +32,32 @@ equally weighted mixture of the family over the components and, within
 each, over the predictors,
 \deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
-each expectation evaluated on a Gauss-Hermite product grid of at most 400
-nodes, or at the single node \eqn{\eta_{ci}} where \eqn{C_{ci}} is zero
-at every row. One component carries the default interval, two
-sources of variation being folded into its covariance; the parametric
-bootstrap gives one component per replica. A quantile
-of \eqn{G_i} lies between the smallest and the largest quantile of the
-conditional laws at the nodes, a mixture's distribution function being an
-average of theirs, and is found there by bisection -- on the integers for
-a discrete family, where it is the smallest value at which \eqn{G_i}
-reaches the level. Only the family's distribution function and quantile
-are read, so no location parameter is needed. The standard deviation is
+each expectation evaluated at the single node \eqn{\eta_{ci}} where
+\eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
+split by its eigenvectors: the directions after the first are a
+Gauss-Hermite product grid of at most 64 nodes, and the first, the one of
+largest variance, a 20-node Gauss-Hermite rule. Where that variance is
+large against the spread of the conditional law, the law's distribution
+function turns from 0 to 1 between two adjacent nodes, which the rule
+integrates badly: with \eqn{r} the ratio of the two standard deviations of
+a Gaussian law, its error in probability is 2e-11 at \eqn{r = 1}, 1.5e-03
+at \eqn{r = 3} and 1.8e-02 at \eqn{r = 5}. A direction whose values at two
+adjacent nodes differ by more than 0.3 is therefore integrated by
+\code{\link[numericals7:quad_vec]{numericals7::quad_vec()}} instead, at its default tolerances. A
+direction cell is left to Gauss-Hermite whatever its values when it is
+among the lightest, whose weights add up to at most 1e-8. One
+component carries the default interval, two sources of variation being
+folded into its covariance; the parametric bootstrap gives one component
+per replica. A quantile of \eqn{G_i} lies between the smallest and the
+largest quantile of the conditional laws at the nodes, a mixture's
+distribution function being an average of theirs. For a continuous family
+it is found by Newton's method on \eqn{G_i(y) = p} with the mixture's
+density as the derivative, started at the weighted median of those
+quantiles and kept inside a bracket every evaluation shrinks; for a
+discrete one by bisection on the integers, as the smallest value at which
+\eqn{G_i} reaches the level. Only the family's distribution function,
+density and quantile are read, so no location parameter is needed. The
+standard deviation is
 \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
 \code{NA} where the family's mean or variance does not exist.
 }

@@ -16,7 +16,8 @@ NULL
 #' \deqn{b \mid w \sim \mathrm{N}(0, \Sigma/w), \qquad
 #'   w \sim \mathrm{Gamma}(\nu/2, \nu/2),}
 #' so it gives one component per node of a trapezoidal rule in
-#' \eqn{\log w} ([gamma_nodes()]), each with the Gaussian covariance \eqn{z^\top\Sigma z/w} and the
+#' \eqn{\log w} ([gamma_nodes()]), each with the Gaussian covariance
+#' \eqn{z^\top\Sigma z/w} and the
 #' node's weight; two such terms give the product of the two rules. Any other
 #' prior (a Laplace, a prior shared by a label that is not Gaussian), or more
 #' than two Student t terms, is averaged by Monte Carlo: `n_draw` draws of a
@@ -54,7 +55,7 @@ NULL
 #'
 #' @keywords internal
 predictive_mixture <- function(fit, spec, design, aside, eta, C0,
-                               weight = 1, n_draw = 2000L) {
+                               weight = 1, n_draw = 5000L) {
   params <- spec@distrib@params
   P <- length(params)
   n <- spec@n_obs
@@ -252,19 +253,28 @@ prior_student <- function(pen, th, d) {
 #' 2e-08 with 80, against 1.2e-02 for Gauss-Laguerre with 96; at
 #' \eqn{\nu = 2.54} it is 1e-07 and 4e-13, against 5e-05.
 #'
+#' The range widens as \eqn{\nu} falls (25 units of \eqn{\log w} at
+#' \eqn{\nu = 2.54}, 62 at 0.95, 190 at 0.3), so the rule fixes the spacing
+#' of the nodes rather than their number. At a spacing of 0.6 the error is at
+#' most 2e-08 from \eqn{\nu = 0.3} to 2.54, against 7e-05 with 64 nodes at
+#' \eqn{\nu = 0.5}; at least 40 nodes are used, which covers a large
+#' \eqn{\nu}, where the range is short.
+#'
 #' @param a The shape, \eqn{\nu/2}.
-#' @param k The number of nodes.
+#' @param h The spacing of the nodes in \eqn{\log w}.
+#' @param k_min The smallest number of nodes.
 #'
 #' @return A list with `w`, the nodes, and `a`, the weights, which sum to one.
 #'
 #' @examples
 #' q <- statmodels7:::gamma_nodes(1.5)
-#' c(sum(q$a), sum(q$a * q$w))
+#' c(length(q$w), sum(q$a), sum(q$a * q$w))
 #'
 #' @keywords internal
-gamma_nodes <- function(a, k = 64L) {
+gamma_nodes <- function(a, h = 0.6, k_min = 40L) {
   lo <- log(stats::qgamma(1e-12, shape = a, rate = a))
   hi <- log(stats::qgamma(1 - 1e-12, shape = a, rate = a))
+  k <- max(as.integer(k_min), ceiling((hi - lo) / h) + 1L)
   w <- exp(seq(lo, hi, length.out = k))
   d <- stats::dgamma(w, shape = a, rate = a) * w
   list(w = w, a = d / sum(d))

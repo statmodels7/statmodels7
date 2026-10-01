@@ -125,7 +125,7 @@ predictive_bootstrap <- function(object, spec, design, aside, n_boot, refit) {
     cb <- predictive_mixture(fit_b, spec, design, aside,
                              statmod_eta(spec, design, r$coefficients)$eta,
                              NULL, weight = 1,
-                             n_draw = max(1L, ceiling(2000 / n_boot)))
+                             n_draw = max(1L, ceiling(5000 / n_boot)))
     inf_var <- inf_var || isTRUE(attr(cb, "infinite_variance"))
     comps <- c(comps, cb)
   }

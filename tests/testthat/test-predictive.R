@@ -165,3 +165,40 @@ test_that("predictive is refused where it is not read", {
                        interval = "prediction", predictive = "bootstrap",
                        n_boot = 0), "n_boot")
 })
+
+test_that("a broad effect against a narrow residual is integrated exactly", {
+  # with the effect's spread far above sigma the conditional law turns from 0
+  # to 1 between two Gauss-Hermite nodes; the gaussian case has a closed form
+  set.seed(4)
+  gg <- data.frame(g = factor(rep(1:20, each = 20)), x = runif(400))
+  b <- rnorm(20, sd = 0.3)
+  b[c(3, 9, 16)] <- c(5.5, -6.0, 4.8)
+  gg$y <- 1 + 2 * gg$x + b[gg$g] + rnorm(400)
+  nw <- data.frame(x = 0.5, g = "new")
+  fg <- suppressWarnings(statmod(y ~ x + random(~ 1 | g),
+                                 distributions7::gaussian1_distrib(), gg))
+  p <- predict(fg, "response", nw, random = "zero", interval = "prediction",
+               predictive = "plugin")
+  m <- predict(fg, "mu", nw, random = "zero")
+  s <- predict(fg, "sigma", nw, random = "zero")
+  tau <- hyper(fg)$estimate
+  expect_gt(tau / s, 2)
+  expect_equal(c(p$lower, p$upper),
+               m + c(-1, 1) * stats::qnorm(0.975) * sqrt(s^2 + tau^2),
+               tolerance = 1e-7)
+  tp <- distributions7::fixed(distributions7::student_t1_distrib(), mu = 0)
+  ft <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = tp),
+                                 distributions7::gaussian1_distrib(), gg))
+  h <- hyper(ft)$estimate
+  expect_lt(h[2], 1)
+  p <- predict(ft, "response", nw, random = "zero", interval = "prediction",
+               predictive = "plugin")
+  m <- predict(ft, "mu", nw, random = "zero")
+  s <- predict(ft, "sigma", nw, random = "zero")
+  Fy <- function(y) stats::integrate(function(w)
+    stats::pnorm((y - m) / sqrt(s^2 + h[1]^2 / w)) *
+      stats::dgamma(w, h[2] / 2, h[2] / 2), 0, Inf, rel.tol = 1e-10)$value
+  # the 20-node rule alone gave 0.0244 and 0.9756 here
+  expect_lt(abs(Fy(p$lower) - 0.025), 1e-6)
+  expect_lt(abs(Fy(p$upper) - 0.975), 1e-6)
+})

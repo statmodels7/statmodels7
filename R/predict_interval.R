@@ -223,17 +223,32 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
 #' each, over the predictors,
 #' \deqn{G_i(y) = \frac{1}{B}\sum_{c=1}^{B} E_{\eta \sim
 #'   \mathrm{N}(\eta_{ci}, C_{ci})}[F(y \mid h^{-1}(\eta))],}
-#' each expectation evaluated on a Gauss-Hermite product grid of at most 400
-#' nodes, or at the single node \eqn{\eta_{ci}} where \eqn{C_{ci}} is zero
-#' at every row. One component carries the default interval, two
-#' sources of variation being folded into its covariance; the parametric
-#' bootstrap gives one component per replica. A quantile
-#' of \eqn{G_i} lies between the smallest and the largest quantile of the
-#' conditional laws at the nodes, a mixture's distribution function being an
-#' average of theirs, and is found there by bisection -- on the integers for
-#' a discrete family, where it is the smallest value at which \eqn{G_i}
-#' reaches the level. Only the family's distribution function and quantile
-#' are read, so no location parameter is needed. The standard deviation is
+#' each expectation evaluated at the single node \eqn{\eta_{ci}} where
+#' \eqn{C_{ci}} is zero at every row. Otherwise \eqn{C_{ci} = LL^\top} is
+#' split by its eigenvectors: the directions after the first are a
+#' Gauss-Hermite product grid of at most 64 nodes, and the first, the one of
+#' largest variance, a 20-node Gauss-Hermite rule. Where that variance is
+#' large against the spread of the conditional law, the law's distribution
+#' function turns from 0 to 1 between two adjacent nodes, which the rule
+#' integrates badly: with \eqn{r} the ratio of the two standard deviations of
+#' a Gaussian law, its error in probability is 2e-11 at \eqn{r = 1}, 1.5e-03
+#' at \eqn{r = 3} and 1.8e-02 at \eqn{r = 5}. A direction whose values at two
+#' adjacent nodes differ by more than 0.3 is therefore integrated by
+#' [numericals7::quad_vec()] instead, at its default tolerances. A
+#' direction cell is left to Gauss-Hermite whatever its values when it is
+#' among the lightest, whose weights add up to at most 1e-8. One
+#' component carries the default interval, two sources of variation being
+#' folded into its covariance; the parametric bootstrap gives one component
+#' per replica. A quantile of \eqn{G_i} lies between the smallest and the
+#' largest quantile of the conditional laws at the nodes, a mixture's
+#' distribution function being an average of theirs. For a continuous family
+#' it is found by Newton's method on \eqn{G_i(y) = p} with the mixture's
+#' density as the derivative, started at the weighted median of those
+#' quantiles and kept inside a bracket every evaluation shrinks; for a
+#' discrete one by bisection on the integers, as the smallest value at which
+#' \eqn{G_i} reaches the level. Only the family's distribution function,
+#' density and quantile are read, so no location parameter is needed. The
+#' standard deviation is
 #' \eqn{\sqrt{E[\mathrm{Var}(Y\mid\eta)] + \mathrm{Var}(E[Y\mid\eta])}},
 #' `NA` where the family's mean or variance does not exist.
 #'
@@ -254,108 +269,222 @@ predictive_response <- function(spec, comps, level) {
   links <- d@link_params
   P <- length(params)
   n <- spec@n_obs
-  kk <- max(2L, min(20L, floor(400^(1 / P))))
-  q <- gauss_hermite(kk)
-  grid <- as.matrix(expand.grid(rep(list(seq_len(kk)), P)))
-  x_gh <- matrix(q$x[grid], nrow(grid), P) * sqrt(2)
-  w_gh <- apply(matrix(q$w[grid], nrow(grid), P), 1L, prod) / pi^(P / 2)
+  discrete <- S7::S7_inherits(d, distributions7::discrete_distrib)
   bad <- rep(FALSE, n)
-  pieces <- vector("list", length(comps))
-  w <- numeric(0)
+  # every component becomes cells, each a base point B, a leading direction
+  # A and a weight; a point component is one cell with no direction
+  pts <- list()
+  dirs <- list()
   for (cc in seq_along(comps)) {
     C <- comps[[cc]]$C
     eta0 <- comps[[cc]]$eta
     wt <- comps[[cc]]$weight
     if (is.null(wt)) wt <- 1 / length(comps)
-    # a component with no covariance at any row is its mean alone, so one
-    # node carries it rather than a grid of coincident ones
-    point <- is.null(C) || (all(is.finite(C)) && !any(C != 0))
-    x <- if (point) matrix(0, 1L, P) else x_gh
-    wc <- if (point) 1 else w_gh
-    K <- nrow(x)
     M <- matrix(vapply(params, function(p) rep_len(as.numeric(eta0[[p]]), n),
                        numeric(n)), n, P)
-    e <- array(NA_real_, c(n, K, P))
-    if (point) {
-      fin <- apply(is.finite(M), 1L, all)
-      bad[!fin] <- TRUE
-      e[, 1L, ] <- M
-    } else {
-      for (i in seq_len(n)) {
-        Ci <- C[, , i]
-        if (!all(is.finite(Ci)) || !all(is.finite(M[i, ]))) {
-          bad[i] <- TRUE
-          next
-        }
-        ev <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
-        L <- ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), P)
-        e[i, , ] <- sweep(x %*% t(L), 2L, M[i, ], "+")
+    bad <- bad | !apply(is.finite(M), 1L, all)
+    if (is.null(C) || (all(is.finite(C)) && !any(C != 0))) {
+      pts[[length(pts) + 1L]] <- list(B = M, w = wt)
+      next
+    }
+    L <- array(0, c(n, P, P))
+    for (i in seq_len(n)) {
+      Ci <- C[, , i]
+      if (!all(is.finite(Ci))) {
+        bad[i] <- TRUE
+        next
+      }
+      ev <- eigen((Ci + t(Ci)) / 2, symmetric = TRUE)
+      L[i, , ] <- ev$vectors %*% diag(sqrt(pmax(ev$values, 0)), P)
+    }
+    # the directions that carry variance at some row: the first, the largest,
+    # is integrated adaptively where it needs it, the others on a
+    # Gauss-Hermite grid
+    sz <- apply(L^2, 3L, sum)
+    r <- max(1L, sum(sz > 1e-14 * max(sz)))
+    kr <- if (r > 1L) max(2L, min(8L, floor(64^(1 / (r - 1L))))) else 1L
+    qg <- gauss_hermite(max(kr, 2L))
+    grid <- if (r > 1L) {
+      as.matrix(expand.grid(rep(list(seq_len(kr)), r - 1L)))
+    } else matrix(0L, 1L, 0L)
+    for (g in seq_len(nrow(grid))) {
+      B <- M
+      wg <- 1
+      for (j in seq_len(r - 1L)) {
+        B <- B + L[, , j + 1L] * (sqrt(2) * qg$x[grid[g, j]])
+        wg <- wg * qg$w[grid[g, j]] / sqrt(pi)
+      }
+      dirs[[length(dirs) + 1L]] <- list(B = B, A = matrix(L[, , 1L], n, P),
+                                        w = wt * wg)
+    }
+  }
+  stack <- function(z, what) {
+    array(vapply(z, function(e) e[[what]], numeric(n * P)),
+          c(n, P, length(z)))
+  }
+  NP <- length(pts)
+  ND <- length(dirs)
+  BP <- stack(pts, "B")
+  WP <- vapply(pts, function(e) e$w, numeric(1))
+  BD <- stack(dirs, "B")
+  AD <- stack(dirs, "A")
+  WD <- vapply(dirs, function(e) e$w, numeric(1))
+  # the direction cells left to Gauss-Hermite whatever their values: the
+  # lightest, whose weights add up to at most 1e-8, so the error they can
+  # carry into the mixture's distribution function is at most that
+  ow <- order(WD)
+  light <- rep(FALSE, ND)
+  light[ow[cumsum(WD[ow]) <= 1e-8 * sum(c(WP, WD))]] <- TRUE
+  gh <- gauss_hermite(20L)
+  ol <- order(gh$x)
+  xl <- sqrt(2) * gh$x[ol]
+  wl <- gh$w[ol] / sqrt(pi)
+  kl <- length(xl)
+  theta_at <- function(E) {
+    th <- stats::setNames(lapply(seq_len(P), function(j) as.numeric(
+      linkfunctions7::linkinv(links[[params[j]]], E[[j]]))), params)
+    lapply(th, function(v) {
+      v[!is.finite(v)] <- theta_fill(v)
+      v
+    })
+  }
+  # the parameters at every row and point cell, then at every row,
+  # direction cell and Gauss-Hermite node: row fastest, then cell, then node
+  thP <- theta_at(lapply(seq_len(P), function(j) as.vector(BP[, j, ])))
+  thD <- theta_at(lapply(seq_len(P), function(j) {
+    as.vector(array(BD[, j, ], c(n, ND, kl)) +
+                outer(matrix(AD[, j, ], n, ND), xl))
+  }))
+  cdf_fun <- function(y, th) distributions7::distrib_cdf(d, y, th)
+  pdf_fun <- function(y, th) distributions7::distrib_pdf(d, y, th)
+  # quad_vec() over the leading direction of the direction cells in `mark`
+  adapt <- function(yv, mark, fun) {
+    idx <- which(mark)
+    ri <- (idx - 1L) %% n + 1L
+    ci <- (idx - 1L) %/% n + 1L
+    Bm <- matrix(vapply(seq_len(P), function(j) BD[cbind(ri, j, ci)],
+                        numeric(length(idx))), length(idx), P)
+    Am <- matrix(vapply(seq_len(P), function(j) AD[cbind(ri, j, ci)],
+                        numeric(length(idx))), length(idx), P)
+    yy <- yv[ri]
+    f <- function(x, i) {
+      xv <- as.vector(x)
+      ii <- rep(i, length.out = length(xv))
+      th <- theta_at(lapply(seq_len(P), function(j)
+        Bm[ii, j] + Am[ii, j] * xv))
+      stats::dnorm(xv) * fun(yy[ii], th)
+    }
+    numericals7::quad_vec(f, -Inf, rep(Inf, length(idx)))
+  }
+  # the mixture's distribution function at y, one value a row, and its
+  # density where `dens`; a direction cell whose conditional law turns by
+  # more than 0.3 between two Gauss-Hermite nodes is integrated by quad_vec()
+  mix <- function(y, dens = FALSE) {
+    yv <- rep(y, length.out = n)
+    out <- list(F = numeric(n), f = numeric(n))
+    if (NP) {
+      yr <- rep(yv, NP)
+      out$F <- as.numeric(matrix(cdf_fun(yr, thP), n, NP) %*% WP)
+      if (dens) out$f <- as.numeric(matrix(pdf_fun(yr, thP), n, NP) %*% WP)
+    }
+    if (ND) {
+      yr <- rep(yv, ND * kl)
+      Fa <- array(cdf_fun(yr, thD), c(n, ND, kl))
+      Fm <- matrix(0, n, ND)
+      jump <- matrix(0, n, ND)
+      for (k in seq_len(kl)) {
+        Fm <- Fm + wl[k] * Fa[, , k]
+        if (k > 1L) jump <- pmax(jump, abs(Fa[, , k] - Fa[, , k - 1L]))
+      }
+      mark <- jump > 0.3
+      mark[bad, ] <- FALSE
+      mark[, light] <- FALSE
+      if (any(mark)) Fm[mark] <- adapt(yv, mark, cdf_fun)
+      out$F <- out$F + as.numeric(Fm %*% WD)
+      if (dens) {
+        fa <- array(pdf_fun(yr, thD), c(n, ND, kl))
+        fm <- matrix(0, n, ND)
+        for (k in seq_len(kl)) fm <- fm + wl[k] * fa[, , k]
+        if (any(mark)) fm[mark] <- adapt(yv, mark, pdf_fun)
+        out$f <- out$f + as.numeric(fm %*% WD)
       }
     }
-    pieces[[cc]] <- e
-    w <- c(w, wc * wt)
+    out
   }
-  K <- length(w)
-  eta <- array(NA_real_, c(n, K, P))
-  at <- 0L
-  for (e in pieces) {
-    eta[, at + seq_len(dim(e)[2L]), ] <- e
-    at <- at + dim(e)[2L]
-  }
-  theta <- stats::setNames(lapply(seq_len(P), function(j)
-    as.numeric(linkfunctions7::linkinv(links[[params[j]]],
-                                       as.vector(eta[, , j])))), params)
-  ok <- !bad
-  if (any(bad)) theta <- lapply(theta, function(v) {
-    v[rep(bad, K)] <- theta_fill(v)
-    v
-  })
-  cdf <- function(y) {
-    Fy <- distributions7::distrib_cdf(d, rep(y, K), theta)
-    as.numeric(matrix(Fy, n, K) %*% w)
-  }
+  # a bracket from the conditional quantiles, which the mixture's lies
+  # between, and a start at their weighted median
   cond_q <- function(pr) {
-    Q <- matrix(distributions7::distrib_quantile(d, rep(pr, n * K), theta),
-                n, K)
-    cbind(apply(Q, 1L, min), apply(Q, 1L, max))
+    Q <- cbind(
+      if (NP) matrix(distributions7::distrib_quantile(
+        d, rep(pr, n * NP), thP), n, NP),
+      if (ND) matrix(distributions7::distrib_quantile(
+        d, rep(pr, n * ND * kl), thD), n, ND * kl))
+    w <- c(WP, as.vector(outer(WD, wl)))
+    list(lo = apply(Q, 1L, min), hi = apply(Q, 1L, max),
+         start = vapply(seq_len(n), function(i) {
+           o <- order(Q[i, ])
+           Q[i, o][which(cumsum(w[o]) >= 0.5 * sum(w))[1L]]
+         }, numeric(1)))
   }
-  discrete <- S7::S7_inherits(d, distributions7::discrete_distrib)
   quant <- function(pr) {
     br <- cond_q(pr)
-    lo <- br[, 1L]
-    hi <- br[, 2L]
+    lo <- br$lo
+    hi <- br$hi
     if (discrete) {
       lo <- lo - 1
       for (it in seq_len(200L)) {
         open <- hi - lo > 1
         if (!any(open, na.rm = TRUE)) break
         mid <- floor((lo + hi) / 2)
-        g <- cdf(ifelse(open, mid, hi))
-        up <- open & g >= pr
+        g <- mix(ifelse(open, mid, hi))$F
+        up <- which(open & g >= pr)
+        dn <- which(open & g < pr)
         hi[up] <- mid[up]
-        lo[open & !up] <- mid[open & !up]
+        lo[dn] <- mid[dn]
       }
       return(hi)
     }
+    # Newton on G(y) = pr inside a bracket every evaluation shrinks; a step
+    # that leaves the bracket is replaced by its midpoint
+    y <- pmin(pmax(br$start, lo), hi)
     for (it in seq_len(100L)) {
-      mid <- (lo + hi) / 2
-      if (all(hi - lo <= 1e-10 * pmax(1, abs(mid)), na.rm = TRUE)) break
-      g <- cdf(mid)
-      up <- g >= pr
-      hi[up] <- mid[up]
-      lo[!up] <- mid[!up]
+      v <- mix(y, dens = TRUE)
+      g <- v$F - pr
+      up <- which(g >= 0)
+      dn <- which(g < 0)
+      hi[up] <- y[up]
+      lo[dn] <- y[dn]
+      done <- !is.finite(g) | abs(g) <= 1e-12 |
+        hi - lo <= 1e-10 * pmax(1, abs(y))
+      if (all(done)) break
+      step <- y - g / v$f
+      inside <- is.finite(step) & step > lo & step < hi
+      y <- ifelse(done, y, ifelse(inside, step, (lo + hi) / 2))
     }
-    (lo + hi) / 2
+    y
   }
   a <- (1 - level) / 2
   med <- quant(0.5)
   lower <- quant(a)
   upper <- quant(1 - a)
+  # the moments are smooth in the predictors, so the Gauss-Hermite nodes
+  # serve
   sdv <- tryCatch({
-    mu <- matrix(mean(d, theta), n, K)
-    vv <- matrix(distributions7::variance(d, theta), n, K)
-    m1 <- as.numeric(mu %*% w)
-    s2 <- as.numeric(vv %*% w) + as.numeric(mu^2 %*% w) - m1^2
+    m1 <- m2 <- numeric(n)
+    if (NP) {
+      mu <- matrix(mean(d, thP), n, NP)
+      vv <- matrix(distributions7::variance(d, thP), n, NP)
+      m1 <- m1 + as.numeric(mu %*% WP)
+      m2 <- m2 + as.numeric((vv + mu^2) %*% WP)
+    }
+    if (ND) {
+      w <- as.vector(outer(WD, wl))
+      mu <- matrix(mean(d, thD), n, ND * kl)
+      vv <- matrix(distributions7::variance(d, thD), n, ND * kl)
+      m1 <- m1 + as.numeric(mu %*% w)
+      m2 <- m2 + as.numeric((vv + mu^2) %*% w)
+    }
+    s2 <- m2 - m1^2
     ifelse(is.finite(s2) & s2 >= 0, sqrt(s2), NA_real_)
   }, error = function(e) rep(NA_real_, n))
   # a Student t prior with nu <= 2 has no variance, and the mixture over its

@@ -1,3 +1,36 @@
+# statmodels7 0.175.0
+
+* A prediction interval for a new group (`interval = "prediction"`) is
+  computed exactly where the variance of a new group's effects is large
+  against the spread of the family. `predictive_response()` averaged the
+  family over each component's predictors with a 20-node Gauss-Hermite rule
+  per direction, and where the predictor's standard deviation is several
+  times the family's the distribution function turns from 0 to 1 between two
+  nodes: the error in probability is 2e-11 at a ratio of 1, 1.5e-03 at 3 and
+  1.8e-02 at 5, for a Gaussian prior as for any other. Under a Student t
+  prior with nu = 0.95, where many nodes of the scale mixture have that
+  shape, the 95 per cent interval read (-1.885, 5.898) where it is
+  (-1.803, 5.816), the probabilities at its ends being 0.0244 and 0.9756.
+  The direction of largest variance is now integrated by
+  `numericals7::quad_vec()` wherever the family's distribution function
+  moves by more than 0.3 between two adjacent nodes, the other directions
+  keeping a Gauss-Hermite grid of at most 64 nodes; the quantiles are found
+  by Newton's method with the mixture's density, inside a bracket, where
+  they were found by bisection. On the same interval the ends now give
+  probabilities within 1e-6 of 0.025 and 0.975 by `integrate()`. On
+  `sleepstudy` with a random slope, where the ratio is about 2, the 95 per
+  cent interval at day 9 moves from (217.39, 473.83) to (217.38, 473.85).
+  The cost, stated: one prediction under the Student t prior takes 1.1 s,
+  and 50 rows under `predictive = "averaged"` 68 s.
+* `gamma_nodes()` fixes the spacing of its nodes in log w at 0.6, with at
+  least 40 nodes, where it fixed their number at 64: the range widens as nu
+  falls, and with 64 nodes the error in probability was 1.7e-06 at
+  nu = 0.95 and 7e-05 at nu = 0.5. It is at most 2e-08 now from nu = 0.3
+  to 2.54, at 104 nodes for nu = 0.95 and 315 for nu = 0.3.
+* The Monte Carlo average under a prior that is neither Gaussian nor a
+  Student t draws 5000 effects where it drew 2000; over five seeds the ends
+  of a logistic prior's interval move by about 0.04 on a width of 7.6.
+
 # statmodels7 0.174.0
 
 * `predict(interval = "prediction")` takes `predictive`, which says what the

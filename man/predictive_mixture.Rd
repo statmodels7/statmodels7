@@ -12,7 +12,7 @@ predictive_mixture(
   eta,
   C0,
   weight = 1,
-  n_draw = 2000L
+  n_draw = 5000L
 )
 }
 \arguments{
@@ -48,7 +48,8 @@ group or multivariate, is a scale mixture of Gaussians,
 \deqn{b \mid w \sim \mathrm{N}(0, \Sigma/w), \qquad
   w \sim \mathrm{Gamma}(\nu/2, \nu/2),}
 so it gives one component per node of a trapezoidal rule in
-\eqn{\log w} (\code{\link[=gamma_nodes]{gamma_nodes()}}), each with the Gaussian covariance \eqn{z^\top\Sigma z/w} and the
+\eqn{\log w} (\code{\link[=gamma_nodes]{gamma_nodes()}}), each with the Gaussian covariance
+\eqn{z^\top\Sigma z/w} and the
 node's weight; two such terms give the product of the two rules. Any other
 prior (a Laplace, a prior shared by a label that is not Gaussian), or more
 than two Student t terms, is averaged by Monte Carlo: \code{n_draw} draws of a
