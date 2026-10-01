@@ -64,6 +64,30 @@ test_that("the coupling is tested and not assumed negligible", {
   expect_null(hyper_variance(big))
 })
 
+test_that("an indefinite matrix gives no variance, whatever its inverse's diagonal", {
+  ## the shape measured on a zero-inflated negative binomial with a random
+  ## effect on mu and on zi: every diagonal entry of -H negative and the
+  ## inverse's diagonal positive, which the old test of the inverse accepted
+  A <- matrix(c(-1, 3, 3, -8), 2, 2,
+              dimnames = list(c("a", "b"), c("a", "b")))
+  expect_true(all(diag(solve(A)) > 0))
+  expect_null(hyper_variance(A))
+  ## a positive diagonal does not make a matrix positive definite either
+  ## a Householder reflection: diagonal 1/3, eigenvalues (1, 1, -1), its
+  ## own inverse
+  B <- diag(3) - 2 / 3 * matrix(1, 3, 3)
+  dimnames(B) <- list(letters[1:3], letters[1:3])
+  expect_lt(min(eigen(B, symmetric = TRUE)$values), 0)
+  expect_true(all(diag(solve(B)) > 0))
+  expect_null(hyper_variance(B))
+  ## and the kept block is held to the same test: the third coordinate is
+  ## held, and what is left is still indefinite
+  C <- matrix(0, 3, 3, dimnames = list(letters[1:3], letters[1:3]))
+  C[1:2, 1:2] <- matrix(c(1, 2, 2, 1), 2, 2)
+  C[3, 3] <- -1
+  expect_null(hyper_variance(C))
+})
+
 test_that("nothing usable gives NULL", {
   A <- diag(c(-1, -2))
   dimnames(A) <- list(c("a", "b"), c("a", "b"))

@@ -37,6 +37,16 @@ computed and compared against the kept diagonal rather than assumed
 negligible; above \code{schur} the whole matrix is refused as before. The
 default is the size at which the correction cannot move the four
 significant digits the summary prints.
+
+A variance is returned only where the matrix inverted is positive
+definite, which is read off the smallest eigenvalue of the matrix
+equilibrated to a unit diagonal. A positive diagonal of the inverse is
+not enough: an indefinite matrix can have one. Measured on a
+zero-inflated negative binomial with a random effect on each equation,
+stopped where the criterion's curvature has an eigenvalue of -5 on that
+scale, every diagonal entry of \code{A} was negative and the inverse's diagonal
+was positive, so the two standard deviations were reported with standard
+errors of 0.015 and 0.0009 on the free scale.
 }
 \seealso{
 \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}}, its only caller.

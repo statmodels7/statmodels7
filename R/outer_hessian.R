@@ -1307,6 +1307,16 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
 #' default is the size at which the correction cannot move the four
 #' significant digits the summary prints.
 #'
+#' A variance is returned only where the matrix inverted is positive
+#' definite, which is read off the smallest eigenvalue of the matrix
+#' equilibrated to a unit diagonal. A positive diagonal of the inverse is
+#' not enough: an indefinite matrix can have one. Measured on a
+#' zero-inflated negative binomial with a random effect on each equation,
+#' stopped where the criterion's curvature has an eigenvalue of -5 on that
+#' scale, every diagonal entry of `A` was negative and the inverse's diagonal
+#' was positive, so the two standard deviations were reported with standard
+#' errors of 0.015 and 0.0009 on the free scale.
+#'
 #' @param A The negative of the outer Hessian, with dimnames.
 #' @param schur The largest relative Schur correction a held coordinate may
 #'   contribute to a kept one's curvature.
@@ -1319,8 +1329,16 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
 #'
 #' @keywords internal
 hyper_variance <- function(A, schur = 1e-4) {
+  # positive definite on the equilibrated scale, so the test does not turn on
+  # how different the hyperparameters' scales are
+  pd <- function(M) {
+    if (!all(is.finite(M)) || any(diag(M) <= 0)) return(FALSE)
+    s <- 1 / sqrt(diag(M))
+    ev <- eigen(s * t(s * M), symmetric = TRUE, only.values = TRUE)$values
+    min(ev) > ncol(M) * .Machine$double.eps
+  }
   usable <- function(M) !is.null(M) && all(is.finite(M)) && all(diag(M) > 0)
-  V <- tryCatch(solve(A), error = function(e) NULL)
+  V <- if (pd(A)) tryCatch(solve(A), error = function(e) NULL) else NULL
   if (usable(V)) return(V)
   p <- ncol(A)
   d <- diag(A)
@@ -1328,6 +1346,7 @@ hyper_variance <- function(A, schur = 1e-4) {
                  apply(!is.finite(A), 1L, any))
   keep <- setdiff(seq_len(p), bad)
   if (!length(bad) || !length(keep)) return(NULL)
+  if (!pd(A[keep, keep, drop = FALSE])) return(NULL)
   W <- tryCatch(solve(A[keep, keep, drop = FALSE]), error = function(e) NULL)
   if (!usable(W)) return(NULL)
   Bi <- tryCatch(solve(A[bad, bad, drop = FALSE]), error = function(e) NULL)

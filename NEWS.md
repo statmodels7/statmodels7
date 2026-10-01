@@ -1,3 +1,19 @@
+# statmodels7 0.180.0
+
+* A hyperparameter estimated by `reml()` or `ml()` gets a standard error
+  only where the negative of the criterion's Hessian is positive definite,
+  read off the smallest eigenvalue of that matrix scaled to a unit
+  diagonal. `hyper_variance()` checked only that the diagonal of the
+  inverse was positive, which an indefinite matrix can satisfy. On a
+  zero-inflated negative binomial with a random effect on `mu` and on `zi`
+  (the `Salamanders` data), whose criterion has an eigenvalue of -5 on that
+  scale at the reported point, every diagonal entry of the matrix was
+  negative and the two standard deviations were printed with standard
+  errors of 0.0035 and 0.0017. They are printed without one now. The same
+  test applies to the block that is kept when a coordinate is held, and to
+  `vcov()` and the degrees-of-freedom correction where the fit estimated
+  coefficients on its criterion, which read the same function.
+
 # statmodels7 0.179.0
 
 * `iwls(hessian = "auto")` settled on the expected information (a family
