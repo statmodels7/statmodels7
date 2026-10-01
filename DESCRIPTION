@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.175.0
+Version: 0.176.0
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -98,6 +98,7 @@ Collate:
     'predict_interval.R'
     'predict_bootstrap.R'
     'predict_prior.R'
+    'predict_group.R'
     'refresh.R'
     'restricted.R'
     'rstatmod.R'

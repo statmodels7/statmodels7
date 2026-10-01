@@ -126,14 +126,22 @@ predict_moments <- function() {
 #'     interval of the typical group's value, which a new group's value
 #'     falls outside of far more often than the level says.}
 #'   \item{`"group"`}{the interval of a new group's parameter, with `random =
-#'     "zero"` or `"marginal"`. The variance of its predictor is the
-#'     estimates' plus the one a new group's effects add,
-#'     \eqn{se^2 + z^\top \Sigma_b z}, in the parameter's own equation, so
-#'     a random effect on `sigma` widens the interval for `sigma`. On the link
-#'     scale this is the standard error glmmTMB reports at a new level. The
-#'     interval is the predictor's, carried through the link; the fit stays
-#'     what `random` asks for, the typical group's value or the population
-#'     average. Implies `se = TRUE`.}
+#'     "zero"` or `"marginal"`. A new group's parameter is
+#'     \eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
+#'     group's predictor plus its estimation error plus \eqn{z^\top b}, the
+#'     effects of a new group drawn from the prior, in the parameter's own
+#'     equation, so a random effect on `sigma` widens the interval for
+#'     `sigma`. Under Gaussian priors the variance of \eqn{\eta^*} is
+#'     \eqn{se^2 + z^\top \Sigma_b z}, the standard error glmmTMB reports at
+#'     a new level on the link scale. The interval's ends are quantiles of
+#'     \eqn{\eta^*} carried through the inverse link, which is monotone, so
+#'     they are the quantiles of \eqn{\theta^*} under any link; under a prior
+#'     that is not Gaussian they are the quantiles of the mixture of
+#'     [predictive_mixture()]. The standard error is the standard deviation
+#'     of \eqn{\theta^*}, not the delta method, and is `NA` where it is not
+#'     known to exist (see [group_interval()]). The fit is the typical
+#'     group's value under `random = "zero"` and the population average
+#'     under `"marginal"`. Implies `se = TRUE`.}
 #'   \item{`"prediction"`}{an interval for a new observation of the response,
 #'     with `what = "response"`. The family is averaged over the predictors of
 #'     every parameter, taken jointly Gaussian -- correlated across equations
@@ -190,11 +198,10 @@ predict_moments <- function() {
 #' over 40 by `"group"`, and a new observation 0.939 and 0.951 by
 #' `"prediction"`, where the confidence interval of the typical group covers
 #' 0.45 and 0.26; on a Poisson response the same read 0.909 and 0.937 and,
-#' the support being discrete, 0.975 and 0.976. For `interval = "group"`
-#' a prior that is not Gaussian has no covariance to read and is rejected;
-#' `interval = "prediction"` reads its quantiles instead, a Student t
-#' prior as a scale mixture of Gaussians and any other prior by Monte
-#' Carlo (see [predictive_mixture()]). A term that shares a label with an
+#' the support being discrete, 0.975 and 0.976. Under a prior that is not
+#' Gaussian both `interval = "group"` and `interval = "prediction"` read
+#' its quantiles, a Student t prior as a scale mixture of Gaussians and any
+#' other prior by Monte Carlo (see [predictive_mixture()]). A term that shares a label with an
 #' effect read with its own estimate, or with one written inside a
 #' subformula, is rejected.
 #'
@@ -429,24 +436,11 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     # A NEW GROUP'S PARAMETER varies around the typical group's by what its
     # effects add, z' Sigma_b z in its own equation, on top of the estimates'
     # own uncertainty
+    # A NEW GROUP'S PARAMETER varies around the typical group's by what its
+    # effects add, on top of the estimates' own uncertainty: its interval and
+    # standard deviation are those of h^-1(eta*), see group_interval()
     if (identical(interval, "group")) {
-      blocks <- random_blocks(spec, design, object, aside)
-      add <- predictive_cov(object, spec, design, blocks, fixed = FALSE)$random
-      zq <- stats::qnorm((1 + level) / 2)
-      for (p in params) {
-        a <- add[p, p, ]
-        if (!any(a != 0)) next
-        s <- sqrt(su[[p]]$se_eta^2 + a)
-        g <- spec@distrib@link_params[[p]]
-        su[[p]]$se_eta <- s
-        su[[p]]$eta_lower <- su[[p]]$eta - zq * s
-        su[[p]]$eta_upper <- su[[p]]$eta + zq * s
-        ends <- cbind(linkfunctions7::linkinv(g, su[[p]]$eta_lower),
-                      linkfunctions7::linkinv(g, su[[p]]$eta_upper))
-        su[[p]]$lower <- pmin(ends[, 1L], ends[, 2L])
-        su[[p]]$upper <- pmax(ends[, 1L], ends[, 2L])
-        su[[p]]$se <- abs(linkfunctions7::dlinkinv(g, su[[p]]$eta)) * s
-      }
+      su <- group_interval(object, spec, design, aside, ep, su, level, ...)
     }
     # a marginal parameter is averaged over the effects: the fit and the ends
     # of the interval are the fixed part's carried through that average,

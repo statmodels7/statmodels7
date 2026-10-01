@@ -1,3 +1,41 @@
+# statmodels7 0.176.0
+
+* The standard error of `predict(interval = "group")` is the standard
+  deviation of a new group's parameter, \eqn{\theta^* = h^{-1}(\eta^*)},
+  where it was the delta method \eqn{|h^{-1}{}'(\eta_0)|\, s}. The interval
+  was already exact, its ends being quantiles of \eqn{\eta^*} carried through
+  a monotone inverse link; the standard error beside it was not, and the
+  error is large because \eqn{s} carries the variance of the random effects:
+  measured against `integrate()`, the delta method was 20 per cent too small
+  for the mean of a Poisson random intercept (`MASS::epil`), 42 per cent for
+  the dispersion of a negative binomial with a random effect on it
+  (`glmmTMB::Owls`, kappa 0.83), and 18 per cent too large for a Bernoulli
+  probability (`MASS::bacteria`). Under Gaussian priors it is now \eqn{s} for
+  the identity link (unchanged), \eqn{e^{\eta_0 + s^2/2}\sqrt{e^{s^2} - 1}}
+  for the log link and a 40-node Gauss-Hermite rule for every other link,
+  agreeing with `integrate()` to 1e-15 and 6e-10. It is `NA` where the
+  predictor's domain is not the whole line (square root and inverse links).
+  The standard error of `interval = "confidence"` is still the delta
+  method, as in `predict.glm()`: there the correction is of the order of the
+  error of the normal approximation of the estimate itself.
+* `interval = "group"` accepts a prior that is not Gaussian, which it
+  rejected. The ends are quantiles of \eqn{\eta^*}: by the scale mixture for
+  a Student t, by the prior's own quantiles for one univariate prior of
+  another family (2000 nodes, so the result does not depend on the seed,
+  where the Monte Carlo draws gave ends with a standard deviation of 0.030 to
+  0.037 over 20 seeds on a logistic prior), and by the Monte Carlo draws of
+  `predictive_mixture()` otherwise. Checked against `integrate()`: the ends
+  of a Student t interval have probabilities within 1e-6 of 0.025 and 0.975,
+  and a logistic one within 1e-4. The standard error is reported only where
+  it is known to exist: for an inverse link bounded on both sides always, for
+  the identity link as \eqn{\sqrt{\mathrm{se}_0^2 + \mathrm{Var}(b)}} (`NA`
+  for a Student t with \eqn{\nu \le 2}), and otherwise `NA`: under a log link
+  a Student t has no moment generating function, so the mean of a new group's
+  parameter is infinite.
+* New internal functions: `group_interval()`, `group_sd_gaussian()`,
+  `group_sd_mixture()`, `gh_moments()`, `heavy_variance()`,
+  `mixture_quantile()`, `group_quantile_nodes()`, `link_kind()`.
+
 # statmodels7 0.175.0
 
 * A prediction interval for a new group (`interval = "prediction"`) is

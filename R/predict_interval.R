@@ -41,8 +41,9 @@ random_within <- function(spec, param, key) {
 #' variance is that prior's, at the hyperparameters the fit reached; the
 #' uncertainty of those hyperparameters is not propagated, which the page of
 #' [predict.StatmodFit()] states. A prior that is not Gaussian has no
-#' covariance to read here and is rejected by name; a prediction interval
-#' reaches such a prior through [predictive_mixture()] instead.
+#' covariance to read here and is rejected by name; a group interval and a
+#' prediction interval reach such a prior through [predictive_mixture()]
+#' instead.
 #'
 #' Where a label ties terms together, the prior is one multivariate Gaussian
 #' over the coordinates of all of them, and every member has to be set aside:

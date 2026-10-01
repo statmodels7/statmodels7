@@ -168,14 +168,22 @@ method on the fixed part, conditional on the prior's scale.
 the estimates alone. For a term set aside by \code{random} it is the
 interval of the typical group's value, which a new group's value
 falls outside of far more often than the level says.}
-\item{\code{"group"}}{the interval of a new group's parameter, with \code{random = "zero"} or \code{"marginal"}. The variance of its predictor is the
-estimates' plus the one a new group's effects add,
-\eqn{se^2 + z^\top \Sigma_b z}, in the parameter's own equation, so
-a random effect on \code{sigma} widens the interval for \code{sigma}. On the link
-scale this is the standard error glmmTMB reports at a new level. The
-interval is the predictor's, carried through the link; the fit stays
-what \code{random} asks for, the typical group's value or the population
-average. Implies \code{se = TRUE}.}
+\item{\code{"group"}}{the interval of a new group's parameter, with \code{random = "zero"} or \code{"marginal"}. A new group's parameter is
+\eqn{\theta^* = h^{-1}(\eta^*)}, with \eqn{\eta^*} the typical
+group's predictor plus its estimation error plus \eqn{z^\top b}, the
+effects of a new group drawn from the prior, in the parameter's own
+equation, so a random effect on \code{sigma} widens the interval for
+\code{sigma}. Under Gaussian priors the variance of \eqn{\eta^*} is
+\eqn{se^2 + z^\top \Sigma_b z}, the standard error glmmTMB reports at
+a new level on the link scale. The interval's ends are quantiles of
+\eqn{\eta^*} carried through the inverse link, which is monotone, so
+they are the quantiles of \eqn{\theta^*} under any link; under a prior
+that is not Gaussian they are the quantiles of the mixture of
+\code{\link[=predictive_mixture]{predictive_mixture()}}. The standard error is the standard deviation
+of \eqn{\theta^*}, not the delta method, and is \code{NA} where it is not
+known to exist (see \code{\link[=group_interval]{group_interval()}}). The fit is the typical
+group's value under \code{random = "zero"} and the population average
+under \code{"marginal"}. Implies \code{se = TRUE}.}
 \item{\code{"prediction"}}{an interval for a new observation of the response,
 with \code{what = "response"}. The family is averaged over the predictors of
 every parameter, taken jointly Gaussian -- correlated across equations
@@ -232,11 +240,10 @@ group's predictor is covered 0.898 of the time over 10 groups and 0.943
 over 40 by \code{"group"}, and a new observation 0.939 and 0.951 by
 \code{"prediction"}, where the confidence interval of the typical group covers
 0.45 and 0.26; on a Poisson response the same read 0.909 and 0.937 and,
-the support being discrete, 0.975 and 0.976. For \code{interval = "group"}
-a prior that is not Gaussian has no covariance to read and is rejected;
-\code{interval = "prediction"} reads its quantiles instead, a Student t
-prior as a scale mixture of Gaussians and any other prior by Monte
-Carlo (see \code{\link[=predictive_mixture]{predictive_mixture()}}). A term that shares a label with an
+the support being discrete, 0.975 and 0.976. Under a prior that is not
+Gaussian both \code{interval = "group"} and \code{interval = "prediction"} read
+its quantiles, a Student t prior as a scale mixture of Gaussians and any
+other prior by Monte Carlo (see \code{\link[=predictive_mixture]{predictive_mixture()}}). A term that shares a label with an
 effect read with its own estimate, or with one written inside a
 subformula, is rejected.
 

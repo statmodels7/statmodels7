@@ -30,8 +30,9 @@ A new group's effect is drawn from the prior the fit estimated, so its
 variance is that prior's, at the hyperparameters the fit reached; the
 uncertainty of those hyperparameters is not propagated, which the page of
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} states. A prior that is not Gaussian has no
-covariance to read here and is rejected by name; a prediction interval
-reaches such a prior through \code{\link[=predictive_mixture]{predictive_mixture()}} instead.
+covariance to read here and is rejected by name; a group interval and a
+prediction interval reach such a prior through \code{\link[=predictive_mixture]{predictive_mixture()}}
+instead.
 
 Where a label ties terms together, the prior is one multivariate Gaussian
 over the coordinates of all of them, and every member has to be set aside:
