@@ -14,10 +14,13 @@ random_nodes(priors, nsim = 10000L)
 \value{
 A list with \code{b}, one matrix per prior with a row per node and a
 column per coordinate, and \code{w}, the weights, summing to one.
+For one univariate prior that is not Gaussian, a list with \code{quad}, that
+prior.
 }
 \description{
 A product Gauss-Hermite grid where every prior is Gaussian and the total
-dimension is at most three, Monte Carlo draws otherwise.
+dimension is at most three; the prior itself, for \code{\link[=marginal_quad]{marginal_quad()}}, where
+the only prior is univariate and not Gaussian; Monte Carlo draws otherwise.
 }
 \details{
 The grid has \eqn{\min(40, \lfloor 8000^{1/D}\rfloor)} nodes per

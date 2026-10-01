@@ -140,7 +140,8 @@ random_prior <- function(spec, design, fit, param, key) {
 #'
 #' @description
 #' A product Gauss-Hermite grid where every prior is Gaussian and the total
-#' dimension is at most three, Monte Carlo draws otherwise.
+#' dimension is at most three; the prior itself, for [marginal_quad()], where
+#' the only prior is univariate and not Gaussian; Monte Carlo draws otherwise.
 #'
 #' @details
 #' The grid has \eqn{\min(40, \lfloor 8000^{1/D}\rfloor)} nodes per
@@ -157,9 +158,19 @@ random_prior <- function(spec, design, fit, param, key) {
 #'
 #' @return A list with `b`, one matrix per prior with a row per node and a
 #'   column per coordinate, and `w`, the weights, summing to one.
+#'   For one univariate prior that is not Gaussian, a list with `quad`, that
+#'   prior.
 #'
 #' @keywords internal
 random_nodes <- function(priors, nsim = 10000L) {
+  # ONE UNIVARIATE PRIOR THAT IS NOT GAUSSIAN is integrated exactly, by
+  # adaptive quadrature against its own density, rather than by draws: on a
+  # logit with a Student t prior 10000 draws were 3e-3 out
+  if (length(priors) == 1L && !priors[[1L]]$gaussian &&
+      priors[[1L]]$dim == 1L &&
+      "parent" %in% S7::prop_names(priors[[1L]]$pen)) {
+    return(list(quad = priors[[1L]]))
+  }
   D <- sum(vapply(priors, `[[`, integer(1), "dim"))
   gauss <- all(vapply(priors, `[[`, logical(1), "gaussian"))
   if (gauss && D <= 3L) {
@@ -280,6 +291,10 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
                           "parameter (%s),\n  \"parameter\", \"mean\", ",
                           "\"variance\", \"std_dev\" or a predictor."),
                    what, paste(params, collapse = ", ")), call. = FALSE)
+  if (!is.null(nodes$quad)) {
+    return(marginal_quad(spec, eta0, Zs[[1L]], mt$param[1L], nodes$quad,
+                         what, kind, inv))
+  }
   acc <- stats::setNames(lapply(params, function(p) numeric(n)), params)
   m1 <- m2 <- v1 <- numeric(n)
   for (k in seq_along(nodes$w)) {
@@ -302,6 +317,23 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
       }
     }
   }
+  # A PREDICTOR WHOSE DOMAIN IS NOT THE WHOLE LINE (square root, inverse)
+  # leaves it with positive probability under a Gaussian effect, and there the
+  # average over new groups does not exist: E[1/(eta0 + u)] is infinite for a
+  # Gaussian u. Where that probability is negligible the average over the
+  # nodes is the meaningful number; above 1e-8 it is reported as NA.
+  checked <- switch(kind, param = intersect(what, mt$param),
+                    unique(mt$param))
+  for (p in checked) {
+    bad <- marginal_out_of_domain(links[[p]], eta0[[p]], Zs, nodes,
+                                  which(mt$param == p))
+    if (!any(bad)) next
+    if (kind == "moment") {
+      m1[bad] <- m2[bad] <- v1[bad] <- NA_real_
+    } else {
+      acc[[p]][bad] <- NA_real_
+    }
+  }
   switch(kind,
          param = acc[[what]],
          all = acc,
@@ -309,4 +341,117 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
                          mean = m1,
                          variance = v1 + m2 - m1^2,
                          std_dev = sqrt(v1 + m2 - m1^2)))
+}
+
+
+#' Rows Where a New Group's Predictor Leaves the Domain of Its Link
+#'
+#' @description
+#' A predictor whose domain is not the whole line (the square root and
+#' inverse links) leaves it with positive probability under a Gaussian
+#' effect, and there the average over new groups does not exist:
+#' \eqn{E[1/(\eta_0 + u)]} is infinite for a Gaussian \eqn{u}. Where that
+#' probability is below 1e-8 the average over the nodes is the meaningful
+#' number; above it the row is reported as `NA`, with a warning.
+#'
+#' @details
+#' The variance of the effects' contribution at each row is read off the
+#' nodes, \eqn{\sum_k w_k (z^\top b_k)^2}, which a Gauss-Hermite grid gives
+#' exactly, the effects having mean zero.
+#'
+#' @param link The parameter's link.
+#' @param eta0 The predictor at the fixed part, one value a row.
+#' @param Zs The within-group rows of the marginal terms.
+#' @param nodes What [random_nodes()] returns.
+#' @param idx The marginal terms in this parameter's equation.
+#'
+#' @return A logical vector, `TRUE` at a row to report as `NA`.
+#'
+#' @keywords internal
+marginal_out_of_domain <- function(link, eta0, Zs, nodes, idx) {
+  n <- length(eta0)
+  eb <- linkfunctions7::eta_bounds(link)
+  if (!any(is.finite(eb)) || is.null(nodes$w)) return(rep(FALSE, n))
+  v <- numeric(n)
+  for (k in seq_along(nodes$w)) {
+    add <- numeric(n)
+    for (i in idx) add <- add + as.numeric(Zs[[i]] %*% nodes$b[[i]][k, ])
+    v <- v + nodes$w[k] * add^2
+  }
+  s <- sqrt(v)
+  pr <- ifelse(s > 0,
+               stats::pnorm((eb[1L] - eta0) / s) +
+                 stats::pnorm((eta0 - eb[2L]) / s),
+               as.numeric(eta0 <= eb[1L] | eta0 >= eb[2L]))
+  bad <- pr > 1e-8
+  if (any(bad)) {
+    warning(sprintf(paste0("A new group's predictor leaves the domain of the ",
+                           "%s link with probability up\n  to %.2g, so its ",
+                           "average over new groups does not exist there; ",
+                           "those rows are NA."), link@link_name,
+                    max(pr[bad])), call. = FALSE)
+  }
+  bad
+}
+
+
+#' A Marginal Prediction by Adaptive Quadrature Over One Univariate Prior
+#'
+#' @description
+#' The average over a new group's effect when the only effect set aside is
+#' one coordinate with a prior that is not Gaussian: each quantity is
+#' \eqn{\int q(\eta_0 + z u)\, f_b(u)\, du}, with \eqn{f_b} the prior's own
+#' density, computed by [numericals7::quad_vec()] over the rows at once.
+#'
+#' @details
+#' Measured on a Bernoulli with a logit link and a Student t prior, 10000
+#' Monte Carlo draws were 3e-3 out against `integrate()`; this is within the
+#' default tolerances of `quad_vec()`.
+#'
+#' @param spec The specification at the rows predicted.
+#' @param eta0 The predictors at the fixed part, a named list.
+#' @param Z The within-group column of the term, one value a row.
+#' @param param The parameter whose equation holds the term.
+#' @param prior What [random_prior()] returns for the term.
+#' @param what,kind What was asked for and its kind, as in
+#'   [random_marginal()].
+#' @param inv The inverse link or its derivative.
+#'
+#' @return As [random_marginal()].
+#'
+#' @keywords internal
+marginal_quad <- function(spec, eta0, Z, param, prior, what, kind, inv) {
+  params <- spec@distrib@params
+  links <- spec@distrib@link_params
+  n <- spec@n_obs
+  Z <- rep_len(as.numeric(Z), n)
+  par <- prior$pen@parent
+  th0 <- prior$theta
+  mom <- predict_moments()
+  theta_at <- function(x, i) {
+    stats::setNames(lapply(params, function(p) {
+      e <- eta0[[p]][i]
+      if (identical(p, param)) e <- e + Z[i] * x
+      as.numeric(inv(links[[p]], e))
+    }), params)
+  }
+  integral <- function(q) {
+    f <- function(x, i) {
+      xv <- as.vector(x)
+      ii <- rep(i, length.out = length(xv))
+      dens <- as.numeric(distributions7::distrib_pdf(par, xv, th0))
+      dens * q(theta_at(xv, ii))
+    }
+    numericals7::quad_vec(f, -Inf, rep(Inf, n))
+  }
+  if (kind == "param") return(integral(function(th) th[[what]]))
+  if (kind == "all") {
+    return(stats::setNames(lapply(params, function(p)
+      integral(function(th) th[[p]])), params))
+  }
+  m1 <- integral(function(th) mom[["mean"]](spec@distrib, th))
+  if (what == "mean") return(m1)
+  m2 <- integral(function(th) mom[["mean"]](spec@distrib, th)^2)
+  v1 <- integral(function(th) mom[["variance"]](spec@distrib, th))
+  switch(what, variance = v1 + m2 - m1^2, std_dev = sqrt(v1 + m2 - m1^2))
 }

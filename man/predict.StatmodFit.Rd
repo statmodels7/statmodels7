@@ -151,11 +151,17 @@ so a random effect on the scale enters the marginal variance of the
 response.
 
 The average is a Gauss-Hermite product grid where every prior is Gaussian
-and there are at most three coordinates in all, and 10000 draws from the
-prior otherwise, on a seed of their own. A prior that is not Gaussian is
-integrated only where the inverse link is bounded: a Student t has no
-moment generating function, so under a log link the average does not
-exist, and such a request signals an error. A term that shares a covariance
+and there are at most three coordinates in all; adaptive quadrature
+against the prior's density (\code{\link[numericals7:quad_vec]{numericals7::quad_vec()}}) where the only
+effect set aside is one coordinate with a prior that is not Gaussian; and
+10000 draws from the priors otherwise, on a seed of their own. A prior that
+is not Gaussian is integrated only where the inverse link is bounded: a
+Student t has no moment generating function, so under a log link the
+average does not exist, and such a request signals an error. Under a link
+whose predictor has a restricted domain (the square root and inverse
+links) the average does not exist either, since a Gaussian effect leaves
+the domain with positive probability; it is reported where that
+probability is below 1e-8 and is \code{NA}, with a warning, elsewhere. A term that shares a covariance
 with others through a label has no prior of its own and is read at
 \code{"zero"} only. The standard error of a marginal parameter is the delta
 method on the fixed part, conditional on the prior's scale.

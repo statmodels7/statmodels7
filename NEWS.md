@@ -1,3 +1,26 @@
+# statmodels7 0.177.0
+
+* `predict(random = "marginal")` averages over one univariate prior that is
+  not Gaussian by adaptive quadrature against the prior's own density
+  (`numericals7::quad_vec()`), where it took 10000 Monte Carlo draws: on a
+  Bernoulli with a logit link and a Student t prior the draws were 3e-3 out
+  against `integrate()`, and the average now agrees to 2e-16. The parameter,
+  its interval and standard error, and the moments of the response all go
+  through it. Several priors, or a prior over several coordinates, keep the
+  draws.
+* Under a link whose predictor has a restricted domain (the square root and
+  the inverse links) the average over new groups does not exist, a Gaussian
+  effect leaving the domain with positive probability: \eqn{E[1/(\eta_0 + u)]}
+  is infinite. It was returned as a finite number; it is now reported where
+  that probability is below 1e-8 (on a Gamma with an inverse link it was
+  1e-32, and the number is the meaningful one) and is `NA` with a warning
+  elsewhere. Under a Gaussian prior every other link was already exact:
+  measured against `integrate()` or the closed forms, 2e-15 (probit,
+  \eqn{\Phi(\eta_0/\sqrt{1 + \tau^2})}), 1.5e-15 (cloglog), 3e-9 (cauchit),
+  1e-15 (softplus) and 1e-15 (square root, \eqn{\eta_0^2 + \tau^2}).
+* New internal functions `marginal_quad()` and `marginal_out_of_domain()`;
+  `test-marginal-links.R`.
+
 # statmodels7 0.176.0
 
 * The standard error of `predict(interval = "group")` is the standard
