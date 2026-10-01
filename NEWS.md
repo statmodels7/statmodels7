@@ -1,3 +1,24 @@
+# statmodels7 0.179.0
+
+* `iwls(hessian = "auto")` settled on the expected information (a family
+  whose expected information is exact) continues on the observed information
+  after `iwls_switch_after()` = 10 scoring steps without convergence, the
+  expected information standing in where the observed one cannot step.
+  Fisher scoring converges only linearly near the mode where the two
+  informations differ, which they do whenever the dispersion has an equation
+  of its own. Measured on `ChickWeight`, a gaussian with smooths in the mean
+  and in sigma: the first inner fit needed 235 scoring steps, the budget is
+  100, and the REML criterion was unavailable at its start; it now converges
+  in 0.8 s. With random intercepts on the chicks in both equations the fit
+  stopped, certificate `unknown`, at a REML criterion of -2417.314 with the
+  standard deviation of the intercepts at 0.028; it now reaches -2416.533 and
+  0.685, glmmTMB's 0.6846, in 9.6 s against 19.0. With smooths and random
+  intercepts in both equations, 13.7 s against 36.6 at the same point. A run
+  that converges within ten steps is unchanged bit for bit.
+* `Iwls` gains the property `switch_after`; `iwls_fit()` takes `switch_at`
+  and `switch_after` and returns `switched`, the iteration at which a run
+  moved to the observed information.
+
 # statmodels7 0.178.0
 
 * `predict(interval = "prediction")` for a new group under one univariate

@@ -16,7 +16,9 @@ iwls_fit(
   backup_at = NULL,
   damp_on_reject = TRUE,
   kinks_at = NULL,
-  newton_at = NULL
+  newton_at = NULL,
+  switch_at = NULL,
+  switch_after = Inf
 )
 }
 \arguments{
@@ -74,10 +76,19 @@ term a block moving with its coefficients adds. Where the scoring step
 is rejected or shrunk below a tenth, the Newton step on it is tried by
 \code{\link[=iwls_newton_step]{iwls_newton_step()}} and the one that decreases the objective more is
 taken.}
+
+\item{switch_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
+on the observed information. After \code{switch_after} iterations without
+convergence it takes the place of \code{pieces_at}, and \code{pieces_at} that of
+\code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method \code{\link[=iwls_resolve]{iwls_resolve()}}
+settled on the expected information from \code{"auto"}.}
+
+\item{switch_after}{The iteration after which \code{switch_at} takes over.}
 }
 \value{
-A list of nine: the six below; \code{note}, the reason a run stopped or
-\code{NULL}; \code{aliased}, the coordinates the pivot left out; and \code{fallback}, a
+A list of ten: the six below; \code{note}, the reason a run stopped or
+\code{NULL}; \code{aliased}, the coordinates the pivot left out; \code{switched}, the
+iteration at which the run moved to \code{switch_at}, or 0; and \code{fallback}, a
 named integer vector counting the iterations at which the expected pieces
 stepped in for a curvature that was not positive definite (\code{indefinite})
 or for a step that found no acceptable point (\code{search}), the trial

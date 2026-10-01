@@ -1593,6 +1593,22 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
         subset_pieces(spec, design, obj$split(v), hyper, m_exp, idx)
       }
     }
+    # AND THE OBSERVED INFORMATION TAKES OVER from the expected one after
+    # iwls_switch_after() scoring steps, on a method iwls_resolve() settled on
+    # the expected information from "auto": see iwls_fit()
+    switch_at <- NULL
+    sw <- method@switch_after
+    if (identical(method@hessian, "expected") && length(sw) && is.finite(sw)) {
+      m_obs <- method
+      m_obs@hessian <- "observed"
+      m_obs@switch_after <- Inf
+      switch_at <- function(b) {
+        v <- beta
+        v[idx] <- b
+        if (whole) return(iwls_pieces(spec, design, obj$split(v), hyper, m_obs))
+        subset_pieces(spec, design, obj$split(v), hyper, m_obs, idx)
+      }
+    }
     # WHERE A SHARP BREAK-POINT SITS ON AN OBSERVATION the objective has a
     # kink, and iwls_fit() holds the coordinates that move it once a line
     # search rejects every step: see there
@@ -1638,7 +1654,9 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
                     verbose = vb$inner, groups = groups, frozen = frozen,
                     backup_at = backup_at,
                     damp_on_reject = !has_sharp_breakpoint(spec),
-                    kinks_at = kinks_at, newton_at = newton_at)
+                    kinks_at = kinks_at, newton_at = newton_at,
+                    switch_at = switch_at,
+                    switch_after = if (is.null(switch_at)) Inf else sw)
     out <- beta
     out[idx] <- res$par
     # the block was solved in its own numbering, so the aliased coordinates

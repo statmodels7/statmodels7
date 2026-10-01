@@ -27,6 +27,11 @@ NULL
 #'   the step wherever the observed penalized information is not positive
 #'   definite or its step finds no acceptable point. [iwls_resolve()] sets it,
 #'   for `"auto"` on a family whose expected information is not exact.
+#' @param switch_after A single number: the iteration after which a run on
+#'   the expected information continues on the observed one, the expected
+#'   then taking the step only where the observed cannot. `Inf` never
+#'   switches. [iwls_resolve()] sets it, for `"auto"` on a family whose
+#'   expected information is exact, to [iwls_switch_after()].
 #'
 #' @return An object of class `Iwls` with one property per argument above,
 #'   each holding what was passed.
@@ -50,7 +55,8 @@ Iwls <- S7::new_class("Iwls",
     tol = S7::class_numeric,
     criterion = S7::class_any,
     step_halving = S7::class_numeric,
-    fallback = S7::class_logical
+    fallback = S7::class_logical,
+    switch_after = S7::class_numeric
   )
 )
 
@@ -94,6 +100,19 @@ Iwls <- S7::new_class("Iwls",
 #' median time between 0.17 and 0.98 of the approximation's per family. The
 #' fit records the settled method, so `fit@methods$smooth` says which
 #' curvature ran.
+#'
+#' On a family whose expected information is exact, a run that has not
+#' converged after [iwls_switch_after()] scoring steps continues on the
+#' observed information, the expected one standing in where the observed
+#' cannot step. Fisher scoring converges only linearly near the mode wherever
+#' the two informations differ there, which they do whenever the dispersion
+#' has an equation of its own. Measured on `ChickWeight` with smooths in the
+#' mean and in \eqn{\sigma}, the first inner fit needed 235 scoring steps and
+#' the REML criterion was unavailable at its start; with random intercepts in
+#' both equations the fit stopped at a REML criterion 0.78 below the maximum,
+#' with the standard deviation of the chicks' intercepts at 0.028 where it is
+#' 0.685. With the switch both converge, and a run that converges within the
+#' first ten steps is unchanged.
 #'
 #' `approx` reaches \pkg{distributions7} and is read only where the family
 #' has no closed expected information; elsewhere the family's own method
@@ -234,7 +253,8 @@ iwls <- function(hessian = c("auto", "expected", "observed"),
   }
   Iwls(hessian = hessian, approx = approx, decomposition = decomposition,
        maxit = as.numeric(maxit), tol = tol, criterion = criterion,
-       step_halving = as.numeric(step_halving), fallback = FALSE)
+       step_halving = as.numeric(step_halving), fallback = FALSE,
+       switch_after = Inf)
 }
 
 #' @export
@@ -243,7 +263,11 @@ iwls <- function(hessian = c("auto", "expected", "observed"),
 #' @rdname iwls
 print.Iwls <- function(x, ...) {
   cat(sprintf("iwls: %s information%s, %s\n", x@hessian,
-              if (isTRUE(x@fallback)) " (the expected where it cannot step)" else "",
+              if (isTRUE(x@fallback)) " (the expected where it cannot step)"
+              else if (length(x@switch_after) && is.finite(x@switch_after))
+                sprintf(" (the observed after %d iterations)",
+                        as.integer(x@switch_after))
+              else "",
               x@decomposition))
   cat(sprintf("  maxit %d, %s\n", as.integer(x@maxit),
               if (is.null(x@criterion)) sprintf("tol %g", x@tol)
@@ -303,14 +327,42 @@ S7::method(print, Iwls) <- print.Iwls
 iwls_resolve <- function(method, distrib) {
   if (!identical(method@hessian, "auto")) {
     if (!length(method@fallback)) method@fallback <- FALSE
+    if (!length(method@switch_after)) method@switch_after <- Inf
     return(method)
   }
   exact <- distributions7::expected_hessian_exact(distrib) &&
     !distributions7::expected_hessian_costly(distrib)
   method@hessian <- if (exact) "expected" else "observed"
   method@fallback <- !exact
+  method@switch_after <- if (exact) iwls_switch_after() else Inf
   method
 }
+
+
+#' When a Run on the Expected Information Continues on the Observed One
+#'
+#' @description
+#' The iteration after which an [iwls()] left at `hessian = "auto"`, and
+#' settled on the expected information, continues on the observed
+#' information.
+#'
+#' @details
+#' Fisher scoring is robust far from the mode, the expected information being
+#' positive definite wherever the family is defined, and it converges only
+#' linearly near the mode wherever the expected and the observed information
+#' differ there -- which they do for every model whose dispersion has an
+#' equation of its own. Newton's step converges quadratically near the mode.
+#' A run that has not converged after this many scoring steps is near enough
+#' for the second to pay, and the expected information still takes the step
+#' wherever the observed penalized information is not positive definite or
+#' its step finds no acceptable point.
+#'
+#' @return A single number.
+#'
+#' @seealso [iwls_resolve()], [iwls_fit()].
+#'
+#' @keywords internal
+iwls_switch_after <- function() 10
 
 
 #' Solve One Weighted Least Squares Step
@@ -665,9 +717,16 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   is rejected or shrunk below a tenth, the Newton step on it is tried by
 #'   [iwls_newton_step()] and the one that decreases the objective more is
 #'   taken.
+#' @param switch_at `NULL`, or a function like `pieces_at` building the pieces
+#'   on the observed information. After `switch_after` iterations without
+#'   convergence it takes the place of `pieces_at`, and `pieces_at` that of
+#'   `backup_at`. [fit_smooth()] passes one for a method [iwls_resolve()]
+#'   settled on the expected information from `"auto"`.
+#' @param switch_after The iteration after which `switch_at` takes over.
 #'
-#' @return A list of nine: the six below; `note`, the reason a run stopped or
-#'   `NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
+#' @return A list of ten: the six below; `note`, the reason a run stopped or
+#'   `NULL`; `aliased`, the coordinates the pivot left out; `switched`, the
+#'   iteration at which the run moved to `switch_at`, or 0; and `fallback`, a
 #'   named integer vector counting the iterations at which the expected pieces
 #'   stepped in for a curvature that was not positive definite (`indefinite`)
 #'   or for a step that found no acceptable point (`search`), the trial
@@ -693,8 +752,12 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                      groups = NULL, frozen = integer(0), backup_at = NULL,
                      damp_on_reject = TRUE, kinks_at = NULL,
-                     newton_at = NULL) {
+                     newton_at = NULL, switch_at = NULL,
+                     switch_after = Inf) {
   beta <- start
+  # the iteration at which the run moved to the observed information, 0 if
+  # it never did
+  switched <- 0L
   value <- obj$fn(beta)
   hist <- list()
   # a run that stops before its first solve has dropped nothing
@@ -727,6 +790,20 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
                 "step"))
   }
   for (it in seq_len(as.integer(method@maxit))) {
+    # FISHER SCORING YIELDS TO NEWTON once it has taken `switch_after` steps
+    # without converging. It converges only linearly near the mode wherever
+    # the two informations differ there, which they do for every dispersion
+    # with an equation of its own: measured on a gaussian with smooths in the
+    # mean and in sigma, the first inner fit needed 235 scoring steps and the
+    # REML criterion was unavailable at its start at the budget of 100. From
+    # here the observed information takes the step and the expected one
+    # stands in wherever the observed cannot, as on a family whose expected
+    # information is not exact.
+    if (!switched && !is.null(switch_at) && it > switch_after) {
+      backup_at <- pieces_at
+      pieces_at <- switch_at
+      switched <- it
+    }
     g <- obj$gr(beta)
     # THE VERDICT READS THE FREE COORDINATES. A coordinate the caller holds
     # keeps whatever score the constrained optimum leaves in its direction --
@@ -1001,7 +1078,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   }
   list(par = beta, value = value, converged = converged,
        iterations = it, score = score, note = note, aliased = aliased,
-       fallback = fallback,
+       fallback = fallback, switched = switched,
        history = if (length(hist)) do.call(rbind, hist) else NULL)
 }
 

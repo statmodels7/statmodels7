@@ -13,7 +13,8 @@ Iwls(
   tol = integer(0),
   criterion = NULL,
   step_halving = integer(0),
-  fallback = logical(0)
+  fallback = logical(0),
+  switch_after = integer(0)
 )
 }
 \arguments{
@@ -41,6 +42,12 @@ abandoned, a single non-negative number.}
 the step wherever the observed penalized information is not positive
 definite or its step finds no acceptable point. \code{\link[=iwls_resolve]{iwls_resolve()}} sets it,
 for \code{"auto"} on a family whose expected information is not exact.}
+
+\item{switch_after}{A single number: the iteration after which a run on
+the expected information continues on the observed one, the expected
+then taking the step only where the observed cannot. \code{Inf} never
+switches. \code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{"auto"} on a family whose
+expected information is exact, to \code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
 }
 \value{
 An object of class \code{Iwls} with one property per argument above,

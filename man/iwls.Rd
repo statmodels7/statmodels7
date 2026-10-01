@@ -82,6 +82,19 @@ median time between 0.17 and 0.98 of the approximation's per family. The
 fit records the settled method, so \code{fit@methods$smooth} says which
 curvature ran.
 
+On a family whose expected information is exact, a run that has not
+converged after \code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps continues on the
+observed information, the expected one standing in where the observed
+cannot step. Fisher scoring converges only linearly near the mode wherever
+the two informations differ there, which they do whenever the dispersion
+has an equation of its own. Measured on \code{ChickWeight} with smooths in the
+mean and in \eqn{\sigma}, the first inner fit needed 235 scoring steps and
+the REML criterion was unavailable at its start; with random intercepts in
+both equations the fit stopped at a REML criterion 0.78 below the maximum,
+with the standard deviation of the chicks' intercepts at 0.028 where it is
+0.685. With the switch both converge, and a run that converges within the
+first ten steps is unchanged.
+
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information; elsewhere the family's own method
 answers and the argument does not enter. It is accepted rather than
