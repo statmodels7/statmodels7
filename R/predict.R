@@ -675,9 +675,9 @@ predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
     }
     if (length(key) && all(key %in% rownames(V))) {
       Vp <- as.matrix(V[key, key, drop = FALSE])
-      if (nrow(X) == n && all(is.finite(Vp))) {
-        v <- rowSums((X %*% Vp) * X)
-        v[v < 0] <- 0
+      if (nrow(X) == n) {
+        v <- row_quad(X, Vp, X)
+        v[!is.na(v) & v < 0] <- 0
       }
     }
     se_eta <- sqrt(v)

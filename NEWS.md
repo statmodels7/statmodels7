@@ -1,3 +1,34 @@
+# statmodels7 0.178.0
+
+* `predict(interval = "prediction")` for a new group under one univariate
+  prior that is neither Gaussian nor a Student t (a logistic, a Laplace, a
+  Cauchy) integrates over the prior's own quantiles, \eqn{b_k = Q((k -
+  1/2)/K)} with \eqn{K = 1000}, where it took 5000 random draws, so the
+  interval does not depend on the seed. Measured on the simulated data of the
+  book's chapter 7 against `integrate()`, with the estimates held fixed: the
+  ends are 3.5e-6 from the exact ones on a logistic prior (the draws moved
+  them by 0.05 between seeds and were up to 0.12 away), 1e-11 on a Cauchy
+  (0.61) and 1.3e-4 on a Laplace, whose kink at zero slows the rule (0.004);
+  on a Poisson response the integer ends are exact, where the draws missed
+  the upper end by one on some seeds. The cost: 0.02 to 0.05 s with
+  `predictive = "plugin"`, against 0.13 to 0.20 s, and 0.8 to 1.2 s with the
+  default `"averaged"`, against 0.2 s, each node carrying the Gaussian error
+  of the estimates. `interval = "group"` uses the same 1000 nodes, where it
+  used 2000.
+* The standard deviation of a new observation is `NA` under a prior whose
+  family reports no finite variance (a Cauchy), as it was under a Student t
+  with \eqn{\nu \le 2}: the draws returned a finite number with a standard
+  deviation of 34 between seeds.
+* Under a prior with a kink (a Laplace), `predict(se = TRUE)` returned `NA`
+  even for the typical group, and so did the averaged prediction interval and
+  the group interval. The random effects the kink holds at zero have no
+  variance, and a row was blanked when any entry of the variance block was
+  missing, whether its design reached that coefficient or not.
+  `row_quad()` blanks a row only where both its coefficients reach a missing
+  entry.
+* New internal functions `row_quad()` and `prior_infinite_variance()`;
+  `predictive_mixture()` takes `n_nodes`.
+
 # statmodels7 0.177.0
 
 * `predict(random = "marginal")` averages over one univariate prior that is

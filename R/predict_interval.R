@@ -181,9 +181,7 @@ predictive_cov <- function(object, spec, design, blocks, fixed = TRUE, ...) {
       v <- rep(NA_real_, n)
       if (all(c(ka, kb) %in% rownames(V))) {
         Vab <- as.matrix(V[ka, kb, drop = FALSE])
-        if (all(is.finite(Vab))) {
-          v <- rowSums((as.matrix(da$X) %*% Vab) * as.matrix(db$X))
-        }
+        v <- row_quad(as.matrix(da$X), Vab, as.matrix(db$X))
       }
       fx[a, b, ] <- v
       fx[b, a, ] <- v
@@ -508,4 +506,41 @@ predictive_response <- function(spec, comps, level) {
 theta_fill <- function(v) {
   f <- v[is.finite(v)]
   if (length(f)) f[[1L]] else 1
+}
+
+
+#' A Quadratic Form Row by Row, Where the Variance Has Missing Entries
+#'
+#' @description
+#' \eqn{x_{ia}^\top V x_{ib}} for every row \eqn{i}, with the entries of
+#' \eqn{V} that are not finite read as missing: a row is `NA` only where it
+#' reaches one of them, that is where both its coefficient in \eqn{x_a} and
+#' its coefficient in \eqn{x_b} are non-zero.
+#'
+#' @details
+#' A coefficient a kinked prior holds at its kink, such as a random effect
+#' under a Laplace prior estimated at exactly zero, has no variance, and
+#' [vcov.StatmodFit()] reports `NA` there. A prediction whose design does not
+#' reach that coefficient, the typical group's under `random = "zero"` for
+#' one, has a standard error all the same; requiring every entry of the block
+#' to be finite made it `NA` as well.
+#'
+#' @param Xa,Xb Matrices with a row per observation and a column per
+#'   coefficient of the two blocks.
+#' @param V The block of the variance matrix, rows for `Xa` and columns for
+#'   `Xb`.
+#'
+#' @return A numeric vector, one value a row.
+#'
+#' @keywords internal
+row_quad <- function(Xa, V, Xb) {
+  bad <- !is.finite(V)
+  V0 <- V
+  V0[bad] <- 0
+  v <- rowSums((Xa %*% V0) * Xb)
+  if (any(bad)) {
+    hit <- rowSums(((Xa != 0) * 1) %*% (bad * 1) * ((Xb != 0) * 1)) > 0
+    v[hit] <- NA_real_
+  }
+  v
 }

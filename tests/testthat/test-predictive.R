@@ -125,7 +125,7 @@ test_that("a new group under a Student t prior is a scale mixture", {
   expect_lt(abs(Fy(p$upper) - 0.975), 1e-4)
 })
 
-test_that("a new group under another prior is averaged by Monte Carlo", {
+test_that("a new group under another prior is integrated on its quantiles", {
   set.seed(8)
   gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
   gg$y <- 1 + gg$x + rnorm(12)[gg$g] + rnorm(60, sd = 0.4)
@@ -136,15 +136,56 @@ test_that("a new group under another prior is averaged by Monte Carlo", {
   set.seed(1)
   p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
                predictive = "plugin")
+  set.seed(2)
+  p2 <- predict(fit, "response", nw, random = "zero", interval = "prediction",
+                predictive = "plugin")
+  # nodes and not draws: the seed does not move the interval
+  expect_identical(p, p2)
   sb <- fit@hyper$mu[[1]][["sigma"]]
   m <- predict(fit, "mu", nw, random = "zero")
   s <- predict(fit, "sigma", nw, random = "zero")
-  set.seed(2)
-  k <- 2e5
-  yb <- m + stats::rexp(k, 1 / sb) * sample(c(-1, 1), k, TRUE) +
-    stats::rnorm(k, 0, s)
-  expect_equal(c(p$lower, p$upper),
-               unname(stats::quantile(yb, c(0.025, 0.975))), tolerance = 0.03)
+  G <- function(y) stats::integrate(function(b)
+    stats::pnorm((y - m - b) / s) * exp(-abs(b) / sb) / (2 * sb),
+    -Inf, Inf, rel.tol = 1e-12)$value
+  # the kink of the Laplace density at zero slows the midpoint rule on the
+  # quantiles: 1000 nodes leave 1.3e-04 in the ends, 8e-06 in probability
+  expect_lt(abs(G(p$lower) - 0.025), 1e-4)
+  expect_lt(abs(G(p$upper) - 0.975), 1e-4)
+  # with the estimates averaged the coefficients the kink holds at zero have
+  # no variance, and the typical group does not reach them
+  pa <- predict(fit, "response", nw, random = "zero", interval = "prediction")
+  expect_true(all(is.finite(unlist(pa))))
+  expect_true(pa$upper - pa$lower > p$upper - p$lower)
+  expect_true(is.finite(predict(fit, "mu", nw, random = "zero", se = TRUE)$se))
+})
+
+test_that("a Cauchy prior gives exact ends and no standard deviation", {
+  set.seed(8)
+  gg <- data.frame(g = factor(rep(1:15, each = 6)), x = rnorm(90))
+  gg$y <- 1 + gg$x + 0.4 * stats::rcauchy(15)[gg$g] + rnorm(90, sd = 0.5)
+  cp <- distributions7::fixed(distributions7::cauchy_distrib(), mu = 0)
+  fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = cp),
+                                  distributions7::gaussian1_distrib(), gg))
+  nw <- data.frame(x = 0.5, g = "new")
+  p <- predict(fit, "response", nw, random = "zero", interval = "prediction",
+               predictive = "plugin")
+  sb <- fit@hyper$mu[[1]][["sigma"]]
+  m <- predict(fit, "mu", nw, random = "zero")
+  s <- predict(fit, "sigma", nw, random = "zero")
+  G <- function(y) stats::integrate(function(b)
+    stats::pnorm((y - m - b) / s) * stats::dcauchy(b, 0, sb),
+    -Inf, Inf, rel.tol = 1e-12)$value
+  expect_lt(abs(G(p$lower) - 0.025), 1e-6)
+  expect_lt(abs(G(p$upper) - 0.975), 1e-6)
+  expect_true(is.na(p$se))
+})
+
+test_that("a quadratic form reaches a missing variance only where it is used", {
+  V <- matrix(c(1, NA, NA, 2), 2)
+  X <- rbind(c(1, 0), c(1, 1))
+  v <- row_quad(X, V, X)
+  expect_equal(v[1], 1)
+  expect_true(is.na(v[2]))
 })
 
 test_that("a prior with no variance reports none", {

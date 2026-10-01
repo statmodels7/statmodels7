@@ -18,14 +18,21 @@ NULL
 #' so it gives one component per node of a trapezoidal rule in
 #' \eqn{\log w} ([gamma_nodes()]), each with the Gaussian covariance
 #' \eqn{z^\top\Sigma z/w} and the
-#' node's weight; two such terms give the product of the two rules. Any other
-#' prior (a Laplace, a prior shared by a label that is not Gaussian), or more
-#' than two Student t terms, is averaged by Monte Carlo: `n_draw` draws of a
+#' node's weight; two such terms give the product of the two rules. One
+#' univariate prior of another family (a logistic, a Laplace, a Cauchy) gives
+#' one component per quantile node, \eqn{b_k = Q((k - 1/2)/K)} with
+#' \eqn{K = 1000} ([group_quantile_nodes()]), so the result does not depend on
+#' the random seed: measured on a logistic prior the ends of the interval are
+#' 3.5e-6 from the exact ones, against 0.12 for 5000 draws, and on a Cauchy
+#' 1e-11 against 0.61. Any other prior (several such terms, a prior over
+#' several coordinates, a prior shared by a label that is not Gaussian), or
+#' more than two Student t terms, is averaged by Monte Carlo: `n_draw` draws of a
 #' new group's effects, from [penalties7::penalty_draw()] or from the scale
 #' mixture, each with a draw of the estimation error, so the interval
 #' depends on the random seed. The quantiles of the mixture exist whatever the
 #' prior; its standard deviation does not under a Student t with
-#' \eqn{\nu \le 2}, and the result carries the attribute
+#' \eqn{\nu \le 2} or a univariate prior whose family reports no finite
+#' variance (a Cauchy), and the result carries the attribute
 #' `infinite_variance` to say so.
 #'
 #' @param fit The [StatmodFit()] whose hyperparameters give the priors.
@@ -36,6 +43,8 @@ NULL
 #'   `P x P x n`, or `NULL` for none.
 #' @param weight The total weight of the components returned.
 #' @param n_draw The number of Monte Carlo draws, where they are needed.
+#' @param n_nodes The number of quantile nodes for one univariate prior that
+#'   is neither Gaussian nor a Student t ([group_quantile_nodes()]).
 #'
 #' @return A list of components, each a list with `eta`, `C` (an array or
 #'   `NULL`) and `weight`, with the attribute `infinite_variance`.
@@ -55,7 +64,8 @@ NULL
 #'
 #' @keywords internal
 predictive_mixture <- function(fit, spec, design, aside, eta, C0,
-                               weight = 1, n_draw = 5000L) {
+                               weight = 1, n_draw = 5000L,
+                               n_nodes = 1000L) {
   params <- spec@distrib@params
   P <- length(params)
   n <- spec@n_obs
@@ -63,7 +73,21 @@ predictive_mixture <- function(fit, spec, design, aside, eta, C0,
   base <- predictive_cov(fit, spec, design, parts$gaussian,
                          fixed = FALSE)$random
   if (!is.null(C0)) base <- base + C0
-  inf_var <- any(vapply(parts$t, function(tb) tb$nu <= 2, logical(1)))
+  inf_var <- any(vapply(parts$t, function(tb) tb$nu <= 2, logical(1))) ||
+    any(vapply(parts$other, prior_infinite_variance, logical(1)))
+  # ONE UNIVARIATE PRIOR of a family other than the Student t is integrated
+  # on its own quantiles, so the interval does not depend on the seed: on a
+  # logistic prior the ends of 5000 draws moved by 0.05 between seeds and
+  # were up to 0.12 from the exact ones, where 1000 nodes are 3.5e-6 away
+  qn <- group_quantile_nodes(spec, eta, base, parts, K = n_nodes)
+  if (!is.null(qn)) {
+    out <- lapply(qn, function(cc) {
+      cc$weight <- cc$weight * weight
+      cc
+    })
+    attr(out, "infinite_variance") <- inf_var
+    return(out)
+  }
   if (length(parts$other) || length(parts$t) > 2L) {
     out <- prior_mc(spec, eta, base, c(parts$t, parts$other), weight,
                     as.integer(n_draw))
@@ -385,4 +409,25 @@ prior_draw_groups <- function(pen, th, D, n_draw) {
     got <- got + nrow(m)
   }
   do.call(rbind, rows)[seq_len(n_draw), , drop = FALSE]
+}
+
+
+#' Whether a Prior Has No Finite Variance
+#'
+#' @param ob An entry of `other` from [prior_parts()].
+#'
+#' @return `TRUE` where the prior is univariate and the variance its family
+#'   reports is infinite or not a number (a Cauchy); `FALSE` otherwise,
+#'   including where no variance can be read.
+#'
+#' @keywords internal
+prior_infinite_variance <- function(ob) {
+  if (sum(ob$members$dim) != 1L ||
+      !"parent" %in% S7::prop_names(ob$penalty)) {
+    return(FALSE)
+  }
+  v <- tryCatch(as.numeric(distributions7::variance(ob$penalty@parent,
+                                                    ob$theta))[1L],
+                error = function(e) NULL)
+  !is.null(v) && !is.finite(v)
 }

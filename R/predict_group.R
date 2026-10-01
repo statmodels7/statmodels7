@@ -310,7 +310,7 @@ mixture_quantile <- function(M, S, W, p) {
 #' Where the only prior a new group's interval sets aside that is not
 #' Gaussian is one univariate prior of a family other than the Student t,
 #' the mixture over its effect is built from the prior's own quantiles,
-#' \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 2000} and equal weights, each
+#' \eqn{b_k = Q((k - 1/2)/K)} with \eqn{K = 1000} and equal weights, each
 #' node a Gaussian component carrying the estimation error and the Gaussian
 #' effects. The result does not depend on the random seed, where the Monte
 #' Carlo draws of [predictive_mixture()] give the ends of a group interval
@@ -328,7 +328,7 @@ mixture_quantile <- function(M, S, W, p) {
 #'   or `NULL` where the priors are of another kind.
 #'
 #' @keywords internal
-group_quantile_nodes <- function(spec, eta, base, parts, K = 2000L) {
+group_quantile_nodes <- function(spec, eta, base, parts, K = 1000L) {
   if (length(parts$t) || length(parts$other) != 1L) return(NULL)
   ob <- parts$other[[1L]]
   mem <- ob$members
