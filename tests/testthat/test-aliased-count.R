@@ -197,7 +197,9 @@ test_that("a summary prints where a selected column is not identified", {
   fm <- y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))
   f <- suppressWarnings(statmod(fm, distributions7::gaussian1_distrib(), dc))
   txt <- utils::capture.output(print(summary(f)))
-  expect_true(any(grepl("lasso.g1", txt, fixed = TRUE)))
+  # the rows of the lasso sit under its own heading, named by their columns
+  expect_true(any(grepl("lasso(~g)", txt, fixed = TRUE)))
+  expect_true(any(grepl("^ +g1 ", txt)))
   # the aliased one is not among the rows reported as selected
-  expect_false(any(grepl("lasso.g12", txt, fixed = TRUE)))
+  expect_false(any(grepl("^ +g12 ", txt)))
 })

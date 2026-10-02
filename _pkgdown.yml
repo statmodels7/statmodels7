@@ -73,6 +73,7 @@ reference:
     own.
   contents:
   - statmod_test
+  - statmod_breakpoint_test
 
 - title: Installing and updating
   desc: >

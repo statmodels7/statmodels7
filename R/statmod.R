@@ -514,15 +514,40 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   fit_once <- function(beta_start) {
     hyper <- hyper0
     spec_h <- spec
-    if (is.null(outer_criterion) && is.null(sparse_criterion)) {
+    # A criterion that cannot be read at its start because a break-point's
+    # working iteration has not converged there is read again after the
+    # positions are settled. Measured on segmented::globTempAnom with four
+    # changes of slope, the iteration stopped on two observed years and the
+    # REML criterion stopped the fit with an error; settled, the positions
+    # reach the profile's minimum and the criterion is read there.
+    deferred <- FALSE
+    if (!is.null(outer_criterion) && length(attr(design, "refresh"))) {
+      res <- tryCatch(
+        statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                       outer_criterion, outer_optimizer, beta_start,
+                       approx, maxit, tol, vb, data, weights, offsets,
+                       sparse_criterion),
+        error = function(e) e)
+      if (inherits(res, "error")) {
+        if (!grepl("unavailable at the starting hyperparameters",
+                   conditionMessage(res), fixed = TRUE)) {
+          stop(res)
+        }
+        deferred <- conditionMessage(res)
+      }
+    }
+    if (!isFALSE(deferred) ||
+        (is.null(outer_criterion) && is.null(sparse_criterion))) {
       res <- statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
                                beta_start, expected, approx, maxit, tol, vb)
       crit <- NA_real_
     } else {
-      res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                            outer_criterion, outer_optimizer, beta_start,
-                            approx, maxit, tol, vb, data, weights, offsets,
-                            sparse_criterion)
+      if (!length(attr(design, "refresh")) || is.null(outer_criterion)) {
+        res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                              outer_criterion, outer_optimizer, beta_start,
+                              approx, maxit, tol, vb, data, weights, offsets,
+                              sparse_criterion)
+      }
       hyper <- res$hyper
       crit <- res$criterion
       # the coefficients the criterion estimated stay where it put them in
@@ -592,11 +617,33 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       # on MASS::mcycle with a jseg in sigma's equation, the first round left the
       # break-point at the confinement limit, where the smoothing parameter had
       # been chosen, and the second moved it to the profile's minimum.
+      sg0 <- statmod_settle_seg(spec_h, design, blocks, hyper, inner_optimizer,
+                                res, expected, approx, maxit, tol, vb)
+      res <- sg0$res
       st0 <- statmod_settle_breakpoints(spec_h, design, blocks, hyper,
                                         inner_optimizer, res, expected, approx,
                                         maxit, tol, vb)
       res <- st0$res
-      if (round > 1L && !st0$moved) break
+      fresh <- !isFALSE(deferred)
+      if (fresh) {
+        # the criterion that could not be read at the start, read now
+        r2 <- tryCatch(
+          statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                         outer_criterion, outer_optimizer, res$par, approx,
+                         maxit, tol, vb, data, weights, offsets,
+                         sparse_criterion),
+          error = function(e) NULL)
+        if (is.null(r2)) stop(deferred, call. = FALSE)
+        deferred <- FALSE
+        res <- r2
+        hyper <- res$hyper
+        crit <- res$criterion
+        spec_h <- if (length(res$held_coef)) {
+          S7::set_props(spec, held_coef = res$held_coef)
+        } else spec
+        sg0$moved <- TRUE
+      }
+      if (round > 1L && !st0$moved && !sg0$moved) break
       # a held term is a Jacobian block from here on: its contribution is X beta
       # exactly, so it is fitted like any other block and the rules that apply
       # to a working linearization -- the working phase, and the refusal to put
@@ -623,8 +670,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
           length(marginal_coords(spec, design, crit_default)$where)) {
         outer_criterion <<- crit_default
       }
-      if (st0$settled && (!is.null(outer_criterion) ||
-                        !is.null(sparse_criterion))) {
+      if (!fresh && (st0$settled || sg0$moved) &&
+          (!is.null(outer_criterion) || !is.null(sparse_criterion))) {
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
                          outer_criterion, outer_optimizer, res$par, approx,
@@ -642,7 +689,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       }
       # with no criterion nothing changed the working response, so a second
       # round would read the same polish
-      if (!st0$settled ||
+      if ((!st0$settled && !sg0$moved) ||
           (is.null(outer_criterion) && is.null(sparse_criterion))) break
     }
     list(res = res, hyper = hyper, crit = crit, spec_h = spec_h)

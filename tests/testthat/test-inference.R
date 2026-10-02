@@ -810,7 +810,8 @@ test_that("a developed parameter is reported as a compartment of its own", {
   expect_match(cp$lines[[1L]], "^[0-9]+ predictions, sd")
 
   out <- paste(utils::capture.output(print(s)), collapse = "\n")
-  expect_match(out, "psi1  ~ intercept + random", fixed = TRUE)
+  expect_match(out, "psi1 ~ random(~1 | id)", fixed = TRUE)
+  expect_match(out, "random effects: random(~1 | id)", fixed = TRUE)
   expect_match(out, "effect sd", fixed = TRUE)
   expect_match(out, "predictions, sd", fixed = TRUE)
   expect_false(grepl("random.1", out, fixed = TRUE))
@@ -849,7 +850,7 @@ test_that("the head shows every parameter of a term at once", {
   # develops it, which is the one thing the tables below cannot show: there
   # that number is labelled by the development's intercept
   expect_true(all(is.finite(b$head$estimate)))
-  expect_identical(b$head$note, "~ intercept + random")
+  expect_identical(b$head$note, "~ random(~1 | id)")
   expect_false(any(c("beta", "gamma1") %in% b$head$name))
 })
 
@@ -997,7 +998,7 @@ test_that("a structural term is a block, and its development a compartment", {
   # a block is headed by its term and nothing else, at column zero: the
   # call also appears indented under `Call:`, which is not the heading
   expect_true(any(startsWith(lines, "gas(")))
-  expect_match(out, "omega  ~ intercept + random", fixed = TRUE)
+  expect_match(out, "omega ~ random(~1 | id)", fixed = TRUE)
   expect_false(grepl("omega.random.1", out, fixed = TRUE))
   # nothing reported here carries a test, so the two test columns are not
   # printed at all

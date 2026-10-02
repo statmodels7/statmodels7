@@ -531,6 +531,174 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
 }
 
 
+#' Settle the Changes of Slope on the Profile
+#'
+#' @description
+#' After the working phase and the restarts, every sharp [modelterms7::seg()]
+#' term is moved to the minimum of its exact least-squares profile over every
+#' interval of the covariate ([modelterms7::seg_polish_exact()]), and the
+#' model is refitted from there with the positions free.
+#'
+#' @details
+#' The profile of a change of slope is smooth inside each interval between
+#' consecutive observed values and has a kink at each of them, so the
+#' iteration of Muggeo (2003) can stop on a kink that is not a minimum:
+#' measured on `segmented::globTempAnom` with four break-points, it stopped
+#' with two positions on observed years and the inner fit 0.106
+#' log-likelihood units above its mode, and the REML criterion could not be
+#' evaluated at its start. Inside an interval the profile has one stationary
+#' point, so its minimum over every interval is exact
+#' ([modelterms7::seg_polish_exact()]). The profile is read on the working
+#' response of the term's equation, and a polished position is kept only
+#' where the refit from it reaches a better objective. In an equation whose
+#' working profile only approximates the objective, the five deepest local
+#' minima of the profile are refitted as well.
+#'
+#' @inheritParams statmod_settle_breakpoints
+#'
+#' @return A list: `res`, the fit, and `moved`, `TRUE` where a polished
+#'   position replaced the one the iteration reached.
+#'
+#' @references
+#' Muggeo, V. M. R. (2003). Estimating regression models with unknown
+#' break-points. *Statistics in Medicine*, 22, 3055--3071.
+#'
+#' @keywords internal
+statmod_settle_seg <- function(spec, design, blocks, hyper, inner_optimizer,
+                               res, expected, approx, maxit, tol, vb,
+                               rounds = 5L) {
+  st <- attr(design, "state")
+  rf <- attr(design, "refresh")
+  none <- list(res = res, moved = FALSE)
+  if (is.null(st) || !length(rf)) return(none)
+  y0 <- spec@response
+  if (!is.numeric(y0) || is.matrix(y0) || length(y0) != spec@n_obs ||
+      anyNA(y0)) {
+    return(none)
+  }
+  segs <- Filter(function(r) {
+    tm <- st$terms[[r$param]][[r$term]]
+    S7::S7_inherits(tm, modelterms7::SegTerm) && identical(tm@kind, "seg") &&
+      is.null(tm@spec$smoothed) && !isTRUE(tm@blueprint$developed) &&
+      !isTRUE(tm@spec$marginal)
+  }, rf)
+  if (!length(segs)) return(none)
+  obj_split <- res$obj$split
+  obj_stack <- res$obj$stack
+  vbq <- lapply(vb, function(x) FALSE)
+  reset <- function() {
+    st$key <- NULL
+    st$value <- NULL
+  }
+  # the terms at the given positions and the coefficients that go with them
+  place <- function(terms, par) {
+    cf <- obj_split(par)
+    for (r in segs) {
+      tm <- terms[[r$param]][[r$term]]
+      st$terms[[r$param]][[r$term]] <- tm
+      cols <- design[[r$param]]$blocks[[r$term]]
+      cf[[r$param]][cols] <- as.numeric(tm@blueprint$coef)
+    }
+    reset()
+    obj_stack(cf)
+  }
+  refit <- function(par) {
+    tryCatch(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+                               par, expected, approx, maxit, tol, vbq),
+             error = function(e) NULL)
+  }
+  better <- function(r1, r0) {
+    !is.null(r1) && is.finite(r1$value) &&
+      (!is.finite(r0$value) || r1$value < r0$value - 1e-8 * (abs(r0$value) + 1))
+  }
+  # the working response of an equation net of one term, and its weights
+  working_of <- function(par, r, tm) {
+    cfl <- obj_split(par)
+    ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
+    if (is.null(ep)) return(NULL)
+    wk <- tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, approx),
+                   error = function(e) NULL)
+    if (is.null(wk)) return(NULL)
+    eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else
+      ep$eta_static[[r$param]], spec@n_obs)
+    list(y = wk$z - (eta - as.numeric(modelterms7::term_value(tm))), w = wk$w)
+  }
+  best <- res
+  best_terms <- st$terms
+  moved <- FALSE
+  for (it in seq_len(as.integer(rounds))) {
+    cand <- best_terms
+    any_move <- FALSE
+    for (r in segs) {
+      tm <- best_terms[[r$param]][[r$term]]
+      wk <- working_of(best$par, r, tm)
+      if (is.null(wk)) next
+      pt <- tryCatch(modelterms7::seg_polish_exact(tm, wk$y, weights = wk$w),
+                     error = function(e) NULL)
+      if (is.null(pt)) next
+      if (!isTRUE(all.equal(modelterms7::seg_psi(pt), modelterms7::seg_psi(tm),
+                            tolerance = 1e-10))) {
+        cand[[r$param]][[r$term]] <- pt
+        any_move <- TRUE
+      }
+    }
+    if (!any_move) break
+    st$terms <- best_terms
+    r1 <- refit(place(cand, best$par))
+    if (better(r1, best)) {
+      best <- r1
+      best_terms <- st$terms
+      moved <- TRUE
+    } else {
+      break
+    }
+  }
+  # where the working profile is a model of the objective, the deepest local
+  # minima of the profile are refitted and compared on the objective
+  for (r in segs) {
+    if (working_exact(spec, r$param)) next
+    tm0 <- best_terms[[r$param]][[r$term]]
+    for (k in seq_len(tm0@npsi)) {
+      tmb <- best_terms[[r$param]][[r$term]]
+      wk <- working_of(best$par, r, tmb)
+      if (is.null(wk)) next
+      pr <- tryCatch(modelterms7::seg_profile_intervals(tmb, wk$y, k,
+                                                        weights = wk$w),
+                     error = function(e) NULL)
+      if (is.null(pr) || nrow(pr) < 2L) next
+      v <- pr$rss
+      nv <- length(v)
+      locmin <- which(is.finite(v) & v <= c(Inf, v[-nv]) & v <= c(v[-1L], Inf))
+      cands <- pr$psi[locmin[order(v[locmin])]][seq_len(min(5L,
+                                                           length(locmin)))]
+      psi_b <- as.numeric(modelterms7::seg_psi(tmb))
+      for (q in cands) {
+        if (isTRUE(abs(q - psi_b[k]) < 1e-10)) next
+        pj <- psi_b
+        pj[k] <- q
+        cj <- best_terms
+        cj[[r$param]][[r$term]] <- tryCatch(
+          modelterms7::seg_relocate(tmb, pj), error = function(e) NULL)
+        if (is.null(cj[[r$param]][[r$term]])) next
+        st$terms <- best_terms
+        r1 <- refit(place(cj, best$par))
+        if (better(r1, best)) {
+          best <- r1
+          best_terms <- st$terms
+          moved <- TRUE
+        }
+      }
+    }
+  }
+  st$terms <- best_terms
+  reset()
+  fields <- c("par", "value", "converged", "obj", "aliased", "hist_blocks",
+              "hist_inner")
+  res[intersect(fields, names(best))] <- best[intersect(fields, names(best))]
+  list(res = res, moved = moved)
+}
+
+
 #' Is the Working Profile of an Equation Its Objective?
 #'
 #' @description

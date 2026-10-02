@@ -244,7 +244,7 @@ test_that("a class reaching a subformula is reported and both members say so", {
   expect_identical(sum(grepl("reported above", out, fixed = TRUE)), 2L)
   # the nl term keeps its own reading: the compartment for `a`, the rows of
   # its other parameters, and no grouping indicator printed one per line
-  expect_true(any(grepl("^  a  ~ ", out)))
+  expect_true(any(grepl("^  a ~ ", out)))
   expect_false(any(grepl("nl.a.random.1", out, fixed = TRUE)))
   # AND A POINTER NEVER OUTLIVES THE SECTION IT POINTS AT
   expect_true(any(grepl("shared covariance blocks", out, fixed = TRUE)))

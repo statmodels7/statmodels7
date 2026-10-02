@@ -3423,14 +3423,61 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       })
       tb <- do.call(rbind, c(hr, lapply(parts, function(z) z$table)))
       ln <- unlist(lapply(parts, function(z) z$lines))
+      # PRINTED AS A MIXED MODEL IS: the fixed effects of the development
+      # first, then each penalized sub-term under its own name with its
+      # hyperparameters, its kept rows and its summary line. A hyperparameter
+      # is filed with the sub-term whose coordinates it covers.
+      owner <- vapply(seq_along(hr), function(h) {
+        ii <- hp$index[mine][[h]]
+        w <- which(vapply(cp$sub_index, function(si) {
+          length(ii) > 0L && all(ii %in% si)
+        }, logical(1)))
+        if (length(w)) w[[1L]] else NA_integer_
+      }, integer(1))
+      pen <- vapply(seq_along(cp$subs), function(i) {
+        !identical(parts[[i]]$kind, "parametric") || any(owner %in% i)
+      }, logical(1))
+      fixed <- do.call(rbind, lapply(parts[!pen], function(z) z$table))
+      loose <- do.call(rbind, hr[is.na(owner)])
+      sections <- list()
+      if (!is.null(fixed) && nrow(fixed)) {
+        sections[[1L]] <- list(header = if (any(pen)) "fixed effects",
+                               table = fixed, lines = character(0))
+      }
+      for (i in which(pen)) {
+        nm_i <- names(cp$subs)[i]
+        if (is.null(nm_i) || !nzchar(nm_i)) nm_i <- sub_label(cp$subs[[i]])
+        t_i <- do.call(rbind, c(hr[which(owner == i)], list(parts[[i]]$table)))
+        sections[[length(sections) + 1L]] <- list(
+          header = if (identical(parts[[i]]$kind, "random"))
+            paste("random effects:", nm_i) else nm_i,
+          table = if (is.null(t_i)) empty else t_i,
+          lines = parts[[i]]$lines)
+      }
+      if (!is.null(loose) && nrow(loose)) {
+        sections <- c(list(list(header = NULL, table = loose,
+                                lines = character(0))), sections)
+      }
       list(name = cp$name,
-           header = sprintf("%s  ~ %s", cp$name,
-                            paste(vapply(cp$subs, sub_label, character(1)),
-                                  collapse = " + ")),
+           header = sprintf("%s ~ %s", cp$name, dev_formula(term, cp)),
            table = if (is.null(tb)) empty else tb,
            lines = if (is.null(ln)) character(0) else ln,
+           sections = sections,
            n_coef = length(cp$index))
     })
+  }
+  # THE FORMULA THAT DEVELOPS A PARAMETER, as it was written: the term
+  # keeps its subformulas by parameter, so `psi ~ 0 + group` is reported as
+  # `psi1 ~ 0 + group`. A term that keeps none is described by its
+  # sub-terms.
+  dev_formula <- function(term, cp) {
+    sf <- tryCatch(term@subformulas, error = function(e) NULL)
+    f <- if (is.list(sf)) sf[[cp$name]] else NULL
+    if (inherits(f, "formula")) {
+      return(paste(deparse(f[[length(f)]], width.cutoff = 500L),
+                   collapse = " "))
+    }
+    paste(vapply(cp$subs, sub_label, character(1)), collapse = " + ")
   }
   # THE DEVELOPED PARAMETERS READ AT A GLANCE, one line each: the population
   # value of the development, and what develops it. A parameter that is a
@@ -3438,11 +3485,10 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # it; a developed one is spread over a compartment where its population
   # value is labeled by the development's intercept, so this is the only
   # place the parameter's own name appears beside a number.
-  head_rows <- function(rows_at, dev) {
+  head_rows <- function(rows_at, dev, term) {
     out <- lapply(dev, function(cp) {
       r <- NULL
-      note <- paste("~", paste(vapply(cp$subs, sub_label, character(1)),
-                               collapse = " + "))
+      note <- paste("~", dev_formula(term, cp))
       for (i in seq_along(cp$subs)) {
         j <- which(tryCatch(modelterms7::term_coef_names(cp$subs[[i]]),
                             error = function(e) character(0)) ==
@@ -3503,7 +3549,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     list(kind = "structural", label = block_label("structural"), term = nm,
          n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
          table = if (is.null(tb)) empty else tb,
-         head = if (length(dev)) head_rows(rows_at, dev) else NULL,
+         head = if (length(dev)) head_rows(rows_at, dev, term) else NULL,
          components = compartments(term, rows_at, dev, hp),
          classes = hp$classes, note = class_note(nm))
   }
@@ -3580,7 +3626,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         n_na = if (identical(kind, "selection") && length(kz))
           sum(is.na(cr$estimate[kz])) else 0L,
         table = if (is.null(tb)) empty else tb,
-        head = head_rows(rows_at, dev),
+        head = head_rows(rows_at, dev, term),
         components = compartments(term, rows_at, dev, hp),
         classes = hp$classes, note = class_note(nm))
       next
@@ -4309,9 +4355,17 @@ S7::method(print, StatmodSummary) <- print.StatmodSummary
 format_block_cells <- function(tb, digits = 4L, stat = "z") {
   hyp <- tb$role %in% c("fixed", "estimated")
   fixed <- hyp & !is.finite(tb$se)
-  num <- function(v) ifelse(is.na(v), "", format(signif(v, digits)))
+  # each number on its own: a block mixes rows of very different sizes (a
+  # slope of 0.002 beside a position of 450), and one format for the column
+  # printed the position as 449.900000 and its standard error as 7.791e+00
+  one <- function(v) {
+    vapply(v, function(x) {
+      if (is.na(x)) "NA" else format(signif(x, digits))
+    }, character(1), USE.NAMES = FALSE)
+  }
+  num <- function(v) ifelse(is.na(v), "", one(v))
   out <- cbind(
-    estimate = format(signif(tb$estimate, digits)),
+    estimate = one(tb$estimate),
     se = num(tb$se),
     z = num(tb$statistic),
     p = ifelse(is.na(tb$p_value), "",
@@ -4443,8 +4497,21 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   secs <- list(list(header = NULL, indent = 2L, tb = b$table,
                     lines = character(0)))
   for (cp in comp) {
+    if (is.null(cp$sections)) {
+      secs[[length(secs) + 1L]] <- list(header = cp$header, indent = 4L,
+                                        tb = cp$table, lines = cp$lines)
+      next
+    }
+    # the formula heads the compartment, and its sections follow without a
+    # blank line, indented under their own headers where they have one
     secs[[length(secs) + 1L]] <- list(header = cp$header, indent = 4L,
-                                      tb = cp$table, lines = cp$lines)
+                                      tb = cp$table[0L, , drop = FALSE],
+                                      lines = character(0))
+    for (z in cp$sections) {
+      secs[[length(secs) + 1L]] <- list(
+        header = z$header, indent = if (is.null(z$header)) 4L else 6L,
+        tb = z$table, lines = z$lines, gap = FALSE)
+    }
   }
   for (i in seq_along(secs)) {
     keep <- block_rows_shown(secs[[i]]$tb, max_coef)
@@ -4502,7 +4569,8 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
       paste(pad(colnames(fm$cells), cw), collapse = " "))), "\n", sep = "")
   for (i in seq_along(secs)) {
     s <- secs[[i]]
-    if (!is.null(s$header)) cat("\n", strrep(" ", s$indent - 2L), s$header,
+    if (!is.null(s$header)) cat(if (!isFALSE(s$gap)) "\n",
+                                strrep(" ", s$indent - 2L), s$header,
                                 "\n", sep = "")
     for (r in rows[[i]]) {
       cat(sub("[ ]+$", "", paste0(

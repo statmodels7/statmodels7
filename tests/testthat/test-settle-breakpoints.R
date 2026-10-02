@@ -121,3 +121,15 @@ test_that("a jseg developed over groups is settled at the per-group minimum", {
   ci <- confint(f)
   expect_true(all(is.na(ci[c("mu:jseg.psi1.ga", "mu:jseg.psi1.gb"), "se"])))
 })
+
+test_that("four changes of slope on calendar years reach the profile minimum", {
+  skip_if_not_installed("segmented")
+  data(globTempAnom, package = "segmented")
+  f <- statmod(Anomaly ~ seg(Year, npsi = 4),
+               distrib = distributions7::gaussian1_distrib(), data = globTempAnom)
+  rss <- sum((globTempAnom$Anomaly - fitted(f, what = "mu"))^2)
+  # the coordinatewise exact polish from the default start; segmented's own
+  # four-break-point fit stops at 1.628
+  expect_equal(rss, 1.388930, tolerance = 1e-6)
+  expect_identical(statmod_certificate(f)$state, "converged")
+})

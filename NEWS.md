@@ -1,3 +1,34 @@
+# statmodels7 0.188.0
+
+* `statmod_breakpoint_test()` tests that a model has no break-point against
+  the `seg()`, `jump()` or `jseg()` term it carries, in any family, in the
+  equation of any parameter and inside a parameter of `nl()`. It reads Rao's
+  score process of the change at a held position on one fit of the model
+  without the break-point; for a change of slope or a smoothed step the
+  p-value is Davies' (1987) upper bound, for a sharp step a parametric
+  bootstrap of the supremum over every interval. On a subsample of 40
+  `MASS::GAGurine` children it gives p = 0.0016 against 0.0026 for
+  `segmented::davies.test()`; on 100 samples without a break-point it
+  rejected at 5 per cent in 5.
+* A sharp `seg()` is settled on its exact profile after the working phase,
+  as `jump()` and `jseg()` are (`statmod_settle_seg()`). A criterion that
+  cannot be read at its start because a break-point's working iteration has
+  not converged there is read after the positions are settled, rather than
+  stopping the fit. `seg(Year, npsi = 4)` on `segmented::globTempAnom`
+  stopped with "the REML criterion is unavailable at the starting
+  hyperparameters"; it now converges at a residual sum of squares of
+  1.388930. With two break-points the fit reaches `segmented`'s 1.761916
+  (1.762435 before), also from the start (1880, 1950) without restarts.
+* `summary()` heads the compartment of a developed coefficient with its
+  formula as written (`psi1 ~ 0 + group`, `psi1 ~ random(~1 | id)`) in place
+  of "~ covariates" or "~ intercept + random", and prints a development with
+  penalized sub-terms as a mixed model does: the fixed effects first, then
+  each random effect under its own heading with its hyperparameters and the
+  spread of its predictions.
+* The numbers of a summary table are formatted one at a time, so a block
+  that mixes slopes of 0.002 with positions of 450 no longer prints the
+  position as 449.900000.
+
 # statmodels7 0.187.1
 
 * `predict()` past the series of a panel whose score-driven level is
