@@ -167,15 +167,23 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
   keep <- snap()
   fields <- c("par", "value", "converged", "obj", "hist_blocks", "hist_inner")
 
-  # the response net of what the rest of the term's equation contributes,
-  # on the predictor scale
+  # the working response of the term's own equation net of the rest of that
+  # equation, with its working weights: for a gaussian mean the response
+  # itself, elsewhere the quadratic model of the objective a scoring step
+  # reads. It was the RESPONSE net of the equation whatever the equation, so
+  # a break-point in sigma's equation was proposed on a quantity that has
+  # nothing to do with sigma: measured on MASS::mcycle with a jseg there,
+  # every proposal passed the screen and was refitted, and the fit took
+  # 2961 s.
   net_y <- function(r, tm) {
-    d1 <- statmod_design_at(spec, obj_split(best$par), design)
-    p <- r$param
-    cf <- obj_split(best$par)[[p]]
-    eta <- as.numeric(d1[[p]]$X %*% cf)
-    if (!is.null(d1[[p]]$adj)) eta <- eta + d1[[p]]$adj
-    y0 - (eta - as.numeric(modelterms7::term_value(tm)))
+    cfl <- obj_split(best$par)
+    ep <- statmod_eta(spec, design, cfl)
+    wk <- coord_working(spec, ep, cfl, design, r$param, TRUE, approx)
+    if (is.null(wk)) stop("no working response")
+    eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else
+      ep$eta_static[[r$param]], n)
+    list(y = wk$z - (eta - as.numeric(modelterms7::term_value(tm))),
+         w = wk$w)
   }
 
   # One proposal: new positions for every break-point term, each kept only
@@ -191,23 +199,25 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
       # break-point has one position per observation and no single profile
       # -- leaves the other terms' proposals standing
       cand <- tryCatch({
-        yn <- net_y(r, tm)
-        base <- modelterms7::seg_profile_rss(tm, yn)
+        nw <- net_y(r, tm)
+        yn <- nw$y
+        base <- modelterms7::seg_profile_rss(tm, yn, weights = nw$w)
         switch(kind,
-          sweep = modelterms7::seg_polish(tm, yn),
+          sweep = modelterms7::seg_polish(tm, yn, weights = nw$w),
           boot = {
             w <- tabulate(sample.int(n, n, replace = TRUE), nbins = n)
-            modelterms7::seg_polish(tm, yn, weights = spec@weights * w)
+            modelterms7::seg_polish(tm, yn, weights = nw$w * w)
           },
           random = {
             lim <- tm@blueprint$lim
             modelterms7::seg_polish(
               modelterms7::seg_relocate(tm, stats::runif(tm@npsi, lim[1L],
-                                                         lim[2L])), yn)
+                                                         lim[2L])), yn,
+              weights = nw$w)
           })
       }, error = function(e) NULL)
       if (is.null(cand)) next
-      v <- modelterms7::seg_profile_rss(cand, yn)
+      v <- modelterms7::seg_profile_rss(cand, yn, weights = nw$w)
       if (v < base - 1e-6 * (base + 1)) {
         gain <- TRUE
         st$terms[[r$param]][[r$term]] <- cand
@@ -316,7 +326,7 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
 #' @keywords internal
 statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
                                        inner_optimizer, res, expected, approx,
-                                       maxit, tol, vb) {
+                                       maxit, tol, vb, rounds = 5L) {
   st <- attr(design, "state")
   rf <- attr(design, "refresh")
   none <- list(res = res, moved = FALSE, settled = FALSE)
@@ -324,8 +334,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
   sharp <- Filter(function(r) {
     tm <- st$terms[[r$param]][[r$term]]
     S7::S7_inherits(tm, modelterms7::SegTerm) &&
-      tm@kind %in% c("jump", "jseg") && is.null(tm@spec$smoothed) &&
-      !isTRUE(tm@blueprint$held)
+      tm@kind %in% c("jump", "jseg") && is.null(tm@spec$smoothed)
   }, rf)
   if (!length(sharp)) return(none)
   obj_split <- res$obj$split
@@ -343,8 +352,7 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
   place <- function(terms, par) {
     cf <- obj_split(par)
     for (r in sharp) {
-      tm <- terms[[r$param]][[r$term]]
-      tm <- modelterms7::seg_hold(tm)
+      tm <- modelterms7::seg_hold(terms[[r$param]][[r$term]])
       st$terms[[r$param]][[r$term]] <- tm
       cols <- design[[r$param]]$blocks[[r$term]]
       cf[[r$param]][cols] <- as.numeric(tm@blueprint$coef)
@@ -357,18 +365,35 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
                                par, expected, approx, maxit, tol, vbq),
              error = function(e) NULL)
   }
+  ok_fit <- function(r) !is.null(r) && is.finite(r$value)
   keep <- st$terms
 
-  # the polished positions, term by term, read on the response net of the
-  # rest of the equation
-  cand <- keep
+  # FIRST the hold where the iteration stopped and the exact refit there:
+  # the polish reads the working response of the term's equation, and at the
+  # working fixed point the coefficients beside the break-point are those of
+  # the working model. Measured on MASS::mcycle with a jseg in sigma's
+  # equation, the polish read at the fixed point put the minimum at the
+  # confinement limit where the iteration had stopped, and read at the exact
+  # fit there it put it at 16.3, beside the profile's minimum at 14.7.
+  best <- refit(place(keep, res$par))
+  if (!ok_fit(best)) {
+    st$terms <- keep
+    reset()
+    return(none)
+  }
+  best_terms <- st$terms
   moved <- FALSE
-  if (can_polish) {
-    cfl <- obj_split(res$par)
+  # THEN the polish, repeated while it improves the objective: the working
+  # response moves with the coefficients the refit changes, so one reading
+  # is a step and not the answer
+  for (it in seq_len(if (can_polish) as.integer(rounds) else 0L)) {
+    cfl <- obj_split(best$par)
     ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
+    if (is.null(ep)) break
+    cand <- best_terms
+    any_move <- FALSE
     for (r in sharp) {
-      if (is.null(ep)) break
-      tm <- keep[[r$param]][[r$term]]
+      tm <- best_terms[[r$param]][[r$term]]
       p <- r$param
       # the working response of the term's own equation, net of the rest of
       # that equation, with the working weights: for a gaussian mean it is the
@@ -386,31 +411,116 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
       if (!isTRUE(all.equal(modelterms7::seg_psi(pt), modelterms7::seg_psi(tm),
                             tolerance = 0))) {
         cand[[p]][[r$term]] <- pt
-        moved <- TRUE
+        any_move <- TRUE
       }
     }
-  }
-
-  # the refit at the positions the iteration reached, held
-  r0 <- refit(place(keep, res$par))
-  best <- r0
-  best_terms <- st$terms
-  if (moved) {
-    st$terms <- keep
-    r1 <- refit(place(cand, res$par))
-    if (!is.null(r1) && is.finite(r1$value) &&
-        (is.null(r0) || !is.finite(r0$value) ||
-         r1$value < r0$value - 1e-8 * (abs(r0$value) + 1))) {
+    if (!any_move) break
+    st$terms <- best_terms
+    r1 <- refit(place(cand, best$par))
+    if (ok_fit(r1) && r1$value < best$value - 1e-8 * (abs(best$value) + 1)) {
       best <- r1
       best_terms <- st$terms
+      moved <- TRUE
     } else {
-      moved <- FALSE
+      break
     }
   }
-  if (is.null(best) || !is.finite(best$value)) {
-    st$terms <- keep
-    reset()
-    return(none)
+  # AND WHERE THE PROFILE IS ONLY A MODEL OF THE OBJECTIVE, a local search
+  # on the objective itself. The working response is exact for a gaussian
+  # mean and a quadratic model anywhere else, so there the polish stops near
+  # the minimum and not at it: measured on MASS::mcycle with a jseg in sigma's
+  # equation, it stopped at 16.3, a local minimum of the objective six
+  # intervals from the global one at 14.7 (656.08 against 657.40 at the fit's
+  # smoothing parameter). The five deepest local minima of the working
+  # profile are refitted with the positions held and compared on the
+  # objective, and then the neighbouring intervals of the best, the window
+  # recentred while the best sits at its edge.
+  for (r in sharp) {
+    if (!can_polish || working_exact(spec, r$param)) next
+    tm0 <- best_terms[[r$param]][[r$term]]
+    if (tm0@blueprint$developed) next
+    xv <- tm0@blueprint$xv
+    lim <- tm0@blueprint$lim
+    u <- sort(unique(xv))
+    mid <- (u[-1L] + u[-length(u)]) / 2
+    mid <- mid[mid > lim[1L] & mid < lim[2L]]
+    if (length(mid) < 2L) next
+    for (k in seq_len(tm0@npsi)) {
+      # the candidates: the five deepest local minima of the working profile
+      # over every interval, read at the exact fit reached so far, each
+      # refitted and compared on the objective
+      cfl <- obj_split(best$par)
+      ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
+      wk <- if (is.null(ep)) NULL else
+        tryCatch(coord_working(spec, ep, cfl, design, r$param, TRUE, approx),
+                 error = function(e) NULL)
+      if (!is.null(wk)) {
+        tmb <- best_terms[[r$param]][[r$term]]
+        eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[r$param]] else
+          ep$eta_static[[r$param]], spec@n_obs)
+        yn <- wk$z - (eta - as.numeric(modelterms7::term_value(tmb)))
+        pr <- tryCatch(modelterms7::seg_profile_intervals(tmb, yn, k,
+                                                          weights = wk$w),
+                       error = function(e) NULL)
+        if (!is.null(pr) && nrow(pr) >= 2L) {
+          v <- pr$rss
+          nv <- length(v)
+          lo <- c(Inf, v[-nv])
+          hi <- c(v[-1L], Inf)
+          locmin <- which(is.finite(v) & v <= lo & v <= hi)
+          cands <- pr$psi[locmin[order(v[locmin])]][seq_len(min(5L,
+                                                               length(locmin)))]
+          psi_b <- as.numeric(modelterms7::seg_psi(tmb))
+          for (q in cands) {
+            if (isTRUE(abs(q - psi_b[k]) < 1e-12)) next
+            pj <- psi_b
+            pj[k] <- q
+            cj <- best_terms
+            cj[[r$param]][[r$term]] <- tryCatch(
+              modelterms7::seg_relocate(tmb, pj), error = function(e) NULL)
+            if (is.null(cj[[r$param]][[r$term]])) next
+            st$terms <- best_terms
+            r1 <- refit(place(cj, best$par))
+            if (ok_fit(r1) &&
+                r1$value < best$value - 1e-8 * (abs(best$value) + 1)) {
+              best <- r1
+              best_terms <- st$terms
+              moved <- TRUE
+            }
+          }
+          st$terms <- best_terms
+          reset()
+        }
+      }
+      for (step in seq_len(10L)) {
+        tmb <- best_terms[[r$param]][[r$term]]
+        psi <- as.numeric(modelterms7::seg_psi(tmb))
+        i0 <- which.min(abs(mid - psi[k]))
+        win <- setdiff(max(1L, i0 - 3L):min(length(mid), i0 + 3L), i0)
+        found <- 0L
+        for (j in win) {
+          pj <- psi
+          pj[k] <- mid[j]
+          cj <- best_terms
+          cj[[r$param]][[r$term]] <- tryCatch(
+            modelterms7::seg_relocate(tmb, pj), error = function(e) NULL)
+          if (is.null(cj[[r$param]][[r$term]])) next
+          st$terms <- best_terms
+          r1 <- refit(place(cj, best$par))
+          if (ok_fit(r1) &&
+              r1$value < best$value - 1e-8 * (abs(best$value) + 1)) {
+            best <- r1
+            best_terms <- st$terms
+            moved <- TRUE
+            found <- j
+          }
+        }
+        st$terms <- best_terms
+        reset()
+        # recentre only where the best sits at the edge of the window
+        if (!found || abs(found - i0) < 3L) break
+      }
+    }
   }
   st$terms <- best_terms
   reset()
@@ -418,4 +528,26 @@ statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
               "hist_inner")
   res[fields] <- best[fields]
   list(res = res, moved = moved, settled = TRUE)
+}
+
+
+#' Is the Working Profile of an Equation Its Objective?
+#'
+#' @description
+#' `TRUE` where the working response of a distribution parameter's equation
+#' gives the objective exactly: the location of a gaussian family on the
+#' identity link, whose log-likelihood is quadratic in that predictor. Every
+#' other equation reads a quadratic model of its objective.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param p The distribution parameter, a string.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+working_exact <- function(spec, p) {
+  d <- spec@distrib
+  isTRUE(identical(p, d@params[1L]) &&
+           grepl("^gaussian", d@distrib_name) &&
+           identical(d@link_params[[1L]]@link_name, "identity"))
 }

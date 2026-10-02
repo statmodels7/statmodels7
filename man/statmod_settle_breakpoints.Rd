@@ -15,7 +15,8 @@ statmod_settle_breakpoints(
   approx,
   maxit,
   tol,
-  vb
+  vb,
+  rounds = 5L
 )
 }
 \arguments{
@@ -29,8 +30,9 @@ statmod_settle_breakpoints(
 \item{res}{The fit to settle, as \code{\link[=statmod_alternate]{statmod_alternate()}} returns it.}
 }
 \value{
-A list: \code{res}, the settled fit, and \code{moved}, \code{TRUE} where a
-polished position replaced the one the iteration reached.
+A list: \code{res}, the settled fit, \code{moved}, \code{TRUE} where a
+polished position replaced the one the iteration reached, and \code{settled},
+\code{TRUE} where a term was held.
 }
 \description{
 After the working phase and the restarts, every sharp \code{\link[modelterms7:jump]{modelterms7::jump()}}
@@ -59,9 +61,10 @@ carried the position is held in the solve and left out of the information
 (\code{\link[=term_held_stack]{term_held_stack()}}). This is how \code{segmented} and \code{stepmented} report
 their coefficients: at the estimated positions, conditional on them.
 
-The profile is least squares of the response, net of the rest of the
-equation, on the term's own columns: exact for a gaussian response with an
-identity link and a position for any other. A polished position is kept
+The profile is weighted least squares of the working response of the
+term's own equation, net of the rest of that equation, on the term's own
+columns, with the working weights of a scoring step: exact for a gaussian
+mean and the quadratic model of the objective for any other equation. A polished position is kept
 only where the refit at it reaches a better objective than the refit at the
 position the iteration reached. A term whose per-break-point coefficients
 carry a development is held without polishing, its positions being one per

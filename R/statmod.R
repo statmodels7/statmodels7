@@ -585,52 +585,65 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     # coefficients are those of the working model and whose position may sit
     # one interval away from the profile's minimum; see
     # statmod_settle_breakpoints().
-    st0 <- statmod_settle_breakpoints(spec_h, design, blocks, hyper,
-                                      inner_optimizer, res, expected, approx,
-                                      maxit, tol, vb)
-    res <- st0$res
-    # a held term is a Jacobian block from here on: its contribution is X beta
-    # exactly, so it is fitted like any other block and the rules that apply
-    # to a working linearization -- the working phase, and the refusal to put
-    # a dispersion's coefficients on the criterion (marginal_coords()) -- no
-    # longer apply to it
-    if (st0$settled) {
-      d2 <- design
-      rf2 <- attr(d2, "refresh")
-      stt <- attr(d2, "state")
-      for (i in seq_along(rf2)) {
-        tm <- stt$terms[[rf2[[i]]$param]][[rf2[[i]]$term]]
-        if (isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))) {
-          rf2[[i]]$frozen <- FALSE
+    for (round in seq_len(3L)) {
+      # The settle and the criterion are ALTERNATED until the positions stop
+      # moving, at most three rounds: the hyperparameters move the working
+      # response the polish reads, and the polish moves the criterion. Measured
+      # on MASS::mcycle with a jseg in sigma's equation, the first round left the
+      # break-point at the confinement limit, where the smoothing parameter had
+      # been chosen, and the second moved it to the profile's minimum.
+      st0 <- statmod_settle_breakpoints(spec_h, design, blocks, hyper,
+                                        inner_optimizer, res, expected, approx,
+                                        maxit, tol, vb)
+      res <- st0$res
+      if (round > 1L && !st0$moved) break
+      # a held term is a Jacobian block from here on: its contribution is X beta
+      # exactly, so it is fitted like any other block and the rules that apply
+      # to a working linearization -- the working phase, and the refusal to put
+      # a dispersion's coefficients on the criterion (marginal_coords()) -- no
+      # longer apply to it
+      if (st0$settled) {
+        d2 <- design
+        rf2 <- attr(d2, "refresh")
+        stt <- attr(d2, "state")
+        for (i in seq_along(rf2)) {
+          tm <- stt$terms[[rf2[[i]]$param]][[rf2[[i]]$term]]
+          if (isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))) {
+            rf2[[i]]$frozen <- FALSE
+          }
+        }
+        attr(d2, "refresh") <- rf2
+        design <<- d2
+      }
+      # the criterion is re-read on the held block whether or not a position
+      # moved: the search ran on the working block, whose determinant carries
+      # the auxiliary column, so its hyperparameters are another criterion's
+      if (st0$settled && is.null(outer_criterion) && is.null(sparse_criterion) &&
+          !is.null(crit_default) &&
+          length(marginal_coords(spec, design, crit_default)$where)) {
+        outer_criterion <<- crit_default
+      }
+      if (st0$settled && (!is.null(outer_criterion) ||
+                        !is.null(sparse_criterion))) {
+        r2 <- tryCatch(
+          statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                         outer_criterion, outer_optimizer, res$par, approx,
+                         maxit, tol, vb, data, weights, offsets,
+                         sparse_criterion),
+          error = function(e) NULL)
+        if (!is.null(r2)) {
+          res <- r2
+          hyper <- res$hyper
+          crit <- res$criterion
+          spec_h <- if (length(res$held_coef)) {
+            S7::set_props(spec, held_coef = res$held_coef)
+          } else spec
         }
       }
-      attr(d2, "refresh") <- rf2
-      design <<- d2
-    }
-    # the criterion is re-read on the held block whether or not a position
-    # moved: the search ran on the working block, whose determinant carries
-    # the auxiliary column, so its hyperparameters are another criterion's
-    if (st0$settled && is.null(outer_criterion) && is.null(sparse_criterion) &&
-        !is.null(crit_default) &&
-        length(marginal_coords(spec, design, crit_default)$where)) {
-      outer_criterion <<- crit_default
-    }
-    if (st0$settled && (!is.null(outer_criterion) ||
-                      !is.null(sparse_criterion))) {
-      r2 <- tryCatch(
-        statmod_select(spec, design, blocks, hyper, inner_optimizer,
-                       outer_criterion, outer_optimizer, res$par, approx,
-                       maxit, tol, vb, data, weights, offsets,
-                       sparse_criterion),
-        error = function(e) NULL)
-      if (!is.null(r2)) {
-        res <- r2
-        hyper <- res$hyper
-        crit <- res$criterion
-        spec_h <- if (length(res$held_coef)) {
-          S7::set_props(spec, held_coef = res$held_coef)
-        } else spec
-      }
+      # with no criterion nothing changed the working response, so a second
+      # round would read the same polish
+      if (!st0$settled ||
+          (is.null(outer_criterion) && is.null(sparse_criterion))) break
     }
     list(res = res, hyper = hyper, crit = crit, spec_h = spec_h)
   }

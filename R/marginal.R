@@ -139,8 +139,18 @@ marginal_coords <- function(spec, design, method) {
     }
   }
   structural <- length(attr(design, "structural")) > 0L
-  refresh <- vapply(attr(design, "refresh"), function(r) r$param,
-                    character(1))
+  # a held break-point term does not move: its block is the exact design at
+  # the held positions, so its equation is not excluded on its account.
+  # Measured on MASS::mcycle with a jseg in sigma's equation, the held fit
+  # read -590.44 on a criterion that left sigma's coefficients at the joint
+  # mode, where the same model with the columns written out reads -580.24
+  st_terms <- attr(design, "state")$terms
+  moving <- Filter(function(r) {
+    tm <- tryCatch(st_terms[[r$param]][[r$term]], error = function(e) NULL)
+    !isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))
+  }, attr(design, "refresh"))
+  refresh <- vapply(moving, function(r) r$param, character(1))
+  held <- term_held_stack(spec, design)
   # a block that is a working linearization rather than a Jacobian has no
   # curvature for a determinant to read: at one break-point the criterion
   # read -132.9 or -109.8 according to where the iteration began
@@ -195,6 +205,9 @@ marginal_coords <- function(spec, design, method) {
       out$skipped[[p]] <- reason
       next
     }
+    # the slot of a held break-point is a column of zeros, held in the solve,
+    # and it is not a coordinate of the criterion either
+    free[pos %in% held] <- FALSE
     w <- pos[free]
     out$where <- c(out$where, w)
     out$param <- c(out$param, rep(p, length(w)))

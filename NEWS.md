@@ -1,3 +1,31 @@
+# statmodels7 0.185.0
+
+* A sharp `jump()` or `jseg()` term in the equation of a parameter other than
+  a gaussian mean is settled on the working response of that equation, with
+  its working weights. The restarts propose positions on the same quantity;
+  they used the response net of the equation whatever the equation, so in
+  sigma's equation every proposal passed the screen and was refitted. The
+  profile is a quadratic model of the objective there, so the polish is
+  followed by a search on the objective itself: the five deepest local minima
+  of the working profile and the neighbouring intervals of the best are
+  refitted with the positions held (`working_exact()` says where the profile
+  is the objective and the search is skipped). On `MASS::mcycle`,
+  `sigma ~ jseg(times)` beside `s(times)` took 2961 s and stopped at the
+  confinement limit (49.52) with the logLik at -584.54; it takes about 10 s
+  and settles at 14.7, the maximum of the REML profile over every interval.
+  `sigma ~ jump(times)` reported a non-finite outer gradient and is
+  certified now.
+* The settle and the re-selection of the hyperparameters alternate, at most
+  three rounds, until the positions stop moving: the hyperparameters move the
+  working response the polish reads.
+* A held break-point no longer keeps its equation off the REML criterion:
+  `marginal_coords()` excluded every equation with a term that can move,
+  held or not, so in sigma's equation the coefficients stayed at the joint
+  mode. The held position's slot is not a coordinate of the criterion. On
+  `MASS::mcycle` the held fit and the same model with the break-point's
+  columns written out now read the same criterion (-580.24088 both, where the
+  held fit read -590.44).
+
 # statmodels7 0.184.0
 
 * A sharp `jump()` or `jseg()` term is settled after the working phase and

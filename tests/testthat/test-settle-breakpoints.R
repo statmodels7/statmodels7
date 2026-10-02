@@ -58,3 +58,32 @@ test_that("a jump beside a smooth is certified after the criterion is re-read", 
                data = data.frame(x, y, z))
   expect_identical(statmod_certificate(f)$state, "converged")
 })
+
+test_that("a sharp jseg in sigma's equation is settled at the profile's minimum", {
+  skip_if_not_installed("MASS")
+  data(mcycle, package = "MASS")
+  f <- statmod(accel ~ s(times, bspline_smooth(k = 20)) | sigma ~ jseg(times),
+               distrib = distributions7::gaussian1_distrib(), data = mcycle)
+  p <- coef(f)$sigma[["jseg.psi1"]]
+  # the global minimum of the REML profile over every interval is at 14.7,
+  # between the observed times 14.6 and 14.8
+  expect_equal(p, 14.7, tolerance = 1e-10)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  # held, the fit is the model with the break-point's columns written out
+  d <- mcycle
+  d$h <- pmax(d$times - p, 0)
+  d$s <- as.numeric(d$times > p)
+  g <- statmod(accel ~ s(times, bspline_smooth(k = 20)) | sigma ~ times + h + s,
+               distrib = distributions7::gaussian1_distrib(), data = d)
+  expect_equal(f@criterion, g@criterion, tolerance = 1e-6)
+  expect_equal(as.numeric(logLik(f)), as.numeric(logLik(g)), tolerance = 1e-6)
+})
+
+test_that("a sharp jump in sigma's equation is certified", {
+  skip_if_not_installed("MASS")
+  data(mcycle, package = "MASS")
+  f <- statmod(accel ~ s(times, bspline_smooth(k = 20)) | sigma ~ jump(times),
+               distrib = distributions7::gaussian1_distrib(), data = mcycle)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  expect_true(all(is.finite(f@coefficients$sigma)))
+})
