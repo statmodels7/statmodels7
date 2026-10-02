@@ -87,3 +87,37 @@ test_that("a sharp jump in sigma's equation is certified", {
   expect_identical(statmod_certificate(f)$state, "converged")
   expect_true(all(is.finite(f@coefficients$sigma)))
 })
+
+test_that("a jseg developed over groups is settled at the per-group minimum", {
+  set.seed(1)
+  g <- factor(rep(c("a", "b", "c"), each = 30))
+  x <- runif(90, 0, 10)
+  gi <- as.integer(g)
+  pg <- c(3, 5, 7)[gi]
+  y <- 1 + 0.3 * x + ifelse(x > pg, 1.5 - 0.6 * (x - pg), 0) +
+    rnorm(90, sd = 0.5)
+  d <- data.frame(x = x, g = g, y = y)
+  f <- statmod(y ~ jseg(x, psi ~ 0 + g), distrib = distributions7::gaussian1_distrib(),
+               data = d)
+  rss <- function(q) {
+    q <- q[gi]
+    sum(stats::.lm.fit(cbind(1, x, pmax(x - q, 0), x > q), y)$residuals^2)
+  }
+  cand <- lapply(1:3, function(j) {
+    u <- sort(unique(x[gi == j]))
+    m <- (u[-1] + u[-length(u)]) / 2
+    lim <- stats::quantile(x[gi == j], c(0.05, 0.95))
+    m[m > lim[1] & m < lim[2]]
+  })
+  best <- Inf
+  for (a in cand[[1]]) for (b in cand[[2]]) {
+    best <- min(best, vapply(cand[[3]], function(v) rss(c(a, b, v)), 1))
+  }
+  # the polish also minimizes inside the interval, so it can only be lower
+  expect_lte(sum((y - fitted(f, what = "mu"))^2), best + 1e-8)
+  expect_identical(statmod_certificate(f)$state, "converged")
+  cf <- coef(f)$mu
+  expect_true(all(c("jseg.psi1.ga", "jseg.psi1.gb", "jseg.psi1.gc") %in% names(cf)))
+  ci <- confint(f)
+  expect_true(all(is.na(ci[c("mu:jseg.psi1.ga", "mu:jseg.psi1.gb"), "se"])))
+})

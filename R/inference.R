@@ -3258,7 +3258,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     # nuisance parameter that vanishes, so the classical p-value is wrong
     # by a factor of three to five (Davies' problem). segmented prints the
     # estimate and the standard error alone for the same reason.
-    pos <- grepl("^psi[0-9]*$", rd$name)
+    pos <- grepl("^psi[0-9]*([.]|$)", rd$name)
     st[pos] <- NA_real_
     out <- data.frame(name = rd$name, estimate = rd$value, se = se,
                       statistic = st, p_value = 2 * stats::pnorm(-abs(st)),
@@ -3491,6 +3491,14 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       # development reports: the position of a break-point and not the pair
       # of working coefficients it is read off
       rr <- if (identical(kind, "breakpoint")) readable_rows(nm) else NULL
+      # a held break-point reports its developed position in that table, one
+      # value per column of the sub-design, so the compartment of the slot
+      # that once carried it is not shown
+      if (!is.null(rr) &&
+          isTRUE(tryCatch(term@blueprint$held, error = function(e) FALSE))) {
+        dev <- dev[!grepl("^psi[0-9]+$",
+                          vapply(dev, function(z) z$name, character(1)))]
+      }
       tb <- do.call(rbind, c(own_hyper(hp, dev), list(
         if (is.null(rr)) cr[own, , drop = FALSE] else rr)))
       blocks[[length(blocks) + 1L]] <- list(
@@ -4896,14 +4904,36 @@ certificate_core <- function(fit, tol, flat, edge) {
       "mode against %g"), out$mode_error, mode_error_limit())
     return(out)
   }
+  # WHERE THE FORM HAS NO EXACT OUTER GRADIENT the criterion itself is
+  # differenced, one refit per point, as long as the coordinates are few
+  # enough for that to cost less than the fit: three refits for one
+  # coordinate and nine for two. Measured on a marginal seg over a 20 x 15
+  # panel with one hyperparameter, the certificate read `unknown` beside a
+  # fit of 159 s; differenced, it costs three refits warm-started at the fit.
+  diffd <- NULL
   if (!outer_gradient_ok(spec, design, idx, method, 1L, gamma = ng > 0L)) {
-    out$reason <- "this form has no exact outer gradient, and differencing it would cost more than the fit"
-    return(out)
+    nv <- nrow(idx) + ng
+    if (ng || nv > 2L) {
+      out$reason <- sprintf(paste0(
+        "this form has no exact outer gradient, and differencing it over %d ",
+        "coordinates would take %d refits"), nv, 1L + 2L * nv^2)
+      return(out)
+    }
+    diffd <- tryCatch(criterion_differenced(fit, spec, design, blocks, method,
+                                            idx, cf, hy),
+                      error = function(e) NULL)
+    if (is.null(diffd)) {
+      out$reason <- paste0("this form has no exact outer gradient, and the ",
+                           "refits that difference the criterion did not all ",
+                           "reach a mode")
+      return(out)
+    }
   }
   basis <- integrated_basis(spec, design, method@kind, gamma = ng > 0L)
-  g <- tryCatch(statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
-                                      ctx = ctx, gam = gam),
-                error = function(e) NULL)
+  g <- if (!is.null(diffd)) diffd$g else
+    tryCatch(statmod_marginal_grad(spec, design, cf, hy, method, idx, basis,
+                                   ctx = ctx, gam = gam),
+             error = function(e) NULL)
   if (is.null(g) || !all(is.finite(g))) {
     # ⚠️ A NON-FINITE OUTER GRADIENT AT A BOUNDARY IS NOT THE SAME COMPLAINT,
     # and saying which it is costs one read. Where a coefficient sits at the
@@ -4961,8 +4991,12 @@ certificate_core <- function(fit, tol, flat, edge) {
   # to 168 in the interior, the smallest being a random break-point's prior
   # scale at eta -5.32. 2e-3 is the geometric middle of that gap.
   eta <- hyper_to_eta(hy, idx)
-  cv <- outer_curvature(spec, design, cf, hy, method, idx, basis,
-                        fit@methods$smooth, gam = gam)
+  cv <- if (!is.null(diffd)) {
+    list(A = diffd$A, source = "differenced criterion")
+  } else {
+    outer_curvature(spec, design, cf, hy, method, idx, basis,
+                    fit@methods$smooth, gam = gam)
+  }
   if (is.null(cv$A)) {
     # ⚠️ NO VERDICT, BUT STILL THE BOUNDARY COORDINATES, and leaving them out
     # was a regression CI found and this machine hid. `boundary_key` is what
@@ -5112,6 +5146,83 @@ certificate_core <- function(fit, tol, flat, edge) {
   out
 }
 
+
+
+#' The Outer Criterion Differenced by Refitting
+#'
+#' @description
+#' The gradient and the curvature of the outer criterion in its free
+#' coordinates, read by central differences of the criterion itself: the
+#' model is refitted at each displaced point, warm-started at the fitted
+#' coefficients, and the criterion is read at the refitted mode.
+#'
+#' @details
+#' With one coordinate the readings are
+#' \eqn{g = (c_+ - c_-)/(2h)} and \eqn{A = -(c_+ - 2c_0 + c_-)/h^2}; with two
+#' the four axial points give the diagonal and the four diagonal points the
+#' cross term, \eqn{(c_{++} - c_{+-} - c_{-+} + c_{--})/(4h^2)}. The centre
+#' \eqn{c_0} is refitted too, so every reading comes from the same inner
+#' iteration. The step is \eqn{h = 10^{-2}} on the free scale, where a
+#' hyperparameter's logarithm moves by one per cent; the truncation error is
+#' of order \eqn{h^2} and the effect of an inner tolerance \eqn{\epsilon}
+#' on the curvature of order \eqn{\epsilon/h^2}.
+#'
+#' @param fit The [StatmodFit()].
+#' @param spec,design,blocks The specification, its design and its blocks.
+#' @param method The outer criterion.
+#' @param idx The hyperparameter index, [outer_hyper_index()].
+#' @param cf,hy The fitted coefficients and hyperparameters.
+#' @param h The step on the free scale.
+#'
+#' @return A list with the gradient `g` and the curvature `A` (minus the
+#'   Hessian), or `NULL` where a refit did not reach a mode.
+#'
+#' @keywords internal
+criterion_differenced <- function(fit, spec, design, blocks, method, idx, cf,
+                                  hy, h = 1e-2) {
+  io <- fit@methods$smooth
+  budget <- method_budget(io)
+  cfg <- inner_settings(io)
+  approx <- cfg$approx
+  obj <- statmod_objective(spec, hy, design, cfg$expected, approx)
+  warm <- obj$stack(cf)
+  basis <- integrated_basis(spec, design, method@kind)
+  eta0 <- hyper_to_eta(hy, idx)
+  nv <- length(eta0)
+  at <- function(d) {
+    hy2 <- eta_to_hyper(eta0 + d, idx, hy)
+    res <- statmod_alternate(spec, design, blocks, hy2, io, warm, cfg$expected,
+                             approx, budget$maxit, budget$tol, verbosity(0),
+                             hold_refresh = TRUE)
+    cf2 <- res$obj$split(res$par)
+    ctx2 <- outer_context(spec, design, cf2, hy2, approx)
+    m <- statmod_marginal(spec, design, cf2, hy2, method, approx, basis, ctx2)
+    if (is.null(m) || !is.finite(m$value)) stop("no criterion")
+    m$value
+  }
+  e <- function(j) {
+    v <- numeric(nv)
+    v[j] <- 1
+    v
+  }
+  c0 <- at(numeric(nv))
+  g <- numeric(nv)
+  A <- matrix(0, nv, nv)
+  for (j in seq_len(nv)) {
+    cp <- at(h * e(j))
+    cm <- at(-h * e(j))
+    g[j] <- (cp - cm) / (2 * h)
+    A[j, j] <- -(cp - 2 * c0 + cm) / h^2
+  }
+  if (nv == 2L) {
+    cpp <- at(h * (e(1) + e(2)))
+    cpm <- at(h * (e(1) - e(2)))
+    cmp <- at(h * (-e(1) + e(2)))
+    cmm <- at(-h * (e(1) + e(2)))
+    A[1, 2] <- A[2, 1] <- -(cpp - cpm - cmp + cmm) / (4 * h^2)
+  }
+  list(g = g, A = A)
+}
 
 
 #' The Outer Criterion's Curvature at a Reported Point

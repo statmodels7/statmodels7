@@ -1160,7 +1160,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   if (chose_optimizer) {
     optimizer <- outer_default_optimizer(
       exact, outer_newton_ok(spec, design, exact2, method),
-      mixed_penalized(spec, design))
+      mixed_penalized(spec, design), nv)
   }
   # Whether the TRACE prints a gradient. It reports what the search is using,
   # so where the search uses none there is none to report, and asking would
@@ -2077,24 +2077,39 @@ outer_backtracks <- function() 12
 #' model at a criterion of -65.40, where the maximum is -53.30 near
 #' \eqn{\lambda = 91.5}.
 #'
+#' A search over one coordinate with no exact gradient takes
+#' [optimizers7::brent()], which brackets the maximum and reduces the bracket
+#' by parabolic steps, stopping when its half-width on the free scale is
+#' below \eqn{10^{-3}}, a change of one part in a thousand in the
+#' hyperparameter. Measured on `seg(t, psi ~ random(~1 | id), marginal =
+#' TRUE)` over a 20 x 15 panel, where the only hyperparameter is the scale of
+#' a random intercept, the search took 11 evaluations against the 23 of
+#' [optimizers7::nelder_mead()], at a criterion 2e-05 lower.
+#'
 #' @param exact Whether the criterion has an exact gradient.
 #' @param use_hess Whether the search should STEER by the exact Hessian, which
 #'   is not the same question as whether one exists: see [outer_newton_ok()].
 #' @param mixed Whether the model carries a covariance class spanning the
 #'   coefficients and a structural term's own parameters.
+#' @param n The number of coordinates the search moves.
 #'
 #' @return An \pkg{optimizers7} optimizer.
 #'
 #' @seealso [outer_fit()], [outer_gradient_ok()]
 #'
 #' @keywords internal
-outer_default_optimizer <- function(exact, use_hess, mixed = FALSE) {
+outer_default_optimizer <- function(exact, use_hess, mixed = FALSE,
+                                    n = NA_integer_) {
   # the step is bounded at 5 on the free scale, mgcv's maxNstep: a Newton
   # step set by a small curvature can otherwise jump past the maximum onto
   # the plateau where a smoothing parameter runs to infinity. See the
   # details above.
   if (use_hess) return(optimizers7::newton(max_length = 5))
   if (exact || mixed) return(optimizers7::lbfgs())
+  # one coordinate and no gradient: a bracket reduced by parabolic steps.
+  # See the details above.
+  if (isTRUE(n == 1L)) return(optimizers7::brent(criterion =
+                                optimizers7::crit_stationary(1e-3)))
   optimizers7::nelder_mead()
 }
 

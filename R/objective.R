@@ -513,40 +513,13 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
   # of the complete-data score, so this one is the LARGER and a standard
   # error read off it is too small. What vcov() reports comes from
   # statmod_regime_information(), which differentiates the forward recursion
-  # twice.
+  # twice. The states enter each block only through its weight, so the
+  # weights are averaged over the states first and each block is one cross
+  # product. Measured on a marginal seg over a 20 x 15 panel, a cross product
+  # and a sparse write per state and block took 242 s of a 451 s fit, most of
+  # it in the sparse writes, and 38 s summed first.
   if (length(ev$regimes)) {
-    r <- ev$regimes[[1L]]
-    npar <- vapply(design, function(d) d$npar, integer(1))
-    offs <- cumsum(npar) - npar
-    total <- sum(npar)
-    out <- zero_information(design, total)
-    for (k in seq_len(component_count(r$mu))) {
-      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
-                                   component_shift(r$mu, k))
-      Hk <- if (expected) {
-        distributions7::distrib_expected_hessian(spec@distrib, spec@response,
-                                                 thk, scale = "link",
-                                                 approx = approx, threads = spec@threads)
-      } else {
-        distributions7::distrib_hessian(spec@distrib, spec@response, thk,
-                                        scale = "link", threads = spec@threads)
-      }
-      for (a in seq_along(params)) {
-        if (npar[a] == 0L) next
-        for (b in seq_along(params)) {
-          if (npar[b] == 0L || b < a) next
-          wv <- spec@weights * r$gamma[, k] *
-            rep_len(Hk[[hess_key(params, a, b)]], spec@n_obs)
-          blk <- wcrossprod(design[[params[a]]]$X, wv,
-                        design[[params[b]]]$X, spec@threads)
-          ra <- offs[a] + seq_len(npar[a])
-          rb <- offs[b] + seq_len(npar[b])
-          out[ra, rb] <- out[ra, rb] + blk
-          if (a != b) out[rb, ra] <- out[rb, ra] + t(blk)
-        }
-      }
-    }
-    return(-out)
+    H <- regime_hessian_sum(spec, ev, expected, approx)
   }
 
   # given by the caller where it has already asked for them at this point
@@ -633,26 +606,110 @@ information_subset <- function(spec, design, ev, expected, approx, H, index) {
     }
   }
   if (length(ev$regimes)) {
-    r <- ev$regimes[[1L]]
-    for (k in seq_len(component_count(r$mu))) {
-      thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
-                                   component_shift(r$mu, k))
-      Hk <- if (expected) {
-        distributions7::distrib_expected_hessian(spec@distrib, spec@response,
-                                                 thk, scale = "link",
-                                                 approx = approx,
-                                                 threads = spec@threads)
-      } else {
-        distributions7::distrib_hessian(spec@distrib, spec@response, thk,
-                                        scale = "link", threads = spec@threads)
-      }
-      add(Hk, spec@weights * r$gamma[, k])
-    }
-  } else {
-    if (is.null(H)) H <- statmod_family_hessian(spec, ev$theta, expected, approx)
-    add(H, spec@weights)
+    H <- regime_hessian_sum(spec, ev, expected, approx)
+  } else if (is.null(H)) {
+    H <- statmod_family_hessian(spec, ev$theta, expected, approx)
   }
+  add(H, spec@weights)
   -out
+}
+
+
+#' The Second-Derivative Components of a Mixture, Averaged Over Its States
+#'
+#' @description
+#' For a likelihood mixed over states, each second-derivative component of
+#' the family averaged over the states with their smoothed probabilities,
+#' \eqn{\bar h_{ab,i} = \sum_k \gamma_{ik} h_{ab}(\theta_{ik})}.
+#'
+#' @details
+#' The complete-data information is
+#' \eqn{\sum_k X_a' \mathrm{diag}(w \gamma_k h_{ab,k}) X_b
+#' = X_a' \mathrm{diag}(w \bar h_{ab}) X_b}, so one cross product per block
+#' replaces one per state and block. The states are the latent components of
+#' a structural term: the regimes of [modelterms7::regime()] and the
+#' quadrature nodes or side patterns of a marginal break-point term.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param ev What [statmod_eta()] returns, carrying `regimes`.
+#' @param expected,approx As in [statmod_information_at()].
+#'
+#' @return A named list of numeric vectors of length `n_obs`, keyed as
+#'   [distributions7::distrib_hessian()] keys its result.
+#'
+#' @keywords internal
+regime_hessian_sum <- function(spec, ev, expected, approx) {
+  r <- ev$regimes[[1L]]
+  K <- component_count(r$mu)
+  n <- spec@n_obs
+  # THE STATES STACKED, one call of the family per chunk of states rather
+  # than one per state: a marginal break-point carries some four hundred
+  # quadrature nodes per group, and on a 20 x 15 panel the per-state calls
+  # took 26 s of a 159 s fit. The observation index runs fastest in the
+  # stack, so a constant the family carries per observation (the trials of a
+  # binomial) recycles onto its own rows; a family that rejects the length,
+  # and a matrix response, which does not stack by repetition, keep the loop
+  # below.
+  stacked <- if (!is.matrix(spec@response) && K > 1L) tryCatch({
+    hfun <- function(th) {
+      if (expected) {
+        distributions7::distrib_expected_hessian(spec@distrib, rep(
+          spec@response, length.out = length(th[[1L]])), th, scale = "link",
+          approx = approx, threads = spec@threads)
+      } else {
+        distributions7::distrib_hessian(spec@distrib, rep(
+          spec@response, length.out = length(th[[1L]])), th, scale = "link",
+          threads = spec@threads)
+      }
+    }
+    links <- spec@distrib@link_params
+    params <- spec@distrib@params
+    per <- max(1L, floor(2e6 / n))
+    out <- NULL
+    for (from in seq(1L, K, by = per)) {
+      ks <- from:min(K, from + per - 1L)
+      sh <- vapply(ks, function(k) rep_len(component_shift(r$mu, k), n),
+                   numeric(n))
+      th <- stats::setNames(lapply(params, function(q) {
+        e <- rep(rep_len(ev$eta_static[[q]], n), length(ks))
+        if (identical(q, r$param)) e <- e + as.numeric(sh)
+        linkfunctions7::linkinv(links[[q]], e)
+      }), params)
+      Hs <- hfun(th)
+      gk <- r$gamma[, ks, drop = FALSE]
+      part <- lapply(Hs, function(h) {
+        rowSums(gk * matrix(rep_len(h, n * length(ks)), n, length(ks)))
+      })
+      out <- if (is.null(out)) part else
+        stats::setNames(lapply(names(part), function(key) out[[key]] + part[[key]]),
+                        names(part))
+    }
+    out
+  }, error = function(e) NULL) else NULL
+  if (!is.null(stacked)) return(stacked)
+  out <- NULL
+  for (k in seq_len(K)) {
+    thk <- statmod_theta_shifted(spec, ev$eta_static, r$param,
+                                 component_shift(r$mu, k))
+    Hk <- if (expected) {
+      distributions7::distrib_expected_hessian(spec@distrib, spec@response,
+                                               thk, scale = "link",
+                                               approx = approx,
+                                               threads = spec@threads)
+    } else {
+      distributions7::distrib_hessian(spec@distrib, spec@response, thk,
+                                      scale = "link", threads = spec@threads)
+    }
+    gk <- r$gamma[, k]
+    if (is.null(out)) {
+      out <- lapply(Hk, function(h) gk * rep_len(h, spec@n_obs))
+    } else {
+      for (key in names(Hk)) {
+        out[[key]] <- out[[key]] + gk * rep_len(Hk[[key]], spec@n_obs)
+      }
+    }
+  }
+  out
 }
 
 

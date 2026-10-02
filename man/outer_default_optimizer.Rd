@@ -4,7 +4,7 @@
 \alias{outer_default_optimizer}
 \title{Which Optimizer the Outer Search Uses When the Caller Names None}
 \usage{
-outer_default_optimizer(exact, use_hess, mixed = FALSE)
+outer_default_optimizer(exact, use_hess, mixed = FALSE, n = NA_integer_)
 }
 \arguments{
 \item{exact}{Whether the criterion has an exact gradient.}
@@ -14,6 +14,8 @@ is not the same question as whether one exists: see \code{\link[=outer_newton_ok
 
 \item{mixed}{Whether the model carries a covariance class spanning the
 coefficients and a structural term's own parameters.}
+
+\item{n}{The number of coordinates the search moves.}
 }
 \value{
 An \pkg{optimizers7} optimizer.
@@ -46,6 +48,14 @@ standardized by the term, the first step went from \eqn{\lambda = 1} to
 \eqn{1.6\times10^{10}}, a length of 23.5, and the fit reported the empty
 model at a criterion of -65.40, where the maximum is -53.30 near
 \eqn{\lambda = 91.5}.
+
+A search over one coordinate with no exact gradient takes
+\code{\link[optimizers7:brent]{optimizers7::brent()}}, which brackets the maximum and reduces the bracket
+by parabolic steps, stopping when its half-width on the free scale is
+below \eqn{10^{-3}}, a change of one part in a thousand in the
+hyperparameter. Measured on \code{seg(t, psi ~ random(~1 | id), marginal = TRUE)} over a 20 x 15 panel, where the only hyperparameter is the scale of
+a random intercept, the search took 11 evaluations against the 23 of
+\code{\link[optimizers7:nelder_mead]{optimizers7::nelder_mead()}}, at a criterion 2e-05 lower.
 }
 \seealso{
 \code{\link[=outer_fit]{outer_fit()}}, \code{\link[=outer_gradient_ok]{outer_gradient_ok()}}

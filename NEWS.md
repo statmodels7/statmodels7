@@ -1,3 +1,31 @@
+# statmodels7 0.186.0
+
+* A sharp `jump()` or `jseg()` whose break-point is developed over groups or
+  covariates is settled like an undeveloped one: the polish of
+  `modelterms7::seg_polish_exact()` moves the development's coefficients and
+  the model is refitted at the held positions. Measured on three groups of
+  80, `jseg(x, psi ~ 0 + g)` certified `converged` at an RSS of 170.85 with
+  positions 2.12, 4.46 and 2.19 against a truth of 3, 5 and 7, and settles
+  at 65.22 with positions 3.16, 4.96 and 7.03. `summary()` reports the
+  positions as `psi1.<level>` and no longer prints the working slots.
+* The complete-data information of a mixture is assembled with one cross
+  product per block, the states' weights averaged first
+  (`regime_hessian_sum()`), where it took a cross product and a sparse write
+  per state and block; the family is called once over the stacked states. On
+  `seg(t, psi ~ random(~1 | id), marginal = TRUE)` over a 20 x 15 panel the
+  information went from 242 s to 38 s of a 451 s fit.
+* A search over one hyperparameter with no exact outer gradient uses
+  `optimizers7::brent()` in place of `optimizers7::nelder_mead()`: 11
+  evaluations against 23 on the same fit.
+* Where the outer criterion has no exact gradient and there are at most two
+  coordinates, `statmod_certificate()` differences the criterion by refitting
+  (`criterion_differenced()`, three refits for one coordinate and nine for
+  two) and reads the decrement there, where it returned `unknown`. The same
+  fit certifies `converged` at a decrement of 5.7e-07, the certificate taking
+  10 s.
+* Together with modelterms7 0.89.0, that fit goes from 606 s to 91 s at the
+  same criterion (-226.1308).
+
 # statmodels7 0.185.0
 
 * A sharp `jump()` or `jseg()` term in the equation of a parameter other than

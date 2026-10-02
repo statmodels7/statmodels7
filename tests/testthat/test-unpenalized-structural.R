@@ -142,7 +142,8 @@ test_that("a term of the likelihood shape is refused and says what it costs", {
   # regime()'s exact gradient needs how the smoothed posterior moves along the
   # direction the mode moves in, which the term does not supply. Read on the
   # coefficients alone it was out by 2.05e-04, flat in the step, so it is
-  # refused: the search is derivative-free and the certificate unknown
+  # refused: the search over the one hyperparameter is brent(), and the
+  # certificate differences the criterion by refitting
   skip_on_cran()
   set.seed(5)
   n <- 300L
@@ -160,8 +161,8 @@ test_that("a term of the likelihood shape is refused and says what it costs", {
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, des))
   expect_false(outer_gradient_ok(fit@spec, des, idx, reml(), 1L))
   expect_false(outer_gradient_ok(fit@spec, des, idx, reml("expected"), 1L))
-  expect_identical(class(fit@methods$search)[[1L]], "optimizers7::NelderMead")
+  expect_identical(class(fit@methods$search)[[1L]], "optimizers7::Brent")
   ce <- statmod_certificate(fit)
-  expect_identical(ce$state, "unknown")
-  expect_match(ce$reason, "no exact outer gradient")
+  expect_identical(ce$curvature, "differenced criterion")
+  expect_identical(ce$state, "converged")
 })

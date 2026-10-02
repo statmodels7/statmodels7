@@ -77,10 +77,11 @@ test_that("a multivariate t prior is searched on the gradient and converges", {
 
 test_that("a derivative-free default search is not given a stall rule", {
   skip_on_cran()
-  # regime() has no exact outer gradient, so the default search is the
-  # simplex. The resolution rule reads a CHANGE in the objective, and the best
-  # vertex of a simplex does not move over an iteration that only reshapes
-  # it, so the rule would end the search there.
+  # regime() has no exact outer gradient, so the default search is
+  # derivative-free: brent() over the one hyperparameter here, the simplex
+  # over more. The resolution rule reads a CHANGE in the objective, and the
+  # best point of such a search does not move over an iteration that only
+  # reshapes its bracket or simplex, so the rule would end the search there.
   set.seed(3)
   n <- 300L
   z <- stats::rnorm(n)
@@ -96,7 +97,7 @@ test_that("a derivative-free default search is not given a stall rule", {
                  distributions7::gaussian1_distrib(), d,
                  outer_criterion = reml())
   s <- fit@methods$search
-  expect_identical(class(s)[[1L]], class(optimizers7::nelder_mead())[[1L]])
+  expect_identical(class(s)[[1L]], class(optimizers7::brent())[[1L]])
   expect_identical(class(s@criterion)[[1L]],
-                   class(optimizers7::nelder_mead()@criterion)[[1L]])
+                   class(optimizers7::brent()@criterion)[[1L]])
 })
