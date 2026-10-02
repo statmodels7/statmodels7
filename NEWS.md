@@ -1,3 +1,9 @@
+# statmodels7 0.186.2
+
+* Requires modelterms7 0.90.0, where the parameters of a marginal
+  break-point's gaussian prior are `psi1.mean` and `psi1.sd` (they were `m1`
+  and `tau1`); `coef()` and `summary()` report them under the new names.
+
 # statmodels7 0.186.1
 
 * `vcov()` and `summary()` of a model with a mixture term beside a random

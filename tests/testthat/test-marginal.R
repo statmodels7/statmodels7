@@ -21,8 +21,8 @@ test_that("a marginal jump fits end to end and reports what it estimated", {
                  distributions7::gaussian1_distrib(), pn$dd)
   expect_true(fit@converged)
   st <- fit@structural[[1L]]$parameter
-  expect_lt(abs(st[["m1"]] - 5), 0.6)
-  expect_lt(abs(st[["tau1"]] - 0.5), 0.3)
+  expect_lt(abs(st[["psi1.mean"]] - 5), 0.6)
+  expect_lt(abs(st[["psi1.sd"]] - 0.5), 0.3)
   expect_lt(abs(st[["delta1"]] - 2), 0.3)
   # nothing is held: m does not enter the predictor as a level, so the
   # equation's intercept confounds nothing of the term's
@@ -32,9 +32,9 @@ test_that("a marginal jump fits end to end and reports what it estimated", {
   # the joint block, tau's interval built on the log scale and so positive
   s <- summary(fit)
   tab <- s@structural
-  expect_identical(sort(tab$name), sort(c("m1", "tau1", "delta1")))
+  expect_identical(sort(tab$name), sort(c("psi1.mean", "psi1.sd", "delta1")))
   expect_true(all(is.finite(tab$se)))
-  expect_gt(tab$lower[tab$name == "tau1"], 0)
+  expect_gt(tab$lower[tab$name == "psi1.sd"], 0)
 
   V <- vcov(fit)
   expect_true(all(is.finite(diag(V))))
@@ -84,7 +84,7 @@ test_that("the fresh start reads the exact profile of the target", {
   z <- attr(design, "structure")$zeta[[1L]]
   # the profile puts m near the population position and the change of level
   # near the truth, where a conventional start has nothing to read them off
-  expect_lt(abs(z[["m1"]] - 5), 1)
+  expect_lt(abs(z[["psi1.mean"]] - 5), 1)
   expect_gt(z[["delta1"]], 1)
 })
 
@@ -104,8 +104,8 @@ test_that("two latent break-points fit end to end", {
                  distributions7::gaussian1_distrib(), dd)
   expect_true(fit@converged)
   st <- fit@structural[[1L]]$parameter
-  expect_lt(abs(st[["m1"]] - 3), 0.7)
-  expect_lt(abs(st[["m2"]] - 7), 0.7)
+  expect_lt(abs(st[["psi1.mean"]] - 3), 0.7)
+  expect_lt(abs(st[["psi2.mean"]] - 7), 0.7)
   expect_lt(abs(st[["delta1"]] - 2), 0.4)
   expect_lt(abs(st[["delta2"]] + 1.5), 0.4)
   lat <- statmod_latent(fit)
@@ -129,7 +129,7 @@ test_that("the seg marginal fits end to end beside an intercept", {
   expect_true(fit@converged)
   st <- fit@structural[[1L]]$parameter
   expect_lt(abs(st[["beta"]] - 0.5), 0.2)
-  expect_lt(abs(st[["m1"]] - 5), 0.7)
+  expect_lt(abs(st[["psi1.mean"]] - 5), 0.7)
   expect_lt(abs(st[["gamma1"]] + 1.2), 0.3)
   lat <- statmod_latent(fit)
   expect_gt(cor(lat$mean, ps), 0.8)
@@ -150,8 +150,8 @@ test_that("a t prior rides the cdf surface end to end", {
                  distributions7::gaussian1_distrib(), dd)
   st <- fit@structural[[1L]]$parameter
   expect_identical(sort(names(st)),
-                   sort(c("m1", "sigma", "nu", "delta1")))
-  expect_lt(abs(st[["m1"]] - 5), 0.7)
+                   sort(c("psi1.mean", "sigma", "nu", "delta1")))
+  expect_lt(abs(st[["psi1.mean"]] - 5), 0.7)
   expect_lt(abs(st[["delta1"]] - 2), 0.4)
   lat <- statmod_latent(fit)
   # a heavy-tailed prior's edge moments can fail to exist, and what cannot
@@ -176,7 +176,7 @@ test_that("a kinked penalty fits beside the marginal term", {
                    jump(x, psi ~ random(~1 | id), marginal = TRUE),
                  distributions7::gaussian1_distrib(), dd)
   st <- fit@structural[[1L]]$parameter
-  expect_lt(abs(st[["m1"]] - 5), 0.7)
+  expect_lt(abs(st[["psi1.mean"]] - 5), 0.7)
   expect_lt(abs(st[["delta1"]] - 2), 0.4)
   cf <- sort(abs(fit@coefficients$mu), decreasing = TRUE)
   # the intercept and the one signal column both survive with their size;
