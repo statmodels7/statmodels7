@@ -1,3 +1,11 @@
+# statmodels7 0.186.1
+
+* `vcov()` and `summary()` of a model with a mixture term beside a random
+  effect stopped with "number of items to replace is not a multiple of
+  replacement length": the random effect's block is a sparse `Matrix` there,
+  and the information of the mixture assigned it into a base matrix. Measured
+  on `y ~ random(~1 | id) + jump(t, psi ~ random(~1 | id), marginal = TRUE)`.
+
 # statmodels7 0.186.0
 
 * A sharp `jump()` or `jseg()` whose break-point is developed over groups or

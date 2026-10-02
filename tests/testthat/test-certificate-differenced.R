@@ -24,4 +24,8 @@ test_that("a marginal break-point is certified on the differenced criterion", {
   expect_identical(ce$state, "converged")
   expect_lt(abs(ce$gradient), 0.05)
   expect_lt(ce$decrement, 1e-2)
+  # the random intercept's block is sparse beside the structural term, and
+  # the information of the mixture assembles it into a dense matrix
+  expect_no_error(s <- summary(f))
+  expect_true(is.finite(confint(f)["mu:jump.delta1", "se"]))
 })

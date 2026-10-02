@@ -791,7 +791,12 @@ statmod_regime_information <- function(spec, ev, design, npar, offs, nb, n,
 
   Vs <- lapply(seq_along(params), function(a) {
     M <- matrix(0, n, m)
-    if (npar[a] > 0L) M[, offs[a] + seq_len(npar[a])] <- design[[params[a]]]$X
+    # a random effect's block is a sparse Matrix beside a structural term
+    # (densify_small() leaves it so), and it does not assign into a base
+    # matrix: summary() of a marginal jump beside random(~1 | id) stopped here
+    if (npar[a] > 0L) {
+      M[, offs[a] + seq_len(npar[a])] <- as.matrix(design[[params[a]]]$X)
+    }
     M
   })
 
