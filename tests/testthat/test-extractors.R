@@ -158,18 +158,18 @@ test_that("vcov selects one equation's submatrix", {
   expect_error(vcov(fit, parameter = "nope"), "matched nothing")
 })
 
-test_that("a block that is a working linearization is held out, not reported at zero", {
+test_that("a sharp break-point is held and its position alone has no variance", {
   sharp <- fit_break(kind = "jump")
-  expect_warning(V <- vcov(sharp), "working linearization")
+  # the term is held at the minimum of its profile, so its block is the exact
+  # design there and vcov() reports every coefficient but the position, which
+  # is held without a warning
+  V <- expect_no_warning(vcov(sharp))
   nm <- rownames(V)
-  own <- grep("^mu:jump\\.", nm)
-  rest <- setdiff(seq_along(nm), own)
-  # the term's own coefficients would be reported with a standard error of
-  # EXACTLY zero -- measured against a bootstrap of 200 resamples, 0.000
-  # against 0.063 and 0.540 -- so they are missing instead
-  expect_true(all(is.na(diag(V)[own])))
-  expect_true(all(is.finite(diag(V)[rest])))
-  expect_gt(length(own), 0L)
+  own <- which(startsWith(nm, "mu:jump."))
+  pos <- which(startsWith(nm, "mu:jump.psi"))
+  expect_gt(length(own), length(pos))
+  expect_true(all(is.na(diag(V)[pos])))
+  expect_true(all(is.finite(diag(V)[setdiff(seq_along(nm), pos)])))
   # and the continuous construction, whose block IS a Jacobian, keeps
   # everything
   cont <- fit_break(kind = "seg")
@@ -178,11 +178,12 @@ test_that("a block that is a working linearization is held out, not reported at 
   expect_true(any(grepl("psi1$", rownames(Vc))))
 })
 
-test_that("a summary of a sharp break-point exists and says why it is short", {
+test_that("a summary of a sharp break-point exists and says why psi has no se", {
   sharp <- fit_break(kind = "jump")
   s <- expect_no_warning(summary(sharp))
-  expect_true(any(grepl("working linearization", s@notes)))
-  out <- paste(utils::capture.output(print(s)), collapse = "\n")
+  expect_true(any(grepl("held at the minimum of their profile", s@notes)))
+  out <- paste(utils::capture.output(print(s)), collapse = "
+")
   expect_match(out, "jump(x, psi = 4)", fixed = TRUE)
 })
 

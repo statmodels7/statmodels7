@@ -320,6 +320,9 @@ vcov.StatmodFit <- function(object,
   keep[lab$kinked & beta == 0] <- FALSE
   frz <- frozen_block(spec, lab)
   keep[frz] <- FALSE
+  # the slot of a held break-point is a column of zeros by design and is
+  # held rather than reported as a direction the information misses
+  keep[term_held_stack(spec, design)] <- FALSE
   # An ALIASED coordinate carries no information of its own and, unlike the
   # flat directions handled below, which one it is has already been settled
   # by the pivot that fitted the model. Leaving it in makes the matrix
@@ -2430,6 +2433,24 @@ summary.StatmodFit <- function(object, level = 0.95,
                              readable = FALSE, ...))
   spec <- object@spec
   design <- statmod_design(spec)
+  # A HELD BREAK-POINT says once why its position has no standard error
+  held_terms <- unlist(lapply(names(spec@terms), function(p) {
+    Filter(function(nm) length(tryCatch(
+      modelterms7::term_held(spec@terms[[p]][[nm]]),
+      error = function(e) integer(0))) > 0L, names(spec@terms[[p]]))
+  }))
+  if (length(held_terms)) {
+    frozen_msg <- c(frozen_msg, sprintf(paste0(
+      "The break-points of %s are held at the minimum of their profile,",
+      " which is
+  constant between consecutive observations and has no",
+      " curvature, so they carry
+  no standard error and the other",
+      " coefficients are conditional on them. A
+  smoothed term",
+      " (smoothed = numericals7::smooth_probit()) gives them one."),
+      paste(unique(held_terms), collapse = ", ")))
+  }
   ci$statistic <- ci$estimate / ci$se
   ci$p_value <- 2 * stats::pnorm(-abs(ci$statistic))
   test_msg <- character(0)
@@ -3216,9 +3237,17 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     se <- rep(NA_real_, length(rd$name))
     if (!is.null(V) && all(key %in% rownames(V))) {
       Vb <- as.matrix(V[key, key, drop = FALSE])
-      if (all(is.finite(Vb))) {
-        se <- sqrt(pmax(diag(rd$jacobian %*% Vb %*% t(rd$jacobian)), 0))
-      }
+      # a quantity is read only off the coordinates its row of the Jacobian
+      # touches, so a coordinate with no variance -- the slot of a held
+      # break-point, a column of zeros -- leaves every other quantity its
+      # standard error and takes away only those that depend on it, as
+      # readable_vcov() does
+      ok <- is.finite(diag(Vb))
+      bad <- apply(rd$jacobian[, !ok, drop = FALSE] != 0, 1L, any)
+      Vz <- Vb
+      Vz[!is.finite(Vz)] <- 0
+      se <- sqrt(pmax(diag(rd$jacobian %*% Vz %*% t(rd$jacobian)), 0))
+      se[bad] <- NA_real_
     }
     z <- stats::qnorm(1 - (1 - level) / 2)
     st <- rd$value / se

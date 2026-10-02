@@ -446,6 +446,10 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       !is.null(order_shortfall(spec@distrib, 2L, "the REML criterion"))) {
     outer_criterion <- NULL
   }
+  # the default criterion, kept: a working break-point block refuses to put a
+  # dispersion on it, and once statmod_settle_breakpoints() has held the
+  # block the refusal no longer applies
+  crit_default <- if (!asked) outer_criterion else NULL
   if (!is.null(outer_criterion)) {
     nothing <- !nrow(outer_hyper_index(spec, blocks)) &&
       !length(marginal_coords(spec, design, outer_criterion)$where)
@@ -574,6 +578,58 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
           hyper <- res$hyper
           crit <- res$criterion
         }
+      }
+    }
+    # A SHARP BREAK-POINT IS SETTLED ON THE PROFILE AND HELD THERE. The
+    # working construction stops at a fixed point of its own iteration, whose
+    # coefficients are those of the working model and whose position may sit
+    # one interval away from the profile's minimum; see
+    # statmod_settle_breakpoints().
+    st0 <- statmod_settle_breakpoints(spec_h, design, blocks, hyper,
+                                      inner_optimizer, res, expected, approx,
+                                      maxit, tol, vb)
+    res <- st0$res
+    # a held term is a Jacobian block from here on: its contribution is X beta
+    # exactly, so it is fitted like any other block and the rules that apply
+    # to a working linearization -- the working phase, and the refusal to put
+    # a dispersion's coefficients on the criterion (marginal_coords()) -- no
+    # longer apply to it
+    if (st0$settled) {
+      d2 <- design
+      rf2 <- attr(d2, "refresh")
+      stt <- attr(d2, "state")
+      for (i in seq_along(rf2)) {
+        tm <- stt$terms[[rf2[[i]]$param]][[rf2[[i]]$term]]
+        if (isTRUE(tryCatch(tm@blueprint$held, error = function(e) FALSE))) {
+          rf2[[i]]$frozen <- FALSE
+        }
+      }
+      attr(d2, "refresh") <- rf2
+      design <<- d2
+    }
+    # the criterion is re-read on the held block whether or not a position
+    # moved: the search ran on the working block, whose determinant carries
+    # the auxiliary column, so its hyperparameters are another criterion's
+    if (st0$settled && is.null(outer_criterion) && is.null(sparse_criterion) &&
+        !is.null(crit_default) &&
+        length(marginal_coords(spec, design, crit_default)$where)) {
+      outer_criterion <<- crit_default
+    }
+    if (st0$settled && (!is.null(outer_criterion) ||
+                      !is.null(sparse_criterion))) {
+      r2 <- tryCatch(
+        statmod_select(spec, design, blocks, hyper, inner_optimizer,
+                       outer_criterion, outer_optimizer, res$par, approx,
+                       maxit, tol, vb, data, weights, offsets,
+                       sparse_criterion),
+        error = function(e) NULL)
+      if (!is.null(r2)) {
+        res <- r2
+        hyper <- res$hyper
+        crit <- res$criterion
+        spec_h <- if (length(res$held_coef)) {
+          S7::set_props(spec, held_coef = res$held_coef)
+        } else spec
       }
     }
     list(res = res, hyper = hyper, crit = crit, spec_h = spec_h)
@@ -708,6 +764,9 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # A READER WHO DOES NOT PRINT THE SUMMARY IS STILL TOLD. The `NA` that
   # follows is base R's convention and is right, but on its own it reports a
   # non-identified model by omission.
+  # a coefficient a term holds is not estimated by the information and is
+  # not a column the model fails to identify: its column is zero by design
+  alias <- setdiff(alias, term_held_stack(spec, design))
   warn_aliased(aliased_labels(spec, design, alias))
   # the terms as the fit left them, so a break-point and a nonlinear
   # parameter are read off the fitted object and prediction reapplies them
@@ -1749,7 +1808,14 @@ subset_pieces <- function(spec, design, coef, hyper, method, idx) {
 #' @keywords internal
 held_positions <- function(spec, design, obj, beta) {
   hc <- spec@held_coef
-  if (!length(hc)) return(list(where = integer(0), value = numeric(0)))
+  # the slots a term holds (a held break-point, see
+  # modelterms7::seg_hold()) are held where they stand: their columns are
+  # zero, so the value does not reach the objective, and left free the
+  # pivot would drop them and report them as not identified
+  th <- term_held_stack(spec, design)
+  if (!length(hc)) {
+    return(list(where = th, value = as.numeric(beta[th])))
+  }
   pos <- obj$split(seq_along(beta))
   where <- integer(0)
   value <- numeric(0)
@@ -1765,7 +1831,46 @@ held_positions <- function(spec, design, obj, beta) {
     where <- c(where, pos[[p]][j])
     value <- c(value, as.numeric(v))
   }
-  list(where = where, value = value)
+  extra <- setdiff(th, where)
+  list(where = c(where, extra), value = c(value, as.numeric(beta[extra])))
+}
+
+
+#' The Stacked Positions the Terms Hold
+#'
+#' @description
+#' The positions, in the stacked coefficient vector, of the coefficients the
+#' model's terms hold ([modelterms7::term_held()]): the slot of a held
+#' break-point. The terms are read from the design's state where the fit
+#' carries one, so a term held during the fit is seen at once, and from the
+#' specification otherwise.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design.
+#'
+#' @return An integer vector of positions, possibly empty.
+#'
+#' @keywords internal
+term_held_stack <- function(spec, design) {
+  st <- attr(design, "state")
+  params <- spec@distrib@params
+  npar <- vapply(params, function(p) {
+    if (is.null(design[[p]])) 0L else as.integer(design[[p]]$npar)
+  }, integer(1))
+  offs <- cumsum(npar) - npar
+  out <- integer(0)
+  for (a in seq_along(params)) {
+    p <- params[a]
+    for (nm in names(spec@terms[[p]])) {
+      tm <- if (!is.null(st) && !is.null(st$terms[[p]][[nm]]))
+        st$terms[[p]][[nm]] else spec@terms[[p]][[nm]]
+      h <- tryCatch(modelterms7::term_held(tm), error = function(e) integer(0))
+      if (!length(h)) next
+      cols <- design[[p]]$blocks[[nm]]
+      out <- c(out, offs[a] + cols[h])
+    }
+  }
+  sort(unique(as.integer(out)))
 }
 
 
@@ -2320,6 +2425,19 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
         H <- statmod_information_at(spec, coef, design, expected, approx)
         S <- statmod_penalty_at(spec, coef, hyper, design, "hessian")
         S <- zap_nonfinite(S)
+        # a coefficient a term holds (a held break-point's slot, a column of
+        # zeros) counts one: the position it stands for was estimated, on
+        # the profile rather than by the derivative, as segmented counts it
+        hp <- term_held_stack(spec, design)
+        if (length(hp)) {
+          H <- as_dense(H)
+          S <- as_dense(S)
+          H[hp, ] <- 0
+          H[, hp] <- 0
+          H[cbind(hp, hp)] <- 1
+          S[hp, ] <- 0
+          S[, hp] <- 0
+        }
         # through solve_pd, whose equilibrated test forgives scale
         # separation from any source: a smoothing parameter a criterion
         # sends to 1e15 separates the scales without flattening a

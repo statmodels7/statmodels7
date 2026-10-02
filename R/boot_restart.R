@@ -256,3 +256,166 @@ statmod_boot_restart <- function(spec, design, blocks, hyper, inner_optimizer,
   restore(keep)
   best
 }
+
+
+#' Settle the Sharp Break-Points on the Profile and Hold Them
+#'
+#' @description
+#' After the working phase and the restarts, every sharp [modelterms7::jump()]
+#' or [modelterms7::jseg()] term is moved to the minimum of its exact
+#' least-squares profile ([modelterms7::seg_polish_exact()]), held there
+#' ([modelterms7::seg_hold()]), and the coefficients of the model are refitted
+#' with the positions held.
+#'
+#' @details
+#' The working construction of Fasola, Muggeo and Kuchenhoff stops at a fixed
+#' point of its own iteration. Its coefficients there are those of the working
+#' model, whose block carries a weight frozen at the previous iterate, and not
+#' the coefficients that maximize the likelihood at the positions reached; and
+#' the profile of a discontinuous term is constant between consecutive
+#' observations, so the iteration can stop one interval away from the
+#' minimum. Measured on 16 samples of 200 observations (a jseg and a jump, 8
+#' seeds each), the fit reached the interval of the profile's minimum in 11,
+#' its coefficients sat up to 0.04 log-likelihood units below least squares
+#' at the position reached, and `statmod_certificate()` reported
+#' `not converged` in 12, reading the mode along the working block's auxiliary
+#' column, which is not a direction of the model.
+#'
+#' Held, a break-point term contributes a linear function of its remaining
+#' coefficients, so the refit is an ordinary fit, and the coordinate that
+#' carried the position is held in the solve and left out of the information
+#' ([term_held_stack()]). This is how `segmented` and `stepmented` report
+#' their coefficients: at the estimated positions, conditional on them.
+#'
+#' The profile is weighted least squares of the working response of the
+#' term's own equation, net of the rest of that equation, on the term's own
+#' columns, with the working weights of a scoring step: exact for a gaussian
+#' mean and the quadratic model of the objective for any other equation. A polished position is kept
+#' only where the refit at it reaches a better objective than the refit at the
+#' position the iteration reached. A term whose per-break-point coefficients
+#' carry a development is held without polishing, its positions being one per
+#' observation.
+#'
+#' @param spec The specification, holds included.
+#' @param design The design, carrying the terms in its state.
+#' @param blocks,hyper,inner_optimizer,expected,approx,maxit,tol,vb As
+#'   [statmod_alternate()].
+#' @param res The fit to settle, as [statmod_alternate()] returns it.
+#'
+#' @return A list: `res`, the settled fit, `moved`, `TRUE` where a
+#'   polished position replaced the one the iteration reached, and `settled`,
+#'   `TRUE` where a term was held.
+#'
+#' @references
+#' Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
+#' iterative algorithm for change-point detection in abrupt change models.
+#' *Computational Statistics*, 33, 997--1015.
+#'
+#' @seealso [statmod_boot_restart()], which runs before it.
+#'
+#' @keywords internal
+statmod_settle_breakpoints <- function(spec, design, blocks, hyper,
+                                       inner_optimizer, res, expected, approx,
+                                       maxit, tol, vb) {
+  st <- attr(design, "state")
+  rf <- attr(design, "refresh")
+  none <- list(res = res, moved = FALSE, settled = FALSE)
+  if (is.null(st) || !length(rf)) return(none)
+  sharp <- Filter(function(r) {
+    tm <- st$terms[[r$param]][[r$term]]
+    S7::S7_inherits(tm, modelterms7::SegTerm) &&
+      tm@kind %in% c("jump", "jseg") && is.null(tm@spec$smoothed) &&
+      !isTRUE(tm@blueprint$held)
+  }, rf)
+  if (!length(sharp)) return(none)
+  obj_split <- res$obj$split
+  obj_stack <- res$obj$stack
+  vbq <- lapply(vb, function(x) FALSE)
+  y0 <- spec@response
+  can_polish <- is.numeric(y0) && !is.matrix(y0) &&
+    length(y0) == spec@n_obs && !anyNA(y0)
+  reset <- function() {
+    st$key <- NULL
+    st$value <- NULL
+  }
+  # the terms with the given positions written in and every sharp term held,
+  # and the coefficients that go with them
+  place <- function(terms, par) {
+    cf <- obj_split(par)
+    for (r in sharp) {
+      tm <- terms[[r$param]][[r$term]]
+      tm <- modelterms7::seg_hold(tm)
+      st$terms[[r$param]][[r$term]] <- tm
+      cols <- design[[r$param]]$blocks[[r$term]]
+      cf[[r$param]][cols] <- as.numeric(tm@blueprint$coef)
+    }
+    reset()
+    obj_stack(cf)
+  }
+  refit <- function(par) {
+    tryCatch(statmod_alternate(spec, design, blocks, hyper, inner_optimizer,
+                               par, expected, approx, maxit, tol, vbq),
+             error = function(e) NULL)
+  }
+  keep <- st$terms
+
+  # the polished positions, term by term, read on the response net of the
+  # rest of the equation
+  cand <- keep
+  moved <- FALSE
+  if (can_polish) {
+    cfl <- obj_split(res$par)
+    ep <- tryCatch(statmod_eta(spec, design, cfl), error = function(e) NULL)
+    for (r in sharp) {
+      if (is.null(ep)) break
+      tm <- keep[[r$param]][[r$term]]
+      p <- r$param
+      # the working response of the term's own equation, net of the rest of
+      # that equation, with the working weights: for a gaussian mean it is the
+      # response itself, and in any other equation it is the quadratic model
+      # of the objective a scoring step reads
+      wk <- tryCatch(coord_working(spec, ep, cfl, design, p, TRUE, approx),
+                     error = function(e) NULL)
+      if (is.null(wk)) next
+      eta <- rep_len(if (is.null(ep$eta_static)) ep$eta[[p]] else
+        ep$eta_static[[p]], spec@n_obs)
+      yn <- wk$z - (eta - as.numeric(modelterms7::term_value(tm)))
+      pt <- tryCatch(modelterms7::seg_polish_exact(tm, yn, weights = wk$w),
+                     error = function(e) NULL)
+      if (is.null(pt)) next
+      if (!isTRUE(all.equal(modelterms7::seg_psi(pt), modelterms7::seg_psi(tm),
+                            tolerance = 0))) {
+        cand[[p]][[r$term]] <- pt
+        moved <- TRUE
+      }
+    }
+  }
+
+  # the refit at the positions the iteration reached, held
+  r0 <- refit(place(keep, res$par))
+  best <- r0
+  best_terms <- st$terms
+  if (moved) {
+    st$terms <- keep
+    r1 <- refit(place(cand, res$par))
+    if (!is.null(r1) && is.finite(r1$value) &&
+        (is.null(r0) || !is.finite(r0$value) ||
+         r1$value < r0$value - 1e-8 * (abs(r0$value) + 1))) {
+      best <- r1
+      best_terms <- st$terms
+    } else {
+      moved <- FALSE
+    }
+  }
+  if (is.null(best) || !is.finite(best$value)) {
+    st$terms <- keep
+    reset()
+    return(none)
+  }
+  st$terms <- best_terms
+  reset()
+  fields <- c("par", "value", "converged", "obj", "aliased", "hist_blocks",
+              "hist_inner")
+  res[fields] <- best[fields]
+  list(res = res, moved = moved, settled = TRUE)
+}

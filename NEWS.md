@@ -1,3 +1,35 @@
+# statmodels7 0.184.0
+
+* A sharp `jump()` or `jseg()` term is settled after the working phase and
+  the restarts (`statmod_settle_breakpoints()`): its break-points are moved
+  to the minimum of the exact profile of their own equation
+  (`modelterms7::seg_polish_exact()` on the working response, kept only where
+  the objective improves), held there (`modelterms7::seg_hold()`), and the
+  model's coefficients are refitted at the held positions. The working
+  iteration stops at a fixed point whose coefficients belong to the working
+  model and whose position may sit one interval from the minimum. Measured
+  on 16 samples of 200 observations (a jseg and a jump, 8 seeds each), the
+  certificate read `not converged` in 12 and a coefficient was named not
+  identified in 5; the RSS was at the profile's minimum in 11. All 16 now
+  certify `converged` at the profile's minimum with nothing aliased, at the
+  same cost.
+* At the held position the term's coefficients are those of `lm()` with the
+  position given, with conditional standard errors equal to `lm()`'s; the
+  position has no standard error (the profile has no curvature), counts one
+  degree of freedom, and `summary()` says why in a note. The slot that
+  carried it is held in the solve and in the information
+  (`term_held_stack()`), and `vcov()` holds it without a warning.
+* Held, the block is no longer a working linearization, so a dispersion's
+  coefficients go on the REML criterion as for any other model: on an
+  unpenalized `jseg()` sigma is \eqn{\sqrt{\mathrm{RSS}/(n - 4)}}, as `lm()`
+  reads it, where it was the joint-mode \eqn{\sqrt{\mathrm{RSS}/n}}. Beside a
+  smooth the hyperparameters are re-selected on the held block: on
+  `jseg(x) + s(z)` the certificate's outer gradient read 10.06 against the
+  search's stationary point, and reads 1.2e-07 now.
+* `n_boot = 0` turns off the restarts and not the polish: the polish is the
+  exact minimum of the profile for one break-point at a time, not a
+  heuristic restart.
+
 # statmodels7 0.183.0
 
 * The effective degrees of freedom of a block with a kink are the trace of

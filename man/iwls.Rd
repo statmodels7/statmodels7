@@ -101,7 +101,11 @@ carries \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in
 \eqn{\beta}, so a mode left short by \eqn{\delta} enters it at first
 order; a warm-started fit whose score is already under the rule would stop
 without moving and leave the criterion out by an amount linear in the
-outer step. The extra step takes the error to second order.
+outer step. The extra step takes the error to second order. It is kept
+unless it raises the objective by more than a relative \eqn{10^{-8}}: a
+sufficient-decrease test at a point already under the rule would accept or
+reject by the last bits, and the criterion would jump between nearby
+hyperparameters.
 
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information; elsewhere the family's own method

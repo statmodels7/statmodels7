@@ -379,7 +379,8 @@ statmod_hold <- function(spec, coords, values) {
 #' @keywords internal
 held_stack <- function(spec, design) {
   hc <- spec@held_coef
-  if (!length(hc)) return(integer(0))
+  th <- term_held_stack(spec, design)
+  if (!length(hc)) return(th)
   params <- spec@distrib@params
   npar <- vapply(design, function(d) d$npar, integer(1))
   offs <- cumsum(npar) - npar
@@ -390,7 +391,7 @@ held_stack <- function(spec, design) {
     j <- match(names(hc[[p]]), design[[p]]$coef_names)
     out <- c(out, offs[a] + j[!is.na(j)])
   }
-  sort(unique(out))
+  sort(unique(c(out, th)))
 }
 
 

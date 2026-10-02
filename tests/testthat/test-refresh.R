@@ -267,19 +267,23 @@ test_that("a break-point term whose psi is not named starts on a grid", {
   expect_equal(unname(cf[["jseg.gamma1"]]), 2, tolerance = 0.2)
 
   # a caller who names psi has said where to BEGIN; with the restarts
-  # disabled as well, the fit is left on that start's own optimum, short
-  # of the truth at 6
+  # disabled the working iteration is left on that start's own optimum, short
+  # of the truth at 6 -- and the polish over every interval of the profile
+  # (statmod_settle_breakpoints()) then moves a single break-point to the
+  # profile's minimum, which is not a restart: it is exact
   held <- statmod(y ~ jseg(x, psi = 5, n_boot = 0),
                   distributions7::gaussian1_distrib(), dj)
-  expect_lt(psi_of(held), 5.8)
-  # from this start the scaling factor reaches its floor with the
-  # break-point still moving, so the working phase is ended rather than
-  # repeated at every pass: two passes, where running out of the pass
-  # budget took a hundred and about 250 s
-  expect_false(held@converged)
+  # the same interval between consecutive observations as the grid start's
+  # optimum, where the profile is constant
+  lo <- min(psi_of(held), psi_of(fit))
+  hi <- max(psi_of(held), psi_of(fit))
+  expect_false(any(dj$x > lo & dj$x < hi))
+  expect_true(held@converged)
+  # the scaling factor reaches its floor with the break-point still moving,
+  # so the working phase is ended rather than repeated at every pass
   expect_lte(max(held@history$blocks$pass), 5)
-  # and it is the worse optimum, which is the point of the grid
-  expect_gt(as.numeric(logLik(fit)), as.numeric(logLik(held)))
+  expect_equal(as.numeric(logLik(fit)), as.numeric(logLik(held)),
+               tolerance = 1e-8)
   # with the restarts left at their default the same start is rescued:
   # naming psi says where to begin, not which optimum to accept
   resc <- statmod(y ~ jseg(x, psi = 5), distributions7::gaussian1_distrib(),
