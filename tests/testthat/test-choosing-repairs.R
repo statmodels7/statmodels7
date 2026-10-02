@@ -94,12 +94,19 @@ test_that("a kinked block's step is halved until the objective falls", {
 
 test_that("a Newton search that did not settle is run again by lbfgs", {
   skip_on_cran()
-  f <- statmod(GAG ~ s(Age, bspline_smooth(k = 15)) |
-                 sigma ~ s(Age, bspline_smooth(k = 8)) |
-                 nu ~ s(Age, bspline_smooth(k = 6)),
-               distrib = distributions7::student_t1_distrib(), data = gagurine)
+  form <- GAG ~ s(Age, bspline_smooth(k = 15)) |
+    sigma ~ s(Age, bspline_smooth(k = 8)) |
+    nu ~ s(Age, bspline_smooth(k = 6))
+  # with an inner budget of 100 the Newton search stopped at -845.09 and
+  # lbfgs, run again from the same start, reaches -816.59
+  f <- statmod(form, distrib = distributions7::student_t1_distrib(),
+               data = gagurine, inner_optimizer = iwls(maxit = 100))
   expect_true(inherits(f@methods$search, "optimizers7::Lbfgs"))
-  # the Newton search stopped at -845.09; lbfgs reaches -816.59
   expect_gt(as.numeric(logLik(f, type = "marginal")), -817)
   expect_identical(statmod_certificate(f)$state, "boundary")
+  # since 0.182.0 the default budget of 1000 lets Newton settle there itself
+  g <- statmod(form, distrib = distributions7::student_t1_distrib(),
+               data = gagurine)
+  expect_gt(as.numeric(logLik(g, type = "marginal")), -817)
+  expect_identical(statmod_certificate(g)$state, "boundary")
 })

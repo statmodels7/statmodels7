@@ -101,18 +101,30 @@ Iwls <- S7::new_class("Iwls",
 #' fit records the settled method, so `fit@methods$smooth` says which
 #' curvature ran.
 #'
-#' On a family whose expected information is exact, a run that has not
-#' converged after [iwls_switch_after()] scoring steps continues on the
-#' observed information, the expected one standing in where the observed
-#' cannot step. Fisher scoring converges only linearly near the mode wherever
+#' On a family whose expected information is exact, a run continues on the
+#' observed information as soon as Fisher scoring contracts the score slowly,
+#' each of two consecutive ratios of the score above [iwls_switch_rate()],
+#' and at the latest after [iwls_switch_after()] scoring steps; the expected
+#' information stands in where the observed cannot step. Fisher scoring converges only linearly near the mode wherever
 #' the two informations differ there, which they do whenever the dispersion
 #' has an equation of its own. Measured on `ChickWeight` with smooths in the
 #' mean and in \eqn{\sigma}, the first inner fit needed 235 scoring steps and
 #' the REML criterion was unavailable at its start; with random intercepts in
 #' both equations the fit stopped at a REML criterion 0.78 below the maximum,
 #' with the standard deviation of the chicks' intercepts at 0.028 where it is
-#' 0.685. With the switch both converge, and a run that converges within the
-#' first ten steps is unchanged.
+#' 0.685. With the switch both converge.
+#'
+#' Where the rule is met, the run takes one more full step, on the observed
+#' information where the family has it exactly. The marginal criterion
+#' carries \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in
+#' \eqn{\beta}, so a mode left short by \eqn{\delta} enters it at first
+#' order; a warm-started fit whose score is already under the rule would stop
+#' without moving and leave the criterion out by an amount linear in the
+#' outer step. The extra step takes the error to second order. It is kept
+#' unless it raises the objective by more than a relative \eqn{10^{-8}}: a
+#' sufficient-decrease test at a point already under the rule would accept or
+#' reject by the last bits, and the criterion would jump between nearby
+#' hyperparameters.
 #'
 #' `approx` reaches \pkg{distributions7} and is read only where the family
 #' has no closed expected information; elsewhere the family's own method
@@ -219,7 +231,7 @@ Iwls <- S7::new_class("Iwls",
 iwls <- function(hessian = c("auto", "expected", "observed"),
                  approx = c("opg", "bartlett", "integrate", "mc"),
                  decomposition = c("qr", "svd", "chol", "chol_crossprod"),
-                 maxit = 100L, tol = 1e-6, criterion = NULL,
+                 maxit = 1000L, tol = 1e-6, criterion = NULL,
                  step_halving = 30L) {
   hessian <- match.arg(hessian)
   approx <- match.arg(approx)
@@ -363,6 +375,56 @@ iwls_resolve <- function(method, distrib) {
 #'
 #' @keywords internal
 iwls_switch_after <- function() 10
+
+
+#' Whether Fisher Scoring Is Contracting Slowly
+#'
+#' @description
+#' `TRUE` where the last two ratios of consecutive scores both exceed `rate`.
+#'
+#' @param scores The scores of the run so far, one per iteration.
+#' @param rate The ratio above which a step counts as slow, or `NA` to never
+#'   answer `TRUE`.
+#'
+#' @return A single logical.
+#'
+#' @seealso [iwls_fit()], [iwls_switch_rate()].
+#'
+#' @keywords internal
+iwls_slow <- function(scores, rate) {
+  k <- length(scores)
+  if (is.na(rate) || k < 3L) return(FALSE)
+  r <- scores[(k - 1L):k] / scores[(k - 2L):(k - 1L)]
+  all(is.finite(r)) && all(r > rate)
+}
+
+
+#' The Contraction Rate Above Which Fisher Scoring Yields
+#'
+#' @description
+#' The ratio of consecutive scores above which [iwls_fit()] continues on the
+#' observed information before [iwls_switch_after()] steps.
+#'
+#' @return A single number, or `NA` for the count alone.
+#'
+#' @seealso [iwls_slow()].
+#'
+#' @keywords internal
+iwls_switch_rate <- function() 0.5
+
+
+#' Whether an Inner Fit Takes One Step Past Its Stopping Rule
+#'
+#' @description
+#' `TRUE` where [iwls_fit()] takes a full step at the point its rule
+#' accepted, so a criterion read there is out by a second-order amount.
+#'
+#' @return A single logical.
+#'
+#' @seealso [iwls_fit()].
+#'
+#' @keywords internal
+iwls_polish <- function() TRUE
 
 
 #' Solve One Weighted Least Squares Step
@@ -765,6 +827,7 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
   converged <- FALSE
   it <- 0L
   score <- Inf
+  scores <- numeric(0)
   note <- NULL
   # NULL until a step has been taken: a rule reading a change in the
   # objective has nothing to read at the starting point, and says FALSE
@@ -799,11 +862,6 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     # here the observed information takes the step and the expected one
     # stands in wherever the observed cannot, as on a family whose expected
     # information is not exact.
-    if (!switched && !is.null(switch_at) && it > switch_after) {
-      backup_at <- pieces_at
-      pieces_at <- switch_at
-      switched <- it
-    }
     g <- obj$gr(beta)
     # THE VERDICT READS THE FREE COORDINATES. A coordinate the caller holds
     # keeps whatever score the constrained optimum leaves in its direction --
@@ -823,6 +881,16 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
       break
     }
     score <- max(abs(gf)) / n
+    scores <- c(scores, score)
+    # THE SWITCH, read off the run itself: Fisher scoring that contracts the
+    # score slowly over two consecutive steps is in the linear regime where
+    # Newton's step pays, whatever the count; the count is the ceiling.
+    if (!switched && !is.null(switch_at) &&
+        (it > switch_after || iwls_slow(scores, iwls_switch_rate()))) {
+      backup_at <- pieces_at
+      pieces_at <- switch_at
+      switched <- it
+    }
     if (verbose) {
       cat(sprintf("  %-5d %14.6f %12.3e %10s\n", it - 1L, value, score,
                   if (it == 1L) "-" else fmt_step(step_used)))
@@ -868,6 +936,41 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
         }
       }
       converged <- TRUE
+      # ONE MORE STEP AT THE POINT THE RULE ACCEPTED. The marginal criterion
+      # carries log|K(beta)|, which is not stationary in beta, so a mode left
+      # short by delta enters it at FIRST order in delta. A warm-started fit
+      # whose score is already under the rule stops without moving, and the
+      # criterion is then read at the incumbent's coefficients: measured on a
+      # gaussian location-scale smooth, the trial points of an outer line
+      # search read the criterion off by an amount linear in the step,
+      # -2.9e-05 halving with it, against a predicted gain of 1e-06, and the
+      # search spent its twelve backtracks there. A full step on the observed
+      # information takes the error to second order.
+      if (iwls_polish()) {
+        pp <- if (!is.null(switch_at) && !switched) switch_at(beta) else
+          if (is.null(pc_met)) pieces_at(beta) else pc_met
+        if (!pieces_definite(pp)) pp <- NULL
+        # The step is taken WHOLE and kept unless it makes the objective
+        # clearly worse. At a point the rule accepted, the decrease a step
+        # buys is at the objective's rounding, so a sufficient-decrease test
+        # there accepts or rejects by the last bits, and the criterion read at
+        # the mode then jumps between nearby hyperparameters: measured, a
+        # central difference of aic() moved from 0.43769 to 0.43727 and
+        # 0.43683 as the step halved, against 0.43769 at every step without it.
+        if (!is.null(pp)) {
+          sol <- tryCatch(iwls_solve(pp, -g, method@decomposition, damp,
+                                     frozen), error = function(e) NULL)
+          if (!is.null(sol) && all(is.finite(sol$delta))) {
+            cand <- beta + sol$delta
+            vnew <- tryCatch(obj$fn(cand), error = function(e) Inf)
+            if (is.finite(vnew) &&
+                vnew <= value + 1e-8 * max(1, abs(value))) {
+              beta <- cand
+              value <- vnew
+            }
+          }
+        }
+      }
       break
     }
     pc <- if (is.null(pc_met)) pieces_at(beta) else pc_met

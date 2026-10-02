@@ -555,11 +555,13 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
   expect_true(is.finite(r) && r > 0)
   expect_null(attr(r, "mode_error"))
 
-  # INJECTION: the same point with a score five orders larger. The predicted
-  # decrease goes as the SQUARE of the score, so this is ten orders on the
-  # quantity tested, and it must be refused with the reason attached.
+  # INJECTION: the same point with a large score. The predicted decrease goes
+  # as the SQUARE of the score, and it must be refused with the reason
+  # attached. The score is set along a fixed direction rather than scaled from the
+  # fit's, which since 0.182.0 is located to rounding and scales to nothing.
+  dir <- rep(1, length(st$score))
   st2 <- st
-  st2$score <- st$score * 1e5
+  st2$score <- dir * 1e2
   r2 <- criterion_resolution(st2, spec, design, method, crit_at)
   expect_true(is.na(r2))
   expect_gt(attr(r2, "mode_error"), mode_error_limit())
@@ -568,7 +570,7 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
   # the displacement to be a correction still reports, so the guard cannot be
   # satisfied by refusing everything
   st3 <- st
-  st3$score <- st$score * 1e-3
+  st3$score <- dir * 1e-3
   r3 <- criterion_resolution(st3, spec, design, method, crit_at)
   expect_true(is.finite(r3) && r3 > 0)
 })

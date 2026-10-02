@@ -1,3 +1,29 @@
+# statmodels7 0.182.0
+
+* `iwls()` takes one more full step where its stopping rule is met, on the
+  observed information where the family has it exactly. The marginal
+  criterion carries the log-determinant of the penalized information, which
+  is not stationary in the coefficients, so a mode left short by a distance
+  enters it at first order in that distance. A warm-started inner fit whose
+  score is already under the rule stops without moving, and the criterion
+  is then read at the incumbent's coefficients. Measured on the motorcycle
+  model of the book's chapter 2, a gaussian with smooths in the mean and in
+  sigma started from the fit with the smooth in the mean alone: the trial
+  points of the outer line search read the criterion off by an amount
+  linear in the step, the search spent its twelve backtracks there, and the
+  warm start took 29 criterion evaluations against the cold start's 27. It
+  now takes 17, at the same criterion. The step is kept unless it raises
+  the objective by more than a relative 1e-8; a sufficient-decrease test at
+  a point already under the rule accepts or rejects by the last bits, and
+  measured, a central difference of `aic()` then moved from 0.43769 to
+  0.43727 and 0.43683 as its step halved.
+* Fisher scoring settled on by `iwls(hessian = "auto")` continues on the
+  observed information as soon as it contracts slowly, the last two ratios
+  of consecutive scores above `iwls_switch_rate()` = 0.5, and at the latest
+  after `iwls_switch_after()` = 10 steps as before. A run started on
+  `iwls(hessian = "expected")` still never switches.
+* The default budget of `iwls()` is 1000 iterations, where it was 100.
+
 # statmodels7 0.181.0
 
 * `summary()` prints the free straight line of every level of a smooth with

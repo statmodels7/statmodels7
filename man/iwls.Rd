@@ -9,7 +9,7 @@ iwls(
   hessian = c("auto", "expected", "observed"),
   approx = c("opg", "bartlett", "integrate", "mc"),
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
-  maxit = 100L,
+  maxit = 1000L,
   tol = 1e-06,
   criterion = NULL,
   step_halving = 30L
@@ -82,18 +82,26 @@ median time between 0.17 and 0.98 of the approximation's per family. The
 fit records the settled method, so \code{fit@methods$smooth} says which
 curvature ran.
 
-On a family whose expected information is exact, a run that has not
-converged after \code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps continues on the
-observed information, the expected one standing in where the observed
-cannot step. Fisher scoring converges only linearly near the mode wherever
+On a family whose expected information is exact, a run continues on the
+observed information as soon as Fisher scoring contracts the score slowly,
+each of two consecutive ratios of the score above \code{\link[=iwls_switch_rate]{iwls_switch_rate()}},
+and at the latest after \code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps; the expected
+information stands in where the observed cannot step. Fisher scoring converges only linearly near the mode wherever
 the two informations differ there, which they do whenever the dispersion
 has an equation of its own. Measured on \code{ChickWeight} with smooths in the
 mean and in \eqn{\sigma}, the first inner fit needed 235 scoring steps and
 the REML criterion was unavailable at its start; with random intercepts in
 both equations the fit stopped at a REML criterion 0.78 below the maximum,
 with the standard deviation of the chicks' intercepts at 0.028 where it is
-0.685. With the switch both converge, and a run that converges within the
-first ten steps is unchanged.
+0.685. With the switch both converge.
+
+Where the rule is met, the run takes one more full step, on the observed
+information where the family has it exactly. The marginal criterion
+carries \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in
+\eqn{\beta}, so a mode left short by \eqn{\delta} enters it at first
+order; a warm-started fit whose score is already under the rule would stop
+without moving and leave the criterion out by an amount linear in the
+outer step. The extra step takes the error to second order.
 
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information; elsewhere the family's own method

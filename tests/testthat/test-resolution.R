@@ -6,6 +6,10 @@ test_that("the criterion's resolution is read at the fit and tracks the inner ru
   # start would differ by. A LOOSER inner rule leaves the mode less well
   # located, so the resolution has to grow with it.
   skip_on_cran()
+  # the extra step iwls() takes where its rule is met locates the mode to
+  # rounding whatever the tolerance, which is its purpose; the relation
+  # between the rule and the resolution is read without it
+  local_mocked_bindings(iwls_polish = function() FALSE)
   set.seed(3)
   n <- 300L
   x <- sort(runif(n, -3, 3))

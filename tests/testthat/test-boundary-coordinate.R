@@ -135,6 +135,18 @@ test_that("a shape APPROACHING its clamp no longer deadlocks the step", {
   d <- data.frame(y = 2 * sin(4 * x) + b[as.integer(g)] + rnorm(n, 0, 0.5),
                   x = x, g = g)
 
+  ## Since 0.182.0 scoring yields to the observed information as soon as it
+  ## contracts slowly, and the run never reaches the stall: no damping, and
+  ## the score falls below 1e-6.
+  fit0 <- statmod(y ~ x + random(~1 | g),
+                  distributions7::student_t1_distrib(), d,
+                  outer_criterion = NULL)
+  expect_true(fit0@converged)
+  expect_false(any(fit0@history$inner$damp > 0))
+  expect_lt(min(fit0@history$inner$score), 1e-6)
+  ## The damping is what serves where the switch does not come in time, so
+  ## it is tested with the rate rule off.
+  local_mocked_bindings(iwls_switch_rate = function() NA_real_)
   fit <- statmod(y ~ x + random(~1 | g),
                  distributions7::student_t1_distrib(), d,
                  outer_criterion = NULL)
