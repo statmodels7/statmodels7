@@ -1047,8 +1047,7 @@ fitted_ranges <- function(x) {
     }
   }, character(1))
   paste0("The fit did not converge. The parameters it reached: ",
-         paste(trimws(gsub("[ ]{2,}", " ", rows)), collapse = "; "),
-         ". A scale at 1e-15 says the rest on its own.")
+         paste(trimws(gsub("[ ]{2,}", " ", rows)), collapse = "; "), ".")
 }
 
 

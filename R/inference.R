@@ -608,7 +608,9 @@ S7::method(vcov, StatmodFit) <- vcov.StatmodFit
 #' because a level an intercept in the same equation carries is held and is
 #' absent from the information the variance comes from. A quantity that reads a held
 #' parameter is marked: its value stands, and its variance would be that of
-#' the rest alone, so it is not reported.
+#' the rest alone, so it is not reported. A quantity that reads a coordinate
+#' past the edge of its chart is marked in the same way
+#' ([structural_edge_rows()]).
 #'
 #' @param spec The fitted specification.
 #' @param design The design.
@@ -715,11 +717,15 @@ readable_joint <- function(spec, design, fit) {
     # and a quantity that reads one is marked rather than given the variance
     # of the rest
     fi <- match(tl$free, tl$nm)
+    # a quantity that reads a coordinate past the edge of its chart has no
+    # variance to report either: see statmod_structural_table()
+    edge_q <- tryCatch(structural_edge_rows(tl$tm, z, tl$nm),
+                       error = function(e) rep(FALSE, length(rd$name)))
     for (k in seq_along(rd$name)) {
       j <- numeric(njoint)
       j[tl$at + seq_along(fi)] <- rd$jacobian[k, fi]
-      touches <- length(tl$held) > 0L &&
-        any(rd$jacobian[k, match(tl$held, tl$nm)] != 0)
+      touches <- (length(tl$held) > 0L &&
+        any(rd$jacobian[k, match(tl$held, tl$nm)] != 0)) || isTRUE(edge_q[[k]])
       nmk <- if (nzchar(lb)) paste(lb, rd$name[[k]], sep = ".") else
         rd$name[[k]]
       sc <- if (is.null(rd$scale)) ident else rd$scale[[k]]
@@ -1903,7 +1909,13 @@ confint.StatmodFit <- function(object, parm = NULL, level = 0.95,
   }
   lab <- coef_labels(spec, design)
   est <- unlist(object@coefficients[spec@distrib@params], use.names = FALSE)
-  se <- se[seq_len(nrow(lab))]
+  # BY NAME, not by position. The matrix carries a structural term's free
+  # parameters right after the coefficients of the equation it sits in, so
+  # the first nrow(lab) entries of its diagonal are the coefficients only
+  # where that equation is the last one. Read by position, a filter in the
+  # mean gave the scale's intercept the standard error of the filter's
+  # log-loading (Nile, gas(1, 1): 0.3295 printed against 0.0707).
+  se <- unname(se[rownames(lab)])
   out <- data.frame(lab[, c("parameter", "term", "coefficient")],
                     estimate = est, se = se,
                     lower = est - z * se, upper = est + z * se,
@@ -2532,7 +2544,14 @@ summary.StatmodFit <- function(object, level = 0.95,
   # line of print(): the measured case is a scale that ran to 1e-15 while
   # 380 of 400 coefficients survived, which is read once when something
   # looks wrong and never otherwise.
-  if (!object@converged) {
+  # ⚠️ ASKED OF THE CERTIFICATE, as the note on the maximum below is, and for
+  # the same reason: a regime chain whose transition coordinate ran to the
+  # edge (geyser, alr1.1 at -27) leaves the search's flag FALSE at a point
+  # the certificate reads as converged, and the note said "The fit did not
+  # converge" under that verdict.
+  cert_bad <- if (is.null(cert) || is.null(cert$state)) !object@converged else
+    !cert$state %in% c("converged", "boundary")
+  if (cert_bad) {
     r <- tryCatch(fitted_ranges(object), error = function(e) "")
     if (nzchar(r)) notes <- c(notes, r)
   }
@@ -2667,9 +2686,7 @@ summary.StatmodFit <- function(object, level = 0.95,
   # maximum" directly under a certificate saying CONVERGED. The two are
   # different questions, so the note is emitted only where the question it
   # answers -- is this a maximum -- has actually been answered no.
-  bad <- if (is.null(cert) || is.null(cert$state)) !object@converged else
-    !cert$state %in% c("converged", "boundary")
-  if (bad) {
+  if (cert_bad) {
     notes <- c(notes, paste0(
       "The point reported is not certified as a maximum, so every estimate ",
       "and\n  interval above is read where the surface is still moving."))
@@ -2691,6 +2708,17 @@ summary.StatmodFit <- function(object, level = 0.95,
       "A level marked held is carried by an intercept in the same equation ",
       "and is\n  not estimated: the two are exactly confounded, so only one ",
       "of them can be."))
+  }
+  if (!is.null(strc) && isTRUE(any(strc$edge))) {
+    notes <- c(notes, sprintf(paste0(
+      "%s depend%s on a coordinate that has run to the edge of its chart, ",
+      "so %s reported\n  without a standard error and an interval: the ",
+      "chart's derivative tends to\n  zero there and the delta method would ",
+      "report a standard error that\n  collapses where the quantity stops ",
+      "being identified."),
+      paste(strc$name[strc$edge], collapse = ", "),
+      if (sum(strc$edge) == 1L) "s" else "",
+      if (sum(strc$edge) == 1L) "it is" else "they are"))
   }
 
   StatmodSummary(

@@ -1,3 +1,22 @@
+# statmodels7 0.187.0
+
+* `confint(readable = FALSE)`, and through it `summary()`, read each
+  standard error by name. Read by position, a structural term in an equation
+  other than the last gave the following equations the standard errors of
+  the term's own parameters: on `flow ~ gas(1, 1)` (the Nile flows) the
+  scale's intercept was printed with 0.3295, the log-loading's, against
+  0.0707.
+* A quantity of a structural term that depends on a coordinate past the edge
+  of its chart (a free value beyond 8 on a side where the chart has a bound,
+  the certificate's rule) is reported without a standard error and an
+  interval, in `summary()`, `confint()` and `vcov()`, and a note names it.
+* A `regime()` term is reported by its transition probabilities.
+* `statmod_latent()` returns the smoothed state probabilities of a
+  `regime()` term.
+* The note on where the parameters ended up follows the certificate, as the
+  note on the maximum does, and no longer carries a sentence of the
+  documentation.
+
 # statmodels7 0.186.6
 
 * The reading of the smooth part's mode error leaves out a free coordinate

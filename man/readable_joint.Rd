@@ -43,7 +43,9 @@ in order, then the \strong{free} parameters of each structural term. Free,
 because a level an intercept in the same equation carries is held and is
 absent from the information the variance comes from. A quantity that reads a held
 parameter is marked: its value stands, and its variance would be that of
-the rest alone, so it is not reported.
+the rest alone, so it is not reported. A quantity that reads a coordinate
+past the edge of its chart is marked in the same way
+(\code{\link[=structural_edge_rows]{structural_edge_rows()}}).
 }
 \seealso{
 \code{\link[modelterms7:term_readable]{modelterms7::term_readable()}},

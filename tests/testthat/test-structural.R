@@ -594,7 +594,12 @@ test_that("a structural term is counted and reported", {
   s <- summary(fit)
   st <- s@structural
   expect_false(is.null(st))
-  expect_setequal(st$name, zn)
+  # by the quantities the term reports: the levels, and the transition
+  # probabilities in place of the log-ratios they are estimated on (Giovanni,
+  # 2026-10-02); each row of the matrix sums to one
+  expect_setequal(st$name, c("level1", "gap2", "p1.1", "p1.2", "p2.1", "p2.2"))
+  pr <- st$estimate[match(c("p1.1", "p1.2", "p2.1", "p2.2"), st$name)]
+  expect_equal(c(pr[1] + pr[2], pr[3] + pr[4]), c(1, 1), tolerance = 1e-12)
   expect_true(st$held[st$name == "level1"])
   expect_true(is.na(st$se[st$name == "level1"]))
   expect_true(all(is.finite(st$se[!st$held])))

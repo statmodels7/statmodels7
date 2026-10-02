@@ -2,7 +2,7 @@
 % Please edit documentation in R/structural.R
 \name{statmod_latent}
 \alias{statmod_latent}
-\title{The Posterior Break-Points of a Marginal Term}
+\title{The Latent Variables of a Fitted Structural Term}
 \usage{
 statmod_latent(fit)
 }
@@ -11,22 +11,28 @@ statmod_latent(fit)
 term of the likelihood shape.}
 }
 \value{
-A data frame with one row per group and break-point:
-\code{group}, \code{psi}, \code{mean} and \code{sd}.
+For a break-point term, a data frame with one row per group and
+break-point: \code{group}, \code{psi}, \code{mean} and \code{sd}. For a regime term, a data
+frame with one row per observation, in the order of the data, and one
+column per regime, \code{state1}, \code{state2}, and so on.
 }
 \description{
-The posterior mean and standard deviation of each group's latent
-break-points in a fitted model carrying a marginal break-point term
-(\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} or
-\code{\link[modelterms7:jseg]{modelterms7::jseg()}} with \code{marginal = TRUE}).
+The posterior summary of the latent variable a structural term of the
+likelihood shape integrates over: the posterior mean and standard
+deviation of each group's break-points for a marginal break-point term
+(\code{\link[modelterms7:jump]{modelterms7::jump()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} or \code{\link[modelterms7:jseg]{modelterms7::jseg()}}
+with \code{marginal = TRUE}), and the smoothed probability of each regime at
+each observation for \code{\link[modelterms7:regime]{modelterms7::regime()}}.
 }
 \details{
 The quantities come from the same decomposition the marginal likelihood
-is computed on: the posterior over a group's intervals or quadrature
-nodes, with the within-interval moments those of the fitted prior
-truncated to it. The computation is
-\code{\link[modelterms7:term_latent]{modelterms7::term_latent()}}'s; this function supplies what
-the term cannot see, the fitted predictors and the model's log-density.
+is computed on. For a break-point term it is the posterior over a group's
+intervals or quadrature nodes, with the within-interval moments those of
+the fitted prior truncated to it. For a regime term it is the forward and
+backward recursions, which give \eqn{P(S_t = j \mid y_1, \dots, y_n)}.
+The computation is \code{\link[modelterms7:term_latent]{modelterms7::term_latent()}}'s; this function supplies
+what the term cannot see, the fitted predictors and the model's
+log-density.
 }
 \examples{
 set.seed(1)
@@ -36,6 +42,12 @@ dd$y <- 1 + 2 * (dd$x >= dd$psi) + rnorm(32, 0, 0.3)
 fit <- statmod(y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE),
                distributions7::gaussian1_distrib(), dd)
 statmod_latent(fit)
+
+# the smoothed probability of the second regime at a change of level
+dr <- data.frame(t = 1:60, y = c(rnorm(30), rnorm(30, 3)))
+fr <- statmod(y ~ regime(k = 2, time = t),
+              distributions7::gaussian1_distrib(), dr)
+round(statmod_latent(fr)$state2[c(1, 29, 30, 31, 32, 60)], 3)
 
 }
 \seealso{

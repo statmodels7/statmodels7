@@ -1397,8 +1397,16 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
 #' @param fit A [StatmodFit()].
 #' @param level The interval's level, `0.95` by default.
 #'
-#' @return A data frame with one row per parameter of each structural term,
-#'   carrying the estimate, its standard error and the interval's two ends,
+#' A quantity that depends on a coordinate past the edge of its chart (see
+#' [structural_edge_rows()]) is reported without a standard error and an
+#' interval, for the reason a correlation at the boundary is: the chart's
+#' derivative tends to zero there, so the delta method reports a standard
+#' error that collapses exactly where the quantity stops being identified.
+#'
+#' @return A data frame with one row per quantity each structural term
+#'   reports, carrying the estimate, its standard error and the interval's
+#'   two ends, `held` (the quantity is a held parameter), `edge` (it depends
+#'   on a coordinate past the edge of its chart),
 #'   plus `component` and `position`: which of the term's own parameters the
 #'   quantity belongs to, and where in the parameter vector it sits, both
 #'   read off the Jacobian's support. `NULL` where the model carries no
@@ -1491,8 +1499,15 @@ statmod_structural_table <- function(fit, level = 0.95) {
     # a held parameter is not estimated, and a quantity that reads one is not
     # either: it would be reported with the variance of the rest alone
     touches_held <- apply(J[, held, drop = FALSE] != 0, 1L, any)
+    # WHICH ROWS ARE A HELD PARAMETER, read off the Jacobian's support and not
+    # by position: a term may report more quantities than it has parameters
+    # (a regime chain, k^2 probabilities over k(k-1) log-ratios), so row i is
+    # not parameter i
+    is_held <- apply(J != 0, 1L, function(r) any(r) && all(nm[r] %in% held))
+    edge_q <- structural_edge_rows(tm, zeta, nm)
     for (i in seq_along(rd$name)) {
-      s <- if (ok && !touches_held[[i]]) sqrt(max(vq[[i]], 0)) else NA_real_
+      s <- if (ok && !touches_held[[i]] && !edge_q[[i]]) sqrt(max(vq[[i]], 0))
+           else NA_real_
       val <- rd$value[[i]]
       lo <- hi <- NA_real_
       if (is.finite(s)) {
@@ -1510,7 +1525,7 @@ statmod_structural_table <- function(fit, level = 0.95) {
       rows[[length(rows) + 1L]] <- data.frame(
         parameter = u$param, term = u$term, name = rd$name[[i]],
         estimate = as.numeric(val), se = s, lower = lo, upper = hi,
-        held = nm[[i]] %in% held, component = ow[[1L]],
+        held = is_held[[i]], edge = edge_q[[i]], component = ow[[1L]],
         position = ow[[2L]], stringsAsFactors = FALSE)
     }
   }
@@ -1518,27 +1533,92 @@ statmod_structural_table <- function(fit, level = 0.95) {
 }
 
 
-#' The Posterior Break-Points of a Marginal Term
+#' The Quantities of a Structural Term That Read a Coordinate at an Edge
 #'
 #' @description
-#' The posterior mean and standard deviation of each group's latent
-#' break-points in a fitted model carrying a marginal break-point term
-#' ([modelterms7::jump()], [modelterms7::seg()] or
-#' [modelterms7::jseg()] with `marginal = TRUE`).
+#' Marks each quantity [modelterms7::term_readable()] reports for a
+#' structural term according to whether it depends on a free coordinate that
+#' has run past the edge of a chart mapping onto a bounded set.
+#'
+#' @details
+#' The coordinates checked are those [modelterms7::term_charted()] names,
+#' and a coordinate is at the edge when its free value exceeds `edge` in
+#' absolute value, the rule [edge_violations()] and [statmod_certificate()]
+#' use, on a side where its chart maps onto a finite bound: a log link has
+#' an edge towards zero and none towards infinity. The dependence is read off
+#' the Jacobian evaluated with those
+#' coordinates moved back to \eqn{\pm}`edge`: at the fitted point the
+#' derivative of a saturated chart can underflow to zero, which would hide
+#' the dependence it is meant to reveal.
+#'
+#' @param tm The structural term.
+#' @param zeta Its parameters on the unconstrained scale.
+#' @param nm Its parameter names, as [modelterms7::term_params()] gives them.
+#' @param edge The free value past which a coordinate is at the edge.
+#'
+#' @return A logical vector with one element per reported quantity.
+#'
+#' @seealso [statmod_structural_table()], [readable_joint()]
+#'
+#' @keywords internal
+structural_edge_rows <- function(tm, zeta, nm, edge = 8) {
+  z <- unlist(zeta)[nm]
+  ch <- intersect(tryCatch(modelterms7::term_charted(tm),
+                           error = function(e) character(0)), nm)
+  lk <- tryCatch(modelterms7::term_links(tm), error = function(e) list())
+  # ON THE SIDE WHERE THE CHART HAS A BOUND. A log link saturates towards
+  # zero and not towards infinity, so a loading at a free value of 8.88 (a
+  # gas() on the Nile flows, alpha1 = 7188 in units of a variance) is an
+  # ordinary estimate. A coordinate whose link is the identity and which is
+  # still charted is one whose chart lies elsewhere (the log-ratios of a
+  # regime chain), and is bounded on both sides.
+  bounded_side <- function(j) {
+    g <- lk[[j]]
+    if (is.null(g) || identical(g@link_name, "identity")) return(TRUE)
+    far_v <- linkfunctions7::linkinv(g, sign(z[[j]]) * 50)
+    b <- g@link_bounds
+    b <- b[is.finite(b)]
+    length(b) > 0L && is.finite(far_v) &&
+      min(abs(far_v - b)) <= 1e-8 * max(1, abs(b))
+  }
+  far <- ch[is.finite(z[ch]) & abs(z[ch]) > edge]
+  far <- far[vapply(far, bounded_side, logical(1))]
+  rd0 <- modelterms7::term_readable(tm, zeta)
+  if (!length(far)) return(rep(FALSE, length(rd0$name)))
+  zc <- z
+  zc[far] <- sign(z[far]) * edge
+  J <- modelterms7::term_readable(tm, as.list(zc))$jacobian
+  apply(J[, far, drop = FALSE] != 0, 1L, any)
+}
+
+
+#' The Latent Variables of a Fitted Structural Term
+#'
+#' @description
+#' The posterior summary of the latent variable a structural term of the
+#' likelihood shape integrates over: the posterior mean and standard
+#' deviation of each group's break-points for a marginal break-point term
+#' ([modelterms7::jump()], [modelterms7::seg()] or [modelterms7::jseg()]
+#' with `marginal = TRUE`), and the smoothed probability of each regime at
+#' each observation for [modelterms7::regime()].
 #'
 #' @details
 #' The quantities come from the same decomposition the marginal likelihood
-#' is computed on: the posterior over a group's intervals or quadrature
-#' nodes, with the within-interval moments those of the fitted prior
-#' truncated to it. The computation is
-#' [modelterms7::term_latent()]'s; this function supplies what
-#' the term cannot see, the fitted predictors and the model's log-density.
+#' is computed on. For a break-point term it is the posterior over a group's
+#' intervals or quadrature nodes, with the within-interval moments those of
+#' the fitted prior truncated to it. For a regime term it is the forward and
+#' backward recursions, which give \eqn{P(S_t = j \mid y_1, \dots, y_n)}.
+#' The computation is [modelterms7::term_latent()]'s; this function supplies
+#' what the term cannot see, the fitted predictors and the model's
+#' log-density.
 #'
 #' @param fit A [StatmodFit()] whose model carries a structural
 #'   term of the likelihood shape.
 #'
-#' @return A data frame with one row per group and break-point:
-#'   `group`, `psi`, `mean` and `sd`.
+#' @return For a break-point term, a data frame with one row per group and
+#'   break-point: `group`, `psi`, `mean` and `sd`. For a regime term, a data
+#'   frame with one row per observation, in the order of the data, and one
+#'   column per regime, `state1`, `state2`, and so on.
 #'
 #' @examples
 #' set.seed(1)
@@ -1548,6 +1628,12 @@ statmod_structural_table <- function(fit, level = 0.95) {
 #' fit <- statmod(y ~ jump(x, psi ~ random(~1 | id), marginal = TRUE),
 #'                distributions7::gaussian1_distrib(), dd)
 #' statmod_latent(fit)
+#'
+#' # the smoothed probability of the second regime at a change of level
+#' dr <- data.frame(t = 1:60, y = c(rnorm(30), rnorm(30, 3)))
+#' fr <- statmod(y ~ regime(k = 2, time = t),
+#'               distributions7::gaussian1_distrib(), dr)
+#' round(statmod_latent(fr)$state2[c(1, 29, 30, 31, 32, 60)], 3)
 #'
 #' @seealso [modelterms7::term_latent()],
 #'   [statmod()]
