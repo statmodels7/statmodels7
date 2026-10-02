@@ -48,7 +48,8 @@ them with \code{\link[=mode_error_limit]{mode_error_limit()}}.
 }
 \details{
 The smooth part is every coordinate that is not a zero of a kinked
-penalty, not in a frozen working block, not aliased and not held, together
+penalty, not in a frozen working block, not aliased, not held and not
+named by \code{\link[=deficient_coords]{deficient_coords()}} on the information over the others, together
 with a structural term's own free parameters where the model carries one.
 Its reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g}, with
 \eqn{g} the gradient of the penalized objective and \eqn{K = H + S} the

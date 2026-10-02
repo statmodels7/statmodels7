@@ -1,3 +1,20 @@
+# statmodels7 0.186.6
+
+* The reading of the smooth part's mode error leaves out a free coordinate
+  that the penalized information does not identify, as it leaves out an
+  aliased one. A lasso over two identical columns may share the effect
+  between them; every point of its path below the empty fit then read as
+  unsettled and was dropped, so the path chose the empty fit (lambda 41.8 on
+  an effect of 2). It now chooses the lambda and the effect of the same
+  lasso with one copy removed. The same reading reaches the unshrunk end of
+  a path where the free coefficients include an intercept beside every level
+  of a group: on twelve group effects under a Laplace prior the path now
+  chooses a scale of 1079 with a BIC of 133.60, where it chose 0.23 with
+  136.70.
+* `summary()` lists a coefficient under a kinked penalty that is not
+  identified with its estimate missing, and the heading counts it as not
+  identified. It failed with an error.
+
 # statmodels7 0.186.5
 
 * The heading of a term whose parameter carries a kinked sub-term, such as

@@ -130,8 +130,13 @@ test_that("a new group under another prior is integrated on its quantiles", {
   gg <- data.frame(g = factor(rep(1:12, each = 5)), x = rnorm(60))
   gg$y <- 1 + gg$x + rnorm(12)[gg$g] + rnorm(60, sd = 0.4)
   lp <- distributions7::fixed(distributions7::laplace_distrib(), mu = 0)
-  fit <- suppressWarnings(statmod(y ~ x + random(~ 1 | g, distrib = lp),
-                                  distributions7::gaussian1_distrib(), gg))
+  # the scale is held at the value the path chose before 0.186.6: since then
+  # the path also scores its unshrunk end, where the BIC is lower (133.60
+  # against 136.70) and the scale is 1079, and the reference integral below
+  # cannot resolve a Laplace density that wide beside a residual of 0.44
+  fit <- suppressWarnings(statmod(
+    y ~ x + random(~ 1 | g, distrib = lp, hyper = list(sigma = 0.2324714)),
+    distributions7::gaussian1_distrib(), gg))
   nw <- data.frame(x = 0.5, g = "new")
   set.seed(1)
   p <- predict(fit, "response", nw, random = "zero", interval = "prediction",

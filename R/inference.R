@@ -3548,7 +3548,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         n_kinked = if (length(kz)) length(kz) else NULL,
         edf = term_edf(nm),
         n_zero = if (identical(kind, "selection") && length(kz))
-          sum(cr$estimate[kz] == 0) else 0L,
+          sum(cr$estimate[kz] == 0, na.rm = TRUE) else 0L,
+        n_na = if (identical(kind, "selection") && length(kz))
+          sum(is.na(cr$estimate[kz])) else 0L,
         table = if (is.null(tb)) empty else tb,
         head = head_rows(rows_at, dev),
         components = compartments(term, rows_at, dev, hp),
@@ -3558,7 +3560,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     keep <- switch(kind,
       smooth = smooth_linear_cols(term, nrow(cr)),
       # a coefficient a kinked penalty set to zero is counted, not listed
-      selection = cr$estimate != 0,
+      # an aliased one is listed, its estimate missing, as base R lists it
+      selection = is.na(cr$estimate) | cr$estimate != 0,
       rep(TRUE, nrow(cr)))
     if (identical(kind, "random")) keep <- rep(FALSE, nrow(cr))
     body <- if (identical(kind, "breakpoint")) {
@@ -3574,7 +3577,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     blocks[[length(blocks) + 1L]] <- list(
       kind = kind, label = block_label(kind), term = nm, n_coef = k,
       edf = term_edf(nm),
-      n_zero = if (identical(kind, "selection")) sum(cr$estimate == 0) else 0L,
+      n_zero = if (identical(kind, "selection"))
+        sum(cr$estimate == 0, na.rm = TRUE) else 0L,
+      n_na = if (identical(kind, "selection")) sum(is.na(cr$estimate)) else 0L,
       table = tb, head = NULL, components = list(), classes = hp$classes,
       note = class_note(nm))
   }
@@ -4385,8 +4390,10 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
   }
   if (identical(b$kind, "selection")) {
     nk <- if (is.null(b$n_kinked)) b$n_coef else b$n_kinked
-    bits <- c(bits, sprintf("%d selected, %d at zero", nk - b$n_zero,
+    nn <- if (is.null(b$n_na)) 0L else b$n_na
+    bits <- c(bits, sprintf("%d selected, %d at zero", nk - b$n_zero - nn,
                             b$n_zero))
+    if (nn > 0L) bits <- c(bits, sprintf("%d not identified", nn))
   }
   cat("\n", head, sep = "")
   if (length(bits)) cat("   [", paste(bits, collapse = ", "), "]", sep = "")

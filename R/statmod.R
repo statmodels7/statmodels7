@@ -1206,7 +1206,8 @@ curv_blocks <- function(blocks, spec, design) {
 #'
 #' @details
 #' The smooth part is every coordinate that is not a zero of a kinked
-#' penalty, not in a frozen working block, not aliased and not held, together
+#' penalty, not in a frozen working block, not aliased, not held and not
+#' named by [deficient_coords()] on the information over the others, together
 #' with a structural term's own free parameters where the model carries one.
 #' Its reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g}, with
 #' \eqn{g} the gradient of the penalized objective and \eqn{K = H + S} the
@@ -1267,6 +1268,18 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
   K <- pieces$K
   keep <- pieces$keep
   keep <- keep[is.finite(g[keep]) & is.finite(diag(K)[keep])]
+  # a free coordinate the information does not identify is left out, as an
+  # aliased one is: a lasso over two identical columns may share the effect
+  # between them, both are then free and the information over them is
+  # singular, and a reading that cannot be computed made every point of the
+  # path below the empty fit read as unsettled, so the path chose the empty
+  # fit (lambda 41.8 on an effect of 2)
+  if (length(keep) > 1L) {
+    A0 <- K[keep, keep, drop = FALSE]
+    dep <- tryCatch(deficient_coords((A0 + t(A0)) / 2),
+                    error = function(e) integer(0))
+    if (length(dep)) keep <- keep[-dep]
+  }
   if (!length(keep)) {
     out[["mode"]] <- 0
   } else {
