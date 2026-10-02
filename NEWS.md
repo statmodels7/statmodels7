@@ -1,3 +1,22 @@
+# statmodels7 0.186.4
+
+* `predict(random = "zero")` and `random = "marginal"` reach a random effect
+  written inside a term's subformula, such as `Asym ~ 1 + random(~ 1 | Tree)`
+  in `nl()` or `psi ~ random(~ 1 | id)` in `seg()`. Before, such an effect
+  stayed at its conditional value under either mode. Since the term is not
+  linear in the effect, it is evaluated at the effect's value: `"zero"` reads
+  the typical group, a group the fit never saw included, with the delta
+  method on the Jacobian there; `"marginal"` averages over the nodes of a
+  Gaussian prior's product grid, with the delta method of that average. The
+  key of such an effect is the outer term's key, the parameter and the
+  sub-term joined by `::`. `interval = "group"` and `"prediction"` signal an
+  error for it.
+* A coefficient that a kinked penalty holds at zero is left out of the
+  aliasing test, as `vcov()` leaves it out of the matrix it inverts. Under
+  `1 + lasso(~ g)`, with every level of `g` coded, the last level was
+  reported as `NA` although the kink identifies it, and `summary()` failed
+  where that level was the only one selected.
+
 # statmodels7 0.186.3
 
 * Inside the compartment of a developed parameter, `summary()` names the

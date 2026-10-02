@@ -4,10 +4,13 @@
 \alias{deficient_coords}
 \title{The Coordinates a Fit Does Not Identify, Found After the Fact}
 \usage{
-deficient_coords(K)
+deficient_coords(K, held = integer(0))
 }
 \arguments{
 \item{K}{The penalized information at the mode, \eqn{H + S}.}
+
+\item{held}{The coordinates a kinked penalty holds at zero, from
+\code{\link[=zero_kinked]{zero_kinked()}}, which are not candidates.}
 }
 \value{
 An integer vector of coordinates of the coefficient vector,
@@ -66,6 +69,15 @@ Which coordinate is then named is the pivot's, as it is in
 \code{\link[=augmented_solve]{augmented_solve()}}. Measured against that pivot where both speak, the
 two agree on a duplicated column under four families and on an
 over-parametrized \code{\link[modelterms7:nl]{modelterms7::nl()}} term.
+
+A coordinate a kinked penalty holds at zero is left out of the test,
+as \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} leaves it out of the matrix it inverts. The kink
+identifies such a coordinate although \eqn{K} carries no curvature for
+it: under \code{1 + lasso(~ g)}, with every level of \code{g} coded, the direction
+that raises the intercept and lowers every level is flat in \eqn{K} and
+not in the objective, whose minimum over it is unique. Read on the whole
+matrix the pivot named the last level, reported it as missing, and
+\code{summary()} failed where that level was the only one selected.
 }
 \seealso{
 \code{\link[=uninformative_coords]{uninformative_coords()}}, which holds a coordinate the

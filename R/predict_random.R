@@ -15,14 +15,17 @@ NULL
 #' matches no term signals an error listing those there are.
 #'
 #' Only a term written in an equation is listed. One written inside a
-#' subformula develops another term's parameter and is predicted as that
-#' term predicts it.
+#' subformula develops another term's parameter; those are listed by
+#' [nested_random_terms()] and returned in the attribute `"nested"`, with
+#' their modes. An unnamed mode applies to them as well, and a name may be
+#' the key of either kind.
 #'
 #' @param spec The fit's specification.
 #' @param random The mode or modes, as [predict.StatmodFit()] takes them.
 #'
 #' @return A data frame with columns `param`, `key` and `mode`, one row per
-#'   random-effect term, or zero rows where the model has none.
+#'   random-effect term, or zero rows where the model has none, with the
+#'   nested terms in the attribute `"nested"`.
 #'
 #' @keywords internal
 random_modes <- function(spec, random) {
@@ -45,25 +48,33 @@ random_modes <- function(spec, random) {
          "character vector of\n  those named by the random-effect terms.",
          call. = FALSE)
   }
+  nested <- nested_random_terms(spec)
   if (is.null(names(random))) {
     if (length(random) != 1L) {
       stop("An unnamed 'random' must be a single mode.", call. = FALSE)
     }
     out$mode <- rep(random, nrow(out))
+    nested$mode <- rep(random, nrow(nested))
+    attr(out, "nested") <- nested
     return(out)
   }
   squash <- function(x) gsub("[[:space:]]", "", x)
   out$mode <- rep("conditional", nrow(out))
+  nested$mode <- rep("conditional", nrow(nested))
   for (nm in names(random)) {
     hit <- squash(out$key) == squash(nm)
-    if (!any(hit)) {
+    hit_n <- squash(nested$key) == squash(nm)
+    if (!any(hit) && !any(hit_n)) {
+      keys <- c(unique(out$key), nested$key)
       stop(sprintf(paste0("'random' names '%s', which is not a random-effect ",
                           "term of the model.\n  They are: %s."), nm,
-                   if (nrow(out)) paste(unique(out$key), collapse = ", ")
+                   if (length(keys)) paste(keys, collapse = ", ")
                    else "none"), call. = FALSE)
     }
     out$mode[hit] <- random[[nm]]
+    nested$mode[hit_n] <- random[[nm]]
   }
+  attr(out, "nested") <- nested
   out
 }
 
@@ -260,12 +271,17 @@ gauss_hermite <- function(k) {
 #'   of the inverse link, which is what the delta method of a marginal
 #'   parameter multiplies the predictor's standard error by. Read only for a
 #'   parameter.
+#' @param eta_node For random effects written inside a subformula, a function
+#'   of the node index returning the predictors at that node, where the term
+#'   holding them is evaluated at the node's values. It takes the place of
+#'   `eta0`, and the effects written in an equation are added to it as
+#'   usual. The check of a predictor's domain reads `eta0` and is not run.
 #'
 #' @return A numeric vector, or a named list of them for `"parameter"`.
 #'
 #' @keywords internal
 random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
-                            deriv = FALSE) {
+                            deriv = FALSE, eta_node = NULL) {
   inv <- if (deriv) linkfunctions7::dlinkinv else linkfunctions7::linkinv
   params <- spec@distrib@params
   links <- spec@distrib@link_params
@@ -298,7 +314,8 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
   acc <- stats::setNames(lapply(params, function(p) numeric(n)), params)
   m1 <- m2 <- v1 <- numeric(n)
   for (k in seq_along(nodes$w)) {
-    eta <- eta0
+    eta <- if (is.null(eta_node)) eta0 else
+      lapply(eta_node(k), function(e) rep_len(as.numeric(e), n))
     for (i in seq_len(nrow(mt))) {
       p <- mt$param[i]
       eta[[p]] <- eta[[p]] + as.numeric(Zs[[i]] %*% nodes$b[[i]][k, ])
@@ -322,8 +339,8 @@ random_marginal <- function(spec, design, ep, mt, nodes, what, eta_at = NULL,
   # average over new groups does not exist: E[1/(eta0 + u)] is infinite for a
   # Gaussian u. Where that probability is negligible the average over the
   # nodes is the meaningful number; above 1e-8 it is reported as NA.
-  checked <- switch(kind, param = intersect(what, mt$param),
-                    unique(mt$param))
+  checked <- if (!is.null(eta_node)) character(0) else
+    switch(kind, param = intersect(what, mt$param), unique(mt$param))
   for (p in checked) {
     bad <- marginal_out_of_domain(links[[p]], eta0[[p]], Zs, nodes,
                                   which(mt$param == p))

@@ -12,7 +12,8 @@ random_marginal(
   nodes,
   what,
   eta_at = NULL,
-  deriv = FALSE
+  deriv = FALSE,
+  eta_node = NULL
 )
 }
 \arguments{
@@ -35,6 +36,12 @@ them.}
 of the inverse link, which is what the delta method of a marginal
 parameter multiplies the predictor's standard error by. Read only for a
 parameter.}
+
+\item{eta_node}{For random effects written inside a subformula, a function
+of the node index returning the predictors at that node, where the term
+holding them is evaluated at the node's values. It takes the place of
+\code{eta0}, and the effects written in an equation are added to it as
+usual. The check of a predictor's domain reads \code{eta0} and is not run.}
 }
 \value{
 A numeric vector, or a named list of them for \code{"parameter"}.

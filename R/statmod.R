@@ -764,7 +764,8 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                                          expected, approx),
                     error = function(e) NULL)
   if (!length(alias) && !is.null(Kmode)) {
-    alias <- tryCatch(deficient_coords(Kmode), error = function(e) integer(0))
+    alias <- tryCatch(deficient_coords(Kmode, zero_kinked(spec, design, coef)),
+                      error = function(e) integer(0))
   }
   # and a coefficient whose own design column has vanished -- a break-point
   # run out of the data -- is named whatever the pivot said: the pivot names

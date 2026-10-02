@@ -1551,7 +1551,18 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 #' two agree on a duplicated column under four families and on an
 #' over-parametrized [modelterms7::nl()] term.
 #'
+#' A coordinate a kinked penalty holds at zero is left out of the test,
+#' as [vcov.StatmodFit()] leaves it out of the matrix it inverts. The kink
+#' identifies such a coordinate although \eqn{K} carries no curvature for
+#' it: under `1 + lasso(~ g)`, with every level of `g` coded, the direction
+#' that raises the intercept and lowers every level is flat in \eqn{K} and
+#' not in the objective, whose minimum over it is unique. Read on the whole
+#' matrix the pivot named the last level, reported it as missing, and
+#' `summary()` failed where that level was the only one selected.
+#'
 #' @param K The penalized information at the mode, \eqn{H + S}.
+#' @param held The coordinates a kinked penalty holds at zero, from
+#'   [zero_kinked()], which are not candidates.
 #'
 #' @return An integer vector of coordinates of the coefficient vector,
 #'   possibly empty.
@@ -1562,7 +1573,7 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 #'   fit.
 #'
 #' @keywords internal
-deficient_coords <- function(K) {
+deficient_coords <- function(K, held = integer(0)) {
   K <- tryCatch(as_dense(K), error = function(e) NULL)
   if (is.null(K) || !is.matrix(K) || ncol(K) < 2L) return(integer(0))
   d <- diag(K)
@@ -1570,7 +1581,7 @@ deficient_coords <- function(K) {
   # otherwise make every row non-finite and leave nothing to test, which
   # is what a first version did on a fit carrying both a clamp and a
   # duplicated column
-  rest <- which(is.finite(d) & d > 0)
+  rest <- setdiff(which(is.finite(d) & d > 0), held)
   if (length(rest) < 2L) return(integer(0))
   A <- K[rest, rest, drop = FALSE]
   if (!all(is.finite(A))) return(integer(0))

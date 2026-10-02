@@ -13,7 +13,8 @@ random_modes(spec, random)
 }
 \value{
 A data frame with columns \code{param}, \code{key} and \code{mode}, one row per
-random-effect term, or zero rows where the model has none.
+random-effect term, or zero rows where the model has none, with the
+nested terms in the attribute \code{"nested"}.
 }
 \description{
 Lists the \code{\link[modelterms7:random]{modelterms7::random()}} terms written in the model's equations,
@@ -27,7 +28,9 @@ conditional. A key is matched with its white space removed, so
 matches no term signals an error listing those there are.
 
 Only a term written in an equation is listed. One written inside a
-subformula develops another term's parameter and is predicted as that
-term predicts it.
+subformula develops another term's parameter; those are listed by
+\code{\link[=nested_random_terms]{nested_random_terms()}} and returned in the attribute \code{"nested"}, with
+their modes. An unnamed mode applies to them as well, and a name may be
+the key of either kind.
 }
 \keyword{internal}

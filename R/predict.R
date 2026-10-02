@@ -123,6 +123,25 @@ predict_moments <- function() {
 #' `"zero"` only. The standard error of a marginal parameter is the delta
 #' method on the fixed part, conditional on the prior's scale.
 #'
+#' A random effect written inside a term's subformula, such as
+#' `nl(~ Asym / (1 + exp((xmid - age) / scal)), Asym ~ 1 + random(~ 1 | g))`
+#' or `seg(t, psi ~ random(~ 1 | id))`, is set aside by the same modes. Its
+#' key is the outer term's key, the parameter and the sub-term joined by
+#' `"::"`, and an unnamed mode applies to it as well. The effect enters the
+#' term's parameter, and the term is not linear in it, so the term is
+#' evaluated at the effect's value rather than having its columns removed:
+#' `"zero"` evaluates it with the effect at zero at every row, and the
+#' delta method reads its Jacobian there. `"marginal"` averages the term's
+#' contribution, carried through the inverse link, over the nodes of the
+#' product grid of a Gaussian prior; a prior of another family signals an
+#' error. A predictor (`"link"`) is the average of the predictors at the
+#' nodes. The standard error of a marginal parameter is the delta method of
+#' that average, whose gradient sums the design at each node, and its
+#' interval is the delta method's on the link scale carried through the
+#' link. `interval = "group"` and `"prediction"` are not available for such
+#' an effect, and neither is a standard error where effects of both kinds
+#' are averaged over.
+#'
 #' # Three intervals
 #'
 #' `interval` says what an interval is for.
@@ -347,6 +366,15 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   }
   rm <- random_modes(object@spec, random)
   aside <- rm[rm$mode != "conditional", , drop = FALSE]
+  nest <- attr(rm, "nested")
+  nest <- nest[nest$mode != "conditional", , drop = FALSE]
+  if (nrow(nest) && !identical(interval, "confidence")) {
+    stop(sprintf(paste0("interval = \"%s\" is not available for a random ",
+                        "effect written inside a\n  term's subformula (%s). ",
+                        "random = \"zero\" and \"marginal\" are, with the ",
+                        "default\n  interval."), interval, nest$key[1L]),
+         call. = FALSE)
+  }
   if (identical(what, "response") && !identical(interval, "prediction")) {
     stop(paste0("The response is predicted with interval = \"prediction\": ",
                 "what it has is a\n  distribution, not a value to report ",
@@ -375,16 +403,27 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     }
   }
   if (identical(interval, "group")) se <- TRUE
-  if (nrow(aside) && length(statmod_structural(object@spec))) {
+  if ((nrow(aside) || nrow(nest)) &&
+      length(statmod_structural(object@spec))) {
     stop("random = \"zero\" or \"marginal\" is not available beside a ",
          "structural term: its\n  level is a recursion read at the ",
          "predictor, so setting a random effect aside\n  would move the ",
          "recursion as well.", call. = FALSE)
   }
   spec <- spec_at(object, newdata, need_response = FALSE)
+  unseen <- if (nrow(aside)) split(aside$key, aside$param) else NULL
+  coef_use <- object@coefficients
+  pr <- NULL
   design <- withCallingHandlers(
-    statmod_design(spec, if (nrow(aside))
-      split(aside$key, aside$param) else NULL),
+    if (nrow(nest)) {
+      # a random effect inside a subformula enters a term that is not linear
+      # in it: the term is evaluated with its effects read in one group's
+      # columns, at zero here and at each node of the prior below
+      pr <- nested_prepare(object, spec, nest, unseen)
+      spec <- pr$spec
+      coef_use <- pr$coef
+      pr$design
+    } else statmod_design(spec, unseen),
     error = function(e) {
       if (grepl("was not present at build time", conditionMessage(e),
                 fixed = TRUE)) {
@@ -403,11 +442,27 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
     if (length(idx)) design[[aside$param[i]]]$X[, idx] <- 0
   }
   mt <- aside[aside$mode == "marginal", , drop = FALSE]
+  nm <- which(nest$mode == "marginal")
   nodes <- NULL
-  if (nrow(mt)) {
-    priors <- lapply(seq_len(nrow(mt)), function(i)
-      random_prior(spec, design, object, mt$param[i], mt$key[i]))
+  eta_node <- NULL
+  if (nrow(mt) || length(nm)) {
+    priors <- c(lapply(seq_len(nrow(mt)), function(i)
+      random_prior(spec, design, object, mt$param[i], mt$key[i])),
+      lapply(nm, function(j) nested_prior(spec, design, object, nest[j, ])))
     nodes <- random_nodes(priors)
+  }
+  # the coefficients and the predictors at node k of the nested effects
+  # averaged over: every row reads its effect in the first level's columns
+  if (length(nm)) {
+    coef_node <- function(k) {
+      cf <- coef_use
+      for (j in seq_along(nm)) {
+        cl <- pr$cols[[nm[j]]]
+        cf[[cl$param]][cl$first] <- nodes$b[[nrow(mt) + j]][k, ]
+      }
+      cf
+    }
+    eta_node <- function(k) statmod_eta(spec, design, coef_node(k))$eta
   }
   # A STRUCTURAL TERM HAS NO BLOCK TO REAPPLY: its contribution is the state
   # a recursion has reached, so new rows CONTINUE the series rather than
@@ -416,7 +471,7 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   # paths are separated rather than merged.
   cont <- !is.null(newdata) && length(attr(design, "structural"))
   ep <- if (cont) statmod_eta_continued(object, spec, design) else
-    statmod_eta(spec, design, object@coefficients)
+    statmod_eta(spec, design, coef_use)
   if (cont && isTRUE(se)) {
     stop("The standard error of a prediction past the series is not ",
          "reported. What\n  predict(se = TRUE) gives is the uncertainty of ",
@@ -473,10 +528,42 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
       su[[p]]$lower <- pmin(ends[, 1L], ends[, 2L])
       su[[p]]$upper <- pmax(ends[, 1L], ends[, 2L])
     }
+    # with nested effects averaged over, the predictor is not a shift of the
+    # fixed part, so the delta method reads the design at every node
+    if (length(nm)) {
+      if (nrow(mt)) {
+        stop(paste0("se = TRUE is not available where random effects ",
+                    "written in an equation and\n  inside a subformula are ",
+                    "both averaged over. Each kind alone is."),
+             call. = FALSE)
+      }
+      for (p in unique(nest$param[nm])) {
+        fitv <- random_marginal(spec, design, ep, mt, nodes, p,
+                                eta_node = eta_node)
+        ms <- nested_marginal_se(object, pr, coef_node, eta_node, nodes$w, p,
+                                 fitv, level, ...)
+        su[[p]][c("fit", "se", "lower", "upper")] <- ms
+      }
+    }
     return(se_answer(su, what, params, spec))
   }
-  if (nrow(mt) && !identical(what, "link") && !startsWith(what, "link:")) {
-    return(random_marginal(spec, design, ep, mt, nodes, what))
+  if ((nrow(mt) || length(nm)) && !identical(what, "link") &&
+      !startsWith(what, "link:")) {
+    return(random_marginal(spec, design, ep, mt, nodes, what,
+                           eta_node = eta_node))
+  }
+  # a predictor averaged over nested effects is the average of the
+  # predictors at the nodes, the term not being linear in them
+  if (length(nm)) {
+    n <- spec@n_obs
+    eb <- lapply(ep$eta, function(e) numeric(n))
+    for (k in seq_along(nodes$w)) {
+      ek <- eta_node(k)
+      for (p in names(eb)) {
+        eb[[p]] <- eb[[p]] + nodes$w[k] * rep_len(as.numeric(ek[[p]]), n)
+      }
+    }
+    ep$eta <- eb
   }
 
   if (identical(what, "link")) return(ep$eta)

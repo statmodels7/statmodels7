@@ -114,9 +114,23 @@ test_that("the criterion reads the rank and not the count where they differ", {
   expect_false(isTRUE(all.equal(r$edf, n_act)))
 })
 
-test_that("a coefficient the model does not identify is reported", {
+test_that("a level a kinked penalty holds at zero is not reported", {
+  # the direction that raises the intercept and lowers every level is flat in
+  # the penalized information and not in the objective: the kink identifies
+  # it, as vcov() leaves the level out of the matrix it inverts (0.186.4)
   dc <- collinear_data()
   fm <- y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))
+  f <- statmod(fm, distributions7::gaussian1_distrib(), dc)
+  expect_length(f@aliased, 0L)
+  cf <- stats::coef(f)$mu
+  expect_false(anyNA(cf))
+  expect_true(any(cf[grepl("lasso", names(cf))] == 0))
+})
+
+test_that("a coefficient the model does not identify is reported", {
+  # two parameters that enter only through their sum
+  dc <- collinear_data()
+  fm <- y ~ 0 + nl(~ (a + b) * exp(-r * x), start = list(a = 1, b = 1, r = 1))
   expect_warning(f <- statmod(fm, distributions7::gaussian1_distrib(), dc),
                  "not identified at the fitted point")
   expect_identical(length(f@aliased), 1L)

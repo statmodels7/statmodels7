@@ -165,6 +165,25 @@ probability is below 1e-8 and is \code{NA}, with a warning, elsewhere. A term th
 with others through a label has no prior of its own and is read at
 \code{"zero"} only. The standard error of a marginal parameter is the delta
 method on the fixed part, conditional on the prior's scale.
+
+A random effect written inside a term's subformula, such as
+\code{nl(~ Asym / (1 + exp((xmid - age) / scal)), Asym ~ 1 + random(~ 1 | g))}
+or \code{seg(t, psi ~ random(~ 1 | id))}, is set aside by the same modes. Its
+key is the outer term's key, the parameter and the sub-term joined by
+\code{"::"}, and an unnamed mode applies to it as well. The effect enters the
+term's parameter, and the term is not linear in it, so the term is
+evaluated at the effect's value rather than having its columns removed:
+\code{"zero"} evaluates it with the effect at zero at every row, and the
+delta method reads its Jacobian there. \code{"marginal"} averages the term's
+contribution, carried through the inverse link, over the nodes of the
+product grid of a Gaussian prior; a prior of another family signals an
+error. A predictor (\code{"link"}) is the average of the predictors at the
+nodes. The standard error of a marginal parameter is the delta method of
+that average, whose gradient sums the design at each node, and its
+interval is the delta method's on the link scale carried through the
+link. \code{interval = "group"} and \code{"prediction"} are not available for such
+an effect, and neither is a standard error where effects of both kinds
+are averaged over.
 }
 
 \section{Three intervals}{
