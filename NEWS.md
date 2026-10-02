@@ -1,3 +1,11 @@
+# statmodels7 0.187.1
+
+* `predict()` past the series of a panel whose score-driven level is
+  developed (`omega ~ 1 + random(~ 1 | id)`) no longer stops with "'qr' and
+  'y' must have the same number of rows": the check that a development's
+  column lies in the equation's span is asked of the fitting rows only. The
+  forecast agrees with the recursion written out to 4e-15 on `nlme::Ovary`.
+
 # statmodels7 0.187.0
 
 * `confint(readable = FALSE)`, and through it `summary()`, read each

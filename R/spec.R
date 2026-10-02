@@ -1215,7 +1215,13 @@ statmod_held_levels <- function(spec, design) {
     # the subspace half of the question, for a developed level: an
     # unpenalized coordinate whose column the equation already spans
     Zl <- modelterms7::term_level_design(tm)
-    if (is.null(Zl)) next
+    # the development is built on the rows the term was fitted on, so the
+    # question is one about the fitting data; at new rows (a forecast past
+    # the series) the two designs do not share their rows and there is
+    # nothing to compare. Asked there, qr.resid() stopped every forecast of a
+    # panel whose level is developed: 308 rows of development against six of
+    # newdata on nlme::Ovary.
+    if (is.null(Zl) || nrow(Zl) != nrow(X)) next
     pen_idx <- unlist(lapply(modelterms7::term_penalties(tm),
                              function(e) e$index))
     nm_all <- modelterms7::term_params(tm)
