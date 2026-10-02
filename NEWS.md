@@ -1,3 +1,31 @@
+# statmodels7 0.183.0
+
+* The effective degrees of freedom of a block with a kink are the trace of
+  `(H + S)^-1 H` over the coordinates away from the kink, which is the count
+  the path scores each point with (`statmod_pe()`'s tau). A lasso still
+  counts its non-zero coefficients; an elastic net counts fewer (12.49 for 13
+  coefficients on `MASS::UScrime`), and SCAD and MCP count more where the
+  penalty curves. Until now the fit counted a kinked block by its non-zero
+  coefficients, so the count a fit printed was not the count its path had
+  chosen it with: a scaled MCP on `MASS::UScrime` scored 9.72 at
+  lambda = 37.45 where the fit reported 8.
+* The top of a lasso path is read with every coordinate against its own
+  kink, and a hyperparameter shared through `id` starts its path at the
+  largest of its members' tops, each read with the other members held at
+  their kinks (`path_top_shared()`). A lasso over fifteen standardized
+  covariates of `MASS::UScrime` started at 374.5, five points of the path
+  being empty fits, and starts at 74.85; two lasso blocks sharing an `id`
+  now visit the same values as one lasso over both (1.4e-14) and choose the
+  same lambda. Along the path of a scaled SCAD or MCP the curvature is read
+  again at each point's own coefficients, so the BIC a path reports at a
+  point is the BIC of the fit returned there.
+* A design carrying fewer than a hundred coefficients, with no block that
+  moves and no structural term, is stored as base matrices
+  (`densify_small()`), unless a block is sparse because the caller asked for
+  it. On `MASS::Cars93`, a lasso beside `random(~ 1 | Manufacturer)`, a fit
+  at a held lambda goes from 6.69 s to 2.55 s and a path of ten values from
+  67.8 s to 30.1 s, with the coefficients agreeing to 6e-12.
+
 # statmodels7 0.182.0
 
 * `iwls()` takes one more full step where its stopping rule is met, on the

@@ -1845,12 +1845,59 @@ statmod_design <- function(spec, unseen = NULL) {
   # the last point statmod_eta() was asked for, where nothing in the design
   # moves with the coefficients; an environment for the reason above
   if (!length(su) && !length(rf)) {
+    out <- densify_small(out)
     mm <- new.env(parent = emptyenv())
     mm$key <- NULL
     mm$value <- NULL
     attr(out, "eta_memo") <- mm
   }
   out
+}
+
+
+#' Store a Small Design as Base Matrices
+#'
+#' @description
+#' Converts the sparse blocks of a design to base matrices when the
+#' equations together carry fewer than `min_dim` coefficients and no block
+#' is sparse because the caller asked for it.
+#'
+#' @details
+#' A random effect builds its block sparse whatever its size. Below about a
+#' hundred coefficients the sparse route costs more than it saves, its fixed
+#' cost being the coercions and the S4 dispatch around each product, which do
+#' not shrink with the matrix; [worth_sparse()] records the same crossover for
+#' the factorization. Measured on `MASS::Cars93`, a lasso over twelve
+#' standardized columns beside `random(~ 1 | Manufacturer)` (46 coefficients):
+#' the fit at a held \eqn{\lambda} takes 2.55 s with the design dense against
+#' 6.69 s sparse, and a path of ten values 30.1 s against 67.8 s, with the
+#' coefficients agreeing to 6e-12 and the same \eqn{\lambda} chosen. The
+#' conversion is applied only where no block moves with the coefficients and
+#' no structural term is present, since those designs are rebuilt during the
+#' fit and a rebuilt block would come back sparse. A block the caller asked
+#' to be sparse (`sparse = TRUE` on a term, `linpar_options(sparse = TRUE)`,
+#' a sparse matrix as input) is never converted, and then neither is the
+#' rest of the design: the design keeps the storage it was given.
+#'
+#' @param design The design, a list with one entry per distribution
+#'   parameter, each carrying its block as `X`.
+#' @param min_dim The number of coefficients below which the design is
+#'   stored dense.
+#'
+#' @return The design, with every `X` a base matrix where the total is below
+#'   `min_dim`, and unchanged otherwise.
+#'
+#' @keywords internal
+densify_small <- function(design, min_dim = 100L) {
+  total <- sum(vapply(design, function(d) as.integer(d$npar), integer(1)))
+  if (total >= min_dim) return(design)
+  if (any(vapply(design, function(d) isTRUE(d$asked_sparse), logical(1)))) {
+    return(design)
+  }
+  for (p in names(design)) {
+    if (isS4(design[[p]]$X)) design[[p]]$X <- as.matrix(design[[p]]$X)
+  }
+  design
 }
 
 
@@ -1967,6 +2014,12 @@ statmod_design_blocks <- function(spec, unseen = NULL) {
     starts <- ends - widths + 1L
     list(
       X = bind_blocks(mats, spec@n_obs),
+      # a block sparse because the caller asked for it, as distinct from the
+      # block random() builds sparse whatever its size; densify_small() never
+      # touches the first
+      asked_sparse = any(vapply(names(tms), function(k)
+        isS4(mats[[k]]) && !S7::S7_inherits(tms[[k]], modelterms7::RandomTerm),
+        logical(1))),
       coef_names = unlist(nms, use.names = FALSE),
       npar = as.integer(sum(widths)),
       blocks = stats::setNames(

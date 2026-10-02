@@ -300,25 +300,52 @@ kink_by_power <- function(pen, theta, name, target, pw) {
 #' refitted, so the number is a starting point and no boundary. The path
 #' checks it: a top whose fit is not empty is doubled until it is.
 #'
+#' Where the kinks of the coordinates differ, as under `standardize`, each
+#' score is read against its own coordinate's kink, and the result is
+#' expressed in the units of the first coordinate's kink, which is how
+#' [kink_solve()] reads it.
+#'
 #' @param obj The stacked objective.
 #' @param beta The current coefficients.
 #' @param block One entry of `statmod_blocks()$sparse`.
 #' @param hyper The hyperparameters.
+#' @param also Other blocks to hold at their kinks while the score is read,
+#'   each a list with the stacked positions `index` and the value `at`; the
+#'   members of a shared hyperparameter other than `block`.
 #'
 #' @return A single number.
 #'
 #' @keywords internal
-path_null_score <- function(obj, beta, block, hyper) {
+path_null_score <- function(obj, beta, block, hyper, also = NULL) {
   th <- as.list(hyper[[block$param]][[block$term]])
   k <- penalties7::penalty_kinks(block$penalty, th)
   k <- k[is.finite(k)]
   at <- if (length(k)) k[[1L]] else 0
   v <- beta
   v[block$index] <- at
+  # the other members of a shared axis are held at their own kinks too: the
+  # top is the value that empties all of them at once, so none of them may
+  # carry a coefficient the score of this one is read against
+  for (o in also) v[o$index] <- o$at
   g <- obj$gr(v)[block$index] -
     penalties7::penalty_gradient(block$penalty,
                                  rep(at, length(block$index)), th)
-  max(abs(g))
+  # EVERY COORDINATE AGAINST ITS OWN KINK. Under a diagonal map, which is what
+  # `standardize` writes, coordinate j's kink is the first coordinate's times
+  # |d_j|/|d_1|, so the block empties when the largest |g_j|/w_j is at most
+  # one. The size returned is the first coordinate's, which is the size
+  # kink_scale() and kink_solve() speak. Reading max|g| against the first
+  # coordinate's kink alone made the top depend on which covariate was
+  # written first: measured on MASS::UScrime, a lasso over fifteen
+  # standardized covariates started at 374.5 and the same model written as
+  # two blocks sharing an id at 158.4, so the two built different grids and
+  # chose different values of lambda.
+  w <- tryCatch(coord_kinks(block$penalty, th), error = function(e) NULL)
+  if (is.null(w) || length(w) != length(g) || !all(is.finite(w)) ||
+      any(w <= 0)) {
+    return(max(abs(g)))
+  }
+  w[[1L]] * max(abs(g) / w)
 }
 
 
@@ -1184,6 +1211,9 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
                          weights, offsets, rows, sweeps = 2L,
                          nested_method = NULL) {
   expected <- identical(method@hessian, "expected")
+  # the information statmod() reads the curvature of a scaled SCAD or MCP
+  # with at the fitted coefficients, which a point is scored with as well
+  curv_expected <- inner_settings(inner_optimizer)$expected
   smooth_idx <- outer_hyper_index(spec, blocks)
   is_cv <- identical(method@kind, "cv")
   # the smooth hyperparameters are estimated inside each point of the path by
@@ -1248,6 +1278,15 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # carries the curvature the alternation settled at there, and the degrees
     # of freedom have to read that one and not the curvature at the start
     sp <- if (!is.null(r$spec)) r$spec else spec
+    # and read once more at the point's own coefficients, which is what the
+    # fit returned at this value does before it reports anything: the
+    # curvature is a function of the coefficients, so the two then score the
+    # same penalty. Read at the curvature of the alternation's last pass, an
+    # MCP point on MASS::UScrime scored a trace of 9.0 where the fit at the
+    # same value reported 10.96
+    sc <- tryCatch(statmod_curv(sp, design, cf, curv_expected, approx),
+                   error = function(e) NULL)
+    if (!is.null(sc)) sp <- sc
     act <- statmod_active(sp, blocks, r$par, at)
     m <- statmod_pe(sp, design, cf, at, method, approx, act)
     if (is.null(m)) NA_real_ else m$value
@@ -1267,7 +1306,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
       row <- rows[i, ]
       b <- path_block(blocks, row)
       ob <- statmod_objective(spec, hy, design, expected, approx)
-      tp[[i]] <- path_null_score(ob, at, b, hy)
+      tp[[i]] <- path_top_shared(ob, at, blocks, row, hy, b)
       # a hyperparameter that does not scale the kink has no top of this
       # kind: no value of it empties the block
       if (!path_by_kink(b$penalty, hy[[row$parameter]][[row$term]],
@@ -1662,6 +1701,66 @@ path_member_index <- function(blocks, row) {
   mem <- mem[[1L]]
   sort(unique(unlist(lapply(seq_len(nrow(mem)), function(i)
     path_block(blocks, mem[i, , drop = FALSE])$index), use.names = FALSE)))
+}
+
+
+#' The Top of a Path Over Every Member of an Axis
+#'
+#' @description
+#' The size of the kink, in the axis's own block's units, at which every
+#' member of the axis has all its coefficients at the kink.
+#'
+#' @details
+#' A shared axis is one value multiplying several penalties, which may sit in
+#' different equations -- a lasso on the mean and a lasso on the scale with
+#' one `id`. Each member's top is read from its own score, with every member
+#' held at its kink, and carried onto the value of the hyperparameter through
+#' its own penalty; the axis starts at the largest of those values, written
+#' back as a size of the first member's kink, which is the size the rest of
+#' the path speaks. Two blocks of one equation sharing an `id` therefore start
+#' where a single block over both starts, the score of a column not depending
+#' on how the columns were grouped. Where nothing is shared this is
+#' [path_null_score()] of the one block.
+#'
+#' @param obj The stacked objective.
+#' @param beta The coefficients the scores are read at.
+#' @param blocks The block split.
+#' @param row One row of [path_rows()]'s index.
+#' @param hyper The hyperparameters.
+#' @param b The axis's own block, `path_block(blocks, row)`.
+#'
+#' @return A single number, a size of `b`'s kink.
+#'
+#' @seealso [path_null_score()], [path_member_index()]
+#'
+#' @keywords internal
+path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
+  mem <- row$members
+  if (is.null(mem) || nrow(mem[[1L]]) < 2L) {
+    return(path_null_score(obj, beta, b, hyper))
+  }
+  mem <- mem[[1L]]
+  mb <- lapply(seq_len(nrow(mem)), function(i)
+    path_block(blocks, mem[i, , drop = FALSE]))
+  kink_at <- function(bl) {
+    k <- penalties7::penalty_kinks(bl$penalty,
+                                   as.list(hyper[[bl$param]][[bl$term]]))
+    k <- k[is.finite(k)]
+    if (length(k)) k[[1L]] else 0
+  }
+  held <- lapply(mb, function(bl) list(index = bl$index, at = kink_at(bl)))
+  vals <- vapply(seq_along(mb), function(i) {
+    bl <- mb[[i]]
+    th <- as.list(hyper[[bl$param]][[bl$term]])
+    s <- path_null_score(obj, beta, bl, hyper, also = held[-i])
+    tryCatch(kink_solve(bl$penalty, th, mem$name[[i]], s),
+             error = function(e) NA_real_)
+  }, numeric(1))
+  vals <- vals[is.finite(vals) & vals > 0]
+  if (!length(vals)) return(path_null_score(obj, beta, b, hyper))
+  th <- as.list(hyper[[b$param]][[b$term]])
+  th[[row$name]] <- max(vals)
+  kink_scale(b$penalty, th)
 }
 
 

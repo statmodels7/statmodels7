@@ -4,7 +4,7 @@
 \alias{path_null_score}
 \title{The Largest Score a Kinked Block Has to Beat}
 \usage{
-path_null_score(obj, beta, block, hyper)
+path_null_score(obj, beta, block, hyper, also = NULL)
 }
 \arguments{
 \item{obj}{The stacked objective.}
@@ -14,6 +14,10 @@ path_null_score(obj, beta, block, hyper)
 \item{block}{One entry of \code{statmod_blocks()$sparse}.}
 
 \item{hyper}{The hyperparameters.}
+
+\item{also}{Other blocks to hold at their kinks while the score is read,
+each a list with the stacked positions \code{index} and the value \code{at}; the
+members of a shared hyperparameter other than \code{block}.}
 }
 \value{
 A single number.
@@ -32,5 +36,10 @@ hyperparameter for which the term contributes nothing, which is
 The other coefficients are held where the caller left them and are not
 refitted, so the number is a starting point and no boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.
+
+Where the kinks of the coordinates differ, as under \code{standardize}, each
+score is read against its own coordinate's kink, and the result is
+expressed in the units of the first coordinate's kink, which is how
+\code{\link[=kink_solve]{kink_solve()}} reads it.
 }
 \keyword{internal}

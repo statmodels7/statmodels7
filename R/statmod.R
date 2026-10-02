@@ -2278,6 +2278,32 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   # the model actually estimates, which is the coefficients AND the term's own
   # free parameters: joint_smoother_diag() below. Its coefficient half stands
   # in for this one, so every branch underneath is unchanged.
+  # A MODEL WITH A KINKED BLOCK reads the count the path that chose its
+  # hyperparameters read: the trace over the coordinates away from a kink,
+  # statmod_pe()'s tau, split by term. Until 0.183.0 a kinked block was
+  # counted by its non-zero coefficients and the rest by the smoother over
+  # every coordinate, the zero ones included, so the count a fit reported was
+  # not the count its path had scored it with: a scaled MCP on MASS::UScrime
+  # scored 9.72 at lambda = 37.45 where the fit there reported 8, a SCAD point
+  # 70.3 against 34.4 in BIC, and the path chose a value whose fit was not the
+  # best by the criterion the fit printed. The trace is Stein's count -- a
+  # coefficient in MCP's concave zone counts 1/(1 - 1/gamma) -- and for a
+  # lasso alone it is the number of non-zero coefficients, as before.
+  kd <- kinked_edf_diag(spec, coef, design, hyper, expected, approx, aliased)
+  if (!is.null(kd)) {
+    for (a in seq_along(params)) {
+      p <- params[a]
+      for (nm in names(spec@terms[[p]])) {
+        cols <- design[[p]]$blocks[[nm]]
+        rows[[length(rows) + 1L]] <- data.frame(
+          parameter = p, term = nm, coefficients = length(cols),
+          edf = sum(kd[offs[a] + cols]))
+      }
+    }
+    if (!length(rows)) return(NULL)
+    return(do.call(rbind, rows))
+  }
+
   smoother <- NULL
   zsmooth <- NULL
   zfailed <- FALSE
@@ -2405,6 +2431,65 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
   }
   if (!length(rows)) return(NULL)
   do.call(rbind, rows)
+}
+
+
+#' The Count of Each Coordinate Where a Block Has a Kink
+#'
+#' @description
+#' The diagonal of \eqn{(H_{AA} + S_{AA})^{-1}H_{AA}} over the coordinates
+#' \eqn{A} away from a kink, and zero elsewhere: the count [statmod_pe()]
+#' prices a point of a path with, one coordinate at a time.
+#'
+#' @details
+#' The total is [statmod_pe()]'s \eqn{\tau} at the same coefficients: where
+#' the penalty's Hessian vanishes on \eqn{A} each active coordinate counts one,
+#' which is the number of non-zero coefficients of a lasso, and otherwise the
+#' trace is read through the same Cholesky factor. A coordinate in the
+#' concave zone of SCAD or MCP has a negative penalty curvature and counts more
+#' than one, which is Stein's count for those penalties.
+#'
+#' It answers only for a model with a kinked block and no structural term,
+#' and declines (`NULL`) where the active columns are not of full rank,
+#' where [statmod_pe()] reads a rank in place of a count, or where the factor
+#' does not exist; [statmod_edf()] then reads its other rules.
+#'
+#' @param spec,coef,design,hyper The specification, the coefficients, the
+#'   design and the hyperparameters.
+#' @param expected,approx Which information.
+#' @param aliased Stacked positions the fit did not estimate.
+#'
+#' @return A numeric vector over the stacked coefficients, or `NULL`.
+#'
+#' @seealso [statmod_pe()], [statmod_edf()]
+#'
+#' @keywords internal
+kinked_edf_diag <- function(spec, coef, design, hyper, expected, approx,
+                            aliased = integer(0)) {
+  if (!is.null(statmod_structural_state(design))) return(NULL)
+  blocks <- statmod_blocks(spec, design)
+  if (!length(blocks$sparse)) return(NULL)
+  params <- spec@distrib@params
+  beta <- unlist(lapply(params, function(p) as.numeric(coef[[p]])),
+                 use.names = FALSE)
+  act <- statmod_active(spec, blocks, beta, hyper)
+  act[aliased] <- FALSE
+  ai <- which(act)
+  d <- numeric(length(beta))
+  if (!length(ai)) return(d)
+  S <- zap_nonfinite(statmod_penalty_at(spec, coef, hyper, design, "hessian"))
+  S_aa <- as_dense(S[ai, ai, drop = FALSE])
+  if (!any(S_aa != 0)) {
+    if (!design_count_exact(design)) return(NULL)
+    d[ai] <- 1
+    return(d)
+  }
+  H <- as_dense(statmod_information_at(spec, coef, design, expected, approx,
+                                       index = ai))
+  P <- tryCatch(chol2inv(chol(H + S_aa)), error = function(e) NULL)
+  if (is.null(P)) return(NULL)
+  d[ai] <- rowSums(P * t(H))
+  d
 }
 
 

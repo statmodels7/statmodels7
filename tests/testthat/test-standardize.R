@@ -55,9 +55,11 @@ test_that("standardizing makes the fit independent of a column's units", {
 test_that("a sparse block survives a standardized penalty in the same equation", {
   # a grouping indicator is built sparse, and standardization works on the
   # penalty rather than on the design, so nothing in the chain has an excuse
-  # to densify it
+  # to densify it. The groups are many enough that the design carries more
+  # than the hundred coefficients below which densify_small() stores a
+  # random effect dense
   set.seed(3)
-  m <- 60
+  m <- 120
   dr <- data.frame(g = factor(rep(seq_len(m), each = 6)))
   dr$v1 <- rnorm(nrow(dr))
   dr$v2 <- rnorm(nrow(dr)) * 50
@@ -164,4 +166,32 @@ test_that("a sparse equation fits under every penalized term", {
     expect_true(fit@converged, label = nm)
     expect_true(all(is.finite(unlist(coef(fit)))), label = nm)
   }
+})
+
+
+test_that("a small design is stored dense and a sparse request is kept", {
+  # a random intercept over 20 groups is built sparse by random() and the
+  # whole design carries 23 coefficients, below the gate
+  set.seed(5)
+  d <- data.frame(g = factor(rep(seq_len(20), each = 5)))
+  d$v1 <- rnorm(nrow(d)); d$v2 <- rnorm(nrow(d))
+  d$y <- rnorm(nrow(d), 1 + 0.5 * d$v1)
+  fml <- y ~ lasso(~ v1 + v2, lambda = 1) + random(~ 1 | g)
+  spec <- statmod_spec(fml, distributions7::gaussian1_distrib(), d)
+  re <- Filter(function(tm) S7::S7_inherits(tm, modelterms7::RandomTerm),
+               spec@terms$mu)
+  expect_true(isS4(modelterms7::term_matrix(re[[1]])))
+  expect_false(isS4(statmod_design(spec)$mu$X))
+  # with the parametric block asked sparse, every block keeps the storage it
+  # was given
+  fml_s <- y ~ v1 + v2 + random(~ 1 | g)
+  a <- statmod(fml_s, distributions7::gaussian1_distrib(), d)
+  b <- statmod(fml_s, distributions7::gaussian1_distrib(), d,
+               linpar_control = linpar_options(sparse = TRUE))
+  expect_false(isS4(statmod_design(a@spec)$mu$X))
+  expect_true(isS4(statmod_design(b@spec)$mu$X))
+  # and the fit is the same model in either storage
+  expect_equal(a@loglik, b@loglik, tolerance = 1e-8)
+  expect_equal(unname(unlist(a@coefficients)), unname(unlist(b@coefficients)),
+               tolerance = 1e-8)
 })
