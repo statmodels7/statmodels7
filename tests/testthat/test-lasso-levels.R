@@ -35,3 +35,22 @@ test_that("a lasso over every level beside an intercept reports every level", {
     expect_no_error(capture.output(print(summary(f))))
   }
 })
+
+test_that("a lasso inside nl() counts the coordinates under its kink", {
+  set.seed(1)
+  g <- factor(rep(LETTERS[1:8], each = 12))
+  conc <- rep(c(0.02, 0.06, 0.11, 0.22, 0.56, 1.10), 16)
+  vm <- c(200, 200, 260, 200, 200, 150, 200, 200)
+  d <- data.frame(g = g, conc = conc,
+                  y = vm[g] * conc / (0.07 + conc) + rnorm(96, sd = 10))
+  f <- statmod(y ~ 0 + nl(~ Vm * conc / (K + conc), Vm ~ 1 + lasso(~ g)),
+               distrib = distributions7::gaussian1_distrib(), data = d)
+  cf <- coef(f)$mu
+  lv <- cf[grepl("lasso", names(cf))]
+  out <- capture.output(print(summary(f)))
+  head <- out[grepl("selected", out, fixed = TRUE)]
+  expect_length(head, 1L)
+  expect_true(grepl(sprintf("%d selected, %d at zero", sum(lv != 0),
+                            sum(lv == 0)), head, fixed = TRUE))
+  expect_gt(sum(lv == 0), 0L)
+})

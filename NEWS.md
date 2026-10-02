@@ -1,3 +1,10 @@
+# statmodels7 0.186.5
+
+* The heading of a term whose parameter carries a kinked sub-term, such as
+  `nl(..., Vm ~ 1 + lasso(~ g))`, counts the selected coefficients and those
+  at zero over the coordinates under the kink. It reported every
+  coefficient of the term as selected and none at zero.
+
 # statmodels7 0.186.4
 
 * `predict(random = "zero")` and `random = "marginal"` reach a random effect

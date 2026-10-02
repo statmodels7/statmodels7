@@ -54,7 +54,10 @@ A list of block records, each with \code{kind}, \code{label},
 with \code{head} and \code{components}: a term written in parameters
 of its own that develops one of them over covariates reports that
 parameter as a compartment of its own, carrying its hyperparameter and
-its sub-terms' rows, and \code{table} keeps only what is left.
+its sub-terms' rows, and \code{table} keeps only what is left. Such a term
+with a kinked sub-term also carries \code{n_kinked}, the number of
+coordinates under the kink, which \code{n_zero} and the count of selected
+coefficients read.
 }
 \description{
 Groups a parameter's terms into the readings a summary prints: the

@@ -2974,7 +2974,10 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
 #'   with `head` and `components`: a term written in parameters
 #'   of its own that develops one of them over covariates reports that
 #'   parameter as a compartment of its own, carrying its hyperparameter and
-#'   its sub-terms' rows, and `table` keeps only what is left.
+#'   its sub-terms' rows, and `table` keeps only what is left. Such a term
+#'   with a kinked sub-term also carries `n_kinked`, the number of
+#'   coordinates under the kink, which `n_zero` and the count of selected
+#'   coefficients read.
 #'
 #' @param st The structural table, or `NULL`. A structural term has no
 #'   design columns, so its block is built from what it reports, never from
@@ -3531,9 +3534,21 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       }
       tb <- do.call(rbind, c(own_hyper(hp, dev), list(
         if (is.null(rr)) cr[own, , drop = FALSE] else rr)))
+      # the count of a selection reads the coordinates under a kinked
+      # sub-term alone, as a lasso written in an equation does: the term's
+      # own parameters and an unpenalized intercept are not selected
+      kz <- unlist(lapply(dev, function(z) unlist(lapply(seq_along(z$subs),
+        function(s) {
+          pen <- tryCatch(z$subs[[s]]@penalty, error = function(e) NULL)
+          if (!is.null(pen) && isTRUE(penalty_has_kink(pen))) z$sub_index[[s]]
+          else integer(0)
+        }))))
       blocks[[length(blocks) + 1L]] <- list(
         kind = kind, label = block_label(kind), term = nm, n_coef = k,
-        edf = term_edf(nm), n_zero = 0L,
+        n_kinked = if (length(kz)) length(kz) else NULL,
+        edf = term_edf(nm),
+        n_zero = if (identical(kind, "selection") && length(kz))
+          sum(cr$estimate[kz] == 0) else 0L,
         table = if (is.null(tb)) empty else tb,
         head = head_rows(rows_at, dev),
         components = compartments(term, rows_at, dev, hp),
@@ -4369,8 +4384,9 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
     if (is.finite(b$edf)) bits <- c(bits, sprintf("edf %.2f", b$edf))
   }
   if (identical(b$kind, "selection")) {
-    bits <- c(bits, sprintf("%d selected, %d at zero",
-                            b$n_coef - b$n_zero, b$n_zero))
+    nk <- if (is.null(b$n_kinked)) b$n_coef else b$n_kinked
+    bits <- c(bits, sprintf("%d selected, %d at zero", nk - b$n_zero,
+                            b$n_zero))
   }
   cat("\n", head, sep = "")
   if (length(bits)) cat("   [", paste(bits, collapse = ", "), "]", sep = "")
