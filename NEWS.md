@@ -1,3 +1,15 @@
+# statmodels7 0.186.3
+
+* Inside the compartment of a developed parameter, `summary()` names the
+  standard deviation of its random effects `effect sd` also when the term
+  carries more than one penalty. With random effects on two parameters of one
+  term (`seg(t, psi ~ random(~1 | id), gamma1 ~ random(~1 | id))`, the same in
+  `nl()` and `gas()`) the rows read `psi1::random(~1 | id).sigma`: the entry's
+  name was prefixed to keep two sigmas apart in the term's own table, and the
+  compartment's header already names the coefficient. The prefix stays where
+  two entries of one compartment would otherwise share a name; `hyper()` and
+  the keys are unchanged.
+
 # statmodels7 0.186.2
 
 * Requires modelterms7 0.90.0, where the parameters of a marginal

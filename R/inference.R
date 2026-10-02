@@ -3077,11 +3077,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       if (is.null(th) || !length(th)) return(empty)
       u <- statmod_unit(spec, des, p, key)
       if (is.null(u)) return(empty)
-      lab <- if (length(ent) > 1L && nzchar(e$name)) {
-        paste(e$name, names(th), sep = ".")
-      } else {
-        names(th)
-      }
+      # the entry's name is prefixed where the term carries several, so two
+      # sigmas in one table stay apart; the prefix is recorded so that a
+      # compartment, whose header already names the coefficient, can take it
+      # off again
+      pre <- if (length(ent) > 1L && nzchar(e$name)) paste0(e$name, ".") else ""
+      lab <- paste0(pre, names(th))
       marginal <- outer_ran && !penalty_has_kink(u$penalty)
       hk <- paste(p, key, names(th), sep = "\r")
       # PER HYPERPARAMETER, and the test has to be the vector one: `ifelse`
@@ -3179,9 +3180,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
           rr <- rbind(rr, stats::setNames(r[keep, , drop = FALSE],
                                           c(cols, "source")))
         }
+        attr(rr, "prefix") <- pre
         return(rr)
       }
-      stats::setNames(r, c(cols, "source"))
+      r <- stats::setNames(r, c(cols, "source"))
+      attr(r, "prefix") <- pre
+      r
     })
     # PER ENTRY and not stacked, because an entry belongs where its
     # coefficients do: a penalty covering a developed parameter's columns is
@@ -3352,6 +3356,21 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       }, logical(1))
       hr <- hp$rows[mine]
       pens <- hp$penalty[mine]
+      # INSIDE A COMPARTMENT THE ENTRY'S PREFIX IS TAKEN OFF: the header
+      # names the coefficient, so `psi1::random(~1 | id).sigma` under
+      # `psi1 ~ intercept + random` reads as `effect sd`, as it does when the
+      # term carries one random effect. Where two entries of one compartment
+      # would then share a name the prefixes stay, since they are what tells
+      # the rows apart.
+      bare <- lapply(hr, function(h) {
+        pre <- attr(h, "prefix")
+        if (!nrow(h) || is.null(pre) || !nzchar(pre)) return(h$name)
+        ifelse(startsWith(h$name, pre), substring(h$name, nchar(pre) + 1L),
+               h$name)
+      })
+      if (!anyDuplicated(unlist(bare))) {
+        for (i in seq_along(hr)) if (nrow(hr[[i]])) hr[[i]]$name <- bare[[i]]
+      }
       for (i in seq_along(hr)) {
         if (!nrow(hr[[i]])) next
         hr[[i]]$name <- vapply(hr[[i]]$name, hyper_label, character(1),
