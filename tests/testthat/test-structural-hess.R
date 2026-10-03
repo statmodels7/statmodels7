@@ -266,5 +266,5 @@ test_that("a filter's hyperparameter keeps its standard error", {
   expect_false(is.null(V))
   expect_gt(V[[1L, 1L]], 0)
   txt <- paste(capture.output(print(summary(fit))), collapse = "\n")
-  expect_match(txt, "effect sd")
+  expect_match(txt, "sigma [reml]", fixed = TRUE)
 })

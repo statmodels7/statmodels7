@@ -3332,16 +3332,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     if (length(nms) == 1L && endsWith(nms, "(Intercept)")) "intercept" else
       "covariates"
   }
-  # WHAT A HYPERPARAMETER IS, rather than which coordinate carries it. A
-  # compartment's `sigma` sits under a term of a model whose distribution
-  # has a `sigma` of its own, and the two are different quantities; a
-  # gaussian prior's is the scale of the effects it shrinks and a quadratic
-  # penalty's `lambda` is a precision. Any other name is left as it stands.
+  # WHAT A HYPERPARAMETER IS, rather than which coordinate carries it: a
+  # quadratic penalty's `lambda` is a precision. A random effect's
+  # hyperparameters keep the names they carry in an ordinary random() block
+  # (sigma, sd[...], cor[...], nu), so a development reads as the same object
+  # wherever it is written. Any other name is left as it stands.
   hyper_label <- function(nm, pen) {
-    if (identical(nm, "sigma") &&
-        grepl("gaussian", pen@penalty_name, fixed = TRUE)) {
-      return("effect sd")
-    }
     if (identical(nm, "lambda") &&
         isTRUE(tryCatch(penalties7::is_quadratic(pen),
                         error = function(e) FALSE))) {
@@ -3352,10 +3348,9 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # WHAT A SUB-TERM CONTRIBUTES to its compartment: its rows filtered the way
   # a block of that kind is filtered at the top level, so a smooth shows its
   # unpenalized part, a kinked penalty shows what it kept, and a random
-  # effect shows no coefficients at all. What a reader wants of a set of
-  # predictions is how many there are and how far they spread, which is one
-  # line, where the predictions themselves are a column of numbers nobody
-  # reads and are still in `coef()`.
+  # effect shows no coefficients at all: its predictions are summarized by
+  # effect_spread(), as in an ordinary random() block, and are still in
+  # `coef()`.
   #
   # `rows_at` is how the rows of a set of the term's own coefficients are
   # obtained. An additive term reads its design block's rows by column; a
@@ -3379,15 +3374,11 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
       selection = !is.na(rr$estimate) & rr$estimate != 0,
       rep(TRUE, nrow(rr)))
     if (identical(sk, "random")) keep <- rep(FALSE, nrow(rr))
-    lines <- character(0)
-    if (identical(sk, "random") && nrow(rr)) {
-      lines <- sprintf("%d predictions, sd %s, range %s to %s", nrow(rr),
-                       format(signif(stats::sd(rr$estimate), 3L)),
-                       format(signif(min(rr$estimate), 3L)),
-                       format(signif(max(rr$estimate), 3L)))
-      names(lines) <- "effects"
-    }
-    list(kind = sk, table = rr[keep, , drop = FALSE], lines = lines)
+    # the predictions of a random effect are summarized as an ordinary
+    # random() block summarizes them, see effect_spread()
+    sp <- if (identical(sk, "random") && nrow(rr)) effect_spread(s, rr$estimate)
+    list(kind = sk, table = rr[keep, , drop = FALSE], lines = character(0),
+         spread = sp, n_coef = nrow(rr))
   }
   # ONE COMPARTMENT PER DEVELOPED PARAMETER, carrying its own hyperparameter
   # first and then each sub-term's rows in the order the block binds them.
@@ -3448,11 +3439,14 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         nm_i <- names(cp$subs)[i]
         if (is.null(nm_i) || !nzchar(nm_i)) nm_i <- sub_label(cp$subs[[i]])
         t_i <- do.call(rbind, c(hr[which(owner == i)], list(parts[[i]]$table)))
+        # a random sub-term is headed as an ordinary random() block is, by
+        # its own call and the number of its coefficients
         sections[[length(sections) + 1L]] <- list(
           header = if (identical(parts[[i]]$kind, "random"))
-            paste("random effects:", nm_i) else nm_i,
+            sprintf("%s   [%d coefficients]", nm_i, parts[[i]]$n_coef)
+            else nm_i,
           table = if (is.null(t_i)) empty else t_i,
-          lines = parts[[i]]$lines)
+          lines = parts[[i]]$lines, spread = parts[[i]]$spread)
       }
       if (!is.null(loose) && nrow(loose)) {
         sections <- c(list(list(header = NULL, table = loose,
@@ -3463,6 +3457,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
            table = if (is.null(tb)) empty else tb,
            lines = if (is.null(ln)) character(0) else ln,
            sections = sections,
+           spread = Filter(Negate(is.null),
+                           lapply(parts, function(z) z$spread)),
            n_coef = length(cp$index))
     })
   }
@@ -3471,7 +3467,12 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   # `psi1 ~ 0 + group`. A term that keeps none is described by its
   # sub-terms.
   dev_formula <- function(term, cp) {
+    # nl() and the break-point terms keep them as `subformulas`, gas() as
+    # `submodels`
     sf <- tryCatch(term@subformulas, error = function(e) NULL)
+    if (!is.list(sf) || is.null(sf[[cp$name]])) {
+      sf <- tryCatch(term@submodels, error = function(e) NULL)
+    }
     f <- if (is.list(sf)) sf[[cp$name]] else NULL
     if (inherits(f, "formula")) {
       return(paste(deparse(f[[length(f)]], width.cutoff = 500L),
@@ -3549,7 +3550,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
     list(kind = "structural", label = block_label("structural"), term = nm,
          n_coef = nrow(r), edf = term_edf(nm), n_zero = 0L,
          table = if (is.null(tb)) empty else tb,
-         head = if (length(dev)) head_rows(rows_at, dev, term) else NULL,
+         head = NULL,
          components = compartments(term, rows_at, dev, hp),
          classes = hp$classes, note = class_note(nm))
   }
@@ -3626,7 +3627,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         n_na = if (identical(kind, "selection") && length(kz))
           sum(is.na(cr$estimate[kz])) else 0L,
         table = if (is.null(tb)) empty else tb,
-        head = head_rows(rows_at, dev, term),
+        head = NULL,
         components = compartments(term, rows_at, dev, hp),
         classes = hp$classes, note = class_note(nm))
       next
@@ -3655,7 +3656,8 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
         sum(cr$estimate == 0, na.rm = TRUE) else 0L,
       n_na = if (identical(kind, "selection")) sum(is.na(cr$estimate)) else 0L,
       table = tb, head = NULL, components = list(), classes = hp$classes,
-      note = class_note(nm))
+      note = class_note(nm),
+      spread = if (identical(kind, "random")) effect_spread(term, cr$estimate))
   }
   blocks
 }
@@ -4439,11 +4441,12 @@ block_rows_shown <- function(tb, max_coef = NULL, cap = 12L, show = 10L) {
 #' deviations are not comparable quantities, and a table that stacks them
 #' reads as a list of numbers and no longer as a model. Each developed
 #' parameter is therefore printed as a compartment of its own, headed by what
-#' develops it, opening with its hyperparameter under a name that says what
-#' the hyperparameter is, and rendering each sub-term the way a block of that
-#' kind is rendered at the top level. A random development reports the scale
-#' of its effects and one line saying how many predictions there are and how
-#' far they spread, the predictions themselves being in [coef()].
+#' develops it, with its fixed effects first and then each penalized sub-term,
+#' rendered the way a block of that kind is rendered at the top level. A
+#' random sub-term is headed by its call and its number of coefficients and
+#' reports the hyperparameters of its prior under the names of an ordinary
+#' random() block, followed by the summary of its predicted effects
+#' ([effect_spread()]); the predictions themselves are in [coef()].
 #'
 #' @param b A block record from [summary_blocks()].
 #' @param digits Significant digits.
@@ -4492,10 +4495,10 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
 
   comp <- if (is.null(b$components)) list() else b$components
   # the term's own table first, then one section per compartment, each
-  # carrying the rows it keeps and the free-text lines a random development
-  # reports instead of its predictions
+  # carrying the rows it keeps and, for a random effect, the summary of its
+  # predictions
   secs <- list(list(header = NULL, indent = 2L, tb = b$table,
-                    lines = character(0)))
+                    lines = character(0), spread = b$spread))
   for (cp in comp) {
     if (is.null(cp$sections)) {
       secs[[length(secs) + 1L]] <- list(header = cp$header, indent = 4L,
@@ -4510,7 +4513,7 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
     for (z in cp$sections) {
       secs[[length(secs) + 1L]] <- list(
         header = z$header, indent = if (is.null(z$header)) 4L else 6L,
-        tb = z$table, lines = z$lines, gap = FALSE)
+        tb = z$table, lines = z$lines, gap = FALSE, spread = z$spread)
     }
   }
   for (i in seq_along(secs)) {
@@ -4588,9 +4591,93 @@ print_block <- function(b, digits = 4L, max_coef = NULL, stat = "z") {
       cat(strrep(" ", s$indent),
           sprintf("... %d more, in coef()\n", s$hidden), sep = "")
     }
+    print_effect_spread(s$spread, indent = s$indent, digits = digits)
   }
   invisible(NULL)
 }
+
+#' The Predicted Random Effects of a Term, Summarized
+#'
+#' @description
+#' The six-number summary of [base::summary()] (minimum, quartiles, mean and
+#' maximum) of a random-effect term's predicted effects, one row per
+#' coordinate of the effect: the intercept, and each covariate of a random
+#' slope.
+#'
+#' @details
+#' The coefficients of one group are adjacent in the block, so the
+#' predictions are read as a matrix with one row per level and one column per
+#' coordinate, the coordinates named as [modelterms7::term_group()] names
+#' them.
+#'
+#' @param term A built random-effect term.
+#' @param est Its predicted effects, in the order of its coefficients.
+#'
+#' @return A list with `table`, a data frame with one row per coordinate and
+#'   the six summary columns, `levels`, the number of groups, and `group`, the
+#'   grouping expression; `NULL` where the term carries no grouping.
+#'
+#' @keywords internal
+effect_spread <- function(term, est) {
+  gr <- tryCatch(modelterms7::term_group(term), error = function(e) NULL)
+  est <- as.numeric(est)
+  if (is.null(gr) || !length(est)) return(NULL)
+  m <- length(gr$levels)
+  d <- gr$dim
+  if (m * d != length(est)) return(NULL)
+  M <- matrix(est, nrow = m, ncol = d, byrow = TRUE)
+  tb <- do.call(rbind, lapply(seq_len(d), function(j) {
+    s <- summary(M[, j])
+    as.data.frame(as.list(as.numeric(s)), col.names = names(s),
+                  check.names = FALSE)
+  }))
+  rownames(tb) <- gr$names
+  list(table = tb, levels = m,
+       group = paste(deparse(gr$expr, width.cutoff = 500L), collapse = " "))
+}
+
+
+#' Print the Summary of a Term's Predicted Random Effects
+#'
+#' @description
+#' Prints what [effect_spread()] returns under the heading
+#' `predicted effects (m levels of g)`, one row per coordinate.
+#'
+#' @param sp What [effect_spread()] returns.
+#' @param indent The indentation of the heading.
+#' @param digits Significant digits.
+#'
+#' @return `NULL`, invisibly. Called for the printing.
+#'
+#' @keywords internal
+print_effect_spread <- function(sp, indent = 2L, digits = 4L) {
+  if (is.null(sp)) return(invisible(NULL))
+  cat(strrep(" ", indent),
+      sprintf("predicted effects (%d levels of %s)\n", sp$levels, sp$group),
+      sep = "")
+  tb <- sp$table
+  # each number on its own, a mean that is zero up to rounding printed as 0
+  cells <- t(apply(as.matrix(tb), 1L, function(z) {
+    z <- zapsmall(z, digits = digits + 3L)
+    vapply(z, function(v) format(signif(v, digits)), character(1))
+  }))
+  cells <- matrix(cells, nrow = nrow(tb))
+  cw <- pmax(nchar(colnames(tb)), apply(nchar(cells), 2L, max))
+  w <- max(nchar(rownames(tb)))
+  pre <- strrep(" ", indent + 2L)
+  pad <- function(x) {
+    mapply(function(v, j) formatC(v, width = j, flag = " "), x, cw,
+           USE.NAMES = FALSE)
+  }
+  cat(pre, strrep(" ", w), "  ", paste(pad(colnames(tb)), collapse = " "),
+      "\n", sep = "")
+  for (i in seq_len(nrow(tb))) {
+    cat(pre, formatC(rownames(tb)[i], width = -w, flag = " "), "  ",
+        paste(pad(cells[i, ]), collapse = " "), "\n", sep = "")
+  }
+  invisible(NULL)
+}
+
 
 #' The Term Read at a Glance
 #'

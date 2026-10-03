@@ -31,10 +31,11 @@ different things: a break-point's population value and its per-group
 deviations are not comparable quantities, and a table that stacks them
 reads as a list of numbers and no longer as a model. Each developed
 parameter is therefore printed as a compartment of its own, headed by what
-develops it, opening with its hyperparameter under a name that says what
-the hyperparameter is, and rendering each sub-term the way a block of that
-kind is rendered at the top level. A random development reports the scale
-of its effects and one line saying how many predictions there are and how
-far they spread, the predictions themselves being in \code{\link[=coef]{coef()}}.
+develops it, with its fixed effects first and then each penalized sub-term,
+rendered the way a block of that kind is rendered at the top level. A
+random sub-term is headed by its call and its number of coefficients and
+reports the hyperparameters of its prior under the names of an ordinary
+random() block, followed by the summary of its predicted effects
+(\code{\link[=effect_spread]{effect_spread()}}); the predictions themselves are in \code{\link[=coef]{coef()}}.
 }
 \keyword{internal}

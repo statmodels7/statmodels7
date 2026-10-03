@@ -17,7 +17,10 @@ test_that("a compartment names its random effects' sd without the entry prefix",
                  seg(t, psi ~ random(~ 1 | id), gamma1 ~ random(~ 1 | id)),
                distrib = distributions7::gaussian1_distrib(), data = d)
   out <- capture.output(print(summary(f)))
-  expect_length(grep("effect sd [reml]", out, fixed = TRUE), 2L)
+  # the names of an ordinary random() block, the one written in the equation
+  # included (0.188.1)
+  expect_length(grep("sigma [reml]", out, fixed = TRUE), 3L)
+  expect_length(grep("effect sd", out, fixed = TRUE), 0L)
   expect_length(grep("::random", out, fixed = TRUE), 0L)
   # the keys hyper() reports are unchanged
   expect_true(all(grepl("::", hyper(f)$term[grepl("seg", hyper(f)$term)])))

@@ -1,3 +1,19 @@
+# statmodels7 0.188.1
+
+* `summary()` reports a random effect written inside a term's subformula
+  (`nl()`, `seg()`, `jump()`, `jseg()`, `gas()`) as an ordinary `random()`
+  block: headed by its call and its number of coefficients, with the
+  hyperparameters of its prior under their own names (`sigma`, `sd[...]` and
+  `cor[...]`, `nu` for a t prior). The line giving each developed parameter
+  under the term's heading is removed, its population value being the
+  compartment's own fixed effect.
+* Every random-effect block, ordinary or developed, ends with the summary of
+  its predicted effects, `predicted effects (m levels of g)`: the minimum,
+  quartiles, mean and maximum, one row per coordinate of the effect. It
+  replaces the line giving their count, standard deviation and range.
+* The heading of a developed parameter of `gas()` gives the formula as
+  written.
+
 # statmodels7 0.188.0
 
 * `statmod_breakpoint_test()` tests that a model has no break-point against

@@ -806,14 +806,22 @@ test_that("a developed parameter is reported as a compartment of its own", {
   expect_true("(Intercept)" %in% cp$table$name)
   expect_false(any(startsWith(cp$table$name, "random.")))
   expect_lt(nrow(cp$table), cp$n_coef)
-  # and reports how many there are instead
-  expect_match(cp$lines[[1L]], "^[0-9]+ predictions, sd")
+  # and summarizes them as an ordinary random() block does: the six numbers
+  # of summary() for each coordinate of the effect
+  sp <- cp$spread[[1L]]
+  expect_identical(rownames(sp$table), "(Intercept)")
+  expect_identical(colnames(sp$table),
+                   c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."))
+  rr <- coef(fit)$mu[startsWith(names(coef(fit)$mu), "seg.psi1.random")]
+  expect_equal(unlist(sp$table[1L, ]), as.numeric(summary(as.numeric(rr))),
+               ignore_attr = TRUE)
 
   out <- paste(utils::capture.output(print(s)), collapse = "\n")
   expect_match(out, "psi1 ~ random(~1 | id)", fixed = TRUE)
-  expect_match(out, "random effects: random(~1 | id)", fixed = TRUE)
-  expect_match(out, "effect sd", fixed = TRUE)
-  expect_match(out, "predictions, sd", fixed = TRUE)
+  expect_match(out, "random(~1 | id)   [", fixed = TRUE)
+  expect_match(out, "sigma [reml]", fixed = TRUE)
+  expect_match(out, "predicted effects (", fixed = TRUE)
+  expect_false(grepl("effect sd", out, fixed = TRUE))
   expect_false(grepl("random.1", out, fixed = TRUE))
 })
 
@@ -832,7 +840,7 @@ test_that("a term that develops nothing keeps the flat table it had", {
   expect_true("psi1" %in% b$table$name)
 })
 
-test_that("the head shows every parameter of a term at once", {
+test_that("a developed term has no head line, its formula heads the compartment", {
   set.seed(5)
   m <- 5
   ni <- 30
@@ -845,13 +853,12 @@ test_that("the head shows every parameter of a term at once", {
   fit <- statmod(y ~ seg(x, psi ~ random(~ 1 | id), psi = 5),
                  gaussian1_distrib(), dd)
   b <- summary(fit)@tables$mu[[2L]]
-  expect_identical(b$head$name, "psi1")
-  # it carries the population value of the development and says what
-  # develops it, which is the one thing the tables below cannot show: there
-  # that number is labelled by the development's intercept
-  expect_true(all(is.finite(b$head$estimate)))
-  expect_identical(b$head$note, "~ random(~1 | id)")
-  expect_false(any(c("beta", "gamma1") %in% b$head$name))
+  # the population value is the development's own fixed effect, printed in
+  # its compartment, so a line under the term's heading would repeat it
+  # (Giovanni, 2026-10-03)
+  expect_null(b$head)
+  expect_identical(b$components[[1L]]$header, "psi1 ~ random(~1 | id)")
+  expect_true("(Intercept)" %in% b$components[[1L]]$table$name)
 })
 
 test_that("a long block is cut and says how much it hid", {
@@ -991,7 +998,7 @@ test_that("a structural term is a block, and its development a compartment", {
   # of its own carrying nothing else
   expect_true(any(cp$table$role == "estimated"))
   expect_true("(Intercept)" %in% cp$table$name)
-  expect_match(cp$lines[[1L]], "^[0-9]+ predictions, sd")
+  expect_identical(rownames(cp$spread[[1L]]$table), "(Intercept)")
 
   lines <- utils::capture.output(print(s))
   out <- paste(lines, collapse = "\n")
