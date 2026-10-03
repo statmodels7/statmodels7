@@ -226,8 +226,8 @@ structural_psi <- function(term, zeta) {
 #'   not zero, `score` returns \eqn{u = s\,\mathcal{I}^{-d}} and `curvature`
 #'   its derivative in the predictor,
 #'   \eqn{u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'},
-#'   and the compiled context is withheld, its kernel reading the score as it
-#'   is.
+#'   and the compiled context carries `scaling`, its kernel composing the
+#'   same quantities from the family's scalar entry points.
 #'
 #' @return A list with `score`, `curvature` and `logdens`.
 #'
@@ -299,8 +299,26 @@ structural_callbacks <- function(spec, theta, p, scaling = 0) {
     }
   }
 
+  # the fast context of piano_parallel.txt section 2a: where the C
+  # registries of distributions7 and linkfunctions7 cover this family
+  # and this link, the filter's kernel reads the score and the
+  # curvature through their scalar entry points instead of calling back
+  # into R -- the same composition, bit-identical, held to that by
+  # modelterms7's twin test -- and an uncovered pair leaves the context
+  # inert, the callbacks below running as before
+  fast <- if (!S7::S7_inherits(d, distributions7::multivariate_distrib) &&
+              !is.matrix(y)) {
+    list(family = attr(S7::S7_class(d), "name"),
+         link = lk@link_name,
+         k = match(p, params),
+         bounds = as.numeric(lk@link_bounds),
+         y = as.numeric(y),
+         theta = theta_n)
+  } else NULL
+
   if (scaling != 0) {
     check_filter_scaling(d, y, theta_n)
+    if (!is.null(fast)) fast$scaling <- scaling
     return(list(
       score = function(e, i) {
         th <- at(i)
@@ -316,29 +334,14 @@ structural_callbacks <- function(spec, theta, p, scaling = 0) {
           as.numeric(k$dinformation(y[i], th, e))
       },
       logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e)),
-      fast = NULL))
+      fast = fast))
   }
 
   list(
     score = function(e, i) as.numeric(k$score(y[i], at(i), e)),
     curvature = function(e, i) as.numeric(k$curvature(y[i], at(i), e)),
     logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e)),
-    # the fast context of piano_parallel.txt section 2a: where the C
-    # registries of distributions7 and linkfunctions7 cover this family
-    # and this link, the filter's kernel reads the score and the
-    # curvature through their scalar entry points instead of calling back
-    # into R -- the same composition, bit-identical, held to that by
-    # modelterms7's twin test -- and an uncovered pair leaves the context
-    # inert, the callbacks above running as before
-    fast = if (!S7::S7_inherits(d, distributions7::multivariate_distrib) &&
-               !is.matrix(y)) {
-      list(family = attr(S7::S7_class(d), "name"),
-           link = lk@link_name,
-           k = match(p, params),
-           bounds = as.numeric(lk@link_bounds),
-           y = as.numeric(y),
-           theta = theta_n)
-    } else NULL
+    fast = fast
   )
 }
 

@@ -18,8 +18,8 @@ structural_callbacks(spec, theta, p, scaling = 0)
 not zero, \code{score} returns \eqn{u = s\,\mathcal{I}^{-d}} and \code{curvature}
 its derivative in the predictor,
 \eqn{u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'},
-and the compiled context is withheld, its kernel reading the score as it
-is.}
+and the compiled context carries \code{scaling}, its kernel composing the
+same quantities from the family's scalar entry points.}
 }
 \value{
 A list with \code{score}, \code{curvature} and \code{logdens}.
