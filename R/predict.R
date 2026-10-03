@@ -929,10 +929,12 @@ filter_joint_jacobian <- function(spec, design, coef) {
                                        threads = spec@threads)
   D3 <- distributions7::distrib_deriv3(d, spec@response, th, scale = "link",
                                        threads = spec@threads)
-  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3)
+  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3, th)
   V <- jd$V
   V[[jd$ap]] <- cv$jacobian
   V <- lapply(V, function(x) x[, jd$keep, drop = FALSE])
+  # the derivative of what drives the filter, for a continuation's rows
+  Hd <- filter_driving(spec, th, jd$ap, filter_scaling(jd$f$tm), gl, H)$H
   params <- jd$params
   ckey <- unlist(lapply(params, function(q) {
     if (design[[q]]$npar) paste(q, design[[q]]$coef_names, sep = ":") else
@@ -941,7 +943,7 @@ filter_joint_jacobian <- function(spec, design, coef) {
   lb <- tryCatch(jd$f$tm@label, error = function(e) "")
   tkey <- paste(jd$f$param, if (length(lb) == 1L && nzchar(lb))
     paste(lb, jd$zn, sep = ".") else jd$zn, sep = ":")
-  list(J = V[[jd$ap]], V = V, H = H, ap = jd$ap, nb = jd$nb,
+  list(J = V[[jd$ap]], V = V, H = H, Hd = Hd, ap = jd$ap, nb = jd$nb,
        key = c(ckey, tkey)[jd$keep],
        free = jd$zn[jd$keep[jd$keep > jd$nb] - jd$nb])
 }
@@ -1048,7 +1050,7 @@ statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
       # rebuilt on them, which is what gives its recursion their own times
       # and groups; every other block still goes through its blueprint.
       tmn <- modelterms7::term_build(tm, nd)
-      cb <- structural_callbacks(spec, theta, p)
+      cb <- structural_callbacks(spec, theta, p, scaling = filter_scaling(tm))
       out <- modelterms7::term_filter(tmn, eta[[p]], spec@response,
                                       cb$score, cb$curvature, psi,
                                       fast = cb$fast, threads = spec@threads)
@@ -1132,7 +1134,7 @@ continued_deriv_inputs <- function(ospec, odesign, coef, f, ost, tm) {
   if (npar[ap]) S[, col] <- as_dense(odesign[[p]]$X)
   ds <- matrix(0, n, ncol(fj$J))
   for (b in seq_along(params)) {
-    ds <- ds + rep_len(fj$H[[hess_key(params, ap, b)]], n) * fj$V[[b]]
+    ds <- ds + rep_len(fj$Hd[[hess_key(params, ap, b)]], n) * fj$V[[b]]
   }
   z <- ost$zeta[[f$term]]
   nm <- names(z)
