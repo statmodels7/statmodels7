@@ -32,6 +32,18 @@ fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
   beta <- statmod_start(spec, design, obj, NULL)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
                          cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
+  # statmod()'s second fit from a score-driven term's own start, where the
+  # fit from the information-scaled start does not converge
+  sst <- statmod_structural_state(design)
+  plain <- if (!is.null(sst)) sst$plain_start else NULL
+  if (length(plain) && !isTRUE(r$converged)) {
+    zinfo <- sst$zeta
+    for (tn in names(plain)) sst$zeta[[tn]] <- plain[[tn]]
+    r2 <- statmod_alternate(spec, design, blocks, hy, inner, beta,
+                            cfg$expected, cfg$approx, cfg$maxit, cfg$tol,
+                            verbosity(0))
+    if (isTRUE(r2$converged)) r <- r2 else sst$zeta <- zinfo
+  }
   par <- r$par
   if (polish) {
     if (length(attr(design, "structural")) || length(attr(design, "refresh")) ||

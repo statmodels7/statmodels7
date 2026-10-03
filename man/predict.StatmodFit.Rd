@@ -272,11 +272,12 @@ other prior by Monte Carlo (see \code{\link[=predictive_mixture]{predictive_mixt
 effect read with its own estimate, or with one written inside a
 subformula, is rejected.
 
-A forecast reports \strong{no standard error}. \code{se = TRUE} gives the
-uncertainty of the parameters, while a forecast carries the uncertainty of
-the future scores as well, which is the larger part and is no delta
-method. Reporting the smaller half under the name of the whole would
-mislead.
+A forecast's standard error, with \code{se = TRUE}, is the uncertainty of the
+estimated parameters alone, carried by the delta method through the
+continued recursion, whose derivative is exact. A forecast also carries
+the uncertainty of the future scores, which the delta method does not
+reach, so the standard error and the interval leave it out, and a warning
+says so.
 }
 
 \examples{

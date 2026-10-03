@@ -1910,10 +1910,14 @@ densify_small <- function(design, min_dim = 100L) {
 #' Settle a Fresh Start of a Structural Term Against Its Equation
 #'
 #' @description
-#' The two adjustments a start of a structural term's own parameters needs
+#' The three adjustments a start of a structural term's own parameters needs
 #' once the design is known: a level held by an intercept in the same
-#' equation starts at zero, and an unheld level that the term's own start
-#' left at zero starts at the equation's data-based intercept.
+#' equation starts at zero, an unheld level that the term's own start
+#' left at zero starts at the equation's data-based intercept, and a score
+#' loading of a filter starts at \eqn{0.1/\mathcal{I}}, with \eqn{\mathcal{I}}
+#' the expected information of its equation's predictor at the
+#' intercept-only fit ([predictor_information()]), so that the first step of
+#' the recursion has the same size whatever the scale of the score.
 #'
 #' @details
 #' [statmod_design()] applies them to the start [modelterms7::term_start()]
@@ -1977,7 +1981,99 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
       if (is.finite(z)) sst$zeta[[u$term]][[lvl]] <- z
     }
   }
+  # A SCORE LOADING STARTS ON THE SCALE OF THE SCORE IT MULTIPLIES. The
+  # score is used unscaled, so its size is the family's: (y - mu)/sigma^2 for
+  # a gaussian mean, of order phi for a beta on the logit. The term's own
+  # start, a loading of 0.1, is a weak response only where the score is of
+  # order one; on a beta share with phi near 130 it made the filter explode
+  # at the first step and the fit stopped at -3326.66 where the static model
+  # reaches 413.58. Read on the scale of a score scaled by the inverse
+  # information, 0.1 is the same weak response for every family, so the
+  # loading starts at 0.1 / I, I the expected information of the equation's
+  # predictor at the intercept-only fit (Giovanni, 2026-10-03). Measured over
+  # eleven fits of chapter 13 every one that converged before reaches the
+  # same maximum, and the beta converges at 450.48. On gaussian panels with a
+  # random level (40 simulated, three groups of 35) it converged on 34 where
+  # 0.1 converged on 37, the two failing on different panels, so statmod()
+  # fits once more from the term's own start, kept in sst$plain_start, where
+  # the fit from this one does not converge (Giovanni, same day).
+  filt <- which(vapply(seq_along(su), function(i)
+    fresh[i] && identical(su[[i]]$kind, "filter"), logical(1)))
+  if (length(filt)) {
+    info <- tryCatch(predictor_information(spec), error = function(e) NULL)
+    for (i in filt) {
+      u <- su[[i]]
+      I <- info[[u$param]]
+      if (is.null(I) || !is.finite(I) || I <= 0) next
+      tm <- spec@terms[[u$param]][[u$term]]
+      lks <- modelterms7::term_links(tm)
+      z <- sst$zeta[[u$term]]
+      # the term's own start is kept: statmod() fits from it once more where
+      # the fit from this one does not converge
+      if (is.null(sst$plain_start)) sst$plain_start <- list()
+      sst$plain_start[[u$term]] <- z
+      for (a in grep("^alpha[0-9]+$", modelterms7::term_params(tm),
+                     value = TRUE)) {
+        lk <- lks[[a]]
+        if (is.null(lk)) lk <- linkfunctions7::log_link()
+        new <- tryCatch(linkfunctions7::linkfun(lk, 0.1 / I),
+                        error = function(e) NA_real_)
+        old <- tryCatch(linkfunctions7::linkfun(lk, 0.1),
+                        error = function(e) NA_real_)
+        if (!is.finite(new)) next
+        if (a %in% names(z)) {
+          z[[a]] <- new
+        } else if (is.finite(old) && old != 0) {
+          # a developed loading starts at the constant projected onto its
+          # design, which is linear in the constant
+          dev <- startsWith(names(z), paste0(a, "."))
+          z[dev] <- z[dev] * (new / old)
+        }
+      }
+      sst$zeta[[u$term]] <- z
+    }
+  }
   invisible(NULL)
+}
+
+
+#' The Expected Information of Each Predictor at the Intercept-Only Fit
+#'
+#' @description
+#' For each distribution parameter, the mean over the observations of the
+#' expected information of its linear predictor,
+#' \eqn{-\mathrm{E}[\partial^2 \ell / \partial \eta^2]}, at the parameters of
+#' the intercept-only fit.
+#'
+#' @details
+#' It sets the scale a score-driven term's loading starts on
+#' ([structural_start_fixups()]): the score of a predictor has variance equal
+#' to this information, so a loading of \eqn{0.1/\mathcal{I}} moves the
+#' predictor by a tenth of the score's natural unit whatever the family.
+#'
+#' @param spec A [StatmodSpec()].
+#'
+#' @return A named numeric vector, one entry per distribution parameter, or
+#'   `NULL` where the intercept-only fit is not available.
+#'
+#' @keywords internal
+predictor_information <- function(spec) {
+  d <- spec@distrib
+  y <- spec@response
+  eta0 <- statmod_intercepts(spec)
+  if (is.null(eta0)) return(NULL)
+  n <- spec@n_obs
+  th <- lapply(d@params, function(q) {
+    v <- eta0[[q]]
+    if (is.null(v) || !is.finite(v)) v <- 0
+    rep_len(linkfunctions7::linkinv(d@link_params[[q]], v), n)
+  })
+  names(th) <- d@params
+  eh <- distributions7::distrib_expected_hessian(d, y, th, scale = "link")
+  vapply(d@params, function(q) {
+    v <- eh[[paste(q, q, sep = "_")]]
+    if (is.null(v)) NA_real_ else -mean(as.numeric(v))
+  }, numeric(1))
 }
 
 

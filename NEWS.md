@@ -1,3 +1,30 @@
+# statmodels7 0.188.2
+
+* `predict()` with `se = TRUE` past the end of a `gas()` series returns a
+  standard error and an interval instead of an error, with a warning that
+  they carry the uncertainty of the estimated parameters alone and leave out
+  that of the future scores. The standard error is the delta method through
+  the continued recursion, whose derivative is exact.
+* The standard error of a predictor carrying a `gas()` filter, at the
+  observed rows and past them, differentiates the filter in the
+  coefficients of every equation. The scores that drive the recursion are
+  read at every predictor, so a coefficient of the scale moves a filter in
+  the mean; the standard error read only the filter's own equation. On the
+  gaussian model of the Nile flow the standard error of the filtered mean was
+  up to 12 per cent too large, and that of the forecast one year ahead
+  8.7 per cent too large.
+* The loading of a `gas()` filter starts at `0.1 / I`, where `I` is the mean
+  expected information of the predictor at the intercept-only fit, instead
+  of at 0.1 on the scale of the predictor. A beta filter on the share of
+  front-seat passengers in `Seatbelts` diverged from the old start and
+  converges from the new one; for a gaussian mean the start is
+  `0.1 * sigma^2`. Where the fit from that start does not converge, the
+  model is fitted once more from the term's own start of 0.1 and the better
+  of the two fits is kept. On 40 simulated gaussian panels with a random
+  level the two starts alone converged on 34 and 37 panels, failing on
+  different ones; with the second fit no panel ends lower than from 0.1,
+  and one ends higher.
+
 # statmodels7 0.188.1
 
 * `summary()` reports a random effect written inside a term's subformula

@@ -230,11 +230,12 @@ predict_moments <- function() {
 #' effect read with its own estimate, or with one written inside a
 #' subformula, is rejected.
 #'
-#' A forecast reports **no standard error**. `se = TRUE` gives the
-#' uncertainty of the parameters, while a forecast carries the uncertainty of
-#' the future scores as well, which is the larger part and is no delta
-#' method. Reporting the smaller half under the name of the whole would
-#' mislead.
+#' A forecast's standard error, with `se = TRUE`, is the uncertainty of the
+#' estimated parameters alone, carried by the delta method through the
+#' continued recursion, whose derivative is exact. A forecast also carries
+#' the uncertainty of the future scores, which the delta method does not
+#' reach, so the standard error and the interval leave it out, and a warning
+#' says so.
 #' @param object A [StatmodFit()].
 #' @param what What to predict: a parameter's name, optionally prefixed
 #'   `"link:"`; a moment's name; `"parameter"` (the default) or `"link"`. An
@@ -470,15 +471,19 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   # the fitting data's values whatever `newdata` held, which is why the two
   # paths are separated rather than merged.
   cont <- !is.null(newdata) && length(attr(design, "structural"))
-  ep <- if (cont) statmod_eta_continued(object, spec, design) else
-    statmod_eta(spec, design, coef_use)
+  ep <- if (cont) {
+    statmod_eta_continued(object, spec, design, deriv = isTRUE(se))
+  } else statmod_eta(spec, design, coef_use)
+  # A FORECAST'S STANDARD ERROR is the uncertainty of the parameters alone,
+  # carried by the delta method through the continued recursion. A forecast
+  # also carries the uncertainty of the future scores, which no delta method
+  # reaches, so the number is reported with a warning saying what it leaves
+  # out (Giovanni, 2026-10-03: a warning, not the error it used to be).
   if (cont && isTRUE(se)) {
-    stop("The standard error of a prediction past the series is not ",
-         "reported. What\n  predict(se = TRUE) gives is the uncertainty of ",
-         "the parameters; a forecast\n  carries the uncertainty of the ",
-         "future scores as well, which is the larger part\n  and is no ",
-         "delta method. predict(fit, se = TRUE) at the observed rows is ",
-         "exact.", call. = FALSE)
+    warning("The standard error of a prediction past the series is that of ",
+            "the estimated\n  parameters alone. A forecast also carries the ",
+            "uncertainty of the future\n  scores, which this standard error ",
+            "and its interval leave out.", call. = FALSE)
   }
   params <- spec@distrib@params
   if (identical(interval, "prediction")) {
@@ -749,16 +754,20 @@ predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
     key <- if (d$npar) paste(p, d$coef_names, sep = ":") else character(0)
     X <- if (d$npar) as.matrix(d$X) else matrix(0, n, 0L)
     # A SCORE-DRIVEN TERM ADDS ITS LEVEL to this equation's predictor, and
-    # the level is no column of the design: the filter returns its exact
-    # derivative in the term's own parameters at every observation, which is
-    # the only place it can be computed. Carried onto the free scale by each
-    # parameter's own link -- the same chain the exact gradient uses -- those
-    # become further columns of the derivative row, read against the tail of
-    # the joint variance.
-    fl <- structural_se_columns(spec, design, ep, p, X)
-    if (!is.null(fl) && nrow(fl$J) == n) {
-      X <- cbind(fl$X, fl$J)
-      key <- c(key, fl$key)
+    # the level is no column of the design: its derivative is the forward
+    # Jacobian of the recursion, in the coefficients of EVERY equation (the
+    # scores are read at all the predictors) and the term's free parameters,
+    # and it replaces the design row
+    fl <- structural_se_columns(spec, design, ep, p, object@coefficients)
+    if (!is.null(fl) && nrow(fl$X) == n) {
+      X <- fl$X
+      key <- fl$key
+    }
+    # past the series the rows come from the continued recursion instead
+    cc <- ep$cont_cols[[p]]
+    if (!is.null(cc) && nrow(cc$X) == n) {
+      X <- cc$X
+      key <- cc$key
     }
     if (length(key) && all(key %in% rownames(V))) {
       Vp <- as.matrix(V[key, key, drop = FALSE])
@@ -832,75 +841,109 @@ se_answer <- function(su, what, params, spec) {
 }
 
 
-#' The Columns a Structural Term Adds to a Derivative Row
+#' The Derivative Row of an Equation Carrying a Filter
 #'
 #' @description
-#' The derivative of one equation's predictor in the free parameters of the
-#' score-driven term sitting in it, one row per observation, on the scale the
-#' variance matrix is indexed by.
+#' The derivative of the predictor of the equation carrying a score-driven
+#' term, one row per observation, in every coordinate of the variance matrix
+#' it moves with: the coefficients of every equation and the term's free
+#' parameters on their unconstrained scale.
 #'
 #' @details
 #' A filter's level is a recursion, not a column, so it has no row of a
-#' design. What it has is the derivative the recursion propagates beside the
-#' state, which [modelterms7::term_filter()] returns on the
-#' parameter scale; multiplying by each parameter's own
-#' \eqn{h'(\zeta_j)} carries it to the unconstrained scale the joint
-#' matrix is written in, which is the chain the exact gradient already uses.
+#' design. Its derivative is the forward Jacobian of the recursion, which
+#' [filter_joint_jacobian()] returns. Every equation's coefficients enter it,
+#' not only those of the filter's own equation: the scores that drive the
+#' recursion are read at the predictors of every equation, so a coefficient
+#' of the scale moves the level of a filter in the mean. Leaving those
+#' columns out, on the gaussian score-driven model of the Nile flow, gave a
+#' standard error of the filtered mean up to 12 per cent too large.
 #'
-#' A parameter an intercept in the same equation holds is not estimated and
-#' is not in that matrix, so it is not here either.
-#'
-#' The design's own rows are corrected at the same time, through
-#' [modelterms7::term_static_deriv()]: a coefficient of this
-#' equation moves the level as well as the static part, because the scores
-#' driving the recursion are read at the predictor the recursion produces.
-#' Measured on a score-driven mean with one covariate beside it, leaving
-#' that out understates the standard error by about a quarter.
+#' A parameter that an intercept in the same equation holds is not estimated
+#' and is not in that matrix, so it is not here either.
 #'
 #' @param spec The specification.
 #' @param design Its design.
 #' @param ep The predictors, as [statmod_eta()] returns them.
 #' @param p The distribution parameter whose equation is being read.
-#' @param X The equation's design rows.
+#' @param coef The coefficients the predictors were evaluated at.
 #'
-#' @return A list with `X`, `J` and `key`, or `NULL`
-#'   where the equation carries no filter.
+#' @return A list with `X` (the derivative rows) and `key` (the names of
+#'   their columns in the variance matrix), or `NULL` where the equation
+#'   carries no filter.
 #'
-#' @seealso [predict_se()], [statmod_filter_at()]
+#' @seealso [predict_se()], [filter_joint_jacobian()]
 #'
 #' @keywords internal
-structural_se_columns <- function(spec, design, ep, p, X) {
+structural_se_columns <- function(spec, design, ep, p, coef) {
   fs <- ep$filters
-  if (!length(fs)) return(NULL)
-  sst <- statmod_structural_state(design)
-  cols <- list()
-  keys <- character(0)
-  seen <- FALSE
-  for (f in fs) {
-    if (!identical(f$param, p)) next
-    if (ncol(X)) {
-      D <- modelterms7::term_static_deriv(f$tm, f$curv, X, f$psi)
-      if (!is.null(D) && identical(dim(D), dim(X))) X <- D
-    }
-    seen <- TRUE
-    z <- sst$zeta[[f$term]]
-    nm <- names(z)
-    hl <- sst$held[[f$term]]
-    free <- setdiff(nm, hl)
-    if (!length(free)) next
-    links <- modelterms7::term_links(f$tm)
-    ch <- vapply(free, function(j)
-      linkfunctions7::dlinkinv(links[[j]], z[[j]]), numeric(1))
-    J <- as.matrix(f$jacobian)[, match(free, nm), drop = FALSE]
-    cols[[length(cols) + 1L]] <- J * rep(ch, each = nrow(J))
-    lb <- tryCatch(f$tm@label, error = function(e) "")
-    nmf <- if (length(lb) == 1L && nzchar(lb)) paste(lb, free, sep = ".") else
-      free
-    keys <- c(keys, paste(p, nmf, sep = ":"))
+  if (!length(fs) ||
+      !any(vapply(fs, function(f) identical(f$param, p), logical(1)))) {
+    return(NULL)
   }
-  if (!seen) return(NULL)
-  J <- if (length(cols)) do.call(cbind, cols) else matrix(0, nrow(X), 0L)
-  list(X = X, J = J, key = keys)
+  fj <- filter_joint_jacobian(spec, design, coef)
+  if (is.null(fj)) return(NULL)
+  list(X = fj$J, key = fj$key)
+}
+
+
+#' The Forward Jacobian of a Filter in Every Coordinate
+#'
+#' @description
+#' The derivative of the predictor that a score-driven term produces, in the
+#' coefficients of every equation followed by the term's free parameters on
+#' their unconstrained scale, at each observation, together with the static
+#' rows of every equation in the same columns.
+#'
+#' @details
+#' The rows are the ones the joint information is assembled from
+#' ([statmod_full_information()]): each equation's design placed in its own
+#' columns, and for the filter's equation the Jacobian that
+#' [modelterms7::term_curvature()] propagates beside the state. A model
+#' carries at most one structural term, so every other equation is static
+#' and its design is its derivative.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param design Its design.
+#' @param coef The coefficients.
+#'
+#' @return `NULL` where the model carries no filter, otherwise a list with
+#'   `J` (the filter equation's rows), `V` (every equation's rows, the
+#'   filter's being `J`), `H` (the family's second derivatives on the link
+#'   scale), `ap` (the index of the filter's parameter), `nb` (the number of
+#'   coefficient columns), `key` (the names of the columns in the variance
+#'   matrix) and `free` (the term's free parameters), all columns restricted
+#'   to the free ones.
+#'
+#' @seealso [structural_se_columns()], [continued_deriv_inputs()]
+#'
+#' @keywords internal
+filter_joint_jacobian <- function(spec, design, coef) {
+  jd <- joint_design_rows(spec, design, coef)
+  if (is.null(jd)) return(NULL)
+  d <- spec@distrib
+  th <- jd$ev$theta
+  gl <- distributions7::distrib_gradient(d, spec@response, th, scale = "link",
+                                         threads = spec@threads)
+  H <- distributions7::distrib_hessian(d, spec@response, th, scale = "link",
+                                       threads = spec@threads)
+  D3 <- distributions7::distrib_deriv3(d, spec@response, th, scale = "link",
+                                       threads = spec@threads)
+  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3)
+  V <- jd$V
+  V[[jd$ap]] <- cv$jacobian
+  V <- lapply(V, function(x) x[, jd$keep, drop = FALSE])
+  params <- jd$params
+  ckey <- unlist(lapply(params, function(q) {
+    if (design[[q]]$npar) paste(q, design[[q]]$coef_names, sep = ":") else
+      character(0)
+  }), use.names = FALSE)
+  lb <- tryCatch(jd$f$tm@label, error = function(e) "")
+  tkey <- paste(jd$f$param, if (length(lb) == 1L && nzchar(lb))
+    paste(lb, jd$zn, sep = ".") else jd$zn, sep = ":")
+  list(J = V[[jd$ap]], V = V, H = H, ap = jd$ap, nb = jd$nb,
+       key = c(ckey, tkey)[jd$keep],
+       free = jd$zn[jd$keep[jd$keep > jd$nb] - jd$nb])
 }
 
 
@@ -937,17 +980,28 @@ structural_se_columns <- function(spec, design, ep, p, X) {
 #' states, which past the data is a predictive distribution, no single
 #' value.
 #'
+#' With `deriv = TRUE` the continuation is differentiated as well, in the
+#' coefficients of every equation and the term's free parameters
+#' ([continued_deriv_inputs()]), which is what a standard error of the
+#' forecast reads.
+#'
 #' @param fit The fitted model.
 #' @param spec The specification at the new data.
 #' @param design Its design.
+#' @param deriv Whether to return the forecast's derivative rows.
 #'
 #' @return A list shaped as [statmod_eta()]'s, without the
-#'   memoized filter objects.
+#'   memoized filter objects, plus `cont_cols`: for each equation whose
+#'   filter was continued with `deriv = TRUE`, a list with `X` (the
+#'   derivative of the predictor at the new rows in the coefficients of
+#'   every equation and the term's free parameters) and `key` (the names of
+#'   its columns in the variance matrix).
 #'
 #' @seealso [predict.StatmodFit()]
 #'
 #' @keywords internal
-statmod_eta_continued <- function(fit, spec, design) {
+statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
+  cont_cols <- list()
   nd <- spec@newdata
   params <- spec@distrib@params
   links <- spec@distrib@link_params
@@ -1005,13 +1059,92 @@ statmod_eta_continued <- function(fit, spec, design) {
       # the same callback the filter itself was handed
       s_past <- vapply(seq_along(f_past),
                        function(i) f$cb$score(f$eta[[i]], i), numeric(1))
-      eta[[p]] <- eta[[p]] +
-        modelterms7::term_continue(tm, psi, f_past, s_past, nd)
+      dv <- if (isTRUE(deriv)) {
+        continued_deriv_inputs(ospec, odesign, coef, f, ost, tm)
+      } else NULL
+      cont <- modelterms7::term_continue(tm, psi, f_past, s_past, nd,
+                                         deriv = dv$deriv)
+      eta[[p]] <- eta[[p]] + as.numeric(cont)
+      if (!is.null(dv)) {
+        # the forecast's derivative row: the static part in the equation's
+        # own columns plus what the continued level adds in every column
+        jac <- attr(cont, "jacobian")
+        if (d2[[p]]$npar) {
+          jac[, dv$col] <- jac[, dv$col] + as.matrix(d2[[p]]$X)
+        }
+        cont_cols[[p]] <- list(X = jac, key = dv$key)
+      }
     }
     theta[[p]] <- linkfunctions7::linkinv(links[[p]], eta[[p]])
   }
   list(eta = eta, theta = theta, filters = list(), regimes = list(),
-       eta_static = eta)
+       eta_static = eta, cont_cols = cont_cols)
+}
+
+
+#' What the Derivative of a Continued Filter Starts From
+#'
+#' @description
+#' The derivatives of the level and of the score at the observed rows, and of
+#' the term's parameters, in the coordinates the variance matrix of the fit
+#' is written in: the coefficients of every equation followed by the term's
+#' free parameters on their unconstrained scale.
+#'
+#' @details
+#' The coordinates are the ones [structural_se_columns()] uses for a
+#' prediction at the observed rows, so a forecast and a fitted value are
+#' read against the same rows and columns of the variance. The derivative of
+#' the filtered predictor at an observed row is the forward Jacobian of
+#' [filter_joint_jacobian()]; the level's derivative is that minus the
+#' equation's design row. The score drives the recursion and depends on the
+#' predictors of every equation, so its derivative is
+#' \eqn{\sum_b \ell_{pb,t} V_{b,t}}, with \eqn{V_{b,t}} the derivative row
+#' of equation \eqn{b} and \eqn{\ell_{pb,t}} the family's second derivative
+#' on the link scale. A parameter's derivative in its own unconstrained
+#' coordinate is its link's, and one for a coefficient of a development.
+#'
+#' @param ospec,odesign The fit's specification and design.
+#' @param coef The coefficients.
+#' @param f The filter object at the observed rows.
+#' @param ost The structural state.
+#' @param tm The term.
+#'
+#' @return A list with `deriv` (as [modelterms7::term_continue()] takes
+#'   it), `col` (the columns of the filter equation's coefficients) and
+#'   `key` (the names of the columns in the variance matrix), or `NULL`
+#'   where the fit carries no filter.
+#'
+#' @seealso [statmod_eta_continued()], [structural_se_columns()]
+#'
+#' @keywords internal
+continued_deriv_inputs <- function(ospec, odesign, coef, f, ost, tm) {
+  fj <- filter_joint_jacobian(ospec, odesign, coef)
+  if (is.null(fj)) return(NULL)
+  params <- ospec@distrib@params
+  ap <- fj$ap
+  p <- params[ap]
+  n <- ospec@n_obs
+  npar <- vapply(odesign, function(d) d$npar, integer(1))
+  offs <- cumsum(npar) - npar
+  col <- offs[ap] + seq_len(npar[ap])
+  # the equation's static rows in the joint columns
+  S <- matrix(0, n, ncol(fj$J))
+  if (npar[ap]) S[, col] <- as_dense(odesign[[p]]$X)
+  ds <- matrix(0, n, ncol(fj$J))
+  for (b in seq_along(params)) {
+    ds <- ds + rep_len(fj$H[[hess_key(params, ap, b)]], n) * fj$V[[b]]
+  }
+  z <- ost$zeta[[f$term]]
+  nm <- names(z)
+  links <- modelterms7::term_links(tm)
+  dpsi <- matrix(0, length(nm), ncol(fj$J))
+  for (i in seq_along(fj$free)) {
+    j <- fj$free[i]
+    dpsi[match(j, nm), fj$nb + i] <-
+      linkfunctions7::dlinkinv(links[[j]], z[[j]])
+  }
+  list(deriv = list(df_past = fj$J - S, ds_past = ds, dpsi = dpsi),
+       col = col, key = fj$key)
 }
 
 

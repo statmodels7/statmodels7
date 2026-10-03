@@ -704,7 +704,44 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     spec <- sc
     blocks <- statmod_blocks(spec, design)
   }
-  f1 <- fit_once(beta)
+  # A SCORE LOADING STARTS AT 0.1/I (structural_start_fixups()), and where the
+  # fit from there does not converge it is fitted once more from the term's
+  # own start, the better of the two kept by the rule the multistarts below
+  # use. Measured on 40 simulated gaussian panels with a random level, the
+  # two starts failed on different panels (34 and 37 converged), and the
+  # second fit is paid only on a failure.
+  sst0 <- statmod_structural_state(design)
+  plain <- if (!is.null(sst0)) sst0$plain_start else NULL
+  if (length(plain)) {
+    f1 <- tryCatch(fit_once(beta), error = function(e) e)
+    if (inherits(f1, "error") || !isTRUE(f1$res$converged)) {
+      zinfo <- sst0$zeta
+      for (tn in names(plain)) sst0$zeta[[tn]] <- plain[[tn]]
+      f2 <- tryCatch(fit_once(beta), error = function(e) NULL)
+      if (inherits(f1, "error")) {
+        if (is.null(f2)) {
+          sst0$zeta <- zinfo
+          stop(f1)
+        }
+        f1 <- f2
+      } else if (!is.null(f2) &&
+                 (edge_restart_better(f2$res, f1$res, f1$crit,
+                                      outer_criterion, sparse_criterion) ||
+                  # a converged fit is kept unless the other is strictly
+                  # better: on a tie the unconverged one is the same point
+                  # with a flag that says less about it
+                  (isTRUE(f2$res$converged) &&
+                   (!edge_restart_better(f1$res, f2$res, f2$crit,
+                                         outer_criterion, sparse_criterion) ||
+                    retry_tie(f1, f2))))) {
+        f1 <- f2
+      } else {
+        sst0$zeta <- zinfo
+      }
+    }
+  } else {
+    f1 <- fit_once(beta)
+  }
   res <- f1$res
   hyper <- f1$hyper
   crit <- f1$crit

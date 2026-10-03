@@ -127,3 +127,33 @@ edge_restart_better <- function(new, old, crit, outer_criterion,
     is.finite(new$value) && new$value < old$value
   }
 }
+
+
+#' Whether Two Fits Reach the Same Point
+#'
+#' @description
+#' `TRUE` where the criteria of two fits, or their objectives where
+#' either has no criterion, agree to a relative \eqn{10^{-8}}.
+#'
+#' @details
+#' [statmod()] reads it after a second fit of a score-driven model from the
+#' term's own start: where the two reach the same point, the converged one is
+#' kept, a difference at the level of rounding deciding nothing.
+#'
+#' @param a,b Two results of the inner fit, each a list with `res` and
+#'   `crit`.
+#'
+#' @return `TRUE` or `FALSE`.
+#'
+#' @keywords internal
+retry_tie <- function(a, b) {
+  ca <- a$crit
+  cb <- b$crit
+  if (length(ca) == 1L && length(cb) == 1L && is.finite(ca) && is.finite(cb)) {
+    return(abs(ca - cb) <= 1e-8 * (1 + abs(cb)))
+  }
+  va <- a$res$value
+  vb <- b$res$value
+  length(va) == 1L && length(vb) == 1L && is.finite(va) && is.finite(vb) &&
+    abs(va - vb) <= 1e-8 * (1 + abs(vb))
+}

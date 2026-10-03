@@ -4,7 +4,7 @@
 \alias{statmod_eta_continued}
 \title{Predictors at Rows That Continue the Series}
 \usage{
-statmod_eta_continued(fit, spec, design)
+statmod_eta_continued(fit, spec, design, deriv = FALSE)
 }
 \arguments{
 \item{fit}{The fitted model.}
@@ -12,10 +12,16 @@ statmod_eta_continued(fit, spec, design)
 \item{spec}{The specification at the new data.}
 
 \item{design}{Its design.}
+
+\item{deriv}{Whether to return the forecast's derivative rows.}
 }
 \value{
 A list shaped as \code{\link[=statmod_eta]{statmod_eta()}}'s, without the
-memoized filter objects.
+memoized filter objects, plus \code{cont_cols}: for each equation whose
+filter was continued with \code{deriv = TRUE}, a list with \code{X} (the
+derivative of the predictor at the new rows in the coefficients of
+every equation and the term's free parameters) and \code{key} (the names of
+its columns in the variance matrix).
 }
 \description{
 The linear predictors and the parameters at new rows for a model carrying
@@ -47,6 +53,11 @@ A term whose contribution is a likelihood mixed over latent states is
 rejected: what such a term reports at an observed row is a posterior over
 states, which past the data is a predictive distribution, no single
 value.
+
+With \code{deriv = TRUE} the continuation is differentiated as well, in the
+coefficients of every equation and the term's free parameters
+(\code{\link[=continued_deriv_inputs]{continued_deriv_inputs()}}), which is what a standard error of the
+forecast reads.
 }
 \seealso{
 \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}

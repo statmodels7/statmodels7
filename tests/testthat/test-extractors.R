@@ -251,26 +251,31 @@ test_that("a score-driven term's predictor carries its own uncertainty", {
   tn <- names(sst$zeta)[[1L]]
   free <- setdiff(names(sst$zeta[[tn]]), sst$held[[tn]])
   nb <- design$mu$npar
+  ns <- design$sigma$npar
 
   # THE REFERENCE differentiates the predictor itself in every estimated
-  # parameter, coefficients and the filter's own together, and shares no
-  # arithmetic with the delta method: the level is a recursion, so a
-  # coefficient of this equation reaches it through the scores as well as
-  # through the static part, and leaving that out understates the answer
+  # parameter, the coefficients of both equations and the filter's own
+  # together, and shares no arithmetic with the delta method: the level is a
+  # recursion, so a coefficient of this equation reaches it through the
+  # scores as well as through the static part, and so does a coefficient of
+  # the scale, at which the scores are read
   eta_of <- function(v) {
     cf <- fit@coefficients
     cf$mu <- v[seq_len(nb)]
+    cf$sigma <- v[nb + seq_len(ns)]
     zz <- sst$zeta[[tn]]
-    for (k in seq_along(free)) zz[[free[k]]] <- v[nb + k]
+    for (k in seq_along(free)) zz[[free[k]]] <- v[nb + ns + k]
     d2 <- statmod_design(spec)
     s2 <- statmod_structural_state(d2)
     s2$zeta[[tn]] <- zz
     s2$key <- NULL
     as.numeric(statmod_eta(spec, d2, cf)$eta$mu)
   }
-  v0 <- c(fit@coefficients$mu, unlist(sst$zeta[[tn]])[free])
+  v0 <- c(fit@coefficients$mu, fit@coefficients$sigma,
+          unlist(sst$zeta[[tn]])[free])
   J <- numDeriv::jacobian(eta_of, v0)
   key <- c(paste("mu", design$mu$coef_names, sep = ":"),
+           paste("sigma", design$sigma$coef_names, sep = ":"),
            structural_tail_names(spec, design))
   V <- as.matrix(vcov(fit, readable = FALSE)[key, key, drop = FALSE])
   ref <- sqrt(pmax(rowSums((J %*% V) * J), 0))
@@ -283,6 +288,64 @@ test_that("a score-driven term's predictor carries its own uncertainty", {
   Vb <- V[seq_len(nb), seq_len(nb), drop = FALSE]
   naive <- sqrt(pmax(rowSums((X %*% Vb) * X), 0))
   expect_gt(max(abs(naive - ref) / ref), 0.05)
+  # nor are the rows without the scale's columns, which is what the delta
+  # method read until 2026-10-03
+  J0 <- J
+  J0[, nb + seq_len(ns)] <- 0
+  own <- sqrt(pmax(rowSums((J0 %*% V) * J0), 0))
+  expect_gt(max(abs(own - ref) / ref), 0.01)
+})
+
+test_that("the standard error of a filter in the scale reads the mean's coefficients", {
+  set.seed(67)
+  m <- 250
+  r <- numeric(m)
+  ls <- 0
+  for (i in seq_len(m)) {
+    r[i] <- 0.3 + exp(ls) * rnorm(1)
+    ls <- 0.1 * (((r[i] - 0.3) / exp(ls))^2 - 1) + 0.8 * ls
+  }
+  d <- data.frame(r = r, t = seq_len(m), x = rnorm(m))
+  fit <- statmod(r ~ x | sigma ~ gas(p = 1, q = 1, time = t),
+                 gaussian1_distrib(), d)
+  spec <- fit@spec
+  design <- statmod_design(spec)
+  sst <- statmod_structural_state(design)
+  tn <- names(sst$zeta)[[1L]]
+  free <- setdiff(names(sst$zeta[[tn]]), sst$held[[tn]])
+  nb <- design$mu$npar
+  ns <- design$sigma$npar
+  # the scores that drive the scale are read at the mean, so the filtered
+  # log-scale moves with the mean's coefficients; the reference re-runs the
+  # model at perturbed coefficients of both equations and parameters
+  eta_of <- function(v) {
+    cf <- fit@coefficients
+    cf$mu <- v[seq_len(nb)]
+    cf$sigma <- v[nb + seq_len(ns)]
+    zz <- sst$zeta[[tn]]
+    for (k in seq_along(free)) zz[[free[k]]] <- v[nb + ns + k]
+    d2 <- statmod_design(spec)
+    s2 <- statmod_structural_state(d2)
+    s2$zeta[[tn]] <- zz
+    s2$key <- NULL
+    as.numeric(statmod_eta(spec, d2, cf)$eta$sigma)
+  }
+  v0 <- c(fit@coefficients$mu, fit@coefficients$sigma,
+          unlist(sst$zeta[[tn]])[free])
+  J <- numDeriv::jacobian(eta_of, v0)
+  key <- c(paste("mu", design$mu$coef_names, sep = ":"),
+           paste("sigma", design$sigma$coef_names, sep = ":"),
+           structural_tail_names(spec, design))
+  V <- as.matrix(vcov(fit, readable = FALSE)[key, key, drop = FALSE])
+  ref <- sqrt(pmax(rowSums((J %*% V) * J), 0))
+  expect_equal(predict(fit, "link:sigma", se = TRUE)$se, ref, tolerance = 1e-6)
+  # the mean's columns are not zero
+  expect_gt(max(abs(J[, seq_len(nb)])), 1e-3)
+  # and its forecast is the same rows continued
+  nd <- data.frame(r = NA_real_, t = m + 1:4, x = 0)
+  expect_warning(pr <- predict(fit, "link:sigma", nd, se = TRUE),
+                 "parameters alone")
+  expect_true(all(is.finite(pr$se)) && all(pr$se > 0))
 })
 
 test_that("a score-driven term is continued past the series", {
@@ -327,9 +390,32 @@ test_that("a score-driven term is continued past the series", {
   # a row inside the observed series is not a continuation of it
   expect_error(predict(fit, "mu", data.frame(y = NA_real_, t = 50, x = 0)),
                "inside the observed series")
-  # and a forecast reports no standard error, the uncertainty of the future
-  # scores being no delta method
-  expect_error(predict(fit, "mu", nd, se = TRUE), "is not reported", fixed = TRUE)
+  # A FORECAST'S STANDARD ERROR is the parameters' alone, with a warning
+  # saying so (Giovanni, 2026-10-03; it was an error). The reference is the
+  # same extended filter as above, differentiated numerically in the
+  # coefficients of the mean, the scale's intercept and the term's free
+  # parameters, read against those rows of the variance.
+  expect_warning(pr <- predict(fit, "mu", nd, se = TRUE),
+                 "parameters alone")
+  expect_equal(pr$fit, got)
+  zt <- ost$zeta[[tn]]
+  lk <- modelterms7::term_links(tmx)
+  fc_ref <- function(u) {
+    z <- zt
+    z[] <- u[-(1:2)]
+    ps <- structural_psi(tmx, z)
+    sgu <- exp(u[[2L]])
+    e <- as.numeric(d2$mu$X %*% u[[1L]])
+    as.numeric(modelterms7::term_filter(
+      tmx, e, yv,
+      function(e, i) if (is.na(yv[[i]])) 0 else (yv[[i]] - e) / sgu^2,
+      function(e, i) if (is.na(yv[[i]])) 0 else -1 / sgu^2, ps)$eta[m + 1:5])
+  }
+  g <- numDeriv::jacobian(fc_ref, c(coef(fit)$mu[["x"]],
+                                    coef(fit)$sigma[["(Intercept)"]], zt))
+  keys <- c("mu:x", "sigma:(Intercept)", paste0("mu:gas.", names(zt)))
+  V <- vcov(fit, readable = FALSE)[keys, keys]
+  expect_equal(pr$se, sqrt(rowSums((g %*% V) * g)), tolerance = 1e-6)
 })
 
 test_that("a forecast decays towards the filter's stationary level", {
