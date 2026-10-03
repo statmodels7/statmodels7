@@ -704,19 +704,19 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     spec <- sc
     blocks <- statmod_blocks(spec, design)
   }
-  # A SCORE LOADING STARTS AT 0.1/I (structural_start_fixups()), and where the
-  # fit from there does not converge it is fitted once more from the term's
-  # own start, the better of the two kept by the rule the multistarts below
-  # use. Measured on 40 simulated gaussian panels with a random level, the
-  # two starts failed on different panels (34 and 37 converged), and the
-  # second fit is paid only on a failure.
+  # A SECOND START FOR A SCORE LOADING. Where the fit from the term's own
+  # start does not converge, it is fitted once more with each loading at
+  # 0.1/I (structural_start_fixups()), and the better of the two is kept by
+  # the rule the multistarts below use. A beta share in Seatbelts stops
+  # unconverged at -3326.66 from the first and converges at 450.48 from the
+  # second; the second fit is paid only on a failure.
   sst0 <- statmod_structural_state(design)
-  plain <- if (!is.null(sst0)) sst0$plain_start else NULL
-  if (length(plain)) {
+  alt <- if (!is.null(sst0)) sst0$info_start else NULL
+  if (length(alt)) {
     f1 <- tryCatch(fit_once(beta), error = function(e) e)
     if (inherits(f1, "error") || !isTRUE(f1$res$converged)) {
       zinfo <- sst0$zeta
-      for (tn in names(plain)) sst0$zeta[[tn]] <- plain[[tn]]
+      for (tn in names(alt)) sst0$zeta[[tn]] <- alt[[tn]]
       f2 <- tryCatch(fit_once(beta), error = function(e) NULL)
       if (inherits(f1, "error")) {
         if (is.null(f2)) {

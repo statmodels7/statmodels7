@@ -13,17 +13,13 @@
   gaussian model of the Nile flow the standard error of the filtered mean was
   up to 12 per cent too large, and that of the forecast one year ahead
   8.7 per cent too large.
-* The loading of a `gas()` filter starts at `0.1 / I`, where `I` is the mean
-  expected information of the predictor at the intercept-only fit, instead
-  of at 0.1 on the scale of the predictor. A beta filter on the share of
-  front-seat passengers in `Seatbelts` diverged from the old start and
-  converges from the new one; for a gaussian mean the start is
-  `0.1 * sigma^2`. Where the fit from that start does not converge, the
-  model is fitted once more from the term's own start of 0.1 and the better
-  of the two fits is kept. On 40 simulated gaussian panels with a random
-  level the two starts alone converged on 34 and 37 panels, failing on
-  different ones; with the second fit no panel ends lower than from 0.1,
-  and one ends higher.
+* Where a `gas()` fit from the term's own start (a loading of 0.1) does not
+  converge, it is fitted once more with each loading at `0.1 / I`, where `I`
+  is the mean expected information of the predictor at the intercept-only
+  fit, and the better of the two fits is kept. A beta filter on the share of
+  front-seat passengers in `Seatbelts` stops unconverged at -3326.66 from
+  0.1 and converges at 450.48 from `0.1 / I`. Every fit that converged from
+  0.1 is unchanged.
 
 # statmodels7 0.188.1
 

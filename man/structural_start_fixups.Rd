@@ -21,14 +21,15 @@ values are a fresh start rather than values a fit arrived at.}
 \code{NULL}, invisibly; \code{sst$zeta} is modified in place.
 }
 \description{
-The three adjustments a start of a structural term's own parameters needs
+The adjustments a start of a structural term's own parameters needs
 once the design is known: a level held by an intercept in the same
-equation starts at zero, an unheld level that the term's own start
-left at zero starts at the equation's data-based intercept, and a score
-loading of a filter starts at \eqn{0.1/\mathcal{I}}, with \eqn{\mathcal{I}}
-the expected information of its equation's predictor at the
-intercept-only fit (\code{\link[=predictor_information]{predictor_information()}}), so that the first step of
-the recursion has the same size whatever the scale of the score.
+equation starts at zero, and an unheld level that the term's own start
+left at zero starts at the equation's data-based intercept. A filter also
+receives a second start, kept beside the first, with each score loading
+at \eqn{0.1/\mathcal{I}}, \eqn{\mathcal{I}} the expected information of
+its equation's predictor at the intercept-only fit
+(\code{\link[=predictor_information]{predictor_information()}}); \code{\link[=statmod]{statmod()}} fits from it where the fit from
+the first start does not converge.
 }
 \details{
 \code{\link[=statmod_design]{statmod_design()}} applies them to the start \code{\link[modelterms7:term_start]{modelterms7::term_start()}}

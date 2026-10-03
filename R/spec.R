@@ -1910,14 +1910,15 @@ densify_small <- function(design, min_dim = 100L) {
 #' Settle a Fresh Start of a Structural Term Against Its Equation
 #'
 #' @description
-#' The three adjustments a start of a structural term's own parameters needs
+#' The adjustments a start of a structural term's own parameters needs
 #' once the design is known: a level held by an intercept in the same
-#' equation starts at zero, an unheld level that the term's own start
-#' left at zero starts at the equation's data-based intercept, and a score
-#' loading of a filter starts at \eqn{0.1/\mathcal{I}}, with \eqn{\mathcal{I}}
-#' the expected information of its equation's predictor at the
-#' intercept-only fit ([predictor_information()]), so that the first step of
-#' the recursion has the same size whatever the scale of the score.
+#' equation starts at zero, and an unheld level that the term's own start
+#' left at zero starts at the equation's data-based intercept. A filter also
+#' receives a second start, kept beside the first, with each score loading
+#' at \eqn{0.1/\mathcal{I}}, \eqn{\mathcal{I}} the expected information of
+#' its equation's predictor at the intercept-only fit
+#' ([predictor_information()]); [statmod()] fits from it where the fit from
+#' the first start does not converge.
 #'
 #' @details
 #' [statmod_design()] applies them to the start [modelterms7::term_start()]
@@ -1981,22 +1982,22 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
       if (is.finite(z)) sst$zeta[[u$term]][[lvl]] <- z
     }
   }
-  # A SCORE LOADING STARTS ON THE SCALE OF THE SCORE IT MULTIPLIES. The
-  # score is used unscaled, so its size is the family's: (y - mu)/sigma^2 for
-  # a gaussian mean, of order phi for a beta on the logit. The term's own
-  # start, a loading of 0.1, is a weak response only where the score is of
-  # order one; on a beta share with phi near 130 it made the filter explode
-  # at the first step and the fit stopped at -3326.66 where the static model
-  # reaches 413.58. Read on the scale of a score scaled by the inverse
-  # information, 0.1 is the same weak response for every family, so the
-  # loading starts at 0.1 / I, I the expected information of the equation's
-  # predictor at the intercept-only fit (Giovanni, 2026-10-03). Measured over
-  # eleven fits of chapter 13 every one that converged before reaches the
-  # same maximum, and the beta converges at 450.48. On gaussian panels with a
-  # random level (40 simulated, three groups of 35) it converged on 34 where
-  # 0.1 converged on 37, the two failing on different panels, so statmod()
-  # fits once more from the term's own start, kept in sst$plain_start, where
-  # the fit from this one does not converge (Giovanni, same day).
+  # A SECOND START FOR A SCORE LOADING, ON THE SCALE OF THE SCORE IT
+  # MULTIPLIES. The score is used unscaled, so its size is the family's:
+  # (y - mu)/sigma^2 for a gaussian mean, of order phi for a beta on the
+  # logit. The term's own start, a loading of 0.1, is a weak response only
+  # where the score is of order one; on a beta share with phi near 130 it
+  # made the filter explode at the first step and the fit stopped,
+  # unconverged, at -3326.66 where the static model reaches 413.58. Read on
+  # the scale of a score scaled by the inverse information, 0.1 is the same
+  # weak response for every family: 0.1 / I, I the expected information of
+  # the equation's predictor at the intercept-only fit, from which the beta
+  # converges at 450.48. It is kept in sst$info_start, and statmod() fits from
+  # it where the fit from the term's own start does not converge (Giovanni,
+  # 2026-10-03). Used as THE start it converged on 34 of 40 simulated
+  # gaussian panels with a random level where 0.1 converged on 37, and on the
+  # battery it took gas-panel-omega to a lower REML optimum (-609.528 against
+  # -609.490), so it is the second start and not the first.
   filt <- which(vapply(seq_along(su), function(i)
     fresh[i] && identical(su[[i]]$kind, "filter"), logical(1)))
   if (length(filt)) {
@@ -2008,10 +2009,6 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
       tm <- spec@terms[[u$param]][[u$term]]
       lks <- modelterms7::term_links(tm)
       z <- sst$zeta[[u$term]]
-      # the term's own start is kept: statmod() fits from it once more where
-      # the fit from this one does not converge
-      if (is.null(sst$plain_start)) sst$plain_start <- list()
-      sst$plain_start[[u$term]] <- z
       for (a in grep("^alpha[0-9]+$", modelterms7::term_params(tm),
                      value = TRUE)) {
         lk <- lks[[a]]
@@ -2030,7 +2027,8 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
           z[dev] <- z[dev] * (new / old)
         }
       }
-      sst$zeta[[u$term]] <- z
+      if (is.null(sst$info_start)) sst$info_start <- list()
+      sst$info_start[[u$term]] <- z
     }
   }
   invisible(NULL)
@@ -2046,7 +2044,7 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
 #' the intercept-only fit.
 #'
 #' @details
-#' It sets the scale a score-driven term's loading starts on
+#' It sets the scale of a score-driven term's second start
 #' ([structural_start_fixups()]): the score of a predictor has variance equal
 #' to this information, so a loading of \eqn{0.1/\mathcal{I}} moves the
 #' predictor by a tenth of the score's natural unit whatever the family.
