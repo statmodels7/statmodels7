@@ -14,7 +14,7 @@ Description: Fits distributional regression models, and installs and attaches
     Installing this package installs all eight members, attaching it attaches
     all eight, and it reports which are out of date and which of their
     exports mask one another.
-License: MIT + file LICENSE
+License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 URL: https://statmodels7.github.io/statmodels7/,
