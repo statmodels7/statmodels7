@@ -1512,7 +1512,9 @@ structural_dk_matrix <- function(spec, design, jd, st, v) {
   cv3 <- modelterms7::term_third(
     f$tm, f$eta_static, spec@response,
     function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
-    w * st$s_at, st$seed, st$blocks(vfull), vfull)
+    w * st$s_at, st$seed, st$blocks(vfull), vfull,
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
   dphi <- cv3$dphi[, keep, drop = FALSE]
   out <- -cv3$curvature[keep, keep, drop = FALSE]
 
@@ -1607,7 +1609,9 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
   cv4 <- modelterms7::term_fourth(
     f$tm, f$eta_static, spec@response,
     function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
-    wt * st$s_at, st$seed, blk4(list(vfull, wfull)), list(vfull, wfull))
+    wt * st$s_at, st$seed, blk4(list(vfull, wfull)), list(vfull, wfull),
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = attr(blk4, "data"), threads = spec@threads)
   dphi_v <- cv4$dphi[[1L]][, keep, drop = FALSE]
   dphi_w <- cv4$dphi[[2L]][, keep, drop = FALSE]
   dpsi <- cv4$dpsi[, keep, drop = FALSE]
@@ -1651,7 +1655,9 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
     cv3 <- modelterms7::term_third(
       f$tm, f$eta_static, spec@response,
       function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
-      wt * pair[[1L]], st$seed, st$blocks(pair[[2L]]), pair[[2L]])
+      wt * pair[[1L]], st$seed, st$blocks(pair[[2L]]), pair[[2L]],
+      score_values = st$sd_at, curvature_values = st$cd_at,
+      blocks_data = st$blocks_data, threads = spec@threads)
     tot <- tot + sum(M * cv3$curvature[keep, keep, drop = FALSE])
   }
 
@@ -1901,6 +1907,10 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
                         st$gl, st$H, st$D3, st$D4, D5)
   blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, dr4$H, dr4$D3, dr4$D4,
                              jd$n, dr4$D5)
+  # the same pieces as data, for the compiled fourth order
+  attr(blk4, "data") <- structural_blocks_data(jd$params, jd$ap, jd$V, dr4$H,
+                                               dr4$D3, jd$n, D4 = dr4$D4,
+                                               D5 = dr4$D5)
 
   nh <- nrow(idx)
   pieces <- structural_outer_pieces(spec, design, coef, hyper, idx, jd)

@@ -4,7 +4,7 @@
 \alias{structural_blocks_data}
 \title{The Same Pieces as Data for the Compiled Recursion}
 \usage{
-structural_blocks_data(params, ap, Vs, H, D3, n)
+structural_blocks_data(params, ap, Vs, H, D3, n, D4 = NULL, D5 = NULL)
 }
 \arguments{
 \item{params}{The distribution's parameter names.}
@@ -16,9 +16,15 @@ structural_blocks_data(params, ap, Vs, H, D3, n)
 \item{H, D3}{The family's derivatives at the fitted predictors.}
 
 \item{n}{The number of observations.}
+
+\item{D4, D5}{The fourth and fifth derivatives, which the compiled third
+and fourth orders read: one column per index triple \eqn{(r, r_2, r_3)}
+after the filter's own, at \eqn{((r-1) n_p + r_2 - 1) n_p + r_3}, and
+likewise for the quadruples of the fifth. \code{NULL} leaves them out.}
 }
 \value{
-A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}.
+A list with \code{H}, \code{D3}, \code{Vs} and \code{ap}, and \code{D4} and \code{D5} where
+they were given.
 }
 \description{
 The quantities the callback of \code{.structural_blocks()} reads, laid out

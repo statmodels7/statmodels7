@@ -1572,7 +1572,8 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
   # asking the family again -- the same bargain the information makes.
   seed <- jd$V[[ap]]
   mk_blocks <- .structural_blocks(params, ap, jd$V, dr$H, dr$D3, dr$D4, n)
-  bd_data <- structural_blocks_data(params, ap, jd$V, dr$H, dr$D3, n)
+  bd_data <- structural_blocks_data(params, ap, jd$V, dr$H, dr$D3, n,
+                                    D4 = dr$D4)
   # the joint information reads the same recursion at the same point (its
   # blocks callback carries D4 as well, which the second order never
   # touches), so the memo's slot is shared with it, the seed in the key
@@ -1650,7 +1651,9 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
   cv3 <- modelterms7::term_third(
     f$tm, f$eta_static, spec@response,
     function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
-    w * st$s_at, st$seed, st$blocks(vfull), vfull)
+    w * st$s_at, st$seed, st$blocks(vfull), vfull,
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
   W3 <- cv3$curvature[keep, keep, drop = FALSE]
   dphi <- cv3$dphi[, keep, drop = FALSE]
 
@@ -1857,11 +1860,17 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' @param Vs The static rows.
 #' @param H,D3 The family's derivatives at the fitted predictors.
 #' @param n The number of observations.
+#' @param D4,D5 The fourth and fifth derivatives, which the compiled third
+#'   and fourth orders read: one column per index triple \eqn{(r, r_2, r_3)}
+#'   after the filter's own, at \eqn{((r-1) n_p + r_2 - 1) n_p + r_3}, and
+#'   likewise for the quadruples of the fifth. `NULL` leaves them out.
 #'
-#' @return A list with `H`, `D3`, `Vs` and `ap`.
+#' @return A list with `H`, `D3`, `Vs` and `ap`, and `D4` and `D5` where
+#'   they were given.
 #'
 #' @keywords internal
-structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
+structural_blocks_data <- function(params, ap, Vs, H, D3, n, D4 = NULL,
+                                   D5 = NULL) {
   np <- length(params)
   Hc <- matrix(0, n, np)
   for (q in seq_len(np)) {
@@ -1874,9 +1883,28 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
         rep_len(D3[[deriv3_key(params, ap, r, r2)]], n)
     }
   }
-  list(H = Hc, D3 = D3m,
-       Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
-       ap = ap)
+  out <- list(H = Hc, D3 = D3m,
+              Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
+              ap = ap)
+  if (!is.null(D4)) {
+    D4m <- matrix(0, n, np^3)
+    for (r in seq_len(np)) for (r2 in seq_len(np)) for (r3 in seq_len(np)) {
+      D4m[, ((r - 1L) * np + r2 - 1L) * np + r3] <-
+        rep_len(D4[[deriv4_key(params, ap, r, r2, r3)]], n)
+    }
+    out$D4 <- D4m
+  }
+  if (!is.null(D5)) {
+    D5m <- matrix(0, n, np^4)
+    for (r in seq_len(np)) for (r2 in seq_len(np)) for (r3 in seq_len(np)) {
+      for (r4 in seq_len(np)) {
+        D5m[, (((r - 1L) * np + r2 - 1L) * np + r3 - 1L) * np + r4] <-
+          rep_len(D5[[deriv5_key(params, ap, r, r2, r3, r4)]], n)
+      }
+    }
+    out$D5 <- D5m
+  }
+  out
 }
 
 
