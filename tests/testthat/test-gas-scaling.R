@@ -146,7 +146,7 @@ test_that("a family without the information's second derivative is rejected", {
   set.seed(2)
   dl <- data.frame(t = 1:60, y = stats::rnorm(60))
   expect_error(statmod(y ~ gas(p = 1, q = 1, time = t, scaling = 1),
-                       distrib = laplace_distrib(), data = dl),
+                       distrib = enet_distrib(), data = dl),
                "analytic second derivative")
 })
 

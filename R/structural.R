@@ -305,15 +305,25 @@ structural_callbacks <- function(spec, theta, p, scaling = 0) {
   # curvature through their scalar entry points instead of calling back
   # into R -- the same composition, bit-identical, held to that by
   # modelterms7's twin test -- and an uncovered pair leaves the context
-  # inert, the callbacks below running as before
-  fast <- if (!S7::S7_inherits(d, distributions7::multivariate_distrib) &&
-              !is.matrix(y)) {
-    list(family = attr(S7::S7_class(d), "name"),
-         link = lk@link_name,
+  # inert, the callbacks below running as before. distrib_scalar_route()
+  # gives the name the registry knows the distribution by and the constants
+  # its entries read after the parameters (the binomial's size), and NULL
+  # where the registry does not cover it; link_scalar_route() does the same
+  # for the link, with the link's own parameters
+  route <- if (!is.matrix(y)) distributions7::distrib_scalar_route(d)
+  lroute <- linkfunctions7::link_scalar_route(lk)
+  fast <- if (!is.null(route) && !is.null(lroute)) {
+    consts <- lapply(route$constants, function(v) {
+      v <- as.numeric(v)
+      if (length(v) == 1L) v else rep_len(v, n)
+    })
+    list(family = route$name,
+         link = lroute$name,
+         link_par = lroute$par,
          k = match(p, params),
          bounds = as.numeric(lk@link_bounds),
          y = as.numeric(y),
-         theta = theta_n)
+         theta = c(theta_n, consts))
   } else NULL
 
   if (scaling != 0) {
