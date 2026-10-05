@@ -1272,7 +1272,7 @@ pd_logdet_dense <- function(M, scale = NULL) {
   # logarithms and survives it -- measured, chol and eigen agree to six
   # significant figures at 1e14 (-644.725631 against -644.725128). What
   # matters here is only that every eigenvalue is genuinely POSITIVE, and an
-  # eigenvalue below eps times the largest is not distinguishable from zero
+  # eigenvalue below p eps times the largest is not distinguishable from zero
   # in double precision whatever the factorization reports.
   ch <- tryCatch(chol(M), error = function(e) NULL)
   if (!is.null(ch)) {
@@ -1292,7 +1292,15 @@ pd_logdet_dense <- function(M, scale = NULL) {
   if (is.null(ev) || !all(is.finite(ev))) {
     return(list(logdet = NA_real_, ok = FALSE))
   }
-  if (min(ev) > .Machine$double.eps * max(ev)) {
+  # THE FLOOR SCALES WITH THE DIMENSION, as the rank tests in augmented.R and
+  # outer_criteria.R already read it. An exactly singular K + S comes back
+  # from eigen() with a smallest eigenvalue of either sign whose size is set
+  # by rounding: measured on 216 penalized informations with a duplicated,
+  # rescaled or summed column (gaussian and Poisson, n 500 to 20000, p 33 to
+  # 305), |min|/max reached 9 eps and never 0.27 p eps, and a floor of eps
+  # alone accepted 52 of them. Over the 579 matrices the suite accepts on
+  # this route the smallest legitimate ratio is 1.9e4 eps.
+  if (min(ev) > ncol(M) * .Machine$double.eps * max(ev)) {
     return(list(logdet = sum(log(ev)), ok = TRUE))
   }
   list(logdet = NA_real_, ok = FALSE, min_ev = min(ev), max_ev = max(ev))
