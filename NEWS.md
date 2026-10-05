@@ -1,3 +1,24 @@
+# statmodels7 0.190.0
+
+* `gas(scaling = d)` filters are fitted: the score, the information and
+  their derivatives through the scaled recursion (`filter_driving()`,
+  Leibniz on `u = s w` and Faa di Bruno on `w = I^(-d)`),
+  the exact outer gradient and Hessian, prediction past the series and
+  `rstatmod()`. A loading that does not converge from its own start is
+  refitted from `0.1 I^(d - 1)`. At `scaling = 0` every result
+  is the previous one.
+* The compiled context of a filter is built from
+  `distributions7::distrib_scalar_route()` and
+  `linkfunctions7::link_scalar_route()`, so every family and link those
+  registries cover, wrappers included, runs the recursion without calling
+  back into R.
+* The degrees of freedom of a filter are reported missing, with the warning
+  that says why, where the count read off the joint smoother is negative: the
+  joint penalized information can be positive definite while the information
+  it smooths is not, and a filter's count then read -3.21.
+* Requires distributions7 0.70.0, linkfunctions7 0.5.0, modelterms7 0.94.0
+  and numericals7 0.21.0.
+
 # statmodels7 0.189.0
 
 * A location or mean on the identity link starts from a least-squares fit
