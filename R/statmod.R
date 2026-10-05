@@ -2808,16 +2808,20 @@ joint_smoother_diag <- function(spec, coef, design, hyper) {
       # -7.1e-05, chol() refuses it too, and a plain solve returns a diagonal
       # with a negative entry, which is not a smoother's -- so the refusal is
       # right and there is nothing to relax.
-      dd <- diag(solve_pd(as_dense(M), "the joint penalized information") %*%
-                   as_dense(K))
-      # A DIAGONAL WITH A NEGATIVE ENTRY IS NOT A SMOOTHER'S either, where M
-      # is accepted and K is not positive semi-definite. Measured on a filter
-      # beside a random effect that stopped unconverged, K's smallest
-      # eigenvalue was -3.1e-4 against 4.3e5, M passed, and the filter's
-      # count summed to -3.21; it is reported missing, as where M is refused.
-      if (any(dd < -sqrt(.Machine$double.eps))) NULL else dd
+      diag(solve_pd(as_dense(M), "the joint penalized information") %*%
+             as_dense(K))
     }
   }, error = function(e) NULL)
+  # A NEGATIVE COUNT IS NOT A COUNT, where M is accepted and K is indefinite.
+  # Measured on a filter beside a random effect that stopped unconverged,
+  # K's smallest eigenvalue was -3.1e-4 against 4.3e5, M passed, and the
+  # filter's entries read -1.04 to -1.56, its count -3.21; it is reported
+  # missing, as where M is refused. The rule is on the count and not on the
+  # entries (Giovanni, 2026-10-05): entries of either sign near zero are
+  # ordinary, -6e-8 for a shrunk deviation and -0.067 on a converged panel
+  # whose K is indefinite as an observed information over penalized
+  # deviations often is (count 3.73).
+  if (!is.null(d) && sum(d[nb + seq_along(free)]) < 0) d <- NULL
   # THE TWO WAYS OF HAVING NOTHING ARE DIFFERENT and the caller must tell them
   # apart: a model with no joint vector falls back to a rule that is right for
   # it, while one whose joint matrix cannot be read has no reading at all, and
