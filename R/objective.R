@@ -319,6 +319,9 @@ statmod_score_obs <- function(spec, coef, design) {
     H <- distributions7::distrib_hessian(spec@distrib, spec@response,
                                          ev$theta, scale = "link", threads = spec@threads)
     a <- match(f$param, params)
+    # what the filter was driven by moves with every predictor: the score's
+    # derivative, or the scaled score's where gas(scaling = ) is not zero
+    H <- filter_driving(spec, ev$theta, a, filter_scaling(f$tm), g, H)$H
     add <- stats::setNames(lapply(params, function(q) {
       ad$dscore * rep_len(H[[hess_key(params, a, match(q, params))]], n)
     }), params)

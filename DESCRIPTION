@@ -91,6 +91,7 @@ Collate:
     'outer_criteria.R'
     'path.R'
     'coord.R'
+    'filter_driving.R'
     'kkt.R'
     'marginal.R'
     'order.R'

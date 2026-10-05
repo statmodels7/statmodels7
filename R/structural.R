@@ -222,11 +222,17 @@ structural_psi <- function(term, zeta) {
 #' @param theta The per-observation parameters, as
 #'   [statmod_eta()] returns them.
 #' @param p The distribution parameter the term sits in.
+#' @param scaling The exponent \eqn{d} of [modelterms7::gas()]: where it is
+#'   not zero, `score` returns \eqn{u = s\,\mathcal{I}^{-d}} and `curvature`
+#'   its derivative in the predictor,
+#'   \eqn{u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'},
+#'   and the compiled context carries `scaling`, its kernel composing the
+#'   same quantities from the family's scalar entry points.
 #'
 #' @return A list with `score`, `curvature` and `logdens`.
 #'
 #' @keywords internal
-structural_callbacks <- function(spec, theta, p) {
+structural_callbacks <- function(spec, theta, p, scaling = 0) {
   d <- spec@distrib
   y <- spec@response
   lk <- d@link_params[[p]]
@@ -293,26 +299,59 @@ structural_callbacks <- function(spec, theta, p) {
     }
   }
 
+  # the fast context of piano_parallel.txt section 2a: where the C
+  # registries of distributions7 and linkfunctions7 cover this family
+  # and this link, the filter's kernel reads the score and the
+  # curvature through their scalar entry points instead of calling back
+  # into R -- the same composition, bit-identical, held to that by
+  # modelterms7's twin test -- and an uncovered pair leaves the context
+  # inert, the callbacks below running as before. distrib_scalar_route()
+  # gives the name the registry knows the distribution by and the constants
+  # its entries read after the parameters (the binomial's size), and NULL
+  # where the registry does not cover it; link_scalar_route() does the same
+  # for the link, with the link's own parameters
+  route <- if (!is.matrix(y)) distributions7::distrib_scalar_route(d)
+  lroute <- linkfunctions7::link_scalar_route(lk)
+  fast <- if (!is.null(route) && !is.null(lroute)) {
+    consts <- lapply(route$constants, function(v) {
+      v <- as.numeric(v)
+      if (length(v) == 1L) v else rep_len(v, n)
+    })
+    list(family = route$name,
+         link = lroute$name,
+         link_par = lroute$par,
+         k = match(p, params),
+         bounds = as.numeric(lk@link_bounds),
+         y = as.numeric(y),
+         theta = c(theta_n, consts))
+  } else NULL
+
+  if (scaling != 0) {
+    check_filter_scaling(d, y, theta_n)
+    if (!is.null(fast)) fast$scaling <- scaling
+    return(list(
+      score = function(e, i) {
+        th <- at(i)
+        as.numeric(k$score(y[i], th, e)) *
+          as.numeric(k$information(y[i], th, e))^(-scaling)
+      },
+      curvature = function(e, i) {
+        th <- at(i)
+        s <- as.numeric(k$score(y[i], th, e))
+        info <- as.numeric(k$information(y[i], th, e))
+        as.numeric(k$curvature(y[i], th, e)) * info^(-scaling) -
+          scaling * s * info^(-scaling - 1) *
+          as.numeric(k$dinformation(y[i], th, e))
+      },
+      logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e)),
+      fast = fast))
+  }
+
   list(
     score = function(e, i) as.numeric(k$score(y[i], at(i), e)),
     curvature = function(e, i) as.numeric(k$curvature(y[i], at(i), e)),
     logdens = function(e, i) as.numeric(k$logdens(y[i], at(i), e)),
-    # the fast context of piano_parallel.txt section 2a: where the C
-    # registries of distributions7 and linkfunctions7 cover this family
-    # and this link, the filter's kernel reads the score and the
-    # curvature through their scalar entry points instead of calling back
-    # into R -- the same composition, bit-identical, held to that by
-    # modelterms7's twin test -- and an uncovered pair leaves the context
-    # inert, the callbacks above running as before
-    fast = if (!S7::S7_inherits(d, distributions7::multivariate_distrib) &&
-               !is.matrix(y)) {
-      list(family = attr(S7::S7_class(d), "name"),
-           link = lk@link_name,
-           k = match(p, params),
-           bounds = as.numeric(lk@link_bounds),
-           y = as.numeric(y),
-           theta = theta_n)
-    } else NULL
+    fast = fast
   )
 }
 
@@ -648,7 +687,7 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
   # parameters over the same static predictor, so the two agree by
   # construction and the callback need not evaluate the family again.
   #
-  cv <- filter_curvature(spec, design, f, ap, Vs, gl, H, D3)
+  cv <- filter_curvature(spec, design, f, ap, Vs, gl, H, D3, ev$theta)
   Vs[[ap]] <- cv$jacobian
 
   out <- matrix(0, m, m)
@@ -715,26 +754,32 @@ statmod_full_information_impl <- function(spec, coef, design, params, ev) {
 #'   coefficients followed by the term's parameters.
 #' @param gl,H,D3 The family's first three derivatives on the link scale at
 #'   the fitted predictors.
+#' @param theta The per-observation parameters they were read at, from which
+#'   the expected information is read where the filter scales its score.
 #'
 #' @return The list [modelterms7::term_curvature()] returns.
 #'
 #' @keywords internal
-filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3) {
+filter_curvature <- function(spec, design, f, ap, Vs, gl, H, D3, theta) {
   params <- spec@distrib@params
   n <- spec@n_obs
   w <- spec@weights
-  blocks <- .structural_blocks(params, ap, Vs, H, D3, NULL, n)(NULL)
+  # the recursion reads the derivatives of what drives it, the contraction
+  # weighs by the log-likelihood's own score; the two coincide at scaling 0
+  dr <- filter_driving(spec, theta, ap, filter_scaling(f$tm), gl, H, D3)
+  blocks <- .structural_blocks(params, ap, Vs, dr$H, dr$D3, NULL, n)(NULL)
   s_at <- rep_len(gl[[f$param]], n)
-  c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
-  bd_data <- structural_blocks_data(params, ap, Vs, H, D3, n)
+  sd_at <- rep_len(dr$gl[[f$param]], n)
+  cd_at <- rep_len(dr$H[[hess_key(params, ap, ap)]], n)
+  bd_data <- structural_blocks_data(params, ap, Vs, dr$H, dr$D3, n)
   structural_memo(design, "curv",
                   list(zeta = f$psi, eta = f$eta_static,
                        g = w * s_at, seed = Vs[[ap]]), function() {
     modelterms7::term_curvature(
       f$tm, f$eta_static, spec@response,
-      function(e, i) s_at[i], function(e, i) c_at[i], f$psi,
+      function(e, i) sd_at[i], function(e, i) cd_at[i], f$psi,
       w * s_at, Vs[[ap]], blocks,
-      score_values = s_at, curvature_values = c_at,
+      score_values = sd_at, curvature_values = cd_at,
       blocks_data = bd_data, threads = spec@threads)
   })
 }
@@ -1352,7 +1397,8 @@ statmod_filter_at <- function(spec, design, eta_static, theta_static) {
   for (u in su) {
     if (!identical(u$kind, "filter")) next
     tm <- spec@terms[[u$param]][[u$term]]
-    cb <- structural_callbacks(spec, theta_static, u$param)
+    cb <- structural_callbacks(spec, theta_static, u$param,
+                               scaling = filter_scaling(tm))
     psi <- structural_psi(tm, st$zeta[[u$term]])
     f <- modelterms7::term_filter(tm, eta_static[[u$param]], spec@response,
                                   cb$score, cb$curvature, psi,

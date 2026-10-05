@@ -730,10 +730,31 @@ rstatmod_eta <- function(spec, design, coef, psi = NULL) {
     as.numeric(distributions7::distrib_rng(spec@distrib, 1L, th))
   }
   k <- distributions7::distrib_kernel(spec@distrib, p)
-  res <- modelterms7::term_simulate(
-    tm, psi, eta[[p]], draw,
-    score = function(y, e, i) as.numeric(k$score(y, at(i), e)),
-    curvature = function(y, e, i) as.numeric(k$curvature(y, at(i), e)))
+  # the filter is driven by the scaled score where gas(scaling = ) is not
+  # zero, so the simulated path runs the same recursion the fit did
+  d_sc <- filter_scaling(tm)
+  score <- if (d_sc == 0) {
+    function(y, e, i) as.numeric(k$score(y, at(i), e))
+  } else {
+    function(y, e, i) {
+      th <- at(i)
+      as.numeric(k$score(y, th, e)) *
+        as.numeric(k$information(y, th, e))^(-d_sc)
+    }
+  }
+  curvature <- if (d_sc == 0) {
+    function(y, e, i) as.numeric(k$curvature(y, at(i), e))
+  } else {
+    function(y, e, i) {
+      th <- at(i)
+      s <- as.numeric(k$score(y, th, e))
+      info <- as.numeric(k$information(y, th, e))
+      as.numeric(k$curvature(y, th, e)) * info^(-d_sc) -
+        d_sc * s * info^(-d_sc - 1) * as.numeric(k$dinformation(y, th, e))
+    }
+  }
+  res <- modelterms7::term_simulate(tm, psi, eta[[p]], draw,
+                                    score = score, curvature = curvature)
   eta[[p]] <- res$eta
   theta[[p]] <- linkfunctions7::linkinv(lk, res$eta)
   list(eta = eta, theta = theta, y = res$y, latent = res$latent,

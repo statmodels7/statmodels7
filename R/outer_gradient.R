@@ -853,7 +853,7 @@ filter_joint_movement <- function(spec, design, coef, S, Dm, total, D3) {
                                          threads = spec@threads)
   H <- distributions7::distrib_hessian(d, spec@response, th, scale = "link",
                                        threads = spec@threads)
-  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3)
+  cv <- filter_curvature(spec, design, jd$f, jd$ap, jd$V, gl, H, D3, th)
   V <- jd$V
   V[[jd$ap]] <- cv$jacobian
   list(rows = lapply(V, function(x) x[, jd$keep, drop = FALSE]),
@@ -1558,16 +1558,22 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
                                        threads = spec@threads)
   D4 <- distributions7::distrib_deriv4(d, y, ev$theta, scale = "link",
                                        threads = spec@threads)
+  # what drives the recursion and its derivatives, the log-likelihood's own
+  # where gas(scaling = ) is zero; `s_at` stays the log-likelihood's score,
+  # the weight every contraction below is taken against
+  dr <- filter_driving(spec, ev$theta, ap, filter_scaling(f$tm), gl, H, D3, D4)
   s_at <- rep_len(gl[[f$param]], n)
-  c_at <- rep_len(H[[hess_key(params, ap, ap)]], n)
+  sd_at <- rep_len(dr$gl[[f$param]], n)
+  cd_at <- rep_len(dr$H[[hess_key(params, ap, ap)]], n)
 
   # the filter's forward Jacobian, which is V for the equation it sits in.
   # The recursion is re-run at parameters it has already been run at, so the
   # callbacks LOOK UP the derivatives read at that predictor rather than
   # asking the family again -- the same bargain the information makes.
   seed <- jd$V[[ap]]
-  mk_blocks <- .structural_blocks(params, ap, jd$V, H, D3, D4, n)
-  bd_data <- structural_blocks_data(params, ap, jd$V, H, D3, n)
+  mk_blocks <- .structural_blocks(params, ap, jd$V, dr$H, dr$D3, dr$D4, n)
+  bd_data <- structural_blocks_data(params, ap, jd$V, dr$H, dr$D3, n,
+                                    D4 = dr$D4)
   # the joint information reads the same recursion at the same point (its
   # blocks callback carries D4 as well, which the second order never
   # touches), so the memo's slot is shared with it, the seed in the key
@@ -1575,9 +1581,9 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
                         list(zeta = f$psi, eta = f$eta_static,
                              g = w * s_at, seed = seed), function() {
     modelterms7::term_curvature(
-      f$tm, f$eta_static, y, function(e, i) s_at[i], function(e, i) c_at[i],
+      f$tm, f$eta_static, y, function(e, i) sd_at[i], function(e, i) cd_at[i],
       f$psi, w * s_at, seed, mk_blocks(NULL),
-      score_values = s_at, curvature_values = c_at,
+      score_values = sd_at, curvature_values = cd_at,
       blocks_data = bd_data, threads = spec@threads)
   })
   V <- jd$V
@@ -1604,7 +1610,8 @@ structural_grad_parts_impl <- function(spec, design, coef, jd, M) {
   # rows, which the second order needs as well; it is returned rather than
   # recomputed there, both readers being at the same point by construction
   list(u = u, V = V, Vk = Vk, VM = VM, G = G, H = H, D3 = D3, D4 = D4,
-       s_at = s_at, c_at = c_at, seed = seed, blocks = mk_blocks,
+       gl = gl, s_at = s_at, sd_at = sd_at, cd_at = cd_at,
+       seed = seed, blocks = mk_blocks,
        blocks_data = bd_data, w = w)
 }
 
@@ -1643,8 +1650,10 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 
   cv3 <- modelterms7::term_third(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
-    w * st$s_at, st$seed, st$blocks(vfull), vfull)
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
+    w * st$s_at, st$seed, st$blocks(vfull), vfull,
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
   W3 <- cv3$curvature[keep, keep, drop = FALSE]
   dphi <- cv3$dphi[, keep, drop = FALSE]
 
@@ -1656,9 +1665,9 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
   }
   cvk <- modelterms7::term_curvature(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
     w * kappa, st$seed, st$blocks(NULL),
-    score_values = st$s_at, curvature_values = st$c_at,
+    score_values = st$sd_at, curvature_values = st$cd_at,
     blocks_data = st$blocks_data, threads = spec@threads)
   Wk <- cvk$curvature[keep, keep, drop = FALSE]
 
@@ -1851,11 +1860,17 @@ structural_chain_extra <- function(spec, design, jd, M, st, v) {
 #' @param Vs The static rows.
 #' @param H,D3 The family's derivatives at the fitted predictors.
 #' @param n The number of observations.
+#' @param D4,D5 The fourth and fifth derivatives, which the compiled third
+#'   and fourth orders read: one column per index triple \eqn{(r, r_2, r_3)}
+#'   after the filter's own, at \eqn{((r-1) n_p + r_2 - 1) n_p + r_3}, and
+#'   likewise for the quadruples of the fifth. `NULL` leaves them out.
 #'
-#' @return A list with `H`, `D3`, `Vs` and `ap`.
+#' @return A list with `H`, `D3`, `Vs` and `ap`, and `D4` and `D5` where
+#'   they were given.
 #'
 #' @keywords internal
-structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
+structural_blocks_data <- function(params, ap, Vs, H, D3, n, D4 = NULL,
+                                   D5 = NULL) {
   np <- length(params)
   Hc <- matrix(0, n, np)
   for (q in seq_len(np)) {
@@ -1868,9 +1883,28 @@ structural_blocks_data <- function(params, ap, Vs, H, D3, n) {
         rep_len(D3[[deriv3_key(params, ap, r, r2)]], n)
     }
   }
-  list(H = Hc, D3 = D3m,
-       Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
-       ap = ap)
+  out <- list(H = Hc, D3 = D3m,
+              Vs = lapply(Vs, function(x) if (is.matrix(x)) x else as_dense(x)),
+              ap = ap)
+  if (!is.null(D4)) {
+    D4m <- matrix(0, n, np^3)
+    for (r in seq_len(np)) for (r2 in seq_len(np)) for (r3 in seq_len(np)) {
+      D4m[, ((r - 1L) * np + r2 - 1L) * np + r3] <-
+        rep_len(D4[[deriv4_key(params, ap, r, r2, r3)]], n)
+    }
+    out$D4 <- D4m
+  }
+  if (!is.null(D5)) {
+    D5m <- matrix(0, n, np^4)
+    for (r in seq_len(np)) for (r2 in seq_len(np)) for (r3 in seq_len(np)) {
+      for (r4 in seq_len(np)) {
+        D5m[, (((r - 1L) * np + r2 - 1L) * np + r3 - 1L) * np + r4] <-
+          rep_len(D5[[deriv5_key(params, ap, r, r2, r3, r4)]], n)
+      }
+    }
+    out$D5 <- D5m
+  }
+  out
 }
 
 

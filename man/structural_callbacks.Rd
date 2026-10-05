@@ -4,7 +4,7 @@
 \alias{structural_callbacks}
 \title{The Score and Curvature a Filter Is Driven By}
 \usage{
-structural_callbacks(spec, theta, p)
+structural_callbacks(spec, theta, p, scaling = 0)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -13,6 +13,13 @@ structural_callbacks(spec, theta, p)
 \code{\link[=statmod_eta]{statmod_eta()}} returns them.}
 
 \item{p}{The distribution parameter the term sits in.}
+
+\item{scaling}{The exponent \eqn{d} of \code{\link[modelterms7:gas]{modelterms7::gas()}}: where it is
+not zero, \code{score} returns \eqn{u = s\,\mathcal{I}^{-d}} and \code{curvature}
+its derivative in the predictor,
+\eqn{u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'},
+and the compiled context carries \code{scaling}, its kernel composing the
+same quantities from the family's scalar entry points.}
 }
 \value{
 A list with \code{score}, \code{curvature} and \code{logdens}.

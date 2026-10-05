@@ -4,7 +4,7 @@
 \alias{filter_curvature}
 \title{A Filter's Second-Order Recursion at the Fitted Point}
 \usage{
-filter_curvature(spec, design, f, ap, Vs, gl, H, D3)
+filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -20,6 +20,9 @@ coefficients followed by the term's parameters.}
 
 \item{gl, H, D3}{The family's first three derivatives on the link scale at
 the fitted predictors.}
+
+\item{theta}{The per-observation parameters they were read at, from which
+the expected information is read where the filter scales its score.}
 }
 \value{
 The list \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}} returns.

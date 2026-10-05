@@ -1511,8 +1511,10 @@ structural_dk_matrix <- function(spec, design, jd, st, v) {
 
   cv3 <- modelterms7::term_third(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
-    w * st$s_at, st$seed, st$blocks(vfull), vfull)
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
+    w * st$s_at, st$seed, st$blocks(vfull), vfull,
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = st$blocks_data, threads = spec@threads)
   dphi <- cv3$dphi[, keep, drop = FALSE]
   out <- -cv3$curvature[keep, keep, drop = FALSE]
 
@@ -1522,9 +1524,9 @@ structural_dk_matrix <- function(spec, design, jd, st, v) {
   }
   cvk <- modelterms7::term_curvature(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
     w * kappa, st$seed, st$blocks(NULL),
-    score_values = st$s_at, curvature_values = st$c_at,
+    score_values = st$sd_at, curvature_values = st$cd_at,
     blocks_data = st$blocks_data, threads = spec@threads)
   out <- out - cvk$curvature[keep, keep, drop = FALSE]
 
@@ -1606,8 +1608,10 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
   # the recursion's own quantities, along both directions and against both
   cv4 <- modelterms7::term_fourth(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
-    wt * st$s_at, st$seed, blk4(list(vfull, wfull)), list(vfull, wfull))
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
+    wt * st$s_at, st$seed, blk4(list(vfull, wfull)), list(vfull, wfull),
+    score_values = st$sd_at, curvature_values = st$cd_at,
+    blocks_data = attr(blk4, "data"), threads = spec@threads)
   dphi_v <- cv4$dphi[[1L]][, keep, drop = FALSE]
   dphi_w <- cv4$dphi[[2L]][, keep, drop = FALSE]
   dpsi <- cv4$dpsi[, keep, drop = FALSE]
@@ -1630,9 +1634,9 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
   gk <- gk + rep_len(H[[hess_key(params, ap, ap)]], n) * phi_vw
   cv0 <- modelterms7::term_curvature(
     f$tm, f$eta_static, spec@response,
-    function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
+    function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
     wt * gk, st$seed, st$blocks(NULL),
-    score_values = st$s_at, curvature_values = st$c_at,
+    score_values = st$sd_at, curvature_values = st$cd_at,
     blocks_data = st$blocks_data, threads = spec@threads)
   tot <- tot + sum(M * cv0$curvature[keep, keep, drop = FALSE])
 
@@ -1650,8 +1654,10 @@ structural_chain_extra2 <- function(spec, design, jd, M, st, blk4, v, w) {
   for (pair in list(list(kv, wfull), list(kw, vfull))) {
     cv3 <- modelterms7::term_third(
       f$tm, f$eta_static, spec@response,
-      function(e, i) st$s_at[i], function(e, i) st$c_at[i], f$psi,
-      wt * pair[[1L]], st$seed, st$blocks(pair[[2L]]), pair[[2L]])
+      function(e, i) st$sd_at[i], function(e, i) st$cd_at[i], f$psi,
+      wt * pair[[1L]], st$seed, st$blocks(pair[[2L]]), pair[[2L]],
+      score_values = st$sd_at, curvature_values = st$cd_at,
+      blocks_data = st$blocks_data, threads = spec@threads)
     tot <- tot + sum(M * cv3$curvature[keep, keep, drop = FALSE])
   }
 
@@ -1897,8 +1903,14 @@ statmod_structural_hess <- function(spec, design, coef, hyper, method, idx,
                                    jd$ev$theta, scale = "link"),
     error = function(e) NULL)
   if (is.null(D5)) return(NULL)
-  blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, st$H, st$D3, st$D4,
-                             jd$n, D5)
+  dr4 <- filter_driving(spec, jd$ev$theta, jd$ap, filter_scaling(jd$f$tm),
+                        st$gl, st$H, st$D3, st$D4, D5)
+  blk4 <- .structural_blocks(jd$params, jd$ap, jd$V, dr4$H, dr4$D3, dr4$D4,
+                             jd$n, dr4$D5)
+  # the same pieces as data, for the compiled fourth order
+  attr(blk4, "data") <- structural_blocks_data(jd$params, jd$ap, jd$V, dr4$H,
+                                               dr4$D3, jd$n, D4 = dr4$D4,
+                                               D5 = dr4$D5)
 
   nh <- nrow(idx)
   pieces <- structural_outer_pieces(spec, design, coef, hyper, idx, jd)

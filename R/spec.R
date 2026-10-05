@@ -1998,6 +1998,9 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
   # gaussian panels with a random level where 0.1 converged on 37, and on the
   # battery it took gas-panel-omega to a lower REML optimum (-609.528 against
   # -609.490), so it is the second start and not the first.
+  # With gas(scaling = d) the score is multiplied by I^-d, so the same weak
+  # response is 0.1 * I^(d - 1): 0.1 / I at d = 0, and the term's own 0.1 at
+  # d = 1, where the score already is on that scale.
   filt <- which(vapply(seq_along(su), function(i)
     fresh[i] && identical(su[[i]]$kind, "filter"), logical(1)))
   if (length(filt)) {
@@ -2009,11 +2012,15 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
       tm <- spec@terms[[u$param]][[u$term]]
       lks <- modelterms7::term_links(tm)
       z <- sst$zeta[[u$term]]
+      # 0.1 / I written as it was at d = 0: 0.1 * I^-1 can differ from it in
+      # the last bit, and a fit started from either can end elsewhere
+      d_sc <- filter_scaling(tm)
+      a_start <- if (d_sc == 0) 0.1 / I else 0.1 * I^(d_sc - 1)
       for (a in grep("^alpha[0-9]+$", modelterms7::term_params(tm),
                      value = TRUE)) {
         lk <- lks[[a]]
         if (is.null(lk)) lk <- linkfunctions7::log_link()
-        new <- tryCatch(linkfunctions7::linkfun(lk, 0.1 / I),
+        new <- tryCatch(linkfunctions7::linkfun(lk, a_start),
                         error = function(e) NA_real_)
         old <- tryCatch(linkfunctions7::linkfun(lk, 0.1),
                         error = function(e) NA_real_)
