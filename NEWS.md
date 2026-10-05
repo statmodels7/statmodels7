@@ -1,3 +1,21 @@
+# statmodels7 0.189.0
+
+* A location or mean on the identity link starts from a least-squares fit
+  of its parametric columns (weighted by the prior weights and net of the
+  offset), and the other parameters start from the distribution fitted
+  without covariates to the residuals. The intercept-only start read the
+  response's marginal shape, which a strong covariate distorts: on 204
+  regressions of 17 location families the direct skew normal stopped below
+  its maximum in 2 of 12 fits from the old start and in none from the new
+  one, and the 204 fits took 85 s instead of 198 s. Equations that carry a
+  break-point, a nonlinear term or a filter keep the intercept-only start.
+* A penalized information is accepted as positive definite by the
+  eigendecomposition only when its smallest eigenvalue exceeds p eps times
+  the largest, p the dimension, as the package's rank tests already read it.
+  With eps alone, 52 of 216 exactly singular matrices (a duplicated, rescaled
+  or summed column) were accepted, their smallest eigenvalue being rounding
+  of up to 9 eps; no fit of the reference battery changes.
+
 # statmodels7 0.188.2
 
 * `predict()` with `se = TRUE` past the end of a `gas()` series returns a

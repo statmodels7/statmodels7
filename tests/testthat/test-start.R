@@ -188,6 +188,9 @@ test_that("the target is carried onto the predictor's scale", {
 })
 
 test_that("an ordinary model's start is untouched", {
+  # untouched by the target of a structural term; the least-squares start of
+  # an identity-link location is a separate rule, turned off here
+  local_mocked_bindings(location_ols_start = function(spec, design) NULL)
   spec <- statmod_spec(y ~ x + z, distributions7::gaussian1_distrib(), dd)
   design <- statmod_design(spec)
   obj <- statmod_objective(spec, statmod_hyper_start(spec, design), design)

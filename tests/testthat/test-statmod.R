@@ -78,7 +78,10 @@ test_that("a differentiable penalty joins the smooth block", {
 test_that("a penalty with a kink is fitted apart, and the fit alternates", {
   # the subject is the alternation, so the dispersion is read at the joint
   # mode: estimated on the criterion, the history would be the refit at the
-  # point the search reports, warm-started from its own answer
+  # point the search reports, warm-started from its own answer. From the
+  # least-squares start the fit closes in one pass, so the intercept-only
+  # start is used to see the alternation.
+  local_mocked_bindings(location_ols_start = function(spec, design) NULL)
   fit <- statmod(y ~ x + lasso(L), distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml(marginal = "none"))
   expect_true(fit@converged)

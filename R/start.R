@@ -599,11 +599,25 @@ S7::method(start_at, StartIntercepts) <-
     params <- spec@distrib@params
     out <- stats::setNames(lapply(design, function(d) numeric(d$npar)),
                            params)
-    eta0 <- statmod_intercepts(spec)
+    # A LOCATION ON THE IDENTITY LINK starts from a least-squares fit of its
+    # parametric columns, and the other parameters from the residuals: the
+    # intercept-only fit reads the response's marginal shape, which a strong
+    # covariate distorts. Measured on 17 location families, 4 slopes and 3
+    # seeds against a fit started at the truth: the skew normal in its direct
+    # chart stopped 19.6 and 8.2 log-likelihood units below its maximum in two
+    # of 12 regressions from the intercept-only start and in none from this
+    # one, and the 204 fits took 85 s against 198 s.
+    ols <- location_ols_start(spec, design)
+    eta0 <- if (is.null(ols)) statmod_intercepts(spec) else ols$eta0
     for (p in params) {
       if (design[[p]]$npar == 0L) next
       v <- eta0[[p]]
       if (is.null(v) || !is.finite(v)) next
+      if (!is.null(ols) && identical(p, ols$param)) {
+        # the least-squares coefficients were fitted net of the offset
+        out[[p]][ols$cols] <- ols$coef
+        next
+      }
       # AN OFFSET IS PART OF THE PREDICTOR AND THE INTERCEPT-ONLY FIT DOES NOT
       # SEE IT. statmod_intercepts() fits the distribution to the response
       # alone, so it answers with the predictor the model should have on
@@ -657,6 +671,88 @@ S7::method(start_at, StartIntercepts) <-
     }
     out
   }
+
+#' @title A Least-Squares Start for a Location on the Identity Link
+#' @name location_ols_start
+#'
+#' @description
+#' Fits the parametric columns of the first parameter's equation to the
+#' response by least squares (weighted by the prior weights, net of that
+#' equation's offset), and fits the distribution without covariates to the
+#' residuals shifted by the fitted intercept. Returns the coefficients of
+#' those columns and the intercepts of every parameter, or `NULL` where the
+#' start does not apply.
+#'
+#' @details
+#' It applies when the family is univariate, its first parameter is a
+#' location or a mean on the identity link, that parameter's equation has an
+#' intercept and at least one other parametric column, and every term of the
+#' equation is a [modelterms7::LinparTerm], a [modelterms7::SmoothTerm], a
+#' [modelterms7::RandomTerm] or a [modelterms7::PenalizedTerm]. The penalized
+#' blocks start at zero, as they do from the intercept-only start, and a
+#' term with a start of its own (a break-point, a nonlinear term, a filter)
+#' leaves the equation on the intercept-only start. An aliased column takes
+#' the coefficient zero.
+#'
+#' @param spec The specification.
+#' @param design The design.
+#'
+#' @return `NULL`, or a list with `param` (the first parameter's name),
+#'   `cols` (positions in its coefficient vector), `coef` (their starting
+#'   values) and `eta0` (link-scale intercepts, as from
+#'   [statmod_intercepts()]).
+#'
+#' @seealso [start_at()], [statmod_intercepts()]
+#' @keywords internal
+location_ols_start <- function(spec, design) {
+  d <- spec@distrib
+  if (S7::S7_inherits(d, distributions7::multivariate_distrib)) return(NULL)
+  y <- spec@response
+  if (!is.numeric(y) || !is.null(dim(y))) return(NULL)
+  p <- d@params[[1L]]
+  if (!identical(d@link_params[[p]]@link_name, "identity")) return(NULL)
+  if (!tolower(d@params_interpretation[[1L]]) %in% c("location", "mean")) {
+    return(NULL)
+  }
+  if (is.null(design[[p]]) || design[[p]]$npar == 0L) return(NULL)
+  terms <- spec@terms[[p]]
+  plain <- vapply(terms, function(tm)
+    S7::S7_inherits(tm, modelterms7::LinparTerm) ||
+      S7::S7_inherits(tm, modelterms7::SmoothTerm) ||
+      S7::S7_inherits(tm, modelterms7::RandomTerm) ||
+      S7::S7_inherits(tm, modelterms7::PenalizedTerm), logical(1))
+  if (!length(terms) || !all(plain)) return(NULL)
+  ii <- parametric_intercept(spec, design, p)
+  if (is.na(ii)) return(NULL)
+  cols <- sort(unique(unlist(lapply(names(terms), function(nm)
+    if (S7::S7_inherits(terms[[nm]], modelterms7::LinparTerm))
+      design[[p]]$blocks[[nm]]), use.names = FALSE)))
+  if (length(cols) < 2L) return(NULL)
+  X <- as.matrix(design[[p]]$X[, cols, drop = FALSE])
+  off <- spec@offsets[[p]]
+  ya <- if (is.null(off)) y else y - off
+  w <- spec@weights
+  ok <- is.finite(ya) & apply(is.finite(X), 1L, all)
+  if (length(w) == length(y)) ok <- ok & is.finite(w) & w > 0
+  if (sum(ok) <= length(cols)) return(NULL)
+  fit <- tryCatch(if (length(w) == length(y))
+    stats::lm.wfit(X[ok, , drop = FALSE], ya[ok], w[ok]) else
+      stats::lm.fit(X[ok, , drop = FALSE], ya[ok]),
+    error = function(e) NULL)
+  if (is.null(fit)) return(NULL)
+  b <- fit$coefficients
+  b[!is.finite(b)] <- 0
+  jj <- match(ii, cols)
+  r <- as.numeric(ya - X %*% b)
+  z <- (r + b[[jj]])[ok]
+  spec_r <- tryCatch(S7::set_props(spec, response = z), error = function(e) NULL)
+  if (is.null(spec_r)) return(NULL)
+  eta0 <- statmod_intercepts(spec_r)
+  if (is.null(eta0[[p]]) || !is.finite(eta0[[p]])) return(NULL)
+  # the location of the residual distribution is the intercept
+  b[[jj]] <- eta0[[p]]
+  list(param = p, cols = cols, coef = as.numeric(b), eta0 = eta0)
+}
 
 #' @title Where an Equation's Intercept Is
 #' @name parametric_intercept

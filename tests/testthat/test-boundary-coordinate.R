@@ -134,6 +134,12 @@ test_that("a shape APPROACHING its clamp no longer deadlocks the step", {
   b <- rnorm(10, 0, 0.4)
   d <- data.frame(y = 2 * sin(4 * x) + b[as.integer(g)] + rnorm(n, 0, 0.5),
                   x = x, g = g)
+  ## The stall is a property of the intercept-only start. From the
+  ## least-squares start of a location on the identity link the same fit
+  ## takes 5 iterations, needs no damping and reaches the same
+  ## log-likelihood (-387.49613593), so this test reproduces the start the
+  ## two mechanisms below were built for.
+  local_mocked_bindings(location_ols_start = function(spec, design) NULL)
 
   ## Since 0.182.0 scoring yields to the observed information as soon as it
   ## contracts slowly, and the run never reaches the stall: no damping, and

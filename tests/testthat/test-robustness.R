@@ -7,7 +7,9 @@ test_that("the start is the intercept-only MLE, not zero", {
   # statmod_start read distrib_start's result by parameter name. That result
   # is a list of STARTS, each keyed by parameter, so the name matched nothing
   # and every start silently fell to zero on the link scale -- a location of 0
-  # for a response centred at 5.84.
+  # for a response centred at 5.84. The intercept-only start is the subject,
+  # so the least-squares start of an identity-link location is turned off.
+  local_mocked_bindings(location_ols_start = function(spec, design) NULL)
   spec <- statmod_spec(Sepal.Length ~ Species,
                        distributions7::gaussian1_distrib(), iris)
   design <- statmod_design(spec)
