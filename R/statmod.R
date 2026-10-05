@@ -2808,8 +2808,14 @@ joint_smoother_diag <- function(spec, coef, design, hyper) {
       # -7.1e-05, chol() refuses it too, and a plain solve returns a diagonal
       # with a negative entry, which is not a smoother's -- so the refusal is
       # right and there is nothing to relax.
-      diag(solve_pd(as_dense(M), "the joint penalized information") %*%
-             as_dense(K))
+      dd <- diag(solve_pd(as_dense(M), "the joint penalized information") %*%
+                   as_dense(K))
+      # A DIAGONAL WITH A NEGATIVE ENTRY IS NOT A SMOOTHER'S either, where M
+      # is accepted and K is not positive semi-definite. Measured on a filter
+      # beside a random effect that stopped unconverged, K's smallest
+      # eigenvalue was -3.1e-4 against 4.3e5, M passed, and the filter's
+      # count summed to -3.21; it is reported missing, as where M is refused.
+      if (any(dd < -sqrt(.Machine$double.eps))) NULL else dd
     }
   }, error = function(e) NULL)
   # THE TWO WAYS OF HAVING NOTHING ARE DIFFERENT and the caller must tell them
