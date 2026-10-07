@@ -232,6 +232,48 @@ reject_nested_offsets <- function(eq, param) {
 }
 
 
+#' Reject Missing Values in the Data a Fit Reads
+#'
+#' @description
+#' Signals an error naming the response, or each variable of the data that
+#' an equation names, where it holds a missing value, with the rows. A fit
+#' does not drop rows: in a time series or a panel a dropped row changes
+#' what the neighbouring rows mean, so the choice of which rows to remove is
+#' the caller's.
+#'
+#' @param response The response, as evaluated.
+#' @param equations The equations, one formula per parameter.
+#' @param data The data frame.
+#'
+#' @return `NULL`, invisibly, when nothing is missing.
+#'
+#' @keywords internal
+reject_missing <- function(response, equations, data) {
+  rows <- function(v) {
+    w <- if (is.matrix(v)) which(rowSums(is.na(v)) > 0) else which(is.na(v))
+    paste0(if (length(w) == 1L) "row " else "rows ",
+           paste(utils::head(w, 6L), collapse = ", "),
+           if (length(w) > 6L) sprintf(", ... (%d in all)", length(w)) else "")
+  }
+  tail_msg <- paste0("\n  statmod() does not drop rows. Remove them from the ",
+                     "data, or replace the missing values.")
+  if (anyNA(response)) {
+    stop("The response is missing at ", rows(response), ".", tail_msg,
+         call. = FALSE)
+  }
+  for (p in names(equations)) {
+    vars <- intersect(all.vars(equations[[p]]), names(data))
+    for (v in vars) {
+      if (anyNA(data[[v]])) {
+        stop(sprintf("The variable '%s' in the equation for '%s' is missing at %s.",
+                     v, p, rows(data[[v]])), tail_msg, call. = FALSE)
+      }
+    }
+  }
+  invisible(NULL)
+}
+
+
 #' Evaluate the Offsets a Formula Names
 #'
 #' @description
@@ -747,6 +789,7 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
   # what is left cannot name an offset: it would be inside another term, and
   # that term's own model.matrix would drop it without a word
   for (p in names(stripped)) reject_nested_offsets(stripped[[p]], p)
+  if (need_response) reject_missing(response, stripped, data)
   from_formula <- eval_offsets(formula, params, data, env, n)
 
   built <- statmod_terms(stripped, data, env, response, linpar)
@@ -917,12 +960,33 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
   # through the `offsets` argument at fitting time has the length of the
   # fitting data and cannot be reused, so prediction used to drop the offset
   # and return the predictor of a model without one.
-  S7::set_props(spec, response = response, n_obs = as.integer(n),
-                distrib = distrib,
-                weights = rep(1, n),
-                offsets = eval_offsets(spec@formula, spec@distrib@params,
-                                       data, env, n),
-                newdata = data)
+  out <- S7::set_props(spec, response = response, n_obs = as.integer(n),
+                       distrib = distrib,
+                       weights = rep(1, n),
+                       offsets = eval_offsets(spec@formula, spec@distrib@params,
+                                              data, env, n),
+                       newdata = data)
+  # ROWS THAT CARRY THE RESPONSE ARE A SERIES OF THEIR OWN: a structural term
+  # is rebuilt on them, with the fitted parameters, so the recursion runs
+  # over their times and groups from its own start, and every route then
+  # reads them as it reads the fitting rows. Left with the fitting rows'
+  # blueprint, predict(newdata = <the fitting rows>) on a regime() model was
+  # rejected as a prediction past the series, and on a gas() model the
+  # standard error read the intercept's row alone (46.5 at every year of the
+  # Nile, where the fitted values carry 46.5, 34.7, 33.1, ...). Rows without
+  # it continue the fitted series (statmod_eta_continued()).
+  su <- statmod_structural(spec)
+  known <- if (is.matrix(response)) stats::complete.cases(response) else
+    !is.na(response)
+  if (!absent && length(su) && all(known)) {
+    tms <- out@terms
+    for (u in su) {
+      tms[[u$param]][[u$term]] <-
+        modelterms7::term_build(tms[[u$param]][[u$term]], data)
+    }
+    out@terms <- tms
+  }
+  out
 }
 
 

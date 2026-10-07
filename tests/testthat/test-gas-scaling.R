@@ -119,7 +119,7 @@ test_that("a scaled Poisson filter on the identity link is INGARCH(1, 1)", {
   # being the level the filter fluctuates around
   c0 <- cf[["(Intercept)"]]
   a <- cf[["gas.alpha1"]]
-  b <- cf[["gas.beta1"]]
+  b <- cf[["gas.phi1"]]
   rec <- numeric(nrow(disc))
   rec[1] <- c0
   for (t in 2:nrow(disc)) {
@@ -138,7 +138,7 @@ test_that("a constant information only rescales the loading", {
   s2 <- exp(2 * coef(f0)$sigma[["(Intercept)"]])
   expect_equal(coef(f1)$mu[["gas.alpha1"]], coef(f0)$mu[["gas.alpha1"]] / s2,
                tolerance = 1e-4)
-  expect_equal(coef(f1)$mu[["gas.beta1"]], coef(f0)$mu[["gas.beta1"]],
+  expect_equal(coef(f1)$mu[["gas.phi1"]], coef(f0)$mu[["gas.phi1"]],
                tolerance = 1e-5)
 })
 

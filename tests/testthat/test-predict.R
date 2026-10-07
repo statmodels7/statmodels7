@@ -306,3 +306,23 @@ test_that("a response of the wrong length is an error where one is needed", {
   short$y <- y[1:10]
   expect_true(is.finite(as.numeric(loglik(fit, data = short))))
 })
+
+test_that("a structural model predicted at its own rows gives its fitted values", {
+  # with newdata carrying the response, a regime() model was rejected as a
+  # prediction past the series and a gas() model's standard error read the
+  # intercept's row alone (46.5 at every year of the Nile)
+  nile <- data.frame(year = 1871:1970, flow = as.numeric(Nile))
+  fg <- statmod(flow ~ gas(p = 1, q = 1, time = year),
+                distrib = distributions7::gaussian1_distrib(), data = nile)
+  expect_no_warning(
+    pn <- predict(fg, what = "mu", newdata = nile, se = TRUE))
+  expect_equal(pn, predict(fg, what = "mu", se = TRUE), tolerance = 1e-10)
+  expect_gt(diff(range(pn$se)), 10)
+  expect_equal(as.numeric(logLik(fg)),
+               as.numeric(loglik(fg, data = nile)), tolerance = 1e-10)
+  gy <- data.frame(waiting = geyser_waiting)
+  fr <- statmod(waiting ~ regime(k = 2),
+                distrib = distributions7::gaussian1_distrib(), data = gy)
+  expect_equal(predict(fr, what = "mu", newdata = gy),
+               predict(fr, what = "mu"), tolerance = 1e-10)
+})

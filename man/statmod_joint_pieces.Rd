@@ -16,7 +16,8 @@ states is read at a fitted point.}
 \value{
 A list with \code{fn}, \code{gr}, \code{he}, \code{raw}, \code{setz} (writes the filter's
 free parameters into the design's structural state), \code{zeta} (reads
-them), \code{ix}, \code{nb}, \code{free} and \code{key}.
+them), \code{ix}, \code{nb}, \code{free}, \code{key} and \code{param} (the distribution parameter the
+term sits in).
 }
 \description{
 The objective, gradient and exact information \code{\link[=statmod_fit_joint]{statmod_fit_joint()}}

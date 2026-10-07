@@ -683,3 +683,26 @@ test_that("a parent keeps its own penalty beside a labelled sub-term", {
   expect_length(Filter(function(z) is.null(z$pieces), us), 1L)
   expect_length(Filter(function(z) !is.null(z$pieces), us), 1L)
 })
+
+test_that("a missing value in the data is named before the fit", {
+  # a missing covariate used to stop with "NA/NaN/Inf in foreign function
+  # call", an out-of-domain mu, an unavailable criterion or "missing value
+  # where TRUE/FALSE needed", depending on where it reached
+  set.seed(3)
+  geyser <- data.frame(duration = runif(60, 1, 5))
+  geyser$waiting <- 50 + 8 * geyser$duration + rnorm(60, sd = 5)
+  geyser$dlag <- c(NA, head(geyser$duration, n = -1))
+  g1 <- distributions7::gaussian1_distrib()
+  expect_error(statmod(waiting ~ dlag, distrib = g1, data = geyser),
+               "'dlag' in the equation for 'mu' is missing at row 1")
+  expect_error(statmod(waiting ~ duration | sigma ~ dlag, distrib = g1,
+                       data = geyser),
+               "'dlag' in the equation for 'sigma' is missing at row 1")
+  g2 <- geyser
+  g2$waiting[c(5, 9)] <- NA
+  expect_error(statmod(waiting ~ duration, distrib = g1, data = g2),
+               "response is missing at rows 5, 9")
+  # a column the formula does not name may be missing
+  expect_s3_class(logLik(statmod(waiting ~ duration, distrib = g1, data = geyser)),
+                  "logLik")
+})

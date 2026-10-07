@@ -348,6 +348,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                        linpar = linpar_control)
   spec@threads <- n_thr
   spec@workers <- numericals7::worker_count(threads)
+  # a marginal criterion left at hessian = "auto" is settled against the
+  # family here, as an iwls() left at "auto" is below
+  if (S7::S7_inherits(outer_criterion, OuterMethod)) {
+    outer_criterion <- outer_resolve(outer_criterion, spec@distrib)
+  }
   design <- statmod_design(spec)
   hyper <- statmod_hyper_start(spec, design)
   blocks <- statmod_blocks(spec, design)

@@ -29,7 +29,7 @@ test_that("a panel whose level is developed is continued past its series", {
   cf <- coef(fit)$mu
   s2 <- exp(2 * coef(fit)$sigma[["(Intercept)"]])
   a <- cf[["gas.alpha1"]]
-  b <- cf[["gas.beta1"]]
+  b <- cf[["gas.phi1"]]
   w <- cf[["gas.omega.(Intercept)"]] + cf[["gas.omega.random.2"]]
   d2 <- dd[dd$id == 2L, ]
   f <- w / (1 - b)

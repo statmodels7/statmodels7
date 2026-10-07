@@ -683,7 +683,7 @@ test_that("a filter is reported under the names its literature uses", {
   fit <- statmod(y ~ gas(p = 1, q = 1, time = t) - 1,
                  distributions7::gaussian1_distrib(), dd)
   tb <- statmod_structural_table(fit)
-  expect_identical(tb$name, c("omega", "alpha1", "beta1"))
+  expect_identical(tb$name, c("omega", "alpha1", "phi1"))
   expect_true(all(is.finite(tb$se)))
   # the persistence is reported as the COEFFICIENT, so it must agree with the
   # chart carried through Levinson-Durbin rather than with the free value
@@ -693,7 +693,7 @@ test_that("a filter is reported under the names its literature uses", {
   expect_equal(tb$estimate, unname(c(0.3, 0.4, 0.7)), tolerance = 0.15)
   # and the interval respects the region: |beta| < 1 for a stationary AR(1)
   expect_true(tb$lower[[3L]] > -1 && tb$upper[[3L]] < 1)
-  expect_output(print(summary(fit)), "beta1")
+  expect_output(print(summary(fit)), "phi1")
   expect_output(print(summary(fit)), "alpha1")
 
   # above q = 1 the coefficient is a function of the WHOLE chart, so the
@@ -704,7 +704,7 @@ test_that("a filter is reported under the names its literature uses", {
   f2 <- statmod(y ~ gas(p = 1, q = 2, time = t) - 1,
                 distributions7::gaussian1_distrib(), dd2)
   t2 <- statmod_structural_table(f2)
-  expect_identical(t2$name, c("omega", "alpha1", "beta1", "beta2"))
+  expect_identical(t2$name, c("omega", "alpha1", "phi1", "phi2"))
   z2 <- f2@structural[[1L]]$unconstrained
   rho <- linkfunctions7::linkinv(linkfunctions7::rhobit_link(),
                                  z2[c("pacf1", "pacf2")])

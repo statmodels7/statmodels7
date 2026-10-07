@@ -82,11 +82,18 @@ predict_moments <- function() {
 #' # A score-driven term is predicted past the series
 #'
 #' Such a term's contribution at one row is the state a recursion has
-#' reached, so new rows continue the series instead of being read on their
-#' own. Each row is placed by its own time within its own group, and must
-#' come after every observed time of that group; a row falling inside the
-#' observed series is refused, since there the response is known and the
-#' filter must be run, never continued.
+#' reached, so new rows without the response continue the series instead of
+#' being read on their own. Each row is placed by its own time within its own
+#' group, and must come after every observed time of that group; a row
+#' falling inside the observed series is rejected, since there the response
+#' is known and the filter must be run, never continued.
+#'
+#' New rows that carry the response are a series of their own: the
+#' structural term is rebuilt on them with the fitted parameters, and they
+#' are read as the fitting rows are, standard errors included. With the
+#' fitting data as `newdata` the result is `predict(fit)`'s; this holds for a
+#' [modelterms7::regime()] term as well, whose prediction is the
+#' posterior-weighted predictor.
 #'
 #' Beyond the data the score sits at its conditional mean of zero, which the
 #' model's own definition guarantees, so the continuation is the
@@ -470,7 +477,10 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
   # being read on their own. Running the ordinary assembly there returned
   # the fitting data's values whatever `newdata` held, which is why the two
   # paths are separated rather than merged.
-  cont <- !is.null(newdata) && length(attr(design, "structural"))
+  # rows carrying the response were rebuilt as a series of their own by
+  # statmod_respec(), and are read as the fitting rows are
+  cont <- !is.null(newdata) && length(attr(design, "structural")) &&
+    !isTRUE(statmod_response_known(spec@response))
   ep <- if (cont) {
     statmod_eta_continued(object, spec, design, deriv = isTRUE(se))
   } else statmod_eta(spec, design, coef_use)
@@ -967,15 +977,10 @@ filter_joint_jacobian <- function(spec, design, coef) {
 #' continue from there through
 #' [modelterms7::term_continue()].
 #'
-#' Which of the two a call asks for is decided by the response, not by the
-#' times. New rows carrying the response are a re-reading: the filter is run
-#' over them from the term's own seed, and that is what a caller means by
-#' predicting a model on another series, and is why
-#' `predict(fit, newdata = <the fitting data>)` returns the fitted
-#' values. New rows without it are a continuation, and must come after the
-#' observed series. A frame carrying the response on some rows only is
-#' rejected: the two readings differ, and picking one would answer a question
-#' that was not asked.
+#' Only rows without the response are continued, and they must come after
+#' the observed series. Rows that carry it are a series of their own, rebuilt
+#' by [statmod_respec()] and read as the fitting rows are, which is why
+#' `predict(fit, newdata = <the fitting data>)` returns the fitted values.
 #'
 #' A term whose contribution is a likelihood mixed over latent states is
 #' rejected: what such a term reports at an observed row is a posterior over
@@ -1039,43 +1044,29 @@ statmod_eta_continued <- function(fit, spec, design, deriv = FALSE) {
   odesign <- statmod_design(ospec)
   oep <- statmod_eta(ospec, odesign, coef)
   ost <- statmod_structural_state(odesign)
-  known <- statmod_response_known(spec@response)
   for (f in oep$filters) {
     tm <- ospec@terms[[f$param]][[f$term]]
     psi <- structural_psi(tm, ost$zeta[[f$term]])
     p <- f$param
-    if (identical(known, TRUE)) {
-      # A RE-READING: the response is there, so the filter is run over these
-      # rows from the term's own seed rather than continued. The term is
-      # rebuilt on them, which is what gives its recursion their own times
-      # and groups; every other block still goes through its blueprint.
-      tmn <- modelterms7::term_build(tm, nd)
-      cb <- structural_callbacks(spec, theta, p, scaling = filter_scaling(tm))
-      out <- modelterms7::term_filter(tmn, eta[[p]], spec@response,
-                                      cb$score, cb$curvature, psi,
-                                      fast = cb$fast, threads = spec@threads)
-      eta[[p]] <- out$eta
-    } else {
-      f_past <- as.numeric(f$eta) - as.numeric(f$eta_static)
-      # the driving quantity, read at the predictor the recursion produced --
-      # the same callback the filter itself was handed
-      s_past <- vapply(seq_along(f_past),
-                       function(i) f$cb$score(f$eta[[i]], i), numeric(1))
-      dv <- if (isTRUE(deriv)) {
-        continued_deriv_inputs(ospec, odesign, coef, f, ost, tm)
-      } else NULL
-      cont <- modelterms7::term_continue(tm, psi, f_past, s_past, nd,
-                                         deriv = dv$deriv)
-      eta[[p]] <- eta[[p]] + as.numeric(cont)
-      if (!is.null(dv)) {
-        # the forecast's derivative row: the static part in the equation's
-        # own columns plus what the continued level adds in every column
-        jac <- attr(cont, "jacobian")
-        if (d2[[p]]$npar) {
-          jac[, dv$col] <- jac[, dv$col] + as.matrix(d2[[p]]$X)
-        }
-        cont_cols[[p]] <- list(X = jac, key = dv$key)
+    f_past <- as.numeric(f$eta) - as.numeric(f$eta_static)
+    # the driving quantity, read at the predictor the recursion produced --
+    # the same callback the filter itself was handed
+    s_past <- vapply(seq_along(f_past),
+                     function(i) f$cb$score(f$eta[[i]], i), numeric(1))
+    dv <- if (isTRUE(deriv)) {
+      continued_deriv_inputs(ospec, odesign, coef, f, ost, tm)
+    } else NULL
+    cont <- modelterms7::term_continue(tm, psi, f_past, s_past, nd,
+                                       deriv = dv$deriv)
+    eta[[p]] <- eta[[p]] + as.numeric(cont)
+    if (!is.null(dv)) {
+      # the forecast's derivative row: the static part in the equation's
+      # own columns plus what the continued level adds in every column
+      jac <- attr(cont, "jacobian")
+      if (d2[[p]]$npar) {
+        jac[, dv$col] <- jac[, dv$col] + as.matrix(d2[[p]]$X)
       }
+      cont_cols[[p]] <- list(X = jac, key = dv$key)
     }
     theta[[p]] <- linkfunctions7::linkinv(links[[p]], eta[[p]])
   }

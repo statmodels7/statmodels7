@@ -33,3 +33,42 @@ test_that("a score loading has a second start on the scale of its score", {
   expect_equal(predictor_information(sp2)[["mu"]], 1 / s0^2,
                tolerance = 1e-10)
 })
+
+test_that("a free level fits the same model as the intercept spelling", {
+  # flow ~ 0 + gas() searched omega and the persistence on the ridge
+  # omega = L (1 - sum phi) and stopped after 200 Newton iterations at
+  # -642.67; the joint fit now searches the level L itself
+  nile <- data.frame(year = 1871:1970, flow = as.numeric(Nile))
+  for (q in 1:2) {
+    a <- statmod(flow ~ gas(p = 1, q = q, time = year),
+                 distrib = distributions7::gaussian1_distrib(), data = nile)
+    b <- statmod(flow ~ 0 + gas(p = 1, q = q, time = year),
+                 distrib = distributions7::gaussian1_distrib(), data = nile)
+    expect_equal(as.numeric(logLik(b)), as.numeric(logLik(a)), tolerance = 1e-8)
+    expect_identical(statmod_certificate(b)$state, "converged")
+    ph <- coef(a)$mu[grep("phi", names(coef(a)$mu))]
+    expect_equal(coef(b)$mu[["gas.omega"]],
+                 coef(a)$mu[["(Intercept)"]] * (1 - sum(ph)), tolerance = 1e-5)
+  }
+})
+
+test_that("the level chart's derivatives are those of the composed objective", {
+  nile <- data.frame(year = 1871:1970, flow = as.numeric(Nile))
+  b <- statmod(flow ~ 0 + gas(p = 1, q = 2, time = year),
+               distrib = distributions7::gaussian1_distrib(), data = nile)
+  spec <- b@spec
+  design <- statmod_design(spec)
+  obj <- statmod_objective(spec, b@hyper, design, FALSE, "bartlett")
+  jp <- statmod_joint_pieces(spec, design, obj, b@hyper)
+  lv <- joint_level_chart(spec, jp)
+  expect_false(is.null(lv))
+  u <- c(obj$stack(b@coefficients), jp$zeta()) + c(0.01, 3, 0.1, 0.2, -0.1)
+  v <- lv$from(u)
+  expect_equal(lv$to(v), u)
+  f <- function(v) jp$fn(lv$to(v))
+  g <- lv$grad(v, jp$gr(lv$to(v)))
+  h <- lv$hess(v, jp$gr(lv$to(v)), jp$he(lv$to(v)))
+  expect_equal(g, numDeriv::grad(f, v), tolerance = 1e-6, ignore_attr = TRUE)
+  k <- 2:5
+  expect_equal(h[k, k], numDeriv::hessian(f, v)[k, k], tolerance = 1e-5)
+})

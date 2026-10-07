@@ -91,7 +91,7 @@ test_that("coef reports a structural term's parameters", {
   b <- coef(fit, readable = FALSE)$mu
   # a model whose whole predictor is a filter used to answer numeric(0)
   expect_identical(length(a), 3L)
-  expect_true(all(endsWith(names(a), c("omega", "alpha1", "beta1"))))
+  expect_true(all(endsWith(names(a), c("omega", "alpha1", "phi1"))))
   # the persistence rides a partial autocorrelation and is REPORTED as the
   # autoregressive coefficient; the loading rides a log
   expect_true(any(endsWith(names(b), "pacf1")))
@@ -438,7 +438,7 @@ test_that("a forecast decays towards the filter's stationary level", {
                                    statmod_structural_state(
                                      statmod_design(fit@spec))$zeta[[1L]])
   om <- rd$value[[which(rd$name == "omega")]]
-  bt <- rd$value[[which(rd$name == "beta1")]]
+  bt <- rd$value[[which(rd$name == "phi1")]]
   expect_equal(fc[[40L]], om / (1 - bt), tolerance = 1e-6)
   expect_true(all(abs(diff(fc)) <= abs(diff(fc))[[1L]] + 1e-12))
 })

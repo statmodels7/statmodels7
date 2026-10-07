@@ -5,15 +5,20 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("observed", "expected"), marginal = NULL)
+reml(hessian = c("auto", "observed", "expected"), marginal = NULL)
 
-ml(hessian = c("observed", "expected"), marginal = NULL)
+ml(hessian = c("auto", "observed", "expected"), marginal = NULL)
 }
 \arguments{
-\item{hessian}{Which information enters the determinant: \code{"observed"} (the
-default), the curvature of the log-likelihood at the data, which makes
-the criterion the Laplace approximation, or \code{"expected"}, the Fisher
-information, a function of the parameters alone. Matched with
+\item{hessian}{Which information enters the determinant: \code{"observed"},
+the curvature of the log-likelihood at the data, which makes the
+criterion the Laplace approximation, \code{"expected"}, the Fisher
+information, a function of the parameters alone, or \code{"auto"} (the
+default), which \code{\link[=statmod]{statmod()}} settles against the family through
+\code{\link[=outer_resolve]{outer_resolve()}}: the expected information for a Student t, a skew t
+or a Cauchy response, whose observed information is not positive
+definite at an outlier, and the observed information otherwise. The
+fitted model records the information used. Matched with
 \code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
 family writes its expected information out, which every shipped family
 does since distributions7 0.65.0. A family that does not would read the

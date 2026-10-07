@@ -99,7 +99,9 @@ outer_gradient_ok <- function(spec, design, idx, method, order = 1L,
   for (su in attr(design, "structural")) {
     if (identical(su$kind, "loglik")) return(FALSE)
   }
-  if (!identical(method@hessian, "observed")) {
+  # an "auto" that statmod() has not settled reads as "observed", as it does
+  # at every other site
+  if (identical(method@hessian, "expected")) {
     # The expected route asks for the same object in the same place -- the
     # movement of K with the coefficients -- but that object is
     # dE[l'']/deta rather than l''', because differentiating an expectation

@@ -1569,8 +1569,10 @@ iwls_score <- function(g, hj, groups, n) {
   out <- 0
   for (idx in groups) {
     if (!length(idx)) next
-    s <- sqrt(stats::median(hj[idx]) / n)
-    if (!is.finite(s) || s <= 0) s <- 1
+    # a negative median curvature (a Student t's observed information at
+    # its outliers) is tested before the root, which would warn
+    m <- stats::median(hj[idx])
+    s <- if (is.finite(m) && m > 0) sqrt(m / n) else 1
     out <- max(out, max(abs(g[idx])) / (n * s))
   }
   out

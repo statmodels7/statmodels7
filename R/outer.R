@@ -85,8 +85,9 @@ OuterMethod <- S7::new_class("OuterMethod",
                     "\"bic\" or \"cv\"."))
     }
     if (!identical(length(self@hessian), 1L) ||
-        !self@hessian %in% c("expected", "observed")) {
-      return("Property 'hessian' must be \"expected\" or \"observed\".")
+        !self@hessian %in% c("auto", "expected", "observed")) {
+      return(paste0("Property 'hessian' must be \"auto\", \"expected\" or ",
+                    "\"observed\"."))
     }
     if (!identical(length(self@rule), 1L) ||
         !self@rule %in% c("min", "1se")) {
@@ -258,10 +259,15 @@ outer_path_defaults <- function() {
 #' structured branches. A penalty offering neither is rejected by name,
 #' instead of being integrated over a subspace guessed at.
 #'
-#' @param hessian Which information enters the determinant: `"observed"` (the
-#'   default), the curvature of the log-likelihood at the data, which makes
-#'   the criterion the Laplace approximation, or `"expected"`, the Fisher
-#'   information, a function of the parameters alone. Matched with
+#' @param hessian Which information enters the determinant: `"observed"`,
+#'   the curvature of the log-likelihood at the data, which makes the
+#'   criterion the Laplace approximation, `"expected"`, the Fisher
+#'   information, a function of the parameters alone, or `"auto"` (the
+#'   default), which [statmod()] settles against the family through
+#'   [outer_resolve()]: the expected information for a Student t, a skew t
+#'   or a Cauchy response, whose observed information is not positive
+#'   definite at an outlier, and the observed information otherwise. The
+#'   fitted model records the information used. Matched with
 #'   [match.arg()]. Both carry an exact outer gradient and Hessian wherever the
 #'   family writes its expected information out, which every shipped family
 #'   does since distributions7 0.65.0. A family that does not would read the
@@ -324,7 +330,7 @@ outer_path_defaults <- function() {
 #' logLik(fit, type = "marginal")
 #'
 #' @export
-reml <- function(hessian = c("observed", "expected"), marginal = NULL) {
+reml <- function(hessian = c("auto", "observed", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
@@ -333,11 +339,66 @@ reml <- function(hessian = c("observed", "expected"), marginal = NULL) {
 
 #' @rdname reml
 #' @export
-ml <- function(hessian = c("observed", "expected"), marginal = NULL) {
+ml <- function(hessian = c("auto", "observed", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
                          outer_path_defaults()))
+}
+
+
+#' Settle a Marginal Criterion's Information Against the Family
+#'
+#' @description
+#' Replaces `hessian = "auto"` by the information the criterion uses for
+#' `distrib`: `"expected"` for a Student t, a skew t or a Cauchy response,
+#' wrapped or not, and `"observed"` for every other family. Any other value
+#' is returned unchanged.
+#'
+#' @details
+#' The log-density of these families is not concave in the location, so
+#' their observed information is not positive definite at an outlier, and
+#' the Laplace determinant built on it fails there. Measured on
+#' `MASS::GAGurine` with `GAG ~ Age | sigma ~ Age | nu ~ Age` and a
+#' `student_t1` response: on the observed information the outer search ran
+#' 91.5 s and did not converge, on the expected information it converged in
+#' 7.9 s at a larger log-likelihood (-923.891 against -924.106). Without the
+#' equation in `nu` the two converge to the same point, the expected
+#' information costing 8.2 s against 2.6 s (Giovanni, 2026-10-07: the
+#' expected information for the t).
+#'
+#' @param method An [OuterMethod()].
+#' @param distrib The response family.
+#'
+#' @return `method`, with `hessian` settled.
+#'
+#' @keywords internal
+outer_resolve <- function(method, distrib) {
+  if (!identical(method@hessian, "auto")) return(method)
+  method@hessian <- if (observed_indefinite(distrib)) "expected" else "observed"
+  method
+}
+
+
+#' Whether a Family's Observed Information Can Be Indefinite
+#'
+#' @description
+#' `TRUE` for a Student t, a skew t or a Cauchy response, its parents
+#' included, whose log-density is not concave in the location.
+#'
+#' @param distrib A family.
+#'
+#' @return A single logical.
+#'
+#' @keywords internal
+observed_indefinite <- function(distrib) {
+  t_like <- paste0("distributions7::", c("StudentT1Distrib", "StudentT2Distrib",
+                                         "SkewTDistrib", "CauchyDistrib"))
+  if (any(class(distrib) %in% t_like)) return(TRUE)
+  if (S7::prop_exists(distrib, "parent_distrib")) {
+    return(observed_indefinite(distrib@parent_distrib))
+  }
+  FALSE
 }
 
 

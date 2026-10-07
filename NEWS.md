@@ -1,3 +1,31 @@
+# statmodels7 0.191.0
+
+* `reml()` and `ml()` take `hessian = "auto"` by default, which `statmod()`
+  settles against the family: the expected information for a Student t, a
+  skew t or a Cauchy response, wrapped or not, whose observed information is
+  not positive definite at an outlier, and the observed information
+  otherwise. The fit records the information used. On `MASS::GAGurine` with
+  `nu ~ Age` the default search converges in 8.9 s, where on the observed
+  information it ran 91.5 s and did not converge.
+* A filter whose level is free (`flow ~ 0 + gas(...)`) is searched on the
+  level around which the predictor fluctuates, `omega / prod(1 - r_k)`, and
+  not on `omega`. On the Nile it stopped after 200 Newton iterations at
+  -642.67, and it now reaches the -637.40 of the intercept spelling.
+* A missing value in the response, or in a variable an equation names, is
+  rejected before the fit with the variable, the equation and the rows. It
+  used to stop with a message from deep inside the fit that named none of
+  them.
+* New rows that carry the response are read as a series of their own: a
+  structural term is rebuilt on them with the fitted parameters. With the
+  fitting data as `newdata`, `predict()` on a `regime()` model returns the
+  fitted predictor, where it was rejected, and on a `gas()` model the
+  standard errors are the fitted ones, where they read the intercept's row
+  alone.
+* The autoregressive coefficients of a `gas()` term are reported as
+  `gas.phi1`, ... (modelterms7 0.94.1), where they were `gas.beta1`, ...
+* The convergence reading of the inner fit no longer warns where the median
+  curvature of an equation is negative.
+
 # statmodels7 0.190.0
 
 * `gas(scaling = d)` filters are fitted: the score, the information and

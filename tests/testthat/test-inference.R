@@ -993,7 +993,7 @@ test_that("a structural term is a block, and its development a compartment", {
   # the term's own table keeps the parameters that are numbers, under the
   # names the term reports: the persistence rides a partial autocorrelation
   # and what is reported is the autoregressive coefficient
-  expect_identical(b$table$name, c("alpha1", "beta1"))
+  expect_identical(b$table$name, c("alpha1", "phi1"))
   # the hyperparameter sits with the coordinates it shrinks, not in a block
   # of its own carrying nothing else
   expect_true(any(cp$table$role == "estimated"))
@@ -1023,8 +1023,8 @@ test_that("which parameter a structural quantity belongs to is read off the jaco
   # filed with the term. The last one is rho_q exactly and does belong to
   # its own, which is the control saying the rule reads the Jacobian rather
   # than the name
-  expect_identical(st$component[st$name == "beta1"], "")
-  expect_identical(st$component[st$name == "beta2"], "pacf2")
+  expect_identical(st$component[st$name == "phi1"], "")
+  expect_identical(st$component[st$name == "phi2"], "pacf2")
   expect_identical(st$component[st$name == "alpha1"], "alpha1")
 })
 
@@ -1044,7 +1044,7 @@ test_that("a structural term with no development is one flat block", {
   b <- s@tables$mu[[which(kinds == "structural")]]
   expect_length(b$components, 0L)
   expect_null(b$head)
-  expect_identical(b$table$name, c("omega", "alpha1", "beta1"))
+  expect_identical(b$table$name, c("omega", "alpha1", "phi1"))
 })
 
 

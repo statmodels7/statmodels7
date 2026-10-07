@@ -125,11 +125,18 @@ to contain.
 
 \section{A score-driven term is predicted past the series}{
 Such a term's contribution at one row is the state a recursion has
-reached, so new rows continue the series instead of being read on their
-own. Each row is placed by its own time within its own group, and must
-come after every observed time of that group; a row falling inside the
-observed series is refused, since there the response is known and the
-filter must be run, never continued.
+reached, so new rows without the response continue the series instead of
+being read on their own. Each row is placed by its own time within its own
+group, and must come after every observed time of that group; a row
+falling inside the observed series is rejected, since there the response
+is known and the filter must be run, never continued.
+
+New rows that carry the response are a series of their own: the
+structural term is rebuilt on them with the fitted parameters, and they
+are read as the fitting rows are, standard errors included. With the
+fitting data as \code{newdata} the result is \code{predict(fit)}'s; this holds for a
+\code{\link[modelterms7:regime]{modelterms7::regime()}} term as well, whose prediction is the
+posterior-weighted predictor.
 
 Beyond the data the score sits at its conditional mean of zero, which the
 model's own definition guarantees, so the continuation is the

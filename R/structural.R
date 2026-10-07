@@ -1257,15 +1257,140 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
   u0 <- c(beta, jp$zeta())
   jp$raw(u0)
   if (is.null(optimizer)) optimizer <- optimizers7::newton()
-  res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, he = jp$he)
-  jp$setz(res@par[jp$ix])
+  # A FREE LEVEL IS SEARCHED ON THE LEVEL AROUND WHICH THE PREDICTOR
+  # FLUCTUATES, L = omega / (1 - sum phi), and not on omega: with omega a
+  # coordinate, raising the persistence at fixed omega moves that level, so
+  # the likelihood runs along the ridge omega = L (1 - sum phi) and Newton
+  # crawled on it. On the Nile, flow ~ 0 + gas(1, 1) stopped after 200
+  # iterations at -642.67 (beta 0.22, a negative eigenvalue) from both
+  # starts, where the intercept spelling of the same model, whose level IS
+  # a coefficient, converges at -637.40.
+  lv <- joint_level_chart(spec, jp)
+  if (is.null(lv)) {
+    res <- optimizers7::minimize(optimizer, jp$fn, u0, gr = jp$gr, he = jp$he)
+    par <- res@par
+  } else {
+    res <- optimizers7::minimize(
+      optimizer, function(v) jp$fn(lv$to(v)), lv$from(u0),
+      gr = function(v) lv$grad(v, jp$gr(lv$to(v))),
+      he = function(v) {
+        u <- lv$to(v)
+        lv$hess(v, jp$gr(u), jp$he(u))
+      })
+    par <- lv$to(res@par)
+  }
+  jp$setz(par[jp$ix])
   if (verbose) {
     vb_say("%d coefficients and %d parameters of %s: %d iterations, converged %s",
            jp$nb, length(jp$free), short_keys(jp$key),
            as.integer(res@iterations), res@converged)
   }
-  list(par = res@par[seq_len(jp$nb)], value = res@value,
+  list(par = par[seq_len(jp$nb)], value = res@value,
        converged = isTRUE(res@converged), iterations = res@iterations)
+}
+
+
+#' The Level Chart of a Filter's Joint Fit
+#'
+#' @description
+#' The change of coordinates under which [statmod_fit_joint()] searches a
+#' free level: the level \eqn{\omega} of a score-driven term is replaced by
+#' \eqn{L = \omega / \prod_k (1 - r_k)}, the level around which the
+#' predictor fluctuates, \eqn{r_k} being the partial autocorrelations that
+#' carry the persistence (by the Durbin-Levinson recursion,
+#' \eqn{1 - \sum_k \phi_k = \prod_k (1 - r_k)}). The other coordinates are
+#' unchanged.
+#'
+#' @details
+#' The chart applies where the level is one free coordinate on the identity
+#' link and every persistence is a free scalar partial autocorrelation; in
+#' any other case the result is `NULL` and the fit runs on the term's own
+#' coordinates. With \eqn{\omega = L P(\rho)}, the gradient is
+#' \eqn{J^\top g} and the Hessian
+#' \eqn{J^\top H J + g_\omega \nabla^2 \omega}, \eqn{J} the Jacobian of the
+#' map.
+#'
+#' @param spec A [StatmodSpec()].
+#' @param jp The joint pieces, as [statmod_joint_pieces()] returns them.
+#'
+#' @return `NULL`, or a list of the functions `to` (chart to the term's
+#'   coordinates), `from`, `grad` and `hess`.
+#'
+#' @keywords internal
+joint_level_chart <- function(spec, jp) {
+  tm <- spec@terms[[jp$param]][[jp$key]]
+  lvl <- tryCatch(modelterms7::term_level_param(tm), error = function(e) NULL)
+  if (length(lvl) != 1L || !lvl %in% jp$free) return(NULL)
+  prm <- modelterms7::term_params(tm)
+  # a level developed by a subformula (`omega ~ 1 + random(...)`) is left on
+  # its own coordinates: its constant column is one of several, and with the
+  # chart the outer gradient of a covariance class over it lost its O(h^2)
+  if (any(startsWith(prm, paste0(lvl, "."))) || grepl(".", lvl, fixed = TRUE)) {
+    return(NULL)
+  }
+  pacf <- grep("^pacf", prm, value = TRUE)
+  if (!length(pacf) || !all(grepl("^pacf[0-9]+$", pacf)) ||
+      !all(pacf %in% jp$free)) {
+    return(NULL)
+  }
+  lks <- modelterms7::term_links(tm)
+  x <- c(-1.5, 0, 2.5)
+  if (!isTRUE(all.equal(linkfunctions7::linkinv(lks[[lvl]], x), x)) ||
+      !isTRUE(all.equal(linkfunctions7::dlinkinv(lks[[lvl]], x), rep(1, 3)))) {
+    return(NULL)
+  }
+  il <- jp$nb + match(lvl, jp$free)
+  ip <- jp$nb + match(pacf, jp$free)
+  # P = prod (1 - r_k) and its first two derivatives in the unconstrained
+  # partial autocorrelations; each written as a product over the other
+  # factors, which stays finite where one factor is zero
+  pr <- function(v) {
+    rho <- v[ip]
+    k <- length(rho)
+    r <- p1 <- p2 <- numeric(k)
+    for (j in seq_len(k)) {
+      r[j] <- linkfunctions7::linkinv(lks[[pacf[j]]], rho[j])
+      p1[j] <- -linkfunctions7::dlinkinv(lks[[pacf[j]]], rho[j])
+      p2[j] <- -linkfunctions7::d2linkinv(lks[[pacf[j]]], rho[j])
+    }
+    p <- 1 - r
+    rest <- function(drop) prod(p[-drop])
+    d1 <- vapply(seq_len(k), function(j) p1[j] * rest(j), numeric(1))
+    d2 <- matrix(0, k, k)
+    for (i in seq_len(k)) for (j in seq_len(k)) {
+      d2[i, j] <- if (i == j) p2[i] * rest(i) else p1[i] * p1[j] * rest(c(i, j))
+    }
+    list(P = prod(p), d1 = d1, d2 = d2)
+  }
+  list(
+    to = function(v) {
+      v[il] <- v[il] * pr(v)$P
+      v
+    },
+    from = function(u) {
+      u[il] <- u[il] / pr(u)$P
+      u
+    },
+    grad = function(v, g) {
+      q <- pr(v)
+      out <- g
+      out[il] <- g[il] * q$P
+      out[ip] <- g[ip] + g[il] * v[il] * q$d1
+      out
+    },
+    hess = function(v, g, H) {
+      q <- pr(v)
+      J <- diag(length(v))
+      J[il, il] <- q$P
+      J[il, ip] <- v[il] * q$d1
+      out <- crossprod(J, as.matrix(H) %*% J)
+      K <- matrix(0, length(v), length(v))
+      K[il, ip] <- q$d1
+      K[ip, il] <- q$d1
+      K[ip, ip] <- v[il] * q$d2
+      out + g[il] * K
+    }
+  )
 }
 
 
@@ -1284,7 +1409,8 @@ statmod_fit_joint <- function(spec, design, obj, beta, hyper,
 #'
 #' @return A list with `fn`, `gr`, `he`, `raw`, `setz` (writes the filter's
 #'   free parameters into the design's structural state), `zeta` (reads
-#'   them), `ix`, `nb`, `free` and `key`.
+#'   them), `ix`, `nb`, `free`, `key` and `param` (the distribution parameter the
+#'   term sits in).
 #'
 #' @keywords internal
 statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
@@ -1360,7 +1486,7 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
 
   list(fn = fn, gr = gr, he = he, raw = raw, setz = setz,
        zeta = function() as.numeric(sst$zeta[[key]][free]),
-       ix = ix, nb = nb, free = free, key = key)
+       ix = ix, nb = nb, free = free, key = key, param = su[[1L]]$param)
 }
 
 
@@ -1510,7 +1636,7 @@ statmod_structural_table <- function(fit, level = 0.95) {
     free <- setdiff(nm, held)
     # What is reported is what the TERM says it reports, which is not always
     # the coordinate it was estimated on: a score-driven persistence rides a
-    # partial autocorrelation, and the literature's beta_j is the
+    # partial autocorrelation, and the literature's phi_j is the
     # autoregressive coefficient, a function of the whole chart. The Jacobian
     # comes with it, so the standard error is the delta method over the JOINT
     # variance rather than one entry of its diagonal -- above q = 1 a

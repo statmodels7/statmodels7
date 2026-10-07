@@ -37,8 +37,8 @@ that is no quantity of the model at all.
 
 A \strong{score-driven} term's persistence rides a partial autocorrelation, the
 stationary region not being a box, and what the literature calls
-\eqn{\beta_j} is the autoregressive coefficient the whole chart produces.
-At \eqn{q = 2} a fit reporting \eqn{\beta_1 = 0.761} has a free coordinate
+\eqn{\phi_j} is the autoregressive coefficient the whole chart produces.
+At \eqn{q = 2} a fit reporting \eqn{\phi_1 = 0.761} has a free coordinate
 of \eqn{\mathrm{pacf}_1 = 0.857}.
 
 Where a term declares no quantities of its own the coordinates stand. So
