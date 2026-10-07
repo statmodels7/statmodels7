@@ -2309,6 +2309,18 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #' the design \pkg{distributions7} already documents and which only its
 #' multivariate gaussian implements.
 #'
+#' **An intercept the fit ran to the limit of its chart is replaced** by the
+#' data-based start of [distributions7::distrib_start()]. On a log or logit
+#' chart a value past \eqn{e^{\pm 16}} is a limit of the family and not an
+#' estimate: a Student t fitted to a response no heavier-tailed than a
+#' gaussian puts \eqn{\nu} at \eqn{6.1 \times 10^8} (`gamlss.data::film90`)
+#' or \eqn{7.0 \times 10^{10}} (`abdom`). Where a marginal criterion
+#' estimates that coefficient its search starts there, the criterion is flat in
+#' it, and on film90 `lbfgs()` did not leave it: 100 s and `not converged`,
+#' where from the data-based \eqn{\nu = 30} the same search converges in
+#' 6.9 s to the point the observed information reaches. An identity chart is
+#' left alone, a location of any size being an estimate.
+#'
 #' @param spec A [StatmodSpec()].
 #'
 #' @return A named list, one entry per distribution parameter, on the link
@@ -2338,8 +2350,21 @@ statmod_intercepts <- function(spec) {
   if (!is.null(fd)) {
     e <- tryCatch(stats::coef(fd, scale = "link"), error = function(e) NULL)
     if (!is.null(e) && length(e) == length(params) && all(is.finite(e))) {
-      return(intercept_start_from_data(
-        spec, stats::setNames(as.list(as.numeric(e)), params)))
+      e <- stats::setNames(as.list(as.numeric(e)), params)
+      run <- vapply(params, function(p)
+        !identical(links[[p]]@link_name, "identity") &&
+          abs(e[[p]]) > intercept_chart_limit(), logical(1))
+      if (any(run)) {
+        th <- tryCatch(
+          distributions7::distrib_start(spec@distrib, spec@response, 1L),
+          error = function(e) NULL)
+        for (p in params[run]) {
+          v <- if (length(th)) th[[1L]][[p]] else NULL
+          if (is.null(v) || !is.finite(v[[1L]])) next
+          e[[p]] <- linkfunctions7::linkfun(links[[p]], v[[1L]])
+        }
+      }
+      return(intercept_start_from_data(spec, e))
     }
   }
 
@@ -2354,6 +2379,19 @@ statmod_intercepts <- function(spec) {
     linkfunctions7::linkfun(links[[p]], v[[1L]])
   }), params))
 }
+
+#' Where an Intercept on a Non-Identity Chart Stops Being an Estimate
+#'
+#' @description
+#' The absolute value, on the link scale, past which [statmod_intercepts()]
+#' reads an intercept-only estimate as a limit the fit ran to: 16, a parameter
+#' beyond \eqn{e^{16} \approx 8.9 \times 10^6} or below its reciprocal on a log
+#' chart.
+#'
+#' @return A single positive number.
+#'
+#' @keywords internal
+intercept_chart_limit <- function() 16
 
 #' Replace an Intercept Where the Family Reads Its Start Off the Data
 #'

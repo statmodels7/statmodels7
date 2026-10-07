@@ -23,13 +23,14 @@
 # its coefficients, a structural term, a kinked penalty -- it is refused
 # rather than done approximately.
 fit_at_hyper <- function(formula, distrib, data, hy, inner = iwls(),
+                         start = NULL,
                          polish = FALSE) {
   spec <- statmod_spec(formula, distrib, data, NULL, NULL)
   design <- statmod_design(spec)
   blocks <- statmod_blocks(spec, design)
   cfg <- inner_settings(inner, distrib)
   obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
-  beta <- statmod_start(spec, design, obj, NULL)
+  beta <- statmod_start(spec, design, obj, start)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
                          cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
   # statmod()'s second fit from the information-scaled start of a
@@ -73,7 +74,7 @@ fit_at_hyper_spec <- function(spec, design, hy, distrib,
   blocks <- statmod_blocks(spec, design)
   cfg <- inner_settings(inner, distrib)
   obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
-  beta <- statmod_start(spec, design, obj, NULL)
+  beta <- statmod_start(spec, design, obj, start)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
                          cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
   r$obj$split(r$par)

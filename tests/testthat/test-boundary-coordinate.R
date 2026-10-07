@@ -98,10 +98,14 @@ test_that("a shape run to its clamp fits instead of stopping the run", {
   d <- data.frame(y = eta + rt(n, df = 5) * 0.5, x = x, z = z, g = g)
 
   ## nu read at the joint mode, which is where it runs to the clamp; the
-  ## marginal criterion stops it at a finite value
+  ## marginal criterion stops it at a finite value. The start is the
+  ## intercept-only fit's log nu of 20, which statmod_intercepts() now
+  ## replaces by the data-based nu = 30: from there the flat search stops at
+  ## nu = 4.6e169, short of the clamp, and this regime is not reached
   fit <- statmod(y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g),
                  distributions7::student_t1_distrib(), d,
-                 outer_criterion = reml(marginal = "none"))
+                 outer_criterion = reml(marginal = "none"),
+                 start = list(nu = 20))
   expect_s7_class(fit, StatmodFit)
   expect_true(is.finite(as.numeric(logLik(fit))))
   ## nu is at the clamp, and the OTHER coordinates were fitted there rather
@@ -214,8 +218,10 @@ test_that("the outer gradient beside a clamped shape is the pinned criterion's",
   form <- y ~ s(x, bspline_smooth(k = 20)) + random(~1 | g)
   dt <- distributions7::student_t1_distrib()
   ## nu read at the joint mode, where it runs to the clamp; the marginal
-  ## criterion stops it at a finite value and the case is not reached
-  fit <- statmod(form, dt, d, outer_criterion = reml(marginal = "none"))
+  ## criterion stops it at a finite value and the case is not reached. The
+  ## start is the intercept-only log nu of 20, as in the test above
+  fit <- statmod(form, dt, d, outer_criterion = reml(marginal = "none"),
+                 start = list(nu = 20))
   ## the premise: nu at the clamp, which is where the NaN lived. Absent, the
   ## case this test is about has not been reached, and it says so.
   skip_if(fit@fitted$nu[1] < 1e300, "nu did not reach its clamp here")
@@ -236,7 +242,8 @@ test_that("the outer gradient beside a clamped shape is the pinned criterion's",
   inner <- iwls(maxit = 10000, tol = 1e-10)
   at <- function(e) {
     hy <- eta_to_hyper(e, idx, fit@hyper)
-    list(hy = hy, cf = fit_at_hyper(form, dt, d, hy, inner = inner)$coefficients)
+    list(hy = hy, cf = fit_at_hyper(form, dt, d, hy, inner = inner,
+                                    start = list(nu = 20))$coefficients)
   }
   fn <- function(e) {
     p <- at(e)

@@ -4,7 +4,7 @@
 \alias{statmod_design}
 \title{The Design of a Specification}
 \usage{
-statmod_design(spec, unseen = NULL)
+statmod_design(spec, unseen = NULL, skip = character(0))
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -14,6 +14,12 @@ keys of the \code{\link[modelterms7:random]{modelterms7::random()}} terms whose 
 never saw are given zeros instead of an error; \code{NULL} (the default) for
 none. It is how \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} reads a new group under
 \code{random = "zero"} or \code{"marginal"}.}
+
+\item{skip}{The distribution parameters whose equations are not rebuilt
+from \code{spec@newdata}: each of their blocks is a matrix of zeros of the
+width the fit gave it. \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} passes the parameters a
+prediction does not read whose covariates \code{newdata} lacks; \code{character(0)}
+(the default) for none.}
 }
 \value{
 A named list with one entry per parameter, each a list with

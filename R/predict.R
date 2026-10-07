@@ -431,7 +431,8 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
       spec <- pr$spec
       coef_use <- pr$coef
       pr$design
-    } else statmod_design(spec, unseen),
+    } else statmod_design(spec, unseen,
+                          predict_unread(object, what, newdata, interval)),
     error = function(e) {
       if (grepl("was not present at build time", conditionMessage(e),
                 fixed = TRUE)) {
@@ -614,6 +615,50 @@ predict.StatmodFit <- function(object, what = "parameter", newdata = NULL,
 }
 S7::method(predict, StatmodFit) <- predict.StatmodFit
 
+#' The Equations a Prediction Does Not Read
+#'
+#' @description
+#' The distribution parameters whose equations [predict.StatmodFit()] can
+#' leave unbuilt: those other than `what` whose variables `newdata` does not
+#' carry, where `what` names one parameter.
+#'
+#' @details
+#' A prediction of one parameter reads that parameter's equation alone, so
+#' the covariates of the other equations need not be in `newdata`. They used
+#' to be required all the same, the design being rebuilt for every equation:
+#' `predict(fit, what = "mu", newdata)` on `accel ~ s(times) | sigma ~ z`
+#' stopped with "object 'z' not found". Nothing is left out where every
+#' equation can be built, where `what` asks for every parameter or a moment,
+#' or where the model carries a structural term, whose recursion reads the
+#' predictors of every equation.
+#'
+#' @param object A [StatmodFit()].
+#' @param what,newdata,interval As in [predict.StatmodFit()].
+#'
+#' @return A character vector of parameter names, possibly empty.
+#'
+#' @keywords internal
+predict_unread <- function(object, what, newdata, interval = "confidence") {
+  params <- object@spec@distrib@params
+  if (is.null(newdata) || !(what %in% params) ||
+      !identical(interval, "confidence") ||
+      length(statmod_structural(object@spec))) {
+    return(character(0))
+  }
+  eq <- statmod_equations(object@spec@formula, params)$equations
+  # a variable of an unread equation that is not a column of newdata is not
+  # looked up anywhere else: the equation is not read, so leaving it unbuilt
+  # costs nothing, where reading the formula's environment could find a
+  # vector of the fitting rows
+  missing_vars <- function(q) {
+    v <- all.vars(q[[length(q)]])
+    v[!(v %in% names(newdata))]
+  }
+  setdiff(params[vapply(params, function(p)
+    !is.null(eq[[p]]) && length(missing_vars(eq[[p]])) > 0L, logical(1))], what)
+}
+
+
 
 #' The Message for an Unrecognized Prediction Target
 #'
@@ -735,6 +780,14 @@ S7::method(fitted, StatmodFit) <- fitted.StatmodFit
 #' reads it reports `NA` for its standard error. That is the truth about such
 #' a fit, no gap in the arithmetic.
 #'
+#' A coefficient that a lasso, an elastic net, a SCAD or an MCP holds at
+#' exactly zero is the other case, and it is treated as fixed: the model
+#' selected without it, its row of the variance is `NA`, and its column of
+#' the design is left out of the quadratic form, so it contributes nothing.
+#' Without this, a prediction at new data read every such coefficient against
+#' a non-zero covariate and returned `NA` on every row (a smooth beside a
+#' lasso on `MASS::Boston`, one coefficient at zero).
+#'
 #' @param object A fitted model.
 #' @param spec The specification the prediction is made under.
 #' @param design Its design.
@@ -756,6 +809,15 @@ predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
   links <- spec@distrib@link_params
   out <- stats::setNames(vector("list", length(spec@distrib@params)),
                          spec@distrib@params)
+  # the coefficients a kinked penalty holds at zero, by key: fixed at zero,
+  # they carry no variance into the prediction (see the details)
+  stacked <- unlist(lapply(spec@distrib@params, function(p) {
+    if (design[[p]]$npar) paste(p, design[[p]]$coef_names, sep = ":") else
+      character(0)
+  }))
+  zk <- tryCatch(zero_kinked(spec, design, object@coefficients),
+                 error = function(e) integer(0))
+  held0 <- stacked[zk]
   for (p in spec@distrib@params) {
     d <- design[[p]]
     n <- spec@n_obs
@@ -780,9 +842,11 @@ predict_se <- function(object, spec, design, ep, level = 0.95, ...) {
       key <- cc$key
     }
     if (length(key) && all(key %in% rownames(V))) {
-      Vp <- as.matrix(V[key, key, drop = FALSE])
+      keep <- !(key %in% held0)
+      Vp <- as.matrix(V[key[keep], key[keep], drop = FALSE])
       if (nrow(X) == n) {
-        v <- row_quad(X, Vp, X)
+        Xk <- X[, keep, drop = FALSE]
+        v <- row_quad(Xk, Vp, Xk)
         v[!is.na(v) & v < 0] <- 0
       }
     }

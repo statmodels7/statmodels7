@@ -1840,6 +1840,11 @@ check_offsets <- function(offsets, params, n) {
 #'   never saw are given zeros instead of an error; `NULL` (the default) for
 #'   none. It is how [predict.StatmodFit()] reads a new group under
 #'   `random = "zero"` or `"marginal"`.
+#' @param skip The distribution parameters whose equations are not rebuilt
+#'   from `spec@newdata`: each of their blocks is a matrix of zeros of the
+#'   width the fit gave it. [predict.StatmodFit()] passes the parameters a
+#'   prediction does not read whose covariates `newdata` lacks; `character(0)`
+#'   (the default) for none.
 #'
 #' @return A named list with one entry per parameter, each a list with
 #'   `X`, `coef_names`, `npar` and `blocks` (the column
@@ -1856,8 +1861,8 @@ check_offsets <- function(offsets, params, n) {
 #' vapply(statmod_design(d), function(z) z$npar, integer(1))
 #'
 #' @export
-statmod_design <- function(spec, unseen = NULL) {
-  out <- statmod_design_blocks(spec, unseen)
+statmod_design <- function(spec, unseen = NULL, skip = character(0)) {
+  out <- statmod_design_blocks(spec, unseen, skip)
   su <- statmod_structural(spec)
   if (length(su)) {
     sst <- new.env(parent = emptyenv())
@@ -2153,12 +2158,12 @@ predictor_information <- function(spec) {
 #' coefficients.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param unseen As in [statmod_design()].
+#' @param unseen,skip As in [statmod_design()].
 #'
 #' @return A named list, one entry per distribution parameter.
 #'
 #' @keywords internal
-statmod_design_blocks <- function(spec, unseen = NULL) {
+statmod_design_blocks <- function(spec, unseen = NULL, skip = character(0)) {
   stats::setNames(lapply(names(spec@terms), function(p) {
     tms <- spec@terms[[p]]
     # a structural term contributes no columns at all
@@ -2173,6 +2178,8 @@ statmod_design_blocks <- function(spec, unseen = NULL) {
     # building again would give a block of the same shape multiplying the same
     # coefficients and meaning something else
     mats <- if (is.null(spec@newdata)) lapply(tms, modelterms7::term_matrix)
+      else if (p %in% skip) lapply(tms, function(tm)
+        matrix(0, spec@n_obs, length(modelterms7::term_coef_names(tm))))
       else stats::setNames(lapply(names(tms), function(k) {
         if (k %in% unseen[[p]]) {
           modelterms7::term_predict(tms[[k]], newdata = spec@newdata,

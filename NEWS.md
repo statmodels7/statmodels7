@@ -1,3 +1,25 @@
+# statmodels7 0.193.0
+
+* An intercept-only start that runs past e^16 on a link other than the
+  identity (a Student t's `nu` at 6.1e8 on a response no heavier-tailed than
+  a gaussian) is replaced by the data-based start of
+  `distributions7::distrib_start()`. Where a marginal criterion estimates
+  that coefficient, its search started where the criterion is flat in it: on
+  `gamlss.data::film90` the expected information ran 100 s and did not
+  converge, and it now converges in 7.6 s at the point the observed
+  information reaches.
+* `predict(se = TRUE)` beside a lasso, an elastic net, a SCAD or an MCP
+  treats a coefficient the penalty holds at zero as fixed, so it carries no
+  variance into the prediction. The standard errors were `NA` on every row
+  where such a coefficient met a non-zero covariate.
+* `predict(what = )` naming one parameter does not need the covariates of the
+  other equations in `newdata`.
+* Pearson and response residuals are `NA`, with a warning, where the mean or
+  the standard deviation of the family cannot be computed, as for a
+  distribution whose variance does not exist.
+* `plot()` on a fit signals an error that names `predict()` and
+  `residuals()`, where it failed inside `plot.default()`.
+
 # statmodels7 0.192.0
 
 * The loadings of a `gas()` term are `gas.kappa1`, ... and its autoregressive

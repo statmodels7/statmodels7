@@ -65,6 +65,14 @@ A discontinuous break-point term's block is a working linearization and is
 held out of \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}, so every observation whose predictor
 reads it reports \code{NA} for its standard error. That is the truth about such
 a fit, no gap in the arithmetic.
+
+A coefficient that a lasso, an elastic net, a SCAD or an MCP holds at
+exactly zero is the other case, and it is treated as fixed: the model
+selected without it, its row of the variance is \code{NA}, and its column of
+the design is left out of the quadratic form, so it contributes nothing.
+Without this, a prediction at new data read every such coefficient against
+a non-zero covariate and returned \code{NA} on every row (a smooth beside a
+lasso on \code{MASS::Boston}, one coefficient at zero).
 }
 
 \seealso{

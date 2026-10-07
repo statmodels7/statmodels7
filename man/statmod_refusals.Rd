@@ -5,6 +5,7 @@
 \alias{terms.StatmodFit}
 \alias{model.frame.StatmodFit}
 \alias{anova.StatmodFit}
+\alias{plot.StatmodFit}
 \title{What a Fit Does Not Answer}
 \usage{
 \method{terms}{StatmodFit}(x, ...)
@@ -12,6 +13,8 @@
 \method{model.frame}{StatmodFit}(formula, ...)
 
 \method{anova}{StatmodFit}(object, ...)
+
+\method{plot}{StatmodFit}(x, ...)
 }
 \arguments{
 \item{...}{Unused.}
@@ -23,8 +26,8 @@ Nothing. Each method signals an error naming what to ask
 instead.
 }
 \description{
-Three generics of \pkg{stats} signal an error on a statmod fit, each
-naming what to ask instead.
+Three generics of \pkg{stats} and the generic \code{\link[base:plot]{base::plot()}} signal an
+error on a statmod fit, each naming what to use instead.
 }
 \details{
 \code{terms()} would have to report one set of terms where a fit has one per
@@ -44,6 +47,11 @@ distribution to compare against. \code{\link[=logLik.StatmodFit]{logLik.StatmodF
 \code{AIC} and \code{BIC} are what this package reports, with the
 effective degrees of freedom corrected for the smoothing parameters
 having been estimated.
+
+\code{plot()} would have to choose one picture for a model with an equation
+per parameter, any number of terms and any number of covariates. The
+fitted curves come from \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} on a grid of new data, and
+the residuals from \code{\link[=residuals.StatmodFit]{residuals.StatmodFit()}}.
 }
 \seealso{
 \code{\link[=formula.StatmodFit]{formula.StatmodFit()}},

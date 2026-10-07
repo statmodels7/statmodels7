@@ -272,8 +272,8 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' @title What a Fit Does Not Answer
 #' @name statmod_refusals
 #' @description
-#' Three generics of \pkg{stats} signal an error on a statmod fit, each
-#' naming what to ask instead.
+#' Three generics of \pkg{stats} and the generic [base::plot()] signal an
+#' error on a statmod fit, each naming what to use instead.
 #' @details
 #' `terms()` would have to report one set of terms where a fit has one per
 #' distribution parameter, and the formula it was written with is not a
@@ -292,6 +292,11 @@ S7::method(simulate, StatmodFit) <- simulate.StatmodFit
 #' `AIC` and `BIC` are what this package reports, with the
 #' effective degrees of freedom corrected for the smoothing parameters
 #' having been estimated.
+#'
+#' `plot()` would have to choose one picture for a model with an equation
+#' per parameter, any number of terms and any number of covariates. The
+#' fitted curves come from [predict.StatmodFit()] on a grid of new data, and
+#' the residuals from [residuals.StatmodFit()].
 #' @param object,x,formula A [StatmodFit()].
 #' @param ... Unused.
 #' @return Nothing. Each method signals an error naming what to ask
@@ -330,3 +335,15 @@ anova.StatmodFit <- function(object, ...) {
        call. = FALSE)
 }
 S7::method(anova, StatmodFit) <- anova.StatmodFit
+
+#' @rdname statmod_refusals
+#' @keywords internal
+plot.StatmodFit <- function(x, ...) {
+  stop("a statmod fit has no plot() method: a model with an equation per ",
+       "parameter has
+  no single picture. predict(fit, newdata = grid) ",
+       "gives the fitted curves and
+  residuals(fit) the quantile residuals ",
+       "to draw.", call. = FALSE)
+}
+S7::method(plot, StatmodFit) <- plot.StatmodFit

@@ -772,10 +772,29 @@ residuals.StatmodFit <- function(object,
          call. = FALSE)
   }
   if (identical(type, "response") || identical(type, "pearson")) {
-    m <- mean(d, th)
+    m <- tryCatch(mean(d, th), error = function(e) {
+      warning(sprintf(paste0(
+        "The mean of '%s' could not be computed at the fitted parameters, ",
+        "so the %s residuals are NA: %s It may not exist there."),
+        d@distrib_name, type, conditionMessage(e)), call. = FALSE)
+      NA_real_
+    })
     r <- as.numeric(y) - as.numeric(m)
+    if (all(is.na(r))) return(r)
     if (identical(type, "response")) return(r)
-    s <- as.numeric(distributions7::std_dev(d, th))
+    # A family with no closed-form variance reaches it by quadrature, which
+    # does not converge where the variance does not exist (a log-logistic of
+    # shape below 2). That used to end in an error listing every observation;
+    # the residual there has no value, and it is returned as NA.
+    s <- tryCatch(as.numeric(distributions7::std_dev(d, th)),
+                  error = function(e) {
+                    warning(sprintf(paste0(
+                      "The standard deviation of '%s' could not be computed ",
+                      "at the fitted parameters, so the Pearson residuals are ",
+                      "NA: %s It may not exist there."),
+                      d@distrib_name, conditionMessage(e)), call. = FALSE)
+                    rep(NA_real_, length(r))
+                  })
     return(r / s)
   }
   fy <- as.numeric(distributions7::distrib_cdf(d, y, th))
