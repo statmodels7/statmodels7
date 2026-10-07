@@ -79,3 +79,27 @@ test_that("Pearson residuals are NA, with a warning, where the variance fails", 
                  "could not be computed")
   expect_true(all(is.na(r)))
 })
+
+test_that("a family's own method without ... is named before the fit", {
+  Lap <- S7::new_class("LapNoDots", parent = distributions7::continuous_distrib,
+                       package = NULL)
+  pdf_generic <- distributions7::distrib_pdf
+  S7::method(pdf_generic, Lap) <- function(distrib, y, theta, log = FALSE) {
+    ld <- -log(2 * theta[[2]]) - abs(y - theta[[1]]) / theta[[2]]
+    if (log) ld else exp(ld)
+  }
+  d <- Lap(distrib_name = "laplace without dots", dimension = "univariate",
+           bounds = c(-Inf, Inf), params = c("mu", "b"),
+           params_interpretation = c(mu = "location", b = "scale"), n_params = 2,
+           params_bounds = list(mu = c(-Inf, Inf), b = c(0, Inf)),
+           link_params = list(mu = linkfunctions7::identity_link(),
+                              b = linkfunctions7::log_link()))
+  set.seed(12)
+  dd <- data.frame(x = runif(40))
+  dd$y <- dd$x + rnorm(40)
+  expect_error(statmod(y ~ x, distrib = d, data = dd),
+               "distrib_pdf() method of 'laplace without dots' has no `...`",
+               fixed = TRUE)
+  expect_error(statmod(y ~ x, distrib = d, data = dd),
+               "function(distrib, y, theta, log = FALSE, ...)", fixed = TRUE)
+})

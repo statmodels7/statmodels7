@@ -5,20 +5,25 @@
 \alias{ml}
 \title{Estimate the Hyperparameters by a Marginal Likelihood}
 \usage{
-reml(hessian = c("auto", "observed", "expected"), marginal = NULL)
+reml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 
-ml(hessian = c("auto", "observed", "expected"), marginal = NULL)
+ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 }
 \arguments{
-\item{hessian}{Which information enters the determinant: \code{"observed"},
-the curvature of the log-likelihood at the data, which makes the
-criterion the Laplace approximation, \code{"expected"}, the Fisher
-information, a function of the parameters alone, or \code{"auto"} (the
-default), which \code{\link[=statmod]{statmod()}} settles against the family through
-\code{\link[=outer_resolve]{outer_resolve()}}: the expected information for a Student t, a skew t
-or a Cauchy response, whose observed information is not positive
-definite at an outlier, and the observed information otherwise. The
-fitted model records the information used. Matched with
+\item{hessian}{Which information enters the determinant: \code{"observed"}
+(the default), the curvature of the log-likelihood at the data, which
+makes the criterion the Laplace approximation, \code{"expected"}, the Fisher
+information, a function of the parameters alone, or \code{"auto"}, which
+\code{\link[=statmod]{statmod()}} settles against the family through \code{\link[=outer_resolve]{outer_resolve()}}: the
+expected information for a Student t, a skew t or a Cauchy response,
+whose observed information is not positive definite at an outlier, and
+the observed information otherwise. The observed information is the
+default because, once a degrees-of-freedom start run to its limit is
+replaced (statmodels7 0.193.0), it reaches the same point as the expected
+one on every case measured and 2 to 20 times faster; the case that needs
+the expected information (\code{MASS::GAGurine} with \code{nu ~ Age}) is one where
+the caller names it (Giovanni, 2026-10-07). The fitted model records the
+information used. Matched with
 \code{\link[=match.arg]{match.arg()}}. Both carry an exact outer gradient and Hessian wherever the
 family writes its expected information out, which every shipped family
 does since distributions7 0.65.0. A family that does not would read the

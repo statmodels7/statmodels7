@@ -1,3 +1,16 @@
+# statmodels7 0.194.0
+
+* `reml()` and `ml()` take `hessian = "observed"` by default again (Giovanni,
+  2026-10-07, evening). With the start of 0.193.0, the observed information
+  reaches the point the expected one reaches on every case measured, two to
+  twenty times faster; `hessian = "expected"` and `"auto"` remain, and a
+  model such as `GAG ~ Age | sigma ~ Age | nu ~ Age` with a Student t
+  response is one where the expected information is to be named.
+* A family whose own `distrib_pdf()` method, or derivative method, has no
+  `...` in its signature is rejected before the fit, with the signature it
+  needs. `statmod()` passes the number of threads to these methods, and such
+  a method stopped with "unused argument (threads = 1)" from inside the fit.
+
 # statmodels7 0.193.0
 
 * An intercept-only start that runs past e^16 on a link other than the

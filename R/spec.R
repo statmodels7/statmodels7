@@ -748,6 +748,7 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
       "distributions7::fit_distrib()."),
       distrib@distrib_name), call. = FALSE)
   }
+  assert_method_signatures(distrib)
   params <- distrib@params
   split <- statmod_equations(formula, params)
 
@@ -2206,4 +2207,46 @@ statmod_design_blocks <- function(spec, unseen = NULL, skip = character(0)) {
         names(tms))
     )
   }), names(spec@terms))
+}
+
+
+#' Check the Signatures of a Family's Own Methods
+#'
+#' @description
+#' Signals an error naming the method and the signature it needs where a
+#' family registers a method of its own, for the density or for a
+#' derivative, whose formals have no `...`.
+#'
+#' @details
+#' [statmod()] passes further arguments to these methods, the number of
+#' threads among them, and a method without `...` stopped with "unused
+#' argument (threads = 1)" from inside the fit. The derivative methods also
+#' take `scale`, which the generic resolves and passes on. The methods of the
+#' families shipped with \pkg{distributions7} all carry `...`; a family
+#' written by a user is where this is met, and where the message is read.
+#'
+#' @param distrib A univariate family.
+#'
+#' @return `distrib`, invisibly.
+#'
+#' @keywords internal
+assert_method_signatures <- function(distrib) {
+  need <- list(
+    distrib_pdf = "function(distrib, y, theta, log = FALSE, ...)",
+    distrib_gradient = "function(distrib, y, theta, scale = c(\"parameter\", \"link\"), ...)",
+    distrib_hessian = "function(distrib, y, theta, scale = c(\"parameter\", \"link\"), ...)",
+    distrib_deriv3 = "function(distrib, y, theta, scale = c(\"parameter\", \"link\"), ...)",
+    distrib_deriv4 = "function(distrib, y, theta, scale = c(\"parameter\", \"link\"), ...)",
+    distrib_expected_hessian = "function(distrib, y, theta, scale = c(\"parameter\", \"link\"), ...)")
+  cls <- S7::S7_class(distrib)
+  for (g in names(need)) {
+    m <- tryCatch(S7::method(getExportedValue("distributions7", g), cls),
+                  error = function(e) NULL)
+    if (is.null(m) || "..." %in% names(formals(m))) next
+    stop(sprintf(paste0(
+      "the %s() method of '%s' has no `...` in its signature, and statmod() ",
+      "passes\n  further arguments to it (the number of threads). Write it ",
+      "as\n  %s."), g, distrib@distrib_name, need[[g]]), call. = FALSE)
+  }
+  invisible(distrib)
 }

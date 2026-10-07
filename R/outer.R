@@ -259,15 +259,20 @@ outer_path_defaults <- function() {
 #' structured branches. A penalty offering neither is rejected by name,
 #' instead of being integrated over a subspace guessed at.
 #'
-#' @param hessian Which information enters the determinant: `"observed"`,
-#'   the curvature of the log-likelihood at the data, which makes the
-#'   criterion the Laplace approximation, `"expected"`, the Fisher
-#'   information, a function of the parameters alone, or `"auto"` (the
-#'   default), which [statmod()] settles against the family through
-#'   [outer_resolve()]: the expected information for a Student t, a skew t
-#'   or a Cauchy response, whose observed information is not positive
-#'   definite at an outlier, and the observed information otherwise. The
-#'   fitted model records the information used. Matched with
+#' @param hessian Which information enters the determinant: `"observed"`
+#'   (the default), the curvature of the log-likelihood at the data, which
+#'   makes the criterion the Laplace approximation, `"expected"`, the Fisher
+#'   information, a function of the parameters alone, or `"auto"`, which
+#'   [statmod()] settles against the family through [outer_resolve()]: the
+#'   expected information for a Student t, a skew t or a Cauchy response,
+#'   whose observed information is not positive definite at an outlier, and
+#'   the observed information otherwise. The observed information is the
+#'   default because, once a degrees-of-freedom start run to its limit is
+#'   replaced (statmodels7 0.193.0), it reaches the same point as the expected
+#'   one on every case measured and 2 to 20 times faster; the case that needs
+#'   the expected information (`MASS::GAGurine` with `nu ~ Age`) is one where
+#'   the caller names it (Giovanni, 2026-10-07). The fitted model records the
+#'   information used. Matched with
 #'   [match.arg()]. Both carry an exact outer gradient and Hessian wherever the
 #'   family writes its expected information out, which every shipped family
 #'   does since distributions7 0.65.0. A family that does not would read the
@@ -330,7 +335,7 @@ outer_path_defaults <- function() {
 #' logLik(fit, type = "marginal")
 #'
 #' @export
-reml <- function(hessian = c("auto", "observed", "expected"), marginal = NULL) {
+reml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "reml", hessian = match.arg(hessian),
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
@@ -339,7 +344,7 @@ reml <- function(hessian = c("auto", "observed", "expected"), marginal = NULL) {
 
 #' @rdname reml
 #' @export
-ml <- function(hessian = c("auto", "observed", "expected"), marginal = NULL) {
+ml <- function(hessian = c("observed", "auto", "expected"), marginal = NULL) {
   do.call(OuterMethod, c(list(kind = "ml", hessian = match.arg(hessian),
                              k = NA_real_,
                              marginal = check_marginal_arg(marginal)),
