@@ -103,3 +103,19 @@ test_that("a family's own method without ... is named before the fit", {
   expect_error(statmod(y ~ x, distrib = d, data = dd),
                "function(distrib, y, theta, log = FALSE, ...)", fixed = TRUE)
 })
+
+test_that("a search that left on the resolution rule with the criterion rising restarts", {
+  skip_on_cran()
+  # the battery's gas-panel-omega: an unconverged inner point entered the
+  # quasi-Newton memory and the search stopped at -609.528 with the gradient
+  # at 1.2, where the criterion reaches -609.490
+  set.seed(3)
+  pan <- data.frame(g = factor(rep(seq_len(12), each = 40)), x = runif(480))
+  form <- y ~ gas(p = 1, q = 1, by = g, omega ~ 1 + random(~1 | g))
+  set.seed(12)
+  sim <- rstatmod(form, distributions7::gaussian1_distrib(), pan)
+  fit <- statmod(form, distrib = distributions7::gaussian1_distrib(),
+                 data = sim$data, inner_optimizer = iwls(maxit = 10000))
+  expect_identical(statmod_certificate(fit)$state, "converged")
+  expect_gt(fit@criterion, -609.4915)
+})

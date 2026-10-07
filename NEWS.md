@@ -1,3 +1,15 @@
+# statmodels7 0.195.0
+
+* An outer search chosen by `statmod()` that stops on the resolution rule
+  while the Newton decrement of the criterion is above `mode_error_limit()`
+  is run again from its point, with an empty quasi-Newton memory, up to
+  three times. The rule reads the decrease the search's own model predicts,
+  and one bad curvature pair made it predict none: on the battery's
+  gas-panel-omega the search stopped at -609.528 with the gradient at 1.2,
+  and it now reaches -609.4905 (the regression entered with the compiled
+  third and fourth orders of 0.190.0, which moved an unconverged inner point
+  across the availability limit).
+
 # statmodels7 0.194.0
 
 * `reml()` and `ml()` take `hessian = "observed"` by default again (Giovanni,

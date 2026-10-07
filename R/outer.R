@@ -1859,6 +1859,40 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     }
   }
 
+  # A SEARCH THIS PACKAGE CHOSE THAT LEFT ON THE RESOLUTION RULE WITH THE
+  # CRITERION STILL RISING IS RUN AGAIN FROM ITS POINT, with an empty
+  # quasi-Newton memory. The rule reads the decrease the search's own model
+  # predicts, and a model fed one bad curvature pair predicts nothing: on the
+  # battery's gas-panel-omega an unconverged inner point read -654.9 entered
+  # lbfgs()'s memory and the search left after three iterations with the
+  # gradient at 1.2 and the criterion at -609.528, where it rises to
+  # -609.490. The Newton decrement at the point is what decides, in the
+  # criterion's units, against mode_error_limit(); the certificate's 0.01
+  # left that run 0.0028 short. At most three restarts.
+  for (attempt in seq_len(3L)) {
+    if (!(chose_optimizer && exact2 && isTRUE(res@converged) &&
+          identical(res@criterion_met,
+                    "no decrease above the objective's resolution"))) break
+    rising <- isTRUE(tryCatch({
+      evaluate(res@par)
+      g <- derivs(1L)
+      A <- sgn * derivs(2L)
+      dec <- joint_decrement(g, (A + t(A)) / 2)
+      is.finite(dec) && dec > mode_error_limit()
+    }, error = function(e) FALSE))
+    if (!rising) break
+    res2 <- tryCatch(optimizers7::minimize(optimizer, fn, res@par, gr = gr,
+                                           he = he),
+                     error = function(e) NULL)
+    if (is.null(res2) || !is.finite(res2@value) ||
+        !(res2@value < res@value - mode_error_limit())) {
+      tryCatch(evaluate(res@par), error = function(e) NULL)
+      break
+    }
+    res <- res2
+    settled <- isTRUE(res@converged)
+  }
+
   # A HYPERPARAMETER AT THE EDGE OF ITS CHART IS PROBED FROM INSIDE. On the
   # free scale the criterion's slope carries the chart's own derivative, which
   # vanishes at the edge, so a search can stop there with a vanishing gradient
