@@ -119,3 +119,37 @@ test_that("a search that left on the resolution rule with the criterion rising r
   expect_identical(statmod_certificate(fit)$state, "converged")
   expect_gt(fit@criterion, -609.4915)
 })
+
+test_that("cv() reapplies the terms built on all the rows to each fold", {
+  # a held-out row past the range of its training rows used to stop the fit:
+  # the fold rebuilt the basis on the training rows alone
+  set.seed(14)
+  n <- 120
+  d <- data.frame(x = c(runif(n - 1), 1.5), z1 = rnorm(n), z2 = rnorm(n))
+  d$y <- sin(2 * d$x) + 0.5 * d$z1 + rnorm(n, sd = 0.3)
+  folds <- c(rep(1:4, length.out = n - 1), 4)
+  folds[d$x > 0.9 & seq_len(n) < n] <- 1
+  fit <- statmod(y ~ s(x, bspline_smooth(k = 6)) + lasso(~ z1 + z2),
+                 distrib = distributions7::gaussian1_distrib(), data = d,
+                 sparse_criterion = cv(folds = folds))
+  expect_true(is.finite(as.numeric(logLik(fit))))
+  expect_true("cv" %in% hyper(fit)$source)
+})
+
+test_that("a lasso whose coefficients span the intercept leaves the smooths estimated", {
+  skip_on_cran()
+  # the lasso codes every level of its first factor, and two coefficients away
+  # from zero span the intercept: the mode's matrix was singular, the exact
+  # outer gradient NULL, and the smoothing parameters stayed at their start
+  set.seed(15)
+  n <- 400
+  d <- data.frame(x = runif(n), g = factor(sample(c("a", "b"), n, TRUE)),
+                  h = factor(sample(c("u", "v"), n, TRUE)))
+  d$y <- rgamma(n, shape = 5, rate = 5 / exp(1 + sin(3 * d$x) + 0.3 * (d$g == "b")))
+  fit <- suppressWarnings(statmod(y ~ s(x) + lasso(~ g + h, lambda = 1e-4),
+                 distrib = distributions7::gamma1_distrib(), data = d,
+                 sparse_criterion = NULL))
+  h <- hyper(fit)
+  expect_false(isTRUE(all.equal(h$estimate[h$source == "reml"], 1)))
+  expect_identical(statmod_certificate(fit)$state, "converged")
+})

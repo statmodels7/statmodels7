@@ -213,6 +213,24 @@ ctx_penalized <- function(ctx, spec, design, coef, hyper, expected = FALSE,
                            c(pinned_coords(spec, design),
                              if (kinked) zero_kinked(spec, design, coef)))
     fac <- pd_factor(K)
+    # THE MODE'S MATRIX LEAVES OUT THE DIRECTIONS THE MODEL DOES NOT
+    # IDENTIFY, as the criterion's determinant leaves them out (Giovanni,
+    # 2026-10-07). A lasso codes every level of the first factor of its
+    # formula, and two of its coefficients away from zero span the intercept:
+    # the matrix was singular, the exact outer gradient came back NULL, the
+    # search read it as zero and stopped at its start. Measured on
+    # gamlss.data::rent, a gamma with s(Fl) + s(A) + lasso(~ B + H + L + loc):
+    # the smoothing parameters stayed at 1; with the directions held they are
+    # 5446.2 and 121.92, a central difference of the criterion gives 5446.4
+    # and 121.93, and the battery's verdicts do not move.
+    if (!isTRUE(fac$ok) && !laplace) {
+      fl <- deficient_coords(K, attr(K, "held_at"))
+      if (length(fl)) {
+        K <- pin_boundary(K, c(pinned_coords(spec, design),
+                               if (kinked) zero_kinked(spec, design, coef), fl))
+        fac <- pd_factor(K)
+      }
+    }
     if (!isTRUE(fac$ok)) return(NULL)
     inv <- if (isTRUE(fac$sparse)) {
       as.matrix(Matrix::solve(fac$factor, Matrix::Diagonal(ncol(K))))

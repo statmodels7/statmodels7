@@ -1,3 +1,21 @@
+# statmodels7 0.196.0
+
+* `cv()` reapplies to each fold the terms built on all the rows, as
+  `predict()` reapplies them to new data: the knots of a basis, the levels of
+  a factor and the scales of a standardized block come from the covariates of
+  every row, never from the response. A fold rebuilt them on its training
+  rows, and a held-out row past their range stopped the fit ("evaluation
+  points fall outside the basis interval", a smooth beside a lasso on
+  `gamlss.data::rent`).
+* The matrix that moves the mode, which the exact outer gradient reads,
+  leaves out the directions the model does not identify, as the criterion's
+  determinant does. A lasso codes every level of the first factor of its
+  formula, and two of its coefficients away from zero span the intercept:
+  the gradient came back missing, the search read it as zero, and the
+  smoothing parameters stayed at their start of 1 (rent, a gamma with
+  `s(Fl) + s(A) + lasso(~ B + H + L + loc)`; now 5446.2 and 121.92, where a
+  central difference of the criterion gives 5446.4 and 121.93).
+
 # statmodels7 0.195.0
 
 * An outer search chosen by `statmod()` that stops on the resolution rule

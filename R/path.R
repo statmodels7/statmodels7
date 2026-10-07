@@ -937,9 +937,13 @@ cv_bind_inputs <- function(spec, sub, i, n) {
 #' The path is run fold by fold, not point by point, so that each fit starts
 #' from the previous point's coefficients. That warm chain is the whole
 #' economy of a path
-#' cheaper than its length suggests. Each training fit rebuilds the design on
-#' its own rows: a term is re-evaluated in the data it is fitted to, so a basis
-#' or a set of contrasts is not carried over from rows the fit did not see.
+#' cheaper than its length suggests. Each fold reapplies to its rows the terms
+#' built on all the rows, as [predict.StatmodFit()] reapplies them to new
+#' data: the knots of a basis, the levels of a factor and the scales of a
+#' standardized block come from the covariates of every row, never from the
+#' response. Rebuilt on the training rows alone, a basis did not cover a held
+#' out row past their range, and the fold stopped the whole fit (a smooth of
+#' the year of construction beside a lasso on `gamlss.data::rent`).
 #'
 #' @param spec A [StatmodSpec()].
 #' @param data The data the fit was called on.
@@ -980,19 +984,26 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     # that is not a column there is not found at all
     train <- cv_bind_inputs(spec, data[keep, , drop = FALSE], keep, nrow(data))
     test <- cv_bind_inputs(spec, data[!keep, , drop = FALSE], !keep, nrow(data))
-    w <- if (is.null(weights)) NULL else weights[keep]
-    off <- if (is.null(offsets)) NULL else lapply(offsets, function(o) o[keep])
     # the design depends on the fold and not on the path, so it is built once
     # here rather than once per point. Measured, that is worth about 4 per cent
     # and not the most of it, which was the guess: at 200 observations and 20
     # columns a cross-validated path costs 0.88 seconds a fit and almost all of
     # it is the proximal iteration.
-    # the fold is rebuilt with the SAME linpar options: one that built a
-    # dense design where the fit built a sparse one would be paying for a
-    # storage the model did not ask for
-    ts <- tryCatch(statmod_spec(spec@formula, spec@distrib, train, w, off,
-                                linpar = spec@linpar),
-                   error = function(e) conditionMessage(e))
+    # THE FOLD REAPPLIES THE TERMS BUILT ON ALL THE ROWS (Giovanni,
+    # 2026-10-07), as predict() does: rebuilt on the training rows, a basis
+    # did not reach a held-out row past their range and statmod_respec() of
+    # the test rows stopped the whole fit. Only covariates enter a term's
+    # construction, so no response of the held-out rows reaches the training
+    # fit. The weights and the offsets are the fit's own, at these rows.
+    ts <- tryCatch({
+      s0 <- statmod_respec(spec, train)
+      S7::set_props(
+        s0,
+        weights = if (length(spec@weights) == length(keep)) spec@weights[keep]
+                  else rep(1, sum(keep)),
+        offsets = lapply(spec@offsets, function(o)
+          if (length(o) == length(keep)) o[keep] else o))
+    }, error = function(e) conditionMessage(e))
     # statmod_spec() builds a FRESH specification, so the thread count does
     # not travel with it as it does through statmod_respec(), which starts
     # from the one it is given: until 2026-08-21 a fold fell back to the
@@ -1014,7 +1025,10 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       # path would otherwise score NA everywhere and keep its starting value
       return(list(dev = dev_f, err = ts))
     }
-    td <- statmod_design(ts)
+    # the terms are reapplied when the design is built, so an input the fold
+    # cannot evaluate fails here, and is carried out as above
+    td <- tryCatch(statmod_design(ts), error = function(e) conditionMessage(e))
+    if (is.character(td)) return(list(dev = dev_f, err = td))
     cfgs <- inner_settings(inner_optimizer, ts@distrib)
     obj <- statmod_objective(ts, hypers[[1L]], td, cfgs$expected, cfgs$approx)
     warm <- statmod_start(ts, td, obj, NULL)
