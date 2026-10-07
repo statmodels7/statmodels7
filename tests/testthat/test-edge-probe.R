@@ -29,16 +29,28 @@ test_that("nested random effects reach the maximum of the REML criterion", {
   expect_identical(statmod_certificate(fit)$state, "converged")
 })
 
-test_that("without the probe the search stops at the edge", {
+test_that("a search started at the edge stays there without the probe", {
   skip_on_cran()
-  # the negative control: the case above reaches the maximum through the
-  # probe and not by its own path
+  # the negative control, started at the edge itself so that it does not
+  # depend on a data set's path running there: the default start reaches the
+  # maximum on its own since densify_small() (note/criterio-esterno.md)
   m <- machines_df()
-  testthat::local_mocked_bindings(edge_probe_hyper = function(...) NULL)
+  orig <- statmod_hyper_start
+  testthat::local_mocked_bindings(statmod_hyper_start = function(...) {
+    h <- orig(...)
+    h$mu[["random(~1 | Worker)"]][["sigma"]] <- exp(-9)
+    h
+  })
   fit <- statmod(score ~ Machine + random(~ 1 | Worker) +
                    random(~ 1 | Worker:Machine), distrib = G, data = m)
-  expect_lt(as.numeric(logLik(fit, type = "marginal")), -108)
-  expect_lt(hyper(fit)$estimate[1], 0.01)
+  expect_equal(hyper(fit)$estimate, c(4.781050, 3.729532), tolerance = 1e-4)
+  expect_equal(as.numeric(logLik(fit, type = "marginal")), -107.8438,
+               tolerance = 1e-6)
+  testthat::local_mocked_bindings(edge_probe_hyper = function(...) NULL)
+  fit0 <- statmod(score ~ Machine + random(~ 1 | Worker) +
+                    random(~ 1 | Worker:Machine), distrib = G, data = m)
+  expect_lt(as.numeric(logLik(fit0, type = "marginal")), -108)
+  expect_lt(hyper(fit0)$estimate[1], 0.01)
 })
 
 test_that("the probe returns the best point inside and nothing at an interior point", {
