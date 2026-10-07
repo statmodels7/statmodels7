@@ -4,14 +4,14 @@
 # derivative of the objective in a coefficient is not the block times the
 # score, and a fit built on that converges to the wrong point.
 
-sim_gas <- function(n, omega, alpha1, b1, sd = 1, seed = 21) {
+sim_gas <- function(n, omega, kappa1, b1, sd = 1, seed = 21) {
   set.seed(seed)
   f <- numeric(n)
   y <- numeric(n)
   s <- 0
   f0 <- omega / (1 - b1)
   for (t in seq_len(n)) {
-    f[t] <- omega + alpha1 * (if (t > 1) s else 0) +
+    f[t] <- omega + kappa1 * (if (t > 1) s else 0) +
       b1 * (if (t > 1) f[t - 1] else f0)
     y[t] <- f[t] + stats::rnorm(1, sd = sd)
     s <- (y[t] - f[t]) / sd^2
@@ -125,7 +125,7 @@ test_that("the gradient in the coefficients carries the filter's feedback", {
                        distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
   sst <- statmod_structural_state(des)
-  sst$zeta[[1L]] <- c(omega = 0.2, alpha1 = 0.3, pacf1 = 0.6)
+  sst$zeta[[1L]] <- c(omega = 0.2, kappa1 = 0.3, pacf1 = 0.6)
   cf <- list(mu = 0.8, sigma = 0.1)
 
   L <- function(v) {
@@ -155,7 +155,7 @@ test_that("the gradient in the term's own parameters is exact", {
   des <- statmod_design(spec)
   sst <- statmod_structural_state(des)
   cf <- list(mu = 0.8, sigma = 0.1)
-  nm <- c("omega", "alpha1", "pacf1")
+  nm <- c("omega", "kappa1", "pacf1")
   z0 <- c(0.2, 0.3, 0.6)
 
   L <- function(z) {
@@ -170,13 +170,13 @@ test_that("the gradient in the term's own parameters is exact", {
 })
 
 test_that("statmod recovers a score-driven model it simulated", {
-  truth <- c(omega = 0.3, alpha1 = 0.4, pacf1 = 0.7)
-  dd <- sim_gas(2000, truth[["omega"]], truth[["alpha1"]], truth[["pacf1"]])
+  truth <- c(omega = 0.3, kappa1 = 0.4, pacf1 = 0.7)
+  dd <- sim_gas(2000, truth[["omega"]], truth[["kappa1"]], truth[["pacf1"]])
   fit <- statmod(y ~ gas(p = 1, q = 1, time = t) - 1,
                  distributions7::gaussian1_distrib(), dd)
   expect_true(fit@converged)
   est <- fit@structural[[1L]]$parameter
-  expect_named(est, c("omega", "alpha1", "pacf1"))
+  expect_named(est, c("omega", "kappa1", "pacf1"))
   expect_equal(unname(est), unname(truth), tolerance = 0.15)
   expect_equal(exp(fit@coefficients$sigma), 1, tolerance = 0.1,
                ignore_attr = TRUE)
@@ -683,7 +683,7 @@ test_that("a filter is reported under the names its literature uses", {
   fit <- statmod(y ~ gas(p = 1, q = 1, time = t) - 1,
                  distributions7::gaussian1_distrib(), dd)
   tb <- statmod_structural_table(fit)
-  expect_identical(tb$name, c("omega", "alpha1", "phi1"))
+  expect_identical(tb$name, c("omega", "kappa1", "xi1"))
   expect_true(all(is.finite(tb$se)))
   # the persistence is reported as the COEFFICIENT, so it must agree with the
   # chart carried through Levinson-Durbin rather than with the free value
@@ -693,8 +693,8 @@ test_that("a filter is reported under the names its literature uses", {
   expect_equal(tb$estimate, unname(c(0.3, 0.4, 0.7)), tolerance = 0.15)
   # and the interval respects the region: |beta| < 1 for a stationary AR(1)
   expect_true(tb$lower[[3L]] > -1 && tb$upper[[3L]] < 1)
-  expect_output(print(summary(fit)), "phi1")
-  expect_output(print(summary(fit)), "alpha1")
+  expect_output(print(summary(fit)), "xi1")
+  expect_output(print(summary(fit)), "kappa1")
 
   # above q = 1 the coefficient is a function of the WHOLE chart, so the
   # reported quantity and the free coordinate are different numbers and the
@@ -704,7 +704,7 @@ test_that("a filter is reported under the names its literature uses", {
   f2 <- statmod(y ~ gas(p = 1, q = 2, time = t) - 1,
                 distributions7::gaussian1_distrib(), dd2)
   t2 <- statmod_structural_table(f2)
-  expect_identical(t2$name, c("omega", "alpha1", "phi1", "phi2"))
+  expect_identical(t2$name, c("omega", "kappa1", "xi1", "xi2"))
   z2 <- f2@structural[[1L]]$unconstrained
   rho <- linkfunctions7::linkinv(linkfunctions7::rhobit_link(),
                                  z2[c("pacf1", "pacf2")])
@@ -716,7 +716,7 @@ test_that("a filter is reported under the names its literature uses", {
 # A panel: each group runs the same filter with a departure of its own,
 # written as one development per parameter, and the random intercepts'
 # ridges are what identify the departures.
-sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) {
+sim_panel <- function(m, n, omega, kappa1, b1, spread = 0.15, sd = 1, seed = 3) {
   set.seed(seed)
   out <- list()
   for (gi in seq_len(m)) {
@@ -724,7 +724,7 @@ sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) 
     f <- numeric(n); y <- numeric(n); s <- 0
     f0 <- om / (1 - b1)
     for (t in seq_len(n)) {
-      f[t] <- om + alpha1 * (if (t > 1) s else 0) + b1 * (if (t > 1) f[t - 1] else f0)
+      f[t] <- om + kappa1 * (if (t > 1) s else 0) + b1 * (if (t > 1) f[t - 1] else f0)
       y[t] <- f[t] + stats::rnorm(1, sd = sd)
       s <- (y[t] - f[t]) / sd^2
     }
@@ -734,7 +734,7 @@ sim_panel <- function(m, n, omega, alpha1, b1, spread = 0.15, sd = 1, seed = 3) 
 }
 
 panel_fml <- y ~ gas(p = 1, q = 1, omega ~ random(~1 | id),
-                     alpha1 ~ random(~1 | id), pacf1 ~ random(~1 | id),
+                     kappa1 ~ random(~1 | id), pacf1 ~ random(~1 | id),
                      by = id, time = t) - 1
 
 # the criterion at a given hyperparameter, with the mode refitted there, which

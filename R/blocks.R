@@ -909,7 +909,7 @@ class_space <- function(cl) {
 #' term's own parameters, which contribute no design column and live in the
 #' design's structural state. The walk is the same and the positions it
 #' composes are the same numbers -- measured, a labelled effect inside
-#' `gas(alpha1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly the
+#' `gas(kappa1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly the
 #' `cols` the unlabelled sub-term's own penalty is read at -- so what a piece
 #' records is which vector they index rather than a different arithmetic.
 #'

@@ -28,8 +28,8 @@ test_that("a panel whose level is developed is continued past its series", {
   # then the recursion with the score at its mean of zero
   cf <- coef(fit)$mu
   s2 <- exp(2 * coef(fit)$sigma[["(Intercept)"]])
-  a <- cf[["gas.alpha1"]]
-  b <- cf[["gas.phi1"]]
+  a <- cf[["gas.kappa1"]]
+  b <- cf[["gas.xi1"]]
   w <- cf[["gas.omega.(Intercept)"]] + cf[["gas.omega.random.2"]]
   d2 <- dd[dd$id == 2L, ]
   f <- w / (1 - b)

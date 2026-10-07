@@ -80,8 +80,8 @@ test_that("par holds an equation, a coefficient, a group or a parameter", {
 
   # a structural parameter, on the scale a reader knows
   d <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t), gaussian1_distrib(),
-                data.frame(t = 1:60), par = list(alpha1 = 0.35, sigma = 0))
-  expect_equal(d$structural$alpha1, 0.35)
+                data.frame(t = 1:60), par = list(kappa1 = 0.35, sigma = 0))
+  expect_equal(d$structural$kappa1, 0.35)
   # and its neighbours are still drawn
   expect_false(d$structural$omega == 0)
 })

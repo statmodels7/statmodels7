@@ -590,7 +590,7 @@ test_that("a label inside a filter is addressed in the term's own parameters", {
   d2 <- data.frame(id = factor(rep(seq_len(m), each = ni)))
   d2$y <- stats::rnorm(m * ni)
   spec <- statmod_spec(y ~ gas(p = 1, q = 1,
-                               alpha1 ~ 1 + random(~ 1 | u | id), by = id),
+                               kappa1 ~ 1 + random(~ 1 | u | id), by = id),
                        distributions7::gaussian1_distrib(), d2)
   des <- statmod_design(spec)
   u <- Filter(function(z) !is.null(z$pieces), statmod_penalized(spec, des))
@@ -602,7 +602,7 @@ test_that("a label inside a filter is addressed in the term's own parameters", {
   expect_true(u$structural)
   expect_null(u$index)
   nm <- names(statmod_structural_state(des)$zeta[[u$term]])
-  expect_identical(nm[u$cols], paste0("alpha1.random.", seq_len(m)))
+  expect_identical(nm[u$cols], paste0("kappa1.random.", seq_len(m)))
   # and `term` names the structural term rather than the class, because that
   # is what every structural consumer looks its zeta up by
   expect_true(u$term %in% names(spec@terms$mu))
@@ -649,7 +649,7 @@ test_that("a class split between a filter and an ordinary term is joint", {
   # the variance already assemble
   spec <- statmod_spec(
     y ~ random(~ 1 | u | id) +
-      gas(p = 1, q = 1, alpha1 ~ 1 + random(~ 1 | u | id), by = id),
+      gas(p = 1, q = 1, kappa1 ~ 1 + random(~ 1 | u | id), by = id),
     distributions7::gaussian1_distrib(), d2)
   des <- statmod_design(spec)
   u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))

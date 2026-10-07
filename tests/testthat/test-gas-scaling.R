@@ -118,8 +118,8 @@ test_that("a scaled Poisson filter on the identity link is INGARCH(1, 1)", {
   # lambda_{t+1} = c (1 - b) + a y_t + (b - a) lambda_t, the intercept c
   # being the level the filter fluctuates around
   c0 <- cf[["(Intercept)"]]
-  a <- cf[["gas.alpha1"]]
-  b <- cf[["gas.phi1"]]
+  a <- cf[["gas.kappa1"]]
+  b <- cf[["gas.xi1"]]
   rec <- numeric(nrow(disc))
   rec[1] <- c0
   for (t in 2:nrow(disc)) {
@@ -136,9 +136,9 @@ test_that("a constant information only rescales the loading", {
                 distrib = gaussian1_distrib(), data = nile)
   expect_equal(as.numeric(logLik(f1)), as.numeric(logLik(f0)), tolerance = 1e-6)
   s2 <- exp(2 * coef(f0)$sigma[["(Intercept)"]])
-  expect_equal(coef(f1)$mu[["gas.alpha1"]], coef(f0)$mu[["gas.alpha1"]] / s2,
+  expect_equal(coef(f1)$mu[["gas.kappa1"]], coef(f0)$mu[["gas.kappa1"]] / s2,
                tolerance = 1e-4)
-  expect_equal(coef(f1)$mu[["gas.phi1"]], coef(f0)$mu[["gas.phi1"]],
+  expect_equal(coef(f1)$mu[["gas.xi1"]], coef(f0)$mu[["gas.xi1"]],
                tolerance = 1e-5)
 })
 
@@ -215,7 +215,7 @@ test_that("the outer gradient and Hessian are exact for a scaled score", {
   skip_on_cran()
   d <- sc_panel()
   fit <- statmod(y ~ gas(p = 1, q = 1, by = g, time = t, scaling = 1,
-                         alpha1 ~ 1 + random(~ 1 | g)),
+                         kappa1 ~ 1 + random(~ 1 | g)),
                  poisson_distrib(), d, outer_criterion = reml())
   p <- sc_parts(fit)
   o <- sc_outer(p)
@@ -379,9 +379,9 @@ test_that("a scaled filter is exact with its parameters developed", {
   dp <- sc_sub_panel()
   forms <- list(
     y ~ 0 + x + gas(p = 1, q = 1, by = id, time = t, scaling = 1,
-                    omega ~ z, alpha1 ~ z, pacf1 ~ z),
+                    omega ~ z, kappa1 ~ z, pacf1 ~ z),
     y ~ x + gas(p = 1, q = 1, by = id, time = t, scaling = 0.5,
-                alpha1 ~ s(z, bspline_smooth(k = 6))),
+                kappa1 ~ s(z, bspline_smooth(k = 6))),
     y ~ x + gas(p = 1, q = 1, by = id, time = t, scaling = 1,
                 pacf1 ~ random(~ 1 | id)))
   for (fm in forms) {

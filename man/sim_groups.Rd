@@ -17,7 +17,7 @@ One entry per scalar parameter and one per family of names that share a
 stem, in the order the names arrive.
 }
 \details{
-A structural term's parameters are \code{omega}, \code{alpha1} and the like where
+A structural term's parameters are \code{omega}, \code{kappa1} and the like where
 nothing is developed, and \code{omega.(Intercept)}, \code{omega.random.1} and so on
 where something is. The first are read one by one and the second are a
 block, so the printed form is grouped at the first dot, the scalars coming

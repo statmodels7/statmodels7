@@ -15,8 +15,8 @@ test_that("a score loading has a second start on the scale of its score", {
   info <- predictor_information(spec)
   st <- statmod_structural_state(statmod_design(spec))
   # the first start is the term's own, the second is 0.1/I
-  expect_equal(exp(st$zeta[[1L]][["alpha1"]]), 0.1, tolerance = 1e-12)
-  expect_equal(exp(st$info_start[[1L]][["alpha1"]]), 0.1 / info[["mu"]],
+  expect_equal(exp(st$zeta[[1L]][["kappa1"]]), 0.1, tolerance = 1e-12)
+  expect_equal(exp(st$info_start[[1L]][["kappa1"]]), 0.1 / info[["mu"]],
                tolerance = 1e-12)
   fit <- statmod(share ~ law + gas(p = 1, q = 1, time = month),
                  distributions7::beta1_distrib(), sb)
@@ -46,7 +46,7 @@ test_that("a free level fits the same model as the intercept spelling", {
                  distrib = distributions7::gaussian1_distrib(), data = nile)
     expect_equal(as.numeric(logLik(b)), as.numeric(logLik(a)), tolerance = 1e-8)
     expect_identical(statmod_certificate(b)$state, "converged")
-    ph <- coef(a)$mu[grep("phi", names(coef(a)$mu))]
+    ph <- coef(a)$mu[grep("xi", names(coef(a)$mu))]
     expect_equal(coef(b)$mu[["gas.omega"]],
                  coef(a)$mu[["(Intercept)"]] * (1 - sum(ph)), tolerance = 1e-5)
   }

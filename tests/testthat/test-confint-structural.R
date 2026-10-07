@@ -45,8 +45,8 @@ test_that("a loading far up its log link is an estimate, not an edge", {
   fit <- statmod(y ~ gas(1, 1), distributions7::gaussian1_distrib(),
                  data.frame(y = y))
   z <- fit@structural[[1]]$unconstrained
-  expect_gt(z[["alpha1"]], 8)
+  expect_gt(z[["kappa1"]], 8)
   ci <- confint(fit)
-  expect_true(is.finite(ci["mu:gas.alpha1", "se"]))
-  expect_true(ci["mu:gas.alpha1", "lower"] > 0)
+  expect_true(is.finite(ci["mu:gas.kappa1", "se"]))
+  expect_true(ci["mu:gas.kappa1", "lower"] > 0)
 })

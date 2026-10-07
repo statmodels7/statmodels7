@@ -90,7 +90,7 @@ sh_grad <- function(fit, p) {
 test_that("the structural Hessian converges O(h^2) onto the exact gradient", {
   skip_on_cran()
   d <- sh_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- sh_parts(fit)
   expect_gt(length(attr(p$design, "structural")), 0L)
@@ -137,7 +137,7 @@ test_that("the off-diagonal of the structural Hessian is exact too", {
   # wrong one is invisible, which is why this case exists beside the last.
   d <- sh_panel2()
   fit <- statmod(y ~ gas(p = 1, q = 1, by = g, omega ~ 1 + random(~ 1 | g),
-                         alpha1 ~ 1 + random(~ 1 | g)),
+                         kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- sh_parts(fit)
   expect_identical(nrow(p$idx), 2L)
@@ -186,7 +186,7 @@ test_that("the assembled joint derivative and its trace are one quantity", {
   # places every term where the trace expects it -- and it is an identity
   # rather than a tolerance because both are exact.
   d <- sh_panel(seed = 12L, m = 5L, ni = 18L)
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- sh_parts(fit)
   jd <- joint_design_rows(p$spec, p$design, p$coef)
@@ -211,7 +211,7 @@ test_that("the second-order trace is symmetric in its two directions", {
   # swap maps each onto another, so a term placed on the wrong direction
   # breaks it.
   d <- sh_panel(seed = 12L, m = 5L, ni = 18L)
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- sh_parts(fit)
   jd <- joint_design_rows(p$spec, p$design, p$coef)
@@ -258,7 +258,7 @@ test_that("a filter's hyperparameter keeps its standard error", {
   # hyperparameter estimated by a marginal criterion, which used to come
   # from the stencil and now comes from the assembly
   d <- sh_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- sh_parts(fit)
   V <- statmod_hyper_vcov(p$spec, p$design, p$coef, p$hyper, p$method,

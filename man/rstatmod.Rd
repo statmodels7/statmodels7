@@ -193,7 +193,7 @@ filter and an equation at once is in neither vector on its own.
 \item a distribution parameter, \code{mu}, which is that whole equation;
 \item one of its coefficients or a group of them, \code{mu.(Intercept)} or
 \code{mu.random}, a group being a name the members extend at a dot;
-\item a structural term's own parameter, \code{alpha1}, or a group of those,
+\item a structural term's own parameter, \code{kappa1}, or a group of those,
 \code{omega.random}.
 }
 
@@ -211,8 +211,8 @@ A structural parameter is named on the scale a reader knows, which is
 logarithm, a persistence the partial autocorrelation its chart carries.
 A parameter a subformula DEVELOPS is different, and it has to be: its
 coordinates are the coefficients of that development, which act on the
-unconstrained scale of the parameter's own chart, so \code{alpha1} is a loading
-and \code{alpha1.random.3} is a group's departure on the log scale that
+unconstrained scale of the parameter's own chart, so \code{kappa1} is a loading
+and \code{kappa1.random.3} is a group's departure on the log scale that
 loading rides. That is what keeps every group's loading positive whatever
 the departure is.
 }
@@ -280,7 +280,7 @@ vapply(study$data, function(d) coef(statmod(
 sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
                  distributions7::gaussian1_distrib(),
                  data.frame(t = 1:100),
-                 par = list(sigma = 0, omega = 0.4, alpha1 = 0.3,
+                 par = list(sigma = 0, omega = 0.4, kappa1 = 0.3,
                             pacf1 = 0.6))
 head(sim5$latent, 3)
 

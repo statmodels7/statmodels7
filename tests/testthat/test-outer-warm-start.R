@@ -13,7 +13,7 @@ test_that("the reported criterion is not worse than the best the search saw", {
   set.seed(3)
   m <- 12; ni <- 40
   pan <- data.frame(g = factor(rep(seq_len(m), each = ni)), x = runif(m * ni))
-  form <- y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~1 | g))
+  form <- y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~1 | g))
   G <- distributions7::gaussian1_distrib()
   set.seed(13)
   d <- rstatmod(form, G, pan)$data

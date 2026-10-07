@@ -127,7 +127,7 @@ test_that("beside a structural term a moving penalty keeps the stencil", {
   d$y <- stats::rnorm(m * ni) + stats::rnorm(m, 0, 0.5)[as.integer(d$g)]
   spec <- statmod_spec(y ~ random(~ 1 | g, distrib = distributions7::fixed(
     distributions7::student_t1_distrib(), mu = 0)) +
-      gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+      gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
     distributions7::gaussian1_distrib(), d)
   design <- statmod_design(spec)
   idx <- outer_hyper_index(spec, statmod_blocks(spec, design))

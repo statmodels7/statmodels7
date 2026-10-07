@@ -1,3 +1,10 @@
+# statmodels7 0.192.0
+
+* The loadings of a `gas()` term are `gas.kappa1`, ... and its autoregressive
+  coefficients `gas.xi1`, ... (modelterms7 0.95.0), where they were
+  `gas.alpha1`, ... and `gas.beta1`, ...; the keys of `rstatmod(par = )` and
+  the subformulas follow (`kappa1 ~ x`).
+
 # statmodels7 0.191.0
 
 * `reml()` and `ml()` take `hessian = "auto"` by default, which `statmod()`
@@ -21,8 +28,6 @@
   fitted predictor, where it was rejected, and on a `gas()` model the
   standard errors are the fitted ones, where they read the intercept's row
   alone.
-* The autoregressive coefficients of a `gas()` term are reported as
-  `gas.phi1`, ... (modelterms7 0.94.1), where they were `gas.beta1`, ...
 * The convergence reading of the inner fit no longer warns where the median
   curvature of an equation is negative.
 

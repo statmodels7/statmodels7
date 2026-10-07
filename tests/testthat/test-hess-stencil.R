@@ -232,7 +232,7 @@ test_that("the stencil refuses where the curvature is not resolved", {
   }))
   d <- data.frame(g = g, y = y)
   fit <- statmod(y ~ random(~ 1 | u | g) +
-                   gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | u | g)),
+                   gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | u | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   p <- stencil_parts(fit)
   # the premise of the case, asserted so that a fit landing elsewhere skips

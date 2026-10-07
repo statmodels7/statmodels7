@@ -2080,7 +2080,7 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
       # the last bit, and a fit started from either can end elsewhere
       d_sc <- filter_scaling(tm)
       a_start <- if (d_sc == 0) 0.1 / I else 0.1 * I^(d_sc - 1)
-      for (a in grep("^alpha[0-9]+$", modelterms7::term_params(tm),
+      for (a in grep("^kappa[0-9]+$", modelterms7::term_params(tm),
                      value = TRUE)) {
         lk <- lks[[a]]
         if (is.null(lk)) lk <- linkfunctions7::log_link()

@@ -91,12 +91,12 @@ test_that("coef reports a structural term's parameters", {
   b <- coef(fit, readable = FALSE)$mu
   # a model whose whole predictor is a filter used to answer numeric(0)
   expect_identical(length(a), 3L)
-  expect_true(all(endsWith(names(a), c("omega", "alpha1", "phi1"))))
+  expect_true(all(endsWith(names(a), c("omega", "kappa1", "xi1"))))
   # the persistence rides a partial autocorrelation and is REPORTED as the
   # autoregressive coefficient; the loading rides a log
   expect_true(any(endsWith(names(b), "pacf1")))
-  expect_equal(unname(a[endsWith(names(a), "alpha1")]),
-               exp(unname(b[endsWith(names(b), "alpha1")])))
+  expect_equal(unname(a[endsWith(names(a), "kappa1")]),
+               exp(unname(b[endsWith(names(b), "kappa1")])))
 })
 
 test_that("a developed parameter keeps its coefficients under either reading", {
@@ -132,16 +132,16 @@ test_that("vcov and confint report the quantities, and agree with coef", {
   # the delta method really moves the variance: the loading's is its own
   # scale's, not its coordinate's
   Vr <- vcov(fit, readable = FALSE)
-  i <- grep("alpha1$", rownames(V))
-  j <- grep("alpha1$", rownames(Vr))
-  al <- ci$estimate[grep("alpha1$", rownames(ci))]
+  i <- grep("kappa1$", rownames(V))
+  j <- grep("kappa1$", rownames(Vr))
+  al <- ci$estimate[grep("kappa1$", rownames(ci))]
   expect_equal(sqrt(V[i, i]), al * sqrt(Vr[j, j]), tolerance = 1e-6)
 })
 
 test_that("an interval is built on the scale that keeps its quantity in its set", {
   fit <- fit_gas(q = 1L)
   ci <- confint(fit)
-  r <- ci[grep("alpha1$", rownames(ci)), , drop = FALSE]
+  r <- ci[grep("kappa1$", rownames(ci)), , drop = FALSE]
   # a loading is positive and rides a log, so its interval is asymmetric and
   # its lower end cannot be negative
   expect_gt(r$lower, 0)
@@ -438,7 +438,7 @@ test_that("a forecast decays towards the filter's stationary level", {
                                    statmod_structural_state(
                                      statmod_design(fit@spec))$zeta[[1L]])
   om <- rd$value[[which(rd$name == "omega")]]
-  bt <- rd$value[[which(rd$name == "phi1")]]
+  bt <- rd$value[[which(rd$name == "xi1")]]
   expect_equal(fc[[40L]], om / (1 - bt), tolerance = 1e-6)
   expect_true(all(abs(diff(fc)) <= abs(diff(fc))[[1L]] + 1e-12))
 })

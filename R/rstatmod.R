@@ -128,7 +128,7 @@ NULL
 #' - a distribution parameter, `mu`, which is that whole equation;
 #' - one of its coefficients or a group of them, `mu.(Intercept)` or
 #'   `mu.random`, a group being a name the members extend at a dot;
-#' - a structural term's own parameter, `alpha1`, or a group of those,
+#' - a structural term's own parameter, `kappa1`, or a group of those,
 #'   `omega.random`.
 #'
 #' A value is a vector of that key's own length, a single number used for all
@@ -145,8 +145,8 @@ NULL
 #' logarithm, a persistence the partial autocorrelation its chart carries.
 #' A parameter a subformula DEVELOPS is different, and it has to be: its
 #' coordinates are the coefficients of that development, which act on the
-#' unconstrained scale of the parameter's own chart, so `alpha1` is a loading
-#' and `alpha1.random.3` is a group's departure on the log scale that
+#' unconstrained scale of the parameter's own chart, so `kappa1` is a loading
+#' and `kappa1.random.3` is a group's departure on the log scale that
 #' loading rides. That is what keeps every group's loading positive whatever
 #' the departure is.
 #'
@@ -260,7 +260,7 @@ NULL
 #' sim5 <- rstatmod(y ~ 0 + gas(p = 1, q = 1, time = t),
 #'                  distributions7::gaussian1_distrib(),
 #'                  data.frame(t = 1:100),
-#'                  par = list(sigma = 0, omega = 0.4, alpha1 = 0.3,
+#'                  par = list(sigma = 0, omega = 0.4, kappa1 = 0.3,
 #'                             pacf1 = 0.6))
 #' head(sim5$latent, 3)
 #'
@@ -538,7 +538,7 @@ sim_values <- function(v) {
 #' stem, in the order the names arrive.
 #'
 #' @details
-#' A structural term's parameters are `omega`, `alpha1` and the like where
+#' A structural term's parameters are `omega`, `kappa1` and the like where
 #' nothing is developed, and `omega.(Intercept)`, `omega.random.1` and so on
 #' where something is. The first are read one by one and the second are a
 #' block, so the printed form is grouped at the first dot, the scalars coming

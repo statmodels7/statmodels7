@@ -33,7 +33,7 @@ edf_panel <- function(m = 10L, ni = 40L, seed = 31L) {
 test_that("a penalty over a filter's own parameters is priced at all", {
   skip_on_cran()
   d <- edf_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   dz <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
@@ -76,7 +76,7 @@ test_that("the route it replaced returns exactly zero on the same fit", {
   # test above fail and this one pass with the two agreeing, which is what
   # says the checks discriminate.
   d <- edf_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   dz <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
@@ -103,7 +103,7 @@ test_that("the joint correction is the two matrices the criterion reads", {
   # contraction here from those two must reproduce what the function returns,
   # which is what says it reads them rather than a second copy.
   d <- edf_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   dz <- statmod_design(fit@spec)
   idx <- outer_hyper_index(fit@spec, statmod_blocks(fit@spec, dz))
@@ -209,7 +209,7 @@ test_that("the correction is the trace vcov()'s two matrices already imply", {
   # 0.114.0 while the correction passed joint = FALSE, so one consumer of
   # hyper_mode_cross() counted the movement and the other counted zero.
   d <- edf_panel()
-  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+  fit <- statmod(y ~ gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
                  gaussian1_distrib(), d, outer_criterion = reml())
   dz <- statmod_design(fit@spec)
   K <- as.matrix(statmod_full_information(fit@spec, fit@coefficients, dz))

@@ -37,7 +37,7 @@ fit_panel <- function(form, dd) {
 test_that("an unpenalized parameter of a filter still costs exactly one", {
   dd <- panel()
   fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
-                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+                           kappa1 ~ 1 + random(~ 1 | g)), dd)
   design <- statmod_design(fit@spec)
   js <- joint_smoother_diag(fit@spec, fit@coefficients, design, fit@hyper)
   expect_false(is.null(js))
@@ -66,7 +66,7 @@ test_that("an unpenalized parameter of a filter still costs exactly one", {
 test_that("a structural term's count is the joint trace over its parameters", {
   dd <- panel()
   fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
-                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+                           kappa1 ~ 1 + random(~ 1 | g)), dd)
   design <- statmod_design(fit@spec)
   sst <- statmod_structural_state(design)
   key <- names(sst$zeta)[[1L]]
@@ -142,7 +142,7 @@ test_that("a term that mixes over states keeps one apiece, and is right to", {
 test_that("a class counts the coordinates it collects, not its members", {
   dd <- panel()
   fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
-                           alpha1 ~ 1 + random(~ 1 | u | g),
+                           kappa1 ~ 1 + random(~ 1 | u | g),
                            omega ~ 1 + random(~ 1 | u | g)), dd)
   s <- summary(fit)
   expect_length(s@classes, 1L)
@@ -179,7 +179,7 @@ test_that("a count that cannot be read is missing, not the old rule", {
   # depended on one would be a test of the sample.
   dd <- panel()
   fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
-                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+                           kappa1 ~ 1 + random(~ 1 | g)), dd)
   design <- statmod_design(fit@spec)
   orig <- joint_smoother_diag
   on.exit(utils::assignInNamespace("joint_smoother_diag", orig,
@@ -207,7 +207,7 @@ test_that("a count that cannot be read is missing, not the old rule", {
   expect_true(is.na(row_bad))
   # and it is NOT the count of the term's free parameters, which is what the
   # rule it replaces returned
-  zn <- modelterms7::term_params(fit@spec@terms$mu[["gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~1 | g))"]])
+  zn <- modelterms7::term_params(fit@spec@terms$mu[["gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~1 | g))"]])
   expect_false(isTRUE(all.equal(row_bad, as.numeric(length(zn) - 1L))))
   # the ordinary rows still say what they can
   expect_true(all(is.finite(bad$edf[bad$term == "linpar"])))
@@ -222,7 +222,7 @@ test_that("logLik's fallback for a missing count is an upper bound", {
   # measured, a filter carrying eighteen free parameters reported a df of 2.
   dd <- panel()
   fit <- fit_panel(y ~ gas(p = 1, q = 1, by = g,
-                           alpha1 ~ 1 + random(~ 1 | g)), dd)
+                           kappa1 ~ 1 + random(~ 1 | g)), dd)
   nm <- fit@edf$term[fit@edf$term != "linpar"]
   expect_length(nm, 1L)
   expect_identical(fit@edf$coefficients[fit@edf$term == nm], 0L)

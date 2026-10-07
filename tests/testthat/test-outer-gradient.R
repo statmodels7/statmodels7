@@ -477,7 +477,7 @@ test_that("the gradient reaches a covariance class inside a filter", {
   dp <- sim_gas_panel(11, 8L, 30L)
   form <- y ~ 0 + gas(p = 1, q = 1, by = id, time = t,
                       omega ~ 1 + random(~ 1 | u | id),
-                      alpha1 ~ 1 + random(~ 1 | u | id))
+                      kappa1 ~ 1 + random(~ 1 | u | id))
   h <- struct_harness(form, dp, reml(hessian = "observed"))
   expect_identical(nrow(h$idx), 3L)
   expect_true(h$fit0@converged)

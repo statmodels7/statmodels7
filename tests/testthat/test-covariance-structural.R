@@ -36,11 +36,11 @@ test_that("a class of one structural member is the unlabelled fit exactly", {
   # the term's parameter vector.
   dd <- panel()
   one <- statmod(y ~ gas(p = 1, q = 1, by = g,
-                         alpha1 ~ 1 + random(~ 1 | u | g)),
+                         kappa1 ~ 1 + random(~ 1 | u | g)),
                  distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
   bare <- statmod(y ~ gas(p = 1, q = 1, by = g,
-                          alpha1 ~ 1 + random(~ 1 | g)),
+                          kappa1 ~ 1 + random(~ 1 | g)),
                   distributions7::gaussian1_distrib(), dd,
                   outer_criterion = reml())
   expect_equal(as.numeric(stats::logLik(one)),
@@ -60,9 +60,9 @@ test_that("the penalty a one-member class builds is the member's own", {
   # failure there says which half moved
   dd <- panel()
   bare <- modelterms7::term_build(
-    modelterms7::gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)), dd)
+    modelterms7::gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)), dd)
   lab <- modelterms7::term_build(
-    modelterms7::gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | u | g)),
+    modelterms7::gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | u | g)),
     dd)
   # a LABELLED sub-term declares no penalty of its own: the class carries it
   expect_length(modelterms7::term_penalties(lab), 0L)
@@ -89,7 +89,7 @@ test_that("two developed parameters of one filter share a covariance", {
   # under both starting rules. Seed 7 converges at a correlation of 0.34.
   dd <- panel(seed = 7L)
   fit <- statmod(y ~ gas(p = 1, q = 1, by = g,
-                         alpha1 ~ 1 + random(~ 1 | u | g),
+                         kappa1 ~ 1 + random(~ 1 | u | g),
                          omega ~ 1 + random(~ 1 | u | g)),
                  distributions7::gaussian1_distrib(), dd,
                  outer_criterion = reml())
@@ -110,7 +110,7 @@ test_that("two developed parameters of one filter share a covariance", {
   # for the equation alone: both are effects inside one term of `mu`
   cd <- class_coords(u)
   expect_identical(cd$column,
-                   c("omega:(Intercept)", "alpha1:(Intercept)"))
+                   c("omega:(Intercept)", "kappa1:(Intercept)"))
   s <- summary(fit)
   expect_length(s@classes, 1L)
   # the class's own count is the term's, taken ONCE: both members are
@@ -127,7 +127,7 @@ test_that("two classes in one filter accumulate into one vector", {
   dd <- panel(m = 8L, ni = 20L)
   spec <- statmod_spec(y ~ 0 + gas(p = 1, q = 1, by = g,
                                    omega ~ 1 + random(~ 1 | u | g),
-                                   alpha1 ~ 1 + random(~ 1 | v | g)),
+                                   kappa1 ~ 1 + random(~ 1 | v | g)),
                        distributions7::gaussian1_distrib(), dd)
   des <- statmod_design(spec)
   us <- Filter(function(z) !is.null(z$pieces), statmod_penalized(spec, des))
@@ -208,7 +208,7 @@ mixed_panel <- function(seed = 77L, m = 8L, ni = 30L, rho = 0) {
 }
 
 mixed_formula <- y ~ random(~ 1 | u | g) +
-  gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | u | g))
+  gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | u | g))
 
 test_that("a mixed class is addressed in the joint vector, interleaved", {
   dd <- mixed_panel()
@@ -329,7 +329,7 @@ test_that("at zero correlation the mixed model IS the independent one", {
     hy
   })
   ind <- crit(y ~ random(~ 1 | g) +
-                gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~ 1 | g)),
+                gas(p = 1, q = 1, by = g, kappa1 ~ 1 + random(~ 1 | g)),
               function(hy, sp) {
                 for (u in statmod_penalized(sp, statmod_design(sp))) {
                   hy[[u$param]][[u$key]][["sigma"]] <-

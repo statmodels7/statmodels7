@@ -1636,7 +1636,7 @@ statmod_structural_table <- function(fit, level = 0.95) {
     free <- setdiff(nm, held)
     # What is reported is what the TERM says it reports, which is not always
     # the coordinate it was estimated on: a score-driven persistence rides a
-    # partial autocorrelation, and the literature's phi_j is the
+    # partial autocorrelation, and the literature's xi_j is the
     # autoregressive coefficient, a function of the whole chart. The Jacobian
     # comes with it, so the standard error is the delta method over the JOINT
     # variance rather than one entry of its diagonal -- above q = 1 a
@@ -1740,7 +1740,7 @@ structural_edge_rows <- function(tm, zeta, nm, edge = 8) {
   lk <- tryCatch(modelterms7::term_links(tm), error = function(e) list())
   # ON THE SIDE WHERE THE CHART HAS A BOUND. A log link saturates towards
   # zero and not towards infinity, so a loading at a free value of 8.88 (a
-  # gas() on the Nile flows, alpha1 = 7188 in units of a variance) is an
+  # gas() on the Nile flows, kappa1 = 7188 in units of a variance) is an
   # ordinary estimate. A coordinate whose link is the identity and which is
   # still charted is one whose chart lies elsewhere (the log-ratios of a
   # regime chain), and is bounded on both sides.

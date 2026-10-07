@@ -42,7 +42,7 @@ test_that("a developed gas level is fitted end to end", {
   # the simulation drives the level with the RAW residual while the model's
   # score is (y - f)/sigma^2, so the loading the model estimates is the
   # simulated one times sigma^2 = 0.25
-  expect_equal(unname(exp(zs[["alpha1"]])), 0.3 * 0.25, tolerance = 0.35)
+  expect_equal(unname(exp(zs[["kappa1"]])), 0.3 * 0.25, tolerance = 0.35)
   expect_equal(
     unname(linkfunctions7::linkinv(linkfunctions7::rhobit_link(),
                                    zs[["pacf1"]])), 0.6, tolerance = 0.2)
