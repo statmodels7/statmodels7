@@ -1,6 +1,6 @@
 Package: statmodels7
 Title: The S7 Toolkit for Statistical Modeling
-Version: 0.198.1
+Version: 0.198.2
 Authors@R:
     person("Giovanni", "Tinervia", , "giovannitinervia9@gmail.com", role = c("aut", "cre"))
 Description: Fits distributional regression models, and installs and attaches
@@ -46,12 +46,14 @@ LinkingTo:
 SystemRequirements: GNU make
 Suggests:
     glmnet,
+    MASS,
     mgcv,
     ncvreg,
     numDeriv,
     pak,
     pkgdown,
     rmarkdown,
+    segmented,
     testthat (>= 3.0.0),
     knitr
 VignetteBuilder: knitr

@@ -1,3 +1,8 @@
+# statmodels7 0.198.2
+
+* `MASS` and `segmented` are declared in `Suggests`: two test files load data
+  sets from them, which `R CMD check --as-cran` reports as undeclared.
+
 # statmodels7 0.198.1
 
 * A ridge is read only at a maximum: where the equilibrated outer curvature
