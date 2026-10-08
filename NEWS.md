@@ -1,3 +1,21 @@
+# statmodels7 0.198.0
+
+* `statmod_certificate()` reads the flat directions of the outer curvature
+  as well as its flat coordinates. A direction along which several
+  coordinates move with the criterion unchanged is found on the curvature
+  equilibrated to a unit diagonal, whose eigenvalue there is at most `flat`;
+  it is named in `boundary` and in the new field `ridge`, and where what it
+  would buy alone is within `tol` it leaves the verdict and the state is
+  `"boundary"`. On a Burr XII model whose shape runs to its Weibull limit in
+  one level of a factor the state was `"unknown"` or `"converged"` on the
+  sign of an eigenvalue of 2e-7; it is now `"boundary"` on both, with the
+  change of that level named. Over the reference battery the smallest such
+  eigenvalue is 0.375, and no state moves.
+* `summary()` reports no standard error, interval or test for the
+  coefficients that move along such a direction: those the criterion
+  estimated and those the variance matrix moves with them, and a note names
+  the direction.
+
 # statmodels7 0.197.0
 
 * Where `iwls(hessian = "auto")` is settled on the observed information with

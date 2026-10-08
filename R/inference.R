@@ -2508,6 +2508,34 @@ summary.StatmodFit <- function(object, level = 0.95,
   V <- catch_frozen(tryCatch(vcov(object, readable = FALSE, type = type,
                                   expected = expected, approx = approx, ...),
                              error = function(e) NULL))
+  # A RIDGE OF THE OUTER CRITERION costs every coefficient that moves along it
+  # its standard error, its interval and its test: the criterion does not
+  # change along the direction, so the variance there describes rounding. The
+  # coefficients the criterion estimated are named by the certificate; the
+  # ones held in the inner fit are those the variance matrix moves with the
+  # ridge's combination (measured on a Burr XII whose shape runs to its
+  # Weibull limit in one level of a factor: the three coefficients of log k
+  # and, with them, the three of log mu, by 1/c of each).
+  ridge_rows <- if (is.null(cert) || !length(cert$ridge)) integer(0) else
+    tryCatch(ridge_coef_rows(cert$ridge, V, rownames(ci)),
+             error = function(e) integer(0))
+  ridge_msg <- character(0)
+  if (length(ridge_rows)) {
+    ci[ridge_rows, c("se", "statistic", "p_value", "lower", "upper")] <-
+      NA_real_
+    ridge_msg <- sprintf(paste0(
+      "The outer criterion is flat along %s (%s), so the coefficients that ",
+      "move\n  along it carry no standard error, interval or test: %s. ",
+      "Their estimates are\n  one point of the ridge. A ridge of this kind ",
+      "appears when a parameter runs to\n  a limit at which the family ",
+      "becomes another one, such as the Weibull limit of\n  a Burr XII ",
+      "distribution."),
+      if (length(cert$ridge) == 1L) "a direction" else "several directions",
+      paste(vapply(cert$ridge, function(x) paste0(
+        ifelse(x < 0, "- ", "+ "), format(abs(x), digits = 3), " ",
+        names(x), collapse = " "), ""), collapse = "; "),
+      paste(rownames(ci)[ridge_rows], collapse = ", "))
+  }
   strc <- tryCatch(statmod_structural_table(object, level),
                    error = function(e) NULL)
   tables <- lapply(spec@distrib@params, function(p)
@@ -2545,7 +2573,7 @@ summary.StatmodFit <- function(object, level = 0.95,
             if (length(object@aliased) == 1L) "Its" else "Their",
             paste(object@aliased, collapse = ", "))
   } else character(0)
-  notes <- c(character(0), frozen_msg, aliased_msg, test_msg,
+  notes <- c(character(0), frozen_msg, aliased_msg, ridge_msg, test_msg,
              tryCatch(class_notes(spec, design), error = function(e) character(0)))
   # WHERE THE PARAMETERS ENDED UP, for a fit that did not converge. It
   # qualifies the fit rather than describing it, so it is a note and not a
@@ -4906,6 +4934,19 @@ drop_common_prefix <- function(nms) {
 #' the state is then `"unknown"` -- the label falls back on the free value,
 #' `edge`, there being nothing else to read.
 #'
+#' A **ridge** is a direction rather than a coordinate: several coordinates
+#' move together and the criterion does not change, while each of them alone
+#' is curved. It is read on the equilibrated curvature
+#' \eqn{A/(ss')}, \eqn{s_j = \sqrt{|A_{jj}|}}, whose eigenvalues are
+#' dimensionless; an eigenvalue of at most `flat` in absolute value names its
+#' eigenvector, written on the original coordinates in `boundary` and in
+#' `ridge` (see [certificate_ridges()]). A ridge whose own decrement is
+#' within `tol` leaves the verdict and the state is `"boundary"`. Measured on
+#' a Burr XII model whose shape \eqn{k} runs to its Weibull limit in one level
+#' of a factor, the eigenvalue was \eqn{\pm 2 \times 10^{-7}} and the
+#' eigenvector the change of that level alone; over the reference battery
+#' the smallest eigenvalue was 0.375.
+#'
 #' @param fit A [StatmodFit()].
 #' @param tol The largest rise, in the criterion's own units, that a certified
 #'   point may still have available to it. ⚠️ Until 0.127.0 this was a
@@ -4914,14 +4955,18 @@ drop_common_prefix <- function(nms) {
 #' @param flat The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 #'   criterion in a hyperparameter's free value at which that hyperparameter
 #'   is reported as sitting at a boundary; for a coefficient the criterion
-#'   estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It decides the
-#'   label alone and never the verdict; see the details.
+#'   estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It is also the
+#'   largest eigenvalue, in absolute value, of a flat direction of the
+#'   equilibrated curvature. It decides the label alone and never the
+#'   verdict; see the details.
 #' @param edge The free value beyond which a hyperparameter is reported as
 #'   sitting at a boundary where no curvature can be read, and only there.
 #'
 #' @return A list with `state` (`"converged"`, `"boundary"`,
 #'   `"not converged"` or `"unknown"`), `decrement`, `gradient`,
-#'   `mode_error`, `curvature`, `boundary`, `boundary_key` and `reason`.
+#'   `mode_error`, `curvature`, `boundary`, `boundary_key`, `ridge` and
+#'   `reason`. `ridge` is a list with one named vector per flat direction of
+#'   the outer curvature, over the coordinates that move along it.
 #'   `decrement` is what the verdict is made on and `gradient` is reported
 #'   beside it; `curvature` says whether that decrement was read against an
 #'   analytic Hessian or against one differenced from the exact gradient.
@@ -4982,7 +5027,7 @@ certificate_core <- function(fit, tol, flat, edge) {
   out <- list(state = "unknown", decrement = NA_real_, gradient = NA_real_,
               mode_error = NA_real_, curvature = NA_character_,
               boundary = character(0), boundary_key = character(0),
-              reason = character(0),
+              ridge = list(), reason = character(0),
               inner = c(gradient = NA_real_, eigen = NA_real_),
               outer = c(gradient = NA_real_, eigen = NA_real_),
               zeros = NULL)
@@ -5330,6 +5375,38 @@ certificate_core <- function(fit, tol, flat, edge) {
   }
   at_edge <- intersect(reported, which(coord_decrement(g, cv$A) <= tol))
   interior <- setdiff(seq_along(g), at_edge)
+  # A RIDGE IS A DIRECTION, and the reading above takes one coordinate at a
+  # time, so it cannot see one along which every coordinate moves. Measured on
+  # a Burr XII whose shape k runs to its Weibull limit in the base level of a
+  # factor: the flat direction is the intercept of log k with the opposite
+  # change in the other two levels, each coordinate alone has a curvature
+  # above 24, and the state was `unknown` or `converged` on the sign of an
+  # eigenvalue of 2e-7. The equilibrated curvature A / (s s'), s the root of
+  # its diagonal, reads such a direction directly: its smallest eigenvalue
+  # was +-2e-7 there, with the eigenvector the ridge exactly, against 0.375
+  # to 1 over the reference battery, where a coordinate at an edge leaves it
+  # near one. A direction whose eigenvalue is at most `flat` in absolute value
+  # is named; it leaves the verdict, as an edge does, only if what it would
+  # buy alone is already within `tol`.
+  rg <- certificate_ridges(g, cv$A, setdiff(seq_along(g), reported), flat, tol)
+  if (length(rg$dirs)) {
+    lab_all <- c(paste(idx$parameter, idx$term, idx$name, sep = "/"),
+                 if (ng) paste(gam$param, gam$name, sep = "/"))
+    key_all <- c(paste(idx$parameter, idx$term, idx$name, sep = "\r"),
+                 rep(NA_character_, ng))
+    where_all <- c(rep(NA_integer_, nrow(idx)), gam$where)
+    out$ridge <- lapply(rg$dirs, function(x) {
+      on <- which(x != 0)
+      structure(stats::setNames(x[on], lab_all[on]), where = where_all[on])
+    })
+    out$boundary <- c(out$boundary, vapply(out$ridge, function(x)
+      paste0("ridge: ", paste0(ifelse(x < 0, "- ", "+ "), format(abs(x),
+                                                                 digits = 3),
+                               " ", names(x), collapse = " ")), ""))
+    hk <- unique(unlist(lapply(rg$dirs, function(x)
+      key_all[which(x != 0)])))
+    out$boundary_key <- unique(c(out$boundary_key, hk[!is.na(hk)]))
+  }
   # ⚠️ WITH NO INTERIOR COORDINATE THERE IS NOTHING TO MEASURE, and 0 was the
   # wrong way to say so: printed as `outer gradient 0` it reads as the
   # gradient VANISHING -- a stationary point, the best news a reader could
@@ -5363,8 +5440,15 @@ certificate_core <- function(fit, tol, flat, edge) {
   # uses is the same maximum restricted to one coordinate, so it too is
   # bounded by the joint one and a coordinate called an edge had already
   # passed the test the verdict applies.
+  # A ridge that has met `tol` on its own is taken out the same way, as the
+  # maximum over the directions orthogonal to it, which is again a
+  # constrained maximum of the same function and so no larger.
   if (length(interior)) {
-    dec <- joint_decrement(g[interior], cv$A[interior, interior, drop = FALSE])
+    dec <- if (length(rg$settled)) {
+      decrement_off(g, cv$A, interior, rg$settled)
+    } else {
+      joint_decrement(g[interior], cv$A[interior, interior, drop = FALSE])
+    }
   } else {
     dec <- 0
   }
@@ -5381,7 +5465,8 @@ certificate_core <- function(fit, tol, flat, edge) {
     return(out)
   }
   if (dec <= tol) {
-    out$state <- if (length(at_edge)) "boundary" else "converged"
+    out$state <- if (length(at_edge) || length(rg$settled)) "boundary" else
+      "converged"
   } else {
     out$state <- "not converged"
     out$reason <- sprintf(paste0(
@@ -5639,6 +5724,160 @@ joint_decrement <- function(g, A) {
   0.5 * sum(g * v)
 }
 
+
+
+#' The Flat Directions of the Outer Curvature
+#'
+#' @description
+#' The directions along which the equilibrated outer curvature
+#' \eqn{A/(ss')}, \eqn{s_j = \sqrt{|A_{jj}|}}, has an eigenvalue of at most
+#' `flat` in absolute value, over the coordinates `keep`.
+#'
+#' @details
+#' A coordinate the curvature does not resolve shows on the diagonal, which
+#' [statmod_certificate()] reads one coordinate at a time. A direction along
+#' which several coordinates move together can be flat while every coordinate
+#' alone is curved, and the equilibrated matrix is what reads it: its
+#' diagonal is one, so its smallest eigenvalue measures how far the
+#' coordinates are from a linear dependence in the curvature, whatever their
+#' scales. A direction is returned on the original coordinates, scaled so
+#' that its largest entry is one in absolute value, with entries below 1e-3
+#' set to zero. Its own decrement is \eqn{(q'\tilde g)^2/(2|\lambda|)}, with
+#' \eqn{q} the equilibrated eigenvector and \eqn{\tilde g = g/s}; the
+#' absolute value is taken because the sign of an eigenvalue this small is
+#' the sign of rounding.
+#'
+#' @param g The outer gradient.
+#' @param A The outer curvature, positive at a maximum.
+#' @param keep The coordinates to read, those not already reported at an
+#'   edge.
+#' @param flat The largest eigenvalue, in absolute value, of a flat
+#'   direction.
+#' @param tol The largest decrement of a direction that leaves the verdict.
+#'
+#' @return A list with `dirs`, the flat directions as vectors over every
+#'   coordinate, and `settled`, those whose own decrement is at most `tol`.
+#'
+#' @seealso [statmod_certificate()], [decrement_off()]
+#'
+#' @keywords internal
+certificate_ridges <- function(g, A, keep, flat, tol) {
+  out <- list(dirs = list(), settled = list())
+  keep <- keep[is.finite(g[keep])]
+  if (length(keep) < 2L) return(out)
+  A <- as.matrix(A)
+  Ak <- A[keep, keep, drop = FALSE]
+  Ak <- (Ak + t(Ak)) / 2
+  if (any(!is.finite(Ak))) return(out)
+  s <- sqrt(abs(diag(Ak)))
+  if (any(s == 0)) return(out)
+  e <- tryCatch(eigen(Ak / tcrossprod(s), symmetric = TRUE),
+                error = function(e) NULL)
+  if (is.null(e)) return(out)
+  for (k in which(abs(e$values) <= flat)) {
+    q <- e$vectors[, k]
+    xk <- q / s
+    xk <- xk / max(abs(xk))
+    xk[abs(xk) < 1e-3] <- 0
+    x <- numeric(length(g))
+    x[keep] <- xk
+    out$dirs[[length(out$dirs) + 1L]] <- x
+    gq <- sum(q * g[keep] / s)
+    lam <- max(abs(e$values[k]), .Machine$double.xmin)
+    if (gq^2 / (2 * lam) <= tol) {
+      out$settled[[length(out$settled) + 1L]] <- x
+    }
+  }
+  out
+}
+
+
+#' The Coefficients That Move Along a Ridge
+#'
+#' @description
+#' The rows of the coefficient table that lose their standard error to the
+#' ridges [statmod_certificate()] names.
+#'
+#' @details
+#' A ridge is written over the coordinates of the outer criterion; the
+#' coefficients among them are taken as they are. The coefficients held in
+#' the inner fit move with the ridge through the mode, and the variance
+#' matrix carries that: the change of coefficient \eqn{j} per unit along the
+#' combination \eqn{x'\gamma} is \eqn{b_j = (Vx)_j / (x'Vx)}, and a
+#' coefficient with \eqn{|b_j| \ge 10^{-2}} is taken too, the direction being
+#' scaled so that its largest entry is one. Where the variance matrix has no
+#' finite entries for the ridge's coordinates (the mode reading already held
+#' one of them), the named coefficients alone are taken.
+#'
+#' @param ridge The certificate's `ridge`, each element carrying the
+#'   attribute `where`, the stacked positions of its coefficients (`NA` for a
+#'   hyperparameter).
+#' @param V The variance matrix over the coefficients, or `NULL`.
+#' @param rows The row names of the coefficient table, in stacked order.
+#'
+#' @return The row indices, sorted.
+#'
+#' @seealso [certificate_ridges()], [summary.StatmodFit()]
+#'
+#' @keywords internal
+ridge_coef_rows <- function(ridge, V, rows) {
+  out <- integer(0)
+  Vd <- if (is.null(V)) NULL else as.matrix(V)
+  for (x in ridge) {
+    w <- attr(x, "where")
+    ok <- !is.na(w)
+    if (!any(ok)) next
+    w <- w[ok]
+    xv <- as.numeric(x)[ok]
+    out <- c(out, w)
+    if (is.null(Vd)) next
+    nm <- rows[w]
+    if (!all(nm %in% rownames(Vd))) next
+    Vw <- Vd[, nm, drop = FALSE]
+    if (any(!is.finite(Vd[nm, nm]))) next
+    vr <- drop(crossprod(xv, Vd[nm, nm, drop = FALSE] %*% xv))
+    if (!is.finite(vr) || vr <= 0) next
+    b <- drop(Vw %*% xv) / vr
+    hit <- names(b)[is.finite(b) & abs(b) >= 1e-2]
+    out <- c(out, stats::na.omit(match(hit, rows)))
+  }
+  sort(unique(as.integer(out)))
+}
+
+
+#' The Decrement Over the Directions Orthogonal to Some Others
+#'
+#' @description
+#' The joint decrement over the coordinates `interior`, maximized over the
+#' steps that have no component along the directions `dirs` in the
+#' equilibrated coordinates.
+#'
+#' @details
+#' A constraint on the step can only lower the maximum of
+#' \eqn{2g'x - x'Ax}, so the result is at most [joint_decrement()] over the
+#' same coordinates, as removing a coordinate is.
+#'
+#' @param g,A The outer gradient and curvature.
+#' @param interior The coordinates under test.
+#' @param dirs A list of directions, vectors over every coordinate.
+#'
+#' @return A single number, `NA` where the reduced curvature is not
+#'   positive definite.
+#'
+#' @seealso [certificate_ridges()], [joint_decrement()]
+#'
+#' @keywords internal
+decrement_off <- function(g, A, interior, dirs) {
+  A <- as.matrix(A)[interior, interior, drop = FALSE]
+  A <- (A + t(A)) / 2
+  gi <- g[interior]
+  s2 <- abs(diag(A))
+  C <- do.call(cbind, lapply(dirs, function(x) s2 * x[interior]))
+  r <- qr(C)$rank
+  if (r >= length(interior)) return(0)
+  N <- qr.Q(qr(C), complete = TRUE)[, -seq_len(r), drop = FALSE]
+  joint_decrement(as.numeric(crossprod(N, gi)), crossprod(N, A %*% N))
+}
 
 
 #' What One Coordinate Alone Would Buy

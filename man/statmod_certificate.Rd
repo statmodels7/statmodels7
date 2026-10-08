@@ -17,8 +17,10 @@ meaning has: a caller who set one should read \code{\link[=joint_decrement]{join
 \item{flat}{The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 criterion in a hyperparameter's free value at which that hyperparameter
 is reported as sitting at a boundary; for a coefficient the criterion
-estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It decides the
-label alone and never the verdict; see the details.}
+estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It is also the
+largest eigenvalue, in absolute value, of a flat direction of the
+equilibrated curvature. It decides the label alone and never the
+verdict; see the details.}
 
 \item{edge}{The free value beyond which a hyperparameter is reported as
 sitting at a boundary where no curvature can be read, and only there.}
@@ -26,7 +28,9 @@ sitting at a boundary where no curvature can be read, and only there.}
 \value{
 A list with \code{state} (\code{"converged"}, \code{"boundary"},
 \code{"not converged"} or \code{"unknown"}), \code{decrement}, \code{gradient},
-\code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key} and \code{reason}.
+\code{mode_error}, \code{curvature}, \code{boundary}, \code{boundary_key}, \code{ridge} and
+\code{reason}. \code{ridge} is a list with one named vector per flat direction of
+the outer curvature, over the coordinates that move along it.
 \code{decrement} is what the verdict is made on and \code{gradient} is reported
 beside it; \code{curvature} says whether that decrement was read against an
 analytic Hessian or against one differenced from the exact gradient.
@@ -184,6 +188,19 @@ curvature of 3e-13 at a free value above 13 and is still named.
 Where no curvature can be read at all -- neither route produces one, and
 the state is then \code{"unknown"} -- the label falls back on the free value,
 \code{edge}, there being nothing else to read.
+
+A \strong{ridge} is a direction rather than a coordinate: several coordinates
+move together and the criterion does not change, while each of them alone
+is curved. It is read on the equilibrated curvature
+\eqn{A/(ss')}, \eqn{s_j = \sqrt{|A_{jj}|}}, whose eigenvalues are
+dimensionless; an eigenvalue of at most \code{flat} in absolute value names its
+eigenvector, written on the original coordinates in \code{boundary} and in
+\code{ridge} (see \code{\link[=certificate_ridges]{certificate_ridges()}}). A ridge whose own decrement is
+within \code{tol} leaves the verdict and the state is \code{"boundary"}. Measured on
+a Burr XII model whose shape \eqn{k} runs to its Weibull limit in one level
+of a factor, the eigenvalue was \eqn{\pm 2 \times 10^{-7}} and the
+eigenvector the change of that level alone; over the reference battery
+the smallest eigenvalue was 0.375.
 }
 \examples{
 dd <- data.frame(x = runif(120))

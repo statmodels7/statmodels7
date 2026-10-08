@@ -17,8 +17,10 @@ meaning has: a caller who set one should read \code{\link[=joint_decrement]{join
 \item{flat}{The largest curvature \eqn{\lvert A_{jj}\rvert} of the outer
 criterion in a hyperparameter's free value at which that hyperparameter
 is reported as sitting at a boundary; for a coefficient the criterion
-estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It decides the
-label alone and never the verdict; see the details.}
+estimates, the curvature times \eqn{\max(1, \gamma_j^2)}. It is also the
+largest eigenvalue, in absolute value, of a flat direction of the
+equilibrated curvature. It decides the label alone and never the
+verdict; see the details.}
 
 \item{edge}{The free value beyond which a hyperparameter is reported as
 sitting at a boundary where no curvature can be read, and only there.}
