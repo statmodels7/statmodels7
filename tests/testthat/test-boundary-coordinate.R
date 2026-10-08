@@ -155,11 +155,15 @@ test_that("a shape APPROACHING its clamp no longer deadlocks the step", {
   expect_false(any(fit0@history$inner$damp > 0))
   expect_lt(min(fit0@history$inner$score), 1e-6)
   ## The damping is what serves where the switch does not come in time, so
-  ## it is tested with the rate rule off.
+  ## it is tested with the rate rule off, and on Fisher scoring named
+  ## explicitly: since 0.197.0 the default continues past ten scoring steps
+  ## on the observed information repaired where it is indefinite, and that
+  ## route reaches the same log-likelihood in 13 iterations without a stall.
   local_mocked_bindings(iwls_switch_rate = function() NA_real_)
   fit <- statmod(y ~ x + random(~1 | g),
                  distributions7::student_t1_distrib(), d,
-                 outer_criterion = NULL)
+                 outer_criterion = NULL,
+                 inner_optimizer = iwls(hessian = "expected"))
   expect_true(fit@converged)
   h <- fit@history$inner
   ## the damping really did fire, and it started from zero

@@ -4,13 +4,16 @@
 \alias{hyper_variance}
 \title{The Variance of the Estimated Hyperparameters}
 \usage{
-hyper_variance(A, schur = 1e-04)
+hyper_variance(A, schur = 1e-04, at_edge = integer(0))
 }
 \arguments{
 \item{A}{The negative of the outer Hessian, with dimnames.}
 
 \item{schur}{The largest relative Schur correction a held coordinate may
 contribute to a kept one's curvature.}
+
+\item{at_edge}{Positions of coordinates at the edge of their range, held
+without the Schur test.}
 }
 \value{
 A matrix of the same shape as \code{A} with the variance in the kept
@@ -47,6 +50,18 @@ stopped where the criterion's curvature has an eigenvalue of -5 on that
 scale, every diagonal entry of \code{A} was negative and the inverse's diagonal
 was positive, so the two standard deviations were reported with standard
 errors of 0.015 and 0.0009 on the free scale.
+
+A coordinate the certificate names at the edge of its range is held
+whatever its curvature, and the Schur test is not applied to it: there the
+criterion has stopped moving in it, so its curvature and its coupling to
+the others are below the resolution of the criterion. Measured on two
+correlated random intercepts whose correlation runs to one, at an angle of
+-9.14 the analytic coupling of the angle to the two standard deviations
+read 3.9e-3 and 5.2e-3 beside its own curvature of 8e-7, while the
+criterion differenced by refitting read 1.2e-3 and -2.5e-6 at a step of
+0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That coupling made the
+whole matrix indefinite, and the two standard deviations lost their
+standard errors to a coordinate whose own were already missing.
 }
 \seealso{
 \code{\link[=statmod_hyper_vcov]{statmod_hyper_vcov()}}, its only caller.

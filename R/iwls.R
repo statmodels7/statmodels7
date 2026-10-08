@@ -310,6 +310,11 @@ S7::method(print, Iwls) <- print.Iwls
 #' family and a REML criterion within \eqn{[-3.7 \times 10^{-5},
 #' 1.9 \times 10^{-4}]} of it. The expected information stood in 52 times over
 #' those fits, every time for a curvature that was not positive definite.
+#' Since 0.197.0 such a curvature is first repaired by [pd_repair()] and its
+#' step tried, the expected information standing in only where that step
+#' finds no acceptable point: measured on the seven costly families below,
+#' at the same log-likelihood and certificate, it takes 1/4 to 1/6 of the time
+#' where the observed information is indefinite.
 #'
 #' A family whose expected information is exact but costly, which
 #' [distributions7::expected_hessian_costly()] reports, is settled on the
@@ -756,9 +761,9 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #'   optimum leaves there and does not vanish.
 #' @param backup_at `NULL`, or a function like `pieces_at` building the pieces
 #'   on the expected information, which takes the step where the observed
-#'   penalized information is not positive definite or where the observed step
-#'   finds no acceptable point; a trial point whose objective raises an error
-#'   is then read as rejected. [fit_smooth()] passes one for a method
+#'   step finds no acceptable point; an observed penalized information that is
+#'   not positive definite is first repaired by [pd_repair()] and tried. A
+#'   trial point whose objective raises an error is then read as rejected. [fit_smooth()] passes one for a method
 #'   [iwls_resolve()] settled with the fallback.
 #' @param damp_on_reject Whether a line search that finds no acceptable step
 #'   raises the Levenberg damping and retries (the default) or ends the run.
@@ -789,9 +794,10 @@ iwls_pieces <- function(spec, design, coef, hyper, method) {
 #' @return A list of ten: the six below; `note`, the reason a run stopped or
 #'   `NULL`; `aliased`, the coordinates the pivot left out; `switched`, the
 #'   iteration at which the run moved to `switch_at`, or 0; and `fallback`, a
-#'   named integer vector counting the iterations at which the expected pieces
-#'   stepped in for a curvature that was not positive definite (`indefinite`)
-#'   or for a step that found no acceptable point (`search`), the trial
+#'   named integer vector counting the iterations at which the observed
+#'   penalized information was not positive definite (`indefinite`) and those
+#'   at which the expected pieces stepped in for a step that found no
+#'   acceptable point (`search`), the trial
 #'   points whose objective raised (`error`), and the iterations at which the
 #'   Newton step on the full Hessian was taken in place of the scoring step
 #'   (`newton`). Of the six:
@@ -975,12 +981,25 @@ iwls_fit <- function(obj, start, method, n, pieces_at, verbose = FALSE,
     }
     pc <- if (is.null(pc_met)) pieces_at(beta) else pc_met
     # THE EXPECTED PIECES TAKE THE STEP where the observed ones cannot, on a
-    # method iwls_resolve() settled with the fallback: an observed penalized
-    # information that is not positive definite, or an observed step that
+    # method iwls_resolve() settled with the fallback: an observed step that
     # finds no acceptable point. A trial point whose objective raises is then
     # read as rejected rather than as the end of the fit.
+    #
+    # AN OBSERVED PENALIZED INFORMATION THAT IS NOT POSITIVE DEFINITE IS
+    # REPAIRED AND TRIED FIRST (iwls_solve() floors its eigenvalues with
+    # pd_repair()); the expected pieces step in only if its search fails.
+    # Until 0.197.0 they took every such step, and the expected information
+    # was the slow route: on a Burr XII with every parameter over a factor
+    # (rent, 1969 rows) the joint information is indefinite at 1207 steps of
+    # 1323, and the fit took 221 s with the OPG standing in (a density-only
+    # family) and 17.1 s with the closed forms, against 10.1 and 9.4 s now at
+    # the same log-likelihood. On the seven families whose exact expected
+    # information is costly, with a smooth on the location and the shape over
+    # a covariate at n = 1000, the log-likelihood and the certificate's state
+    # are the same to 10 digits at 1/4 to 1/6 of the time where the observed
+    # information is indefinite (skew t 92.5 -> 15.4 s, pseudohuber2 254.4 ->
+    # 57.2 s), and the repaired step's search did not fail once.
     if (!is.null(backup_at) && !pieces_definite(pc)) {
-      pc <- backup_at(beta)
       fallback[["indefinite"]] <- fallback[["indefinite"]] + 1L
     }
     st <- iwls_line_search(obj, beta, value, g, pc, method, damp, frozen,
@@ -1636,8 +1655,12 @@ pd_repair <- function(A, rel = 1e-8) {
   # signals "infinite or missing values in 'x'" from three frames down, which
   # names the arithmetic and not the iterate that produced it
   if (!all(is.finite(A))) return(NULL)
+  # the factorization is a probe: on a sparse matrix that is not positive
+  # definite CHOLMOD warns before Matrix signals the error, and since 0.197.0
+  # an indefinite observed information reaches this test inside a fit, where
+  # the warning reached the user three times per fit
   ok <- tryCatch({
-    chol(A)
+    suppressWarnings(chol(A))
     TRUE
   }, error = function(e) FALSE)
   if (ok) return(A)

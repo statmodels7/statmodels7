@@ -126,3 +126,31 @@ test_that("a fit that converges keeps the variance it had", {
   expect_true(all(tb$lower[r] < tb$estimate[r]))
   expect_true(all(tb$upper[r] > tb$estimate[r]))
 })
+
+test_that("a coordinate at the edge is held without the Schur test", {
+  ## the case measured on two correlated random intercepts: the angle's own
+  ## curvature is 8e-7 and its coupling to the two standard deviations is
+  ## above the criterion's resolution, so the whole matrix is indefinite
+  A <- matrix(c(34.015, -16.941, 3.8598e-03,
+                -16.941, 18.563, 5.1931e-03,
+                3.8598e-03, 5.1931e-03, 7.9943e-07), 3, 3,
+              dimnames = list(c("a", "b", "z"), c("a", "b", "z")))
+  expect_null(hyper_variance(A))
+  V <- hyper_variance(A, at_edge = 3L)
+  expect_false(is.null(V))
+  expect_true(all(is.na(V[3, ])) && all(is.na(V[, 3])))
+  expect_equal(V[1:2, 1:2], solve(A[1:2, 1:2]), tolerance = 1e-12)
+  ## a held coordinate is held even where the full matrix would invert, so
+  ## the others read the same conditional variance at either point
+  B <- A
+  B[3, 1:2] <- B[1:2, 3] <- c(1e-5, -1e-5)
+  B[3, 3] <- 1e-3
+  expect_equal(hyper_variance(B, at_edge = 3L)[1:2, 1:2],
+               solve(B[1:2, 1:2]), tolerance = 1e-12)
+  ## a coordinate held for its curvature alone keeps the Schur test
+  C <- A
+  C[3, 3] <- -1
+  C[3, 1:2] <- C[1:2, 3] <- c(1, 1)
+  expect_null(hyper_variance(C))
+  expect_false(is.null(hyper_variance(C, at_edge = 3L)))
+})

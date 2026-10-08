@@ -1317,9 +1317,23 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
 #' was positive, so the two standard deviations were reported with standard
 #' errors of 0.015 and 0.0009 on the free scale.
 #'
+#' A coordinate the certificate names at the edge of its range is held
+#' whatever its curvature, and the Schur test is not applied to it: there the
+#' criterion has stopped moving in it, so its curvature and its coupling to
+#' the others are below the resolution of the criterion. Measured on two
+#' correlated random intercepts whose correlation runs to one, at an angle of
+#' -9.14 the analytic coupling of the angle to the two standard deviations
+#' read 3.9e-3 and 5.2e-3 beside its own curvature of 8e-7, while the
+#' criterion differenced by refitting read 1.2e-3 and -2.5e-6 at a step of
+#' 0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That coupling made the
+#' whole matrix indefinite, and the two standard deviations lost their
+#' standard errors to a coordinate whose own were already missing.
+#'
 #' @param A The negative of the outer Hessian, with dimnames.
 #' @param schur The largest relative Schur correction a held coordinate may
 #'   contribute to a kept one's curvature.
+#' @param at_edge Positions of coordinates at the edge of their range, held
+#'   without the Schur test.
 #'
 #' @return A matrix of the same shape as `A` with the variance in the kept
 #'   rows and columns and `NA` elsewhere, or `NULL` when no coordinate is
@@ -1328,7 +1342,7 @@ hyper_correction <- function(spec, design, coef, hyper, method, Vb, keep,
 #' @seealso [statmod_hyper_vcov()], its only caller.
 #'
 #' @keywords internal
-hyper_variance <- function(A, schur = 1e-4) {
+hyper_variance <- function(A, schur = 1e-4, at_edge = integer(0)) {
   # positive definite on the equilibrated scale, so the test does not turn on
   # how different the hyperparameters' scales are
   pd <- function(M) {
@@ -1338,22 +1352,29 @@ hyper_variance <- function(A, schur = 1e-4) {
     min(ev) > ncol(M) * .Machine$double.eps
   }
   usable <- function(M) !is.null(M) && all(is.finite(M)) && all(diag(M) > 0)
-  V <- if (pd(A)) tryCatch(solve(A), error = function(e) NULL) else NULL
-  if (usable(V)) return(V)
   p <- ncol(A)
+  at_edge <- intersect(as.integer(at_edge), seq_len(p))
+  if (!length(at_edge)) {
+    V <- if (pd(A)) tryCatch(solve(A), error = function(e) NULL) else NULL
+    if (usable(V)) return(V)
+  }
   d <- diag(A)
-  bad <- which(!is.finite(d) | d <= 0 |
-                 apply(!is.finite(A), 1L, any))
-  keep <- setdiff(seq_len(p), bad)
-  if (!length(bad) || !length(keep)) return(NULL)
+  bad <- setdiff(which(!is.finite(d) | d <= 0 |
+                         apply(!is.finite(A), 1L, any)), at_edge)
+  keep <- setdiff(seq_len(p), c(bad, at_edge))
+  if (!length(c(bad, at_edge)) || !length(keep)) return(NULL)
   if (!pd(A[keep, keep, drop = FALSE])) return(NULL)
   W <- tryCatch(solve(A[keep, keep, drop = FALSE]), error = function(e) NULL)
   if (!usable(W)) return(NULL)
-  Bi <- tryCatch(solve(A[bad, bad, drop = FALSE]), error = function(e) NULL)
-  if (is.null(Bi) || any(!is.finite(Bi))) return(NULL)
-  Akb <- A[keep, bad, drop = FALSE]
-  corr <- diag(as.matrix(Akb %*% Bi %*% t(Akb)))
-  if (any(abs(corr) > schur * d[keep])) return(NULL)
+  if (length(bad)) {
+    # the Schur test over the coordinates held for their curvature alone; a
+    # coordinate at the edge has no coupling the criterion can resolve
+    Bi <- tryCatch(solve(A[bad, bad, drop = FALSE]), error = function(e) NULL)
+    if (is.null(Bi) || any(!is.finite(Bi))) return(NULL)
+    Akb <- A[keep, bad, drop = FALSE]
+    corr <- diag(as.matrix(Akb %*% Bi %*% t(Akb)))
+    if (any(abs(corr) > schur * d[keep])) return(NULL)
+  }
   out <- matrix(NA_real_, p, p, dimnames = dimnames(A))
   out[keep, keep] <- W
   out
@@ -1394,6 +1415,9 @@ hyper_variance <- function(A, schur = 1e-4) {
 #'   refits its probes with; `iwls()` where none is given.
 #' @param pinned The coordinates the fit left out of the criterion's
 #'   determinant, as it records them in `methods$pinned`.
+#' @param at_edge The `boundary_key` of [statmod_certificate()]: the
+#'   hyperparameters at the edge of their range, held by [hyper_variance()]
+#'   so that the others carry the variance conditional on them.
 #'
 #' @return A square matrix, one row per estimated hyperparameter, whose
 #'   dimnames join the distribution parameter, the term and the
@@ -1406,7 +1430,8 @@ hyper_variance <- function(A, schur = 1e-4) {
 #'
 #' @keywords internal
 statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
-                               inner = NULL, pinned = NULL) {
+                               inner = NULL, pinned = NULL,
+                               at_edge = character(0)) {
   if (is.null(method) || !method@kind %in% c("ml", "reml")) return(NULL)
   blocks <- statmod_blocks(spec, design)
   idx <- outer_hyper_index(spec, blocks)
@@ -1423,9 +1448,9 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
                                          gam = mc$gam),
                    error = function(e) NULL)
     if (is.null(Ho) || !all(is.finite(Ho))) return(NULL)
-    Vv <- hyper_variance(-as.matrix(Ho))
-    if (is.null(Vv)) return(NULL)
     k <- paste(idx$parameter, idx$term, idx$name, sep = "\r")
+    Vv <- hyper_variance(-as.matrix(Ho), at_edge = which(k %in% at_edge))
+    if (is.null(Vv)) return(NULL)
     V <- Vv[seq_len(nrow(idx)), seq_len(nrow(idx)), drop = FALSE]
     dimnames(V) <- list(k, k)
     return(structure(V, idx = idx))
@@ -1452,7 +1477,7 @@ statmod_hyper_vcov <- function(spec, design, coef, hyper, method,
   A <- -as.matrix(Ho)
   k <- paste(idx$parameter, idx$term, idx$name, sep = "\r")
   dimnames(A) <- list(k, k)
-  V <- hyper_variance(A)
+  V <- hyper_variance(A, at_edge = which(k %in% at_edge))
   if (is.null(V)) return(NULL)
   structure(V, idx = idx)
 }

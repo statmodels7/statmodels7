@@ -2943,6 +2943,15 @@ readable_hyper_rows <- function(rd, th, Vh, p, key, level, role, src, cols,
         linkfunctions7::dlinkinv(lk[[i]], eta)
       }, 0)
       jac <- rd$jacobian * rep(d, each = k)
+      # a coordinate at a boundary has no variance, statmod_hyper_vcov()
+      # having held it; it contributes nothing here, and every quantity that
+      # depends on it loses its standard error below
+      edge <- kk %in% at_edge
+      if (any(edge)) {
+        vb[edge, ] <- 0
+        vb[, edge] <- 0
+        jac[, edge] <- 0
+      }
       if (all(is.finite(vb)) && all(is.finite(jac))) {
         se <- sqrt(pmax(diag(jac %*% vb %*% t(jac)), 0))
       }
@@ -3060,7 +3069,7 @@ summary_blocks <- function(fit, spec, design, p, ci, level = 0.95,
   Vh <- if (outer_ran) tryCatch(
     statmod_hyper_vcov(spec, design, fit@coefficients, fit@hyper,
                        fit@methods$outer, inner = fit@methods$smooth,
-                       pinned = fit@methods$pinned),
+                       pinned = fit@methods$pinned, at_edge = at_edge),
     error = function(e) NULL) else NULL
   spc <- fit@methods$sparse_criterion
   spc_keys <- fit@methods$sparse_hyper

@@ -98,9 +98,13 @@ test_that("a Newton search that did not settle is run again by lbfgs", {
     sigma ~ s(Age, bspline_smooth(k = 8)) |
     nu ~ s(Age, bspline_smooth(k = 6))
   # with an inner budget of 100 the Newton search stopped at -845.09 and
-  # lbfgs, run again from the same start, reaches -816.59
+  # lbfgs, run again from the same start, reaches -816.59. Since 0.197.0 the
+  # default inner route repairs an indefinite observed information and
+  # settles within that budget, so the unsettled search is reproduced on
+  # Fisher scoring named explicitly
   f <- statmod(form, distrib = distributions7::student_t1_distrib(),
-               data = gagurine, inner_optimizer = iwls(maxit = 100))
+               data = gagurine,
+               inner_optimizer = iwls(maxit = 100, hessian = "expected"))
   expect_true(inherits(f@methods$search, "optimizers7::Lbfgs"))
   expect_gt(as.numeric(logLik(f, type = "marginal")), -817)
   expect_identical(statmod_certificate(f)$state, "boundary")

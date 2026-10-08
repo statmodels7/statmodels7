@@ -69,13 +69,44 @@ test_that("the expected pieces take the step where the observed ones cannot", {
   }
   pd <- function(b) list(R = NULL, C = NULL, A = Q)
 
-  # an observed curvature that is not positive definite is not used
+  # an observed curvature that is not positive definite is repaired and its
+  # step tried first: where the gradient has no component along the negative
+  # direction the repaired step lands on the minimum, and the expected pieces
+  # are built only to read the decrement at the converged point
+  Q3 <- matrix(0, 3, 3)
+  Q3[1:2, 1:2] <- Q
+  Q3[3, 3] <- 2
+  m3 <- c(m, 0.5)
+  toy3 <- list(fn = function(b) 0.5 * sum((b - m3) * as.numeric(Q3 %*% (b - m3))),
+               gr = function(b) as.numeric(Q3 %*% (b - m3)))
+  neg3 <- function(b) {
+    A <- Q3
+    A[3, 3] <- -2
+    list(R = NULL, C = NULL, A = A)
+  }
+  built <- 0L
+  pd3 <- function(b) {
+    built <<- built + 1L
+    list(R = NULL, C = NULL, A = Q3)
+  }
+  r0 <- iwls_fit(toy3, c(0, 0, 0.5), iwls(hessian = "observed"), 1, neg3,
+                 backup_at = pd3)
+  expect_true(r0$converged)
+  expect_equal(r0$par, m3, tolerance = 1e-6)
+  expect_gt(r0$fallback[["indefinite"]], 0L)
+  expect_identical(r0$fallback[["search"]], 0L)
+  expect_identical(built, 1L)
+
+  # where the repaired step finds no acceptable point, the expected pieces
+  # take it: every eigenvalue of -Q is floored to 1e-8 of the largest, so the
+  # repaired step is 1e8 times too long for five halvings
   neg <- function(b) list(R = NULL, C = NULL, A = -Q)
-  r1 <- iwls_fit(toy(), c(0, 0), iwls(hessian = "observed"), 1, neg, backup_at = pd)
+  r1 <- iwls_fit(toy(), c(0, 0), iwls(hessian = "observed", step_halving = 5),
+                 1, neg, backup_at = pd)
   expect_true(r1$converged)
   expect_equal(r1$par, m, tolerance = 1e-6)
   expect_gt(r1$fallback[["indefinite"]], 0L)
-  expect_identical(r1$fallback[["search"]], 0L)
+  expect_gt(r1$fallback[["search"]], 0L)
 
   # a positive definite one whose step is 1e12 times too long, beyond what
   # five halvings can shorten: the search fails and the expected pieces step

@@ -50,9 +50,9 @@ optimum leaves there and does not vanish.}
 
 \item{backup_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
 on the expected information, which takes the step where the observed
-penalized information is not positive definite or where the observed step
-finds no acceptable point; a trial point whose objective raises an error
-is then read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method
+step finds no acceptable point; an observed penalized information that is
+not positive definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and tried. A
+trial point whose objective raises an error is then read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method
 \code{\link[=iwls_resolve]{iwls_resolve()}} settled with the fallback.}
 
 \item{damp_on_reject}{Whether a line search that finds no acceptable step
@@ -89,9 +89,10 @@ settled on the expected information from \code{"auto"}.}
 A list of ten: the six below; \code{note}, the reason a run stopped or
 \code{NULL}; \code{aliased}, the coordinates the pivot left out; \code{switched}, the
 iteration at which the run moved to \code{switch_at}, or 0; and \code{fallback}, a
-named integer vector counting the iterations at which the expected pieces
-stepped in for a curvature that was not positive definite (\code{indefinite})
-or for a step that found no acceptable point (\code{search}), the trial
+named integer vector counting the iterations at which the observed
+penalized information was not positive definite (\code{indefinite}) and those
+at which the expected pieces stepped in for a step that found no
+acceptable point (\code{search}), the trial
 points whose objective raised (\code{error}), and the iterations at which the
 Newton step on the full Hessian was taken in place of the scoring step
 (\code{newton}). Of the six:

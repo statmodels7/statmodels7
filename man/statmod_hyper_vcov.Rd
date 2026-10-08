@@ -11,7 +11,8 @@ statmod_hyper_vcov(
   hyper,
   method,
   inner = NULL,
-  pinned = NULL
+  pinned = NULL,
+  at_edge = character(0)
 )
 }
 \arguments{
@@ -30,6 +31,10 @@ refits its probes with; \code{iwls()} where none is given.}
 
 \item{pinned}{The coordinates the fit left out of the criterion's
 determinant, as it records them in \code{methods$pinned}.}
+
+\item{at_edge}{The \code{boundary_key} of \code{\link[=statmod_certificate]{statmod_certificate()}}: the
+hyperparameters at the edge of their range, held by \code{\link[=hyper_variance]{hyper_variance()}}
+so that the others carry the variance conditional on them.}
 }
 \value{
 A square matrix, one row per estimated hyperparameter, whose

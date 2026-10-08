@@ -1,3 +1,24 @@
+# statmodels7 0.197.0
+
+* Where `iwls(hessian = "auto")` is settled on the observed information with
+  the expected one as its fallback, an observed penalized information that
+  is not positive definite is repaired (its eigenvalues floored) and its step
+  tried first; the expected information takes the step only if that step
+  finds no acceptable point. It took every such step before, and that was
+  the slow route: a Burr XII with every parameter over a factor
+  (`gamlss.data::rent`) fitted in 221 s with only its density and 17.1 s with
+  its closed forms, against 10.1 s and 9.4 s now at the same log-likelihood.
+  On the families whose exact expected information is costly the
+  log-likelihood is the same to 10 digits at 1/4 to 1/6 of the time where
+  the observed information is indefinite (skew t 92.5 s to 15.4 s).
+* A hyperparameter that `statmod_certificate()` finds at the edge of its
+  range is held when `summary()` inverts the outer curvature, and the other
+  hyperparameters report the variance conditional on it. Its coupling to
+  them is below the resolution of the criterion there, and it could make
+  the whole matrix indefinite: two correlated random intercepts whose
+  correlation ran to one lost the standard errors of both standard
+  deviations along with the correlation's.
+
 # statmodels7 0.196.0
 
 * `cv()` reapplies to each fold the terms built on all the rows, as

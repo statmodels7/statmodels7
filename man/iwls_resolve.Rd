@@ -35,6 +35,11 @@ positive definite, or where its step finds no acceptable point, in 68 of
 family and a REML criterion within \eqn{[-3.7 \times 10^{-5},
 1.9 \times 10^{-4}]} of it. The expected information stood in 52 times over
 those fits, every time for a curvature that was not positive definite.
+Since 0.197.0 such a curvature is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its
+step tried, the expected information standing in only where that step
+finds no acceptable point: measured on the seven costly families below,
+at the same log-likelihood and certificate, it takes 1/4 to 1/6 of the time
+where the observed information is indefinite.
 
 A family whose expected information is exact but costly, which
 \code{\link[distributions7:expected_hessian_costly]{distributions7::expected_hessian_costly()}} reports, is settled on the
