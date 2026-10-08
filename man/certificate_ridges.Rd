@@ -40,7 +40,9 @@ that its largest entry is one in absolute value, with entries below 1e-3
 set to zero. Its own decrement is \eqn{(q'\tilde g)^2/(2|\lambda|)}, with
 \eqn{q} the equilibrated eigenvector and \eqn{\tilde g = g/s}; the
 absolute value is taken because the sign of an eigenvalue this small is
-the sign of rounding.
+the sign of rounding. No direction is returned where an eigenvalue is
+below \code{-flat}: the point is then not a maximum, and a flat direction there
+is not a ridge of one.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, \code{\link[=decrement_off]{decrement_off()}}

@@ -34,6 +34,11 @@ test_that("a flat direction is found where every coordinate is curved", {
   # the sign of an eigenvalue this small is rounding: -1e-9 is named alike
   rn <- certificate_ridges(g, ridge_case(-1e-9), seq_len(4), 2e-3, 1e-2)
   expect_length(rn$dirs, 1L)
+  # a point that is not a maximum has no ridge: a rank-one curvature of the
+  # wrong sign leaves every direction but one flat, and none is named
+  v <- c(1, -6, -5, -2)
+  expect_length(certificate_ridges(g, -1e13 * tcrossprod(v), seq_len(4),
+                                   2e-3, 1e-2)$dirs, 0L)
 })
 
 test_that("the decrement off a ridge is the constrained maximum", {

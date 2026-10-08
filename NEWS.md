@@ -1,3 +1,12 @@
+# statmodels7 0.198.1
+
+* A ridge is read only at a maximum: where the equilibrated outer curvature
+  has an eigenvalue below `-flat`, no direction is named. A zero-inflated
+  negative binomial with a random effect on each equation, stopped where
+  that curvature is a rank-one matrix with an eigenvalue of -5, had four
+  directions named and the standard errors of four coefficients of the mean
+  removed.
+
 # statmodels7 0.198.0
 
 * `statmod_certificate()` reads the flat directions of the outer curvature

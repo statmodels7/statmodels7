@@ -5745,7 +5745,9 @@ joint_decrement <- function(g, A) {
 #' set to zero. Its own decrement is \eqn{(q'\tilde g)^2/(2|\lambda|)}, with
 #' \eqn{q} the equilibrated eigenvector and \eqn{\tilde g = g/s}; the
 #' absolute value is taken because the sign of an eigenvalue this small is
-#' the sign of rounding.
+#' the sign of rounding. No direction is returned where an eigenvalue is
+#' below `-flat`: the point is then not a maximum, and a flat direction there
+#' is not a ridge of one.
 #'
 #' @param g The outer gradient.
 #' @param A The outer curvature, positive at a maximum.
@@ -5774,6 +5776,14 @@ certificate_ridges <- function(g, A, keep, flat, tol) {
   e <- tryCatch(eigen(Ak / tcrossprod(s), symmetric = TRUE),
                 error = function(e) NULL)
   if (is.null(e)) return(out)
+  # a ridge is a flat direction of a MAXIMUM: where the curvature is clearly
+  # of the wrong sign in some direction the point is not one, and the
+  # directions orthogonal to that one say nothing. Measured on a
+  # zero-inflated negative binomial with a random effect on each equation,
+  # stopped where the outer curvature is a rank-one matrix of order 1e14 and
+  # the equilibrated eigenvalues are -5 and four of order 1e-8: every
+  # direction but one read as a ridge.
+  if (min(e$values) < -flat) return(out)
   for (k in which(abs(e$values) <= flat)) {
     q <- e$vectors[, k]
     xk <- q / s
