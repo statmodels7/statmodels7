@@ -21,7 +21,7 @@ A list of entries, each with `label` and `idx`.
 
 ## Details
 
-A structural term's parameters are `omega`, `alpha1` and the like where
+A structural term's parameters are `omega`, `kappa1` and the like where
 nothing is developed, and `omega.(Intercept)`, `omega.random.1` and so
 on where something is. The first are read one by one and the second are
 a block, so the printed form is grouped at the first dot, the scalars

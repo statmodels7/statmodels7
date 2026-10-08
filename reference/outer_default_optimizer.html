@@ -13,7 +13,24 @@ at a loading scale collapsed to 2.1e-06 and a correlation of -0.9999, while
 lbfgs() differencing the criterion reached -683.305 in 27 seconds at
 scales of 0.647 and 0.389 and a correlation of 0.733 – which on data
 simulated with the two effects INDEPENDENT is the answer the two separate
-fits give, to 0.2 of log-likelihood."><meta property="og:description" content="The choice is made from what the criterion can supply: its exact Hessian,
+fits give, to 0.2 of log-likelihood.
+newton() is given max_length = 5, which bounds every component of a
+step on the free scale, as maxNstep does in mgcv. Where the criterion
+flattens as a smoothing parameter grows, the curvature at the start can be
+small enough for the Newton step to jump past the maximum onto that
+plateau, where the gradient is close to zero and the search stops.
+Measured on a ridge over the fifteen predictors of MASS::UScrime,
+standardized by the term, the first step went from \(\lambda = 1\) to
+\(1.6\times10^{10}\), a length of 23.5, and the fit reported the empty
+model at a criterion of -65.40, where the maximum is -53.30 near
+\(\lambda = 91.5\).
+A search over one coordinate with no exact gradient takes
+optimizers7::brent(), which brackets the maximum and reduces the bracket
+by parabolic steps, stopping when its half-width on the free scale is
+below \(10^{-3}\), a change of one part in a thousand in the
+hyperparameter. Measured on seg(t, psi ~ random(~1 | id), marginal = TRUE) over a 20 x 15 panel, where the only hyperparameter is the scale of
+a random intercept, the search took 11 evaluations against the 23 of
+optimizers7::nelder_mead(), at a criterion 2e-05 lower."><meta property="og:description" content="The choice is made from what the criterion can supply: its exact Hessian,
 its exact gradient, or neither.
 A covariance class split between the coefficients and a filter's own
 parameters takes lbfgs() even where the exact gradient is unavailable to
@@ -27,7 +44,24 @@ at a loading scale collapsed to 2.1e-06 and a correlation of -0.9999, while
 lbfgs() differencing the criterion reached -683.305 in 27 seconds at
 scales of 0.647 and 0.389 and a correlation of 0.733 – which on data
 simulated with the two effects INDEPENDENT is the answer the two separate
-fits give, to 0.2 of log-likelihood."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+fits give, to 0.2 of log-likelihood.
+newton() is given max_length = 5, which bounds every component of a
+step on the free scale, as maxNstep does in mgcv. Where the criterion
+flattens as a smoothing parameter grows, the curvature at the start can be
+small enough for the Newton step to jump past the maximum onto that
+plateau, where the gradient is close to zero and the search stops.
+Measured on a ridge over the fifteen predictors of MASS::UScrime,
+standardized by the term, the first step went from \(\lambda = 1\) to
+\(1.6\times10^{10}\), a length of 23.5, and the fit reported the empty
+model at a criterion of -65.40, where the maximum is -53.30 near
+\(\lambda = 91.5\).
+A search over one coordinate with no exact gradient takes
+optimizers7::brent(), which brackets the maximum and reduces the bracket
+by parabolic steps, stopping when its half-width on the free scale is
+below \(10^{-3}\), a change of one part in a thousand in the
+hyperparameter. Measured on seg(t, psi ~ random(~1 | id), marginal = TRUE) over a 20 x 15 panel, where the only hyperparameter is the scale of
+a random intercept, the search took 11 evaluations against the 23 of
+optimizers7::nelder_mead(), at a criterion 2e-05 lower."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -35,7 +69,7 @@ fits give, to 0.2 of log-likelihood."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,11 +114,28 @@ at a loading scale collapsed to 2.1e-06 and a correlation of -0.9999, while
 scales of 0.647 and 0.389 and a correlation of 0.733 – which on data
 simulated with the two effects INDEPENDENT is the answer the two separate
 fits give, to 0.2 of log-likelihood.</p>
+<p><code>newton()</code> is given <code>max_length = 5</code>, which bounds every component of a
+step on the free scale, as <code>maxNstep</code> does in mgcv. Where the criterion
+flattens as a smoothing parameter grows, the curvature at the start can be
+small enough for the Newton step to jump past the maximum onto that
+plateau, where the gradient is close to zero and the search stops.
+Measured on a ridge over the fifteen predictors of <code><a href="https://rdrr.io/pkg/MASS/man/UScrime.html" class="external-link">MASS::UScrime</a></code>,
+standardized by the term, the first step went from \(\lambda = 1\) to
+\(1.6\times10^{10}\), a length of 23.5, and the fit reported the empty
+model at a criterion of -65.40, where the maximum is -53.30 near
+\(\lambda = 91.5\).</p>
+<p>A search over one coordinate with no exact gradient takes
+<code><a href="https://statmodels7.github.io/optimizers7/reference/brent.html" class="external-link">optimizers7::brent()</a></code>, which brackets the maximum and reduces the bracket
+by parabolic steps, stopping when its half-width on the free scale is
+below \(10^{-3}\), a change of one part in a thousand in the
+hyperparameter. Measured on <code>seg(t, psi ~ random(~1 | id), marginal = TRUE)</code> over a 20 x 15 panel, where the only hyperparameter is the scale of
+a random intercept, the search took 11 evaluations against the 23 of
+<code><a href="https://statmodels7.github.io/optimizers7/reference/nelder_mead.html" class="external-link">optimizers7::nelder_mead()</a></code>, at a criterion 2e-05 lower.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_default_optimizer</span><span class="op">(</span><span class="va">exact</span>, <span class="va">use_hess</span>, mixed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">outer_default_optimizer</span><span class="op">(</span><span class="va">exact</span>, <span class="va">use_hess</span>, mixed <span class="op">=</span> <span class="cn">FALSE</span>, n <span class="op">=</span> <span class="cn">NA_integer_</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -103,6 +154,10 @@ is not the same question as whether one exists: see <code><a href="outer_newton_
 <dt id="arg-mixed">mixed<a class="anchor" aria-label="anchor" href="#arg-mixed"></a></dt>
 <dd><p>Whether the model carries a covariance class spanning the
 coefficients and a structural term's own parameters.</p></dd>
+
+
+<dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
+<dd><p>The number of coordinates the search moves.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -7,7 +7,7 @@ sweeps.
 ## Usage
 
 ``` r
-coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
+coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 ```
 
 ## Arguments
@@ -31,12 +31,13 @@ coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L)
 
 - s_now:
 
-  The size of the kink at this point, a single number.
+  The size of the kink at this point, one number per column (a single
+  number is recycled).
 
 - s_prev:
 
-  The size of the kink at the previous point, or `NULL` when there is no
-  previous point.
+  The size of the kink at the previous point, one number per column, or
+  `NULL` when there is no previous point.
 
 - threads:
 

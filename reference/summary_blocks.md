@@ -81,4 +81,6 @@ A list of block records, each with `kind`, `label`, `n_coef`, `edf`,
 written in parameters of its own that develops one of them over
 covariates reports that parameter as a compartment of its own, carrying
 its hyperparameter and its sub-terms' rows, and `table` keeps only what
-is left.
+is left. Such a term with a kinked sub-term also carries `n_kinked`, the
+number of coordinates under the kink, which `n_zero` and the count of
+selected coefficients read.

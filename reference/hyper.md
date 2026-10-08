@@ -130,12 +130,12 @@ d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
 hyper(fit)
 #>   parameter                        term   name estimate  held source   id
-#> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.67929 FALSE   reml <NA>
+#> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.31279 FALSE   reml <NA>
 
 # The same value on the scale the outer search ran on.
 hyper(fit, scale = "link")
 #>   parameter                        term   name estimate  held source   id
-#> 1        mu s(x, bspline_smooth(k = 6)) lambda  3.39045 FALSE   reml <NA>
+#> 1        mu s(x, bspline_smooth(k = 6)) lambda 3.378024 FALSE   reml <NA>
 
 # Held by the term instead, and reported as fixed.
 held <- statmod(y ~ s(x, bspline_smooth(k = 6), hyper = c(lambda = 2)),

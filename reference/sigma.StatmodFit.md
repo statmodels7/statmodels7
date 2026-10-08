@@ -57,5 +57,5 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 head(sigma(fit))
-#> [1] 0.2220141 0.2303400 0.2468724 0.2771821 0.2171743 0.2762440
+#> [1] 0.2282563 0.2366059 0.2531638 0.2834521 0.2233994 0.2825159
 ```

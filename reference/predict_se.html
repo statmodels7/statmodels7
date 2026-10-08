@@ -9,7 +9,7 @@ parameter it gives, with an interval."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,6 +118,13 @@ its lower end cannot come out negative.</p>
 held out of <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, so every observation whose predictor
 reads it reports <code>NA</code> for its standard error. That is the truth about such
 a fit, no gap in the arithmetic.</p>
+<p>A coefficient that a lasso, an elastic net, a SCAD or an MCP holds at
+exactly zero is the other case, and it is treated as fixed: the model
+selected without it, its row of the variance is <code>NA</code>, and its column of
+the design is left out of the quadratic form, so it contributes nothing.
+Without this, a prediction at new data read every such coefficient against
+a non-zero covariate and returned <code>NA</code> on every row (a smooth beside a
+lasso on <code><a href="https://rdrr.io/pkg/MASS/man/Boston.html" class="external-link">MASS::Boston</a></code>, one coefficient at zero).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

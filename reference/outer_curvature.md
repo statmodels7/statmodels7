@@ -15,7 +15,8 @@ outer_curvature(
   method,
   idx,
   basis = NULL,
-  inner = NULL
+  inner = NULL,
+  gam = NULL
 )
 ```
 
@@ -30,6 +31,12 @@ outer_curvature(
 - inner:
 
   The inner optimizer, which the differenced route refits with.
+
+- gam:
+
+  The coefficients the criterion estimates, from
+  [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
+  or `NULL`.
 
 ## Value
 

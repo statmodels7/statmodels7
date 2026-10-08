@@ -1,7 +1,8 @@
 # What a Fit Does Not Answer
 
-Three generics of stats signal an error on a statmod fit, each naming
-what to ask instead.
+Three generics of stats and the generic
+[`base::plot()`](https://rdrr.io/r/base/plot.html) signal an error on a
+statmod fit, each naming what to use instead.
 
 ## Usage
 
@@ -14,6 +15,9 @@ model.frame(formula, ...)
 
 # S3 method for class 'StatmodFit'
 anova(object, ...)
+
+# S3 method for class 'StatmodFit'
+plot(x, ...)
 ```
 
 ## Arguments
@@ -55,6 +59,14 @@ from the same data has no null distribution to compare against.
 `AIC` and `BIC` are what this package reports, with the effective
 degrees of freedom corrected for the smoothing parameters having been
 estimated.
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) would have to
+choose one picture for a model with an equation per parameter, any
+number of terms and any number of covariates. The fitted curves come
+from
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+on a grid of new data, and the residuals from
+[`residuals.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md).
 
 ## See also
 

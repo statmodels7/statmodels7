@@ -36,7 +36,7 @@ coef(f1)
 #> 
 #> $sigma
 #> (Intercept) 
-#>  -0.2526842
+#>  -0.2493397
 ```
 
 [`coef()`](https://rdrr.io/r/stats/coef.html) answers with **one
@@ -65,7 +65,7 @@ lapply(coef(f2), round, 3)
 #> 
 #> $sigma
 #> (Intercept)           x 
-#>      -0.579       0.356
+#>      -0.575       0.356
 ```
 
 against a truth of $`\mu = 1 + 0.8x`$ and $`\log\sigma = -0.6 + 0.35x`$.
@@ -80,7 +80,7 @@ Comparing the two fits shows what the second equation bought:
 
 c(constant_scale = loglik(f1), modeled_scale = loglik(f2))
 #> constant_scale  modeled_scale 
-#>      -349.8763      -245.7099
+#>      -349.8797      -245.7139
 ```
 
 ## Terms
@@ -96,10 +96,10 @@ db$y <- rnorm(n, 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], 0.4)
 
 f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)), gaussian1_distrib(), db)
 f3@edf
-#>   parameter                        term coefficients     edf
-#> 1        mu                      linpar            1 1.00000
-#> 2        mu s(z, bspline_smooth(k = 8))            7 5.27609
-#> 3     sigma                      linpar            1 1.00000
+#>   parameter                        term coefficients      edf
+#> 1        mu                      linpar            1 1.000000
+#> 2        mu s(z, bspline_smooth(k = 8))            7 5.264483
+#> 3     sigma                      linpar            1 1.000000
 ```
 
 The smooth carries 7 coefficients and **spends** about 5.3 of them: that
@@ -112,7 +112,7 @@ reports the hyperparameters and who chose each:
 
 hyper(f3)
 #>   parameter                        term   name estimate  held source   id
-#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.067872 FALSE   reml <NA>
+#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.064316 FALSE   reml <NA>
 ```
 
 A random effect is written the same way and is the same machinery, its
@@ -122,15 +122,15 @@ penalty being a Gaussian prior over the group effects:
 
 f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g), gaussian1_distrib(), db)
 f4@edf
-#>   parameter                        term coefficients      edf
-#> 1        mu                      linpar            1  1.00000
-#> 2        mu s(z, bspline_smooth(k = 8))            7  6.12777
-#> 3        mu              random(~1 | g)           20 18.57787
-#> 4     sigma                      linpar            1  1.00000
+#>   parameter                        term coefficients       edf
+#> 1        mu                      linpar            1  1.000000
+#> 2        mu s(z, bspline_smooth(k = 8))            7  6.083231
+#> 3        mu              random(~1 | g)           20 18.540240
+#> 4     sigma                      linpar            1  1.000000
 hyper(f4)
 #>   parameter                        term   name  estimate  held source   id
-#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0454563 FALSE   reml <NA>
-#> 2        mu              random(~1 | g)  sigma 0.7061974 FALSE   reml <NA>
+#> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.0345354 FALSE   reml <NA>
+#> 2        mu              random(~1 | g)  sigma 0.7070243 FALSE   reml <NA>
 ```
 
 20 group effects spend about 18.6 degrees of freedom here, and the
@@ -180,25 +180,25 @@ summary(f3)
 #> 
 #> Parametric terms
 #>                estimate      se     z       p  lower upper
-#>   (Intercept)    0.9152 0.04678 19.56 < 1e-16 0.8235 1.007
+#>   (Intercept)    0.9152 0.04728 19.36 < 1e-16 0.8225 1.008
 #> 
-#> s(z, bspline_smooth(k = 8))   [7 coefficients, edf 5.28]
+#> s(z, bspline_smooth(k = 8))   [7 coefficients, edf 5.26]
 #>                  estimate      se     z        p   lower  upper
-#>   lambda [reml]    1.0680 0.71220                0.28890 3.9470
-#>   lin              0.1389 0.04686 2.964 0.003039 0.04704 0.2307
+#>   lambda [reml]     1.064  0.7107                 0.2875   3.94
+#>   lin              0.1389 0.04736 2.933 0.003361 0.04606 0.2317
 #> 
 #> === sigma   [log link]
 #> 
 #> Parametric terms
 #>                estimate      se      z         p   lower   upper
-#>   (Intercept)   -0.2103 0.04082 -5.152 2.574e-07 -0.2904 -0.1303
+#>   (Intercept)   -0.1998 0.04124 -4.844 1.273e-06 -0.2806 -0.1189
 #> 
 #> 95% intervals, bayesian variance
-#> conditional log-likelihood -362.579490    effective df 7.28
-#> cAIC 739.711    cBIC 766.660
-#> fitted in 810 ms
-#> inner   max |grad|/se 6.7e-07   min eigen 0.96
-#> outer   max |grad|/se 1.2e-05   min eigen 1
+#> conditional log-likelihood -362.616546    effective df 7.26
+#> cAIC 739.762    cBIC 766.668
+#> fitted in 169 ms
+#> inner   max |grad|/se 1.3e-15   min eigen 1
+#> outer   max |grad|/se 2.1e-08   min eigen 0.99
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
 
@@ -223,7 +223,7 @@ asks for?
 cert <- statmod_certificate(f4)
 c(state = cert$state, mode_error = signif(cert$mode_error, 3))
 #>       state  mode_error 
-#> "converged"  "3.55e-11"
+#> "converged"  "6.77e-30"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit
@@ -243,9 +243,9 @@ nd <- data.frame(z = c(-1, 0, 1),
                  g = factor(c(1, 2, 3), levels = levels(db$g)))
 predict(f4, newdata = nd, se = TRUE)$mu
 #>          fit        se      lower       upper
-#> 1 -0.2844652 0.1137424 -0.5073962 -0.06153423
-#> 2  1.8482754 0.1147794  1.6233119  2.07323891
-#> 3  2.4667260 0.1167146  2.2379697  2.69548230
+#> 1 -0.2837629 0.1188419 -0.5166888 -0.05083693
+#> 2  1.8468308 0.1199200  1.6117920  2.08186963
+#> 3  2.4646126 0.1219466  2.2256016  2.70362367
 ```
 
 Prediction **reapplies** each term’s blueprint rather than rebuilding
@@ -259,7 +259,7 @@ The `stats` generics behave as they read:
 
 c(nobs = nobs(f4), df.residual = df.residual(f4))
 #>        nobs df.residual 
-#>    300.0000    273.2944
+#>    300.0000    273.3765
 length(sigma(f4))
 #> [1] 300
 ```

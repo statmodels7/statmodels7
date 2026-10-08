@@ -6,7 +6,16 @@ free scale their links carry them onto.
 ## Usage
 
 ``` r
-statmod_hyper_vcov(spec, design, coef, hyper, method, inner = NULL)
+statmod_hyper_vcov(
+  spec,
+  design,
+  coef,
+  hyper,
+  method,
+  inner = NULL,
+  pinned = NULL,
+  at_edge = character(0)
+)
 ```
 
 ## Arguments
@@ -38,6 +47,19 @@ statmod_hyper_vcov(spec, design, coef, hyper, method, inner = NULL)
   probes with;
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   where none is given.
+
+- pinned:
+
+  The coordinates the fit left out of the criterion's determinant, as it
+  records them in `methods$pinned`.
+
+- at_edge:
+
+  The `boundary_key` of
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md):
+  the hyperparameters at the edge of their range, held by
+  [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
+  so that the others carry the variance conditional on them.
 
 ## Value
 

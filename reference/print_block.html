@@ -11,7 +11,7 @@ per parameter developed over covariates."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,11 +84,12 @@ different things: a break-point's population value and its per-group
 deviations are not comparable quantities, and a table that stacks them
 reads as a list of numbers and no longer as a model. Each developed
 parameter is therefore printed as a compartment of its own, headed by what
-develops it, opening with its hyperparameter under a name that says what
-the hyperparameter is, and rendering each sub-term the way a block of that
-kind is rendered at the top level. A random development reports the scale
-of its effects and one line saying how many predictions there are and how
-far they spread, the predictions themselves being in <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>.</p>
+develops it, with its fixed effects first and then each penalized sub-term,
+rendered the way a block of that kind is rendered at the top level. A
+random sub-term is headed by its call and its number of coefficients and
+reports the hyperparameters of its prior under the names of an ordinary
+random() block, followed by the summary of its predicted effects
+(<code><a href="effect_spread.html">effect_spread()</a></code>); the predictions themselves are in <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

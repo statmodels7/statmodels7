@@ -18,7 +18,8 @@ outer_fit(
   approx,
   maxit,
   tol,
-  vb
+  vb,
+  hold_hyper = FALSE
 )
 ```
 
@@ -69,6 +70,11 @@ outer_fit(
 - vb:
 
   The resolved verbosity.
+
+- hold_hyper:
+
+  `TRUE` to hold the hyperparameters at `hyper` and search over the
+  criterion's own coefficients alone.
 
 ## Value
 

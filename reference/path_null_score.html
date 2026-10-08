@@ -9,7 +9,7 @@ coefficients, with the block held at the kink."><meta property="og:image" conten
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ coefficients, with the block held at the kink.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_null_score</span><span class="op">(</span><span class="va">obj</span>, <span class="va">beta</span>, <span class="va">block</span>, <span class="va">hyper</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_null_score</span><span class="op">(</span><span class="va">obj</span>, <span class="va">beta</span>, <span class="va">block</span>, <span class="va">hyper</span>, also <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,6 +67,12 @@ coefficients, with the block held at the kink.</p>
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
 <dd><p>The hyperparameters.</p></dd>
 
+
+<dt id="arg-also">also<a class="anchor" aria-label="anchor" href="#arg-also"></a></dt>
+<dd><p>Other blocks to hold at their kinks while the score is read,
+each a list with the stacked positions <code>index</code> and the value <code>at</code>; the
+members of a shared hyperparameter other than <code>block</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -82,6 +88,10 @@ hyperparameter for which the term contributes nothing, which is
 <p>The other coefficients are held where the caller left them and are not
 refitted, so the number is a starting point and no boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.</p>
+<p>Where the kinks of the coordinates differ, as under <code>standardize</code>, each
+score is read against its own coordinate's kink, and the result is
+expressed in the units of the first coordinate's kink, which is how
+<code><a href="kink_solve.html">kink_solve()</a></code> reads it.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

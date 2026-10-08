@@ -9,7 +9,7 @@ the mode leaves out, for a fit whose own solve named none."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ the mode leaves out, for a fit whose own solve named none.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">deficient_coords</span><span class="op">(</span><span class="va">K</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">deficient_coords</span><span class="op">(</span><span class="va">K</span>, held <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -54,6 +54,11 @@ the mode leaves out, for a fit whose own solve named none.</p>
 
 <dl><dt id="arg-k">K<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>The penalized information at the mode, \(H + S\).</p></dd>
+
+
+<dt id="arg-held">held<a class="anchor" aria-label="anchor" href="#arg-held"></a></dt>
+<dd><p>The coordinates a kinked penalty holds at zero, from
+<code><a href="zero_kinked.html">zero_kinked()</a></code>, which are not candidates.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -106,6 +111,14 @@ only where the whole matrix would otherwise have been refused.</p>
 <code><a href="augmented_solve.html">augmented_solve()</a></code>. Measured against that pivot where both speak, the
 two agree on a duplicated column under four families and on an
 over-parametrized <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> term.</p>
+<p>A coordinate a kinked penalty holds at zero is left out of the test,
+as <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> leaves it out of the matrix it inverts. The kink
+identifies such a coordinate although \(K\) carries no curvature for
+it: under <code>1 + lasso(~ g)</code>, with every level of <code>g</code> coded, the direction
+that raises the intercept and lowers every level is flat in \(K\) and
+not in the objective, whose minimum over it is unique. Read on the whole
+matrix the pivot named the last level, reported it as missing, and
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> failed where that level was the only one selected.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

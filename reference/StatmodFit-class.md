@@ -145,7 +145,7 @@ fit@coefficients
 #> [1] 1.030728 1.985136
 #> 
 #> $sigma
-#> [1] -1.472794
+#> [1] -1.438298
 #> 
 fit@converged
 #> [1] TRUE

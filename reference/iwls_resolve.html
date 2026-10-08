@@ -13,7 +13,7 @@ observed cannot. A method whose curvature was named is returned as it is.'><meta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,12 @@ positive definite, or where its step finds no acceptable point, in 68 of
 68, at a median time between 0.17 and 0.98 of the expected route's per
 family and a REML criterion within \([-3.7 \times 10^{-5},
 1.9 \times 10^{-4}]\) of it. The expected information stood in 52 times over
-those fits, every time for a curvature that was not positive definite.</p>
+those fits, every time for a curvature that was not positive definite.
+Since 0.197.0 such a curvature is first repaired by <code><a href="pd_repair.html">pd_repair()</a></code> and its
+step tried, the expected information standing in only where that step
+finds no acceptable point: measured on the seven costly families below,
+at the same log-likelihood and certificate, it takes 1/4 to 1/6 of the time
+where the observed information is indefinite.</p>
 <p>A family whose expected information is exact but costly, which
 <code><a href="https://statmodels7.github.io/distributions7/reference/expected_hessian_costly.html" class="external-link">distributions7::expected_hessian_costly()</a></code> reports, is settled on the
 observed information as well. Measured at 1000 observations with a smooth

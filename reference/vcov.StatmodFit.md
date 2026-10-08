@@ -145,7 +145,7 @@ dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 sqrt(diag(vcov(fit)))
 #>    mu:(Intercept)              mu:x sigma:(Intercept) 
-#>        0.08659784        0.14678520        0.07905694 
+#>        0.08770104        0.14865515        0.08006408 
 
 # With a penalized term the three differ, and the widest is the one that
 # does not read the smoothing parameter as known.
@@ -155,5 +155,5 @@ fs <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distri
 vapply(c("frequentist", "bayesian", "unconditional"),
        function(ty) sqrt(diag(vcov(fs, type = ty)))[[1L]], 0)
 #>   frequentist      bayesian unconditional 
-#>    0.02085794    0.02085794    0.02085794 
+#>    0.02125842    0.02125842    0.02125842 
 ```

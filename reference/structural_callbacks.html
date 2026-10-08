@@ -11,7 +11,7 @@ one observation, with every other parameter held where it is."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ one observation, with every other parameter held where it is.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">structural_callbacks</span><span class="op">(</span><span class="va">spec</span>, <span class="va">theta</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">structural_callbacks</span><span class="op">(</span><span class="va">spec</span>, <span class="va">theta</span>, <span class="va">p</span>, scaling <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,6 +66,15 @@ one observation, with every other parameter held where it is.</p>
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
 <dd><p>The distribution parameter the term sits in.</p></dd>
+
+
+<dt id="arg-scaling">scaling<a class="anchor" aria-label="anchor" href="#arg-scaling"></a></dt>
+<dd><p>The exponent \(d\) of <code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>: where it is
+not zero, <code>score</code> returns \(u = s\,\mathcal{I}^{-d}\) and <code>curvature</code>
+its derivative in the predictor,
+\(u' = s'\,\mathcal{I}^{-d} - d\,s\,\mathcal{I}^{-d-1}\mathcal{I}'\),
+and the compiled context carries <code>scaling</code>, its kernel composing the
+same quantities from the family's scalar entry points.</p></dd>
 
 </dl></div>
     <div class="section level2">

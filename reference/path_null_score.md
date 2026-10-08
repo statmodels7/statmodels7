@@ -6,7 +6,7 @@ coefficients, with the block held at the kink.
 ## Usage
 
 ``` r
-path_null_score(obj, beta, block, hyper)
+path_null_score(obj, beta, block, hyper, also = NULL)
 ```
 
 ## Arguments
@@ -27,6 +27,12 @@ path_null_score(obj, beta, block, hyper)
 
   The hyperparameters.
 
+- also:
+
+  Other blocks to hold at their kinks while the score is read, each a
+  list with the stacked positions `index` and the value `at`; the
+  members of a shared hyperparameter other than `block`.
+
 ## Value
 
 A single number.
@@ -42,3 +48,9 @@ glmnet's `lambda.max` written for any separable penalty.
 The other coefficients are held where the caller left them and are not
 refitted, so the number is a starting point and no boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.
+
+Where the kinks of the coordinates differ, as under `standardize`, each
+score is read against its own coordinate's kink, and the result is
+expressed in the units of the first coordinate's kink, which is how
+[`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
+reads it.

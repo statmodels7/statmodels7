@@ -19,7 +19,7 @@ default."><meta property="og:image" content="https://statmodels7.github.io/statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,9 +60,9 @@ default.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">reml</span><span class="op">(</span>hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"expected"</span><span class="op">)</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">reml</span><span class="op">(</span>hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"auto"</span>, <span class="st">"expected"</span><span class="op">)</span>, marginal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">ml</span><span class="op">(</span>hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"expected"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">ml</span><span class="op">(</span>hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"auto"</span>, <span class="st">"expected"</span><span class="op">)</span>, marginal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,10 +70,20 @@ default.</p>
 
 
 <dl><dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p>Which information enters the determinant: <code>"observed"</code> (the
-default), the curvature of the log-likelihood at the data, which makes
-the criterion the Laplace approximation, or <code>"expected"</code>, the Fisher
-information, a function of the parameters alone. Matched with
+<dd><p>Which information enters the determinant: <code>"observed"</code>
+(the default), the curvature of the log-likelihood at the data, which
+makes the criterion the Laplace approximation, <code>"expected"</code>, the Fisher
+information, a function of the parameters alone, or <code>"auto"</code>, which
+<code><a href="statmod.html">statmod()</a></code> settles against the family through <code><a href="outer_resolve.html">outer_resolve()</a></code>: the
+expected information for a Student t, a skew t or a Cauchy response,
+whose observed information is not positive definite at an outlier, and
+the observed information otherwise. The observed information is the
+default because, once a degrees-of-freedom start run to its limit is
+replaced (statmodels7 0.193.0), it reaches the same point as the expected
+one on every case measured and 2 to 20 times faster; the case that needs
+the expected information (<code><a href="https://rdrr.io/pkg/MASS/man/GAGurine.html" class="external-link">MASS::GAGurine</a></code> with <code>nu ~ Age</code>) is one where
+the caller names it (Giovanni, 2026-10-07). The fitted model records the
+information used. Matched with
 <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>. Both carry an exact outer gradient and Hessian wherever the
 family writes its expected information out, which every shipped family
 does since distributions7 0.65.0. A family that does not would read the
@@ -83,11 +93,30 @@ default <code>iwls(approx = "opg")</code>, which is not an expectation, and
 <code><a href="statmod.html">statmod()</a></code> rejects <code>"expected"</code> there: see
 <code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>.</p></dd>
 
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Which distribution parameters have their unpenalized
+coefficients estimated by maximizing this criterion, instead of being
+read at the joint mode (<code>ml()</code>) or integrated (<code>reml()</code>). <code>NULL</code>, the
+default, names every parameter except the position, which is the
+family's first parameter. <code>"none"</code> names no parameter, <code>"all"</code> names
+every one, and a character vector names the parameters listed. With
+<code>"all"</code>, <code>reml()</code> and <code>ml()</code> are the same criterion.
+Where the model carries a penalty with a kink (a lasso, an elastic
+net, a SCAD or an MCP, in any equation), <code>NULL</code> names no parameter:
+the path that chooses the kinked penalty scores the model at the joint
+mode, and the fit returned is the model it scored. A parameter named
+explicitly is still estimated on the criterion, at the value the path
+chose. Where the family lacks the two derivatives the criterion reads
+in some parameter (a Laplace response) and the model carries no smooth
+hyperparameter, the default criterion is not run at all, and a
+<code>reml()</code> or <code>ml()</code> passed by name is rejected.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An <code><a href="OuterMethod-class.html">OuterMethod()</a></code> object of kind <code>"reml"</code> or <code>"ml"</code>, with
-<code>hessian</code> as supplied and the path settings unused.</p>
+<code>hessian</code> and <code>marginal</code> as supplied and the path settings unused.</p>
     </div>
     <div class="section level2">
     <h2 id="the-criterion">The criterion<a class="anchor" aria-label="anchor" href="#the-criterion"></a></h2>
@@ -105,44 +134,61 @@ Wood's (2011) REML criterion term for term.</p>
     </div>
     <div class="section level2">
     <h2 id="what-each-one-integrates">What each one integrates<a class="anchor" aria-label="anchor" href="#what-each-one-integrates"></a></h2>
-    <p><code>reml()</code> takes \(A = I\): every coefficient is integrated, the
-unpenalized ones under the flat prior their absence of a penalty amounts
-to.</p>
-<p><code>ml()</code> takes \(A\) spanning the range space of the penalty, so an
-unpenalized coefficient is profiled. An ordinary covariate is one; so is
-the linear component of a Demmler-Reinsch smooth, which that smooth's
-penalty leaves alone.</p>
-<p>This is the distinction between REML and ML for a variance component in a
-mixed model, and <code>reml()</code> is the default for the same reason: profiling a
-fixed effect leaves the variance estimate biased downwards.</p>
+    <p>Write \(\gamma\) for the unpenalized coefficients of the parameters that
+<code>marginal</code> names, and \(u\) for every other coefficient. The criterion
+is maximized in \(\gamma\) together with the hyperparameters. At each
+value of \(\gamma\), the coefficients \(u\) are set to the penalized
+mode.</p>
+<p><code>reml()</code> integrates every coefficient in \(u\). An unpenalized one is
+integrated under a flat prior, which is what the absence of a penalty
+amounts to. <code>ml()</code> integrates only the directions in the range space of the
+penalty, so an unpenalized coefficient in \(u\) is read at the mode. An
+ordinary covariate is unpenalized. The linear component of a
+Demmler-Reinsch smooth is unpenalized too, because the penalty of that
+smooth does not act on it.</p>
+<p>With <code>marginal = "all"</code>, \(\gamma\) holds every unpenalized
+coefficient. The two criteria then integrate the same directions, and they
+are the same function: measured on six families with a random intercept,
+the two maxima and the two sets of coefficients agree exactly.</p>
+<p>A coefficient that the model does not identify at the first fit is left
+out of the determinant for the whole search, and it stays free in the
+inner fit. This is how <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code> computes its REML criterion, with the
+rank of the design instead of its number of columns.</p>
     </div>
     <div class="section level2">
-    <h2 id="a-dispersion-is-a-coefficient-and-is-read-at-the-joint-mode">A dispersion is a coefficient, and is read at the joint mode<a class="anchor" aria-label="anchor" href="#a-dispersion-is-a-coefficient-and-is-read-at-the-joint-mode"></a></h2>
-    <p>What these criteria estimate are the HYPERPARAMETERS. Everything else is a
-coefficient, read where the penalized likelihood is maximized, and that
-includes the intercept of a dispersion equation: a negative binomial's
-\(\theta\), a Gamma's dispersion, a gaussian's \(\sigma\). A
-coefficient read there is a maximum likelihood estimate, and maximum
-likelihood underestimates a dispersion.</p>
-<p>The gaussian case says it in closed form. On a mixed model at
-\(n = 20000\) over 500 groups, <code>sigma(fit)</code> is \(\sqrt{rss/n}\) to
-\(3.6\times10^{-10}\) relative – the conditional ML estimate, on the raw
-residuals \(y - \hat y\) and not on what <code><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals()</a></code> returns, which are
-standardized – where <code>lme4</code> reports \(\sqrt{rss/(n - \mathrm{edf})}\),
-and the factor \(\sqrt{n/(n-\mathrm{edf})}\) carries one onto the other to
-\(1.4\times10^{-5}\). The same holds for a count model: measured over
-eight designs against <code>glmmTMB</code>, which makes the dispersion intercept an
-outer parameter of its own criterion, our \(\theta\) is larger by a
-factor of 1.03 to 1.33.</p>
-<p>That difference is a matter of WHERE the dispersion is read and not of
-which coefficients the determinant spans. Measured on the same designs, by
-separating the two: moving the dispersion intercept out of the determinant
-and leaving it at the joint mode accounts for 0.01 to 1.75 per cent of the
-gap, and reading it as an outer parameter instead accounts for the other 98
-to 100. The determinant here spans every coefficient of every equation,
-which is what \(A = I\) means, and a distributional regression has no
-reason to treat the coefficients of one equation differently from those of
-another.</p>
+    <h2 id="where-a-dispersion-and-a-shape-are-estimated">Where a dispersion and a shape are estimated<a class="anchor" aria-label="anchor" href="#where-a-dispersion-and-a-shape-are-estimated"></a></h2>
+    <p>By default <code>marginal</code> names every parameter except the position, which is
+the family's first parameter: the location, or the scale for a family with
+no location, such as <code><a href="https://statmodels7.github.io/distributions7/reference/weibull1_distrib.html" class="external-link">distributions7::weibull1_distrib()</a></code>. For a gaussian
+mixed model this is the REML of <code>lme</code> and <code>glmmTMB</code>. The coefficients of
+the mean are integrated, and \(\sigma\) is maximized on the criterion.
+Without any penalty, <code>reml()</code> returns the \(\sigma\) of <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code>,
+\(\sqrt{\mathrm{rss}/(n-p)}\), and its criterion equals
+<code>logLik(lm(...), REML = TRUE)</code>. <code>ml()</code> returns \(\sqrt{\mathrm{rss}/n}\).
+On <code><a href="https://rdrr.io/pkg/nlme/man/Orthodont.html" class="external-link">nlme::Orthodont</a></code>, <code>distance ~ agec + random(~ agec | Subject)</code> gives
+\(\sigma\) = 1.310039, standard deviations 2.134332 and 0.226429, and a
+criterion of -221.31834, which are the values of <code>lme</code> to six digits.</p>
+<p><code>marginal = "none"</code> gives the convention of <code>gamlss</code> and of mgcv's
+<code>gaulss</code>: every parameter of the distribution is read at the joint mode of
+the penalized likelihood. That estimate ignores the degrees of freedom of
+the coefficients estimated beside it, so a dispersion read there is biased
+downwards. Measured over 20 replicates of 40 groups of 8, a gamma
+dispersion with a random effect of its own is biased by -8.0 per cent at the
+joint mode and by -2.6 per cent on the criterion, and a Weibull shape with
+a random intercept by +8.7 and +1.1 per cent.</p>
+<p>Where some coefficients of the location are integrated, the estimate
+depends on the parametrization of the family. The dispersion of
+<code><a href="https://statmodels7.github.io/distributions7/reference/gamma1_distrib.html" class="external-link">distributions7::gamma1_distrib()</a></code> and the variance of
+<code><a href="https://statmodels7.github.io/distributions7/reference/gamma2_distrib.html" class="external-link">distributions7::gamma2_distrib()</a></code>, \(\sigma^2 = \phi\mu^2\), differ
+by about one per cent under <code>reml()</code>, because the second contains the
+integrated mean. With <code>"all"</code> the criterion does not depend on the
+parametrization.</p>
+<p>Five configurations are not covered yet, and <code><a href="marginal_coords.html">marginal_coords()</a></code> lists
+them: a structural term, a block that moves with its coefficients, a
+penalty with a kink, a block that is a working linearization (a sharp
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>), and a penalty whose null
+space is not spanned by coordinates. In each case a parameter that the default names keeps the
+convention of <code>"none"</code>, and a parameter named explicitly is refused.</p>
     </div>
     <div class="section level2">
     <h2 id="which-hyperparameters">Which hyperparameters<a class="anchor" aria-label="anchor" href="#which-hyperparameters"></a></h2>
@@ -201,7 +247,7 @@ they chose.</p></div>
 <span class="r-in"><span><span class="co"># The smoothing parameter was estimated, and hyper() says by what.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="hyper.html">hyper</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter                         term   name estimate  held source   id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, bspline_smooth(k = 10)) lambda 3.245098 FALSE   reml &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        mu s(x, bspline_smooth(k = 10)) lambda  3.21673 FALSE   reml &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ML profiles the unpenalized directions instead of integrating them, so</span></span></span>
 <span class="r-in"><span><span class="co"># it shrinks a little less. The gap is small here because only two of the</span></span></span>
@@ -210,15 +256,15 @@ they chose.</p></div>
 <span class="r-in"><span>               outer_criterion <span class="op">=</span> <span class="fu">ml</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>reml <span class="op">=</span> <span class="fu"><a href="hyper.html">hyper</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">$</span><span class="va">estimate</span>, ml <span class="op">=</span> <span class="fu"><a href="hyper.html">hyper</a></span><span class="op">(</span><span class="va">fml</span><span class="op">)</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     reml       ml </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3.245098 3.223994 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3.216730 3.205381 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>reml <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">fit</span><span class="op">@</span><span class="va">edf</span><span class="op">$</span><span class="va">edf</span><span class="op">)</span>, ml <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">fml</span><span class="op">@</span><span class="va">edf</span><span class="op">$</span><span class="va">edf</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     reml       ml </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8.587662 8.593215 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8.562273 8.574067 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The marginal log-likelihood is what these maximize, and it is only</span></span></span>
 <span class="r-in"><span><span class="co"># available where one of them ran.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">fit</span>, type <span class="op">=</span> <span class="st">"marginal"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 'log Lik.' -55.80844 (df=3)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 'log Lik.' -53.66395 (df=3)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

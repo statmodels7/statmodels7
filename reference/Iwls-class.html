@@ -15,7 +15,7 @@ argument; this raw constructor does not."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,8 @@ argument; this raw constructor does not.</p>
 <span>  tol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  step_halving <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  fallback <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span>  fallback <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  switch_after <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -109,6 +110,14 @@ abandoned, a single non-negative number.</p></dd>
 the step wherever the observed penalized information is not positive
 definite or its step finds no acceptable point. <code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it,
 for <code>"auto"</code> on a family whose expected information is not exact.</p></dd>
+
+
+<dt id="arg-switch-after">switch_after<a class="anchor" aria-label="anchor" href="#arg-switch-after"></a></dt>
+<dd><p>A single number: the iteration after which a run on
+the expected information continues on the observed one, the expected
+then taking the step only where the observed cannot. <code>Inf</code> never
+switches. <code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it, for <code>"auto"</code> on a family whose
+expected information is exact, to <code><a href="iwls_switch_after.html">iwls_switch_after()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

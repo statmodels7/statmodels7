@@ -143,19 +143,19 @@ dd$y <- 1 + 2 * dd$x + rnorm(80, sd = 0.4)
 fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 confint(fit)
 #>                   parameter   term coefficient  estimate         se      lower
-#> mu:(Intercept)           mu linpar (Intercept)  1.043291 0.08659784  0.8735627
-#> mu:x                     mu linpar           x  2.007856 0.14678520  1.7201624
-#> sigma:(Intercept)     sigma linpar (Intercept) -1.045460 0.07905694 -1.2004085
+#> mu:(Intercept)           mu linpar (Intercept)  1.043291 0.08770104  0.8714004
+#> mu:x                     mu linpar           x  2.007856 0.14865515  1.7164973
+#> sigma:(Intercept)     sigma linpar (Intercept) -1.032801 0.08006408 -1.1897235
 #>                        upper
-#> mu:(Intercept)     1.2130200
-#> mu:x               2.2955498
-#> sigma:(Intercept) -0.8905109
+#> mu:(Intercept)     1.2151822
+#> mu:x               2.2992148
+#> sigma:(Intercept) -0.8758781
 confint(fit, "sigma")
-#>                   parameter   term coefficient estimate         se     lower
-#> sigma:(Intercept)     sigma linpar (Intercept) -1.04546 0.07905694 -1.200408
+#>                   parameter   term coefficient  estimate         se     lower
+#> sigma:(Intercept)     sigma linpar (Intercept) -1.032801 0.08006408 -1.189723
 #>                        upper
-#> sigma:(Intercept) -0.8905109
+#> sigma:(Intercept) -0.8758781
 confint(fit, "mu:x", test = "lr", readable = FALSE)
 #>      parameter   term coefficient estimate        se    lower    upper
-#> mu:x        mu linpar           x 2.007856 0.1467852 1.716674 2.299038
+#> mu:x        mu linpar           x 2.007856 0.1486552 1.716674 2.299038
 ```

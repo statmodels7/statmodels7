@@ -13,7 +13,8 @@ statmod_edf_correction(
   design,
   method,
   expected = TRUE,
-  approx = "opg"
+  approx = "opg",
+  pinned = NULL
 )
 ```
 
@@ -49,6 +50,11 @@ statmod_edf_correction(
 
   The approximation for the expected information. Not read where the
   model carries a filter.
+
+- pinned:
+
+  The coordinates the fit left out of the criterion's determinant, as it
+  records them in `methods$pinned`.
 
 ## Value
 

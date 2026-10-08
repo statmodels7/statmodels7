@@ -9,7 +9,7 @@ derivative.
 ## Usage
 
 ``` r
-filter_curvature(spec, design, f, ap, Vs, gl, H, D3)
+filter_curvature(spec, design, f, ap, Vs, gl, H, D3, theta)
 ```
 
 ## Arguments
@@ -42,6 +42,11 @@ filter_curvature(spec, design, f, ap, Vs, gl, H, D3)
 
   The family's first three derivatives on the link scale at the fitted
   predictors.
+
+- theta:
+
+  The per-observation parameters they were read at, from which the
+  expected information is read where the filter scales its score.
 
 ## Value
 

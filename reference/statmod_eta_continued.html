@@ -11,7 +11,7 @@ where the fitting data left it."><meta property="og:image" content="https://stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ where the fitting data left it.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_eta_continued</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">statmod_eta_continued</span><span class="op">(</span><span class="va">fit</span>, <span class="va">spec</span>, <span class="va">design</span>, deriv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,11 +66,19 @@ where the fitting data left it.</p>
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
 <dd><p>Its design.</p></dd>
 
+
+<dt id="arg-deriv">deriv<a class="anchor" aria-label="anchor" href="#arg-deriv"></a></dt>
+<dd><p>Whether to return the forecast's derivative rows.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list shaped as <code><a href="statmod_eta.html">statmod_eta()</a></code>'s, without the
-memoized filter objects.</p>
+memoized filter objects, plus <code>cont_cols</code>: for each equation whose
+filter was continued with <code>deriv = TRUE</code>, a list with <code>X</code> (the
+derivative of the predictor at the new rows in the coefficients of
+every equation and the term's free parameters) and <code>key</code> (the names of
+its columns in the variance matrix).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -83,19 +91,18 @@ driving quantity at each of them, the level being the difference between
 the filtered predictor and the static one – and the term is asked to
 continue from there through
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_continue.html" class="external-link">modelterms7::term_continue()</a></code>.</p>
-<p>Which of the two a call asks for is decided by the response, not by the
-times. New rows carrying the response are a re-reading: the filter is run
-over them from the term's own seed, and that is what a caller means by
-predicting a model on another series, and is why
-<code>predict(fit, newdata = &lt;the fitting data&gt;)</code> returns the fitted
-values. New rows without it are a continuation, and must come after the
-observed series. A frame carrying the response on some rows only is
-rejected: the two readings differ, and picking one would answer a question
-that was not asked.</p>
+<p>Only rows without the response are continued, and they must come after
+the observed series. Rows that carry it are a series of their own, rebuilt
+by <code><a href="statmod_respec.html">statmod_respec()</a></code> and read as the fitting rows are, which is why
+<code>predict(fit, newdata = &lt;the fitting data&gt;)</code> returns the fitted values.</p>
 <p>A term whose contribution is a likelihood mixed over latent states is
 rejected: what such a term reports at an observed row is a posterior over
 states, which past the data is a predictive distribution, no single
 value.</p>
+<p>With <code>deriv = TRUE</code> the continuation is differentiated as well, in the
+coefficients of every equation and the term's free parameters
+(<code><a href="continued_deriv_inputs.html">continued_deriv_inputs()</a></code>), which is what a standard error of the
+forecast reads.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

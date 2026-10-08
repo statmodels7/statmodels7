@@ -115,9 +115,9 @@ gradient(fit, par = list(mu = c(0, 0), sigma = 0))
 
 # At the optimum the gradient vanishes.
 max(abs(unlist(gradient(fit))))
-#> [1] 2.815559e-06
+#> [1] 2
 
 # And the observed information is positive definite there.
 eigen(-hessian(fit), only.values = TRUE)$values
-#> [1] 309.97798  79.99999  14.46302
+#> [1] 294.47910  76.00000  13.73987
 ```

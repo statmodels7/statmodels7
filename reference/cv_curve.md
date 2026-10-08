@@ -62,10 +62,15 @@ A list with `cvm`, `cvse` and `n_fail`.
 
 The path is run fold by fold, not point by point, so that each fit
 starts from the previous point's coefficients. That warm chain is the
-whole economy of a path cheaper than its length suggests. Each training
-fit rebuilds the design on its own rows: a term is re-evaluated in the
-data it is fitted to, so a basis or a set of contrasts is not carried
-over from rows the fit did not see.
+whole economy of a path cheaper than its length suggests. Each fold
+reapplies to its rows the terms built on all the rows, as
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+reapplies them to new data: the knots of a basis, the levels of a factor
+and the scales of a standardized block come from the covariates of every
+row, never from the response. Rebuilt on the training rows alone, a
+basis did not cover a held out row past their range, and the fold
+stopped the whole fit (a smooth of the year of construction beside a
+lasso on `gamlss.data::rent`).
 
 ## See also
 

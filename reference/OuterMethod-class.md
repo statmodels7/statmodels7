@@ -23,7 +23,8 @@ OuterMethod(
   k = integer(0),
   nfolds = integer(0),
   rule = character(0),
-  folds = integer(0)
+  folds = integer(0),
+  marginal = NULL
 )
 ```
 
@@ -63,6 +64,14 @@ OuterMethod(
 
   A fold number per observation, or `integer(0)` for folds drawn at fit
   time. Read by `"cv"` alone.
+
+- marginal:
+
+  Which distribution parameters have their unpenalized coefficients
+  estimated on the marginal criterion: `NULL` for every parameter except
+  the position, `"none"`, `"all"`, or a vector of names. Read by
+  `"reml"` and `"ml"` alone; see
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md).
 
 ## Value
 

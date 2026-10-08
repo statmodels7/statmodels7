@@ -11,7 +11,7 @@ behind it."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -256,7 +256,7 @@ filter and an equation at once is in neither vector on its own.</p>
     <p><code>par</code> is one named list over the whole model, and a key may be</p><ul><li><p>a distribution parameter, <code>mu</code>, which is that whole equation;</p></li>
 <li><p>one of its coefficients or a group of them, <code>mu.(Intercept)</code> or
 <code>mu.random</code>, a group being a name the members extend at a dot;</p></li>
-<li><p>a structural term's own parameter, <code>alpha1</code>, or a group of those,
+<li><p>a structural term's own parameter, <code>kappa1</code>, or a group of those,
 <code>omega.random</code>.</p></li>
 </ul><p>A value is a vector of that key's own length, a single number used for all
 of them, or a <strong>function</strong> of the count. The function is how a structured
@@ -271,8 +271,8 @@ nothing is refused with what the model does carry.</p>
 logarithm, a persistence the partial autocorrelation its chart carries.
 A parameter a subformula DEVELOPS is different, and it has to be: its
 coordinates are the coefficients of that development, which act on the
-unconstrained scale of the parameter's own chart, so <code>alpha1</code> is a loading
-and <code>alpha1.random.3</code> is a group's departure on the log scale that
+unconstrained scale of the parameter's own chart, so <code>kappa1</code> is a loading
+and <code>kappa1.random.3</code> is a group's departure on the log scale that
 loading rides. That is what keeps every group's loading positive whatever
 the departure is.</p>
     </div>
@@ -334,7 +334,7 @@ the reason <code><a href="statmod.html">statmod()</a></code> refuses one.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -1.165592 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -1.145181 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a sparse truth, written as a function of the coefficient count</span></span></span>
@@ -366,7 +366,7 @@ the reason <code><a href="statmod.html">statmod()</a></code> refuses one.</p>
 <span class="r-in"><span><span class="va">sim5</span> <span class="op">&lt;-</span> <span class="fu">rstatmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">gas</span><span class="op">(</span>p <span class="op">=</span> <span class="fl">1</span>, q <span class="op">=</span> <span class="fl">1</span>, time <span class="op">=</span> <span class="va">t</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                 par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sigma <span class="op">=</span> <span class="fl">0</span>, omega <span class="op">=</span> <span class="fl">0.4</span>, alpha1 <span class="op">=</span> <span class="fl">0.3</span>,</span></span>
+<span class="r-in"><span>                 par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sigma <span class="op">=</span> <span class="fl">0</span>, omega <span class="op">=</span> <span class="fl">0.4</span>, kappa1 <span class="op">=</span> <span class="fl">0.3</span>,</span></span>
 <span class="r-in"><span>                            pacf1 <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sim5</span><span class="op">$</span><span class="va">latent</span>, <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.0000000 0.6960904 0.6137012</span>

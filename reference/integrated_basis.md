@@ -6,7 +6,7 @@ of the penalty's range space for ML.
 ## Usage
 
 ``` r
-integrated_basis(spec, design, kind)
+integrated_basis(spec, design, kind, gamma = FALSE)
 ```
 
 ## Arguments
@@ -23,6 +23,13 @@ integrated_basis(spec, design, kind)
 - kind:
 
   `"reml"` or `"ml"`.
+
+- gamma:
+
+  `TRUE` where the criterion also estimates coefficients
+  ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md));
+  a model with no penalized direction then gets an empty basis rather
+  than an error.
 
 ## Value
 

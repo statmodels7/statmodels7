@@ -12,7 +12,7 @@ the static jacobian rows densified, and the filter's parameter index.
 ## Usage
 
 ``` r
-structural_blocks_data(params, ap, Vs, H, D3, n)
+structural_blocks_data(params, ap, Vs, H, D3, n, D4 = NULL, D5 = NULL)
 ```
 
 ## Arguments
@@ -37,6 +37,14 @@ structural_blocks_data(params, ap, Vs, H, D3, n)
 
   The number of observations.
 
+- D4, D5:
+
+  The fourth and fifth derivatives, which the compiled third and fourth
+  orders read: one column per index triple \\(r, r_2, r_3)\\ after the
+  filter's own, at \\((r-1) n_p + r_2 - 1) n_p + r_3\\, and likewise for
+  the quadruples of the fifth. `NULL` leaves them out.
+
 ## Value
 
-A list with `H`, `D3`, `Vs` and `ap`.
+A list with `H`, `D3`, `Vs` and `ap`, and `D4` and `D5` where they were
+given.

@@ -11,7 +11,7 @@ parameters."><meta property="og:image" content="https://statmodels7.github.io/st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,6 +110,12 @@ reference distribution needs no asymptotics (Dunn and Smyth, 1996).</p>
     <p>The construction is randomized: \(u_i\) is drawn uniformly on
 \((F(y_i^-), F(y_i))\) and the residual is \(\Phi^{-1}(u_i)\). Exact
 again, at the price of being random, so two calls give two answers.</p>
+<p>Where \(F(y_i)\) exceeds one half the residual is read from the survival
+function, \(\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)\) with \(1 - u_i\)
+computed as \(1 - F\) directly, so a count far in the upper tail, where
+\(F\) rounds to one, gets a finite residual. A family whose
+distribution function does not take <code>lower.tail</code> keeps the lower-tail
+reading.</p>
 <p>This applies to every discrete family, and at the atom alone to a mixed
 one, which is the zero-adjusted wrapper of a continuous parent. <code>seed</code>
 makes a call reproducible without disturbing the caller's stream; left
@@ -144,8 +150,8 @@ parameters these are read against.</p></div>
 <span class="r-in"><span><span class="co"># Under a correct model the quantile residuals are standard normal.</span></span></span>
 <span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         mean           sd </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2.090233e-17 1.002509e+00 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          mean            sd </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -1.949639e-17  9.974843e-01 </span>
 <span class="r-in"><span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/shapiro.test.html" class="external-link">shapiro.test</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.8361219</span>
 <span class="r-in"><span></span></span>

@@ -49,6 +49,20 @@ data-based `distrib_start` method on the univariate families, which is
 the design distributions7 already documents and which only its
 multivariate gaussian implements.
 
+**An intercept the fit ran to the limit of its chart is replaced** by
+the data-based start of
+[`distributions7::distrib_start()`](https://statmodels7.github.io/distributions7/reference/distrib_start.html).
+On a log or logit chart a value past \\e^{\pm 16}\\ is a limit of the
+family and not an estimate: a Student t fitted to a response no
+heavier-tailed than a gaussian puts \\\nu\\ at \\6.1 \times 10^8\\
+(`gamlss.data::film90`) or \\7.0 \times 10^{10}\\ (`abdom`). Where a
+marginal criterion estimates that coefficient its search starts there,
+the criterion is flat in it, and on film90 `lbfgs()` did not leave it:
+100 s and `not converged`, where from the data-based \\\nu = 30\\ the
+same search converges in 6.9 s to the point the observed information
+reaches. An identity chart is left alone, a location of any size being
+an estimate.
+
 ## See also
 
 [`statmod_start()`](https://statmodels7.github.io/statmodels7/reference/statmod_start.md)

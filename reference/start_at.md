@@ -85,9 +85,9 @@ start_at(start_origin(), spec, design, NULL)
 #> 
 start_at(start_intercepts(), spec, design, NULL)
 #> $mu
-#> [1] 2.048898 0.000000
+#> [1] 1.090078 1.863506
 #> 
 #> $sigma
-#> [1] -0.560959
+#> [1] -1.410593
 #> 
 ```

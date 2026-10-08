@@ -6,7 +6,15 @@ which the gradient and the Hessian both read.
 ## Usage
 
 ``` r
-ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
+ctx_penalized(
+  ctx,
+  spec,
+  design,
+  coef,
+  hyper,
+  expected = FALSE,
+  laplace = FALSE
+)
 ```
 
 ## Arguments
@@ -21,12 +29,12 @@ ctx_penalized(ctx, spec, design, coef, hyper, expected = FALSE)
 
 - expected:
 
-  Whether \\H\\ is the expected information, as the criterion carries
-  under `reml(hessian = "expected")`. It used to be hard-coded to the
-  observed one, correctly, because the exact gradient ran on no other
-  route; admitting the expected route makes the criterion's determinant
-  a different matrix, and reading the wrong one would be a gradient of
-  the wrong function.
+  Whether the information is the expected one.
+
+- laplace:
+
+  Whether the matrix is the criterion's, with the kinked coordinates
+  left out, or the mode's.
 
 ## Value
 
@@ -68,6 +76,17 @@ buys is the cost of producing it.
 
 `NULL` is returned where the matrix is not positive definite, which is
 the answer both callers already gave there.
+
+**Two matrices, where a penalty has a kink.** The criterion's
+determinant leaves out every coordinate a kinked penalty covers
+([`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)),
+which is what `laplace = TRUE` asks for. The default is the mode's own
+curvature, which leaves out only the coordinates a kinked penalty holds
+at ZERO
+([`zero_kinked()`](https://statmodels7.github.io/statmodels7/reference/zero_kinked.md)):
+those stay at zero when a hyperparameter moves, and a Newton correction
+of the mode does not move them either. Where no penalty has a kink the
+two are one matrix and one cache entry.
 
 ## See also
 

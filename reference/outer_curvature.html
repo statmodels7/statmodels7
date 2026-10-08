@@ -11,7 +11,7 @@ difference of the exact gradient where it does not."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,8 @@ difference of the <strong>exact</strong> gradient where it does not.</p>
 <span>  <span class="va">method</span>,</span>
 <span>  <span class="va">idx</span>,</span>
 <span>  basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  inner <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  inner <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gam <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -71,6 +72,11 @@ takes them.</p></dd>
 
 <dt id="arg-inner">inner<a class="anchor" aria-label="anchor" href="#arg-inner"></a></dt>
 <dd><p>The inner optimizer, which the differenced route refits with.</p></dd>
+
+
+<dt id="arg-gam">gam<a class="anchor" aria-label="anchor" href="#arg-gam"></a></dt>
+<dd><p>The coefficients the criterion estimates, from
+<code><a href="marginal_coords.html">marginal_coords()</a></code>, or <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

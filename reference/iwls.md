@@ -18,7 +18,7 @@ iwls(
   hessian = c("auto", "expected", "observed"),
   approx = c("opg", "bartlett", "integrate", "mc"),
   decomposition = c("qr", "svd", "chol", "chol_crossprod"),
-  maxit = 100L,
+  maxit = 1000L,
   tol = 1e-06,
   criterion = NULL,
   step_halving = 30L
@@ -113,6 +113,34 @@ families whose expected information is an approximation, a smooth at n =
 median time between 0.17 and 0.98 of the approximation's per family. The
 fit records the settled method, so `fit@methods$smooth` says which
 curvature ran.
+
+On a family whose expected information is exact, a run continues on the
+observed information as soon as Fisher scoring contracts the score
+slowly, each of two consecutive ratios of the score above
+[`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md),
+and at the latest after
+[`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
+scoring steps; the expected information stands in where the observed
+cannot step. Fisher scoring converges only linearly near the mode
+wherever the two informations differ there, which they do whenever the
+dispersion has an equation of its own. Measured on `ChickWeight` with
+smooths in the mean and in \\\sigma\\, the first inner fit needed 235
+scoring steps and the REML criterion was unavailable at its start; with
+random intercepts in both equations the fit stopped at a REML criterion
+0.78 below the maximum, with the standard deviation of the chicks'
+intercepts at 0.028 where it is 0.685. With the switch both converge.
+
+Where the rule is met, the run takes one more full step, on the observed
+information where the family has it exactly. The marginal criterion
+carries \\\log\lvert K(\beta)\rvert\\, which is not stationary in
+\\\beta\\, so a mode left short by \\\delta\\ enters it at first order;
+a warm-started fit whose score is already under the rule would stop
+without moving and leave the criterion out by an amount linear in the
+outer step. The extra step takes the error to second order. It is kept
+unless it raises the objective by more than a relative \\10^{-8}\\: a
+sufficient-decrease test at a point already under the rule would accept
+or reject by the last bits, and the criterion would jump between nearby
+hyperparameters.
 
 `approx` reaches distributions7 and is read only where the family has no
 closed expected information; elsewhere the family's own method answers
@@ -219,20 +247,20 @@ for the criteria that can replace it.
 ``` r
 iwls()
 #> iwls: auto information, qr
-#>   maxit 100, tol 1e-06
+#>   maxit 1000, tol 1e-06
 
 # Newton instead of Fisher scoring, solved through an SVD, which reports a
 # numerical rank where a deficient block would make a Cholesky fail.
 iwls(hessian = "observed", decomposition = "svd")
 #> iwls: observed information, svd
-#>   maxit 100, tol 1e-06
+#>   maxit 1000, tol 1e-06
 
 # An optimizers7 stopping rule in place of tol. crit_grad(t) here is
 # exactly tol = t, the state's gradient being the score per observation.
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
 #> iwls: auto information, qr
-#>   maxit 100, gradient (max-norm) < 1e-08 or |df| < 1e-12 (relative)
+#>   maxit 1000, gradient (max-norm) < 1e-08 or |df| < 1e-12 (relative)
 
 # Both at once is an error: tol would be read by nobody.
 try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))

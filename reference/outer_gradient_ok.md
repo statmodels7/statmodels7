@@ -8,7 +8,7 @@ observed information.
 ## Usage
 
 ``` r
-outer_gradient_ok(spec, design, idx, method, order = 1L)
+outer_gradient_ok(spec, design, idx, method, order = 1L, gamma = FALSE)
 ```
 
 ## Arguments
@@ -35,6 +35,13 @@ outer_gradient_ok(spec, design, idx, method, order = 1L)
 - order:
 
   `1` for the gradient, `2` for the Hessian as well.
+
+- gamma:
+
+  `TRUE` where the outer vector also carries coefficients the criterion
+  estimates
+  ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
+  so an empty index is not a reason to answer `FALSE`.
 
 ## Value
 

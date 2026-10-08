@@ -6,7 +6,7 @@ Sends the block to the dense kernel or to the sparse one, taking a
 ## Usage
 
 ``` r
-coord_call(X, z, w, b0, tab, screen, tol, covariance)
+coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
 ```
 
 ## Arguments

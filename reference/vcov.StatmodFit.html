@@ -9,7 +9,7 @@ parameter's block at once."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -174,7 +174,7 @@ Statistical Association</em>, 111(516), 1548–1563.</p>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    mu:(Intercept)              mu:x sigma:(Intercept) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        0.08659784        0.14678520        0.07905694 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        0.08770104        0.14865515        0.08006408 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With a penalized term the three differ, and the widest is the one that</span></span></span>
 <span class="r-in"><span><span class="co"># does not read the smoothing parameter as known.</span></span></span>
@@ -184,7 +184,7 @@ Statistical Association</em>, 111(516), 1548–1563.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"frequentist"</span>, <span class="st">"bayesian"</span>, <span class="st">"unconditional"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>       <span class="kw">function</span><span class="op">(</span><span class="va">ty</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">fs</span>, type <span class="op">=</span> <span class="va">ty</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1L</span><span class="op">]</span><span class="op">]</span>, <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   frequentist      bayesian unconditional </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    0.02085794    0.02085794    0.02085794 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    0.02125842    0.02125842    0.02125842 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -7,7 +7,7 @@ forward from where the fitting data left it.
 ## Usage
 
 ``` r
-statmod_eta_continued(fit, spec, design)
+statmod_eta_continued(fit, spec, design, deriv = FALSE)
 ```
 
 ## Arguments
@@ -24,11 +24,19 @@ statmod_eta_continued(fit, spec, design)
 
   Its design.
 
+- deriv:
+
+  Whether to return the forecast's derivative rows.
+
 ## Value
 
 A list shaped as
 [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)'s,
-without the memoized filter objects.
+without the memoized filter objects, plus `cont_cols`: for each equation
+whose filter was continued with `deriv = TRUE`, a list with `X` (the
+derivative of the predictor at the new rows in the coefficients of every
+equation and the term's free parameters) and `key` (the names of its
+columns in the variance matrix).
 
 ## Details
 
@@ -42,20 +50,22 @@ the filtered predictor and the static one – and the term is asked to
 continue from there through
 [`modelterms7::term_continue()`](https://statmodels7.github.io/modelterms7/reference/term_continue.html).
 
-Which of the two a call asks for is decided by the response, not by the
-times. New rows carrying the response are a re-reading: the filter is
-run over them from the term's own seed, and that is what a caller means
-by predicting a model on another series, and is why
+Only rows without the response are continued, and they must come after
+the observed series. Rows that carry it are a series of their own,
+rebuilt by
+[`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+and read as the fitting rows are, which is why
 `predict(fit, newdata = <the fitting data>)` returns the fitted values.
-New rows without it are a continuation, and must come after the observed
-series. A frame carrying the response on some rows only is rejected: the
-two readings differ, and picking one would answer a question that was
-not asked.
 
 A term whose contribution is a likelihood mixed over latent states is
 rejected: what such a term reports at an observed row is a posterior
 over states, which past the data is a predictive distribution, no single
 value.
+
+With `deriv = TRUE` the continuation is differentiated as well, in the
+coefficients of every equation and the term's free parameters
+([`continued_deriv_inputs()`](https://statmodels7.github.io/statmodels7/reference/continued_deriv_inputs.md)),
+which is what a standard error of the forecast reads.
 
 ## See also
 

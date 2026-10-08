@@ -78,14 +78,14 @@ for the members installed.
 # nothing.
 v <- statmodels7_update()
 #> statmodels7 toolkit, installed versions:
-#>   basis7           0.13.1
-#>   distributions7   0.65.0
-#>   linkfunctions7   0.4.0
-#>   modelterms7      0.79.0
-#>   numericals7      0.15.0
-#>   optimizers7      0.8.0
-#>   parameters7      0.20.0
-#>   penalties7       0.27.0
+#>   basis7           0.14.0
+#>   distributions7   0.75.1
+#>   linkfunctions7   0.5.0
+#>   modelterms7      0.95.1
+#>   numericals7      0.21.1
+#>   optimizers7      0.13.0
+#>   parameters7      0.22.1
+#>   penalties7       0.30.0
 #> 
 #> To install or update every member:
 #>   statmodels7_update("install")

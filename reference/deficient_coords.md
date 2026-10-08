@@ -6,7 +6,7 @@ the mode leaves out, for a fit whose own solve named none.
 ## Usage
 
 ``` r
-deficient_coords(K)
+deficient_coords(K, held = integer(0))
 ```
 
 ## Arguments
@@ -14,6 +14,12 @@ deficient_coords(K)
 - K:
 
   The penalized information at the mode, \\H + S\\.
+
+- held:
+
+  The coordinates a kinked penalty holds at zero, from
+  [`zero_kinked()`](https://statmodels7.github.io/statmodels7/reference/zero_kinked.md),
+  which are not candidates.
 
 ## Value
 
@@ -85,6 +91,17 @@ Measured against that pivot where both speak, the two agree on a
 duplicated column under four families and on an over-parametrized
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 term.
+
+A coordinate a kinked penalty holds at zero is left out of the test, as
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+leaves it out of the matrix it inverts. The kink identifies such a
+coordinate although \\K\\ carries no curvature for it: under
+`1 + lasso(~ g)`, with every level of `g` coded, the direction that
+raises the intercept and lowers every level is flat in \\K\\ and not in
+the objective, whose minimum over it is unique. Read on the whole matrix
+the pivot named the last level, reported it as missing, and
+[`summary()`](https://rdrr.io/r/base/summary.html) failed where that
+level was the only one selected.
 
 ## See also
 

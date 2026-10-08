@@ -9,7 +9,7 @@ parametric terms together, and one block per penalized term."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,10 @@ as it always was.</p></dd>
 with <code>head</code> and <code>components</code>: a term written in parameters
 of its own that develops one of them over covariates reports that
 parameter as a compartment of its own, carrying its hyperparameter and
-its sub-terms' rows, and <code>table</code> keeps only what is left.</p>
+its sub-terms' rows, and <code>table</code> keeps only what is left. Such a term
+with a kinked sub-term also carries <code>n_kinked</code>, the number of
+coordinates under the kink, which <code>n_zero</code> and the count of selected
+coefficients read.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

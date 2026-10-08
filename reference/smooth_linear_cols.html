@@ -9,7 +9,7 @@ effect in, which are the ones worth printing."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,8 +79,9 @@ periodic basis none, its null space being the constant alone and the
 constant belonging to the model's intercept.</p>
 <p>It replaces a reading of <code>spec$linear</code>, which was the term's record of
 the same fact while a smooth was always a B-spline with a second-derivative
-penalty. Under a factor <code>by</code> the block is one copy per level and only the
-first level's column is marked, which is what that reading did too.</p>
+penalty. Under a factor <code>by</code> the block is one copy per level and the free
+columns of every level are marked, whether the levels share a smoothing
+parameter or not.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

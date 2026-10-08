@@ -84,7 +84,7 @@ design <- statmod_design(spec)
 # Centered, the intercept stays on the response's scale.
 set.seed(2)
 start_at(start_random(sd = 0.5), spec, design, NULL)$mu
-#> [1] 100.60044079   0.09242459
+#> [1] 99.641621  1.955931
 
 # Uncentered, it is the raw draw, which is nowhere near 100.
 set.seed(2)

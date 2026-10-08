@@ -6,7 +6,7 @@ the coefficients they carry.
 ## Usage
 
 ``` r
-statmod_design(spec)
+statmod_design(spec, unseen = NULL, skip = character(0))
 ```
 
 ## Arguments
@@ -15,6 +15,24 @@ statmod_design(spec)
 
   A
   [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+
+- unseen:
+
+  A named list, one entry per distribution parameter, of the keys of the
+  [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
+  terms whose rows of a level the fit never saw are given zeros instead
+  of an error; `NULL` (the default) for none. It is how
+  [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+  reads a new group under `random = "zero"` or `"marginal"`.
+
+- skip:
+
+  The distribution parameters whose equations are not rebuilt from
+  `spec@newdata`: each of their blocks is a matrix of zeros of the width
+  the fit gave it.
+  [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+  passes the parameters a prediction does not read whose covariates
+  `newdata` lacks; `character(0)` (the default) for none.
 
 ## Value
 

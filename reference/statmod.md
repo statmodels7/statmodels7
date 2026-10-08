@@ -313,7 +313,7 @@ coef(fit)
 #> 
 #> $sigma
 #> (Intercept) 
-#>   0.0708999 
+#>  0.07592502 
 #> 
 
 # The scale modeled too, which is what the framework is for. The data
@@ -321,13 +321,13 @@ coef(fit)
 both <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 coef(both)$sigma
 #>  (Intercept)            x 
-#> -0.008201081  0.234254511 
+#> -0.003093138  0.233104770 
 confint(both)["sigma:x", c("estimate", "lower", "upper")]
 #>          estimate     lower     upper
-#> sigma:x 0.2342545 0.1429599 0.3255491
+#> sigma:x 0.2331048 0.1427447 0.3234648
 
 # It is the better model on this data.
 c(one = AIC(fit), both = AIC(both))
 #>      one     both 
-#> 601.9354 578.9139 
+#> 601.9454 578.9246 
 ```

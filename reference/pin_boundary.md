@@ -6,7 +6,7 @@ finite by the identity's, leaving the rest of the matrix alone.
 ## Usage
 
 ``` r
-pin_boundary(K)
+pin_boundary(K, hold = integer(0))
 ```
 
 ## Arguments

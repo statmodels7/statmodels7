@@ -9,7 +9,7 @@ the hyperparameters under estimation."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@ the hyperparameters under estimation.</p>
 <span>  <span class="va">idx</span>,</span>
 <span>  basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  free <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  ctx <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gam <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -95,11 +96,20 @@ the hyperparameters under estimation.</p>
 asks for the parameter scale, having its own second-order chain rule to
 apply.</p></dd>
 
+
+<dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
+<dd><p>The evaluation context, or <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-gam">gam<a class="anchor" aria-label="anchor" href="#arg-gam"></a></dt>
+<dd><p>The coefficients the criterion estimates, from
+<code><a href="marginal_coords.html">marginal_coords()</a></code>, or <code>NULL</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric vector, one entry per row of <code>idx</code>, or <code>NULL</code>
-where the determinant does not exist.</p>
+    <p>A numeric vector, one entry per row of <code>idx</code> followed by one per
+position of <code>gam$where</code>, or <code>NULL</code> where the determinant does not exist.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

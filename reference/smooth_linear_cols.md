@@ -42,5 +42,5 @@ the constant belonging to the model's intercept.
 It replaces a reading of `spec$linear`, which was the term's record of
 the same fact while a smooth was always a B-spline with a
 second-derivative penalty. Under a factor `by` the block is one copy per
-level and only the first level's column is marked, which is what that
-reading did too.
+level and the free columns of every level are marked, whether the levels
+share a smoothing parameter or not.

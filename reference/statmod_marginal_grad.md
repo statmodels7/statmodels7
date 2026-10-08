@@ -15,7 +15,8 @@ statmod_marginal_grad(
   idx,
   basis = NULL,
   free = TRUE,
-  ctx = NULL
+  ctx = NULL,
+  gam = NULL
 )
 ```
 
@@ -56,10 +57,20 @@ statmod_marginal_grad(
   Whether to carry the result onto the free scale. The Hessian asks for
   the parameter scale, having its own second-order chain rule to apply.
 
+- ctx:
+
+  The evaluation context, or `NULL`.
+
+- gam:
+
+  The coefficients the criterion estimates, from
+  [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
+  or `NULL`.
+
 ## Value
 
-A numeric vector, one entry per row of `idx`, or `NULL` where the
-determinant does not exist.
+A numeric vector, one entry per row of `idx` followed by one per
+position of `gam$where`, or `NULL` where the determinant does not exist.
 
 ## Details
 

@@ -7,7 +7,7 @@ one observation, with every other parameter held where it is.
 ## Usage
 
 ``` r
-structural_callbacks(spec, theta, p)
+structural_callbacks(spec, theta, p, scaling = 0)
 ```
 
 ## Arguments
@@ -26,6 +26,16 @@ structural_callbacks(spec, theta, p)
 - p:
 
   The distribution parameter the term sits in.
+
+- scaling:
+
+  The exponent \\d\\ of
+  [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html):
+  where it is not zero, `score` returns \\u = s\\\mathcal{I}^{-d}\\ and
+  `curvature` its derivative in the predictor, \\u' =
+  s'\\\mathcal{I}^{-d} - d\\s\\\mathcal{I}^{-d-1}\mathcal{I}'\\, and the
+  compiled context carries `scaling`, its kernel composing the same
+  quantities from the family's scalar entry points.
 
 ## Value
 

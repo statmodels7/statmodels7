@@ -66,9 +66,9 @@ spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 # The intercept starts at the response's own scale, and the slope at zero.
 start_at(start_intercepts(), spec, statmod_design(spec), NULL)
 #> $mu
-#> [1] 603.0251   0.0000
+#> [1] 500.88837  19.94518
 #> 
 #> $sigma
-#> [1] 3.979791
+#> [1] 1.4661
 #> 
 ```

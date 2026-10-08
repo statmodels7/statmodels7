@@ -6,7 +6,7 @@ coefficients.
 ## Usage
 
 ``` r
-statmod_design_blocks(spec)
+statmod_design_blocks(spec, unseen = NULL, skip = character(0))
 ```
 
 ## Arguments
@@ -15,6 +15,11 @@ statmod_design_blocks(spec)
 
   A
   [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+
+- unseen, skip:
+
+  As in
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md).
 
 ## Value
 

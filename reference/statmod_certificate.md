@@ -8,7 +8,7 @@ have run to a boundary.
 ## Usage
 
 ``` r
-statmod_certificate(fit, tol = 0.01, edge = 8)
+statmod_certificate(fit, tol = 0.01, flat = 0.002, edge = 8)
 ```
 
 ## Arguments
@@ -26,20 +26,31 @@ statmod_certificate(fit, tol = 0.01, edge = 8)
   a caller who set one should read
   [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md).
 
+- flat:
+
+  The largest curvature \\\lvert A\_{jj}\rvert\\ of the outer criterion
+  in a hyperparameter's free value at which that hyperparameter is
+  reported as sitting at a boundary; for a coefficient the criterion
+  estimates, the curvature times \\\max(1, \gamma_j^2)\\. It is also the
+  largest eigenvalue, in absolute value, of a flat direction of the
+  equilibrated curvature. It decides the label alone and never the
+  verdict; see the details.
+
 - edge:
 
-  The free value beyond which a hyperparameter that has already met
-  `tol` on its own is reported as sitting at a boundary. It decides the
-  label alone and never the verdict; see the details.
+  The free value beyond which a hyperparameter is reported as sitting at
+  a boundary where no curvature can be read, and only there.
 
 ## Value
 
 A list with `state` (`"converged"`, `"boundary"`, `"not converged"` or
 `"unknown"`), `decrement`, `gradient`, `mode_error`, `curvature`,
-`boundary`, `boundary_key` and `reason`. `decrement` is what the verdict
-is made on and `gradient` is reported beside it; `curvature` says
-whether that decrement was read against an analytic Hessian or against
-one differenced from the exact gradient. `boundary_key` names the same
+`boundary`, `boundary_key`, `ridge` and `reason`. `ridge` is a list with
+one named vector per flat direction of the outer curvature, over the
+coordinates that move along it. `decrement` is what the verdict is made
+on and `gradient` is reported beside it; `curvature` says whether that
+decrement was read against an analytic Hessian or against one
+differenced from the exact gradient. `boundary_key` names the same
 coordinates as `boundary` does, in the key
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
 labels its rows by, which is what
@@ -121,13 +132,19 @@ mode, and the mode error answers it: measured over the reference battery
 it reads 5.2e-11 to 7.9e-05 on fits that are right against 1.215 on a
 `jump` fitted to data carrying a slope and a slope change it has no term
 for. A model whose only hyperparameters are **kinked**, `lasso`, `scad`,
-`mcp`, swept along a path because a Laplace a Laplace approximation at a
-mode sitting on the kink having no meaning, gets neither reading and
-stays `"unknown"`: at a coefficient the penalty has set to zero the
-score does not vanish but lies in the subdifferential, so the mode error
-is not a statement about being at a mode. Measured on a lasso, its
-4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and
-whose score is -0.715.
+`mcp`, swept along a path because a Laplace approximation at a mode
+sitting on the kink has no meaning, stays `"unknown"`: its
+hyperparameter is the argument of a minimum over a grid and there is no
+gradient to read. Its mode error is reported over the coordinates the
+kink leaves free
+([`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)):
+at a coefficient the penalty has set to zero the score does not vanish
+but lies in the subdifferential, and read there it put a lasso's fit
+4.7e-03 above its mode on a coordinate whose coefficient is exactly 0
+and whose score is -0.715. Where the default
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+also estimates a dispersion's unpenalized coefficients beside the kink,
+those carry a gradient and the certificate reads it as usual.
 
 A form whose criterion has no exact GRADIENT
 ([`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
@@ -139,16 +156,32 @@ differences there is the exact gradient, so the reading still rests on a
 derivative the package computes rather than on one it estimates twice
 over.
 
-**The boundary label, and why its threshold needs no derivation.** A
-hyperparameter may run to an edge and belong there: on a covariate that
-is pure noise the smoothing parameter reaches 9.2e+08, the criterion is
-genuinely flat, and calling that fit unconverged would be wrong. A
-coordinate is **reported** as sitting at a boundary on its free value
-alone, that being a fact about its chart rather than a reading: a
-hyperparameter that has run to an edge has no meaningful interval
-whatever the criterion's curvature says, which is what `boundary_key`
-tells
+**The boundary label.** A hyperparameter may run to an edge and belong
+there: on a covariate that is pure noise the smoothing parameter reaches
+9.2e+08, the criterion is genuinely flat, and calling that fit
+unconverged would be wrong. A coordinate is **reported** as sitting at a
+boundary where the criterion no longer moves with it, that is where its
+own curvature \\\lvert A\_{jj}\rvert\\ is at most `flat`. Such a
+hyperparameter has no meaningful interval, \\1/\sqrt{A\_{jj}}\\ being
+the conditional standard error of its free value, and that is what
+`boundary_key` tells
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md).
+
+Until 0.153.0 the label read the free value alone, \\\lvert\eta_j\rvert
+\> 8\\, and the size of a smoothing parameter depends on how its penalty
+is normalized and on the units of the response. Measured on the
+reference battery, one smooth beside a random effect puts its smoothing
+parameter at \\\eta\\ of \\-0.20\\, \\9.01\\ and \\-13.96\\ as the
+response is multiplied by 1, 0.01 and 1000, while its curvature reads
+2.50, 2.50 and 2.71; and on
+[`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html) a mean smooth
+at \\\eta = -9.57\\ was named a boundary while its curvature is 5.57 and
+its effective degrees of freedom move by 1.63 per unit of \\\eta\\. Over
+the battery, the lotto 0 and D1 nets and those fits, the coordinates
+that really sit at an edge read \\A\_{jj}\\ of 4.2e-07 to 2.6e-04 and
+the interior ones 1.5e-02 to 168, so the default of 2e-3 sits in a gap
+of a factor 57 and reads as a conditional standard error of the free
+value above 22.
 
 What may be **excluded from the verdict** is narrower – the value
 together with
@@ -170,9 +203,41 @@ going to zero and can come back large. Reporting on the conjunction left
 such a coordinate unnamed on the one platform where that fit landed
 there.
 
-The default separates the measured cases with room on both sides:
-coordinates that ran to an edge sit at 9.3, 10.5 and 20.6 on the free
-scale against 0.13, 0.30 and 2.01 for the ones that did not.
+A **coefficient** that the criterion estimates beside the
+hyperparameters (the argument `marginal` of
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+and
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
+is read the same way, with its curvature multiplied by \\\max(1,
+\gamma_j^2)\\: it is reported at a boundary where its conditional
+standard error exceeds \\22\\ times \\\max(1, \lvert\gamma_j\rvert)\\. A
+coefficient carries the units of its parameter and of its covariate,
+which a hyperparameter's free value does not, and the bare curvature
+then depends on them: on `cars`, the intercept of a constant \\\sigma\\
+on the identity link reads 15.38 with a standard error of 1.54 and the
+same fit with the distance in centimeters reads 1538 with 154, and only
+the second fell under 2e-3; so did a variance \\\sigma^2 = 236.5\\ with
+a standard error of 48.3. The ratio of the two is the same in any units.
+A Student \\t\\'s degrees of freedom at their gaussian limit, which is
+the case the label exists for, has a curvature of 3e-13 at a free value
+above 13 and is still named.
+
+Where no curvature can be read at all – neither route produces one, and
+the state is then `"unknown"` – the label falls back on the free value,
+`edge`, there being nothing else to read.
+
+A **ridge** is a direction rather than a coordinate: several coordinates
+move together and the criterion does not change, while each of them
+alone is curved. It is read on the equilibrated curvature \\A/(ss')\\,
+\\s_j = \sqrt{\|A\_{jj}\|}\\, whose eigenvalues are dimensionless; an
+eigenvalue of at most `flat` in absolute value names its eigenvector,
+written on the original coordinates in `boundary` and in `ridge` (see
+[`certificate_ridges()`](https://statmodels7.github.io/statmodels7/reference/certificate_ridges.md)).
+A ridge whose own decrement is within `tol` leaves the verdict and the
+state is `"boundary"`. Measured on a Burr XII model whose shape \\k\\
+runs to its Weibull limit in one level of a factor, the eigenvalue was
+\\\pm 2 \times 10^{-7}\\ and the eigenvector the change of that level
+alone; over the reference battery the smallest eigenvalue was 0.375.
 
 ## See also
 

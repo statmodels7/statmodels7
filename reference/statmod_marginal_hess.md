@@ -15,7 +15,8 @@ statmod_marginal_hess(
   idx,
   basis = NULL,
   ctx = NULL,
-  inner = NULL
+  inner = NULL,
+  gam = NULL
 )
 ```
 
@@ -50,6 +51,20 @@ statmod_marginal_hess(
 - basis:
 
   The integrated subspace, or `NULL`.
+
+- ctx:
+
+  The evaluation context, or `NULL`.
+
+- inner:
+
+  The inner optimizer, read by the differenced route.
+
+- gam:
+
+  The coefficients the criterion estimates, from
+  [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
+  or `NULL`. Their rows and columns follow those of the hyperparameters.
 
 ## Value
 

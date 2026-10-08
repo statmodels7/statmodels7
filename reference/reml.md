@@ -15,9 +15,9 @@ default.
 ## Usage
 
 ``` r
-reml(hessian = c("observed", "expected"))
+reml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 
-ml(hessian = c("observed", "expected"))
+ml(hessian = c("observed", "auto", "expected"), marginal = NULL)
 ```
 
 ## Arguments
@@ -26,8 +26,21 @@ ml(hessian = c("observed", "expected"))
 
   Which information enters the determinant: `"observed"` (the default),
   the curvature of the log-likelihood at the data, which makes the
-  criterion the Laplace approximation, or `"expected"`, the Fisher
-  information, a function of the parameters alone. Matched with
+  criterion the Laplace approximation, `"expected"`, the Fisher
+  information, a function of the parameters alone, or `"auto"`, which
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  settles against the family through
+  [`outer_resolve()`](https://statmodels7.github.io/statmodels7/reference/outer_resolve.md):
+  the expected information for a Student t, a skew t or a Cauchy
+  response, whose observed information is not positive definite at an
+  outlier, and the observed information otherwise. The observed
+  information is the default because, once a degrees-of-freedom start
+  run to its limit is replaced (statmodels7 0.193.0), it reaches the
+  same point as the expected one on every case measured and 2 to 20
+  times faster; the case that needs the expected information
+  ([`MASS::GAGurine`](https://rdrr.io/pkg/MASS/man/GAGurine.html) with
+  `nu ~ Age`) is one where the caller names it (Giovanni, 2026-10-07).
+  The fitted model records the information used. Matched with
   [`match.arg()`](https://rdrr.io/r/base/match.arg.html). Both carry an
   exact outer gradient and Hessian wherever the family writes its
   expected information out, which every shipped family does since
@@ -38,12 +51,31 @@ ml(hessian = c("observed", "expected"))
   rejects `"expected"` there: see
   [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md).
 
+- marginal:
+
+  Which distribution parameters have their unpenalized coefficients
+  estimated by maximizing this criterion, instead of being read at the
+  joint mode (`ml()`) or integrated (`reml()`). `NULL`, the default,
+  names every parameter except the position, which is the family's first
+  parameter. `"none"` names no parameter, `"all"` names every one, and a
+  character vector names the parameters listed. With `"all"`, `reml()`
+  and `ml()` are the same criterion. Where the model carries a penalty
+  with a kink (a lasso, an elastic net, a SCAD or an MCP, in any
+  equation), `NULL` names no parameter: the path that chooses the kinked
+  penalty scores the model at the joint mode, and the fit returned is
+  the model it scored. A parameter named explicitly is still estimated
+  on the criterion, at the value the path chose. Where the family lacks
+  the two derivatives the criterion reads in some parameter (a Laplace
+  response) and the model carries no smooth hyperparameter, the default
+  criterion is not run at all, and a `reml()` or `ml()` passed by name
+  is rejected.
+
 ## Value
 
 An
 [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-object of kind `"reml"` or `"ml"`, with `hessian` as supplied and the
-path settings unused.
+object of kind `"reml"` or `"ml"`, with `hessian` and `marginal` as
+supplied and the path settings unused.
 
 ## The criterion
 
@@ -61,49 +93,77 @@ marginal criterion needs. Written out, the expression reproduces Wood's
 
 ## What each one integrates
 
-`reml()` takes \\A = I\\: every coefficient is integrated, the
-unpenalized ones under the flat prior their absence of a penalty amounts
-to.
+Write \\\gamma\\ for the unpenalized coefficients of the parameters that
+`marginal` names, and \\u\\ for every other coefficient. The criterion
+is maximized in \\\gamma\\ together with the hyperparameters. At each
+value of \\\gamma\\, the coefficients \\u\\ are set to the penalized
+mode.
 
-`ml()` takes \\A\\ spanning the range space of the penalty, so an
-unpenalized coefficient is profiled. An ordinary covariate is one; so is
-the linear component of a Demmler-Reinsch smooth, which that smooth's
-penalty leaves alone.
+`reml()` integrates every coefficient in \\u\\. An unpenalized one is
+integrated under a flat prior, which is what the absence of a penalty
+amounts to. `ml()` integrates only the directions in the range space of
+the penalty, so an unpenalized coefficient in \\u\\ is read at the mode.
+An ordinary covariate is unpenalized. The linear component of a
+Demmler-Reinsch smooth is unpenalized too, because the penalty of that
+smooth does not act on it.
 
-This is the distinction between REML and ML for a variance component in
-a mixed model, and `reml()` is the default for the same reason:
-profiling a fixed effect leaves the variance estimate biased downwards.
+With `marginal = "all"`, \\\gamma\\ holds every unpenalized coefficient.
+The two criteria then integrate the same directions, and they are the
+same function: measured on six families with a random intercept, the two
+maxima and the two sets of coefficients agree exactly.
 
-## A dispersion is a coefficient, and is read at the joint mode
+A coefficient that the model does not identify at the first fit is left
+out of the determinant for the whole search, and it stays free in the
+inner fit. This is how [`stats::lm()`](https://rdrr.io/r/stats/lm.html)
+computes its REML criterion, with the rank of the design instead of its
+number of columns.
 
-What these criteria estimate are the HYPERPARAMETERS. Everything else is
-a coefficient, read where the penalized likelihood is maximized, and
-that includes the intercept of a dispersion equation: a negative
-binomial's \\\theta\\, a Gamma's dispersion, a gaussian's \\\sigma\\. A
-coefficient read there is a maximum likelihood estimate, and maximum
-likelihood underestimates a dispersion.
+## Where a dispersion and a shape are estimated
 
-The gaussian case says it in closed form. On a mixed model at \\n =
-20000\\ over 500 groups, `sigma(fit)` is \\\sqrt{rss/n}\\ to
-\\3.6\times10^{-10}\\ relative – the conditional ML estimate, on the raw
-residuals \\y - \hat y\\ and not on what
-[`residuals()`](https://rdrr.io/r/stats/residuals.html) returns, which
-are standardized – where `lme4` reports \\\sqrt{rss/(n -
-\mathrm{edf})}\\, and the factor \\\sqrt{n/(n-\mathrm{edf})}\\ carries
-one onto the other to \\1.4\times10^{-5}\\. The same holds for a count
-model: measured over eight designs against `glmmTMB`, which makes the
-dispersion intercept an outer parameter of its own criterion, our
-\\\theta\\ is larger by a factor of 1.03 to 1.33.
+By default `marginal` names every parameter except the position, which
+is the family's first parameter: the location, or the scale for a family
+with no location, such as
+[`distributions7::weibull1_distrib()`](https://statmodels7.github.io/distributions7/reference/weibull1_distrib.html).
+For a gaussian mixed model this is the REML of `lme` and `glmmTMB`. The
+coefficients of the mean are integrated, and \\\sigma\\ is maximized on
+the criterion. Without any penalty, `reml()` returns the \\\sigma\\ of
+[`stats::lm()`](https://rdrr.io/r/stats/lm.html),
+\\\sqrt{\mathrm{rss}/(n-p)}\\, and its criterion equals
+`logLik(lm(...), REML = TRUE)`. `ml()` returns
+\\\sqrt{\mathrm{rss}/n}\\. On
+[`nlme::Orthodont`](https://rdrr.io/pkg/nlme/man/Orthodont.html),
+`distance ~ agec + random(~ agec | Subject)` gives \\\sigma\\ =
+1.310039, standard deviations 2.134332 and 0.226429, and a criterion of
+-221.31834, which are the values of `lme` to six digits.
 
-That difference is a matter of WHERE the dispersion is read and not of
-which coefficients the determinant spans. Measured on the same designs,
-by separating the two: moving the dispersion intercept out of the
-determinant and leaving it at the joint mode accounts for 0.01 to 1.75
-per cent of the gap, and reading it as an outer parameter instead
-accounts for the other 98 to 100. The determinant here spans every
-coefficient of every equation, which is what \\A = I\\ means, and a
-distributional regression has no reason to treat the coefficients of one
-equation differently from those of another.
+`marginal = "none"` gives the convention of `gamlss` and of mgcv's
+`gaulss`: every parameter of the distribution is read at the joint mode
+of the penalized likelihood. That estimate ignores the degrees of
+freedom of the coefficients estimated beside it, so a dispersion read
+there is biased downwards. Measured over 20 replicates of 40 groups of
+8, a gamma dispersion with a random effect of its own is biased by -8.0
+per cent at the joint mode and by -2.6 per cent on the criterion, and a
+Weibull shape with a random intercept by +8.7 and +1.1 per cent.
+
+Where some coefficients of the location are integrated, the estimate
+depends on the parametrization of the family. The dispersion of
+[`distributions7::gamma1_distrib()`](https://statmodels7.github.io/distributions7/reference/gamma1_distrib.html)
+and the variance of
+[`distributions7::gamma2_distrib()`](https://statmodels7.github.io/distributions7/reference/gamma2_distrib.html),
+\\\sigma^2 = \phi\mu^2\\, differ by about one per cent under `reml()`,
+because the second contains the integrated mean. With `"all"` the
+criterion does not depend on the parametrization.
+
+Five configurations are not covered yet, and
+[`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
+lists them: a structural term, a block that moves with its coefficients,
+a penalty with a kink, a block that is a working linearization (a sharp
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+or
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)),
+and a penalty whose null space is not spanned by coordinates. In each
+case a parameter that the default names keeps the convention of
+`"none"`, and a parameter named explicitly is refused.
 
 ## Which hyperparameters
 
@@ -181,7 +241,7 @@ fit <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distr
 # The smoothing parameter was estimated, and hyper() says by what.
 hyper(fit)
 #>   parameter                         term   name estimate  held source   id
-#> 1        mu s(x, bspline_smooth(k = 10)) lambda 3.245098 FALSE   reml <NA>
+#> 1        mu s(x, bspline_smooth(k = 10)) lambda  3.21673 FALSE   reml <NA>
 
 # ML profiles the unpenalized directions instead of integrating them, so
 # it shrinks a little less. The gap is small here because only two of the
@@ -190,13 +250,13 @@ fml <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distr
                outer_criterion = ml())
 c(reml = hyper(fit)$estimate, ml = hyper(fml)$estimate)
 #>     reml       ml 
-#> 3.245098 3.223994 
+#> 3.216730 3.205381 
 c(reml = sum(fit@edf$edf), ml = sum(fml@edf$edf))
 #>     reml       ml 
-#> 8.587662 8.593215 
+#> 8.562273 8.574067 
 
 # The marginal log-likelihood is what these maximize, and it is only
 # available where one of them ran.
 logLik(fit, type = "marginal")
-#> 'log Lik.' -55.80844 (df=3)
+#> 'log Lik.' -53.66395 (df=3)
 ```

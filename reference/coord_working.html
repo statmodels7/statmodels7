@@ -9,7 +9,7 @@ problem the log-likelihood is locally."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,6 +95,14 @@ produce both far from the optimum.</p>
     <p>For a Gaussian response on the identity link the quadratic is exact and
 one pass answers the problem. Elsewhere it is the local approximation a
 scoring step works on, and the weights are rebuilt at each iteration.</p>
+<p>Where the design carries a structural term, the predictor of an equation
+includes a part that belongs to that term, and no column of a block
+carries it. The working response is then built on the static predictor,
+with \(s_i\) the score of the model from <code><a href="statmod_score_obs.html">statmod_score_obs()</a></code>, so the
+quadratic has the gradient of the log-likelihood at the current
+coefficients. The weights stay the family's curvature at the whole
+predictor. Another positive weight would change the path of the descent
+and would leave its fixed point where it is.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

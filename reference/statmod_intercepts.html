@@ -9,7 +9,7 @@ draw from the parameter's domain otherwise."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,17 @@ one draw; several are taken and the best kept. What would make it good is a
 data-based <code>distrib_start</code> method on the univariate families, which is
 the design <span class="pkg">distributions7</span> already documents and which only its
 multivariate gaussian implements.</p>
+<p><strong>An intercept the fit ran to the limit of its chart is replaced</strong> by the
+data-based start of <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_start.html" class="external-link">distributions7::distrib_start()</a></code>. On a log or logit
+chart a value past \(e^{\pm 16}\) is a limit of the family and not an
+estimate: a Student t fitted to a response no heavier-tailed than a
+gaussian puts \(\nu\) at \(6.1 \times 10^8\) (<code>gamlss.data::film90</code>)
+or \(7.0 \times 10^{10}\) (<code>abdom</code>). Where a marginal criterion
+estimates that coefficient its search starts there, the criterion is flat in
+it, and on film90 <code>lbfgs()</code> did not leave it: 100 s and <code>not converged</code>,
+where from the data-based \(\nu = 30\) the same search converges in
+6.9 s to the point the observed information reaches. An identity chart is
+left alone, a location of any size being an estimate.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

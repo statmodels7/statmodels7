@@ -19,7 +19,7 @@ densified, and the filter's parameter index."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ densified, and the filter's parameter index.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">structural_blocks_data</span><span class="op">(</span><span class="va">params</span>, <span class="va">ap</span>, <span class="va">Vs</span>, <span class="va">H</span>, <span class="va">D3</span>, <span class="va">n</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">structural_blocks_data</span><span class="op">(</span><span class="va">params</span>, <span class="va">ap</span>, <span class="va">Vs</span>, <span class="va">H</span>, <span class="va">D3</span>, <span class="va">n</span>, D4 <span class="op">=</span> <span class="cn">NULL</span>, D5 <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -86,10 +86,18 @@ densified, and the filter's parameter index.</p>
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>The number of observations.</p></dd>
 
+
+<dt id="arg-d-d-">D4, D5<a class="anchor" aria-label="anchor" href="#arg-d-d-"></a></dt>
+<dd><p>The fourth and fifth derivatives, which the compiled third
+and fourth orders read: one column per index triple \((r, r_2, r_3)\)
+after the filter's own, at \(((r-1) n_p + r_2 - 1) n_p + r_3\), and
+likewise for the quadruples of the fifth. <code>NULL</code> leaves them out.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>H</code>, <code>D3</code>, <code>Vs</code> and <code>ap</code>.</p>
+    <p>A list with <code>H</code>, <code>D3</code>, <code>Vs</code> and <code>ap</code>, and <code>D4</code> and <code>D5</code> where
+they were given.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

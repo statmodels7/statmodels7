@@ -19,7 +19,7 @@ predict.StatmodFit(), coef.StatmodFit() and the other accessors read."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -304,7 +304,7 @@ with the result, <code><a href="statmod_spec.html">statmod_spec()</a></code> to 
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   0.0708999 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  0.07592502 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The scale modeled too, which is what the framework is for. The data</span></span></span>
@@ -312,15 +312,15 @@ with the result, <code><a href="statmod_spec.html">statmod_spec()</a></code> to 
 <span class="r-in"><span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu">statmod</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">both</span><span class="op">)</span><span class="op">$</span><span class="va">sigma</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  (Intercept)            x </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.008201081  0.234254511 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.003093138  0.233104770 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">both</span><span class="op">)</span><span class="op">[</span><span class="st">"sigma:x"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          estimate     lower     upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:x 0.2342545 0.1429599 0.3255491</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma:x 0.2331048 0.1427447 0.3234648</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># It is the better model on this data.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>one <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>, both <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">both</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      one     both </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 601.9354 578.9139 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 601.9454 578.9246 </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

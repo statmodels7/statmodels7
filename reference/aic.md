@@ -157,12 +157,12 @@ fb <- statmod(y ~ s(x, bspline_smooth(k = 10)), distributions7::gaussian1_distri
 # buys a smoother fit: a larger smoothing parameter and fewer edf.
 c(aic = unlist(fa@hyper), bic = unlist(fb@hyper))
 #> aic.mu.s(x, bspline_smooth(k = 10)).lambda 
-#>                                  0.5706846 
+#>                                  0.5696677 
 #> bic.mu.s(x, bspline_smooth(k = 10)).lambda 
-#>                                 13.4456276 
+#>                                 13.4428649 
 c(aic = sum(fa@edf$edf), bic = sum(fb@edf$edf))
 #>      aic      bic 
-#> 9.913454 7.258357 
+#> 9.914632 7.258561 
 
 # The object is a specification and carries no data.
 aic()

@@ -21,14 +21,23 @@ statmod_structural_table(fit, level = 0.95)
 
   The interval's level, `0.95` by default.
 
+  A quantity that depends on a coordinate past the edge of its chart
+  (see
+  [`structural_edge_rows()`](https://statmodels7.github.io/statmodels7/reference/structural_edge_rows.md))
+  is reported without a standard error and an interval, for the reason a
+  correlation at the boundary is: the chart's derivative tends to zero
+  there, so the delta method reports a standard error that collapses
+  exactly where the quantity stops being identified.
+
 ## Value
 
-A data frame with one row per parameter of each structural term,
+A data frame with one row per quantity each structural term reports,
 carrying the estimate, its standard error and the interval's two ends,
-plus `component` and `position`: which of the term's own parameters the
-quantity belongs to, and where in the parameter vector it sits, both
-read off the Jacobian's support. `NULL` where the model carries no
-structural term.
+`held` (the quantity is a held parameter), `edge` (it depends on a
+coordinate past the edge of its chart), plus `component` and `position`:
+which of the term's own parameters the quantity belongs to, and where in
+the parameter vector it sits, both read off the Jacobian's support.
+`NULL` where the model carries no structural term.
 
 ## Details
 

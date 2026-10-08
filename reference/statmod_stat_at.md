@@ -13,7 +13,8 @@ statmod_stat_at(
   value = 0,
   test = "wald",
   type = "bayesian",
-  mode_error = FALSE
+  mode_error = FALSE,
+  objective0 = NULL
 )
 ```
 
@@ -54,6 +55,13 @@ statmod_stat_at(
   one row at a time, and
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md),
   five to seven times per interval – do not read it.
+
+- objective0:
+
+  The penalized objective at the unrestricted joint mode, as
+  [`joint_objective()`](https://statmodels7.github.io/statmodels7/reference/joint_objective.md)
+  returns it, for a caller that reads the likelihood ratio many times on
+  one fit. `NULL` computes it here.
 
 ## Value
 

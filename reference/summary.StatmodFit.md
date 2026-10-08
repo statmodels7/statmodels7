@@ -289,19 +289,20 @@ summary(statmod(y ~ x | sigma ~ x,
 #> 
 #> Parametric terms
 #>                estimate      se     z       p  lower upper
-#>   (Intercept)     1.063 0.07514 14.14 < 1e-16 0.9156 1.210
-#>   x               1.903 0.13020 14.62 < 1e-16 1.6480 2.158
+#>   (Intercept)     1.063 0.07579 14.02 < 1e-16 0.9143 1.211
+#>   x               1.903  0.1313  14.5 < 1e-16  1.646  2.16
 #> 
 #> === sigma   [log link]
 #> 
 #> Parametric terms
-#>                estimate     se        z         p   lower   upper
-#>   (Intercept)   -0.9647 0.1386 -6.96100 3.375e-12 -1.2360 -0.6931
-#>   x              0.0216 0.2389  0.09041     0.928 -0.4466  0.4898
+#>                estimate     se       z         p   lower   upper
+#>   (Intercept)   -0.9559 0.1338  -7.144 9.051e-13  -1.218 -0.6936
+#>   x             0.02082 0.2277 0.09145    0.9271 -0.4254   0.467
 #> 
 #> 95% intervals, bayesian variance
-#> conditional log-likelihood -55.844138    effective df 4.00
-#> cAIC 119.688    cBIC 130.838
-#> fitted in 36 ms
-#> inner   max |grad|/se 3.1e-06   min eigen 0.11
+#> conditional log-likelihood -55.852571    effective df 4.00
+#> cAIC 119.705    cBIC 130.855
+#> fitted in 52 ms
+#> inner   max |grad|/se 1.9e-15   min eigen 0.12
+#> outer   max |grad|/se 1.6e-14   min eigen 0.13
 ```

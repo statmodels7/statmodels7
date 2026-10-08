@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,10 @@ coefficients and the history of the run.</p>
 <span>  frozen <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  backup_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  damp_on_reject <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  kinks_at <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  kinks_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  newton_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  switch_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  switch_after <span class="op">=</span> <span class="cn">Inf</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -112,9 +115,9 @@ optimum leaves there and does not vanish.</p></dd>
 <dt id="arg-backup-at">backup_at<a class="anchor" aria-label="anchor" href="#arg-backup-at"></a></dt>
 <dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
 on the expected information, which takes the step where the observed
-penalized information is not positive definite or where the observed step
-finds no acceptable point; a trial point whose objective raises an error
-is then read as rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method
+step finds no acceptable point; an observed penalized information that is
+not positive definite is first repaired by <code><a href="pd_repair.html">pd_repair()</a></code> and tried. A
+trial point whose objective raises an error is then read as rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method
 <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled with the fallback.</p></dd>
 
 
@@ -136,15 +139,40 @@ length those positions are held and the step is retried on the rest;
 once the run has converged with them held, one step on every coordinate
 is tried, and taken if it decreases the objective.</p></dd>
 
+
+<dt id="arg-newton-at">newton_at<a class="anchor" aria-label="anchor" href="#arg-newton-at"></a></dt>
+<dd><p><code>NULL</code>, or a function of the coefficients returning the
+full Hessian of the objective, the scoring pieces' curvature plus the
+term a block moving with its coefficients adds. Where the scoring step
+is rejected or shrunk below a tenth, the Newton step on it is tried by
+<code><a href="iwls_newton_step.html">iwls_newton_step()</a></code> and the one that decreases the objective more is
+taken.</p></dd>
+
+
+<dt id="arg-switch-at">switch_at<a class="anchor" aria-label="anchor" href="#arg-switch-at"></a></dt>
+<dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
+on the observed information. After <code>switch_after</code> iterations without
+convergence it takes the place of <code>pieces_at</code>, and <code>pieces_at</code> that of
+<code>backup_at</code>. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method <code><a href="iwls_resolve.html">iwls_resolve()</a></code>
+settled on the expected information from <code>"auto"</code>.</p></dd>
+
+
+<dt id="arg-switch-after">switch_after<a class="anchor" aria-label="anchor" href="#arg-switch-after"></a></dt>
+<dd><p>The iteration after which <code>switch_at</code> takes over.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of nine: the six below; <code>note</code>, the reason a run stopped or
-<code>NULL</code>; <code>aliased</code>, the coordinates the pivot left out; and <code>fallback</code>, a
-named integer vector counting the iterations at which the expected pieces
-stepped in for a curvature that was not positive definite (<code>indefinite</code>)
-or for a step that found no acceptable point (<code>search</code>), and the trial
-points whose objective raised (<code>error</code>). Of the six:</p><dl><dt><code>par</code></dt>
+    <p>A list of ten: the six below; <code>note</code>, the reason a run stopped or
+<code>NULL</code>; <code>aliased</code>, the coordinates the pivot left out; <code>switched</code>, the
+iteration at which the run moved to <code>switch_at</code>, or 0; and <code>fallback</code>, a
+named integer vector counting the iterations at which the observed
+penalized information was not positive definite (<code>indefinite</code>) and those
+at which the expected pieces stepped in for a step that found no
+acceptable point (<code>search</code>), the trial
+points whose objective raised (<code>error</code>), and the iterations at which the
+Newton step on the full Hessian was taken in place of the scoring step
+(<code>newton</code>). Of the six:</p><dl><dt><code>par</code></dt>
 <dd><p>the stacked coefficients reached, a numeric vector.</p></dd>
 
 <dt><code>value</code></dt>

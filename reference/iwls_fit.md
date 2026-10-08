@@ -19,7 +19,10 @@ iwls_fit(
   frozen = integer(0),
   backup_at = NULL,
   damp_on_reject = TRUE,
-  kinks_at = NULL
+  kinks_at = NULL,
+  newton_at = NULL,
+  switch_at = NULL,
+  switch_after = Inf
 )
 ```
 
@@ -76,10 +79,12 @@ iwls_fit(
 - backup_at:
 
   `NULL`, or a function like `pieces_at` building the pieces on the
-  expected information, which takes the step where the observed
-  penalized information is not positive definite or where the observed
-  step finds no acceptable point; a trial point whose objective raises
-  an error is then read as rejected.
+  expected information, which takes the step where the observed step
+  finds no acceptable point; an observed penalized information that is
+  not positive definite is first repaired by
+  [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
+  and tried. A trial point whose objective raises an error is then read
+  as rejected.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   passes one for a method
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
@@ -106,14 +111,41 @@ iwls_fit(
   has converged with them held, one step on every coordinate is tried,
   and taken if it decreases the objective.
 
+- newton_at:
+
+  `NULL`, or a function of the coefficients returning the full Hessian
+  of the objective, the scoring pieces' curvature plus the term a block
+  moving with its coefficients adds. Where the scoring step is rejected
+  or shrunk below a tenth, the Newton step on it is tried by
+  [`iwls_newton_step()`](https://statmodels7.github.io/statmodels7/reference/iwls_newton_step.md)
+  and the one that decreases the objective more is taken.
+
+- switch_at:
+
+  `NULL`, or a function like `pieces_at` building the pieces on the
+  observed information. After `switch_after` iterations without
+  convergence it takes the place of `pieces_at`, and `pieces_at` that of
+  `backup_at`.
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  passes one for a method
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  settled on the expected information from `"auto"`.
+
+- switch_after:
+
+  The iteration after which `switch_at` takes over.
+
 ## Value
 
-A list of nine: the six below; `note`, the reason a run stopped or
-`NULL`; `aliased`, the coordinates the pivot left out; and `fallback`, a
-named integer vector counting the iterations at which the expected
-pieces stepped in for a curvature that was not positive definite
-(`indefinite`) or for a step that found no acceptable point (`search`),
-and the trial points whose objective raised (`error`). Of the six:
+A list of ten: the six below; `note`, the reason a run stopped or
+`NULL`; `aliased`, the coordinates the pivot left out; `switched`, the
+iteration at which the run moved to `switch_at`, or 0; and `fallback`, a
+named integer vector counting the iterations at which the observed
+penalized information was not positive definite (`indefinite`) and those
+at which the expected pieces stepped in for a step that found no
+acceptable point (`search`), the trial points whose objective raised
+(`error`), and the iterations at which the Newton step on the full
+Hessian was taken in place of the scoring step (`newton`). Of the six:
 
 - `par`:
 

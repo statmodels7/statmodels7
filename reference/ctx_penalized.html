@@ -9,7 +9,7 @@ the gradient and the Hessian both read."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,15 @@ the gradient and the Hessian both read.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ctx_penalized</span><span class="op">(</span><span class="va">ctx</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="va">coef</span>, <span class="va">hyper</span>, expected <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ctx_penalized</span><span class="op">(</span></span>
+<span>  <span class="va">ctx</span>,</span>
+<span>  <span class="va">spec</span>,</span>
+<span>  <span class="va">design</span>,</span>
+<span>  <span class="va">coef</span>,</span>
+<span>  <span class="va">hyper</span>,</span>
+<span>  expected <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  laplace <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -61,12 +69,12 @@ the gradient and the Hessian both read.</p>
 
 
 <dt id="arg-expected">expected<a class="anchor" aria-label="anchor" href="#arg-expected"></a></dt>
-<dd><p>Whether \(H\) is the expected information, as the
-criterion carries under <code>reml(hessian = "expected")</code>. It used to
-be hard-coded to the observed one, correctly, because the exact gradient
-ran on no other route; admitting the expected route makes the criterion's
-determinant a different matrix, and reading the wrong one would be a
-gradient of the wrong function.</p></dd>
+<dd><p>Whether the information is the expected one.</p></dd>
+
+
+<dt id="arg-laplace">laplace<a class="anchor" aria-label="anchor" href="#arg-laplace"></a></dt>
+<dd><p>Whether the matrix is the criterion's, with the kinked
+coordinates left out, or the mode's.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,6 +110,13 @@ could have kept. What the sparse factor buys is the cost
 of producing it.</p>
 <p><code>NULL</code> is returned where the matrix is not positive definite, which is
 the answer both callers already gave there.</p>
+<p><strong>Two matrices, where a penalty has a kink.</strong> The criterion's determinant
+leaves out every coordinate a kinked penalty covers (<code><a href="laplace_pinned.html">laplace_pinned()</a></code>),
+which is what <code>laplace = TRUE</code> asks for. The default is the mode's own
+curvature, which leaves out only the coordinates a kinked penalty holds at
+ZERO (<code><a href="zero_kinked.html">zero_kinked()</a></code>): those stay at zero when a hyperparameter moves, and
+a Newton correction of the mode does not move them either. Where no
+penalty has a kink the two are one matrix and one cache entry.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

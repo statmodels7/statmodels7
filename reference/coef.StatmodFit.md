@@ -47,9 +47,9 @@ that is no quantity of the model at all.
 
 A **score-driven** term's persistence rides a partial autocorrelation,
 the stationary region not being a box, and what the literature calls
-\\\beta_j\\ is the autoregressive coefficient the whole chart produces.
-At \\q = 2\\ a fit reporting \\\beta_1 = 0.761\\ has a free coordinate
-of \\\mathrm{pacf}\_1 = 0.857\\.
+\\\xi_j\\ is the autoregressive coefficient the whole chart produces. At
+\\q = 2\\ a fit reporting \\\xi_1 = 0.761\\ has a free coordinate of
+\\\mathrm{pacf}\_1 = 0.857\\.
 
 Where a term declares no quantities of its own the coordinates stand. So
 do the coefficients of a parameter developed over covariates: a

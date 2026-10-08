@@ -20,7 +20,8 @@ Iwls(
   tol = integer(0),
   criterion = NULL,
   step_halving = integer(0),
-  fallback = logical(0)
+  fallback = logical(0),
+  switch_after = integer(0)
 )
 ```
 
@@ -70,6 +71,16 @@ Iwls(
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
   sets it, for `"auto"` on a family whose expected information is not
   exact.
+
+- switch_after:
+
+  A single number: the iteration after which a run on the expected
+  information continues on the observed one, the expected then taking
+  the step only where the observed cannot. `Inf` never switches.
+  [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
+  sets it, for `"auto"` on a family whose expected information is exact,
+  to
+  [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md).
 
 ## Value
 

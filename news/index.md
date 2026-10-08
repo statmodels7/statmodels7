@@ -1,5 +1,1682 @@
 # Changelog
 
+## statmodels7 0.198.2
+
+- `MASS` and `segmented` are declared in `Suggests`: two test files load
+  data sets from them, which `R CMD check --as-cran` reports as
+  undeclared.
+
+## statmodels7 0.198.1
+
+- A ridge is read only at a maximum: where the equilibrated outer
+  curvature has an eigenvalue below `-flat`, no direction is named. A
+  zero-inflated negative binomial with a random effect on each equation,
+  stopped where that curvature is a rank-one matrix with an eigenvalue
+  of -5, had four directions named and the standard errors of four
+  coefficients of the mean removed.
+
+## statmodels7 0.198.0
+
+- [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  reads the flat directions of the outer curvature as well as its flat
+  coordinates. A direction along which several coordinates move with the
+  criterion unchanged is found on the curvature equilibrated to a unit
+  diagonal, whose eigenvalue there is at most `flat`; it is named in
+  `boundary` and in the new field `ridge`, and where what it would buy
+  alone is within `tol` it leaves the verdict and the state is
+  `"boundary"`. On a Burr XII model whose shape runs to its Weibull
+  limit in one level of a factor the state was `"unknown"` or
+  `"converged"` on the sign of an eigenvalue of 2e-7; it is now
+  `"boundary"` on both, with the change of that level named. Over the
+  reference battery the smallest such eigenvalue is 0.375, and no state
+  moves.
+- [`summary()`](https://rdrr.io/r/base/summary.html) reports no standard
+  error, interval or test for the coefficients that move along such a
+  direction: those the criterion estimated and those the variance matrix
+  moves with them, and a note names the direction.
+
+## statmodels7 0.197.0
+
+- Where `iwls(hessian = "auto")` is settled on the observed information
+  with the expected one as its fallback, an observed penalized
+  information that is not positive definite is repaired (its eigenvalues
+  floored) and its step tried first; the expected information takes the
+  step only if that step finds no acceptable point. It took every such
+  step before, and that was the slow route: a Burr XII with every
+  parameter over a factor (`gamlss.data::rent`) fitted in 221 s with
+  only its density and 17.1 s with its closed forms, against 10.1 s and
+  9.4 s now at the same log-likelihood. On the families whose exact
+  expected information is costly the log-likelihood is the same to 10
+  digits at 1/4 to 1/6 of the time where the observed information is
+  indefinite (skew t 92.5 s to 15.4 s).
+- A hyperparameter that
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  finds at the edge of its range is held when
+  [`summary()`](https://rdrr.io/r/base/summary.html) inverts the outer
+  curvature, and the other hyperparameters report the variance
+  conditional on it. Its coupling to them is below the resolution of the
+  criterion there, and it could make the whole matrix indefinite: two
+  correlated random intercepts whose correlation ran to one lost the
+  standard errors of both standard deviations along with the
+  correlation’s.
+
+## statmodels7 0.196.0
+
+- [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  reapplies to each fold the terms built on all the rows, as
+  [`predict()`](https://rdrr.io/r/stats/predict.html) reapplies them to
+  new data: the knots of a basis, the levels of a factor and the scales
+  of a standardized block come from the covariates of every row, never
+  from the response. A fold rebuilt them on its training rows, and a
+  held-out row past their range stopped the fit (“evaluation points fall
+  outside the basis interval”, a smooth beside a lasso on
+  `gamlss.data::rent`).
+- The matrix that moves the mode, which the exact outer gradient reads,
+  leaves out the directions the model does not identify, as the
+  criterion’s determinant does. A lasso codes every level of the first
+  factor of its formula, and two of its coefficients away from zero span
+  the intercept: the gradient came back missing, the search read it as
+  zero, and the smoothing parameters stayed at their start of 1 (rent, a
+  gamma with `s(Fl) + s(A) + lasso(~ B + H + L + loc)`; now 5446.2 and
+  121.92, where a central difference of the criterion gives 5446.4 and
+  121.93).
+
+## statmodels7 0.195.0
+
+- An outer search chosen by
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  that stops on the resolution rule while the Newton decrement of the
+  criterion is above
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+  is run again from its point, with an empty quasi-Newton memory, up to
+  three times. The rule reads the decrease the search’s own model
+  predicts, and one bad curvature pair made it predict none: on the
+  battery’s gas-panel-omega the search stopped at -609.528 with the
+  gradient at 1.2, and it now reaches -609.4905 (the regression entered
+  with the compiled third and fourth orders of 0.190.0, which moved an
+  unconverged inner point across the availability limit).
+
+## statmodels7 0.194.0
+
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  take `hessian = "observed"` by default again (Giovanni, 2026-10-07,
+  evening). With the start of 0.193.0, the observed information reaches
+  the point the expected one reaches on every case measured, two to
+  twenty times faster; `hessian = "expected"` and `"auto"` remain, and a
+  model such as `GAG ~ Age | sigma ~ Age | nu ~ Age` with a Student t
+  response is one where the expected information is to be named.
+- A family whose own `distrib_pdf()` method, or derivative method, has
+  no `...` in its signature is rejected before the fit, with the
+  signature it needs.
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  passes the number of threads to these methods, and such a method
+  stopped with “unused argument (threads = 1)” from inside the fit.
+
+## statmodels7 0.193.0
+
+- An intercept-only start that runs past e^16 on a link other than the
+  identity (a Student t’s `nu` at 6.1e8 on a response no heavier-tailed
+  than a gaussian) is replaced by the data-based start of
+  [`distributions7::distrib_start()`](https://statmodels7.github.io/distributions7/reference/distrib_start.html).
+  Where a marginal criterion estimates that coefficient, its search
+  started where the criterion is flat in it: on `gamlss.data::film90`
+  the expected information ran 100 s and did not converge, and it now
+  converges in 7.6 s at the point the observed information reaches.
+- `predict(se = TRUE)` beside a lasso, an elastic net, a SCAD or an MCP
+  treats a coefficient the penalty holds at zero as fixed, so it carries
+  no variance into the prediction. The standard errors were `NA` on
+  every row where such a coefficient met a non-zero covariate.
+- `predict(what = )` naming one parameter does not need the covariates
+  of the other equations in `newdata`.
+- Pearson and response residuals are `NA`, with a warning, where the
+  mean or the standard deviation of the family cannot be computed, as
+  for a distribution whose variance does not exist.
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a fit
+  signals an error that names
+  [`predict()`](https://rdrr.io/r/stats/predict.html) and
+  [`residuals()`](https://rdrr.io/r/stats/residuals.html), where it
+  failed inside
+  [`plot.default()`](https://rdrr.io/r/graphics/plot.default.html).
+
+## statmodels7 0.192.0
+
+- The loadings of a `gas()` term are `gas.kappa1`, … and its
+  autoregressive coefficients `gas.xi1`, … (modelterms7 0.95.0), where
+  they were `gas.alpha1`, … and `gas.beta1`, …; the keys of
+  `rstatmod(par = )` and the subformulas follow (`kappa1 ~ x`).
+
+## statmodels7 0.191.0
+
+- [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  take `hessian = "auto"` by default, which
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  settles against the family: the expected information for a Student t,
+  a skew t or a Cauchy response, wrapped or not, whose observed
+  information is not positive definite at an outlier, and the observed
+  information otherwise. The fit records the information used. On
+  [`MASS::GAGurine`](https://rdrr.io/pkg/MASS/man/GAGurine.html) with
+  `nu ~ Age` the default search converges in 8.9 s, where on the
+  observed information it ran 91.5 s and did not converge.
+- A filter whose level is free (`flow ~ 0 + gas(...)`) is searched on
+  the level around which the predictor fluctuates,
+  `omega / prod(1 - r_k)`, and not on `omega`. On the Nile it stopped
+  after 200 Newton iterations at -642.67, and it now reaches the -637.40
+  of the intercept spelling.
+- A missing value in the response, or in a variable an equation names,
+  is rejected before the fit with the variable, the equation and the
+  rows. It used to stop with a message from deep inside the fit that
+  named none of them.
+- New rows that carry the response are read as a series of their own: a
+  structural term is rebuilt on them with the fitted parameters. With
+  the fitting data as `newdata`,
+  [`predict()`](https://rdrr.io/r/stats/predict.html) on a `regime()`
+  model returns the fitted predictor, where it was rejected, and on a
+  `gas()` model the standard errors are the fitted ones, where they read
+  the intercept’s row alone.
+- The convergence reading of the inner fit no longer warns where the
+  median curvature of an equation is negative.
+
+## statmodels7 0.190.0
+
+- `gas(scaling = d)` filters are fitted: the score, the information and
+  their derivatives through the scaled recursion
+  ([`filter_driving()`](https://statmodels7.github.io/statmodels7/reference/filter_driving.md),
+  Leibniz on `u = s w` and Faa di Bruno on `w = I^(-d)`), the exact
+  outer gradient and Hessian, prediction past the series and
+  [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md).
+  A loading that does not converge from its own start is refitted from
+  `0.1 I^(d - 1)`. At `scaling = 0` every result is the previous one.
+- The compiled context of a filter is built from
+  [`distributions7::distrib_scalar_route()`](https://statmodels7.github.io/distributions7/reference/distrib_scalar_route.html)
+  and
+  [`linkfunctions7::link_scalar_route()`](https://statmodels7.github.io/linkfunctions7/reference/link_scalar_route.html),
+  so every family and link those registries cover, wrappers included,
+  runs the recursion without calling back into R.
+- The degrees of freedom of a filter are reported missing, with the
+  warning that says why, where the count read off the joint smoother is
+  negative: the joint penalized information can be positive definite
+  while the information it smooths is not, and a filter’s count then
+  read -3.21.
+- Requires distributions7 0.70.0, linkfunctions7 0.5.0, modelterms7
+  0.94.0 and numericals7 0.21.0.
+
+## statmodels7 0.189.0
+
+- A location or mean on the identity link starts from a least-squares
+  fit of its parametric columns (weighted by the prior weights and net
+  of the offset), and the other parameters start from the distribution
+  fitted without covariates to the residuals. The intercept-only start
+  read the response’s marginal shape, which a strong covariate distorts:
+  on 204 regressions of 17 location families the direct skew normal
+  stopped below its maximum in 2 of 12 fits from the old start and in
+  none from the new one, and the 204 fits took 85 s instead of 198 s.
+  Equations that carry a break-point, a nonlinear term or a filter keep
+  the intercept-only start.
+- A penalized information is accepted as positive definite by the
+  eigendecomposition only when its smallest eigenvalue exceeds p eps
+  times the largest, p the dimension, as the package’s rank tests
+  already read it. With eps alone, 52 of 216 exactly singular matrices
+  (a duplicated, rescaled or summed column) were accepted, their
+  smallest eigenvalue being rounding of up to 9 eps; no fit of the
+  reference battery changes.
+
+## statmodels7 0.188.2
+
+- [`predict()`](https://rdrr.io/r/stats/predict.html) with `se = TRUE`
+  past the end of a `gas()` series returns a standard error and an
+  interval instead of an error, with a warning that they carry the
+  uncertainty of the estimated parameters alone and leave out that of
+  the future scores. The standard error is the delta method through the
+  continued recursion, whose derivative is exact.
+- The standard error of a predictor carrying a `gas()` filter, at the
+  observed rows and past them, differentiates the filter in the
+  coefficients of every equation. The scores that drive the recursion
+  are read at every predictor, so a coefficient of the scale moves a
+  filter in the mean; the standard error read only the filter’s own
+  equation. On the gaussian model of the Nile flow the standard error of
+  the filtered mean was up to 12 per cent too large, and that of the
+  forecast one year ahead 8.7 per cent too large.
+- Where a `gas()` fit from the term’s own start (a loading of 0.1) does
+  not converge, it is fitted once more with each loading at `0.1 / I`,
+  where `I` is the mean expected information of the predictor at the
+  intercept-only fit, and the better of the two fits is kept. A beta
+  filter on the share of front-seat passengers in `Seatbelts` stops
+  unconverged at -3326.66 from 0.1 and converges at 450.48 from
+  `0.1 / I`. Every fit that converged from 0.1 is unchanged.
+
+## statmodels7 0.188.1
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) reports a random
+  effect written inside a term’s subformula (`nl()`, `seg()`, `jump()`,
+  `jseg()`, `gas()`) as an ordinary `random()` block: headed by its call
+  and its number of coefficients, with the hyperparameters of its prior
+  under their own names (`sigma`, `sd[...]` and `cor[...]`, `nu` for a t
+  prior). The line giving each developed parameter under the term’s
+  heading is removed, its population value being the compartment’s own
+  fixed effect.
+- Every random-effect block, ordinary or developed, ends with the
+  summary of its predicted effects, `predicted effects (m levels of g)`:
+  the minimum, quartiles, mean and maximum, one row per coordinate of
+  the effect. It replaces the line giving their count, standard
+  deviation and range.
+- The heading of a developed parameter of `gas()` gives the formula as
+  written.
+
+## statmodels7 0.188.0
+
+- [`statmod_breakpoint_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_breakpoint_test.md)
+  tests that a model has no break-point against the `seg()`, `jump()` or
+  `jseg()` term it carries, in any family, in the equation of any
+  parameter and inside a parameter of `nl()`. It reads Rao’s score
+  process of the change at a held position on one fit of the model
+  without the break-point; for a change of slope or a smoothed step the
+  p-value is Davies’ (1987) upper bound, for a sharp step a parametric
+  bootstrap of the supremum over every interval. On a subsample of 40
+  [`MASS::GAGurine`](https://rdrr.io/pkg/MASS/man/GAGurine.html)
+  children it gives p = 0.0016 against 0.0026 for
+  [`segmented::davies.test()`](https://rdrr.io/pkg/segmented/man/davies.test.html);
+  on 100 samples without a break-point it rejected at 5 per cent in 5.
+- A sharp `seg()` is settled on its exact profile after the working
+  phase, as `jump()` and `jseg()` are
+  ([`statmod_settle_seg()`](https://statmodels7.github.io/statmodels7/reference/statmod_settle_seg.md)).
+  A criterion that cannot be read at its start because a break-point’s
+  working iteration has not converged there is read after the positions
+  are settled, rather than stopping the fit. `seg(Year, npsi = 4)` on
+  [`segmented::globTempAnom`](https://rdrr.io/pkg/segmented/man/globTempAnom.html)
+  stopped with “the REML criterion is unavailable at the starting
+  hyperparameters”; it now converges at a residual sum of squares of
+  1.388930. With two break-points the fit reaches `segmented`’s 1.761916
+  (1.762435 before), also from the start (1880, 1950) without restarts.
+- [`summary()`](https://rdrr.io/r/base/summary.html) heads the
+  compartment of a developed coefficient with its formula as written
+  (`psi1 ~ 0 + group`, `psi1 ~ random(~1 | id)`) in place of “~
+  covariates” or “~ intercept + random”, and prints a development with
+  penalized sub-terms as a mixed model does: the fixed effects first,
+  then each random effect under its own heading with its hyperparameters
+  and the spread of its predictions.
+- The numbers of a summary table are formatted one at a time, so a block
+  that mixes slopes of 0.002 with positions of 450 no longer prints the
+  position as 449.900000.
+
+## statmodels7 0.187.1
+
+- [`predict()`](https://rdrr.io/r/stats/predict.html) past the series of
+  a panel whose score-driven level is developed
+  (`omega ~ 1 + random(~ 1 | id)`) no longer stops with “‘qr’ and ‘y’
+  must have the same number of rows”: the check that a development’s
+  column lies in the equation’s span is asked of the fitting rows only.
+  The forecast agrees with the recursion written out to 4e-15 on
+  [`nlme::Ovary`](https://rdrr.io/pkg/nlme/man/Ovary.html).
+
+## statmodels7 0.187.0
+
+- `confint(readable = FALSE)`, and through it
+  [`summary()`](https://rdrr.io/r/base/summary.html), read each standard
+  error by name. Read by position, a structural term in an equation
+  other than the last gave the following equations the standard errors
+  of the term’s own parameters: on `flow ~ gas(1, 1)` (the Nile flows)
+  the scale’s intercept was printed with 0.3295, the log-loading’s,
+  against 0.0707.
+- A quantity of a structural term that depends on a coordinate past the
+  edge of its chart (a free value beyond 8 on a side where the chart has
+  a bound, the certificate’s rule) is reported without a standard error
+  and an interval, in
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`confint()`](https://rdrr.io/r/stats/confint.html) and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html), and a note names it.
+- A `regime()` term is reported by its transition probabilities.
+- [`statmod_latent()`](https://statmodels7.github.io/statmodels7/reference/statmod_latent.md)
+  returns the smoothed state probabilities of a `regime()` term.
+- The note on where the parameters ended up follows the certificate, as
+  the note on the maximum does, and no longer carries a sentence of the
+  documentation.
+
+## statmodels7 0.186.6
+
+- The reading of the smooth part’s mode error leaves out a free
+  coordinate that the penalized information does not identify, as it
+  leaves out an aliased one. A lasso over two identical columns may
+  share the effect between them; every point of its path below the empty
+  fit then read as unsettled and was dropped, so the path chose the
+  empty fit (lambda 41.8 on an effect of 2). It now chooses the lambda
+  and the effect of the same lasso with one copy removed. The same
+  reading reaches the unshrunk end of a path where the free coefficients
+  include an intercept beside every level of a group: on twelve group
+  effects under a Laplace prior the path now chooses a scale of 1079
+  with a BIC of 133.60, where it chose 0.23 with 136.70.
+- [`summary()`](https://rdrr.io/r/base/summary.html) lists a coefficient
+  under a kinked penalty that is not identified with its estimate
+  missing, and the heading counts it as not identified. It failed with
+  an error.
+
+## statmodels7 0.186.5
+
+- The heading of a term whose parameter carries a kinked sub-term, such
+  as `nl(..., Vm ~ 1 + lasso(~ g))`, counts the selected coefficients
+  and those at zero over the coordinates under the kink. It reported
+  every coefficient of the term as selected and none at zero.
+
+## statmodels7 0.186.4
+
+- `predict(random = "zero")` and `random = "marginal"` reach a random
+  effect written inside a term’s subformula, such as
+  `Asym ~ 1 + random(~ 1 | Tree)` in `nl()` or `psi ~ random(~ 1 | id)`
+  in `seg()`. Before, such an effect stayed at its conditional value
+  under either mode. Since the term is not linear in the effect, it is
+  evaluated at the effect’s value: `"zero"` reads the typical group, a
+  group the fit never saw included, with the delta method on the
+  Jacobian there; `"marginal"` averages over the nodes of a Gaussian
+  prior’s product grid, with the delta method of that average. The key
+  of such an effect is the outer term’s key, the parameter and the
+  sub-term joined by `::`. `interval = "group"` and `"prediction"`
+  signal an error for it.
+- A coefficient that a kinked penalty holds at zero is left out of the
+  aliasing test, as [`vcov()`](https://rdrr.io/r/stats/vcov.html) leaves
+  it out of the matrix it inverts. Under `1 + lasso(~ g)`, with every
+  level of `g` coded, the last level was reported as `NA` although the
+  kink identifies it, and
+  [`summary()`](https://rdrr.io/r/base/summary.html) failed where that
+  level was the only one selected.
+
+## statmodels7 0.186.3
+
+- Inside the compartment of a developed parameter,
+  [`summary()`](https://rdrr.io/r/base/summary.html) names the standard
+  deviation of its random effects `effect sd` also when the term carries
+  more than one penalty. With random effects on two parameters of one
+  term (`seg(t, psi ~ random(~1 | id), gamma1 ~ random(~1 | id))`, the
+  same in `nl()` and `gas()`) the rows read
+  `psi1::random(~1 | id).sigma`: the entry’s name was prefixed to keep
+  two sigmas apart in the term’s own table, and the compartment’s header
+  already names the coefficient. The prefix stays where two entries of
+  one compartment would otherwise share a name;
+  [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
+  and the keys are unchanged.
+
+## statmodels7 0.186.2
+
+- Requires modelterms7 0.90.0, where the parameters of a marginal
+  break-point’s gaussian prior are `psi1.mean` and `psi1.sd` (they were
+  `m1` and `tau1`); [`coef()`](https://rdrr.io/r/stats/coef.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) report them under
+  the new names.
+
+## statmodels7 0.186.1
+
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) of a model with a
+  mixture term beside a random effect stopped with “number of items to
+  replace is not a multiple of replacement length”: the random effect’s
+  block is a sparse `Matrix` there, and the information of the mixture
+  assigned it into a base matrix. Measured on
+  `y ~ random(~1 | id) + jump(t, psi ~ random(~1 | id), marginal = TRUE)`.
+
+## statmodels7 0.186.0
+
+- A sharp `jump()` or `jseg()` whose break-point is developed over
+  groups or covariates is settled like an undeveloped one: the polish of
+  [`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)
+  moves the development’s coefficients and the model is refitted at the
+  held positions. Measured on three groups of 80, `jseg(x, psi ~ 0 + g)`
+  certified `converged` at an RSS of 170.85 with positions 2.12, 4.46
+  and 2.19 against a truth of 3, 5 and 7, and settles at 65.22 with
+  positions 3.16, 4.96 and 7.03.
+  [`summary()`](https://rdrr.io/r/base/summary.html) reports the
+  positions as `psi1.<level>` and no longer prints the working slots.
+- The complete-data information of a mixture is assembled with one cross
+  product per block, the states’ weights averaged first
+  ([`regime_hessian_sum()`](https://statmodels7.github.io/statmodels7/reference/regime_hessian_sum.md)),
+  where it took a cross product and a sparse write per state and block;
+  the family is called once over the stacked states. On
+  `seg(t, psi ~ random(~1 | id), marginal = TRUE)` over a 20 x 15 panel
+  the information went from 242 s to 38 s of a 451 s fit.
+- A search over one hyperparameter with no exact outer gradient uses
+  [`optimizers7::brent()`](https://statmodels7.github.io/optimizers7/reference/brent.html)
+  in place of
+  [`optimizers7::nelder_mead()`](https://statmodels7.github.io/optimizers7/reference/nelder_mead.html):
+  11 evaluations against 23 on the same fit.
+- Where the outer criterion has no exact gradient and there are at most
+  two coordinates,
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  differences the criterion by refitting
+  ([`criterion_differenced()`](https://statmodels7.github.io/statmodels7/reference/criterion_differenced.md),
+  three refits for one coordinate and nine for two) and reads the
+  decrement there, where it returned `unknown`. The same fit certifies
+  `converged` at a decrement of 5.7e-07, the certificate taking 10 s.
+- Together with modelterms7 0.89.0, that fit goes from 606 s to 91 s at
+  the same criterion (-226.1308).
+
+## statmodels7 0.185.0
+
+- A sharp `jump()` or `jseg()` term in the equation of a parameter other
+  than a gaussian mean is settled on the working response of that
+  equation, with its working weights. The restarts propose positions on
+  the same quantity; they used the response net of the equation whatever
+  the equation, so in sigma’s equation every proposal passed the screen
+  and was refitted. The profile is a quadratic model of the objective
+  there, so the polish is followed by a search on the objective itself:
+  the five deepest local minima of the working profile and the
+  neighbouring intervals of the best are refitted with the positions
+  held
+  ([`working_exact()`](https://statmodels7.github.io/statmodels7/reference/working_exact.md)
+  says where the profile is the objective and the search is skipped). On
+  [`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html),
+  `sigma ~ jseg(times)` beside `s(times)` took 2961 s and stopped at the
+  confinement limit (49.52) with the logLik at -584.54; it takes about
+  10 s and settles at 14.7, the maximum of the REML profile over every
+  interval. `sigma ~ jump(times)` reported a non-finite outer gradient
+  and is certified now.
+- The settle and the re-selection of the hyperparameters alternate, at
+  most three rounds, until the positions stop moving: the
+  hyperparameters move the working response the polish reads.
+- A held break-point no longer keeps its equation off the REML
+  criterion:
+  [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
+  excluded every equation with a term that can move, held or not, so in
+  sigma’s equation the coefficients stayed at the joint mode. The held
+  position’s slot is not a coordinate of the criterion. On
+  [`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html) the held
+  fit and the same model with the break-point’s columns written out now
+  read the same criterion (-580.24088 both, where the held fit read
+  -590.44).
+
+## statmodels7 0.184.0
+
+- A sharp `jump()` or `jseg()` term is settled after the working phase
+  and the restarts
+  ([`statmod_settle_breakpoints()`](https://statmodels7.github.io/statmodels7/reference/statmod_settle_breakpoints.md)):
+  its break-points are moved to the minimum of the exact profile of
+  their own equation
+  ([`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)
+  on the working response, kept only where the objective improves), held
+  there
+  ([`modelterms7::seg_hold()`](https://statmodels7.github.io/modelterms7/reference/seg_hold.html)),
+  and the model’s coefficients are refitted at the held positions. The
+  working iteration stops at a fixed point whose coefficients belong to
+  the working model and whose position may sit one interval from the
+  minimum. Measured on 16 samples of 200 observations (a jseg and a
+  jump, 8 seeds each), the certificate read `not converged` in 12 and a
+  coefficient was named not identified in 5; the RSS was at the
+  profile’s minimum in 11. All 16 now certify `converged` at the
+  profile’s minimum with nothing aliased, at the same cost.
+- At the held position the term’s coefficients are those of
+  [`lm()`](https://rdrr.io/r/stats/lm.html) with the position given,
+  with conditional standard errors equal to
+  [`lm()`](https://rdrr.io/r/stats/lm.html)’s; the position has no
+  standard error (the profile has no curvature), counts one degree of
+  freedom, and [`summary()`](https://rdrr.io/r/base/summary.html) says
+  why in a note. The slot that carried it is held in the solve and in
+  the information
+  ([`term_held_stack()`](https://statmodels7.github.io/statmodels7/reference/term_held_stack.md)),
+  and [`vcov()`](https://rdrr.io/r/stats/vcov.html) holds it without a
+  warning.
+- Held, the block is no longer a working linearization, so a
+  dispersion’s coefficients go on the REML criterion as for any other
+  model: on an unpenalized `jseg()` sigma is , as
+  [`lm()`](https://rdrr.io/r/stats/lm.html) reads it, where it was the
+  joint-mode . Beside a smooth the hyperparameters are re-selected on
+  the held block: on `jseg(x) + s(z)` the certificate’s outer gradient
+  read 10.06 against the search’s stationary point, and reads 1.2e-07
+  now.
+- `n_boot = 0` turns off the restarts and not the polish: the polish is
+  the exact minimum of the profile for one break-point at a time, not a
+  heuristic restart.
+
+## statmodels7 0.183.0
+
+- The effective degrees of freedom of a block with a kink are the trace
+  of `(H + S)^-1 H` over the coordinates away from the kink, which is
+  the count the path scores each point with
+  ([`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)’s
+  tau). A lasso still counts its non-zero coefficients; an elastic net
+  counts fewer (12.49 for 13 coefficients on
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html)), and
+  SCAD and MCP count more where the penalty curves. Until now the fit
+  counted a kinked block by its non-zero coefficients, so the count a
+  fit printed was not the count its path had chosen it with: a scaled
+  MCP on [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html)
+  scored 9.72 at lambda = 37.45 where the fit reported 8.
+- The top of a lasso path is read with every coordinate against its own
+  kink, and a hyperparameter shared through `id` starts its path at the
+  largest of its members’ tops, each read with the other members held at
+  their kinks
+  ([`path_top_shared()`](https://statmodels7.github.io/statmodels7/reference/path_top_shared.md)).
+  A lasso over fifteen standardized covariates of
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) started
+  at 374.5, five points of the path being empty fits, and starts at
+  74.85; two lasso blocks sharing an `id` now visit the same values as
+  one lasso over both (1.4e-14) and choose the same lambda. Along the
+  path of a scaled SCAD or MCP the curvature is read again at each
+  point’s own coefficients, so the BIC a path reports at a point is the
+  BIC of the fit returned there.
+- A design carrying fewer than a hundred coefficients, with no block
+  that moves and no structural term, is stored as base matrices
+  ([`densify_small()`](https://statmodels7.github.io/statmodels7/reference/densify_small.md)),
+  unless a block is sparse because the caller asked for it. On
+  [`MASS::Cars93`](https://rdrr.io/pkg/MASS/man/Cars93.html), a lasso
+  beside `random(~ 1 | Manufacturer)`, a fit at a held lambda goes from
+  6.69 s to 2.55 s and a path of ten values from 67.8 s to 30.1 s, with
+  the coefficients agreeing to 6e-12.
+
+## statmodels7 0.182.0
+
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  takes one more full step where its stopping rule is met, on the
+  observed information where the family has it exactly. The marginal
+  criterion carries the log-determinant of the penalized information,
+  which is not stationary in the coefficients, so a mode left short by a
+  distance enters it at first order in that distance. A warm-started
+  inner fit whose score is already under the rule stops without moving,
+  and the criterion is then read at the incumbent’s coefficients.
+  Measured on the motorcycle model of the book’s chapter 2, a gaussian
+  with smooths in the mean and in sigma started from the fit with the
+  smooth in the mean alone: the trial points of the outer line search
+  read the criterion off by an amount linear in the step, the search
+  spent its twelve backtracks there, and the warm start took 29
+  criterion evaluations against the cold start’s 27. It now takes 17, at
+  the same criterion. The step is kept unless it raises the objective by
+  more than a relative 1e-8; a sufficient-decrease test at a point
+  already under the rule accepts or rejects by the last bits, and
+  measured, a central difference of
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  then moved from 0.43769 to 0.43727 and 0.43683 as its step halved.
+- Fisher scoring settled on by `iwls(hessian = "auto")` continues on the
+  observed information as soon as it contracts slowly, the last two
+  ratios of consecutive scores above
+  [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md)
+  = 0.5, and at the latest after
+  [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
+  = 10 steps as before. A run started on `iwls(hessian = "expected")`
+  still never switches.
+- The default budget of
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  is 1000 iterations, where it was 100.
+
+## statmodels7 0.181.0
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) prints the free
+  straight line of every level of a smooth with a factor `by`, where it
+  printed the line of the first level only. The block is level-major, so
+  the free column of level j sits at the start of its own copy, and the
+  rule marked the leading run of free columns of the whole block.
+  [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
+  now marks every column no penalty touches, so `s(Time, by = Diet)`
+  over four diets shows `1.lin`, `2.lin`, `3.lin` and `4.lin`, under
+  `by_hyper = "shared"` and `"level"` alike. A smooth without a `by` is
+  unchanged. The coefficient names are unchanged too: the level stays
+  before the column, as in `random.18.Time`.
+
+## statmodels7 0.180.0
+
+- A hyperparameter estimated by
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  gets a standard error only where the negative of the criterion’s
+  Hessian is positive definite, read off the smallest eigenvalue of that
+  matrix scaled to a unit diagonal.
+  [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
+  checked only that the diagonal of the inverse was positive, which an
+  indefinite matrix can satisfy. On a zero-inflated negative binomial
+  with a random effect on `mu` and on `zi` (the `Salamanders` data),
+  whose criterion has an eigenvalue of -5 on that scale at the reported
+  point, every diagonal entry of the matrix was negative and the two
+  standard deviations were printed with standard errors of 0.0035 and
+  0.0017. They are printed without one now. The same test applies to the
+  block that is kept when a coordinate is held, and to
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) and the
+  degrees-of-freedom correction where the fit estimated coefficients on
+  its criterion, which read the same function.
+
+## statmodels7 0.179.0
+
+- `iwls(hessian = "auto")` settled on the expected information (a family
+  whose expected information is exact) continues on the observed
+  information after
+  [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md)
+  = 10 scoring steps without convergence, the expected information
+  standing in where the observed one cannot step. Fisher scoring
+  converges only linearly near the mode where the two informations
+  differ, which they do whenever the dispersion has an equation of its
+  own. Measured on `ChickWeight`, a gaussian with smooths in the mean
+  and in sigma: the first inner fit needed 235 scoring steps, the budget
+  is 100, and the REML criterion was unavailable at its start; it now
+  converges in 0.8 s. With random intercepts on the chicks in both
+  equations the fit stopped, certificate `unknown`, at a REML criterion
+  of -2417.314 with the standard deviation of the intercepts at 0.028;
+  it now reaches -2416.533 and 0.685, glmmTMB’s 0.6846, in 9.6 s against
+  19.0. With smooths and random intercepts in both equations, 13.7 s
+  against 36.6 at the same point. A run that converges within ten steps
+  is unchanged bit for bit.
+- `Iwls` gains the property `switch_after`;
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
+  takes `switch_at` and `switch_after` and returns `switched`, the
+  iteration at which a run moved to the observed information.
+
+## statmodels7 0.178.0
+
+- `predict(interval = "prediction")` for a new group under one
+  univariate prior that is neither Gaussian nor a Student t (a logistic,
+  a Laplace, a Cauchy) integrates over the prior’s own quantiles, with ,
+  where it took 5000 random draws, so the interval does not depend on
+  the seed. Measured on the simulated data of the book’s chapter 7
+  against [`integrate()`](https://rdrr.io/r/stats/integrate.html), with
+  the estimates held fixed: the ends are 3.5e-6 from the exact ones on a
+  logistic prior (the draws moved them by 0.05 between seeds and were up
+  to 0.12 away), 1e-11 on a Cauchy (0.61) and 1.3e-4 on a Laplace, whose
+  kink at zero slows the rule (0.004); on a Poisson response the integer
+  ends are exact, where the draws missed the upper end by one on some
+  seeds. The cost: 0.02 to 0.05 s with `predictive = "plugin"`, against
+  0.13 to 0.20 s, and 0.8 to 1.2 s with the default `"averaged"`,
+  against 0.2 s, each node carrying the Gaussian error of the estimates.
+  `interval = "group"` uses the same 1000 nodes, where it used 2000.
+- The standard deviation of a new observation is `NA` under a prior
+  whose family reports no finite variance (a Cauchy), as it was under a
+  Student t with : the draws returned a finite number with a standard
+  deviation of 34 between seeds.
+- Under a prior with a kink (a Laplace), `predict(se = TRUE)` returned
+  `NA` even for the typical group, and so did the averaged prediction
+  interval and the group interval. The random effects the kink holds at
+  zero have no variance, and a row was blanked when any entry of the
+  variance block was missing, whether its design reached that
+  coefficient or not.
+  [`row_quad()`](https://statmodels7.github.io/statmodels7/reference/row_quad.md)
+  blanks a row only where both its coefficients reach a missing entry.
+- New internal functions
+  [`row_quad()`](https://statmodels7.github.io/statmodels7/reference/row_quad.md)
+  and
+  [`prior_infinite_variance()`](https://statmodels7.github.io/statmodels7/reference/prior_infinite_variance.md);
+  [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)
+  takes `n_nodes`.
+
+## statmodels7 0.177.0
+
+- `predict(random = "marginal")` averages over one univariate prior that
+  is not Gaussian by adaptive quadrature against the prior’s own density
+  ([`numericals7::quad_vec()`](https://statmodels7.github.io/numericals7/reference/quad_vec.html)),
+  where it took 10000 Monte Carlo draws: on a Bernoulli with a logit
+  link and a Student t prior the draws were 3e-3 out against
+  [`integrate()`](https://rdrr.io/r/stats/integrate.html), and the
+  average now agrees to 2e-16. The parameter, its interval and standard
+  error, and the moments of the response all go through it. Several
+  priors, or a prior over several coordinates, keep the draws.
+- Under a link whose predictor has a restricted domain (the square root
+  and the inverse links) the average over new groups does not exist, a
+  Gaussian effect leaving the domain with positive probability: is
+  infinite. It was returned as a finite number; it is now reported where
+  that probability is below 1e-8 (on a Gamma with an inverse link it was
+  1e-32, and the number is the meaningful one) and is `NA` with a
+  warning elsewhere. Under a Gaussian prior every other link was already
+  exact: measured against
+  [`integrate()`](https://rdrr.io/r/stats/integrate.html) or the closed
+  forms, 2e-15 (probit, ), 1.5e-15 (cloglog), 3e-9 (cauchit), 1e-15
+  (softplus) and 1e-15 (square root, ).
+- New internal functions
+  [`marginal_quad()`](https://statmodels7.github.io/statmodels7/reference/marginal_quad.md)
+  and
+  [`marginal_out_of_domain()`](https://statmodels7.github.io/statmodels7/reference/marginal_out_of_domain.md);
+  `test-marginal-links.R`.
+
+## statmodels7 0.176.0
+
+- The standard error of `predict(interval = "group")` is the standard
+  deviation of a new group’s parameter, , where it was the delta method
+  . The interval was already exact, its ends being quantiles of carried
+  through a monotone inverse link; the standard error beside it was not,
+  and the error is large because carries the variance of the random
+  effects: measured against
+  [`integrate()`](https://rdrr.io/r/stats/integrate.html), the delta
+  method was 20 per cent too small for the mean of a Poisson random
+  intercept ([`MASS::epil`](https://rdrr.io/pkg/MASS/man/epil.html)), 42
+  per cent for the dispersion of a negative binomial with a random
+  effect on it (`glmmTMB::Owls`, kappa 0.83), and 18 per cent too large
+  for a Bernoulli probability
+  ([`MASS::bacteria`](https://rdrr.io/pkg/MASS/man/bacteria.html)).
+  Under Gaussian priors it is now for the identity link (unchanged), for
+  the log link and a 40-node Gauss-Hermite rule for every other link,
+  agreeing with [`integrate()`](https://rdrr.io/r/stats/integrate.html)
+  to 1e-15 and 6e-10. It is `NA` where the predictor’s domain is not the
+  whole line (square root and inverse links). The standard error of
+  `interval = "confidence"` is still the delta method, as in
+  [`predict.glm()`](https://rdrr.io/r/stats/predict.glm.html): there the
+  correction is of the order of the error of the normal approximation of
+  the estimate itself.
+- `interval = "group"` accepts a prior that is not Gaussian, which it
+  rejected. The ends are quantiles of : by the scale mixture for a
+  Student t, by the prior’s own quantiles for one univariate prior of
+  another family (2000 nodes, so the result does not depend on the seed,
+  where the Monte Carlo draws gave ends with a standard deviation of
+  0.030 to 0.037 over 20 seeds on a logistic prior), and by the Monte
+  Carlo draws of
+  [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)
+  otherwise. Checked against
+  [`integrate()`](https://rdrr.io/r/stats/integrate.html): the ends of a
+  Student t interval have probabilities within 1e-6 of 0.025 and 0.975,
+  and a logistic one within 1e-4. The standard error is reported only
+  where it is known to exist: for an inverse link bounded on both sides
+  always, for the identity link as (`NA` for a Student t with ), and
+  otherwise `NA`: under a log link a Student t has no moment generating
+  function, so the mean of a new group’s parameter is infinite.
+- New internal functions:
+  [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md),
+  [`group_sd_gaussian()`](https://statmodels7.github.io/statmodels7/reference/group_sd_gaussian.md),
+  [`group_sd_mixture()`](https://statmodels7.github.io/statmodels7/reference/group_sd_mixture.md),
+  [`gh_moments()`](https://statmodels7.github.io/statmodels7/reference/gh_moments.md),
+  [`heavy_variance()`](https://statmodels7.github.io/statmodels7/reference/heavy_variance.md),
+  [`mixture_quantile()`](https://statmodels7.github.io/statmodels7/reference/mixture_quantile.md),
+  [`group_quantile_nodes()`](https://statmodels7.github.io/statmodels7/reference/group_quantile_nodes.md),
+  [`link_kind()`](https://statmodels7.github.io/statmodels7/reference/link_kind.md).
+
+## statmodels7 0.175.0
+
+- A prediction interval for a new group (`interval = "prediction"`) is
+  computed exactly where the variance of a new group’s effects is large
+  against the spread of the family.
+  [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
+  averaged the family over each component’s predictors with a 20-node
+  Gauss-Hermite rule per direction, and where the predictor’s standard
+  deviation is several times the family’s the distribution function
+  turns from 0 to 1 between two nodes: the error in probability is 2e-11
+  at a ratio of 1, 1.5e-03 at 3 and 1.8e-02 at 5, for a Gaussian prior
+  as for any other. Under a Student t prior with nu = 0.95, where many
+  nodes of the scale mixture have that shape, the 95 per cent interval
+  read (-1.885, 5.898) where it is (-1.803, 5.816), the probabilities at
+  its ends being 0.0244 and 0.9756. The direction of largest variance is
+  now integrated by
+  [`numericals7::quad_vec()`](https://statmodels7.github.io/numericals7/reference/quad_vec.html)
+  wherever the family’s distribution function moves by more than 0.3
+  between two adjacent nodes, the other directions keeping a
+  Gauss-Hermite grid of at most 64 nodes; the quantiles are found by
+  Newton’s method with the mixture’s density, inside a bracket, where
+  they were found by bisection. On the same interval the ends now give
+  probabilities within 1e-6 of 0.025 and 0.975 by
+  [`integrate()`](https://rdrr.io/r/stats/integrate.html). On
+  `sleepstudy` with a random slope, where the ratio is about 2, the 95
+  per cent interval at day 9 moves from (217.39, 473.83) to (217.38,
+  473.85). The cost, stated: one prediction under the Student t prior
+  takes 1.1 s, and 50 rows under `predictive = "averaged"` 68 s.
+- [`gamma_nodes()`](https://statmodels7.github.io/statmodels7/reference/gamma_nodes.md)
+  fixes the spacing of its nodes in log w at 0.6, with at least 40
+  nodes, where it fixed their number at 64: the range widens as nu
+  falls, and with 64 nodes the error in probability was 1.7e-06 at nu =
+  0.95 and 7e-05 at nu = 0.5. It is at most 2e-08 now from nu = 0.3 to
+  2.54, at 104 nodes for nu = 0.95 and 315 for nu = 0.3.
+- The Monte Carlo average under a prior that is neither Gaussian nor a
+  Student t draws 5000 effects where it drew 2000; over five seeds the
+  ends of a logistic prior’s interval move by about 0.04 on a width of
+  7.6.
+
+## statmodels7 0.174.0
+
+- `predict(interval = "prediction")` takes `predictive`, which says what
+  the family is averaged over besides the family itself and a new
+  group’s effects: `"averaged"` (the default and the previous behaviour)
+  averages over the estimates’ approximate normal sampling distribution,
+  the normal approximation to the parametric bootstrap predictive
+  distribution of Harris (1989); `"plugin"` holds the estimates at their
+  values; and `"bootstrap"` simulates `n_boot` responses from the fit,
+  with the random effects drawn afresh from their estimated prior,
+  refits each and averages over the refits. Only the effects of a term
+  `random` sets aside are drawn afresh, with
+  [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html),
+  so a prior that is not Gaussian (a multivariate Student t with an
+  AR(1) scale) is drawn too; a term read `"conditional"` keeps its
+  estimated effects, the prediction being about those groups. Every
+  refit starts at the fit’s optimum. `boot_refit = "coefficients"`
+  refits at the fit’s hyperparameters, a coefficient the fit estimated
+  on its criterion (a dispersion under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
+  being estimated there again; `"full"` chooses the hyperparameters
+  again on every replica. It holds for every family and every parameter
+  alike. Measured at 95 per cent on a Gaussian regression at n = 12,
+  over 200 samples: plug-in 0.900, averaged 0.950, bootstrap 0.945; over
+  400 samples of a Gamma with its dispersion modelled at n = 25, plug-in
+  0.935 and averaged 0.948. A replica costs one inner fit, about 0.28 s
+  on `sleepstudy` with a random slope, and a full one about 0.9 s.
+  [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
+  reads a list of components, and
+  [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+  takes `hold_hyper`. A term whose block moves with its coefficients, a
+  response that is not one number per observation and a cross-validated
+  criterion under `boot_refit = "full"` are rejected by name.
+- A prediction interval for a NEW group (`random = "zero"` or
+  `"marginal"`) reaches a prior that is not Gaussian, where it was
+  rejected: the quantiles of the mixture exist whatever the prior.
+  [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)
+  reads a Student t prior (univariate on one coefficient a group, or
+  multivariate) as a scale mixture of Gaussians, b \| w ~ N(0, Sigma/w)
+  with w ~ Gamma(nu/2, nu/2), over a trapezoidal rule in log w
+  ([`gamma_nodes()`](https://statmodels7.github.io/statmodels7/reference/gamma_nodes.md),
+  64 nodes), and any other prior (a Laplace) by Monte Carlo with
+  [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html),
+  2000 draws, so that interval depends on the seed. Against a
+  brute-force simulation of 2e5 draws, a univariate t at nu = 2.54 gives
+  -2.113 and 5.282 against -2.125 and 5.297, a multivariate t -1.849 and
+  5.083 against -1.849 and 5.091, a Laplace 0.572 and 2.886 against
+  0.574 and 2.900. The rule in log w was chosen over Gauss-Laguerre in w
+  by measurement: the integrand is not smooth at w = 0, and at nu = 1
+  the error is 2e-08 with 80 nodes against 1.2e-02 with 96. The standard
+  deviation is `NA` under a t with nu \<= 2. A prior is Gaussian only if
+  its Hessian is constant AND it has no kink, a Laplace prior having a
+  constant zero Hessian. `interval = "group"` still rejects a prior that
+  is not Gaussian, with a message that no longer names `random = "zero"`
+  as the remedy to a caller who used it.
+
+## statmodels7 0.173.0
+
+- A multivariate Student t distribution for a block of random effects
+  has an exact outer gradient and Hessian, its penalty now supplying how
+  its Hessian moves with the coefficients (penalties7 0.30.0). Without
+  them the search fell to the simplex. On the random slopes of
+  `sleepstudy` with
+  `random(~ Days | Subject, distrib = fixed(mvstudent_t1_distrib(2), mu1 = 0, mu2 = 0))`
+  the search took 10 evaluations and stopped at a REML criterion of
+  -898.17 with near its start of 1, certificate `unknown`; it now takes
+  53 evaluations and 4.6 s, reaches -871.8143, the gaussian criterion of
+  `lmer()` (-871.8141), with at its gaussian limit and the certificate
+  `boundary`. Against a central difference of the criterion with the
+  mode refitted the gradient is 5.5e-07 out under
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and 2.9e-06 under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  at a step of 1e-3, a hundredth of the reading at 1e-2.
+
+- A search this package chose that reads no gradient (the simplex,
+  `nelder_mead()`) is no longer given the stopping rule built from the
+  criterion’s resolution. That rule reads a change in the objective, and
+  the best vertex of a simplex does not move over an iteration that only
+  reshapes the simplex, so the rule ended the search at the first such
+  iteration. It was the reason the search above stopped after 10
+  evaluations. The line search keeps its resolution. On
+  `y ~ ridge(~ 0 + z) + regime(k = 2)` the search takes 21 evaluations
+  where it took 8, at the same criterion (-407.6311). Requires
+  distributions7 0.67.0 and penalties7 0.30.0.
+
+## statmodels7 0.172.0
+
+- A hyperparameter whose free value has run past the edge of its chart
+  is probed from inside when the search is the one this package chose.
+  On the free scale the slope of the criterion carries the chart’s own
+  derivative, which vanishes at the edge, so the search could stop there
+  at a point that is not a maximum. On
+  [`nlme::Machines`](https://rdrr.io/pkg/nlme/man/Machines.html),
+  `score ~ Machine + random(~1 | Worker) + random(~1 | Worker:Machine)`
+  stopped with the Worker standard deviation at 0.00025 and a REML
+  criterion of -110.63, the certificate reading `unknown`; `lme()`
+  reaches -107.84, and with the Worker standard deviation held the
+  criterion rises steadily from 0 to 4.78. An AR(1) covariance over the
+  four ages of `Orthodont` stopped at a correlation of 0.99988 and
+  -218.756, where glmmTMB reaches -218.197 at 0.93. Each coordinate past
+  a free value of 8 is moved three quarters, one half, one quarter and
+  the whole of the way back to its starting value with the rest held,
+  and the search restarts from the best probe where it gains more than
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
+  Both models now reach the reference packages’ criterion, with the
+  certificate `converged`. A coordinate that really sits at an edge,
+  such as the smoothing parameter of a smooth of noise, loses criterion
+  at every probe and stays where it was, at a cost of four evaluations
+  of the criterion and a fifth at the reported point, which leaves the
+  search’s state and the last row of `history$outer` at that point.
+
+## statmodels7 0.171.0
+
+- Two terms of one equation that give their coefficients the same names
+  are rejected when the formula is read, naming the terms and the
+  argument `label`. Two smooths of the same covariate with different
+  constructions,
+  `s(x, bspline_smooth(k = 10)) + s(x, pspline_smooth(k = 12))`, stopped
+  inside the fit on “duplicate ‘row.names’ are not allowed”, and
+  `s(x) + s(x, by = z)` fitted with duplicated names in
+  [`coef()`](https://rdrr.io/r/stats/coef.html) and
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html). The second no longer
+  collides, modelterms7 0.86.0 labelling the varying coefficient
+  `s(x):z`.
+
+- Requires basis7 0.14.0, whose `pspline_smooth()` and
+  `adaptive_smooth()` take their differences on the Eilers-Marx
+  coefficients (the fits of mgcv’s `bs = "ps"` and `bs = "ad"`), and
+  modelterms7 0.86.0, whose smooth with a numeric `by` keeps its
+  constant (the fit of mgcv’s `by`). Every fit with one of these terms
+  moves.
+
+## statmodels7 0.170.0
+
+- [`predict()`](https://rdrr.io/r/stats/predict.html) of a binomial fit
+  written with `cbind(successes, failures)` works at rows that carry no
+  response. The probability of a binomial is a function of the linear
+  predictor alone, but the family carried the numbers of trials of the
+  fitting rows, and
+  [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+  refused them against a grid of another length:
+  `predict(fit, what = "mu", newdata = grid)` with five rows against a
+  fit of twelve stopped on *“the family carries 12 numbers of trials and
+  these are 5 rows”*, and the same call was right only if the grid
+  carried made-up columns for the response. The numbers of trials are
+  now missing at such rows, the parameters are predicted, and a moment
+  of the response (`what = "mean"`, `"variance"`, …) or a prediction
+  interval says that it needs the trials and how to supply them. A
+  family given a constant `size` is unchanged.
+
+- A response matrix at new rows is no longer compared with the numbers
+  of trials of the fit. They are the row sums of the fitting rows,
+  written by the same function, so a prediction at rows whose trials
+  differed from the fitting rows’ (with the response columns present)
+  stopped on *“the number of trials is given twice and the two
+  disagree”*. The new rows bring their own row sums. A `size` the caller
+  gave the family, with a single-column response, is still checked
+  against the rows.
+
+## statmodels7 0.169.0
+
+- The certificate’s boundary label for a coefficient that the criterion
+  estimates (the argument `marginal` of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
+  reads its curvature times max(1, gamma^2), so it is the same in any
+  units. It read the bare curvature, which carries the units of the
+  parameter and of its covariate: on `cars`, a constant `sigma` on the
+  identity link read 15.38 with a standard error of 1.54 and was not
+  named, the same fit with the distance multiplied by 100 read 1538 with
+  154 and was named `boundary` with no outer gradient, and so was a
+  variance of 236.5 with a standard error of 48.3 under
+  `gaussian2_distrib(link_sigma2 = identity_link())`. A Student t’s `nu`
+  at its gaussian limit, the case the label exists for, is still named.
+
+- Where the criterion estimates coefficients, the default outer search
+  gives `newton()` a typical size for each of them: its conditional
+  standard error at the start, where that exceeds one (hyperparameters
+  keep 1). The bound of 5 and the length-one scaling of a repaired
+  direction were read in the coefficients’ own units: the variance
+  above, started at 651 where the restricted likelihood is not concave
+  in it, moved one unit per evaluation for 185 evaluations, and the
+  standard deviation of 1538 took 201 and stopped 0.9 per cent short.
+  Both now take 7. A fit whose standard errors at the start are all at
+  most one is unchanged. Requires optimizers7 0.10.0.
+
+## statmodels7 0.168.0
+
+- [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  no longer reports a hyperparameter whose coefficients `par` writes.
+  Such a hyperparameter governs nothing in the truth: with
+  `par = coef(fit)` the call simulates from a fitted model, and the
+  print used to list smoothing parameters drawn beside it (0.468 and
+  0.853 on the motorcycle model, whose fitted values are 6.7e-05 and
+  0.364). It is still drawn, so the random stream and the simulated data
+  do not change.
+
+## statmodels7 0.167.0
+
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  takes the Newton step on the full Hessian where a block moves with its
+  coefficients and the scoring step is rejected or shrunk below a tenth.
+  The scoring pieces carry the Gauss-Newton matrix, which leaves out the
+  score times the block’s own derivative, and on a smoothed break-point
+  that term can be most of the curvature: measured on a `jump()` under
+  `smooth_quintic()`, the curvature in the break-point is 6.1 by
+  Gauss-Newton and 7853 in truth, so the scoring step in it was
+  thousands of times too long, the line search shrank it to 0.001 and
+  the run stalled 0.066 above the mode, where the Gauss-Newton reading
+  of the mode error was 1.5e-05. The full Hessian is the one the exact
+  outer gradient already reads
+  ([`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md)),
+  and it agrees with a difference of the analytic gradient to 1e-7; an
+  indefinite one is repaired by flooring the absolute eigenvalues, as
+  [`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html)
+  does. A run whose scoring steps are accepted never takes it. On that
+  battery case the default route goes from 34 s and one criterion
+  evaluation, certificate `not converged`, to 2.9 s, three evaluations
+  and `converged`. Over 180 fits of smoothed `seg()`, `jump()` and
+  `jseg()` under three smoothers the stall was rare before the repair:
+  none above 1e-3 of the mode, the largest 5.8e-5.
+
+## statmodels7 0.166.0
+
+Seven repairs, found while measuring the claims of the book’s chapter on
+choosing a model, each decided with the measurement beside it.
+
+- **Beside a penalty with a kink the default `marginal` names nothing.**
+  Since 0.163.0 the default
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  put the unpenalized coefficients of every parameter but the position
+  on the criterion while the kinked coordinates stayed at the joint
+  mode. Along the path that chooses a lasso, SCAD or MCP each point then
+  ran a search on those coefficients, and where the active set jumps the
+  search did not converge and the point was scored NA and skipped: 2 of
+  25 on UScrime for SCAD and MCP, 18 of 25 for SCAD in the equation of a
+  Student t’s nu, and under `scad(a = 30)` the point skipped was the
+  best, BIC 30.40 against the 37.25 chosen. Reading them on the
+  criterion once, at the chosen lambda, returned another model than the
+  one the path had scored in 4 of 5 cases measured (a SCAD scored with 7
+  covariates came back with 6 and not converged, the criterion jumping
+  in log sigma where the active set changes). Every parameter is now
+  read at the joint mode, along the path and in the returned fit. A
+  parameter named in `marginal` is still estimated on the criterion.
+- **A kinked block’s step is halved until the penalized objective
+  falls.** The coordinate descent took each proximal Newton step whole.
+  Where the working quadratic is not the model – a penalty in the
+  equation of a gaussian’s sigma – the step raised the objective at 922
+  of 1900 steps on UScrime, the block ran out of its budget at 50000
+  sweeps and did not converge; with the search of the first item a lasso
+  path there took more than 15 minutes, and it takes 9 seconds. A scaled
+  SCAD or MCP, whose curvature is damped towards the current step’s at
+  every iteration, keeps the whole step, its objective moving with the
+  curvature. The points of such a path that remain unscored are where
+  the model degenerates, a fitted sigma falling to 1e-5 and the
+  penalized likelihood rising without bound. A block that exhausts its
+  budget is now reported as not converged.
+- **A Newton search this package chose and that did not settle is run
+  again by `lbfgs()`, from the same start, and the better one is kept.**
+  On GAGurine with a Student t and `nu ~ s(Age)` the default stopped at
+  a REML criterion of -845.09 with the curvature not negative definite;
+  it now reaches -816.59, the smoothing parameter of nu at its edge,
+  state `boundary`.
+- **A family without two derivatives keeps its dispersion at the joint
+  mode when the default criterion would be there for that alone.** Since
+  0.155.0 `statmod(y ~ x, laplace_distrib())` was rejected, the default
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  reading two derivatives in `mu`. It fits again. A
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  or
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  passed by name is still rejected, and so is a model whose smooth
+  hyperparameters need the criterion.
+- **`weights` naming a column of `data` is read there**, as
+  [`glm()`](https://rdrr.io/r/stats/glm.html) and
+  [`lm()`](https://rdrr.io/r/stats/lm.html) read it; `weights = wt`
+  failed with “object ‘wt’ not found”.
+- **A multivariate family is rejected by name** in
+  [`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md),
+  where the fit used to reach distributions7’s parameter check and a
+  message telling the caller to use a model.
+- **The quantile residual is read from the survival function in the
+  upper tail.** A Poisson count of 67 at a mean of 15 had F(y - 1) = 1
+  in double precision and a residual of Inf; it is 9.9. Where F is at
+  most one half nothing moves.
+
+## statmodels7 0.165.0
+
+- **The likelihood ratio reads a dispersion at its joint mode on both
+  sides.** Since 0.155.0 the default
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  estimates the unpenalized coefficients of a dispersion on the
+  criterion, so the point a fit returns is not the joint mode of the
+  penalized likelihood. The restricted refit of
+  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
+  `summary(test = "lr")` and `confint(test = "lr")` goes to that joint
+  mode, and the statistic differenced the two, subtracting 2(l_ML -
+  l_REML): on a gaussian linear regression at n = 40 it read 1.0458
+  where [`lm()`](https://rdrr.io/r/stats/lm.html) gives 1.1643, and
+  -0.118 at the estimate itself, so an inverted interval was too narrow
+  and a signed root was not a number near the estimate. The unrestricted
+  side is now the full model refitted with nothing held, from the fitted
+  coefficients and at the fitted hyperparameters
+  ([`joint_objective()`](https://statmodels7.github.io/statmodels7/reference/joint_objective.md)),
+  and it is computed once for an interval or a summary. The statistic is
+  [`lm()`](https://rdrr.io/r/stats/lm.html)’s to the printed digit and
+  zero at the estimate; at the ends of the likelihood-ratio interval for
+  K in the Michaelis-Menten model the ML profile computed with
+  [`lm()`](https://rdrr.io/r/stats/lm.html) is 3.84146, the chi-squared
+  quantile. A model with nothing estimated on the criterion – a Poisson,
+  or `marginal = "none"` – is unchanged, the fit being at the joint mode
+  already. The score and gradient statistics read only the restricted
+  fit and were never affected.
+
+## statmodels7 0.164.0
+
+- **`predict(interval =)`: an interval for a new group, and one for a
+  new observation** (decided 2026-09-29). `"confidence"` is the interval
+  of before. `"group"`, with `random = "zero"` or `"marginal"`, is the
+  interval of a new group’s parameter: the variance of its predictor is
+  the estimates’ plus the one a new group’s effects add, se^2 + z’
+  Sigma_b z, in the parameter’s own equation, so a random effect on
+  `sigma` widens `sigma`‘s interval. `"prediction"`, with the new
+  `what = "response"`, is an interval for a new observation: every
+  predictor is taken jointly Gaussian – the estimates’ covariance plus
+  the effects’, correlated across equations where a label ties them –
+  the family is averaged over it on a Gauss-Hermite grid, and the ends
+  are quantiles of that average found from the family’s distribution
+  function, the fit its median and `se` its standard deviation. No
+  location parameter is needed, and for a discrete family the ends are
+  values of its support. Both are conditional on the covariance the fit
+  estimated.
+
+  Measured at 95 per cent over 200 fits of a random intercept at eight
+  observations a group, with 200 new groups each: on a gaussian response
+  `"group"` covers a new group’s predictor 0.898 of the time over 10
+  groups and 0.943 over 40, and `"prediction"` a new observation 0.939
+  and 0.951, where the confidence interval of the typical group covers
+  0.45 and 0.26; on a Poisson response 0.909 and 0.937, and 0.975 and
+  0.976 for a new count, the support being discrete. The three
+  predictions cost 0.16 s on the gaussian and 0.03 s on the Poisson.
+
+## statmodels7 0.163.0
+
+- **A kinked penalty no longer takes a dispersion off the marginal
+  criterion** (decided 2026-09-29).
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  estimate the unpenalized coefficients of the parameters `marginal`
+  names on the criterion also where the model carries a lasso, a SCAD or
+  an MCP, and the coordinates a kinked penalty covers stay at the joint
+  mode and are left out of the Laplace determinant
+  ([`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)),
+  which is the restricted likelihood of Verbyla (1993) with those
+  coefficients treated as known; for
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  they are left out of the integrated basis. `reml(marginal = "sigma")`
+  beside a kink was refused and is accepted. A path over a kinked
+  hyperparameter now searches the criterion at every point, as it did
+  for a smoothing parameter. Measured on \`y ~ x1 + … + x20 \| sigma ~
+  lasso(~ z1
+
+  - … + z10)\` at 200 observations over 15 samples, the dispersion’s
+    intercept is off by +0.003 on average (root mean square 0.048)
+    against -0.057 (0.073) before, with 1.9 slopes of seven selected
+    wrongly against 1.2, and all 60 fits of four shapes converge. The
+    cost is about four times the fit: 3.8 to 5.7 s against 1.0 to 1.4 s
+    on those shapes.
+
+- **The mode’s movement holds a coordinate a kink keeps at zero.** The
+  exact outer gradient and Hessian moved it as a free coordinate, and
+  they were out by a relative 3.3e-05 on a smooth beside a lasso in the
+  mean and 1.4e-04 with the lasso on the dispersion, flat in the step.
+  With the coordinate held they converge onto a difference of the
+  criterion as the square of the step, 3.8e-08 and 8.5e-07 at a step of
+  1e-3.
+
+- **The mode error reads the free coordinates.** At a coordinate a kink
+  keeps at zero the smooth part’s gradient is the likelihood’s score,
+  which the kink’s interval contains, and it was read as a residual by
+  the mode error, the criterion’s resolution and the certificate: on a
+  lasso over a dispersion it put a fit at its mode 2.47 log-likelihood
+  units above it, against 4.5e-08 over the free coordinates
+  ([`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)).
+  A nested search refused a resolution for that reason ran out of
+  backtracks at the optimum.
+
+- **A path point counts where its nested search stands at the optimum.**
+  [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+  reports `settled`, the Newton decrement at the reported point against
+  the certificate’s tolerance, and a path scores a point whose search’s
+  stopping rule did not fire when it is settled, which is the rule
+  availability already follows for an inner fit. On
+  `y ~ s(x) + lasso(...)` over six samples the path left 3 to 11 of its
+  25 points unscored, and none now. The search’s own flag is unchanged.
+
+- A test pins the default
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  on a modelled gaussian dispersion to the restricted likelihood of
+  Verbyla (1993) written out.
+
+- On the reference battery the lasso fit, whose only hyperparameter used
+  to leave the certificate `unknown`, is certified `converged` on its
+  dispersion’s intercept, and the criterion of `lasso+random` moves by
+  0.18, the lasso’s coordinates having left the determinant, at 12.5 s
+  against 20.7; no recovery moves.
+
+## statmodels7 0.162.0
+
+- **A kinked penalty under a strong rule is solved on its own
+  coordinates.** The compiled coordinate descent reads row a of the
+  proximal table for coordinate keep\[a\], the a-th coordinate the
+  strong rule kept, and the table was built from the whole penalty with
+  the kept coordinates’ steps, so row a carried coordinate a’s map entry
+  and curvature. Under `standardize = TRUE` a lasso or an elastic net
+  therefore soft-thresholded each kept coordinate at another
+  coordinate’s scale along a path, and since 0.158.0, whose verdict
+  reads the KKT conditions, those points were reported as not converged
+  and dropped from the path: on
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) 19 of the
+  27 path fits of `lasso(X, standardize = TRUE)`, the path then choosing
+  all 15 predictors at lambda 0.037. Over six simulated regressions with
+  columns of spreads from 0.14 to 7.4 and three true effects the
+  gaussian paths chose 19 to 30 of 30 columns and the logistic ones
+  none. The table is now built on the penalty restricted to the kept
+  coordinates
+  ([`coord_table_penalty()`](https://statmodels7.github.io/statmodels7/reference/coord_table_penalty.md)),
+  every path fit converges, UScrime chooses 9 predictors at lambda 17.4,
+  the gaussian simulations 3 to 5 and the logistic ones 3 or 4. The
+  strong rule and the check that puts back what it discarded compare
+  each coordinate’s gradient with its own kink
+  ([`coord_kinks()`](https://statmodels7.github.io/statmodels7/reference/coord_kinks.md)),
+  lambda \|d_j\| under a map, where they read the first coordinate’s.
+
+- **SCAD and MCP are scaled by a self-consistent curvature** (decided
+  2026-09-29). c_j is the curvature the coordinate descent steps with,
+  the weighted sum of squares of the column centered where the
+  equation’s intercept is profiled out, read again at every pass of the
+  alternation and at the fitted coefficients, and inside the descent the
+  table takes the current step’s curvature damped as the geometric mean
+  with the previous one. 0.159.0 read the uncentered diagonal of the
+  information once at the start, which failed the step condition on
+  columns far from centered (`scad(X)` and `mcp(X)` on raw
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) stopped,
+  with or without `standardize`), and with the table misaligned failed
+  it on a logistic SCAD too. Over 60 simulated regressions (gaussian,
+  logistic, Poisson, SCAD and MCP, n = 300, p = 20, four true effects)
+  the false positives go from 58 to 44 at a mean coefficient rmse of
+  0.065 against 0.063, with no failure and every fit converged. The
+  damping is what makes a strong-effect logistic SCAD settle: undamped,
+  a coefficient between the two knees alternated between 1.009 and 1.496
+  and 3 fits of 16 did not converge; damped, all 16 converge with the
+  KKT conditions at the fit’s curvature met to 5e-8. The objective and
+  the degrees of freedom read the curvature at the point, a fit carrying
+  it at its coefficients. The descent does not stop while the damped
+  curvature is still moving, a gaussian mean at a held scale otherwise
+  stopping at its second iteration with a KKT residual of 1e-3.
+  Validated against
+  [`ncvreg::ncvfit()`](https://pbreheny.github.io/ncvreg/reference/ncvfit.html),
+  whose threshold reads each column’s own sum of squares: on twenty
+  noise columns the two land on one point, 9e-12 apart on the
+  coefficients with the same objective to fifteen digits, for SCAD and
+  for MCP, where with the curvature read once at the start they were two
+  stationary points of two problems.
+
+## statmodels7 0.161.0
+
+- Requires numericals7 0.16.0, whose `smooth_quintic()` resolves its
+  width at 5/(2 log 2) spacings. A test pins that
+  `jump(x, smoothed = smooth_quintic())` keeps its break-point
+  identified on four samples where the width of one spacing left it
+  unidentified, and that the old width still does, and the page of
+  [`warn_aliased()`](https://statmodels7.github.io/statmodels7/reference/warn_aliased.md)
+  says where that case remains reachable.
+
+## statmodels7 0.160.0
+
+- **[`predict()`](https://rdrr.io/r/stats/predict.html) takes
+  `random`**, which says how a `random()` term is read: `"conditional"`
+  (the default) with each group’s own estimated effect, so a level the
+  fit never saw still signals an error, whose message now names this
+  argument; `"zero"` with every effect at zero at every row, the typical
+  group, which is lme4’s and glmmTMB’s `re.form = NA`; and `"marginal"`
+  averaged over the prior the fit estimated, , the population average. A
+  single string applies to every such term, and a character vector named
+  by the terms’ keys chooses term by term.
+
+- The average is a Gauss-Hermite product grid where every prior is
+  Gaussian and there are at most three coordinates in all, with nodes
+  per coordinate, and 10000 draws from
+  [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html)
+  otherwise, on a seed of their own and leaving the caller’s random
+  stream where it was. Checked against references sharing no arithmetic
+  with the grid: under a log link it is to 1e-15, under a logit
+  [`stats::integrate()`](https://rdrr.io/r/stats/integrate.html) to
+  1e-15, and a correlated random slope under a log link to 3e-15. A
+  moment is averaged by the law of total expectation and the variance
+  adds the variance of the conditional mean; under an identity link the
+  marginal variance exceeds the typical group’s by to 8e-16.
+
+- A prior that is not Gaussian is integrated only where the inverse link
+  is bounded. A Student t has no moment generating function, so under a
+  log link is infinite: measured on a Poisson random intercept at ,
+  10000 draws gave 31.5, 2.9, 28.7, 57.9 and 331 on five seeds, against
+  1.81 at a zero effect, where under a logit the same draws gave 0.628
+  to 0.631. Such a request signals an error naming `"zero"`.
+
+- With `se = TRUE` a marginal parameter’s standard error is the delta
+  method on the fixed part, conditional on the prior’s scale, and its
+  interval is the fixed part’s carried through the average. A prediction
+  interval for a new group, which would include the prior’s scale, is
+  not given. A term sharing a covariance through a label is read at
+  `"zero"` only, and neither mode is available beside a structural term,
+  whose recursion reads the predictor.
+
+- [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  takes `unseen`, the keys of the random-effect terms whose unseen
+  levels are given zero rows. Requires modelterms7 0.83.0.
+
+## statmodels7 0.159.0
+
+- **SCAD and MCP are scaled by the curvature of the likelihood in each
+  of their coordinates**, read once at the starting coefficients: , with
+  the information per observation of the coordinate’s own equation,
+  divided by under `standardize`. The penalty is , so the slope at zero
+  stays and the knee sits at . The penalty was written on the canonical
+  problem with unit curvature, and a gaussian likelihood carries on the
+  squared residuals, so on
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) the knee
+  sat at 64 against coefficients of at most 0.30 and SCAD returned the
+  lasso’s fit to the printed digit. For a gaussian mean with
+  standardized columns , which is ncvreg’s convention. It holds in every
+  equation, a dispersion or a shape included, and a cross-validation
+  fold scales at its own starting coefficients.
+
+- Measured on 18 simulated sparse regressions (gaussian, Bernoulli and
+  Poisson, SCAD and MCP, three seeds): all 72 true coefficients kept, 15
+  false positives against 31, mean rmse 0.1127 against 0.1332. On
+  UScrime SCAD and MCP keep 9 predictors where they kept 10. A lasso, a
+  ridge and a fit with no SCAD or MCP penalty are untouched: the nets
+  are identical and the reference battery unchanged.
+
+- The curvature is read once, at the start. Reading it again at the
+  fitted coefficients was measured at about twice the cost with 10 false
+  positives and mean rmse 0.1175, and three gaussian SCAD fits of 18
+  stopped with the proximal operator’s condition violated; it is not the
+  default and is recorded as an open question.
+
+## statmodels7 0.158.0
+
+- Where the fit alternates between blocks (a penalty with a kink, a
+  structural term, or both), its verdict is read at the point it reached
+  and no longer off the inner optimizers’ flags. The smooth part, with a
+  structural term’s own parameters beside it, is read by the Newton
+  decrement , and every coefficient a kinked penalty holds at zero by
+  the KKT decrement , with the size of the kink and the diagonal of the
+  information; both are in log-likelihood units and are compared with
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
+  Beside `gas(1, 1)` a lasso fit at its KKT point read
+  `converged = FALSE`, because the joint block, already at its mode,
+  took one step that moved the objective by a relative 4.7e-15 and its
+  stall guard fired. It now reads `TRUE`, with a decrement of 1.2e-04
+  and a KKT decrement of 0. Measured over eight models (a lasso beside
+  `gas()` and beside `regime()`, a lasso chosen by BIC, a lasso beside a
+  random effect, SCAD, a lasso on the scale’s equation, and `gas()` and
+  `regime()` alone), that is the only flag that moves, and no
+  log-likelihood moves. The readings cost 0.00 to 0.11 s per fit.
+
+- [`alternation_readings()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
+  and
+  [`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
+  are the internal functions that compute the readings.
+  [`statmod_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.md)
+  takes `kinds`, so the joint vector can be read beside a mixture over
+  latent states as well as beside a filter.
+
+## statmodels7 0.157.0
+
+- A structural term that returns several starts through
+  [`modelterms7::term_starts()`](https://statmodels7.github.io/modelterms7/reference/term_starts.html)
+  is fitted from each, and the fit keeps the best by the rule the edge
+  restarts use: the criterion where one was maximized, the penalized
+  objective otherwise. Every start is a whole fit from the fresh
+  coefficient start, run before the check at the edge of the charts, so
+  that check reads the winner. `regime(n_start = 8)` on
+  [`MASS::geyser`](https://rdrr.io/pkg/MASS/man/geyser.html) costs about
+  eight fits (21.9 s against 2.3 s with two regimes, 29.8 s against 4.7
+  s with three). With `n_start = 1`, the default, nothing changes.
+  Requires modelterms7 0.82.0.
+- The adjustments a fresh structural start receives once the design is
+  known (a level held by an intercept starts at zero, an unheld level at
+  zero starts at the equation’s intercept) are one function,
+  [`structural_start_fixups()`](https://statmodels7.github.io/statmodels7/reference/structural_start_fixups.md),
+  which
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  and the further starts both call.
+
+## statmodels7 0.156.0
+
+- A coordinate at the edge of its chart is checked for a maximum on the
+  bounded scale. Its score is the bounded-scale derivative times the
+  chart’s own, and the second vanishes at the edge, so a fit could stop
+  there with a vanishing score while moving back inside raised the
+  log-likelihood. At the end of a fit every coordinate past a free value
+  of 8 that
+  [`modelterms7::term_charted()`](https://statmodels7.github.io/modelterms7/reference/term_charted.html)
+  names, or that is the intercept of an equation with no other column
+  and a link other than the identity, is moved to 8 with the rest held;
+  where the log-likelihood rises by more than
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+  the fit restarts from there, at most three times, and a violation that
+  survives makes
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  report the point as not converged, naming the coordinate. Measured on
+  [`MASS::geyser`](https://rdrr.io/pkg/MASS/man/geyser.html) with the
+  old start, `waiting ~ regime(k = 2)` stopped at -1134.01 with a
+  transition probability at 2.8e-12 and a certificate reading
+  `converged`; moving it to 3.4e-4 gains 0.06, and the restarted fit
+  reaches -1099.63. Over the structural cases of the reference battery
+  three coordinates sit at an edge and all three point outward (slopes
+  -1.24, -425 and a flat one), so nothing there moves. Requires
+  modelterms7 0.81.0.
+- A structural coordinate that an intercept in the same equation holds
+  starts at zero whatever the term’s own start says, and a free level is
+  replaced by the intercept-only fit only where the term’s start left it
+  at zero. With modelterms7 0.81.0 a regime term reads its levels off
+  the response, and without this the held level kept that value (0.059
+  on a simulated panel) and shifted every regime by a constant the fit
+  could not remove.
+
+## statmodels7 0.155.0
+
+- **[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  take `marginal`, and by default they estimate a dispersion and a shape
+  on the criterion.** The argument names the distribution parameters
+  whose unpenalized coefficients are maximized on the marginal criterion
+  together with the hyperparameters, instead of being read at the joint
+  mode of the penalized likelihood. `NULL`, the default, names every
+  parameter except the position, which is the family’s first parameter.
+  `"none"` gives the convention of the previous releases, which is also
+  that of gamlss and of mgcv’s `gaulss`. `"all"` names every parameter,
+  and then
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  and
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  are the same criterion.
+- With the default, a gaussian model without penalties returns the sigma
+  of [`lm()`](https://rdrr.io/r/stats/lm.html), `sqrt(rss/(n - p))`, and
+  its criterion equals `logLik(lm(...), REML = TRUE)`;
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  returns `sqrt(rss/n)`. On
+  [`nlme::Orthodont`](https://rdrr.io/pkg/nlme/man/Orthodont.html),
+  `distance ~ agec + random(~ agec | Subject)` returns sigma 1.310039,
+  standard deviations 2.134332 and 0.226429 and a criterion of
+  -221.31834, the values of `lme` to six digits, where the previous
+  release returned 1.217, 2.101, 0.117 and a correlation of 0.998. The
+  standard errors of the fixed effects agree with those of `lme` to six
+  digits.
+- **What moves.** Every fit of a family with a dispersion or a shape
+  moves its estimate of that parameter, and with it the log-likelihood,
+  the information criteria and the standard errors. A Poisson or a
+  Bernoulli fit does not move. A model with no penalty now runs the
+  criterion when it carries such a parameter. `marginal = "none"`
+  reproduces the previous release: the lotto 0 and D1 nets are
+  identical, 168 of 168 and 529 of 529 comparisons.
+- The exact outer gradient and the exact outer Hessian cover the
+  estimated coefficients. Measured against a central difference with the
+  mode refitted, both converge as O(h^2), to 2e-6 and 6e-7 relative at h
+  = 1e-3 on a gaussian and a gamma model with a random effect and a
+  dispersion regression.
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html) gives the estimated
+  coefficients the curvature of the criterion in place of their Schur
+  complement, for `type = "bayesian"` and `type = "unconditional"`. On a
+  gaussian model without penalties the block of the mean equals
+  `vcov(lm())` and the variance of `log(sigma)` is `1/(2(n - p))`.
+- The standard error of a hyperparameter is read on the inverse of the
+  criterion’s Hessian over the hyperparameters and the estimated
+  coefficients together, so the uncertainty of sigma reaches it. On
+  [`nlme::Orthodont`](https://rdrr.io/pkg/nlme/man/Orthodont.html) the
+  intervals of the two standard deviations and of the correlation agree
+  with
+  [`nlme::intervals()`](https://rdrr.io/pkg/nlme/man/intervals.html) to
+  four digits. `summary(correct = TRUE)` adds `tr((V_u - V_b) H)`, the
+  part of the unconditional variance that the hyperparameters add to the
+  block variance, so the identity with
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) holds.
+- A coefficient the model does not identify at the first fit is left out
+  of the criterion’s determinant and stays free in the inner fit, as
+  [`lm()`](https://rdrr.io/r/stats/lm.html) computes its REML criterion
+  with the rank of the design.
+- Where the bootstrap restarts of a break-point term move the fit, the
+  outer search runs once more from the restarted point, so the estimated
+  coefficients belong to the basin the fit ends in.
+- Not covered yet, where the default keeps the convention of `"none"`
+  and an explicit request is refused: a model with a structural term, an
+  equation with a block that moves with its coefficients, a model with a
+  kinked penalty, a block that is a working linearization rather than a
+  Jacobian (a sharp `jump()` or `jseg()`), a penalty whose null space is
+  not spanned by coordinates (`te()`), and multivariate families. Beside
+  a sharp `jseg()` the determinant over the block’s columns reads no
+  curvature: two fits reaching the same break-point read REML criteria
+  of -132.9 and -109.8 according to where they began.
+- A fit that went through the outer search reports the columns the pivot
+  of its final refit left out, as a fit without one always did; before,
+  it was read only on the information at the mode.
+- An `optimizers7` inner method now respects a held coefficient by
+  leaving it out of the block it fits, where it used to be refused.
+- The exact outer gradient of a correlated random effect is exact near a
+  singular covariance. On the battery’s `random-slope` case the search
+  drove the log-Cholesky coordinate `log L22` to -11.5, where the trace
+  of the penalty’s derivative against the inverse of the penalized
+  information read -23.37 against -21.53 by a difference of the
+  log-determinant. The inverse was not the cause: the derivative of the
+  prior’s precision was, formed as `-Sigma^-1 A Sigma^-1` in
+  distributions7. With distributions7 0.66.0 the trace agrees with the
+  difference to 6e-05, which is the difference’s own noise, and the case
+  is certified `boundary` at a gap of 0 with no unavailable point, where
+  it read `unknown` with twelve.
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)’s
+  built-in rule also requires the Newton decrement `g'(H+S)^-1 g / 2` to
+  be under `1e-6` before it reads the mode as located. The score per
+  observation carries the units of the response, so where the curvature
+  `n / sigma^2` is small a score under `tol` still leaves the mode far
+  away. On the battery’s `scale-1000` case the rule was met with the
+  decrement at 1.5e-02, and the outer criterion read there differed by
+  0.017 between two searches; with the decrement both reach
+  -8367.433577, which is better than either reached before, and
+  `scale-1` is unchanged. A caller’s `criterion =` is left as the caller
+  wrote it.
+- With the mode located this way, the outer gradient at a fitted point
+  is small where it used to look large. On a random intercept over n/10
+  groups beside a smooth, five seeds at n = 1000 and n = 3000 give outer
+  gradients from 1e-6 to 5e-3 under both conventions of
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  where the census of 2026-09-12 recorded 0.02 to 0.42 on the same
+  shape. Most of that was the inner mode error. A test in
+  `test-decrement.R` asserted the larger reading and no longer does.
+- Requires distributions7 0.66.0 and modelterms7 0.80.0. The second
+  makes the block of a break-point against its confinement limit the
+  Jacobian of its contribution, so the inner gradient of a smoothed
+  `jseg()` whose break-point ran out of the data is no longer 145 where
+  the objective is flat.
+
+## statmodels7 0.154.0
+
+- **A kinked penalty’s block is solved with its equation’s intercept
+  profiled out.** The coordinate descent fits the block with the other
+  columns of its equation held, and the intercept is one of them. Where
+  the columns are not centered, a change of one coefficient moves the
+  mean of the fit, which only the intercept can take back, and the
+  intercept is updated in another block. The alternation between the two
+  blocks then converged at a rate set by how close each column is to the
+  constant. Measured on
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html), whose
+  predictors have means up to 33 times their spread, a lasso on the
+  fifteen raw predictors of `log(y)` at lambda = 17.4 stopped with the
+  objective at -17.84 where its minimum is -21.93, with six coefficients
+  against nine, reporting `converged = FALSE`, and the path chose the
+  empty model at lambda = 374.5.
+- The kernel now centers the columns with the working weights, and it
+  does so implicitly, as glmnet does: it carries the weighted means of
+  the columns and the weighted mean of the residual, so a sparse block
+  stays sparse.
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  then sets the intercept to the value that goes with the block’s
+  coefficients, so each step is a joint step in the block and the
+  intercept. On
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) the path
+  now chooses nine predictors at lambda = 17.4 from the raw columns, the
+  point it reaches with the predictors centered in the data, in 7.0
+  seconds of processor time where it took 38.2. A held intercept, or an
+  equation with no intercept, leaves the block uncentered as before.
+- **The default outer optimizer bounds a Newton step.** Where the exact
+  outer Hessian exists the search is `newton(max_length = 5)` from
+  optimizers7 0.9.0, which bounds every component of a step on the free
+  scale, as `maxNstep` does in mgcv. Where a penalty is light the REML
+  criterion rises almost linearly in the logarithm of the smoothing
+  parameter, so its curvature is small and the Newton step is long
+  enough to jump past the maximum onto the plateau where every
+  coefficient is shrunk to zero. There the gradient is close to zero and
+  the search stopped. Measured on a ridge over the fifteen predictors of
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html),
+  standardized by the term, the first step went from lambda = 1 to
+  1.6e10 and the fit reported the empty model after two evaluations:
+  criterion -65.40, 2.00 effective degrees of freedom, and the
+  certificate `unknown`. With the bound the search reaches lambda =
+  91.48 in four evaluations, at a criterion of -53.30 and 12.93
+  effective degrees of freedom, and the certificate reads `converged`.
+  On six simulated ridge fits with fifteen predictors and fifty
+  observations, two stopped on the plateau before and none does now, and
+  the four that converged before need 5 to 8 evaluations where they
+  needed 12 to 20. An optimizer named by the caller keeps its own
+  settings, so `outer_optimizer = newton()` is unbounded as before.
+- The bound also binds on the first step of an ordinary smooth. On the
+  data of the smoother net the Newton step of `y ~ s(x)` from lambda = 1
+  reaches a free value of 8.05, where the maximum is at 1.97. The search
+  now takes a step of 5 and reaches the same maximum by another path, so
+  it stops at a different point within the criterion’s resolution: on
+  two gaussian smooths lambda moves by 0.02 per cent, the effective
+  degrees of freedom by 2e-4 and 4e-4, and the log-likelihood by 1.3e-4
+  and 4.2e-4, while the searches take 6 and 5 evaluations against 7 and
+  8 and the certificate reads `converged` in both releases.
+- **A kinked block beside a structural term is solved on the working
+  response of the model.** The coordinate descent built its working
+  response from the family’s score at the whole predictor of the
+  equation. A structural term adds to that predictor a part that no
+  column of the block carries: the level of a filter, or the posterior
+  mean of the shifts of a likelihood mixed over latent states. The
+  working response therefore carried that part as well, and the descent
+  solved a different problem. It now reads the static predictor and the
+  score of the model, which Fisher’s identity gives for a mixture and
+  the reverse recursion gives for a filter. Measured with a lasso held
+  at a fixed lambda, the largest distance of an active coefficient’s
+  score from its KKT value was 38 beside `gas(1, 1)`, 27 beside
+  `regime(2)` and 57 beside
+  `jump(x, psi ~ random(~1 | id), marginal = TRUE)`, and it is now
+  6.9e-07, 1.5e-06 and 5.0e-08, the reference being the derivative of
+  the log-likelihood taken by numDeriv. Beside `regime(2)` with a
+  Poisson response the fit diverged to an intercept of -309 and a
+  log-likelihood of -129223 in 238 seconds. It now converges in 5
+  seconds at a log-likelihood of -795.35, with the coefficient of the
+  signal column at 0.497 against a truth of 0.5.
+- The same defect met the intercept step above. Beside the marginal
+  break-point term the intercept took the posterior mean of the jump at
+  every sweep, and the lasso path chose the empty model at a
+  log-likelihood of -198.61, where 0.153.0 reached -72.25. The fit now
+  reaches -71.32 at the lambda that 0.153.0 chose.
+- Beside `gas(1, 1)` the fit now stops at its KKT point and reports
+  `converged = FALSE`, where 0.153.0 reported `TRUE` at a point that was
+  not a KKT point. The flag comes from the smooth block: at the second
+  pass it takes one step at a point with nothing left to move, and its
+  stall guard fires.
+- Requires optimizers7 0.9.0.
+
+## statmodels7 0.153.0
+
+- **[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  names a hyperparameter a boundary where the criterion no longer moves
+  with it**, that is where its own curvature `|A_jj|` in the free value
+  is at most the new argument `flat = 2e-3`, and no longer where the
+  free value exceeds `edge = 8` (Giovanni). The size of a smoothing
+  parameter depends on how its penalty is normalized and on the units of
+  the response: on the reference battery one smooth beside a random
+  effect sits at a free value of -0.20, 9.01 and -13.96 as the response
+  is multiplied by 1, 0.01 and 1000, while its curvature reads 2.50,
+  2.50 and 2.71. On
+  [`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html),
+  `accel ~ s(times, bspline_smooth(k = 20))` put the mean’s smoothing
+  parameter at -9.57, named it a boundary and printed it with no
+  standard error, while its curvature is 5.57 and the effective degrees
+  of freedom move by 1.63 per unit of it; it now carries a standard
+  error and an interval. Over the battery, the lotto 0 and D1 nets and
+  those fits, the coordinates that really sit at an edge read a
+  curvature of 4.2e-07 to 2.6e-04 and the interior ones 1.5e-02 to 168,
+  and the rule also names three coordinates the value never reached: a
+  random slope’s scale at -6.27 and two prior scales of a hierarchical
+  break-point model at -7.26 and -5.81.
+- What may be excluded from the verdict is unchanged in form, the named
+  set intersected with the coordinates whose own decrement already meets
+  `tol`, so the threshold decides the label and never the state. Where
+  no curvature can be read the label still falls back on `edge`.
+
 ## statmodels7 0.152.0
 
 - **A coefficient whose own design column has vanished is named as not

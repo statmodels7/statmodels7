@@ -9,7 +9,7 @@ coordinate whose own curvature cannot produce a variance."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ coordinate whose own curvature cannot produce a variance.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hyper_variance</span><span class="op">(</span><span class="va">A</span>, schur <span class="op">=</span> <span class="fl">1e-04</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hyper_variance</span><span class="op">(</span><span class="va">A</span>, schur <span class="op">=</span> <span class="fl">1e-04</span>, at_edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,6 +59,11 @@ coordinate whose own curvature cannot produce a variance.</p>
 <dt id="arg-schur">schur<a class="anchor" aria-label="anchor" href="#arg-schur"></a></dt>
 <dd><p>The largest relative Schur correction a held coordinate may
 contribute to a kept one's curvature.</p></dd>
+
+
+<dt id="arg-at-edge">at_edge<a class="anchor" aria-label="anchor" href="#arg-at-edge"></a></dt>
+<dd><p>Positions of coordinates at the edge of their range, held
+without the Schur test.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -83,6 +88,26 @@ computed and compared against the kept diagonal rather than assumed
 negligible; above <code>schur</code> the whole matrix is refused as before. The
 default is the size at which the correction cannot move the four
 significant digits the summary prints.</p>
+<p>A variance is returned only where the matrix inverted is positive
+definite, which is read off the smallest eigenvalue of the matrix
+equilibrated to a unit diagonal. A positive diagonal of the inverse is
+not enough: an indefinite matrix can have one. Measured on a
+zero-inflated negative binomial with a random effect on each equation,
+stopped where the criterion's curvature has an eigenvalue of -5 on that
+scale, every diagonal entry of <code>A</code> was negative and the inverse's diagonal
+was positive, so the two standard deviations were reported with standard
+errors of 0.015 and 0.0009 on the free scale.</p>
+<p>A coordinate the certificate names at the edge of its range is held
+whatever its curvature, and the Schur test is not applied to it: there the
+criterion has stopped moving in it, so its curvature and its coupling to
+the others are below the resolution of the criterion. Measured on two
+correlated random intercepts whose correlation runs to one, at an angle of
+-9.14 the analytic coupling of the angle to the two standard deviations
+read 3.9e-3 and 5.2e-3 beside its own curvature of 8e-7, while the
+criterion differenced by refitting read 1.2e-3 and -2.5e-6 at a step of
+0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That coupling made the
+whole matrix indefinite, and the two standard deviations lost their
+standard errors to a coordinate whose own were already missing.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

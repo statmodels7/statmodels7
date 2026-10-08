@@ -9,7 +9,7 @@ of the penalty's range space for ML."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ of the penalty's range space for ML.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">integrated_basis</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">kind</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">integrated_basis</span><span class="op">(</span><span class="va">spec</span>, <span class="va">design</span>, <span class="va">kind</span>, gamma <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,6 +62,12 @@ of the penalty's range space for ML.</p>
 
 <dt id="arg-kind">kind<a class="anchor" aria-label="anchor" href="#arg-kind"></a></dt>
 <dd><p><code>"reml"</code> or <code>"ml"</code>.</p></dd>
+
+
+<dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
+<dd><p><code>TRUE</code> where the criterion also estimates coefficients
+(<code><a href="marginal_coords.html">marginal_coords()</a></code>); a model with no penalized direction then gets an
+empty basis rather than an error.</p></dd>
 
 </dl></div>
     <div class="section level2">

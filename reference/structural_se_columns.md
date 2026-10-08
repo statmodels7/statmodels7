@@ -1,13 +1,14 @@
-# The Columns a Structural Term Adds to a Derivative Row
+# The Derivative Row of an Equation Carrying a Filter
 
-The derivative of one equation's predictor in the free parameters of the
-score-driven term sitting in it, one row per observation, on the scale
-the variance matrix is indexed by.
+The derivative of the predictor of the equation carrying a score-driven
+term, one row per observation, in every coordinate of the variance
+matrix it moves with: the coefficients of every equation and the term's
+free parameters on their unconstrained scale.
 
 ## Usage
 
 ``` r
-structural_se_columns(spec, design, ep, p, X)
+structural_se_columns(spec, design, ep, p, coef)
 ```
 
 ## Arguments
@@ -30,37 +31,32 @@ structural_se_columns(spec, design, ep, p, X)
 
   The distribution parameter whose equation is being read.
 
-- X:
+- coef:
 
-  The equation's design rows.
+  The coefficients the predictors were evaluated at.
 
 ## Value
 
-A list with `X`, `J` and `key`, or `NULL` where the equation carries no
+A list with `X` (the derivative rows) and `key` (the names of their
+columns in the variance matrix), or `NULL` where the equation carries no
 filter.
 
 ## Details
 
 A filter's level is a recursion, not a column, so it has no row of a
-design. What it has is the derivative the recursion propagates beside
-the state, which
-[`modelterms7::term_filter()`](https://statmodels7.github.io/modelterms7/reference/term_filter.html)
-returns on the parameter scale; multiplying by each parameter's own
-\\h'(\zeta_j)\\ carries it to the unconstrained scale the joint matrix
-is written in, which is the chain the exact gradient already uses.
+design. Its derivative is the forward Jacobian of the recursion, which
+[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md)
+returns. Every equation's coefficients enter it, not only those of the
+filter's own equation: the scores that drive the recursion are read at
+the predictors of every equation, so a coefficient of the scale moves
+the level of a filter in the mean. Leaving those columns out, on the
+gaussian score-driven model of the Nile flow, gave a standard error of
+the filtered mean up to 12 per cent too large.
 
-A parameter an intercept in the same equation holds is not estimated and
-is not in that matrix, so it is not here either.
-
-The design's own rows are corrected at the same time, through
-[`modelterms7::term_static_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_static_deriv.html):
-a coefficient of this equation moves the level as well as the static
-part, because the scores driving the recursion are read at the predictor
-the recursion produces. Measured on a score-driven mean with one
-covariate beside it, leaving that out understates the standard error by
-about a quarter.
+A parameter that an intercept in the same equation holds is not
+estimated and is not in that matrix, so it is not here either.
 
 ## See also
 
 [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md),
-[`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)
+[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md)

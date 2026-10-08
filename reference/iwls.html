@@ -19,7 +19,7 @@ can be passed to any number of fits."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.152.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@ can be passed to any number of fits.</p>
 <span>  hessian <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"expected"</span>, <span class="st">"observed"</span><span class="op">)</span>,</span>
 <span>  approx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"opg"</span>, <span class="st">"bartlett"</span>, <span class="st">"integrate"</span>, <span class="st">"mc"</span><span class="op">)</span>,</span>
 <span>  decomposition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qr"</span>, <span class="st">"svd"</span>, <span class="st">"chol"</span>, <span class="st">"chol_crossprod"</span><span class="op">)</span>,</span>
-<span>  maxit <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  maxit <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">1e-06</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  step_halving <span class="op">=</span> <span class="fl">30L</span></span>
@@ -150,6 +150,29 @@ n = 300 and 1000, the certificate accepts the point reached in 68, against
 median time between 0.17 and 0.98 of the approximation's per family. The
 fit records the settled method, so <code>fit@methods$smooth</code> says which
 curvature ran.</p>
+<p>On a family whose expected information is exact, a run continues on the
+observed information as soon as Fisher scoring contracts the score slowly,
+each of two consecutive ratios of the score above <code><a href="iwls_switch_rate.html">iwls_switch_rate()</a></code>,
+and at the latest after <code><a href="iwls_switch_after.html">iwls_switch_after()</a></code> scoring steps; the expected
+information stands in where the observed cannot step. Fisher scoring converges only linearly near the mode wherever
+the two informations differ there, which they do whenever the dispersion
+has an equation of its own. Measured on <code>ChickWeight</code> with smooths in the
+mean and in \(\sigma\), the first inner fit needed 235 scoring steps and
+the REML criterion was unavailable at its start; with random intercepts in
+both equations the fit stopped at a REML criterion 0.78 below the maximum,
+with the standard deviation of the chicks' intercepts at 0.028 where it is
+0.685. With the switch both converge.</p>
+<p>Where the rule is met, the run takes one more full step, on the observed
+information where the family has it exactly. The marginal criterion
+carries \(\log\lvert K(\beta)\rvert\), which is not stationary in
+\(\beta\), so a mode left short by \(\delta\) enters it at first
+order; a warm-started fit whose score is already under the rule would stop
+without moving and leave the criterion out by an amount linear in the
+outer step. The extra step takes the error to second order. It is kept
+unless it raises the objective by more than a relative \(10^{-8}\): a
+sufficient-decrease test at a point already under the rule would accept or
+reject by the last bits, and the criterion would jump between nearby
+hyperparameters.</p>
 <p><code>approx</code> reaches <span class="pkg">distributions7</span> and is read only where the family
 has no closed expected information; elsewhere the family's own method
 answers and the argument does not enter. It is accepted rather than
@@ -238,20 +261,20 @@ criteria that can replace it.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, tol 1e-06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 1000, tol 1e-06</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Newton instead of Fisher scoring, solved through an SVD, which reports a</span></span></span>
 <span class="r-in"><span><span class="co"># numerical rank where a deficient block would make a Cholesky fail.</span></span></span>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>hessian <span class="op">=</span> <span class="st">"observed"</span>, decomposition <span class="op">=</span> <span class="st">"svd"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: observed information, svd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, tol 1e-06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 1000, tol 1e-06</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An optimizers7 stopping rule in place of tol. crit_grad(t) here is</span></span></span>
 <span class="r-in"><span><span class="co"># exactly tol = t, the state's gradient being the score per observation.</span></span></span>
 <span class="r-in"><span><span class="fu">iwls</span><span class="op">(</span>criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_any.html" class="external-link">crit_any</a></span><span class="op">(</span><span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                       <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_rel_obj.html" class="external-link">crit_rel_obj</a></span><span class="op">(</span><span class="fl">1e-12</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iwls: auto information, qr</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 100, gradient (max-norm) &lt; 1e-08 or |df| &lt; 1e-12 (relative)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   maxit 1000, gradient (max-norm) &lt; 1e-08 or |df| &lt; 1e-12 (relative)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Both at once is an error: tol would be read by nobody.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">iwls</span><span class="op">(</span>tol <span class="op">=</span> <span class="fl">1e-8</span>, criterion <span class="op">=</span> <span class="fu">optimizers7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">crit_grad</a></span><span class="op">(</span><span class="fl">1e-8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>

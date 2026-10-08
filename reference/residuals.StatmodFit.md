@@ -71,6 +71,12 @@ The construction is randomized: \\u_i\\ is drawn uniformly on
 \\(F(y_i^-), F(y_i))\\ and the residual is \\\Phi^{-1}(u_i)\\. Exact
 again, at the price of being random, so two calls give two answers.
 
+Where \\F(y_i)\\ exceeds one half the residual is read from the survival
+function, \\\Phi^{-1}(u_i) = -\Phi^{-1}(1 - u_i)\\ with \\1 - u_i\\
+computed as \\1 - F\\ directly, so a count far in the upper tail, where
+\\F\\ rounds to one, gets a finite residual. A family whose distribution
+function does not take `lower.tail` keeps the lower-tail reading.
+
 This applies to every discrete family, and at the atom alone to a mixed
 one, which is the zero-adjusted wrapper of a continuous parent. `seed`
 makes a call reproducible without disturbing the caller's stream; left
@@ -107,8 +113,8 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), d)
 # Under a correct model the quantile residuals are standard normal.
 r <- residuals(fit)
 c(mean = mean(r), sd = stats::sd(r))
-#>         mean           sd 
-#> 2.090233e-17 1.002509e+00 
+#>          mean            sd 
+#> -1.949639e-17  9.974843e-01 
 stats::shapiro.test(r)$p.value
 #> [1] 0.8361219
 
