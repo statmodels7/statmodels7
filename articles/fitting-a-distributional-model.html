@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.198.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -240,8 +240,8 @@ then says so in its <code>held</code> column.</p>
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
 <span><span class="co">#&gt; conditional log-likelihood -362.616546    effective df 7.26</span></span>
 <span><span class="co">#&gt; cAIC 739.762    cBIC 766.668</span></span>
-<span><span class="co">#&gt; fitted in 169 ms</span></span>
-<span><span class="co">#&gt; inner   max |grad|/se 1.3e-15   min eigen 1</span></span>
+<span><span class="co">#&gt; fitted in 257 ms</span></span>
+<span><span class="co">#&gt; inner   max |grad|/se 3.7e-16   min eigen 1</span></span>
 <span><span class="co">#&gt; outer   max |grad|/se 2.1e-08   min eigen 0.99</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
 <p>Three things in that output are worth naming. The log-likelihood is
@@ -264,7 +264,7 @@ is the point reported the one the model asks for?</p>
 <code class="sourceCode R"><span><span class="va">cert</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">f4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>state <span class="op">=</span> <span class="va">cert</span><span class="op">$</span><span class="va">state</span>, mode_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">cert</span><span class="op">$</span><span class="va">mode_error</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       state  mode_error </span></span>
-<span><span class="co">#&gt; "converged"  "6.77e-30"</span></span></code></pre></div>
+<span><span class="co">#&gt; "converged"  "4.93e-30"</span></span></code></pre></div>
 <p><code>mode_error</code> is how far above its own penalized mode the
 inner fit stopped, in log-likelihood units, so one limit serves every
 model whatever its scale. The <code>state</code> is
