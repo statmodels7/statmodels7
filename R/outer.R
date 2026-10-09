@@ -1636,6 +1636,53 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
 
   eta0 <- c(hyper_to_eta(hyper, idx), beta[gam$where])
 
+  # A CORRELATION'S ANGLE THAT RUNS PAST 9 IS SEARCHED AGAIN INSIDE A BOX OF
+  # HALF-WIDTH 9, where the package chose the optimizer. The criterion's slope
+  # in an angle decays like exp(-2|z|), so a correlation estimated at one runs
+  # out along a direction that is flat, and where it stops is platform
+  # arithmetic. Past about 10 the covariance is singular to working
+  # precision: measured on a shared (mu, sigma) intercept block whose truth is
+  # a correlation of one, a search started anywhere between -8.5 and -11 ran
+  # to -14.55, ten coefficients of sigma became unidentified, the certificate
+  # read `unknown` and the summary lost the standard errors of both standard
+  # deviations; Windows stopped at -9.14 and Linux at -9.37 (both `boundary`)
+  # or -10.24 (`unknown`). The box sits one unit past the certificate's edge
+  # of 8, whose test is strict, so a search that runs out is still read as at
+  # the edge, at a correlation within 3e-8 of one.
+  #
+  # ⚠️ THE BOX IS ENTERED ONLY WHERE THE FREE SEARCH LEAVES IT. A box is a
+  # reparametrization, and it changes the search's path everywhere and not
+  # only near the edge: applied from the start, the battery's
+  # gas-mixed-class, whose free search stops at an angle of -0.74, went to
+  # -7.15 and a criterion 1.06 higher but with an indefinite curvature
+  # (state `unknown`). Run only after the free search has left (-9, 9), every
+  # fit that stays inside is unchanged.
+  #
+  # An angle is a free value parameters7 names z<i>.<j>, or a hyperparameter
+  # on a rhobit link.
+  angle <- grepl("(^|_)z[0-9]+\\.[0-9]+$", idx$name) |
+    vapply(attr(idx, "links"), function(l) any(grepl("Rhobit", class(l))),
+           logical(1))
+  box_lo <- rep(-Inf, length(eta0))
+  box_up <- rep(Inf, length(eta0))
+  box_lo[which(angle)] <- -9
+  box_up[which(angle)] <- 9
+  has_box <- chose_optimizer && any(angle)
+  use_box <- FALSE
+  mini <- function(opt, start, ...) {
+    args <- list(opt, fn, start, ...)
+    if (use_box && isTRUE(optimizers7::optimizer_bounded(opt))) {
+      args$lower <- box_lo
+      args$upper <- box_up
+      out <- which(angle & abs(start[seq_along(angle)]) >= 9)
+      args[[3L]][out] <- sign(start[out]) * 8.5
+    }
+    do.call(optimizers7::minimize, args)
+  }
+  ran_out <- function(r) {
+    has_box && !use_box && any(abs(r@par[which(angle)]) > 9)
+  }
+
   # THE CRITERION HAS A RESOLUTION AND THE STOPPING RULE HAS TO KNOW IT.
   # Every evaluation refits the coefficients from the RUNNING warm start, so
   # the value at one hyperparameter depends on the path taken to it, and a
@@ -1724,6 +1771,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # Where no reading is ever usable the closure returns NA, which
     # optimizers7 reads as no resolution at all -- which is the answer for a
     # fit whose mode is never located.
+    #
     if ("line_search" %in% S7::prop_names(optimizer)) {
       optimizer <- S7::set_props(
         optimizer,
@@ -1799,11 +1847,55 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   }
 
   res <- if (exact2) {
-    optimizers7::minimize(optimizer, fn, eta0, gr = gr, he = he)
+    mini(optimizer, eta0, gr = gr, he = he)
   } else if (exact) {
-    optimizers7::minimize(optimizer, fn, eta0, gr = gr)
+    mini(optimizer, eta0, gr = gr)
   } else {
-    optimizers7::minimize(optimizer, fn, eta0)
+    mini(optimizer, eta0)
+  }
+
+  if (ran_out(res)) {
+    use_box <- TRUE
+    res_box <- tryCatch(
+      if (exact2) {
+        mini(optimizer, res@par, gr = gr, he = he)
+      } else if (exact) {
+        mini(optimizer, res@par, gr = gr)
+      } else {
+        mini(optimizer, res@par)
+      }, error = function(e) NULL)
+    if (!is.null(res_box) && is.finite(res_box@value)) res <- res_box
+  }
+
+  # A LINE SEARCH THAT FAILED AT THE ROUNDING OF THE CRITERION IS A
+  # RESOLUTION STOP. Where no reading of the criterion's resolution exists (a
+  # fit with no penalty, whose hyperparameters are a dispersion's
+  # coefficients) or the reading is smaller than the arithmetic, a Newton
+  # step at the optimum predicts a decrease the criterion cannot show, every
+  # trial is rejected on the last bits, and the run reports no acceptable
+  # step at the optimum. Measured on y ~ x | sigma ~ z on arm64 macOS: twelve
+  # backtracks and the flag FALSE where x86_64 accepted the first trial by a
+  # few ulps. The test is made AFTER the search has failed, so a run that
+  # succeeds is untouched: a floor read before the trials stopped ordinary
+  # gaussian fits at a relative 4e-7 in sigma. The floor is 1e3 eps |f|, and
+  # a wrong direction, which predicts a large decrease, stays a failure.
+  if (chose_optimizer && exact2 && !isTRUE(res@converged) &&
+      identical(res@message, "the line search found no acceptable step")) {
+    floor_res <- 1e3 * .Machine$double.eps *
+      max(1, if (is.finite(res@value)) abs(res@value) else 1)
+    at_floor <- isTRUE(tryCatch({
+      evaluate(res@par)
+      g <- derivs(1L)
+      A <- sgn * derivs(2L)
+      dec <- joint_decrement(g, (A + t(A)) / 2)
+      is.finite(dec) && dec <= floor_res
+    }, error = function(e) FALSE))
+    if (at_floor) {
+      res <- S7::set_props(
+        res, converged = TRUE,
+        criterion_met = "no decrease above the objective's resolution",
+        message = "")
+    }
   }
 
   # WHETHER THE REPORTED POINT IS THE OPTIMUM, which the search's flag does
@@ -1840,7 +1932,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
     # reaches the maximum is lbfgs() as a caller names it, and the budget and
     # resolution this function gives its own choice stopped it at -818.63
     alt <- optimizers7::lbfgs()
-    res2 <- tryCatch(optimizers7::minimize(alt, fn, eta0, gr = gr),
+    res2 <- tryCatch(mini(alt, eta0, gr = gr),
                      error = function(e) NULL)
     if (!is.null(res2) && is.finite(res2@value) &&
         res2@value < res@value - 1e-8 * max(1, abs(res@value))) {
@@ -1881,7 +1973,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       is.finite(dec) && dec > mode_error_limit()
     }, error = function(e) FALSE))
     if (!rising) break
-    res2 <- tryCatch(optimizers7::minimize(optimizer, fn, res@par, gr = gr,
+    res2 <- tryCatch(mini(optimizer, res@par, gr = gr,
                                            he = he),
                      error = function(e) NULL)
     if (is.null(res2) || !is.finite(res2@value) ||
@@ -1928,11 +2020,11 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       }
       res2 <- tryCatch(
         if (exact2) {
-          optimizers7::minimize(optimizer, fn, pr, gr = gr, he = he)
+          mini(optimizer, pr, gr = gr, he = he)
         } else if (exact) {
-          optimizers7::minimize(optimizer, fn, pr, gr = gr)
+          mini(optimizer, pr, gr = gr)
         } else {
-          optimizers7::minimize(optimizer, fn, pr)
+          mini(optimizer, pr)
         }, error = function(e) NULL)
       if (is.null(res2) || !is.finite(res2@value) ||
           !(res2@value < res@value - mode_error_limit())) {

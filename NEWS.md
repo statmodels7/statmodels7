@@ -1,3 +1,26 @@
+# statmodels7 0.199.0
+
+* An outer search that the package chose and whose line search found no
+  acceptable step is reported as converged, with the criterion met "no
+  decrease above the objective's resolution", where the Newton decrement at
+  the point is below 1e3 eps |f|. At the optimum of `y ~ x | sigma ~ z` on
+  arm64 macOS every trial was rejected on the last bits of the criterion,
+  and the fit read `converged = FALSE` at a decrement of 1.4e-14. The test
+  is made after the search has failed, so a search that succeeds is
+  unchanged.
+* A correlation's angle (a free value named `z<i>.<j>`, or a hyperparameter
+  on a rhobit link) whose free search ends past 9 is searched again inside
+  a box of half-width 9, from the point brought back to 8.5. Past about 10
+  the covariance is singular to working precision: a shared (mu, sigma)
+  intercept block whose correlation is one ran to an angle of -14.55, ten
+  coefficients became unidentified and the summary lost the standard errors
+  of both standard deviations. A search that ends inside the box is
+  unchanged.
+* With distributions7 0.76.0, the standard error of a random effect's
+  variance under a log-gamma prior built with `transformation()` is the
+  curvature of the restricted likelihood's profile (0.0529 on the test case,
+  against 0.0441 to 0.0584 before, depending on the platform).
+
 # statmodels7 0.198.2
 
 * `MASS` and `segmented` are declared in `Suggests`: two test files load data

@@ -431,3 +431,34 @@ test_that("away from the boundary every reading keeps its numbers", {
   expect_lt(abs(tb$estimate[[3L]]), 0.5)
   expect_false(any(grepl("edge of its range", s@notes, fixed = TRUE)))
 })
+
+test_that("a correlation's angle that runs out is searched again inside the box", {
+  skip_on_cran()
+  # Started past the singular zone, the free search ran to an angle of -14.55
+  # on every platform: ten coefficients of sigma became unidentified, the
+  # certificate read `unknown` and both standard deviations lost their
+  # standard errors. It is now searched again inside a box of half-width 9
+  # and stops at the edge, with the deviations reported.
+  set.seed(51)
+  m <- 10L
+  ni <- 10L
+  g <- factor(rep(seq_len(m), each = ni))
+  b <- stats::rnorm(m, 0, 1.2)
+  u <- 0.35 / 1.2 * b
+  dd <- data.frame(g = g)
+  dd$y <- stats::rnorm(m * ni, mean = 1 + b[as.integer(g)],
+                       sd = exp(-0.3 + u[as.integer(g)]))
+  form <- y ~ random(~ 1 | a | g) | sigma ~ random(~ 1 | a | g)
+  free <- statmod(form, distributions7::gaussian1_distrib(), dd,
+                  outer_criterion = reml())
+  hy <- free@hyper
+  hy$mu[["a | g"]][["sigma_z2.1"]] <- -11
+  fit <- statmod(form, distributions7::gaussian1_distrib(), dd,
+                 outer_criterion = reml(),
+                 start = start_from(S7::set_props(free, hyper = hy)))
+  z <- unlist(fit@hyper$mu[["a | g"]])[["sigma_z2.1"]]
+  expect_lte(abs(z), 9)
+  expect_identical(statmod_certificate(fit)$state, "boundary")
+  tb <- summary(fit)@classes[[1L]]$table
+  expect_true(all(is.finite(tb$se[1:2])))
+})
