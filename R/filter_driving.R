@@ -66,29 +66,6 @@ check_filter_scaling <- function(d, y, theta) {
 }
 
 
-#' The Set Partitions of a Small Index Set
-#'
-#' @param m The size of the set, 1 to 4.
-#'
-#' @return A list of partitions, each a list of integer vectors.
-#'
-#' @keywords internal
-set_partitions <- function(m) {
-  if (m == 0L) return(list(list()))
-  out <- list()
-  for (part in set_partitions(m - 1L)) {
-    # the new element joins each existing block in turn, or opens its own
-    for (j in seq_along(part)) {
-      pj <- part
-      pj[[j]] <- c(pj[[j]], m)
-      out[[length(out) + 1L]] <- pj
-    }
-    out[[length(out) + 1L]] <- c(part, list(m))
-  }
-  out
-}
-
-
 #' The Driving Quantity of a Filter and Its Derivatives
 #'
 #' @description
@@ -183,7 +160,7 @@ filter_driving <- function(spec, theta, ap, scaling, gl, H, D3 = NULL,
   w_of <- function(B) {
     if (!length(B)) return(phik(0L))
     out <- numeric(n)
-    for (part in set_partitions(length(B))) {
+    for (part in numericals7::set_partitions(length(B))) {
       term <- phik(length(part))
       for (beta in part) term <- term * Ider[[tkey(B[beta])]]
       out <- out + term
