@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.199.1" id="statmodels7-01991">statmodels7 0.199.1<a class="anchor" aria-label="anchor" href="#statmodels7-01991"></a></h2>
+<ul><li>A test of <code><a href="../reference/criterion_resolution.html">criterion_resolution()</a></code> accepts <code>NA</code> at a located mode where the correction moves the criterion by exactly nothing, as it did on ubuntu’s release runner; the positive reading is still asserted at a score of 1e-3.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.199.0" id="statmodels7-01990">statmodels7 0.199.0<a class="anchor" aria-label="anchor" href="#statmodels7-01990"></a></h2>
 <ul><li>An outer search that the package chose and whose line search found no acceptable step is reported as converged, with the criterion met “no decrease above the objective’s resolution”, where the Newton decrement at the point is below 1e3 eps |f|. At the optimum of <code>y ~ x | sigma ~ z</code> on arm64 macOS every trial was rejected on the last bits of the criterion, and the fit read <code>converged = FALSE</code> at a decrement of 1.4e-14. The test is made after the search has failed, so a search that succeeds is unchanged.</li>

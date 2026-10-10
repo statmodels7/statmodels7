@@ -1,5 +1,13 @@
 # Changelog
 
+## statmodels7 0.199.1
+
+- A test of
+  [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
+  accepts `NA` at a located mode where the correction moves the
+  criterion by exactly nothing, as it did on ubuntu’s release runner;
+  the positive reading is still asserted at a score of 1e-3.
+
 ## statmodels7 0.199.0
 
 - An outer search that the package chose and whose line search found no
