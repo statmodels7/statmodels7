@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.199.4" id="statmodels7-01994">statmodels7 0.199.4<a class="anchor" aria-label="anchor" href="#statmodels7-01994"></a></h2>
+<ul><li>The restart of an outer search that stopped on the resolution rule with the exact Newton decrement above <code><a href="../reference/mode_error_limit.html">mode_error_limit()</a></code> stops on a gain below that limit, with a tenth of it for the line search, instead of on the resolution read at the start of the search. On the battery’s gas-panel-omega that resolution is about 2 REML units and moves with rounding, so the restart’s first step was taken or refused by chance: a change of one or two ulps in the rhobit link’s derivatives left the fit at -609.4932 with a decrement of 2.6e-3, where it reached -609.4905 before. The restart now reaches -609.490415 from either, with a decrement of 1e-6.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.199.3" id="statmodels7-01993">statmodels7 0.199.3<a class="anchor" aria-label="anchor" href="#statmodels7-01993"></a></h2>
 <ul><li>The scaled score of a <code>gas()</code> filter enumerates its set partitions with <code><a href="https://statmodels7.github.io/numericals7/reference/set_partitions.html" class="external-link">numericals7::set_partitions()</a></code>, and the private copy of that function is removed. The two built the same partitions in the same order, so no computed value changes.</li>
