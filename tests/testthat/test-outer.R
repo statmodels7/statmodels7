@@ -550,9 +550,12 @@ test_that("a resolution is refused where the inner fit is not at a mode", {
              split = res$obj$split, score = res$obj$gr(res$par),
              value = m$value)
 
-  # a located mode reports a resolution, as it always did
+  # a located mode reports a resolution, or NA where the correction moves the
+  # criterion by exactly nothing: a mode located to the last bit, which
+  # ubuntu's release runner produced on 2026-10-09. Either way it is not
+  # refused as a mode error; the positive branch is pinned by st3 below.
   r <- criterion_resolution(st, spec, design, method, crit_at)
-  expect_true(is.finite(r) && r > 0)
+  expect_true(is.na(r) || (is.finite(r) && r > 0))
   expect_null(attr(r, "mode_error"))
 
   # INJECTION: the same point with a large score. The predicted decrease goes
