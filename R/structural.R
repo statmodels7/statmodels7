@@ -1455,8 +1455,11 @@ statmod_joint_pieces <- function(spec, design, obj, hyper, kinds = "filter") {
       if (!is.null(pg[[key]])) g <- g + pg[[key]][free]
       out <- c(obj$gr(b), g)
       if (mixed) {
-        out <- out + joint_penalty_at(spec, design, obj$split(b), hyper,
-                                      "gradient", njoint)
+        # obj$gr() already carries the coefficient part of a mixed class
+        jg <- joint_penalty_at(spec, design, obj$split(b), hyper,
+                               "gradient", njoint)
+        jg[seq_len(nb)] <- 0
+        out <- out + jg
       }
       out
     }, error = function(e) NULL)

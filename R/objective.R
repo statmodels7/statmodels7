@@ -1303,6 +1303,19 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
   }
   stack <- function(l) unlist(l[params], use.names = FALSE)
 
+  # a MIXED class's prior is left out of statmod_penalty_at()'s derivatives
+  # and placed in the joint vector by joint_penalty_at(); its coefficient
+  # part, with a filter's own parameters held, belongs in this objective's
+  # gradient and Hessian as its value already belongs in fn
+  nb <- sum(npar)
+  mixed <- Filter(function(u) isTRUE(u$mixed), statmod_penalized(spec, design))
+  nj <- max(c(nb, unlist(lapply(mixed, function(u) u$joint))))
+  mixed_at <- function(cf, what) {
+    out <- joint_penalty_at(spec, design, cf, hyper, what, nj)
+    if (what == "gradient") out[seq_len(nb)] else
+      out[seq_len(nb), seq_len(nb), drop = FALSE]
+  }
+
   list(
     npar = npar,
     split = split,
@@ -1316,7 +1329,9 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
       cf <- split(v)
       s <- statmod_score_at(spec, cf, design)
       pg <- statmod_penalty_at(spec, cf, hyper, design, "gradient")
-      stack(Map(function(a, b) -a + b, s, pg))
+      g <- stack(Map(function(a, b) -a + b, s, pg))
+      if (length(mixed)) g <- g + mixed_at(cf, "gradient")
+      g
     },
     # the same gradient at the positions `idx` alone, for a fit that moves
     # only those: the score's products over the other columns are skipped
@@ -1324,12 +1339,15 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
       cf <- split(v)
       s <- statmod_score_at(spec, cf, design, index = idx)
       pg <- stack(statmod_penalty_at(spec, cf, hyper, design, "gradient"))
+      if (length(mixed)) pg <- pg + mixed_at(cf, "gradient")
       -s + pg[idx]
     },
     he = function(v) {
       cf <- split(v)
-      statmod_information_at(spec, cf, design, expected, approx) +
+      H <- statmod_information_at(spec, cf, design, expected, approx) +
         statmod_penalty_at(spec, cf, hyper, design, "hessian")
+      if (length(mixed)) H <- H + mixed_at(cf, "hessian")
+      H
     }
   )
 }

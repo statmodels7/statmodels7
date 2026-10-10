@@ -306,6 +306,43 @@ test_that("the joint penalty matches a prior written out by hand", {
   expect_equal(got_h[jb, jz], hand_h[jb, jz], tolerance = 1e-10)
 })
 
+test_that("the objective over the coefficients carries a mixed class's derivatives", {
+  # with a filter's own parameters held, the prior of a mixed class is a
+  # function of the coefficients like any other penalty: its value entered
+  # fn and its derivatives did not, so the certificate read a score of order
+  # one at a mode (mode_error 1.41 on the battery's gas-mixed-class)
+  dd <- mixed_panel()
+  spec <- statmod_spec(mixed_formula, distributions7::gaussian1_distrib(), dd)
+  des <- statmod_design(spec)
+  nb <- sum(vapply(des, function(d) d$npar, integer(1)))
+  hy <- statmod_hyper_start(spec, des)
+  u <- Filter(function(z) isTRUE(z$mixed), statmod_penalized(spec, des))[[1L]]
+  cor_nm <- grep("z2\\.1$", names(hy[[u$param]][[u$key]]), value = TRUE)
+  hy[[u$param]][[u$key]][[cor_nm]] <- 0.8
+  set.seed(6)
+  v <- stats::rnorm(nb, 0, 0.3)
+  obj <- statmod_objective(spec, hy, des, FALSE, "bartlett")
+  g <- obj$gr(v)
+  h <- 1e-5
+  gn <- vapply(seq_len(nb), function(i) {
+    e <- numeric(nb)
+    e[i] <- h
+    (obj$fn(v + e) - obj$fn(v - e)) / (2 * h)
+  }, numeric(1))
+  expect_lt(max(abs(g - gn)), 1e-6 * max(1, max(abs(g))))
+  expect_equal(obj$gr_sub(v, 2:4), g[2:4], tolerance = 1e-12)
+  # the Hessian carries the coefficient block of the joint one
+  cf <- obj$split(v)
+  njoint <- max(c(nb, u$joint))
+  extra <- as.matrix(obj$he(v)) -
+    as.matrix(statmod_information_at(spec, cf, des, FALSE, "bartlett")) -
+    as.matrix(statmod_penalty_at(spec, cf, hy, des, "hessian"))
+  jh <- joint_penalty_at(spec, des, cf, hy, "hessian", njoint)
+  expect_equal(unname(extra), unname(jh[seq_len(nb), seq_len(nb)]),
+               tolerance = 1e-10)
+  expect_gt(max(abs(extra)), 0.01)
+})
+
 test_that("at zero correlation the mixed model IS the independent one", {
   # The strongest control available, and an identity rather than a tolerance:
   # a block-diagonal prior is exactly the two separate priors, so the two
