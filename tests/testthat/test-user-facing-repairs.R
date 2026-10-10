@@ -118,6 +118,9 @@ test_that("a search that left on the resolution rule with the criterion rising r
                  data = sim$data, inner_optimizer = iwls(maxit = 10000))
   expect_identical(statmod_certificate(fit)$state, "converged")
   expect_gt(fit@criterion, -609.4915)
+  # the restart stops in the decrement's unit, so it leaves the decrement
+  # below the limit that started it, whatever the resolution read
+  expect_lt(statmod_certificate(fit)$decrement, mode_error_limit())
 })
 
 test_that("cv() reapplies the terms built on all the rows to each fold", {

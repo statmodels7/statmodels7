@@ -1,3 +1,16 @@
+# statmodels7 0.199.4
+
+* The restart of an outer search that stopped on the resolution rule with
+  the exact Newton decrement above `mode_error_limit()` stops on a gain
+  below that limit, with a tenth of it for the line search, instead of on
+  the resolution read at the start of the search. On the battery's
+  gas-panel-omega that resolution is about 2 REML units and moves with
+  rounding, so the restart's first step was taken or refused by chance: a
+  change of one or two ulps in the rhobit link's derivatives left the fit
+  at -609.4932 with a decrement of 2.6e-3, where it reached -609.4905
+  before. The restart now reaches -609.490415 from either, with a
+  decrement of 1e-6.
+
 # statmodels7 0.199.3
 
 * The scaled score of a `gas()` filter enumerates its set partitions with

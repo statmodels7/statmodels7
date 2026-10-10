@@ -1715,6 +1715,9 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # the criterion can resolve, the search returns at the first step whose
   # predicted improvement is below it instead of paying for thirty trials,
   # each of them a whole inner fit.
+  # the optimizer's own rule, before the resolution is added to it: the
+  # restart below reads its own unit and not this one
+  own_criterion <- optimizer@criterion
   if (chose_optimizer) {
     fn(eta0)
     resolution <- state$resolution
@@ -1961,10 +1964,33 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # -609.490. The Newton decrement at the point is what decides, in the
   # criterion's units, against mode_error_limit(); the certificate's 0.01
   # left that run 0.0028 short. At most three restarts.
+  #
+  # ⚠️ THE RESTART STOPS IN THE DECREMENT'S UNIT AND NOT IN THE RESOLUTION'S.
+  # It is run only where the exact decrement exceeds mode_error_limit(), so
+  # its rule is a gain below that limit and its line search is given a tenth
+  # of it. Given the search's own rule instead, it stopped wherever the first
+  # step's predicted gain fell against a tenth of the resolution read at the
+  # start, which on gas-panel-omega is about 2 REML units and moves by 45 per
+  # cent with a perturbation of one ulp in the rhobit link's derivatives: at
+  # one reading the step went through (0.217 against 0.199) and the criterion
+  # reached -609.4905, at the other it did not (0.217 against 0.287) and the
+  # fit stopped at -609.4932 with a decrement of 2.6e-3. With its own unit the
+  # restart reaches -609.490415 from either, with the decrement at 1e-6.
+  restart_opt <- optimizer
+  if (chose_optimizer && "line_search" %in% S7::prop_names(optimizer)) {
+    restart_opt <- S7::set_props(
+      optimizer,
+      criterion = optimizers7::crit_any(
+        own_criterion, optimizers7::crit_abs_obj(mode_error_limit())),
+      line_search = S7::set_props(
+        optimizer@line_search,
+        resolution = function() mode_error_limit() / 10))
+  }
   for (attempt in seq_len(3L)) {
     if (!(chose_optimizer && exact2 && isTRUE(res@converged) &&
-          identical(res@criterion_met,
-                    "no decrease above the objective's resolution"))) break
+          (attempt > 1L ||
+           identical(res@criterion_met,
+                     "no decrease above the objective's resolution")))) break
     rising <- isTRUE(tryCatch({
       evaluate(res@par)
       g <- derivs(1L)
@@ -1973,8 +1999,7 @@ outer_fit <- function(spec, design, blocks, hyper, inner_optimizer, method,
       is.finite(dec) && dec > mode_error_limit()
     }, error = function(e) FALSE))
     if (!rising) break
-    res2 <- tryCatch(mini(optimizer, res@par, gr = gr,
-                                           he = he),
+    res2 <- tryCatch(mini(restart_opt, res@par, gr = gr, he = he),
                      error = function(e) NULL)
     if (is.null(res2) || !is.finite(res2@value) ||
         !(res2@value < res@value - mode_error_limit())) {
