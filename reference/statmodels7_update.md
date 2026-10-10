@@ -80,9 +80,9 @@ v <- statmodels7_update()
 #> statmodels7 toolkit, installed versions:
 #>   basis7           0.14.0
 #>   distributions7   0.76.1
-#>   linkfunctions7   0.5.0
+#>   linkfunctions7   0.5.1
 #>   modelterms7      0.95.1
-#>   numericals7      0.21.1
+#>   numericals7      0.22.1
 #>   optimizers7      0.13.0
 #>   parameters7      0.22.1
 #>   penalties7       0.30.0

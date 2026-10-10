@@ -1239,9 +1239,6 @@ exported, and none is needed to use the package.
 - [`select_parameter()`](https://statmodels7.github.io/statmodels7/reference/select_parameter.md)
   : One Equation's Submatrix of a Variance Matrix
 
-- [`set_partitions()`](https://statmodels7.github.io/statmodels7/reference/set_partitions.md)
-  : The Set Partitions of a Small Index Set
-
 - [`shape_floor()`](https://statmodels7.github.io/statmodels7/reference/shape_floor.md)
   : The Smallest Admissible Value of a Shape Parameter
 

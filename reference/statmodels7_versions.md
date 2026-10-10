@@ -56,9 +56,9 @@ v
 #>          package version
 #> 1         basis7  0.14.0
 #> 2 distributions7  0.76.1
-#> 3 linkfunctions7   0.5.0
+#> 3 linkfunctions7   0.5.1
 #> 4    modelterms7  0.95.1
-#> 5    numericals7  0.21.1
+#> 5    numericals7  0.22.1
 #> 6    optimizers7  0.13.0
 #> 7    parameters7  0.22.1
 #> 8     penalties7  0.30.0

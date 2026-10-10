@@ -1,5 +1,13 @@
 # Changelog
 
+## statmodels7 0.199.3
+
+- The scaled score of a `gas()` filter enumerates its set partitions
+  with
+  [`numericals7::set_partitions()`](https://statmodels7.github.io/numericals7/reference/set_partitions.html),
+  and the private copy of that function is removed. The two built the
+  same partitions in the same order, so no computed value changes.
+
 ## statmodels7 0.199.2
 
 - The gradient and Hessian of the inner objective over the coefficients
