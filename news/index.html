@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.199.2" id="statmodels7-01992">statmodels7 0.199.2<a class="anchor" aria-label="anchor" href="#statmodels7-01992"></a></h2>
+<ul><li>The gradient and Hessian of the inner objective over the coefficients carry the derivatives of a covariance class shared between coefficients and a filter’s own parameters, whose value the objective already carried. The certificate’s mode error on such a fit read the missing prior gradient as a score (1.41 at a located mode on a panel with <code>random(~1 | u | g)</code> in mu and in a <code>gas()</code> loading; 3e-29 now). The fit itself is unchanged.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.199.1" id="statmodels7-01991">statmodels7 0.199.1<a class="anchor" aria-label="anchor" href="#statmodels7-01991"></a></h2>
 <ul><li>A test of <code><a href="../reference/criterion_resolution.html">criterion_resolution()</a></code> accepts <code>NA</code> at a located mode where the correction moves the criterion by exactly nothing, as it did on ubuntu’s release runner; the positive reading is still asserted at a score of 1e-3.</li>

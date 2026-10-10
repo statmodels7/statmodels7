@@ -1,5 +1,15 @@
 # Changelog
 
+## statmodels7 0.199.2
+
+- The gradient and Hessian of the inner objective over the coefficients
+  carry the derivatives of a covariance class shared between
+  coefficients and a filter’s own parameters, whose value the objective
+  already carried. The certificate’s mode error on such a fit read the
+  missing prior gradient as a score (1.41 at a located mode on a panel
+  with `random(~1 | u | g)` in mu and in a `gas()` loading; 3e-29 now).
+  The fit itself is unchanged.
+
 ## statmodels7 0.199.1
 
 - A test of
