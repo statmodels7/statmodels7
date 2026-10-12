@@ -226,7 +226,8 @@ test_that("screening is checked, so a rule that discards too much is exact", {
     keep <- keep0
     b0 <- numeric(ncol(X))
     repeat {
-      tab <- penalties7::penalty_prox_spec(b$block$penalty, th, 1 / v[keep])
+      tab <- penalties7::penalty_prox_spec(
+        coord_table_penalty(b$block$penalty, keep, v), th, 1 / v[keep])
       out <- coord_descent(X, z, w, b0, tab$cut, tab$slope, tab$icept,
                            as.integer(keep - 1L), 500L, 1e-12, FALSE)
       back <- setdiff(which(abs(out$grad) > s * (1 + 1e-10)), keep)

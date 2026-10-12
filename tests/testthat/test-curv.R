@@ -117,12 +117,12 @@ test_that("the table is built for the kept coordinates", {
     expect_equal(sub$cut, full$cut[keep, , drop = FALSE])
     expect_equal(sub$icept, full$icept[keep, , drop = FALSE])
   }
-  # the call as it was: the whole penalty with the kept steps reads
-  # coordinates 1 and 2 where 2 and 4 are meant
+  # the call as it was, the whole penalty with the kept steps, read
+  # coordinates 1 and 2 where 2 and 4 are meant; penalties7 now rejects a
+  # step vector whose length is neither one nor the number of coefficients
   pen <- penalties7::lasso_penalty(map = D)
-  old <- penalties7::penalty_prox_spec(pen, list(lambda = 1), st[keep])
-  full <- penalties7::penalty_prox_spec(pen, list(lambda = 1), st)
-  expect_false(isTRUE(all.equal(old$cut[1:2, 1], full$cut[keep, 1])))
+  expect_error(penalties7::penalty_prox_spec(pen, list(lambda = 1), st[keep]),
+               "one per coefficient")
 })
 
 test_that("a scaled table takes the curvature of the current step", {
