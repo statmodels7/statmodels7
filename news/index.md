@@ -1,5 +1,14 @@
 # Changelog
 
+## statmodels7 0.199.6
+
+- Requires modelterms7 0.96.0, which rejects arguments that it accepted
+  and ignored. Three tests used them. Two tests of `test-spec.R` passed
+  `params` to `nl()` beside a formula, one of them with the values meant
+  as `start`; the threads test of the product grid passed
+  `scad(n_a = 3)` with the shape held, so it swept `lambda` alone, and
+  it now estimates the shape with `a = NULL`.
+
 ## statmodels7 0.199.5
 
 - Requires penalties7 0.31.0, whose `penalty_prox_spec()` rejects a step

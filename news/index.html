@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/statmodels7/statmodels7/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.199.6" id="statmodels7-01996">statmodels7 0.199.6<a class="anchor" aria-label="anchor" href="#statmodels7-01996"></a></h2>
+<ul><li>Requires modelterms7 0.96.0, which rejects arguments that it accepted and ignored. Three tests used them. Two tests of <code>test-spec.R</code> passed <code>params</code> to <code>nl()</code> beside a formula, one of them with the values meant as <code>start</code>; the threads test of the product grid passed <code>scad(n_a = 3)</code> with the shape held, so it swept <code>lambda</code> alone, and it now estimates the shape with <code>a = NULL</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.199.5" id="statmodels7-01995">statmodels7 0.199.5<a class="anchor" aria-label="anchor" href="#statmodels7-01995"></a></h2>
 <ul><li>Requires penalties7 0.31.0, whose <code>penalty_prox_spec()</code> rejects a step vector whose length is neither one nor the number of coefficients. Two tests called it with the whole penalty and the steps of the kept coordinates; the screening test now builds the table from <code><a href="../reference/coord_table_penalty.html">coord_table_penalty()</a></code>, as <code><a href="../reference/coord_fit.html">coord_fit()</a></code> does, and the curvature test expects the error.</li>
