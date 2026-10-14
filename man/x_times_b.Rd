@@ -16,7 +16,8 @@ A numeric vector of \code{nrow(X)} entries.
 }
 \description{
 Computes \eqn{X\beta} reading only the columns whose coefficient is not
-zero, which after a lasso is most of a block.
+zero. After a lasso many coefficients of a block are exactly zero, and the
+corresponding columns are skipped.
 }
 \details{
 A term \eqn{0 \cdot x_{ij}} adds exactly zero to the running sum, so

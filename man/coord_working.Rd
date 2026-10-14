@@ -26,9 +26,11 @@ with no closed form.}
 }
 \value{
 A list with \code{w} and \code{z}, each a numeric vector of length
-\code{spec@n_obs}. \code{NULL} where the curvature is not usable, which is any
-non-finite or non-positive \eqn{h_i}; the observed information can
-produce both far from the optimum.
+\code{spec@n_obs}. A row of weight zero has \code{w} zero and \code{z} equal to its
+predictor. \code{NULL} where the working problem is not usable: a non-finite
+or non-positive \eqn{h_i}, or a non-finite score, on a row of positive
+weight. The observed information can produce non-positive values far from
+the optimum.
 }
 \description{
 \eqn{h_i} and \eqn{z_i = \eta_i + s_i/h_i}, the weighted least squares
@@ -36,8 +38,10 @@ problem the log-likelihood is locally.
 }
 \details{
 For a Gaussian response on the identity link the quadratic is exact and
-one pass answers the problem. Elsewhere it is the local approximation a
-scoring step works on, and the weights are rebuilt at each iteration.
+the first iteration answers the problem. Elsewhere it is the local
+approximation a scoring step works on, and the weights are rebuilt at each
+iteration. A row of weight zero has no curvature and no score, and it
+enters the descent with weight zero at its own predictor.
 
 Where the design carries a structural term, the predictor of an equation
 includes a part that belongs to that term, and no column of a block

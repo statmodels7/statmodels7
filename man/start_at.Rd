@@ -14,7 +14,9 @@ start_at(strategy, spec, design, obj, ...)
 \item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
 
 \item{obj}{The objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it, or \code{NULL}.
-Only \code{\link[=start_search]{start_search()}} reads it; the other three accept \code{NULL}.}
+Only \code{\link[=start_search]{start_search()}} reads it, and \code{\link[=start_search]{start_search()}} signals an error
+when \code{obj} is \code{NULL}. The other four shipped strategies run with \code{NULL};
+\code{\link[=start_from]{start_from()}} passes \code{obj} on to its \code{rest} strategy.}
 
 \item{...}{Passed to methods. No shipped method reads it.}
 }
@@ -35,9 +37,9 @@ only the design's widths, \code{\link[=start_intercepts]{start_intercepts()}} fi
 runs an optimizer over \code{obj}.
 
 A method must return a full-length vector for every distribution
-parameter, including the ones it has nothing to say about. Zero is the
-conventional filler, and it is the value a penalized block wants anyway,
-its penalty being smallest there.
+parameter, including the ones it does not set. Zero is the conventional
+filler, and it is the value at which the penalty of a penalized block is
+smallest.
 }
 \examples{
 set.seed(1)
@@ -45,8 +47,8 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 design <- statmod_design(spec)
-# a strategy that needs no objective is asked with NULL for it; the ones
-# that search the likelihood are handed the objective by statmod()
+# a strategy that needs no objective is called with NULL for it; the ones
+# that search the likelihood receive the objective from statmod()
 start_at(start_origin(), spec, design, NULL)
 start_at(start_intercepts(), spec, design, NULL)
 

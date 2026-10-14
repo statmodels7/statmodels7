@@ -34,7 +34,7 @@ outer_handles <- function(formula, data, method, distrib = NULL,
   at <- function(eta) {
     hy <- eta_to_hyper(eta, idx, fit0@hyper)
     list(hy = hy, fit = fit_at_hyper(formula, distrib, data, hy, inner,
-                                     polish))
+                                     polish = polish))
   }
   list(
     idx = idx,

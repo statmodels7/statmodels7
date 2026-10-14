@@ -36,7 +36,7 @@ rule.}
 \code{\link[=iwls_solve]{iwls_solve()}} needs, as \code{\link[=iwls_pieces]{iwls_pieces()}} builds it.}
 
 \item{verbose}{\code{TRUE} to print one line per iteration: the objective, the
-score, the step length and the route taken.}
+score per observation and the step length.}
 
 \item{groups}{A list of integer index vectors, one per equation, in the
 numbering of the coefficients handed in. \code{NULL} treats them as one
@@ -45,23 +45,24 @@ group, which is right where the whole vector is being fitted.}
 \item{frozen}{Positions held at their starting values, an integer vector
 in the same numbering. They are dropped from every solve, so the run
 maximizes over the rest, and the stopping rule reads the free
-coordinates alone -- a held coordinate's score is what the constrained
+coordinates alone: a held coordinate's score is what the constrained
 optimum leaves there and does not vanish.}
 
 \item{backup_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
 on the expected information, which takes the step where the observed
-step finds no acceptable point; an observed penalized information that is
-not positive definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and tried. A
-trial point whose objective raises an error is then read as rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method
-\code{\link[=iwls_resolve]{iwls_resolve()}} settled with the fallback.}
+step finds no acceptable point. An observed penalized information that
+is not positive definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its step
+tried. A trial point whose objective raises an error is read as
+rejected. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method \code{\link[=iwls_resolve]{iwls_resolve()}} settled
+with the fallback.}
 
 \item{damp_on_reject}{Whether a line search that finds no acceptable step
 raises the Levenberg damping and retries (the default) or ends the run.
 \code{\link[=fit_smooth]{fit_smooth()}} passes \code{FALSE} where the design carries a sharp
 break-point term, whose objective has a kink in the break-point at the
 observations: there every Gauss-Newton step from the minimum is
-rejected, and escalating the damping eight times at every inner fit
-costs iterations without reaching anything a stop would not.}
+rejected, and escalating the damping at every inner fit costs iterations
+without reaching anything that a stop would not.}
 
 \item{kinks_at}{\code{NULL}, or a function of the coefficients returning the
 positions at which the objective has a kink there, as
@@ -79,7 +80,8 @@ taken.}
 
 \item{switch_at}{\code{NULL}, or a function like \code{pieces_at} building the pieces
 on the observed information. After \code{switch_after} iterations without
-convergence it takes the place of \code{pieces_at}, and \code{pieces_at} that of
+convergence, or earlier when \code{\link[=iwls_slow]{iwls_slow()}} reports a slow contraction of
+the score, it takes the place of \code{pieces_at}, and \code{pieces_at} that of
 \code{backup_at}. \code{\link[=fit_smooth]{fit_smooth()}} passes one for a method \code{\link[=iwls_resolve]{iwls_resolve()}}
 settled on the expected information from \code{"auto"}.}
 
@@ -89,23 +91,25 @@ settled on the expected information from \code{"auto"}.}
 A list of ten: the six below; \code{note}, the reason a run stopped or
 \code{NULL}; \code{aliased}, the coordinates the pivot left out; \code{switched}, the
 iteration at which the run moved to \code{switch_at}, or 0; and \code{fallback}, a
-named integer vector counting the iterations at which the observed
-penalized information was not positive definite (\code{indefinite}) and those
-at which the expected pieces stepped in for a step that found no
-acceptable point (\code{search}), the trial
-points whose objective raised (\code{error}), and the iterations at which the
-Newton step on the full Hessian was taken in place of the scoring step
-(\code{newton}). Of the six:
+named integer vector of four counts. The count \code{indefinite} is the number
+of iterations at which the observed penalized information was not
+positive definite, \code{search} the number at which the expected pieces
+stepped in for a step that found no acceptable point, \code{error} the number
+of trial points whose objective raised, and \code{newton} the number of
+iterations at which the Newton step on the full Hessian was taken in
+place of the scoring step. Of the six:
 \describe{
 \item{\code{par}}{the stacked coefficients reached, a numeric vector.}
 \item{\code{value}}{the penalized objective there, unaveraged.}
 \item{\code{converged}}{a single logical: whether a stopping rule fired,
 the dimensionless verdict included.}
-\item{\code{iterations}}{how many steps were taken. \code{1} means the rule was
-met at the first check with no step taken, as a warm
-start already at the mode reports.}
+\item{\code{iterations}}{the index of the iteration at which the loop
+ended. \code{1} means the rule was met at the first check, as a warm start
+already at the mode reports; the full step taken after the rule is
+met is not counted.}
 \item{\code{score}}{the score per observation at the point reached.}
-\item{\code{history}}{a data frame with one row per iteration.}
+\item{\code{history}}{a data frame with one row per accepted step, or \code{NULL}
+when no step was accepted.}
 }
 }
 \description{
@@ -113,15 +117,19 @@ Runs the scoring iteration on the objective of
 \code{\link[=statmod_objective]{statmod_objective()}} at fixed hyperparameters, returning the
 coefficients and the history of the run.
 }
-\section{Two departures from a plain Newton iteration}{
+\section{Repair of the curvature}{
 A curvature that is not positive definite is repaired by flooring its
 eigenvalues, and the run continues. \code{solve()} would signal an error there
 and abandon a start that is merely far from the optimum.
+}
 
-The stopping rule is read at the iterate, on a score divided by the sample
-size, so a threshold means the same at \eqn{n = 10} and at
-\eqn{n = 10^7}. The objective itself stays unaveraged, that being the
-scale the penalty is added on.
+\section{The stopping rule}{
+The built-in stopping rule compares a score divided by the sample size with
+\code{tol}, so that a threshold has the same meaning at \eqn{n = 10} and at
+\eqn{n = 10^7}, and it also requires the Newton decrement to be at most
+\eqn{10^{-6}}. After the rule is met, one more full step is taken. The
+objective itself is not averaged, because the penalty is added on that
+scale.
 }
 
 \section{The dimensionless final verdict}{
@@ -134,11 +142,10 @@ The verdict therefore adds a second, dimensionless reading,
       s_p = \sqrt{\mathrm{median}_j H_{jj} / n},}
 with \eqn{s_p} taken over the equation each coordinate belongs to.
 
-It can relabel a run that has already stopped as converged, and it can
-never stop a run that is still moving. Driving the loop with it was tried
-and made the tolerance unreachable at the other end of the scale, where
-the objective's magnitude grows with \eqn{\log y} and the stall guard
-fires first.
+It can relabel a run that has already stopped as converged, and it never
+stops a run that is still moving. Driving the loop with it would make the
+tolerance unreachable at the other end of the scale, where the magnitude of
+the objective grows with \eqn{\log y} and the stall guard fires first.
 }
 
 \seealso{

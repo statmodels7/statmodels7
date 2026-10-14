@@ -28,9 +28,10 @@ class_zeta_cols(cl)
 member's positions in whichever vector the class is addressed in.}
 }
 \value{
-\code{class_pieces()} a list of lists with \code{param}, \code{term}, \code{cols} and
-\code{index}; \code{class_index()} and \code{class_zeta_cols()} an integer vector of
-\code{m * dim} positions.
+\code{class_pieces()} a list with one element per member: the member's
+piece (see \code{\link[=label_pieces]{label_pieces()}}) with \code{cols} and \code{index} added;
+\code{class_index()} and \code{class_zeta_cols()} an integer vector of \code{m * dim}
+positions.
 }
 \description{
 \code{class_pieces()} gives one entry per member with its parameter, its columns
@@ -47,18 +48,20 @@ from each member.
 
 Each member's own block is already group-major, so member \eqn{k}'s columns
 for group \eqn{i} are its positions \eqn{(i-1)d_k + 1} to \eqn{id_k}. The
-union across members is \strong{not} contiguous -- one member's columns all
+union across members is \strong{not} contiguous (one member's columns all
 precede the next member's in the stacked vector, and the two may be in
-different equations -- so what comes out is a permutation rather than a
-range. Nothing downstream minds: reading and writing a matrix at
-\verb{[index, index]} is correct for any index, provided the penalty's own
-output is in the same order, which is what this ordering arranges.
+different equations), so what comes out is a permutation and not a range.
+Reading and writing a matrix at \verb{[index, index]} is correct for any index,
+provided the penalty's own output is in the same order, which is what this
+ordering arranges.
 
 A class whose members are all inside a structural term is addressed in that
 term's own parameters instead, which is the vector its penalty is read at
 and where the design has no column. \code{class_zeta_cols()} interleaves those
 positions by the same rule, and \code{class_pieces()} is not consulted at all,
-there being no design block to look the columns up in.
+there being no design block to look the columns up in. A class split
+between coefficients and a structural term's parameters is addressed in the
+joint vector by \code{\link[=class_joint_pieces]{class_joint_pieces()}}.
 }
 \seealso{
 \code{\link[=statmod_penalized]{statmod_penalized()}}, their caller.

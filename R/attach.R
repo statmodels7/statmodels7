@@ -1,40 +1,40 @@
 #' The Packages of the Toolkit
 #'
 #' @description
-#' Names the eight member packages that `statmodels7` installs and attaches:
+#' Names the member packages that `statmodels7` installs and attaches:
 #' `basis7`, `distributions7`, `linkfunctions7`, `modelterms7`,
 #' `numericals7`, `optimizers7`, `parameters7` and `penalties7`. Installing
-#' `statmodels7` installs all eight, and attaching it attaches all eight;
-#' this function is how the rest of the package, and a caller, learn which
-#' those are.
+#' `statmodels7` installs all of them, and attaching it attaches all of them.
+#' The rest of the package and the caller use this function to obtain the
+#' list.
 #'
 #' @details
-#' # Where the list comes from
+#' # Source of the list
 #'
-#' The names are read out of the `Imports` field of this package's own
-#' installed `DESCRIPTION`, keeping the entries that end in `7`. That is the
-#' toolkit's naming convention: every member package is named for what it
-#' supplies with a `7` appended, for S7. Version constraints such as
-#' `distributions7 (>= 0.26.0)` are stripped, since a constraint travels
-#' with a name and is not part of it.
+#' The names are read from the `Imports` field of the installed `DESCRIPTION`
+#' of this package, keeping the entries that end in `7`. This follows the
+#' naming convention of the toolkit: every member name ends in `7`, for S7.
+#' Version constraints such as `distributions7 (>= 0.26.0)` are stripped,
+#' since a constraint is attached to a name and is not part of it.
 #'
 #' Reading the field keeps one enumeration. A member added to `Imports` is a
-#' member here on the next install, with no second list to keep in step.
+#' member here after the next install, and no second list has to be kept in
+#' step.
 #'
-#' # Why `S7` itself is excluded
+#' # The exclusion of `S7`
 #'
-#' `S7` ends in a `7` and is not a member. Its digit counts R's object
-#' systems, and it is the system every member is built on. It has to be
-#' declared in `Imports` because the code says `S7::` throughout, so the
-#' name reaches this field and is removed by name.
+#' `S7` ends in a `7` but is not a member: it is the object system on which
+#' every member is built. It has to be declared in `Imports` because the code
+#' calls `S7::` throughout, so the name reaches this field and is removed by
+#' name.
 #'
-#' @return A character vector of package names, sorted alphabetically. Length
-#'   eight for a complete installation. The result does not say whether a
-#'   member is installed; [statmodels7_versions()] answers that.
+#' @return A character vector of package names, sorted alphabetically, with
+#'   one element per member. The result does not say whether a member is
+#'   installed; [statmodels7_versions()] reports that.
 #'
 #' @seealso [statmodels7_versions()] for the installed version of each,
-#'   [statmodels7_conflicts()] for the exports they mask between them,
-#'   [statmodels7_update()] to install the ones that are out of date.
+#'   [statmodels7_conflicts()] for the exports that more than one member
+#'   makes, [statmodels7_update()] to install or update the members.
 #'
 #' @examples
 #' pkgs <- statmodels7_packages()
@@ -60,18 +60,18 @@ statmodels7_packages <- function() {
 #'
 #' @description
 #' Reports the version of each member package as it is installed on this
-#' machine, one row per member. A member that is not installed reports `NA`
-#' instead of being dropped, so the result always has one row per name
+#' machine, one row per member. A member that is not installed has `NA` as its
+#' version and is kept, so the result always has one row per name
 #' [statmodels7_packages()] returns and a missing member is visible.
 #'
 #' @details
 #' The version is read with [utils::packageVersion()] and coerced to a
-#' character string, so `"0.38.0"` sorts and prints as written and no
-#' comparison is implied between two members' numbers. The members version
-#' independently.
+#' character string, so a version such as `"0.38.0"` is kept as written. The
+#' members are versioned independently, and the version numbers of two
+#' members are not comparable.
 #'
-#' This is the source of the table the attach message prints, and of the
-#' comparison [statmodels7_update()] makes against GitHub.
+#' This is the source of the table that the attach message prints and of the
+#' installed versions that [statmodels7_update()] reports.
 #'
 #' @return A data frame with one row per member and two character columns:
 #'   \describe{
@@ -83,7 +83,7 @@ statmodels7_packages <- function() {
 #'   so both columns are character.
 #'
 #' @seealso [statmodels7_packages()] for the names alone,
-#'   [statmodels7_update()] to install the members that are behind.
+#'   [statmodels7_update()] to install or update the members.
 #'
 #' @examples
 #' v <- statmodels7_versions()
@@ -117,14 +117,15 @@ statmodels7_versions <- function() {
 #' not, and the two columns are filled down the left one first.
 #'
 #' @details
-#' Padding is applied inside a line and stripped at its end, since a trailing
-#' run of spaces is invisible where it is written and visible wherever the
-#' message is pasted. A member that is not installed is marked `x` and named
-#' with the text `not installed`; leaving it blank would hide the difference
-#' between an absent member and a present one.
+#' Padding is applied inside a line and stripped at its end, because a
+#' trailing run of spaces is invisible where it is written and becomes
+#' visible when the message is pasted elsewhere. A member that is not
+#' installed is marked `x` and shown with the text `not installed`, so that
+#' an absent member differs visibly from a present one.
 #'
-#' Plain ASCII throughout. A non-ASCII character in a package's startup
-#' message is a portability risk taken for a decoration.
+#' The message uses plain ASCII only. A non-ASCII character in a startup
+#' message can print incorrectly in a session with another encoding, and the
+#' layout needs none.
 #'
 #' @param versions A data frame as [statmodels7_versions()] returns, with
 #'   character columns `package` and `version` and `NA` in `version` for a
@@ -166,15 +167,15 @@ statmodels7_attach_message <- function(versions) {
 #' is skipped without an error.
 #'
 #' @details
-#' Each member's own startup messages are suppressed: the caller asked for
-#' the toolkit and gets one message about it, not eight. The masking warnings
+#' Each member's own startup messages are suppressed, so that attaching the
+#' toolkit prints one message instead of one per member. The masking warnings
 #' are suppressed too, and [statmodels7_conflicts()] reports the same
 #' information once, at the end, in one block.
 #'
 #' Attachment order follows [statmodels7_packages()], which is alphabetical.
-#' The members export no name in common, so nothing about the result depends
-#' on that order; [statmodels7_conflicts()] is what would report it if one
-#' day they did.
+#' The members export no name in common, so the result does not depend on
+#' that order. If a name were exported by two members,
+#' [statmodels7_conflicts()] would report it.
 #'
 #' @return The names of the packages this call attached, a character vector,
 #'   invisibly. Empty when every installed member was already on the search

@@ -13,26 +13,27 @@ statmod_blocks(spec, design)
 }
 \value{
 A list with \code{smooth} (the stacked column indices fitted
-jointly) and \code{sparse} (a list, one entry per non-smooth term, each
-with the parameter, the term's name, its stacked columns and its
-penalty).
+jointly) and \code{sparse} (a list with one entry per penalized unit that has
+a kink). Each entry holds \code{param}, \code{term} (the penalty's key), \code{cols}
+(positions within the parameter's coefficients), \code{index} (positions in the
+stacked vector), \code{penalty}, \code{structural}, \code{zterm} (the term's own name)
+and \code{ids} (the labels under which hyperparameters are shared).
 }
 \description{
 Returns which coefficients are fitted jointly and which carry a penalty
 with a kink and are therefore fitted by a method of their own.
 }
 \details{
-The property that decides is one each term already reports: a penalty whose
-\code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is non-empty is not twice
-differentiable in its coefficients, so its block cannot enter a system
-solved by a curvature. Everything else goes into one system and is
-estimated all together: an unpenalized block, a ridge, a spline, a random
-effect, a structured or additive penalty. Their joint curvature exists,
-and using it closes a fit in a handful of iterations.
+The split depends on the penalty of each penalized unit (see
+\code{\link[=statmod_penalized]{statmod_penalized()}}). A penalty for which \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}}
+returns a finite point is not twice differentiable in its coefficients, so
+its block cannot enter a system solved by a curvature. Everything else goes
+into one system and is estimated all together: an unpenalized block, a
+ridge, a spline, a random effect, a structured or additive penalty. Their
+joint curvature exists, so a scoring or Newton step applies to them.
 
-A term whose penalty gains a smooth approximation would answer
-\code{penalty_kinks()} differently and move into the smooth block with no
-change here.
+The classification is made by \code{\link[=penalty_has_kink]{penalty_has_kink()}}, so a penalty that
+becomes smooth moves into the smooth block with no change here.
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}

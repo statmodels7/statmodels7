@@ -20,32 +20,34 @@ statmod_start(spec, design, obj, start = NULL)
 A stacked numeric vector.
 }
 \description{
-An intercept-only fit per distribution parameter, with every other
-coefficient at zero.
+The starting coefficients of every equation: the intercepts from the
+intercept-only fit of the distribution, a weighted least-squares start for
+the parametric slopes of the location where it applies, and each term's
+own start where the term declares one.
 }
 \details{
-Each equation's intercept starts at the intercept-only MLE, which
-\code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} supplies: the model with every
-covariate removed is the right place for the model with them to begin, and
-it costs one small fit. The penalized blocks start at zero, where their
-penalty is smallest.
+Each equation's intercept starts at the intercept-only maximum likelihood
+estimate, which \code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} supplies: the model with
+every covariate removed is a natural place for the model with covariates
+to begin, and it costs one small fit. A block whose term declares no start
+of its own, the penalized blocks among them, starts at zero, where its
+penalty is smallest. \code{\link[=start_intercepts]{start_intercepts()}} describes the strategy in full.
 
-\code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback. It returns one
-list per start, each keyed by parameter, so the value wanted is
-\code{th[[1]][[p]]}; indexing the outer list by a parameter's name gives
-\code{NULL}, and this function did that, so every start silently fell to
-zero on the link scale. On a response centered at 5.84 that put the location
-at 0 and sent the run traveling, which is how a Student t fitted to iris
-reached a variance of \eqn{10^7}.
+\code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback for an intercept that the
+fit cannot supply. It returns one list per start, each keyed by parameter,
+so the value for parameter \code{p} is \code{th[[1]][[p]]}.
 
-A start that cannot be obtained is not an error: the fit still runs, from a
-worse place. What would be an error is not noticing, which is why the two
-routes are tried in order rather than one being assumed to work.
+A start that cannot be obtained is not an error: the fit still runs, from
+zero on the link scale. The two routes are tried in order.
 
-\code{start} is either a named list of values, a
-\code{\link[=start_strategy]{start_strategy()}} --- which is asked once, here, before the
-alternation between the coefficients and the hyperparameters begins --- or
-\code{NULL} for \code{\link[=start_intercepts]{start_intercepts()}}, which this function did before
-strategies existed and still does.
+\code{start} is a named list of values, a \code{\link[=start_strategy]{start_strategy()}}, or \code{NULL}, which
+is \code{\link[=start_intercepts]{start_intercepts()}}. A strategy is evaluated once, here, before the
+alternation between the coefficients and the hyperparameters begins, and
+it must return one numeric vector without missing values per distribution
+parameter, of the length of that parameter's coefficient vector. A named
+list replaces the coefficients of the parameters it names, and may name a
+subset; the other parameters start as under \code{\link[=start_intercepts]{start_intercepts()}}. A list
+without names, a name that is not a parameter, and a vector of the wrong
+length are errors.
 }
 \keyword{internal}

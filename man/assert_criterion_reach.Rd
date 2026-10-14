@@ -2,7 +2,7 @@
 % Please edit documentation in R/order.R
 \name{assert_criterion_reach}
 \alias{assert_criterion_reach}
-\title{Refuse a Prediction-Error Criterion on a Structural Term's Own Parameters}
+\title{Prediction-Error Criteria and a Structural Term's Own Parameters}
 \usage{
 assert_criterion_reach(
   spec,
@@ -27,27 +27,24 @@ assert_criterion_reach(
 \description{
 Raises an error naming the penalty and the remedy when \code{aic()}, \code{bic()} or
 \code{cv()} would have to select a hyperparameter of a penalty over the own
-parameters of a structural term: the deviations of a score-driven filter
-over a panel, or a covariance class that reaches into one.
+parameters of a structural term: the group departures of a score-driven
+filter over a panel, or a covariance class that reaches into one.
 }
 \details{
 A prediction-error criterion reads the effective degrees of freedom, and
 their derivative, over the coefficients alone, where such a penalty covers
-nothing. Measured before this refusal existed, the exact gradient of
-\code{aic()} there was exactly 0, the search stopped at its first evaluation
-reporting convergence, and the traces it priced were 2 and 1 where the
-traces over the joint vector are 7.433 and 22.410. \code{cv()} and the path a
-kinked penalty is swept along are built on the same blocks, and for a lasso
-over a filter's parameters the path died on "'from' must be a finite
-number". \code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} span the term's parameters in their
-determinant and estimate a twice differentiable penalty there. A penalty
-with a kink there has no criterion at all, and holding its hyperparameter
-does not fit either: measured, a lasso over a filter's own parameters held
-at \code{lambda = 2} dies inside the coordinate-descent route, in the published
-release as well, so the message names no remedy for it.
+nothing. The exact gradient of \code{aic()} there is zero, so a search would
+stop at its first evaluation and report convergence. \code{cv()} and the path
+along which a kinked penalty is swept are built on the same blocks.
+\code{\link[=reml]{reml()}} and \code{\link[=ml]{ml()}} span the term's parameters in their determinant and
+estimate a twice differentiable penalty there. A penalty with a kink there
+has no criterion that can select its hyperparameter. The hyperparameter can
+be held by writing its value in the term, for example
+\code{lasso(~id, lambda = 2)}, and the penalty is then fitted over the term's own
+parameters by a proximal route, without a criterion.
 
 Which penalties a criterion reaches depends on its role, and only those are
-asked about: an \code{outer_criterion} reaches the smooth penalties, and the
+checked: an \code{outer_criterion} reaches the smooth penalties, and the
 kinked ones as well when no \code{sparse_criterion} is given, while a
 \code{sparse_criterion} reaches the kinked ones alone.
 }

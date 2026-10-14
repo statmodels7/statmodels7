@@ -21,16 +21,18 @@ The values the unit's penalty is read at, in the unit's own order.
 }
 \details{
 Written once because a unit's coefficients are addressed differently
-depending on what it is, and every caller wants the same vector. An ordinary
+depending on what it is, and every caller needs the same vector. An ordinary
 unit sits in one equation and its columns are positions in that parameter's
-coefficients; a covariance class spans several and is addressed only in the
-stacked vector. Stacking and indexing answers both, and for an ordinary unit
+coefficients; a covariance class may span several equations and is
+addressed only in the stacked vector. Stacking and indexing serves both, and
+for an ordinary unit
 it returns exactly what \code{coef[[u$param]][u$cols]} returned, the stacked
 index being that parameter's offset plus those columns.
 
 A structural unit has no position in the stacked vector at all: its penalty
 covers the term's own parameters, which contribute no design column. It is
-read from the design's structural state instead and never reaches here.
+read from the design's structural state instead. A mixed covariance class
+is addressed in the joint vector. \code{\link[=unit_joint_beta]{unit_joint_beta()}} reads both of them.
 }
 \seealso{
 \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}, \code{\link[=statmod_marginal_grad]{statmod_marginal_grad()}},

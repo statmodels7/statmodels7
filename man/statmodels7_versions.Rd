@@ -18,18 +18,18 @@ so both columns are character.
 }
 \description{
 Reports the version of each member package as it is installed on this
-machine, one row per member. A member that is not installed reports \code{NA}
-instead of being dropped, so the result always has one row per name
+machine, one row per member. A member that is not installed has \code{NA} as its
+version and is kept, so the result always has one row per name
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} returns and a missing member is visible.
 }
 \details{
 The version is read with \code{\link[utils:packageDescription]{utils::packageVersion()}} and coerced to a
-character string, so \code{"0.38.0"} sorts and prints as written and no
-comparison is implied between two members' numbers. The members version
-independently.
+character string, so a version such as \code{"0.38.0"} is kept as written. The
+members are versioned independently, and the version numbers of two
+members are not comparable.
 
-This is the source of the table the attach message prints, and of the
-comparison \code{\link[=statmodels7_update]{statmodels7_update()}} makes against GitHub.
+This is the source of the table that the attach message prints and of the
+installed versions that \code{\link[=statmodels7_update]{statmodels7_update()}} reports.
 }
 \examples{
 v <- statmodels7_versions()
@@ -45,5 +45,5 @@ v$package[is.na(v$version)]
 }
 \seealso{
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} for the names alone,
-\code{\link[=statmodels7_update]{statmodels7_update()}} to install the members that are behind.
+\code{\link[=statmodels7_update]{statmodels7_update()}} to install or update the members.
 }

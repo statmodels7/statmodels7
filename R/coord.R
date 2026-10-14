@@ -5,15 +5,16 @@ NULL
 #'
 #' @description
 #' Estimates one penalized block by cycling over its coefficients on the
-#' working quadratic of its own equation, the other blocks held fixed.
+#' working quadratic of its own equation, the other blocks held fixed. Where
+#' the equation has an unpenalized intercept that is not held, the block is
+#' solved with the intercept profiled out, and the intercept is then set to the
+#' value that goes with the block's coefficients.
 #'
 #' @details
-#' **Why not the proximal method.** A proximal gradient step reads the
-#' whole model: measured on 200 observations and 20 columns, one block fit made
-#' 88 evaluations of the objective, 75 of the gradient and 83 of the operator,
-#' each over every parameter of the distribution, and closed in 36 iterations
-#' at 0.17 seconds. A coordinate descent reads the block's own columns and the
-#' running residual instead and closes in six sweeps.
+#' **Comparison with the proximal method.** Each iteration of a proximal
+#' gradient method evaluates the objective, its gradient and the penalty's
+#' operator over every parameter of the distribution. A coordinate descent
+#' reads only the block's own columns and the running residual.
 #'
 #' **The working quadratic.** With \eqn{\eta} the equation's linear
 #' predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
@@ -21,14 +22,23 @@ NULL
 #' \eqn{z = \eta + s/h}, which is the weighted least squares problem of
 #' [iwls()] restricted to one equation. The other columns of that
 #' equation enter as an offset. For a Gaussian response with an identity link
-#' the quadratic is exact and one pass is the answer; otherwise the weights are
-#' rebuilt and the sweeps repeated.
+#' the quadratic is exact and the first weighted least squares iteration gives
+#' the answer; otherwise the weights are rebuilt and the sweeps repeated.
+#'
+#' **Centering.** Where the equation has an unpenalized intercept that is not
+#' held (see [coord_centers()]), the compiled sweeps solve the block with the
+#' intercept profiled out: the columns and the working response enter at their
+#' weighted means, implicitly, so a sparse block stays sparse. After the sweeps
+#' the intercept is set to the weighted mean of the working response net of the
+#' block, so the step is a joint step in the block and the intercept. A held
+#' intercept, or an equation with no intercept, leaves the block uncentered.
 #'
 #' **The penalty arrives as a table.** The coordinate update is the
 #' penalty's own proximal operator at the step \eqn{1/v_j}, with
-#' \eqn{v_j = \sum_i w_i x_{ij}^2}, and \eqn{v_j} does not move while the
-#' working weights are held. The whole table is therefore built once per
-#' weighted least squares iteration by
+#' \eqn{v_j = \sum_i w_i x_{ij}^2} (the centered sum of squares where the block
+#' is centered), and \eqn{v_j} does not move while the working weights are
+#' held. The whole table is therefore built once per weighted least squares
+#' iteration by
 #' [penalties7::penalty_prox_spec()] and the compiled sweeps read it,
 #' so the kernel names no family and a penalty that describes its operator gets
 #' the compiled route without an edit here.
@@ -42,8 +52,7 @@ NULL
 #' what makes the answer exact is the check afterwards: the gradient is read
 #' over every column at the point reached, any discarded coordinate whose
 #' gradient exceeds the kink is put back, and the fit is repeated. Without
-#' the check the route would be occasionally wrong instead of occasionally
-#' slow.
+#' the check the answer would not be exact.
 #'
 #' **Which update.** The gradient is kept either as a residual, at
 #' \eqn{O(n)} a visit, or as itself through
@@ -52,29 +61,45 @@ NULL
 #' \eqn{n} is large next to the number of live coordinates and pays in
 #' memory, so [coord_covariance()] decides it from the two sizes.
 #'
+#' **Acceptance.** A step is accepted where the penalized objective falls, and
+#' is halved towards the current point otherwise. A SCAD or MCP penalty that
+#' carries a curvature (see [coord_table_penalty()]) takes every step whole.
+#'
 #' @param obj The full objective, as [statmod_objective()] returns it. Read
 #'   for the value at the point reached, not for its gradient.
-#' @param beta The current stacked coefficients, a named list with one vector
-#'   per distribution parameter. Every block but this one is held at these.
+#' @param beta The current coefficients of all distribution parameters,
+#'   stacked into one numeric vector (the vector that `obj$split()` divides by
+#'   parameter). Every coefficient outside this block is held at its value,
+#'   except the equation's unpenalized intercept when the block is centered.
 #' @param block One entry of `statmod_blocks()$sparse`: the equation, the
 #'   term, its column positions and its penalty.
 #' @param hyper The hyperparameters, per penalized term, held fixed here.
 #' @param spec A [StatmodSpec()].
-#' @param design The design, refreshed at `beta` if any term needs it.
+#' @param design The design, as [statmod_design()] returns it. Where a term
+#'   recomputes its block with the coefficients, the block is read again at
+#'   the current coefficients.
 #' @param expected `TRUE` for the expected information in the working
-#'   weights, `FALSE` for the observed one.
+#'   weights, `FALSE` for the observed one. Where the observed curvature of
+#'   the equation is not positive at some observation, the expected
+#'   information is used in its place.
 #' @param approx How the expected information is approximated for a family
 #'   with no closed form.
 #' @param maxit The budget in weighted least squares iterations, each of
 #'   which rebuilds the weights and runs the compiled sweeps to convergence.
-#' @param tol The stopping tolerance on the relative change in the block's
-#'   coefficients.
+#' @param tol The stopping tolerance on the largest absolute change in the
+#'   block's coefficients over a weighted least squares iteration. The
+#'   compiled sweeps use the same tolerance on the largest absolute change of
+#'   a sweep.
 #' @param prev_kink The size of the kink at the previous point of a path, a
 #'   single number, or `NULL` to cycle over every coordinate. Only the strong
 #'   rule reads it.
 #'
-#' @return A list shaped like [sparse_fit()]'s, with the block's fitted
-#'   coefficients, the sweep count and the gradient the kernel ended at.
+#' @return A list shaped like [sparse_fit()]'s: `par` (the whole stacked
+#'   coefficient vector, updated in this block and, where the block is
+#'   centered, in the equation's intercept), `value` (the objective),
+#'   `converged`, `iterations` (the total number of kernel sweeps) and
+#'   `method` (`"coordinate descent"`). `converged` is `TRUE` when the
+#'   iterations settled or when no length of step lowered the objective.
 #'   `NULL` where the route does not apply: the penalty describes no
 #'   proximal table at the steps this block's curvature produces, or the
 #'   working weights are unusable.
@@ -380,6 +405,9 @@ coord_fit <- function(obj, beta, block, hyper, spec, design, expected, approx,
 #'   column, or `NULL` when there is no previous point.
 #' @param threads The thread count the gradient read may use, a plain
 #'   integer.
+#' @param center `TRUE` when the block is solved with its equation's intercept
+#'   profiled out: the residual is then taken to weighted mean zero before the
+#'   gradient is read.
 #'
 #' @return An integer vector of one-based column indices to visit, in
 #'   ascending order. Every column when `s_prev` is `NULL` or either kink
@@ -457,9 +485,7 @@ coord_block <- function(X, cols) {
 #' @details
 #' The two kernels are one algorithm instantiated twice over a column
 #' accessor, and they agree bit for bit. The arithmetic licenses that:
-#' skipping a structural zero omits an addition of zero, which is exact. It
-#' is the one place in this toolkit where an identity assertion over compiled
-#' floating point is correct.
+#' skipping a structural zero omits an addition of zero, which is exact.
 #'
 #' The `dgCMatrix` is taken apart in R, so the compiled code needs no
 #' dependency on the \pkg{Matrix} package's C API.
@@ -476,10 +502,15 @@ coord_block <- function(X, cols) {
 #' @param covariance `TRUE` to hold the gradient itself and cache Gram
 #'   columns, `FALSE` to hold the running residual. [coord_covariance()]
 #'   decides.
+#' @param means The weighted column means of the block, one per column, with
+#'   which the kernel centers the columns and the working response implicitly,
+#'   or `numeric(0)` for an uncentered block.
 #'
 #' @return The kernel's list of three: `beta` (the fitted coefficients,
 #'   length `p`), `sweeps` (how many passes it took) and `grad` (the gradient
-#'   at the point reached, length `p`).
+#'   of the weighted quadratic at the point reached, length `p`, computed only
+#'   when the strong rule left some column out and a vector of zeros
+#'   otherwise).
 #'
 #' @seealso [coord_block()]
 #'
@@ -499,15 +530,16 @@ coord_call <- function(X, z, w, b0, tab, screen, tol, covariance,
 #' The Size of the Kink in Each Coordinate
 #'
 #' @description
-#' Returns, for every coordinate of a kinked penalty, the jump of its
-#' derivative at the kink, which is the threshold a coordinate's gradient is
-#' compared with to decide whether it can stay at zero.
+#' Returns, for every coordinate of a kinked penalty, the size of its kink:
+#' half the jump of its derivative across the kink, which is the threshold a
+#' coordinate's gradient is compared with to decide whether it can stay at
+#' zero.
 #'
 #' @details
 #' [kink_scale()] reads the first coordinate only, which is what a path needs
 #' to place its grid. A coordinate descent needs every coordinate's: under a
 #' diagonal map \eqn{D}, which is what `standardize` writes, coordinate
-#' \eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The jump is measured as in
+#' \eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The size is measured as in
 #' [kink_scale()], by a Richardson extrapolation of the one-sided derivatives,
 #' on every coordinate at once. A scaled SCAD or MCP has its kink at
 #' \eqn{\lambda\lvert d_j\rvert} whatever its curvature, the scaling leaving
@@ -554,20 +586,18 @@ coord_kinks <- function(pen, theta, eps = 1e-4) {
 #' coordinate was screened out or a curvature is written, and a penalty under
 #' a map that is not diagonal is returned as it stands, having no table.
 #'
-#' A SCAD or MCP carrying a curvature is scaled SELF-CONSISTENTLY: at the
+#' A SCAD or MCP carrying a curvature is scaled self-consistently: at the
 #' point the descent settles at, its curvature is the one the step is taken
 #' with, \eqn{c_j = v_j}, the (centered) weighted sum of squares of the column
 #' at the current working weights, divided by \eqn{d_j^2} under a diagonal map,
-#' the penalty being written on \eqn{u = D\beta}. On the way there it is
-#' DAMPED, \eqn{c_j \leftarrow \sqrt{c_j^{\mathrm{prev}} v_j}}: taken
-#' undamped, a coefficient between the two knees of a logistic SCAD
-#' alternated between 1.009 and 1.496 with its curvature between 21.8 and
-#' 30.7 and never settled, 3 fits of 16 not converging on a strong-effect
-#' probe; damped, all 16 converge with the KKT conditions at the fit's
-#' curvature met to \eqn{5 \times 10^{-8}}. The scaled step is
-#' \eqn{\sqrt{c^{\mathrm{prev}}_j / v_j}}, one where the weights have not
-#' moved, so the step condition \eqn{t c_j < a - 1} (SCAD) or
-#' \eqn{t c_j < \gamma} (MCP) holds unless they moved by a factor of
+#' the penalty being written on \eqn{u = D\beta}. On the way there the
+#' curvature is damped, \eqn{c_j \leftarrow \sqrt{c_j^{\mathrm{prev}} v_j}}.
+#' Taken undamped, the coefficient and the curvature of a coordinate between
+#' the two knees of the penalty can alternate between two values without
+#' settling, whereas the damped update converges. The product of the step and
+#' the curvature is \eqn{\sqrt{c^{\mathrm{prev}}_j / v_j}}, which is one where
+#' the weights have not moved, so the step condition \eqn{t c_j < a - 1} (SCAD)
+#' or \eqn{t c_j < \gamma} (MCP) holds unless the weights moved by a factor of
 #' \eqn{(a-1)^2}. [statmod_curv()] writes the undamped quantity into the
 #' specification at every pass of the alternation, so the objective and the
 #' degrees of freedom read it too.
@@ -619,18 +649,17 @@ coord_table_penalty <- function(pen, keep, v, prev = NULL) {
 #' onto its block, so that the next point of a path can screen against it.
 #'
 #' @details
-#' The previous point travels on the blocks themselves, sparing every layer
-#' between the path and the descent an argument. Where a penalty was a moment
-#' ago is a property of its block, and the path rebuilds the blocks at each
-#' point in any case.
+#' The size at the previous point travels on the blocks themselves, so that no
+#' argument has to pass through the layers between the path and the descent.
 #'
 #' @param blocks The blocks, as [statmod_blocks()] returns them, with a
 #'   `sparse` list of the kinked entries.
 #' @param hyper The hyperparameters at the point just fitted.
 #'
 #' @return `blocks`, with each entry of its `sparse` list carrying a
-#'   `prev_kink` element: the size of that penalty's kink at `hyper`. The
-#'   `smooth` list is untouched.
+#'   `prev_kink` element: the size of that penalty's kink at `hyper`. An entry
+#'   whose kink size is not finite and positive, or cannot be read, carries no
+#'   `prev_kink` element. The `smooth` list is untouched.
 #'
 #' @seealso [coord_screen()], [statmod_path()]
 #'
@@ -657,14 +686,10 @@ blocks_at_kink <- function(blocks, hyper) {
 #' @details
 #' The covariance form replaces an \eqn{O(n)} read of the gradient with an
 #' \eqn{O(m)} one, and pays for it by building a column of \eqn{X'WX} at
-#' \eqn{O(nm)} the first time a coordinate moves off zero. It is worth having
-#' only while \eqn{m} is small next to \eqn{n}, and the two conditions say
-#' exactly that.
-#'
-#' The measurement is unambiguous in the other direction: at 5000
-#' observations with 200 columns and nothing screened away, the covariance
-#' form cost 70 milliseconds against 55 for the residual, the Gram columns
-#' being dearer than the residual passes they replaced.
+#' \eqn{O(nm)} the first time the coordinate is nonzero. It is used only
+#' while \eqn{m} is small next to \eqn{n}: \eqn{m \le 32} and \eqn{n > 8m}.
+#' When many coordinates are live, the Gram columns cost more than the
+#' residual passes that they replace, so the residual form is used.
 #'
 #' @param n The number of observations.
 #' @param m How many coordinates the strong rule left to visit.
@@ -688,8 +713,10 @@ coord_covariance <- function(n, m) {
 #'
 #' @details
 #' For a Gaussian response on the identity link the quadratic is exact and
-#' one pass answers the problem. Elsewhere it is the local approximation a
-#' scoring step works on, and the weights are rebuilt at each iteration.
+#' the first iteration answers the problem. Elsewhere it is the local
+#' approximation a scoring step works on, and the weights are rebuilt at each
+#' iteration. A row of weight zero has no curvature and no score, and it
+#' enters the descent with weight zero at its own predictor.
 #'
 #' Where the design carries a structural term, the predictor of an equation
 #' includes a part that belongs to that term, and no column of a block
@@ -712,9 +739,11 @@ coord_covariance <- function(n, m) {
 #'   with no closed form.
 #'
 #' @return A list with `w` and `z`, each a numeric vector of length
-#'   `spec@n_obs`. `NULL` where the curvature is not usable, which is any
-#'   non-finite or non-positive \eqn{h_i}; the observed information can
-#'   produce both far from the optimum.
+#'   `spec@n_obs`. A row of weight zero has `w` zero and `z` equal to its
+#'   predictor. `NULL` where the working problem is not usable: a non-finite
+#'   or non-positive \eqn{h_i}, or a non-finite score, on a row of positive
+#'   weight. The observed information can produce non-positive values far from
+#'   the optimum.
 #'
 #' @keywords internal
 coord_working <- function(spec, ep, coef, design, p, expected, approx) {
@@ -749,8 +778,16 @@ coord_working <- function(spec, ep, coef, design, p, expected, approx) {
   # an n x K x K array this function then took one slice of
   H <- statmod_family_hessian(spec, ep$theta, expected, approx)
   h <- -spec@weights * rep_len(H[[hess_key(params, a, a)]], n)
-  if (any(!is.finite(h)) || any(h <= 0) || any(!is.finite(s))) return(NULL)
-  list(w = h, z = e0 + s / h)
+  # a row of weight zero has no curvature and no score, and it enters the
+  # descent with weight zero at its own predictor
+  on <- spec@weights > 0
+  if (any(!is.finite(h[on])) || any(h[on] <= 0) || any(!is.finite(s[on]))) {
+    return(NULL)
+  }
+  z <- e0
+  z[on] <- e0[on] + s[on] / h[on]
+  h[!on] <- 0
+  list(w = h, z = z)
 }
 
 
@@ -796,14 +833,13 @@ coord_offset <- function(spec, p, n) {
 #' \eqn{v_j = \sum_i w_i x_{ij}^2} of a block would be finite and positive,
 #' from the block's column norms and the range of the weights, so that
 #' [coord_fit()] need not compute the curvatures of columns it never visits.
-#' `coord_curv()` computes them on the columns asked for.
+#' `coord_curv()` computes them on the columns given in `k`.
 #'
 #' @details
 #' The condition is sufficient and not necessary. With the weights finite and
 #' positive, which [coord_working()] has already checked, a column's
-#' curvature is at least its largest term, which is at least
-#' \eqn{\min_i w_i\, \lVert x_j\rVert^2 / n}, and at most
-#' \eqn{n \max_i w_i \max_i x_{ij}^2}. So where every column norm is
+#' curvature is at least \eqn{\min_i w_i\, \lVert x_j\rVert^2} and at most
+#' \eqn{\max_i w_i\, \lVert x_j\rVert^2}. So where every column norm is
 #' positive and \eqn{\min w \min_j \lVert x_j\rVert^2 > 10^{-200}} and
 #' \eqn{\max w \max_j \lVert x_j\rVert^2 < 10^{200}}, no curvature can be
 #' zero, underflow or overflow. Where any of this fails, `FALSE` sends the
@@ -909,15 +945,9 @@ coord_block_at <- function(design, p, X, cols) {
 #' of a coefficient moves the mean of the fit, which only the intercept can
 #' take back, and the intercept is updated in another block. The alternation
 #' between the two then converges at a rate set by how close each column is
-#' to the constant. Measured on `MASS::UScrime`, whose columns have means up
-#' to 33 times their spread, a lasso on the fifteen raw predictors of
-#' `log(y)` stopped at a fixed \eqn{\lambda} of 17.4 with the objective
-#' \eqn{-\ell + \rho} at -17.84 where its minimum is -21.93, six
-#' coefficients against nine, reporting `converged = FALSE`, and the path
-#' chose the empty model at \eqn{\lambda = 374.5}. With the columns centered
-#' the path chooses nine of them at \eqn{\lambda = 17.4}, the point it
-#' reaches with the predictors centered in the data, in 7.0 seconds of
-#' processor time against 38.2.
+#' to the constant. Centering the columns removes this dependence, and the
+#' alternation then converges to the same point that a fit with centered
+#' predictors reaches.
 #'
 #' Solving with the intercept profiled out is the Frisch-Waugh-Lovell
 #' reading of an unpenalized constant: the coefficients of the block are
@@ -952,7 +982,7 @@ coord_centers <- function(spec, design, p, obj, beta) {
 #' Weighted Sums of Squares of Centered Columns
 #'
 #' @description
-#' \eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} asked for,
+#' \eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} given in `k`,
 #' which is the curvature a coordinate of a centered block has.
 #'
 #' @details

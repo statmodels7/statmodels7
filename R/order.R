@@ -25,10 +25,13 @@
 #' `TRUE` when the log-density has at least `need` continuous derivatives in
 #' every parameter the model carries an equation for. Used as a gate by the
 #' consumers that can fall back on something else, and through
-#' [order_shortfall()] as a refusal by the ones that cannot.
+#' [order_shortfall()] as an error message by the ones that cannot.
 #'
 #' @param distrib A distributions7 family.
-#' @param need The order asked for; see the table in `R/order.R`.
+#' @param need The order required, an integer from 1 to 5: 1 for a score
+#'   continuous in the coefficients, 2 for the curvature, 3 and 4 for the exact
+#'   gradient and Hessian of a marginal criterion, and 5 for the fourth
+#'   derivative of a filtered predictor.
 #'
 #' @return A single logical. `NA` orders count as unavailable: a wrapper of a
 #'   kinked family records the kink without declaring its order, and an
@@ -50,9 +53,10 @@ order_available <- function(distrib, need) {
 #' Why a Consumer Cannot Run on This Family
 #'
 #' @description
-#' The message a consumer refuses with: the family, the parameter, the order it
-#' needs against the order there is, and what to write instead. `NULL` when
-#' there is nothing to refuse.
+#' The error message of a consumer that cannot run on the family: the family,
+#' the parameter, the order that the consumer needs against the order that the
+#' family has, and what to write instead. `NULL` when the family has enough
+#' derivatives.
 #'
 #' @details
 #' Two shapes of shortfall are told apart, because the remedies differ. A
@@ -93,7 +97,7 @@ order_shortfall <- function(distrib, need, what) {
     sprintf("'%s' has %s of them in '%s'", fam, format(have), p1)
   }
   how <- if (!is.null(kd)) {
-    sprintf(" -- its log-density carries %s of an argument that moves with '%s', so the curvature %s reads sits on a set of measure zero in the response",
+    sprintf(" -- its log-density carries %s of an argument that moves with '%s', so the curvature that %s reads sits on a set of measure zero in the response",
             switch(kd@phi,
                    abs = "an absolute value", hinge = "a hinge",
                    hinge2 = "a squared hinge", hinge3 = "a cubed hinge",
@@ -103,18 +107,19 @@ order_shortfall <- function(distrib, need, what) {
 
   paste0(what, " needs ", format(need),
          " derivatives of the log-density in every parameter, and ", cause, how,
-         ". Fit with outer_criterion = NULL, setting the hyperparameters",
-         " yourself through hyper, or model '", p1,
+         ". Fit with outer_criterion = NULL, which holds each smoothing",
+         " hyperparameter at the value written in its term or at its starting",
+         " value, or model '", p1,
          "' with a family that is smooth in it.")
 }
 
-#' Refuse Where a Criterion Cannot Be Computed
+#' Derivative Orders Read by a Criterion
 #'
 #' @description
 #' Raises [order_shortfall()]'s message when the family does not carry the two
 #' derivatives every criterion reads. Called from [statmod()] once the
-#' criterion is known to have something to do, so a model whose criterion is
-#' inert is not refused for a reason that would never have arisen.
+#' criterion is known to have something to do, so that a model whose criterion
+#' is inert does not signal an error that cannot arise.
 #'
 #' @param distrib A distributions7 family.
 #' @param method An [OuterMethod()], or `NULL`.
@@ -134,10 +139,10 @@ assert_criterion_order <- function(distrib, method) {
   invisible(NULL)
 }
 
-#' Refuse an Expected-Information Criterion That Would Read the Scores' Outer Product
+#' Expected-Information Criteria and the Scores' Outer Product
 #'
 #' @description
-#' Raises an error naming the family and the remedy when a criterion asked for
+#' Raises an error naming the family and the remedy when a criterion defined
 #' on the expected information would read, for this family, the outer product
 #' of the scores at the data instead of an expectation.
 #'
@@ -148,9 +153,9 @@ assert_criterion_order <- function(distrib, method) {
 #' \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 #' \partial\eta^\top]}, a function of the parameters alone. Where a family
 #' writes that information out, [distributions7::expected_hessian_exact()]
-#' answers `TRUE` and nothing is asked here. Every shipped family does since
-#' \pkg{distributions7} 0.65.0; where a family written outside the toolkit
-#' does not, it falls back on the strategy `approx` names, and the default, `"opg"`, returns
+#' answers `TRUE` and no check is made. Where a family does not write it out,
+#' for example a family written outside the toolkit, the information falls
+#' back on the strategy `approx` names, and the default, `"opg"`, returns
 #' \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
 #' estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
 #' information itself: it depends on the response, as the observed curvature
@@ -159,17 +164,14 @@ assert_criterion_order <- function(distrib, method) {
 #' gradient, so its search is derivative-free and [statmod_certificate()]
 #' answers `unknown`.
 #'
-#' Measured at 4000 observations with a smooth on the first parameter, on the
-#' six families this applied to before \pkg{distributions7} 0.64.0 and 0.65.0
-#' gave all of them an exact expected information, every one fit on the observed
-#' information in 3 to 5 criterion evaluations with a Newton search and an
-#' analytic certificate, where the outer-product route took 12 to 22
-#' evaluations of a simplex.
+#' A criterion on the observed information has an exact outer gradient and
+#' Hessian and is searched with Newton's method; the outer-product route has
+#' neither and is searched without derivatives.
 #'
-#' The expectation is asked for by name with another `approx` in [iwls()], and
-#' that is not refused: `"bartlett"` sums or integrates over the support and
-#' is a genuine expected information, at a cost measured between 66 and 1930
-#' seconds per evaluation at 4000 observations.
+#' The expectation can be requested with another `approx` in [iwls()], and
+#' this check does not reject it: `"bartlett"` sums or integrates over the
+#' support and gives a genuine expected information, at a much higher cost per
+#' evaluation.
 #'
 #' @param distrib A distributions7 family.
 #' @param method An [OuterMethod()], or `NULL`.
@@ -200,9 +202,9 @@ assert_criterion_information <- function(distrib, method, approx) {
     "criterion would be neither the Laplace approximation nor its Fisher ",
     "variant and would have no exact outer derivatives. Use ",
     "%s(hessian = \"observed\"), whose outer gradient and Hessian are exact on ",
-    "this family, or ask for the expectation by name with ",
+    "this family, or name the expectation with ",
     "iwls(approx = \"bartlett\"), which sums or integrates over the support at ",
-    "a cost of minutes per evaluation."),
+    "a much higher cost per evaluation."),
     crit, distrib@distrib_name, method@kind), call. = FALSE)
 }
 
@@ -214,9 +216,9 @@ assert_criterion_information <- function(distrib, method, approx) {
 #' parameters, which an expectation cannot do.
 #'
 #' @details
-#' Asked at a probe rather than read from a list of families, so a family
-#' written later is covered: two distinct responses drawn at one parameter
-#' value, and the two answers compared. A family that
+#' The answer comes from a probe and not from a list of families, so that a
+#' family written later is covered: two distinct responses drawn at one
+#' parameter value, and the two answers compared. A family that
 #' [distributions7::expected_hessian_exact()] reports as writing its
 #' information out is never probed, and neither is any `approx` other than
 #' `"opg"`, the only strategy that reads the response. A truncated family reports
@@ -265,32 +267,29 @@ expected_is_opg <- function(distrib, approx) {
   !isTRUE(all.equal(e1, e2, tolerance = 1e-8, check.attributes = FALSE))
 }
 
-#' Refuse a Prediction-Error Criterion on a Structural Term's Own Parameters
+#' Prediction-Error Criteria and a Structural Term's Own Parameters
 #'
 #' @description
 #' Raises an error naming the penalty and the remedy when `aic()`, `bic()` or
 #' `cv()` would have to select a hyperparameter of a penalty over the own
-#' parameters of a structural term: the deviations of a score-driven filter
-#' over a panel, or a covariance class that reaches into one.
+#' parameters of a structural term: the group departures of a score-driven
+#' filter over a panel, or a covariance class that reaches into one.
 #'
 #' @details
 #' A prediction-error criterion reads the effective degrees of freedom, and
 #' their derivative, over the coefficients alone, where such a penalty covers
-#' nothing. Measured before this refusal existed, the exact gradient of
-#' `aic()` there was exactly 0, the search stopped at its first evaluation
-#' reporting convergence, and the traces it priced were 2 and 1 where the
-#' traces over the joint vector are 7.433 and 22.410. `cv()` and the path a
-#' kinked penalty is swept along are built on the same blocks, and for a lasso
-#' over a filter's parameters the path died on "'from' must be a finite
-#' number". [reml()] and [ml()] span the term's parameters in their
-#' determinant and estimate a twice differentiable penalty there. A penalty
-#' with a kink there has no criterion at all, and holding its hyperparameter
-#' does not fit either: measured, a lasso over a filter's own parameters held
-#' at `lambda = 2` dies inside the coordinate-descent route, in the published
-#' release as well, so the message names no remedy for it.
+#' nothing. The exact gradient of `aic()` there is zero, so a search would
+#' stop at its first evaluation and report convergence. `cv()` and the path
+#' along which a kinked penalty is swept are built on the same blocks.
+#' [reml()] and [ml()] span the term's parameters in their determinant and
+#' estimate a twice differentiable penalty there. A penalty with a kink there
+#' has no criterion that can select its hyperparameter. The hyperparameter can
+#' be held by writing its value in the term, for example
+#' `lasso(~id, lambda = 2)`, and the penalty is then fitted over the term's own
+#' parameters by a proximal route, without a criterion.
 #'
 #' Which penalties a criterion reaches depends on its role, and only those are
-#' asked about: an `outer_criterion` reaches the smooth penalties, and the
+#' checked: an `outer_criterion` reaches the smooth penalties, and the
 #' kinked ones as well when no `sparse_criterion` is given, while a
 #' `sparse_criterion` reaches the kinked ones alone.
 #'
@@ -335,15 +334,14 @@ assert_criterion_reach <- function(spec, design, method,
       paste0("a prediction-error criterion reads the degrees of freedom and ",
              "their gradient over the coefficients alone")
     }
-    # ⚠️ NO REMEDY IS NAMED FOR A PENALTY WITH A KINK, and a measurement is
-    # why: holding its hyperparameter at a value written on the term does not
-    # fit either. A lasso over a filter's own parameters held at lambda = 2
-    # dies on "subscript out of bounds" in coord_block(), in the published
-    # 0.124.0 as well, the coordinate-descent route reading the penalized
-    # coordinates as columns of a design, which those parameters are not.
+    # ⚠️ THE MESSAGE NAMES NO REMEDY FOR A PENALTY WITH A KINK. Holding its
+    # hyperparameter at a value written on the term does fit: sparse_fit()
+    # sends the block to sparse_fit_structural(), a proximal route over the
+    # term's own parameters, which is not a selection by a criterion.
     remedy <- if (kinked) {
       paste0("A penalty with a kink there has no criterion that can select ",
-             "it: reml() and ml() read a curvature the kink does not have.")
+             "it: reml() and ml() read a curvature that does not exist at ",
+             "the kink.")
     } else {
       "Use reml() or ml(), whose determinant spans the term's parameters as well."
     }

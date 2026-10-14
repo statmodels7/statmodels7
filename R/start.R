@@ -4,17 +4,18 @@ NULL
 #' @title S7 Class for a Starting-Value Strategy
 #'
 #' @description
-#' The abstract parent of the starting-value strategies. A strategy says where
-#' a fit begins as a **procedure**, not as a vector of numbers: fit the
-#' intercept-only model, draw around it, or search the likelihood for a basin.
-#' `statmod(start =)` accepts one, or a plain named list of coefficients.
+#' The abstract parent of the starting-value strategies. A strategy defines
+#' where a fit begins as a procedure and not as a vector of numbers: fit the
+#' intercept-only model, draw around it, search the likelihood for a basin,
+#' or reuse the estimates of another fit. `statmod(start =)` accepts a
+#' strategy, or a named list of coefficient vectors.
 #'
 #' @details
-#' A strategy is asked exactly once, before the alternation between the
-#' coefficients and the hyperparameters begins. An optimizer runs at every
+#' [statmod()] calls a strategy exactly once, before the alternation between
+#' the coefficients and the hyperparameters begins. An optimizer runs at every
 #' step of that alternation, which is why a global search belongs here: given
-#' to `inner_optimizer` it would rerun at every hyperparameter the outer
-#' search tried and return the same answer each time.
+#' to `inner_optimizer` it would rerun at every hyperparameter value that the
+#' outer search tries and reach the same point each time.
 #'
 #' **The class is abstract and cannot be instantiated.** Calling
 #' `start_strategy()` signals an error; what the class is for is to be
@@ -60,16 +61,16 @@ start_strategy <- S7::new_class(
 #' The start_strategy Class Object
 #'
 #' @description
-#' Fetches the [start_strategy()] class object from the namespace at the
-#' moment it is asked for, so a membership test reads the class as it now
-#' exists.
+#' Returns the [start_strategy()] class object from the namespace at the time
+#' of the call, so that a membership test reads the class as it exists then.
 #'
 #' @details
 #' A class captured in a variable at build time makes such a test fail under
 #' \pkg{covr}, which re-evaluates a package's code and so re-creates the
 #' class. `S7::S7_inherits()` against the captured copy is then
 #' `FALSE` for an object of the live class. `distributions7` and
-#' `linkfunctions7` record the same trap.
+#' `linkfunctions7` document the same behavior of `identical()` on a class
+#' that has been re-created.
 #'
 #' @return The `start_strategy` S7 class object.
 #'
@@ -94,15 +95,17 @@ start_strategy_class <- function() start_strategy
 #' runs an optimizer over `obj`.
 #'
 #' A method must return a full-length vector for every distribution
-#' parameter, including the ones it has nothing to say about. Zero is the
-#' conventional filler, and it is the value a penalized block wants anyway,
-#' its penalty being smallest there.
+#' parameter, including the ones it does not set. Zero is the conventional
+#' filler, and it is the value at which the penalty of a penalized block is
+#' smallest.
 #'
 #' @param strategy A [start_strategy()], which decides the method.
 #' @param spec The [StatmodSpec()] being fitted.
 #' @param design The design, as [statmod_design()] returns it.
 #' @param obj The objective, as [statmod_objective()] returns it, or `NULL`.
-#'   Only [start_search()] reads it; the other three accept `NULL`.
+#'   Only [start_search()] reads it, and [start_search()] signals an error
+#'   when `obj` is `NULL`. The other four shipped strategies run with `NULL`;
+#'   [start_from()] passes `obj` on to its `rest` strategy.
 #' @param ... Passed to methods. No shipped method reads it.
 #'
 #' @return A named list, one numeric vector per distribution parameter in the
@@ -114,8 +117,8 @@ start_strategy_class <- function() start_strategy
 #' dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
 #' spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 #' design <- statmod_design(spec)
-#' # a strategy that needs no objective is asked with NULL for it; the ones
-#' # that search the likelihood are handed the objective by statmod()
+#' # a strategy that needs no objective is called with NULL for it; the ones
+#' # that search the likelihood receive the objective from statmod()
 #' start_at(start_origin(), spec, design, NULL)
 #' start_at(start_intercepts(), spec, design, NULL)
 #'
@@ -126,22 +129,32 @@ start_at <- S7::new_generic("start_at", "strategy",
 
 #' @title S7 Classes for the Shipped Strategies
 #' @description
-#' The three classes [start_intercepts()], [start_origin()] and
-#' [start_random()] instantiate. Each inherits from [start_strategy()] and
-#' carries its `label`; only `StartRandom` adds properties of its own. Use the
-#' constructors, which validate; these raw ones do not.
+#' The five classes that [start_intercepts()], [start_origin()],
+#' [start_random()], [start_search()] and [start_from()] instantiate. Each
+#' inherits from [start_strategy()] and carries its `label`; `StartRandom`
+#' adds `fn`, `args` and `center`, `StartSearch` adds `optimizer` and `over`,
+#' and `StartFrom` adds `fit` and `rest`. Use the constructors, which
+#' validate; these raw ones do not.
+#' @param label A single string, the name that the strategy prints.
 #' @param fn The generator a random start draws from, called as `fn(n, ...)`.
 #'   `StartRandom` only.
 #' @param args A list of further arguments to `fn`. `StartRandom` only.
 #' @param center A single logical: whether the draw is added to the
 #'   intercept-only start. `StartRandom` only.
+#' @param optimizer,over An \pkg{optimizers7} optimizer and an optional
+#'   character vector of coefficient labels. `StartSearch` only.
+#' @param fit,rest A [StatmodFit()] and a [start_strategy()]. `StartFrom`
+#'   only.
 #' @return An S7 object inheriting from [start_strategy()]:
 #'   `StartIntercepts` and `StartOrigin` with the one inherited property
-#'   `label`, `StartRandom` with `fn`, `args` and `center` besides.
-#' @seealso [start_intercepts()], [start_origin()], [start_random()] for the
-#'   constructors, [start_at()] for the methods registered on these classes.
+#'   `label`, `StartRandom` with `fn`, `args` and `center` besides,
+#'   `StartSearch` with `optimizer` and `over`, and `StartFrom` with `fit` and
+#'   `rest`.
+#' @seealso [start_intercepts()], [start_origin()], [start_random()],
+#'   [start_search()], [start_from()] for the constructors, [start_at()] for
+#'   the methods registered on these classes.
 #' @name StartIntercepts-class
-#' @aliases StartIntercepts StartOrigin StartRandom
+#' @aliases StartIntercepts StartOrigin StartRandom StartSearch StartFrom
 #' @keywords internal
 StartIntercepts <- S7::new_class("StartIntercepts", parent = start_strategy)
 
@@ -160,32 +173,45 @@ StartRandom <- S7::new_class("StartRandom", parent = start_strategy,
 #'
 #' @description
 #' The default: each equation's intercept at the maximum likelihood estimate
-#' of the model with every covariate removed, and every other coefficient at
-#' zero.
+#' of the model with every covariate removed. Where the first parameter is a
+#' location or a mean on the identity link, the slopes of its parametric
+#' columns start at a least-squares fit, and a term with a starting value of
+#' its own starts at the value that the term declares. The remaining
+#' coefficients start at zero.
 #'
 #' @details
 #' The model with no covariates is the model with every slope set to zero, so
-#' its maximum likelihood estimate is exactly where the model with covariates
-#' should begin. It costs one small fit, on an intercept-only design.
+#' its maximum likelihood estimate is a natural starting point for the
+#' intercepts of the model with covariates. It requires one small fit, on an
+#' intercept-only design.
 #'
-#' Every other coefficient starts at zero, which is where a penalized block's
-#' penalty is smallest.
+#' Three further rules apply:
 #'
-#' Two adjustments make it usable where a naive intercept would not be:
+#' - A location or mean on the identity link whose equation has an intercept
+#'   and at least one other parametric column starts its parametric
+#'   coefficients at a weighted least-squares fit net of the offset, and the
+#'   intercepts of the other parameters are fitted to the residuals. This
+#'   applies when every term of that equation is a parametric, smooth, random
+#'   or penalized term.
+#' - A term whose [modelterms7::term_coef_start()] method returns values that
+#'   are not all zeros, such as a break-point or a nonlinear term, starts at
+#'   those values.
+#' - All other coefficients start at zero, which is where the penalty of a
+#'   penalized block is smallest.
 #'
-#' - An **offset** is subtracted before the value is written. Without that, a
-#'   model with an offset averaging 6.74 begins at
-#'   \eqn{\exp(0.897 + 6.74) = 2080} against a sample mean of 2.45. Measured
-#'   on a negative binomial over person-years: 4.9 s and 9 scoring iterations
-#'   with the correction, more than 25 minutes without.
+#' Two adjustments apply to the intercepts:
+#'
+#' - The mean of an **offset** is subtracted from the intercept before the
+#'   value is written, because the intercept-only fit does not see the offset
+#'   and the predictor would otherwise start displaced by it.
 #' - The value is written to a **parametric intercept** and to nothing else.
-#'   A term such as [modelterms7::nl()] names the intercept of each of its own
-#'   parameters `(Intercept)` too, and those live on that parameter's chart,
-#'   not the predictor's. Writing a predictor-scale value onto a `phi` that
-#'   rides a log link gave \eqn{\exp(23.9) = 2.5 \times 10^{10}}.
+#'   A term such as [modelterms7::nl()] also names the intercept of each of
+#'   its own parameters `(Intercept)`, but those coefficients lie on the
+#'   chart of that parameter and not on the scale of the predictor.
 #'
 #' This is what [statmod()] does when `start` is `NULL`. The constructor
-#' exists so the default can be named, compared against and passed on.
+#' exists so that the default can be named, compared with other strategies and
+#' passed on.
 #'
 #' @return A `StartIntercepts` object, inheriting from [start_strategy()].
 #'
@@ -197,7 +223,8 @@ StartRandom <- S7::new_class("StartRandom", parent = start_strategy,
 #' dd$y <- 500 + 20 * dd$x + rnorm(60, sd = 5)
 #' spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 #'
-#' # The intercept starts at the response's own scale, and the slope at zero.
+#' # The intercept starts at the response's own scale, and the slope at its
+#' # least-squares value.
 #' start_at(start_intercepts(), spec, statmod_design(spec), NULL)
 #'
 #' @seealso [start_origin()], [start_random()], [start_search()]
@@ -213,25 +240,25 @@ start_intercepts <- function() {
 #' distribution parameter is the value its link maps zero to.
 #'
 #' @details
-#' # When it is a poor choice
+#' # Use of the origin
 #'
 #' A location parameter on the identity link begins at zero whatever the
 #' response is. On a response centered at a thousand the run then starts a
-#' thousand units away and has to travel there, and on a badly scaled model
-#' it may not arrive at all. [start_intercepts()], the default, exists for
-#' that reason.
+#' thousand units from the response and has to travel there, and on a badly
+#' scaled model it may not arrive. [start_intercepts()], the default, avoids
+#' this by starting the intercepts at the intercept-only fit.
 #'
-#' It is harmless where every equation is on a log or a logit link, since
-#' zero is then an ordinary interior value of the parameter, and it is the
-#' reference the other strategies are judged against.
+#' The origin is appropriate where every equation is on a log or a logit
+#' link, since zero is then an ordinary interior value of the parameter.
 #'
 #' # The name
 #'
-#' `start_origin`, not `start_zeros`. \pkg{optimizers7} already exports
-#' `start_zeros()` for the starting point of an optimizer, and no two members
-#' of this toolkit export the same name. A collision would be reported by
-#' [statmodels7_conflicts()], and, worse, which function a caller reached
-#' would depend on the order the packages were attached in.
+#' The function is named `start_origin()` and not `start_zeros()`, because
+#' \pkg{optimizers7} already exports `start_zeros()` for the starting point of
+#' an optimizer, and no two members of this toolkit export the same name. A
+#' collision would be reported by [statmodels7_conflicts()], and the function
+#' reached by a caller would depend on the order in which the packages were
+#' attached.
 #'
 #' @return A `StartOrigin` object, inheriting from [start_strategy()].
 #'
@@ -257,28 +284,31 @@ start_origin <- function() {
 #' @title Start From a Random Draw
 #'
 #' @description
-#' Draws every coefficient from a generator of the caller's choosing and, by
-#' default, adds the draw to the intercept-only fit. Built for running a model
-#' from several starts and comparing where they land, which is how a
-#' multimodal likelihood is explored.
+#' Draws every coefficient from a generator chosen by the caller and, by
+#' default, adds the draw to the intercept-only fit. It is intended for
+#' running a model from several starts and comparing where they land, which
+#' is one way to explore a multimodal likelihood.
 #'
 #' @details
-#' # Why the draw is centered by default
+#' # Centering
 #'
-#' A coefficient drawn from a standard normal is a sensible perturbation and a
-#' hopeless absolute value: the intercept of a location equation is on the
-#' scale of the response, which may be a thousand. Adding the draw to
-#' [start_intercepts()]'s answer keeps that scale and randomizes the
-#' direction, leaving the several starts something to differ in.
+#' A coefficient drawn from a standard normal is a reasonable perturbation but
+#' not a reasonable absolute value, because the intercept of a location
+#' equation is on the scale of the response, which may be a thousand. Adding
+#' the draw to the answer of [start_intercepts()] keeps that scale and
+#' randomizes the position around it, so that the several starts differ from
+#' one another.
 #'
-#' `center = FALSE` uses the draw alone, which is right when the generator is
-#' already scaled to the problem.
+#' With `center = FALSE` the draw is used alone, which is appropriate when the
+#' generator is already scaled to the problem.
 #'
 #' # The random stream
 #'
 #' The draw comes from the session's generator, so [set.seed()] governs the
-#' result and a fit begun this way repeats only alongside its seed. Nothing
-#' is seeded internally.
+#' result, and a fit begun this way repeats only with the same seed. The
+#' intercept-only fit to which a centered draw is added sets a seed of its own
+#' and restores the caller's stream afterwards, so it does not change the
+#' draw.
 #'
 #' @param fn A generator called as `fn(n, ...)` and returning `n` values.
 #'   Defaults to [stats::rnorm()]. Any function of that shape serves.
@@ -339,91 +369,75 @@ StartFrom <- S7::new_class("StartFrom", parent = start_strategy,
 #' @title Start From Another Fit's Estimates
 #'
 #' @description
-#' Takes the coefficients a model already fitted found, matches them to the
-#' model about to be fitted, and starts there. What the two models do not
-#' share is left to a second strategy.
+#' Takes the coefficients that were estimated in a fitted model, matches them
+#' to the model that is about to be fitted, and starts the fit there. The
+#' coefficients that the two models do not share are set by a second
+#' strategy.
 #'
 #' @details
 #' Two models of the same response often share most of their coefficients: one
 #' drops a covariate, one adds a term, one changes the family. The estimates
-#' of the first are then a far better starting point for the second than any
-#' rule that looks only at the response, and there is no reason to find them
-#' twice.
+#' of the first model are then a closer starting point for the second than a
+#' rule that uses only the response.
 #'
 #' # What is matched, and what is projected
 #'
-#' The two designs are compared BLOCK BY BLOCK, a block being one term's
-#' columns, and three things can happen to a block:
+#' The two designs are compared block by block, a block being the columns of
+#' one term, and a block is treated in one of three ways:
 #' \describe{
-#'   \item{the parametric block}{is matched COLUMN BY COLUMN, by name. Adding
-#'     or dropping a covariate is the case this exists for, and the names of a
-#'     model matrix are variables, levels and interactions, which mean what
-#'     they say.}
+#'   \item{the parametric block}{is matched column by column, by name. The
+#'     names of a model matrix are variables, levels and interactions, so a
+#'     covariate that is added or dropped leaves the other columns matched.}
 #'   \item{a block written on the same basis}{is carried across as it stands,
-#'     its coefficient names being the same coordinates. This is exact and
-#'     costs nothing.}
-#'   \item{a block written on ANOTHER basis}{is estimated by least squares
-#'     against what the reference's predictor leaves once the blocks already
-#'     carried across are removed.}
+#'     because its coefficient names are the same coordinates.}
+#'   \item{a block written on another basis}{is estimated by least squares
+#'     against the part of the reference's predictor that the blocks already
+#'     carried across do not explain.}
 #' }
 #'
-#' The third rule is what makes two bases comparable at all. A smooth's
-#' coefficients are coordinates in a basis the fit rotates, so `s(x, bspline_smooth(k = 6))`
-#' and `s(x, bspline_smooth(k = 10))` carry the names `s(x).z1` to `s(x).z4` in common and
-#' mean something different by each: measured on one data set, `s(x).z1` is
-#' 0.0267 at `k = 6` and -0.0277 at `k = 10`, opposite in sign. What the two
-#' do share is the FUNCTION, so the coefficients are found by projecting it,
+#' The third rule makes two bases comparable. The coefficients of a smooth are
+#' coordinates in a basis that the fit rotates, so
+#' `s(x, bspline_smooth(k = 6))` and `s(x, bspline_smooth(k = 10))` carry the
+#' names `s(x).z1` to `s(x).z4` in common but give them different meanings,
+#' and one name does not identify one function. What the two bases share is
+#' the fitted function, so the coefficients are found by projecting it,
 #' \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
-#' r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
-#' over the pending columns \eqn{S} alone. The equality
-#' \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
-#' B_{\mathrm{old}}\beta_{\mathrm{old}}} has no solution unless the old span
-#' sits inside the new one, and the projection is what remains: the closest
-#' the new basis can come to the function it is started from. Where the spans
-#' do nest it is exact, and where the two bases coincide it returns the
-#' coefficients it was given, so the second rule above is a fast path rather
-#' than a different answer.
+#' r = \eta^{\mathrm{ref}} - \eta_{-S},}
+#' over the pending columns \eqn{S} alone, where \eqn{\eta^{\mathrm{ref}}} is
+#' the reference's predictor and \eqn{\eta_{-S}} is the new model's predictor
+#' with the pending columns at zero. Both predictors are the actual predictors
+#' of their models, including the value of a block that moves with its
+#' coefficients (a break-point or a nonlinear term). The equality of the two
+#' blocks, \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
+#' B_{\mathrm{old}}\beta_{\mathrm{old}}}, has a solution only if the old span
+#' lies inside the new one, and the projection gives the closest function that
+#' the new basis can represent. Where the spans are nested the projection is
+#' exact, and where the two bases coincide it returns the coefficients it was
+#' given, so the second rule above is a shortcut and not a different answer.
 #'
 #' Two blocks are paired by the stem of their coefficient names and by the
-#' term's class, not by the block's own key, which is the term's deparsed call
-#' and therefore differs the moment `k` does.
+#' class of the term, and not by the key of the block, which is the deparsed
+#' call of the term and therefore differs as soon as `k` does.
 #'
-#' A distribution parameter the reference does not have -- fitting a negative
-#' binomial from a Poisson, where `theta` is new -- is left to `rest`, so the
-#' families need not agree. So is any block the reference has no counterpart
-#' for, and any block at all when the two responses differ, when either model
-#' carries a structural term, or when the equation carries a block that moves
-#' with its coefficients.
+#' A distribution parameter that the reference does not have, such as `theta`
+#' when a negative binomial is fitted from a Poisson, is set by `rest`, so the
+#' families need not agree. So is any block for which the reference has no
+#' counterpart. A block that matches by name is carried across whatever the
+#' response is. The projection of a block written on another basis is skipped,
+#' and the block is set by `rest`, when the two responses differ or when
+#' either model carries a structural term. A pending block that itself moves
+#' with its coefficients (for example `seg(x)` refitted as
+#' `seg(x, npsi = 2)`) is not projected either, because its coefficients are
+#' not those of a linear block, and it keeps the values given by `rest`.
 #'
-#' # What it buys
-#'
-#' On the blocks that MATCH, between 1.1 and 2.1 times, and the honest reading
-#' is that it is not more because nothing was starting from zero:
-#' [start_intercepts()], the default, already fits the intercept-only model.
-#' On a Poisson at \eqn{n = 4000} refitted with one covariate dropped it is
-#' 1.12 to 1.57 times, on a two-equation gaussian 1.89, and on a negative
-#' binomial with 40 columns at \eqn{n = 20000} it is 2.05 -- 0.81 s against
-#' 0.40 s. Fitting a negative binomial from a Poisson's estimates is 1.29.
-#'
-#' On a block that is PROJECTED the starting predictor is a different order of
-#' magnitude closer. Measured at \eqn{n = 4000}, widening `s(x, bspline_smooth(k = 6))` to
-#' `s(x, bspline_smooth(k = 12))`, the root mean square gap between the starting predictor and
-#' the reference's is \eqn{3\times 10^{-15}} where leaving the block to the
-#' fallback gives 1.046; a quadratic basis carried onto a cubic one at the
-#' same `k` gives 0.0101 against 1.049. What that is worth in time depends on
-#' the family: a gaussian on the identity link solves its inner problem in one
-#' step whatever the start, so it is 1.09 to 1.26 times, while a Poisson goes
-#' from 18 criterion evaluations to 6 and 1.94 times, and a Poisson that also
-#' drops a covariate 1.71.
-#'
-#' The gain is worth having where the same model is refitted many times over:
-#' a coefficient held at a sequence of values, which is what an interval by
-#' inversion walks, or a model built up one term at a time.
+#' The starting values are most useful where the same model is refitted many
+#' times, as with a coefficient held at a sequence of values in an interval by
+#' inversion, or with a model built up one term at a time.
 #'
 #' @param fit A [StatmodFit()] to take the estimates from.
 #' @param rest The strategy for whatever the two models do not share.
 #'   [start_intercepts()] by default, which is what a fit given no strategy
-#'   at all uses.
+#'   uses. It receives the objective, so [start_search()] can serve as `rest`.
 #'
 #' @return A `StartFrom` object, inheriting from [start_strategy()].
 #'
@@ -476,63 +490,65 @@ start_from <- function(fit, rest = start_intercepts()) {
 #' @details
 #' # Once, before the fit
 #'
-#' A search belongs to the starting value, never to the scoring step. Given
-#' to `inner_optimizer` instead, as `chain(sa(), iwls())`, it would rerun at
-#' every hyperparameter the outer criterion tried, which on an ordinary fit
-#' is 46 times and inside [cv()] is the folds times the path, returning the
-#' same answer each time.
+#' A search is a starting value and is not part of the scoring step. If it
+#' were given to `inner_optimizer`, it would be rerun at every hyperparameter
+#' value that the outer criterion tries and, inside [cv()], at every point of
+#' the path for every fold, and each run would reach the same point.
 #'
 #' # On the likelihood alone
 #'
-#' The penalties are off. What a starting value has to get right is the
-#' basin of the likelihood, the one thing the fit will not correct by itself.
+#' The penalties are off. A starting value has to select the basin of the
+#' likelihood, which is the one thing that the fit does not correct by itself.
 #' The penalties enter afterwards, when their hyperparameters are estimated,
-#' and at the probe values they represent nobody's choice: a lasso at
-#' \eqn{\lambda = 1} against an unaveraged log-likelihood empties whole
-#' blocks, so a search there would explore a different model.
+#' and at the probe values of the hyperparameters they are not a chosen
+#' penalty, so a search with them would explore the likelihood of a different
+#' model.
 #'
 #' # Which coordinates are searched
 #'
-#' The non-convex ones, which the toolkit can already name: the parameters of
-#' a structural term ([modelterms7::gas()], [modelterms7::regime()]), the
+#' The non-convex ones, which the toolkit can name: the parameters of a
+#' structural term ([modelterms7::gas()], [modelterms7::regime()]), the
 #' coefficients of a term that recomputes its own block
 #' ([modelterms7::nl()], [modelterms7::seg()] and the break-point terms), and
 #' each equation's intercept.
 #'
-#' Everything else keeps its default. A smooth, a ridge or a random effect is
-#' a convex block whose optimum the scoring step reaches from anywhere, and
-#' searching over a thousand random-effect coefficients would spend the whole
-#' budget on the part of the model that needs it least.
+#' All other coefficients keep their default values. A smooth, a ridge or a
+#' random effect is a convex block whose optimum the scoring step reaches from
+#' any start, and a search over a thousand random-effect coefficients would
+#' spend the budget on the part of the model that needs a search least.
 #'
 #' A penalized coordinate is excluded **wherever it sits**, including inside
-#' a non-convex term. A sub-formula develops a break-point or a nonlinear
-#' parameter over groups, and those deviations are columns of the term's own
-#' block. They are the case the rule exists for: on the likelihood alone
-#' nothing identifies them, since the penalty is what does, so a search over
-#' them fits each group's own points and moves away from the penalized mode.
-#' Measured on `jseg(x, npsi = 2, by = ~random(~1|id))` over thirty groups,
-#' 210 of the 219 coordinates are such deviations.
+#' a non-convex term. A sub-formula can develop a break-point or a nonlinear
+#' parameter over groups, and the group deviations are columns of the block of
+#' that term. On the likelihood alone nothing identifies these deviations,
+#' because the penalty identifies them, so a search over them would fit the
+#' points of each group and move away from the penalized mode. In a `jseg()`
+#' term with `by = ~random(~1|id)`, most coordinates are such deviations.
 #'
-#' `over` overrides the choice by name.
+#' The argument `over` replaces this choice by naming the coefficients.
+#' A structural term's own parameters are searched in either case.
 #'
-#' # The hyperparameters are not searched
+#' # The hyperparameters
 #'
-#' They cannot be, from here. The objective is the likelihood with the
-#' penalties off, in which a hyperparameter does not appear, so no proposal
-#' could change one.
+#' The search does not cover the hyperparameters. Its objective is the
+#' likelihood with the penalties off, in which no hyperparameter appears, so
+#' no proposal can change one.
 #'
-#' A global search over them is a search over the **outer** criterion, where
-#' each proposal costs a full refit instead of one likelihood evaluation, and
-#' that is `statmod(outer_optimizer = optimizers7::sa())`. A kinked penalty
-#' is outside even that: its hyperparameter has a known upper end and is
-#' swept by a warm-started path, which a random jump would fail to improve on
-#' and would destroy.
+#' A global search over the hyperparameters is a search over the **outer**
+#' criterion, where each proposal requires a full refit and not one likelihood
+#' evaluation. It is requested by `statmod(outer_optimizer =
+#' optimizers7::sa())`. The hyperparameters of a kinked penalty are outside
+#' that search as well: they are chosen along a warm-started path scored by
+#' `sparse_criterion`, which a random jump would not improve.
 #'
 #' @param optimizer The optimizer to search with, any \pkg{optimizers7}
 #'   optimizer. Defaults to `optimizers7::sa()`, simulated annealing, which
 #'   is the one built for a multimodal surface.
 #' @param over Optional character vector naming the coefficients to search
-#'   over, overriding the choice above. Names not in the model are an error.
+#'   over, overriding the choice above. A coefficient is named by its label,
+#'   the parameter and the coefficient joined by a colon (`"sigma:(Intercept)"`);
+#'   a bare name is accepted where only one equation carries it. Names not in
+#'   the model, and a bare name that several equations carry, are an error.
 #'
 #' @return A `StartSearch` object, inheriting from [start_strategy()], with
 #'   properties `optimizer` and `over`.
@@ -589,7 +605,11 @@ S7::method(print, start_strategy) <- function(x, ...) {
 
 #' @title Starting Values From the Intercept-Only Fit
 #' @name start_at.StartIntercepts
-#' @description The default strategy's answer.
+#' @description
+#' The answer of the default strategy: the intercept-only fit, the
+#' least-squares start of a location where [location_ols_start()] applies, and
+#' the start that each term declares through
+#' [modelterms7::term_coef_start()]. See [start_intercepts()].
 #' @param strategy A `StartIntercepts` object.
 #' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
@@ -689,10 +709,10 @@ S7::method(start_at, StartIntercepts) <-
 #' intercept and at least one other parametric column, and every term of the
 #' equation is a [modelterms7::LinparTerm], a [modelterms7::SmoothTerm], a
 #' [modelterms7::RandomTerm] or a [modelterms7::PenalizedTerm]. The penalized
-#' blocks start at zero, as they do from the intercept-only start, and a
-#' term with a start of its own (a break-point, a nonlinear term, a filter)
-#' leaves the equation on the intercept-only start. An aliased column takes
-#' the coefficient zero.
+#' blocks start at zero, as they do from the intercept-only start. If the
+#' equation has a term of any other kind (a break-point, a nonlinear term, a
+#' filter), the least-squares start does not apply and the equation keeps the
+#' intercept-only start. An aliased column takes the coefficient zero.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -762,20 +782,15 @@ location_ols_start <- function(spec, design) {
 #' `NA` where it has none.
 #'
 #' @details
-#' What is looked for is a column of the parametric block, which is a
+#' The position searched for is a column of the parametric block, which is a
 #' stricter test than a coefficient whose name ends in `(Intercept)`.
 #' [modelterms7::nl()] names the intercept of each of its own parameters the
-#' same way, and those live on those parameters' own charts, not on the
-#' predictor's, so a model written `y ~ 0 + nl(...)` puts one of them
-#' first. Writing the
-#' intercept-only fit there sets the parameter to `linkinv` of a value
-#' that was never on its scale: measured on a logistic growth curve whose
-#' asymptote rides a log link, `mean(y) = 23.9` became a starting
-#' \eqn{\phi} of `2.5e10`, an objective of `7.0e20` and a gradient
-#' of `1.4e21`, on data whose every scale is ordinary. The lasso path
-#' built at those coefficients then spanned `2.8e15` to `2.8e19`
-#' where the block empties at about 300, so all of its points were the same
-#' empty fit and every subject deviation was estimated as exactly zero.
+#' same way, and those coefficients lie on the charts of the parameters of
+#' the term and not on the scale of the predictor, so a model written
+#' `y ~ 0 + nl(...)` has one of them first. Writing the intercept-only fit
+#' there would set the parameter to the inverse link of a value that was never
+#' on its scale, and for a parameter on a log link the starting value would be
+#' far outside the range of the data.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -810,23 +825,20 @@ parametric_intercept <- function(spec, design, p) {
 #' for itself.
 #'
 #' @details
-#' It exists only where the response reads the parameter directly, which
-#' `params_interpretation` says: a mean or a location. A scale or a shape has
-#' no per-observation reading, so `NULL` is returned and nothing is invented
-#' for the occasion.
+#' A target exists only where the response reads the parameter directly,
+#' which `params_interpretation` records as a mean or a location. A scale or a
+#' shape has no per-observation reading, so `NULL` is returned.
 #'
-#' The scale matters and is not a detail. Measured on a Poisson whose
-#' predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
-#' the raw response estimated \eqn{\phi} between 52.7 and 54.8 over five
-#' samples, and one handed \eqn{g(y)} estimated it between 4.03 and 4.07.
-#' What does not matter, measured on the same shape beside another term, is
-#' the other terms' contribution: subtracting it moved the estimate from
-#' 39.68 to 39.87 against a truth of 40, so the response is passed as it
-#' stands and nothing is residualized.
+#' The response is passed on the scale of the predictor, \eqn{g(y)}, because a
+#' term that estimates its parameters from the raw response would work on the
+#' wrong scale. The contribution of the other terms of the equation is not
+#' subtracted, and the offset of the equation is.
 #'
-#' A response sitting on a bound of the parameter's own domain is moved half
-#' way to the nearest admissible value, a link not being defined at its
-#' bound. For counts under a log link that is the classical half.
+#' A response that lies on a bound of the domain of the parameter is moved
+#' half way from the bound to the smallest (or, for an upper bound, the
+#' largest) response inside the domain, because a link is not defined at its
+#' bound. For counts under a log link this gives one half when the smallest
+#' positive count is 1.
 #'
 #' @param spec The specification.
 #' @param p The distribution parameter naming the equation.
@@ -885,7 +897,8 @@ S7::method(start_at, StartOrigin) <-
 
 #' @title Starting Values From a Random Draw
 #' @name start_at.StartRandom
-#' @description The draw, added to the intercept-only fit unless told not to.
+#' @description The draw, added to the intercept-only fit unless `center` is
+#'   `FALSE`.
 #' @param strategy A `StartRandom` object.
 #' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
@@ -920,16 +933,16 @@ S7::method(start_at, StartRandom) <-
 #' the terms that recompute their own design.
 #'
 #' @details
-#' The predicate for the second is [refreshes_own_block()], the same one
-#' [unfittable_reason()] uses, so a term written later is covered with no
-#' edit here. A convex block is left out deliberately: the scoring step
-#' reaches its optimum from anywhere, and a search over it would spend the
-#' budget where it buys nothing.
+#' The predicate for the second is [refreshes_own_block()], which tests
+#' whether the term registers a [modelterms7::term_refresh()] method of its
+#' own, so a term written later is covered with no edit here. A convex block
+#' is left out deliberately: the scoring step reaches its optimum from any
+#' start, and a search over it would use the budget where it gains nothing.
 #'
-#' A penalized coordinate is then removed wherever it sits, which is not the
-#' same question as whether its term is convex: a penalty declared through a
-#' sub-formula of a break-point or nonlinear term covers columns of that
-#' term's block, and the loop takes the whole block.
+#' A penalized coordinate is then removed wherever it sits, which differs from
+#' testing whether its term is convex: a penalty declared through a
+#' sub-formula of a break-point or nonlinear term covers columns of the block
+#' of that term, and the loop takes the whole block.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -989,28 +1002,52 @@ search_coords <- function(spec, design) {
 #' best it found in place --- which is how a strategy returning coefficients
 #' can nonetheless start a filter somewhere better than its own
 #' `term_start()`.
+#'
+#' The objective `obj` is required, and an error is signaled when it is
+#' `NULL`. A coefficient named in `over` is resolved by its label, with a bare
+#' name accepted where one equation alone carries it.
 #' @param strategy A `StartSearch` object.
 #' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors.
 #' @keywords internal
 S7::method(start_at, StartSearch) <-
   function(strategy, spec, design, obj, ...) {
+    if (is.null(obj)) {
+      stop(paste0("start_search() evaluates the objective, which statmod()",
+                  " passes as 'obj'."), call. = FALSE)
+    }
     base <- start_at(start_intercepts(), spec, design, obj)
     beta0 <- obj$stack(base)
 
     idx <- if (is.null(strategy@over)) {
       search_coords(spec, design)
     } else {
-      nms <- unlist(lapply(spec@distrib@params,
-                           function(p) design[[p]]$coef_names),
+      params <- spec@distrib@params
+      nms <- unlist(lapply(params, function(p) design[[p]]$coef_names),
                     use.names = FALSE)
-      hit <- match(strategy@over, nms)
+      eq <- rep(params, vapply(params, function(p)
+        length(design[[p]]$coef_names), integer(1)))
+      labs <- paste(eq, nms, sep = ":")
+      # a coefficient is named by its label, parameter:name, as coef_labels()
+      # writes it; a bare name is accepted where one equation alone carries it
+      hit <- vapply(strategy@over, function(o) {
+        k <- match(o, labs)
+        if (!is.na(k)) return(k)
+        k <- which(nms == o)
+        if (length(k) > 1L) {
+          stop(sprintf(paste0("'over' names '%s', which is a coefficient of",
+                              " several equations.\n  Name one by its label:",
+                              " %s."), o, paste(labs[k], collapse = ", ")),
+               call. = FALSE)
+        }
+        if (!length(k)) NA_integer_ else k
+      }, integer(1))
       if (anyNA(hit)) {
         stop(sprintf("'over' names %s, which is not a coefficient.",
                      paste(strategy@over[is.na(hit)], collapse = ", ")),
              call. = FALSE)
       }
-      sort(hit)
+      sort(unique(unname(hit)))
     }
 
     # a structural term's own parameters, which the objective reads from the
@@ -1071,17 +1108,17 @@ S7::method(start_at, StartSearch) <-
 #' The reference fit's estimates where the two models share a coefficient,
 #' the fallback strategy's answer everywhere else.
 #' @details
-#' A block is matched by the name the formula gave its term: column by column
-#' for the parametric block, and as a whole for every other where the
-#' coefficient names agree. What is left over -- the same term written on
-#' another basis, paired by [block_stem()] and [same_term_kind()] -- goes to
-#' [project_blocks()], which estimates it against the partial residual of the
-#' reference's predictor. See [start_from()] for why the three rules differ.
+#' A block is matched by the name that the formula gave its term: column by
+#' column for the parametric block, and as a whole for every other block where
+#' the coefficient names agree. The remaining blocks, which are the same term
+#' written on another basis and paired by [block_stem()] and
+#' [same_term_kind()], go to [project_blocks()], which estimates them against
+#' the partial residual of the reference's predictor. See [start_from()] for
+#' the three rules.
 #'
-#' The result carries an attribute `"taken"`, a data frame naming every
-#' coefficient the reference answered for and whether it was `matched` or
-#' `projected`, so a caller can see what was reused rather than infer it from
-#' the fit that follows.
+#' The result carries an attribute `"taken"`, a data frame that names every
+#' coefficient taken from the reference and records whether it was `matched`
+#' or `projected`, so that the reused coefficients can be read directly.
 #' @param strategy A `StartFrom` object.
 #' @param spec,design,obj,... As in [start_at()].
 #' @return A named list of numeric vectors, with the attribute `"taken"`.
@@ -1169,41 +1206,49 @@ S7::method(start_at, StartFrom) <-
 #' Project a Reference Fit's Predictor onto the Blocks That Did Not Match
 #'
 #' @description
-#' Estimates the coefficients of the blocks [start_at()]'s `StartFrom` method
-#' left pending -- a term the two models share written on a different basis --
-#' by least squares against the part of the reference's predictor the blocks
-#' already carried across do not explain.
+#' Estimates the coefficients of the blocks that the `StartFrom` method of
+#' [start_at()] left pending, which are terms that the two models share
+#' written on a different basis. The estimate is by least squares against the
+#' part of the reference's predictor that the blocks already carried across do
+#' not explain.
 #'
 #' @details
 #' Two bases of the same term span different subspaces, so
 #' \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} = B_{\mathrm{old}}
-#' \beta_{\mathrm{old}}} has no solution in general and the projection
+#' \beta_{\mathrm{old}}} has no solution in general, and the projection
 #' \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
-#' r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
-#' is what remains: the best the new basis can do at reproducing the fitted
-#' function. Only the pending columns \eqn{S} are estimated, and \eqn{r} is
-#' the partial residual of the reference's predictor after the blocks already
-#' matched by name are removed at the values they were given. Where a block
-#' matched exactly there is nothing to solve, so a refit whose bases all
-#' agree performs no arithmetic here and returns the coefficients it was
-#' handed.
+#' r = \eta^{\mathrm{ref}} - \eta_{-S},}
+#' gives the closest reproduction of the fitted function that the new basis
+#' allows. Only the pending columns \eqn{S} are estimated. The vector \eqn{r}
+#' is the partial residual of the reference's predictor
+#' \eqn{\eta^{\mathrm{ref}}} after the blocks already matched by name are
+#' removed at the values they were given (\eqn{\eta_{-S}} is the new model's
+#' predictor with the pending columns at zero). Both predictors are read
+#' through [statmod_design_at()], so a block that moves with its coefficients
+#' (a break-point or a nonlinear term) contributes its value and not its
+#' linearization \eqn{X\beta}. Where every block matched exactly there is
+#' nothing to solve, and a refit whose bases all agree returns the
+#' coefficients it was given.
 #'
 #' The projection is exact when the reference's function lies in the span of
-#' the new basis, and reduces to the identity when the two bases coincide,
-#' which is why the name match above is a fast path rather than a different
-#' answer. Whatever the reference explains and the new model has no column
-#' for -- a covariate the formula dropped -- stays in \eqn{r} and is absorbed
-#' by the pending blocks, which is the closest the new design can come to the
-#' predictor it is being started from.
+#' the new basis, and it reduces to the identity when the two bases coincide,
+#' so the name match above is a shortcut and not a different answer. Whatever
+#' the reference explains and the new model has no column for, such as a
+#' covariate that the formula dropped, stays in \eqn{r} and is absorbed by
+#' the pending blocks.
 #'
-#' Three conditions gate it, each returning the coefficients unchanged. The
-#' two responses must be identical, which is what says the two designs are
-#' read at the same rows: the projection compares two predictors pointwise
-#' and means nothing across different data. Neither model may carry a
-#' structural term, whose contribution is a recursion's state rather than
-#' \eqn{X\beta}. And neither design may carry an adjustment for that
-#' parameter, which is the same condition for a block that moves with its
-#' coefficients.
+#' Three conditions restrict the projection. The two responses must be
+#' identical, so that the two designs are read at the same rows: the
+#' projection compares two predictors observation by observation and has no
+#' meaning across different data. Neither model may carry a structural term,
+#' whose contribution is the state of a recursion and not a function of the
+#' coefficients. Where either of these two conditions fails, the coefficients
+#' are returned unchanged. A pending block that itself moves with its
+#' coefficients (for example `seg(x)` refitted as `seg(x, npsi = 2)`) is not
+#' projected, because its coefficients are not those of a linear block, and it
+#' keeps the values given by the fallback strategy. The pending columns of an
+#' equation are also left to the fallback when their design has more than
+#' \eqn{5 \times 10^7} entries.
 #'
 #' @param spec The [StatmodSpec()] being started.
 #' @param design Its design.
@@ -1234,8 +1279,20 @@ project_blocks <- function(spec, design, ref, rdesign, out, pending) {
       length(attr(rdesign, "structural"))) {
     return(list(start = out, taken = taken))
   }
+  # the predictor of one equation at given coefficients: X b, plus the
+  # adjustment that statmod_design_at() records for a block that moves with
+  # its coefficients
+  eta_at <- function(sp, des, cf, p) {
+    d <- statmod_design_at(sp, cf, des)[[p]]
+    e <- as.numeric(d$X %*% cf[[p]])
+    if (!is.null(d$adj)) e <- e + d$adj
+    e
+  }
   for (p in names(pending)) {
-    if (!is.null(design[[p]]$adj) || !is.null(rdesign[[p]]$adj)) next
+    # a block that moves with its own coefficients is not linear in them
+    pending[[p]] <- Filter(function(b)
+      !refreshes_own_block(spec@terms[[p]][[b$nm]]), pending[[p]])
+    if (!length(pending[[p]])) next
     cols <- sort(unique(unlist(lapply(pending[[p]], function(b) b$idx))))
     A <- design[[p]]$X[, cols, drop = FALSE]
     # a smooth's block is dense by construction, so this densifies nothing
@@ -1243,10 +1300,10 @@ project_blocks <- function(spec, design, ref, rdesign, out, pending) {
     # block is one copy per level and the projection is not worth a
     # gigabyte
     if (prod(dim(A)) > 5e7) next
-    held <- out[[p]]
-    held[cols] <- 0
-    r <- as.numeric(rdesign[[p]]$X %*% ref@coefficients[[p]]) -
-      as.numeric(design[[p]]$X %*% held)
+    held <- out
+    held[[p]][cols] <- 0
+    r <- eta_at(ref@spec, rdesign, ref@coefficients, p) -
+      eta_at(spec, design, held, p)
     b <- tryCatch(qr.coef(qr(as.matrix(A)), r), error = function(e) NULL)
     if (is.null(b)) next
     # a column the pivot drops has no least-squares value and keeps whatever
@@ -1281,12 +1338,14 @@ project_blocks <- function(spec, design, ref, rdesign, out, pending) {
 #' `s(x, bspline_smooth(k = 6))` and `s(x, bspline_smooth(k = 10))` are two different keys and never meet by
 #' name. Their coefficients, on the other hand, are `s(x).lin`, `s(x).z1`,
 #' ... on both sides, so the stem `s(x)` names the term without naming the
-#' basis. The suffix is taken from the LAST dot rather than the first, so a
+#' basis. The suffix is taken from the last dot and not the first, so a
 #' covariate whose own name carries one -- `s(my.var)` -- keeps it.
 #'
-#' `NA` is returned where the names carry no suffix at all, which is the
-#' parametric block, whose columns are variables and levels and which is
-#' matched column by column instead.
+#' `NA` is returned where the names do not reduce to one common stem, as for
+#' the parametric block of several columns, whose columns are variables and
+#' levels and which is matched column by column instead. A block of a single
+#' column whose name contains a dot, such as `my.var`, reduces to the stem
+#' `my`.
 #'
 #' @param nms A block's coefficient names.
 #'
@@ -1331,12 +1390,13 @@ same_term_kind <- function(a, b) {
 #' [start_from()] matches column by column.
 #'
 #' @details
-#' The question is asked of the TERM rather than of its name. A caller may
-#' name a term anything, and what decides is that the block carries ordinary
-#' model-matrix columns whose names are variables and levels -- so a
-#' coefficient of one model means what the coefficient of the same name means
-#' in another. Every other kind of block is a basis, a set of levels or a
-#' standardized design, where a shared name is not a shared meaning.
+#' The test reads the class of the term and not the name of the term. A caller
+#' may give a term any name, and the deciding property is that the block
+#' carries ordinary model-matrix columns whose names are variables and levels,
+#' so that a coefficient of one model has the same meaning as the coefficient
+#' of the same name in another. Every other kind of block is a basis, a set of
+#' levels or a standardized design, where a shared name does not imply a
+#' shared meaning.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param param The distribution parameter.

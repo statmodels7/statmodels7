@@ -19,15 +19,13 @@ and every consumer of \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} ze
 using the matrix.
 }
 \details{
-Seven places wrote \code{S[!is.finite(S)] <- 0}. That is correct on a base
-matrix and a trap on a sparse one: the logical index is a dense
-\eqn{p \times p} matrix, so the storage the accumulator exists to keep is
-thrown away at the first consumer.
+The assignment \code{S[!is.finite(S)] <- 0} is correct on a base matrix. On a
+sparse matrix the logical index is a dense \eqn{p \times p} matrix, so the
+storage the accumulator exists to keep would be lost.
 
 On a sparse matrix only the \strong{stored} values can be non-finite, a
-structural zero being finite by construction, so the same answer comes
-from the value slot alone in \eqn{O(\mathrm{nnz})}. The two branches are
-written once here in place of seven times.
+structural zero being finite by construction, so the same result comes
+from the value slot alone in \eqn{O(\mathrm{nnz})} operations.
 }
 \seealso{
 \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}

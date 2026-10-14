@@ -8,7 +8,7 @@
 iwls(
   hessian = c("auto", "expected", "observed"),
   approx = c("opg", "bartlett", "integrate", "mc"),
-  decomposition = c("qr", "svd", "chol", "chol_crossprod"),
+  decomposition = c("qr", "svd", "chol"),
   maxit = 1000L,
   tol = 1e-06,
   criterion = NULL,
@@ -25,30 +25,33 @@ distribution is known. A single string.}
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
-\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"}, \code{"chol"} or
-\code{"chol_crossprod"}.}
+\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"} or \code{"chol"}.}
 
-\item{maxit}{The iteration budget, a single positive number.}
+\item{maxit}{The iteration budget, a single positive whole number.}
 
-\item{tol}{The stopping tolerance on the score per observation.}
+\item{tol}{The stopping tolerance on the score per observation, a single
+positive number.}
 
 \item{criterion}{An \pkg{optimizers7} \code{criterion} object driving the loop
 in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
-\item{step_halving}{How many halvings are allowed before a step is
-abandoned, a single non-negative number.}
+\item{step_halving}{The number of halvings tried after the full step before
+a step is abandoned, a single non-negative whole number. The line search
+tries the full step and then at most \code{step_halving} halved steps, so \code{0}
+tries the full step alone.}
 
 \item{x}{An \code{\link[=Iwls]{Iwls()}} object.}
 
 \item{...}{Unused.}
 }
 \value{
-An \code{\link[=Iwls]{Iwls()}} object, holding the seven settings above and no data,
-with \code{fallback} \code{FALSE} until \code{\link[=iwls_resolve]{iwls_resolve()}} settles an \code{"auto"}.
+An \code{\link[=Iwls]{Iwls()}} object holding the settings given and no data. Its
+\code{fallback} is \code{FALSE} and its \code{switch_after} is \code{Inf} until
+\code{\link[=iwls_resolve]{iwls_resolve()}} settles an \code{"auto"}.
 }
 \description{
-Configures the scoring step \code{statmod()} fits the smooth block with, and
-returns it as an object to pass as \code{inner_optimizer}. This is the default,
+Configures the scoring step with which \code{statmod()} fits the smooth block,
+and returns it as an object to pass as \code{inner_optimizer}. This is the default,
 so \code{statmod(...)} and \code{statmod(..., inner_optimizer = iwls())} fit the
 same model; call it by name to change the curvature, the decomposition,
 the budget or the stopping rule.
@@ -57,8 +60,8 @@ Every argument has a default, and the object carries no data: one \code{iwls()}
 can be passed to any number of fits.
 }
 \section{The name}{
-\code{iwls}, not \code{irls}. The iteration already implies the re-weighting, so the
-second \code{r} says nothing \emph{iterated} has not said.
+The name abbreviates iterated weighted least squares. The word iterated
+already implies the re-weighting, so the abbreviation \code{irls} is not used.
 }
 
 \section{The curvature}{
@@ -70,36 +73,32 @@ Newton's matrix may be indefinite; Newton converges faster near the
 optimum and is what the exact outer gradient needs.
 
 \code{"auto"}, the default, is settled against the family when the fit starts,
-by \code{\link[=iwls_resolve]{iwls_resolve()}}: the expected information where the family writes it
-exactly, and otherwise the observed information, with the expected one
-taking the step wherever the observed penalized information is not
-positive definite or its step finds no acceptable point, and a trial point
-whose objective raises an error read as rejected. Measured on 68 fits of
-ten families whose expected information is an approximation, a smooth at
-n = 300 and 1000, the certificate accepts the point reached in 68, against
-63 on the approximation and 60 on the observed information alone, at a
-median time between 0.17 and 0.98 of the approximation's per family. The
-fit records the settled method, so \code{fit@methods$smooth} says which
-curvature ran.
+by \code{\link[=iwls_resolve]{iwls_resolve()}}. The expected information is used where the family
+writes it exactly and at an acceptable cost. Otherwise the observed
+information is used. An observed penalized information that is not
+positive definite is first repaired by flooring its eigenvalues, and the
+expected information takes the step only where the repaired step finds no
+acceptable point. A trial point whose objective raises an error is read as
+rejected. The fit records the settled method, so \code{fit@methods$smooth}
+shows which curvature ran.
 
-On a family whose expected information is exact, a run continues on the
-observed information as soon as Fisher scoring contracts the score slowly,
-each of two consecutive ratios of the score above \code{\link[=iwls_switch_rate]{iwls_switch_rate()}},
-and at the latest after \code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps; the expected
-information stands in where the observed cannot step. Fisher scoring converges only linearly near the mode wherever
-the two informations differ there, which they do whenever the dispersion
-has an equation of its own. Measured on \code{ChickWeight} with smooths in the
-mean and in \eqn{\sigma}, the first inner fit needed 235 scoring steps and
-the REML criterion was unavailable at its start; with random intercepts in
-both equations the fit stopped at a REML criterion 0.78 below the maximum,
-with the standard deviation of the chicks' intercepts at 0.028 where it is
-0.685. With the switch both converge.
+On a family that \code{\link[=iwls_resolve]{iwls_resolve()}} settles on the expected information from
+\code{"auto"}, a run continues on the observed information as soon as Fisher
+scoring contracts the score slowly, each of two consecutive ratios of the
+score being above \code{\link[=iwls_switch_rate]{iwls_switch_rate()}}, and at the latest after
+\code{\link[=iwls_switch_after]{iwls_switch_after()}} scoring steps. The expected information then takes
+the step only where the observed step finds no acceptable point. Fisher
+scoring converges only linearly near the mode wherever the two informations
+differ there, which they do whenever the dispersion has an equation of its
+own, whereas Newton's step converges quadratically.
 
-Where the rule is met, the run takes one more full step, on the observed
-information where the family has it exactly. The marginal criterion
-carries \eqn{\log\lvert K(\beta)\rvert}, which is not stationary in
-\eqn{\beta}, so a mode left short by \eqn{\delta} enters it at first
-order; a warm-started fit whose score is already under the rule would stop
+Where the rule is met, the run takes one more full step. The step uses the
+observed information if the method was settled on the expected information
+from \code{"auto"} and has not yet switched, and otherwise the information that
+the run is using. The marginal criterion carries
+\eqn{\log\lvert K(\beta)\rvert}, which is not stationary in \eqn{\beta},
+so a mode left short by \eqn{\delta} enters it at first order; a
+warm-started fit whose score is already under the rule would stop
 without moving and leave the criterion out by an amount linear in the
 outer step. The extra step takes the error to second order. It is kept
 unless it raises the objective by more than a relative \eqn{10^{-8}}: a
@@ -109,81 +108,85 @@ hyperparameters.
 
 \code{approx} reaches \pkg{distributions7} and is read only where the family
 has no closed expected information; elsewhere the family's own method
-answers and the argument does not enter. It is accepted rather than
-refused there because an \code{iwls()} object is built before it meets a
-distribution and can be passed to any number of fits, so the question it
-would be refused on cannot be asked at construction.
-\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the predicate that says
+answers and the argument does not enter. The argument is accepted for every
+family because an \code{iwls()} object is built before it meets a distribution
+and can be passed to any number of fits, so whether the family has a
+closed expected information cannot be checked at construction.
+\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the predicate that records
 which case a family is in.
 
 Its default is \code{"opg"}, the outer product of the observed scores, which
 costs one gradient. The alternative readings evaluate the expectation
-itself -- a sum over the support for a discrete family, a quadrature for a
-continuous one -- and are orders of magnitude dearer inside a loop that
-rebuilds the curvature at every iteration: measured on a Poisson-inverse
-gaussian regression at \eqn{n = 500}, \code{statmod()} takes 0.64 s under
-\code{"opg"} and 89.06 s under \code{"bartlett"}, reaching the same log-likelihood
-and coefficients agreeing to \eqn{10^{-6}}. What the cheap matrix gives up
-is variance, not the answer: the score is exact, so a scoring step driven
-by any positive definite matrix reaches the same stationary point, and the
-outer product is positive semidefinite by construction where the observed
-Hessian need not be. A standard error is a different question and is read
-off the observed information instead -- see \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
+itself (a sum over the support for a discrete family, a quadrature for a
+continuous one) and cost much more inside a loop that rebuilds the
+curvature at every iteration. What the cheap matrix gives up is variance
+and not the answer: the score is exact, so a scoring step driven by any
+positive definite matrix reaches the same stationary point, and the outer
+product is positive semidefinite by construction where the observed Hessian
+need not be. The information behind a standard error is chosen separately;
+see \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}.
 }
 
 \section{The decomposition}{
 The step solves \eqn{(X'WX + S)\delta = X'g - S\beta}, and this argument
-says how.
+selects the method.
 
 \describe{
 \item{\code{"qr"}}{a QR of the augmented design
 \eqn{[\sqrt{W}X;\ \mathrm{chol}(S)]}, and the default. Forming
-\eqn{X'X} squares the condition number, and a break-point term's
-design is bounded only to \eqn{\epsilon^{-1/2}} by construction, so
-squaring it exhausts double precision. This is also why a closed-form
-ridge is beaten at \eqn{p = 200} by a method that never forms
-\eqn{X'X}.}
+\eqn{X'X} squares the condition number, and the design of a
+break-point term is bounded only to \eqn{\epsilon^{-1/2}} by
+construction, so that squaring it exhausts double precision.}
 \item{\code{"svd"}}{a singular value decomposition of the same augmented
 design. It reports a numerical rank where a deficient block would make
 a Cholesky fail.}
-\item{\code{"chol"}}{a Cholesky factor of the penalized information,
-assembled without the augmentation.}
-\item{\code{"chol_crossprod"}}{the same, forming \eqn{X'WX} explicitly.
-The fastest per iteration and the worst conditioned; offered because
-the choice is the user's.}
+\item{\code{"chol"}}{a Cholesky factor of the penalized information
+\eqn{X'WX + S}, assembled without the augmentation. The information is
+formed explicitly, so the condition number is squared.}
 }
+
+The \code{"qr"} and \code{"svd"} methods need a square root of the per-observation
+curvature and of the penalty. Where either does not exist, the step uses
+the assembled information, as \code{"chol"} does.
 }
 
 \section{The stopping rule}{
 A scoring step is not an optimizer and carries its own loop, but the rule
 that ends the loop belongs to the caller.
 
-With \code{criterion = NULL}, the default, the built-in rule applies: the score
-per observation \eqn{\max_j \lvert g_j \rvert / n} against \code{tol}, with the
-dimensionless reading of \code{\link[=iwls_score]{iwls_score()}} arbitrating the final verdict. Any
-\pkg{optimizers7} criterion may drive the loop instead, and then \code{tol} is
-never read, so passing both is an error.
+With \code{criterion = NULL}, the default, the built-in rule applies. The rule
+is met when the score per observation \eqn{\max_j \lvert g_j \rvert / n},
+taken over the free coordinates, is below \code{tol} and the Newton decrement
+\eqn{g^\top (H+S)^{-1} g / 2} is at most \eqn{10^{-6}}. The decrement is
+in log-likelihood units and does not depend on the scale of the response.
+When the loop ends without meeting the rule, the dimensionless reading of
+\code{\link[=iwls_score]{iwls_score()}} can relabel the stopped run as converged. Any
+\pkg{optimizers7} criterion may drive the loop instead. It replaces the
+whole built-in rule, the decrement condition and the dimensionless reading
+included, and \code{tol} is then not read, so passing both is an error.
 
-What a criterion is shown is the state \code{optimizers7::crit_met()}
-documents, with three things worth knowing about it here:
+The state that a criterion receives is the one \code{optimizers7::crit_met()}
+documents. In this loop the state has three properties:
 \itemize{
-\item Its \code{gradient} is the score \strong{per observation}, the quantity the
-built-in rule compares. So \code{criterion = optimizers7::crit_grad(t)} is
-exactly \code{tol = t}, and either threshold means the same at \eqn{n = 10}
-and at \eqn{n = 10^7}.
-\item Its objective is the penalized log-likelihood \strong{unaveraged}, which is
-the scale the penalty is added on. A rule reading the objective's
-absolute value therefore carries the sample size with it; one reading
-its relative change does not.
+\item Its \code{gradient} is the score per observation, the quantity that the
+built-in rule compares with \code{tol}. The threshold of
+\code{optimizers7::crit_grad(t)} therefore applies to the same quantity as
+\code{tol = t} and has the same meaning at \eqn{n = 10} and at
+\eqn{n = 10^7}.
+\item Its \code{f_new} is the penalized objective, the negative penalized
+log-likelihood, not divided by the sample size, which is the scale on
+which the penalty is added. A rule that reads the absolute value of the
+objective therefore depends on the sample size; a rule that reads its
+relative change does not.
 \item On the first iteration \code{f_old} and \code{x_old} are \code{NULL}, there being no
 previous point, so a rule reading a change returns \code{FALSE} there by
 construction.
 }
 
-A criterion needing something the step does not compute is rejected at
-construction. A stationarity measure is the case: it belongs to the
-derivative-free methods, and a rule asking for one would otherwise sit in
-the loop and never fire.
+A criterion that needs a quantity the step does not compute is rejected at
+construction. A stationarity measure is an example: it belongs to the
+derivative-free methods, and a rule that requires one would remain in the
+loop without ever being met.
 }
 
 \examples{
@@ -193,12 +196,12 @@ iwls()
 # numerical rank where a deficient block would make a Cholesky fail.
 iwls(hessian = "observed", decomposition = "svd")
 
-# An optimizers7 stopping rule in place of tol. crit_grad(t) here is
-# exactly tol = t, the state's gradient being the score per observation.
+# An optimizers7 stopping rule in place of tol. The gradient in the state
+# that the rule receives is the score per observation, as for tol.
 iwls(criterion = optimizers7::crit_any(optimizers7::crit_grad(1e-8),
                                        optimizers7::crit_rel_obj(1e-12)))
 
-# Both at once is an error: tol would be read by nobody.
+# Both at once is an error: tol would not be read.
 try(iwls(tol = 1e-8, criterion = optimizers7::crit_grad(1e-8)))
 
 }

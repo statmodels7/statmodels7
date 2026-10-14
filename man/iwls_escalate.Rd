@@ -24,11 +24,9 @@ The first value is \eqn{10^{-8}} of the curvature's own scale, as
 coordinate and already large beside one whose information has fallen by
 eight orders, which is the disparity the damping exists to correct.
 
-Each further escalation multiplies by a hundred, so eight of them span
-sixteen orders and reach a damping that dominates the largest diagonal.
-Measured on the case this was built for, the offending coordinate needed
-\eqn{\lambda \approx 100} against a largest diagonal of 2328, which the
-sixth escalation passes.
+Each further escalation multiplies by a hundred, so that the eight
+escalations that a run may use span fourteen orders of magnitude, from
+\eqn{10^{-8}} to \eqn{10^{6}} times the largest diagonal.
 }
 \seealso{
 \code{\link[=iwls_scale]{iwls_scale()}} for the scale, \code{\link[=iwls_solve]{iwls_solve()}} for what the damping

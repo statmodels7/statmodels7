@@ -21,23 +21,23 @@ has no closed form, passed through to
 }
 \value{
 The named list of second-derivative components on the link scale,
-as \code{\link[distributions7:distrib_hessian]{distributions7::distrib_hessian()}} returns it.
+as \code{\link[distributions7:distrib_expected_hessian]{distributions7::distrib_expected_hessian()}} returns it when
+\code{expected} is \code{TRUE} and as \code{\link[distributions7:distrib_hessian]{distributions7::distrib_hessian()}}
+otherwise.
 }
 \description{
-Asks the distribution for its Hessian, or for its expected information,
-on the link scale at one value of the parameters.
+Computes the Hessian of the distribution, or its expected information, on
+the link scale at one value of the parameters.
 }
 \details{
-Written once because two routes read it at the same point. \code{\link[=iwls_pieces]{iwls_pieces()}}
-builds a square-root decomposition out of the per-observation blocks and
-falls back to the assembled information when that decomposition cannot be
-formed, and both of those used to ask the family themselves. Where the
-expected information IS the outer product of scores the per-observation
-block is rank one, so the square-root route is abandoned at every point
-and the work done for it was thrown away; passing the components down
-instead of recomputing them is what stops that.
+The components are computed in one place because several routes read them
+at the same point. \code{\link[=iwls_pieces]{iwls_pieces()}} builds a square-root decomposition from
+the per-observation blocks and uses the assembled information when that
+decomposition cannot be formed. Both routes receive the components computed
+here, so the family is evaluated once per point.
 }
 \seealso{
-\code{\link[=statmod_information_at]{statmod_information_at()}} and \code{\link[=info_blocks]{info_blocks()}}, its two readers.
+\code{\link[=statmod_information_at]{statmod_information_at()}}, \code{\link[=info_blocks]{info_blocks()}}, \code{\link[=iwls_pieces]{iwls_pieces()}} and
+\code{\link[=coord_working]{coord_working()}}, which read it.
 }
 \keyword{internal}

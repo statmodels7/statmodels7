@@ -25,11 +25,17 @@ sweep.}
 \item{covariance}{\code{TRUE} to hold the gradient itself and cache Gram
 columns, \code{FALSE} to hold the running residual. \code{\link[=coord_covariance]{coord_covariance()}}
 decides.}
+
+\item{means}{The weighted column means of the block, one per column, with
+which the kernel centers the columns and the working response implicitly,
+or \code{numeric(0)} for an uncentered block.}
 }
 \value{
 The kernel's list of three: \code{beta} (the fitted coefficients,
 length \code{p}), \code{sweeps} (how many passes it took) and \code{grad} (the gradient
-at the point reached, length \code{p}).
+of the weighted quadratic at the point reached, length \code{p}, computed only
+when the strong rule left some column out and a vector of zeros
+otherwise).
 }
 \description{
 Sends the block to the dense kernel or to the sparse one, taking a
@@ -38,9 +44,7 @@ Sends the block to the dense kernel or to the sparse one, taking a
 \details{
 The two kernels are one algorithm instantiated twice over a column
 accessor, and they agree bit for bit. The arithmetic licenses that:
-skipping a structural zero omits an addition of zero, which is exact. It
-is the one place in this toolkit where an identity assertion over compiled
-floating point is correct.
+skipping a structural zero omits an addition of zero, which is exact.
 
 The \code{dgCMatrix} is taken apart in R, so the compiled code needs no
 dependency on the \pkg{Matrix} package's C API.

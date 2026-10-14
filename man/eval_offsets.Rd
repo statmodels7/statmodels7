@@ -17,7 +17,7 @@ anything.}
 \item{env}{The environment the formula carried, the enclosure of the
 evaluation.}
 
-\item{n}{The number of observations, the length to recycle to.}
+\item{n}{The number of observations.}
 }
 \value{
 A named list with one entry per element of \code{params}, each a
@@ -28,17 +28,18 @@ offset.
 The offset per distribution parameter, evaluated in the data.
 }
 \details{
-The expressions are kept and re-evaluated, never carried as numbers, and
-that is how an offset survives prediction. \code{\link[=statmod_respec]{statmod_respec()}} calls
-this against the new data; a vector supplied through \code{\link[=statmod]{statmod()}}'s
-\code{offsets} argument at fitting time has the wrong length for other rows and
-cannot be reused. Before this, \code{predict(fit, newdata =)} returned the
-predictor of a model with no offset at all.
+The expressions are kept and re-evaluated, not carried as numbers, which
+is how an offset written in the formula applies in prediction.
+\code{\link[=statmod_respec]{statmod_respec()}} calls this against the new data; a vector supplied
+through \code{\link[=statmod]{statmod()}}'s \code{offsets} argument at fitting time has the length of
+the fitting data and cannot be reused on other rows.
 
 Each expression is evaluated in \code{data} with \code{env} behind it, so a symbol
 resolves as a column first and as a variable of the caller's environment
-second. A result shorter than \code{n} is recycled, so a single number is a
-constant offset.
+second. A result of length one is recycled to \code{n}, so a single number is a
+constant offset, and a result of any other length except \code{n} is an error.
+A value that is missing or not finite is an error. Several offsets in one
+equation are summed.
 }
 \seealso{
 \code{\link[=split_offsets]{split_offsets()}}

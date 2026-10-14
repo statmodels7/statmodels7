@@ -22,7 +22,9 @@ the intercept-only fit.
 \details{
 It sets the scale of a score-driven term's second start
 (\code{\link[=structural_start_fixups]{structural_start_fixups()}}): the score of a predictor has variance equal
-to this information, so a loading of \eqn{0.1/\mathcal{I}} moves the
-predictor by a tenth of the score's natural unit whatever the family.
+to this information, so a loading of \eqn{0.1/\mathcal{I}} on the unscaled
+score moves the predictor by a tenth of the score's natural unit whatever
+the family. For a filter with \code{scaling} \eqn{d} the loading is
+\eqn{0.1\,\mathcal{I}^{d-1}}, which gives the same step.
 }
 \keyword{internal}

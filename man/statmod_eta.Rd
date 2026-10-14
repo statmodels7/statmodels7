@@ -17,13 +17,19 @@ offsets and the sample size.}
 parameter, each as long as its equation's design is wide.}
 }
 \value{
-A list of two named lists, each with one entry per distribution
-parameter in the family's order:
+A list with the elements
 \describe{
-\item{\code{eta}}{the linear predictors, numeric vectors of length
-\code{spec@n_obs}.}
-\item{\code{theta}}{the parameters they imply, the same shape, each
-strictly inside its parameter's bounds.}
+\item{\code{eta}}{a named list of the linear predictors, one numeric vector
+of length \code{spec@n_obs} per distribution parameter in the family's
+order.}
+\item{\code{theta}}{the parameters that the predictors imply, in the same
+shape.}
+\item{\code{filters}}{the runs of the filter-shaped structural term, an
+empty list when the model has none.}
+\item{\code{regimes}}{the latent-state structure of a term of the likelihood
+shape, an empty list when the model has none.}
+\item{\code{eta_static}}{present only when the model carries a structural
+term: the predictors before the term's level is added.}
 }
 }
 \description{
@@ -38,10 +44,15 @@ parameter's own link inverts it to \eqn{\theta_k}.
 with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment a
 refreshable term contributes, zero for an ordinary design.
 
-The inverse link clamps \eqn{\theta_k} strictly inside its own open
-bounds, so a predictor far out on the link scale gives a parameter a
-density can be evaluated at. A structural term of the filter shape adds
-its level to \eqn{\eta_k} before the link is inverted.
+The inverse link is evaluated by \code{linkfunctions7::linkinv()}. The links
+onto a bounded interval keep the result within the bounds of the parameter,
+at or next to a bound for a predictor far out on the link scale, so that a
+density can still be evaluated. The \code{inverse} link is an exception: a
+negative predictor gives a negative parameter.
+
+A structural term of the filter shape adds its level to \eqn{\eta_k}
+before the link is inverted. A term whose contribution is a likelihood
+mixed over latent states reports the posterior-weighted predictor.
 }
 \seealso{
 \code{\link[=statmod_loglik_at]{statmod_loglik_at()}} and \code{\link[=statmod_score_at]{statmod_score_at()}}, which read this,

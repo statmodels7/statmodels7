@@ -22,8 +22,10 @@ coord_fit(
 \item{obj}{The full objective, as \code{\link[=statmod_objective]{statmod_objective()}} returns it. Read
 for the value at the point reached, not for its gradient.}
 
-\item{beta}{The current stacked coefficients, a named list with one vector
-per distribution parameter. Every block but this one is held at these.}
+\item{beta}{The current coefficients of all distribution parameters,
+stacked into one numeric vector (the vector that \code{obj$split()} divides by
+parameter). Every coefficient outside this block is held at its value,
+except the equation's unpenalized intercept when the block is centered.}
 
 \item{block}{One entry of \code{statmod_blocks()$sparse}: the equation, the
 term, its column positions and its penalty.}
@@ -32,10 +34,14 @@ term, its column positions and its penalty.}
 
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{design}{The design, refreshed at \code{beta} if any term needs it.}
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it. Where a term
+recomputes its block with the coefficients, the block is read again at
+the current coefficients.}
 
 \item{expected}{\code{TRUE} for the expected information in the working
-weights, \code{FALSE} for the observed one.}
+weights, \code{FALSE} for the observed one. Where the observed curvature of
+the equation is not positive at some observation, the expected
+information is used in its place.}
 
 \item{approx}{How the expected information is approximated for a family
 with no closed form.}
@@ -43,31 +49,38 @@ with no closed form.}
 \item{maxit}{The budget in weighted least squares iterations, each of
 which rebuilds the weights and runs the compiled sweeps to convergence.}
 
-\item{tol}{The stopping tolerance on the relative change in the block's
-coefficients.}
+\item{tol}{The stopping tolerance on the largest absolute change in the
+block's coefficients over a weighted least squares iteration. The
+compiled sweeps use the same tolerance on the largest absolute change of
+a sweep.}
 
 \item{prev_kink}{The size of the kink at the previous point of a path, a
 single number, or \code{NULL} to cycle over every coordinate. Only the strong
 rule reads it.}
 }
 \value{
-A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s, with the block's fitted
-coefficients, the sweep count and the gradient the kernel ended at.
+A list shaped like \code{\link[=sparse_fit]{sparse_fit()}}'s: \code{par} (the whole stacked
+coefficient vector, updated in this block and, where the block is
+centered, in the equation's intercept), \code{value} (the objective),
+\code{converged}, \code{iterations} (the total number of kernel sweeps) and
+\code{method} (\code{"coordinate descent"}). \code{converged} is \code{TRUE} when the
+iterations settled or when no length of step lowered the objective.
 \code{NULL} where the route does not apply: the penalty describes no
 proximal table at the steps this block's curvature produces, or the
 working weights are unusable.
 }
 \description{
 Estimates one penalized block by cycling over its coefficients on the
-working quadratic of its own equation, the other blocks held fixed.
+working quadratic of its own equation, the other blocks held fixed. Where
+the equation has an unpenalized intercept that is not held, the block is
+solved with the intercept profiled out, and the intercept is then set to the
+value that goes with the block's coefficients.
 }
 \details{
-\strong{Why not the proximal method.} A proximal gradient step reads the
-whole model: measured on 200 observations and 20 columns, one block fit made
-88 evaluations of the objective, 75 of the gradient and 83 of the operator,
-each over every parameter of the distribution, and closed in 36 iterations
-at 0.17 seconds. A coordinate descent reads the block's own columns and the
-running residual instead and closes in six sweeps.
+\strong{Comparison with the proximal method.} Each iteration of a proximal
+gradient method evaluates the objective, its gradient and the penalty's
+operator over every parameter of the distribution. A coordinate descent
+reads only the block's own columns and the running residual.
 
 \strong{The working quadratic.} With \eqn{\eta} the equation's linear
 predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
@@ -75,14 +88,23 @@ predictor, \eqn{s_i} the score in it and \eqn{h_i} the information,
 \eqn{z = \eta + s/h}, which is the weighted least squares problem of
 \code{\link[=iwls]{iwls()}} restricted to one equation. The other columns of that
 equation enter as an offset. For a Gaussian response with an identity link
-the quadratic is exact and one pass is the answer; otherwise the weights are
-rebuilt and the sweeps repeated.
+the quadratic is exact and the first weighted least squares iteration gives
+the answer; otherwise the weights are rebuilt and the sweeps repeated.
+
+\strong{Centering.} Where the equation has an unpenalized intercept that is not
+held (see \code{\link[=coord_centers]{coord_centers()}}), the compiled sweeps solve the block with the
+intercept profiled out: the columns and the working response enter at their
+weighted means, implicitly, so a sparse block stays sparse. After the sweeps
+the intercept is set to the weighted mean of the working response net of the
+block, so the step is a joint step in the block and the intercept. A held
+intercept, or an equation with no intercept, leaves the block uncentered.
 
 \strong{The penalty arrives as a table.} The coordinate update is the
 penalty's own proximal operator at the step \eqn{1/v_j}, with
-\eqn{v_j = \sum_i w_i x_{ij}^2}, and \eqn{v_j} does not move while the
-working weights are held. The whole table is therefore built once per
-weighted least squares iteration by
+\eqn{v_j = \sum_i w_i x_{ij}^2} (the centered sum of squares where the block
+is centered), and \eqn{v_j} does not move while the working weights are
+held. The whole table is therefore built once per weighted least squares
+iteration by
 \code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} and the compiled sweeps read it,
 so the kernel names no family and a penalty that describes its operator gets
 the compiled route without an edit here.
@@ -96,8 +118,7 @@ a theorem, so the rule can discard a coordinate that belongs in the fit, and
 what makes the answer exact is the check afterwards: the gradient is read
 over every column at the point reached, any discarded coordinate whose
 gradient exceeds the kink is put back, and the fit is repeated. Without
-the check the route would be occasionally wrong instead of occasionally
-slow.
+the check the answer would not be exact.
 
 \strong{Which update.} The gradient is kept either as a residual, at
 \eqn{O(n)} a visit, or as itself through
@@ -105,6 +126,10 @@ slow.
 with the Gram columns cached as coordinates come alive. The second wins when
 \eqn{n} is large next to the number of live coordinates and pays in
 memory, so \code{\link[=coord_covariance]{coord_covariance()}} decides it from the two sizes.
+
+\strong{Acceptance.} A step is accepted where the penalized objective falls, and
+is halved towards the current point otherwise. A SCAD or MCP penalty that
+carries a curvature (see \code{\link[=coord_table_penalty]{coord_table_penalty()}}) takes every step whole.
 }
 \references{
 Friedman, J., Hastie, T. and Tibshirani, R. (2010). Regularization paths for

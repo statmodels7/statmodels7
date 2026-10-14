@@ -37,28 +37,28 @@ The value, gradient and Hessian of every penalty whose coordinates are part
 coefficients and part a structural term's own parameters, placed in the
 joint vector \eqn{[\beta; \zeta_{\mathrm{free}}]}.
 }
-\section{Why one function and not two halves}{
-A class's prior is one object over one stacked vector. \pkg{penalties7}
-computes one gradient and one Hessian over that vector, in the class's own
-order, and knows nothing of the split -- to it these are \eqn{m} blocks of
-\eqn{d} numbers with a covariance in common. Splitting the answer into a
-coefficient half and a parameter half would report each as though the other
-were not there, and would lose the CROSS block entirely, which is the only
-place the correlation between the two enters at all.
+\section{One function for both parts}{
+The prior of a class is one object over one stacked vector. \pkg{penalties7}
+computes one gradient and one Hessian over that vector, in the order of the
+class, and has no notion of the split: it treats the coordinates as \eqn{m}
+blocks of \eqn{d} numbers with a covariance in common. Splitting the result
+into a coefficient part and a parameter part would report each as though
+the other were absent and would lose the cross block, the only place where
+the correlation between the two enters.
 
-So the scatter is written once and the three assemblies that build the joint
-matrix add what it returns: the inner step
+The scatter is therefore written once, and the three assemblies that build
+the joint matrix add what it returns: the inner step
 (\code{\link[=statmod_fit_joint]{statmod_fit_joint()}}), the marginal criterion
 (\code{\link[=statmod_marginal_full]{statmod_marginal_full()}}) and the variance
 (\code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}}). \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} and
 \code{\link[=statmod_structural_penalty]{statmod_structural_penalty()}} skip a mixed class for the same reason.
 }
 
-\section{Where the values come from}{
-Each coordinate is read where it lives -- a coefficient from \code{coef}, a
-filter parameter from the design's structural state -- and assembled in the
-class's own order, which \code{joint} on the unit already records. The result is
-written back at those same positions, so no ordering is composed twice.
+\section{Source of the values}{
+Each coordinate is read where it is stored (a coefficient from \code{coef}, a
+filter parameter from the structural state of the design) and assembled in
+the order of the class, which \code{joint} on the unit records. The result is
+written back at the same positions, so that the ordering is composed once.
 }
 
 \seealso{

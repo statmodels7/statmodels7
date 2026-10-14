@@ -8,25 +8,26 @@ NULL
 #' with a kink and are therefore fitted by a method of their own.
 #'
 #' @details
-#' The property that decides is one each term already reports: a penalty whose
-#' [penalties7::penalty_kinks()] is non-empty is not twice
-#' differentiable in its coefficients, so its block cannot enter a system
-#' solved by a curvature. Everything else goes into one system and is
-#' estimated all together: an unpenalized block, a ridge, a spline, a random
-#' effect, a structured or additive penalty. Their joint curvature exists,
-#' and using it closes a fit in a handful of iterations.
+#' The split depends on the penalty of each penalized unit (see
+#' [statmod_penalized()]). A penalty for which [penalties7::penalty_kinks()]
+#' returns a finite point is not twice differentiable in its coefficients, so
+#' its block cannot enter a system solved by a curvature. Everything else goes
+#' into one system and is estimated all together: an unpenalized block, a
+#' ridge, a spline, a random effect, a structured or additive penalty. Their
+#' joint curvature exists, so a scoring or Newton step applies to them.
 #'
-#' A term whose penalty gains a smooth approximation would answer
-#' `penalty_kinks()` differently and move into the smooth block with no
-#' change here.
+#' The classification is made by [penalty_has_kink()], so a penalty that
+#' becomes smooth moves into the smooth block with no change here.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, as [statmod_design()] returns it.
 #'
 #' @return A list with `smooth` (the stacked column indices fitted
-#'   jointly) and `sparse` (a list, one entry per non-smooth term, each
-#'   with the parameter, the term's name, its stacked columns and its
-#'   penalty).
+#'   jointly) and `sparse` (a list with one entry per penalized unit that has
+#'   a kink). Each entry holds `param`, `term` (the penalty's key), `cols`
+#'   (positions within the parameter's coefficients), `index` (positions in the
+#'   stacked vector), `penalty`, `structural`, `zterm` (the term's own name)
+#'   and `ids` (the labels under which hyperparameters are shared).
 #'
 #' @seealso [statmod()]
 #'
@@ -84,11 +85,12 @@ statmod_blocks <- function(spec, design) {
 #' one of them. Everything outside a kinked block is active, having no kink to
 #' sit at.
 #'
-#' The map of a kinked penalty is the identity here: a separable penalty under
-#' a general map is the generalized-lasso problem, which
-#' [penalties7::penalty_prox()] rejects, so a block that reaches this
-#' function penalizes its coefficients one at a time and a kink of the penalty
-#' is a kink in a coefficient.
+#' A kinked penalty reaches this function with no map or with a diagonal map,
+#' which is what `standardize = TRUE` writes. A separable penalty under a
+#' general map is the generalized-lasso problem, which
+#' [penalties7::penalty_prox()] rejects. A block that reaches this function
+#' therefore penalizes its coefficients one at a time, and a kink of the
+#' penalty is a kink in a coefficient.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param blocks The blocks, as [statmod_blocks()] returns them.
@@ -120,24 +122,28 @@ statmod_active <- function(spec, blocks, beta, hyper, tol = 1e-8) {
 #'
 #' @description
 #' `TRUE` when the penalty is not differentiable somewhere a coefficient can
-#' be. A block whose penalty answers `TRUE` is estimated outside the jointly
-#' fitted system, by a coordinate descent of its own.
+#' be. A block whose penalty gives `TRUE` is estimated outside the jointly
+#' fitted system by [sparse_fit()]: a compiled coordinate descent where the
+#' penalty describes its proximal operator as a table, and an accelerated
+#' proximal gradient iteration otherwise.
 #'
 #' @details
 #' [penalties7::penalty_kinks()] is read at a probe value of the
-#' hyperparameters, the midpoint of their bounds, which is the rule
-#' \pkg{modelterms7} already uses. Whether a kink exists is a property of the
-#' family, not of a point, so any admissible probe answers.
+#' hyperparameters, which [penalty_theta_start()] gives. The probe is the
+#' midpoint of the interval where both bounds are finite, one unit inside the
+#' bound where only one is finite, and zero where neither is.
+#' \pkg{modelterms7} uses the same rule. Whether a kink exists is a property
+#' of the family and not of a point, so any admissible probe gives the same
+#' answer.
 #'
-#' A penalty that stops when asked is reported, never treated as smooth.
-#' Reading the failure as an answer sends the term to the scheme for the
-#' opposite property: `scad()` and `mcp()` were fitted by the
-#' curvature of a function that has none, reporting an effective 19.00
-#' degrees of freedom out of 20 on a design of pure noise, which is no
-#' selection at all.
+#' If [penalties7::penalty_kinks()] signals an error, `penalty_has_kink()`
+#' signals an error that names the penalty, and the penalty is not treated as
+#' smooth. Reading the failure as an answer would send a kinked penalty, such
+#' as `scad()` or `mcp()`, to the scheme for smooth penalties, which fits it
+#' by the curvature of a function that has none.
 #'
 #' @param pen A \pkg{penalties7} penalty.
-#' @param what How to name the penalty if it cannot answer.
+#' @param what How to name the penalty in the error message.
 #'
 #' @return A single logical.
 #'
@@ -146,11 +152,11 @@ penalty_has_kink <- function(pen, what = "a penalty") {
   th <- as.list(penalty_theta_start(pen))
   k <- tryCatch(penalties7::penalty_kinks(pen, th), error = function(e) e)
   if (inherits(k, "error")) {
-    stop(sprintf(paste0("%s cannot say whether it is differentiable.",
-                        "\n  penalty_kinks() stopped with: %s",
+    stop(sprintf(paste0("It cannot be determined whether %s is differentiable.",
+                        "\n  penalty_kinks() failed with: %s",
                         "\n  The two fitting schemes differ by exactly that",
-                        " property, so a penalty\n  that does not answer",
-                        " cannot be assigned to one of them."),
+                        " property, so a penalty\n  whose kinks cannot be",
+                        " evaluated cannot be assigned to either of them."),
                  what, conditionMessage(k)), call. = FALSE)
   }
   length(k) > 0L && any(is.finite(unlist(k)))
@@ -160,30 +166,44 @@ penalty_has_kink <- function(pen, what = "a penalty") {
 #' Fit One Non-Smooth Block, the Others Held Fixed
 #'
 #' @description
-#' Runs a proximal gradient iteration on the block's own coefficients, the
-#' smooth part of the objective supplying the gradient and the penalty its
-#' proximal operator.
+#' Estimates the coefficients of one block with a kinked penalty, the other
+#' coefficients held fixed. A penalty over a structural term's own parameters
+#' is fitted by [sparse_fit_structural()]. Otherwise a compiled coordinate
+#' descent, [coord_fit()], is used where the penalty describes its proximal
+#' operator as a table, and an accelerated proximal gradient iteration runs on
+#' the block where it does not, the smooth part of the objective supplying the
+#' gradient and the penalty its proximal operator.
 #'
 #' @details
-#' The route is [optimizers7::prox_grad()] with
-#' [penalties7::penalty_prox()], accelerated: measured, at a
-#' condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
-#' iterations against 126, and at 480 the plain one does not converge in
-#' 50000. A coordinate descent on the same objective is 1.1 to 5.3 times
-#' faster again and is the next thing to write. It needs the columns of the
-#' design and the running residual, which is the model itself, so it belongs
-#' here and could not live behind an optimizer's black-box interface.
+#' The coordinate descent of [coord_fit()] reads the columns of the design and
+#' the running residual, which belong to the model, so it is called here and
+#' not through an optimizer's black-box interface. Where [coord_fit()] returns
+#' `NULL` (the penalty has no proximal table at the steps of this block, or the
+#' working weights are unusable), or where `spec` or `design` is `NULL`, the
+#' route is [optimizers7::prox_grad()] with [penalties7::penalty_prox()],
+#' accelerated.
 #'
 #' @param obj The full objective.
 #' @param beta The current stacked coefficients.
 #' @param block One entry of `statmod_blocks()$sparse`.
 #' @param hyper The hyperparameters.
-#' @param maxit The iteration budget.
+#' @param maxit The iteration budget of the proximal gradient route and of the
+#'   structural route. The coordinate descent route has a budget of its own,
+#'   set in [coord_fit()] and [coord_call()].
 #' @param tol The stopping tolerance.
-#' @param verbose Whether the optimizer prints its own trace.
+#' @param verbose Whether the optimizer of the proximal routes prints its own
+#'   trace. The coordinate descent route does not use it.
+#' @param spec A [StatmodSpec()]. With `spec` or `design` `NULL` the
+#'   coordinate descent is skipped.
+#' @param design The design, as [statmod_design()] returns it.
+#' @param expected `TRUE` for the expected information in the working weights
+#'   of the coordinate descent, `FALSE` for the observed one.
+#' @param approx How the expected information is approximated for a family
+#'   with no closed form, as in [coord_fit()].
 #'
 #' @return A list with `par` (the whole vector, updated in this block),
-#'   `value`, `converged` and `iterations`.
+#'   `value`, `converged`, `iterations` and `method` (`"coordinate descent"`,
+#'   `"proximal gradient"` or `"proximal gradient (structural)"`).
 #'
 #' @seealso [statmod()]
 #'
@@ -250,21 +270,19 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #' or not that term has more than one.
 #'
 #' @details
-#' Twelve places used to run the same loop: over the distribution parameters,
-#' over each one's terms, asking each term for its penalty. Every one of them
-#' assumed a term carries at most one.
+#' The enumeration runs over the distribution parameters and over the terms of
+#' each, and reads the penalties of each term. A term may carry several
+#' penalties, over different subsets of its own parameters, as a panel model
+#' with a population value and a shrunk deviation per group needs. A
+#' covariance class (see [statmod_classes()]) is one unit over the stacked
+#' columns of its members. The callers that need the penalties of a model
+#' read this one enumeration.
 #'
-#' A term may carry several, over different subsets of its own parameters,
-#' as a panel model with a population value and a shrunk deviation
-#' per group needs. Enumerating once is both the generalization and the
-#' removal of eleven copies.
-#'
-#' **The key** is the term's name in the formula, and the entry's own name
-#' appended after `::` when the term carries more than one. Two
-#' `ridge()` terms are two terms with two keys and two hyperparameters,
-#' which they already were; a term with one penalty over the whole of itself
-#' keys exactly as before, so nothing that reads a hyperparameter by term name
-#' changes.
+#' **The key** is the term's name in the formula, with the entry's own name
+#' appended after `::` when the term carries more than one penalty and the
+#' entry is named. Two `ridge()` terms are two terms with two keys and two
+#' hyperparameters. A term with one penalty has its name alone as key, so a
+#' hyperparameter is read by the term's name.
 #'
 #' `statmod_penalized_units()` builds the list. `statmod_penalized()`
 #' returns it from the design's `eta_memo` environment where the design has
@@ -276,9 +294,13 @@ sparse_fit <- function(obj, beta, block, hyper, maxit = 500, tol = 1e-8,
 #' @param design The design, as [statmod_design()] returns it.
 #'
 #' @return A list of entries, each with `param`, `term` (the name in
-#'   the formula), `key`, `cols` (positions within the parameter's
-#'   coefficients), `index` (positions in the stacked vector) and
-#'   `penalty`.
+#'   the formula), `key`, `within`, `penalty`, `fixed`, `n_values`, `values`,
+#'   `min_ratio`, `search`, `ids`, `structural`, `cols` and `index`. For an
+#'   ordinary unit `cols` are positions within the parameter's coefficients and
+#'   `index` positions in the stacked vector. For a structural unit `cols` are
+#'   positions among the term's own parameters and `index` is `NULL`. The entry
+#'   of a covariance class also carries `class`, `params`, `pieces`, `mixed`
+#'   and, for a mixed class, `joint` and `beta_index`.
 #'
 #' @seealso [statmod_blocks()],
 #'   [modelterms7::term_penalties()]
@@ -375,27 +397,30 @@ statmod_penalized_units <- function(spec, design) {
 #'
 #' Each member's own block is already group-major, so member \eqn{k}'s columns
 #' for group \eqn{i} are its positions \eqn{(i-1)d_k + 1} to \eqn{id_k}. The
-#' union across members is **not** contiguous -- one member's columns all
+#' union across members is **not** contiguous (one member's columns all
 #' precede the next member's in the stacked vector, and the two may be in
-#' different equations -- so what comes out is a permutation rather than a
-#' range. Nothing downstream minds: reading and writing a matrix at
-#' `[index, index]` is correct for any index, provided the penalty's own
-#' output is in the same order, which is what this ordering arranges.
+#' different equations), so what comes out is a permutation and not a range.
+#' Reading and writing a matrix at `[index, index]` is correct for any index,
+#' provided the penalty's own output is in the same order, which is what this
+#' ordering arranges.
 #'
 #' A class whose members are all inside a structural term is addressed in that
 #' term's own parameters instead, which is the vector its penalty is read at
 #' and where the design has no column. `class_zeta_cols()` interleaves those
 #' positions by the same rule, and `class_pieces()` is not consulted at all,
-#' there being no design block to look the columns up in.
+#' there being no design block to look the columns up in. A class split
+#' between coefficients and a structural term's parameters is addressed in the
+#' joint vector by [class_joint_pieces()].
 #'
 #' @param cl One class, from [statmod_classes()].
 #' @param design The design.
 #' @param params The distribution's parameters, in order.
 #' @param offs Where each parameter's coefficients start in the stacked vector.
 #'
-#' @return `class_pieces()` a list of lists with `param`, `term`, `cols` and
-#'   `index`; `class_index()` and `class_zeta_cols()` an integer vector of
-#'   `m * dim` positions.
+#' @return `class_pieces()` a list with one element per member: the member's
+#'   piece (see [label_pieces()]) with `cols` and `index` added;
+#'   `class_index()` and `class_zeta_cols()` an integer vector of `m * dim`
+#'   positions.
 #'
 #' @seealso [statmod_penalized()], their caller.
 #'
@@ -457,25 +482,28 @@ class_zeta_cols <- function(cl) {
 #'
 #' A coefficient member's positions are its parameter's offset plus its
 #' columns, exactly as [class_pieces()] gives them. A structural member's are
-#' `nb` plus its place among the FREE parameters, which is not its place among
+#' `nb` plus its place among the free parameters, which is not its place among
 #' all of them: a held one is not in the joint vector at all.
 #'
 #' # A held coordinate cannot be in a class
 #'
 #' The prior's dimension is fixed when the class is assembled, from the members'
-#' widths. If one of the coordinates it collects is then held -- the level of a
+#' widths. If one of the coordinates it collects is then held (the level of a
 #' filter is, wherever a linear intercept in the same equation already carries
-#' the constant -- the class has fewer coordinates than its prior describes and
-#' there is no honest matrix to estimate. It is rejected here, where the held
-#' set is visible, naming the coordinate and the two ways out.
+#' the constant), the class has fewer coordinates than its prior describes and
+#' there is no covariance matrix of the prior's dimension to estimate. It is
+#' rejected here, where the held set is visible, naming the coordinate and the
+#' two ways out.
 #'
 #' @param cl One class, from [statmod_classes()], whose `space` is `"mixed"`.
 #' @param design The design.
 #' @param params The distribution's parameters, in order.
 #' @param offs Where each parameter's coefficients start in the stacked vector.
 #'
-#' @return A list of lists, one per member, each the piece with `joint` added
-#'   and, for a coefficient member, `cols` and `index`.
+#' @return A list of lists, one per member, each the piece with `joint` added.
+#'   A coefficient member also gets `cols` and `index`. A structural member
+#'   gets `zcols` (positions among the term's own parameters) and has `cols`
+#'   and `index` set to `NULL`.
 #'
 #' @seealso [statmod_penalized()], its caller; [joint_penalty_at()], which
 #'   reads the positions.
@@ -521,16 +549,18 @@ class_joint_pieces <- function(cl, design, params, offs) {
 #'
 #' @details
 #' Written once because a unit's coefficients are addressed differently
-#' depending on what it is, and every caller wants the same vector. An ordinary
+#' depending on what it is, and every caller needs the same vector. An ordinary
 #' unit sits in one equation and its columns are positions in that parameter's
-#' coefficients; a covariance class spans several and is addressed only in the
-#' stacked vector. Stacking and indexing answers both, and for an ordinary unit
+#' coefficients; a covariance class may span several equations and is
+#' addressed only in the stacked vector. Stacking and indexing serves both, and
+#' for an ordinary unit
 #' it returns exactly what `coef[[u$param]][u$cols]` returned, the stacked
 #' index being that parameter's offset plus those columns.
 #'
 #' A structural unit has no position in the stacked vector at all: its penalty
 #' covers the term's own parameters, which contribute no design column. It is
-#' read from the design's structural state instead and never reaches here.
+#' read from the design's structural state instead. A mixed covariance class
+#' is addressed in the joint vector. [unit_joint_beta()] reads both of them.
 #'
 #' @param u One unit, from [statmod_penalized()].
 #' @param coef The coefficients, a named list by distribution parameter.
@@ -551,15 +581,19 @@ unit_beta <- function(u, coef, params) {
 #'
 #' @description
 #' The positions the unit's penalty covers, in whichever vector it is
-#' addressed in: the stacked coefficients for an ordinary unit, and the
-#' structural term's own parameters for one whose coefficients are a filter's.
+#' addressed in: the stacked coefficients for an ordinary unit, the
+#' structural term's own parameters for one whose coefficients are a filter's,
+#' and the joint vector of coefficients and free structural parameters for a
+#' mixed class.
 #'
 #' @details
 #' A reader that only needs to know how many coordinates a penalty covers, or
-#' which of a term's components they belong to, wants the same answer for both
-#' kinds and cannot get it from one field: an ordinary unit leaves `cols` empty
-#' where it spans several equations, and a structural one has no `index` at
-#' all.
+#' which of a term's components they belong to, needs the same answer for every
+#' kind of unit, and the kinds keep their positions in different fields. An
+#' ordinary unit and a covariance class among the coefficients carry them in
+#' `index`. A structural unit has no `index` and carries them in `cols`, among
+#' the term's own parameters. A mixed class has neither and carries them in
+#' `joint`.
 #'
 #' @param u One unit, from [statmod_penalized()], or a class carrying the same
 #'   two fields.
@@ -570,6 +604,9 @@ unit_beta <- function(u, coef, params) {
 #'
 #' @keywords internal
 unit_positions <- function(u) {
+  # a mixed class spans coefficients and a filter's parameters, and only the
+  # joint vector addresses both
+  if (isTRUE(u$mixed)) return(as.integer(u$joint))
   if (isTRUE(u$structural)) u$cols else u$index
 }
 
@@ -583,16 +620,16 @@ unit_positions <- function(u) {
 #' kinds can be read off one diagonal.
 #'
 #' @details
-#' The three kinds are addressed in three different vectors and the caller
-#' that wants a trace wants one. A mixed class already records the answer, its
+#' The three kinds are addressed in three different vectors, and a caller that
+#' forms a trace needs one. A mixed class already records the answer, its
 #' `joint` field being built by [class_joint_pieces()]. A structural unit
-#' records positions among ALL of a term's parameters, where the joint vector
+#' records positions among all of a term's parameters, where the joint vector
 #' holds only the free ones, so a held coordinate has to be mapped out rather
 #' than offset past. An ordinary unit's stacked index is already a position in
 #' the joint vector, coefficients coming first and none of them being held.
 #'
-#' Written once because the convention is composed in three places otherwise,
-#' and two of them would agree only by accident.
+#' Written once so that the convention is composed in one place and not in
+#' three.
 #'
 #' @param u One unit, from [statmod_penalized()].
 #' @param spec A [StatmodSpec()].
@@ -628,16 +665,15 @@ unit_joint_positions <- function(u, spec, design) {
 #' The three kinds are read from two different places. An ordinary unit's
 #' coordinates are coefficients and come from `coef`. A structural unit's
 #' are a filter's own parameters and come from the design's structural state,
-#' on the UNCONSTRAINED scale, which is the scale the recursion is
+#' on the unconstrained scale, which is the scale the recursion is
 #' differentiated on and the one the penalty covers. A mixed class holds some
 #' of each and interleaves them group by group, so its pieces are read
 #' separately and put back in the class's own order, which is what
 #' [class_joint_pieces()] records.
 #'
-#' Written beside [unit_joint_positions()] because a value and its address
-#' are one convention: a caller composing them separately would scatter one
-#' unit's numbers at another's coordinates, and the two would agree only by
-#' accident.
+#' Written beside [unit_joint_positions()] because a value and its position
+#' must follow the same convention. A caller that composed them separately
+#' could place one unit's values at another unit's positions.
 #'
 #' @param u One unit, from [statmod_penalized()].
 #' @param spec A [StatmodSpec()].
@@ -683,8 +719,9 @@ unit_joint_beta <- function(u, spec, design, coef) {
 #' @param spec A [StatmodSpec()].
 #'
 #' @return A list of entries with `param`, `term`, `key`,
-#'   `within` (positions among the term's own parameters) and
-#'   `penalty`.
+#'   `within` (positions among the term's own parameters), `penalty`, `fixed`,
+#'   `n_values`, `values`, `min_ratio`, `search` and `ids`. The entry of a
+#'   covariance class also carries `class` and `params`.
 #'
 #' @seealso [statmod_penalized()]
 #'
@@ -758,9 +795,9 @@ statmod_penalty_keys <- function(spec) {
 #' expressions for one grouping, and `id` under two subsets is one expression
 #' for two groupings.
 #'
-#' Correlating effects on different groupings means nothing -- they are indexed
-#' by different things and there is no block to estimate -- so a label used on
-#' two groupings is an error naming both.
+#' Correlating effects on different groupings means nothing, since they are
+#' indexed by different things and there is no block to estimate, so a label
+#' used on two groupings is an error naming both.
 #'
 #' # Whose prior it is
 #'
@@ -770,21 +807,24 @@ statmod_penalty_keys <- function(spec) {
 #' [parameters7::dr_prod()], whose coordinates are the log standard deviations
 #' and the correlations' angles, so a printed hyperparameter is the quantity it
 #' names. At a total of one column there is no correlation and the default is
-#' the centered univariate Gaussian a single unlabelled term would have built.
+#' the centered univariate Gaussian that a single unlabeled term would have
+#' built.
 #'
-#' A class whose members carry priors of **different families** -- a Gaussian
-#' intercept correlated with a Student t slope -- is a copula and not an
-#' elliptical family; \pkg{modelterms7} rejects a univariate `distrib` on a
-#' labelled term for that reason, and this function never sees the case.
+#' A class whose members carry priors of **different families** (a Gaussian
+#' intercept correlated with a Student t slope) is a copula and not an
+#' elliptical family. \pkg{modelterms7} rejects a univariate `distrib` on a
+#' labeled term for that reason, and this function never sees the case.
 #'
 #' @param terms The built terms, a named list of named lists: one element
 #'   per distribution parameter, in the family's order.
 #'
-#' @return A list, one element per class, each with `tag`, `group` (the
-#'   deparsed expression), `levels`, `m`, `dim` (the class total), `penalty`
-#'   and `pieces` -- one per member, with its parameter, its term's name and
-#'   its within-group column count, in the order the equations were walked.
-#'   Empty where no term carries a label.
+#' @return A list named by the class key (`<label> | <grouping>`), one element
+#'   per class, each with `tag`, `group` (the deparsed expression), `levels`,
+#'   `m`, `key`, `dim` (the class total), `space` (see [class_space()]),
+#'   `structural`, `sterm` (the name of the structural term, present only
+#'   where the class touches one), `penalty` and `pieces`. The pieces are one
+#'   per member, as [label_pieces()] returns them, in the order the equations
+#'   were walked. Empty where no term carries a label.
 #'
 #' @seealso [statmod_penalty_keys()], which turns each into one penalized
 #'   unit; [statmod_penalized()] for the interleaved index it is read at.
@@ -859,12 +899,13 @@ statmod_classes <- function(terms) {
 #' design carries in its structural state.
 #'
 #' A class whose members are all of one kind is read in that vector. A class
-#' **split between them** is read in the JOINT vector the fit already builds,
+#' **split between them** is read in the joint vector the fit already builds,
 #' \eqn{[\beta; \zeta_{\mathrm{free}}]}: the inner step, the marginal
 #' criterion and the variance all assemble it, with the coefficients first and
 #' a filter's free parameters after them. What such a class adds to those three
-#' is the CROSS block, which the penalty produces on its own -- it is one
-#' Hessian over the class's stacked vector and knows nothing of the split.
+#' is the cross block, which the penalty produces on its own: it is one
+#' Hessian over the class's stacked vector, computed without reference to the
+#' split between coefficients and filter parameters.
 #'
 #' @param cl One class, as [statmod_classes()] assembles it.
 #'
@@ -882,36 +923,35 @@ class_space <- function(cl) {
 }
 
 
-#' Every Labelled Effect a Term Carries, Its Sub-Terms Included
+#' Every Labeled Effect in a Term, Its Sub-Terms Included
 #'
 #' @description
-#' One piece per labelled random effect reachable from a term: the term itself
+#' One piece per labeled random effect reachable from a term: the term itself
 #' where it carries a label, and the sub-terms developing its own parameters
 #' otherwise, walked to any depth.
 #'
 #' @details
 #' # Why a sub-term is reachable at all
 #'
-#' `seg(x, psi ~ random(~ 1 | u | id))` develops a break-point over a labelled
-#' random effect. The labelled term is not one of the equation's terms -- the
-#' equation carries one `SegTerm`, whose own label is absent -- and its
-#' coefficients are columns of that term's block. Measured, they are exactly
-#' the ones [modelterms7::term_components()] reports as that component's
-#' `sub_index`, so a piece records them as `within`, positions in the parent's
+#' `seg(x, psi ~ random(~ 1 | u | id))` develops a break-point over a labeled
+#' random effect. The labeled term is not one of the equation's terms (the
+#' equation carries one `SegTerm`, whose own label is absent), and its
+#' coefficients are columns of that term's block. They are the columns that
+#' [modelterms7::term_components()] reports as that component's `sub_index`,
+#' so a piece records them as `within`, positions in the parent's
 #' block, and the design turns them into positions in the stacked vector the
 #' same way it does for any other term.
 #'
-#' That is the whole of what a subformula costs here, and it is why the case is
-#' covered: a labelled effect written in a subformula of an **additive** term
-#' lives in the same vector as one written in an equation.
+#' A labeled effect written in a subformula of an **additive** term lives in
+#' the same vector as one written in an equation, so the same positions apply.
 #'
 #' A **structural** parent addresses its coefficients differently: they are the
 #' term's own parameters, which contribute no design column and live in the
 #' design's structural state. The walk is the same and the positions it
-#' composes are the same numbers -- measured, a labelled effect inside
-#' `gas(kappa1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly the
-#' `cols` the unlabelled sub-term's own penalty is read at -- so what a piece
-#' records is which vector they index rather than a different arithmetic.
+#' composes are the same numbers (for a labeled effect inside
+#' `gas(kappa1 ~ 1 + random(~ 1 | u | g))` they are the `cols` at which the
+#' unlabeled sub-term's own penalty is read), so a piece records which vector
+#' the positions index and not a different arithmetic.
 #'
 #' # Depth
 #'
@@ -920,7 +960,7 @@ class_space <- function(cl) {
 #' columns are positions in its parent's block, which are themselves positions
 #' in the equation-level term's.
 #'
-#' A labelled term's own sub-terms are not walked. Its columns are the class's
+#' A labeled term's own sub-terms are not walked. Its columns are the class's
 #' already, and anything inside it belongs to that block rather than to another.
 #'
 #' @param term One built term.
@@ -930,18 +970,19 @@ class_space <- function(cl) {
 #' @param within The piece's columns in that term's block, or `NULL` at the top
 #'   level, where the piece is the whole of it.
 #' @param path Which of the parent's parameters were developed to reach the
-#'   piece, outermost first, empty at the top level. It says what the effect
-#'   is an effect ON: a labelled random intercept written inside
+#'   piece, outermost first, empty at the top level. It identifies the quantity
+#'   on which the effect acts: a labeled random intercept written inside
 #'   `seg(x, psi ~ ...)` is an effect on the break-point and not on the mean,
 #'   and a report naming only the equation would be read as the second.
 #' @param structural Whether `within` indexes a structural term's own
 #'   parameters rather than columns of the design. `NULL` at the top level,
-#'   where it is read from the term; a recursive call passes what it was told.
+#'   where it is read from the term; a recursive call passes the value it
+#'   received.
 #'
 #' @return A list of pieces, each with `param`, `term`, `within`, `path`,
 #'   `dim`, `tag`, `group` (as [modelterms7::term_group()] returns it),
 #'   `structural` and `distrib`. Empty where nothing under the term is
-#'   labelled.
+#'   labeled.
 #'
 #' @seealso [statmod_classes()], its caller; [class_pieces()] for the mapping
 #'   of `within` onto the stacked vector.
@@ -994,15 +1035,12 @@ label_pieces <- function(term, param, nm, within = NULL,
 #' @details
 #' The prior describes the effects of **one group** over every column the label
 #' collects, so its dimension is the class's total and the penalty covers
-#' \eqn{m} such blocks. Which chart the covariance rides is a modeling choice
-#' and is [parameters7::dr_prod()] by default, where a coordinate is the
-#' logarithm of a standard deviation exactly; the alternative, log-Cholesky,
-#' is the same family of matrices written so that only the first coordinate
-#' reads as one.
+#' \eqn{m} such blocks. The default prior is a centered multivariate Gaussian
+#' whose covariance is written by [parameters7::dr_prod()], where a coordinate
+#' is the logarithm of a standard deviation exactly.
 #'
-#' Naming a `distrib` on more than one member is an error rather than a
-#' precedence rule: the prior is one object and there is nothing to say which
-#' of two should win.
+#' Naming a `distrib` on more than one member is an error and not a precedence
+#' rule: the prior is one object, so two of them cannot both be used.
 #'
 #' @param cl One class, as [statmod_classes()] assembles it before the penalty.
 #'
@@ -1056,11 +1094,11 @@ class_penalty <- function(cl) {
 #' return.
 #'
 #' @details
-#' which hyperparameters are estimated is a property of the terms, not of the
-#' criterion: the term is where the penalty is named, and a criterion argument
-#' saying otherwise was read by nothing when the two disagreed. Everything
-#' here consults this one enumeration: the outer index, the path, and the
-#' summary's account of what was estimated and what was given.
+#' Which hyperparameters are estimated is a property of the terms and not of
+#' the criterion, because the term is where the penalty is named.
+#' [path_rows()] and the summary's account of what was estimated and what was
+#' held read this enumeration. The outer index reads the same `fixed` entries
+#' of [statmod_penalized()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1086,13 +1124,13 @@ statmod_held <- function(spec, design = NULL) {
 #'
 #' @description
 #' What a hyperparameter row is filed under: the term's name where the term
-#' carries one penalty, and `term::entry` where it carries several.
+#' carries one penalty or the entry has no name, and `term::entry` where the
+#' term carries several penalties and the entry is named.
 #'
 #' @details
-#' The composition is written once because two callers reading a
-#' hyperparameter by a key they each compose would agree only by accident. A
-#' term carrying one penalty keys as it always did, so a formula of ordinary
-#' terms is unaffected by the entry names the terms now supply.
+#' The composition is written once so that every caller reading a
+#' hyperparameter by key uses the same key. A term carrying one penalty keys
+#' by its name alone, whatever the entry is called.
 #'
 #' @param term The term's name in the formula.
 #' @param entries The term's entries, as
@@ -1118,10 +1156,10 @@ statmod_entry_key <- function(term, entries, entry) {
 #' `NULL` where there is none.
 #'
 #' @details
-#' The places that read a penalty from a `(parameter, term)` pair used to
-#' fetch it with `term_penalty()` and take the term's whole block, which
-#' assumes one penalty per term. Looking it up here answers the same question
-#' where that holds and the right question where it does not.
+#' A reader that starts from a `(parameter, term)` pair looks the penalty up
+#' here and not from the term's whole block, which assumes one penalty per
+#' term. The lookup returns that penalty where the term has one, and the
+#' penalty with the given key where it has several.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1142,22 +1180,23 @@ statmod_unit <- function(spec, design, param, key) {
 #' How Many Values a Path Visits for One Hyperparameter
 #'
 #' @description
-#' The grid size the term asked for, or the layer's fallback where it asked
-#' for nothing.
+#' The grid size that the term specifies, or the fallback of
+#' [path_fallbacks()] where the term specifies none.
 #'
 #' @details
 #' How finely a hyperparameter is swept is a property of the term for the
 #' same reason as whether it is swept at all: a penalized block of four
-#' columns and one of four hundred want different grids, and a criterion
-#' applies to every hyperparameter of the model at once, the smooth ones
-#' included, and those are read at the mode instead of being swept, so a
-#' criterion cannot know which kind it is looking at. [modelterms7::term_grid()] is where a
-#' term says so, and the value travels with the penalty's entry, so one
+#' columns and one of four hundred want different grids. A criterion applies
+#' to every hyperparameter of the model at once, the smooth ones included, and
+#' those are read at the mode instead of being swept, so the grid size cannot
+#' be a property of the criterion. [modelterms7::term_grid()] is where a term
+#' gives its grid size, and the value travels with the penalty's entry, so one
 #' reached through a sub-term of a structural term carries it too.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param row One row of [path_rows()]'s index.
-#' @param default [path_fallbacks()]'s, for a term that named none.
+#' @param default The fallback of [path_fallbacks()], used for a term that
+#'   specifies none.
 #'
 #' @return A single integer.
 #'
@@ -1169,21 +1208,23 @@ statmod_grid_size <- function(spec, row, default) {
 }
 
 
-#' How Far Down the Path Reaches for One Term
+#' The Depth of a Path for One Term
 #'
 #' @description
-#' The depth the term asked for, or the layer's fallback where it asked for
-#' nothing.
+#' The depth that the term specifies, or the fallback of [path_fallbacks()]
+#' where the term specifies none.
 #'
 #' @details
-#' One number per term, not one per hyperparameter, because only the sweep by
-#' kink size reads it. A bounded hyperparameter is swept over its own
-#' interval, and a shape that does not move the kink over a geometric grid
-#' above its lower bound; neither takes its length from here.
+#' One number per term and not one per hyperparameter, because only the sweep
+#' by kink size reads it. A bounded hyperparameter is swept over its own
+#' interval, and a shape that does not move the kink over a grid whose
+#' distances above the smallest admissible shape are geometric; neither takes
+#' its length from here.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param row One row of [path_rows()]'s index.
-#' @param default [path_fallbacks()]'s, for a term that named none.
+#' @param default The fallback of [path_fallbacks()], used for a term that
+#'   specifies none.
 #'
 #' @return A single number.
 #'
@@ -1199,16 +1240,16 @@ statmod_min_ratio <- function(spec, row, default) {
 #'
 #' @description
 #' `"grid"` for every combination of the term's kinked hyperparameters,
-#' `"cyclic"` for one at a time, or the default where the term named
+#' `"cyclic"` for one at a time, or the default where the term specifies
 #' neither.
 #'
 #' @details
 #' It belongs to the term, for the reason the whole enumeration does: a
-#' criterion is asked about every hyperparameter of the model, and a smooth
-#' one is read at the mode instead of being swept, so most of what it is
-#' asked about could not answer. A penalty with a kink is fitted
-#' by a scheme of its own, and how that scheme covers the term's own
-#' hyperparameters is part of the scheme.
+#' criterion applies to every hyperparameter of the model, and a smooth one is
+#' read at the mode instead of being swept, so a setting that concerns only
+#' the kinked hyperparameters cannot belong to the criterion. A penalty with a
+#' kink is fitted by a scheme of its own, and how that scheme covers the
+#' term's own hyperparameters is part of the scheme.
 #'
 #' Being per term is also what keeps one term's choice off another's:
 #' `y ~ lasso(X) + enet(R, search = "cyclic")` sweeps the elastic net
@@ -1216,7 +1257,7 @@ statmod_min_ratio <- function(spec, row, default) {
 #'
 #' @param spec A [StatmodSpec()].
 #' @param row One row of [path_rows()]'s index.
-#' @param default What to use where the term named nothing.
+#' @param default What to use where the term specifies nothing.
 #'
 #' @return `"grid"` or `"cyclic"`.
 #'
@@ -1237,8 +1278,7 @@ statmod_search <- function(spec, row, default = "grid") {
 #' The Values a Term Wrote Out for One Hyperparameter
 #'
 #' @description
-#' The grid the term named, or `NULL` where it left the path to build
-#' one.
+#' The grid the term specifies, or `NULL` where the path builds one.
 #'
 #' @details
 #' The third state of a hyperparameter's argument, beside holding it at one
@@ -1267,10 +1307,15 @@ statmod_values <- function(spec, row) {
 
 #' One Setting of the Path, Read From the Term
 #'
+#' @description
+#' Reads one setting of the path from the penalty's entry in the term, and
+#' returns `default` where the term does not set it.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param row One row of [path_rows()]'s index.
 #' @param field Which field of the penalty's entry to read.
-#' @param default What the criterion asks for.
+#' @param default The fallback of [path_fallbacks()] for this setting, used
+#'   where the term specifies none.
 #' @param name The hyperparameter's name, or `NULL` where the setting
 #'   is one per term.
 #'

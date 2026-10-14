@@ -7,7 +7,7 @@
 iwls_switch_rate()
 }
 \value{
-A single number, or \code{NA} for the count alone.
+A single number.
 }
 \description{
 The ratio of consecutive scores above which \code{\link[=iwls_fit]{iwls_fit()}} continues on the

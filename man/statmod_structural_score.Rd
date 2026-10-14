@@ -32,6 +32,10 @@ reverse pass is needed.
 The reverse pass answers a different question: the derivative in the
 coefficients of the equations, where a coefficient reaches the level only
 through the scores at earlier times. That is \code{modelterms7::term_adjoint()}.
+
+For a term of the likelihood shape, a mixture over latent states, the
+derivative is the Jacobian of the term's log-likelihood in its parameters,
+weighted by the observation weights.
 }
 \seealso{
 \code{\link[=statmod_filter_at]{statmod_filter_at()}} for the filter run this reads,

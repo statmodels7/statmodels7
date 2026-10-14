@@ -2,21 +2,21 @@
 % Please edit documentation in R/spec.R
 \name{check_trials_known}
 \alias{check_trials_known}
-\title{Refuse a Quantity That Needs Trials the Rows Do Not Carry}
+\title{Reject a Quantity That Needs Trials the Rows Lack}
 \usage{
 check_trials_known(distrib, what)
 }
 \arguments{
 \item{distrib}{The family, as \code{\link[=statmod_respec]{statmod_respec()}} returns it.}
 
-\item{what}{The quantity asked for, in words, for the message.}
+\item{what}{The quantity requested, in words, for the message.}
 }
 \value{
 \code{distrib}, unchanged.
 }
 \description{
 Signals an error where the family's numbers of trials are missing, which
-is what \code{\link[=statmod_respec]{statmod_respec()}} leaves when a prediction is asked at rows with
+is what \code{\link[=statmod_respec]{statmod_respec()}} leaves when a prediction is made at rows with
 no response.
 }
 \details{

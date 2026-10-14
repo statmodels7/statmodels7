@@ -21,12 +21,13 @@ A single logical.
 \code{\link[=start_from]{start_from()}} matches column by column.
 }
 \details{
-The question is asked of the TERM rather than of its name. A caller may
-name a term anything, and what decides is that the block carries ordinary
-model-matrix columns whose names are variables and levels -- so a
-coefficient of one model means what the coefficient of the same name means
-in another. Every other kind of block is a basis, a set of levels or a
-standardized design, where a shared name is not a shared meaning.
+The test reads the class of the term and not the name of the term. A caller
+may give a term any name, and the deciding property is that the block
+carries ordinary model-matrix columns whose names are variables and levels,
+so that a coefficient of one model has the same meaning as the coefficient
+of the same name in another. Every other kind of block is a basis, a set of
+levels or a standardized design, where a shared name does not imply a
+shared meaning.
 }
 \seealso{
 \code{\link[=start_from]{start_from()}}, which uses it to decide how a block is matched.

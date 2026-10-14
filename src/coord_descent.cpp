@@ -24,7 +24,8 @@ using namespace Rcpp;
 //                   g_j = (X'Wz)_j - sum_k (X'WX)_jk beta_k,
 //               so that a change of beta_k by d costs one pass over the
 //               screened set, O(m), and the column (X'WX)_.k is computed once
-//               the first time coordinate k moves off zero. It wins when n is
+//               the first time coordinate k is nonzero (at the start or after
+//               its first move). It wins when n is
 //               large next to the number of live coordinates, which is the
 //               regime a kinked penalty is used in, and pays for it in the
 //               memory the cached columns take.

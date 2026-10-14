@@ -25,12 +25,13 @@ square-root design, whose cross-product is the unpenalized information, so
 the penalty does not enter.
 
 On the assembled route it is the diagonal of the matrix itself, which
-folds the penalty in. That is a different normalizer, and it is accepted
-because the assembled route is already the fallback: it is reached only
-where no square root exists, and the reading it feeds arbitrates a verdict
-rather than driving the loop.
+folds the penalty in. That is a different normalizer. It is accepted
+because the reading only arbitrates a verdict and does not drive the loop,
+and because the assembled route is used either where no square root
+exists or when \code{"chol"} is requested.
 }
 \seealso{
-\code{\link[=iwls_score]{iwls_score()}}, the only caller.
+\code{\link[=iwls_score]{iwls_score()}}, which normalizes by it, and \code{\link[=iwls_fit]{iwls_fit()}}, the only
+caller.
 }
 \keyword{internal}

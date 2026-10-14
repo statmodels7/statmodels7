@@ -15,8 +15,7 @@ statmod_values(spec, row)
 A numeric vector, or \code{NULL}.
 }
 \description{
-The grid the term named, or \code{NULL} where it left the path to build
-one.
+The grid the term specifies, or \code{NULL} where the path builds one.
 }
 \details{
 The third state of a hyperparameter's argument, beside holding it at one

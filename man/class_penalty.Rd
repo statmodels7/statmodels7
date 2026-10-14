@@ -19,15 +19,12 @@ members named, or the centered multivariate Gaussian that is the default.
 \details{
 The prior describes the effects of \strong{one group} over every column the label
 collects, so its dimension is the class's total and the penalty covers
-\eqn{m} such blocks. Which chart the covariance rides is a modeling choice
-and is \code{\link[parameters7:dr_prod]{parameters7::dr_prod()}} by default, where a coordinate is the
-logarithm of a standard deviation exactly; the alternative, log-Cholesky,
-is the same family of matrices written so that only the first coordinate
-reads as one.
+\eqn{m} such blocks. The default prior is a centered multivariate Gaussian
+whose covariance is written by \code{\link[parameters7:dr_prod]{parameters7::dr_prod()}}, where a coordinate
+is the logarithm of a standard deviation exactly.
 
-Naming a \code{distrib} on more than one member is an error rather than a
-precedence rule: the prior is one object and there is nothing to say which
-of two should win.
+Naming a \code{distrib} on more than one member is an error and not a precedence
+rule: the prior is one object, so two of them cannot both be used.
 }
 \seealso{
 \code{\link[=statmod_classes]{statmod_classes()}}, its only caller.

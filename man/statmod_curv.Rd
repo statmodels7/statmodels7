@@ -28,20 +28,18 @@ with: \eqn{c_j = \sum_i w_i (x_{ij} - \bar x_j)^2}, the working weights
 being the ones \code{\link[=coord_working]{coord_working()}} returns for the coordinate's own equation
 and \eqn{\bar x_j} the column's weighted mean where the equation's
 intercept is profiled out of the descent (\code{\link[=coord_centers]{coord_centers()}}), and
-\eqn{\sum_i w_i x_{ij}^2} where it is not. Reading the uncentered diagonal
-of the information instead, as 0.159.0 did, gave a curvature the centered
-step does not have: on \code{MASS::UScrime} with raw predictors, whose means
-reach 33 standard deviations, the ratio of the two reached 1138 and the
-step condition failed on every fit.
+\eqn{\sum_i w_i x_{ij}^2} where it is not. The uncentered diagonal of the
+information is not used, because it differs from the curvature of the
+centered step when the column means are large relative to their standard
+deviations.
 
-It is called at every pass of \code{\link[=statmod_alternate]{statmod_alternate()}} and once more at the
-fitted coefficients, which makes the scaling SELF-CONSISTENT (decided
-2026-09-29): at the fit, \eqn{c_j} is the curvature at the fit. Measured on
-60 simulated sparse regressions it gives 44 false positives against the
-58 of a curvature read once at the start, and it cannot fail the step
-condition, \code{\link[=coord_table_penalty]{coord_table_penalty()}} writing the current step's curvature
-into the table. Under a diagonal map \eqn{u = D\beta} the curvature is
-divided by \eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty
-under any other map, or reached through a sub-term, is left as it is.
+It is called at the starting coefficients, at every pass of
+\code{\link[=statmod_alternate]{statmod_alternate()}} and once more at the fitted coefficients, so that
+the scaling is self-consistent: at the fit, \eqn{c_j} is the curvature at
+the fit. The step condition of the descent is met because
+\code{\link[=coord_table_penalty]{coord_table_penalty()}} writes the current step's curvature into the
+table. Under a diagonal map \eqn{u = D\beta} the curvature is divided by
+\eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty under any
+other map, or reached through a sub-term, is left as it is.
 }
 \keyword{internal}

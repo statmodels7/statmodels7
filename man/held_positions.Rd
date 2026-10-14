@@ -13,7 +13,8 @@ held_positions(spec, design, obj, beta)
 
 \item{obj}{The objective, read for its split of the stacked vector.}
 
-\item{beta}{The stacked coefficients, read for their length alone.}
+\item{beta}{The stacked coefficients, read for their length and for the
+values of the coefficients that the terms hold.}
 }
 \value{
 A list of two numeric vectors of equal length, \code{where} (integer
@@ -25,14 +26,13 @@ the stacked coefficient vector the objective works on, with the values
 beside them.
 }
 \details{
-A hold is written by name because a name is what a caller can say and a
-position is not: the design's column order is the formula's business, and
-a term added to an equation moves every coordinate after it. The
-translation is the objective's own split of the stacked vector, so the
-answer is in the numbering every consumer of that vector already uses.
+A hold is written by name, because the column order of the design follows
+the formula and a term added to an equation moves every coordinate after
+it. The translation is the objective's own split of the stacked vector, so
+the answer is in the numbering that every consumer of that vector uses.
 
-A name that matches no coefficient of its equation is an error rather than
-a hold nothing enforces, which is what a silent \code{NA} would have been.
+A name that matches no coefficient of its equation is an error, because a
+silent \code{NA} would leave the hold unenforced.
 }
 \seealso{
 \code{\link[=fit_smooth]{fit_smooth()}}, which enforces the hold.

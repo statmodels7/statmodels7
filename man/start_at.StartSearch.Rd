@@ -23,5 +23,9 @@ the likelihood, exactly as \code{statmod_fit_joint()} does, and leaves the
 best it found in place --- which is how a strategy returning coefficients
 can nonetheless start a filter somewhere better than its own
 \code{term_start()}.
+
+The objective \code{obj} is required, and an error is signaled when it is
+\code{NULL}. A coefficient named in \code{over} is resolved by its label, with a bare
+name accepted where one equation alone carries it.
 }
 \keyword{internal}

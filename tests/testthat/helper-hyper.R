@@ -74,7 +74,7 @@ fit_at_hyper_spec <- function(spec, design, hy, distrib,
   blocks <- statmod_blocks(spec, design)
   cfg <- inner_settings(inner, distrib)
   obj <- statmod_objective(spec, hy, design, cfg$expected, cfg$approx)
-  beta <- statmod_start(spec, design, obj, start)
+  beta <- statmod_start(spec, design, obj, NULL)
   r <- statmod_alternate(spec, design, blocks, hy, inner, beta, cfg$expected,
                          cfg$approx, cfg$maxit, cfg$tol, verbosity(0))
   r$obj$split(r$par)

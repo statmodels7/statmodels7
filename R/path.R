@@ -16,21 +16,23 @@ NULL
 #' hyperparameter of its own, and a Laplace prior written by its scale has a
 #' kink whose size falls as that scale grows.
 #'
-#' The penalty is separable over the coefficients wherever it has a kink, a
-#' kinked penalty under a general map being the generalized-lasso problem and
-#' rejected upstream, so one coordinate answers for all of them.
+#' A kinked penalty is separable over the coefficients, and one under a general
+#' map (the generalized-lasso problem) is rejected upstream. Under a diagonal
+#' map, which `standardize = TRUE` writes, the kink differs by coordinate. This
+#' function reads the first coordinate's kink, and [coord_kinks()] returns the
+#' kink of every coordinate.
 #'
-#' The derivative just past the kink carries the distance it was read at,
-#' MCP's being \eqn{\lambda - \epsilon/\gamma}, so the two readings are
-#' extrapolated to the limit. Without that the shape parameters appear to move
-#' the kink by a millionth of themselves, which is enough to be selected for a
-#' path, and measures \eqn{\epsilon} in place of the penalty. The
-#' extrapolation is exact for a penalty that is affine on each side of the
-#' kink, which the lasso, SCAD, MCP and the elastic net all are.
+#' The derivative just past the kink depends on the distance it is read at
+#' (MCP's, for example, is \eqn{\lambda - \epsilon/\gamma}), so the one-sided
+#' derivatives at distances \eqn{\epsilon/2} and \eqn{\epsilon} are combined by
+#' Richardson extrapolation to the limit. The extrapolation is exact for a
+#' penalty that is affine on each side of the kink, as the lasso, SCAD, MCP and
+#' the elastic net are.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters, as a list or a named vector.
-#' @param eps How far either side of the kink to read the derivative.
+#' @param eps The larger of the two distances from the kink at which the
+#'   derivative is read.
 #'
 #' @return A single non-negative number, `0` where there is no kink.
 #'
@@ -55,24 +57,24 @@ kink_scale <- function(pen, theta, eps = 1e-4) {
 #' Which Hyperparameters Set the Size of the Kink
 #'
 #' @description
-#' The names whose value moves [kink_scale()], which are the ones a
-#' path over the penalty has to vary.
+#' The names of the hyperparameters whose value changes [kink_scale()].
 #'
 #' @details
-#' The question is put to the penalty and never answered from a list of
-#' families: the shape parameters of SCAD and MCP leave the subdifferential at
-#' zero unchanged and govern how fast the penalty flattens further out, while
-#' \eqn{\lambda} and the elastic net's \eqn{\alpha} both scale it.
+#' Each hyperparameter is moved to another admissible value and the size of the
+#' kink is read again, so that no list of families is consulted. The shape
+#' parameters of SCAD and MCP leave the subdifferential at zero unchanged and
+#' govern how fast the penalty flattens further out, while \eqn{\lambda} and
+#' the elastic net's \eqn{\alpha} both scale it.
 #'
 #' `unbounded` restricts the answer to the hyperparameters with no upper
-#' bound, which is the default choice of what to select. The reference
-#' implementations do the same by convention, \pkg{glmnet} holding
-#' \eqn{\alpha} fixed and \pkg{ncvreg} holding \eqn{\gamma}, and a bounded
-#' shape is better swept by hand over a few values than searched.
+#' bound. [path_by_kink()] calls this function with `unbounded = FALSE` and
+#' excludes the bounded hyperparameters itself; those are swept over their
+#' interval by [path_grid()].
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
 #' @param unbounded Whether to keep only those with an infinite upper bound.
+#'   `TRUE` by default.
 #'
 #' @return A character vector, possibly empty.
 #'
@@ -123,22 +125,21 @@ bounded_bump <- function(v, b) {
 #' @details
 #' The size of the kink is monotone in such a hyperparameter but not
 #' necessarily increasing: a Laplace prior written by its scale has a kink of
-#' \eqn{1/\sigma}, which narrows as the hyperparameter grows. Which way to walk
-#' is therefore measured before walking, by comparing the size at the current
-#' value with the size at twice it, and only then is the root bracketed by
-#' doubling and found with [stats::uniroot()]. A version that assumed
-#' the size increases returned `NA` for every target on the Laplace,
-#' having walked away from the answer.
+#' \eqn{1/\sigma}, which narrows as the hyperparameter grows. The direction of
+#' the walk is therefore measured before the root is bracketed, by comparing
+#' the size at the current value with the size at twice it. The root is then
+#' bracketed by doubling or halving and found with [stats::uniroot()].
 #'
-#' Where the size is a power of the hyperparameter, which every kinked
-#' penalty here turns out to be, the hyperparameter entering a separable
-#' penalty as a scale is, the inversion is closed and the search is not run at
-#' all. [kink_power()] measures the exponent and the answer is
-#' checked against the size before it is returned, so a penalty that does not
-#' obey a power law falls back to the search and is never assumed into one.
+#' Where the size is a power of the hyperparameter, as it is for the shipped
+#' kinked penalties because the hyperparameter enters a separable penalty as a
+#' scale, the inversion is closed and the search is not run. [kink_power()]
+#' measures the exponent and [kink_by_power()] checks the answer against the
+#' size before it is returned, so that a penalty that does not obey a power
+#' law falls back to the search.
 #'
 #' @param pen A \pkg{penalties7} penalty.
-#' @param theta The other hyperparameters.
+#' @param theta The hyperparameters in force; the value of `name` is where
+#'   the search starts.
 #' @param name Which one to solve for.
 #' @param target The size the kink should have.
 #'
@@ -191,29 +192,31 @@ kink_solve <- function(pen, theta, name, target) {
 #'
 #' @description
 #' The exponent \eqn{k} in \eqn{s(v) = c\,v^k}, read from the size of the kink
-#' at the current value and at twice it, or `NA` where there is no such
+#' at the current value and at twice it (or at half it, where twice it is
+#' outside the hyperparameter's interval), or `NULL` where there is no such
 #' exponent to read.
 #'
 #' @details
 #' A separable penalty is minus a log density and its hyperparameter enters as
 #' a scale, so the width of the subdifferential at the kink is a power of it.
-#' Measured over four decades, the exponent is exactly one for the lasso, for
-#' SCAD and MCP in \eqn{\lambda} and for the elastic net in both \eqn{\lambda}
-#' and \eqn{\alpha}, and exactly zero for the shapes of SCAD and MCP, which do
-#' not move the kink at all; the largest spread across a decade sweep is
-#' \eqn{5.6\times 10^{-16}}. A Laplace prior written by its scale has exponent
+#' The exponent is one for the lasso, for SCAD and MCP in \eqn{\lambda} and for
+#' the elastic net in both \eqn{\lambda} and \eqn{\alpha}. For the shapes of
+#' SCAD and MCP, which do not move the kink, there is no exponent and the
+#' result is `NULL`. A Laplace prior written by its scale has exponent
 #' \eqn{-1}, its kink narrowing as the hyperparameter grows.
 #'
-#' The exponent is measured, never assumed, and whoever inverts it checks
-#' the answer, so a penalty whose kink is not a power of its hyperparameter
-#' costs two evaluations and then takes the search.
+#' The exponent is measured and not assumed, and [kink_by_power()] checks the
+#' inversion, so that a penalty whose kink is not a power of its
+#' hyperparameter costs two evaluations of the size and then takes the
+#' search of [kink_solve()].
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
 #' @param name Which one.
 #'
 #' @return A list of the exponent `k`, the value `v0` it was read at
-#'   and the size `s0` there; `NULL` where the size does not move.
+#'   and the size `s0` there; `NULL` where the size does not move or where
+#'   either size or the value is not positive and finite.
 #'
 #' @seealso [kink_solve()], [path_values()]
 #'
@@ -242,11 +245,11 @@ kink_power <- function(pen, theta, name) {
 #' The value giving each target size, checked against the size it produces.
 #'
 #' @details
-#' The check is what licenses the closed route: the exponent came from two
-#' points and the relation is asserted at a third before the answer is used.
-#' A target that misses by more than a rounding, or that lands outside the
-#' hyperparameter's own interval, comes back `NA` and the caller falls
-#' back to bracketing.
+#' The exponent comes from two points, and the relation is checked at the
+#' first and the last admissible target before any answer is used. If either
+#' check misses by more than a rounding, every target comes back `NA`; a
+#' target whose value lands outside the hyperparameter's own interval comes
+#' back `NA` on its own. The caller then falls back to bracketing.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
@@ -297,7 +300,7 @@ kink_by_power <- function(pen, theta, name, target, pw) {
 #' \pkg{glmnet}'s `lambda.max` written for any separable penalty.
 #'
 #' The other coefficients are held where the caller left them and are not
-#' refitted, so the number is a starting point and no boundary. The path
+#' refitted, so the number is a starting point and not a boundary. The path
 #' checks it: a top whose fit is not empty is doubled until it is.
 #'
 #' Where the kinks of the coordinates differ, as under `standardize`, each
@@ -361,14 +364,11 @@ path_null_score <- function(obj, beta, block, hyper, also = NULL) {
 #' grows is swept in the same order as one whose kink widens: from the empty
 #' model towards the full one. Values the penalty cannot reach are dropped.
 #'
-#' The exponent relating the two is read once and every target inverted
-#' through it, in place of bracketing each target on its own. Measured, a
-#' bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
-#' twenty-five points spent 6.7 per cent of itself locating the values it
-#' would visit; through the exponent the whole grid costs four evaluations of
-#' the size. [kink_by_power()] checks the relation before the values
-#' are used and returns `NA` where it does not hold, and those fall back
-#' to [kink_solve()] one at a time.
+#' The exponent relating the two is read once by [kink_power()] and every
+#' target is inverted through it, in place of bracketing each target on its
+#' own. [kink_by_power()] checks the relation before the values are used and
+#' returns `NA` where it does not hold, and those targets fall back to
+#' [kink_solve()] one at a time.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
@@ -404,20 +404,21 @@ path_values <- function(pen, theta, name, s_max, n_values = 40L,
 #' so that the warm starts run the way every other path here runs.
 #'
 #' @details
-#' Which end is the sparse one is a property of the penalty, never of the
+#' Which end is the sparse one is a property of the penalty and not of the
 #' numbers: the kink of a lasso widens with \eqn{\lambda} and that of a
-#' Laplace prior written by its scale narrows with \eqn{\sigma}, so the order
-#' is settled by asking the penalty which way its kink moves, never by
-#' sorting downwards. Nothing else is applied: the value that empties the
-#' block does not cap the grid and `min_ratio` does not extend it, both
-#' of those being ways to build one.
+#' Laplace prior written by its scale narrows with \eqn{\sigma}. The order is
+#' therefore taken from the sign of the exponent that [kink_power()] reads,
+#' descending where the kink widens with the hyperparameter and ascending
+#' otherwise. No other rule is applied: the value that empties the block does
+#' not cap the grid and `min_ratio` does not extend it, both of those being
+#' ways to build a grid.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
 #' @param name Which one the path varies.
 #' @param values What the term wrote out.
 #'
-#' @return A numeric vector, from the emptiest fit to the fullest.
+#' @return The distinct values sorted, from the emptiest fit to the fullest.
 #'
 #' @seealso [modelterms7::term_values()], [path_values()]
 #'
@@ -429,33 +430,38 @@ path_forced <- function(pen, theta, name, values) {
 }
 
 
-#' The Values a Path Visits Over a Bounded Hyperparameter
+#' The Values a Path Visits Over a Hyperparameter Not Swept by Kink Size
 #'
 #' @description
-#' An equally spaced grid strictly inside the hyperparameter's own interval.
+#' The grid of a hyperparameter that [path_values()] does not reach: equally
+#' spaced points strictly inside its interval where the interval is bounded,
+#' and a geometric grid above [shape_floor()] where it has no upper bound.
 #'
 #' @details
 #' [path_values()] walks the size of the kink, from the value that
 #' empties the block down, and a bounded hyperparameter cannot reach that end:
 #' the elastic net's kink is \eqn{\lambda\alpha}, so at a given \eqn{\lambda}
 #' no admissible \eqn{\alpha} empties the block and every point of such a path
-#' is dropped. The interval itself is what a bounded shape is swept over
-#' instead, \eqn{\alpha} between the ridge and the lasso and SCAD's and MCP's
-#' shape between their limits, and the sweeps being cyclic, one coordinate
-#' at a time, the kink still moves through \eqn{\lambda}.
+#' is dropped. A bounded hyperparameter is therefore swept over its interval,
+#' with \eqn{\alpha} running between the ridge and the lasso. The kink still
+#' moves through \eqn{\lambda}, which is swept on its own axis.
 #'
 #' The endpoints are excluded because the bounds are open: the elastic net at
 #' \eqn{\alpha = 0} has no kink at all, and the path would be scoring a
 #' penalty of another kind.
 #'
-#' A shape parameter is swept above the smallest value at which the block can
-#' be fitted, which [shape_floor()] derives from the proximal
-#' condition at the steps the block's coordinate descent will take, rather
-#' than above the constant the penalty is defined over. The two coincide on an
-#' ordinary well-conditioned block and differ where the steps are long: with a
-#' standardized penalty on a column of spread 20 the floor is 3 where SCAD's
-#' own bound is 2, so a quarter of the old grid named shapes no fit could
-#' reach.
+#' A hyperparameter with no upper bound that does not move the kink is the
+#' shape of SCAD or MCP. Its grid is the floor plus
+#' `exp(seq(log(0.25), log(25), length.out = n_values))`, which covers the
+#' values in common use (3.7 for the SCAD of Fan and Li, 2001, and 3 for the
+#' MCP of Zhang, 2010) and does not reach the floor itself, where the operator
+#' is set-valued or the penalty is not defined.
+#'
+#' The floor is the smallest value at which the block can be fitted, which
+#' [shape_floor()] derives from the proximal condition at the steps the
+#' block's coordinate descent takes, and not the constant the penalty is
+#' defined over. The two coincide on an ordinary well-conditioned block and
+#' differ where the steps are long.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
@@ -496,20 +502,20 @@ path_grid <- function(pen, theta, name, n_values = 25L, steps = NULL) {
 #' coefficients in hand.
 #'
 #' @details
-#' This is the step the sweeps of [coord_fit()] use, and it is what
-#' decides whether a shape parameter is admissible: SCAD's proximal operator
-#' needs \eqn{t < a - 1} and MCP's \eqn{t < \gamma}, tightened to
-#' \eqn{t d^2} under the diagonal map standardization applies. So the useful
-#' lower limit of a shape is a property of the data, not the constant 2 or 1
-#' the penalty is defined above, and it binds at ordinary settings: measured,
-#' a standardized penalty on a column of spread 20 at \eqn{n = 200} needs
-#' \eqn{a > 3}, and a Poisson block whose fitted means are near
-#' \eqn{10^{-3}} needs \eqn{a > 11}.
+#' This is the step the sweeps of [coord_fit()] use, and it decides whether a
+#' shape parameter is admissible: SCAD's proximal operator requires the step
+#' to be below \eqn{a - 1} and MCP's below \eqn{\gamma}, the step being
+#' multiplied by the squared entries of the diagonal map that standardization
+#' applies. The lower limit of a shape is therefore a property of the data,
+#' and not only the constant 2 or 1 over which the penalty is defined.
 #'
-#' Everything is guarded, and `NULL`, which the caller reads as "the
-#' penalty's own bound and nothing more", is the answer wherever the
-#' working weights are not usable. A starting grid may be approximate; what
-#' it may not do is fail.
+#' The working weights are those of [coord_working()] for the observed
+#' information at the coefficients in hand. The result is `NULL` for a structural block, for a block without
+#' columns, and wherever the working weights or the squared column sums are
+#' not finite and positive; the caller reads `NULL` as the penalty's own bound
+#' and nothing more. Any error inside the computation is also answered with
+#' `NULL`, since the grid built from the steps is a starting grid and may be
+#' approximate.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -554,21 +560,23 @@ path_steps <- function(spec, design, block, beta, split) {
 #' steps the block's coordinate descent will take.
 #'
 #' @details
-#' The limit is derived from the condition, with nothing written down. The
-#' question is put to the penalty, namely whether it produces a table at this
-#' step, and
-#' bisected, so a family added later is covered and neither the \eqn{a - 1} of
-#' SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
-#' the constant the penalty is defined over would otherwise contain points at
-#' which that block, with those data, cannot be fitted by the only route a
-#' kinked penalty has.
+#' The limit is found by bisection on whether
+#' [penalties7::penalty_prox_spec()] returns a table for the penalty at the
+#' block's steps, so that a family added later is covered and neither the
+#' \eqn{a - 1} of SCAD nor the \eqn{\gamma} of MCP appears here. A grid
+#' starting just above the constant over which the penalty is defined would
+#' otherwise contain points at which the block cannot be fitted with those data
+#' by the only route that a kinked penalty has.
 #'
 #' @param pen A \pkg{penalties7} penalty.
 #' @param theta The hyperparameters in force.
 #' @param name Which one is the shape.
 #' @param steps What [path_steps()] returned, or `NULL`.
 #'
-#' @return A single number strictly above the penalty's lower bound.
+#' @return A single number: the penalty's lower bound where `steps` is `NULL`
+#'   or not finite, or where no admissible value is found below the upper
+#'   bound; otherwise the smallest value, to bisection accuracy, at which the
+#'   proximal table exists.
 #'
 #' @seealso [path_steps()], [path_grid()]
 #'
@@ -606,20 +614,21 @@ shape_floor <- function(pen, theta, name, steps = NULL) {
 #' term named neither.
 #'
 #' @details
-#' The five penalized constructors carry these on their own signatures, where
-#' a reader can see them, `lasso(x, n_lambda = 25, min_ratio = 1e-4)` and
-#' `enet(x, n_lambda = 25, n_alpha = 5)`, so nothing here is reached
-#' for them. What reaches it is a term that declares a kinked penalty without
-#' offering an argument for the grid: [modelterms7::random()] under
-#' a Laplace prior is the case, its hyperparameters being whatever the
-#' effects' distribution happens to carry.
+#' The constructors [modelterms7::lasso()], [modelterms7::enet()],
+#' [modelterms7::scad()] and [modelterms7::mcp()] carry these settings on
+#' their own signatures, for example `lasso(x, n_lambda = 25, min_ratio =
+#' 1e-4)` and `enet(x, n_lambda = 25, n_alpha = 5)`, so that nothing here is
+#' used for them. The settings here are used by a term that declares a kinked
+#' penalty without an argument for the grid, such as [modelterms7::random()]
+#' under a Laplace prior, whose hyperparameters are those of the effects'
+#' distribution.
 #'
-#' `kink` is the length of the path over the size of the kink, which
-#' runs geometrically over `1/min_ratio`, which is four decades, and wants
-#' that many points to be smooth in. `other` serves an axis that spans
-#' one bounded interval instead, \eqn{\alpha} between the ridge and the lasso
-#' or a shape over its useful range, and needs fewer; with a product every
-#' extra point there multiplies the fits.
+#' `kink` is the number of points on the axis swept by the size of the kink,
+#' which runs geometrically over a factor of `1/min_ratio` (four decades at
+#' the default). `other` is the number of points on an axis that is swept over
+#' an interval instead, such as \eqn{\alpha} between the ridge and the lasso
+#' or the shape of SCAD or MCP over its usual range; with a product of axes,
+#' every point added there multiplies the number of fits.
 #'
 #' @return A named list of `kink`, `other` and `min_ratio`.
 #'
@@ -690,18 +699,20 @@ path_by_kink <- function(pen, theta, name) {
 #' quasi-Newton step is reading a slope that is about to change. A grid does
 #' not care, and warm starts make it cheap.
 #'
-#' Which hyperparameters are varied is read from the penalty by
-#' [kink_hypers()] unless the method names them.
+#' Every hyperparameter of a kinked penalty is varied, except those that
+#' its term holds and those of an `id` group that one member holds.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param blocks The blocks.
 #' @param hyper The hyperparameters.
-#' @param method An [OuterMethod()].
 #'
-#' @return A data frame of `parameter`, `term` and `name`.
+#' @return A data frame with one row per axis, with columns `parameter`,
+#'   `term` and `name`, and a list column `members` that holds, for each axis,
+#'   the data frame of the hyperparameters it stands for. It has zero rows
+#'   where no hyperparameter is to be estimated.
 #'
 #' @keywords internal
-path_rows <- function(spec, blocks, hyper, method) {
+path_rows <- function(spec, blocks, hyper) {
   rows <- list()
   held <- statmod_held(spec)
   # a label ONE member holds is held for the group, which is the same rule
@@ -750,15 +761,14 @@ path_rows <- function(spec, blocks, hyper, method) {
 #' written into each of them.
 #'
 #' @details
-#' It is [index_group()]'s decision on the other machine. The axis is
-#' identified by its first member, so everything that reads
+#' It plays for a path the role that [index_group()] plays for the outer
+#' search. The axis is identified by its first member, so everything that reads
 #' `parameter`/`term`/`name` -- the block it belongs to, whether it scales the
 #' kink, the history a reader reads -- goes on reading the same fields, and
 #' the `members` list column says which hyperparameters the axis stands for.
 #'
-#' Where nothing is shared each line is its own axis carrying itself as its
-#' single member, so the result is what the caller produced before sharing
-#' existed.
+#' Where nothing is shared, each line is its own axis and carries itself as
+#' its single member.
 #'
 #' @param rows One line per estimated hyperparameter, with an `id` column.
 #'
@@ -780,17 +790,19 @@ path_group <- function(rows) {
 #' Assign the Observations to Folds
 #'
 #' @description
-#' A fold number per observation, either the one the method carries or a fresh
-#' permutation.
+#' A fold number per observation, either the assignment the method carries or
+#' a permutation drawn with a fixed seed.
 #'
 #' @details
-#' The permutation is drawn from the caller's stream and put back, so a fit is
-#' not silently reproducible only when the caller happens to have seeded.
-#' Passing `folds` explicitly is how two criteria are made comparable on the
-#' same partition.
+#' The permutation is drawn after `set.seed(20260811L)`, and the caller's
+#' random-number state is restored afterwards, so the partition is the same
+#' whatever the caller's seed. Passing `folds` explicitly is how two criteria
+#' are made comparable on a partition of the caller's own. The values of
+#' `folds` are relabeled to the integers `1, 2, ...` in the order of their
+#' factor levels, and a length other than `n` signals an error.
 #'
 #' @param n The number of observations.
-#' @param k How many folds.
+#' @param k How many folds, at most `n`.
 #' @param folds The method's own assignment, or `numeric(0)`.
 #'
 #' @return An integer vector of length `n`.
@@ -816,11 +828,13 @@ cv_folds <- function(n, k, folds) {
 }
 
 
-#' The Hyperparameters in the Shape statmod() Accepts
+#' The Hyperparameters as Plain Named Vectors
 #'
-#' @param hyper The nested list the machinery carries.
+#' @param hyper The nested list of hyperparameters, one list per distribution
+#'   parameter and one entry per penalized term.
 #'
-#' @return The same, with the parameters that carry no penalized term dropped.
+#' @return The same list with each entry converted to a named numeric vector,
+#'   and the distribution parameters that carry no penalized term dropped.
 #'
 #' @keywords internal
 hyper_plain <- function(hyper) {
@@ -870,19 +884,20 @@ hyper_set <- function(hyper, row, value) {
 #' and in the formula's environment after. `data.frame(X = X, y = y)`
 #' splits a matrix into `X.x1 ... X.xp`, leaving no column `X`, so
 #' `lasso(X)` reaches past the data to the matrix in the calling
-#' environment. The fit itself is right, the matrix being captured once and
-#' the coefficients identical to the other spelling, but the fold cannot
-#' rebuild: the name still resolves to all the rows.
+#' environment. The fit itself is correct, the matrix being captured once and
+#' the coefficients being identical to those of the other spelling, but the
+#' fold cannot evaluate the term on its rows: the name still resolves to all
+#' the rows.
 #'
 #' The matrix is already on the built term, and `term_build()` checked at
 #' the full fit that it has one row per observation, so the rows of a fold are
-#' the same rows by position. Binding the subset here builds, for the fold,
-#' the spelling the documentation asks the caller for.
+#' the same rows by position. Binding the subset here gives the fold the
+#' spelling that the documentation of the matrix input recommends, with the
+#' matrix as a column of the data.
 #'
-#' Nothing is relearned that should be: a matrix carries no knots, no
-#' contrasts and no levels, so subsetting it and re-evaluating it give the
-#' same block. A formula input is untouched and keeps being rebuilt on the
-#' fold's own rows, and that is what the rule exists for.
+#' A matrix carries no knots, contrasts or levels, so subsetting it and
+#' evaluating it again give the same block. A formula input is left
+#' untouched.
 #'
 #' It applies where `input_expr` is a plain symbol, which is the case the
 #' name can be bound for. A call such as `lasso(scale(X))` keeps only its own
@@ -926,28 +941,31 @@ cv_bind_inputs <- function(spec, sub, i, n) {
 }
 
 
-#' The Held-Out Deviance of Every Point of a Path
+#' The Held-Out Criterion of Every Point of a Path
 #'
 #' @description
 #' Refits the model on each training fold along the whole path and scores it on
-#' the fold left out, returning the mean deviance per observation and its
-#' standard error across folds.
+#' the fold left out. Returns, at each point, the mean over folds of minus twice
+#' the weighted log-likelihood of the held-out rows divided by the sum of their
+#' weights, and its standard error across folds.
 #'
 #' @details
-#' The path is run fold by fold, not point by point, so that each fit starts
-#' from the previous point's coefficients. That warm chain is the whole
-#' economy of a path
-#' cheaper than its length suggests. Each fold reapplies to its rows the terms
-#' built on all the rows, as [predict.StatmodFit()] reapplies them to new
-#' data: the knots of a basis, the levels of a factor and the scales of a
-#' standardized block come from the covariates of every row, never from the
-#' response. Rebuilt on the training rows alone, a basis did not cover a held
-#' out row past their range, and the fold stopped the whole fit (a smooth of
-#' the year of construction beside a lasso on `gamlss.data::rent`).
+#' The path is run fold by fold and not point by point, so that each fit
+#' starts from the previous point's coefficients. Each fold reapplies to its
+#' rows the terms built on all the rows, as [predict.StatmodFit()] reapplies
+#' them to new data: the knots of a basis, the levels of a factor and the
+#' scales of a standardized block come from the covariates of every row and
+#' never from the response. A basis rebuilt on the training rows alone would
+#' not cover a held-out row beyond their range, and the fold would fail.
 #'
-#' @param spec A [StatmodSpec()].
+#' The training rows and the held-out rows carry the weights and offsets of
+#' `spec` at those rows, the offsets given through the `offsets` argument of
+#' [statmod()] included. Where the fit of a fold at a point does not converge,
+#' or its criterion is not finite, the fold's value at that point is missing
+#' and is counted in `n_fail`.
+#'
+#' @param spec A [StatmodSpec()], holding the weights and offsets of the fit.
 #' @param data The data the fit was called on.
-#' @param weights,offsets As [statmod()] received them.
 #' @param inner_optimizer The inner method.
 #' @param hypers A list of hyperparameter settings, one per path point.
 #' @param folds A fold number per observation.
@@ -955,12 +973,16 @@ cv_bind_inputs <- function(spec, sub, i, n) {
 #'   warm start begins again at the head of each, the kink jumping back up
 #'   there. `NULL` treats the whole list as one run.
 #'
-#' @return A list with `cvm`, `cvse` and `n_fail`.
+#' @return A list with `cvm`, the mean over folds at each point; `cvse`, its
+#'   standard error across the folds with a finite value; `n_fail`, the number
+#'   of folds without a value at each point; and `error`, the message of the
+#'   first fold that could not rebuild the model, or `NULL`. `cvm` is missing
+#'   at a point where no fold has a value.
 #'
 #' @seealso [cv()]
 #'
 #' @keywords internal
-cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
+cv_curve <- function(spec, data, inner_optimizer, hypers,
                      folds, run = NULL) {
   nf <- max(folds)
   m <- length(hypers)
@@ -995,15 +1017,16 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     # the test rows stopped the whole fit. Only covariates enter a term's
     # construction, so no response of the held-out rows reaches the training
     # fit. The weights and the offsets are the fit's own, at these rows.
-    ts <- tryCatch({
-      s0 <- statmod_respec(spec, train)
+    at_rows <- function(s0, rows) {
       S7::set_props(
         s0,
-        weights = if (length(spec@weights) == length(keep)) spec@weights[keep]
-                  else rep(1, sum(keep)),
+        weights = if (length(spec@weights) == length(rows)) spec@weights[rows]
+                  else rep(1, sum(rows)),
         offsets = lapply(spec@offsets, function(o)
-          if (length(o) == length(keep)) o[keep] else o))
-    }, error = function(e) conditionMessage(e))
+          if (length(o) == length(rows)) o[rows] else o))
+    }
+    ts <- tryCatch(at_rows(statmod_respec(spec, train), keep),
+                   error = function(e) conditionMessage(e))
     # statmod_spec() builds a FRESH specification, so the thread count does
     # not travel with it as it does through statmod_respec(), which starts
     # from the one it is given: until 2026-08-21 a fold fell back to the
@@ -1038,7 +1061,9 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
     tc <- statmod_curv(ts, td, warm, cfgs$expected, cfgs$approx)
     if (!is.null(tc)) ts <- tc
     tb <- statmod_blocks(ts, td)
-    hs <- statmod_respec(ts, test)
+    # the held-out rows carry their own weights and offsets as well, so that
+    # the deviance they score is the fit's weighted log-likelihood
+    hs <- at_rows(statmod_respec(ts, test), !keep)
     hd <- statmod_design(hs)
     tbj <- tb
     warm0 <- warm
@@ -1058,7 +1083,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
       cf <- r$obj$split(r$par)
       d <- tryCatch(-2 * statmod_loglik_at(hs, cf, hd),
                     error = function(e) NA_real_)
-      if (is.finite(d)) dev_f[j] <- d / nrow(test)
+      if (is.finite(d) && sum(hs@weights) > 0) dev_f[j] <- d / sum(hs@weights)
     }
     list(dev = dev_f, err = NULL)
   }
@@ -1079,7 +1104,7 @@ cv_curve <- function(spec, data, weights, offsets, inner_optimizer, hypers,
 #' @description
 #' Applies a body to each of `n` independent units -- a
 #' cross-validation fold, a combination of a path's product grid -- over
-#' the worker processes the specification asks for (`spec@workers`,
+#' the worker processes that the specification requests (`spec@workers`,
 #' from [`n_threads(workers =)`][numericals7::n_threads]) and in this
 #' process otherwise. Results come back in unit order whatever the number
 #' of workers, and that is what makes the answer independent of the count:
@@ -1146,7 +1171,8 @@ worker_map <- function(spec, n, body, what = "folds") {
 #' The one-standard-error rule takes the sparsest fit that is not measurably
 #' worse than the best one, which is Breiman's rule as \pkg{glmnet} applies it.
 #' The path runs from the emptiest fit to the fullest, so the largest kink
-#' among the admissible points is the first of them.
+#' among the admissible points is the first of them. The rule falls back to
+#' the smallest criterion where `se` is `NULL` or not finite there.
 #'
 #' @param value The criterion at each point.
 #' @param se Its standard error, or `NULL`.
@@ -1172,57 +1198,78 @@ path_pick <- function(value, se = NULL, rule = "min") {
 #' Select the Hyperparameters of a Kinked Penalty Along a Path
 #'
 #' @description
-#' Sweeps them over grids of kink sizes and keeps the setting the criterion
-#' prefers.
+#' Sweeps the hyperparameters of the kinked penalties over grids of kink sizes
+#' and keeps the setting at which the criterion is best, by its minimum or by
+#' the one-standard-error rule.
 #'
 #' @details
 #' The grid runs from the kink that empties the block down to `min_ratio`
 #' of it, so the sweep goes from the sparsest fit towards the fullest and every
-#' fit starts from the previous one's coefficients. Where the top of the grid
-#' does not empty the block it is doubled until it does, the starting value
-#' being computed at the coefficients in hand rather than at a refitted null.
+#' fit starts from the previous one's coefficients. The top of the grid is
+#' computed at the coefficients in hand and not at a refitted null; where the
+#' fit at the top does not empty the block, the top is doubled until it does.
 #'
-#' A term carrying several of them has every combination visited where the
-#' term asks for `search = "grid"` and one coordinate at a time where it
-#' asks for `"cyclic"`. Between terms the alternation is cyclic either
-#' way, so the cost is the product within a term and the sum across them. Each
-#' axis is built at the settings of the axes outside it, and that makes
-#' the elastic net's grid a family of \eqn{\lambda} axes rather than one, and
+#' A term that carries several of these hyperparameters has every combination
+#' visited where it sets `search = "grid"` and one coordinate at a time where
+#' it sets `"cyclic"`. Between terms the alternation is cyclic either way, so
+#' that the cost is the product within a term and the sum across terms. Each
+#' axis is built at the settings of the axes outside it, which makes the
+#' elastic net's grid a family of \eqn{\lambda} axes and not a single one, and
 #' the axis swept by kink size is put innermost so that the warm starts walk
-#' along it.
+#' along it. The runs of a product grid are independent and are distributed
+#' over worker processes where the specification requests them.
 #'
-#' A pass that would visit the points the last one scored is not run. The top
-#' of the path is read again at every pass because the rest of the model moves,
-#' and where it has not the grid is the one already in hand.
+#' A pass that would visit the points scored by the previous one is not run.
+#' The top of the path is computed again at every pass, because the rest of
+#' the model moves, and where it has not moved the grid is the one already in
+#' hand. At most `sweeps` passes are made, and only where more than one
+#' hyperparameter is selected.
 #'
 #' Where the model also carries hyperparameters that are twice differentiable,
-#' those are estimated by [outer_fit()] inside each point of the
-#' path, so the two kinds are not mixed into one search.
+#' those are estimated by [outer_fit()] inside each point of the path, by
+#' `nested_method`, so that the two kinds are not mixed into one search. The
+#' unpenalized coefficients of a dispersion are then held at the joint mode
+#' along the path when `nested_method` is a marginal criterion, and are
+#' estimated on that criterion once, at the setting chosen.
+#'
+#' An error is signaled where `method` is [aic()], [bic()] or [cv()] and no
+#' point of a path is scored. A warning is signaled where the rule is `"min"`,
+#' the axis is swept by kink size, and the minimum lies at the dense end of the
+#' path with the criterion still falling there.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
 #' @param blocks The blocks.
 #' @param hyper The hyperparameters.
 #' @param inner_optimizer The inner method.
-#' @param method An [OuterMethod()].
+#' @param method The [OuterMethod()] that scores the points of the path.
 #' @param optimizer The optimizer for the differentiable hyperparameters.
 #' @param beta The starting coefficients.
 #' @param approx The approximation for the expected information.
 #' @param maxit,tol The inner budget.
 #' @param vb The verbosity.
-#' @param data,weights,offsets What the fit was called on, which
-#'   cross-validation needs in order to refit on part of it.
-#' @param rows Which hyperparameters to select.
-#' @param sweeps How many cyclic passes.
+#' @param data The data the fit was called on, which cross-validation needs
+#'   in order to refit on part of it; the weights and offsets are those held
+#'   by `spec`.
+#' @param rows The axes to select, as [path_rows()] returns them.
+#' @param sweeps The largest number of cyclic passes, `2` by default.
+#' @param nested_method The [OuterMethod()] that estimates the differentiable
+#'   hyperparameters inside each point of the path, or `NULL`, in which case
+#'   `method` is used.
 #'
-#' @return The same list [outer_fit()] returns.
+#' @return A list with `par`, `hyper`, `value`, `criterion`, `converged`,
+#'   `obj`, `hist_blocks`, `hist_inner`, `hist_outer`, `iterations`,
+#'   `evaluations`, `exact_gradient` and `exact_hessian`: the fields of
+#'   [outer_fit()]'s result that a path produces. `criterion` is the value of
+#'   `method` at the setting chosen, and `hist_outer` has one row for each
+#'   point visited.
 #'
 #' @seealso [cv()], [path_rows()]
 #'
 #' @keywords internal
 statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
                          optimizer, beta, approx, maxit, tol, vb, data,
-                         weights, offsets, rows, sweeps = 2L,
+                         rows, sweeps = 2L,
                          nested_method = NULL) {
   expected <- identical(method@hessian, "expected")
   # the information statmod() reads the curvature of a scaled SCAD or MCP
@@ -1510,7 +1557,7 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
         cv_err <- NULL
         if (is_cv) {
           folds <- cv_folds(spec@n_obs, method@nfolds, method@folds)
-          cc <- cv_curve(spec, data, weights, offsets, inner_optimizer, hys,
+          cc <- cv_curve(spec, data, inner_optimizer, hys,
                          folds, pl$run)
           value <- cc$cvm
           se <- cc$cvse
@@ -1629,15 +1676,18 @@ statmod_path <- function(spec, design, blocks, hyper, inner_optimizer, method,
         }
         # ... and only for a hyperparameter swept by kink size. A bounded one
         # is swept over the whole of its own interval, so an answer at either
-        # end is the interval's and there is nothing to widen.
+        # end is the interval's and there is nothing to widen. Of the two ends
+        # of a kink-size path only the dense one can be widened: the sparse
+        # end empties the block, so an answer there is the empty block and
+        # min_ratio, which moves the dense end, does not reach it.
         if (pl$kink && identical(method@rule, "min") &&
-            length(mine) > 1L && k %in% c(1L, length(mine)) && falling()) {
-          warning(sprintf(paste0("The path for '%s' in '%s' stopped at its %s ",
-                                 "end (%s = %s).\n  The criterion was still ",
-                                 "falling there, so widen the path with ",
-                                 "min_ratio\n  or set the value yourself."),
-                          row$term, row$parameter,
-                          if (k == 1L) "sparse" else "dense", row$name,
+            length(mine) > 1L && k == length(mine) && falling()) {
+          warning(sprintf(paste0("The path for '%s' in '%s' stopped at its ",
+                                 "dense end (%s = %s).\n  The criterion was ",
+                                 "still falling there, so widen the path ",
+                                 "with min_ratio\n  or set the value ",
+                                 "yourself."),
+                          row$term, row$parameter, row$name,
                           format(signif(vals[[j]], 4))), call. = FALSE)
         }
         for (i in pl$idx) {
@@ -1699,9 +1749,9 @@ path_block <- function(blocks, row) {
 #' stacked coefficient vector.
 #'
 #' @details
-#' A shared axis is one value multiplying several penalties, so the question
-#' *is the block empty here* is asked of all of them at once. Where nothing is
-#' shared it is the single block's own index.
+#' A shared axis is one value multiplying several penalties, so whether the
+#' block is empty has to be decided over all of them at once. Where nothing is
+#' shared, the result is the single block's own index.
 #'
 #' @param blocks The block split.
 #' @param row One row of [path_rows()]'s index.
@@ -1781,35 +1831,51 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #' Choose the Hyperparameters by Cross-Validation
 #'
 #' @description
-#' Builds the object that tells [statmod()] to choose a model's
-#' hyperparameters by cross-validation: a path of values is scored by the
-#' log-likelihood the fit assigns to observations it was not fitted on, and
-#' the best is kept. Pass the result as `sparse_criterion`, or as
-#' `outer_criterion`, or as both.
+#' Builds the object with which [statmod()] chooses the hyperparameters of
+#' the penalties with a kink by cross-validation: the points of a path of
+#' values are scored by the log-likelihood that the fit assigns to
+#' observations it was not fitted on, and the best is kept. The result is
+#' passed as `sparse_criterion`. It is not an outer criterion:
+#' `outer_criterion = cv()` is an error, the smoothing parameters being
+#' estimated by [reml()], [ml()], [aic()] or [bic()].
 #'
 #' @details
-#' # Why a penalty with a kink needs this
+#' # Cross-validation for a penalty with a kink
 #'
 #' A marginal criterion, [reml()] or [ml()], approximates an integral by a
-#' Laplace expansion at the penalized mode, which asks for the second
+#' Laplace expansion at the penalized mode, which requires the second
 #' derivative of the penalty there. The mode of a lasso, a SCAD or an MCP
 #' sits at the kink for every coefficient it sets to zero, and that is where
 #' the derivative does not exist, so the criterion is undefined at the point
 #' it would be read at.
 #'
-#' Cross-validation asks a different question, about prediction and not about
-#' a posterior, and asking it needs nothing from the penalty beyond a fit.
+#' Cross-validation scores prediction and not a posterior, and it needs
+#' nothing from the penalty beyond a fit.
+#'
+#' Passed as `sparse_criterion` to a model with no hyperparameter of a kinked
+#' penalty left to estimate, `cv()` has no effect.
 #'
 #' # The criterion
 #'
-#' The mean over folds of \eqn{-2\ell/n_f} on the fold left out, each
-#' training fit rebuilding the design on its own rows.
+#' The mean over folds of \eqn{-2\ell_f/w_f}, where \eqn{\ell_f} is the
+#' weighted log-likelihood of the fold left out at the coefficients fitted on
+#' the other folds, and \eqn{w_f} is the sum of the weights of its rows. Each
+#' training fit reapplies to its rows the terms built on all the rows (knots,
+#' factor levels and scales of standardization), as [predict.StatmodFit()]
+#' does for new data, and carries the weights and offsets of the fit.
 #'
 #' `rule = "1se"` takes the largest kink whose criterion is within one
 #' standard error of the smallest, which is the sparsest fit that is not
 #' measurably worse.
 #'
-#' # A path, not a search
+#' # The folds
+#'
+#' Unless `folds` is given, the observations are assigned to folds by a
+#' permutation drawn with a fixed seed, and the caller's random-number state
+#' is restored afterwards, so that the partition does not depend on the
+#' caller's seed.
+#'
+#' # The path
 #'
 #' The penalized mode is a piecewise smooth function of the hyperparameter:
 #' differentiable while the active set holds, turning a corner whenever a
@@ -1822,24 +1888,25 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #'
 #' # Which hyperparameters
 #'
-#' The term's answer: every one of its penalty's that the constructor did not
-#' hold at a number. What the criterion decides is how they are covered.
+#' The path covers every hyperparameter of the term's penalty that the
+#' constructor did not hold at a number.
 #'
 #' # A product within a term, an alternation between terms
 #'
-#' A term carrying several kinked hyperparameters has every combination
-#' visited under `search = "grid"` and one swept at a time under
+#' A term with several kinked hyperparameters has every combination visited
+#' under `search = "grid"` and one hyperparameter swept at a time under
 #' `"cyclic"`.
 #'
 #' The choice belongs to the term, through `enet(X, search =)` and
-#' [modelterms7::term_search()], never to this criterion. The same
-#' criterion is put to the model's smooth hyperparameters as well, and those
-#' are read at the mode instead of being swept, so most of what it is asked
-#' about could not use such an argument.
+#' [modelterms7::term_search()], and not to this criterion. The criterion is
+#' also applied to the model's smooth hyperparameters, which are read at the
+#' mode and not swept, so that an argument of this kind would have no meaning
+#' for them.
 #'
-#' Between two terms the sweep alternates whichever each one named, so
-#' `y ~ lasso(X) + enet(R)` costs the two blocks added, never multiplied,
-#' and one term asking for a product does not make the other pay for it.
+#' Between two terms the sweep alternates whichever search each one names, so
+#' that `y ~ lasso(X) + enet(R)` costs the two blocks added and not
+#' multiplied, and a term that sets a product does not make the other term
+#' pay for it.
 #'
 #' A term that names neither gets the product, because the cyclic sweep
 #' traverses a cross through the point in hand and can stop where each
@@ -1847,56 +1914,48 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #' product of the term's grids where the cyclic sweep's is their sum, which at
 #' two hyperparameters is `n_lambda * n_alpha` fits against
 #' `n_lambda + n_alpha` per pass; with three or more estimated it grows
-#' exponentially, and `"cyclic"` is there for that.
+#' exponentially, and `"cyclic"` is there for that case.
 #'
 #' # How long the path is, and how far down it reaches
 #'
-#' The term's answers again, written on its own signature where a reader can
-#' see them: `lasso(x, n_lambda = 25, min_ratio = 1e-4)`,
+#' The length of the path and its depth are settings of the term, written on
+#' its own signature: `lasso(x, n_lambda = 25, min_ratio = 1e-4)` and
 #' `enet(x, n_lambda = 25, n_alpha = 5)`.
 #'
 #' The two numbers differ because the axes do. \eqn{\lambda} descends the
 #' size of the kink over four decades, while \eqn{\alpha} spans one bounded
-#' interval, so the shipped product is 25 by 5.
+#' interval, so that the default product is 25 by 5.
 #'
-#' # The grid is not a rectangle
+#' # The shape of the grid
 #'
-#' For two different reasons. The
-#' elastic net's kink is \eqn{\lambda\alpha}, so the value emptying the block
-#' is \eqn{\lambda_{\max} = \kappa/\alpha} and every \eqn{\alpha} carries its
-#' own \eqn{\lambda} axis, descending from its own top. The shapes of SCAD and
-#' MCP leave the kink alone, so there \eqn{\lambda_{\max}} is one number
-#' whatever the shape and the two axes really are a rectangle. Each axis is
-#' built at the settings of the axes outside it, which covers both cases with
-#' no rule about families written down anywhere.
+#' The grid is not a rectangle for the elastic net and is a rectangle for
+#' SCAD and MCP. The elastic net's kink is \eqn{\lambda\alpha}, so the value
+#' emptying the block is \eqn{\lambda_{\max} = \kappa/\alpha} and every
+#' \eqn{\alpha} carries its own \eqn{\lambda} axis, descending from its own
+#' top. The shapes of SCAD and MCP leave the kink alone, so that
+#' \eqn{\lambda_{\max}} is one number whatever the shape and the two axes form
+#' a rectangle. Each axis is built at the settings of the axes outside it,
+#' which covers both cases without a rule about families.
 #'
-
 #' # The cost
 #'
-#' `nfolds` fits per point of the path, and how many points there are is the
-#' term's `n_lambda` for one kinked hyperparameter, or the product of its
-#' axes for several.
+#' Each point of the path costs `nfolds` fits. The number of points is the
+#' term's `n_lambda` for one kinked hyperparameter, and the product of its
+#' axes for several. The fits along a path are warm-started within each fold.
 #'
-#' The warm starts are worth 1.8 times, and building each fold's design once
-#' instead of once per point another 4 per cent. What remains is the proximal
-#' iteration: measured at 200 observations and 20 columns, 0.88 seconds a
-#' fit, against `cv.glmnet`'s 0.03 seconds for its whole path of 100 values
-#' on five folds. That distance is why `n_lambda` is 25 here and 100 there.
-#'
-#' The folds themselves run over separate R processes when
-#' `statmod(threads = n_threads(workers = 4))` asks for it, with one seed
-#' drawn per fold in the parent, so the answer is identical at any worker
-#' count. Measured, a ten-fold lasso cross-validation goes from 31.45 s to
-#' 14.18 s at four workers.
+#' The folds run over separate R processes when
+#' `statmod(threads = n_threads(workers = 4))` requests them, with one seed
+#' drawn per fold in the parent, so that the answer is identical at any worker
+#' count.
 #'
 #' @param nfolds How many folds, a single number of at least 2. `10` by
 #'   default. Ignored when `folds` is given.
 #' @param folds A fold number per observation, an integer vector as long as
 #'   the data, for a partition of your own or to compare two criteria on the
-#'   same one. `integer(0)`, the default, draws them at fit time.
+#'   same one. `NULL`, the default, draws a partition with a fixed seed.
 #' @param rule `"min"` for the best criterion, `"1se"` for the sparsest fit
 #'   within one standard error of it. Matched with [match.arg()].
-
+#'
 #' @return An [OuterMethod()] object of kind `"cv"`, carrying `nfolds`,
 #'   `rule` and `folds`. Its `hessian` is `"observed"` and its `k` is
 #'   `NA_real_`, neither being read by this criterion.
@@ -1923,7 +1982,7 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #'
 #' fit <- statmod(y ~ lasso(x, n_lambda = 12),
 #'                distributions7::gaussian1_distrib(), dd,
-#'                outer_criterion = cv(nfolds = 5))
+#'                sparse_criterion = cv(nfolds = 5))
 #' hyper(fit)
 #'
 #' # The two columns that carry signal are recovered.
@@ -1931,11 +1990,11 @@ path_top_shared <- function(obj, beta, blocks, row, hyper, b) {
 #'
 #' # "1se" takes the largest kink within one standard error of the best, so
 #' # it never keeps more coefficients than "min". On this data the two agree,
-#' # the criterion being flat enough that the best point is already within
-#' # one standard error of itself.
+#' # because the only sparser point of the path has a criterion more than one
+#' # standard error above the minimum.
 #' one_se <- statmod(y ~ lasso(x, n_lambda = 12),
 #'                   distributions7::gaussian1_distrib(), dd,
-#'                   outer_criterion = cv(nfolds = 5, rule = "1se"))
+#'                   sparse_criterion = cv(nfolds = 5, rule = "1se"))
 #' c(min = hyper(fit)$estimate, one_se = hyper(one_se)$estimate)
 #' c(min = sum(coef(fit)$mu[-1] != 0), one_se = sum(coef(one_se)$mu[-1] != 0))
 #'
@@ -1944,6 +2003,25 @@ cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se")) {
   OuterMethod(kind = "cv", hessian = "observed", k = NA_real_,
               nfolds = as.numeric(nfolds), rule = match.arg(rule),
               folds = if (is.null(folds)) numeric(0) else as.numeric(folds))
+}
+
+
+#' The Error for a Cross-Validation With Nothing to Select
+#'
+#' @description
+#' Signals the error that [statmod()] gives when [cv()] is passed as
+#' `outer_criterion` to a model in which no penalty with a kink has a
+#' hyperparameter left to estimate.
+#'
+#' @return Does not return.
+#'
+#' @keywords internal
+stop_cv_nothing <- function() {
+  stop(paste0("cv() has nothing to select: no penalty with a kink here has",
+              "\n  a hyperparameter left to estimate. A smoothing parameter",
+              " that is twice\n  differentiable is estimated by reml(),",
+              " ml(), aic() or bic(), which read\n  a criterion rather than",
+              " refitting on folds."), call. = FALSE)
 }
 
 
@@ -1956,19 +2034,25 @@ cv <- function(nfolds = 10, folds = NULL, rule = c("min", "1se")) {
 #' @details
 #' The split is the same one that decides how the coefficients are fitted, so a
 #' term whose penalty has a kink has both its coefficients and its
-#' hyperparameters handled by methods that do not ask for a curvature it does
-#' not have.
+#' hyperparameters handled by methods that do not require a curvature that the
+#' penalty does not have.
 #'
 #' @inheritParams statmod_path
+#' @param method The [OuterMethod()] that estimates the twice differentiable
+#'   hyperparameters, or `NULL`.
+#' @param sparse_method The [OuterMethod()] that scores the path, or `NULL`,
+#'   in which case `method` is used.
 #'
-#' @return The list [outer_fit()] returns.
+#' @return The list [outer_fit()] or [statmod_path()] returns, with the
+#'   element `criterion_by`, the [OuterMethod()] whose value is `criterion`;
+#'   the list [statmod_alternate()] returns where no criterion runs.
 #'
 #' @seealso [statmod()]
 #'
 #' @keywords internal
 statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
                            optimizer, beta, approx, maxit, tol, vb, data,
-                           weights, offsets, sparse_method = NULL) {
+                           sparse_method = NULL) {
   # Two families of penalty, two criteria. A kinked one is swept over a path
   # of its own values by `sparse_method`; a twice differentiable one is read
   # by `method` at the mode. Where both are present the path is outside and
@@ -1976,7 +2060,7 @@ statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
   # can have its smoothing parameter by REML and its lasso by BIC at once --
   # which one argument could not express.
   sm <- if (is.null(sparse_method)) method else sparse_method
-  rows <- path_rows(spec, blocks, hyper, sm)
+  rows <- path_rows(spec, blocks, hyper)
   if (!nrow(rows)) {
     if (is.null(method)) {
       # held here too: statmod() runs the full alternation, phase on, at
@@ -1986,17 +2070,16 @@ statmod_select <- function(spec, design, blocks, hyper, inner_optimizer, method,
                                beta, identical(sm@hessian, "expected"),
                                approx, maxit, tol, vb, hold_refresh = TRUE))
     }
-    if (identical(method@kind, "cv")) {
-      stop(paste0("cv() has nothing to select: no term here carries a penalty",
-                  "\n  with a kink. A smoothing parameter that is twice",
-                  " differentiable is\n  estimated by reml(), ml(), aic() or",
-                  " bic(), which read a criterion\n  rather than refitting on",
-                  " folds."), call. = FALSE)
-    }
-    return(outer_fit(spec, design, blocks, hyper, inner_optimizer, method,
-                     optimizer, beta, approx, maxit, tol, vb))
+    if (identical(method@kind, "cv")) stop_cv_nothing()
+    res <- outer_fit(spec, design, blocks, hyper, inner_optimizer, method,
+                     optimizer, beta, approx, maxit, tol, vb)
+    res$criterion_by <- method
+    return(res)
   }
-  statmod_path(spec, design, blocks, hyper, inner_optimizer, sm, optimizer,
-               beta, approx, maxit, tol, vb, data, weights, offsets, rows,
-               nested_method = method)
+  # where a path runs, the criterion it returns is the path's own
+  res <- statmod_path(spec, design, blocks, hyper, inner_optimizer, sm,
+                      optimizer, beta, approx, maxit, tol, vb, data, rows,
+                      nested_method = method)
+  res$criterion_by <- sm
+  res
 }

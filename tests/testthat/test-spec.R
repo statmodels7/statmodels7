@@ -189,7 +189,7 @@ test_that("the message names the term and its parameter", {
                   error = conditionMessage)
   expect_match(err, "'hollow()'", fixed = TRUE)
   expect_match(err, "'sigma'", fixed = TRUE)
-  expect_match(err, "neither shape of the contract", fixed = TRUE)
+  expect_match(err, "neither term_filter() nor term_loglik()", fixed = TRUE)
 })
 
 test_that("the terms the scheme does cover are not rejected", {

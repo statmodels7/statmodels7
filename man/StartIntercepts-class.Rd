@@ -25,6 +25,8 @@ StartSearch(label = character(0), optimizer = NULL, over = NULL)
 StartFrom(label = character(0), fit = NULL, rest = NULL)
 }
 \arguments{
+\item{label}{A single string, the name that the strategy prints.}
+
 \item{fn}{The generator a random start draws from, called as \code{fn(n, ...)}.
 \code{StartRandom} only.}
 
@@ -32,20 +34,31 @@ StartFrom(label = character(0), fit = NULL, rest = NULL)
 
 \item{center}{A single logical: whether the draw is added to the
 intercept-only start. \code{StartRandom} only.}
+
+\item{optimizer, over}{An \pkg{optimizers7} optimizer and an optional
+character vector of coefficient labels. \code{StartSearch} only.}
+
+\item{fit, rest}{A \code{\link[=StatmodFit]{StatmodFit()}} and a \code{\link[=start_strategy]{start_strategy()}}. \code{StartFrom}
+only.}
 }
 \value{
 An S7 object inheriting from \code{\link[=start_strategy]{start_strategy()}}:
 \code{StartIntercepts} and \code{StartOrigin} with the one inherited property
-\code{label}, \code{StartRandom} with \code{fn}, \code{args} and \code{center} besides.
+\code{label}, \code{StartRandom} with \code{fn}, \code{args} and \code{center} besides,
+\code{StartSearch} with \code{optimizer} and \code{over}, and \code{StartFrom} with \code{fit} and
+\code{rest}.
 }
 \description{
-The three classes \code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}} and
-\code{\link[=start_random]{start_random()}} instantiate. Each inherits from \code{\link[=start_strategy]{start_strategy()}} and
-carries its \code{label}; only \code{StartRandom} adds properties of its own. Use the
-constructors, which validate; these raw ones do not.
+The five classes that \code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}},
+\code{\link[=start_random]{start_random()}}, \code{\link[=start_search]{start_search()}} and \code{\link[=start_from]{start_from()}} instantiate. Each
+inherits from \code{\link[=start_strategy]{start_strategy()}} and carries its \code{label}; \code{StartRandom}
+adds \code{fn}, \code{args} and \code{center}, \code{StartSearch} adds \code{optimizer} and \code{over},
+and \code{StartFrom} adds \code{fit} and \code{rest}. Use the constructors, which
+validate; these raw ones do not.
 }
 \seealso{
-\code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}} for the
-constructors, \code{\link[=start_at]{start_at()}} for the methods registered on these classes.
+\code{\link[=start_intercepts]{start_intercepts()}}, \code{\link[=start_origin]{start_origin()}}, \code{\link[=start_random]{start_random()}},
+\code{\link[=start_search]{start_search()}}, \code{\link[=start_from]{start_from()}} for the constructors, \code{\link[=start_at]{start_at()}} for
+the methods registered on these classes.
 }
 \keyword{internal}

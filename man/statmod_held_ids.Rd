@@ -18,8 +18,8 @@ label.
 }
 \details{
 The members of a group estimate one value, so a value written on one of
-them is the group's. Two members held at DIFFERENT values are a
-contradiction rather than a preference between them, and are rejected here,
-at the one place both are visible.
+them is the value of the group. Two members held at different values
+contradict each other, and the function signals an error that names both
+terms.
 }
 \keyword{internal}

@@ -24,10 +24,9 @@ keyed by \code{\link[distributions7:hess_names]{distributions7::hess_names()}} a
 \details{
 The key is built by pasting the two parameter names in the order
 \code{\link[distributions7:hess_names]{distributions7::hess_names()}} uses, and is never parsed back out of a
-name. That is the discipline \pkg{distributions7} records for a family
-whose parameter name contains the separator: splitting \code{"log_scale_mu"} on
-the underscore gives the wrong pair, while generating the name from the
-same enumeration that generated the list cannot.
+name. For a family whose parameter name contains the separator, splitting
+\code{"log_scale_mu"} on the underscore gives the wrong pair, whereas generating
+the name from the same enumeration that generated the list cannot.
 }
 \seealso{
 \code{\link[=statmod_information_at]{statmod_information_at()}}, its caller.

@@ -12,7 +12,7 @@ of the result. Everything visible from \code{env} stays visible.}
 }
 \value{
 A new environment holding one binding per exported function of
-\pkg{modelterms7}, currently 82 of them, with \code{env} as its parent.
+\pkg{modelterms7}, with \code{env} as its parent.
 }
 \description{
 Returns a fresh environment holding every function \pkg{modelterms7}
@@ -21,21 +21,20 @@ exports, whose parent is \code{env}. A term call evaluated there reaches
 other name the caller wrote resolves as usual, one step further out.
 }
 \details{
-The masking this removes is real and its symptom names nothing.
 \pkg{mgcv} exports \code{s()} and \code{te()}, and \pkg{segmented} exports \code{seg()}.
-With either package attached, a caller writing a \code{statmod()} formula gets
-that package's function, whose value is not a model term; the failure then
-surfaces inside \code{model.matrix()} as \verb{invalid type (list) for variable 's(x)'}, which names neither the call nor the mask.
+With either package attached, a \code{statmod()} formula that uses one of these
+names would call that package's function, whose value is not a model term.
+The failure then occurs inside \code{model.matrix()} as \verb{invalid type (list) for variable 's(x)'}, a message that does not mention the masking package.
 
 Putting \pkg{modelterms7} in front removes the ambiguity at the point
 where the formula is read. A caller who wants the other package's function
-writes \code{mgcv::s(x)}, which reaches past the shim; \pkg{modelterms7}'s
-formula interpreter then rejects it, naming the class returned and the
-package that supplied it.
+writes \code{mgcv::s(x)}, which reaches past the shim; the formula interpreter
+of \pkg{modelterms7} then rejects the value, naming the class returned
+and the call as written.
 
-Only functions are copied. \pkg{modelterms7} exports objects that are not
-functions, S7 classes among them, and shadowing those would change what a
-name means without any of the benefit.
+A binding is made for each export of \pkg{modelterms7} for which
+\code{is.function()} is \code{TRUE}. The S7 class generators of that package are
+functions and are copied with the others.
 }
 \seealso{
 \code{\link[=statmod_equations]{statmod_equations()}} for the formula this is used to interpret,

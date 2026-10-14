@@ -20,7 +20,8 @@ parameter.}
 \code{approx}.}
 }
 \value{
-A list of three, of which the ones the route does not need are
+A list with \code{R}, \code{C} and \code{A} and, on the square-root route,
+\code{threads}, the thread count. The matrices that the route does not need are
 \code{NULL}:
 \describe{
 \item{\code{R}}{the square-root design, as \code{\link[=sqrt_design]{sqrt_design()}} returns it, or
@@ -39,10 +40,11 @@ decomposition will actually use.
 }
 \details{
 Only what the decomposition will read is built. \code{"qr"} and \code{"svd"} need
-the square-root design \code{R} and the penalty's factor \code{C} and never form the
-information; \code{"chol"} and \code{"chol_crossprod"} need the assembled \code{A} and
-neither square root. Building all three unconditionally would pay for the
-route not taken at every iteration of the loop.
+the square-root design \code{R} and the penalty's factor \code{C}, and build the
+information only when one of the two factors does not exist; \code{"chol"} needs
+the assembled \code{A} and neither square root. Building all three
+unconditionally would pay for the route not taken at every iteration of the
+loop.
 }
 \seealso{
 \code{\link[=iwls_solve]{iwls_solve()}}, which consumes this,

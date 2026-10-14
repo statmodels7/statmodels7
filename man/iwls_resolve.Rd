@@ -18,43 +18,29 @@ the observed information.
 }
 \description{
 Turns an \code{\link[=iwls]{iwls()}} left at \code{hessian = "auto"} into the method a fit runs:
-the expected information where the family writes it exactly, and otherwise
-the observed information, with the expected one taking the step where the
-observed cannot. A method whose curvature was named is returned as it is.
+the expected information where the family writes it exactly and at an
+acceptable cost, and otherwise the observed information, with the expected
+one taking the step where the observed step finds no acceptable point. A
+method whose curvature was named is returned as it is.
 }
 \details{
-\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the question. Where it answers
-\code{FALSE} the expected information is an approximation, the outer product of
-the scores by default. Measured on 68 fits of ten such families, a smooth
-at n = 300 and 1000: a scoring step on that approximation ends at a point
-the certificate accepts in 63; the observed information alone in 60, 7 of
-the others ending in an error; and the observed information with the
-expected standing in where the observed penalized information is not
-positive definite, or where its step finds no acceptable point, in 68 of
-68, at a median time between 0.17 and 0.98 of the expected route's per
-family and a REML criterion within \eqn{[-3.7 \times 10^{-5},
-1.9 \times 10^{-4}]} of it. The expected information stood in 52 times over
-those fits, every time for a curvature that was not positive definite.
-Since 0.197.0 such a curvature is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its
-step tried, the expected information standing in only where that step
-finds no acceptable point: measured on the seven costly families below,
-at the same log-likelihood and certificate, it takes 1/4 to 1/6 of the time
-where the observed information is indefinite.
+\code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} is the first question. Where it
+answers \code{FALSE} the expected information is an approximation, the outer
+product of the scores by default, and the method is settled on the observed
+information. An observed penalized information that is not positive
+definite is first repaired by \code{\link[=pd_repair]{pd_repair()}} and its step tried; the
+expected information takes the step only where that step finds no
+acceptable point.
 
-A family whose expected information is exact but costly, which
-\code{\link[distributions7:expected_hessian_costly]{distributions7::expected_hessian_costly()}} reports, is settled on the
-observed information as well. Measured at 1000 observations with a smooth
-on the location and the shape developed over a covariate, the expected
-route reaches the same estimate at 7 to 21 times the cost for the
-location-scale families, which take a quadrature per distinct shape: 3.5
-against 24.3 seconds for the skew normal, 0.3 against 27.5 for the
-pseudo-Huber, 10.2 against 214.7 for the skew t. The Poisson-inverse
-Gaussians sum over the support per observation, over a number of terms
-growing as \eqn{\sigma\mu}: 0.7 against 3.9 seconds for pig1 and 0.4
-against 2.4 for pig2 with the dispersion developed over a covariate, and
-far more where a fit passes through a large \eqn{\sigma\mu}. The expected information is
-still read where the observed one cannot take the step, and in full where a
-method or a criterion names it.
+\code{\link[distributions7:expected_hessian_costly]{distributions7::expected_hessian_costly()}} is the second question. A
+family whose expected information is exact but costly is settled on the
+observed information as well, because the expected information of such a
+family requires a quadrature or a sum over the support at each
+observation. The expected information is still used where the observed one
+cannot take the step, and in full where a method or a criterion names it.
+
+Only a family settled on the expected information receives a
+\code{switch_after} other than \code{Inf}; see \code{\link[=iwls_switch_after]{iwls_switch_after()}}.
 }
 \seealso{
 \code{\link[=iwls]{iwls()}}, \code{\link[=fit_smooth]{fit_smooth()}}, which reads \code{fallback}.

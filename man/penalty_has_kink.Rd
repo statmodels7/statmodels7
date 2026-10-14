@@ -9,27 +9,31 @@ penalty_has_kink(pen, what = "a penalty")
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty.}
 
-\item{what}{How to name the penalty if it cannot answer.}
+\item{what}{How to name the penalty in the error message.}
 }
 \value{
 A single logical.
 }
 \description{
 \code{TRUE} when the penalty is not differentiable somewhere a coefficient can
-be. A block whose penalty answers \code{TRUE} is estimated outside the jointly
-fitted system, by a coordinate descent of its own.
+be. A block whose penalty gives \code{TRUE} is estimated outside the jointly
+fitted system by \code{\link[=sparse_fit]{sparse_fit()}}: a compiled coordinate descent where the
+penalty describes its proximal operator as a table, and an accelerated
+proximal gradient iteration otherwise.
 }
 \details{
 \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} is read at a probe value of the
-hyperparameters, the midpoint of their bounds, which is the rule
-\pkg{modelterms7} already uses. Whether a kink exists is a property of the
-family, not of a point, so any admissible probe answers.
+hyperparameters, which \code{\link[=penalty_theta_start]{penalty_theta_start()}} gives. The probe is the
+midpoint of the interval where both bounds are finite, one unit inside the
+bound where only one is finite, and zero where neither is.
+\pkg{modelterms7} uses the same rule. Whether a kink exists is a property
+of the family and not of a point, so any admissible probe gives the same
+answer.
 
-A penalty that stops when asked is reported, never treated as smooth.
-Reading the failure as an answer sends the term to the scheme for the
-opposite property: \code{scad()} and \code{mcp()} were fitted by the
-curvature of a function that has none, reporting an effective 19.00
-degrees of freedom out of 20 on a design of pure noise, which is no
-selection at all.
+If \code{\link[penalties7:penalty_kinks]{penalties7::penalty_kinks()}} signals an error, \code{penalty_has_kink()}
+signals an error that names the penalty, and the penalty is not treated as
+smooth. Reading the failure as an answer would send a kinked penalty, such
+as \code{scad()} or \code{mcp()}, to the scheme for smooth penalties, which fits it
+by the curvature of a function that has none.
 }
 \keyword{internal}

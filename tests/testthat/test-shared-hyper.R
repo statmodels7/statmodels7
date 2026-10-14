@@ -130,7 +130,7 @@ test_that("a shared axis is swept once by a path", {
                      gaussian1_distrib(), d)
   de <- statmod_design(sp)
   bl <- statmod_blocks(sp, de)
-  rows <- path_rows(sp, bl, statmod_hyper_start(sp, de), bic())
+  rows <- path_rows(sp, bl, statmod_hyper_start(sp, de))
   expect_identical(nrow(rows), 1L)
   expect_identical(nrow(rows$members[[1L]]), 2L)
 

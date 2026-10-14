@@ -30,11 +30,12 @@ the hyperparameters in force, and a coefficient is inactive when it sits at
 one of them. Everything outside a kinked block is active, having no kink to
 sit at.
 
-The map of a kinked penalty is the identity here: a separable penalty under
-a general map is the generalized-lasso problem, which
-\code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}} rejects, so a block that reaches this
-function penalizes its coefficients one at a time and a kink of the penalty
-is a kink in a coefficient.
+A kinked penalty reaches this function with no map or with a diagonal map,
+which is what \code{standardize = TRUE} writes. A separable penalty under a
+general map is the generalized-lasso problem, which
+\code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}} rejects. A block that reaches this function
+therefore penalizes its coefficients one at a time, and a kink of the
+penalty is a kink in a coefficient.
 }
 \seealso{
 \code{\link[=outer_tau]{outer_tau()}}

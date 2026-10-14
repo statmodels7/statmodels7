@@ -20,8 +20,8 @@ the coordinates that equation owns.}
 }
 \value{
 A single non-negative number: the largest per-equation reading.
-An equation whose median curvature is zero or not finite contributes
-nothing.
+An equation whose median curvature is zero or not finite is scaled by
+one, so that its score per observation enters the reading as it is.
 }
 \description{
 The absolute \eqn{\max\lvert g\rvert / n} read per equation against that
@@ -34,26 +34,21 @@ The score of a location equation carries the units \eqn{1/y} and its
 curvature \eqn{1/y^2}, so dividing by \eqn{s_p} survives any rescaling of
 the response. Taking \eqn{s_p} over the whole equation changes nothing
 within it: a stiff, heavily penalized coordinate is held to the same rule
-as its neighbors, and that is what the envelope identities the outer
-gradient rests on require of the mode.
+as its neighbors, and the envelope identities on which the outer gradient
+rests require this of the mode.
 
 This reading arbitrates the final verdict and never drives the loop.
 }
 
-\section{Two designs refused before this one}{
-A per-coordinate normalization by \eqn{(H+S)_{jj}} is dimensionless too
-and is wrong: at extreme shrinkage the penalized coordinates converge
-loosely, the envelope identities lose their footing, and every outer
-trajectory moved.
+\section{Alternative readings that were rejected}{
+A per-coordinate normalization by \eqn{(H+S)_{jj}} is dimensionless too,
+but at extreme shrinkage the penalized coordinates converge loosely and the
+envelope identities lose their footing.
 
-Driving the loop with the per-equation form is right at small \eqn{y} and
-unreachable at large. At \eqn{y \times 10^4} the objective's magnitude
-grows with \eqn{\log y}, so the stall guard on it fires before a rule
-\eqn{1/s_p} stricter can. The inner fit then reported failure across the
-whole corridor of smoothing parameters between the criterion's plateau and
-its optimum, and the outer search, which reads a non-converged point as
-unavailable, never crossed it: 1482 evaluations and a fit at cor 0.82,
-where the absolute rule reaches 0.998.
+Using the per-equation form to drive the loop works at small \eqn{y} and
+cannot be met at large \eqn{y}. At \eqn{y \times 10^4} the magnitude of the
+objective grows with \eqn{\log y}, so the stall guard on the objective
+stops the run before a rule \eqn{1/s_p} stricter can be met.
 }
 
 \seealso{

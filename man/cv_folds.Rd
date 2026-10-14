@@ -9,7 +9,7 @@ cv_folds(n, k, folds)
 \arguments{
 \item{n}{The number of observations.}
 
-\item{k}{How many folds.}
+\item{k}{How many folds, at most \code{n}.}
 
 \item{folds}{The method's own assignment, or \code{numeric(0)}.}
 }
@@ -17,13 +17,15 @@ cv_folds(n, k, folds)
 An integer vector of length \code{n}.
 }
 \description{
-A fold number per observation, either the one the method carries or a fresh
-permutation.
+A fold number per observation, either the assignment the method carries or
+a permutation drawn with a fixed seed.
 }
 \details{
-The permutation is drawn from the caller's stream and put back, so a fit is
-not silently reproducible only when the caller happens to have seeded.
-Passing \code{folds} explicitly is how two criteria are made comparable on the
-same partition.
+The permutation is drawn after \code{set.seed(20260811L)}, and the caller's
+random-number state is restored afterwards, so the partition is the same
+whatever the caller's seed. Passing \code{folds} explicitly is how two criteria
+are made comparable on a partition of the caller's own. The values of
+\code{folds} are relabeled to the integers \verb{1, 2, ...} in the order of their
+factor levels, and a length other than \code{n} signals an error.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{label_pieces}
 \alias{label_pieces}
-\title{Every Labelled Effect a Term Carries, Its Sub-Terms Included}
+\title{Every Labeled Effect in a Term, Its Sub-Terms Included}
 \usage{
 label_pieces(
   term,
@@ -25,47 +25,47 @@ by.}
 level, where the piece is the whole of it.}
 
 \item{path}{Which of the parent's parameters were developed to reach the
-piece, outermost first, empty at the top level. It says what the effect
-is an effect ON: a labelled random intercept written inside
+piece, outermost first, empty at the top level. It identifies the quantity
+on which the effect acts: a labeled random intercept written inside
 \code{seg(x, psi ~ ...)} is an effect on the break-point and not on the mean,
 and a report naming only the equation would be read as the second.}
 
 \item{structural}{Whether \code{within} indexes a structural term's own
 parameters rather than columns of the design. \code{NULL} at the top level,
-where it is read from the term; a recursive call passes what it was told.}
+where it is read from the term; a recursive call passes the value it
+received.}
 }
 \value{
 A list of pieces, each with \code{param}, \code{term}, \code{within}, \code{path},
 \code{dim}, \code{tag}, \code{group} (as \code{\link[modelterms7:term_group]{modelterms7::term_group()}} returns it),
 \code{structural} and \code{distrib}. Empty where nothing under the term is
-labelled.
+labeled.
 }
 \description{
-One piece per labelled random effect reachable from a term: the term itself
+One piece per labeled random effect reachable from a term: the term itself
 where it carries a label, and the sub-terms developing its own parameters
 otherwise, walked to any depth.
 }
 \section{Why a sub-term is reachable at all}{
-\code{seg(x, psi ~ random(~ 1 | u | id))} develops a break-point over a labelled
-random effect. The labelled term is not one of the equation's terms -- the
-equation carries one \code{SegTerm}, whose own label is absent -- and its
-coefficients are columns of that term's block. Measured, they are exactly
-the ones \code{\link[modelterms7:term_components]{modelterms7::term_components()}} reports as that component's
-\code{sub_index}, so a piece records them as \code{within}, positions in the parent's
+\code{seg(x, psi ~ random(~ 1 | u | id))} develops a break-point over a labeled
+random effect. The labeled term is not one of the equation's terms (the
+equation carries one \code{SegTerm}, whose own label is absent), and its
+coefficients are columns of that term's block. They are the columns that
+\code{\link[modelterms7:term_components]{modelterms7::term_components()}} reports as that component's \code{sub_index},
+so a piece records them as \code{within}, positions in the parent's
 block, and the design turns them into positions in the stacked vector the
 same way it does for any other term.
 
-That is the whole of what a subformula costs here, and it is why the case is
-covered: a labelled effect written in a subformula of an \strong{additive} term
-lives in the same vector as one written in an equation.
+A labeled effect written in a subformula of an \strong{additive} term lives in
+the same vector as one written in an equation, so the same positions apply.
 
 A \strong{structural} parent addresses its coefficients differently: they are the
 term's own parameters, which contribute no design column and live in the
 design's structural state. The walk is the same and the positions it
-composes are the same numbers -- measured, a labelled effect inside
-\code{gas(kappa1 ~ 1 + random(~ 1 | u | g))} comes out at 3 to 12, exactly the
-\code{cols} the unlabelled sub-term's own penalty is read at -- so what a piece
-records is which vector they index rather than a different arithmetic.
+composes are the same numbers (for a labeled effect inside
+\code{gas(kappa1 ~ 1 + random(~ 1 | u | g))} they are the \code{cols} at which the
+unlabeled sub-term's own penalty is read), so a piece records which vector
+the positions index and not a different arithmetic.
 }
 
 \section{Depth}{
@@ -74,7 +74,7 @@ walk recurses and composes \code{within} on the way down: a depth-two sub-term's
 columns are positions in its parent's block, which are themselves positions
 in the equation-level term's.
 
-A labelled term's own sub-terms are not walked. Its columns are the class's
+A labeled term's own sub-terms are not walked. Its columns are the class's
 already, and anything inside it belongs to that block rather than to another.
 }
 

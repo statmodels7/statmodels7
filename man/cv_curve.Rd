@@ -2,25 +2,14 @@
 % Please edit documentation in R/path.R
 \name{cv_curve}
 \alias{cv_curve}
-\title{The Held-Out Deviance of Every Point of a Path}
+\title{The Held-Out Criterion of Every Point of a Path}
 \usage{
-cv_curve(
-  spec,
-  data,
-  weights,
-  offsets,
-  inner_optimizer,
-  hypers,
-  folds,
-  run = NULL
-)
+cv_curve(spec, data, inner_optimizer, hypers, folds, run = NULL)
 }
 \arguments{
-\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, holding the weights and offsets of the fit.}
 
 \item{data}{The data the fit was called on.}
-
-\item{weights, offsets}{As \code{\link[=statmod]{statmod()}} received them.}
 
 \item{inner_optimizer}{The inner method.}
 
@@ -33,24 +22,32 @@ warm start begins again at the head of each, the kink jumping back up
 there. \code{NULL} treats the whole list as one run.}
 }
 \value{
-A list with \code{cvm}, \code{cvse} and \code{n_fail}.
+A list with \code{cvm}, the mean over folds at each point; \code{cvse}, its
+standard error across the folds with a finite value; \code{n_fail}, the number
+of folds without a value at each point; and \code{error}, the message of the
+first fold that could not rebuild the model, or \code{NULL}. \code{cvm} is missing
+at a point where no fold has a value.
 }
 \description{
 Refits the model on each training fold along the whole path and scores it on
-the fold left out, returning the mean deviance per observation and its
-standard error across folds.
+the fold left out. Returns, at each point, the mean over folds of minus twice
+the weighted log-likelihood of the held-out rows divided by the sum of their
+weights, and its standard error across folds.
 }
 \details{
-The path is run fold by fold, not point by point, so that each fit starts
-from the previous point's coefficients. That warm chain is the whole
-economy of a path
-cheaper than its length suggests. Each fold reapplies to its rows the terms
-built on all the rows, as \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} reapplies them to new
-data: the knots of a basis, the levels of a factor and the scales of a
-standardized block come from the covariates of every row, never from the
-response. Rebuilt on the training rows alone, a basis did not cover a held
-out row past their range, and the fold stopped the whole fit (a smooth of
-the year of construction beside a lasso on \code{gamlss.data::rent}).
+The path is run fold by fold and not point by point, so that each fit
+starts from the previous point's coefficients. Each fold reapplies to its
+rows the terms built on all the rows, as \code{\link[=predict.StatmodFit]{predict.StatmodFit()}} reapplies
+them to new data: the knots of a basis, the levels of a factor and the
+scales of a standardized block come from the covariates of every row and
+never from the response. A basis rebuilt on the training rows alone would
+not cover a held-out row beyond their range, and the fold would fail.
+
+The training rows and the held-out rows carry the weights and offsets of
+\code{spec} at those rows, the offsets given through the \code{offsets} argument of
+\code{\link[=statmod]{statmod()}} included. Where the fit of a fold at a point does not converge,
+or its criterion is not finite, the fold's value at that point is missing
+and is counted in \code{n_fail}.
 }
 \seealso{
 \code{\link[=cv]{cv()}}

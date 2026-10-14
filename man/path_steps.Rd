@@ -26,20 +26,20 @@ A numeric vector, one step per column, or \code{NULL}.
 coefficients in hand.
 }
 \details{
-This is the step the sweeps of \code{\link[=coord_fit]{coord_fit()}} use, and it is what
-decides whether a shape parameter is admissible: SCAD's proximal operator
-needs \eqn{t < a - 1} and MCP's \eqn{t < \gamma}, tightened to
-\eqn{t d^2} under the diagonal map standardization applies. So the useful
-lower limit of a shape is a property of the data, not the constant 2 or 1
-the penalty is defined above, and it binds at ordinary settings: measured,
-a standardized penalty on a column of spread 20 at \eqn{n = 200} needs
-\eqn{a > 3}, and a Poisson block whose fitted means are near
-\eqn{10^{-3}} needs \eqn{a > 11}.
+This is the step the sweeps of \code{\link[=coord_fit]{coord_fit()}} use, and it decides whether a
+shape parameter is admissible: SCAD's proximal operator requires the step
+to be below \eqn{a - 1} and MCP's below \eqn{\gamma}, the step being
+multiplied by the squared entries of the diagonal map that standardization
+applies. The lower limit of a shape is therefore a property of the data,
+and not only the constant 2 or 1 over which the penalty is defined.
 
-Everything is guarded, and \code{NULL}, which the caller reads as "the
-penalty's own bound and nothing more", is the answer wherever the
-working weights are not usable. A starting grid may be approximate; what
-it may not do is fail.
+The working weights are those of \code{\link[=coord_working]{coord_working()}} for the observed
+information at the coefficients in hand. The result is \code{NULL} for a structural block, for a block without
+columns, and wherever the working weights or the squared column sums are
+not finite and positive; the caller reads \code{NULL} as the penalty's own bound
+and nothing more. Any error inside the computation is also answered with
+\code{NULL}, since the grid built from the steps is a starting grid and may be
+approximate.
 }
 \seealso{
 \code{\link[=shape_floor]{shape_floor()}}, \code{\link[=coord_fit]{coord_fit()}}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/order.R
 \name{assert_criterion_order}
 \alias{assert_criterion_order}
-\title{Refuse Where a Criterion Cannot Be Computed}
+\title{Derivative Orders Read by a Criterion}
 \usage{
 assert_criterion_order(distrib, method)
 }
@@ -17,8 +17,8 @@ assert_criterion_order(distrib, method)
 \description{
 Raises \code{\link[=order_shortfall]{order_shortfall()}}'s message when the family does not carry the two
 derivatives every criterion reads. Called from \code{\link[=statmod]{statmod()}} once the
-criterion is known to have something to do, so a model whose criterion is
-inert is not refused for a reason that would never have arisen.
+criterion is known to have something to do, so that a model whose criterion
+is inert does not signal an error that cannot arise.
 }
 \examples{
 statmodels7:::assert_criterion_order(distributions7::gaussian1_distrib(), reml())

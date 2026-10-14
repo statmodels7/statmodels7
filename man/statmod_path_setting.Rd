@@ -13,7 +13,8 @@ statmod_path_setting(spec, row, field, default, name = NULL)
 
 \item{field}{Which field of the penalty's entry to read.}
 
-\item{default}{What the criterion asks for.}
+\item{default}{The fallback of \code{\link[=path_fallbacks]{path_fallbacks()}} for this setting, used
+where the term specifies none.}
 
 \item{name}{The hyperparameter's name, or \code{NULL} where the setting
 is one per term.}
@@ -22,6 +23,7 @@ is one per term.}
 A single number.
 }
 \description{
-One Setting of the Path, Read From the Term
+Reads one setting of the path from the penalty's entry in the term, and
+returns \code{default} where the term does not set it.
 }
 \keyword{internal}

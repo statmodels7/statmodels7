@@ -30,6 +30,10 @@ counts an observation twice.
 No penalty enters. This is the likelihood alone; \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}
 gives the other half of the objective, and \code{\link[=statmod_objective]{statmod_objective()}} combines
 them.
+
+For a model with a term of the likelihood shape, a mixture over latent
+states, the log-likelihood of the term replaces the sum of the log-densities
+at the observations.
 }
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for its derivative,

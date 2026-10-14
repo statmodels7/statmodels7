@@ -18,14 +18,13 @@ carrying the same label become a single axis, swept once, whose value is
 written into each of them.
 }
 \details{
-It is \code{\link[=index_group]{index_group()}}'s decision on the other machine. The axis is
-identified by its first member, so everything that reads
+It plays for a path the role that \code{\link[=index_group]{index_group()}} plays for the outer
+search. The axis is identified by its first member, so everything that reads
 \code{parameter}/\code{term}/\code{name} -- the block it belongs to, whether it scales the
 kink, the history a reader reads -- goes on reading the same fields, and
 the \code{members} list column says which hyperparameters the axis stands for.
 
-Where nothing is shared each line is its own axis carrying itself as its
-single member, so the result is what the caller produced before sharing
-existed.
+Where nothing is shared, each line is its own axis and carries itself as
+its single member.
 }
 \keyword{internal}

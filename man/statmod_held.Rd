@@ -20,11 +20,11 @@ One key per hyperparameter a term fixed in its constructor, as
 return.
 }
 \details{
-which hyperparameters are estimated is a property of the terms, not of the
-criterion: the term is where the penalty is named, and a criterion argument
-saying otherwise was read by nothing when the two disagreed. Everything
-here consults this one enumeration: the outer index, the path, and the
-summary's account of what was estimated and what was given.
+Which hyperparameters are estimated is a property of the terms and not of
+the criterion, because the term is where the penalty is named.
+\code{\link[=path_rows]{path_rows()}} and the summary's account of what was estimated and what was
+held read this enumeration. The outer index reads the same \code{fixed} entries
+of \code{\link[=statmod_penalized]{statmod_penalized()}}.
 }
 \seealso{
 \code{\link[modelterms7:term_hyper]{modelterms7::term_hyper()}}, \code{\link[=outer_hyper_index]{outer_hyper_index()}}

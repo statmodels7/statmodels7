@@ -31,10 +31,10 @@ location or a mean on the identity link, that parameter's equation has an
 intercept and at least one other parametric column, and every term of the
 equation is a \link[modelterms7:LinparTerm]{modelterms7::LinparTerm}, a \link[modelterms7:SmoothTerm]{modelterms7::SmoothTerm}, a
 \link[modelterms7:RandomTerm]{modelterms7::RandomTerm} or a \link[modelterms7:PenalizedTerm]{modelterms7::PenalizedTerm}. The penalized
-blocks start at zero, as they do from the intercept-only start, and a
-term with a start of its own (a break-point, a nonlinear term, a filter)
-leaves the equation on the intercept-only start. An aliased column takes
-the coefficient zero.
+blocks start at zero, as they do from the intercept-only start. If the
+equation has a term of any other kind (a break-point, a nonlinear term, a
+filter), the least-squares start does not apply and the equation keeps the
+intercept-only start. An aliased column takes the coefficient zero.
 }
 \seealso{
 \code{\link[=start_at]{start_at()}}, \code{\link[=statmod_intercepts]{statmod_intercepts()}}

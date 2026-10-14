@@ -11,26 +11,26 @@ kink_hypers(pen, theta, unbounded = TRUE)
 
 \item{theta}{The hyperparameters in force.}
 
-\item{unbounded}{Whether to keep only those with an infinite upper bound.}
+\item{unbounded}{Whether to keep only those with an infinite upper bound.
+\code{TRUE} by default.}
 }
 \value{
 A character vector, possibly empty.
 }
 \description{
-The names whose value moves \code{\link[=kink_scale]{kink_scale()}}, which are the ones a
-path over the penalty has to vary.
+The names of the hyperparameters whose value changes \code{\link[=kink_scale]{kink_scale()}}.
 }
 \details{
-The question is put to the penalty and never answered from a list of
-families: the shape parameters of SCAD and MCP leave the subdifferential at
-zero unchanged and govern how fast the penalty flattens further out, while
-\eqn{\lambda} and the elastic net's \eqn{\alpha} both scale it.
+Each hyperparameter is moved to another admissible value and the size of the
+kink is read again, so that no list of families is consulted. The shape
+parameters of SCAD and MCP leave the subdifferential at zero unchanged and
+govern how fast the penalty flattens further out, while \eqn{\lambda} and
+the elastic net's \eqn{\alpha} both scale it.
 
 \code{unbounded} restricts the answer to the hyperparameters with no upper
-bound, which is the default choice of what to select. The reference
-implementations do the same by convention, \pkg{glmnet} holding
-\eqn{\alpha} fixed and \pkg{ncvreg} holding \eqn{\gamma}, and a bounded
-shape is better swept by hand over a few values than searched.
+bound. \code{\link[=path_by_kink]{path_by_kink()}} calls this function with \code{unbounded = FALSE} and
+excludes the bounded hyperparameters itself; those are swept over their
+interval by \code{\link[=path_grid]{path_grid()}}.
 }
 \seealso{
 \code{\link[=kink_scale]{kink_scale()}}

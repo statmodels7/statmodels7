@@ -24,14 +24,22 @@ fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
 \item{vb}{The resolved verbosity.}
 }
 \value{
-A list of five:
+A list with the following elements:
 \describe{
 \item{\code{par}}{the full stacked coefficient vector, with the block's
 positions replaced.}
 \item{\code{value}}{the objective there.}
 \item{\code{converged}}{a single logical, the method's own verdict.}
 \item{\code{iterations}}{how many the method took.}
-\item{\code{history}}{a data frame, one row per iteration.}
+\item{\code{history}}{for \code{\link[=iwls]{iwls()}}, a data frame with one row per accepted
+step, or \code{NULL} where no step was taken; \code{NULL} for an
+\pkg{optimizers7} method.}
+\item{\code{aliased}}{the stacked positions of the coefficients that the
+solve left out, \code{integer(0)} for an \pkg{optimizers7} method.}
+\item{\code{note}}{the note of \code{\link[=iwls_fit]{iwls_fit()}}, a string that states why the
+run stopped where it did not stop on its rule, or that it was read
+as converged by the dimensionless rule, and \code{NULL} otherwise; \code{NULL}
+for an \pkg{optimizers7} method.}
 }
 }
 \description{
@@ -44,12 +52,11 @@ The objective handed to the optimizer is the full one restricted to \code{idx}:
 the coefficients outside the block enter it as constants, so the value it
 reports is the model's objective, never a block's own.
 
-With \code{\link[=iwls]{iwls()}} the step is solved through \code{\link[=fit_smooth]{fit_smooth()}}'s own scoring
-loop, which reads the exact information. With an \pkg{optimizers7}
-optimizer the objective's \code{fn}, \code{gr} and \code{he} are all supplied, so
-\code{newton()} gets the exact second derivative instead of differencing the
-gradient: measured, that is 2.5x on one smooth and 5.5x on three smooths
-with a random effect, at identical answers.
+With \code{\link[=iwls]{iwls()}} the step is solved by the scoring loop of \code{\link[=iwls_fit]{iwls_fit()}}, which
+reads the expected or the observed information, as the settled method
+specifies. With an \pkg{optimizers7} optimizer the objective's \code{fn}, \code{gr} and
+\code{he} are all supplied, so \code{newton()} receives the second derivative of the
+objective and does not difference the gradient.
 }
 \seealso{
 \code{\link[=statmod_alternate]{statmod_alternate()}}, the caller,

@@ -16,30 +16,32 @@ statmod_penalized_units(spec, design)
 }
 \value{
 A list of entries, each with \code{param}, \code{term} (the name in
-the formula), \code{key}, \code{cols} (positions within the parameter's
-coefficients), \code{index} (positions in the stacked vector) and
-\code{penalty}.
+the formula), \code{key}, \code{within}, \code{penalty}, \code{fixed}, \code{n_values}, \code{values},
+\code{min_ratio}, \code{search}, \code{ids}, \code{structural}, \code{cols} and \code{index}. For an
+ordinary unit \code{cols} are positions within the parameter's coefficients and
+\code{index} positions in the stacked vector. For a structural unit \code{cols} are
+positions among the term's own parameters and \code{index} is \code{NULL}. The entry
+of a covariance class also carries \code{class}, \code{params}, \code{pieces}, \code{mixed}
+and, for a mixed class, \code{joint} and \code{beta_index}.
 }
 \description{
 One entry per penalty in the model, whatever term it belongs to and whether
 or not that term has more than one.
 }
 \details{
-Twelve places used to run the same loop: over the distribution parameters,
-over each one's terms, asking each term for its penalty. Every one of them
-assumed a term carries at most one.
+The enumeration runs over the distribution parameters and over the terms of
+each, and reads the penalties of each term. A term may carry several
+penalties, over different subsets of its own parameters, as a panel model
+with a population value and a shrunk deviation per group needs. A
+covariance class (see \code{\link[=statmod_classes]{statmod_classes()}}) is one unit over the stacked
+columns of its members. The callers that need the penalties of a model
+read this one enumeration.
 
-A term may carry several, over different subsets of its own parameters,
-as a panel model with a population value and a shrunk deviation
-per group needs. Enumerating once is both the generalization and the
-removal of eleven copies.
-
-\strong{The key} is the term's name in the formula, and the entry's own name
-appended after \code{::} when the term carries more than one. Two
-\code{ridge()} terms are two terms with two keys and two hyperparameters,
-which they already were; a term with one penalty over the whole of itself
-keys exactly as before, so nothing that reads a hyperparameter by term name
-changes.
+\strong{The key} is the term's name in the formula, with the entry's own name
+appended after \code{::} when the term carries more than one penalty and the
+entry is named. Two \code{ridge()} terms are two terms with two keys and two
+hyperparameters. A term with one penalty has its name alone as key, so a
+hyperparameter is read by the term's name.
 
 \code{statmod_penalized_units()} builds the list. \code{statmod_penalized()}
 returns it from the design's \code{eta_memo} environment where the design has

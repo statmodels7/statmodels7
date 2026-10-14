@@ -22,12 +22,14 @@ A block is keyed in the design by the term's deparsed call, so
 \code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} are two different keys and never meet by
 name. Their coefficients, on the other hand, are \verb{s(x).lin}, \verb{s(x).z1},
 ... on both sides, so the stem \code{s(x)} names the term without naming the
-basis. The suffix is taken from the LAST dot rather than the first, so a
+basis. The suffix is taken from the last dot and not the first, so a
 covariate whose own name carries one -- \code{s(my.var)} -- keeps it.
 
-\code{NA} is returned where the names carry no suffix at all, which is the
-parametric block, whose columns are variables and levels and which is
-matched column by column instead.
+\code{NA} is returned where the names do not reduce to one common stem, as for
+the parametric block of several columns, whose columns are variables and
+levels and which is matched column by column instead. A block of a single
+column whose name contains a dot, such as \code{my.var}, reduces to the stem
+\code{my}.
 }
 \seealso{
 \code{\link[=start_from]{start_from()}}, whose method pairs blocks with it.

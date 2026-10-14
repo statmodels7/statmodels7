@@ -22,13 +22,18 @@ by \code{|}.}
 how many equations there are and what they are called.}
 
 \item{data}{A data frame holding the response, the covariates and any
-matrix columns the terms name.}
+matrix columns the terms name. A missing value in the response, or in a
+variable that an equation names, is an error, because a fit does not
+drop rows.}
 
 \item{weights}{Optional prior weights, a numeric vector of length
-\code{nrow(data)}, or \code{NULL} for all ones.}
+\code{nrow(data)} (not the name of a column), or \code{NULL} for all ones. The
+weights must be non-negative, finite and complete, and not all zero. They
+act as frequency weights and are not normalized.}
 
 \item{offsets}{Optional named list of offsets, one entry per parameter,
-summed with any the formula names.}
+each a finite numeric vector of length 1 or \code{nrow(data)}, summed with any
+offset the formula names for the same parameter.}
 
 \item{need_response}{\code{TRUE}, the default, requires the left-hand side to
 evaluate. \code{FALSE} is what prediction uses: new data routinely has no
@@ -60,12 +65,28 @@ term constructors sit in front of the search path, so \code{s()} means this
 toolkit's even with \pkg{mgcv} attached.
 }
 
+\section{Rejected before any fit}{
+The function signals an error for a multivariate family (which
+\code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} fits with constant parameters), a censored
+response written with \code{cens()}, a family method whose signature has no
+\code{...}, a missing value in the response or in a variable that an equation
+names, a two-column response on a family without \code{size}, an offset written
+inside another term, and a structural term that cannot be fitted or a
+formula with more than one structural term.
+}
+
 \section{Prior weights are not normalized}{
 They enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are taken as
-given. Dividing by their sum would turn the log-likelihood into a mean,
-shrinking every standard error by \eqn{\sqrt{n}} and making the
-information criteria incomparable with an unweighted fit of the same
-model.
+given, so they act as frequency weights: a constant weight \eqn{c} on every
+row is \eqn{c} copies of the data. Dividing the weights by their sum would
+turn the log-likelihood into a mean, multiplying every standard error by
+\eqn{\sqrt{n}} and making the information criteria incomparable with an
+unweighted fit of the same model.
+
+The restricted (REML) criterion counts \eqn{c n} observations against the
+\eqn{p} coefficients when the weights are the constant \eqn{c}. The REML
+estimate of a dispersion parameter therefore changes under a constant
+rescaling of the weights, and the ML estimate does not.
 }
 
 \examples{

@@ -27,12 +27,17 @@ the observed one.}
 with no closed form.}
 }
 \value{
-A list of five functions:
+A list with the elements
 \describe{
+\item{\code{npar}}{the number of coefficients of each equation, an integer
+vector.}
 \item{\code{fn(b)}}{the objective at the stacked coefficients \code{b}, a single
 number.}
 \item{\code{gr(b)}}{its gradient, a numeric vector as long as \code{b}.}
-\item{\code{he(b)}}{its Hessian, a \verb{p x p} matrix.}
+\item{\code{gr_sub(b, idx)}}{the gradient at the positions \code{idx} alone.}
+\item{\code{he(b)}}{its Hessian, the information matrix (expected or
+observed according to \code{expected}) plus the Hessian of the penalties,
+a \verb{p x p} matrix.}
 \item{\code{split(b)}}{the stacked vector as a named list, one entry per
 distribution parameter.}
 \item{\code{stack(l)}}{the inverse of \code{split}.}
@@ -51,10 +56,11 @@ What is scaled instead is the stopping rule, in the one place it is read.
 See \code{\link[=iwls]{iwls()}} and \code{\link[=iwls_score]{iwls_score()}}.
 }
 
-\section{The five closures share one design}{
-All five close over \code{design}, \code{hyper} and the two information settings, so
-a caller who changes a hyperparameter builds a new objective. That is what
-the outer search does at every point it visits.
+\section{The closures share one design}{
+The functions \code{fn}, \code{gr}, \code{gr_sub} and \code{he} close over \code{design} and
+\code{hyper}, and \code{he} also over the two information settings, so that a
+change of a hyperparameter requires a new objective. The outer search
+builds a new objective at every point that it visits.
 }
 
 \seealso{

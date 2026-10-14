@@ -18,15 +18,15 @@ twice attaches nothing the second time, and a member that is not installed
 is skipped without an error.
 }
 \details{
-Each member's own startup messages are suppressed: the caller asked for
-the toolkit and gets one message about it, not eight. The masking warnings
+Each member's own startup messages are suppressed, so that attaching the
+toolkit prints one message instead of one per member. The masking warnings
 are suppressed too, and \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} reports the same
 information once, at the end, in one block.
 
 Attachment order follows \code{\link[=statmodels7_packages]{statmodels7_packages()}}, which is alphabetical.
-The members export no name in common, so nothing about the result depends
-on that order; \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} is what would report it if one
-day they did.
+The members export no name in common, so the result does not depend on
+that order. If a name were exported by two members,
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} would report it.
 }
 \seealso{
 \code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members,

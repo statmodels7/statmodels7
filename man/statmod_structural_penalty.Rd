@@ -27,21 +27,19 @@ or matrix over that term's parameters in their own order; empty when no
 structural term carries a penalty.
 }
 \description{
-The derivative of the penalties a structural term declares, in the term's
-own parameters, in place of the coefficients the other penalty function
-reads.
+The value, gradient or Hessian of the penalties that a structural term
+declares, in the term's own parameters. \code{\link[=statmod_penalty_at]{statmod_penalty_at()}} evaluates
+the penalties on the coefficients.
 }
 \details{
 The objective of the structural block includes these penalties through
-\code{\link[=statmod_penalty_at]{statmod_penalty_at()}}, so its gradient must include their
-derivative: without it the two describe different functions, an optimizer
-walks until its budget runs out, and \code{optimizers7}'s own check reports
-that the objective changes at a rate the gradient does not predict.
+\code{\link[=statmod_penalty_at]{statmod_penalty_at()}}, so that its gradient has to include their
+derivative. Without it the objective and its gradient describe different
+functions, and the gradient check of \pkg{optimizers7} reports that the
+objective changes at a rate that the gradient does not predict.
 
-The penalty is read on the \strong{unconstrained scale}, which is where the
-term carries its parameters and where a deviation from a population value
-is defined. For a deviation, whose link is the identity, the two scales
-coincide.
+The penalty is read on the unconstrained scale, which is the scale on which
+the term carries its parameters.
 }
 \seealso{
 \code{\link[=statmod_penalty_at]{statmod_penalty_at()}}

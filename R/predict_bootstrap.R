@@ -267,7 +267,7 @@ bootstrap_refit <- function(object, spec_b, refit, method, cfg, beta0) {
       (!is.null(crit) || !is.null(sm$sparse_criterion))) {
     res <- statmod_select(spec_b, design, blocks, hyper, method, crit, NULL,
                           beta0, cfg$approx, cfg$maxit, cfg$tol, vb, NULL,
-                          NULL, NULL, sm$sparse_criterion)
+                          sm$sparse_criterion)
     hyper <- res$hyper
   } else if (marg) {
     res <- outer_fit(spec_b, design, blocks, hyper, method, crit, NULL, beta0,

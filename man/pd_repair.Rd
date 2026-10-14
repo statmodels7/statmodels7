@@ -9,18 +9,20 @@ pd_repair(A, rel = 1e-08)
 \arguments{
 \item{A}{A symmetric matrix.}
 
-\item{rel}{The floor, relative to the largest eigenvalue.}
+\item{rel}{The floor, relative to the largest absolute eigenvalue.}
 }
 \value{
-A symmetric positive definite matrix.
+A symmetric positive definite matrix, or \code{NULL} where \code{A} has a
+non-finite entry. A matrix with no rows is returned as it is.
 }
 \description{
 Returns the matrix unchanged when it is positive definite, and otherwise
-its eigendecomposition with the eigenvalues floored.
+the matrix rebuilt from its eigendecomposition with the eigenvalues floored.
 }
 \details{
 Abandoning a start because the curvature is indefinite is what
 \code{solve()} forces and what a repair avoids; the floor is relative to
-the largest eigenvalue, since an absolute one means nothing across scales.
+the largest absolute eigenvalue, since an absolute one means nothing across
+scales. Positive definiteness is tested by a Cholesky factorization.
 }
 \keyword{internal}

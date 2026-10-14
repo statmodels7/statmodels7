@@ -18,8 +18,6 @@ statmod_select(
   tol,
   vb,
   data,
-  weights,
-  offsets,
   sparse_method = NULL
 )
 }
@@ -34,7 +32,8 @@ statmod_select(
 
 \item{inner_optimizer}{The inner method.}
 
-\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
+\item{method}{The \code{\link[=OuterMethod]{OuterMethod()}} that estimates the twice differentiable
+hyperparameters, or \code{NULL}.}
 
 \item{optimizer}{The optimizer for the differentiable hyperparameters.}
 
@@ -46,11 +45,17 @@ statmod_select(
 
 \item{vb}{The verbosity.}
 
-\item{data, weights, offsets}{What the fit was called on, which
-cross-validation needs in order to refit on part of it.}
+\item{data}{The data the fit was called on, which cross-validation needs
+in order to refit on part of it; the weights and offsets are those held
+by \code{spec}.}
+
+\item{sparse_method}{The \code{\link[=OuterMethod]{OuterMethod()}} that scores the path, or \code{NULL},
+in which case \code{method} is used.}
 }
 \value{
-The list \code{\link[=outer_fit]{outer_fit()}} returns.
+The list \code{\link[=outer_fit]{outer_fit()}} or \code{\link[=statmod_path]{statmod_path()}} returns, with the
+element \code{criterion_by}, the \code{\link[=OuterMethod]{OuterMethod()}} whose value is \code{criterion};
+the list \code{\link[=statmod_alternate]{statmod_alternate()}} returns where no criterion runs.
 }
 \description{
 Routes the twice differentiable hyperparameters to \code{\link[=outer_fit]{outer_fit()}}
@@ -59,8 +64,8 @@ and the rest to \code{\link[=statmod_path]{statmod_path()}}.
 \details{
 The split is the same one that decides how the coefficients are fitted, so a
 term whose penalty has a kink has both its coefficients and its
-hyperparameters handled by methods that do not ask for a curvature it does
-not have.
+hyperparameters handled by methods that do not require a curvature that the
+penalty does not have.
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}

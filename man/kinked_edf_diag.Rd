@@ -39,9 +39,12 @@ concave zone of SCAD or MCP has a negative penalty curvature and counts more
 than one, which is Stein's count for those penalties.
 
 It answers only for a model with a kinked block and no structural term,
-and declines (\code{NULL}) where the active columns are not of full rank,
-where \code{\link[=statmod_pe]{statmod_pe()}} reads a rank in place of a count, or where the factor
-does not exist; \code{\link[=statmod_edf]{statmod_edf()}} then reads its other rules.
+and declines (\code{NULL}) where the penalty has no curvature over the active
+coordinates and the count of one per column cannot be certified
+(\code{\link[=design_count_exact]{design_count_exact()}} is \code{FALSE}, where \code{\link[=statmod_pe]{statmod_pe()}} reads a rank in
+place of a count), or where the penalized curvature of the active
+coordinates is not positive definite, so that its Cholesky factor does not
+exist; \code{\link[=statmod_edf]{statmod_edf()}} then reads its other rules.
 }
 \seealso{
 \code{\link[=statmod_pe]{statmod_pe()}}, \code{\link[=statmod_edf]{statmod_edf()}}

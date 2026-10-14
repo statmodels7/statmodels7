@@ -16,14 +16,14 @@ accepted and anything else is an error.}
 A data frame as \code{\link[=statmodels7_versions]{statmodels7_versions()}} returns, with columns
 \code{package} and \code{version}. Returned invisibly under both actions: the
 report prints to the console with \code{\link[=cat]{cat()}} and is not the return value.
-Under \code{"install"} the versions are read \strong{after} the install, so the
-result is the state the call left behind.
+Under \code{"install"} the versions are read after the installation, so the
+result is the state that the call left behind.
 }
 \description{
-Installs the eight member packages of the toolkit from their GitHub
+Installs the member packages of the toolkit from their GitHub
 repositories under \code{github.com/statmodels7}, or prints what is installed
 and stops. The default is to print: installing packages is a side effect,
-and this function asks for it to be requested by name.
+so the installation runs only when \code{action = "install"} is given.
 }
 \section{Where the packages come from}{
 None of the toolkit is on CRAN, so the install path is GitHub, at
@@ -33,25 +33,26 @@ members itself and installs only what is missing or behind. The order the
 names are passed in therefore does not matter.
 
 \pkg{pak} is not a dependency of this package. When \code{action = "install"}
-is asked for and \pkg{pak} is not installed, the call stops with a message
-giving both the \code{install.packages("pak")} line and the equivalent
-\code{\link[remotes:install_github]{remotes::install_github()}} call spelled out with all eight repositories,
-so a caller who prefers \pkg{remotes} can paste it.
+is given and \pkg{pak} is not installed, the call stops with a message
+that contains the \code{install.packages("pak")} line and the equivalent
+\code{\link[remotes:install_github]{remotes::install_github()}} call written out for every member repository,
+so that it can be pasted where \pkg{remotes} is used instead.
 }
 
 \section{Installing over a loaded package}{
 A member that is attached in the current session holds its own DLL open on
-Windows, and \pkg{pak} cannot replace a file that is in use. Restart R
-before installing, or the install of a compiled member fails partway and
-leaves that member in a state where \code{packageVersion()} reports it absent.
+Windows, and \pkg{pak} cannot replace a file that is in use. R should be
+restarted before the installation. Otherwise the installation of a compiled
+member can fail partway and leave that member in a state in which
+\code{packageVersion()} reports it as absent.
 }
 
 \section{Printing}{
-Both actions print, and neither takes an argument to suppress it. The
-report exists to be read, and its return value is
-\code{\link[=statmodels7_versions]{statmodels7_versions()}}, so a caller who wants the versions without the
-console output calls that instead. The install hands the work to
-\pkg{pak}, which prints its own progress and takes no \code{quiet} argument.
+Both actions print, and no argument suppresses the output. The return value
+of the report is the result of \code{\link[=statmodels7_versions]{statmodels7_versions()}}, so a caller who
+wants the versions without the console output calls that function instead.
+The installation is carried out by \pkg{pak}, which prints its own progress
+and has no \code{quiet} argument.
 }
 
 \examples{
@@ -72,5 +73,5 @@ statmodels7_update("install")
 }
 \seealso{
 \code{\link[=statmodels7_versions]{statmodels7_versions()}} for the versions alone,
-\code{\link[=statmodels7_packages]{statmodels7_packages()}} for the members installed.
+\code{\link[=statmodels7_packages]{statmodels7_packages()}} for the names of the members.
 }

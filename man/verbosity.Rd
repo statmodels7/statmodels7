@@ -8,20 +8,22 @@ verbosity(verbose)
 }
 \arguments{
 \item{verbose}{A number from 0 to 3, or a named logical vector with any of
-\code{blocks}, \code{inner}, \code{optimizer}.}
+\code{outer}, \code{blocks}, \code{inner}, \code{optimizer}.}
 }
 \value{
-A list of three logicals.
+A list of four logicals named \code{outer}, \code{blocks}, \code{inner} and
+\code{optimizer}.
 }
 \description{
-Turns a level or a named logical vector into the three switches the fit
-reads.
+Turns a level or a named logical vector into the four switches \code{outer},
+\code{blocks}, \code{inner} and \code{optimizer} that the fit reads.
 }
 \details{
-The levels name the loops rather than counting them: \code{1} shows the
-alternation, \code{2} the inner method's own iterations, \code{3} the
-optimizers' traces. The named form exists because the three are genuinely
-independent -- watching the alternation while silencing a chatty inner
-optimizer is the common case.
+Each level adds output: \code{1} shows the outer search and the alternation
+(switches \code{outer} and \code{blocks}), \code{2} adds the inner method's own iterations
+(\code{inner}), and \code{3} adds the traces of the optimizers (\code{optimizer}). The
+named form sets the four switches independently, which allows the
+alternation to be shown while a chatty inner optimizer is silent. A switch
+that is left out is off.
 }
 \keyword{internal}

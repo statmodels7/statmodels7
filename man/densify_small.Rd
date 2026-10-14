@@ -20,22 +20,17 @@ The design, with every \code{X} a base matrix where the total is below
 \description{
 Converts the sparse blocks of a design to base matrices when the
 equations together carry fewer than \code{min_dim} coefficients and no block
-is sparse because the caller asked for it.
+is sparse because the caller requested it.
 }
 \details{
 A random effect builds its block sparse whatever its size. Below about a
 hundred coefficients the sparse route costs more than it saves, its fixed
 cost being the coercions and the S4 dispatch around each product, which do
 not shrink with the matrix; \code{\link[=worth_sparse]{worth_sparse()}} records the same crossover for
-the factorization. Measured on \code{MASS::Cars93}, a lasso over twelve
-standardized columns beside \code{random(~ 1 | Manufacturer)} (46 coefficients):
-the fit at a held \eqn{\lambda} takes 2.55 s with the design dense against
-6.69 s sparse, and a path of ten values 30.1 s against 67.8 s, with the
-coefficients agreeing to 6e-12 and the same \eqn{\lambda} chosen. The
-conversion is applied only where no block moves with the coefficients and
+the factorization. The conversion is applied only where no block moves with the coefficients and
 no structural term is present, since those designs are rebuilt during the
-fit and a rebuilt block would come back sparse. A block the caller asked
-to be sparse (\code{sparse = TRUE} on a term, \code{linpar_options(sparse = TRUE)},
+fit and a rebuilt block would come back sparse. A block that the caller
+requested sparse (\code{sparse = TRUE} on a term, \code{linpar_options(sparse = TRUE)},
 a sparse matrix as input) is never converted, and then neither is the
 rest of the design: the design keeps the storage it was given.
 }

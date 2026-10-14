@@ -17,6 +17,9 @@ parent of the interpreting environment.}
 
 \item{response}{The evaluated left-hand side, or \code{NULL} where there is
 none. Read by \code{\link[=seg_grid_start]{seg_grid_start()}} and by nothing else.}
+
+\item{linpar}{The options of the implicit parametric block, as
+\code{\link[=linpar_options]{linpar_options()}} returns them.}
 }
 \value{
 A list of two:
@@ -39,7 +42,8 @@ removes.
 
 A factor covariate needs no handling of its own: the interpreter collects
 the bare covariates of an equation into one \code{\link[modelterms7:linpar]{modelterms7::linpar()}}, whose
-block comes from \code{model.matrix} and so carries the contrasts.
+block comes from \code{model.matrix}, or from \code{Matrix::sparse.model.matrix()}
+when the block is sparse, and so carries the contrasts.
 
 A break-point term whose starting positions the caller did not name has
 them chosen on a grid, through \code{\link[=seg_grid_start]{seg_grid_start()}}, in place of the

@@ -20,9 +20,9 @@ A single logical.
 parameters, which an expectation cannot do.
 }
 \details{
-Asked at a probe rather than read from a list of families, so a family
-written later is covered: two distinct responses drawn at one parameter
-value, and the two answers compared. A family that
+The answer comes from a probe and not from a list of families, so that a
+family written later is covered: two distinct responses drawn at one
+parameter value, and the two answers compared. A family that
 \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}} reports as writing its
 information out is never probed, and neither is any \code{approx} other than
 \code{"opg"}, the only strategy that reads the response. A truncated family reports

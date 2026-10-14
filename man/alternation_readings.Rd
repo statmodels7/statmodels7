@@ -37,24 +37,26 @@ objective, stacked coefficients and hyperparameters.}
 }
 \value{
 \code{alternation_readings()} a named vector of \code{mode} and \code{kkt}, the
-second \code{NA} where no coefficient sits at a kink; \code{alternation_settled()}
-a single logical.
+second \code{NA} where no coefficient sits at a kink and \code{Inf} where one does
+and its reading cannot be computed; \code{alternation_settled()} a single
+logical.
 }
 \description{
 Reads, at the point the alternation reached, how far the smooth part is
-from its mode and how far each coefficient a kinked penalty set to zero is
-from its optimality condition, both in log-likelihood units, and compares
-them with \code{\link[=mode_error_limit]{mode_error_limit()}}.
+from its mode and how far each coefficient that a kinked penalty sets to
+zero is from its optimality condition, both in log-likelihood units, and
+compares them with \code{\link[=mode_error_limit]{mode_error_limit()}}.
 }
 \details{
 The smooth part is every coordinate that is not a zero of a kinked
-penalty, not in a frozen working block, not aliased, not held and not
-named by \code{\link[=deficient_coords]{deficient_coords()}} on the information over the others, together
-with a structural term's own free parameters where the model carries one.
+penalty, not in a frozen working block, not aliased, not pinned by a
+marginal criterion and not named by \code{\link[=deficient_coords]{deficient_coords()}} on the
+information over the others, together with a structural term's own free
+parameters where the model carries one.
 Its reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g}, with
 \eqn{g} the gradient of the penalized objective and \eqn{K = H + S} the
 penalized information over those coordinates (the joint one, through
-\code{\link[=statmod_joint_pieces]{statmod_joint_pieces()}}, beside a structural term). A coefficient a
+\code{\link[=statmod_joint_pieces]{statmod_joint_pieces()}}, beside a structural term). A coefficient that a
 kinked penalty holds at zero is optimal where the pull of the likelihood,
 \eqn{s_j}, does not exceed the size \eqn{\kappa_j} of the kink, and its
 reading is the KKT decrement
@@ -63,8 +65,9 @@ the gain a Newton step on that coordinate alone would predict, with
 \eqn{c_j} the diagonal of the unpenalized information. The largest such
 decrement is reported.
 
-A reading that cannot be computed is \code{NA}, and \code{\link[=alternation_settled]{alternation_settled()}}
-reads \code{NA} on the smooth part as not settled.
+A reading of the smooth part that cannot be computed is \code{NA}, and a
+reading of the kinked zeros that cannot be computed is \code{Inf};
+\code{\link[=alternation_settled]{alternation_settled()}} reads both as not settled.
 }
 \seealso{
 \code{\link[=statmod_alternate]{statmod_alternate()}}, \code{\link[=zero_readings]{zero_readings()}}, \code{\link[=inner_mode_error]{inner_mode_error()}}

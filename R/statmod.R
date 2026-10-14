@@ -17,33 +17,56 @@ NULL
 #'   term as the fit left it.
 #' @param coefficients A named list, one numeric vector per distribution
 #'   parameter.
-#' @param structural A named list, one entry per structural term, holding
-#'   that term's own parameters on the unconstrained scale.
+#' @param structural A named list with one entry per structural term. Each
+#'   entry is a list with the term's parameters on their own scale
+#'   (`parameter`), on the unconstrained scale (`unconstrained`), the
+#'   equation that carries the term (`equation`) and the names of the
+#'   parameters that the term holds (`held`).
 #' @param hyper The hyperparameters, keyed by distribution parameter and then
 #'   by term.
-#' @param loglik The maximized weighted log-likelihood, a single number. The
-#'   **conditional** one, read at the fitted coefficients.
+#' @param loglik The weighted log-likelihood at the fitted coefficients, a
+#'   single number. It is the **conditional** one.
 #' @param objective The penalized objective there, unaveraged.
-#' @param edf A data frame of effective degrees of freedom, one row per term.
+#' @param edf A data frame of effective degrees of freedom with the columns
+#'   `parameter`, `term`, `coefficients` and `edf`, one row per term of each
+#'   equation.
 #' @param fitted A named list of the fitted parameters, one vector per
 #'   distribution parameter.
-#' @param converged A single logical: whether every loop stopped on its own
-#'   rule.
-#' @param aliased The labels of the coefficients the design does not
-#'   identify, which the pivot that fitted the model left out, as
-#'   [coef_labels()] names them. Empty where the design is of full rank.
-#'   Their estimate, standard error and interval are reported as missing, and
-#'   they are not counted among the degrees of freedom; the stored
-#'   coefficient is left WHERE IT WAS, the pivot dropping the coordinate from
-#'   the increment rather than from the parameter, so every predictor reads
-#'   the vector as before.
+#' @param converged A single logical. Where the model has nothing to alternate
+#'   between, it is the verdict of the inner method. Where the model has a
+#'   kinked block or a structural term, it is read at the point reached: the
+#'   Newton decrement of the smooth part and the optimality decrement of every
+#'   coefficient that a kinked penalty holds at zero are both within
+#'   [mode_error_limit()]. A term that recomputes its own block, such as a
+#'   break-point term, contributes its own verdict in place of that of the
+#'   inner method.
+#' @param aliased The labels, as [coef_labels()] names them, of the
+#'   coefficients that the fitted point does not identify. A coefficient is
+#'   listed when the pivoted decomposition of the inner fit drops it, when the
+#'   penalized information at the fitted point is singular in its direction
+#'   (this applies to every decomposition and to an \pkg{optimizers7} inner
+#'   optimizer), or when its design column has vanished. The vector is empty
+#'   where the design has full rank. The estimate, standard error and
+#'   interval of a listed coefficient are reported as missing, and it is not
+#'   counted in the degrees of freedom. The stored coefficient keeps the value
+#'   it had when the coordinate was left out of the increment, so every
+#'   predictor reads the vector unchanged.
 #' @param elapsed The elapsed time in seconds.
-#' @param criterion The marginal criterion at the estimated hyperparameters,
-#'   `NA` when no criterion ran.
+#' @param criterion The value of the criterion that chose the
+#'   hyperparameters: [reml()], [ml()], [aic()], [bic()] or [cv()], including
+#'   the criterion that swept the path of a kinked penalty. `NA` when no
+#'   criterion ran.
 #' @param history A list of data frames recording the run: `outer`, `blocks`
-#'   and `inner`.
-#' @param methods A list naming what fitted each block, and the optimizer the
-#'   outer search used.
+#'   and `inner`. An entry is `NULL` where the run produced no such record.
+#' @param methods A list of what the fit decided, which can differ from what
+#'   was supplied: `smooth`, the inner method after [iwls()] has settled its
+#'   information (never `"auto"`); `outer`, the criterion after resolution,
+#'   `NULL` when no marginal or prediction-error criterion ran; `search`, the
+#'   optimizer that the outer search used; `pinned`, the coordinates that the
+#'   criterion left out of its determinant; `kkt`, the edge violations that
+#'   survived the restarts; `sparse`, the blocks of kinked penalties;
+#'   `sparse_criterion`, the criterion that swept their paths; and
+#'   `sparse_hyper`, the hyperparameters it reached.
 #' @param call The matched call.
 #'
 #' @return An object of class `StatmodFit` with one property per argument
@@ -110,26 +133,30 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'
 #' A parameter with no equation of its own gets an intercept, so
 #' `y ~ x` on a two-parameter family fits a constant scale.
-#' [statmod_equations()] does the split; the recovery is not the obvious one,
-#' since R's precedence makes the whole right-hand side of a three-equation
-#' formula the last term alone.
+#' [statmod_equations()] does the split. R's operator precedence nests the
+#' equations on the left, so the right-hand side of the whole formula holds
+#' only the last equation, and the split walks down the left side instead.
 #'
 #' The terms available are \pkg{modelterms7}'s: [modelterms7::s()],
 #' [modelterms7::te()], [modelterms7::random()], [modelterms7::ridge()],
 #' [modelterms7::lasso()], [modelterms7::seg()], [modelterms7::nl()],
 #' [modelterms7::gas()] and the rest. Bare covariates collapse into one
-#' parametric block.
+#' parametric block. A formula can carry at most one structural term, which
+#' is [modelterms7::gas()], [modelterms7::regime()] or the marginal
+#' break-point term.
 #'
 #' A structural term whose level adds a constant to the predictor, the
 #' \eqn{\omega} of [modelterms7::gas()] or the first level of
 #' [modelterms7::regime()], is confounded with an intercept in the same
 #' equation. The intercept is kept and the level held at zero, reported as
-#' `omega (held)`; writing `0 + gas(...)` estimates the level instead. The
-#' two spellings are the same model with the same log-likelihood, and the
-#' constants differ because they measure different quantities: for a
-#' score-driven term the intercept is the stationary level
-#' \eqn{\omega / (1 - \sum_j b_j)}, which is \eqn{\omega} divided by one minus
-#' the persistence. The page of [modelterms7::gas()] gives the identity.
+#' `omega (held)` for [modelterms7::gas()] and as `level1 (held)` for
+#' [modelterms7::regime()]; writing `0 + gas(...)` estimates the level
+#' instead. The two spellings are the same model with the same
+#' log-likelihood, and the constants differ because they measure different
+#' quantities: for a score-driven term the intercept is the stationary level
+#' \eqn{\omega / (1 - \sum_j \xi_j)}, which is \eqn{\omega} divided by one
+#' minus the sum of the persistences \eqn{\xi_j}. The page of
+#' [modelterms7::gas()] gives the identity.
 #'
 #' # The fitting scheme
 #'
@@ -140,12 +167,24 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' one system by `inner_optimizer`. Their joint curvature exists, and using
 #' it is what closes a fit in a handful of iterations.
 #'
-#' A term whose penalty has a **kink**, a lasso, a SCAD or an MCP, is
-#' estimated by a coordinate descent of its own with everything else held
-#' fixed.
+#' A term whose penalty has a **kink**, a lasso, an elastic net, a SCAD or an
+#' MCP, is estimated as a block of its own with the other blocks held fixed.
+#' The block is fitted by a compiled coordinate descent where the penalty
+#' describes its proximal operator as a table at the step taken, and
+#' otherwise by an accelerated proximal gradient. Where the equation has a
+#' free unpenalized intercept, the descent centers the block and moves that
+#' intercept jointly with it.
 #'
-#' The fit alternates between the two until the objective and every block
-#' stop moving.
+#' A structural term of the filter shape, [modelterms7::gas()], is fitted in
+#' one system with the coefficients. A structural term of the likelihood
+#' shape, [modelterms7::regime()] or the marginal break-point term, is
+#' alternated with them.
+#'
+#' The fit alternates between the blocks until the relative change of the
+#' objective falls below the tolerance. Where a kinked block or a structural
+#' term is present, the point reached must in addition satisfy the optimality
+#' conditions of the smooth part and of every coefficient held at a kink, and
+#' `converged` reports that reading.
 #'
 #' # The objective is unaveraged
 #'
@@ -156,83 +195,123 @@ StatmodFit <- S7::new_class("StatmodFit",
 #' instead is the stopping rule, so a threshold means the same at
 #' \eqn{n = 10} and at \eqn{n = 10^7}.
 #'
+#' The weights multiply the log-likelihood, so they act as frequency
+#' weights: a constant weight \eqn{c} on every row is \eqn{c} copies of the
+#' data. The restricted (REML) criterion then counts \eqn{n c} observations
+#' against the \eqn{p} coefficients, so the REML estimate of a dispersion
+#' changes under a constant rescaling of the weights, and the ML estimate
+#' does not.
+#'
 #' # The budget and the stopping rule belong to the method
 #'
 #' There is no `maxit` and no `tol` here. Both are set on `inner_optimizer`,
 #' which is [`iwls(maxit =, tol =)`][iwls] or an \pkg{optimizers7} optimizer
-#' with its own `maxit` and `criterion`, and the alternation reads them from
-#' there. A second copy here would let a caller set both and be obeyed by
-#' neither.
+#' with its own `maxit` and `criterion`. The alternation reads them from
+#' there as its budget in passes and its relative tolerance on the
+#' objective, so that one setting governs both the inner fit and the
+#' alternation.
 #'
 #' # Every hyperparameter is estimated unless its term holds it
 #'
-#' Which ones are held is said by the **term** that carries the penalty:
-#' `lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`, `s(x, bspline_smooth(), hyper = c(lambda = 2))`,
-#' `enet(x, alpha = 0.5)`. Everything left `NULL`, which is each term's
-#' default, is chosen from the data. The term is where the penalty is named
-#' and so is where that belongs; an argument here saying the same thing would
-#' be read by nobody whenever the two disagreed.
+#' The term that carries the penalty states which hyperparameters are held:
+#' `lasso(x, lambda = 3)`, `ridge(x, lambda = 0.5)`,
+#' `s(x, bspline_smooth(), hyper = c(lambda = 2))`,
+#' `enet(x, alpha = 0.5)`. Every hyperparameter left `NULL`, which is each
+#' term's default, is estimated from the data. A hyperparameter is held in
+#' the term and nowhere else, so that the model has one statement of each
+#' held value.
 #'
 #' The **smooth** hyperparameters go to `outer_criterion`, [reml()] by
 #' default, with `outer_optimizer` searching over them and the coefficients
 #' refitted at each point.
 #'
-#' A **kinked** penalty is a different instrument with its own argument.
-#' `sparse_criterion`, [bic()] by default, sweeps it along a path of its own
-#' values, from the kink that empties the block down to a fraction of it. The
+#' A **kinked** penalty has its own argument. `sparse_criterion`, [bic()] by
+#' default, sweeps its hyperparameters along a path of their own values,
+#' from the kink that empties the block down to a fraction of it. The
 #' penalized mode is only piecewise smooth in such a hyperparameter, turning
 #' a corner whenever a coefficient joins the active set or leaves it, so a
-#' criterion read there inherits the corners and a gradient search would read
-#' a slope about to change.
+#' gradient search on a criterion read there would meet those corners.
 #'
 #' The top of that path depends on the data **and on the rest of the model**:
 #' it is the kink that empties the block, found at the coefficients in hand
-#' never at a refitted null, so the other terms' fits enter it.
+#' and not at a refitted null, so the fits of the other terms enter it.
 #'
 #' Where a model carries both kinds the path is outside and the marginal
 #' criterion is estimated inside each of its points, so a smoothing parameter
 #' can come from REML and a lasso's \eqn{\lambda} from BIC in one fit.
 #'
-#' `outer_criterion` runs if and only if the model carries a smooth penalty.
-#' On an ordinary `y ~ x`, or on a model whose only penalty is kinked, there
-#' is nothing for it to estimate and it is not run, so typing the default
-#' changes nothing. `outer_criterion = NULL` holds every smooth
-#' hyperparameter where its term left it.
+#' With the default `marginal = NULL`, [reml()] and [ml()] also estimate on
+#' the criterion the unpenalized coefficients of every distribution parameter
+#' other than the first. `outer_criterion` therefore runs when the model
+#' carries a smooth hyperparameter or such a coefficient, and on an ordinary
+#' `y ~ x` with a two-parameter family it estimates the dispersion by REML.
+#' Beside a kinked penalty, a structural term or a block that moves with its
+#' coefficients, the default names no coefficient, so a model whose only
+#' penalties are kinked does not run the criterion. The default criterion is
+#' also not run when the family lacks the two derivatives that it needs. With
+#' `outer_criterion = NULL`, every smooth hyperparameter stays where its term
+#' left it and the coefficients of all parameters are fitted at the joint
+#' mode, which gives the maximum-likelihood estimate of a dispersion on an
+#' ordinary model.
 #'
 #' # Verbosity
 #'
-#' Three levels, naming the loops: `1` the outer search and the alternation,
-#' `2` the inner method's own iterations, `3` the optimizers' traces as well.
-#' A named form is accepted too, `verbose = c(outer = TRUE, blocks = FALSE)`,
-#' for watching the hyperparameters move while silencing a chatty inner
-#' optimizer.
+#' Three levels name the loops: `1` shows the outer search and the
+#' alternation, `2` adds the inner method's own iterations, and `3` adds the
+#' optimizers' traces. A named logical vector sets the four switches
+#' `outer`, `blocks`, `inner` and `optimizer` independently, and a switch
+#' that is left out is off. For example `verbose = c(outer = TRUE, blocks =
+#' FALSE)` shows the hyperparameters moving while a chatty inner optimizer
+#' stays silent.
 #'
 #' @param formula The model formula.
 #' @param distrib A \pkg{distributions7} distribution object.
-#' @param data A data frame.
-#' @param weights Optional prior weights, taken as given and not normalized.
-#' @param offsets Optional named list of offsets, one per parameter.
+#' @param data A data frame. Missing values in the response or in a variable
+#'   that an equation uses are rejected, with the variable and the rows.
+#' @param weights Optional prior weights, a numeric vector of length \eqn{n}
+#'   or the name of a column of `data`. The weights must be non-negative,
+#'   finite and complete, and are taken as given and not normalized. They
+#'   multiply the log-likelihood, so they act as frequency weights: a constant
+#'   weight \eqn{c} on every row is \eqn{c} copies of the data, and the
+#'   restricted (REML) criterion counts \eqn{n c} observations against the
+#'   coefficients. The REML estimate of a dispersion therefore changes under a
+#'   constant rescaling of the weights, and the ML estimate does not.
+#' @param offsets Optional named list of offsets, one entry per distribution
+#'   parameter, each of length 1 or \eqn{n}. An offset written in the formula
+#'   is added to the entry for the same parameter.
 #' @param inner_optimizer How the smooth block is fitted: [iwls()] or
-#'   an \pkg{optimizers7} optimizer.
+#'   an \pkg{optimizers7} optimizer. Beside a structural term of the filter
+#'   shape, the coefficients and the term's parameters are fitted in one
+#'   system, for which [iwls()] stands for the system's own default optimizer
+#'   and an \pkg{optimizers7} optimizer is used as given.
 #' @param outer_criterion How the smooth hyperparameters are estimated:
-#'   [reml()] (the default), [ml()],
-#'   [aic()], [bic()], [cv()], or
-#'   `NULL` to hold them where they are.
-#' @param sparse_criterion How the hyperparameter of a kinked penalty --
-#'   lasso, scad, mcp -- is chosen: [bic()] (the default),
-#'   [aic()], [cv()], or `NULL` to hold it.
+#'   [reml()] (the default), [ml()], [aic()] or [bic()], or `NULL` to hold
+#'   them where their terms left them. [cv()] cross-validates the
+#'   hyperparameter of a kinked penalty only: it is passed as
+#'   `sparse_criterion`, and as `outer_criterion` it is an error. A
+#'   prediction-error criterion beside a kinked penalty is rejected unless
+#'   `sparse_criterion` is `NULL`.
+#' @param sparse_criterion How the hyperparameter of a kinked penalty (lasso,
+#'   elastic net, scad, mcp) is chosen: [bic()] (the default), [aic()],
+#'   [cv()], or `NULL`. With `NULL` the hyperparameter is held at its value,
+#'   unless the model also carries a smooth penalty and `outer_criterion` is a
+#'   prediction-error criterion, which then sweeps the path.
 #'   A marginal criterion is rejected here, being read at a mode that sits on
 #'   the kink.
-#' @param outer_optimizer The optimizer that searches over them, or
-#'   `NULL` to let the availability of the exact gradient decide.
+#' @param outer_optimizer The optimizer that searches over the smooth
+#'   hyperparameters, or `NULL` to choose one from the derivatives of the
+#'   criterion that exist: [optimizers7::newton()] where the exact Hessian is
+#'   usable, [optimizers7::lbfgs()] with the exact gradient,
+#'   [optimizers7::brent()] for one coordinate without a gradient, and
+#'   [optimizers7::nelder_mead()] otherwise.
 #' @param start Where the fit begins: a named list of coefficients, a
 #'   [start_strategy()] such as [start_search()] or [start_from()], which
 #'   takes the estimates of a model already fitted, or
-#'   `NULL` for [start_intercepts()]. A strategy is asked once,
-#'   before the alternation between the coefficients and the hyperparameters
-#'   begins, which is why a global search belongs here instead of in
-#'   `inner_optimizer`: there it would rerun at every hyperparameter the
-#'   outer search tried.
+#'   `NULL` for [start_intercepts()]. A strategy runs once, before the
+#'   alternation between the coefficients and the hyperparameters begins. A
+#'   global search therefore belongs here and not in `inner_optimizer`, where
+#'   it would run again at every hyperparameter value that the outer search
+#'   tries.
 #' @param linpar_control How the unpenalized parametric block is built, as
 #'   [linpar_options()] returns it: the storage and the contrasts
 #'   for its factors. It reaches the implicit term, the one the bare
@@ -241,31 +320,33 @@ StatmodFit <- S7::new_class("StatmodFit",
 #'   The argument and the function are named differently on purpose, as
 #'   [stats::glm()]'s `control` and
 #'   [stats::glm.control()] are.
-#' @param verbose A level from 0 to 3, or a named logical vector.
+#' @param verbose A level from 0 to 3, or a named logical vector with any of
+#'   `outer`, `blocks`, `inner` and `optimizer`.
 #' @param threads How many threads the fit may use, as
 #'   [numericals7::n_threads()] constructs it. The default,
-#'   `n_threads(1)`, is sequential and takes exactly the sequential
-#'   code path. A larger count reaches the compiled per-observation kernels
-#'   of the family and the dense assembly products as an argument; below a
-#'   kernel's measured internal threshold it stays sequential whatever the
-#'   count says, and a sparse design keeps its \pkg{Matrix} route. The
-#'   object's `workers` fans the units that are independent by
-#'   construction out over separate R processes -- the folds of a
-#'   cross-validation, and the combinations of a kinked path's product
-#'   grid, each of which restarts its warm chain from the sweep's own
-#'   starting coefficients -- each unit fitting sequentially, so the two
-#'   levels never nest. The points within one chain stay sequential:
-#'   measured, a point paid cold costs 2.2-3.2 times the warm chain, so
-#'   splitting a chain would slow the single-process default or make the
-#'   result depend on the count. The result does
-#'   not depend on either count, bit for bit: every parallel region
-#'   decomposes its work over the elements of its output and never splits
-#'   a reduction, and the folds are seeded per fold and collected in fold
-#'   order.
-#' @param ... Not used, and reported. `hyper` was removed from here: a
-#'   hyperparameter is held in the term that carries the penalty, and a
-#'   second place to say so would be read by nobody whenever the two
-#'   disagreed.
+#'   `n_threads(1)`, is sequential and takes the sequential code path. A
+#'   larger count is passed to the compiled per-observation kernels of the
+#'   family and to the dense assembly products; below a kernel's internal
+#'   size threshold the computation stays sequential whatever the count,
+#'   and a sparse design keeps its \pkg{Matrix} route. The object's `workers`
+#'   fans the units that are independent by construction out over separate R
+#'   processes: the folds of a cross-validation, and the combinations of a
+#'   kinked path's product grid, each of which restarts its warm chain from
+#'   the sweep's own starting coefficients. Each unit fits sequentially, so
+#'   the two levels never nest. The points within one chain stay sequential,
+#'   because a point fitted from a cold start costs more than one
+#'   warm-started from the previous point, and splitting a chain would slow
+#'   the single-process default or make the result depend on the count. For
+#'   any two counts above one the result is identical bit for bit: every
+#'   parallel region decomposes its work over the elements of its output and
+#'   never splits a reduction, and the folds are seeded per fold and
+#'   collected in fold order. Between the default and a count above one the
+#'   route can change where the work is large (the BLAS crossproduct against
+#'   the compiled one, and the pivoted `qr()` against the compiled
+#'   triangular factor), and the results then agree to rounding.
+#' @param ... Not used. A named argument signals an error. `hyper` was
+#'   removed from `statmod()`: a hyperparameter is held in the term that
+#'   carries the penalty.
 #'
 #' @return A [StatmodFit()] object.
 #'
@@ -332,11 +413,11 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
     nm <- ...names()
     if (length(nm) && any(nm == "hyper")) {
       stop(paste0("'hyper' has been removed. A hyperparameter is held in",
-                  " the term that\n  carries the penalty --",
-                  " lasso(x, lambda = 3), ridge(x, sigma = 0.5),\n",
-                  "  s(x, bspline_smooth(), hyper = c(lambda = 2)), enet(x, alpha = 0.5) -- and every",
-                  " one left NULL,\n  which is the default, is",
-                  " estimated."), call. = FALSE)
+                  " the term that\n  carries the penalty, as in",
+                  " lasso(x, lambda = 3), ridge(x, lambda = 0.5),\n",
+                  "  s(x, bspline_smooth(), hyper = c(lambda = 2)) or",
+                  " enet(x, alpha = 0.5), and every one left NULL,\n",
+                  "  which is the default, is estimated."), call. = FALSE)
     }
     stop(sprintf("unused argument (%s)", nm[[1L]]), call. = FALSE)
   }
@@ -397,7 +478,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # changes nothing: there is one rule and no hidden second one.
   if (!is.null(outer_criterion) && !S7::S7_inherits(outer_criterion,
                                                    OuterMethod)) {
-    stop("'outer_criterion' must be reml(), ml(), aic(), bic(), cv() or NULL.",
+    stop("'outer_criterion' must be reml(), ml(), aic(), bic() or NULL.",
          call. = FALSE)
   }
   if (!is.null(sparse_criterion) && !S7::S7_inherits(sparse_criterion,
@@ -411,16 +492,22 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # zero, where the second derivative it asks for does not exist
   if (!is.null(sparse_criterion) && !outer_minimize(sparse_criterion)) {
     stop(paste0("'sparse_criterion' must be bic(), aic() or cv(): a kinked",
-                "
-  penalty is chosen by a path over its own values, and",
-                " reml() and ml()
-  are read at a mode that sits on the",
-                " kink, where the curvature they
-  need does not exist."),
+                " penalty is chosen by a path over its own values, and",
+                " reml() and ml() are read at a mode that sits on the",
+                " kink, where the curvature they need does not exist."),
          call. = FALSE)
   }
+  # cv() refits on folds, which only the path over a kinked penalty's own
+  # values does, so it is a sparse criterion and never an outer one
+  if (!is.null(outer_criterion) && identical(outer_criterion@kind, "cv")) {
+    if (!nrow(path_rows(spec, blocks, hyper))) stop_cv_nothing()
+    stop(paste0("'outer_criterion' is cv(), which chooses only the",
+                " hyperparameter of a penalty\n  with a kink. Pass it as",
+                " sparse_criterion = cv(); the smoothing parameters\n  are",
+                " estimated by reml(), ml(), aic() or bic()."), call. = FALSE)
+  }
   if (!is.null(sparse_criterion) &&
-      !nrow(path_rows(spec, blocks, hyper, sparse_criterion))) {
+      !nrow(path_rows(spec, blocks, hyper))) {
     sparse_criterion <- NULL
   }
   # and it steps aside for a caller who set the hyperparameters by hand:
@@ -498,18 +585,14 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   if (!is.null(sparse_criterion) && !is.null(outer_criterion) &&
       outer_minimize(outer_criterion)) {
     stop(paste0("'outer_criterion' is ", outer_criterion@kind, "() and the",
-                " model also carries a penalty
-  with a kink, whose",
-                " hyperparameter is chosen by a path.
-  A prediction-error",
-                " criterion cannot be nested inside that path: it
-  would",
+                " model also carries a penalty with a kink, whose",
+                " hyperparameter is chosen by a path. A prediction-error",
+                " criterion cannot be nested inside that path: it would",
                 " score the same quantity at both levels. Use reml() or",
-                " ml() for
-  the smooth penalties and 'sparse_criterion'",
-                " for the kinked ones, or
-  hold one of the two with",
-                " 'hyper'."), call. = FALSE)
+                " ml() for the smooth penalties and 'sparse_criterion'",
+                " for the kinked ones, or hold the hyperparameters of one",
+                " of the two in their terms, as in lasso(x, lambda = 3)."),
+         call. = FALSE)
   }
 
   # ONE FIT, FROM ONE START. Written as a function so a structural term that
@@ -530,7 +613,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       res <- tryCatch(
         statmod_select(spec, design, blocks, hyper, inner_optimizer,
                        outer_criterion, outer_optimizer, beta_start,
-                       approx, maxit, tol, vb, data, weights, offsets,
+                       approx, maxit, tol, vb, data,
                        sparse_criterion),
         error = function(e) e)
       if (inherits(res, "error")) {
@@ -550,7 +633,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       if (!length(attr(design, "refresh")) || is.null(outer_criterion)) {
         res <- statmod_select(spec, design, blocks, hyper, inner_optimizer,
                               outer_criterion, outer_optimizer, beta_start,
-                              approx, maxit, tol, vb, data, weights, offsets,
+                              approx, maxit, tol, vb, data,
                               sparse_criterion)
       }
       hyper <- res$hyper
@@ -600,7 +683,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
                          outer_criterion, outer_optimizer, res$par, approx,
-                         maxit, tol, vb, data, weights, offsets,
+                         maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
         if (!is.null(r2)) {
@@ -635,7 +718,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
                          outer_criterion, outer_optimizer, res$par, approx,
-                         maxit, tol, vb, data, weights, offsets,
+                         maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
         if (is.null(r2)) stop(deferred, call. = FALSE)
@@ -680,7 +763,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
         r2 <- tryCatch(
           statmod_select(spec, design, blocks, hyper, inner_optimizer,
                          outer_criterion, outer_optimizer, res$par, approx,
-                         maxit, tol, vb, data, weights, offsets,
+                         maxit, tol, vb, data,
                          sparse_criterion),
           error = function(e) NULL)
         if (!is.null(r2)) {
@@ -816,7 +899,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
       } else {
         statmod_select(spec, design, blocks, hyper, inner_optimizer,
                        outer_criterion, outer_optimizer, res$obj$stack(cf),
-                       approx, maxit, tol, vb, data, weights, offsets,
+                       approx, maxit, tol, vb, data,
                        sparse_criterion)
       }, error = function(e) NULL)
     if (is.null(r2) || !edge_restart_better(r2, res, crit, outer_criterion,
@@ -843,7 +926,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
   # WHICH COLUMNS THE MODEL DOES NOT IDENTIFY, from the pivot that fitted it
   # where there was one and from the information at the mode otherwise. Only
   # iwls() on a pivoting decomposition reports a dropped column, so an
-  # optimizers7 method and the chol/svd/chol_crossprod routes left a
+  # optimizers7 method and the chol and svd routes left a
   # rank-deficient design entirely unnamed and vcov() refused the whole
   # matrix. Measured, the after-the-fact test names the SAME coordinate the
   # pivot names wherever both speak, and costs 0.26 to 0.56 per cent of a
@@ -922,8 +1005,7 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
                    # the caller held, and reported both as held
                    sparse_criterion = sparse_criterion,
                    sparse_hyper = if (is.null(sparse_criterion)) character(0)
-                     else with(path_rows(spec, blocks, hyper,
-                                         sparse_criterion),
+                     else with(path_rows(spec, blocks, hyper),
                                paste(parameter, term, name, sep = "\r"))),
     call = cl
   )
@@ -938,14 +1020,21 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' stops moving.
 #'
 #' @details
-#' This is a function of its own because the outer search calls it once per
-#' hyperparameter it tries, warm-started from the previous coefficients. A
-#' whole fit at one point of the search is one call of this.
+#' The outer search calls this function once for each hyperparameter value
+#' that it tries, warm-started from the previous coefficients, so a whole fit
+#' at one point of the search is one call.
 #'
-#' One pass does the smooth block, then each kinked block with everything
-#' else held, then commits any refreshable term's schedule. The passes repeat
-#' until the objective's relative change falls below `tol`, every block
-#' reports it has settled, and [statmod_refresh_settled()] agrees.
+#' One pass fits the smooth block (beside a structural term of the filter
+#' shape, the joint system of the coefficients and the term's parameters),
+#' then the structural block of a term of the likelihood shape, then each
+#' kinked block with the other blocks held, and then commits the schedule of
+#' any refreshable term. The passes stop when the relative change of the
+#' objective falls below `tol`. The verdict is the inner fit's flag where
+#' there is nothing to alternate with. Otherwise it also requires
+#' [alternation_settled()] (the Newton decrement of the smooth part and the
+#' KKT decrement of each coefficient that a kinked penalty holds at zero,
+#' both within [mode_error_limit()]), and [statmod_refresh_settled()] where
+#' the model has refreshable terms.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -968,23 +1057,36 @@ statmod <- function(formula, distrib, data, weights = NULL, offsets = NULL,
 #' @param hold_refresh `TRUE` holds every frozen break-point block at
 #'   its committed positions: the fit is then an ordinary smooth fit, no
 #'   read-off runs and no schedule advances. The outer machinery passes it
-#'   at every criterion evaluation, path point and fold, for two reasons
-#'   measured together: the working phase inside each of dozens of
-#'   evaluations multiplied a fit's cost by twenty, and a break-point
-#'   moving between evaluations makes the criterion path-dependent while
-#'   its cycling flags read as unavailable points to the search. The
-#'   positions are refined once, by the full alternation `statmod()`
-#'   runs at the chosen hyperparameters before the restarts.
+#'   at every criterion evaluation, path point and fold. A working phase
+#'   inside each evaluation would multiply the cost of the fit, and a
+#'   break-point that moves between evaluations makes the criterion depend on
+#'   the path of the search. The positions are refined once, by the full
+#'   alternation `statmod()` runs at the chosen hyperparameters before the
+#'   restarts.
 #'
-#' @return A list of six:
+#' @return A list of nine:
 #'   \describe{
 #'     \item{`par`}{the stacked coefficients reached.}
 #'     \item{`value`}{the penalized objective there, unaveraged.}
-#'     \item{`converged`}{a single logical: the objective settled, every
-#'       block settled, and every refreshable term reported it had.}
+#'     \item{`converged`}{a single logical. Where a term recomputes its own
+#'       block, the verdict is the objective's together with that term's own
+#'       flags, and the flag of the smooth block is not part of it. Beside a
+#'       kinked block or a structural term it also requires
+#'       [alternation_settled()] at the point. Where nothing alternates, it
+#'       is the flag of the inner method.}
 #'     \item{`obj`}{the objective object the last pass used.}
-#'     \item{`hist_blocks`}{a data frame, one row per pass.}
-#'     \item{`hist_inner`}{a data frame, one row per inner iteration.}
+#'     \item{`note`}{the `note` element of the last smooth fit, as
+#'       [fit_smooth()] returns it.}
+#'     \item{`aliased`}{the sorted stacked positions that the pivot left
+#'       out.}
+#'     \item{`hist_blocks`}{a list of one-row data frames, one for each block
+#'       fitted in each pass, with `pass`, `block`, `objective`, `change`,
+#'       `iterations` and `converged`.}
+#'     \item{`hist_inner`}{a list of data frames, one for each pass whose
+#'       smooth fit recorded steps, holding the inner history with the columns
+#'       `pass` and `block` added.}
+#'     \item{`spec`}{the specification after the last pass, with the SCAD and
+#'       MCP curvatures that the fit used.}
 #'   }
 #'
 #' @seealso [statmod()] for the fit this performs,
@@ -1289,19 +1391,20 @@ curv_blocks <- function(blocks, spec, design) {
 #'
 #' @description
 #' Reads, at the point the alternation reached, how far the smooth part is
-#' from its mode and how far each coefficient a kinked penalty set to zero is
-#' from its optimality condition, both in log-likelihood units, and compares
-#' them with [mode_error_limit()].
+#' from its mode and how far each coefficient that a kinked penalty sets to
+#' zero is from its optimality condition, both in log-likelihood units, and
+#' compares them with [mode_error_limit()].
 #'
 #' @details
 #' The smooth part is every coordinate that is not a zero of a kinked
-#' penalty, not in a frozen working block, not aliased, not held and not
-#' named by [deficient_coords()] on the information over the others, together
-#' with a structural term's own free parameters where the model carries one.
+#' penalty, not in a frozen working block, not aliased, not pinned by a
+#' marginal criterion and not named by [deficient_coords()] on the
+#' information over the others, together with a structural term's own free
+#' parameters where the model carries one.
 #' Its reading is the Newton decrement \eqn{\tfrac12 g^\top K^{-1} g}, with
 #' \eqn{g} the gradient of the penalized objective and \eqn{K = H + S} the
 #' penalized information over those coordinates (the joint one, through
-#' [statmod_joint_pieces()], beside a structural term). A coefficient a
+#' [statmod_joint_pieces()], beside a structural term). A coefficient that a
 #' kinked penalty holds at zero is optimal where the pull of the likelihood,
 #' \eqn{s_j}, does not exceed the size \eqn{\kappa_j} of the kink, and its
 #' reading is the KKT decrement
@@ -1310,8 +1413,9 @@ curv_blocks <- function(blocks, spec, design) {
 #' \eqn{c_j} the diagonal of the unpenalized information. The largest such
 #' decrement is reported.
 #'
-#' A reading that cannot be computed is `NA`, and [alternation_settled()]
-#' reads `NA` on the smooth part as not settled.
+#' A reading of the smooth part that cannot be computed is `NA`, and a
+#' reading of the kinked zeros that cannot be computed is `Inf`;
+#' [alternation_settled()] reads both as not settled.
 #'
 #' @param spec,design,obj,beta,hyper The fit's specification, design,
 #'   objective, stacked coefficients and hyperparameters.
@@ -1319,8 +1423,9 @@ curv_blocks <- function(blocks, spec, design) {
 #' @param aliased The positions the scoring step's pivot left out.
 #'
 #' @return `alternation_readings()` a named vector of `mode` and `kkt`, the
-#'   second `NA` where no coefficient sits at a kink; `alternation_settled()`
-#'   a single logical.
+#'   second `NA` where no coefficient sits at a kink and `Inf` where one does
+#'   and its reading cannot be computed; `alternation_settled()` a single
+#'   logical.
 #'
 #' @seealso [statmod_alternate()], [zero_readings()], [inner_mode_error()]
 #'
@@ -1395,7 +1500,9 @@ alternation_readings <- function(spec, design, obj, beta, hyper, expected,
       dec <- dec[is.finite(dec)]
       if (length(dec)) max(dec) else NA_real_
     }, error = function(e) NA_real_)
-    out[["kkt"]] <- kk
+    # a coefficient sits at a kink and its reading cannot be computed: Inf,
+    # so that it is not taken for the absence of a kinked zero
+    out[["kkt"]] <- if (is.na(kk)) Inf else kk
   }
   out
 }
@@ -1423,21 +1530,19 @@ alternation_settled <- function(spec, design, obj, beta, hyper, expected,
 #' being the ones [coord_working()] returns for the coordinate's own equation
 #' and \eqn{\bar x_j} the column's weighted mean where the equation's
 #' intercept is profiled out of the descent ([coord_centers()]), and
-#' \eqn{\sum_i w_i x_{ij}^2} where it is not. Reading the uncentered diagonal
-#' of the information instead, as 0.159.0 did, gave a curvature the centered
-#' step does not have: on `MASS::UScrime` with raw predictors, whose means
-#' reach 33 standard deviations, the ratio of the two reached 1138 and the
-#' step condition failed on every fit.
+#' \eqn{\sum_i w_i x_{ij}^2} where it is not. The uncentered diagonal of the
+#' information is not used, because it differs from the curvature of the
+#' centered step when the column means are large relative to their standard
+#' deviations.
 #'
-#' It is called at every pass of [statmod_alternate()] and once more at the
-#' fitted coefficients, which makes the scaling SELF-CONSISTENT (decided
-#' 2026-09-29): at the fit, \eqn{c_j} is the curvature at the fit. Measured on
-#' 60 simulated sparse regressions it gives 44 false positives against the
-#' 58 of a curvature read once at the start, and it cannot fail the step
-#' condition, [coord_table_penalty()] writing the current step's curvature
-#' into the table. Under a diagonal map \eqn{u = D\beta} the curvature is
-#' divided by \eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty
-#' under any other map, or reached through a sub-term, is left as it is.
+#' It is called at the starting coefficients, at every pass of
+#' [statmod_alternate()] and once more at the fitted coefficients, so that
+#' the scaling is self-consistent: at the fit, \eqn{c_j} is the curvature at
+#' the fit. The step condition of the descent is met because
+#' [coord_table_penalty()] writes the current step's curvature into the
+#' table. Under a diagonal map \eqn{u = D\beta} the curvature is divided by
+#' \eqn{d_j^2}, the penalty being written on \eqn{u}. A penalty under any
+#' other map, or reached through a sub-term, is left as it is.
 #'
 #' @param spec,design The specification and its design.
 #' @param coef The coefficients, split by parameter.
@@ -1501,16 +1606,16 @@ statmod_curv <- function(spec, design, coef, expected, approx) {
 #' Whether a Kinked Block's Curvature Is Read Centered
 #'
 #' @description
-#' Answers, for an equation, the question [coord_centers()] answers for a
-#' coordinate descent: whether its parametric intercept is profiled out of
-#' the descent, so that a column's curvature is its centered weighted sum of
-#' squares.
+#' Decides, for an equation, whether its parametric intercept is profiled out
+#' of the coordinate descent, so that a column's curvature is its centered
+#' weighted sum of squares, as [coord_centers()] decides for a descent.
 #'
 #' @details
 #' The intercept is profiled out where the equation has one and it is not
-#' held at a value. [coord_centers()] asks the same of the positions a hold
-#' reaches through the objective; this asks it of the specification's
-#' `held_coef` directly, which is what [statmod_curv()] has in hand.
+#' held at a value. [coord_centers()] decides this from the positions that a
+#' hold reaches through the objective; this function decides it from the
+#' `held_coef` of the specification directly, which is what [statmod_curv()]
+#' has in hand.
 #'
 #' @param spec,design The specification and its design.
 #' @param p The equation, a parameter name.
@@ -1535,23 +1640,21 @@ curv_centered <- function(spec, design, p) {
 #' smooth block, which is where they are set.
 #'
 #' @details
-#' [statmod()] carries neither a `maxit` nor a `tol` of its own. An argument
-#' accepted and ignored is worse than one that signals an error, and a second
-#' copy would be exactly that: a caller setting `iwls(maxit = 20)` alongside
-#' a loose `maxit = 100` would be obeyed in one and never told about the
-#' other.
-#' \pkg{distributions7}'s `fit_distrib()` shed the same pair for the same
-#' reason.
+#' [statmod()] has no `maxit` and no `tol`. Both are read from
+#' `inner_optimizer`, so that one setting governs the inner fit and the
+#' alternation.
 #'
 #' [iwls()] carries both directly. An \pkg{optimizers7} optimizer carries
-#' `maxit` and a `criterion`, and the tolerance is taken as the **largest**
-#' one in the criterion tree: a combined rule stops at whichever of its parts
-#' fires first, so the alternation should not ask for more precision than the
-#' loop inside it can deliver.
+#' `maxit` and a `criterion`, and the tolerance is read from the criterion
+#' tree by [criterion_tol()]: the largest tolerance of the parts of a rule
+#' built by `crit_any()`, which stops when any part holds, and the smallest
+#' of the parts of a rule built by `crit_all()`, which stops only when every
+#' part holds. The alternation then requires no more precision than the loop
+#' inside it delivers.
 #'
-#' A criterion carrying no tolerance at all leaves the default of
+#' A criterion carrying no tolerance at all takes the default of
 #' [optimizers7::crit_grad()], read from that function's own formals and
-#' never copied as a number, so a change there reaches here.
+#' not copied as a number, so that a change there reaches this function.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #'
@@ -1567,8 +1670,8 @@ method_budget <- function(method) {
   }
   if (!S7::S7_inherits(method, optimizers7::optimizer)) {
     stop(paste0("'inner_optimizer' must be iwls() or an optimizers7 optimizer.\n",
-                "  The budget and the stopping rule are read off it, so there",
-                " is\n  nowhere else for them to come from."), call. = FALSE)
+                "  The budget and the stopping rule are read from it."),
+         call. = FALSE)
   }
   list(maxit = as.integer(method@maxit),
        tol = criterion_tol(method@criterion))
@@ -1578,28 +1681,23 @@ method_budget <- function(method) {
 #' What the Inner Method Says About How to Fit
 #'
 #' @description
-#' The information matrix, its approximation and the budget, read off the inner
-#' method in one place.
+#' The information matrix, its approximation and the budget, read from the
+#' inner method in one place.
 #'
 #' @details
-#' Every route that fits the coefficients reads these, and reading them in
-#' one place keeps a refit inside a path or a fold on the same terms as the
-#' fit the caller asked for. Hard-coding them instead ran cross-validation at
-#' a tolerance a hundred times tighter than [iwls()]'s own, which cost 26 per
-#' cent in time and answered a question the caller had not asked.
+#' Every route that fits the coefficients reads these settings, and reading
+#' them in one place keeps a refit inside a path or a fold on the same terms
+#' as the fit of the caller.
 #'
-#' An \pkg{optimizers7} optimizer gets the OBSERVED information. It
+#' An \pkg{optimizers7} optimizer receives the observed information. It
 #' minimizes \eqn{-\ell + \rho} and [optimizers7::minimize()] documents `he`
-#' as that function's second derivative, which is what the observed
-#' information is; the expected one is a different matrix, so a method asked
-#' for a Newton step was performing Fisher scoring under another name. Where
-#' a family writes neither out the two also differ in cost by orders: the
-#' route taken before was the exact sum over the support, measured at 211 s
-#' per call on a 12096-cell Poisson-inverse gaussian regression against
-#' 0.041 s for the observed, so `newton()` spent an hour building matrices
-#' and never finished. `approx` is `"opg"` for such a method, which is what
+#' as that function's second derivative, which is the observed information;
+#' the expected information is a different matrix, so a Newton step on it
+#' would be Fisher scoring under another name. Where a family writes neither
+#' out, the expected information is also far more expensive to form than the
+#' observed one. `approx` is `"opg"` for such a method, which is what
 #' [iwls()] itself defaults to; it is read only where `expected` is `TRUE`,
-#' so for an optimizer it records a default rather than a choice.
+#' so for an optimizer it records a default and not a choice.
 #'
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #' @param distrib The distribution, read only to settle an [iwls()] left at
@@ -1629,17 +1727,20 @@ inner_settings <- function(method, distrib = NULL) {
 }
 
 
-#' The Tolerance a Criterion Asks For
+#' The Tolerance of a Criterion
 #'
 #' @description
-#' Returns the largest tolerance a criterion asks for, descending into a
-#' combined rule and taking the maximum over its parts.
+#' Returns the tolerance of a criterion, descending into a combined rule: the
+#' largest tolerance of its parts for a rule built by `crit_any()` and the
+#' smallest for a rule built by `crit_all()`.
 #'
 #' @details
-#' The maximum is the right reduction because a combined rule stops when
-#' **any** part fires, so the loop it drives is no more precise than its
-#' loosest term. A caller of [method_budget()] wants the precision the loop
-#' will actually deliver.
+#' A rule built by `crit_any()` stops when **any** part holds, so the loop it
+#' drives is no more precise than its loosest part, and the maximum is taken.
+#' A rule built by `crit_all()` stops only when every part holds, so the loop
+#' reaches the precision of its tightest part, and the minimum is taken. The
+#' value is the precision that the loop delivers, which is what a caller of
+#' [method_budget()] needs.
 #'
 #' @param crit An \pkg{optimizers7} criterion, possibly a combined one built
 #'   by `crit_any()` or `crit_all()`.
@@ -1655,7 +1756,8 @@ criterion_tol <- function(crit) {
   nms <- S7::prop_names(crit)
   if ("criteria" %in% nms) {
     parts <- vapply(crit@criteria, criterion_tol, numeric(1))
-    return(max(parts))
+    # crit_any() stops on its loosest part, crit_all() only on its tightest
+    return(if (identical(crit@how, "all")) min(parts) else max(parts))
   }
   if ("tol" %in% nms) return(as.numeric(crit@tol)[1L])
   eval(formals(optimizers7::crit_grad)$tol)
@@ -1674,12 +1776,11 @@ criterion_tol <- function(crit) {
 #' the coefficients outside the block enter it as constants, so the value it
 #' reports is the model's objective, never a block's own.
 #'
-#' With [iwls()] the step is solved through [fit_smooth()]'s own scoring
-#' loop, which reads the exact information. With an \pkg{optimizers7}
-#' optimizer the objective's `fn`, `gr` and `he` are all supplied, so
-#' `newton()` gets the exact second derivative instead of differencing the
-#' gradient: measured, that is 2.5x on one smooth and 5.5x on three smooths
-#' with a random effect, at identical answers.
+#' With [iwls()] the step is solved by the scoring loop of [iwls_fit()], which
+#' reads the expected or the observed information, as the settled method
+#' specifies. With an \pkg{optimizers7} optimizer the objective's `fn`, `gr` and
+#' `he` are all supplied, so `newton()` receives the second derivative of the
+#' objective and does not difference the gradient.
 #'
 #' @param obj The objective, as [statmod_objective()] returns it.
 #' @param beta The current stacked coefficients, all of them.
@@ -1690,14 +1791,22 @@ criterion_tol <- function(crit) {
 #' @param method [iwls()] or an \pkg{optimizers7} optimizer.
 #' @param vb The resolved verbosity.
 #'
-#' @return A list of five:
+#' @return A list with the following elements:
 #'   \describe{
 #'     \item{`par`}{the full stacked coefficient vector, with the block's
 #'       positions replaced.}
 #'     \item{`value`}{the objective there.}
 #'     \item{`converged`}{a single logical, the method's own verdict.}
 #'     \item{`iterations`}{how many the method took.}
-#'     \item{`history`}{a data frame, one row per iteration.}
+#'     \item{`history`}{for [iwls()], a data frame with one row per accepted
+#'       step, or `NULL` where no step was taken; `NULL` for an
+#'       \pkg{optimizers7} method.}
+#'     \item{`aliased`}{the stacked positions of the coefficients that the
+#'       solve left out, `integer(0)` for an \pkg{optimizers7} method.}
+#'     \item{`note`}{the note of [iwls_fit()], a string that states why the
+#'       run stopped where it did not stop on its rule, or that it was read
+#'       as converged by the dimensionless rule, and `NULL` otherwise; `NULL`
+#'       for an \pkg{optimizers7} method.}
 #'   }
 #'
 #' @seealso [statmod_alternate()], the caller,
@@ -1838,7 +1947,7 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
     # are carried back to the fit's before anything outside reads them
     return(list(par = out, value = obj$fn(out), converged = res$converged,
                 iterations = res$iterations, history = res$history,
-                aliased = idx[res$aliased]))
+                aliased = idx[res$aliased], note = res$note))
   }
 
   # an optimizers7 method solves nothing by a pivot and names no coordinate
@@ -1846,7 +1955,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
   out <- beta
   out[idx] <- res@par
   list(par = out, value = obj$fn(out), converged = res@converged,
-       iterations = res@iterations, history = NULL, aliased = integer(0))
+       iterations = res@iterations, history = NULL, aliased = integer(0),
+       note = NULL)
 }
 
 
@@ -1861,9 +1971,8 @@ fit_smooth <- function(obj, beta, idx, spec, design, hyper, method, vb) {
 #' design, and the solve on a subset reads the assembled matrix anyway. So
 #' the information is formed over the subset's own columns through
 #' [statmod_information_at()]'s `index`, and the penalty's Hessian is added
-#' on the same rows and columns. Forming the whole \eqn{X'WX} to keep its
-#' submatrix was measured at 54 per cent of a lasso path at \eqn{n = 5000}
-#' and 200 columns, the subset being the two intercepts.
+#' on the same rows and columns, which avoids forming the whole \eqn{X'WX} to
+#' keep a submatrix.
 #'
 #' Where the whole route went through the square roots it read
 #' \eqn{R'R + C'C}, which equals \eqn{X'WX + S} up to rounding wherever the
@@ -1902,19 +2011,19 @@ subset_pieces <- function(spec, design, coef, hyper, method, idx) {
 #' beside them.
 #'
 #' @details
-#' A hold is written by name because a name is what a caller can say and a
-#' position is not: the design's column order is the formula's business, and
-#' a term added to an equation moves every coordinate after it. The
-#' translation is the objective's own split of the stacked vector, so the
-#' answer is in the numbering every consumer of that vector already uses.
+#' A hold is written by name, because the column order of the design follows
+#' the formula and a term added to an equation moves every coordinate after
+#' it. The translation is the objective's own split of the stacked vector, so
+#' the answer is in the numbering that every consumer of that vector uses.
 #'
-#' A name that matches no coefficient of its equation is an error rather than
-#' a hold nothing enforces, which is what a silent `NA` would have been.
+#' A name that matches no coefficient of its equation is an error, because a
+#' silent `NA` would leave the hold unenforced.
 #'
 #' @param spec A [StatmodSpec()], read for `held_coef`.
 #' @param design Its design, read for each equation's coefficient names.
 #' @param obj The objective, read for its split of the stacked vector.
-#' @param beta The stacked coefficients, read for their length alone.
+#' @param beta The stacked coefficients, read for their length and for the
+#'   values of the coefficients that the terms hold.
 #'
 #' @return A list of two numeric vectors of equal length, `where` (integer
 #'   positions) and `value`. Both are empty where nothing is held.
@@ -1993,70 +2102,56 @@ term_held_stack <- function(spec, design) {
 #' Fit the Smooth Block Around a Frozen Working Linearization
 #'
 #' @description
-#' The iteration of \cite{fasola2018} for a term whose block is a working
-#' linearization with a frozen weight -- [modelterms7::jump()] and
-#' [modelterms7::jseg()]: the smooth block is fitted exactly at
-#' the committed block, the break-points are read off the fitted
-#' coefficients and committed, and the two alternate until the read-off
-#' settles or the working objective stops moving.
+#' The iteration of Fasola, Muggeo and Kuchenhoff (2018) for a term whose
+#' block is a working linearization with a frozen weight
+#' ([modelterms7::jump()] and [modelterms7::jseg()]). The smooth block is
+#' fitted exactly at the committed block, the break-points are read off the
+#' fitted coefficients and committed, and the two alternate until the
+#' read-off settles or the working objective stops moving.
 #'
 #' @details
-#' The sequencing is the whole of the difference from
-#' [fit_smooth()], and it is what `segmented` does. The
-#' fixed-point iteration these constructions belong to is not a descent
-#' method on the model's objective -- its early steps under a large scaling
-#' factor move uphill on purpose, which is how it leaves a spurious optimum
-#' -- so embedding the read-off inside the inner optimizer's objective put a
-#' sufficient-decrease line search in its way and stalled it: measured on a
-#' three-break-point jseg, the embedded route ended at an rss worse than the
-#' mean-only fit from the TRUE break-points, while this iteration recovers
-#' them from the same start. During the working fit the frozen blocks
-#' contribute \eqn{X\beta} and nothing else (`st$working`), which makes
-#' the inner fit the plain penalized working fit of the papers; the commit
-#' then advances the read-off, the scaling schedule and any relabeling of
-#' crossed break-point lineages, once per working fit.
+#' The sequencing is the whole of the difference from [fit_smooth()], and it
+#' is the sequencing of the \pkg{segmented} package. The fixed-point
+#' iteration these constructions belong to is not a descent method on the
+#' objective of the model: its early steps under a large scaling factor move
+#' uphill on purpose, which is how it leaves a spurious optimum. Embedding
+#' the read-off inside the objective of the inner optimizer would put a
+#' sufficient-decrease line search in its way and stall it. During the
+#' working fit the frozen blocks contribute \eqn{X\beta} and nothing else
+#' (`st$working`), which makes the inner fit the plain penalized working fit
+#' of the papers; the commit then advances the read-off, the scaling
+#' schedule and any relabeling of crossed break-point lineages, once per
+#' working fit.
 #'
-#' Any inner method serves: the working fit goes through
-#' [fit_smooth()], which takes [iwls()] or any
-#' \pkg{optimizers7} optimizer, and the read-off never moves inside
-#' anyone's objective. What differs is the price. Each working fit is
-#' solved afresh at a frozen block, so a method carrying exact curvature
-#' closes it in a step or two while a quasi-Newton method rebuilds its own
-#' from nothing every time: measured on three break-points at
-#' \eqn{n = 10000}, the same answer to the digit costs 6.9 s under
-#' `iwls()`, 9.2 s under `newton()` and 140 s under
-#' `lbfgs()`.
+#' Any inner method serves: the working fit goes through [fit_smooth()],
+#' which takes [iwls()] or any \pkg{optimizers7} optimizer, and the read-off
+#' never moves inside the objective of the inner method. The methods differ
+#' in cost. Each working fit is solved afresh at a frozen block, so a method
+#' that carries exact curvature closes it in a step or two, while a
+#' quasi-Newton method rebuilds its own curvature from nothing every time.
 #'
 #' The exit is at a fixed point of the iteration or in the cycle it settles
-#' into, judged on the working objective: the read-off settled
-#' ([modelterms7::term_converged()]) with the objective stalled,
-#' the objective stalled three times in a row, or the objective equal to
-#' two iterations back twice -- the period-two cycle of the break-point
-#' Muggeo documents, which a consecutive-change rule never sees. Only at a
-#' fixed point does the working objective coincide with the model's, which
-#' is why no best-so-far iterate is kept: mid-travel the committed
-#' contribution of a good working value can sit orders of magnitude off
-#' the data. Running out of the budget reports `FALSE`.
+#' into, judged on the working objective. The iteration stops when the
+#' read-off has settled ([modelterms7::term_converged()]) with the objective
+#' stalled, when the objective has stalled three times in a row, or when the
+#' objective equals its value two iterations back twice (the period-two
+#' cycle of the break-point that Muggeo documents, which a
+#' consecutive-change rule never sees). Only at a fixed point does the
+#' working objective coincide with the model's, so no best-so-far iterate is
+#' kept: mid-travel, the committed contribution of a good working value can
+#' sit orders of magnitude off the data. Running out of the budget reports
+#' `FALSE`.
 #'
-#' A phase that cannot settle is ended early and reports `FALSE` as well:
-#' where every break-point that has not settled sits at the floor of its
-#' scaling factor ([modelterms7::term_stalled()]) for `stall_limit`
-#' consecutive working fits, the factor can shrink no further and nothing is
-#' left to bring the break-point to rest. The profile objective of a
-#' discontinuous term is constant between consecutive observations, so such
-#' a break-point passes from one observation to the next for as long as the
-#' budget lasts: measured on `jseg(x, psi = 5, n_boot = 0)` at
-#' \eqn{n = 400}, the factor reached its floor of 1.8e-8 in the second pass
-#' and the break-point then wandered through a hundred passes of 500 working
-#' fits, 245 s, without converging. Four of those passes did end on the
-#' stall or cycle rule, after 58, 116, 349 and 349 working fits at the
-#' floor, which is a wandering break-point landing on a step small enough
-#' by chance and not a settled one. In the phases that settle the longest
-#' run at the floor measured is 7 working fits (three break-points at
-#' \eqn{n = 10000}); the default of 20 sits between the two, and the stall
-#' and cycle rules are read first at every working fit. With it the fit
-#' above ends in 1.7 s, and with the restarts left on it reaches the same
-#' optimum as the grid start in 1.3 s where it took 250 s.
+#' A phase that cannot settle is ended early and reports `FALSE` as well.
+#' This happens where every break-point that has not settled sits at the
+#' floor of its scaling factor ([modelterms7::term_stalled()]) for
+#' `stall_limit` consecutive working fits: the factor can shrink no further,
+#' and nothing is left to bring the break-point to rest. The profile
+#' objective of a discontinuous term is constant between consecutive
+#' observations, so such a break-point passes from one observation to the
+#' next for as long as the budget lasts. The default `stall_limit` of 20 ends
+#' such a phase, and the stall and cycle rules are read first at every
+#' working fit.
 #'
 #' @param obj The objective.
 #' @param beta The current stacked coefficients.
@@ -2067,14 +2162,15 @@ term_held_stack <- function(spec, design) {
 #' @param method [iwls()] or an optimizer.
 #' @param vb The resolved verbosity.
 #' @param tol The alternation's tolerance, read for the objective-stall rule.
-#' @param budget How many working fits at most. The default covers the
-#'   measured runs (69 to 165 iterations on three break-points) with room.
+#' @param budget How many working fits at most.
 #' @param stall_limit How many consecutive working fits with every unsettled
 #'   break-point at its scaling floor end the phase.
 #'
-#' @return As [fit_smooth()], plus `fasola`, the number of
-#'   working fits taken, and `stalled`, `TRUE` where the phase was ended by
-#'   `stall_limit`.
+#' @return A list with the elements of [fit_smooth()], where `iterations` is
+#'   the total over the working fits and `history` is `NULL`, and with
+#'   `fasola`, the number of working fits taken, and `stalled`, `TRUE` where
+#'   the phase was ended by `stall_limit`. In the iteration proper the list
+#'   also carries a `note` element, which is `NULL`.
 #'
 #' @references
 #' Fasola, S., Muggeo, V. M. R. and Kuchenhoff, H. (2018). A heuristic,
@@ -2122,6 +2218,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
   stalled <- FALSE
   it_total <- 0L
   it <- 0L
+  aliased <- integer(0)
   for (it in seq_len(budget)) {
     st$working <- TRUE
     st$key <- NULL
@@ -2131,6 +2228,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
     st$key <- NULL
     st$value <- NULL
     it_total <- it_total + as.integer(res$iterations)
+    aliased <- res$aliased
     # the commit is where the break-points move: read off the fitted
     # coefficients, schedule advanced, crossed lineages relabeled -- and
     # the coefficients continue from what the terms stored, which is what
@@ -2183,6 +2281,7 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
     resb <- fit_smooth(obj, beta, idx_b, spec, design, hyper, method, vb)
     beta <- resb$par
     it_total <- it_total + as.integer(resb$iterations)
+    aliased <- union(aliased, resb$aliased)
   }
   if (vb$blocks) {
     vb_say("%d working fits, %s", it,
@@ -2191,41 +2290,43 @@ fit_working <- function(obj, beta, idx, spec, design, hyper, method, vb, tol,
            else "budget exhausted", indent = 5L)
   }
   list(par = beta, value = obj$fn(beta), converged = conv,
-       iterations = it_total, history = NULL, note = NULL, fasola = it,
-       stalled = stalled)
+       iterations = it_total, history = NULL, aliased = aliased, note = res$note,
+       fasola = it, stalled = stalled)
 }
 
 
 #' Starting Coefficients
 #'
 #' @description
-#' An intercept-only fit per distribution parameter, with every other
-#' coefficient at zero.
+#' The starting coefficients of every equation: the intercepts from the
+#' intercept-only fit of the distribution, a weighted least-squares start for
+#' the parametric slopes of the location where it applies, and each term's
+#' own start where the term declares one.
 #'
 #' @details
-#' Each equation's intercept starts at the intercept-only MLE, which
-#' [distributions7::fit_distrib()] supplies: the model with every
-#' covariate removed is the right place for the model with them to begin, and
-#' it costs one small fit. The penalized blocks start at zero, where their
-#' penalty is smallest.
+#' Each equation's intercept starts at the intercept-only maximum likelihood
+#' estimate, which [distributions7::fit_distrib()] supplies: the model with
+#' every covariate removed is a natural place for the model with covariates
+#' to begin, and it costs one small fit. A block whose term declares no start
+#' of its own, the penalized blocks among them, starts at zero, where its
+#' penalty is smallest. [start_intercepts()] describes the strategy in full.
 #'
-#' [distributions7::distrib_start()] is the fallback. It returns one
-#' list per start, each keyed by parameter, so the value wanted is
-#' `th[[1]][[p]]`; indexing the outer list by a parameter's name gives
-#' `NULL`, and this function did that, so every start silently fell to
-#' zero on the link scale. On a response centered at 5.84 that put the location
-#' at 0 and sent the run traveling, which is how a Student t fitted to iris
-#' reached a variance of \eqn{10^7}.
+#' [distributions7::distrib_start()] is the fallback for an intercept that the
+#' fit cannot supply. It returns one list per start, each keyed by parameter,
+#' so the value for parameter `p` is `th[[1]][[p]]`.
 #'
-#' A start that cannot be obtained is not an error: the fit still runs, from a
-#' worse place. What would be an error is not noticing, which is why the two
-#' routes are tried in order rather than one being assumed to work.
+#' A start that cannot be obtained is not an error: the fit still runs, from
+#' zero on the link scale. The two routes are tried in order.
 #'
-#' `start` is either a named list of values, a
-#' [start_strategy()] --- which is asked once, here, before the
-#' alternation between the coefficients and the hyperparameters begins --- or
-#' `NULL` for [start_intercepts()], which this function did before
-#' strategies existed and still does.
+#' `start` is a named list of values, a [start_strategy()], or `NULL`, which
+#' is [start_intercepts()]. A strategy is evaluated once, here, before the
+#' alternation between the coefficients and the hyperparameters begins, and
+#' it must return one numeric vector without missing values per distribution
+#' parameter, of the length of that parameter's coefficient vector. A named
+#' list replaces the coefficients of the parameters it names, and may name a
+#' subset; the other parameters start as under [start_intercepts()]. A list
+#' without names, a name that is not a parameter, and a vector of the wrong
+#' length are errors.
 #'
 #' @param spec The specification.
 #' @param design The design.
@@ -2245,11 +2346,15 @@ statmod_start <- function(spec, design, obj, start = NULL) {
            "parameter.", call. = FALSE)
     }
     for (p in params) {
-      if (length(out[[p]]) != design[[p]]$npar || !is.numeric(out[[p]]) ||
-          anyNA(out[[p]])) {
+      if (length(out[[p]]) != design[[p]]$npar) {
         stop(sprintf(paste0("the start strategy returned %d values for '%s'",
                             ", which has %d coefficients."),
                      length(out[[p]]), p, design[[p]]$npar), call. = FALSE)
+      }
+      if (!is.numeric(out[[p]]) || anyNA(out[[p]])) {
+        stop(sprintf(paste0("the start strategy returned missing or",
+                            " non-numeric values for '%s'."), p),
+             call. = FALSE)
       }
     }
     return(obj$stack(out[params]))
@@ -2262,6 +2367,11 @@ statmod_start <- function(spec, design, obj, start = NULL) {
   # whatever it starts from. It is left out rather than kept as machinery
   # that earns nothing.
   if (!is.null(start)) {
+    if (is.null(names(start)) ||
+        any(!nzchar(names(start)))) {
+      stop(paste0("'start' must be a named list, one vector per distribution",
+                  " parameter, or a start strategy."), call. = FALSE)
+    }
     for (p in names(start)) {
       if (!p %in% params) {
         stop(sprintf("'start' names '%s', which is not a parameter.", p),
@@ -2282,44 +2392,33 @@ statmod_start <- function(spec, design, obj, start = NULL) {
 #' The Intercept of Each Equation, on the Link Scale
 #'
 #' @description
-#' The intercept-only maximum likelihood estimate, where it can be had, and a
-#' draw from the parameter's domain otherwise.
+#' The intercept-only maximum likelihood estimate, where it can be had, and
+#' the data-based start of [distributions7::distrib_start()] otherwise.
 #'
 #' @details
 #' Two routes, tried in order. [distributions7::fit_distrib()] fits
 #' the distribution to the response with no covariates, which is the same model
-#' with every slope set to zero and therefore exactly where the fit should
+#' with every slope set to zero and therefore a natural place for the fit to
 #' begin; its link-scale coefficients are the intercepts.
 #' [distributions7::distrib_start()] is the fallback, and its result
 #' is a list of starts, each keyed by parameter, so a value is reached at
 #' `[[1]][[p]]`.
 #'
-#' **The random stream is pinned and restored.** That intercept-only fit
-#' starts from draws over the parameters' domains, so it returns a different
-#' answer on every call where a parameter is weakly identified -- fitted to
-#' `iris`, a Student t's \eqn{\nu} came back at \eqn{e^{39}}, \eqn{e^{21}}
-#' and \eqn{e^{17}} on three consecutive runs, and `statmod()` inherited
-#' that: the same call gave log-likelihoods of -103.49, -112.11 and -111.83. A
-#' fitting function has to give the same answer twice, so the seed is fixed for
-#' the length of this call and the caller's stream is put back afterwards.
-#'
-#' Pinning makes it reproducible without making it good, one draw being
-#' one draw; several are taken and the best kept. What would make it good is a
-#' data-based `distrib_start` method on the univariate families, which is
-#' the design \pkg{distributions7} already documents and which only its
-#' multivariate gaussian implements.
+#' **The random stream is pinned and restored.** The intercept-only fit takes
+#' several starts (`n_start = 10`) and keeps the best, and the starts of some
+#' families are random draws. The seed is therefore fixed for the length of
+#' this call and the caller's stream is put back afterwards, so that the same
+#' call gives the same answer twice.
 #'
 #' **An intercept the fit ran to the limit of its chart is replaced** by the
 #' data-based start of [distributions7::distrib_start()]. On a log or logit
 #' chart a value past \eqn{e^{\pm 16}} is a limit of the family and not an
 #' estimate: a Student t fitted to a response no heavier-tailed than a
-#' gaussian puts \eqn{\nu} at \eqn{6.1 \times 10^8} (`gamlss.data::film90`)
-#' or \eqn{7.0 \times 10^{10}} (`abdom`). Where a marginal criterion
-#' estimates that coefficient its search starts there, the criterion is flat in
-#' it, and on film90 `lbfgs()` did not leave it: 100 s and `not converged`,
-#' where from the data-based \eqn{\nu = 30} the same search converges in
-#' 6.9 s to the point the observed information reaches. An identity chart is
-#' left alone, a location of any size being an estimate.
+#' gaussian puts \eqn{\nu} at a value far beyond any useful estimate. A
+#' marginal criterion that estimates such a coefficient is flat in it, and a
+#' search that starts there does not leave it, so the data-based start is
+#' used instead. An identity chart is left alone, a location of any size
+#' being an estimate.
 #'
 #' @param spec A [StatmodSpec()].
 #'
@@ -2380,7 +2479,7 @@ statmod_intercepts <- function(spec) {
   }), params))
 }
 
-#' Where an Intercept on a Non-Identity Chart Stops Being an Estimate
+#' Limit of an Intercept on a Non-Identity Chart
 #'
 #' @description
 #' The absolute value, on the link scale, past which [statmod_intercepts()]
@@ -2393,7 +2492,7 @@ statmod_intercepts <- function(spec) {
 #' @keywords internal
 intercept_chart_limit <- function() 16
 
-#' Replace an Intercept Where the Family Reads Its Start Off the Data
+#' Data-Based Intercepts of Families That Supply Them
 #'
 #' @description
 #' Overwrites, in the list [statmod_intercepts()] builds, the intercept of each
@@ -2401,16 +2500,17 @@ intercept_chart_limit <- function() 16
 #' onto that parameter's own link.
 #'
 #' @details
-#' The intercept-only fit is the right start for almost every family, and the
-#' wrong one for the mixing weight of [distributions7::zero_inflated()]:
-#' without covariates the parent's overdispersion can absorb the excess zeros,
-#' the weight goes to the edge of its domain, and the link is flat there, so a
-#' model with covariates started from it never leaves -- measured on a
-#' negative binomial with a true weight of 0.25, the fit reported convergence
-#' at a weight of zero, 7.6 log-likelihood units below the interior maximum.
-#' The family answers with the observed proportion of zeros, and the value is
-#' mapped through the parameter's link, so a probit or a cloglog chart gets its
-#' own linear predictor and not a logit.
+#' The intercept-only fit is the right start for almost every family. It is
+#' the wrong one for the mixing weight of [distributions7::zero_inflated()],
+#' and for `skewnormal1_distrib()` and the pseudo-Huber families, for which
+#' [distributions7::distrib_intercept_start()] has methods of their own.
+#' For the mixing weight, the overdispersion of the parent can absorb the
+#' excess zeros without covariates, the weight goes to the edge of its
+#' domain, and the link is flat there, so that a model with covariates
+#' started from it does not leave the edge. The family answers with the
+#' observed proportion of zeros, and the value is mapped through the
+#' parameter's link, so a probit or a cloglog chart gets its own linear
+#' predictor and not a logit.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param eta The named list of link-scale intercepts.
@@ -2441,10 +2541,10 @@ intercept_start_from_data <- function(spec, eta) {
 #' @details
 #' The matrix a penalized fit's curvature is read from: the model's
 #' information from [statmod_information_at()] and the penalty's Hessian
-#' from [statmod_penalty_at()]. It is written once because three readers
-#' want the same matrix at the same point and must not disagree about it --
-#' [statmod_edf()]'s smoother, [vcov.StatmodFit()]'s variance and
-#' [deficient_coords()]'s rank test.
+#' from [statmod_penalty_at()]. It is written once because its readers, the
+#' rank test of [deficient_coords()] in [statmod()], the readings of the
+#' alternation ([alternation_readings()]) and the flat-direction test of the
+#' outer search, must use the same matrix at the same point.
 #'
 #' A kinked penalty contributes no curvature away from its kink, and any
 #' non-finite entry would be the kink itself reached by a hair, so the
@@ -2474,28 +2574,29 @@ statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
 #' Effective Degrees of Freedom, Per Term
 #'
 #' @description
-#' Asks each term what it spends, through \pkg{modelterms7}'s `edf()`.
+#' Computes the effective degrees of freedom of each term: from the diagonal
+#' of the model's smoother where a penalized term is not kinked, from the
+#' number of coefficients away from the kink for a kinked penalty, from the
+#' term's free parameters for a structural term, and through
+#' \pkg{modelterms7}'s `edf()` for the remaining terms.
 #'
 #' @details
-#' A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
-#' block, so it needs the unpenalized curvature there, never only its
-#' coefficients and its hyperparameters. That block is cut out of the
-#' likelihood's information, which is computed once for every term rather than
-#' per term.
+#' A smooth penalized term takes its share from the diagonal of
+#' \eqn{(H+S)^{-1}H} for the whole model, read over the coefficients of every
+#' equation at once. The computation needs the unpenalized curvature of every
+#' equation, and not only the coefficients and hyperparameters of the term.
+#' That curvature is computed once for all terms and not per term.
 #'
 #' A term may carry more than one penalty, over different parameters of its
 #' own, and each has hyperparameters of its own filed under a key of its own.
-#' The row stays per term, which is the granularity a table of terms wants,
+#' The row stays per term, which is the granularity of a table of terms,
 #' and the hyperparameters are handed over keyed by the penalty names
 #' [modelterms7::term_penalties()] gives, which is the shape
 #' `edf()` reads them in. Passing the hyperparameters of one penalty for
 #' a term carrying two would count the whole block against it.
 #'
-#' The arguments are passed by name. `edf()`'s third argument is the
-#' curvature and its fourth the hyperparameters, and a positional call put the
-#' hyperparameters where the curvature belongs: every smooth term then reported
-#' `NA`, the total degrees of freedom counted the unpenalized terms alone,
-#' and AIC and BIC were built on that count.
+#' The arguments of `edf()` are passed by name: its third argument is the
+#' curvature and its fourth the hyperparameters.
 #'
 #' @param spec The specification.
 #' @param coef The coefficients.
@@ -2503,8 +2604,12 @@ statmod_penalized_at <- function(spec, coef, design, hyper, expected = TRUE,
 #' @param hyper The hyperparameters.
 #' @param expected Whether the curvature is the expected information.
 #' @param approx The approximation for the expected information.
+#' @param aliased Stacked positions of the coefficients that the fit did not
+#'   estimate; they are not counted.
 #'
-#' @return A data frame with one row per term.
+#' @return A data frame with one row per term and the columns `parameter`,
+#'   `term`, `coefficients` and `edf`, or `NULL` where the model has no term.
+#'   `edf` is `NA` for a term whose count could not be read.
 #'
 #' @keywords internal
 statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
@@ -2722,9 +2827,12 @@ statmod_edf <- function(spec, coef, design, hyper, expected = TRUE,
 #' than one, which is Stein's count for those penalties.
 #'
 #' It answers only for a model with a kinked block and no structural term,
-#' and declines (`NULL`) where the active columns are not of full rank,
-#' where [statmod_pe()] reads a rank in place of a count, or where the factor
-#' does not exist; [statmod_edf()] then reads its other rules.
+#' and declines (`NULL`) where the penalty has no curvature over the active
+#' coordinates and the count of one per column cannot be certified
+#' ([design_count_exact()] is `FALSE`, where [statmod_pe()] reads a rank in
+#' place of a count), or where the penalized curvature of the active
+#' coordinates is not positive definite, so that its Cholesky factor does not
+#' exist; [statmod_edf()] then reads its other rules.
 #'
 #' @param spec,coef,design,hyper The specification, the coefficients, the
 #'   design and the hyperparameters.
@@ -2782,28 +2890,25 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, approx,
 #' \eqn{K+S} the matrix the criterion's own determinant is taken of,
 #' [statmod_marginal_full()].
 #'
-#' # One apiece is this matrix's own answer, exactly
+#' # The count of an unpenalized parameter
 #'
-#' Writing \eqn{P} for the coordinates some penalty covers, \eqn{S} has a zero
-#' row and a zero column outside \eqn{P}, so
+#' Writing \eqn{P} for the coordinates that some penalty covers, \eqn{S} has a
+#' zero row and a zero column outside \eqn{P}, so
 #' \deqn{F = M^{-1}K = M^{-1}(M - S) = I - M^{-1}S,}
 #' and for \eqn{j} outside \eqn{P} the whole column \eqn{S_{\cdot j}} vanishes,
-#' which makes \eqn{F_{jj}} exactly one. The rule this replaces -- one degree
-#' of freedom per free parameter of a structural term, on the reading that
-#' those are estimated and unpenalized -- is therefore what this matrix says
-#' wherever that rule is right, and measured it is so to the last bit: the
-#' unpenalized coordinates come back at 1.000000000000000 with a gap of
-#' 0.000e+00. What moves is a coordinate a prior shrinks, which since 0.24.0 a
-#' filter's own parameters may be. Measured on a developed loading over eight
-#' groups the eight deviations read between 0.080 and 0.247 where the count
-#' says eight, and under a covariance class over two developed parameters
-#' sixteen of them read between -0.0003 and 0.829 where the count says sixteen.
+#' which makes \eqn{F_{jj}} exactly one. The rule that counts one degree of
+#' freedom per free parameter of a structural term, on the reading that those
+#' parameters are estimated and unpenalized, is therefore what this matrix
+#' gives wherever that rule is right. The count differs for a coordinate that
+#' a prior shrinks, which a filter's own parameters may be (for example the
+#' deviations of a developed loading, or the parameters under a covariance
+#' class); such a coordinate counts less than one.
 #'
 #' A structural term that mixes over latent states rather than shifting the
 #' predictor has no such joint determinant, [statmod_marginal_full()] answering
 #' `NULL` for it, and falls back to the coefficient-only reading.
 #'
-#' The joint route reads the OBSERVED information, there being no expected one
+#' The joint route reads the observed information, there being no expected one
 #' for a filter: [statmod_marginal_full()] assembles from
 #' [modelterms7::term_curvature()], and the criterion of such a model already
 #' reads that same matrix. A model carrying no filter never reaches here and is
@@ -2823,7 +2928,7 @@ kinked_edf_diag <- function(spec, coef, design, hyper, expected, approx,
 #'   second leaves it with no reading, so that the count is reported missing
 #'   rather than taken from a rule meaning something else.
 #'
-#' @seealso [statmod_edf()], its only caller.
+#' @seealso [statmod_edf()] and [summary_class_blocks()], its callers.
 #'
 #' @keywords internal
 joint_smoother_diag <- function(spec, coef, design, hyper) {
@@ -2879,20 +2984,22 @@ joint_smoother_diag <- function(spec, coef, design, hyper) {
 #' Resolve the Verbosity Setting
 #'
 #' @description
-#' Turns a level or a named logical vector into the three switches the fit
-#' reads.
+#' Turns a level or a named logical vector into the four switches `outer`,
+#' `blocks`, `inner` and `optimizer` that the fit reads.
 #'
 #' @details
-#' The levels name the loops rather than counting them: `1` shows the
-#' alternation, `2` the inner method's own iterations, `3` the
-#' optimizers' traces. The named form exists because the three are genuinely
-#' independent -- watching the alternation while silencing a chatty inner
-#' optimizer is the common case.
+#' Each level adds output: `1` shows the outer search and the alternation
+#' (switches `outer` and `blocks`), `2` adds the inner method's own iterations
+#' (`inner`), and `3` adds the traces of the optimizers (`optimizer`). The
+#' named form sets the four switches independently, which allows the
+#' alternation to be shown while a chatty inner optimizer is silent. A switch
+#' that is left out is off.
 #'
 #' @param verbose A number from 0 to 3, or a named logical vector with any of
-#'   `blocks`, `inner`, `optimizer`.
+#'   `outer`, `blocks`, `inner`, `optimizer`.
 #'
-#' @return A list of three logicals.
+#' @return A list of four logicals named `outer`, `blocks`, `inner` and
+#'   `optimizer`.
 #'
 #' @keywords internal
 verbosity <- function(verbose) {
@@ -2924,8 +3031,8 @@ verbosity <- function(verbose) {
 #'
 #' @description
 #' `TRUE` where some equation carries [modelterms7::seg()], [modelterms7::jump()]
-#' or [modelterms7::jseg()] without `smoothed`, whose contribution has a kink
-#' in the break-point at the observations.
+#' or [modelterms7::jseg()] with neither `smoothed` nor `marginal = TRUE`,
+#' whose contribution has a kink in the break-point at the observations.
 #'
 #' @details
 #' [fit_smooth()] reads it to keep [iwls_fit()] from escalating the

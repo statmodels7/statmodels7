@@ -35,14 +35,13 @@ gives a numeric vector of \code{length(k)} curvatures.
 \eqn{v_j = \sum_i w_i x_{ij}^2} of a block would be finite and positive,
 from the block's column norms and the range of the weights, so that
 \code{\link[=coord_fit]{coord_fit()}} need not compute the curvatures of columns it never visits.
-\code{coord_curv()} computes them on the columns asked for.
+\code{coord_curv()} computes them on the columns given in \code{k}.
 }
 \details{
 The condition is sufficient and not necessary. With the weights finite and
 positive, which \code{\link[=coord_working]{coord_working()}} has already checked, a column's
-curvature is at least its largest term, which is at least
-\eqn{\min_i w_i\, \lVert x_j\rVert^2 / n}, and at most
-\eqn{n \max_i w_i \max_i x_{ij}^2}. So where every column norm is
+curvature is at least \eqn{\min_i w_i\, \lVert x_j\rVert^2} and at most
+\eqn{\max_i w_i\, \lVert x_j\rVert^2}. So where every column norm is
 positive and \eqn{\min w \min_j \lVert x_j\rVert^2 > 10^{-200}} and
 \eqn{\max w \max_j \lVert x_j\rVert^2 < 10^{200}}, no curvature can be
 zero, underflow or overflow. Where any of this fails, \code{FALSE} sends the

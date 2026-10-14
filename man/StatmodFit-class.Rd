@@ -30,44 +30,67 @@ term as the fit left it.}
 \item{coefficients}{A named list, one numeric vector per distribution
 parameter.}
 
-\item{structural}{A named list, one entry per structural term, holding
-that term's own parameters on the unconstrained scale.}
+\item{structural}{A named list with one entry per structural term. Each
+entry is a list with the term's parameters on their own scale
+(\code{parameter}), on the unconstrained scale (\code{unconstrained}), the
+equation that carries the term (\code{equation}) and the names of the
+parameters that the term holds (\code{held}).}
 
 \item{hyper}{The hyperparameters, keyed by distribution parameter and then
 by term.}
 
-\item{loglik}{The maximized weighted log-likelihood, a single number. The
-\strong{conditional} one, read at the fitted coefficients.}
+\item{loglik}{The weighted log-likelihood at the fitted coefficients, a
+single number. It is the \strong{conditional} one.}
 
 \item{objective}{The penalized objective there, unaveraged.}
 
-\item{edf}{A data frame of effective degrees of freedom, one row per term.}
+\item{edf}{A data frame of effective degrees of freedom with the columns
+\code{parameter}, \code{term}, \code{coefficients} and \code{edf}, one row per term of each
+equation.}
 
 \item{fitted}{A named list of the fitted parameters, one vector per
 distribution parameter.}
 
-\item{converged}{A single logical: whether every loop stopped on its own
-rule.}
+\item{converged}{A single logical. Where the model has nothing to alternate
+between, it is the verdict of the inner method. Where the model has a
+kinked block or a structural term, it is read at the point reached: the
+Newton decrement of the smooth part and the optimality decrement of every
+coefficient that a kinked penalty holds at zero are both within
+\code{\link[=mode_error_limit]{mode_error_limit()}}. A term that recomputes its own block, such as a
+break-point term, contributes its own verdict in place of that of the
+inner method.}
 
-\item{aliased}{The labels of the coefficients the design does not
-identify, which the pivot that fitted the model left out, as
-\code{\link[=coef_labels]{coef_labels()}} names them. Empty where the design is of full rank.
-Their estimate, standard error and interval are reported as missing, and
-they are not counted among the degrees of freedom; the stored
-coefficient is left WHERE IT WAS, the pivot dropping the coordinate from
-the increment rather than from the parameter, so every predictor reads
-the vector as before.}
+\item{aliased}{The labels, as \code{\link[=coef_labels]{coef_labels()}} names them, of the
+coefficients that the fitted point does not identify. A coefficient is
+listed when the pivoted decomposition of the inner fit drops it, when the
+penalized information at the fitted point is singular in its direction
+(this applies to every decomposition and to an \pkg{optimizers7} inner
+optimizer), or when its design column has vanished. The vector is empty
+where the design has full rank. The estimate, standard error and
+interval of a listed coefficient are reported as missing, and it is not
+counted in the degrees of freedom. The stored coefficient keeps the value
+it had when the coordinate was left out of the increment, so every
+predictor reads the vector unchanged.}
 
 \item{elapsed}{The elapsed time in seconds.}
 
-\item{criterion}{The marginal criterion at the estimated hyperparameters,
-\code{NA} when no criterion ran.}
+\item{criterion}{The value of the criterion that chose the
+hyperparameters: \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}}, \code{\link[=bic]{bic()}} or \code{\link[=cv]{cv()}}, including
+the criterion that swept the path of a kinked penalty. \code{NA} when no
+criterion ran.}
 
 \item{history}{A list of data frames recording the run: \code{outer}, \code{blocks}
-and \code{inner}.}
+and \code{inner}. An entry is \code{NULL} where the run produced no such record.}
 
-\item{methods}{A list naming what fitted each block, and the optimizer the
-outer search used.}
+\item{methods}{A list of what the fit decided, which can differ from what
+was supplied: \code{smooth}, the inner method after \code{\link[=iwls]{iwls()}} has settled its
+information (never \code{"auto"}); \code{outer}, the criterion after resolution,
+\code{NULL} when no marginal or prediction-error criterion ran; \code{search}, the
+optimizer that the outer search used; \code{pinned}, the coordinates that the
+criterion left out of its determinant; \code{kkt}, the edge violations that
+survived the restarts; \code{sparse}, the blocks of kinked penalties;
+\code{sparse_criterion}, the criterion that swept their paths; and
+\code{sparse_hyper}, the hyperparameters it reached.}
 
 \item{call}{The matched call.}
 }

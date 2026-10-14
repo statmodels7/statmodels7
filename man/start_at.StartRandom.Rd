@@ -12,6 +12,7 @@
 A named list of numeric vectors.
 }
 \description{
-The draw, added to the intercept-only fit unless told not to.
+The draw, added to the intercept-only fit unless \code{center} is
+\code{FALSE}.
 }
 \keyword{internal}

@@ -22,20 +22,15 @@ The position of the intercept of one equation's parametric block, or
 \code{NA} where it has none.
 }
 \details{
-What is looked for is a column of the parametric block, which is a
+The position searched for is a column of the parametric block, which is a
 stricter test than a coefficient whose name ends in \code{(Intercept)}.
 \code{\link[modelterms7:nl]{modelterms7::nl()}} names the intercept of each of its own parameters the
-same way, and those live on those parameters' own charts, not on the
-predictor's, so a model written \code{y ~ 0 + nl(...)} puts one of them
-first. Writing the
-intercept-only fit there sets the parameter to \code{linkinv} of a value
-that was never on its scale: measured on a logistic growth curve whose
-asymptote rides a log link, \code{mean(y) = 23.9} became a starting
-\eqn{\phi} of \code{2.5e10}, an objective of \code{7.0e20} and a gradient
-of \code{1.4e21}, on data whose every scale is ordinary. The lasso path
-built at those coefficients then spanned \code{2.8e15} to \code{2.8e19}
-where the block empties at about 300, so all of its points were the same
-empty fit and every subject deviation was estimated as exactly zero.
+same way, and those coefficients lie on the charts of the parameters of
+the term and not on the scale of the predictor, so a model written
+\code{y ~ 0 + nl(...)} has one of them first. Writing the intercept-only fit
+there would set the parameter to the inverse link of a value that was never
+on its scale, and for a parameter on a log link the starting value would be
+far outside the range of the data.
 }
 \seealso{
 \code{\link[=start_at]{start_at()}}, \code{\link[=statmod_intercepts]{statmod_intercepts()}}

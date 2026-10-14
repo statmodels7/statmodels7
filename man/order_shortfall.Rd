@@ -17,9 +17,10 @@ order_shortfall(distrib, need, what)
 A single string, or \code{NULL}.
 }
 \description{
-The message a consumer refuses with: the family, the parameter, the order it
-needs against the order there is, and what to write instead. \code{NULL} when
-there is nothing to refuse.
+The error message of a consumer that cannot run on the family: the family,
+the parameter, the order that the consumer needs against the order that the
+family has, and what to write instead. \code{NULL} when the family has enough
+derivatives.
 }
 \details{
 Two shapes of shortfall are told apart, because the remedies differ. A

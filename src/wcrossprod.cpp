@@ -14,10 +14,10 @@ using namespace Rcpp;
 // rounding of one dot product, which is why the cross-implementation twin
 // in the tests carries a tolerance while the count twin does not.
 //
-// The R wrapper (wcrossprod) holds the gate: only base dense matrices with
-// a full-length weight reach this, and only above the measured work
-// threshold; a sparse design keeps the Matrix route, where a threaded dense
-// kernel would do nothing.
+// The R wrapper (wcrossprod) holds the gate: only base dense matrices of the
+// same height with a full-length weight reach this, and only above the
+// measured work threshold; a sparse design keeps the Matrix route, where a
+// threaded dense kernel would do nothing.
 
 // X'v, one dot product per output element, ascending rows: the same
 // operations in the same order as crossprod(X, v) against the reference

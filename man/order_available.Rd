@@ -9,7 +9,10 @@ order_available(distrib, need)
 \arguments{
 \item{distrib}{A distributions7 family.}
 
-\item{need}{The order asked for; see the table in \code{R/order.R}.}
+\item{need}{The order required, an integer from 1 to 5: 1 for a score
+continuous in the coefficients, 2 for the curvature, 3 and 4 for the exact
+gradient and Hessian of a marginal criterion, and 5 for the fourth
+derivative of a filtered predictor.}
 }
 \value{
 A single logical. \code{NA} orders count as unavailable: a wrapper of a
@@ -20,7 +23,7 @@ unestablished order is not evidence of smoothness.
 \code{TRUE} when the log-density has at least \code{need} continuous derivatives in
 every parameter the model carries an equation for. Used as a gate by the
 consumers that can fall back on something else, and through
-\code{\link[=order_shortfall]{order_shortfall()}} as a refusal by the ones that cannot.
+\code{\link[=order_shortfall]{order_shortfall()}} as an error message by the ones that cannot.
 }
 \examples{
 statmodels7:::order_available(distributions7::gaussian1_distrib(), 4L)

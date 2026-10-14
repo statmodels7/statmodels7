@@ -24,6 +24,10 @@ column, or \code{NULL} when there is no previous point.}
 
 \item{threads}{The thread count the gradient read may use, a plain
 integer.}
+
+\item{center}{\code{TRUE} when the block is solved with its equation's intercept
+profiled out: the residual is then taken to weighted mean zero before the
+gradient is read.}
 }
 \value{
 An integer vector of one-based column indices to visit, in

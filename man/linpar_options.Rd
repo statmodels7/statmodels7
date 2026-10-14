@@ -18,23 +18,18 @@ the session's \code{options("contrasts")}. Carried on the specification, so a
 fold of \code{\link[=cv]{cv()}} reproduces them instead of re-reading the option.}
 }
 \value{
-A named list with elements \code{sparse} and \code{contrasts}, to be passed
-as \code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
-
-The argument and this function are named differently on purpose. With
-one name for both, the argument's default would resolve to its own
-promise and R would report \emph{promise already under evaluation}.
-\code{\link[stats:glm]{stats::glm()}} and \code{\link[stats:glm.control]{stats::glm.control()}} are kept apart for the same
-reason.
+A named list with the element \code{sparse} (possibly \code{NULL}) and, when
+\code{contrasts} is not \code{NULL}, the element \code{contrasts}, to be passed as
+\code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
 }
 \description{
-Says how the parametric part of each linear predictor is built: in what
-storage, and with which contrasts for its factors. Pass the result as
+Specifies how the parametric part of each linear predictor is built: in
+what storage, and with which contrasts for its factors. Pass the result as
 \code{\link[=statmod]{statmod()}}'s \code{linpar_control}.
 
-The one case it exists for is a formula naming a factor of many levels,
-where \code{sparse = TRUE} turns a design that would be gigabytes into one that
-is megabytes.
+It is meant for a formula naming a factor of many levels, where
+\code{sparse = TRUE} keeps the design in sparse storage instead of a dense
+matrix with one column per level.
 }
 \section{Which term it reaches}{
 The \strong{implicit} \code{\link[modelterms7:linpar]{modelterms7::linpar()}} term: the one the bare covariates
@@ -46,25 +41,27 @@ these arguments directly and ignores this.
 \section{Sparse storage}{
 \code{sparse = TRUE} builds the block through
 \code{\link[Matrix:sparse.model.matrix]{Matrix::sparse.model.matrix()}}, which \strong{builds} it sparse instead of
-building a dense matrix and compressing it. The second would cost the
-memory the choice exists to avoid.
+building a dense matrix and compressing it, so no dense intermediate is
+formed. Sparse storage pays where the formula carries a factor of many
+levels. A numeric covariate has no zeros to exploit, and its sparse block
+costs more than it saves.
+}
 
-Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
-against \code{stats::model.matrix}'s
-0.100 s and 161.5 MB, the numbers identical; and a design that would be
-32 GB dense builds in 0.02 s and 19 MB, which settles that there is no
-dense intermediate. It pays where the formula carries a factor of many
-levels and costs more than it saves on numeric covariates, whose block is
-dense whatever is asked for.
+\section{Scaling of the columns}{
+The block is not rescaled. Scaling the columns and carrying the
+coefficients back is a remedy for a conditioning that squares, as forming
+\eqn{X'X} does. \code{\link[=iwls]{iwls()}} with its default \code{decomposition = "qr"} fits
+through a QR factorization of the augmented design and does not form
+\eqn{X'X}, and its final convergence verdict is read on a dimensionless
+scale, so the scale of a column does not decide it.
+}
 
-\strong{There is no rescaling here, and that is measured rather than
-omitted.} Scaling the columns and carrying the coefficients back is the
-remedy for a conditioning that squares, as forming \eqn{X'X} does; \code{\link[=iwls]{iwls()}} fits through a QR of the design and never forms
-it. On columns spanning fifteen decades the raw fit and the scaled one
-converge in the same number of iterations, and both agree with
-\code{\link[stats:lm]{stats::lm()}} to \eqn{10^{-14}}. What does move is the score the
-fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
-answer: the final verdict is already arbitrated on a dimensionless scale.
+\section{The name of the argument}{
+The argument of \code{\link[=statmod]{statmod()}} and this function are named differently on
+purpose. With one name for both, the argument's default would resolve to
+its own promise and R would report \emph{promise already under evaluation}.
+\code{\link[stats:glm]{stats::glm()}} and \code{\link[stats:glm.control]{stats::glm.control()}} are kept apart for the same
+reason.
 }
 
 \examples{
@@ -81,7 +78,7 @@ sparse <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
 Xd <- statmod_design(dense)$mu$X
 Xs <- statmod_design(sparse)$mu$X
 
-# Same numbers, one two orders of magnitude smaller.
+# Same numbers, stored in much less memory.
 c(dense = class(Xd)[1], sparse = class(Xs)[1])
 all.equal(as.matrix(Xs), Xd, check.attributes = FALSE)
 c(dense = object.size(Xd), sparse = object.size(Xs))

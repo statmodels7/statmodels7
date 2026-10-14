@@ -50,7 +50,7 @@ test_that("a penalty that cannot answer is reported, not assumed smooth", {
                                          params_smooth = c(lambda = TRUE))
                         })
   expect_error(penalty_has_kink(Mute(), "The penalty of q(x)"),
-               "cannot say whether it is differentiable")
+               "It cannot be determined whether .* is differentiable")
   expect_error(penalty_has_kink(Mute(), "The penalty of q(x)"),
                "The penalty of q\\(x\\)")
 })

@@ -21,7 +21,7 @@ A list of the bodies' results, in unit order.
 \description{
 Applies a body to each of \code{n} independent units -- a
 cross-validation fold, a combination of a path's product grid -- over
-the worker processes the specification asks for (\code{spec@workers},
+the worker processes that the specification requests (\code{spec@workers},
 from \code{\link[numericals7:n_threads]{n_threads(workers =)}}) and in this
 process otherwise. Results come back in unit order whatever the number
 of workers, and that is what makes the answer independent of the count:

@@ -34,8 +34,9 @@ budget of halvings is spent.
 The Hessian of an objective whose design moves with its coefficients need
 not be positive definite away from the mode, so its eigenvalues are
 replaced by their absolute values and floored at \eqn{10^{-8}} times the
-largest, the repair \code{\link[optimizers7:newton]{optimizers7::newton()}} makes, which keeps the
-increment a descent direction.
+largest, which keeps the increment a descent direction. The repair
+differs from the one of \code{\link[optimizers7:newton]{optimizers7::newton()}}, which raises each
+eigenvalue below the floor to the floor without taking absolute values.
 }
 \seealso{
 \code{\link[=iwls_fit]{iwls_fit()}}, its caller.

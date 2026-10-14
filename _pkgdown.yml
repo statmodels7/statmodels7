@@ -24,9 +24,11 @@ reference:
 
 - title: Fitting
   desc: >
-    One formula, one distribution, and a scheme that fits the terms whose
-    penalties are differentiable all together while the others are alternated
-    around them.
+    One formula and one distribution. The coefficients of the terms with a
+    differentiable penalty are fitted in one system, together with a
+    score-driven term, and the terms with a kinked penalty and the regime
+    terms are alternated with that system. The section also holds the inner
+    method, the criteria that choose the hyperparameters and the simulator.
   contents:
   - statmod
   - linpar_options
@@ -39,10 +41,11 @@ reference:
 
 - title: Where a fit begins
   desc: >
-    A starting value as a strategy rather than a vector of numbers, asked once
-    before the fit alternates. The default is the intercept-only fit; what the
-    others offer is a procedure, from a random perturbation to a global search
-    of the likelihood to the estimates of a model already fitted.
+    A starting value given as a strategy and not as a vector of numbers, and
+    evaluated once before the fit alternates. The default builds the start from
+    intercept-only fits; the other strategies are procedures, from a random
+    perturbation to a global search of the likelihood to the estimates of a
+    model already fitted.
   contents:
   - start_strategy
   - start_at
@@ -54,9 +57,10 @@ reference:
 
 - title: Reading a fit
   desc: >
-    The model as a function of parameters and data, any parameter or moment
-    predicted at new data, what the fit says about its own uncertainty, and the
-    elapsed time in the unit it deserves.
+    The log-likelihood, gradient and Hessian of the model as functions of the
+    parameters and the data, the hyperparameters of a fit with their source,
+    the certificate of convergence, the latent variables of a structural term,
+    and a duration written in a readable unit.
   contents:
   - loglik
   - hyper
@@ -69,8 +73,10 @@ reference:
     One coefficient against one value, by Wald's statistic, the likelihood
     ratio, Rao's score or Terrell's gradient. The same four are what
     `summary(test =)` reports for every row against zero and what
-    `confint(test =)` inverts; this is the surface that takes a null of its
-    own.
+    `confint(test =)` inverts; `statmod_test()` also takes a null value other
+    than zero. The test that a break-point exists is a separate function, which
+    reads the supremum of a score process over the positions of the
+    break-point.
   contents:
   - statmod_test
   - statmod_breakpoint_test
@@ -84,7 +90,8 @@ reference:
 
 - title: Internals
   desc: >
-    The machinery the exported functions are built from. None of it is
-    exported, and none is needed to use the package.
+    The machinery that the exported functions are built from: the classes
+    behind a fit, the methods registered for the generics of stats, and the
+    helper functions. None of it is needed to use the package.
   contents:
   - has_keyword("internal")

@@ -11,11 +11,13 @@ statmod_classes(terms)
 per distribution parameter, in the family's order.}
 }
 \value{
-A list, one element per class, each with \code{tag}, \code{group} (the
-deparsed expression), \code{levels}, \code{m}, \code{dim} (the class total), \code{penalty}
-and \code{pieces} -- one per member, with its parameter, its term's name and
-its within-group column count, in the order the equations were walked.
-Empty where no term carries a label.
+A list named by the class key (\verb{<label> | <grouping>}), one element
+per class, each with \code{tag}, \code{group} (the deparsed expression), \code{levels},
+\code{m}, \code{key}, \code{dim} (the class total), \code{space} (see \code{\link[=class_space]{class_space()}}),
+\code{structural}, \code{sterm} (the name of the structural term, present only
+where the class touches one), \code{penalty} and \code{pieces}. The pieces are one
+per member, as \code{\link[=label_pieces]{label_pieces()}} returns them, in the order the equations
+were walked. Empty where no term carries a label.
 }
 \description{
 The groups of terms that share a covariance block: those carrying the same
@@ -30,9 +32,9 @@ agree as well as the expression: \code{droplevels(id)} and \code{id} are differe
 expressions for one grouping, and \code{id} under two subsets is one expression
 for two groupings.
 
-Correlating effects on different groupings means nothing -- they are indexed
-by different things and there is no block to estimate -- so a label used on
-two groupings is an error naming both.
+Correlating effects on different groupings means nothing, since they are
+indexed by different things and there is no block to estimate, so a label
+used on two groupings is an error naming both.
 }
 
 \section{Whose prior it is}{
@@ -42,12 +44,13 @@ where none does, the default is a centered multivariate Gaussian on
 \code{\link[parameters7:dr_prod]{parameters7::dr_prod()}}, whose coordinates are the log standard deviations
 and the correlations' angles, so a printed hyperparameter is the quantity it
 names. At a total of one column there is no correlation and the default is
-the centered univariate Gaussian a single unlabelled term would have built.
+the centered univariate Gaussian that a single unlabeled term would have
+built.
 
-A class whose members carry priors of \strong{different families} -- a Gaussian
-intercept correlated with a Student t slope -- is a copula and not an
-elliptical family; \pkg{modelterms7} rejects a univariate \code{distrib} on a
-labelled term for that reason, and this function never sees the case.
+A class whose members carry priors of \strong{different families} (a Gaussian
+intercept correlated with a Student t slope) is a copula and not an
+elliptical family. \pkg{modelterms7} rejects a univariate \code{distrib} on a
+labeled term for that reason, and this function never sees the case.
 }
 
 \seealso{

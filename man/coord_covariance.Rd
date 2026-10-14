@@ -23,14 +23,10 @@ covariance form, which holds the gradient itself and caches columns of
 \details{
 The covariance form replaces an \eqn{O(n)} read of the gradient with an
 \eqn{O(m)} one, and pays for it by building a column of \eqn{X'WX} at
-\eqn{O(nm)} the first time a coordinate moves off zero. It is worth having
-only while \eqn{m} is small next to \eqn{n}, and the two conditions say
-exactly that.
-
-The measurement is unambiguous in the other direction: at 5000
-observations with 200 columns and nothing screened away, the covariance
-form cost 70 milliseconds against 55 for the residual, the Gram columns
-being dearer than the residual passes they replaced.
+\eqn{O(nm)} the first time the coordinate is nonzero. It is used only
+while \eqn{m} is small next to \eqn{n}: \eqn{m \le 32} and \eqn{n > 8m}.
+When many coordinates are live, the Gram columns cost more than the
+residual passes that they replace, so the residual form is used.
 }
 \seealso{
 \code{\link[=coord_call]{coord_call()}}, which passes the answer to the kernel,

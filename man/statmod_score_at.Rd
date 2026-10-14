@@ -33,13 +33,15 @@ link-scale predictor \eqn{\eta_k}, which \pkg{distributions7} supplies
 already chained onto that scale.
 }
 \details{
-This is the score of the likelihood alone, with no penalty in it, and it
-is the gradient of a model whose design is fixed.
-
-A model carrying a structural term needs a correction that is not here:
-the term's level is driven by scores read at earlier predictors, so a
-coefficient reaches it through the recursion. \code{\link[=statmod_structural_score]{statmod_structural_score()}}
-and \code{modelterms7::term_adjoint()} supply that.
+This is the score of the likelihood with no penalty in it. The vectors
+\eqn{g_k} are those of \code{\link[=statmod_score_obs]{statmod_score_obs()}}, which already contain the
+contribution of a structural term. Where a filter drives an equation, a
+coefficient also reaches the filter's level through the scores at earlier
+times, and the reverse recursion of \code{modelterms7::term_adjoint()} adds that
+part. Where the likelihood is a mixture over latent states, the score is
+the posterior-weighted average of the ordinary scores. The score in the
+parameters of a structural term itself is returned by
+\code{\link[=statmod_structural_score]{statmod_structural_score()}}.
 }
 \seealso{
 \code{\link[=statmod_loglik_at]{statmod_loglik_at()}} for the value,

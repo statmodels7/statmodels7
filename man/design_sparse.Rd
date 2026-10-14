@@ -19,26 +19,31 @@ zero_information(design, total)
 \item{design}{The design, a list with one entry per distribution
 parameter, each carrying its block as \code{X}.}
 
+\item{A}{A matrix, dense or sparse.}
+
 \item{total}{The number of stacked coefficients across the equations,
 which is the side of the accumulator.}
 }
 \value{
 \code{design_sparse()} gives a single logical. \code{zero_information()}
 gives a \verb{total x total} matrix of zeros, a \code{dgCMatrix} when the design
-is sparse and a base matrix otherwise.
+is sparse and a base matrix otherwise. \code{as_dense()} gives \code{A} as a base
+matrix, and \code{as_sparse()} gives \code{A} as a \pkg{Matrix} object, converting
+a base matrix to compressed column storage.
 }
 \description{
 \code{design_sparse()} reports whether any equation's block is sparse, and
 \code{zero_information()} gives the square zero matrix of the right kind to
-accumulate the information into.
+accumulate the information into. \code{as_dense()} and \code{as_sparse()} convert a
+matrix to the other storage.
 }
 \details{
 The information is assembled one \code{crossprod} per parameter pair and each
 product is written into a square accumulator. With a sparse design each
 product is sparse, and writing a sparse block into a dense accumulator
 signals that the number of items to replace is not a multiple of the
-replacement length, from inside the assembly and naming nothing a caller
-wrote. The accumulator therefore follows the design.
+replacement length, from inside the assembly. The accumulator therefore
+follows the design.
 }
 \seealso{
 \code{\link[=statmod_information_at]{statmod_information_at()}}, which accumulates into it,

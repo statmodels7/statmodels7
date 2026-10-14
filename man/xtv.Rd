@@ -37,12 +37,12 @@ gradient read: \code{v} is the running residual, or the residual times the
 working weights.
 
 \code{wxsq()} computes \eqn{\sum_i w_i x_{ij}^2} for each column \eqn{j}, the
-column curvatures of a working model. The \verb{n x p} matrix of squares is
-never formed.
+column curvatures of a working model. The threaded kernel does not form the
+\verb{n x p} matrix of squares, whereas the sequential expression does.
 
-Both take the package's threaded kernel above the same measured work
-threshold \code{\link[=wcrossprod]{wcrossprod()}} uses, and otherwise evaluate the expressions they
-replace, \code{as.numeric(crossprod(X, v))} and
+Both take the package's threaded kernel above a work threshold, the one
+constant that \code{\link[=wcrossprod]{wcrossprod()}} also uses, and otherwise evaluate the
+expressions they replace, \code{as.numeric(crossprod(X, v))} and
 \code{as.numeric(crossprod(w, X^2))}.
 }
 \section{Why the answer does not depend on the thread count}{
@@ -64,7 +64,7 @@ and \eqn{n \times p} at least \code{2e5}. A sparse \code{X} takes the
 }
 
 \seealso{
-\code{\link[=wcrossprod]{wcrossprod()}} for the matrix-valued kernel and the measured
-threshold both share, \code{\link[=coord_fit]{coord_fit()}} for the descent that calls these.
+\code{\link[=wcrossprod]{wcrossprod()}} for the matrix-valued kernel and the work
+threshold, \code{\link[=coord_fit]{coord_fit()}} for the descent that calls these.
 }
 \keyword{internal}

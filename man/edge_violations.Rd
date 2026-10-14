@@ -19,15 +19,17 @@ not a maximum: \code{\link[=mode_error_limit]{mode_error_limit()}}.}
 \value{
 A data frame with one row per violating coordinate and columns
 \code{kind} (\code{"structural"} or \code{"coefficient"}), \code{param}, \code{term}, \code{name},
-\code{eta}, \code{target} and \code{gain}; zero rows where every coordinate at an edge
-points outward. The design's structural state is left as it was found.
+\code{eta} (the free value), \code{target} (the value it is moved to) and \code{gain};
+zero rows where every coordinate at an edge points outward, and also
+where the log-likelihood at the fit is not finite. The design's
+structural state is left as it was found.
 }
 \description{
 Checks the first-order condition for a maximum at every free coordinate
 that has run past the edge of a chart mapping onto a bounded set, reading
-it on the bounded scale rather than on the free one. Returns the
-coordinates where moving back inside raises the log-likelihood, so the
-point the fit stopped at is not a maximum.
+it on the bounded scale and not on the free one. Returns the coordinates
+where moving back towards the interior raises the log-likelihood, so that
+the point at which the fit stopped is not a maximum.
 }
 \details{
 At a coordinate \eqn{\eta} whose chart \eqn{\theta = h(\eta)} saturates,
@@ -41,13 +43,15 @@ Tucker) is that the derivative on the bounded scale points outward, and
 that is what is checked.
 
 The derivative is read as a one-sided difference: each coordinate beyond
-\code{edge} in absolute value is moved to \eqn{\pm}\code{edge}, the rest held, and
-the log-likelihood is evaluated there. A coordinate is reported where the
-gain exceeds \code{tol}, in log-likelihood units. The coordinates checked are
-those \code{\link[modelterms7:term_charted]{modelterms7::term_charted()}} names for a structural term and for
+\code{edge} in absolute value is moved, one at a time and with the others held,
+to \eqn{\pm}\code{edge}, and the log-likelihood is evaluated there. A coordinate
+is reported where the gain exceeds \code{tol}, in log-likelihood units. The
+coordinates checked are those that \code{\link[modelterms7:term_charted]{modelterms7::term_charted()}} names for
+a structural term (leaving out the ones the term holds) and for
 \code{\link[modelterms7:nl]{modelterms7::nl()}}, and the intercept of an equation that has no other
-column and carries a link that is not the identity. None of them carries
-a penalty, so the log-likelihood difference is the objective's.
+column and carries a link that is not the identity. The comparison is made
+on the log-likelihood alone, and a penalty on these coordinates is not
+included.
 }
 \seealso{
 \code{\link[=statmod_certificate]{statmod_certificate()}}, which reports a violation.

@@ -14,44 +14,33 @@ A named list, one entry per distribution parameter, on the link
 scale; an entry is \code{NULL} where neither route answered.
 }
 \description{
-The intercept-only maximum likelihood estimate, where it can be had, and a
-draw from the parameter's domain otherwise.
+The intercept-only maximum likelihood estimate, where it can be had, and
+the data-based start of \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} otherwise.
 }
 \details{
 Two routes, tried in order. \code{\link[distributions7:fit_distrib]{distributions7::fit_distrib()}} fits
 the distribution to the response with no covariates, which is the same model
-with every slope set to zero and therefore exactly where the fit should
+with every slope set to zero and therefore a natural place for the fit to
 begin; its link-scale coefficients are the intercepts.
 \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}} is the fallback, and its result
 is a list of starts, each keyed by parameter, so a value is reached at
 \verb{[[1]][[p]]}.
 
-\strong{The random stream is pinned and restored.} That intercept-only fit
-starts from draws over the parameters' domains, so it returns a different
-answer on every call where a parameter is weakly identified -- fitted to
-\code{iris}, a Student t's \eqn{\nu} came back at \eqn{e^{39}}, \eqn{e^{21}}
-and \eqn{e^{17}} on three consecutive runs, and \code{statmod()} inherited
-that: the same call gave log-likelihoods of -103.49, -112.11 and -111.83. A
-fitting function has to give the same answer twice, so the seed is fixed for
-the length of this call and the caller's stream is put back afterwards.
-
-Pinning makes it reproducible without making it good, one draw being
-one draw; several are taken and the best kept. What would make it good is a
-data-based \code{distrib_start} method on the univariate families, which is
-the design \pkg{distributions7} already documents and which only its
-multivariate gaussian implements.
+\strong{The random stream is pinned and restored.} The intercept-only fit takes
+several starts (\code{n_start = 10}) and keeps the best, and the starts of some
+families are random draws. The seed is therefore fixed for the length of
+this call and the caller's stream is put back afterwards, so that the same
+call gives the same answer twice.
 
 \strong{An intercept the fit ran to the limit of its chart is replaced} by the
 data-based start of \code{\link[distributions7:distrib_start]{distributions7::distrib_start()}}. On a log or logit
 chart a value past \eqn{e^{\pm 16}} is a limit of the family and not an
 estimate: a Student t fitted to a response no heavier-tailed than a
-gaussian puts \eqn{\nu} at \eqn{6.1 \times 10^8} (\code{gamlss.data::film90})
-or \eqn{7.0 \times 10^{10}} (\code{abdom}). Where a marginal criterion
-estimates that coefficient its search starts there, the criterion is flat in
-it, and on film90 \code{lbfgs()} did not leave it: 100 s and \verb{not converged},
-where from the data-based \eqn{\nu = 30} the same search converges in
-6.9 s to the point the observed information reaches. An identity chart is
-left alone, a location of any size being an estimate.
+gaussian puts \eqn{\nu} at a value far beyond any useful estimate. A
+marginal criterion that estimates such a coefficient is flat in it, and a
+search that starts there does not leave it, so the data-based start is
+used instead. An identity chart is left alone, a location of any size
+being an estimate.
 }
 \seealso{
 \code{\link[=statmod_start]{statmod_start()}}

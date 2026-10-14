@@ -13,17 +13,18 @@
 }
 \value{
 The \pkg{distributions7} distribution object the model was fitted
-with, links included, exactly as it was supplied. Its \verb{@params} property
-names the parameters and \verb{@links} holds their charts.
+with, links included. A binomial family fitted to a two-column response
+carries the row sums as its \code{size}, so in that case the object differs
+from the one supplied. Its \verb{@params} property names the parameters and
+\verb{@link_params} holds their links.
 }
 \description{
 The \pkg{distributions7} object, with its links.
 }
 \details{
-What comes back is the family object itself, so everything the family can
-do is reachable from a fit: its density, its derivatives, its moments and
-its parameters' links. Compare \code{\link[stats:glm]{stats::glm()}}, whose \code{family()} returns a
-description.
+The object returned is the family itself, so its density, its derivatives,
+its moments and its parameters' links are available from a fit. In
+contrast, \code{\link[stats:glm]{stats::glm()}} has a \code{family()} that returns a description.
 }
 \examples{
 set.seed(1)
@@ -34,6 +35,6 @@ family(fit)@params
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}; \code{\link[distributions7:distrib_pdf]{distributions7::distrib_pdf()}} and its siblings for
-what can then be asked of the family
+the quantities that can be computed from the family
 }
 \keyword{internal}

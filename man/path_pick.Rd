@@ -24,7 +24,8 @@ is within one standard error of it.
 The one-standard-error rule takes the sparsest fit that is not measurably
 worse than the best one, which is Breiman's rule as \pkg{glmnet} applies it.
 The path runs from the emptiest fit to the fullest, so the largest kink
-among the admissible points is the first of them.
+among the admissible points is the first of them. The rule falls back to
+the smallest criterion where \code{se} is \code{NULL} or not finite there.
 }
 \references{
 Breiman, L., Friedman, J. H., Olshen, R. A. and Stone, C. J. (1984).

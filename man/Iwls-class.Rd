@@ -25,29 +25,36 @@ distribution is known. A single string.}
 \item{approx}{How the expected information is approximated for a family
 with no closed form: \code{"opg"}, \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
 
-\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"}, \code{"chol"} or
-\code{"chol_crossprod"}.}
+\item{decomposition}{How the step is solved: \code{"qr"}, \code{"svd"} or \code{"chol"}.}
 
-\item{maxit}{The iteration budget, a single positive number.}
+\item{maxit}{The iteration budget, a single positive whole number.}
 
-\item{tol}{The stopping tolerance on the score per observation.}
+\item{tol}{The stopping tolerance on the score per observation, a single
+positive number.}
 
 \item{criterion}{An \pkg{optimizers7} \code{criterion} object driving the loop
 in place of \code{tol}, or \code{NULL} for the built-in rule.}
 
-\item{step_halving}{How many halvings are allowed before a step is
-abandoned, a single non-negative number.}
+\item{step_halving}{The number of halvings tried after the full step before
+a step is abandoned, a single non-negative whole number. The line search
+tries the full step and then at most \code{step_halving} halved steps, so \code{0}
+tries the full step alone.}
 
 \item{fallback}{A single logical: whether the expected information takes
-the step wherever the observed penalized information is not positive
-definite or its step finds no acceptable point. \code{\link[=iwls_resolve]{iwls_resolve()}} sets it,
-for \code{"auto"} on a family whose expected information is not exact.}
+the step where the observed step finds no acceptable point. An observed
+penalized information that is not positive definite is first repaired by
+flooring its eigenvalues, and the step on the repaired matrix is tried.
+\code{\link[=iwls_resolve]{iwls_resolve()}} sets this argument to \code{TRUE} for \code{"auto"} on a family
+that it does not settle on the expected information.}
 
 \item{switch_after}{A single number: the iteration after which a run on
-the expected information continues on the observed one, the expected
-then taking the step only where the observed cannot. \code{Inf} never
-switches. \code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{"auto"} on a family whose
-expected information is exact, to \code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
+the expected information continues on the observed one, unless it
+switched earlier because the score contracted slowly (see
+\code{\link[=iwls_slow]{iwls_slow()}}). The expected information then takes the step only where
+the observed step finds no acceptable point. \code{Inf} never switches.
+\code{\link[=iwls_resolve]{iwls_resolve()}} sets it, for \code{"auto"} on a family whose expected
+information is exact and not costly to evaluate, to
+\code{\link[=iwls_switch_after]{iwls_switch_after()}}.}
 }
 \value{
 An object of class \code{Iwls} with one property per argument above,

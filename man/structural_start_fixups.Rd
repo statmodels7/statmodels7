@@ -26,10 +26,11 @@ once the design is known: a level held by an intercept in the same
 equation starts at zero, and an unheld level that the term's own start
 left at zero starts at the equation's data-based intercept. A filter also
 receives a second start, kept beside the first, with each score loading
-at \eqn{0.1/\mathcal{I}}, \eqn{\mathcal{I}} the expected information of
-its equation's predictor at the intercept-only fit
-(\code{\link[=predictor_information]{predictor_information()}}); \code{\link[=statmod]{statmod()}} fits from it where the fit from
-the first start does not converge.
+at \eqn{0.1\,\mathcal{I}^{d-1}}, where \eqn{d} is the \code{scaling} of the
+filter (so that the loading is \eqn{0.1/\mathcal{I}} for \eqn{d = 0}) and
+\eqn{\mathcal{I}} is the expected information of its equation's predictor
+at the intercept-only fit (\code{\link[=predictor_information]{predictor_information()}}); \code{\link[=statmod]{statmod()}} fits
+from it where the fit from the first start does not converge.
 }
 \details{
 \code{\link[=statmod_design]{statmod_design()}} applies them to the start \code{\link[modelterms7:term_start]{modelterms7::term_start()}}

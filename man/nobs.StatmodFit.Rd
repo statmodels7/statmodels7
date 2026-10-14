@@ -13,8 +13,9 @@
 }
 \value{
 A single integer: the number of rows of the data the model was
-fitted to. Rows the model frame dropped are already gone, so this is the
-count that entered the likelihood.
+fitted to. \code{\link[=statmod]{statmod()}} drops no rows (a missing value in the response or
+in a variable of an equation is an error), so this is the number of
+observations that entered the likelihood.
 }
 \description{
 The row count of the fitting data.

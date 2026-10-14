@@ -21,14 +21,15 @@ one, the score per observation against \code{tol}, or the caller's
 \pkg{optimizers7} criterion read on the same state.
 }
 \details{
-Both routes live here, in one place, although the loop asks the question
-at two. That is what keeps the state a criterion is shown identical in
-both.
+Both routes are implemented here, although the loop evaluates the rule at
+two places. This keeps the state that a criterion receives identical at
+both places.
 
 Two properties of that state matter to a caller writing a rule.
 \code{state$gradient} is already the score per observation, so \code{crit_grad(t)}
-and \code{tol = t} are the same rule. \code{state$objective} is the penalized
-log-likelihood unaveraged, that being the scale the penalty is added
-on.
+and \code{tol = t} apply the same threshold to the score; the built-in rule
+also requires a small Newton decrement, which a criterion does not receive.
+\code{state$f_new} is the negative penalized log-likelihood, not divided by the
+sample size, which is the scale on which the penalty is added.
 }
 \keyword{internal}

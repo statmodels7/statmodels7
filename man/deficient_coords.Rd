@@ -24,7 +24,7 @@ the mode leaves out, for a fit whose own solve named none.
 Only \code{\link[=iwls]{iwls()}} on a pivoting decomposition reports which column it
 dropped, that being a by-product of the solve that fitted the model. An
 \code{optimizers7} method solves nothing by a pivot, and neither do the
-\code{chol}, \code{svd} and \code{chol_crossprod} routes, so a design of less than full
+\code{chol} and \code{svd} routes, so a design of less than full
 rank left every coordinate unnamed and \code{\link[=vcov.StatmodFit]{vcov.StatmodFit()}} refused the
 whole matrix. The question a pivot answers is asked here instead, on the
 matrix \code{vcov()} inverts anyway, so the two cannot disagree about which

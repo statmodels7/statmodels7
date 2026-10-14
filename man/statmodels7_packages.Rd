@@ -7,35 +7,35 @@
 statmodels7_packages()
 }
 \value{
-A character vector of package names, sorted alphabetically. Length
-eight for a complete installation. The result does not say whether a
-member is installed; \code{\link[=statmodels7_versions]{statmodels7_versions()}} answers that.
+A character vector of package names, sorted alphabetically, with
+one element per member. The result does not say whether a member is
+installed; \code{\link[=statmodels7_versions]{statmodels7_versions()}} reports that.
 }
 \description{
-Names the eight member packages that \code{statmodels7} installs and attaches:
+Names the member packages that \code{statmodels7} installs and attaches:
 \code{basis7}, \code{distributions7}, \code{linkfunctions7}, \code{modelterms7},
 \code{numericals7}, \code{optimizers7}, \code{parameters7} and \code{penalties7}. Installing
-\code{statmodels7} installs all eight, and attaching it attaches all eight;
-this function is how the rest of the package, and a caller, learn which
-those are.
+\code{statmodels7} installs all of them, and attaching it attaches all of them.
+The rest of the package and the caller use this function to obtain the
+list.
 }
-\section{Where the list comes from}{
-The names are read out of the \code{Imports} field of this package's own
-installed \code{DESCRIPTION}, keeping the entries that end in \code{7}. That is the
-toolkit's naming convention: every member package is named for what it
-supplies with a \code{7} appended, for S7. Version constraints such as
-\verb{distributions7 (>= 0.26.0)} are stripped, since a constraint travels
-with a name and is not part of it.
+\section{Source of the list}{
+The names are read from the \code{Imports} field of the installed \code{DESCRIPTION}
+of this package, keeping the entries that end in \code{7}. This follows the
+naming convention of the toolkit: every member name ends in \code{7}, for S7.
+Version constraints such as \verb{distributions7 (>= 0.26.0)} are stripped,
+since a constraint is attached to a name and is not part of it.
 
 Reading the field keeps one enumeration. A member added to \code{Imports} is a
-member here on the next install, with no second list to keep in step.
+member here after the next install, and no second list has to be kept in
+step.
 }
 
-\section{Why \code{S7} itself is excluded}{
-\code{S7} ends in a \code{7} and is not a member. Its digit counts R's object
-systems, and it is the system every member is built on. It has to be
-declared in \code{Imports} because the code says \verb{S7::} throughout, so the
-name reaches this field and is removed by name.
+\section{The exclusion of \code{S7}}{
+\code{S7} ends in a \code{7} but is not a member: it is the object system on which
+every member is built. It has to be declared in \code{Imports} because the code
+calls \verb{S7::} throughout, so the name reaches this field and is removed by
+name.
 }
 
 \examples{
@@ -49,6 +49,6 @@ all(grepl("7$", pkgs))
 }
 \seealso{
 \code{\link[=statmodels7_versions]{statmodels7_versions()}} for the installed version of each,
-\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for the exports they mask between them,
-\code{\link[=statmodels7_update]{statmodels7_update()}} to install the ones that are out of date.
+\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}} for the exports that more than one member
+makes, \code{\link[=statmodels7_update]{statmodels7_update()}} to install or update the members.
 }

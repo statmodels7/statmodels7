@@ -12,7 +12,7 @@ default. Ignored when \code{folds} is given.}
 
 \item{folds}{A fold number per observation, an integer vector as long as
 the data, for a partition of your own or to compare two criteria on the
-same one. \code{integer(0)}, the default, draws them at fit time.}
+same one. \code{NULL}, the default, draws a partition with a fixed seed.}
 
 \item{rule}{\code{"min"} for the best criterion, \code{"1se"} for the sparsest fit
 within one standard error of it. Matched with \code{\link[=match.arg]{match.arg()}}.}
@@ -23,34 +23,50 @@ An \code{\link[=OuterMethod]{OuterMethod()}} object of kind \code{"cv"}, carryin
 \code{NA_real_}, neither being read by this criterion.
 }
 \description{
-Builds the object that tells \code{\link[=statmod]{statmod()}} to choose a model's
-hyperparameters by cross-validation: a path of values is scored by the
-log-likelihood the fit assigns to observations it was not fitted on, and
-the best is kept. Pass the result as \code{sparse_criterion}, or as
-\code{outer_criterion}, or as both.
+Builds the object with which \code{\link[=statmod]{statmod()}} chooses the hyperparameters of
+the penalties with a kink by cross-validation: the points of a path of
+values are scored by the log-likelihood that the fit assigns to
+observations it was not fitted on, and the best is kept. The result is
+passed as \code{sparse_criterion}. It is not an outer criterion:
+\code{outer_criterion = cv()} is an error, the smoothing parameters being
+estimated by \code{\link[=reml]{reml()}}, \code{\link[=ml]{ml()}}, \code{\link[=aic]{aic()}} or \code{\link[=bic]{bic()}}.
 }
-\section{Why a penalty with a kink needs this}{
+\section{Cross-validation for a penalty with a kink}{
 A marginal criterion, \code{\link[=reml]{reml()}} or \code{\link[=ml]{ml()}}, approximates an integral by a
-Laplace expansion at the penalized mode, which asks for the second
+Laplace expansion at the penalized mode, which requires the second
 derivative of the penalty there. The mode of a lasso, a SCAD or an MCP
 sits at the kink for every coefficient it sets to zero, and that is where
 the derivative does not exist, so the criterion is undefined at the point
 it would be read at.
 
-Cross-validation asks a different question, about prediction and not about
-a posterior, and asking it needs nothing from the penalty beyond a fit.
+Cross-validation scores prediction and not a posterior, and it needs
+nothing from the penalty beyond a fit.
+
+Passed as \code{sparse_criterion} to a model with no hyperparameter of a kinked
+penalty left to estimate, \code{cv()} has no effect.
 }
 
 \section{The criterion}{
-The mean over folds of \eqn{-2\ell/n_f} on the fold left out, each
-training fit rebuilding the design on its own rows.
+The mean over folds of \eqn{-2\ell_f/w_f}, where \eqn{\ell_f} is the
+weighted log-likelihood of the fold left out at the coefficients fitted on
+the other folds, and \eqn{w_f} is the sum of the weights of its rows. Each
+training fit reapplies to its rows the terms built on all the rows (knots,
+factor levels and scales of standardization), as \code{\link[=predict.StatmodFit]{predict.StatmodFit()}}
+does for new data, and carries the weights and offsets of the fit.
 
 \code{rule = "1se"} takes the largest kink whose criterion is within one
 standard error of the smallest, which is the sparsest fit that is not
 measurably worse.
 }
 
-\section{A path, not a search}{
+\section{The folds}{
+Unless \code{folds} is given, the observations are assigned to folds by a
+permutation drawn with a fixed seed, and the caller's random-number state
+is restored afterwards, so that the partition does not depend on the
+caller's seed.
+}
+
+\section{The path}{
 The penalized mode is a piecewise smooth function of the hyperparameter:
 differentiable while the active set holds, turning a corner whenever a
 coefficient joins it or leaves. A criterion read there inherits the
@@ -62,24 +78,25 @@ of the kink, from the value that leaves the block empty down to
 }
 
 \section{Which hyperparameters}{
-The term's answer: every one of its penalty's that the constructor did not
-hold at a number. What the criterion decides is how they are covered.
+The path covers every hyperparameter of the term's penalty that the
+constructor did not hold at a number.
 }
 
 \section{A product within a term, an alternation between terms}{
-A term carrying several kinked hyperparameters has every combination
-visited under \code{search = "grid"} and one swept at a time under
+A term with several kinked hyperparameters has every combination visited
+under \code{search = "grid"} and one hyperparameter swept at a time under
 \code{"cyclic"}.
 
 The choice belongs to the term, through \code{enet(X, search =)} and
-\code{\link[modelterms7:term_search]{modelterms7::term_search()}}, never to this criterion. The same
-criterion is put to the model's smooth hyperparameters as well, and those
-are read at the mode instead of being swept, so most of what it is asked
-about could not use such an argument.
+\code{\link[modelterms7:term_search]{modelterms7::term_search()}}, and not to this criterion. The criterion is
+also applied to the model's smooth hyperparameters, which are read at the
+mode and not swept, so that an argument of this kind would have no meaning
+for them.
 
-Between two terms the sweep alternates whichever each one named, so
-\code{y ~ lasso(X) + enet(R)} costs the two blocks added, never multiplied,
-and one term asking for a product does not make the other pay for it.
+Between two terms the sweep alternates whichever search each one names, so
+that \code{y ~ lasso(X) + enet(R)} costs the two blocks added and not
+multiplied, and a term that sets a product does not make the other term
+pay for it.
 
 A term that names neither gets the product, because the cyclic sweep
 traverses a cross through the point in hand and can stop where each
@@ -87,46 +104,39 @@ coordinate is separately best without being jointly so. Its cost is the
 product of the term's grids where the cyclic sweep's is their sum, which at
 two hyperparameters is \code{n_lambda * n_alpha} fits against
 \code{n_lambda + n_alpha} per pass; with three or more estimated it grows
-exponentially, and \code{"cyclic"} is there for that.
+exponentially, and \code{"cyclic"} is there for that case.
 }
 
 \section{How long the path is, and how far down it reaches}{
-The term's answers again, written on its own signature where a reader can
-see them: \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)},
+The length of the path and its depth are settings of the term, written on
+its own signature: \code{lasso(x, n_lambda = 25, min_ratio = 1e-4)} and
 \code{enet(x, n_lambda = 25, n_alpha = 5)}.
 
 The two numbers differ because the axes do. \eqn{\lambda} descends the
 size of the kink over four decades, while \eqn{\alpha} spans one bounded
-interval, so the shipped product is 25 by 5.
+interval, so that the default product is 25 by 5.
 }
 
-\section{The grid is not a rectangle}{
-For two different reasons. The
-elastic net's kink is \eqn{\lambda\alpha}, so the value emptying the block
-is \eqn{\lambda_{\max} = \kappa/\alpha} and every \eqn{\alpha} carries its
-own \eqn{\lambda} axis, descending from its own top. The shapes of SCAD and
-MCP leave the kink alone, so there \eqn{\lambda_{\max}} is one number
-whatever the shape and the two axes really are a rectangle. Each axis is
-built at the settings of the axes outside it, which covers both cases with
-no rule about families written down anywhere.
+\section{The shape of the grid}{
+The grid is not a rectangle for the elastic net and is a rectangle for
+SCAD and MCP. The elastic net's kink is \eqn{\lambda\alpha}, so the value
+emptying the block is \eqn{\lambda_{\max} = \kappa/\alpha} and every
+\eqn{\alpha} carries its own \eqn{\lambda} axis, descending from its own
+top. The shapes of SCAD and MCP leave the kink alone, so that
+\eqn{\lambda_{\max}} is one number whatever the shape and the two axes form
+a rectangle. Each axis is built at the settings of the axes outside it,
+which covers both cases without a rule about families.
 }
 
 \section{The cost}{
-\code{nfolds} fits per point of the path, and how many points there are is the
-term's \code{n_lambda} for one kinked hyperparameter, or the product of its
-axes for several.
+Each point of the path costs \code{nfolds} fits. The number of points is the
+term's \code{n_lambda} for one kinked hyperparameter, and the product of its
+axes for several. The fits along a path are warm-started within each fold.
 
-The warm starts are worth 1.8 times, and building each fold's design once
-instead of once per point another 4 per cent. What remains is the proximal
-iteration: measured at 200 observations and 20 columns, 0.88 seconds a
-fit, against \code{cv.glmnet}'s 0.03 seconds for its whole path of 100 values
-on five folds. That distance is why \code{n_lambda} is 25 here and 100 there.
-
-The folds themselves run over separate R processes when
-\code{statmod(threads = n_threads(workers = 4))} asks for it, with one seed
-drawn per fold in the parent, so the answer is identical at any worker
-count. Measured, a ten-fold lasso cross-validation goes from 31.45 s to
-14.18 s at four workers.
+The folds run over separate R processes when
+\code{statmod(threads = n_threads(workers = 4))} requests them, with one seed
+drawn per fold in the parent, so that the answer is identical at any worker
+count.
 }
 
 \examples{
@@ -139,7 +149,7 @@ dd$x <- X
 
 fit <- statmod(y ~ lasso(x, n_lambda = 12),
                distributions7::gaussian1_distrib(), dd,
-               outer_criterion = cv(nfolds = 5))
+               sparse_criterion = cv(nfolds = 5))
 hyper(fit)
 
 # The two columns that carry signal are recovered.
@@ -147,11 +157,11 @@ round(coef(fit)$mu[2:3], 3)
 
 # "1se" takes the largest kink within one standard error of the best, so
 # it never keeps more coefficients than "min". On this data the two agree,
-# the criterion being flat enough that the best point is already within
-# one standard error of itself.
+# because the only sparser point of the path has a criterion more than one
+# standard error above the minimum.
 one_se <- statmod(y ~ lasso(x, n_lambda = 12),
                   distributions7::gaussian1_distrib(), dd,
-                  outer_criterion = cv(nfolds = 5, rule = "1se"))
+                  sparse_criterion = cv(nfolds = 5, rule = "1se"))
 c(min = hyper(fit)$estimate, one_se = hyper(one_se)$estimate)
 c(min = sum(coef(fit)$mu[-1] != 0), one_se = sum(coef(one_se)$mu[-1] != 0))
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{intercept_start_from_data}
 \alias{intercept_start_from_data}
-\title{Replace an Intercept Where the Family Reads Its Start Off the Data}
+\title{Data-Based Intercepts of Families That Supply Them}
 \usage{
 intercept_start_from_data(spec, eta)
 }
@@ -20,16 +20,17 @@ parameter \code{\link[distributions7:distrib_intercept_start]{distributions7::di
 onto that parameter's own link.
 }
 \details{
-The intercept-only fit is the right start for almost every family, and the
-wrong one for the mixing weight of \code{\link[distributions7:zero_inflated]{distributions7::zero_inflated()}}:
-without covariates the parent's overdispersion can absorb the excess zeros,
-the weight goes to the edge of its domain, and the link is flat there, so a
-model with covariates started from it never leaves -- measured on a
-negative binomial with a true weight of 0.25, the fit reported convergence
-at a weight of zero, 7.6 log-likelihood units below the interior maximum.
-The family answers with the observed proportion of zeros, and the value is
-mapped through the parameter's link, so a probit or a cloglog chart gets its
-own linear predictor and not a logit.
+The intercept-only fit is the right start for almost every family. It is
+the wrong one for the mixing weight of \code{\link[distributions7:zero_inflated]{distributions7::zero_inflated()}},
+and for \code{skewnormal1_distrib()} and the pseudo-Huber families, for which
+\code{\link[distributions7:distrib_intercept_start]{distributions7::distrib_intercept_start()}} has methods of their own.
+For the mixing weight, the overdispersion of the parent can absorb the
+excess zeros without covariates, the weight goes to the edge of its
+domain, and the link is flat there, so that a model with covariates
+started from it does not leave the edge. The family answers with the
+observed proportion of zeros, and the value is mapped through the
+parameter's link, so a probit or a cloglog chart gets its own linear
+predictor and not a logit.
 }
 \seealso{
 \code{\link[=statmod_intercepts]{statmod_intercepts()}}

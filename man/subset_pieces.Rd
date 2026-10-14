@@ -32,9 +32,8 @@ A subset has no square-root route of its own: that route needs the whole
 design, and the solve on a subset reads the assembled matrix anyway. So
 the information is formed over the subset's own columns through
 \code{\link[=statmod_information_at]{statmod_information_at()}}'s \code{index}, and the penalty's Hessian is added
-on the same rows and columns. Forming the whole \eqn{X'WX} to keep its
-submatrix was measured at 54 per cent of a lasso path at \eqn{n = 5000}
-and 200 columns, the subset being the two intercepts.
+on the same rows and columns, which avoids forming the whole \eqn{X'WX} to
+keep a submatrix.
 
 Where the whole route went through the square roots it read
 \eqn{R'R + C'C}, which equals \eqn{X'WX + S} up to rounding wherever the

@@ -21,26 +21,29 @@ A \code{StartRandom} object, inheriting from \code{\link[=start_strategy]{start_
 properties \code{fn}, \code{args} and \code{center}.
 }
 \description{
-Draws every coefficient from a generator of the caller's choosing and, by
-default, adds the draw to the intercept-only fit. Built for running a model
-from several starts and comparing where they land, which is how a
-multimodal likelihood is explored.
+Draws every coefficient from a generator chosen by the caller and, by
+default, adds the draw to the intercept-only fit. It is intended for
+running a model from several starts and comparing where they land, which
+is one way to explore a multimodal likelihood.
 }
-\section{Why the draw is centered by default}{
-A coefficient drawn from a standard normal is a sensible perturbation and a
-hopeless absolute value: the intercept of a location equation is on the
-scale of the response, which may be a thousand. Adding the draw to
-\code{\link[=start_intercepts]{start_intercepts()}}'s answer keeps that scale and randomizes the
-direction, leaving the several starts something to differ in.
+\section{Centering}{
+A coefficient drawn from a standard normal is a reasonable perturbation but
+not a reasonable absolute value, because the intercept of a location
+equation is on the scale of the response, which may be a thousand. Adding
+the draw to the answer of \code{\link[=start_intercepts]{start_intercepts()}} keeps that scale and
+randomizes the position around it, so that the several starts differ from
+one another.
 
-\code{center = FALSE} uses the draw alone, which is right when the generator is
-already scaled to the problem.
+With \code{center = FALSE} the draw is used alone, which is appropriate when the
+generator is already scaled to the problem.
 }
 
 \section{The random stream}{
 The draw comes from the session's generator, so \code{\link[=set.seed]{set.seed()}} governs the
-result and a fit begun this way repeats only alongside its seed. Nothing
-is seeded internally.
+result, and a fit begun this way repeats only with the same seed. The
+intercept-only fit to which a centered draw is added sets a seed of its own
+and restores the caller's stream afterwards, so it does not change the
+draw.
 }
 
 \examples{

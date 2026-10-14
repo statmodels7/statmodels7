@@ -27,9 +27,9 @@ contribution is a likelihood mixed over latent states does not report a
 predictor at all, so it cannot be combined with anything that expects
 one.
 
-The count is over the whole formula rather than per equation because that
-is the honest boundary: what makes one admissible is that everything else
-in the model is a predictor it can be driven by.
+The count is over the whole formula and not per equation, because a
+structural term is admissible only where everything else in the model is a
+predictor that can drive it.
 }
 \seealso{
 \code{\link[=reject_unfittable]{reject_unfittable()}}, \code{\link[=statmod_structural]{statmod_structural()}}

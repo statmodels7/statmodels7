@@ -19,12 +19,12 @@ A single string.
 }
 \description{
 What a hyperparameter row is filed under: the term's name where the term
-carries one penalty, and \code{term::entry} where it carries several.
+carries one penalty or the entry has no name, and \code{term::entry} where the
+term carries several penalties and the entry is named.
 }
 \details{
-The composition is written once because two callers reading a
-hyperparameter by a key they each compose would agree only by accident. A
-term carrying one penalty keys as it always did, so a formula of ordinary
-terms is unaffected by the entry names the terms now supply.
+The composition is written once so that every caller reading a
+hyperparameter by key uses the same key. A term carrying one penalty keys
+by its name alone, whatever the entry is called.
 }
 \keyword{internal}

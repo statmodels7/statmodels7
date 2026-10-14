@@ -4,8 +4,8 @@
 #' Takes the single formula [statmod()] accepts, in which the equations of the
 #' distribution's parameters are separated by `|`, and returns the response
 #' together with one one-sided formula per parameter of the family. Every
-#' parameter gets an equation: one a caller did not write is filled in as
-#' `~ 1`, an intercept.
+#' parameter receives an equation, and a parameter whose equation the caller
+#' did not write receives `~ 1`, an intercept.
 #'
 #' @details
 #' # The syntax
@@ -14,41 +14,42 @@
 #'
 #' The first equation carries the response and models the family's first
 #' parameter, and each `|` introduces the next. The parameters may be named
-#' in any order and any of them may be omitted.
+#' in any order, and any of them may be omitted.
 #'
-#' # Why the recovery is a walk
+#' # Splitting the formula
 #'
-#' R's own precedence decides this. `~` binds looser than `|` and associates
-#' to the left, so `y ~ a | p2 ~ b | p3 ~ c` parses as
+#' The split follows R's own precedence. `~` binds looser than `|` and
+#' associates to the left, so `y ~ a | p2 ~ b | p3 ~ c` parses as
 #'
 #' \preformatted{    ((y ~ (a | p2)) ~ (b | p3)) ~ c}
 #'
 #' The right-hand side of the whole formula is `c` alone. Splitting it on `|`
 #' returns one piece and drops two equations without an error.
 #'
-#' What the associativity calls for is a walk down the left spine of the
-#' nested `~` calls, collecting each level's right-hand side and then
-#' reversing. The innermost left operand is the response. Each collected
-#' piece is either `<terms> | <name of the next parameter>`, or, for the
-#' last, `<terms>` alone.
+#' The function therefore walks down the left spine of the nested `~` calls,
+#' collects the right-hand side of each level and reverses the collection.
+#' The innermost left operand is the response. Each collected piece is
+#' either `<terms> | <name of the next parameter>` or, for the last piece,
+#' `<terms>` alone.
 #'
-#' # Bars inside a call survive
+#' # Bars inside a call
 #'
 #' The walk descends only through `~` and through a `|` at the top of a
 #' collected piece. A `|` anywhere inside a call is left as it stands, so
-#' `random(1 | id)` and `gas(by = ~ random(1 | id))` reach the term
-#' constructor whole.
+#' `random(~ 1 | id)` and `gas(omega ~ random(~ 1 | id), by = id)` reach
+#' the term constructor whole.
 #'
-#' # What is refused
+#' # Invalid formulas
 #'
-#' Five conditions, each with an error naming the offending name:
+#' Five conditions signal an error:
 #'
 #' - `formula` is not a formula.
 #' - `formula` has no left-hand side, so there is no response.
-#' - A `|` is not followed by an equation, as in `y ~ x | sigma`.
-#' - A name is not a parameter of this distribution. The message lists the
-#'   ones that are.
-#' - A parameter is given two equations.
+#' - A `|` is not followed by an equation, as in `y ~ x | sigma`. The
+#'   message names the parameter whose equation is missing.
+#' - A name is not a parameter of this distribution. The message names it
+#'   and lists the parameters of the distribution.
+#' - A parameter is given two equations. The message names the parameter.
 #'
 #' @param formula A two-sided formula, with the parameters' equations
 #'   separated by `|` as above. Its environment is carried onto every
@@ -89,11 +90,11 @@
 #' statmod_equations(g, c("mu", "sigma", "nu"))$given
 #'
 #' # A bar inside a call is not a separator.
-#' h <- statmod_equations(y ~ random(1 | id) | sigma ~ z, c("mu", "sigma"))
+#' h <- statmod_equations(y ~ random(~ 1 | id) | sigma ~ z, c("mu", "sigma"))
 #' deparse(h$equations$mu[[2]])
 #'
-#' # A name that is not a parameter is refused, and the message says which
-#' # names are.
+#' # A name that is not a parameter is an error, and the message lists the
+#' # parameters of the distribution.
 #' try(statmod_equations(y ~ x | zz ~ z, c("mu", "sigma")))
 #'
 #' @export
@@ -172,17 +173,16 @@ statmod_equations <- function(formula, params) {
 #'
 #' @details
 #' The formula is built with `eval(bquote(~ .(expr)), envir = env)`, and the
-#' environment is then assigned again. The second step makes the result
-#' reliable: `eval()` gives the formula whatever environment it was evaluated
-#' in, and the assignment states the intended one, so the two cannot come
-#' apart if the construction changes.
+#' environment is then assigned again. `eval()` gives the formula the
+#' environment in which it was evaluated, and the assignment states the
+#' intended environment explicitly, so the result carries `env` whatever the
+#' construction does.
 #'
 #' @param expr A language object, the right-hand side to wrap: a symbol, a
 #'   call, or the literal `1`. Substituted unevaluated, so a term call is not
 #'   run here.
-#' @param env The environment to attach. Passed through with no check, so a
-#'   caller supplying `NULL` gets a formula with a `NULL` environment rather
-#'   than an error.
+#' @param env The environment to attach. It is not checked, and `NULL` gives a
+#'   formula with a `NULL` environment.
 #'
 #' @return A one-sided formula of length 2, whose `[[2]]` is `expr` and whose
 #'   `environment()` is `env`.
@@ -206,28 +206,27 @@ one_sided <- function(expr, env) {
 #' other name the caller wrote resolves as usual, one step further out.
 #'
 #' @details
-#' The masking this removes is real and its symptom names nothing.
 #' \pkg{mgcv} exports `s()` and `te()`, and \pkg{segmented} exports `seg()`.
-#' With either package attached, a caller writing a `statmod()` formula gets
-#' that package's function, whose value is not a model term; the failure then
-#' surfaces inside `model.matrix()` as `invalid type (list) for variable
-#' 's(x)'`, which names neither the call nor the mask.
+#' With either package attached, a `statmod()` formula that uses one of these
+#' names would call that package's function, whose value is not a model term.
+#' The failure then occurs inside `model.matrix()` as `invalid type (list) for
+#' variable 's(x)'`, a message that does not mention the masking package.
 #'
 #' Putting \pkg{modelterms7} in front removes the ambiguity at the point
 #' where the formula is read. A caller who wants the other package's function
-#' writes `mgcv::s(x)`, which reaches past the shim; \pkg{modelterms7}'s
-#' formula interpreter then rejects it, naming the class returned and the
-#' package that supplied it.
+#' writes `mgcv::s(x)`, which reaches past the shim; the formula interpreter
+#' of \pkg{modelterms7} then rejects the value, naming the class returned
+#' and the call as written.
 #'
-#' Only functions are copied. \pkg{modelterms7} exports objects that are not
-#' functions, S7 classes among them, and shadowing those would change what a
-#' name means without any of the benefit.
+#' A binding is made for each export of \pkg{modelterms7} for which
+#' `is.function()` is `TRUE`. The S7 class generators of that package are
+#' functions and are copied with the others.
 #'
 #' @param env The environment the formula carried, which becomes the parent
 #'   of the result. Everything visible from `env` stays visible.
 #'
 #' @return A new environment holding one binding per exported function of
-#'   \pkg{modelterms7}, currently 82 of them, with `env` as its parent.
+#'   \pkg{modelterms7}, with `env` as its parent.
 #'
 #' @seealso [statmod_equations()] for the formula this is used to interpret,
 #'   [modelterms7::interpret_formula()] for the reading it feeds.

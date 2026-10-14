@@ -12,7 +12,10 @@ optimizer. Defaults to \code{optimizers7::sa()}, simulated annealing, which
 is the one built for a multimodal surface.}
 
 \item{over}{Optional character vector naming the coefficients to search
-over, overriding the choice above. Names not in the model are an error.}
+over, overriding the choice above. A coefficient is named by its label,
+the parameter and the coefficient joined by a colon (\code{"sigma:(Intercept)"});
+a bare name is accepted where only one equation carries it. Names not in
+the model, and a bare name that several equations carry, are an error.}
 }
 \value{
 A \code{StartSearch} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}, with
@@ -25,57 +28,55 @@ several local optima: a break-point term, a nonlinear term, a score-driven
 filter or a latent-state mixture.
 }
 \section{Once, before the fit}{
-A search belongs to the starting value, never to the scoring step. Given
-to \code{inner_optimizer} instead, as \code{chain(sa(), iwls())}, it would rerun at
-every hyperparameter the outer criterion tried, which on an ordinary fit
-is 46 times and inside \code{\link[=cv]{cv()}} is the folds times the path, returning the
-same answer each time.
+A search is a starting value and is not part of the scoring step. If it
+were given to \code{inner_optimizer}, it would be rerun at every hyperparameter
+value that the outer criterion tries and, inside \code{\link[=cv]{cv()}}, at every point of
+the path for every fold, and each run would reach the same point.
 }
 
 \section{On the likelihood alone}{
-The penalties are off. What a starting value has to get right is the
-basin of the likelihood, the one thing the fit will not correct by itself.
+The penalties are off. A starting value has to select the basin of the
+likelihood, which is the one thing that the fit does not correct by itself.
 The penalties enter afterwards, when their hyperparameters are estimated,
-and at the probe values they represent nobody's choice: a lasso at
-\eqn{\lambda = 1} against an unaveraged log-likelihood empties whole
-blocks, so a search there would explore a different model.
+and at the probe values of the hyperparameters they are not a chosen
+penalty, so a search with them would explore the likelihood of a different
+model.
 }
 
 \section{Which coordinates are searched}{
-The non-convex ones, which the toolkit can already name: the parameters of
-a structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}), the
+The non-convex ones, which the toolkit can name: the parameters of a
+structural term (\code{\link[modelterms7:gas]{modelterms7::gas()}}, \code{\link[modelterms7:regime]{modelterms7::regime()}}), the
 coefficients of a term that recomputes its own block
 (\code{\link[modelterms7:nl]{modelterms7::nl()}}, \code{\link[modelterms7:seg]{modelterms7::seg()}} and the break-point terms), and
 each equation's intercept.
 
-Everything else keeps its default. A smooth, a ridge or a random effect is
-a convex block whose optimum the scoring step reaches from anywhere, and
-searching over a thousand random-effect coefficients would spend the whole
-budget on the part of the model that needs it least.
+All other coefficients keep their default values. A smooth, a ridge or a
+random effect is a convex block whose optimum the scoring step reaches from
+any start, and a search over a thousand random-effect coefficients would
+spend the budget on the part of the model that needs a search least.
 
 A penalized coordinate is excluded \strong{wherever it sits}, including inside
-a non-convex term. A sub-formula develops a break-point or a nonlinear
-parameter over groups, and those deviations are columns of the term's own
-block. They are the case the rule exists for: on the likelihood alone
-nothing identifies them, since the penalty is what does, so a search over
-them fits each group's own points and moves away from the penalized mode.
-Measured on \code{jseg(x, npsi = 2, by = ~random(~1|id))} over thirty groups,
-210 of the 219 coordinates are such deviations.
+a non-convex term. A sub-formula can develop a break-point or a nonlinear
+parameter over groups, and the group deviations are columns of the block of
+that term. On the likelihood alone nothing identifies these deviations,
+because the penalty identifies them, so a search over them would fit the
+points of each group and move away from the penalized mode. In a \code{jseg()}
+term with \code{by = ~random(~1|id)}, most coordinates are such deviations.
 
-\code{over} overrides the choice by name.
+The argument \code{over} replaces this choice by naming the coefficients.
+A structural term's own parameters are searched in either case.
 }
 
-\section{The hyperparameters are not searched}{
-They cannot be, from here. The objective is the likelihood with the
-penalties off, in which a hyperparameter does not appear, so no proposal
-could change one.
+\section{The hyperparameters}{
+The search does not cover the hyperparameters. Its objective is the
+likelihood with the penalties off, in which no hyperparameter appears, so
+no proposal can change one.
 
-A global search over them is a search over the \strong{outer} criterion, where
-each proposal costs a full refit instead of one likelihood evaluation, and
-that is \code{statmod(outer_optimizer = optimizers7::sa())}. A kinked penalty
-is outside even that: its hyperparameter has a known upper end and is
-swept by a warm-started path, which a random jump would fail to improve on
-and would destroy.
+A global search over the hyperparameters is a search over the \strong{outer}
+criterion, where each proposal requires a full refit and not one likelihood
+evaluation. It is requested by \code{statmod(outer_optimizer = optimizers7::sa())}. The hyperparameters of a kinked penalty are outside
+that search as well: they are chosen along a warm-started path scored by
+\code{sparse_criterion}, which a random jump would not improve.
 }
 
 \examples{

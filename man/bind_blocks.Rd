@@ -28,20 +28,17 @@ A grouping indicator is sparse by construction. A row belongs to one group,
 so a random effect over \eqn{m} groups has density \eqn{1/m}, and
 \pkg{modelterms7} builds it that way.
 
-Binding such a block beside a dense one with \code{cbind()} fails: base
-dispatch reads the sparse block as a vector and reports that the number of
-items to replace is not a multiple of the replacement length, three frames
-from anything a caller wrote. \code{Matrix::cbind2()} is what handles the mixed
-pair.
+Blocks are bound with \code{cbind()} when all of them are base matrices. When
+any block is sparse, they are bound with \code{Matrix::cbind2()}, so that the
+result is a \pkg{Matrix} object whatever the order of the blocks.
 
 The result is sparse when \strong{one} block is. Sparsity is a property of the
-assembled matrix, never of its pieces: a dense fixed block beside a
-large
+assembled matrix and not of its pieces: a dense fixed block beside a large
 indicator leaves a matrix that is still overwhelmingly zero, and its
 factorization stays sparse under a fill-reducing ordering.
 }
 \seealso{
-\code{\link[=design_sparse]{design_sparse()}} for the same question asked of a whole design,
+\code{\link[=design_sparse]{design_sparse()}} for the same test applied to a whole design,
 \code{\link[=statmod_design]{statmod_design()}} for the assembly this serves.
 }
 \keyword{internal}

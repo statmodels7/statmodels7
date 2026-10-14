@@ -11,8 +11,9 @@ statmod_penalty_keys(spec)
 }
 \value{
 A list of entries with \code{param}, \code{term}, \code{key},
-\code{within} (positions among the term's own parameters) and
-\code{penalty}.
+\code{within} (positions among the term's own parameters), \code{penalty}, \code{fixed},
+\code{n_values}, \code{values}, \code{min_ratio}, \code{search} and \code{ids}. The entry of a
+covariance class also carries \code{class} and \code{params}.
 }
 \description{
 The same enumeration as \code{\link[=statmod_penalized]{statmod_penalized()}} minus the column

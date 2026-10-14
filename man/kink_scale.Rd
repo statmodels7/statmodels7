@@ -11,7 +11,8 @@ kink_scale(pen, theta, eps = 1e-04)
 
 \item{theta}{The hyperparameters, as a list or a named vector.}
 
-\item{eps}{How far either side of the kink to read the derivative.}
+\item{eps}{The larger of the two distances from the kink at which the
+derivative is read.}
 }
 \value{
 A single non-negative number, \code{0} where there is no kink.
@@ -29,17 +30,18 @@ assumed: a penalty built from a density carries the same information in a
 hyperparameter of its own, and a Laplace prior written by its scale has a
 kink whose size falls as that scale grows.
 
-The penalty is separable over the coefficients wherever it has a kink, a
-kinked penalty under a general map being the generalized-lasso problem and
-rejected upstream, so one coordinate answers for all of them.
+A kinked penalty is separable over the coefficients, and one under a general
+map (the generalized-lasso problem) is rejected upstream. Under a diagonal
+map, which \code{standardize = TRUE} writes, the kink differs by coordinate. This
+function reads the first coordinate's kink, and \code{\link[=coord_kinks]{coord_kinks()}} returns the
+kink of every coordinate.
 
-The derivative just past the kink carries the distance it was read at,
-MCP's being \eqn{\lambda - \epsilon/\gamma}, so the two readings are
-extrapolated to the limit. Without that the shape parameters appear to move
-the kink by a millionth of themselves, which is enough to be selected for a
-path, and measures \eqn{\epsilon} in place of the penalty. The
-extrapolation is exact for a penalty that is affine on each side of the
-kink, which the lasso, SCAD, MCP and the elastic net all are.
+The derivative just past the kink depends on the distance it is read at
+(MCP's, for example, is \eqn{\lambda - \epsilon/\gamma}), so the one-sided
+derivatives at distances \eqn{\epsilon/2} and \eqn{\epsilon} are combined by
+Richardson extrapolation to the limit. The extrapolation is exact for a
+penalty that is affine on each side of the kink, as the lasso, SCAD, MCP and
+the elastic net are.
 }
 \seealso{
 \code{\link[=kink_hypers]{kink_hypers()}}, \code{\link[=kink_solve]{kink_solve()}}

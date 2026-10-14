@@ -11,91 +11,75 @@ start_from(fit, rest = start_intercepts())
 
 \item{rest}{The strategy for whatever the two models do not share.
 \code{\link[=start_intercepts]{start_intercepts()}} by default, which is what a fit given no strategy
-at all uses.}
+uses. It receives the objective, so \code{\link[=start_search]{start_search()}} can serve as \code{rest}.}
 }
 \value{
 A \code{StartFrom} object, inheriting from \code{\link[=start_strategy]{start_strategy()}}.
 }
 \description{
-Takes the coefficients a model already fitted found, matches them to the
-model about to be fitted, and starts there. What the two models do not
-share is left to a second strategy.
+Takes the coefficients that were estimated in a fitted model, matches them
+to the model that is about to be fitted, and starts the fit there. The
+coefficients that the two models do not share are set by a second
+strategy.
 }
 \details{
 Two models of the same response often share most of their coefficients: one
 drops a covariate, one adds a term, one changes the family. The estimates
-of the first are then a far better starting point for the second than any
-rule that looks only at the response, and there is no reason to find them
-twice.
+of the first model are then a closer starting point for the second than a
+rule that uses only the response.
 }
 \section{What is matched, and what is projected}{
-The two designs are compared BLOCK BY BLOCK, a block being one term's
-columns, and three things can happen to a block:
+The two designs are compared block by block, a block being the columns of
+one term, and a block is treated in one of three ways:
 \describe{
-\item{the parametric block}{is matched COLUMN BY COLUMN, by name. Adding
-or dropping a covariate is the case this exists for, and the names of a
-model matrix are variables, levels and interactions, which mean what
-they say.}
+\item{the parametric block}{is matched column by column, by name. The
+names of a model matrix are variables, levels and interactions, so a
+covariate that is added or dropped leaves the other columns matched.}
 \item{a block written on the same basis}{is carried across as it stands,
-its coefficient names being the same coordinates. This is exact and
-costs nothing.}
-\item{a block written on ANOTHER basis}{is estimated by least squares
-against what the reference's predictor leaves once the blocks already
-carried across are removed.}
+because its coefficient names are the same coordinates.}
+\item{a block written on another basis}{is estimated by least squares
+against the part of the reference's predictor that the blocks already
+carried across do not explain.}
 }
 
-The third rule is what makes two bases comparable at all. A smooth's
-coefficients are coordinates in a basis the fit rotates, so \code{s(x, bspline_smooth(k = 6))}
-and \code{s(x, bspline_smooth(k = 10))} carry the names \verb{s(x).z1} to \verb{s(x).z4} in common and
-mean something different by each: measured on one data set, \verb{s(x).z1} is
-0.0267 at \code{k = 6} and -0.0277 at \code{k = 10}, opposite in sign. What the two
-do share is the FUNCTION, so the coefficients are found by projecting it,
+The third rule makes two bases comparable. The coefficients of a smooth are
+coordinates in a basis that the fit rotates, so
+\code{s(x, bspline_smooth(k = 6))} and \code{s(x, bspline_smooth(k = 10))} carry the
+names \verb{s(x).z1} to \verb{s(x).z4} in common but give them different meanings,
+and one name does not identify one function. What the two bases share is
+the fitted function, so the coefficients are found by projecting it,
 \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
-r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
-over the pending columns \eqn{S} alone. The equality
-\eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
-B_{\mathrm{old}}\beta_{\mathrm{old}}} has no solution unless the old span
-sits inside the new one, and the projection is what remains: the closest
-the new basis can come to the function it is started from. Where the spans
-do nest it is exact, and where the two bases coincide it returns the
-coefficients it was given, so the second rule above is a fast path rather
-than a different answer.
+r = \eta^{\mathrm{ref}} - \eta_{-S},}
+over the pending columns \eqn{S} alone, where \eqn{\eta^{\mathrm{ref}}} is
+the reference's predictor and \eqn{\eta_{-S}} is the new model's predictor
+with the pending columns at zero. Both predictors are the actual predictors
+of their models, including the value of a block that moves with its
+coefficients (a break-point or a nonlinear term). The equality of the two
+blocks, \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} =
+B_{\mathrm{old}}\beta_{\mathrm{old}}}, has a solution only if the old span
+lies inside the new one, and the projection gives the closest function that
+the new basis can represent. Where the spans are nested the projection is
+exact, and where the two bases coincide it returns the coefficients it was
+given, so the second rule above is a shortcut and not a different answer.
 
 Two blocks are paired by the stem of their coefficient names and by the
-term's class, not by the block's own key, which is the term's deparsed call
-and therefore differs the moment \code{k} does.
+class of the term, and not by the key of the block, which is the deparsed
+call of the term and therefore differs as soon as \code{k} does.
 
-A distribution parameter the reference does not have -- fitting a negative
-binomial from a Poisson, where \code{theta} is new -- is left to \code{rest}, so the
-families need not agree. So is any block the reference has no counterpart
-for, and any block at all when the two responses differ, when either model
-carries a structural term, or when the equation carries a block that moves
-with its coefficients.
-}
+A distribution parameter that the reference does not have, such as \code{theta}
+when a negative binomial is fitted from a Poisson, is set by \code{rest}, so the
+families need not agree. So is any block for which the reference has no
+counterpart. A block that matches by name is carried across whatever the
+response is. The projection of a block written on another basis is skipped,
+and the block is set by \code{rest}, when the two responses differ or when
+either model carries a structural term. A pending block that itself moves
+with its coefficients (for example \code{seg(x)} refitted as
+\code{seg(x, npsi = 2)}) is not projected either, because its coefficients are
+not those of a linear block, and it keeps the values given by \code{rest}.
 
-\section{What it buys}{
-On the blocks that MATCH, between 1.1 and 2.1 times, and the honest reading
-is that it is not more because nothing was starting from zero:
-\code{\link[=start_intercepts]{start_intercepts()}}, the default, already fits the intercept-only model.
-On a Poisson at \eqn{n = 4000} refitted with one covariate dropped it is
-1.12 to 1.57 times, on a two-equation gaussian 1.89, and on a negative
-binomial with 40 columns at \eqn{n = 20000} it is 2.05 -- 0.81 s against
-0.40 s. Fitting a negative binomial from a Poisson's estimates is 1.29.
-
-On a block that is PROJECTED the starting predictor is a different order of
-magnitude closer. Measured at \eqn{n = 4000}, widening \code{s(x, bspline_smooth(k = 6))} to
-\code{s(x, bspline_smooth(k = 12))}, the root mean square gap between the starting predictor and
-the reference's is \eqn{3\times 10^{-15}} where leaving the block to the
-fallback gives 1.046; a quadratic basis carried onto a cubic one at the
-same \code{k} gives 0.0101 against 1.049. What that is worth in time depends on
-the family: a gaussian on the identity link solves its inner problem in one
-step whatever the start, so it is 1.09 to 1.26 times, while a Poisson goes
-from 18 criterion evaluations to 6 and 1.94 times, and a Poisson that also
-drops a covariate 1.71.
-
-The gain is worth having where the same model is refitted many times over:
-a coefficient held at a sequence of values, which is what an interval by
-inversion walks, or a model built up one term at a time.
+The starting values are most useful where the same model is refitted many
+times, as with a coefficient held at a sequence of values in an interval by
+inversion, or with a model built up one term at a time.
 }
 
 \examples{

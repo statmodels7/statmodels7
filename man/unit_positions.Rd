@@ -15,15 +15,19 @@ An integer vector.
 }
 \description{
 The positions the unit's penalty covers, in whichever vector it is
-addressed in: the stacked coefficients for an ordinary unit, and the
-structural term's own parameters for one whose coefficients are a filter's.
+addressed in: the stacked coefficients for an ordinary unit, the
+structural term's own parameters for one whose coefficients are a filter's,
+and the joint vector of coefficients and free structural parameters for a
+mixed class.
 }
 \details{
 A reader that only needs to know how many coordinates a penalty covers, or
-which of a term's components they belong to, wants the same answer for both
-kinds and cannot get it from one field: an ordinary unit leaves \code{cols} empty
-where it spans several equations, and a structural one has no \code{index} at
-all.
+which of a term's components they belong to, needs the same answer for every
+kind of unit, and the kinds keep their positions in different fields. An
+ordinary unit and a covariance class among the coefficients carry them in
+\code{index}. A structural unit has no \code{index} and carries them in \code{cols}, among
+the term's own parameters. A mixed class has neither and carries them in
+\code{joint}.
 }
 \seealso{
 \code{\link[=unit_beta]{unit_beta()}} for the values at those positions.

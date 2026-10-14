@@ -24,16 +24,16 @@ criterion and the variance all assemble, so that a unit of any of the three
 kinds can be read off one diagonal.
 }
 \details{
-The three kinds are addressed in three different vectors and the caller
-that wants a trace wants one. A mixed class already records the answer, its
+The three kinds are addressed in three different vectors, and a caller that
+forms a trace needs one. A mixed class already records the answer, its
 \code{joint} field being built by \code{\link[=class_joint_pieces]{class_joint_pieces()}}. A structural unit
-records positions among ALL of a term's parameters, where the joint vector
+records positions among all of a term's parameters, where the joint vector
 holds only the free ones, so a held coordinate has to be mapped out rather
 than offset past. An ordinary unit's stacked index is already a position in
 the joint vector, coefficients coming first and none of them being held.
 
-Written once because the convention is composed in three places otherwise,
-and two of them would agree only by accident.
+Written once so that the convention is composed in one place and not in
+three.
 }
 \seealso{
 \code{\link[=unit_positions]{unit_positions()}} for the same coordinates in the unit's own

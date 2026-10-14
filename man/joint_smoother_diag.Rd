@@ -40,27 +40,24 @@ read on the joint vector: \eqn{K} is \code{\link[=statmod_full_information]{stat
 \eqn{K+S} the matrix the criterion's own determinant is taken of,
 \code{\link[=statmod_marginal_full]{statmod_marginal_full()}}.
 }
-\section{One apiece is this matrix's own answer, exactly}{
-Writing \eqn{P} for the coordinates some penalty covers, \eqn{S} has a zero
-row and a zero column outside \eqn{P}, so
+\section{The count of an unpenalized parameter}{
+Writing \eqn{P} for the coordinates that some penalty covers, \eqn{S} has a
+zero row and a zero column outside \eqn{P}, so
 \deqn{F = M^{-1}K = M^{-1}(M - S) = I - M^{-1}S,}
 and for \eqn{j} outside \eqn{P} the whole column \eqn{S_{\cdot j}} vanishes,
-which makes \eqn{F_{jj}} exactly one. The rule this replaces -- one degree
-of freedom per free parameter of a structural term, on the reading that
-those are estimated and unpenalized -- is therefore what this matrix says
-wherever that rule is right, and measured it is so to the last bit: the
-unpenalized coordinates come back at 1.000000000000000 with a gap of
-0.000e+00. What moves is a coordinate a prior shrinks, which since 0.24.0 a
-filter's own parameters may be. Measured on a developed loading over eight
-groups the eight deviations read between 0.080 and 0.247 where the count
-says eight, and under a covariance class over two developed parameters
-sixteen of them read between -0.0003 and 0.829 where the count says sixteen.
+which makes \eqn{F_{jj}} exactly one. The rule that counts one degree of
+freedom per free parameter of a structural term, on the reading that those
+parameters are estimated and unpenalized, is therefore what this matrix
+gives wherever that rule is right. The count differs for a coordinate that
+a prior shrinks, which a filter's own parameters may be (for example the
+deviations of a developed loading, or the parameters under a covariance
+class); such a coordinate counts less than one.
 
 A structural term that mixes over latent states rather than shifting the
 predictor has no such joint determinant, \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} answering
 \code{NULL} for it, and falls back to the coefficient-only reading.
 
-The joint route reads the OBSERVED information, there being no expected one
+The joint route reads the observed information, there being no expected one
 for a filter: \code{\link[=statmod_marginal_full]{statmod_marginal_full()}} assembles from
 \code{\link[modelterms7:term_curvature]{modelterms7::term_curvature()}}, and the criterion of such a model already
 reads that same matrix. A model carrying no filter never reaches here and is
@@ -68,6 +65,6 @@ untouched.
 }
 
 \seealso{
-\code{\link[=statmod_edf]{statmod_edf()}}, its only caller.
+\code{\link[=statmod_edf]{statmod_edf()}} and \code{\link[=summary_class_blocks]{summary_class_blocks()}}, its callers.
 }
 \keyword{internal}

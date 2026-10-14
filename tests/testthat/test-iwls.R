@@ -37,7 +37,7 @@ test_that("a gaussian fit is least squares", {
 test_that("every decomposition reaches the same point", {
   spec <- statmod_spec(y ~ x + g, distributions7::gaussian1_distrib(), dd)
   ref <- unname(stats::coef(stats::lm(y ~ x + g, dd)))
-  for (how in c("qr", "svd", "chol", "chol_crossprod")) {
+  for (how in c("qr", "svd", "chol")) {
     out <- fit_pieces(spec, iwls(decomposition = how))
     expect_equal(out$coef$mu, ref, tolerance = 1e-9, info = how)
   }

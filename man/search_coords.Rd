@@ -20,15 +20,15 @@ the likelihood is not convex: each equation's intercept, and the blocks of
 the terms that recompute their own design.
 }
 \details{
-The predicate for the second is \code{\link[=refreshes_own_block]{refreshes_own_block()}}, the same one
-\code{\link[=unfittable_reason]{unfittable_reason()}} uses, so a term written later is covered with no
-edit here. A convex block is left out deliberately: the scoring step
-reaches its optimum from anywhere, and a search over it would spend the
-budget where it buys nothing.
+The predicate for the second is \code{\link[=refreshes_own_block]{refreshes_own_block()}}, which tests
+whether the term registers a \code{\link[modelterms7:term_refresh]{modelterms7::term_refresh()}} method of its
+own, so a term written later is covered with no edit here. A convex block
+is left out deliberately: the scoring step reaches its optimum from any
+start, and a search over it would use the budget where it gains nothing.
 
-A penalized coordinate is then removed wherever it sits, which is not the
-same question as whether its term is convex: a penalty declared through a
-sub-formula of a break-point or nonlinear term covers columns of that
-term's block, and the loop takes the whole block.
+A penalized coordinate is then removed wherever it sits, which differs from
+testing whether its term is convex: a penalty declared through a
+sub-formula of a break-point or nonlinear term covers columns of the block
+of that term, and the loop takes the whole block.
 }
 \keyword{internal}

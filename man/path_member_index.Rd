@@ -19,8 +19,8 @@ The union of the blocks the axis's members penalize, as positions in the
 stacked coefficient vector.
 }
 \details{
-A shared axis is one value multiplying several penalties, so the question
-\emph{is the block empty here} is asked of all of them at once. Where nothing is
-shared it is the single block's own index.
+A shared axis is one value multiplying several penalties, so whether the
+block is empty has to be decided over all of them at once. Where nothing is
+shared, the result is the single block's own index.
 }
 \keyword{internal}

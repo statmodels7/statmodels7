@@ -26,16 +26,15 @@ the order that function returns those positions in.
 The three kinds are read from two different places. An ordinary unit's
 coordinates are coefficients and come from \code{coef}. A structural unit's
 are a filter's own parameters and come from the design's structural state,
-on the UNCONSTRAINED scale, which is the scale the recursion is
+on the unconstrained scale, which is the scale the recursion is
 differentiated on and the one the penalty covers. A mixed class holds some
 of each and interleaves them group by group, so its pieces are read
 separately and put back in the class's own order, which is what
 \code{\link[=class_joint_pieces]{class_joint_pieces()}} records.
 
-Written beside \code{\link[=unit_joint_positions]{unit_joint_positions()}} because a value and its address
-are one convention: a caller composing them separately would scatter one
-unit's numbers at another's coordinates, and the two would agree only by
-accident.
+Written beside \code{\link[=unit_joint_positions]{unit_joint_positions()}} because a value and its position
+must follow the same convention. A caller that composed them separately
+could place one unit's values at another unit's positions.
 }
 \seealso{
 \code{\link[=unit_beta]{unit_beta()}}, the coefficient-only case this generalizes.

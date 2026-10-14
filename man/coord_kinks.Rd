@@ -19,15 +19,16 @@ where the penalty reports no finite kink. Its first entry is
 \code{\link[=kink_scale]{kink_scale()}}'s answer.
 }
 \description{
-Returns, for every coordinate of a kinked penalty, the jump of its
-derivative at the kink, which is the threshold a coordinate's gradient is
-compared with to decide whether it can stay at zero.
+Returns, for every coordinate of a kinked penalty, the size of its kink:
+half the jump of its derivative across the kink, which is the threshold a
+coordinate's gradient is compared with to decide whether it can stay at
+zero.
 }
 \details{
 \code{\link[=kink_scale]{kink_scale()}} reads the first coordinate only, which is what a path needs
 to place its grid. A coordinate descent needs every coordinate's: under a
 diagonal map \eqn{D}, which is what \code{standardize} writes, coordinate
-\eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The jump is measured as in
+\eqn{j}'s kink is \eqn{\lambda\lvert d_j\rvert}. The size is measured as in
 \code{\link[=kink_scale]{kink_scale()}}, by a Richardson extrapolation of the one-sided derivatives,
 on every coordinate at once. A scaled SCAD or MCP has its kink at
 \eqn{\lambda\lvert d_j\rvert} whatever its curvature, the scaling leaving

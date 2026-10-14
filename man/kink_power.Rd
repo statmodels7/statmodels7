@@ -15,26 +15,28 @@ kink_power(pen, theta, name)
 }
 \value{
 A list of the exponent \code{k}, the value \code{v0} it was read at
-and the size \code{s0} there; \code{NULL} where the size does not move.
+and the size \code{s0} there; \code{NULL} where the size does not move or where
+either size or the value is not positive and finite.
 }
 \description{
 The exponent \eqn{k} in \eqn{s(v) = c\,v^k}, read from the size of the kink
-at the current value and at twice it, or \code{NA} where there is no such
+at the current value and at twice it (or at half it, where twice it is
+outside the hyperparameter's interval), or \code{NULL} where there is no such
 exponent to read.
 }
 \details{
 A separable penalty is minus a log density and its hyperparameter enters as
 a scale, so the width of the subdifferential at the kink is a power of it.
-Measured over four decades, the exponent is exactly one for the lasso, for
-SCAD and MCP in \eqn{\lambda} and for the elastic net in both \eqn{\lambda}
-and \eqn{\alpha}, and exactly zero for the shapes of SCAD and MCP, which do
-not move the kink at all; the largest spread across a decade sweep is
-\eqn{5.6\times 10^{-16}}. A Laplace prior written by its scale has exponent
+The exponent is one for the lasso, for SCAD and MCP in \eqn{\lambda} and for
+the elastic net in both \eqn{\lambda} and \eqn{\alpha}. For the shapes of
+SCAD and MCP, which do not move the kink, there is no exponent and the
+result is \code{NULL}. A Laplace prior written by its scale has exponent
 \eqn{-1}, its kink narrowing as the hyperparameter grows.
 
-The exponent is measured, never assumed, and whoever inverts it checks
-the answer, so a penalty whose kink is not a power of its hyperparameter
-costs two evaluations and then takes the search.
+The exponent is measured and not assumed, and \code{\link[=kink_by_power]{kink_by_power()}} checks the
+inversion, so that a penalty whose kink is not a power of its
+hyperparameter costs two evaluations of the size and then takes the
+search of \code{\link[=kink_solve]{kink_solve()}}.
 }
 \seealso{
 \code{\link[=kink_solve]{kink_solve()}}, \code{\link[=path_values]{path_values()}}

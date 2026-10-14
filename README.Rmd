@@ -47,82 +47,96 @@ library(statmodels7)
 The equations are separated by a bar, one for each parameter of the
 distribution, and a parameter with no equation of its own is given an
 intercept. Below, the mean carries a penalized smooth of `x` and a random
-intercept over `g`, while the standard deviation is linear in `x` on its log
+intercept over `g`, and the standard deviation is linear in `x` on its log
 scale.
 
 ```{r}
 set.seed(1)
 n <- 400
-d <- data.frame(x = runif(n, -2, 2), g = factor(rep(1:20, length.out = n)))
-u <- rnorm(20, 0, 0.5)
+d <- data.frame(x = runif(n, min = -2, max = 2),
+                g = factor(rep(1:20, length.out = n)))
+u <- rnorm(20, mean = 0, sd = 0.5)
 d$y <- sin(2 * d$x) + u[as.integer(d$g)] + rnorm(n, sd = exp(-0.7 + 0.4 * d$x))
 
 fit <- statmod(y ~ s(x) + random(~ 1 | g) | sigma ~ x,
-               gaussian1_distrib(), d)
+               distrib = gaussian1_distrib(), data = d)
 ```
 
 The smoothing parameter of the smooth and the scale of the random effect are
-hyperparameters rather than coefficients. They are estimated by REML, whose
-gradient and Hessian are computed exactly, and `hyper()` reports each value
-with what put it there.
+hyperparameters. They are estimated by REML, whose gradient and Hessian are
+computed exactly, and `hyper()` reports each value with its source: the
+criterion that estimated it, or `fixed` for a value held in the term.
 
 ```{r}
 hyper(fit)
 ```
 
-`summary()` prints the two together, one block per equation, with the
-effective degrees of freedom each penalized term spends.
+`summary()` prints the coefficients and the hyperparameters of each equation,
+with the effective degrees of freedom of each penalized term.
 
 ```{r}
 summary(fit)
 ```
 
-The last line of that table comes from `statmod_certificate()`, which is
-computed at the point the fit reached rather than read off the optimizer's
-stopping rule: it reports how far above its own mode the coefficients stopped
-and whether the hyperparameters are stationary there.
+After the conditional log-likelihood and the information criteria, the table
+ends with two lines headed `inner` and `outer`. Each gives the largest
+gradient in standard errors and the smallest eigenvalue of the curvature, for
+the coefficients and for the hyperparameters respectively, both read at the
+point the fit reached.
+
+`statmod_certificate()` is computed at the same point and not read off the
+stopping rule of the optimizer. Its `mode_error` is how far above its own
+penalized mode the coefficients stopped, in log-likelihood units, and its
+`state` is `converged`, `boundary`, `not converged` or `unknown`.
 
 ```{r}
-statmod_certificate(fit)[c("state", "gradient", "mode_error")]
+statmod_certificate(fit)[c("state", "mode_error")]
 ```
 
-`predict()` answers for any parameter, or for a moment of the response, and
-carries a standard error through whatever the terms are.
+`predict()` returns the fitted value of any parameter, or of a moment of the
+response, with a standard error that follows from every term in the model.
 
 ```{r}
-predict(fit, "mu", head(d, 3), se = TRUE)
+predict(fit, what = "mu", newdata = head(d, n = 3), se = TRUE)
 ```
 
 ## What the layer fits
 
-Every term `modelterms7` defines goes in any equation: the parametric block,
+Any term of `modelterms7` goes in any equation: the parametric block,
 penalized smooths of one and several covariates, grouped random intercepts
 and slopes, ridge, lasso, elastic net, SCAD and MCP, a nonlinear parametric
 term, effects that change at estimated break-points, score-driven dynamics
-and latent Markov regimes. A term that rewrites the likelihood rather than
-contributing a design block is fitted in the same system as the coefficients,
-with the observed information of the joint model behind `vcov()`.
+and latent Markov regimes. A formula carries at most one score-driven term,
+regime term or break-point term built with `marginal = TRUE`. A score-driven
+term is fitted in one system with the coefficients, and `vcov()` is built from
+the observed information of that joint model. A regime term, or a marginal
+break-point term, is fitted by alternating with the coefficients.
 
-The hyperparameters of a smooth penalty come from `reml()` or `ml()`, or from
-`aic()`, `bic()` or `cv()` on an estimate of prediction error. A penalty with
-a kink has no second derivative at the mode, so its hyperparameter is chosen
-instead along a path of its own values, from the value that empties the block
-downwards.
+The hyperparameters of a smooth penalty are estimated by `reml()` or `ml()`,
+or by `aic()` or `bic()` on an estimate of prediction error, all passed as
+`outer_criterion`. A penalty with a kink (`lasso()`, `enet()`, `scad()` and
+`mcp()`) has no second derivative at the mode, so its hyperparameter is
+chosen along a path of its own values, from the value that empties the block
+downwards. The path is scored by `sparse_criterion`, which is `bic()` by
+default and may also be `aic()` or `cv()`. The function `cv()` serves only as
+`sparse_criterion`.
 
 Random effects written with the same label and the same grouping share one
-covariance block, whatever equation they sit in, which is `brms`'s second
-bar. `y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)` estimates the
-correlation between a subject's level and its dispersion, and the label
-reaches a subformula too, so `seg(x, psi ~ random(~ 1 | u | id))` beside it
-correlates a random break-point with a random scale. The block is one
-multivariate prior over the effects of one level, on `dr_prod()` by default,
-where a coordinate is the logarithm of a standard deviation exactly.
+covariance block, whatever equation they sit in, as with the middle bar of
+`(1 | u | id)` in `brms`. The formula
+`y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)` estimates the
+correlation between a subject's level and the logarithm of its scale. The
+label reaches a subformula too, so `seg(x, psi ~ random(~ 1 | u | id))` in the
+same formula correlates a random break-point with a random scale. The block is
+one multivariate prior over the effects of one level, parametrized by
+`dr_prod()` by default, whose free coordinates are the logarithms of the
+standard deviations followed by the angles of the correlation.
 
-`rstatmod()` simulates from a model written the same way, which is what a
-simulation study needs: the truth is returned beside the data.
+`rstatmod()` simulates from a model written the same way and returns the
+parameters used beside the data.
 
 ```{r}
-sim <- rstatmod(y ~ x, gaussian1_distrib(), d[1:20, ],
+sim <- rstatmod(y ~ x, distrib = gaussian1_distrib(), data = d[1:20, ],
                 par = list(mu = c(1, 2), sigma = log(0.3)))
 sim$par
 ```
@@ -134,10 +148,9 @@ works through a fit from the formula to the fitted object.
 ## The toolkit in one package
 
 Installing this package installs the eight members, and attaching it attaches
-them. They sit in `Imports` rather than `Depends`, which is what lets the
-attaching be reported rather than merely happen: `Depends` would attach them
-in the order the field lists them, with no message and no way for a caller to
-see what arrived at which version.
+them. The members are listed in `Imports` and attached by the package itself,
+which prints one message with the version of each; `Depends` would attach
+them without a report.
 
 ```{r}
 statmodels7_packages()
@@ -146,20 +159,21 @@ statmodels7_packages()
 | package | what it provides |
 |---|---|
 | [numericals7](https://statmodels7.github.io/numericals7/) | the numerical layer at the root: stencils, batched quadrature and series, the combinatorial enumerations, special functions |
-| [linkfunctions7](https://statmodels7.github.io/linkfunctions7/) | link functions as objects, with exact derivatives to fourth order in both directions |
+| [linkfunctions7](https://statmodels7.github.io/linkfunctions7/) | link functions as objects, with exact derivatives to fifth order in both directions |
 | [distributions7](https://statmodels7.github.io/distributions7/) | univariate and multivariate distributions with exact score, information and higher derivatives |
 | [optimizers7](https://statmodels7.github.io/optimizers7/) | optimization algorithms as objects, with composable stopping rules |
 | [basis7](https://statmodels7.github.io/basis7/) | basis expansions with derivatives, anchored integrals and exact Gram matrices |
 | [parameters7](https://statmodels7.github.io/parameters7/) | constrained parameters as maps from an unconstrained vector, exact to fourth order |
-| [penalties7](https://statmodels7.github.io/penalties7/) | penalties as objects, with their normalizing constants and the pieces a marginal criterion consumes |
+| [penalties7](https://statmodels7.github.io/penalties7/) | penalties as objects, with exact derivatives, proximal operators and the pieces a marginal criterion consumes |
 | [modelterms7](https://statmodels7.github.io/modelterms7/) | model terms as objects, each carrying its design block, its penalty and its blueprint for new data |
 
-`statmodels7_versions()` reports what is installed, `statmodels7_conflicts()`
-what masks what, and `statmodels7_update("install")` installs or updates every
-member.
+`statmodels7_versions()` reports the installed version of each member,
+`statmodels7_conflicts()` the names that members mask from one another, and
+`statmodels7_update(action = "install")` installs or updates every member.
 
 ## Related
 
-The mathematical companion to the whole toolkit is the
-[book](https://statmodels7.github.io/book/), which gives every formula the
-packages implement with its derivation and its citation.
+The mathematical companion to the toolkit is the
+[book](https://statmodels7.github.io/book/), which presents the formulas that
+the packages implement, explains where each quantity comes from and cites the
+source of the full argument.

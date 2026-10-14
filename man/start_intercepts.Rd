@@ -11,33 +11,47 @@ A \code{StartIntercepts} object, inheriting from \code{\link[=start_strategy]{st
 }
 \description{
 The default: each equation's intercept at the maximum likelihood estimate
-of the model with every covariate removed, and every other coefficient at
-zero.
+of the model with every covariate removed. Where the first parameter is a
+location or a mean on the identity link, the slopes of its parametric
+columns start at a least-squares fit, and a term with a starting value of
+its own starts at the value that the term declares. The remaining
+coefficients start at zero.
 }
 \details{
 The model with no covariates is the model with every slope set to zero, so
-its maximum likelihood estimate is exactly where the model with covariates
-should begin. It costs one small fit, on an intercept-only design.
+its maximum likelihood estimate is a natural starting point for the
+intercepts of the model with covariates. It requires one small fit, on an
+intercept-only design.
 
-Every other coefficient starts at zero, which is where a penalized block's
-penalty is smallest.
-
-Two adjustments make it usable where a naive intercept would not be:
+Three further rules apply:
 \itemize{
-\item An \strong{offset} is subtracted before the value is written. Without that, a
-model with an offset averaging 6.74 begins at
-\eqn{\exp(0.897 + 6.74) = 2080} against a sample mean of 2.45. Measured
-on a negative binomial over person-years: 4.9 s and 9 scoring iterations
-with the correction, more than 25 minutes without.
+\item A location or mean on the identity link whose equation has an intercept
+and at least one other parametric column starts its parametric
+coefficients at a weighted least-squares fit net of the offset, and the
+intercepts of the other parameters are fitted to the residuals. This
+applies when every term of that equation is a parametric, smooth, random
+or penalized term.
+\item A term whose \code{\link[modelterms7:term_coef_start]{modelterms7::term_coef_start()}} method returns values that
+are not all zeros, such as a break-point or a nonlinear term, starts at
+those values.
+\item All other coefficients start at zero, which is where the penalty of a
+penalized block is smallest.
+}
+
+Two adjustments apply to the intercepts:
+\itemize{
+\item The mean of an \strong{offset} is subtracted from the intercept before the
+value is written, because the intercept-only fit does not see the offset
+and the predictor would otherwise start displaced by it.
 \item The value is written to a \strong{parametric intercept} and to nothing else.
-A term such as \code{\link[modelterms7:nl]{modelterms7::nl()}} names the intercept of each of its own
-parameters \code{(Intercept)} too, and those live on that parameter's chart,
-not the predictor's. Writing a predictor-scale value onto a \code{phi} that
-rides a log link gave \eqn{\exp(23.9) = 2.5 \times 10^{10}}.
+A term such as \code{\link[modelterms7:nl]{modelterms7::nl()}} also names the intercept of each of
+its own parameters \code{(Intercept)}, but those coefficients lie on the
+chart of that parameter and not on the scale of the predictor.
 }
 
 This is what \code{\link[=statmod]{statmod()}} does when \code{start} is \code{NULL}. The constructor
-exists so the default can be named, compared against and passed on.
+exists so that the default can be named, compared with other strategies and
+passed on.
 }
 \examples{
 start_intercepts()
@@ -47,7 +61,8 @@ dd <- data.frame(x = runif(60, 0, 10))
 dd$y <- 500 + 20 * dd$x + rnorm(60, sd = 5)
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 
-# The intercept starts at the response's own scale, and the slope at zero.
+# The intercept starts at the response's own scale, and the slope at its
+# least-squares value.
 start_at(start_intercepts(), spec, statmod_design(spec), NULL)
 
 }

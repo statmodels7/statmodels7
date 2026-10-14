@@ -4,7 +4,7 @@
 \alias{path_rows}
 \title{Which Hyperparameters a Path Has to Select}
 \usage{
-path_rows(spec, blocks, hyper, method)
+path_rows(spec, blocks, hyper)
 }
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
@@ -12,11 +12,12 @@ path_rows(spec, blocks, hyper, method)
 \item{blocks}{The blocks.}
 
 \item{hyper}{The hyperparameters.}
-
-\item{method}{An \code{\link[=OuterMethod]{OuterMethod()}}.}
 }
 \value{
-A data frame of \code{parameter}, \code{term} and \code{name}.
+A data frame with one row per axis, with columns \code{parameter},
+\code{term} and \code{name}, and a list column \code{members} that holds, for each axis,
+the data frame of the hyperparameters it stands for. It has zero rows
+where no hyperparameter is to be estimated.
 }
 \description{
 The rows of an index like \code{\link[=outer_hyper_index]{outer_hyper_index()}}'s, for the
@@ -30,7 +31,7 @@ leaves, so a criterion read at that mode inherits the corners and a
 quasi-Newton step is reading a slope that is about to change. A grid does
 not care, and warm starts make it cheap.
 
-Which hyperparameters are varied is read from the penalty by
-\code{\link[=kink_hypers]{kink_hypers()}} unless the method names them.
+Every hyperparameter of a kinked penalty is varied, except those that
+its term holds and those of an \code{id} group that one member holds.
 }
 \keyword{internal}

@@ -19,6 +19,14 @@ never normalized, so a weight of two counts an observation twice.
 \description{
 The weights each observation entered the likelihood with.
 }
+\details{
+The weights multiply the log-likelihood of each observation, so they act as
+frequency weights: a constant weight \eqn{c} on every row is \eqn{c} copies
+of the data. The restricted likelihood then counts \eqn{n c} observations
+against the \eqn{p} coefficients, so the REML estimate of a dispersion
+changes under a constant rescaling of the weights, while the ML estimate
+does not.
+}
 \examples{
 set.seed(1)
 dd <- data.frame(x = runif(40))

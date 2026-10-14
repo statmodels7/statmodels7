@@ -17,10 +17,10 @@ reject_missing(response, equations, data)
 \code{NULL}, invisibly, when nothing is missing.
 }
 \description{
-Signals an error naming the response, or each variable of the data that
-an equation names, where it holds a missing value, with the rows. A fit
-does not drop rows: in a time series or a panel a dropped row changes
-what the neighbouring rows mean, so the choice of which rows to remove is
+Signals an error naming the response, or the first variable of the data
+that an equation names, where it holds a missing value, with the rows. A
+fit does not drop rows: in a time series or a panel a dropped row changes
+what the neighboring rows mean, so the choice of which rows to remove is
 the caller's.
 }
 \keyword{internal}

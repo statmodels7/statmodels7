@@ -2,7 +2,7 @@
 % Please edit documentation in R/order.R
 \name{assert_criterion_information}
 \alias{assert_criterion_information}
-\title{Refuse an Expected-Information Criterion That Would Read the Scores' Outer Product}
+\title{Expected-Information Criteria and the Scores' Outer Product}
 \usage{
 assert_criterion_information(distrib, method, approx)
 }
@@ -18,7 +18,7 @@ with, from \code{\link[=inner_settings]{inner_settings()}}.}
 \code{NULL}, invisibly. Called for the error.
 }
 \description{
-Raises an error naming the family and the remedy when a criterion asked for
+Raises an error naming the family and the remedy when a criterion defined
 on the expected information would read, for this family, the outer product
 of the scores at the data instead of an expectation.
 }
@@ -29,9 +29,9 @@ at \eqn{y_i}, with the Fisher information
 \eqn{\mathcal{I}(\theta_i) = -\mathbb{E}[\partial^2\ell/\partial\eta\,
 \partial\eta^\top]}, a function of the parameters alone. Where a family
 writes that information out, \code{\link[distributions7:expected_hessian_exact]{distributions7::expected_hessian_exact()}}
-answers \code{TRUE} and nothing is asked here. Every shipped family does since
-\pkg{distributions7} 0.65.0; where a family written outside the toolkit
-does not, it falls back on the strategy \code{approx} names, and the default, \code{"opg"}, returns
+answers \code{TRUE} and no check is made. Where a family does not write it out,
+for example a family written outside the toolkit, the information falls
+back on the strategy \code{approx} names, and the default, \code{"opg"}, returns
 \eqn{s_i s_i^\top} with \eqn{s_i} the score at \eqn{y_i}. That is an unbiased
 estimate of \eqn{\mathcal{I}(\theta_i)} from one observation, not the
 information itself: it depends on the response, as the observed curvature
@@ -40,17 +40,14 @@ Laplace approximation nor its Fisher variant, and it has no exact outer
 gradient, so its search is derivative-free and \code{\link[=statmod_certificate]{statmod_certificate()}}
 answers \code{unknown}.
 
-Measured at 4000 observations with a smooth on the first parameter, on the
-six families this applied to before \pkg{distributions7} 0.64.0 and 0.65.0
-gave all of them an exact expected information, every one fit on the observed
-information in 3 to 5 criterion evaluations with a Newton search and an
-analytic certificate, where the outer-product route took 12 to 22
-evaluations of a simplex.
+A criterion on the observed information has an exact outer gradient and
+Hessian and is searched with Newton's method; the outer-product route has
+neither and is searched without derivatives.
 
-The expectation is asked for by name with another \code{approx} in \code{\link[=iwls]{iwls()}}, and
-that is not refused: \code{"bartlett"} sums or integrates over the support and
-is a genuine expected information, at a cost measured between 66 and 1930
-seconds per evaluation at 4000 observations.
+The expectation can be requested with another \code{approx} in \code{\link[=iwls]{iwls()}}, and
+this check does not reject it: \code{"bartlett"} sums or integrates over the
+support and gives a genuine expected information, at a much higher cost per
+evaluation.
 }
 \examples{
 statmodels7:::assert_criterion_information(

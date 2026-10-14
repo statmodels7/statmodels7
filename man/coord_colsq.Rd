@@ -19,7 +19,7 @@ coord_colsq(X, w, k, m)
 A numeric vector, one entry per column in \code{k}.
 }
 \description{
-\eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} asked for,
+\eqn{\sum_i w_i (x_{ik} - m_k)^2} for the columns \eqn{k} given in \code{k},
 which is the curvature a coordinate of a centered block has.
 }
 \details{

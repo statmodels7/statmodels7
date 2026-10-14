@@ -27,41 +27,49 @@ estimated, and \code{taken}, a list of one-row-per-coefficient data frames
 recording what was projected.
 }
 \description{
-Estimates the coefficients of the blocks \code{\link[=start_at]{start_at()}}'s \code{StartFrom} method
-left pending -- a term the two models share written on a different basis --
-by least squares against the part of the reference's predictor the blocks
-already carried across do not explain.
+Estimates the coefficients of the blocks that the \code{StartFrom} method of
+\code{\link[=start_at]{start_at()}} left pending, which are terms that the two models share
+written on a different basis. The estimate is by least squares against the
+part of the reference's predictor that the blocks already carried across do
+not explain.
 }
 \details{
 Two bases of the same term span different subspaces, so
 \eqn{B_{\mathrm{new}}\beta_{\mathrm{new}} = B_{\mathrm{old}}
-\beta_{\mathrm{old}}} has no solution in general and the projection
+\beta_{\mathrm{old}}} has no solution in general, and the projection
 \deqn{\hat\beta_S = \arg\min_\beta \lVert X_S\beta - r\rVert^2, \qquad
-r = X^{\mathrm{ref}}\beta^{\mathrm{ref}} - X_{-S}\beta_{-S},}
-is what remains: the best the new basis can do at reproducing the fitted
-function. Only the pending columns \eqn{S} are estimated, and \eqn{r} is
-the partial residual of the reference's predictor after the blocks already
-matched by name are removed at the values they were given. Where a block
-matched exactly there is nothing to solve, so a refit whose bases all
-agree performs no arithmetic here and returns the coefficients it was
-handed.
+r = \eta^{\mathrm{ref}} - \eta_{-S},}
+gives the closest reproduction of the fitted function that the new basis
+allows. Only the pending columns \eqn{S} are estimated. The vector \eqn{r}
+is the partial residual of the reference's predictor
+\eqn{\eta^{\mathrm{ref}}} after the blocks already matched by name are
+removed at the values they were given (\eqn{\eta_{-S}} is the new model's
+predictor with the pending columns at zero). Both predictors are read
+through \code{\link[=statmod_design_at]{statmod_design_at()}}, so a block that moves with its coefficients
+(a break-point or a nonlinear term) contributes its value and not its
+linearization \eqn{X\beta}. Where every block matched exactly there is
+nothing to solve, and a refit whose bases all agree returns the
+coefficients it was given.
 
 The projection is exact when the reference's function lies in the span of
-the new basis, and reduces to the identity when the two bases coincide,
-which is why the name match above is a fast path rather than a different
-answer. Whatever the reference explains and the new model has no column
-for -- a covariate the formula dropped -- stays in \eqn{r} and is absorbed
-by the pending blocks, which is the closest the new design can come to the
-predictor it is being started from.
+the new basis, and it reduces to the identity when the two bases coincide,
+so the name match above is a shortcut and not a different answer. Whatever
+the reference explains and the new model has no column for, such as a
+covariate that the formula dropped, stays in \eqn{r} and is absorbed by
+the pending blocks.
 
-Three conditions gate it, each returning the coefficients unchanged. The
-two responses must be identical, which is what says the two designs are
-read at the same rows: the projection compares two predictors pointwise
-and means nothing across different data. Neither model may carry a
-structural term, whose contribution is a recursion's state rather than
-\eqn{X\beta}. And neither design may carry an adjustment for that
-parameter, which is the same condition for a block that moves with its
-coefficients.
+Three conditions restrict the projection. The two responses must be
+identical, so that the two designs are read at the same rows: the
+projection compares two predictors observation by observation and has no
+meaning across different data. Neither model may carry a structural term,
+whose contribution is the state of a recursion and not a function of the
+coefficients. Where either of these two conditions fails, the coefficients
+are returned unchanged. A pending block that itself moves with its
+coefficients (for example \code{seg(x)} refitted as \code{seg(x, npsi = 2)}) is not
+projected, because its coefficients are not those of a linear block, and it
+keeps the values given by the fallback strategy. The pending columns of an
+equation are also left to the fallback when their design has more than
+\eqn{5 \times 10^7} entries.
 }
 \seealso{
 \code{\link[=start_from]{start_from()}}, whose method calls it.

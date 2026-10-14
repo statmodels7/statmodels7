@@ -31,7 +31,9 @@ the number of trial points whose objective raised.
 }
 \description{
 Solves for the scoring increment from the given pieces and halves the step
-until Armijo's condition holds or the budget of halvings is spent.
+until Armijo's condition holds or the budget of halvings is spent. The full
+step is tried first, so a budget of \code{step_halving} halvings allows
+\code{step_halving + 1} trial points.
 }
 \details{
 It is the body \code{\link[=iwls_fit]{iwls_fit()}} ran inline, moved into a function so that the

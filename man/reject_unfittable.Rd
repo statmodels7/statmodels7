@@ -14,29 +14,28 @@ distribution parameter.}
 \code{NULL}, invisibly; called for the error.
 }
 \description{
-Signals an error naming any term whose block is not a fixed design, which
-is what the alternation of \code{\link[=statmod]{statmod()}} assembles.
+Signals an error naming any term that the fitting scheme of \code{\link[=statmod]{statmod()}}
+does not cover, and any formula that carries more than one structural term.
 }
 \details{
-One shape is outside that assembly, and it is read off the term rather than
-from a list of class names, so a term written later is covered without an
-edit here.
+Terms are examined by what they implement and not by a list of class
+names, so a term written later is covered without an edit here.
 
-A \strong{structural} term rewrites the likelihood instead of contributing a
-predictor, so it has no design block at all and answers neither
-\code{term_matrix()} nor \code{term_npar()}. Reaching it through the design
-produced an error naming one of those generics, which says nothing about the
-cause. \code{\link[=statmod_structural]{statmod_structural()}} routes those, and what remains here
-is the term class that is structural and implements neither shape of the
-contract.
+A \strong{structural} term rewrites the likelihood or the filtered predictor
+instead of contributing a fixed design block, so it has no design block and
+answers neither \code{term_matrix()} nor \code{term_npar()}. A term of the filter
+shape, such as \code{gas()}, contributes a predictor through \code{term_filter()}. A
+term of the likelihood shape, such as \code{regime()}, contributes a likelihood
+through \code{term_loglik()}. \code{\link[=statmod_structural]{statmod_structural()}} routes both. What this
+function rejects is a structural term that implements neither
+\code{term_filter()} nor \code{term_loglik()}, and a structural term of the
+likelihood shape that carries a covariance label (\code{\link[=unfittable_reason]{unfittable_reason()}}).
+\code{\link[=reject_incompatible]{reject_incompatible()}} is called before these reasons are raised, so a
+formula with more than one structural term is rejected with that
+function's message.
 
-A term whose block depends on its own coefficients was rejected here too
-until the alternation learned to refresh one; it is fitted now, by
-\code{\link[=statmod_design_at]{statmod_design_at()}}.
-
-Every equation is examined before the error is raised, so a model carrying
-one such term in the mean and another in the scale reports both rather than
-the first.
+A term whose block depends on its own coefficients is fitted by
+\code{\link[=statmod_design_at]{statmod_design_at()}} and is not rejected here.
 }
 \seealso{
 \code{\link[=statmod_terms]{statmod_terms()}}, \code{\link[=statmod]{statmod()}}

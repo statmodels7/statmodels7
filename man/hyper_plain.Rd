@@ -2,17 +2,19 @@
 % Please edit documentation in R/path.R
 \name{hyper_plain}
 \alias{hyper_plain}
-\title{The Hyperparameters in the Shape statmod() Accepts}
+\title{The Hyperparameters as Plain Named Vectors}
 \usage{
 hyper_plain(hyper)
 }
 \arguments{
-\item{hyper}{The nested list the machinery carries.}
+\item{hyper}{The nested list of hyperparameters, one list per distribution
+parameter and one entry per penalized term.}
 }
 \value{
-The same, with the parameters that carry no penalized term dropped.
+The same list with each entry converted to a named numeric vector,
+and the distribution parameters that carry no penalized term dropped.
 }
 \description{
-The Hyperparameters in the Shape statmod() Accepts
+The Hyperparameters as Plain Named Vectors
 }
 \keyword{internal}

@@ -23,10 +23,10 @@ otherwise. Zero columns for an equation carrying only a structural term.
 The block of columns a distribution parameter's equation was fitted with.
 }
 \details{
-A fit has one design per parameter, so which one is wanted is an argument.
-\code{NULL} gives the first, as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block moves with its
-coefficients is returned at the fitted ones, which is the block the fit
-ended on.
+A fit has one design per parameter, and \code{what} selects the parameter.
+\code{NULL} selects the first, as \code{\link[=fitted.StatmodFit]{fitted.StatmodFit()}} does. A term whose block
+moves with its coefficients is returned at the fitted coefficients, which
+is the block the fit ended on.
 
 A structural term contributes no columns at all, so an equation carrying
 one alone gives a matrix of no columns; what such a term contributes is a

@@ -35,20 +35,18 @@ map's diagonal and the curvature among them. It is done only where a
 coordinate was screened out or a curvature is written, and a penalty under
 a map that is not diagonal is returned as it stands, having no table.
 
-A SCAD or MCP carrying a curvature is scaled SELF-CONSISTENTLY: at the
+A SCAD or MCP carrying a curvature is scaled self-consistently: at the
 point the descent settles at, its curvature is the one the step is taken
 with, \eqn{c_j = v_j}, the (centered) weighted sum of squares of the column
 at the current working weights, divided by \eqn{d_j^2} under a diagonal map,
-the penalty being written on \eqn{u = D\beta}. On the way there it is
-DAMPED, \eqn{c_j \leftarrow \sqrt{c_j^{\mathrm{prev}} v_j}}: taken
-undamped, a coefficient between the two knees of a logistic SCAD
-alternated between 1.009 and 1.496 with its curvature between 21.8 and
-30.7 and never settled, 3 fits of 16 not converging on a strong-effect
-probe; damped, all 16 converge with the KKT conditions at the fit's
-curvature met to \eqn{5 \times 10^{-8}}. The scaled step is
-\eqn{\sqrt{c^{\mathrm{prev}}_j / v_j}}, one where the weights have not
-moved, so the step condition \eqn{t c_j < a - 1} (SCAD) or
-\eqn{t c_j < \gamma} (MCP) holds unless they moved by a factor of
+the penalty being written on \eqn{u = D\beta}. On the way there the
+curvature is damped, \eqn{c_j \leftarrow \sqrt{c_j^{\mathrm{prev}} v_j}}.
+Taken undamped, the coefficient and the curvature of a coordinate between
+the two knees of the penalty can alternate between two values without
+settling, whereas the damped update converges. The product of the step and
+the curvature is \eqn{\sqrt{c^{\mathrm{prev}}_j / v_j}}, which is one where
+the weights have not moved, so the step condition \eqn{t c_j < a - 1} (SCAD)
+or \eqn{t c_j < \gamma} (MCP) holds unless the weights moved by a factor of
 \eqn{(a-1)^2}. \code{\link[=statmod_curv]{statmod_curv()}} writes the undamped quantity into the
 specification at every pass of the alternation, so the objective and the
 degrees of freedom read it too.

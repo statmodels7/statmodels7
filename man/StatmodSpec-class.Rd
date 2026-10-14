@@ -45,11 +45,34 @@ where an equation has none.}
 
 \item{intercepts}{A named logical, one per parameter: whether that
 equation's parametric block carried an intercept.}
+
+\item{newdata}{The rows a respecification reads, or \code{NULL} for the fitting
+rows.}
+
+\item{structural}{A named list of the parameters of the structural term,
+keyed by the term; empty where no fit has set them.}
+
+\item{linpar}{A list, the options of the implicit parametric block as
+\code{\link[=linpar_options]{linpar_options()}} returns them.}
+
+\item{held_coef}{A named list, one entry per distribution parameter, of
+coefficients held at a value, each a named numeric vector keyed by
+coefficient name. Empty by default.}
+
+\item{threads}{The number of threads, a single integer.}
+
+\item{workers}{The number of worker processes for the independent fits of
+a cross-validation, a single integer.}
 }
 \value{
 An object of class \code{StatmodSpec} with one property per argument
-above, plus \code{threads}, \code{workers}, \code{linpar}, \code{newdata} and \code{structural},
-which \code{\link[=statmod]{statmod()}} fills in.
+above and the properties described next. \code{linpar} holds the options of the implicit
+parametric block and is set by \code{\link[=statmod_spec]{statmod_spec()}}. \code{newdata} holds the rows
+a respecification reads, \code{NULL} until \code{\link[=statmod_respec]{statmod_respec()}} sets it.
+\code{structural} holds the parameters of a structural term where a fit has
+set them. \code{held_coef} holds coefficients held at a value, by name, empty
+by default. \code{threads} and \code{workers} hold the thread and worker counts
+that \code{\link[=statmod]{statmod()}} sets.
 }
 \description{
 Everything the formula, the data and the distribution produce, before any

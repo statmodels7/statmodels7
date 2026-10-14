@@ -16,7 +16,10 @@ shape_floor(pen, theta, name, steps = NULL)
 \item{steps}{What \code{\link[=path_steps]{path_steps()}} returned, or \code{NULL}.}
 }
 \value{
-A single number strictly above the penalty's lower bound.
+A single number: the penalty's lower bound where \code{steps} is \code{NULL}
+or not finite, or where no admissible value is found below the upper
+bound; otherwise the smallest value, to bisection accuracy, at which the
+proximal table exists.
 }
 \description{
 The lower end of the range a shape may be swept over: the penalty's own
@@ -24,14 +27,13 @@ bound, raised to wherever its proximal operator starts to exist at the
 steps the block's coordinate descent will take.
 }
 \details{
-The limit is derived from the condition, with nothing written down. The
-question is put to the penalty, namely whether it produces a table at this
-step, and
-bisected, so a family added later is covered and neither the \eqn{a - 1} of
-SCAD nor the \eqn{\gamma} of MCP appears here. A grid starting just above
-the constant the penalty is defined over would otherwise contain points at
-which that block, with those data, cannot be fitted by the only route a
-kinked penalty has.
+The limit is found by bisection on whether
+\code{\link[penalties7:penalty_prox_spec]{penalties7::penalty_prox_spec()}} returns a table for the penalty at the
+block's steps, so that a family added later is covered and neither the
+\eqn{a - 1} of SCAD nor the \eqn{\gamma} of MCP appears here. A grid
+starting just above the constant over which the penalty is defined would
+otherwise contain points at which the block cannot be fitted with those data
+by the only route that a kinked penalty has.
 }
 \seealso{
 \code{\link[=path_steps]{path_steps()}}, \code{\link[=path_grid]{path_grid()}}

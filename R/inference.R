@@ -1519,7 +1519,7 @@ uninformative_coords <- function(A, tol = 1e-10, share = 1 - 1e-6,
 #' Only [iwls()] on a pivoting decomposition reports which column it
 #' dropped, that being a by-product of the solve that fitted the model. An
 #' `optimizers7` method solves nothing by a pivot, and neither do the
-#' `chol`, `svd` and `chol_crossprod` routes, so a design of less than full
+#' `chol` and `svd` routes, so a design of less than full
 #' rank left every coordinate unnamed and [vcov.StatmodFit()] refused the
 #' whole matrix. The question a pivot answers is asked here instead, on the
 #' matrix `vcov()` inverts anyway, so the two cannot disagree about which

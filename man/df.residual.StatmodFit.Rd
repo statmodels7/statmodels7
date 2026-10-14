@@ -2,7 +2,7 @@
 % Please edit documentation in R/accessors.R
 \name{df.residual.StatmodFit}
 \alias{df.residual.StatmodFit}
-\title{What a Fit Leaves Unspent}
+\title{Residual Degrees of Freedom of a Fitted Model}
 \usage{
 \method{df.residual}{StatmodFit}(object, ...)
 }
@@ -13,18 +13,19 @@
 }
 \value{
 A single number, \code{nobs(object)} less the total effective degrees
-of freedom. Not an integer in general, and \code{NA} for a model whose
-degrees of freedom could not be counted.
+of freedom. Not an integer in general. Where the effective degrees of
+freedom of a term could not be computed, \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} uses the
+number of coefficients of that term (the number of free parameters, for a
+structural term) in its place, so the result is always a number.
 }
 \description{
-The observation count less the effective degrees of freedom the model
-spent.
+The observation count less the effective degrees of freedom of the model.
 }
 \details{
-The count subtracted is the effective one, the trace of the model's
-smoother. A penalized block spends less than the number of coefficients it
-carries, which is the whole reason a smoothing parameter is estimated at
-all, so the result is not an integer.
+The count subtracted is the effective one, the sum over the terms of their
+effective degrees of freedom, as \code{\link[=logLik.StatmodFit]{logLik.StatmodFit()}} reports it. A
+penalized block has fewer effective degrees of freedom than the number of
+coefficients it carries, so the result is not an integer in general.
 }
 \examples{
 set.seed(1)

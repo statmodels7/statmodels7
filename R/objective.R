@@ -29,10 +29,15 @@ NULL
 #' with \eqn{o_k} the equation's offset and \eqn{a_k} the adjustment a
 #' refreshable term contributes, zero for an ordinary design.
 #'
-#' The inverse link clamps \eqn{\theta_k} strictly inside its own open
-#' bounds, so a predictor far out on the link scale gives a parameter a
-#' density can be evaluated at. A structural term of the filter shape adds
-#' its level to \eqn{\eta_k} before the link is inverted.
+#' The inverse link is evaluated by `linkfunctions7::linkinv()`. The links
+#' onto a bounded interval keep the result within the bounds of the parameter,
+#' at or next to a bound for a predictor far out on the link scale, so that a
+#' density can still be evaluated. The `inverse` link is an exception: a
+#' negative predictor gives a negative parameter.
+#'
+#' A structural term of the filter shape adds its level to \eqn{\eta_k}
+#' before the link is inverted. A term whose contribution is a likelihood
+#' mixed over latent states reports the posterior-weighted predictor.
 #'
 #' @param spec A [StatmodSpec()], read for the distribution, its links, the
 #'   offsets and the sample size.
@@ -41,13 +46,19 @@ NULL
 #' @param coef A named list of coefficient vectors, one per distribution
 #'   parameter, each as long as its equation's design is wide.
 #'
-#' @return A list of two named lists, each with one entry per distribution
-#'   parameter in the family's order:
+#' @return A list with the elements
 #'   \describe{
-#'     \item{`eta`}{the linear predictors, numeric vectors of length
-#'       `spec@n_obs`.}
-#'     \item{`theta`}{the parameters they imply, the same shape, each
-#'       strictly inside its parameter's bounds.}
+#'     \item{`eta`}{a named list of the linear predictors, one numeric vector
+#'       of length `spec@n_obs` per distribution parameter in the family's
+#'       order.}
+#'     \item{`theta`}{the parameters that the predictors imply, in the same
+#'       shape.}
+#'     \item{`filters`}{the runs of the filter-shaped structural term, an
+#'       empty list when the model has none.}
+#'     \item{`regimes`}{the latent-state structure of a term of the likelihood
+#'       shape, an empty list when the model has none.}
+#'     \item{`eta_static`}{present only when the model carries a structural
+#'       term: the predictors before the term's level is added.}
 #'   }
 #'
 #' @seealso [statmod_loglik_at()] and [statmod_score_at()], which read this,
@@ -139,6 +150,10 @@ statmod_eta <- function(spec, design, coef) {
 #' gives the other half of the objective, and [statmod_objective()] combines
 #' them.
 #'
+#' For a model with a term of the likelihood shape, a mixture over latent
+#' states, the log-likelihood of the term replaces the sum of the log-densities
+#' at the observations.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors, one per distribution
 #'   parameter.
@@ -183,13 +198,15 @@ statmod_loglik_at <- function(spec, coef, design = statmod_design(spec)) {
 #' already chained onto that scale.
 #'
 #' @details
-#' This is the score of the likelihood alone, with no penalty in it, and it
-#' is the gradient of a model whose design is fixed.
-#'
-#' A model carrying a structural term needs a correction that is not here:
-#' the term's level is driven by scores read at earlier predictors, so a
-#' coefficient reaches it through the recursion. [statmod_structural_score()]
-#' and `modelterms7::term_adjoint()` supply that.
+#' This is the score of the likelihood with no penalty in it. The vectors
+#' \eqn{g_k} are those of [statmod_score_obs()], which already contain the
+#' contribution of a structural term. Where a filter drives an equation, a
+#' coefficient also reaches the filter's level through the scores at earlier
+#' times, and the reverse recursion of `modelterms7::term_adjoint()` adds that
+#' part. Where the likelihood is a mixture over latent states, the score is
+#' the posterior-weighted average of the ordinary scores. The score in the
+#' parameters of a structural term itself is returned by
+#' [statmod_structural_score()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
@@ -348,6 +365,10 @@ statmod_score_obs <- function(spec, coef, design) {
 #' coefficients of the equations, where a coefficient reaches the level only
 #' through the scores at earlier times. That is `modelterms7::term_adjoint()`.
 #'
+#' For a term of the likelihood shape, a mixture over latent states, the
+#' derivative is the Jacobian of the term's log-likelihood in its parameters,
+#' weighted by the observation weights.
+#'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
 #' @param design The design, whose structural state holds each term's current
@@ -403,18 +424,15 @@ statmod_structural_score <- function(spec, coef,
 #' The Family's Second-Derivative Components at a Point
 #'
 #' @description
-#' Asks the distribution for its Hessian, or for its expected information,
-#' on the link scale at one value of the parameters.
+#' Computes the Hessian of the distribution, or its expected information, on
+#' the link scale at one value of the parameters.
 #'
 #' @details
-#' Written once because two routes read it at the same point. [iwls_pieces()]
-#' builds a square-root decomposition out of the per-observation blocks and
-#' falls back to the assembled information when that decomposition cannot be
-#' formed, and both of those used to ask the family themselves. Where the
-#' expected information IS the outer product of scores the per-observation
-#' block is rank one, so the square-root route is abandoned at every point
-#' and the work done for it was thrown away; passing the components down
-#' instead of recomputing them is what stops that.
+#' The components are computed in one place because several routes read them
+#' at the same point. [iwls_pieces()] builds a square-root decomposition from
+#' the per-observation blocks and uses the assembled information when that
+#' decomposition cannot be formed. Both routes receive the components computed
+#' here, so the family is evaluated once per point.
 #'
 #' @param spec The specification, read for the distribution, the response and
 #'   the thread count.
@@ -426,9 +444,12 @@ statmod_structural_score <- function(spec, coef,
 #'   [distributions7::distrib_expected_hessian()].
 #'
 #' @return The named list of second-derivative components on the link scale,
-#'   as [distributions7::distrib_hessian()] returns it.
+#'   as [distributions7::distrib_expected_hessian()] returns it when
+#'   `expected` is `TRUE` and as [distributions7::distrib_hessian()]
+#'   otherwise.
 #'
-#' @seealso [statmod_information_at()] and [info_blocks()], its two readers.
+#' @seealso [statmod_information_at()], [info_blocks()], [iwls_pieces()] and
+#'   [coord_working()], which read it.
 #'
 #' @keywords internal
 statmod_family_hessian <- function(spec, theta, expected = TRUE,
@@ -467,8 +488,14 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' has no closed expected information.
 #'
 #' With `index` only the requested columns of each design enter a cross
-#' product, so a caller that reads a few rows and columns does not pay for
+#' product, so that reading a few rows and columns does not require
 #' \eqn{X'WX} over every coefficient.
+#'
+#' For a likelihood mixed over latent states the matrix is the complete-data
+#' information, the ordinary information averaged over the smoothed states.
+#' It is positive definite and serves as a scoring matrix, and it is not the
+#' observed information of the mixture. The variance of a fit comes from
+#' [statmod_regime_information()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
@@ -476,7 +503,8 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #' @param expected `TRUE` for the expected information, `FALSE` for the
 #'   negated observed Hessian.
 #' @param approx How the expected information is approximated for a family
-#'   with no closed form: `"bartlett"`, `"integrate"` or `"mc"`.
+#'   with no closed form: `"opg"` (the default), `"bartlett"`, `"integrate"`
+#'   or `"mc"`.
 #'
 #' @return A symmetric `p x p` matrix over the stacked coefficients, `p`
 #'   being their total count across the equations. A \pkg{Matrix} object when
@@ -487,7 +515,7 @@ statmod_family_hessian <- function(spec, theta, expected = TRUE,
 #'   instead, and [statmod_family_hessian()] for the components both read.
 #'
 #' @param H The second-derivative components at this point, as
-#'   [statmod_family_hessian()] returns them, or `NULL` to ask for them.
+#'   [statmod_family_hessian()] returns them, or `NULL` to compute them here.
 #'   A mixture over regimes reads a different set per component and
 #'   ignores this.
 #' @param index `NULL` for the whole matrix, or integer positions in the
@@ -570,7 +598,7 @@ statmod_information_at <- function(spec, coef, design = statmod_design(spec),
 #' @param design The design, already refreshed at the coefficients.
 #' @param ev What [statmod_eta()] returns at the coefficients.
 #' @param expected,approx As in [statmod_information_at()].
-#' @param H The second-derivative components, or `NULL` to ask for them.
+#' @param H The second-derivative components, or `NULL` to compute them here.
 #' @param index Integer positions in the stacked coefficients.
 #'
 #' @return A symmetric matrix over `index`, in that order: a \pkg{Matrix}
@@ -725,10 +753,9 @@ regime_hessian_sum <- function(spec, ev, expected, approx) {
 #' @details
 #' The key is built by pasting the two parameter names in the order
 #' [distributions7::hess_names()] uses, and is never parsed back out of a
-#' name. That is the discipline \pkg{distributions7} records for a family
-#' whose parameter name contains the separator: splitting `"log_scale_mu"` on
-#' the underscore gives the wrong pair, while generating the name from the
-#' same enumeration that generated the list cannot.
+#' name. For a family whose parameter name contains the separator, splitting
+#' `"log_scale_mu"` on the underscore gives the wrong pair, whereas generating
+#' the name from the same enumeration that generated the list cannot.
 #'
 #' @param params The parameter names, in the family's order, as
 #'   `distrib@params` gives them.
@@ -759,15 +786,25 @@ hess_key <- function(params, a, b) {
 #' and Hessian placed in the columns that term owns.
 #'
 #' @details
-#' Each penalized term is asked for the quantity at its own coefficients and
-#' its own hyperparameters, and the answer is placed in the columns that term
-#' owns. A term declaring several penalties, each over a subset of its
-#' coefficients, contributes each one at its own coordinates.
+#' For each penalized term the function evaluates the quantity at the
+#' coefficients and the hyperparameters of that term and places the result in
+#' the columns that the term owns. A term declaring several penalties, each
+#' over a subset of its coefficients, contributes each one at its own
+#' coordinates. A covariance class that spans several equations is gathered
+#' from the stacked vector, and its gradient is scattered back to the
+#' equations that own the coordinates.
 #'
-#' The accumulator is a base matrix even where a penalty answers with a
-#' sparse Hessian, and the coercion is written once at that boundary. Making
-#' it the design's own kind was measured at 0.8x end to end against a blast
-#' radius of twenty-two consumers.
+#' The accumulator for the Hessian follows the design, by the rule of
+#' `zero_information()`: it is a sparse matrix where any equation's design is
+#' sparse and a base matrix otherwise. The Hessian of a penalty is added to a
+#' sparse accumulator as it is, and it is converted to a base matrix when the
+#' accumulator is a base matrix.
+#'
+#' A penalty over the parameters of a structural term enters the value only,
+#' and its derivatives are returned by [statmod_structural_penalty()]. A
+#' covariance class whose coordinates are partly coefficients and partly
+#' parameters of a structural term enters the value only, and its derivatives
+#' are placed in the joint vector by [joint_penalty_at()].
 #'
 #' @param spec A [StatmodSpec()].
 #' @param coef A named list of coefficient vectors.
@@ -782,13 +819,15 @@ hess_key <- function(params, a, b) {
 #'       unpenalized model.}
 #'     \item{`"gradient"`}{a named list of numeric vectors, one per
 #'       distribution parameter, zero in every unpenalized coordinate.}
-#'     \item{`"hessian"`}{a symmetric `p x p` base matrix over the stacked
-#'       coefficients, zero outside the penalized blocks.}
+#'     \item{`"hessian"`}{a symmetric `p x p` matrix over the stacked
+#'       coefficients, zero outside the penalized blocks: a \pkg{Matrix}
+#'       object when any equation's design is sparse, a base matrix
+#'       otherwise.}
 #'   }
 #'
 #' @seealso [statmod_loglik_at()] for the other half of the objective,
-#'   [statmod_structural_penalty()] for penalties over a structural term's
-#'   own parameters, which this does not cover.
+#'   [statmod_structural_penalty()] for the derivatives of penalties over a
+#'   structural term's own parameters, whose value this function includes.
 #'
 #' @keywords internal
 statmod_penalty_at <- function(spec, coef, hyper,
@@ -886,21 +925,19 @@ statmod_penalty_at <- function(spec, coef, hyper,
 #' The Penalty Over a Structural Term's Own Parameters
 #'
 #' @description
-#' The derivative of the penalties a structural term declares, in the term's
-#' own parameters, in place of the coefficients the other penalty function
-#' reads.
+#' The value, gradient or Hessian of the penalties that a structural term
+#' declares, in the term's own parameters. [statmod_penalty_at()] evaluates
+#' the penalties on the coefficients.
 #'
 #' @details
 #' The objective of the structural block includes these penalties through
-#' [statmod_penalty_at()], so its gradient must include their
-#' derivative: without it the two describe different functions, an optimizer
-#' walks until its budget runs out, and `optimizers7`'s own check reports
-#' that the objective changes at a rate the gradient does not predict.
+#' [statmod_penalty_at()], so that its gradient has to include their
+#' derivative. Without it the objective and its gradient describe different
+#' functions, and the gradient check of \pkg{optimizers7} reports that the
+#' objective changes at a rate that the gradient does not predict.
 #'
-#' The penalty is read on the **unconstrained scale**, which is where the
-#' term carries its parameters and where a deviation from a population value
-#' is defined. For a deviation, whose link is the identity, the two scales
-#' coincide.
+#' The penalty is read on the unconstrained scale, which is the scale on which
+#' the term carries its parameters.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design, whose structural state holds each term's current
@@ -957,31 +994,32 @@ statmod_structural_penalty <- function(spec, design, hyper,
 #' The Hyperparameters a Specification Starts From
 #'
 #' @description
-#' Builds the hyperparameter structure a fit begins from: one entry per
-#' penalized term, each at the midpoint of its own bounds. That is the probe
-#' rule \pkg{modelterms7} already uses when it reads a penalty's kinks, so
-#' the two layers start a penalty at the same place.
+#' Builds the hyperparameter structure that a fit starts from: one entry per
+#' penalized term, each hyperparameter at the value given by
+#' [penalty_theta_start()]. That value is the probe value that
+#' \pkg{modelterms7} uses when it reads the kinks of a penalty, so that both
+#' layers start a penalty at the same place.
 #'
 #' @details
-#' A hyperparameter the term holds keeps the held value instead of the probe.
-#' Which ones those are is said by the term and by nothing else, through
-#' `modelterms7::term_hyper()`.
+#' A hyperparameter that its term holds takes the value that the term
+#' carries. A value held on one member of a group of terms that share a
+#' hyperparameter through a common label applies to every member of the group.
 #'
-#' The probe is a placeholder. Every hyperparameter left
-#' `NULL` on its term is estimated afterwards, by a marginal criterion or
-#' along a path.
+#' The start value is a placeholder. Every hyperparameter that is `NULL` on
+#' its term is estimated afterwards, by a marginal criterion or along a path.
 #'
 #' @param spec A [StatmodSpec()], whose terms are walked equation by
 #'   equation.
+#' @param design The design, as [statmod_design()] returns it. It is built
+#'   from `spec` when `NULL`.
 #'
 #' @return A named list with one entry per distribution parameter, each a
 #'   named list of numeric vectors keyed by term key, each vector named by
 #'   that penalty's own hyperparameters. An equation with no penalized term
 #'   holds an empty list.
 #'
-#' @seealso [penalty_theta_start()] for one penalty's midpoints,
-#'   [statmod_hyper_merge()] for a caller's overrides,
-#'   [statmod_held()] for which are held.
+#' @seealso [penalty_theta_start()] for the start values of one penalty,
+#'   [statmod_held()] for the hyperparameters that are held.
 #'
 #' @keywords internal
 statmod_hyper_start <- function(spec, design = NULL) {
@@ -1018,9 +1056,9 @@ statmod_hyper_start <- function(spec, design = NULL) {
 #'
 #' @details
 #' The members of a group estimate one value, so a value written on one of
-#' them is the group's. Two members held at DIFFERENT values are a
-#' contradiction rather than a preference between them, and are rejected here,
-#' at the one place both are visible.
+#' them is the value of the group. Two members held at different values
+#' contradict each other, and the function signals an error that names both
+#' terms.
 #'
 #' @param units The penalized units, as [statmod_penalized()] returns them.
 #'
@@ -1053,26 +1091,26 @@ statmod_held_ids <- function(units) {
 #' Override the Starting Hyperparameters
 #'
 #' @description
-#' Merges a caller's hyperparameters into the ones
-#' [statmod_hyper_start()] computed, by parameter and by term.
+#' Merges a table of hyperparameter values, keyed by distribution parameter
+#' and by term, into the structure that [statmod_hyper_start()] returns.
 #'
 #' @details
-#' Until an outer criterion estimates it, a hyperparameter sits at the probe
-#' value, which is a placeholder: a lasso at \eqn{\lambda = 1} against an
-#' unaveraged log-likelihood over a few hundred observations selects
-#' everything. This is the route by which a caller sets it instead.
+#' [statmod()] does not call this function. It has no `hyper` argument, and a
+#' hyperparameter is held in the term that carries the penalty, for example
+#' `lasso(x, lambda = 3)`. The function is kept for code that builds a
+#' hyperparameter structure by hand.
 #'
 #' A vector is matched by name against the penalty's own hyperparameters, so
 #' `c(lambda = 5)` sets that one and leaves the rest. An unnamed vector of
 #' the full length replaces them all.
 #'
-#' A term may be named either by the key the specification holds it under,
-#' which is its call deparsed, or by its `label`: `"lasso"` in place of
-#' `"lasso(~noise1 + noise2)"`. Where two terms share a label the request is
-#' ambiguous and the keys are asked for.
+#' A term may be named either by the key under which the specification holds
+#' it, which is its deparsed call, or by its `label`: `"lasso"` in place of
+#' `"lasso(~noise1 + noise2)"`. Where two terms share a label the name is
+#' ambiguous, and the function signals an error that lists the keys.
 #'
 #' @param spec A [StatmodSpec()].
-#' @param start The hyperparameters as [statmod_hyper_start()] computed them.
+#' @param start The hyperparameters as [statmod_hyper_start()] returns them.
 #' @param user A named list of named lists, keyed by distribution parameter
 #'   and then by term, or `NULL` for no overrides.
 #'
@@ -1086,19 +1124,19 @@ statmod_held_ids <- function(units) {
 statmod_hyper_merge <- function(spec, start, user) {
   if (is.null(user)) return(start)
   if (!is.list(user) || is.null(names(user))) {
-    stop("'hyper' must be a named list, one entry per distribution parameter.",
+    stop("'user' must be a named list, one entry per distribution parameter.",
          call. = FALSE)
   }
   bad <- setdiff(names(user), names(start))
   if (length(bad)) {
-    stop(sprintf(paste0("'hyper' names '%s', which is not a parameter.\n",
+    stop(sprintf(paste0("'user' names '%s', which is not a parameter.\n",
                         "  They are: %s."),
                  bad[1L], paste(names(start), collapse = ", ")), call. = FALSE)
   }
   for (p in names(user)) {
     u <- user[[p]]
     if (!is.list(u) || is.null(names(u))) {
-      stop(sprintf(paste0("'hyper$%s' must be a named list, one entry per\n",
+      stop(sprintf(paste0("'user$%s' must be a named list, one entry per\n",
                           "  penalized term. This one has: %s."),
                    p, paste(names(start[[p]]), collapse = ", ")),
            call. = FALSE)
@@ -1112,7 +1150,7 @@ statmod_hyper_merge <- function(spec, start, user) {
       if (!is.null(names(v))) {
         miss <- setdiff(names(v), names(cur))
         if (length(miss)) {
-          stop(sprintf(paste0("'hyper$%s$%s' names '%s'. That penalty's\n",
+          stop(sprintf(paste0("'user$%s$%s' names '%s'. That penalty's\n",
                               "  hyperparameters are: %s."),
                        p, nm, miss[1L], paste(names(cur), collapse = ", ")),
                call. = FALSE)
@@ -1120,7 +1158,7 @@ statmod_hyper_merge <- function(spec, start, user) {
         cur[names(v)] <- as.numeric(v)
       } else {
         if (length(v) != length(cur)) {
-          stop(sprintf(paste0("'hyper$%s$%s' has length %d but that penalty",
+          stop(sprintf(paste0("'user$%s$%s' has length %d but that penalty",
                               " has %d\n  hyperparameters: %s."),
                        p, nm, length(v), length(cur),
                        paste(names(cur), collapse = ", ")), call. = FALSE)
@@ -1137,17 +1175,16 @@ statmod_hyper_merge <- function(spec, start, user) {
 #' Resolve a Term's Name Against a Specification
 #'
 #' @description
-#' Turns the name a caller used into the key the specification holds the term
-#' under, accepting either that key or the term's `label`.
+#' Returns the key under which the specification holds a term, given either
+#' that key or the `label` of the term. [statmod_hyper_merge()] is the only
+#' caller, and [statmod()] does not use it.
 #'
 #' @details
 #' A specification keys its terms by the call as written, so a lasso is
-#' `"lasso(~noise1 + noise2)"`. The call is what distinguishes two lassos on
-#' different covariates, and it is also nothing anybody wants to type. The
-#' `label` the term constructor carries is the short form, `"lasso"`, and
-#' both are accepted here. Where two terms share a label the request is
-#' ambiguous and the keys are asked for, guessing having a fair chance of
-#' setting a hyperparameter on the wrong block.
+#' `"lasso(~noise1 + noise2)"`. The call distinguishes two lassos on different
+#' covariates. The `label` of a term is a shorter name, `"lasso"`, and both
+#' are accepted. Where two terms share a label the name is ambiguous, and the
+#' function signals an error that lists the keys.
 #'
 #' @param spec A [StatmodSpec()], read for the terms' labels.
 #' @param start The hyperparameter structure, whose names are the keys.
@@ -1171,12 +1208,12 @@ hyper_key <- function(spec, start, p, name) {
   hit <- keys[labels == name]
   if (length(hit) == 1L) return(hit)
   if (length(hit) > 1L) {
-    stop(sprintf(paste0("'hyper$%s$%s' is ambiguous: %d terms of '%s' carry",
+    stop(sprintf(paste0("'user$%s$%s' is ambiguous: %d terms of '%s' carry",
                         " that label.\n  Name one of them: %s."),
                  p, name, length(hit), p, paste(hit, collapse = ", ")),
          call. = FALSE)
   }
-  stop(sprintf(paste0("'hyper$%s$%s' names no penalized term of '%s'.\n",
+  stop(sprintf(paste0("'user$%s$%s' names no penalized term of '%s'.\n",
                       "  The penalized terms there are: %s."),
                p, name, p,
                if (length(keys)) paste(keys, collapse = ", ") else "none"),
@@ -1197,33 +1234,31 @@ hyper_key <- function(spec, start, p, name) {
 #' - unbounded on both sides: 0, whatever `unit` is.
 #'
 #' @details
-#' One is the scale a smoothing parameter lives on before anything is known
-#' about it, and that is an argument about a hyperparameter bounded below,
-#' which lives on \eqn{(0, \infty)} and for which one is a scale. A coordinate
-#' unbounded on both sides is not such a thing: it is a free coordinate of a
-#' \pkg{parameters7} chart, and there one is not one. On `dr_prod(2)` it reads
-#' as standard deviations of \eqn{e^1 = 2.718} and a correlation of -0.664,
-#' where zero is the chart's neutral point -- unit standard deviations and no
-#' correlation -- which is where an ordinary random effect starts, its own
-#' scale being bounded below and starting at `lower + 1`.
+#' A hyperparameter bounded below lives on \eqn{(0, \infty)} when the lower
+#' bound is zero, and a start of one is a scale on that range. A coordinate
+#' that is unbounded on both sides is a free coordinate of a
+#' \pkg{parameters7} chart, and for a chart the value one has no such meaning:
+#' on `dr_prod(2)` it gives standard deviations of \eqn{e^1 = 2.718} and a
+#' correlation of -0.664. Zero is the neutral point of the chart, with unit
+#' standard deviations and no correlation, so that a coordinate unbounded on
+#' both sides starts at zero. This is also where an ordinary random effect
+#' starts, because its own scale is bounded below and starts at `lower + 1`.
 #'
-#' The value matters only as somewhere to begin: it is a probe, and the
-#' criterion moves it at the first opportunity. What it can do is leave the
-#' inner fit somewhere it cannot converge from, and measured it did: over 22
-#' models across the four charts a caller can reach -- `log_cholesky`,
-#' `dr_prod`, `ar1` and `compound_symmetry` -- the two starting points give
-#' criteria agreeing to 3e-05 or better wherever both finish, and three models
-#' finish from the neutral point that do not finish from one. A hyperparameter
-#' with a finite bound is untouched, so a ridge, a smooth and an ordinary
-#' random effect all begin exactly where they did.
+#' The value is a starting point only, and the criterion moves it. A start
+#' that the inner fit cannot converge from can end the search, and the
+#' neutral point of an unbounded coordinate converges in cases where a start
+#' at one does not. A hyperparameter bounded on both sides starts at the
+#' midpoint of its bounds, and one bounded on one side starts one `unit`
+#' inside the bound. The smoothing parameter of a smooth, the precision of a
+#' ridge, the penalty of a lasso and the scale of an ordinary random effect
+#' are bounded below by zero and start at one.
 #'
 #' @param pen A \pkg{penalties7} penalty object, read for its
 #'   `params_bounds` property alone.
 #' @param unit How far from a one-sided bound the neutral point sits, `1` by
-#'   default. A simulation drawing a prior over coordinates that ride a chart
-#'   passes a half: measured, a scale of 1 puts 10.1 per cent of the
-#'   persistences a partial-autocorrelation chart carries past 0.95 and a
-#'   scale of 0.5 puts 0.9 per cent there.
+#'   default. A simulation that draws a prior over the coordinates of a chart
+#'   may pass a smaller value, which keeps the persistences drawn on a
+#'   partial-autocorrelation chart away from the edge of the chart.
 #'
 #' @return A named numeric vector, one entry per hyperparameter of `pen`,
 #'   named as the penalty names them. `numeric(0)` for a penalty with none,
@@ -1261,11 +1296,12 @@ penalty_theta_start <- function(pen, unit = 1) {
 #' What is scaled instead is the stopping rule, in the one place it is read.
 #' See [iwls()] and [iwls_score()].
 #'
-#' # The five closures share one design
+#' # The closures share one design
 #'
-#' All five close over `design`, `hyper` and the two information settings, so
-#' a caller who changes a hyperparameter builds a new objective. That is what
-#' the outer search does at every point it visits.
+#' The functions `fn`, `gr`, `gr_sub` and `he` close over `design` and
+#' `hyper`, and `he` also over the two information settings, so that a
+#' change of a hyperparameter requires a new objective. The outer search
+#' builds a new objective at every point that it visits.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param hyper The hyperparameters, per penalized term, held for the life of
@@ -1276,12 +1312,17 @@ penalty_theta_start <- function(pen, unit = 1) {
 #' @param approx How the expected information is approximated for a family
 #'   with no closed form.
 #'
-#' @return A list of five functions:
+#' @return A list with the elements
 #'   \describe{
+#'     \item{`npar`}{the number of coefficients of each equation, an integer
+#'       vector.}
 #'     \item{`fn(b)`}{the objective at the stacked coefficients `b`, a single
 #'       number.}
 #'     \item{`gr(b)`}{its gradient, a numeric vector as long as `b`.}
-#'     \item{`he(b)`}{its Hessian, a `p x p` matrix.}
+#'     \item{`gr_sub(b, idx)`}{the gradient at the positions `idx` alone.}
+#'     \item{`he(b)`}{its Hessian, the information matrix (expected or
+#'       observed according to `expected`) plus the Hessian of the penalties,
+#'       a `p x p` matrix.}
 #'     \item{`split(b)`}{the stacked vector as a named list, one entry per
 #'       distribution parameter.}
 #'     \item{`stack(l)`}{the inverse of `split`.}
@@ -1361,29 +1402,29 @@ statmod_objective <- function(spec, hyper, design = statmod_design(spec),
 #' joint vector \eqn{[\beta; \zeta_{\mathrm{free}}]}.
 #'
 #' @details
-#' # Why one function and not two halves
+#' # One function for both parts
 #'
-#' A class's prior is one object over one stacked vector. \pkg{penalties7}
-#' computes one gradient and one Hessian over that vector, in the class's own
-#' order, and knows nothing of the split -- to it these are \eqn{m} blocks of
-#' \eqn{d} numbers with a covariance in common. Splitting the answer into a
-#' coefficient half and a parameter half would report each as though the other
-#' were not there, and would lose the CROSS block entirely, which is the only
-#' place the correlation between the two enters at all.
+#' The prior of a class is one object over one stacked vector. \pkg{penalties7}
+#' computes one gradient and one Hessian over that vector, in the order of the
+#' class, and has no notion of the split: it treats the coordinates as \eqn{m}
+#' blocks of \eqn{d} numbers with a covariance in common. Splitting the result
+#' into a coefficient part and a parameter part would report each as though
+#' the other were absent and would lose the cross block, the only place where
+#' the correlation between the two enters.
 #'
-#' So the scatter is written once and the three assemblies that build the joint
-#' matrix add what it returns: the inner step
+#' The scatter is therefore written once, and the three assemblies that build
+#' the joint matrix add what it returns: the inner step
 #' ([statmod_fit_joint()]), the marginal criterion
 #' ([statmod_marginal_full()]) and the variance
 #' ([vcov.StatmodFit()]). [statmod_penalty_at()] and
 #' [statmod_structural_penalty()] skip a mixed class for the same reason.
 #'
-#' # Where the values come from
+#' # Source of the values
 #'
-#' Each coordinate is read where it lives -- a coefficient from `coef`, a
-#' filter parameter from the design's structural state -- and assembled in the
-#' class's own order, which `joint` on the unit already records. The result is
-#' written back at those same positions, so no ordering is composed twice.
+#' Each coordinate is read where it is stored (a coefficient from `coef`, a
+#' filter parameter from the structural state of the design) and assembled in
+#' the order of the class, which `joint` on the unit records. The result is
+#' written back at the same positions, so that the ordering is composed once.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1444,7 +1485,8 @@ joint_penalty_at <- function(spec, design, coef, hyper,
 #'
 #' @description
 #' Computes \eqn{X\beta} reading only the columns whose coefficient is not
-#' zero, which after a lasso is most of a block.
+#' zero. After a lasso many coefficients of a block are exactly zero, and the
+#' corresponding columns are skipped.
 #'
 #' @details
 #' A term \eqn{0 \cdot x_{ij}} adds exactly zero to the running sum, so

@@ -25,25 +25,24 @@ Runs \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} on a
 did not name, and returns the specification unchanged for anything else.
 }
 \details{
-The objective has local optima in the break-points and the iteration
-converges from within a basin around where it starts, so where a run
-begins decides what it finds. Measured over eight samples and four
-starting positions on a joint jump and change of slope, the fraction of
-runs recovering the break-point is 0 to 0.5 from a single conventional
-start and 1 from the grid. The term's own default is a conventional
-start: the interior quantiles of the covariate, which look at the
-covariate and never at the response.
+The objective has local optima in the break-points, and the iteration
+converges from within a basin around its starting position, so the start
+decides which optimum is found. The term's own default is a conventional
+start, the interior quantiles of the covariate, which depend on the
+covariate and not on the response. Scoring a grid of candidate positions on
+the response gives a start in the basin of the best fit of the linear part.
 
-The rule costs \code{k} linear fits and is exact for a gaussian response, so it
-places a starting value and does not fit. Two consequences follow, and
-both are deliberate. It is applied whatever equation the term sits in,
-the response being what there is to score against even where the term
-develops a scale. And it is skipped where the response is not plain
-numbers, a censored one or a matrix, instead of being given a reading of
-its own.
+\code{\link[modelterms7:seg_start]{modelterms7::seg_start()}} performs one linear fit for each increasing
+combination of \code{npsi} points of a grid of ten, \code{choose(10, npsi)} fits
+in all. The score is exact for a gaussian response, so the rule places a
+starting value and does not fit. The rule is applied whatever equation the
+term sits in, the response being what there is to score against even where
+the term develops a scale. It is skipped where the response is not plain
+numbers (a censored one, a matrix or one with missing values), because
+those have no reading here.
 
-A caller who names \code{psi} has said where to begin and is left alone, which
-is also how the grid is turned off.
+A term whose \code{psi} the caller names keeps it, and naming \code{psi} is also how
+the grid is turned off.
 }
 \seealso{
 \code{\link[modelterms7:seg_start]{modelterms7::seg_start()}},

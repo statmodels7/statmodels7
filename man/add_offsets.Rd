@@ -11,8 +11,10 @@ add_offsets(a, b)
 either list's entries possibly \code{NULL}. Either list may itself be \code{NULL}.}
 }
 \value{
-A named list with one entry per parameter named in either input,
-\code{NULL} where neither supplied one.
+\code{a} with each entry summed with the entry of \code{b} for the same
+parameter where both are present, and replaced by \code{b}'s where only \code{b}
+names one. A parameter named only in \code{b} is not added, and the result is
+\code{NULL} when \code{a} is.
 }
 \description{
 Combines the offsets a formula names with those the \code{offsets} argument

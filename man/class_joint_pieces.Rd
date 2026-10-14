@@ -16,8 +16,10 @@ class_joint_pieces(cl, design, params, offs)
 \item{offs}{Where each parameter's coefficients start in the stacked vector.}
 }
 \value{
-A list of lists, one per member, each the piece with \code{joint} added
-and, for a coefficient member, \code{cols} and \code{index}.
+A list of lists, one per member, each the piece with \code{joint} added.
+A coefficient member also gets \code{cols} and \code{index}. A structural member
+gets \code{zcols} (positions among the term's own parameters) and has \code{cols}
+and \code{index} set to \code{NULL}.
 }
 \description{
 One entry per member of a class split between the design's coefficients and
@@ -33,16 +35,17 @@ whichever a linear intercept already carries.
 
 A coefficient member's positions are its parameter's offset plus its
 columns, exactly as \code{\link[=class_pieces]{class_pieces()}} gives them. A structural member's are
-\code{nb} plus its place among the FREE parameters, which is not its place among
+\code{nb} plus its place among the free parameters, which is not its place among
 all of them: a held one is not in the joint vector at all.
 }
 \section{A held coordinate cannot be in a class}{
 The prior's dimension is fixed when the class is assembled, from the members'
-widths. If one of the coordinates it collects is then held -- the level of a
+widths. If one of the coordinates it collects is then held (the level of a
 filter is, wherever a linear intercept in the same equation already carries
-the constant -- the class has fewer coordinates than its prior describes and
-there is no honest matrix to estimate. It is rejected here, where the held
-set is visible, naming the coordinate and the two ways out.
+the constant), the class has fewer coordinates than its prior describes and
+there is no covariance matrix of the prior's dimension to estimate. It is
+rejected here, where the held set is visible, naming the coordinate and the
+two ways out.
 }
 
 \seealso{

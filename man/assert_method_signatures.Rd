@@ -19,10 +19,10 @@ derivative, whose formals have no \code{...}.
 }
 \details{
 \code{\link[=statmod]{statmod()}} passes further arguments to these methods, the number of
-threads among them, and a method without \code{...} stopped with "unused
-argument (threads = 1)" from inside the fit. The derivative methods also
-take \code{scale}, which the generic resolves and passes on. The methods of the
-families shipped with \pkg{distributions7} all carry \code{...}; a family
-written by a user is where this is met, and where the message is read.
+threads among them, and a method without \code{...} fails from inside the fit
+with "unused argument (threads = 1)". The derivative methods also take
+\code{scale}, which the generic resolves and passes on. The methods of the
+families shipped with \pkg{distributions7} all carry \code{...}, so the error
+arises for a family written by a user.
 }
 \keyword{internal}

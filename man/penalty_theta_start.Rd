@@ -11,10 +11,9 @@ penalty_theta_start(pen, unit = 1)
 \code{params_bounds} property alone.}
 
 \item{unit}{How far from a one-sided bound the neutral point sits, \code{1} by
-default. A simulation drawing a prior over coordinates that ride a chart
-passes a half: measured, a scale of 1 puts 10.1 per cent of the
-persistences a partial-autocorrelation chart carries past 0.95 and a
-scale of 0.5 puts 0.9 per cent there.}
+default. A simulation that draws a prior over the coordinates of a chart
+may pass a smaller value, which keeps the persistences drawn on a
+partial-autocorrelation chart away from the edge of the chart.}
 }
 \value{
 A named numeric vector, one entry per hyperparameter of \code{pen},
@@ -33,25 +32,24 @@ on \eqn{[0, \infty)} starts at 1 at the default \code{unit};
 }
 }
 \details{
-One is the scale a smoothing parameter lives on before anything is known
-about it, and that is an argument about a hyperparameter bounded below,
-which lives on \eqn{(0, \infty)} and for which one is a scale. A coordinate
-unbounded on both sides is not such a thing: it is a free coordinate of a
-\pkg{parameters7} chart, and there one is not one. On \code{dr_prod(2)} it reads
-as standard deviations of \eqn{e^1 = 2.718} and a correlation of -0.664,
-where zero is the chart's neutral point -- unit standard deviations and no
-correlation -- which is where an ordinary random effect starts, its own
-scale being bounded below and starting at \code{lower + 1}.
+A hyperparameter bounded below lives on \eqn{(0, \infty)} when the lower
+bound is zero, and a start of one is a scale on that range. A coordinate
+that is unbounded on both sides is a free coordinate of a
+\pkg{parameters7} chart, and for a chart the value one has no such meaning:
+on \code{dr_prod(2)} it gives standard deviations of \eqn{e^1 = 2.718} and a
+correlation of -0.664. Zero is the neutral point of the chart, with unit
+standard deviations and no correlation, so that a coordinate unbounded on
+both sides starts at zero. This is also where an ordinary random effect
+starts, because its own scale is bounded below and starts at \code{lower + 1}.
 
-The value matters only as somewhere to begin: it is a probe, and the
-criterion moves it at the first opportunity. What it can do is leave the
-inner fit somewhere it cannot converge from, and measured it did: over 22
-models across the four charts a caller can reach -- \code{log_cholesky},
-\code{dr_prod}, \code{ar1} and \code{compound_symmetry} -- the two starting points give
-criteria agreeing to 3e-05 or better wherever both finish, and three models
-finish from the neutral point that do not finish from one. A hyperparameter
-with a finite bound is untouched, so a ridge, a smooth and an ordinary
-random effect all begin exactly where they did.
+The value is a starting point only, and the criterion moves it. A start
+that the inner fit cannot converge from can end the search, and the
+neutral point of an unbounded coordinate converges in cases where a start
+at one does not. A hyperparameter bounded on both sides starts at the
+midpoint of its bounds, and one bounded on one side starts one \code{unit}
+inside the bound. The smoothing parameter of a smooth, the precision of a
+ridge, the penalty of a lasso and the scale of an ordinary random effect
+are bounded below by zero and start at one.
 }
 \seealso{
 \code{\link[=statmod_hyper_start]{statmod_hyper_start()}}, its caller.

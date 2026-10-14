@@ -21,10 +21,10 @@ as both dimnames when \code{A} has them.
 }
 \description{
 Computes \eqn{A^\top A} for a square-root design, through the package's
-threaded kernel above the measured work threshold and through
-\code{crossprod(A)} everywhere else. This is what \code{fit_smooth()}'s subset route
-assembles at every scoring iteration: the design has already been scaled
-by the square root of the working weights, so no weight vector enters.
+threaded kernel above a work threshold and through
+\code{crossprod(A)} everywhere else. The argument is a design that has already
+been scaled by the square root of the working weights, so no weight vector
+enters.
 }
 \section{Symmetry, and independence of the thread count}{
 Only the upper triangle is accumulated: one thread owns column \eqn{k} and
@@ -40,16 +40,15 @@ and it accumulates in the same ascending row order, so the two routes
 agree to the last bit there. An optimized BLAS blocks its accumulations
 and agrees to the rounding of one dot product.
 
-A full \eqn{p^2} version was measured and is not what ships: it was no
-better than \code{dsyrk} at eight threads, so the second half of the work
-bought nothing.
+Only the upper triangle is computed, as \code{dsyrk} does, because computing all
+\eqn{p^2} entries gave no gain.
 }
 
 \section{When the kernel is used}{
 \code{threads > 1}, \code{A} a base dense matrix, and \eqn{n \times p^2} at least
-\code{2e5}. Note the \eqn{p^2}: this kernel writes \eqn{p^2} outputs where
-\code{\link[=xtv]{xtv()}} writes \eqn{p}, so a design wide enough to reach the threshold
-here can be too narrow to reach it there.
+\code{2e5}. This kernel writes \eqn{p^2} outputs where \code{\link[=xtv]{xtv()}} writes \eqn{p},
+so a design wide enough to reach the threshold here can be too narrow to
+reach it there.
 }
 
 \seealso{

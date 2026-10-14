@@ -10,16 +10,16 @@ start_strategy_class()
 The \code{start_strategy} S7 class object.
 }
 \description{
-Fetches the \code{\link[=start_strategy]{start_strategy()}} class object from the namespace at the
-moment it is asked for, so a membership test reads the class as it now
-exists.
+Returns the \code{\link[=start_strategy]{start_strategy()}} class object from the namespace at the time
+of the call, so that a membership test reads the class as it exists then.
 }
 \details{
 A class captured in a variable at build time makes such a test fail under
 \pkg{covr}, which re-evaluates a package's code and so re-creates the
 class. \code{S7::S7_inherits()} against the captured copy is then
 \code{FALSE} for an object of the live class. \code{distributions7} and
-\code{linkfunctions7} record the same trap.
+\code{linkfunctions7} document the same behavior of \code{identical()} on a class
+that has been re-created.
 }
 \seealso{
 \code{\link[=start_strategy]{start_strategy()}} for the class itself.

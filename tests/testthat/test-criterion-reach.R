@@ -37,7 +37,7 @@ test_that("a prediction-error criterion refuses a penalty over a filter's own pa
   expect_error(statmod(form, g1, dp, outer_criterion = bic()),
                "bic\\(\\) cannot select the hyperparameter 'sigma'.*Use reml\\(\\) or ml\\(\\)")
   expect_error(statmod(form, g1, dp, outer_criterion = cv()),
-               "cv\\(\\) cannot select the hyperparameter 'sigma'.*cross-validation sweeps a path")
+               "cv\\(\\) has nothing to select")
   # the route the message names is a fit
   f <- statmod(form, g1, dp)
   expect_true(is.finite(f@criterion))
@@ -51,7 +51,7 @@ test_that("a lasso over a filter's own parameters is refused by name rather than
   dp <- sim_filter_panel(7, 3L, 35L)
   form <- y ~ x + gas(p = 1, q = 1, omega ~ 0 + lasso(~id), by = id, time = t)
   expect_error(statmod(form, distributions7::gaussian1_distrib(), dp),
-               "bic\\(\\) cannot select the hyperparameter 'lambda'.*read a curvature the kink does not have")
+               "bic\\(\\) cannot select the hyperparameter 'lambda'.*read a curvature that does not exist at the kink")
 })
 
 test_that("the certificate says which case a fit without an outer gradient is", {

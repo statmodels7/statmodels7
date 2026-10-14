@@ -14,10 +14,16 @@ check_offsets(offsets, params, n)
 \item{n}{The number of observations.}
 }
 \value{
-A named list of length \code{length(params)}.
+A named list of length \code{length(params)}, each entry a numeric
+vector of length \code{n} or \code{NULL}.
 }
 \description{
 Returns a named list with one offset per parameter, \code{NULL} where none
 was given.
+}
+\details{
+An entry must be numeric, of length 1 or \code{n}, and finite everywhere, as
+an offset written in the formula must be; the names must be parameters of
+the distribution.
 }
 \keyword{internal}

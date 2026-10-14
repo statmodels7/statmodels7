@@ -21,17 +21,16 @@ Signals an error when \code{name} matches nothing, and when it matches the
 labels of two terms at once.
 }
 \description{
-Turns the name a caller used into the key the specification holds the term
-under, accepting either that key or the term's \code{label}.
+Returns the key under which the specification holds a term, given either
+that key or the \code{label} of the term. \code{\link[=statmod_hyper_merge]{statmod_hyper_merge()}} is the only
+caller, and \code{\link[=statmod]{statmod()}} does not use it.
 }
 \details{
 A specification keys its terms by the call as written, so a lasso is
-\code{"lasso(~noise1 + noise2)"}. The call is what distinguishes two lassos on
-different covariates, and it is also nothing anybody wants to type. The
-\code{label} the term constructor carries is the short form, \code{"lasso"}, and
-both are accepted here. Where two terms share a label the request is
-ambiguous and the keys are asked for, guessing having a fair chance of
-setting a hyperparameter on the wrong block.
+\code{"lasso(~noise1 + noise2)"}. The call distinguishes two lassos on different
+covariates. The \code{label} of a term is a shorter name, \code{"lasso"}, and both
+are accepted. Where two terms share a label the name is ambiguous, and the
+function signals an error that lists the keys.
 }
 \seealso{
 \code{\link[=statmod_hyper_merge]{statmod_hyper_merge()}}, its caller.

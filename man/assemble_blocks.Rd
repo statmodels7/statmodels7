@@ -14,8 +14,8 @@ and columns \code{b} for \code{b >= a}. Entries below the diagonal are not read.
 \code{\link[=design_sparse]{design_sparse()}} decides for the accumulator it replaces.}
 }
 \value{
-The assembled matrix, without dimnames: a \code{dgCMatrix} when
-\code{sparse} is \code{TRUE}, otherwise a base matrix.
+The assembled matrix, without dimnames: a \code{dgCMatrix} without
+stored zeros when \code{sparse} is \code{TRUE}, otherwise a base matrix.
 }
 \description{
 Binds a symmetric matrix out of the blocks on and above its block
@@ -24,11 +24,9 @@ diagonal, the ones below being the transposes of those above.
 \details{
 It replaces writing each block into a zero accumulator. With a sparse
 design that accumulator is a \code{dgCMatrix}, and a sub-assignment into it
-rebuilds the compressed columns every time: measured on a lasso over 200
-columns beside a random intercept over 500 groups, the three assignments
-of one information cost 0.07 s against 0.19 s for the products
-themselves. Binding the blocks once does no arithmetic on them, so the
-entries are the ones the products gave.
+rebuilds the compressed columns at every assignment. Binding the blocks
+once avoids that and does no arithmetic on them, so the entries are the
+ones the products gave.
 }
 \seealso{
 \code{\link[=zero_information]{zero_information()}}, the accumulator this replaces where every

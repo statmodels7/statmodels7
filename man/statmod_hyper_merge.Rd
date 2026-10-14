@@ -9,7 +9,7 @@ statmod_hyper_merge(spec, start, user)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}.}
 
-\item{start}{The hyperparameters as \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} computed them.}
+\item{start}{The hyperparameters as \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} returns them.}
 
 \item{user}{A named list of named lists, keyed by distribution parameter
 and then by term, or \code{NULL} for no overrides.}
@@ -19,23 +19,23 @@ The same structure as \code{start}, with the caller's values merged in.
 \code{start} unchanged when \code{user} is \code{NULL}.
 }
 \description{
-Merges a caller's hyperparameters into the ones
-\code{\link[=statmod_hyper_start]{statmod_hyper_start()}} computed, by parameter and by term.
+Merges a table of hyperparameter values, keyed by distribution parameter
+and by term, into the structure that \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} returns.
 }
 \details{
-Until an outer criterion estimates it, a hyperparameter sits at the probe
-value, which is a placeholder: a lasso at \eqn{\lambda = 1} against an
-unaveraged log-likelihood over a few hundred observations selects
-everything. This is the route by which a caller sets it instead.
+\code{\link[=statmod]{statmod()}} does not call this function. It has no \code{hyper} argument, and a
+hyperparameter is held in the term that carries the penalty, for example
+\code{lasso(x, lambda = 3)}. The function is kept for code that builds a
+hyperparameter structure by hand.
 
 A vector is matched by name against the penalty's own hyperparameters, so
 \code{c(lambda = 5)} sets that one and leaves the rest. An unnamed vector of
 the full length replaces them all.
 
-A term may be named either by the key the specification holds it under,
-which is its call deparsed, or by its \code{label}: \code{"lasso"} in place of
-\code{"lasso(~noise1 + noise2)"}. Where two terms share a label the request is
-ambiguous and the keys are asked for.
+A term may be named either by the key under which the specification holds
+it, which is its deparsed call, or by its \code{label}: \code{"lasso"} in place of
+\code{"lasso(~noise1 + noise2)"}. Where two terms share a label the name is
+ambiguous, and the function signals an error that lists the keys.
 }
 \seealso{
 \code{\link[=statmod_hyper_start]{statmod_hyper_start()}} for the structure,

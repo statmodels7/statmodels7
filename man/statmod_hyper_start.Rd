@@ -9,6 +9,9 @@ statmod_hyper_start(spec, design = NULL)
 \arguments{
 \item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}, whose terms are walked equation by
 equation.}
+
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it. It is built
+from \code{spec} when \code{NULL}.}
 }
 \value{
 A named list with one entry per distribution parameter, each a
@@ -17,23 +20,22 @@ that penalty's own hyperparameters. An equation with no penalized term
 holds an empty list.
 }
 \description{
-Builds the hyperparameter structure a fit begins from: one entry per
-penalized term, each at the midpoint of its own bounds. That is the probe
-rule \pkg{modelterms7} already uses when it reads a penalty's kinks, so
-the two layers start a penalty at the same place.
+Builds the hyperparameter structure that a fit starts from: one entry per
+penalized term, each hyperparameter at the value given by
+\code{\link[=penalty_theta_start]{penalty_theta_start()}}. That value is the probe value that
+\pkg{modelterms7} uses when it reads the kinks of a penalty, so that both
+layers start a penalty at the same place.
 }
 \details{
-A hyperparameter the term holds keeps the held value instead of the probe.
-Which ones those are is said by the term and by nothing else, through
-\code{modelterms7::term_hyper()}.
+A hyperparameter that its term holds takes the value that the term
+carries. A value held on one member of a group of terms that share a
+hyperparameter through a common label applies to every member of the group.
 
-The probe is a placeholder. Every hyperparameter left
-\code{NULL} on its term is estimated afterwards, by a marginal criterion or
-along a path.
+The start value is a placeholder. Every hyperparameter that is \code{NULL} on
+its term is estimated afterwards, by a marginal criterion or along a path.
 }
 \seealso{
-\code{\link[=penalty_theta_start]{penalty_theta_start()}} for one penalty's midpoints,
-\code{\link[=statmod_hyper_merge]{statmod_hyper_merge()}} for a caller's overrides,
-\code{\link[=statmod_held]{statmod_held()}} for which are held.
+\code{\link[=penalty_theta_start]{penalty_theta_start()}} for the start values of one penalty,
+\code{\link[=statmod_held]{statmod_held()}} for the hyperparameters that are held.
 }
 \keyword{internal}

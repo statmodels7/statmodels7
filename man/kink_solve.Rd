@@ -9,7 +9,8 @@ kink_solve(pen, theta, name, target)
 \arguments{
 \item{pen}{A \pkg{penalties7} penalty.}
 
-\item{theta}{The other hyperparameters.}
+\item{theta}{The hyperparameters in force; the value of \code{name} is where
+the search starts.}
 
 \item{name}{Which one to solve for.}
 
@@ -24,19 +25,17 @@ Solves \code{kink_scale(pen, theta) == target} in one named hyperparameter.
 \details{
 The size of the kink is monotone in such a hyperparameter but not
 necessarily increasing: a Laplace prior written by its scale has a kink of
-\eqn{1/\sigma}, which narrows as the hyperparameter grows. Which way to walk
-is therefore measured before walking, by comparing the size at the current
-value with the size at twice it, and only then is the root bracketed by
-doubling and found with \code{\link[stats:uniroot]{stats::uniroot()}}. A version that assumed
-the size increases returned \code{NA} for every target on the Laplace,
-having walked away from the answer.
+\eqn{1/\sigma}, which narrows as the hyperparameter grows. The direction of
+the walk is therefore measured before the root is bracketed, by comparing
+the size at the current value with the size at twice it. The root is then
+bracketed by doubling or halving and found with \code{\link[stats:uniroot]{stats::uniroot()}}.
 
-Where the size is a power of the hyperparameter, which every kinked
-penalty here turns out to be, the hyperparameter entering a separable
-penalty as a scale is, the inversion is closed and the search is not run at
-all. \code{\link[=kink_power]{kink_power()}} measures the exponent and the answer is
-checked against the size before it is returned, so a penalty that does not
-obey a power law falls back to the search and is never assumed into one.
+Where the size is a power of the hyperparameter, as it is for the shipped
+kinked penalties because the hyperparameter enters a separable penalty as a
+scale, the inversion is closed and the search is not run. \code{\link[=kink_power]{kink_power()}}
+measures the exponent and \code{\link[=kink_by_power]{kink_by_power()}} checks the answer against the
+size before it is returned, so that a penalty that does not obey a power
+law falls back to the search.
 }
 \seealso{
 \code{\link[=kink_power]{kink_power()}}, \code{\link[=path_values]{path_values()}}

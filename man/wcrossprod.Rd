@@ -7,8 +7,8 @@
 wcrossprod(A, w, B, threads = 1L)
 }
 \arguments{
-\item{A, B}{Dense design blocks with the same number of rows, \verb{n x pa} and
-\verb{n x pb}. Either may be sparse, in which case the \pkg{Matrix} route is
+\item{A, B}{Design blocks with the same number of rows, \verb{n x pa} and
+\verb{n x pb}. If either is not a base dense matrix, the sequential route is
 taken and the result is whatever \code{crossprod()} gives for that pair.}
 
 \item{w}{Per-observation weights, a numeric vector of length \code{n}. A weight
@@ -25,11 +25,11 @@ as its dimnames when either block carries them.
 }
 \description{
 Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product the
-information matrix and the outer Hessian are assembled from. Above a
-measured work threshold, and only when the caller asked for more than one
-thread, the work goes to the package's own threaded kernel. Everywhere
-else it evaluates \code{crossprod(A * w, B)}, which is the expression the
-kernel replaces.
+information matrix and the outer Hessian are assembled from. Above a work
+threshold, and only when more than one thread is requested, the work goes
+to the package's own threaded kernel. Everywhere else the function
+evaluates \code{crossprod(A * w, B)}, which is the expression the kernel
+replaces.
 }
 \section{Why the answer does not depend on the thread count}{
 The kernel splits the work over the \strong{elements of the output}: one thread
@@ -37,7 +37,7 @@ owns one entry \eqn{(j,k)} and accumulates its whole dot product, in
 ascending row order, with the weight multiplied onto \code{A}'s entry before
 the product is formed. No accumulation is ever split between threads, so
 the sum is the same sequence of additions at any count and the result is
-identical bit for bit at 1, 2 or 24 threads.
+identical bit for bit at any thread count.
 
 That guarantee is about the kernel alone. It says nothing about the two
 routes agreeing with each other: engaging the kernel replaces a BLAS call,
@@ -47,20 +47,17 @@ reference BLAS and to the rounding of a single dot product elsewhere.
 }
 
 \section{When the kernel is used}{
-All four conditions must hold: \code{threads > 1}, \code{A} and \code{B} are base dense
-matrices, \code{w} has one entry per row, and the work
-\eqn{n \times p_A \times p_B} is at least \code{2e5} multiply-adds. A sparse
-design keeps its \pkg{Matrix} route, where a dense kernel would gain
-nothing: the cost there is set by the number of stored nonzeros, and the
-threshold above reads the dense shape.
+All of the following must hold: \code{threads > 1}; \code{A} and \code{B} are base dense
+matrices with the same number of rows; \code{w} has one entry per row; and the
+work \eqn{n \times p_A \times p_B} is at least \code{2e5} multiply-adds.
+Otherwise \code{crossprod(A * w, B)} is evaluated, which signals its own error
+for blocks of different heights. A sparse design keeps its \pkg{Matrix}
+route, where a dense kernel would gain nothing: the cost there is set by
+the number of stored nonzeros, and the threshold reads the dense shape.
 
 The threshold is a constant in the source, with no argument to set it. It
-was measured: the crossover where opening a parallel region costs what it
-saves sits near \eqn{9 \times 10^4} multiply-adds on the development
-machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
-\eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
-the gate is set above it, where a misjudgment in either direction costs
-almost nothing.
+lies above the work at which opening a parallel region costs what it
+saves.
 }
 
 \section{Dimnames}{
@@ -70,7 +67,9 @@ put back as the row and column names of the result when either has them.
 }
 
 \seealso{
-\code{\link[=xtv]{xtv()}} and \code{\link[=xtx]{xtx()}}, the other two threaded assembly kernels,
-which share this threshold.
+\code{\link[=xtv]{xtv()}}, \code{\link[=wxsq]{wxsq()}} and \code{\link[=xtx]{xtx()}}, the other threaded assembly
+kernels. They use the same constant, \eqn{2 \times 10^5}, on their own
+measures of work: \eqn{n p} for \code{\link[=xtv]{xtv()}} and \code{\link[=wxsq]{wxsq()}}, and
+\eqn{n p^2} for \code{\link[=xtx]{xtx()}}.
 }
 \keyword{internal}

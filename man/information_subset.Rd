@@ -15,7 +15,7 @@ information_subset(spec, design, ev, expected, approx, H, index)
 
 \item{expected, approx}{As in \code{\link[=statmod_information_at]{statmod_information_at()}}.}
 
-\item{H}{The second-derivative components, or \code{NULL} to ask for them.}
+\item{H}{The second-derivative components, or \code{NULL} to compute them here.}
 
 \item{index}{Integer positions in the stacked coefficients.}
 }

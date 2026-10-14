@@ -1,10 +1,10 @@
 #' Install or Update the Toolkit
 #'
 #' @description
-#' Installs the eight member packages of the toolkit from their GitHub
+#' Installs the member packages of the toolkit from their GitHub
 #' repositories under `github.com/statmodels7`, or prints what is installed
 #' and stops. The default is to print: installing packages is a side effect,
-#' and this function asks for it to be requested by name.
+#' so the installation runs only when `action = "install"` is given.
 #'
 #' @details
 #' # Where the packages come from
@@ -16,25 +16,26 @@
 #' names are passed in therefore does not matter.
 #'
 #' \pkg{pak} is not a dependency of this package. When `action = "install"`
-#' is asked for and \pkg{pak} is not installed, the call stops with a message
-#' giving both the `install.packages("pak")` line and the equivalent
-#' [remotes::install_github()] call spelled out with all eight repositories,
-#' so a caller who prefers \pkg{remotes} can paste it.
+#' is given and \pkg{pak} is not installed, the call stops with a message
+#' that contains the `install.packages("pak")` line and the equivalent
+#' [remotes::install_github()] call written out for every member repository,
+#' so that it can be pasted where \pkg{remotes} is used instead.
 #'
 #' # Installing over a loaded package
 #'
 #' A member that is attached in the current session holds its own DLL open on
-#' Windows, and \pkg{pak} cannot replace a file that is in use. Restart R
-#' before installing, or the install of a compiled member fails partway and
-#' leaves that member in a state where `packageVersion()` reports it absent.
+#' Windows, and \pkg{pak} cannot replace a file that is in use. R should be
+#' restarted before the installation. Otherwise the installation of a compiled
+#' member can fail partway and leave that member in a state in which
+#' `packageVersion()` reports it as absent.
 #'
 #' # Printing
 #'
-#' Both actions print, and neither takes an argument to suppress it. The
-#' report exists to be read, and its return value is
-#' [statmodels7_versions()], so a caller who wants the versions without the
-#' console output calls that instead. The install hands the work to
-#' \pkg{pak}, which prints its own progress and takes no `quiet` argument.
+#' Both actions print, and no argument suppresses the output. The return value
+#' of the report is the result of [statmodels7_versions()], so a caller who
+#' wants the versions without the console output calls that function instead.
+#' The installation is carried out by \pkg{pak}, which prints its own progress
+#' and has no `quiet` argument.
 #'
 #' @param action `"report"` (the default) to print the installed versions and
 #'   the calls that would update them, or `"install"` to install and update.
@@ -44,11 +45,11 @@
 #' @return A data frame as [statmodels7_versions()] returns, with columns
 #'   `package` and `version`. Returned invisibly under both actions: the
 #'   report prints to the console with [cat()] and is not the return value.
-#'   Under `"install"` the versions are read **after** the install, so the
-#'   result is the state the call left behind.
+#'   Under `"install"` the versions are read after the installation, so the
+#'   result is the state that the call left behind.
 #'
 #' @seealso [statmodels7_versions()] for the versions alone,
-#'   [statmodels7_packages()] for the members installed.
+#'   [statmodels7_packages()] for the names of the members.
 #'
 #' @examples
 #' # Prints the table and the two calls that would update it. Installs

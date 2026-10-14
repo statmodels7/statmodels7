@@ -27,30 +27,48 @@ sparse_fit(
 
 \item{hyper}{The hyperparameters.}
 
-\item{maxit}{The iteration budget.}
+\item{maxit}{The iteration budget of the proximal gradient route and of the
+structural route. The coordinate descent route has a budget of its own,
+set in \code{\link[=coord_fit]{coord_fit()}} and \code{\link[=coord_call]{coord_call()}}.}
 
 \item{tol}{The stopping tolerance.}
 
-\item{verbose}{Whether the optimizer prints its own trace.}
+\item{verbose}{Whether the optimizer of the proximal routes prints its own
+trace. The coordinate descent route does not use it.}
+
+\item{spec}{A \code{\link[=StatmodSpec]{StatmodSpec()}}. With \code{spec} or \code{design} \code{NULL} the
+coordinate descent is skipped.}
+
+\item{design}{The design, as \code{\link[=statmod_design]{statmod_design()}} returns it.}
+
+\item{expected}{\code{TRUE} for the expected information in the working weights
+of the coordinate descent, \code{FALSE} for the observed one.}
+
+\item{approx}{How the expected information is approximated for a family
+with no closed form, as in \code{\link[=coord_fit]{coord_fit()}}.}
 }
 \value{
 A list with \code{par} (the whole vector, updated in this block),
-\code{value}, \code{converged} and \code{iterations}.
+\code{value}, \code{converged}, \code{iterations} and \code{method} (\code{"coordinate descent"},
+\code{"proximal gradient"} or \code{"proximal gradient (structural)"}).
 }
 \description{
-Runs a proximal gradient iteration on the block's own coefficients, the
-smooth part of the objective supplying the gradient and the penalty its
-proximal operator.
+Estimates the coefficients of one block with a kinked penalty, the other
+coefficients held fixed. A penalty over a structural term's own parameters
+is fitted by \code{\link[=sparse_fit_structural]{sparse_fit_structural()}}. Otherwise a compiled coordinate
+descent, \code{\link[=coord_fit]{coord_fit()}}, is used where the penalty describes its proximal
+operator as a table, and an accelerated proximal gradient iteration runs on
+the block where it does not, the smooth part of the objective supplying the
+gradient and the penalty its proximal operator.
 }
 \details{
-The route is \code{\link[optimizers7:prox_grad]{optimizers7::prox_grad()}} with
-\code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}}, accelerated: measured, at a
-condition number of 3 the plain iteration wins narrowly, at 55 it is 4153
-iterations against 126, and at 480 the plain one does not converge in
-50000. A coordinate descent on the same objective is 1.1 to 5.3 times
-faster again and is the next thing to write. It needs the columns of the
-design and the running residual, which is the model itself, so it belongs
-here and could not live behind an optimizer's black-box interface.
+The coordinate descent of \code{\link[=coord_fit]{coord_fit()}} reads the columns of the design and
+the running residual, which belong to the model, so it is called here and
+not through an optimizer's black-box interface. Where \code{\link[=coord_fit]{coord_fit()}} returns
+\code{NULL} (the penalty has no proximal table at the steps of this block, or the
+working weights are unusable), or where \code{spec} or \code{design} is \code{NULL}, the
+route is \code{\link[optimizers7:prox_grad]{optimizers7::prox_grad()}} with \code{\link[penalties7:penalty_prox]{penalties7::penalty_prox()}},
+accelerated.
 }
 \seealso{
 \code{\link[=statmod]{statmod()}}

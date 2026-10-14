@@ -25,11 +25,11 @@ power law did not answer.
 The value giving each target size, checked against the size it produces.
 }
 \details{
-The check is what licenses the closed route: the exponent came from two
-points and the relation is asserted at a third before the answer is used.
-A target that misses by more than a rounding, or that lands outside the
-hyperparameter's own interval, comes back \code{NA} and the caller falls
-back to bracketing.
+The exponent comes from two points, and the relation is checked at the
+first and the last admissible target before any answer is used. If either
+check misses by more than a rounding, every target comes back \code{NA}; a
+target whose value lands outside the hyperparameter's own interval comes
+back \code{NA} on its own. The caller then falls back to bracketing.
 }
 \seealso{
 \code{\link[=kink_power]{kink_power()}}, \code{\link[=kink_solve]{kink_solve()}}

@@ -12,15 +12,12 @@ NULL
 #' so a random effect over \eqn{m} groups has density \eqn{1/m}, and
 #' \pkg{modelterms7} builds it that way.
 #'
-#' Binding such a block beside a dense one with `cbind()` fails: base
-#' dispatch reads the sparse block as a vector and reports that the number of
-#' items to replace is not a multiple of the replacement length, three frames
-#' from anything a caller wrote. `Matrix::cbind2()` is what handles the mixed
-#' pair.
+#' Blocks are bound with `cbind()` when all of them are base matrices. When
+#' any block is sparse, they are bound with `Matrix::cbind2()`, so that the
+#' result is a \pkg{Matrix} object whatever the order of the blocks.
 #'
 #' The result is sparse when **one** block is. Sparsity is a property of the
-#' assembled matrix, never of its pieces: a dense fixed block beside a
-#' large
+#' assembled matrix and not of its pieces: a dense fixed block beside a large
 #' indicator leaves a matrix that is still overwhelmingly zero, and its
 #' factorization stays sparse under a fill-reducing ordering.
 #'
@@ -34,7 +31,7 @@ NULL
 #'   An `n x 0` base matrix for an empty `mats`, as an equation
 #'   carrying only a structural term gives.
 #'
-#' @seealso [design_sparse()] for the same question asked of a whole design,
+#' @seealso [design_sparse()] for the same test applied to a whole design,
 #'   [statmod_design()] for the assembly this serves.
 #'
 #' @keywords internal
@@ -50,24 +47,28 @@ bind_blocks <- function(mats, n) {
 #' @description
 #' `design_sparse()` reports whether any equation's block is sparse, and
 #' `zero_information()` gives the square zero matrix of the right kind to
-#' accumulate the information into.
+#' accumulate the information into. `as_dense()` and `as_sparse()` convert a
+#' matrix to the other storage.
 #'
 #' @details
 #' The information is assembled one `crossprod` per parameter pair and each
 #' product is written into a square accumulator. With a sparse design each
 #' product is sparse, and writing a sparse block into a dense accumulator
 #' signals that the number of items to replace is not a multiple of the
-#' replacement length, from inside the assembly and naming nothing a caller
-#' wrote. The accumulator therefore follows the design.
+#' replacement length, from inside the assembly. The accumulator therefore
+#' follows the design.
 #'
 #' @param design The design, a list with one entry per distribution
 #'   parameter, each carrying its block as `X`.
 #' @param total The number of stacked coefficients across the equations,
 #'   which is the side of the accumulator.
+#' @param A A matrix, dense or sparse.
 #'
 #' @return `design_sparse()` gives a single logical. `zero_information()`
 #'   gives a `total x total` matrix of zeros, a `dgCMatrix` when the design
-#'   is sparse and a base matrix otherwise.
+#'   is sparse and a base matrix otherwise. `as_dense()` gives `A` as a base
+#'   matrix, and `as_sparse()` gives `A` as a \pkg{Matrix} object, converting
+#'   a base matrix to compressed column storage.
 #'
 #' @seealso [statmod_information_at()], which accumulates into it,
 #'   [zap_nonfinite()] for the other place the two storages meet.
@@ -97,14 +98,11 @@ as_sparse <- function(A) {
 #' An offset is a column of the linear predictor whose coefficient is known
 #' to be one, and `y ~ x + offset(log_n)` is how R has always written it.
 #'
-#' Taking it out here is the whole of what makes it work. Left in, the term
-#' reached
-#' `model.matrix` through [modelterms7::linpar()], where `terms()` marks it
-#' in the `"offset"` attribute and the design excludes it: the term
-#' contributed no column, no offset and no message, and the model fitted was
-#' the one without it. On a count model over person-years that moved the
-#' intercept from -7.5 to -0.6, which is the difference between a log rate
-#' and a log count.
+#' The offset has to be taken out before the interpreter reads the equation.
+#' Left in, the term would reach `model.matrix` through
+#' [modelterms7::linpar()], where `terms()` marks it in the `"offset"`
+#' attribute and the design excludes it: the term would contribute no column,
+#' no offset and no message, and the model fitted would be the one without it.
 #'
 #' Only a top-level additive term is taken, which is where R recognizes one
 #' too, and `stats::offset(x)` is recognized beside `offset(x)`. Several in
@@ -169,19 +167,17 @@ split_offsets <- function(eq) {
 #' recognizes an offset. One written inside another term's formula, as in
 #' `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)` or
 #' `nl(a ~ 0 + ridge(~ g + offset(o)))`, reaches that term's own
-#' `model.matrix` and is dropped there exactly as it used to be dropped at
-#' the equation level. Measured: the fit ran, the block carried the columns
-#' of the model without it, and the intercept came back at 1.33 against the
-#' -5.01 the offset gives, a factor of 566.
+#' `model.matrix` and is dropped there, as it would be dropped at the
+#' equation level if it were left in. The block then carries the columns of
+#' the model without the offset.
 #'
-#' Such a term is **refused**, never routed up to the equation, because
-#' the
-#' meaning differs by where it sits. In a penalized term's formula an offset
-#' would be a contribution to the equation's predictor, and writing it at
-#' the equation level already says that. In a subformula it would be a
-#' contribution to that parameter's own chart, a different quantity. Picking
-#' one reading would fit the wrong model in half the cases; the refusal names
-#' the place it belongs and costs a caller one edit.
+#' Such a term is rejected and is not moved to the equation, because the
+#' meaning of an offset depends on where it is written. In a penalized term's
+#' formula an offset would be a contribution to the equation's predictor, and
+#' writing it at the equation level already expresses that. In a subformula it
+#' would be a contribution to that parameter's own chart, a different
+#' quantity. Picking one reading would fit the wrong model in some cases, so
+#' the error names the place where the offset belongs.
 #'
 #' The whole expression tree is walked, so a term written later is covered.
 #'
@@ -235,10 +231,10 @@ reject_nested_offsets <- function(eq, param) {
 #' Reject Missing Values in the Data a Fit Reads
 #'
 #' @description
-#' Signals an error naming the response, or each variable of the data that
-#' an equation names, where it holds a missing value, with the rows. A fit
-#' does not drop rows: in a time series or a panel a dropped row changes
-#' what the neighbouring rows mean, so the choice of which rows to remove is
+#' Signals an error naming the response, or the first variable of the data
+#' that an equation names, where it holds a missing value, with the rows. A
+#' fit does not drop rows: in a time series or a panel a dropped row changes
+#' what the neighboring rows mean, so the choice of which rows to remove is
 #' the caller's.
 #'
 #' @param response The response, as evaluated.
@@ -280,17 +276,18 @@ reject_missing <- function(response, equations, data) {
 #' The offset per distribution parameter, evaluated in the data.
 #'
 #' @details
-#' The expressions are kept and re-evaluated, never carried as numbers, and
-#' that is how an offset survives prediction. [statmod_respec()] calls
-#' this against the new data; a vector supplied through [statmod()]'s
-#' `offsets` argument at fitting time has the wrong length for other rows and
-#' cannot be reused. Before this, `predict(fit, newdata =)` returned the
-#' predictor of a model with no offset at all.
+#' The expressions are kept and re-evaluated, not carried as numbers, which
+#' is how an offset written in the formula applies in prediction.
+#' [statmod_respec()] calls this against the new data; a vector supplied
+#' through [statmod()]'s `offsets` argument at fitting time has the length of
+#' the fitting data and cannot be reused on other rows.
 #'
 #' Each expression is evaluated in `data` with `env` behind it, so a symbol
 #' resolves as a column first and as a variable of the caller's environment
-#' second. A result shorter than `n` is recycled, so a single number is a
-#' constant offset.
+#' second. A result of length one is recycled to `n`, so a single number is a
+#' constant offset, and a result of any other length except `n` is an error.
+#' A value that is missing or not finite is an error. Several offsets in one
+#' equation are summed.
 #'
 #' @param formula The model formula, before [split_offsets()] has stripped
 #'   anything.
@@ -298,7 +295,7 @@ reject_missing <- function(response, equations, data) {
 #' @param data A data frame to evaluate in.
 #' @param env The environment the formula carried, the enclosure of the
 #'   evaluation.
-#' @param n The number of observations, the length to recycle to.
+#' @param n The number of observations.
 #'
 #' @return A named list with one entry per element of `params`, each a
 #'   numeric vector of length `n` or `NULL` where that equation names no
@@ -354,8 +351,10 @@ eval_offsets <- function(formula, params, data, env, n) {
 #' @param a,b Two named lists of offsets keyed by distribution parameter,
 #'   either list's entries possibly `NULL`. Either list may itself be `NULL`.
 #'
-#' @return A named list with one entry per parameter named in either input,
-#'   `NULL` where neither supplied one.
+#' @return `a` with each entry summed with the entry of `b` for the same
+#'   parameter where both are present, and replaced by `b`'s where only `b`
+#'   names one. A parameter named only in `b` is not added, and the result is
+#'   `NULL` when `a` is.
 #'
 #' @seealso [eval_offsets()] for the formula's own,
 #'   [statmod()] for the `offsets` argument.
@@ -378,15 +377,13 @@ add_offsets <- function(a, b) {
 #' using the matrix.
 #'
 #' @details
-#' Seven places wrote `S[!is.finite(S)] <- 0`. That is correct on a base
-#' matrix and a trap on a sparse one: the logical index is a dense
-#' \eqn{p \times p} matrix, so the storage the accumulator exists to keep is
-#' thrown away at the first consumer.
+#' The assignment `S[!is.finite(S)] <- 0` is correct on a base matrix. On a
+#' sparse matrix the logical index is a dense \eqn{p \times p} matrix, so the
+#' storage the accumulator exists to keep would be lost.
 #'
 #' On a sparse matrix only the **stored** values can be non-finite, a
-#' structural zero being finite by construction, so the same answer comes
-#' from the value slot alone in \eqn{O(\mathrm{nnz})}. The two branches are
-#' written once here in place of seven times.
+#' structural zero being finite by construction, so the same result comes
+#' from the value slot alone in \eqn{O(\mathrm{nnz})} operations.
 #'
 #' @param S A penalty's Hessian, a square matrix, sparse or dense.
 #'
@@ -427,19 +424,17 @@ zero_information <- function(design, total) {
 #' @details
 #' It replaces writing each block into a zero accumulator. With a sparse
 #' design that accumulator is a `dgCMatrix`, and a sub-assignment into it
-#' rebuilds the compressed columns every time: measured on a lasso over 200
-#' columns beside a random intercept over 500 groups, the three assignments
-#' of one information cost 0.07 s against 0.19 s for the products
-#' themselves. Binding the blocks once does no arithmetic on them, so the
-#' entries are the ones the products gave.
+#' rebuilds the compressed columns at every assignment. Binding the blocks
+#' once avoids that and does no arithmetic on them, so the entries are the
+#' ones the products gave.
 #'
 #' @param blocks A list of lists, `blocks[[a]][[b]]` the block of rows `a`
 #'   and columns `b` for `b >= a`. Entries below the diagonal are not read.
 #' @param sparse Whether the result is a `dgCMatrix`, as
 #'   [design_sparse()] decides for the accumulator it replaces.
 #'
-#' @return The assembled matrix, without dimnames: a `dgCMatrix` when
-#'   `sparse` is `TRUE`, otherwise a base matrix.
+#' @return The assembled matrix, without dimnames: a `dgCMatrix` without
+#'   stored zeros when `sparse` is `TRUE`, otherwise a base matrix.
 #'
 #' @seealso [zero_information()], the accumulator this replaces where every
 #'   block is written exactly once.
@@ -490,10 +485,27 @@ assemble_blocks <- function(blocks, sparse) {
 #'   where an equation has none.
 #' @param intercepts A named logical, one per parameter: whether that
 #'   equation's parametric block carried an intercept.
+#' @param newdata The rows a respecification reads, or `NULL` for the fitting
+#'   rows.
+#' @param structural A named list of the parameters of the structural term,
+#'   keyed by the term; empty where no fit has set them.
+#' @param linpar A list, the options of the implicit parametric block as
+#'   [linpar_options()] returns them.
+#' @param held_coef A named list, one entry per distribution parameter, of
+#'   coefficients held at a value, each a named numeric vector keyed by
+#'   coefficient name. Empty by default.
+#' @param threads The number of threads, a single integer.
+#' @param workers The number of worker processes for the independent fits of
+#'   a cross-validation, a single integer.
 #'
 #' @return An object of class `StatmodSpec` with one property per argument
-#'   above, plus `threads`, `workers`, `linpar`, `newdata` and `structural`,
-#'   which [statmod()] fills in.
+#'   above and the properties described next. `linpar` holds the options of the implicit
+#'   parametric block and is set by [statmod_spec()]. `newdata` holds the rows
+#'   a respecification reads, `NULL` until [statmod_respec()] sets it.
+#'   `structural` holds the parameters of a structural term where a fit has
+#'   set them. `held_coef` holds coefficients held at a value, by name, empty
+#'   by default. `threads` and `workers` hold the thread and worker counts
+#'   that [statmod()] sets.
 #'
 #' @seealso [statmod_spec()], the constructor to use,
 #'   [statmod_design()] for what is assembled from one.
@@ -556,13 +568,13 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' Options for the Unpenalized Parametric Block
 #'
 #' @description
-#' Says how the parametric part of each linear predictor is built: in what
-#' storage, and with which contrasts for its factors. Pass the result as
+#' Specifies how the parametric part of each linear predictor is built: in
+#' what storage, and with which contrasts for its factors. Pass the result as
 #' [statmod()]'s `linpar_control`.
 #'
-#' The one case it exists for is a formula naming a factor of many levels,
-#' where `sparse = TRUE` turns a design that would be gigabytes into one that
-#' is megabytes.
+#' It is meant for a formula naming a factor of many levels, where
+#' `sparse = TRUE` keeps the design in sparse storage instead of a dense
+#' matrix with one column per level.
 #'
 #' @details
 #' # Which term it reaches
@@ -576,25 +588,27 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #'
 #' `sparse = TRUE` builds the block through
 #' [Matrix::sparse.model.matrix()], which **builds** it sparse instead of
-#' building a dense matrix and compressing it. The second would cost the
-#' memory the choice exists to avoid.
+#' building a dense matrix and compressing it, so no dense intermediate is
+#' formed. Sparse storage pays where the formula carries a factor of many
+#' levels. A numeric covariate has no zeros to exploit, and its sparse block
+#' costs more than it saves.
 #'
-#' Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
-#' against `stats::model.matrix`'s
-#' 0.100 s and 161.5 MB, the numbers identical; and a design that would be
-#' 32 GB dense builds in 0.02 s and 19 MB, which settles that there is no
-#' dense intermediate. It pays where the formula carries a factor of many
-#' levels and costs more than it saves on numeric covariates, whose block is
-#' dense whatever is asked for.
+#' # Scaling of the columns
 #'
-#' **There is no rescaling here, and that is measured rather than
-#' omitted.** Scaling the columns and carrying the coefficients back is the
-#' remedy for a conditioning that squares, as forming \eqn{X'X} does; [iwls()] fits through a QR of the design and never forms
-#' it. On columns spanning fifteen decades the raw fit and the scaled one
-#' converge in the same number of iterations, and both agree with
-#' [stats::lm()] to \eqn{10^{-14}}. What does move is the score the
-#' fit reports, 1.5e+02 against 9.2e-05, and that is a reading rather than an
-#' answer: the final verdict is already arbitrated on a dimensionless scale.
+#' The block is not rescaled. Scaling the columns and carrying the
+#' coefficients back is a remedy for a conditioning that squares, as forming
+#' \eqn{X'X} does. [iwls()] with its default `decomposition = "qr"` fits
+#' through a QR factorization of the augmented design and does not form
+#' \eqn{X'X}, and its final convergence verdict is read on a dimensionless
+#' scale, so the scale of a column does not decide it.
+#'
+#' # The name of the argument
+#'
+#' The argument of [statmod()] and this function are named differently on
+#' purpose. With one name for both, the argument's default would resolve to
+#' its own promise and R would report *promise already under evaluation*.
+#' [stats::glm()] and [stats::glm.control()] are kept apart for the same
+#' reason.
 #'
 #' @param sparse A single logical, or `NULL`. `TRUE` makes the block a
 #'   `dgCMatrix`, `FALSE` a base matrix. `NULL`, the default, leaves it to
@@ -605,14 +619,9 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #'   the session's `options("contrasts")`. Carried on the specification, so a
 #'   fold of [cv()] reproduces them instead of re-reading the option.
 #'
-#' @return A named list with elements `sparse` and `contrasts`, to be passed
-#'   as [statmod()]'s `linpar_control`.
-#'
-#'   The argument and this function are named differently on purpose. With
-#'   one name for both, the argument's default would resolve to its own
-#'   promise and R would report *promise already under evaluation*.
-#'   [stats::glm()] and [stats::glm.control()] are kept apart for the same
-#'   reason.
+#' @return A named list with the element `sparse` (possibly `NULL`) and, when
+#'   `contrasts` is not `NULL`, the element `contrasts`, to be passed as
+#'   [statmod()]'s `linpar_control`.
 #'
 #' @seealso [statmod()] for where it is passed,
 #'   [modelterms7::linpar()] for the term it configures.
@@ -631,7 +640,7 @@ StatmodSpec <- S7::new_class("StatmodSpec",
 #' Xd <- statmod_design(dense)$mu$X
 #' Xs <- statmod_design(sparse)$mu$X
 #'
-#' # Same numbers, one two orders of magnitude smaller.
+#' # Same numbers, stored in much less memory.
 #' c(dense = class(Xd)[1], sparse = class(Xs)[1])
 #' all.equal(as.matrix(Xs), Xd, check.attributes = FALSE)
 #' c(dense = object.size(Xd), sparse = object.size(Xs))
@@ -674,24 +683,45 @@ linpar_options <- function(sparse = NULL, contrasts = NULL) {
 #' term constructors sit in front of the search path, so `s()` means this
 #' toolkit's even with \pkg{mgcv} attached.
 #'
+#' # Rejected before any fit
+#'
+#' The function signals an error for a multivariate family (which
+#' [distributions7::fit_distrib()] fits with constant parameters), a censored
+#' response written with `cens()`, a family method whose signature has no
+#' `...`, a missing value in the response or in a variable that an equation
+#' names, a two-column response on a family without `size`, an offset written
+#' inside another term, and a structural term that cannot be fitted or a
+#' formula with more than one structural term.
+#'
 #' # Prior weights are not normalized
 #'
 #' They enter the log-likelihood as \eqn{\sum_i w_i \ell_i} and are taken as
-#' given. Dividing by their sum would turn the log-likelihood into a mean,
-#' shrinking every standard error by \eqn{\sqrt{n}} and making the
-#' information criteria incomparable with an unweighted fit of the same
-#' model.
+#' given, so they act as frequency weights: a constant weight \eqn{c} on every
+#' row is \eqn{c} copies of the data. Dividing the weights by their sum would
+#' turn the log-likelihood into a mean, multiplying every standard error by
+#' \eqn{\sqrt{n}} and making the information criteria incomparable with an
+#' unweighted fit of the same model.
+#'
+#' The restricted (REML) criterion counts \eqn{c n} observations against the
+#' \eqn{p} coefficients when the weights are the constant \eqn{c}. The REML
+#' estimate of a dispersion parameter therefore changes under a constant
+#' rescaling of the weights, and the ML estimate does not.
 #'
 #' @param formula The model formula, with the parameters' equations separated
 #'   by `|`.
 #' @param distrib A \pkg{distributions7} distribution object, which decides
 #'   how many equations there are and what they are called.
 #' @param data A data frame holding the response, the covariates and any
-#'   matrix columns the terms name.
+#'   matrix columns the terms name. A missing value in the response, or in a
+#'   variable that an equation names, is an error, because a fit does not
+#'   drop rows.
 #' @param weights Optional prior weights, a numeric vector of length
-#'   `nrow(data)`, or `NULL` for all ones.
+#'   `nrow(data)` (not the name of a column), or `NULL` for all ones. The
+#'   weights must be non-negative, finite and complete, and not all zero. They
+#'   act as frequency weights and are not normalized.
 #' @param offsets Optional named list of offsets, one entry per parameter,
-#'   summed with any the formula names.
+#'   each a finite numeric vector of length 1 or `nrow(data)`, summed with any
+#'   offset the formula names for the same parameter.
 #' @param need_response `TRUE`, the default, requires the left-hand side to
 #'   evaluate. `FALSE` is what prediction uses: new data routinely has no
 #'   response column.
@@ -821,26 +851,26 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #' spline's knots, a basis reparametrization. [modelterms7::term_predict()]
 #' reapplies that record to new rows.
 #'
-#' Rebuilding instead gives a block of the same shape, multiplying the same
-#' coefficients, that means something else. Measured on `y ~ s(x, bspline_smooth(k = 10))` at
-#' 200 observations: predicting on 40 of the rows the model was fitted to
-#' differed from the fitted values there by 0.237, and on the 51 rows with
-#' \eqn{|x| < 0.5}, where the rebuilt knots move furthest, by 1.19. Handing
-#' back the whole data agrees exactly, which is why nothing noticed.
+#' Rebuilding the block on the new rows instead would give a block of the
+#' same shape, multiplying the same coefficients, with a different meaning:
+#' the knots of a spline, for example, would move with the rows. A structural
+#' term is the exception. Where the rows carry a complete response, it is
+#' rebuilt on them with [modelterms7::term_build()], so that its recursion
+#' runs over their times and groups from its own start; where they do not, it
+#' continues the fitted series.
 #'
-#' The offsets are re-evaluated against `data` rather than carried across,
-#' since a vector of the fitting data's length says nothing about other rows.
+#' The offsets named in the formula are re-evaluated against `data` rather
+#' than carried across, since a vector of the fitting data's length does not
+#' apply to other rows.
 #'
 #' # The rows are the data's
 #'
 #' `n_obs` is `nrow(data)` and never the length of whatever the response
 #' expression evaluates to. `eval(expr, data, env)` falls through to the
 #' formula's environment for anything `data` does not carry, and a
-#' prediction grid carries the covariates and not the response, so the
-#' response resolved to whatever variable of that name was in scope --
-#' in an ordinary session, the fit's own -- and the count came back as the
-#' fitting one. Measured on a fit of 400 rows and a grid of 37,
-#' [predict.StatmodFit()] returned 400 values.
+#' prediction grid carries the covariates and not the response. A response
+#' expression would then resolve to a variable of that name in scope, such as
+#' the fit's own response, and the row count would be that variable's.
 #'
 #' So a response whose variables are not columns of `data` is **absent**
 #' where `need_response` is `FALSE`, and one of a length other than
@@ -853,8 +883,13 @@ statmod_spec <- function(formula, distrib, data, weights = NULL,
 #'   log-likelihood; `FALSE` for a prediction.
 #'
 #' @return A [StatmodSpec()] carrying the fitted terms, with `newdata` set to
-#'   `data`, `n_obs` its row count, and the offsets and response evaluated
-#'   there. Every other property is `spec`'s.
+#'   `data`, `n_obs` its row count, and the response and the offsets named in
+#'   the formula evaluated there. The weights are reset to ones, the family
+#'   carries the numbers of trials of these rows (missing where the rows have
+#'   no response and the family holds one per observation), and a structural
+#'   term is
+#'   rebuilt on them where they carry a complete response. Every other
+#'   property is `spec`'s.
 #'
 #' @seealso [statmod_design()], which reapplies the terms,
 #'   [predict.StatmodFit()], the caller.
@@ -1005,7 +1040,8 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
 #'
 #' A factor covariate needs no handling of its own: the interpreter collects
 #' the bare covariates of an equation into one [modelterms7::linpar()], whose
-#' block comes from `model.matrix` and so carries the contrasts.
+#' block comes from `model.matrix`, or from `Matrix::sparse.model.matrix()`
+#' when the block is sparse, and so carries the contrasts.
 #'
 #' A break-point term whose starting positions the caller did not name has
 #' them chosen on a grid, through [seg_grid_start()], in place of the
@@ -1018,6 +1054,8 @@ statmod_respec <- function(spec, data, need_response = TRUE) {
 #'   parent of the interpreting environment.
 #' @param response The evaluated left-hand side, or `NULL` where there is
 #'   none. Read by [seg_grid_start()] and by nothing else.
+#' @param linpar The options of the implicit parametric block, as
+#'   [linpar_options()] returns them.
 #'
 #' @return A list of two:
 #'   \describe{
@@ -1106,25 +1144,24 @@ reject_duplicate_names <- function(terms) {
 #' did not name, and returns the specification unchanged for anything else.
 #'
 #' @details
-#' The objective has local optima in the break-points and the iteration
-#' converges from within a basin around where it starts, so where a run
-#' begins decides what it finds. Measured over eight samples and four
-#' starting positions on a joint jump and change of slope, the fraction of
-#' runs recovering the break-point is 0 to 0.5 from a single conventional
-#' start and 1 from the grid. The term's own default is a conventional
-#' start: the interior quantiles of the covariate, which look at the
-#' covariate and never at the response.
+#' The objective has local optima in the break-points, and the iteration
+#' converges from within a basin around its starting position, so the start
+#' decides which optimum is found. The term's own default is a conventional
+#' start, the interior quantiles of the covariate, which depend on the
+#' covariate and not on the response. Scoring a grid of candidate positions on
+#' the response gives a start in the basin of the best fit of the linear part.
 #'
-#' The rule costs `k` linear fits and is exact for a gaussian response, so it
-#' places a starting value and does not fit. Two consequences follow, and
-#' both are deliberate. It is applied whatever equation the term sits in,
-#' the response being what there is to score against even where the term
-#' develops a scale. And it is skipped where the response is not plain
-#' numbers, a censored one or a matrix, instead of being given a reading of
-#' its own.
+#' [modelterms7::seg_start()] performs one linear fit for each increasing
+#' combination of `npsi` points of a grid of ten, \code{choose(10, npsi)} fits
+#' in all. The score is exact for a gaussian response, so the rule places a
+#' starting value and does not fit. The rule is applied whatever equation the
+#' term sits in, the response being what there is to score against even where
+#' the term develops a scale. It is skipped where the response is not plain
+#' numbers (a censored one, a matrix or one with missing values), because
+#' those have no reading here.
 #'
-#' A caller who names `psi` has said where to begin and is left alone, which
-#' is also how the grid is turned off.
+#' A term whose `psi` the caller names keeps it, and naming `psi` is also how
+#' the grid is turned off.
 #'
 #' @param tm One term specification, as the formula interpreter produced it.
 #' @param data The data frame the term is built against.
@@ -1155,29 +1192,28 @@ seg_grid_start <- function(tm, data, response) {
 #' Reject a Term the Fitting Scheme Does Not Cover
 #'
 #' @description
-#' Signals an error naming any term whose block is not a fixed design, which
-#' is what the alternation of [statmod()] assembles.
+#' Signals an error naming any term that the fitting scheme of [statmod()]
+#' does not cover, and any formula that carries more than one structural term.
 #'
 #' @details
-#' One shape is outside that assembly, and it is read off the term rather than
-#' from a list of class names, so a term written later is covered without an
-#' edit here.
+#' Terms are examined by what they implement and not by a list of class
+#' names, so a term written later is covered without an edit here.
 #'
-#' A **structural** term rewrites the likelihood instead of contributing a
-#' predictor, so it has no design block at all and answers neither
-#' `term_matrix()` nor `term_npar()`. Reaching it through the design
-#' produced an error naming one of those generics, which says nothing about the
-#' cause. [statmod_structural()] routes those, and what remains here
-#' is the term class that is structural and implements neither shape of the
-#' contract.
+#' A **structural** term rewrites the likelihood or the filtered predictor
+#' instead of contributing a fixed design block, so it has no design block and
+#' answers neither `term_matrix()` nor `term_npar()`. A term of the filter
+#' shape, such as `gas()`, contributes a predictor through `term_filter()`. A
+#' term of the likelihood shape, such as `regime()`, contributes a likelihood
+#' through `term_loglik()`. [statmod_structural()] routes both. What this
+#' function rejects is a structural term that implements neither
+#' `term_filter()` nor `term_loglik()`, and a structural term of the
+#' likelihood shape that carries a covariance label ([unfittable_reason()]).
+#' [reject_incompatible()] is called before these reasons are raised, so a
+#' formula with more than one structural term is rejected with that
+#' function's message.
 #'
-#' A term whose block depends on its own coefficients was rejected here too
-#' until the alternation learned to refresh one; it is fitted now, by
-#' [statmod_design_at()].
-#'
-#' Every equation is examined before the error is raised, so a model carrying
-#' one such term in the mean and another in the scale reports both rather than
-#' the first.
+#' A term whose block depends on its own coefficients is fitted by
+#' [statmod_design_at()] and is not rejected here.
 #'
 #' @param terms The built terms, a named list of named lists, one per
 #'   distribution parameter.
@@ -1219,38 +1255,36 @@ reject_unfittable <- function(terms) {
 #' A score-driven level and a regime's first level both add a constant to
 #' their equation's predictor. With an intercept there too the two are
 #' exactly confounded: shifting the intercept by \eqn{c} and the level by
-#' \eqn{-c(1 - \sum_j b_j)} leaves every predictor unchanged, since the
+#' \eqn{-c(1 - \sum_j \xi_j)} leaves every predictor unchanged, since the
 #' recursion is affine in the level given the score path, the score path
 #' depends on the predictor alone, and the starting level moves by the same
-#' \eqn{c}. The likelihood is flat along that direction, and a fit reaches
-#' the ridge without failing -- the score is small because the surface is
-#' flat, not because it is a maximum.
+#' \eqn{c}. The likelihood is flat along that direction, and a fit can reach
+#' the ridge without failing, because the score is small wherever the surface
+#' is flat.
 #'
 #' **The linear intercept wins.** Where both are present the term's
-#' level is held at zero and the coefficient carries it, and that makes
-#' `y ~ x + gas(...)` an ordinary thing to write. Nothing about the
-#' model is lost: what a constant cannot express is the dynamics, or the
-#' difference between one regime and another, and those are the parameters
-#' that remain free.
+#' level is held at zero and the coefficient carries it, which makes
+#' `y ~ x + gas(...)` an ordinary formula. The model loses nothing, since a
+#' constant cannot express the dynamics or the difference between one regime
+#' and another, and the parameters that express them remain free.
 #'
-#' The question is asked of the **span** of the equation's design and
-#' not of a column named `"(Intercept)"`: a factor coded without one,
-#' or any set of columns summing to a constant, spans it just as well.
-#' Which parameter is the level is the term's own answer, through
-#' [modelterms7::term_level_param()].
+#' The test is made on the **span** of the equation's design and not on a
+#' column named `"(Intercept)"`: a factor coded without one, or any set of
+#' columns summing to a constant, spans the constant just as well.
+#' [modelterms7::term_level_param()] gives which parameter of the term is
+#' the level.
 #'
-#' **A developed level asks the same question of a subspace.** With
-#' `omega ~ Z gamma` the confounding is no longer with one constant
-#' but with whatever `span(Z)` shares with the span of the equation's
-#' design. The constant coordinates are the term's own answer, held as
-#' above. For the rest, an unpenalized coordinate whose column lies in the
-#' equation's span is flagged with a warning rather than held: holding it
-#' would change the model where the confounding is not exact (a
-#' time-varying shared column is exactly flat only when its lags stay in
-#' the development's span, which depends on \eqn{q} and on the column),
-#' while a penalized coordinate is identified by its penalty, exactly as a
-#' deviation is. Where the direction really is flat, the variance matrix
-#' names it.
+#' **For a developed level** the same test applies to a subspace. With
+#' `omega ~ Z gamma` the confounding is no longer with one constant but with
+#' whatever `span(Z)` shares with the span of the equation's design. The
+#' constant coordinates are held as above. For the rest, an unpenalized
+#' coordinate whose column lies in the equation's span is flagged with a
+#' warning and is not held: holding it would change the model where the
+#' confounding is not exact (a time-varying shared column is exactly flat
+#' only when its lags stay in the development's span, which depends on
+#' \eqn{q} and on the column). A penalized coordinate is identified by its
+#' penalty. Where the direction really is flat, the variance matrix shows
+#' it.
 #'
 #' @param spec A [StatmodSpec()].
 #' @param design The design.
@@ -1326,9 +1360,9 @@ statmod_held_levels <- function(spec, design) {
 #' predictor at all, so it cannot be combined with anything that expects
 #' one.
 #'
-#' The count is over the whole formula rather than per equation because that
-#' is the honest boundary: what makes one admissible is that everything else
-#' in the model is a predictor it can be driven by.
+#' The count is over the whole formula and not per equation, because a
+#' structural term is admissible only where everything else in the model is a
+#' predictor that can drive it.
 #'
 #' @param terms The built terms, a named list of named lists.
 #'
@@ -1366,7 +1400,7 @@ reject_incompatible <- function(terms) {
 #' @details
 #' A label written inside a subformula is not visible where the equation's
 #' terms are enumerated: `seg(x, psi ~ random(~ 1 | u | id))` is one
-#' `SegTerm`, whose own [modelterms7::term_tag()] is `NA`, and the labelled
+#' `SegTerm`, whose own [modelterms7::term_tag()] is `NA`, and the labeled
 #' term is a sub-term of its break-point. The sub-terms are reached through
 #' [modelterms7::term_components()], whose `subs` field is the list of them,
 #' and the walk recurses because a sub-term is an ordinary term and may
@@ -1414,19 +1448,19 @@ term_tags_deep <- function(term, what = "it") {
 #' Two reasons, and both are read from the term rather than from its class.
 #'
 #' A covariance label ([modelterms7::term_tag()]) under a structural term of
-#' the **likelihood** shape says that a latent the likelihood integrates out
-#' shares a prior with coefficients that are estimated. The two are integrated
-#' by different routes and there is no one prior to share, so the term is
-#' rejected rather than fitted as though the label were absent, which would be
-#' a different model reported under the name of the one that was asked for. A
-#' label under a **filter** is fitted: its parameters are numbers estimated
-#' beside the coefficients, and the block is read among them.
+#' the **likelihood** shape would make a latent that the likelihood integrates
+#' out share a prior with coefficients that are estimated. The two are
+#' integrated by different routes and there is no one prior to share, so the
+#' term is rejected. Fitting it as though the label were absent would report
+#' a different model under the name of the one requested. A label under a
+#' **filter** is fitted: its parameters are numbers estimated beside the
+#' coefficients, and the block is read among them.
 #'
-#' Whether a class is admissible is not a question about one term, and is
-#' asked where every member is visible, by [class_space()].
+#' Whether a class is admissible depends on all its members, and
+#' [class_space()] decides it where every member is visible.
 #'
-#' A structural term implementing neither shape of the contract is rejected
-#' for the reason its message gives.
+#' A structural term that implements neither `term_filter()` nor
+#' `term_loglik()` is rejected for the reason its message gives.
 #'
 #' @param term One built term.
 #'
@@ -1457,17 +1491,17 @@ unfittable_reason <- function(term) {
                            "block is a prior over coefficients, and the latent",
                            "is integrated out by a different route, so there is",
                            "no one prior to share. Drop the middle bar, or move",
-                           "the labelled effect to an equation of its own."),
+                           "the labeled effect to an equation of its own."),
                      names(lab)[1L], lab[[1L]]))
     }
   }
   if (S7::S7_inherits(term, modelterms7::structural_term)) {
     kind <- structural_kind(term)
     if (identical(kind, "filter") || identical(kind, "loglik")) return("")
-    return(paste("it is a structural term implementing neither shape of the",
-                 "contract: a term that rewrites the likelihood has to",
-                 "answer either term_filter(), reporting a predictor, or",
-                 "term_loglik(), reporting a likelihood."))
+    return(paste("it is a structural term with a method for neither",
+                 "term_filter() nor term_loglik(): a term that rewrites the",
+                 "likelihood implements term_filter(), which returns a",
+                 "predictor, or term_loglik(), which returns a likelihood."))
   }
   ""
 }
@@ -1513,31 +1547,36 @@ refreshes_own_block <- function(term) {
 #' have been written onto.
 #'
 #' @details
-#' `cbind(y, n - y) ~ x` is how aggregated binomial data are written in R, and
-#' it was not read here: the matrix went down as a vector of twice the length
-#' and the run died on *"Parameter dimension mismatch. All parameters should
-#' have length 1 or 400"*, a message about a length nobody had asked for.
+#' `cbind(y, n - y) ~ x` is how aggregated binomial data are written in R.
+#' The two columns are read as the successes and the failures: the response
+#' becomes the successes and the family's `size` becomes the row sums.
 #'
-#' THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is the
-#' half of this worth having. A size handed to the family is a vector fixed at
-#' fitting time, so it cannot follow the rows anywhere else; the row sums of a
-#' response expression are recomputed wherever that expression is evaluated,
-#' which is what makes a fold of [cv()] or a prediction at new data come out
-#' right. That the alternative is not merely awkward but silently wrong is
-#' measured on the density itself: a size of length 200 against 20
-#' observations returns 200 log-densities, summing to -1125.63, and signals
-#' nothing. See [check_trials()], which refuses that case where the row sums
-#' cannot be had.
+#' The number of trials is taken from the response and not from the family.
+#' A size given to the family is a vector fixed at fitting time, so it cannot
+#' follow the rows anywhere else, whereas the row sums of a response
+#' expression are recomputed wherever that expression is evaluated, which is
+#' what makes a fold of [cv()] or a prediction at new data use the right
+#' trials. A size of another length than the rows is recycled by the density
+#' without any signal (a size of length 200 against 20 observations returns
+#' 200 log-densities). See [check_trials()], which rejects that case where the
+#' row sums cannot be had.
+#'
+#' A size given to the family as well must agree with the row sums, and the
+#' two statements disagreeing is an error; the default size of one is not a
+#' statement and is replaced.
 #'
 #' A matrix response is left alone for a multivariate family, where it is the
-#' ordinary thing and each row is one observation.
+#' ordinary response and each row is one observation.
 #'
 #' @param response The evaluated left-hand side.
 #' @param distrib The family.
 #'
 #' @return A list with `response`, the successes, and `distrib`, carrying the
-#'   row sums as its `size`. Both unchanged where the response is not a
-#'   two-column matrix on a univariate family.
+#'   row sums as its `size`. Both are unchanged where the response is not a
+#'   matrix or the family is multivariate. A matrix response on a univariate
+#'   family signals an error where it has a number of columns other than two,
+#'   is not numeric, holds a negative count, or where the family has no
+#'   `size`.
 #'
 #' @seealso [coerce_response()], [statmod_spec()], [statmod_respec()]
 #'
@@ -1588,33 +1627,32 @@ split_binomial_matrix <- function(response, distrib) {
     stop("The number of trials is given twice and the two disagree: the
   response's row sums say one thing and the family's 'size' another.
   Give it once -- either cbind(successes, failures), or a single-column
-  response with size = .", call. = FALSE)
+  response with the numbers of trials as the family's 'size'.",
+         call. = FALSE)
   }
 
   list(response = successi, distrib = S7::set_props(distrib, size = prove))
 }
 
 
-#' Refuse a Number of Trials That Cannot Follow These Rows
+#' Reject a Number of Trials That Cannot Follow These Rows
 #'
 #' @description
 #' Signals an error where the family carries one number of trials per
 #' observation and the rows it is being applied to are a different number.
 #'
 #' @details
-#' A `size` handed to `binomial_distrib()` is a vector fixed when the fit was
-#' written, so at other rows it is neither right nor obviously wrong: it is
-#' recycled, and the answer comes back with no complaint. Measured directly on
-#' the density, a size of length 200 against 20 observations returns **200**
-#' log-densities summing to -1125.63 and signals nothing -- the response is
-#' recycled against the size, so the number of terms is decided by the family
-#' rather than by the data.
+#' A `size` given to `binomial_distrib()` is a vector fixed when the fit was
+#' written, so at other rows it is recycled and the density returns a value
+#' without any signal: a size of length 200 against 20 observations returns
+#' 200 log-densities, the number of terms being decided by the family and not
+#' by the data.
 #'
-#' The alternative to erroring is not a better number, it is a guess: nothing
-#' on the fit says which rows those trials belonged to. What the caller can do
-#' instead is write the response as `cbind(successes, failures)`, whose row
-#' sums are recomputed wherever the expression is evaluated, and the message
-#' says so.
+#' The function signals an error because no correct number can be returned:
+#' the fit does not record which rows the trials belonged to. The caller can
+#' write the response as `cbind(successes, failures)` instead, whose row sums
+#' are recomputed wherever the expression is evaluated, and the error message
+#' gives that remedy.
 #'
 #' @param distrib The family.
 #' @param n The number of rows it is about to be applied to.
@@ -1638,11 +1676,11 @@ check_trials <- function(distrib, n) {
 }
 
 
-#' Refuse a Quantity That Needs Trials the Rows Do Not Carry
+#' Reject a Quantity That Needs Trials the Rows Lack
 #'
 #' @description
 #' Signals an error where the family's numbers of trials are missing, which
-#' is what [statmod_respec()] leaves when a prediction is asked at rows with
+#' is what [statmod_respec()] leaves when a prediction is made at rows with
 #' no response.
 #'
 #' @details
@@ -1653,7 +1691,7 @@ check_trials <- function(distrib, n) {
 #' there is none to read.
 #'
 #' @param distrib The family, as [statmod_respec()] returns it.
-#' @param what The quantity asked for, in words, for the message.
+#' @param what The quantity requested, in words, for the message.
 #'
 #' @return `distrib`, unchanged.
 #'
@@ -1681,26 +1719,24 @@ check_trials_known <- function(distrib, what) {
 #'
 #' @details
 #' A binary outcome recorded as a factor is how these data are ordinarily
-#' written, and `glm()` has always accepted one: its binomial family reads the
-#' first level as the failure. Without this the response reached
-#' `stats::dbinom()` untouched and the run died on *"Non-numeric argument to
-#' mathematical function"*, which names neither the variable nor the cause.
+#' written, and `glm()` accepts one: its binomial family reads the first
+#' level as the failure. The conversion makes the response a number before it
+#' reaches the density, which would otherwise receive a factor.
 #'
 #' The first level is the failure, which is `glm()`'s rule, so a model moved
-#' from `glm()` keeps its signs. The conversion is made for EVERY family and
-#' not only for the binary ones, which is where this departs from base R --
-#' and it departs in the direction of working: `glm(f ~ x, gaussian)` on a
-#' factor `f` does not refuse cleanly, it signals *"NA/NaN/Inf in 'y'"* after
+#' from `glm()` keeps its signs. The conversion is made for every family and
+#' not only for the binary ones, which differs from base R, where
+#' `glm(f ~ x, gaussian)` on a factor `f` signals *"NA/NaN/Inf in 'y'"* after
 #' three warnings from `Ops.factor`. A two-level factor has one numeric
 #' reading and this is it; on a gaussian family the result is the linear
-#' probability model, which is what `as.numeric(f == "b")` would have given.
+#' probability model, which is what `as.numeric(f == "b")` gives.
 #'
-#' The levels used are returned as the attribute `"response_levels"`. That is
-#' what lets [statmod_respec()] reproduce the SAME mapping on other rows: a
-#' factor carries its levels through a subset, but a character vector does
-#' not, so a cross-validation fold holding only one of the two values would
-#' otherwise be coded the other way round and the deviance would come back
-#' wrong without a word.
+#' The levels used are returned as the attribute `"response_levels"`, which
+#' lets [statmod_respec()] reproduce the same mapping on other rows. A factor
+#' carries its levels through a subset, but a character vector does not, so a
+#' cross-validation fold holding only one of the two values would otherwise be
+#' coded the other way round, and the deviance would be wrong with no
+#' signal.
 #'
 #' @param response The evaluated left-hand side.
 #' @param levels The mapping to reuse, from a previous call's attribute, or
@@ -1731,7 +1767,7 @@ coerce_response <- function(response, levels = NULL) {
   number. Two levels are read as 0 and 1, as glm() reads them; anything
   else has no numeric reading this package can choose for you. Convert it
   yourself -- as.integer(y == \"<level>\") -- and say which level is the
-  one being modelled.",
+  one being modeled.",
       if (is.factor(response)) "factor" else "character vector",
       length(lev), if (length(lev) == 1L) "" else "s",
       paste(utils::head(lev, 5), collapse = ", ")), call. = FALSE)
@@ -1761,10 +1797,13 @@ coerce_response <- function(response, levels = NULL) {
 #'
 #' @details
 #' They are not normalized. Making them sum to one would turn
-#' \eqn{\sum_i w_i \ell_i} into a mean, which is the averaging trap the
-#' objective's own scale already has to avoid: every standard error would
-#' shrink by \eqn{\sqrt{n}} and the information criteria would stop being
-#' comparable.
+#' \eqn{\sum_i w_i \ell_i} into a mean: every standard error would be
+#' multiplied by \eqn{\sqrt{n}} and the information criteria would stop being
+#' comparable with those of an unweighted fit. The weights act as frequency
+#' weights.
+#'
+#' The weights must be numeric, of length `n`, non-negative, finite and
+#' complete, and not all zero; anything else is an error.
 #'
 #' @param weights The weights, or `NULL`.
 #' @param n The number of observations.
@@ -1781,8 +1820,9 @@ check_weights <- function(weights, n) {
     stop(sprintf("'weights' has length %d but there are %d observations.",
                  length(weights), n), call. = FALSE)
   }
-  if (anyNA(weights) || any(weights < 0)) {
-    stop("'weights' must be non-negative and complete.", call. = FALSE)
+  if (anyNA(weights) || any(!is.finite(weights)) || any(weights < 0)) {
+    stop("'weights' must be non-negative, finite and complete.",
+         call. = FALSE)
   }
   if (all(weights == 0)) {
     stop("'weights' are all zero: there is nothing to fit.", call. = FALSE)
@@ -1797,11 +1837,17 @@ check_weights <- function(weights, n) {
 #' Returns a named list with one offset per parameter, `NULL` where none
 #' was given.
 #'
+#' @details
+#' An entry must be numeric, of length 1 or `n`, and finite everywhere, as
+#' an offset written in the formula must be; the names must be parameters of
+#' the distribution.
+#'
 #' @param offsets A named list, or `NULL`.
 #' @param params The parameter names.
 #' @param n The number of observations.
 #'
-#' @return A named list of length `length(params)`.
+#' @return A named list of length `length(params)`, each entry a numeric
+#'   vector of length `n` or `NULL`.
 #'
 #' @keywords internal
 check_offsets <- function(offsets, params, n) {
@@ -1822,6 +1868,12 @@ check_offsets <- function(offsets, params, n) {
     if (!is.numeric(o) || (length(o) != 1L && length(o) != n)) {
       stop(sprintf("The offset for '%s' must be numeric of length 1 or %d.",
                    p, n), call. = FALSE)
+    }
+    if (anyNA(o) || !all(is.finite(o))) {
+      stop(sprintf(paste0("The offset for '%s' is not finite everywhere.\n",
+                          "  An offset enters the linear predictor as it",
+                          " stands, so a missing or\n  infinite value has no",
+                          " fitted answer."), p), call. = FALSE)
     }
     out[[p]] <- rep_len(as.numeric(o), n)
   }
@@ -1847,12 +1899,21 @@ check_offsets <- function(offsets, params, n) {
 #'   prediction does not read whose covariates `newdata` lacks; `character(0)`
 #'   (the default) for none.
 #'
-#' @return A named list with one entry per parameter, each a list with
-#'   `X`, `coef_names`, `npar` and `blocks` (the column
-#'   range each term occupies). Where no term moves with the coefficients
-#'   and none is structural, the attribute `eta_memo` is an environment
-#'   holding the last predictors [statmod_eta()] computed on this design, so a
-#'   second call at the same coefficients returns them without recomputing.
+#' @return A named list with one entry per parameter, each a list with `X`,
+#'   `asked_sparse` (whether a block is sparse because the caller requested
+#'   it, absent for an equation that holds only structural terms),
+#'   `coef_names`, `npar` and `blocks` (the column range each term occupies).
+#'
+#'   The list carries attributes where the model needs them. `structural` and
+#'   `structure` are present when a structural term is, `structural` listing
+#'   the structural units and `structure` being an environment with the term's
+#'   current parameters and held levels. `refresh` and `state` are present when
+#'   a term recomputes its own block, `refresh` listing those terms and `state`
+#'   being an environment with the terms they chain from. Where no term moves
+#'   with the coefficients and none is structural, the attribute `eta_memo` is
+#'   an environment holding the last predictors [statmod_eta()] computed on
+#'   this design, so a second call at the same coefficients returns them
+#'   without recomputing.
 #'
 #' @seealso [statmod_spec()]
 #'
@@ -1936,22 +1997,17 @@ statmod_design <- function(spec, unseen = NULL, skip = character(0)) {
 #' @description
 #' Converts the sparse blocks of a design to base matrices when the
 #' equations together carry fewer than `min_dim` coefficients and no block
-#' is sparse because the caller asked for it.
+#' is sparse because the caller requested it.
 #'
 #' @details
 #' A random effect builds its block sparse whatever its size. Below about a
 #' hundred coefficients the sparse route costs more than it saves, its fixed
 #' cost being the coercions and the S4 dispatch around each product, which do
 #' not shrink with the matrix; [worth_sparse()] records the same crossover for
-#' the factorization. Measured on `MASS::Cars93`, a lasso over twelve
-#' standardized columns beside `random(~ 1 | Manufacturer)` (46 coefficients):
-#' the fit at a held \eqn{\lambda} takes 2.55 s with the design dense against
-#' 6.69 s sparse, and a path of ten values 30.1 s against 67.8 s, with the
-#' coefficients agreeing to 6e-12 and the same \eqn{\lambda} chosen. The
-#' conversion is applied only where no block moves with the coefficients and
+#' the factorization. The conversion is applied only where no block moves with the coefficients and
 #' no structural term is present, since those designs are rebuilt during the
-#' fit and a rebuilt block would come back sparse. A block the caller asked
-#' to be sparse (`sparse = TRUE` on a term, `linpar_options(sparse = TRUE)`,
+#' fit and a rebuilt block would come back sparse. A block that the caller
+#' requested sparse (`sparse = TRUE` on a term, `linpar_options(sparse = TRUE)`,
 #' a sparse matrix as input) is never converted, and then neither is the
 #' rest of the design: the design keeps the storage it was given.
 #'
@@ -1985,10 +2041,11 @@ densify_small <- function(design, min_dim = 100L) {
 #' equation starts at zero, and an unheld level that the term's own start
 #' left at zero starts at the equation's data-based intercept. A filter also
 #' receives a second start, kept beside the first, with each score loading
-#' at \eqn{0.1/\mathcal{I}}, \eqn{\mathcal{I}} the expected information of
-#' its equation's predictor at the intercept-only fit
-#' ([predictor_information()]); [statmod()] fits from it where the fit from
-#' the first start does not converge.
+#' at \eqn{0.1\,\mathcal{I}^{d-1}}, where \eqn{d} is the `scaling` of the
+#' filter (so that the loading is \eqn{0.1/\mathcal{I}} for \eqn{d = 0}) and
+#' \eqn{\mathcal{I}} is the expected information of its equation's predictor
+#' at the intercept-only fit ([predictor_information()]); [statmod()] fits
+#' from it where the fit from the first start does not converge.
 #'
 #' @details
 #' [statmod_design()] applies them to the start [modelterms7::term_start()]
@@ -2123,8 +2180,10 @@ structural_start_fixups <- function(spec, sst, su, fresh) {
 #' @details
 #' It sets the scale of a score-driven term's second start
 #' ([structural_start_fixups()]): the score of a predictor has variance equal
-#' to this information, so a loading of \eqn{0.1/\mathcal{I}} moves the
-#' predictor by a tenth of the score's natural unit whatever the family.
+#' to this information, so a loading of \eqn{0.1/\mathcal{I}} on the unscaled
+#' score moves the predictor by a tenth of the score's natural unit whatever
+#' the family. For a filter with `scaling` \eqn{d} the loading is
+#' \eqn{0.1\,\mathcal{I}^{d-1}}, which gives the same step.
 #'
 #' @param spec A [StatmodSpec()].
 #'
@@ -2219,11 +2278,11 @@ statmod_design_blocks <- function(spec, unseen = NULL, skip = character(0)) {
 #'
 #' @details
 #' [statmod()] passes further arguments to these methods, the number of
-#' threads among them, and a method without `...` stopped with "unused
-#' argument (threads = 1)" from inside the fit. The derivative methods also
-#' take `scale`, which the generic resolves and passes on. The methods of the
-#' families shipped with \pkg{distributions7} all carry `...`; a family
-#' written by a user is where this is met, and where the message is read.
+#' threads among them, and a method without `...` fails from inside the fit
+#' with "unused argument (threads = 1)". The derivative methods also take
+#' `scale`, which the generic resolves and passes on. The methods of the
+#' families shipped with \pkg{distributions7} all carry `...`, so the error
+#' arises for a family written by a user.
 #'
 #' @param distrib A univariate family.
 #'

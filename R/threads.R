@@ -6,11 +6,11 @@
 #'
 #' @description
 #' Computes \eqn{A^\top \mathrm{diag}(w) B}, the weighted cross product the
-#' information matrix and the outer Hessian are assembled from. Above a
-#' measured work threshold, and only when the caller asked for more than one
-#' thread, the work goes to the package's own threaded kernel. Everywhere
-#' else it evaluates `crossprod(A * w, B)`, which is the expression the
-#' kernel replaces.
+#' information matrix and the outer Hessian are assembled from. Above a work
+#' threshold, and only when more than one thread is requested, the work goes
+#' to the package's own threaded kernel. Everywhere else the function
+#' evaluates `crossprod(A * w, B)`, which is the expression the kernel
+#' replaces.
 #'
 #' @details
 #' # Why the answer does not depend on the thread count
@@ -20,7 +20,7 @@
 #' ascending row order, with the weight multiplied onto `A`'s entry before
 #' the product is formed. No accumulation is ever split between threads, so
 #' the sum is the same sequence of additions at any count and the result is
-#' identical bit for bit at 1, 2 or 24 threads.
+#' identical bit for bit at any thread count.
 #'
 #' That guarantee is about the kernel alone. It says nothing about the two
 #' routes agreeing with each other: engaging the kernel replaces a BLAS call,
@@ -30,20 +30,17 @@
 #'
 #' # When the kernel is used
 #'
-#' All four conditions must hold: `threads > 1`, `A` and `B` are base dense
-#' matrices, `w` has one entry per row, and the work
-#' \eqn{n \times p_A \times p_B} is at least `2e5` multiply-adds. A sparse
-#' design keeps its \pkg{Matrix} route, where a dense kernel would gain
-#' nothing: the cost there is set by the number of stored nonzeros, and the
-#' threshold above reads the dense shape.
+#' All of the following must hold: `threads > 1`; `A` and `B` are base dense
+#' matrices with the same number of rows; `w` has one entry per row; and the
+#' work \eqn{n \times p_A \times p_B} is at least `2e5` multiply-adds.
+#' Otherwise `crossprod(A * w, B)` is evaluated, which signals its own error
+#' for blocks of different heights. A sparse design keeps its \pkg{Matrix}
+#' route, where a dense kernel would gain nothing: the cost there is set by
+#' the number of stored nonzeros, and the threshold reads the dense shape.
 #'
 #' The threshold is a constant in the source, with no argument to set it. It
-#' was measured: the crossover where opening a parallel region costs what it
-#' saves sits near \eqn{9 \times 10^4} multiply-adds on the development
-#' machine (0.94x at \eqn{8 \times 10^4}, 1.7x at \eqn{10^5}, 10x at
-#' \eqn{2 \times 10^6}, 19x to 20x at the shapes a real fit assembles), and
-#' the gate is set above it, where a misjudgment in either direction costs
-#' almost nothing.
+#' lies above the work at which opening a parallel region costs what it
+#' saves.
 #'
 #' # Dimnames
 #'
@@ -51,8 +48,8 @@
 #' put back as the row and column names of the result when either has them.
 #' `crossprod()` does this itself, so both routes name their output alike.
 #'
-#' @param A,B Dense design blocks with the same number of rows, `n x pa` and
-#'   `n x pb`. Either may be sparse, in which case the \pkg{Matrix} route is
+#' @param A,B Design blocks with the same number of rows, `n x pa` and
+#'   `n x pb`. If either is not a base dense matrix, the sequential route is
 #'   taken and the result is whatever `crossprod()` gives for that pair.
 #' @param w Per-observation weights, a numeric vector of length `n`. A weight
 #'   of any sign is accepted; nothing here assumes the working weights are
@@ -64,13 +61,15 @@
 #' @return A `pa x pb` numeric matrix, with the column names of `A` and `B`
 #'   as its dimnames when either block carries them.
 #'
-#' @seealso [xtv()] and [xtx()], the other two threaded assembly kernels,
-#'   which share this threshold.
+#' @seealso [xtv()], [wxsq()] and [xtx()], the other threaded assembly
+#'   kernels. They use the same constant, \eqn{2 \times 10^5}, on their own
+#'   measures of work: \eqn{n p} for [xtv()] and [wxsq()], and
+#'   \eqn{n p^2} for [xtx()].
 #'
 #' @keywords internal
 wcrossprod <- function(A, w, B, threads = 1L) {
   if (threads > 1L && is.matrix(A) && is.matrix(B) &&
-      length(w) == nrow(A) &&
+      length(w) == nrow(A) && nrow(B) == nrow(A) &&
       as.double(nrow(A)) * ncol(A) * ncol(B) >= 2e5) {
     out <- wcrossprod_cpp(A, w, B, threads)
     cn <- list(colnames(A), colnames(B))
@@ -91,12 +90,12 @@ wcrossprod <- function(A, w, B, threads = 1L) {
 #' working weights.
 #'
 #' `wxsq()` computes \eqn{\sum_i w_i x_{ij}^2} for each column \eqn{j}, the
-#' column curvatures of a working model. The `n x p` matrix of squares is
-#' never formed.
+#' column curvatures of a working model. The threaded kernel does not form the
+#' `n x p` matrix of squares, whereas the sequential expression does.
 #'
-#' Both take the package's threaded kernel above the same measured work
-#' threshold [wcrossprod()] uses, and otherwise evaluate the expressions they
-#' replace, `as.numeric(crossprod(X, v))` and
+#' Both take the package's threaded kernel above a work threshold, the one
+#' constant that [wcrossprod()] also uses, and otherwise evaluate the
+#' expressions they replace, `as.numeric(crossprod(X, v))` and
 #' `as.numeric(crossprod(w, X^2))`.
 #'
 #' @details
@@ -132,8 +131,8 @@ wcrossprod <- function(A, w, B, threads = 1L) {
 #'   Neither carries the column names of `X`, since both feed arithmetic
 #'   indexed by position.
 #'
-#' @seealso [wcrossprod()] for the matrix-valued kernel and the measured
-#'   threshold both share, [coord_fit()] for the descent that calls these.
+#' @seealso [wcrossprod()] for the matrix-valued kernel and the work
+#'   threshold, [coord_fit()] for the descent that calls these.
 #'
 #' @keywords internal
 xtv <- function(X, v, threads = 1L) {
@@ -157,10 +156,10 @@ wxsq <- function(X, w, threads = 1L) {
 #'
 #' @description
 #' Computes \eqn{A^\top A} for a square-root design, through the package's
-#' threaded kernel above the measured work threshold and through
-#' `crossprod(A)` everywhere else. This is what `fit_smooth()`'s subset route
-#' assembles at every scoring iteration: the design has already been scaled
-#' by the square root of the working weights, so no weight vector enters.
+#' threaded kernel above a work threshold and through
+#' `crossprod(A)` everywhere else. The argument is a design that has already
+#' been scaled by the square root of the working weights, so no weight vector
+#' enters.
 #'
 #' @details
 #' # Symmetry, and independence of the thread count
@@ -178,16 +177,15 @@ wxsq <- function(X, w, threads = 1L) {
 #' agree to the last bit there. An optimized BLAS blocks its accumulations
 #' and agrees to the rounding of one dot product.
 #'
-#' A full \eqn{p^2} version was measured and is not what ships: it was no
-#' better than `dsyrk` at eight threads, so the second half of the work
-#' bought nothing.
+#' Only the upper triangle is computed, as `dsyrk` does, because computing all
+#' \eqn{p^2} entries gave no gain.
 #'
 #' # When the kernel is used
 #'
 #' `threads > 1`, `A` a base dense matrix, and \eqn{n \times p^2} at least
-#' `2e5`. Note the \eqn{p^2}: this kernel writes \eqn{p^2} outputs where
-#' [xtv()] writes \eqn{p}, so a design wide enough to reach the threshold
-#' here can be too narrow to reach it there.
+#' `2e5`. This kernel writes \eqn{p^2} outputs where [xtv()] writes \eqn{p},
+#' so a design wide enough to reach the threshold here can be too narrow to
+#' reach it there.
 #'
 #' @param A A dense design block, `n x p`, already scaled by the square root
 #'   of the working weights. A sparse `A` takes the \pkg{Matrix} route and

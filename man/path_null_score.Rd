@@ -34,7 +34,7 @@ hyperparameter for which the term contributes nothing, which is
 \pkg{glmnet}'s \code{lambda.max} written for any separable penalty.
 
 The other coefficients are held where the caller left them and are not
-refitted, so the number is a starting point and no boundary. The path
+refitted, so the number is a starting point and not a boundary. The path
 checks it: a top whose fit is not empty is doubled until it is.
 
 Where the kinks of the coordinates differ, as under \code{standardize}, each

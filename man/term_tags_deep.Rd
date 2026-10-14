@@ -22,7 +22,7 @@ sub-terms developing its own parameters, walked to any depth.
 \details{
 A label written inside a subformula is not visible where the equation's
 terms are enumerated: \code{seg(x, psi ~ random(~ 1 | u | id))} is one
-\code{SegTerm}, whose own \code{\link[modelterms7:term_tag]{modelterms7::term_tag()}} is \code{NA}, and the labelled
+\code{SegTerm}, whose own \code{\link[modelterms7:term_tag]{modelterms7::term_tag()}} is \code{NA}, and the labeled
 term is a sub-term of its break-point. The sub-terms are reached through
 \code{\link[modelterms7:term_components]{modelterms7::term_components()}}, whose \code{subs} field is the list of them,
 and the walk recurses because a sub-term is an ordinary term and may

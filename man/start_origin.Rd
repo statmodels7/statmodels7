@@ -13,24 +13,24 @@ A \code{StartOrigin} object, inheriting from \code{\link[=start_strategy]{start_
 Every coefficient at zero on the unconstrained scale, which for each
 distribution parameter is the value its link maps zero to.
 }
-\section{When it is a poor choice}{
+\section{Use of the origin}{
 A location parameter on the identity link begins at zero whatever the
 response is. On a response centered at a thousand the run then starts a
-thousand units away and has to travel there, and on a badly scaled model
-it may not arrive at all. \code{\link[=start_intercepts]{start_intercepts()}}, the default, exists for
-that reason.
+thousand units from the response and has to travel there, and on a badly
+scaled model it may not arrive. \code{\link[=start_intercepts]{start_intercepts()}}, the default, avoids
+this by starting the intercepts at the intercept-only fit.
 
-It is harmless where every equation is on a log or a logit link, since
-zero is then an ordinary interior value of the parameter, and it is the
-reference the other strategies are judged against.
+The origin is appropriate where every equation is on a log or a logit
+link, since zero is then an ordinary interior value of the parameter.
 }
 
 \section{The name}{
-\code{start_origin}, not \code{start_zeros}. \pkg{optimizers7} already exports
-\code{start_zeros()} for the starting point of an optimizer, and no two members
-of this toolkit export the same name. A collision would be reported by
-\code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}, and, worse, which function a caller reached
-would depend on the order the packages were attached in.
+The function is named \code{start_origin()} and not \code{start_zeros()}, because
+\pkg{optimizers7} already exports \code{start_zeros()} for the starting point of
+an optimizer, and no two members of this toolkit export the same name. A
+collision would be reported by \code{\link[=statmodels7_conflicts]{statmodels7_conflicts()}}, and the function
+reached by a caller would depend on the order in which the packages were
+attached.
 }
 
 \examples{

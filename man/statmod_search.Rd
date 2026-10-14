@@ -11,23 +11,23 @@ statmod_search(spec, row, default = "grid")
 
 \item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
-\item{default}{What to use where the term named nothing.}
+\item{default}{What to use where the term specifies nothing.}
 }
 \value{
 \code{"grid"} or \code{"cyclic"}.
 }
 \description{
 \code{"grid"} for every combination of the term's kinked hyperparameters,
-\code{"cyclic"} for one at a time, or the default where the term named
+\code{"cyclic"} for one at a time, or the default where the term specifies
 neither.
 }
 \details{
 It belongs to the term, for the reason the whole enumeration does: a
-criterion is asked about every hyperparameter of the model, and a smooth
-one is read at the mode instead of being swept, so most of what it is
-asked about could not answer. A penalty with a kink is fitted
-by a scheme of its own, and how that scheme covers the term's own
-hyperparameters is part of the scheme.
+criterion applies to every hyperparameter of the model, and a smooth one is
+read at the mode instead of being swept, so a setting that concerns only
+the kinked hyperparameters cannot belong to the criterion. A penalty with a
+kink is fitted by a scheme of its own, and how that scheme covers the
+term's own hyperparameters is part of the scheme.
 
 Being per term is also what keeps one term's choice off another's:
 \code{y ~ lasso(X) + enet(R, search = "cyclic")} sweeps the elastic net

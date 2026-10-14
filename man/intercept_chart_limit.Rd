@@ -2,7 +2,7 @@
 % Please edit documentation in R/statmod.R
 \name{intercept_chart_limit}
 \alias{intercept_chart_limit}
-\title{Where an Intercept on a Non-Identity Chart Stops Being an Estimate}
+\title{Limit of an Intercept on a Non-Identity Chart}
 \usage{
 intercept_chart_limit()
 }

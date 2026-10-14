@@ -2,7 +2,7 @@
 % Please edit documentation in R/blocks.R
 \name{statmod_min_ratio}
 \alias{statmod_min_ratio}
-\title{How Far Down the Path Reaches for One Term}
+\title{The Depth of a Path for One Term}
 \usage{
 statmod_min_ratio(spec, row, default)
 }
@@ -11,20 +11,22 @@ statmod_min_ratio(spec, row, default)
 
 \item{row}{One row of \code{\link[=path_rows]{path_rows()}}'s index.}
 
-\item{default}{\code{\link[=path_fallbacks]{path_fallbacks()}}'s, for a term that named none.}
+\item{default}{The fallback of \code{\link[=path_fallbacks]{path_fallbacks()}}, used for a term that
+specifies none.}
 }
 \value{
 A single number.
 }
 \description{
-The depth the term asked for, or the layer's fallback where it asked for
-nothing.
+The depth that the term specifies, or the fallback of \code{\link[=path_fallbacks]{path_fallbacks()}}
+where the term specifies none.
 }
 \details{
-One number per term, not one per hyperparameter, because only the sweep by
-kink size reads it. A bounded hyperparameter is swept over its own
-interval, and a shape that does not move the kink over a geometric grid
-above its lower bound; neither takes its length from here.
+One number per term and not one per hyperparameter, because only the sweep
+by kink size reads it. A bounded hyperparameter is swept over its own
+interval, and a shape that does not move the kink over a grid whose
+distances above the smallest admissible shape are geometric; neither takes
+its length from here.
 }
 \seealso{
 \code{\link[=statmod_grid_size]{statmod_grid_size()}}, \code{\link[=path_values]{path_values()}}

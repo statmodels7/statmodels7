@@ -18,28 +18,23 @@ A list of four: \code{expected} (a logical), \code{approx} (a string),
 \code{maxit} and \code{tol}.
 }
 \description{
-The information matrix, its approximation and the budget, read off the inner
-method in one place.
+The information matrix, its approximation and the budget, read from the
+inner method in one place.
 }
 \details{
-Every route that fits the coefficients reads these, and reading them in
-one place keeps a refit inside a path or a fold on the same terms as the
-fit the caller asked for. Hard-coding them instead ran cross-validation at
-a tolerance a hundred times tighter than \code{\link[=iwls]{iwls()}}'s own, which cost 26 per
-cent in time and answered a question the caller had not asked.
+Every route that fits the coefficients reads these settings, and reading
+them in one place keeps a refit inside a path or a fold on the same terms
+as the fit of the caller.
 
-An \pkg{optimizers7} optimizer gets the OBSERVED information. It
+An \pkg{optimizers7} optimizer receives the observed information. It
 minimizes \eqn{-\ell + \rho} and \code{\link[optimizers7:minimize]{optimizers7::minimize()}} documents \code{he}
-as that function's second derivative, which is what the observed
-information is; the expected one is a different matrix, so a method asked
-for a Newton step was performing Fisher scoring under another name. Where
-a family writes neither out the two also differ in cost by orders: the
-route taken before was the exact sum over the support, measured at 211 s
-per call on a 12096-cell Poisson-inverse gaussian regression against
-0.041 s for the observed, so \code{newton()} spent an hour building matrices
-and never finished. \code{approx} is \code{"opg"} for such a method, which is what
+as that function's second derivative, which is the observed information;
+the expected information is a different matrix, so a Newton step on it
+would be Fisher scoring under another name. Where a family writes neither
+out, the expected information is also far more expensive to form than the
+observed one. \code{approx} is \code{"opg"} for such a method, which is what
 \code{\link[=iwls]{iwls()}} itself defaults to; it is read only where \code{expected} is \code{TRUE},
-so for an optimizer it records a default rather than a choice.
+so for an optimizer it records a default and not a choice.
 }
 \seealso{
 \code{\link[=method_budget]{method_budget()}} for the last two,

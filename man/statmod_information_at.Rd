@@ -25,10 +25,11 @@ statmod_information_at(
 negated observed Hessian.}
 
 \item{approx}{How the expected information is approximated for a family
-with no closed form: \code{"bartlett"}, \code{"integrate"} or \code{"mc"}.}
+with no closed form: \code{"opg"} (the default), \code{"bartlett"}, \code{"integrate"}
+or \code{"mc"}.}
 
 \item{H}{The second-derivative components at this point, as
-\code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to ask for them.
+\code{\link[=statmod_family_hessian]{statmod_family_hessian()}} returns them, or \code{NULL} to compute them here.
 A mixture over regimes reads a different set per component and
 ignores this.}
 
@@ -61,8 +62,14 @@ optimum may be indefinite.
 has no closed expected information.
 
 With \code{index} only the requested columns of each design enter a cross
-product, so a caller that reads a few rows and columns does not pay for
+product, so that reading a few rows and columns does not require
 \eqn{X'WX} over every coefficient.
+
+For a likelihood mixed over latent states the matrix is the complete-data
+information, the ordinary information averaged over the smoothed states.
+It is positive definite and serves as a scoring matrix, and it is not the
+observed information of the mixture. The variance of a fit comes from
+\code{\link[=statmod_regime_information]{statmod_regime_information()}}.
 }
 \seealso{
 \code{\link[=statmod_score_at]{statmod_score_at()}} for the first derivative,

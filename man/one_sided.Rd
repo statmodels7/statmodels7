@@ -11,9 +11,8 @@ one_sided(expr, env)
 call, or the literal \code{1}. Substituted unevaluated, so a term call is not
 run here.}
 
-\item{env}{The environment to attach. Passed through with no check, so a
-caller supplying \code{NULL} gets a formula with a \code{NULL} environment rather
-than an error.}
+\item{env}{The environment to attach. It is not checked, and \code{NULL} gives a
+formula with a \code{NULL} environment.}
 }
 \value{
 A one-sided formula of length 2, whose \verb{[[2]]} is \code{expr} and whose
@@ -27,10 +26,10 @@ parameter with no equation.
 }
 \details{
 The formula is built with \code{eval(bquote(~ .(expr)), envir = env)}, and the
-environment is then assigned again. The second step makes the result
-reliable: \code{eval()} gives the formula whatever environment it was evaluated
-in, and the assignment states the intended one, so the two cannot come
-apart if the construction changes.
+environment is then assigned again. \code{eval()} gives the formula the
+environment in which it was evaluated, and the assignment states the
+intended environment explicitly, so the result carries \code{env} whatever the
+construction does.
 }
 \seealso{
 \code{\link[=statmod_equations]{statmod_equations()}}, its only caller.

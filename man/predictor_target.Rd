@@ -21,23 +21,20 @@ parameters from the data, which is the one thing a term cannot work out
 for itself.
 }
 \details{
-It exists only where the response reads the parameter directly, which
-\code{params_interpretation} says: a mean or a location. A scale or a shape has
-no per-observation reading, so \code{NULL} is returned and nothing is invented
-for the occasion.
+A target exists only where the response reads the parameter directly,
+which \code{params_interpretation} records as a mean or a location. A scale or a
+shape has no per-observation reading, so \code{NULL} is returned.
 
-The scale matters and is not a detail. Measured on a Poisson whose
-predictor is a logistic growth curve with \eqn{\phi = 4}, a term handed
-the raw response estimated \eqn{\phi} between 52.7 and 54.8 over five
-samples, and one handed \eqn{g(y)} estimated it between 4.03 and 4.07.
-What does not matter, measured on the same shape beside another term, is
-the other terms' contribution: subtracting it moved the estimate from
-39.68 to 39.87 against a truth of 40, so the response is passed as it
-stands and nothing is residualized.
+The response is passed on the scale of the predictor, \eqn{g(y)}, because a
+term that estimates its parameters from the raw response would work on the
+wrong scale. The contribution of the other terms of the equation is not
+subtracted, and the offset of the equation is.
 
-A response sitting on a bound of the parameter's own domain is moved half
-way to the nearest admissible value, a link not being defined at its
-bound. For counts under a log link that is the classical half.
+A response that lies on a bound of the domain of the parameter is moved
+half way from the bound to the smallest (or, for an upper bound, the
+largest) response inside the domain, because a link is not defined at its
+bound. For counts under a log link this gives one half when the smallest
+positive count is 1.
 }
 \seealso{
 \code{\link[=start_at]{start_at()}},

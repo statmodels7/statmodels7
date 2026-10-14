@@ -15,7 +15,8 @@ armijo_ok(vnew, value, step, gd, c1 = 1e-04)
 
 \item{gd}{\eqn{g^\top\delta}, negative for a descent direction.}
 
-\item{c1}{The share of the predicted decrease that is asked for.}
+\item{c1}{The share of the predicted decrease that the trial point must
+achieve.}
 }
 \value{
 A single logical.
@@ -26,19 +27,14 @@ least a fixed share of what the model predicted over that step.
 }
 \details{
 \deqn{f(x + s d) \;\le\; f(x) + c_1 s\, g^\top d .}
-\strong{The sign of \eqn{g^\top d} is the whole of it.} The increment solves
-\eqn{(H + S)\delta = -g}, so \eqn{g^\top\delta = -g^\top(H+S)^{-1}g} is
-NEGATIVE -- measured, in 19 of 19 solves of one fit, over
-\eqn{[-6435, -0.0119]} -- and the bound therefore sits BELOW \eqn{f(x)}
-and asks for a decrease. Written with the term SUBTRACTED it changes sign
-and the test permits an INCREASE of \eqn{c_1 s |g^\top\delta|}, which on
-that fit was as much as 0.6435 a step, where the loop's own comment said
-sufficient decrease rather than mere non-increase. It is named rather than
-written inline so that the sign carries a test of its own: a test over a
-fit sees the condition only through the steps that fit happens to take,
-and none of them relied on the extra licence.
+The increment solves \eqn{(H + S)\delta = -g}, so
+\eqn{g^\top\delta = -g^\top(H+S)^{-1}g} is negative and the bound lies
+below \eqn{f(x)}, which requires a decrease. If the term were subtracted
+instead, the bound would lie above \eqn{f(x)} and the test would permit an
+increase of \eqn{c_1 s \lvert g^\top\delta\rvert}. The condition is a
+separate function so that its sign can be tested directly.
 }
 \seealso{
-\code{\link[=iwls_fit]{iwls_fit()}}, the loop that asks it.
+\code{\link[=iwls_fit]{iwls_fit()}}, the loop that applies it.
 }
 \keyword{internal}

@@ -16,16 +16,16 @@ The reference fit's estimates where the two models share a coefficient,
 the fallback strategy's answer everywhere else.
 }
 \details{
-A block is matched by the name the formula gave its term: column by column
-for the parametric block, and as a whole for every other where the
-coefficient names agree. What is left over -- the same term written on
-another basis, paired by \code{\link[=block_stem]{block_stem()}} and \code{\link[=same_term_kind]{same_term_kind()}} -- goes to
-\code{\link[=project_blocks]{project_blocks()}}, which estimates it against the partial residual of the
-reference's predictor. See \code{\link[=start_from]{start_from()}} for why the three rules differ.
+A block is matched by the name that the formula gave its term: column by
+column for the parametric block, and as a whole for every other block where
+the coefficient names agree. The remaining blocks, which are the same term
+written on another basis and paired by \code{\link[=block_stem]{block_stem()}} and
+\code{\link[=same_term_kind]{same_term_kind()}}, go to \code{\link[=project_blocks]{project_blocks()}}, which estimates them against
+the partial residual of the reference's predictor. See \code{\link[=start_from]{start_from()}} for
+the three rules.
 
-The result carries an attribute \code{"taken"}, a data frame naming every
-coefficient the reference answered for and whether it was \code{matched} or
-\code{projected}, so a caller can see what was reused rather than infer it from
-the fit that follows.
+The result carries an attribute \code{"taken"}, a data frame that names every
+coefficient taken from the reference and records whether it was \code{matched}
+or \code{projected}, so that the reused coefficients can be read directly.
 }
 \keyword{internal}

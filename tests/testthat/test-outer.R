@@ -186,7 +186,7 @@ test_that("the criterion applies to a smooth penalty and to nothing else", {
 
   expect_error(statmod(y ~ s(x, bspline_smooth(k = 8)), distributions7::gaussian1_distrib(),
                        ds, outer_criterion = "reml"),
-               "reml(), ml(), aic(), bic(), cv() or NULL", fixed = TRUE)
+               "reml(), ml(), aic(), bic() or NULL", fixed = TRUE)
 })
 
 test_that("ml reads an additive penalty's null space, and refuses without one", {

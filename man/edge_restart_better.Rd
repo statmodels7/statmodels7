@@ -8,18 +8,23 @@ edge_restart_better(new, old, crit, outer_criterion, sparse_criterion)
 }
 \arguments{
 \item{new, old}{The two results of \code{\link[=statmod_alternate]{statmod_alternate()}} or
-\code{\link[=statmod_select]{statmod_select()}}.}
+\code{\link[=statmod_select]{statmod_select()}}. The element \code{criterion_by} of \code{old}, the
+\code{\link[=OuterMethod]{OuterMethod()}} whose value is \code{criterion}, gives the criterion.}
 
 \item{crit}{The criterion \code{old} reached, \code{NA} where none ran.}
 
-\item{outer_criterion, sparse_criterion}{As passed to \code{\link[=statmod]{statmod()}}.}
+\item{outer_criterion, sparse_criterion}{As passed to \code{\link[=statmod]{statmod()}}, read
+only where \code{old} does not record the criterion that produced \code{crit}; the
+outer criterion is then used if there is one, and the sparse criterion
+otherwise.}
 }
 \value{
 \code{TRUE} where \code{new} is strictly better.
 }
 \description{
-Compares a fit restarted by \code{\link[=statmod]{statmod()}} after \code{\link[=edge_violations]{edge_violations()}} with the
-one it replaces: on the criterion that chose the hyperparameters where one
-ran, in its own direction, and on the penalized objective otherwise.
+Compares a fit restarted by \code{\link[=statmod]{statmod()}} (after \code{\link[=edge_violations]{edge_violations()}}, or from
+a score-driven term's own start) with the one it replaces. The comparison
+is made on the criterion that chose the hyperparameters, where one ran, in
+the direction of that criterion, and on the penalized objective otherwise.
 }
 \keyword{internal}

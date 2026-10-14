@@ -26,32 +26,38 @@ statmod_edf(
 \item{expected}{Whether the curvature is the expected information.}
 
 \item{approx}{The approximation for the expected information.}
+
+\item{aliased}{Stacked positions of the coefficients that the fit did not
+estimate; they are not counted.}
 }
 \value{
-A data frame with one row per term.
+A data frame with one row per term and the columns \code{parameter},
+\code{term}, \code{coefficients} and \code{edf}, or \code{NULL} where the model has no term.
+\code{edf} is \code{NA} for a term whose count could not be read.
 }
 \description{
-Asks each term what it spends, through \pkg{modelterms7}'s \code{edf()}.
+Computes the effective degrees of freedom of each term: from the diagonal
+of the model's smoother where a penalized term is not kinked, from the
+number of coefficients away from the kink for a kinked penalty, from the
+term's free parameters for a structural term, and through
+\pkg{modelterms7}'s \code{edf()} for the remaining terms.
 }
 \details{
-A smooth penalized term counts \eqn{\mathrm{tr}[(H+S)^{-1}H]} over its own
-block, so it needs the unpenalized curvature there, never only its
-coefficients and its hyperparameters. That block is cut out of the
-likelihood's information, which is computed once for every term rather than
-per term.
+A smooth penalized term takes its share from the diagonal of
+\eqn{(H+S)^{-1}H} for the whole model, read over the coefficients of every
+equation at once. The computation needs the unpenalized curvature of every
+equation, and not only the coefficients and hyperparameters of the term.
+That curvature is computed once for all terms and not per term.
 
 A term may carry more than one penalty, over different parameters of its
 own, and each has hyperparameters of its own filed under a key of its own.
-The row stays per term, which is the granularity a table of terms wants,
+The row stays per term, which is the granularity of a table of terms,
 and the hyperparameters are handed over keyed by the penalty names
 \code{\link[modelterms7:term_penalties]{modelterms7::term_penalties()}} gives, which is the shape
 \code{edf()} reads them in. Passing the hyperparameters of one penalty for
 a term carrying two would count the whole block against it.
 
-The arguments are passed by name. \code{edf()}'s third argument is the
-curvature and its fourth the hyperparameters, and a positional call put the
-hyperparameters where the curvature belongs: every smooth term then reported
-\code{NA}, the total degrees of freedom counted the unpenalized terms alone,
-and AIC and BIC were built on that count.
+The arguments of \code{edf()} are passed by name: its third argument is the
+curvature and its fourth the hyperparameters.
 }
 \keyword{internal}
