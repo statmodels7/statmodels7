@@ -139,7 +139,7 @@ test_that("a term whose block moves with its coefficients is accepted", {
   # it was rejected until the alternation learned to refresh a block; what
   # the design now carries is the list of terms it has to refresh
   for (call in list(quote(seg(x)), quote(jump(x)), quote(jseg(x)),
-                    quote(nl(~ a * exp(b * x), params = c("a", "b"))))) {
+                    quote(nl(~ a * exp(b * x))))) {
     fm <- stats::as.formula(paste("y ~", deparse(call)))
     spec <- expect_no_error(
       statmod_spec(fm, distributions7::gaussian1_distrib(), dd))
@@ -205,7 +205,7 @@ test_that("the predicate reads the method's owner, not a list of classes", {
   built <- function(tm) modelterms7::term_build(tm, dd)
   expect_true(statmodels7:::refreshes_own_block(built(seg(x))))
   expect_true(statmodels7:::refreshes_own_block(
-    built(nl(~ a * exp(b * x), params = c(a = 1, b = 0.1)))))
+    built(nl(~ a * exp(b * x), start = list(a = 1, b = 0.1)))))
   # these inherit term_refresh's identity method on model_term
   expect_false(statmodels7:::refreshes_own_block(built(linpar(~x))))
   expect_false(statmodels7:::refreshes_own_block(built(s(x))))

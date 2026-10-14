@@ -123,10 +123,10 @@ test_that("a product-grid path does not depend on workers, bit for bit", {
   b <- c(1.2, -0.9, 0.6, numeric(p - 3))
   d <- data.frame(y = as.numeric(X %*% b) + rnorm(n))
   d$X <- X
-  f1 <- statmod(y ~ scad(X, n_lambda = 6, n_a = 3),
+  f1 <- statmod(y ~ scad(X, a = NULL, n_lambda = 6, n_a = 3),
                 distributions7::gaussian1_distrib(), d,
                 sparse_criterion = bic())
-  f2 <- statmod(y ~ scad(X, n_lambda = 6, n_a = 3),
+  f2 <- statmod(y ~ scad(X, a = NULL, n_lambda = 6, n_a = 3),
                 distributions7::gaussian1_distrib(), d,
                 sparse_criterion = bic(),
                 threads = numericals7::n_threads(1, workers = 2))
