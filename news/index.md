@@ -1,5 +1,16 @@
 # Changelog
 
+## statmodels7 0.199.5
+
+- Requires penalties7 0.31.0, whose `penalty_prox_spec()` rejects a step
+  vector whose length is neither one nor the number of coefficients. Two
+  tests called it with the whole penalty and the steps of the kept
+  coordinates; the screening test now builds the table from
+  [`coord_table_penalty()`](https://statmodels7.github.io/statmodels7/reference/coord_table_penalty.md),
+  as
+  [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
+  does, and the curvature test expects the error.
+
 ## statmodels7 0.199.4
 
 - The restart of an outer search that stopped on the resolution rule
