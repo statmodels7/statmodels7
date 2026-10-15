@@ -1140,6 +1140,9 @@ helper functions. None of it is needed to use the package.
 - [`random_prior()`](https://statmodels7.github.io/statmodels7/reference/random_prior.md)
   : The Prior of One Random-Effect Term, for Integrating a New Group
 
+- [`random_prior_joint()`](https://statmodels7.github.io/statmodels7/reference/random_prior_joint.md)
+  : One Group's Gaussian Prior From Several Penalties
+
 - [`random_within()`](https://statmodels7.github.io/statmodels7/reference/random_within.md)
   : The Within-Group Rows of a Random-Effect Term
 

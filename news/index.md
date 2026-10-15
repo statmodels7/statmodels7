@@ -1,5 +1,48 @@
 # Changelog
 
+## statmodels7 0.202.0
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) reports no standard
+  error, test or interval for a coefficient that the outer criterion
+  estimated and that
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  finds at a boundary, and a note says why. On a Student t fitted to
+  gaussian data the intercept of log nu stopped at 20.8 with a standard
+  error of 1e4 and an interval from -2e4 to 2e4.
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
+  returns these coefficients in `boundary_coef`, as `parameter:name`.
+
+## statmodels7 0.201.0
+
+- A smooth random effect, `random(~ s(x) | g)` from modelterms7 0.99.0,
+  is fitted, summarized, predicted and simulated as a random effect. The
+  summary reports the prior of the null space as `sd[(Intercept)]`,
+  `sd[lin]` and `cor[(Intercept), lin]`, and the penalized coordinates
+  as `smooth.sigma` (or `sigma1`, `sigma2`, … for an adaptive smoother
+  or an anisotropic tensor product). `predict(random = "zero")` sets
+  every curve aside and reads a new level as a zero curve, and
+  `predict(random = "marginal")` integrates over a new curve. On a
+  simulated panel the fit has the log-likelihood of the same model
+  written as `random(~ 1 + lin | g)` beside a smooth per group without
+  its null space, to 1e-5.
+- `predict(random = "marginal")` integrates a random-effect term that
+  declares several Gaussian priors, one over each within-group column
+  under `correlated = FALSE` or one over each of the two parts of a
+  smooth random effect, by assembling the precision of one group from
+  the parts. Before, it signaled an error.
+- [`summary()`](https://rdrr.io/r/base/summary.html) labels the
+  coordinates of a multivariate prior that covers part of the
+  within-group columns of a term by the columns that it covers.
+- Requires modelterms7 0.99.0 and penalties7 0.32.0.
+
+## statmodels7 0.200.2
+
+- The page of [`vcov()`](https://rdrr.io/r/stats/vcov.html) states what
+  the bayesian matrix is under a prior that is not Gaussian (the Laplace
+  approximation of the posterior variance at the mode, with a curvature
+  of the prior that can be negative) and under SCAD and MCP, whose
+  concave part widens the variance.
+
 ## statmodels7 0.200.1
 
 - The second start of a score loading (0.1/I) is fitted where the first

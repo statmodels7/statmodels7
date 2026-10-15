@@ -96,6 +96,21 @@ take the curvature of that criterion for them. These two types then
 differ from `"frequentist"` for those coefficients even without a
 penalty.
 
+**A prior that is not Gaussian.** \\V_b\\ is computed in the same way
+for every penalty that is twice differentiable at the mode. \\H + S\\ is
+then the curvature of the log-posterior at the mode, and \\V_b\\ is the
+Laplace approximation of the posterior variance. The statement about
+coverage above holds for a Gaussian prior, whose \\S\\ does not depend
+on the coefficients. For another prior \\S\\ is evaluated at the
+estimate and can be negative. Under a Student t prior with scale \\s\\
+and \\\nu\\ degrees of freedom it is negative for every effect larger
+than \\\sqrt{\nu}\\ s\\ in absolute value, so such an effect is shrunk
+little and its variance comes mostly from the likelihood. The
+approximation is local, and it can be poor where the posterior is skewed
+or has more than one mode. Where \\H + S\\ is not positive definite, a
+coordinate whose diagonal entry is not positive is held as described
+below, and otherwise an error is signaled.
+
 **The first two matrices are conditional on the hyperparameters**, which
 they read at the value where the outer search stopped, as though it were
 known. That value was estimated from the same data, and the third matrix
@@ -128,7 +143,13 @@ row and column.** At zero the penalty is not twice differentiable, so
 coefficients that a lasso or an MCP leaves non-zero have a variance,
 which is conditional on that selection;
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-reports this in a note.
+reports this in a note. Away from zero the lasso contributes nothing to
+\\S\\, and SCAD and MCP contribute a negative curvature on their concave
+part, which makes the variance of a coefficient there larger than that
+of the likelihood alone. For these penalties \\V_b\\ is therefore not
+the posterior variance under the corresponding prior, because a
+curvature read at the mode does not see the mass that the prior puts
+near zero.
 
 **Which information.** `expected` selects the matrix used as \\H\\. Its
 default is the expected information where the fit inverted it and the

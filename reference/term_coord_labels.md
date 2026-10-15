@@ -7,7 +7,7 @@ that has no grouping.
 ## Usage
 
 ``` r
-term_coord_labels(term)
+term_coord_labels(term, ii = NULL)
 ```
 
 ## Arguments
@@ -16,9 +16,21 @@ term_coord_labels(term)
 
   One built term.
 
+- ii:
+
+  The entry's positions in the term's block, or `NULL` for every
+  within-group column.
+
 ## Value
 
 A character vector, possibly empty.
+
+## Details
+
+Where the prior covers some of the within-group columns and not all of
+them, as the null-space prior of a smooth random effect does, `ii` gives
+the entry's positions in the block and the labels are those of the
+columns it covers, in the order of the block.
 
 ## See also
 

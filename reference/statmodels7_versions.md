@@ -57,11 +57,11 @@ v
 #> 1         basis7  0.15.0
 #> 2 distributions7  0.78.1
 #> 3 linkfunctions7   0.5.2
-#> 4    modelterms7  0.98.0
+#> 4    modelterms7  0.99.0
 #> 5    numericals7  0.22.1
 #> 6    optimizers7  0.14.0
 #> 7    parameters7  0.24.0
-#> 8     penalties7  0.31.0
+#> 8     penalties7  0.32.0
 
 # One row per member, and every column is character.
 nrow(v) == length(statmodels7_packages())

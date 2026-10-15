@@ -17,7 +17,7 @@ readings that summary.StatmodFit() prints.'><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.202.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,11 @@ was differenced by refits, and <code>NA</code> when no curvature was read.
 <code>boundary_key</code> names the hyperparameters among the coordinates of
 <code>boundary</code>, in the key that <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> labels its rows by;
 <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reads it to leave a standard error off a
-hyperparameter pinned at an edge. The state is <code>"not converged"</code> also
+hyperparameter pinned at an edge. <code>boundary_coef</code> names the
+coefficients estimated on the outer criterion among the coordinates of
+<code>boundary</code>, as <code>parameter:name</code>, and <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reads it to
+leave their standard errors, tests and intervals off. The state is
+<code>"not converged"</code> also
 when the fit recorded a coordinate at the edge of its chart whose return
 raises the log-likelihood.</p>
 <p>Three further fields are those that <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> prints, and its

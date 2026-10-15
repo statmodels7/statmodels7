@@ -60,9 +60,12 @@ hyperparameters among the coordinates of `boundary`, in the key that
 labels its rows by;
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 reads it to leave a standard error off a hyperparameter pinned at an
-edge. The state is `"not converged"` also when the fit recorded a
-coordinate at the edge of its chart whose return raises the
-log-likelihood.
+edge. `boundary_coef` names the coefficients estimated on the outer
+criterion among the coordinates of `boundary`, as `parameter:name`, and
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+reads it to leave their standard errors, tests and intervals off. The
+state is `"not converged"` also when the fit recorded a coordinate at
+the edge of its chart whose return raises the log-likelihood.
 
 Three further fields are those that
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)

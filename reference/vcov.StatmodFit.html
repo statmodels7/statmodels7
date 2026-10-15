@@ -9,7 +9,7 @@ parameter's block at once."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.202.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,6 +131,20 @@ deviation of a Gaussian) are estimated on the criterion, and <code>"bayesian"</c
 <code>"unconditional"</code> take the curvature of that criterion for them. These two
 types then differ from <code>"frequentist"</code> for those coefficients even without a
 penalty.</p>
+<p><strong>A prior that is not Gaussian.</strong> \(V_b\) is computed in the same way for
+every penalty that is twice differentiable at the mode. \(H + S\) is then
+the curvature of the log-posterior at the mode, and \(V_b\) is the Laplace
+approximation of the posterior variance. The statement about coverage above
+holds for a Gaussian prior, whose \(S\) does not depend on the
+coefficients. For another prior \(S\) is evaluated at the estimate and can
+be negative. Under a Student t prior with scale \(s\) and \(\nu\)
+degrees of freedom it is negative for every effect larger than
+\(\sqrt{\nu}\, s\) in absolute value, so such an effect is shrunk little
+and its variance comes mostly from the likelihood. The approximation is
+local, and it can be poor where the posterior is skewed or has more than one
+mode. Where \(H + S\) is not positive definite, a coordinate whose
+diagonal entry is not positive is held as described below, and otherwise an
+error is signaled.</p>
 <p><strong>The first two matrices are conditional on the hyperparameters</strong>, which
 they read at the value where the outer search stopped, as though it were
 known. That value was estimated from the same data, and the third matrix
@@ -158,7 +172,13 @@ states it. See <code><a href="hyper_correction.html">hyper_correction()</a></cod
 column.</strong> At zero the penalty is not twice differentiable, so \(S\) does
 not exist there and no curvature can be read. The coefficients that a lasso
 or an MCP leaves non-zero have a variance, which is conditional on that
-selection; <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reports this in a note.</p>
+selection; <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> reports this in a note. Away from zero
+the lasso contributes nothing to \(S\), and SCAD and MCP contribute a
+negative curvature on their concave part, which makes the variance of a
+coefficient there larger than that of the likelihood alone. For these
+penalties \(V_b\) is therefore not the posterior variance under the
+corresponding prior, because a curvature read at the mode does not see the
+mass that the prior puts near zero.</p>
 <p><strong>Which information.</strong> <code>expected</code> selects the matrix used as \(H\). Its
 default is the expected information where the fit inverted it and the
 family writes it out in closed form, and the observed Hessian otherwise
