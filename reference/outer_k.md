@@ -23,7 +23,8 @@ outer_k(method, n)
 
 - n:
 
-  The number of observations, a single positive number.
+  The number of observations, a single positive number. The fit passes
+  the total of the weights, which are frequencies.
 
 ## Value
 
@@ -39,8 +40,8 @@ none of which charges per degree of freedom.
 
 The resolution happens at fit time because
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-takes no data and cannot know \\n\\ at construction. A criterion object
-is a specification, reusable across models of different sizes.
+takes no data, so \\n\\ is not available at construction. A criterion
+object is a specification, reusable across models of different sizes.
 
 ## See also
 

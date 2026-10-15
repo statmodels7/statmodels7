@@ -30,7 +30,7 @@ A label written inside a subformula is not visible where the equation's
 terms are enumerated: `seg(x, psi ~ random(~ 1 | u | id))` is one
 `SegTerm`, whose own
 [`modelterms7::term_tag()`](https://statmodels7.github.io/modelterms7/reference/term_tag.html)
-is `NA`, and the labelled term is a sub-term of its break-point. The
+is `NA`, and the labeled term is a sub-term of its break-point. The
 sub-terms are reached through
 [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html),
 whose `subs` field is the list of them, and the walk recurses because a

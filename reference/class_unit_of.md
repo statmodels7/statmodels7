@@ -1,7 +1,7 @@
 # The Covariance Class One Term Belongs To
 
 The penalized unit of the covariance class that covers a term's
-coefficients, or `NULL` where the term is not labelled.
+coefficients, or `NULL` where the term has no label.
 
 ## Usage
 
@@ -36,9 +36,9 @@ returns it, or `NULL`.
 
 ## Details
 
-A labelled term declares no penalty of its own, the class carrying it,
-so a reader asking a term for its hyperparameters has to ask the class
-instead. The lookup is by the pair of the equation and the term's name,
+A term with a label declares no penalty of its own, because the class
+carries it, so the hyperparameters of such a term are read from the
+class. The lookup is by the pair of the equation and the term's name,
 which is what a class's pieces record.
 
 ## See also

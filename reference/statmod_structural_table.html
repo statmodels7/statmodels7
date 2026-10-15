@@ -11,7 +11,7 @@ information."><meta property="og:image" content="https://statmodels7.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,42 +60,51 @@ information.</p>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
-<dd><p>The interval's level, <code>0.95</code> by default.</p>
-<p>A quantity that depends on a coordinate past the edge of its chart (see
-<code><a href="structural_edge_rows.html">structural_edge_rows()</a></code>) is reported without a standard error and an
-interval, for the reason a correlation at the boundary is: the chart's
-derivative tends to zero there, so the delta method reports a standard
-error that collapses exactly where the quantity stops being identified.</p></dd>
+<dd><p>The interval's level, <code>0.95</code> by default.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with one row per quantity each structural term
-reports, carrying the estimate, its standard error and the interval's
-two ends, <code>held</code> (the quantity is a held parameter), <code>edge</code> (it depends
-on a coordinate past the edge of its chart),
-plus <code>component</code> and <code>position</code>: which of the term's own parameters the
-quantity belongs to, and where in the parameter vector it sits, both
-read off the Jacobian's support. <code>NULL</code> where the model carries no
-structural term.</p>
+    <p>A data frame with one row per quantity that each structural term
+reports and the columns <code>parameter</code>, <code>term</code>, <code>name</code>, <code>estimate</code>, <code>se</code>,
+<code>lower</code>, <code>upper</code>, <code>held</code> (the quantity is a held parameter), <code>edge</code>
+(it depends on a coordinate past the edge of its chart), <code>component</code> and
+<code>position</code> (which of the term's own parameters the quantity belongs to,
+and where in the parameter vector it sits, both read off the Jacobian's
+support). <code>NULL</code> where the model carries no structural term.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A structural term contributes no design block, so nothing in the
-coefficient tables can report it and the values were reachable only
-through <code>fit@structural</code>. The information for them exists:
-<code><a href="statmod_full_information.html">statmod_full_information()</a></code> spans the coefficients <strong>and</strong> the
-term's own parameters, and the tail block of its inverse is their
-variance on the unconstrained scale.</p>
-<p>The interval is built on that scale and mapped back through the link,
-which keeps a persistence inside \((-1, 1)\) and a positive loading
-positive.</p>
-<p>The standard error on the parameter scale is the delta method,
-\(|h'(\zeta)|\,\mathrm{se}(\zeta)\). It is reported for reading, and the
-interval is not built from it.</p>
+    <p>A structural term contributes no design block, so the coefficient tables
+do not report it. <code><a href="statmod_full_information.html">statmod_full_information()</a></code> spans the coefficients and
+the term's own parameters, and the tail block of its inverse (with the
+penalty Hessians added) is the variance of those parameters on the
+unconstrained scale. A covariance class split between the coefficients and
+the term's own parameters is placed by <code><a href="joint_penalty_at.html">joint_penalty_at()</a></code>, as in
+<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p>
+<p>The quantities reported are those of <code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>, which
+are not always the coordinates on which the term was estimated (a
+persistence of a score-driven term is an autoregressive coefficient, a
+function of the partial autocorrelations). The standard error of a quantity
+is the delta method over the joint variance of the term's parameters,
+\(\sqrt{J V J^\top}\), with \(J\) the Jacobian that
+<code>term_readable()</code> returns (a persistence of a term with \(q &gt; 1\) reads
+several coordinates). The interval is built on the scale that the term
+declares for the quantity (for a score-driven term, the log scale for a
+positive loading, the scale of the partial autocorrelation's link for the
+persistence when \(q = 1\), and the identity scale for a persistence when
+\(q &gt; 1\)): the standard error is carried to that scale by the derivative
+of its link and the end points are mapped back. The interval of a
+persistence is therefore confined to \((-1, 1)\) only when
+\(q = 1\).</p>
 <p>A level held because an intercept in the same equation carries it is not
-estimated, and is reported with a missing standard error. Zero would claim
-it had been estimated exactly.</p>
+estimated, and its standard error is reported as missing, as is that of any
+quantity whose Jacobian row reads a held parameter.</p>
+<p>A quantity that depends on a coordinate past the edge of its chart (see
+<code><a href="structural_edge_rows.html">structural_edge_rows()</a></code>) is reported without a standard error and an
+interval, for the reason a correlation at the boundary is: the chart's
+derivative tends to zero there, so the delta method reports a standard
+error that collapses exactly where the quantity stops being identified.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

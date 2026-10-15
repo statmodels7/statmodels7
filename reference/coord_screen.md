@@ -43,6 +43,12 @@ coord_screen(X, w, z, beta, s_now, s_prev, threads = 1L, center = FALSE)
 
   The thread count the gradient read may use, a plain integer.
 
+- center:
+
+  `TRUE` when the block is solved with its equation's intercept profiled
+  out: the residual is then taken to weighted mean zero before the
+  gradient is read.
+
 ## Value
 
 An integer vector of one-based column indices to visit, in ascending

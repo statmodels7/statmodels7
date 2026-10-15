@@ -14,28 +14,28 @@ start_origin()
 A `StartOrigin` object, inheriting from
 [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md).
 
-## When it is a poor choice
+## Use of the origin
 
 A location parameter on the identity link begins at zero whatever the
 response is. On a response centered at a thousand the run then starts a
-thousand units away and has to travel there, and on a badly scaled model
-it may not arrive at all.
+thousand units from the response and has to travel there, and on a badly
+scaled model it may not arrive.
 [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md),
-the default, exists for that reason.
+the default, avoids this by starting the intercepts at the
+intercept-only fit.
 
-It is harmless where every equation is on a log or a logit link, since
-zero is then an ordinary interior value of the parameter, and it is the
-reference the other strategies are judged against.
+The origin is appropriate where every equation is on a log or a logit
+link, since zero is then an ordinary interior value of the parameter.
 
 ## The name
 
-`start_origin`, not `start_zeros`. optimizers7 already exports
-`start_zeros()` for the starting point of an optimizer, and no two
-members of this toolkit export the same name. A collision would be
-reported by
+The function is named `start_origin()` and not `start_zeros()`, because
+optimizers7 already exports `start_zeros()` for the starting point of an
+optimizer, and no two members of this toolkit export the same name. A
+collision would be reported by
 [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md),
-and, worse, which function a caller reached would depend on the order
-the packages were attached in.
+and the function reached by a caller would depend on the order in which
+the packages were attached.
 
 ## See also
 

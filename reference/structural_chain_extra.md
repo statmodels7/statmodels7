@@ -1,9 +1,11 @@
-# The Two Pieces of the Chain Term That Read the Direction
+# The Chain Term of the Joint Gradient Along a Direction
 
 The contributions to \\\mathrm{tr}(M\\\partial K/\partial u\[v\])\\ that
-come from the recursion, never from the design: the derivative of the
-filter's own Jacobian, and the derivative of the term the level
-contributes to the information.
+come from the recursion and not from the design: the derivative of the
+term's curvature along \\v\\, the curvature re-weighted by the
+derivative of the score along \\v\\, and the movement of the filter's
+Jacobian, which enters through every cross derivative of the filter's
+equation.
 
 ## Usage
 
@@ -28,7 +30,7 @@ structural_chain_extra(spec, design, jd, M, st, v)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - st:
 

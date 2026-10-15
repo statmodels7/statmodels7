@@ -9,7 +9,7 @@ coefficients."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,9 +85,10 @@ is symmetric in all three positions.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Each block is a weighted crossproduct, the weight being
-\(w_i\sum_k \ell'''_{abk}(X_k v_k)_i\): the third derivative never
-appears as an array.</p>
+    <p>Each block is minus a weighted crossproduct of the two designs, the weight
+being \(w_i\sum_k \ell'''_{abk}(X_k v_k)_i\), so that the third
+derivative is never formed as an array over the coefficients. The sign makes
+\(T[v]\) the derivative of \(K = -\ell'' + S\).</p>
 <p>On the expected route <code>d3</code> is the derivative of the expected information in
 the predictors, <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html" class="external-link">distributions7::distrib_dexpected_hessian()</a></code>, and the same
 contraction gives \((\partial H_E/\partial\beta)\cdot v\); that array is

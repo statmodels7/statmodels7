@@ -25,10 +25,10 @@ A single logical.
 
 ## Details
 
-The question
+The question that
 [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
-asks is about one active set at one point, and answering it there would
-cost a decomposition per evaluation. Full column rank of the whole
+answers concerns one active set at one point, and answering it there
+would cost a decomposition per evaluation. Full column rank of the whole
 design answers it for every active set at once, so it is read once and
 reused, which is what keeps the count free on the path it was introduced
 for.
@@ -41,16 +41,14 @@ recomputes its block as the coefficients move, so the same column counts
 do not imply the same columns and a memo that cannot see the refresh
 must not answer; there the certificate is declined outright and
 [`active_rank()`](https://statmodels7.github.io/statmodels7/reference/active_rank.md)
-runs instead. That route is bounded by the trace it replaced, being a
-decomposition of \\X_A\\ where the trace needs the cross product of the
-same columns.
+runs instead. That route is a decomposition of \\X_A\\, where the trace
+needs the cross product of the same columns.
 
 A design carrying a structural term has no `eta_memo` either, so there
-the certificate is recomputed at each call rather than declined. It is
-correct and it is not free; what makes it affordable is that a
-structural term's own penalty covers no coefficient, so the branch this
-serves is reached only where some other block is penalized by a kink and
-nothing else.
+the certificate is recomputed at each call and costs one decomposition
+per equation. The branch that this serves is reached only where a
+penalty with a kink is present and the penalty's Hessian vanishes on the
+active coordinates.
 
 ## See also
 

@@ -17,7 +17,8 @@ vb_name(x, default = "")
 
 - default:
 
-  What to say when there is no object to ask.
+  The string returned when `x` is `NULL` or carries neither a name nor a
+  kind.
 
 ## Value
 

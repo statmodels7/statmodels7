@@ -1,4 +1,4 @@
-# Where an Intercept on a Non-Identity Chart Stops Being an Estimate
+# Limit of an Intercept on a Non-Identity Chart
 
 The absolute value, on the link scale, past which
 [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)

@@ -11,7 +11,7 @@ coefficients refitted at every probe."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,8 @@ coefficients refitted at every probe.</p>
 <span>  <span class="va">idx</span>,</span>
 <span>  basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  inner <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  h <span class="op">=</span> <span class="fu"><a href="hess_stencil_step.html">hess_stencil_step</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  h <span class="op">=</span> <span class="fu"><a href="hess_stencil_step.html">hess_stencil_step</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  gam <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,7 +75,7 @@ coefficients refitted at every probe.</p>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
-<dd><p>The coefficients the probes start from.</p></dd>
+<dd><p>The coefficients from which the probes start.</p></dd>
 
 
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
@@ -94,59 +95,64 @@ coefficients refitted at every probe.</p>
 
 
 <dt id="arg-inner">inner<a class="anchor" aria-label="anchor" href="#arg-inner"></a></dt>
-<dd><p>The inner optimizer the probes refit with; <code><a href="iwls.html">iwls()</a></code> where
+<dd><p>The inner optimizer with which the probes refit; <code><a href="iwls.html">iwls()</a></code> where
 none is given.</p></dd>
 
 
 <dt id="arg-h">h<a class="anchor" aria-label="anchor" href="#arg-h"></a></dt>
-<dd><p>The step, on the free scale the search runs on.</p></dd>
+<dd><p>The step, on the free scale on which the search runs. For a
+coefficient that the criterion estimates the step is
+\(h \max(1, |\gamma_j|)\).</p></dd>
+
+
+<dt id="arg-gam">gam<a class="anchor" aria-label="anchor" href="#arg-gam"></a></dt>
+<dd><p>The coefficients that the criterion estimates, from
+<code><a href="marginal_coords.html">marginal_coords()</a></code>, or <code>NULL</code>. Each probe holds them at its own values
+and refits the rest, as <code><a href="outer_fit.html">outer_fit()</a></code> does.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The Hessian on the free scale, or <code>NULL</code> where a probe could not
-be evaluated or the two steps disagree.</p>
+    <p>The Hessian on the free scale over the hyperparameters followed
+by the coefficients in <code>gam</code>, or <code>NULL</code> where a probe could not be
+evaluated or the two steps disagree.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is what a model carrying a structural term gets, and the reason is
-that the analytic assembly of <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> spans the stacked
-coefficients while a filter's own parameters are estimated beside them and
-move with the hyperparameter as well. Extending it is not a matter of
-bookkeeping: each order of differentiation through the recursion pulls in
-one more order of the response's family, so the first derivative reads the
-family's fourth through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code> and the second would
-read a fifth, which does not exist.</p>
-<p>Differencing an ANALYTIC quantity once is the licence this toolkit already
-grants itself for the Student t's degrees of freedom and for the marginal
-break-point's prior rows. What it forbids is a difference of a difference,
-and there is one layer here.</p>
+    <p><code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> uses this function for a model with a structural
+term for which the joint assembly <code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code> does not
+apply: a filter without a penalty over its own parameters, a term of the
+likelihood shape such as <code>regime()</code>, or a term that does not implement
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>. It also uses it on the expected information
+where <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> does not admit order 2. The analytic assembly
+over the coefficients alone is not the criterion's Hessian when a filter's
+own parameters move with the hyperparameter. <code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code>
+covers that case with the fourth derivative of the recursion from
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code> and the fifth derivative of the family from
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_deriv5.html" class="external-link">distributions7::distrib_deriv5()</a></code>.</p>
+<p>The function differences the exact gradient once, so the result contains a
+single layer of finite differences. The matrix is symmetrized by averaging
+it with its transpose.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-two-probes-start-from-the-same-place">The two probes start from the same place<a class="anchor" aria-label="anchor" href="#the-two-probes-start-from-the-same-place"></a></h2>
-    <p>Both refit from the coefficients given and from the structural state as it
-stands, restored before each probe, so the two differ in the hyperparameter
-alone. That is what makes the result stable: the mode's own location error
-is nearly the same at \(+h\) and \(-h\) and cancels in the difference
-rather than being amplified by \(1/h\). Measured on a penalized filter
-against a second difference of the criterion, the result is FLAT over four
-decades of the step – -1.971435 at every \(h\) from 1e-2 down to 3e-5,
-against a criterion second difference of -1.971456 – where the assembled
-Hessian reads -1.1e-08.</p>
+    <h2 id="probes">Probes<a class="anchor" aria-label="anchor" href="#probes"></a></h2>
+    <p>Each probe refits the coefficients from the coefficients supplied and from
+the structural state as it stands, which is restored before each probe, so
+that the two probes of a column differ in the hyperparameter alone. The
+location error of the mode is nearly the same at \(+h\) and \(-h\) and
+cancels in the difference. Where the inner optimizer is <code><a href="iwls.html">iwls()</a></code>, the probes
+use its tolerance <code>min(tol, hess_stencil_inner_tol())</code>, a budget of at
+least 500 iterations and no stopping criterion of its own; any other inner
+optimizer is used as given.</p>
     </div>
     <div class="section level2">
-    <h2 id="where-it-refuses">Where it refuses<a class="anchor" aria-label="anchor" href="#where-it-refuses"></a></h2>
-    <p>A stencil inherits the reproducibility of the quantity it differences,
-divided by the step, so where the mode is poorly located the answer is
-noise rather than a curvature. It is therefore computed TWICE, at <code>h</code> and
-at <code>3 * h</code>, and refused where the two disagree by more than
-<code><a href="hess_stencil_step.html">hess_stencil_tol()</a></code>. The two regimes are six orders apart and nothing
-sits between them: measured, 5.5e-08 on a penalized filter, 9.3e-07 on an
-unpenalized one beside a smooth and 1.1e-06 on an ordinary smooth, against
-6.0e-01 and 5.7e-01 on two mixed covariance classes whose correlation the
-search left at \(|z| = 8.53\), where the chart's conditioning is 1e10 and
-the exact gradient itself reads 1e-3. A refusal there is the answer, and
-the consumers already handle <code>NULL</code>.</p>
+    <h2 id="rejection-of-an-unresolved-stencil">Rejection of an unresolved stencil<a class="anchor" aria-label="anchor" href="#rejection-of-an-unresolved-stencil"></a></h2>
+    <p>A stencil inherits the reproducibility of the quantity that it differences,
+divided by the step, so where the mode is poorly located the result is
+noise. The matrix is therefore computed at <code>h</code> and at <code>3 * h</code>, and the
+function returns <code>NULL</code> where the largest absolute difference between the
+two exceeds <code><a href="hess_stencil_step.html">hess_stencil_tol()</a></code> times the largest absolute entry of the
+first. Callers treat a <code>NULL</code> result as an unavailable curvature.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

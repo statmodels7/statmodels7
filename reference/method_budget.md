@@ -24,24 +24,23 @@ tolerance on the objective.
 ## Details
 
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-carries neither a `maxit` nor a `tol` of its own. An argument accepted
-and ignored is worse than one that signals an error, and a second copy
-would be exactly that: a caller setting `iwls(maxit = 20)` alongside a
-loose `maxit = 100` would be obeyed in one and never told about the
-other. distributions7's `fit_distrib()` shed the same pair for the same
-reason.
+has no `maxit` and no `tol`. Both are read from `inner_optimizer`, so
+that one setting governs the inner fit and the alternation.
 
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
 carries both directly. An optimizers7 optimizer carries `maxit` and a
-`criterion`, and the tolerance is taken as the **largest** one in the
-criterion tree: a combined rule stops at whichever of its parts fires
-first, so the alternation should not ask for more precision than the
-loop inside it can deliver.
+`criterion`, and the tolerance is read from the criterion tree by
+[`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md):
+the largest tolerance of the parts of a rule built by `crit_any()`,
+which stops when any part holds, and the smallest of the parts of a rule
+built by `crit_all()`, which stops only when every part holds. The
+alternation then requires no more precision than the loop inside it
+delivers.
 
-A criterion carrying no tolerance at all leaves the default of
+A criterion carrying no tolerance at all takes the default of
 [`optimizers7::crit_grad()`](https://statmodels7.github.io/optimizers7/reference/crit_grad.html),
-read from that function's own formals and never copied as a number, so a
-change there reaches here.
+read from that function's own formals and not copied as a number, so
+that a change there reaches this function.
 
 ## See also
 

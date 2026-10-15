@@ -3,8 +3,8 @@
 What
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 returns: the blocks of each distribution parameter, the degrees of
-freedom, the information criteria and whatever has to be said about how
-the numbers should be read.
+freedom, the information criteria and the notes that qualify the
+numbers.
 
 ## Usage
 
@@ -13,6 +13,7 @@ StatmodSummary(
   call = NULL,
   distrib_name = character(0),
   n_obs = integer(0),
+  weight_total = integer(0),
   tables = list(),
   classes = list(),
   links = character(0),
@@ -45,7 +46,12 @@ StatmodSummary(
 
 - n_obs:
 
-  The number of observations.
+  The number of rows of the data.
+
+- weight_total:
+
+  The sum of the prior weights, which
+  [`nobs()`](https://rdrr.io/r/stats/nobs.html) reports.
 
 - tables:
 
@@ -54,20 +60,31 @@ StatmodSummary(
 
 - classes:
 
-  The covariance blocks shared by more than one term, one block record
-  each. They belong to no equation and are printed ahead of them.
+  The covariance blocks that two or more pieces share (terms, or
+  developments of one term), one block record each. They belong to no
+  equation and are printed ahead of the equations.
+
+- links:
+
+  The link of each distribution parameter, a character vector named by
+  parameter.
 
 - edf:
 
   The per-term degrees of freedom.
 
+- structural:
+
+  The table of the structural term's parameters, or `NULL`.
+
 - loglik:
 
-  The maximized log-likelihood.
+  The conditional log-likelihood at the fit.
 
 - df:
 
-  The effective degrees of freedom in total.
+  The effective degrees of freedom in total, including the correction
+  for estimated hyperparameters where it was requested.
 
 - aic, bic:
 
@@ -89,9 +106,25 @@ StatmodSummary(
 
   Which variance convention was used.
 
+- test:
+
+  Which statistic the coefficient tables report: `"wald"`, `"lr"`,
+  `"score"` or `"gradient"`.
+
+- max_coef:
+
+  The number of coefficient rows that each block prints, or `NULL` where
+  the option `statmodels7.summary_max_coef` decides.
+
 - notes:
 
-  Character vector of things the reader has to know.
+  A character vector of the notes that qualify the numbers.
+
+- certificate:
+
+  The list returned by
+  [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md),
+  or `NULL` where it could not be computed.
 
 ## Value
 

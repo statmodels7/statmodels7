@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,10 @@ parameter.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The matrix a penalized fit's curvature is read from: the model's
 information from <code><a href="statmod_information_at.html">statmod_information_at()</a></code> and the penalty's Hessian
-from <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>. It is written once because three readers
-want the same matrix at the same point and must not disagree about it –
-<code><a href="statmod_edf.html">statmod_edf()</a></code>'s smoother, <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>'s variance and
-<code><a href="deficient_coords.html">deficient_coords()</a></code>'s rank test.</p>
+from <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>. It is written once because its readers, the
+rank test of <code><a href="deficient_coords.html">deficient_coords()</a></code> in <code><a href="statmod.html">statmod()</a></code>, the readings of the
+alternation (<code><a href="alternation_readings.html">alternation_readings()</a></code>) and the flat-direction test of the
+outer search, must use the same matrix at the same point.</p>
 <p>A kinked penalty contributes no curvature away from its kink, and any
 non-finite entry would be the kink itself reached by a hair, so the
 penalty passes through <code><a href="zap_nonfinite.html">zap_nonfinite()</a></code> as it does everywhere else.</p>

@@ -32,22 +32,23 @@ statmod_eta_continued(fit, spec, design, deriv = FALSE)
 
 A list shaped as
 [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)'s,
-without the memoized filter objects, plus `cont_cols`: for each equation
-whose filter was continued with `deriv = TRUE`, a list with `X` (the
-derivative of the predictor at the new rows in the coefficients of every
-equation and the term's free parameters) and `key` (the names of its
-columns in the variance matrix).
+without the memoized filter objects and with `eta_static`, the static
+predictor at the new rows before the continued levels are added, plus
+`cont_cols`: for each equation whose filter was continued with
+`deriv = TRUE`, a list with `X` (the derivative of the predictor at the
+new rows in the coefficients of every equation and the term's free
+parameters) and `key` (the names of its columns in the variance matrix).
 
 ## Details
 
 The static part is the ordinary assembly: each term's block reapplied at
 the new rows, the offsets re-evaluated there. What cannot be reapplied
-is the structural term, whose contribution at one row is the state a
-recursion has reached over every row before it. The fit is therefore run
-once at the observed rows to recover that state – the level and the
+is the structural term, whose contribution at one row is the state that
+a recursion has reached over every row before it. The fit is therefore
+run once at the observed rows to recover that state – the level and the
 driving quantity at each of them, the level being the difference between
-the filtered predictor and the static one – and the term is asked to
-continue from there through
+the filtered predictor and the static one – and the term continues from
+there through
 [`modelterms7::term_continue()`](https://statmodels7.github.io/modelterms7/reference/term_continue.html).
 
 Only rows without the response are continued, and they must come after

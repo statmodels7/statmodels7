@@ -1,7 +1,7 @@
 # Run the Structural Terms at the Current Parameters
 
-The level each filter adds to the equation it sits in, together with the
-derivative of that level in the term's own parameters.
+The level that each filter adds to the equation in which it sits,
+together with the derivative of that level in the term's own parameters.
 
 ## Usage
 
@@ -36,9 +36,11 @@ curvature the recursion read at each step.
 
 ## Details
 
-The result is memoized on the coefficients and the term's parameters,
-since the objective, its gradient and its curvature are asked for at the
-same point in turn and a filter is the expensive part of each.
+The function keeps no memo of its own. The caller,
+[`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md),
+keeps one keyed on the coefficients and the term's parameters, because
+the objective, its gradient and its curvature are evaluated at the same
+point in turn and a filter is the expensive part of each.
 
 ## See also
 

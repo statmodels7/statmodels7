@@ -1,7 +1,8 @@
-# How Far Down the Path Reaches for One Term
+# The Depth of a Path for One Term
 
-The depth the term asked for, or the layer's fallback where it asked for
-nothing.
+The depth that the term specifies, or the fallback of
+[`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
+where the term specifies none.
 
 ## Usage
 
@@ -24,8 +25,9 @@ statmod_min_ratio(spec, row, default)
 
 - default:
 
-  [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)'s,
-  for a term that named none.
+  The fallback of
+  [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md),
+  used for a term that specifies none.
 
 ## Value
 
@@ -33,10 +35,11 @@ A single number.
 
 ## Details
 
-One number per term, not one per hyperparameter, because only the sweep
-by kink size reads it. A bounded hyperparameter is swept over its own
-interval, and a shape that does not move the kink over a geometric grid
-above its lower bound; neither takes its length from here.
+One number per term and not one per hyperparameter, because only the
+sweep by kink size reads it. A bounded hyperparameter is swept over its
+own interval, and a shape that does not move the kink over a grid whose
+distances above the smallest admissible shape are geometric; neither
+takes its length from here.
 
 ## See also
 

@@ -77,12 +77,50 @@ StatmodSpec(
   A named logical, one per parameter: whether that equation's parametric
   block carried an intercept.
 
+- newdata:
+
+  The rows a respecification reads, or `NULL` for the fitting rows.
+
+- structural:
+
+  A named list of the parameters of the structural term, keyed by the
+  term; empty where no fit has set them.
+
+- linpar:
+
+  A list, the options of the implicit parametric block as
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  returns them.
+
+- held_coef:
+
+  A named list, one entry per distribution parameter, of coefficients
+  held at a value, each a named numeric vector keyed by coefficient
+  name. Empty by default.
+
+- threads:
+
+  The number of threads, a single integer.
+
+- workers:
+
+  The number of worker processes for the independent fits of a
+  cross-validation, a single integer.
+
 ## Value
 
-An object of class `StatmodSpec` with one property per argument above,
-plus `threads`, `workers`, `linpar`, `newdata` and `structural`, which
+An object of class `StatmodSpec` with one property per argument above
+and the properties described next. `linpar` holds the options of the
+implicit parametric block and is set by
+[`statmod_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_spec.md).
+`newdata` holds the rows a respecification reads, `NULL` until
+[`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
+sets it. `structural` holds the parameters of a structural term where a
+fit has set them. `held_coef` holds coefficients held at a value, by
+name, empty by default. `threads` and `workers` hold the thread and
+worker counts that
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-fills in.
+sets.
 
 ## See also
 

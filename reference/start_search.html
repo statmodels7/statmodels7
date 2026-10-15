@@ -13,7 +13,7 @@ filter or a latent-state mixture."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,10 @@ is the one built for a multimodal surface.</p></dd>
 
 <dt id="arg-over">over<a class="anchor" aria-label="anchor" href="#arg-over"></a></dt>
 <dd><p>Optional character vector naming the coefficients to search
-over, overriding the choice above. Names not in the model are an error.</p></dd>
+over, overriding the choice above. A coefficient is named by its label,
+the parameter and the coefficient joined by a colon (<code>"sigma:(Intercept)"</code>);
+a bare name is accepted where only one equation carries it. Names not in
+the model, and a bare name that several equations carry, are an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -76,53 +79,51 @@ properties <code>optimizer</code> and <code>over</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="once-before-the-fit">Once, before the fit<a class="anchor" aria-label="anchor" href="#once-before-the-fit"></a></h2>
-    <p>A search belongs to the starting value, never to the scoring step. Given
-to <code>inner_optimizer</code> instead, as <code>chain(sa(), iwls())</code>, it would rerun at
-every hyperparameter the outer criterion tried, which on an ordinary fit
-is 46 times and inside <code><a href="cv.html">cv()</a></code> is the folds times the path, returning the
-same answer each time.</p>
+    <p>A search is a starting value and is not part of the scoring step. If it
+were given to <code>inner_optimizer</code>, it would be rerun at every hyperparameter
+value that the outer criterion tries and, inside <code><a href="cv.html">cv()</a></code>, at every point of
+the path for every fold, and each run would reach the same point.</p>
     </div>
     <div class="section level2">
     <h2 id="on-the-likelihood-alone">On the likelihood alone<a class="anchor" aria-label="anchor" href="#on-the-likelihood-alone"></a></h2>
-    <p>The penalties are off. What a starting value has to get right is the
-basin of the likelihood, the one thing the fit will not correct by itself.
+    <p>The penalties are off. A starting value has to select the basin of the
+likelihood, which is the one thing that the fit does not correct by itself.
 The penalties enter afterwards, when their hyperparameters are estimated,
-and at the probe values they represent nobody's choice: a lasso at
-\(\lambda = 1\) against an unaveraged log-likelihood empties whole
-blocks, so a search there would explore a different model.</p>
+and at the probe values of the hyperparameters they are not a chosen
+penalty, so a search with them would explore the likelihood of a different
+model.</p>
     </div>
     <div class="section level2">
     <h2 id="which-coordinates-are-searched">Which coordinates are searched<a class="anchor" aria-label="anchor" href="#which-coordinates-are-searched"></a></h2>
-    <p>The non-convex ones, which the toolkit can already name: the parameters of
-a structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>), the
+    <p>The non-convex ones, which the toolkit can name: the parameters of a
+structural term (<code><a href="https://statmodels7.github.io/modelterms7/reference/gas.html" class="external-link">modelterms7::gas()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/regime.html" class="external-link">modelterms7::regime()</a></code>), the
 coefficients of a term that recomputes its own block
 (<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code> and the break-point terms), and
 each equation's intercept.</p>
-<p>Everything else keeps its default. A smooth, a ridge or a random effect is
-a convex block whose optimum the scoring step reaches from anywhere, and
-searching over a thousand random-effect coefficients would spend the whole
-budget on the part of the model that needs it least.</p>
+<p>All other coefficients keep their default values. A smooth, a ridge or a
+random effect is a convex block whose optimum the scoring step reaches from
+any start, and a search over a thousand random-effect coefficients would
+spend the budget on the part of the model that needs a search least.</p>
 <p>A penalized coordinate is excluded <strong>wherever it sits</strong>, including inside
-a non-convex term. A sub-formula develops a break-point or a nonlinear
-parameter over groups, and those deviations are columns of the term's own
-block. They are the case the rule exists for: on the likelihood alone
-nothing identifies them, since the penalty is what does, so a search over
-them fits each group's own points and moves away from the penalized mode.
-Measured on <code>jseg(x, npsi = 2, by = ~random(~1|id))</code> over thirty groups,
-210 of the 219 coordinates are such deviations.</p>
-<p><code>over</code> overrides the choice by name.</p>
+a non-convex term. A sub-formula can develop a break-point or a nonlinear
+parameter over groups, and the group deviations are columns of the block of
+that term. On the likelihood alone nothing identifies these deviations,
+because the penalty identifies them, so a search over them would fit the
+points of each group and move away from the penalized mode. In a <code>jseg()</code>
+term with <code>by = ~random(~1|id)</code>, most coordinates are such deviations.</p>
+<p>The argument <code>over</code> replaces this choice by naming the coefficients.
+A structural term's own parameters are searched in either case.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-hyperparameters-are-not-searched">The hyperparameters are not searched<a class="anchor" aria-label="anchor" href="#the-hyperparameters-are-not-searched"></a></h2>
-    <p>They cannot be, from here. The objective is the likelihood with the
-penalties off, in which a hyperparameter does not appear, so no proposal
-could change one.</p>
-<p>A global search over them is a search over the <strong>outer</strong> criterion, where
-each proposal costs a full refit instead of one likelihood evaluation, and
-that is <code>statmod(outer_optimizer = optimizers7::sa())</code>. A kinked penalty
-is outside even that: its hyperparameter has a known upper end and is
-swept by a warm-started path, which a random jump would fail to improve on
-and would destroy.</p>
+    <h2 id="the-hyperparameters">The hyperparameters<a class="anchor" aria-label="anchor" href="#the-hyperparameters"></a></h2>
+    <p>The search does not cover the hyperparameters. Its objective is the
+likelihood with the penalties off, in which no hyperparameter appears, so
+no proposal can change one.</p>
+<p>A global search over the hyperparameters is a search over the <strong>outer</strong>
+criterion, where each proposal requires a full refit and not one likelihood
+evaluation. It is requested by <code>statmod(outer_optimizer = optimizers7::sa())</code>. The hyperparameters of a kinked penalty are outside
+that search as well: they are chosen along a warm-started path scored by
+<code>sparse_criterion</code>, which a random jump would not improve.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

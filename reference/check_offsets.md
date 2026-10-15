@@ -25,4 +25,11 @@ check_offsets(offsets, params, n)
 
 ## Value
 
-A named list of length `length(params)`.
+A named list of length `length(params)`, each entry a numeric vector of
+length `n` or `NULL`.
+
+## Details
+
+An entry must be numeric, of length 1 or `n`, and finite everywhere, as
+an offset written in the formula must be; the names must be parameters
+of the distribution.

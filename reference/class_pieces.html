@@ -13,7 +13,7 @@ order the class's penalty reads."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,9 +87,10 @@ member's positions in whichever vector the class is addressed in.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>class_pieces()</code> a list of lists with <code>param</code>, <code>term</code>, <code>cols</code> and
-<code>index</code>; <code>class_index()</code> and <code>class_zeta_cols()</code> an integer vector of
-<code>m * dim</code> positions.</p>
+    <p><code>class_pieces()</code> a list with one element per member: the member's
+piece (see <code><a href="label_pieces.html">label_pieces()</a></code>) with <code>cols</code> and <code>index</code> added;
+<code>class_index()</code> and <code>class_zeta_cols()</code> an integer vector of <code>m * dim</code>
+positions.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -100,17 +101,19 @@ member, so the index must list, for each group in turn, that group's columns
 from each member.</p>
 <p>Each member's own block is already group-major, so member \(k\)'s columns
 for group \(i\) are its positions \((i-1)d_k + 1\) to \(id_k\). The
-union across members is <strong>not</strong> contiguous – one member's columns all
+union across members is <strong>not</strong> contiguous (one member's columns all
 precede the next member's in the stacked vector, and the two may be in
-different equations – so what comes out is a permutation rather than a
-range. Nothing downstream minds: reading and writing a matrix at
-<code>[index, index]</code> is correct for any index, provided the penalty's own
-output is in the same order, which is what this ordering arranges.</p>
+different equations), so what comes out is a permutation and not a range.
+Reading and writing a matrix at <code>[index, index]</code> is correct for any index,
+provided the penalty's own output is in the same order, which is what this
+ordering arranges.</p>
 <p>A class whose members are all inside a structural term is addressed in that
 term's own parameters instead, which is the vector its penalty is read at
 and where the design has no column. <code>class_zeta_cols()</code> interleaves those
 positions by the same rule, and <code>class_pieces()</code> is not consulted at all,
-there being no design block to look the columns up in.</p>
+there being no design block to look the columns up in. A class split
+between coefficients and a structural term's parameters is addressed in the
+joint vector by <code><a href="class_joint_pieces.html">class_joint_pieces()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

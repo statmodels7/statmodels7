@@ -1,6 +1,6 @@
-# The Hyperparameters in the Shape statmod() Accepts
+# The Hyperparameters as Plain Named Vectors
 
-The Hyperparameters in the Shape statmod() Accepts
+The Hyperparameters as Plain Named Vectors
 
 ## Usage
 
@@ -12,8 +12,10 @@ hyper_plain(hyper)
 
 - hyper:
 
-  The nested list the machinery carries.
+  The nested list of hyperparameters, one list per distribution
+  parameter and one entry per penalized term.
 
 ## Value
 
-The same, with the parameters that carry no penalized term dropped.
+The same list with each entry converted to a named numeric vector, and
+the distribution parameters that carry no penalized term dropped.

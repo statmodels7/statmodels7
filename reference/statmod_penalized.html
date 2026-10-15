@@ -9,7 +9,7 @@ or not that term has more than one."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,25 +65,28 @@ or not that term has more than one.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of entries, each with <code>param</code>, <code>term</code> (the name in
-the formula), <code>key</code>, <code>cols</code> (positions within the parameter's
-coefficients), <code>index</code> (positions in the stacked vector) and
-<code>penalty</code>.</p>
+the formula), <code>key</code>, <code>within</code>, <code>penalty</code>, <code>fixed</code>, <code>n_values</code>, <code>values</code>,
+<code>min_ratio</code>, <code>search</code>, <code>ids</code>, <code>structural</code>, <code>cols</code> and <code>index</code>. For an
+ordinary unit <code>cols</code> are positions within the parameter's coefficients and
+<code>index</code> positions in the stacked vector. For a structural unit <code>cols</code> are
+positions among the term's own parameters and <code>index</code> is <code>NULL</code>. The entry
+of a covariance class also carries <code>class</code>, <code>params</code>, <code>pieces</code>, <code>mixed</code>
+and, for a mixed class, <code>joint</code> and <code>beta_index</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Twelve places used to run the same loop: over the distribution parameters,
-over each one's terms, asking each term for its penalty. Every one of them
-assumed a term carries at most one.</p>
-<p>A term may carry several, over different subsets of its own parameters,
-as a panel model with a population value and a shrunk deviation
-per group needs. Enumerating once is both the generalization and the
-removal of eleven copies.</p>
-<p><strong>The key</strong> is the term's name in the formula, and the entry's own name
-appended after <code>::</code> when the term carries more than one. Two
-<code>ridge()</code> terms are two terms with two keys and two hyperparameters,
-which they already were; a term with one penalty over the whole of itself
-keys exactly as before, so nothing that reads a hyperparameter by term name
-changes.</p>
+    <p>The enumeration runs over the distribution parameters and over the terms of
+each, and reads the penalties of each term. A term may carry several
+penalties, over different subsets of its own parameters, as a panel model
+with a population value and a shrunk deviation per group needs. A
+covariance class (see <code><a href="statmod_classes.html">statmod_classes()</a></code>) is one unit over the stacked
+columns of its members. The callers that need the penalties of a model
+read this one enumeration.</p>
+<p><strong>The key</strong> is the term's name in the formula, with the entry's own name
+appended after <code>::</code> when the term carries more than one penalty and the
+entry is named. Two <code>ridge()</code> terms are two terms with two keys and two
+hyperparameters. A term with one penalty has its name alone as key, so a
+hyperparameter is read by the term's name.</p>
 <p><code>statmod_penalized_units()</code> builds the list. <code>statmod_penalized()</code>
 returns it from the design's <code>eta_memo</code> environment where the design has
 one and the terms and the family's parameters are the ones it was built

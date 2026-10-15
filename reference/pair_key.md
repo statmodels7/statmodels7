@@ -17,7 +17,7 @@ pair_key(a, b, keys)
 
 - keys:
 
-  The names the penalty actually returned.
+  The names that the penalty returned.
 
 ## Value
 

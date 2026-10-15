@@ -2,6 +2,9 @@
 
 Estimates one penalized block by cycling over its coefficients on the
 working quadratic of its own equation, the other blocks held fixed.
+Where the equation has an unpenalized intercept that is not held, the
+block is solved with the intercept profiled out, and the intercept is
+then set to the value that goes with the block's coefficients.
 
 ## Usage
 
@@ -32,8 +35,11 @@ coord_fit(
 
 - beta:
 
-  The current stacked coefficients, a named list with one vector per
-  distribution parameter. Every block but this one is held at these.
+  The current coefficients of all distribution parameters, stacked into
+  one numeric vector (the vector that `obj$split()` divides by
+  parameter). Every coefficient outside this block is held at its value,
+  except the equation's unpenalized intercept when the block is
+  centered.
 
 - block:
 
@@ -51,12 +57,17 @@ coord_fit(
 
 - design:
 
-  The design, refreshed at `beta` if any term needs it.
+  The design, as
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  returns it. Where a term recomputes its block with the coefficients,
+  the block is read again at the current coefficients.
 
 - expected:
 
   `TRUE` for the expected information in the working weights, `FALSE`
-  for the observed one.
+  for the observed one. Where the observed curvature of the equation is
+  not positive at some observation, the expected information is used in
+  its place.
 
 - approx:
 
@@ -70,8 +81,10 @@ coord_fit(
 
 - tol:
 
-  The stopping tolerance on the relative change in the block's
-  coefficients.
+  The stopping tolerance on the largest absolute change in the block's
+  coefficients over a weighted least squares iteration. The compiled
+  sweeps use the same tolerance on the largest absolute change of a
+  sweep.
 
 - prev_kink:
 
@@ -82,20 +95,22 @@ coord_fit(
 ## Value
 
 A list shaped like
-[`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)'s,
-with the block's fitted coefficients, the sweep count and the gradient
-the kernel ended at. `NULL` where the route does not apply: the penalty
-describes no proximal table at the steps this block's curvature
-produces, or the working weights are unusable.
+[`sparse_fit()`](https://statmodels7.github.io/statmodels7/reference/sparse_fit.md)'s:
+`par` (the whole stacked coefficient vector, updated in this block and,
+where the block is centered, in the equation's intercept), `value` (the
+objective), `converged`, `iterations` (the total number of kernel
+sweeps) and `method` (`"coordinate descent"`). `converged` is `TRUE`
+when the iterations settled or when no length of step lowered the
+objective. `NULL` where the route does not apply: the penalty describes
+no proximal table at the steps this block's curvature produces, or the
+working weights are unusable.
 
 ## Details
 
-**Why not the proximal method.** A proximal gradient step reads the
-whole model: measured on 200 observations and 20 columns, one block fit
-made 88 evaluations of the objective, 75 of the gradient and 83 of the
-operator, each over every parameter of the distribution, and closed in
-36 iterations at 0.17 seconds. A coordinate descent reads the block's
-own columns and the running residual instead and closes in six sweeps.
+**Comparison with the proximal method.** Each iteration of a proximal
+gradient method evaluates the objective, its gradient and the penalty's
+operator over every parameter of the distribution. A coordinate descent
+reads only the block's own columns and the running residual.
 
 **The working quadratic.** With \\\eta\\ the equation's linear
 predictor, \\s_i\\ the score in it and \\h_i\\ the information,
@@ -104,14 +119,26 @@ predictor, \\s_i\\ the score in it and \\h_i\\ the information,
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
 restricted to one equation. The other columns of that equation enter as
 an offset. For a Gaussian response with an identity link the quadratic
-is exact and one pass is the answer; otherwise the weights are rebuilt
-and the sweeps repeated.
+is exact and the first weighted least squares iteration gives the
+answer; otherwise the weights are rebuilt and the sweeps repeated.
+
+**Centering.** Where the equation has an unpenalized intercept that is
+not held (see
+[`coord_centers()`](https://statmodels7.github.io/statmodels7/reference/coord_centers.md)),
+the compiled sweeps solve the block with the intercept profiled out: the
+columns and the working response enter at their weighted means,
+implicitly, so a sparse block stays sparse. After the sweeps the
+intercept is set to the weighted mean of the working response net of the
+block, so the step is a joint step in the block and the intercept. A
+held intercept, or an equation with no intercept, leaves the block
+uncentered.
 
 **The penalty arrives as a table.** The coordinate update is the
 penalty's own proximal operator at the step \\1/v_j\\, with \\v_j =
-\sum_i w_i x\_{ij}^2\\, and \\v_j\\ does not move while the working
-weights are held. The whole table is therefore built once per weighted
-least squares iteration by
+\sum_i w_i x\_{ij}^2\\ (the centered sum of squares where the block is
+centered), and \\v_j\\ does not move while the working weights are held.
+The whole table is therefore built once per weighted least squares
+iteration by
 [`penalties7::penalty_prox_spec()`](https://statmodels7.github.io/penalties7/reference/penalty_prox_spec.html)
 and the compiled sweeps read it, so the kernel names no family and a
 penalty that describes its operator gets the compiled route without an
@@ -126,8 +153,8 @@ assumption is not a theorem, so the rule can discard a coordinate that
 belongs in the fit, and what makes the answer exact is the check
 afterwards: the gradient is read over every column at the point reached,
 any discarded coordinate whose gradient exceeds the kink is put back,
-and the fit is repeated. Without the check the route would be
-occasionally wrong instead of occasionally slow.
+and the fit is repeated. Without the check the answer would not be
+exact.
 
 **Which update.** The gradient is kept either as a residual, at \\O(n)\\
 a visit, or as itself through \\g_j = (X'Wz)\_j - \sum_k
@@ -136,6 +163,12 @@ as coordinates come alive. The second wins when \\n\\ is large next to
 the number of live coordinates and pays in memory, so
 [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
 decides it from the two sizes.
+
+**Acceptance.** A step is accepted where the penalized objective falls,
+and is halved towards the current point otherwise. A SCAD or MCP penalty
+that carries a curvature (see
+[`coord_table_penalty()`](https://statmodels7.github.io/statmodels7/reference/coord_table_penalty.md))
+takes every step whole.
 
 ## References
 

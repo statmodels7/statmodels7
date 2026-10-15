@@ -21,7 +21,7 @@ marginal_out_of_domain(link, eta0, Zs, nodes, idx)
 
 - eta0:
 
-  The predictor at the fixed part, one value a row.
+  The predictor at the fixed part, one value per row.
 
 - Zs:
 

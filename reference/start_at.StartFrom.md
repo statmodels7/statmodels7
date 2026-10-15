@@ -20,21 +20,21 @@ A named list of numeric vectors, with the attribute `"taken"`.
 
 ## Details
 
-A block is matched by the name the formula gave its term: column by
-column for the parametric block, and as a whole for every other where
-the coefficient names agree. What is left over – the same term written
-on another basis, paired by
+A block is matched by the name that the formula gave its term: column by
+column for the parametric block, and as a whole for every other block
+where the coefficient names agree. The remaining blocks, which are the
+same term written on another basis and paired by
 [`block_stem()`](https://statmodels7.github.io/statmodels7/reference/block_stem.md)
 and
-[`same_term_kind()`](https://statmodels7.github.io/statmodels7/reference/same_term_kind.md)
-– goes to
+[`same_term_kind()`](https://statmodels7.github.io/statmodels7/reference/same_term_kind.md),
+go to
 [`project_blocks()`](https://statmodels7.github.io/statmodels7/reference/project_blocks.md),
-which estimates it against the partial residual of the reference's
+which estimates them against the partial residual of the reference's
 predictor. See
 [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
-for why the three rules differ.
+for the three rules.
 
-The result carries an attribute `"taken"`, a data frame naming every
-coefficient the reference answered for and whether it was `matched` or
-`projected`, so a caller can see what was reused rather than infer it
-from the fit that follows.
+The result carries an attribute `"taken"`, a data frame that names every
+coefficient taken from the reference and records whether it was
+`matched` or `projected`, so that the reused coefficients can be read
+directly.

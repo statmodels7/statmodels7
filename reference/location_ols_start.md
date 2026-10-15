@@ -44,9 +44,10 @@ a
 or a
 [modelterms7::PenalizedTerm](https://statmodels7.github.io/modelterms7/reference/PenalizedTerm.html).
 The penalized blocks start at zero, as they do from the intercept-only
-start, and a term with a start of its own (a break-point, a nonlinear
-term, a filter) leaves the equation on the intercept-only start. An
-aliased column takes the coefficient zero.
+start. If the equation has a term of any other kind (a break-point, a
+nonlinear term, a filter), the least-squares start does not apply and
+the equation keeps the intercept-only start. An aliased column takes the
+coefficient zero.
 
 ## See also
 

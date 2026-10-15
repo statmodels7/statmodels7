@@ -33,8 +33,10 @@ class_joint_pieces(cl, design, params, offs)
 
 ## Value
 
-A list of lists, one per member, each the piece with `joint` added and,
-for a coefficient member, `cols` and `index`.
+A list of lists, one per member, each the piece with `joint` added. A
+coefficient member also gets `cols` and `index`. A structural member
+gets `zcols` (positions among the term's own parameters) and has `cols`
+and `index` set to `NULL`.
 
 ## Details
 
@@ -46,19 +48,19 @@ them less whichever a linear intercept already carries.
 A coefficient member's positions are its parameter's offset plus its
 columns, exactly as
 [`class_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_pieces.md)
-gives them. A structural member's are `nb` plus its place among the FREE
+gives them. A structural member's are `nb` plus its place among the free
 parameters, which is not its place among all of them: a held one is not
 in the joint vector at all.
 
 ## A held coordinate cannot be in a class
 
 The prior's dimension is fixed when the class is assembled, from the
-members' widths. If one of the coordinates it collects is then held –
-the level of a filter is, wherever a linear intercept in the same
-equation already carries the constant – the class has fewer coordinates
-than its prior describes and there is no honest matrix to estimate. It
-is rejected here, where the held set is visible, naming the coordinate
-and the two ways out.
+members' widths. If one of the coordinates it collects is then held (the
+level of a filter is, wherever a linear intercept in the same equation
+already carries the constant), the class has fewer coordinates than its
+prior describes and there is no covariance matrix of the prior's
+dimension to estimate. It is rejected here, where the held set is
+visible, naming the coordinate and the two ways out.
 
 ## See also
 

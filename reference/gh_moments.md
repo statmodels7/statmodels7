@@ -1,7 +1,7 @@
 # The First Two Moments of h^-1(eta) Under a Mixture of Gaussians
 
-Each component is integrated by a 40-node Gauss-Hermite rule, or read at
-its mean where its standard deviation is zero (a Monte Carlo draw).
+Each component is integrated by a 40-node Gauss-Hermite rule, and a
+component with a zero standard deviation gives its value at the mean.
 
 ## Usage
 

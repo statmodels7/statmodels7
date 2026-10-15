@@ -1,4 +1,4 @@
-# The Weight the Second Derivative of a Block Is Paired With
+# The Weight for the Second Derivative of a Block
 
 [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
 with the curvature, one matrix per unit.
@@ -22,7 +22,7 @@ refresh_curv_amat(spec, design, M, params, npar, offs, units, Hl)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params, npar, offs:
 

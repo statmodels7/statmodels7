@@ -35,3 +35,11 @@ contract4(spec, design, d4, params, npar, offs, total, tv, tu)
 ## Value
 
 A square matrix.
+
+## Details
+
+The blocks follow
+[`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md):
+each is minus a weighted crossproduct of the two designs, with the
+weight formed from the fourth derivatives and the predictors of the two
+directions.

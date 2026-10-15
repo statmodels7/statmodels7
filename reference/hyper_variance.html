@@ -9,7 +9,7 @@ coordinate whose own curvature cannot produce a variance."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,8 +57,8 @@ coordinate whose own curvature cannot produce a variance.</p>
 
 
 <dt id="arg-schur">schur<a class="anchor" aria-label="anchor" href="#arg-schur"></a></dt>
-<dd><p>The largest relative Schur correction a held coordinate may
-contribute to a kept one's curvature.</p></dd>
+<dd><p>The largest ratio of the Schur correction to the diagonal entry
+of a kept coordinate. The default is <code>1e-4</code>.</p></dd>
 
 
 <dt id="arg-at-edge">at_edge<a class="anchor" aria-label="anchor" href="#arg-at-edge"></a></dt>
@@ -69,8 +69,9 @@ without the Schur test.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A matrix of the same shape as <code>A</code> with the variance in the kept
-rows and columns and <code>NA</code> elsewhere, or <code>NULL</code> when no coordinate is
-usable or the coupling is too large to ignore.</p>
+rows and columns and <code>NA</code> elsewhere, or <code>NULL</code> when the matrix is not
+positive definite and no coordinate can be held to make the kept part so,
+when no coordinate remains, or when the Schur test fails.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -78,40 +79,28 @@ usable or the coupling is too large to ignore.</p>
 inverts to a variance. A hyperparameter driven to the edge of its range,
 or one the search left before reaching a maximum, has a curvature there
 that is zero or of the wrong sign, and no variance follows from it.</p>
-<p>Such a coordinate used to cost every other one its standard error, the
-whole matrix being refused. It is held instead and the rest is inverted,
-which is the variance CONDITIONAL on it — the same reading <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> gives
-a coefficient the information carries nothing about. That is the marginal
-variance only where the coupling contributes nothing to the kept
-curvature, so the Schur correction \(A_{kb}A_{bb}^{-1}A_{bk}\) is
-computed and compared against the kept diagonal rather than assumed
-negligible; above <code>schur</code> the whole matrix is refused as before. The
-default is the size at which the correction cannot move the four
-significant digits the summary prints.</p>
-<p>A variance is returned only where the matrix inverted is positive
-definite, which is read off the smallest eigenvalue of the matrix
-equilibrated to a unit diagonal. A positive diagonal of the inverse is
-not enough: an indefinite matrix can have one. Measured on a
-zero-inflated negative binomial with a random effect on each equation,
-stopped where the criterion's curvature has an eigenvalue of -5 on that
-scale, every diagonal entry of <code>A</code> was negative and the inverse's diagonal
-was positive, so the two standard deviations were reported with standard
-errors of 0.015 and 0.0009 on the free scale.</p>
-<p>A coordinate the certificate names at the edge of its range is held
-whatever its curvature, and the Schur test is not applied to it: there the
-criterion has stopped moving in it, so its curvature and its coupling to
-the others are below the resolution of the criterion. Measured on two
-correlated random intercepts whose correlation runs to one, at an angle of
--9.14 the analytic coupling of the angle to the two standard deviations
-read 3.9e-3 and 5.2e-3 beside its own curvature of 8e-7, while the
-criterion differenced by refitting read 1.2e-3 and -2.5e-6 at a step of
-0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That coupling made the
-whole matrix indefinite, and the two standard deviations lost their
-standard errors to a coordinate whose own were already missing.</p>
+<p>Such a coordinate is held, and the remaining coordinates are inverted. The
+result is the variance conditional on the held coordinates, which is the
+reading that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> gives to the remaining coefficients when
+it leaves out a coefficient about which the information is flat. The
+conditional variance equals the marginal variance only where the coupling
+contributes nothing to the curvature of the kept coordinates. The Schur
+correction \(A_{kb}A_{bb}^{-1}A_{bk}\) is therefore computed and compared
+with the kept diagonal. Above <code>schur</code> times the kept diagonal, the function
+returns <code>NULL</code>.</p>
+<p>A variance is returned only where the inverted matrix is positive definite,
+which is decided from the smallest eigenvalue of the matrix equilibrated to
+a unit diagonal. A positive diagonal of the inverse does not suffice,
+because an indefinite matrix can have one.</p>
+<p>A coordinate that the certificate places at the edge of its range is held
+whatever its curvature, and the Schur test is not applied to it, because
+the criterion is flat in that coordinate and its curvature and its coupling
+to the other coordinates are below the resolution of the criterion.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code>, its only caller.</p></div>
+    <div class="dont-index"><p><code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code>, <code><a href="hyper_correction.html">hyper_correction()</a></code>, <code><a href="marginal_vcov.html">marginal_vcov()</a></code> and
+<code><a href="marginal_edf_correction.html">marginal_edf_correction()</a></code>, which also call it.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

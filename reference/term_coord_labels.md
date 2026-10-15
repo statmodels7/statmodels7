@@ -25,4 +25,4 @@ A character vector, possibly empty.
 [`class_coords()`](https://statmodels7.github.io/statmodels7/reference/class_coords.md)
 for the same question about a shared block,
 [`entry_owner()`](https://statmodels7.github.io/statmodels7/reference/entry_owner.md)
-for the term this is asked of.
+for the term to which this applies.

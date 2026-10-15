@@ -1,6 +1,6 @@
 # The Pieces of the Block Variance Over the Estimated Coefficients
 
-The quantities
+The quantities that
 [`marginal_vcov()`](https://statmodels7.github.io/statmodels7/reference/marginal_vcov.md)
 and
 [`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md)
@@ -52,9 +52,10 @@ A list with `Pu`, `ui`, `p`, `Bg`, `Be`, `Hv`, `nh`, `ng` and `idx`, or
 
 ## Details
 
-Write \\u\\ for the coefficients the criterion integrates and \\\gamma\\
-for the ones it estimates. At the mode, \\\partial u/\partial\gamma =
--A\_{uu}^{-1}A\_{u\gamma}\\, and a hyperparameter moves \\u\\ by
-\\-A\_{uu}^{-1}\\\partial^2\rho/\partial u\\\partial\eta\\. The columns
-of `Bg` and `Be` are these movements written over the kept coordinates,
-with a unit entry at \\\gamma\\'s own position.
+Write \\u\\ for the coefficients that the criterion integrates and
+\\\gamma\\ for the ones that it estimates. At the mode, \\\partial
+u/\partial\gamma = -A\_{uu}^{-1}A\_{u\gamma}\\, and a hyperparameter
+moves \\u\\ by \\-A\_{uu}^{-1}\\\partial^2\rho/\partial
+u\\\partial\eta\\. The columns of `Bg` and `Be` are these movements
+written over the kept coordinates; each column of `Bg` also has a unit
+entry at the position of its own \\\gamma_j\\.

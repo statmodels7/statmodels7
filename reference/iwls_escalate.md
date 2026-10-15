@@ -33,11 +33,9 @@ measures it. That is negligible beside a well-curved coordinate and
 already large beside one whose information has fallen by eight orders,
 which is the disparity the damping exists to correct.
 
-Each further escalation multiplies by a hundred, so eight of them span
-sixteen orders and reach a damping that dominates the largest diagonal.
-Measured on the case this was built for, the offending coordinate needed
-\\\lambda \approx 100\\ against a largest diagonal of 2328, which the
-sixth escalation passes.
+Each further escalation multiplies by a hundred, so that the eight
+escalations that a run may use span fourteen orders of magnitude, from
+\\10^{-8}\\ to \\10^{6}\\ times the largest diagonal.
 
 ## See also
 

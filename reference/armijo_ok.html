@@ -9,7 +9,7 @@ least a fixed share of what the model predicted over that step."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,8 @@ least a fixed share of what the model predicted over that step.</p>
 
 
 <dt id="arg-c-">c1<a class="anchor" aria-label="anchor" href="#arg-c-"></a></dt>
-<dd><p>The share of the predicted decrease that is asked for.</p></dd>
+<dd><p>The share of the predicted decrease that the trial point must
+achieve.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -79,21 +80,16 @@ least a fixed share of what the model predicted over that step.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>$$f(x + s d) \;\le\; f(x) + c_1 s\, g^\top d .$$
-<strong>The sign of \(g^\top d\) is the whole of it.</strong> The increment solves
-\((H + S)\delta = -g\), so \(g^\top\delta = -g^\top(H+S)^{-1}g\) is
-NEGATIVE – measured, in 19 of 19 solves of one fit, over
-\([-6435, -0.0119]\) – and the bound therefore sits BELOW \(f(x)\)
-and asks for a decrease. Written with the term SUBTRACTED it changes sign
-and the test permits an INCREASE of \(c_1 s |g^\top\delta|\), which on
-that fit was as much as 0.6435 a step, where the loop's own comment said
-sufficient decrease rather than mere non-increase. It is named rather than
-written inline so that the sign carries a test of its own: a test over a
-fit sees the condition only through the steps that fit happens to take,
-and none of them relied on the extra licence.</p>
+The increment solves \((H + S)\delta = -g\), so
+\(g^\top\delta = -g^\top(H+S)^{-1}g\) is negative and the bound lies
+below \(f(x)\), which requires a decrease. If the term were subtracted
+instead, the bound would lie above \(f(x)\) and the test would permit an
+increase of \(c_1 s \lvert g^\top\delta\rvert\). The condition is a
+separate function so that its sign can be tested directly.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="iwls_fit.html">iwls_fit()</a></code>, the loop that asks it.</p></div>
+    <div class="dont-index"><p><code><a href="iwls_fit.html">iwls_fit()</a></code>, the loop that applies it.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

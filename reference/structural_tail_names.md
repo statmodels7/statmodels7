@@ -25,7 +25,7 @@ A character vector, empty where there is no structural term.
 
 ## Details
 
-A level an intercept in the same equation carries is held and is not in
-the joint information, so it is not here either; the tail is the free
-ones in the term's own order, which is the order the information was
-assembled in.
+A level that an intercept in the same equation carries is held and is
+not in the joint information, so it is not here either. The tail
+consists of the free parameters in the order of the term, which is the
+order in which the information was assembled.

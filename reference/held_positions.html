@@ -11,7 +11,7 @@ beside them."><meta property="og:image" content="https://statmodels7.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,8 @@ beside them.</p>
 
 
 <dt id="arg-beta">beta<a class="anchor" aria-label="anchor" href="#arg-beta"></a></dt>
-<dd><p>The stacked coefficients, read for their length alone.</p></dd>
+<dd><p>The stacked coefficients, read for their length and for the
+values of the coefficients that the terms hold.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -78,13 +79,12 @@ positions) and <code>value</code>. Both are empty where nothing is held.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A hold is written by name because a name is what a caller can say and a
-position is not: the design's column order is the formula's business, and
-a term added to an equation moves every coordinate after it. The
-translation is the objective's own split of the stacked vector, so the
-answer is in the numbering every consumer of that vector already uses.</p>
-<p>A name that matches no coefficient of its equation is an error rather than
-a hold nothing enforces, which is what a silent <code>NA</code> would have been.</p>
+    <p>A hold is written by name, because the column order of the design follows
+the formula and a term added to an equation moves every coordinate after
+it. The translation is the objective's own split of the stacked vector, so
+the answer is in the numbering that every consumer of that vector uses.</p>
+<p>A name that matches no coefficient of its equation is an error, because a
+silent <code>NA</code> would leave the hold unenforced.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -1,9 +1,9 @@
 # The Subspace a Marginal Criterion Integrates Over, Jointly
 
-The basis
+The basis onto which
 [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-projects the joint curvature onto: the coefficients' own range basis,
-with one column per penalized parameter of the structural term appended.
+projects the joint curvature: the coefficients' own range basis, with
+one column per penalized parameter of the structural term appended.
 
 ## Usage
 
@@ -40,7 +40,7 @@ structural_joint_basis(spec, design, key, free, nb, basis)
 
 ## Value
 
-A matrix.
+A matrix with `nb` plus `length(free)` rows.
 
 ## Details
 

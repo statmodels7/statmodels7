@@ -13,7 +13,7 @@ counts an observation twice."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,9 @@ support, both of which a search reads as an unusable point.</p>
     <p>No penalty enters. This is the likelihood alone; <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code>
 gives the other half of the objective, and <code><a href="statmod_objective.html">statmod_objective()</a></code> combines
 them.</p>
+<p>For a model with a term of the likelihood shape, a mixture over latent
+states, the log-likelihood of the term replaces the sum of the log-densities
+at the observations.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

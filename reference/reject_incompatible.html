@@ -9,7 +9,7 @@ equations they sit in."><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,9 +71,9 @@ recursion written as two, which neither term implements. A term whose
 contribution is a likelihood mixed over latent states does not report a
 predictor at all, so it cannot be combined with anything that expects
 one.</p>
-<p>The count is over the whole formula rather than per equation because that
-is the honest boundary: what makes one admissible is that everything else
-in the model is a predictor it can be driven by.</p>
+<p>The count is over the whole formula and not per equation, because a
+structural term is admissible only where everything else in the model is a
+predictor that can drive it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

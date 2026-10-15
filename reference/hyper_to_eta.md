@@ -23,7 +23,7 @@ eta_to_hyper(eta, idx, hyper)
   The index, as
   [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   returns it, whose rows say which hyperparameters are on the search and
-  whose `"link"` attribute says how each is carried.
+  whose `"links"` attribute gives the link that carries each.
 
 - eta:
 
@@ -39,10 +39,11 @@ estimated entries replaced and every other one as it was.
 
 The outer search runs on the free scale for the reason every other
 search in the toolkit does: a smoothing parameter is positive, and an
-optimizer that does not know it will step outside the domain. Each
-hyperparameter's own link comes from the `"link"` attribute
+optimizer that has no information about the domain can step outside it.
+The link of each hyperparameter is read from the `"links"` attribute of
+the index that
 [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
-carries.
+returns.
 
 The two are inverses over the estimated hyperparameters:
 `eta_to_hyper(hyper_to_eta(h, idx), idx, h)` returns `h`. The

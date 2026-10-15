@@ -1,7 +1,8 @@
 # A Refreshable Block's Derivative Along One Direction
 
 [`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
-on one unit, with the shape it returns checked rather than assumed.
+on one unit, with the shape of the result checked. A block of another
+shape signals an error that names the term.
 
 ## Usage
 

@@ -28,14 +28,14 @@ An integer vector of positions, possibly empty.
 
 The predicate for the second is
 [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md),
-the same one
-[`unfittable_reason()`](https://statmodels7.github.io/statmodels7/reference/unfittable_reason.md)
-uses, so a term written later is covered with no edit here. A convex
-block is left out deliberately: the scoring step reaches its optimum
-from anywhere, and a search over it would spend the budget where it buys
-nothing.
+which tests whether the term registers a
+[`modelterms7::term_refresh()`](https://statmodels7.github.io/modelterms7/reference/term_refresh.html)
+method of its own, so a term written later is covered with no edit here.
+A convex block is left out deliberately: the scoring step reaches its
+optimum from any start, and a search over it would use the budget where
+it gains nothing.
 
-A penalized coordinate is then removed wherever it sits, which is not
-the same question as whether its term is convex: a penalty declared
-through a sub-formula of a break-point or nonlinear term covers columns
-of that term's block, and the loop takes the whole block.
+A penalized coordinate is then removed wherever it sits, which differs
+from testing whether its term is convex: a penalty declared through a
+sub-formula of a break-point or nonlinear term covers columns of the
+block of that term, and the loop takes the whole block.

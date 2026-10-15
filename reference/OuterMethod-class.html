@@ -3,15 +3,19 @@
 aic(), bic() and cv() all return one. It carries which subspace of
 the coefficients is integrated over, which information matrix enters the
 determinant, and the settings a path or a cross-validation needs.
-One class serves all five, so a property a given criterion does not read
-is present and unused. Use the five constructors, which validate; this raw
-one does not."><meta property="og:description" content="The class every outer criterion is an instance of: reml(), ml(),
+One class serves every criterion, so a property that a given criterion does
+not read is present and unused. The class validates the values of its
+properties. The constructors reml(), ml(), aic(), bic() and cv()
+also match hessian and rule against their choices and check k and
+marginal."><meta property="og:description" content="The class every outer criterion is an instance of: reml(), ml(),
 aic(), bic() and cv() all return one. It carries which subspace of
 the coefficients is integrated over, which information matrix enters the
 determinant, and the settings a path or a cross-validation needs.
-One class serves all five, so a property a given criterion does not read
-is present and unused. Use the five constructors, which validate; this raw
-one does not."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+One class serves every criterion, so a property that a given criterion does
+not read is present and unused. The class validates the values of its
+properties. The constructors reml(), ml(), aic(), bic() and cv()
+also match hessian and rule against their choices and check k and
+marginal."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +23,7 @@ one does not."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +57,11 @@ one does not."><meta property="og:image" content="https://statmodels7.github.io/
 <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> and <code><a href="cv.html">cv()</a></code> all return one. It carries which subspace of
 the coefficients is integrated over, which information matrix enters the
 determinant, and the settings a path or a cross-validation needs.</p>
-<p>One class serves all five, so a property a given criterion does not read
-is present and unused. Use the five constructors, which validate; this raw
-one does not.</p>
+<p>One class serves every criterion, so a property that a given criterion does
+not read is present and unused. The class validates the values of its
+properties. The constructors <code><a href="reml.html">reml()</a></code>, <code><a href="reml.html">ml()</a></code>, <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> and <code><a href="cv.html">cv()</a></code>
+also match <code>hessian</code> and <code>rule</code> against their choices and check <code>k</code> and
+<code>marginal</code>.</p>
     </div>
 
     <div class="section level2">
@@ -82,8 +88,9 @@ made small or large.</p></dd>
 
 
 <dt id="arg-hessian">hessian<a class="anchor" aria-label="anchor" href="#arg-hessian"></a></dt>
-<dd><p><code>"expected"</code> or <code>"observed"</code>. Which information enters the
-Laplace determinant, and whether the exact gradient is available.</p></dd>
+<dd><p><code>"auto"</code>, <code>"expected"</code> or <code>"observed"</code>. Which information
+enters the Laplace determinant. <code><a href="statmod.html">statmod()</a></code> settles <code>"auto"</code> against the
+family through <code><a href="outer_resolve.html">outer_resolve()</a></code>.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>

@@ -27,13 +27,10 @@ ctx_trace_matrix(ctx, pen, basis, expected = FALSE)
 - expected:
 
   Which information `pen` was built with, which is the cache's key: the
-  projection is of that matrix, so one entry cannot serve both. Nothing
-  reaches it today, a search holding one
-  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
-  throughout. The slot is keyed all the same, the twin defect in
-  [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
-  having been unreachable in exactly the same way until it was not.
+  projection is of that matrix, so one entry cannot serve both
+  information types.
 
 ## Value
 
-A square matrix, or `NULL`.
+A square matrix, with the rows and columns of the pinned coordinates set
+to zero, or `NULL`.

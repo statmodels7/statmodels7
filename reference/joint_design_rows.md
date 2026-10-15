@@ -1,9 +1,11 @@
 # The Rows of the Joint Predictor Derivative
 
 \\V\_{a,t} = \partial\eta\_{a,t}/\partial u\\ over the coefficients of
-every equation followed by a structural term's own parameters: the
-equation's design placed in its own columns, and for the equation
-carrying a filter the forward Jacobian of the recursion, which is dense.
+every equation followed by a structural term's own parameters. The
+function returns each equation's static design placed in its own
+columns, with zeros in the columns of the structural term's parameters.
+The callers replace the matrix of the equation that carries the filter
+by the forward Jacobian of the recursion, which is dense.
 
 ## Usage
 
@@ -28,15 +30,17 @@ joint_design_rows(spec, design, coef)
 
 ## Value
 
-A list with `V` (one matrix per distribution parameter), `ap` (which
-equation carries the filter), `keep` (the columns that survive a held
-level), `ev`, `f` and the sizes.
+`NULL` where the model has no filter. Otherwise a list with `V` (one
+matrix per distribution parameter), `ap` (which equation carries the
+filter), `nb`, `np` and `mf` (the numbers of coefficients, of the term's
+parameters and the joint width), `keep` (the columns that survive a held
+level), `zn` (the term's parameter names), `ev`, `f`, `params` and `n`.
 
 ## Details
 
-It exists so that the contraction
+It exists so that the contraction that
 [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
-performs is written once. The formula there does not change where a
+carries out is written once. The formula there does not change where a
 filter is present; only its operand does, \\X\\ becoming \\\[X_p \mid
 D\]\\. Everything downstream, the third derivative against the diagonal
 of \\M\\ and the movement of the mode, then reads the joint vector with

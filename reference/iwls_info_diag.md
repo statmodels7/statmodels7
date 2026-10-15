@@ -31,12 +31,14 @@ square-root design, whose cross-product is the unpenalized information,
 so the penalty does not enter.
 
 On the assembled route it is the diagonal of the matrix itself, which
-folds the penalty in. That is a different normalizer, and it is accepted
-because the assembled route is already the fallback: it is reached only
-where no square root exists, and the reading it feeds arbitrates a
-verdict rather than driving the loop.
+folds the penalty in. That is a different normalizer. It is accepted
+because the reading only arbitrates a verdict and does not drive the
+loop, and because the assembled route is used either where no square
+root exists or when `"chol"` is requested.
 
 ## See also
 
 [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md),
+which normalizes by it, and
+[`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md),
 the only caller.

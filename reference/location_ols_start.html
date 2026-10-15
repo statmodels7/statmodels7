@@ -17,7 +17,7 @@ start does not apply."><meta property="og:image" content="https://statmodels7.gi
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,10 +86,10 @@ location or a mean on the identity link, that parameter's equation has an
 intercept and at least one other parametric column, and every term of the
 equation is a <a href="https://statmodels7.github.io/modelterms7/reference/LinparTerm.html" class="external-link">modelterms7::LinparTerm</a>, a <a href="https://statmodels7.github.io/modelterms7/reference/SmoothTerm.html" class="external-link">modelterms7::SmoothTerm</a>, a
 <a href="https://statmodels7.github.io/modelterms7/reference/RandomTerm.html" class="external-link">modelterms7::RandomTerm</a> or a <a href="https://statmodels7.github.io/modelterms7/reference/PenalizedTerm.html" class="external-link">modelterms7::PenalizedTerm</a>. The penalized
-blocks start at zero, as they do from the intercept-only start, and a
-term with a start of its own (a break-point, a nonlinear term, a filter)
-leaves the equation on the intercept-only start. An aliased column takes
-the coefficient zero.</p>
+blocks start at zero, as they do from the intercept-only start. If the
+equation has a term of any other kind (a break-point, a nonlinear term, a
+filter), the least-squares start does not apply and the equation keeps the
+intercept-only start. An aliased column takes the coefficient zero.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,20 +61,21 @@
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The <span class="pkg">distributions7</span> distribution object the model was fitted
-with, links included, exactly as it was supplied. Its <code>@params</code> property
-names the parameters and <code>@links</code> holds their charts.</p>
+with, links included. A binomial family fitted to a two-column response
+carries the row sums as its <code>size</code>, so in that case the object differs
+from the one supplied. Its <code>@params</code> property names the parameters and
+<code>@link_params</code> holds their links.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>What comes back is the family object itself, so everything the family can
-do is reachable from a fit: its density, its derivatives, its moments and
-its parameters' links. Compare <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code>, whose <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">family()</a></code> returns a
-description.</p>
+    <p>The object returned is the family itself, so its density, its derivatives,
+its moments and its parameters' links are available from a fit. In
+contrast, <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code> has a <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">family()</a></code> that returns a description.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod.html">statmod()</a></code>; <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_pdf.html" class="external-link">distributions7::distrib_pdf()</a></code> and its siblings for
-what can then be asked of the family</p></div>
+the quantities that can be computed from the family</p></div>
     </div>
 
     <div class="section level2">

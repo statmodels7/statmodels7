@@ -11,7 +11,7 @@ the penalty's Hessian, their sum and its factorization."><meta property="og:imag
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,25 +77,21 @@ the penalty's Hessian, their sum and its factorization.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An environment carrying the point and, as they are asked for, the
+    <p>An environment carrying the point and, as they are requested, the
 quantities derived from it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The three consumers each used to assemble these for themselves, so at one
-point the information was built three times and the penalized matrix
-factorized twice, and <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> additionally
-calls the gradient, which repeated the whole of it a fourth time. Measured
-by <code>Rprof</code>'s <code>by.total</code> on a random intercept over 500 levels at
-20000 observations, the gradient and the Hessian together accounted for 128
-per cent of the fit, the overlap being exactly that repetition.</p>
+    <p>The criterion, its gradient and its Hessian read the same information, the
+same penalty Hessian and the same factorization at one point. The context
+holds them, so that each is computed once.</p>
 <p>The context is an environment, so an accessor fills it in place and later
-readers find the quantity already there. Each is computed on first demand
-and never speculatively: the criterion alone does not need an inverse, and
-a search running without an exact gradient must not pay for one.</p>
-<p>Passing <code>NULL</code> wherever a context is accepted restores the earlier
-behavior exactly, so every existing caller goes on working unchanged, a
-caller's own code included.</p>
+readers find the quantity already there. Each quantity is computed on first
+demand and never speculatively: the criterion alone does not need an
+inverse, and a search that runs without an exact gradient does not compute
+one.</p>
+<p>Passing <code>NULL</code> wherever a context is accepted computes every quantity
+afresh at the point given.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

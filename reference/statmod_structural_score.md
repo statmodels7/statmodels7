@@ -43,6 +43,10 @@ coefficients of the equations, where a coefficient reaches the level
 only through the scores at earlier times. That is
 [`modelterms7::term_adjoint()`](https://statmodels7.github.io/modelterms7/reference/term_adjoint.html).
 
+For a term of the likelihood shape, a mixture over latent states, the
+derivative is the Jacobian of the term's log-likelihood in its
+parameters, weighted by the observation weights.
+
 ## See also
 
 [`statmod_filter_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_filter_at.md)

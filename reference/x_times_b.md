@@ -1,7 +1,8 @@
 # A Design Times Coefficients, Over the Nonzero Ones
 
 Computes \\X\beta\\ reading only the columns whose coefficient is not
-zero, which after a lasso is most of a block.
+zero. After a lasso many coefficients of a block are exactly zero, and
+the corresponding columns are skipped.
 
 ## Usage
 

@@ -9,7 +9,7 @@ working linearization with a frozen weight."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,19 +66,16 @@ working linearization with a frozen weight.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A discontinuous break-point term is fitted through a block whose weight is
-held at the previous iterate, so the curvature that block carries is the
-working model's, never the model's. Measured on a jump at 400
-observations against a bootstrap of 200 resamples: the working information
-gives the change of level and the auxiliary coordinate a standard error of
-<strong>exactly zero</strong>, where the resamples give 0.063 and 0.540, and the
-position read off them 1.8e-05 against 0.090. A zero looks like a number and is
-worse than a gap, so those coefficients are left missing.</p>
-<p>The question is asked of the term through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html" class="external-link">modelterms7::term_jacobian_block()</a></code> and never of its class,
-so a construction whose block is a Jacobian keeps its inference: a
-continuous <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, and a discontinuous one
-smoothed by an <code><a href="https://statmodels7.github.io/numericals7/reference/abs_smoother.html" class="external-link">numericals7::abs_smoother()</a></code>, both answer yes.</p>
+    <p>A block whose term answers <code>FALSE</code> to
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html" class="external-link">modelterms7::term_jacobian_block()</a></code> is a working linearization with a
+weight held at the previous iterate, so the curvature that the block carries
+is that of the working model and not that of the model. The standard errors
+computed from it would be zero, which would be reported as a measurement, and
+those coefficients are left missing.</p>
+<p>The check reads the term through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html" class="external-link">modelterms7::term_jacobian_block()</a></code> and
+never through its class, so a construction whose block is a Jacobian keeps
+its inference: a continuous <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, and a discontinuous one
+smoothed by an <code><a href="https://statmodels7.github.io/numericals7/reference/abs_smoother.html" class="external-link">numericals7::abs_smoother()</a></code>, both answer <code>TRUE</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

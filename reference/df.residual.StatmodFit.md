@@ -1,7 +1,8 @@
-# What a Fit Leaves Unspent
+# Residual Degrees of Freedom of a Fitted Model
 
-The observation count less the effective degrees of freedom the model
-spent.
+The number of observations,
+[`nobs.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.md),
+less the effective degrees of freedom of the model.
 
 ## Usage
 
@@ -24,15 +25,21 @@ df.residual(object, ...)
 ## Value
 
 A single number, `nobs(object)` less the total effective degrees of
-freedom. Not an integer in general, and `NA` for a model whose degrees
-of freedom could not be counted.
+freedom. Not an integer in general. Where the effective degrees of
+freedom of a term could not be computed,
+[`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
+uses the number of coefficients of that term (the number of free
+parameters, for a structural term) in its place, so the result is always
+a number.
 
 ## Details
 
-The count subtracted is the effective one, the trace of the model's
-smoother. A penalized block spends less than the number of coefficients
-it carries, which is the whole reason a smoothing parameter is estimated
-at all, so the result is not an integer.
+The count subtracted is the effective one, the sum over the terms of
+their effective degrees of freedom, as
+[`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
+reports it. A penalized block has fewer effective degrees of freedom
+than the number of coefficients it carries, so the result is not an
+integer in general.
 
 ## See also
 

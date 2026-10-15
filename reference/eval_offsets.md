@@ -30,7 +30,7 @@ eval_offsets(formula, params, data, env, n)
 
 - n:
 
-  The number of observations, the length to recycle to.
+  The number of observations.
 
 ## Value
 
@@ -39,19 +39,20 @@ vector of length `n` or `NULL` where that equation names no offset.
 
 ## Details
 
-The expressions are kept and re-evaluated, never carried as numbers, and
-that is how an offset survives prediction.
+The expressions are kept and re-evaluated, not carried as numbers, which
+is how an offset written in the formula applies in prediction.
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
 calls this against the new data; a vector supplied through
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)'s
-`offsets` argument at fitting time has the wrong length for other rows
-and cannot be reused. Before this, `predict(fit, newdata =)` returned
-the predictor of a model with no offset at all.
+`offsets` argument at fitting time has the length of the fitting data
+and cannot be reused on other rows.
 
 Each expression is evaluated in `data` with `env` behind it, so a symbol
 resolves as a column first and as a variable of the caller's environment
-second. A result shorter than `n` is recycled, so a single number is a
-constant offset.
+second. A result of length one is recycled to `n`, so a single number is
+a constant offset, and a result of any other length except `n` is an
+error. A value that is missing or not finite is an error. Several
+offsets in one equation are summed.
 
 ## See also
 

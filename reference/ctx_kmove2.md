@@ -28,7 +28,7 @@ A list with `deriv` and `key`.
 
 It is read only on the expected route, where
 [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-has already asked
+has already checked
 [`expected_deriv2_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.md).
 The components are symmetric in the information's pair and in the pair
 differentiated in, separately, so they are read through

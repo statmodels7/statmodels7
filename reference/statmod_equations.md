@@ -4,8 +4,9 @@ Takes the single formula
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 accepts, in which the equations of the distribution's parameters are
 separated by `|`, and returns the response together with one one-sided
-formula per parameter of the family. Every parameter gets an equation:
-one a caller did not write is filled in as `~ 1`, an intercept.
+formula per parameter of the family. Every parameter receives an
+equation, and a parameter whose equation the caller did not write
+receives `~ 1`, an intercept.
 
 ## Usage
 
@@ -55,11 +56,11 @@ A list of three:
 
 The first equation carries the response and models the family's first
 parameter, and each `|` introduces the next. The parameters may be named
-in any order and any of them may be omitted.
+in any order, and any of them may be omitted.
 
-## Why the recovery is a walk
+## Splitting the formula
 
-R's own precedence decides this. `~` binds looser than `|` and
+The split follows R's own precedence. `~` binds looser than `|` and
 associates to the left, so `y ~ a | p2 ~ b | p3 ~ c` parses as
 
         ((y ~ (a | p2)) ~ (b | p3)) ~ c
@@ -67,33 +68,34 @@ associates to the left, so `y ~ a | p2 ~ b | p3 ~ c` parses as
 The right-hand side of the whole formula is `c` alone. Splitting it on
 `|` returns one piece and drops two equations without an error.
 
-What the associativity calls for is a walk down the left spine of the
-nested `~` calls, collecting each level's right-hand side and then
-reversing. The innermost left operand is the response. Each collected
-piece is either `<terms> | <name of the next parameter>`, or, for the
-last, `<terms>` alone.
+The function therefore walks down the left spine of the nested `~`
+calls, collects the right-hand side of each level and reverses the
+collection. The innermost left operand is the response. Each collected
+piece is either `<terms> | <name of the next parameter>` or, for the
+last piece, `<terms>` alone.
 
-## Bars inside a call survive
+## Bars inside a call
 
 The walk descends only through `~` and through a `|` at the top of a
 collected piece. A `|` anywhere inside a call is left as it stands, so
-`random(1 | id)` and `gas(by = ~ random(1 | id))` reach the term
-constructor whole.
+`random(~ 1 | id)` and `gas(omega ~ random(~ 1 | id), by = id)` reach
+the term constructor whole.
 
-## What is refused
+## Invalid formulas
 
-Five conditions, each with an error naming the offending name:
+Five conditions signal an error:
 
 - `formula` is not a formula.
 
 - `formula` has no left-hand side, so there is no response.
 
-- A `|` is not followed by an equation, as in `y ~ x | sigma`.
+- A `|` is not followed by an equation, as in `y ~ x | sigma`. The
+  message names the parameter whose equation is missing.
 
-- A name is not a parameter of this distribution. The message lists the
-  ones that are.
+- A name is not a parameter of this distribution. The message names it
+  and lists the parameters of the distribution.
 
-- A parameter is given two equations.
+- A parameter is given two equations. The message names the parameter.
 
 ## See also
 
@@ -111,11 +113,11 @@ e$response
 e$equations
 #> $mu
 #> ~x1 + x2
-#> <environment: 0x55c3e062cc28>
+#> <environment: 0x562fc7ce2070>
 #> 
 #> $sigma
 #> ~z
-#> <environment: 0x55c3e062cc28>
+#> <environment: 0x562fc7ce2070>
 #> 
 
 # Every parameter gets an equation; the ones not written get an intercept.
@@ -135,12 +137,12 @@ statmod_equations(g, c("mu", "sigma", "nu"))$given
 #> [1] "mu"    "sigma" "nu"   
 
 # A bar inside a call is not a separator.
-h <- statmod_equations(y ~ random(1 | id) | sigma ~ z, c("mu", "sigma"))
+h <- statmod_equations(y ~ random(~ 1 | id) | sigma ~ z, c("mu", "sigma"))
 deparse(h$equations$mu[[2]])
-#> [1] "random(1 | id)"
+#> [1] "random(~1 | id)"
 
-# A name that is not a parameter is refused, and the message says which
-# names are.
+# A name that is not a parameter is an error, and the message lists the
+# parameters of the distribution.
 try(statmod_equations(y ~ x | zz ~ z, c("mu", "sigma")))
 #> Error : 'zz' is not a parameter of this distribution.
 #>   Its parameters are: mu, sigma.

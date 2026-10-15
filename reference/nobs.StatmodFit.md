@@ -1,6 +1,7 @@
 # The Number of Observations a Model Was Fitted To
 
-The row count of the fitting data.
+The number of observations that entered the likelihood: the sum of the
+prior weights, which are frequency weights.
 
 ## Usage
 
@@ -22,9 +23,25 @@ nobs(object, ...)
 
 ## Value
 
-A single integer: the number of rows of the data the model was fitted
-to. Rows the model frame dropped are already gone, so this is the count
-that entered the likelihood.
+A single number, the sum of the weights: an integer where that sum is a
+whole number, and a double otherwise.
+
+## Details
+
+A weight of two counts its row twice, so a fit with weights is counted
+as the fit of the data with every row repeated as many times as its
+weight. Without weights the result is the number of rows of the data,
+since
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+drops no rows (a missing value in the response or in a variable of an
+equation is an error).
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+the cBIC of
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
+[`logLik.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)'s
+`"nobs"` attribute and
+[`df.residual.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md)
+read the same number.
 
 ## See also
 

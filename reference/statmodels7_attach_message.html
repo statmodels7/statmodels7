@@ -13,7 +13,7 @@ not, and the two columns are filled down the left one first."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,13 +73,14 @@ spaces. <code>character(0)</code> when <code>versions</code> has no rows.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Padding is applied inside a line and stripped at its end, since a trailing
-run of spaces is invisible where it is written and visible wherever the
-message is pasted. A member that is not installed is marked <code>x</code> and named
-with the text <code>not installed</code>; leaving it blank would hide the difference
-between an absent member and a present one.</p>
-<p>Plain ASCII throughout. A non-ASCII character in a package's startup
-message is a portability risk taken for a decoration.</p>
+    <p>Padding is applied inside a line and stripped at its end, because a
+trailing run of spaces is invisible where it is written and becomes
+visible when the message is pasted elsewhere. A member that is not
+installed is marked <code>x</code> and shown with the text <code>not installed</code>, so that
+an absent member differs visibly from a present one.</p>
+<p>The message uses plain ASCII only. A non-ASCII character in a startup
+message can print incorrectly in a session with another encoding, and the
+layout needs none.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

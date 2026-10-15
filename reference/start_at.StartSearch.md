@@ -29,3 +29,7 @@ evaluates the likelihood, exactly as
 does, and leaves the best it found in place — which is how a strategy
 returning coefficients can nonetheless start a filter somewhere better
 than its own `term_start()`.
+
+The objective `obj` is required, and an error is signaled when it is
+`NULL`. A coefficient named in `over` is resolved by its label, with a
+bare name accepted where one equation alone carries it.

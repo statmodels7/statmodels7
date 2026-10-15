@@ -1,9 +1,9 @@
 # The Hyperparameters of a Fitted Model
 
-Reports every hyperparameter of every penalty the model carries: one row
-each, with the value, whether it was held, and what put it there. A
-smoothing parameter, a prior scale, a lasso's \\\lambda\\ and an elastic
-net's \\\alpha\\ all appear here.
+Reports every hyperparameter of every penalty that the model carries:
+one row each, with the value, whether it was held, and what put it
+there. A smoothing parameter, a prior scale, a lasso's \\\lambda\\ and
+an elastic net's \\\alpha\\ all appear here.
 
 ## Usage
 
@@ -25,11 +25,13 @@ hyper(fit, scale = c("parameter", "link"))
 
 ## Value
 
-A data frame with one row per hyperparameter and seven columns:
+A data frame with one row per hyperparameter and the columns:
 
 - `parameter`:
 
   the distribution parameter whose equation the penalized term sits in.
+  For a covariance class that spans several equations, the names of all
+  of them, separated by commas.
 
 - `term`:
 
@@ -41,7 +43,7 @@ A data frame with one row per hyperparameter and seven columns:
 
 - `estimate`:
 
-  its value, on the scale asked for.
+  its value, on the requested scale.
 
 - `held`:
 
@@ -49,7 +51,7 @@ A data frame with one row per hyperparameter and seven columns:
 
 - `source`:
 
-  what put the value there, as above.
+  what produced the value, as above.
 
 - `id`:
 
@@ -64,38 +66,50 @@ It governs the coefficients under it instead of sitting beside them, and
 the two are estimated by different routes and reported with different
 qualifications.
 [`coef.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/coef.StatmodFit.md)
-holds the coefficients and this holds the hyperparameters; neither holds
-the other.
+reports the coefficients, and this function reports the hyperparameters.
 
 ## The two scales
 
-`scale = "parameter"`, the default, is the scale the penalty is written
-on: a smoothing parameter is a positive number, and a gaussian prior's
-`sigma` is a scale. That is what a reader wants.
+`scale = "parameter"`, the default, is the scale on which the penalty is
+written: a smoothing parameter is a positive number, and the `sigma` of
+a gaussian prior is a scale.
 
-`scale = "link"` is the free scale the outer search runs on, through
-each hyperparameter's own link. That is what a caller comparing two
-fits' searches wants. Where a hyperparameter carries no link the two
-coincide.
+`scale = "link"` is the free scale on which the outer search runs,
+obtained through each hyperparameter's own link, and it is the scale on
+which the searches of two fits are compared. Where a hyperparameter
+carries no link, the two scales coincide.
 
-## What `source` says that `held` cannot
+## The columns `held` and `source`
 
-`held` is a logical and says only whether the value moved. `source` says
-what put it there:
+`held` is a logical that records whether a term fixed the value,
+directly or through the label that the hyperparameter shares. `source`
+records what produced the value:
 
-- `"fixed"` for one the term itself held, as
+- `"fixed"` for a hyperparameter that a term holds, as in
   `s(x, bspline_smooth(), hyper = c(lambda = 2))`.
 
-- the criterion's name, `"reml"` or `"ml"`, for one a marginal criterion
-  maximized.
+- the name of the outer criterion (`"reml"`, `"ml"`, `"aic"` or `"bic"`)
+  for a hyperparameter that the outer search chose.
 
-- the criterion that scored the path, `"bic"` and so on, for one chosen
-  along a path over its own values.
+- the name of the sparse criterion (`"aic"`, `"bic"` or `"cv"`) for a
+  hyperparameter of a kinked penalty chosen along a path over its own
+  values.
 
-The distinction has a consequence a reader needs. A value chosen along a
-path is the argument of a minimum over a grid, not the root of a
-derivative, so no standard error follows from it. One a marginal
-criterion reached carries one, from the curvature of that criterion, and
+- `""` where no criterion ran, so that the value stayed at the starting
+  value of its term.
+
+The distinction matters for inference. A value chosen by
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+whether by the outer search or along a path, is the argument of a
+minimum of a prediction-error criterion and not the root of the
+derivative of a likelihood, so no standard error follows from it. A
+value that
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+estimated carries a standard error, computed from the curvature of that
+criterion, and
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 prints it.
 
@@ -104,11 +118,12 @@ prints it.
 Terms whose
 [`modelterms7::term_ids()`](https://statmodels7.github.io/modelterms7/reference/term_ids.html)
 give the same label estimate one value, and that value is written under
-each of their own keys. So a shared hyperparameter appears once per
-term, with the same estimate and the same `source`, and the `id` column
-is what says the agreement is the model rather than a coincidence. The
-penalties are not merged, which is why each still has a row of its own
-and why the effective degrees of freedom are still counted term by term.
+each of their own keys. A shared hyperparameter therefore appears once
+per term, with the same estimate and the same `source`, and the `id`
+column marks the agreement as part of the model and not as a
+coincidence. The penalties are not merged, so each term still has a row
+of its own and the effective degrees of freedom are still counted term
+by term.
 
 ## See also
 
@@ -126,8 +141,9 @@ set.seed(1)
 d <- data.frame(x = runif(80, 0, 1))
 d$y <- sin(3 * d$x) + rnorm(80, 0, 0.3)
 
-# Estimated by REML, which is what source says.
-fit <- statmod(y ~ s(x, bspline_smooth(k = 6)), distributions7::gaussian1_distrib(), d)
+# Estimated by REML, which the source column records.
+fit <- statmod(y ~ s(x, bspline_smooth(k = 6)),
+               distributions7::gaussian1_distrib(), d)
 hyper(fit)
 #>   parameter                        term   name estimate  held source   id
 #> 1        mu s(x, bspline_smooth(k = 6)) lambda 29.31279 FALSE   reml <NA>

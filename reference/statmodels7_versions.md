@@ -1,8 +1,8 @@
 # Installed Versions of the Toolkit
 
 Reports the version of each member package as it is installed on this
-machine, one row per member. A member that is not installed reports `NA`
-instead of being dropped, so the result always has one row per name
+machine, one row per member. A member that is not installed has `NA` as
+its version and is kept, so the result always has one row per name
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
 returns and a missing member is visible.
 
@@ -32,21 +32,21 @@ so both columns are character.
 
 The version is read with
 [`utils::packageVersion()`](https://rdrr.io/r/utils/packageDescription.html)
-and coerced to a character string, so `"0.38.0"` sorts and prints as
-written and no comparison is implied between two members' numbers. The
-members version independently.
+and coerced to a character string, so a version such as `"0.38.0"` is
+kept as written. The members are versioned independently, and the
+version numbers of two members are not comparable.
 
-This is the source of the table the attach message prints, and of the
-comparison
+This is the source of the table that the attach message prints and of
+the installed versions that
 [`statmodels7_update()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_update.md)
-makes against GitHub.
+reports.
 
 ## See also
 
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
 for the names alone,
 [`statmodels7_update()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_update.md)
-to install the members that are behind.
+to install or update the members.
 
 ## Examples
 
@@ -57,7 +57,7 @@ v
 #> 1         basis7  0.15.0
 #> 2 distributions7  0.78.1
 #> 3 linkfunctions7   0.5.2
-#> 4    modelterms7  0.96.0
+#> 4    modelterms7  0.98.0
 #> 5    numericals7  0.22.1
 #> 6    optimizers7  0.14.0
 #> 7    parameters7  0.24.0

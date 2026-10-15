@@ -17,7 +17,7 @@ time."><meta property="og:image" content="https://statmodels7.github.io/statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,20 +79,21 @@ list of two:</p><dl><dt><code>param</code></dt>
 in, a string.</p></dd>
 
 <dt><code>term</code></dt>
-<dd><p>the term's index within that equation, an integer.</p></dd>
+<dd><p>the name of the term within that equation, a string
+(for example <code>"seg(x)"</code>).</p></dd>
 
 
 </dl><p>An empty list when no term refreshes, which is the common case.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Membership is decided by asking whether the term registers a
+    <p>Membership is decided by testing whether the term registers a
 <code>term_refresh()</code> method of its own, which is <code><a href="refreshes_own_block.html">refreshes_own_block()</a></code>. The
 base method on <code>model_term</code> is the identity, so a term written later is
 covered without an edit here.</p>
-<p>This is the list every other function in the file walks. Its emptiness is
-what makes a model of ordinary terms pay nothing for the refresh
-machinery.</p>
+<p>The design stores this list, and every other function in the file walks
+it. When it is empty, a model of ordinary terms incurs no cost from the
+refresh machinery.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

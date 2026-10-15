@@ -27,13 +27,12 @@ A character vector as long as `nm`.
 
 ## Details
 
-The family names its coordinates by position because that is all it has,
-and every one of its readings – a standard deviation, a correlation, a
-partial correlation, a conditional scale – is named `prefix_vi` or
-`prefix_vi_vj`. The rewrite is on that shape alone: a name it does not
-match, or one whose index no label answers for, is left exactly as it
-is, so a family declaring a reading of another kind keeps its own name
-rather than being renamed into a wrong one.
+A multivariate family names its coordinates by position, and each of its
+readings – a standard deviation, a correlation, a partial correlation, a
+conditional scale – is named `prefix_vi` or `prefix_vi_vj`. The rewrite
+applies to that shape alone: a name that does not match, or whose index
+has no label, is left unchanged, so a family declaring a reading of
+another kind keeps its own name.
 
 ## See also
 

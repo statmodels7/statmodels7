@@ -7,7 +7,7 @@ for the hyperparameters whose penalty has a kink.
 ## Usage
 
 ``` r
-path_rows(spec, blocks, hyper, method)
+path_rows(spec, blocks, hyper)
 ```
 
 ## Arguments
@@ -25,14 +25,12 @@ path_rows(spec, blocks, hyper, method)
 
   The hyperparameters.
 
-- method:
-
-  An
-  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
-
 ## Value
 
-A data frame of `parameter`, `term` and `name`.
+A data frame with one row per axis, with columns `parameter`, `term` and
+`name`, and a list column `members` that holds, for each axis, the data
+frame of the hyperparameters it stands for. It has zero rows where no
+hyperparameter is to be estimated.
 
 ## Details
 
@@ -43,6 +41,5 @@ it or leaves, so a criterion read at that mode inherits the corners and
 a quasi-Newton step is reading a slope that is about to change. A grid
 does not care, and warm starts make it cheap.
 
-Which hyperparameters are varied is read from the penalty by
-[`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
-unless the method names them.
+Every hyperparameter of a kinked penalty is varied, except those that
+its term holds and those of an `id` group that one member holds.

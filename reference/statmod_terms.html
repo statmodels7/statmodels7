@@ -9,7 +9,7 @@ it names against the data."><meta property="og:image" content="https://statmodel
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,11 @@ parent of the interpreting environment.</p></dd>
 <dd><p>The evaluated left-hand side, or <code>NULL</code> where there is
 none. Read by <code><a href="seg_grid_start.html">seg_grid_start()</a></code> and by nothing else.</p></dd>
 
+
+<dt id="arg-linpar">linpar<a class="anchor" aria-label="anchor" href="#arg-linpar"></a></dt>
+<dd><p>The options of the implicit parametric block, as
+<code><a href="linpar_options.html">linpar_options()</a></code> returns them.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -91,7 +96,8 @@ caller has attached. See <code><a href="terms_first.html">terms_first()</a></cod
 removes.</p>
 <p>A factor covariate needs no handling of its own: the interpreter collects
 the bare covariates of an equation into one <code><a href="https://statmodels7.github.io/modelterms7/reference/linpar.html" class="external-link">modelterms7::linpar()</a></code>, whose
-block comes from <code>model.matrix</code> and so carries the contrasts.</p>
+block comes from <code>model.matrix</code>, or from <code><a href="https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html" class="external-link">Matrix::sparse.model.matrix()</a></code>
+when the block is sparse, and so carries the contrasts.</p>
 <p>A break-point term whose starting positions the caller did not name has
 them chosen on a grid, through <code><a href="seg_grid_start.html">seg_grid_start()</a></code>, in place of the
 interior quantiles of the covariate the term would otherwise default to.</p>

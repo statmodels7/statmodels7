@@ -22,8 +22,6 @@ statmod_select(
   tol,
   vb,
   data,
-  weights,
-  offsets,
   sparse_method = NULL
 )
 ```
@@ -53,8 +51,9 @@ statmod_select(
 
 - method:
 
-  An
-  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md).
+  The
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
+  that estimates the twice differentiable hyperparameters, or `NULL`.
 
 - optimizer:
 
@@ -76,23 +75,36 @@ statmod_select(
 
   The verbosity.
 
-- data, weights, offsets:
+- data:
 
-  What the fit was called on, which cross-validation needs in order to
-  refit on part of it.
+  The data the fit was called on, which cross-validation needs in order
+  to refit on part of it; the weights and offsets are those held by
+  `spec`.
+
+- sparse_method:
+
+  The
+  [`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
+  that scores the path, or `NULL`, in which case `method` is used.
 
 ## Value
 
 The list
 [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
-returns.
+or
+[`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
+returns, with the element `criterion_by`, the
+[`OuterMethod()`](https://statmodels7.github.io/statmodels7/reference/OuterMethod-class.md)
+whose value is `criterion`; the list
+[`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
+returns where no criterion runs.
 
 ## Details
 
 The split is the same one that decides how the coefficients are fitted,
 so a term whose penalty has a kink has both its coefficients and its
-hyperparameters handled by methods that do not ask for a curvature it
-does not have.
+hyperparameters handled by methods that do not require a curvature that
+the penalty does not have.
 
 ## See also
 

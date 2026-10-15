@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,11 +68,12 @@ their columns are written in.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A model may have no covariates at all – a pure time series is the case –
-and then a row count is the whole of what a simulation needs, so the two
-arguments are alternatives rather than one being compulsory. Where both
-are given they must agree, which is checked rather than resolved by
-preferring one: a caller who wrote both and got them wrong wants to know.</p>
+    <p>A model may have no covariates at all (a pure time series is the case),
+and then a row count is all that a simulation needs, so <code>data</code> and <code>n</code> are
+alternatives and one of them must be given. Where both are given they must
+agree, which is checked and not resolved by preferring one, since a
+disagreement points to a mistake of the caller. <code>n</code> must be a positive
+whole number.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

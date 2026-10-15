@@ -9,7 +9,7 @@ supplies, per parameter."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,8 +59,10 @@ either list's entries possibly <code>NULL</code>. Either list may itself be <cod
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with one entry per parameter named in either input,
-<code>NULL</code> where neither supplied one.</p>
+    <p><code>a</code> with each entry summed with the entry of <code>b</code> for the same
+parameter where both are present, and replaced by <code>b</code>'s where only <code>b</code>
+names one. A parameter named only in <code>b</code> is not added, and the result is
+<code>NULL</code> when <code>a</code> is.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

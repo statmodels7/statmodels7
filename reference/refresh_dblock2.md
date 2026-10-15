@@ -1,7 +1,8 @@
 # A Refreshable Block's Second Derivative Along Two Directions
 
 [`modelterms7::term_block_deriv2()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html)
-on one unit, with the shape it returns checked rather than assumed.
+on one unit, with the shape of the result checked. A block of another
+shape signals an error that names the term.
 
 ## Usage
 
@@ -30,10 +31,16 @@ A numeric matrix, `n` by the term's coefficient count.
 
 ## Details
 
-A term that has not written the method inherits the base one and gets
-zeros, which is exact for a design that does not move and a deliberate
-refusal for a block that is a working linearization rather than a
-Jacobian. Nothing is differenced here in either case.
+The base method on `model_term` answers zeros, which is exact for a
+design that does not move. A sharp
+[`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
+answers zeros because its second derivative vanishes away from the
+break-points, and a sharp
+[`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
+or
+[`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
+answers zeros because its block is a working linearization with a frozen
+weight and not a Jacobian. Nothing is differenced here in any case.
 
 ## See also
 

@@ -9,7 +9,7 @@ scale their links carry them onto."><meta property="og:image" content="https://s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,12 +82,12 @@ scale their links carry them onto.</p>
 
 
 <dt id="arg-inner">inner<a class="anchor" aria-label="anchor" href="#arg-inner"></a></dt>
-<dd><p>The inner optimizer the fit used, which the stencil route
-refits its probes with; <code><a href="iwls.html">iwls()</a></code> where none is given.</p></dd>
+<dd><p>The inner optimizer that the fit used, with which the stencil
+route refits its probes; <code><a href="iwls.html">iwls()</a></code> where none is given.</p></dd>
 
 
 <dt id="arg-pinned">pinned<a class="anchor" aria-label="anchor" href="#arg-pinned"></a></dt>
-<dd><p>The coordinates the fit left out of the criterion's
+<dd><p>The coordinates that the fit left out of the criterion's
 determinant, as it records them in <code>methods$pinned</code>.</p></dd>
 
 
@@ -101,29 +101,34 @@ so that the others carry the variance conditional on them.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A square matrix, one row per estimated hyperparameter, whose
 dimnames join the distribution parameter, the term and the
-hyperparameter's own name with a carriage return, a character no name
-can contain, so the three stay recoverable from the key. The index
-rides on the attribute <code>"idx"</code>. <code>NULL</code> where there is nothing to
-report.</p>
+hyperparameter's own name with a carriage return, a character that no
+name can contain, so that the three are recoverable from the key. The
+index is stored in the attribute <code>"idx"</code>. The rows and columns of held
+coordinates are <code>NA</code> (see <code><a href="hyper_variance.html">hyper_variance()</a></code>). The value is <code>NULL</code> where
+there is nothing to report.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A hyperparameter estimated by <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> is
-the maximizer of a criterion that is twice differentiable in it, so it has a
-variance like any other maximum-likelihood estimate: the inverse of the
-negative Hessian of that criterion at the point reached, which
-<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> already computes exactly. It is read on
-the free scale because that is where the criterion was maximized and where
-the quadratic approximation behind it is reasonable; a variance for a
-smoothing parameter on its own scale, where the estimate is often several
-orders of magnitude from zero and the criterion far from symmetric, would
-describe a shape the criterion does not have.</p>
-<p><strong>Where it does not apply.</strong> A hyperparameter chosen along a path, which
-is what <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> and <code><a href="cv.html">cv()</a></code> do to a kinked penalty's, is the
-argument of a minimum over a grid. It is no root of a derivative, so there
-is no Hessian to invert and no standard error follows. Its uncertainty is
-a resampling question, and <code>NULL</code> is returned in place of a number of
-another kind.</p>
+    <p>A hyperparameter estimated by <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> is the maximizer of a
+criterion that is twice differentiable in it, so its variance is the
+inverse of the negative Hessian of that criterion at the point reached,
+which <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> returns. If the criterion also estimates
+coefficients, the variance is the block of the hyperparameters in the
+inverse of the negative Hessian over the hyperparameters and those
+coefficients. <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> computes the Hessian analytically
+where a route applies and by a difference of the exact gradient otherwise.
+The matrix is read on the free scale because the criterion was maximized on
+that scale, where the quadratic approximation is reasonable. A variance on
+the scale of the hyperparameter itself would describe a shape that the
+criterion does not have where the estimate is far from zero and the
+criterion is asymmetric.</p>
+<p><strong>Where it does not apply.</strong> The function returns <code>NULL</code> for every outer
+criterion other than <code><a href="reml.html">reml()</a></code> and <code><a href="reml.html">ml()</a></code>, including <code><a href="aic.html">aic()</a></code> and <code><a href="aic.html">bic()</a></code>
+used as the outer criterion for a smooth penalty. A hyperparameter that a
+path selects (the penalty of a kinked term, chosen by <code><a href="aic.html">aic()</a></code>, <code><a href="aic.html">bic()</a></code> or
+<code><a href="cv.html">cv()</a></code> over a grid) is the argument of a minimum, not a root of a
+derivative, so no Hessian exists to invert. Its uncertainty can be assessed
+by resampling.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

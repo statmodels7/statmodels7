@@ -41,62 +41,50 @@ outer_curvature(
 ## Value
 
 A list with `A`, the symmetric negated Hessian or `NULL`; `source`,
-`"analytic"` or `"differenced"`; and `why`, the reason where there is no
-`A`.
+`"analytic"` or `"differenced"`, or `NA` where there is no `A`; and
+`why`, the reason where there is no `A`.
 
 ## Details
 
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-reads the rise the criterion would still buy, which needs a curvature
-and not only a gradient. The analytic route is
+reads the rise that the criterion would still buy, which needs a
+curvature and not only a gradient. The analytic route is
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md),
 gated by
 [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-at order 2 – the gate is load-bearing rather than defensive, since the
-assembly returns a number wherever it is called and the wrong one where
-the order is not covered.
+at order 2. The gate is required for correctness, since the assembly
+returns a number wherever it is called and a wrong one where the order
+is not covered.
 
-**Where the order is not covered the gradient is differenced instead**,
-which is
-[`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
-and the same route
+Where the order is not covered, the exact gradient is differenced
+instead by
+[`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md),
+which is also the route that
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
-already takes for a model carrying a filter. The two forms that reach it
-are a criterion asked for on the **expected** information, where order 2
-is refused because the criterion's own second derivative would want the
-next order of \\\partial\mathbb{E}\[\ell''\]/ \partial\eta\\, and a
-penalty whose Hessian moves with the coefficients – a heavy-tailed prior
-on a random effect – placed beside a structural term, where
+takes for a model carrying a filter. The forms that reach it are a
+criterion on the **expected** information for a family that does not
+supply the second derivative of its expected information (or for a model
+with a refreshable block or a structural term), and a penalty whose
+Hessian moves with the coefficients, such as a heavy-tailed prior on a
+random effect, placed beside a structural term, where
 [`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
 reads no movement of that Hessian. The same prior without a structural
-term is analytic since 0.130.0, through
+term is analytic, through
 [`statmod_penalty_second()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_second.md).
-Both forms carry an exact gradient, which is what the difference is
-taken of.
+Both kinds of form carry an exact gradient, which is the quantity that
+the difference is taken of.
 
-The two routes agree where both exist: on a gaussian smooth the
-decrement reads `3.01e-10` by either. What the difference costs is
-measured and is not nothing – it is \\4n_h\\ refits, 0.05 to 0.13
-seconds on the three shapes tried, 5 to 37 per cent of the fit itself,
-where the analytic route is below the clock's own resolution. So a fit
-whose form carries the analytic Hessian refits nothing, and one that
-does not pays for its verdict once, at the summary.
+The two routes agree where both exist. The difference costs \\4(n_h +
+n\_\gamma)\\ refits, \\n\_\gamma\\ being the number of coefficients that
+the criterion estimates; the analytic route refits nothing.
 
-⚠️ The difference is a stopgap and not the destination. One gap is a
-quantity nobody has written – the second derivative of an expected
-information – and the other is an assembly written under an assumption
-one penalty does not satisfy; until both are closed, a certificate on
-those forms rests on a stencil where every other reading in this package
-rests on algebra.
-
-⚠️ `source` is informative and is not load-bearing, and one case can
-mislabel: for a model carrying a filter
+`source` is informative only. For a model carrying a filter
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
 falls back to
 [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
-itself where the analytic assembly fails, and that is reported here as
-`"analytic"`, this function having asked only whether the order was
-covered. Nothing reads `source` to decide anything.
+where the analytic assembly fails, and `source` then still reads
+`"analytic"`, because this function has checked only whether the order
+was covered.
 
 ## See also
 

@@ -29,4 +29,6 @@ block_predictors(design, params, npar, offs, v)
 
 ## Value
 
-A list of numeric vectors, one per parameter.
+A list with one element for each distribution parameter: a numeric
+vector with one value per observation, or `NULL` for a parameter whose
+equation has no coefficients.

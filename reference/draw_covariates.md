@@ -29,11 +29,11 @@ A data frame.
 
 ## Details
 
-A generator that answers with the wrong length is reported rather than
-recycled, for the reason a coefficient function is: R would recycle it
-without a word and the replicate would be of another model. A column of
-`data` under the same name is overwritten, as a caller asking for that
-column to be drawn means.
+A generator that returns the wrong number of values is reported and not
+recycled, for the reason given for a coefficient function: R would
+recycle the vector without a message and the replicate would be of
+another model. A column of `data` under the same name is overwritten,
+because naming the column in `covariates` requests that it be drawn.
 
 ## See also
 

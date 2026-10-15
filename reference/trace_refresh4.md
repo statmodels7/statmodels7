@@ -20,7 +20,7 @@ trace_refresh4(spec, M, params, npar, Hl, dv, du, units, G, d3, v, f2, acurv)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params, npar:
 
@@ -83,11 +83,13 @@ blocks move. A fourth reads the second, \\N_4\[(a,j),(b,k)\] = -\sum_i
 w_i\ell\_{ab,i}F_a\[i,j\]X_b\[i,k\]\\ with \\F_a =
 (\partial^2X_a/\partial\beta^2)\[v,u\]\\ from
 [`modelterms7::term_block_deriv2()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv2.html).
-Those four enter as \\\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N\\, and
-each is read off
+Those four enter as \\\mathrm{tr}(M(N + N^\top)) = 2\sum M\odot N\\.
+\\N_1\\, \\N_2\\ and \\N_4\\ are read off
 [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md),
 with the third derivative for the first two and the curvature for the
-fourth, so neither \\N\\ nor any contraction is assembled.
+fourth, and \\N_3\\ is summed from the two blocks' derivatives with the
+rows of \\M\\ between them, so that neither \\N\\ nor any contraction is
+assembled.
 
 The fifth is of another shape and is added separately. The
 third-derivative contraction carries the direction's predictor
@@ -100,14 +102,6 @@ already computes, so the piece is one further call of it with \\\dot v\\
 in place of the predictors. \\\dot v\\ is the predictor's own second
 derivative contracted in both directions and is therefore symmetric in
 them, which is a free check on the assembly.
-
-**Measured**, against a mixed second difference of \\H\\ that shares no
-arithmetic with any of this: on a bilinear \\f\\, where the fourth term
-is exactly zero, the fifth is the whole of the gap and takes
-\\2.32\times10^{-2}\\ to \\2.19\times10^{-8}\\; on a curved one neither
-alone suffices: \\2.62\times10^{-2}\\ today, \\2.88\times10^{-2}\\ with
-the fifth alone, \\2.65\times10^{-3}\\ with the fourth alone,
-\\5.19\times10^{-8}\\ with both.
 
 ## See also
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,13 +59,12 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A transformed response is rejected rather than answered. Under
-<code>log(y) ~ x</code> the model generates values of <code>log(y)</code>, so a column
-called <code>y</code> would hold the wrong quantity and one called
-<code>"log(y)"</code> would not be the name the formula reads back; the earlier
-version wrote the first of those silently. A censored response is rejected
-for the reason <code><a href="statmod.html">statmod()</a></code> rejects one – there is no censored
-likelihood to fit it back with.</p>
+    <p>A transformed response is rejected. Under <code>log(y) ~ x</code> the model
+generates values of <code>log(y)</code>, so a column called <code>y</code> would hold the wrong
+quantity and one called <code>"log(y)"</code> would not be the name that the formula
+reads back. A censored response is rejected for the reason that
+<code><a href="statmod.html">statmod()</a></code> rejects one: there is no censored likelihood to fit it back
+with.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

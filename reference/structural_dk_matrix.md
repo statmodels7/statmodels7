@@ -42,24 +42,25 @@ A square symmetric matrix over the estimated coordinates.
 
 ## Details
 
-The gradient needs the trace and nothing else, so it never forms this.
-The HESSIAN needs the matrix twice over: in \\\mathrm{tr}(M K_l M
-K_m)\\, which no contraction reduces, and as the operator carrying the
-mode's second movement. Writing \\V_a\\ for each equation's rows,
-\\\mathrm{d}\varphi = E v\\ for the filter's own moving, and \\E\\ for
-the second derivative of the predictor the filter produces,
+The gradient uses only the trace of this matrix against \\M\\ and does
+not form the matrix. The Hessian uses the matrix in two places: in
+\\\mathrm{tr}(M K_l M K_m)\\, which no contraction reduces, and as the
+operator that carries the second movement of the mode. Write \\V_a\\ for
+the rows of each equation, \\\mathrm{d}\varphi = E v\\ for the movement
+of the filter's own parameters, and \\E\\ for the second derivative of
+the predictor that the filter produces. Then
 
 \$\$\frac{\partial K}{\partial u}\[v\] = -\sum_i
 w_i\Big\[\sum\_{a,b}\Big(\sum_k\ell\_{abk}(V_k\cdot v)\Big) V_a^\top
 V_b + \sum_b \ell\_{pb}\big(\mathrm{d}\varphi\otimes V_b +
 V_b\otimes\mathrm{d}\varphi\big)\Big\] - W(\kappa_v) - W_3\[v\],\$\$
 
-with \\\kappa_v = \sum_k \ell\_{pk}(V_k\cdot v)\\ the weight the level's
-own term is re-read at and \\W_3\[v\]\\ what
+with \\\kappa_v = \sum_k \ell\_{pk}(V_k\cdot v)\\ the weight at which
+the term of the level is read again and \\W_3\[v\]\\ the curvature that
 [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
-returns. Traced against \\M\\ it reproduces
+returns. The trace of the matrix against \\M\\ equals the value of
 [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
-exactly, which is what a test asserts of it.
+up to rounding.
 
 ## See also
 

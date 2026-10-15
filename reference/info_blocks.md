@@ -32,9 +32,16 @@ info_blocks(spec, theta, expected = TRUE, approx = "opg", H = NULL)
 - approx:
 
   How the expected information is approximated for a family that has no
-  closed form, passed through to distributions7: `"bartlett"`,
-  `"integrate"` or `"mc"`. Ignored when `expected` is `FALSE` or when
-  the family computes its expected information exactly.
+  closed form, passed through to distributions7: `"opg"` (the default),
+  `"bartlett"`, `"integrate"` or `"mc"`. Ignored when `expected` is
+  `FALSE` or when the family computes its expected information exactly.
+
+- H:
+
+  The family's link-scale second derivatives, as
+  [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
+  returns them, when the caller has already computed them at `theta`;
+  `NULL` computes them here.
 
 ## Value
 
@@ -49,8 +56,9 @@ nothing here multiplies by a link's derivative. With `expected = TRUE`
 the expected information is taken and the blocks are positive definite
 wherever the family is regular; with `expected = FALSE` the observed
 Hessian is negated, which far from the optimum is routinely indefinite.
-[`chol_blocks()`](https://statmodels7.github.io/statmodels7/reference/chol_blocks.md)'s
-refusal is the ordinary consequence.
+In that case
+[`chol_blocks()`](https://statmodels7.github.io/statmodels7/reference/chol_blocks.md)
+returns `NULL`.
 
 The weights enter as given, without normalization, so a weight of two
 counts an observation twice.

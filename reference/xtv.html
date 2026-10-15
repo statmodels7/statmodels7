@@ -5,22 +5,22 @@ xtv() computes \(X^\top v\), one dot product per column. It is the
 gradient read: v is the running residual, or the residual times the
 working weights.
 wxsq() computes \(\sum_i w_i x_{ij}^2\) for each column \(j\), the
-column curvatures of a working model. The n x p matrix of squares is
-never formed.
-Both take the package's threaded kernel above the same measured work
-threshold wcrossprod() uses, and otherwise evaluate the expressions they
-replace, as.numeric(crossprod(X, v)) and
+column curvatures of a working model. The threaded kernel does not form the
+n x p matrix of squares, whereas the sequential expression does.
+Both take the package's threaded kernel above a work threshold, the one
+constant that wcrossprod() also uses, and otherwise evaluate the
+expressions they replace, as.numeric(crossprod(X, v)) and
 as.numeric(crossprod(w, X^2))."><meta property="og:description" content="The two per-sweep reads of the compiled coordinate descent, each one
 vector of length p over an n x p design.
 xtv() computes \(X^\top v\), one dot product per column. It is the
 gradient read: v is the running residual, or the residual times the
 working weights.
 wxsq() computes \(\sum_i w_i x_{ij}^2\) for each column \(j\), the
-column curvatures of a working model. The n x p matrix of squares is
-never formed.
-Both take the package's threaded kernel above the same measured work
-threshold wcrossprod() uses, and otherwise evaluate the expressions they
-replace, as.numeric(crossprod(X, v)) and
+column curvatures of a working model. The threaded kernel does not form the
+n x p matrix of squares, whereas the sequential expression does.
+Both take the package's threaded kernel above a work threshold, the one
+constant that wcrossprod() also uses, and otherwise evaluate the
+expressions they replace, as.numeric(crossprod(X, v)) and
 as.numeric(crossprod(w, X^2))."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -29,7 +29,7 @@ as.numeric(crossprod(w, X^2))."><meta property="og:image" content="https://statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,11 +65,11 @@ vector of length <code>p</code> over an <code>n x p</code> design.</p>
 gradient read: <code>v</code> is the running residual, or the residual times the
 working weights.</p>
 <p><code>wxsq()</code> computes \(\sum_i w_i x_{ij}^2\) for each column \(j\), the
-column curvatures of a working model. The <code>n x p</code> matrix of squares is
-never formed.</p>
-<p>Both take the package's threaded kernel above the same measured work
-threshold <code><a href="wcrossprod.html">wcrossprod()</a></code> uses, and otherwise evaluate the expressions they
-replace, <code>as.numeric(crossprod(X, v))</code> and
+column curvatures of a working model. The threaded kernel does not form the
+<code>n x p</code> matrix of squares, whereas the sequential expression does.</p>
+<p>Both take the package's threaded kernel above a work threshold, the one
+constant that <code><a href="wcrossprod.html">wcrossprod()</a></code> also uses, and otherwise evaluate the
+expressions they replace, <code>as.numeric(crossprod(X, v))</code> and
 <code>as.numeric(crossprod(w, X^2))</code>.</p>
     </div>
 
@@ -130,8 +130,8 @@ and \(n \times p\) at least <code>2e5</code>. A sparse <code>X</code> takes the
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="wcrossprod.html">wcrossprod()</a></code> for the matrix-valued kernel and the measured
-threshold both share, <code><a href="coord_fit.html">coord_fit()</a></code> for the descent that calls these.</p></div>
+    <div class="dont-index"><p><code><a href="wcrossprod.html">wcrossprod()</a></code> for the matrix-valued kernel and the work
+threshold, <code><a href="coord_fit.html">coord_fit()</a></code> for the descent that calls these.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

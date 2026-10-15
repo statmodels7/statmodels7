@@ -11,7 +11,7 @@ other coordinate exactly."><meta property="og:image" content="https://statmodels
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,51 +96,50 @@ is read as accumulated rounding, where the candidate does not.</p></dd>
 where \(c\) is orthogonal to the null space \(\mathcal{N}\) of
 \(K\), and then \(\mathrm{Var}(c'\hat\beta) = c'K^{+}c\) with
 \(K^{+}\) the Moore-Penrose inverse. Reading <code>diag(K^+)</code> is therefore
-not enough on its own: for a \(c\) that is NOT orthogonal it returns a
+not enough on its own: for a \(c\) that is not orthogonal it returns a
 number where the truth is infinite. The rule is in two parts, invert away
 from \(\mathcal{N}\) and report nothing on it, and this function is the
 second part.</p>
 <p>A candidate is a coordinate with no curvature of its own. Its diagonal is
 not finite, which is what a parameter run out of its range leaves behind;
-or it is not positive, which is <code><a href="solve_pd.html">solve_pd()</a></code>'s own reading of that entry
+or it is not positive, which is the reading of <code><a href="solve_pd.html">solve_pd()</a></code> for that entry
 and is a statement about the coordinate whatever scale it is on; or, among
-the coordinates whose diagonal IS positive, it carries the whole of a null
-direction of the JACOBI-EQUILIBRATED matrix. The equilibration is what
-tells a flat direction from scale separation, and requiring one coordinate
-to carry the whole direction is what excludes the collinear case, where
+the coordinates whose diagonal is positive, it carries the whole of a null
+direction of the Jacobi-equilibrated matrix. The equilibration
+distinguishes a flat direction from scale separation, and requiring one
+coordinate to carry the whole direction excludes the collinear case, where
 the null vector is \((e_1 - e_2)/\sqrt{2}\) and each of the two carries
 half of it.</p>
 <p><strong>A candidate is held only where holding it disturbs nothing</strong>, and the
 amount it disturbs is the Schur correction it removes from the others,
 \(K_{Aj}K_{jj}^{-1}K_{jA}\). That test has two branches, because it has
 two scales.</p>
-<p>Where \(K_{jj}\) is POSITIVE the coordinate has a scale of its own and
+<p>Where \(K_{jj}\) is positive the coordinate has a scale of its own and
 the correction, read against \(K_{AA}\) in equilibrated units where that
 block has a unit diagonal, is
 $$\max_k \Bigl(\frac{|K_{jk}|}{\sqrt{K_{kk}}}\Bigr)^{2}
       \Big/ K_{jj} \;\le\; \texttt{schur}.$$
 It is dimensionless and needs no reference: a coordinate measured a
-thousand times smaller than its neighbours has a small row AND a small
-diagonal, and the ratio sees through both. Scaling one down by
-\(10^{-14}\) leaves the ratio at one, and nothing is held.</p>
-<p>Where \(K_{jj}\) is NOT positive the coordinate has no scale of its own
-– the information in that direction is zero rather than small – so that
-ratio is \(0/0\) and says nothing. The only scale left is the matrix's,
-and the question becomes whether the row sits at the level its entries
-were accumulated to: \(\max_k |K_{jk}| \le \texttt{row\_tol}\max|K|\).
-Measured on a count model whose dispersion left its range, \(K_{jj}\) is
-exactly zero, the row's largest entry is \(1.2\times10^{-15}\) against a
-matrix whose largest is 2562, and \(\lVert K_{j\cdot}\rVert/\lVert
-K\rVert\) is \(4.4\times10^{-19}\).</p>
+thousand times smaller than its neighbors has a small row and a small
+diagonal, and the ratio is unchanged by the scaling. Scaling one coordinate
+down by \(10^{-14}\) leaves the ratio unchanged, and nothing is held.</p>
+<p>Where \(K_{jj}\) is not positive the coordinate has no scale of its own
+(the information in that direction is zero and not merely small), so that
+ratio is \(0/0\) and carries no information. The only scale left is that
+of the matrix, and the question becomes whether the row sits at the level
+to which its entries were accumulated:
+\(\max_k |K_{jk}| \le \texttt{row\_tol}\max|K|\). For a count model whose
+dispersion has left its range, \(K_{jj}\) is exactly zero and the entries
+of the row of that coordinate are at the rounding level of the matrix.</p>
 <p>Where neither branch passes, dropping the coordinate would leave
-\(K_{AA}^{-1}\), the variance CONDITIONAL on that coefficient being
+\(K_{AA}^{-1}\), the variance conditional on that coefficient being
 known, which is smaller than the marginal one; nothing is held and the
-caller's refusal stands.</p>
+error signaled by the caller stands.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="solve_pd.html">solve_pd()</a></code>, which refuses the matrix these come from, and
-<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, which holds them.</p></div>
+    <div class="dont-index"><p><code><a href="solve_pd.html">solve_pd()</a></code>, which signals an error for the matrix these come
+from, and <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, which holds them.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

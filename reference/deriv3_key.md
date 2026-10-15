@@ -26,6 +26,6 @@ A single string.
 
 ## Details
 
-The name is built from the parameter names in the family's own order,
-not parsed out of one, which is the discipline distributions7 records
-for a parameter whose own name contains the separator.
+The name is built from the parameter names in the family's own order and
+is not parsed out of an existing name, so that a parameter whose own
+name contains the separator is handled as distributions7 handles it.

@@ -13,7 +13,7 @@ is returned unchanged.'><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,14 +74,9 @@ is returned unchanged.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The log-density of these families is not concave in the location, so
 their observed information is not positive definite at an outlier, and
-the Laplace determinant built on it fails there. Measured on
-<code><a href="https://rdrr.io/pkg/MASS/man/GAGurine.html" class="external-link">MASS::GAGurine</a></code> with <code>GAG ~ Age | sigma ~ Age | nu ~ Age</code> and a
-<code>student_t1</code> response: on the observed information the outer search ran
-91.5 s and did not converge, on the expected information it converged in
-7.9 s at a larger log-likelihood (-923.891 against -924.106). Without the
-equation in <code>nu</code> the two converge to the same point, the expected
-information costing 8.2 s against 2.6 s (Giovanni, 2026-10-07: the
-expected information for the t).</p>
+the Laplace determinant built on it can fail there. The expected
+information is therefore used for these families, and the observed
+information for the others.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

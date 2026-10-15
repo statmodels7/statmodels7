@@ -13,7 +13,7 @@ no estimation uncertainty of its own.'><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,42 +81,49 @@ with the columns of the effects set aside at zero.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of components, each a list with <code>eta</code> and <code>C</code>.</p>
+    <p>A list of components, each a list with <code>eta</code>, <code>C</code> and <code>weight</code>,
+with the attribute <code>infinite_variance</code> set to <code>TRUE</code> where a prior has
+no variance. The weights of the components add up to one.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A replica draws the response from the family at the fitted model. The
 effects of a <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> term that <code>random</code> sets aside are
-drawn afresh from the prior the fit estimated, so the groups of the data
-are new groups in every replica, as they are in the sampling distribution
-of the population-level estimates a new group's prediction rests on. The
+drawn afresh from the prior that the fit estimated, so the groups of the
+data are new groups in every replica, as they are in the sampling
+distribution of the population-level estimates on which a new group's
+prediction rests. The
 effects of a term read <code>"conditional"</code> keep their estimates: the
 prediction is about those groups, and their effects are the quantity
 predicted rather than a source of variation. Every other coefficient keeps
 its estimate. The replica is then refitted in one of two ways:</p><dl><dt><code>"coefficients"</code></dt>
-<dd><p>at the hyperparameters the fit reached, every
-coefficient re-estimated. A coefficient the fit estimated on its
-criterion (a dispersion under <code><a href="reml.html">reml()</a></code>) is estimated there again, the
-hyperparameters held, so the replica's estimator is the fit's.</p></dd>
+<dd><p>at the hyperparameters that the fit reached, every
+coefficient re-estimated. A coefficient that the fit estimated on its
+criterion (a dispersion under <code><a href="reml.html">reml()</a></code>) is estimated there again, with
+the hyperparameters held, so the replica's estimator is the fit's.</p></dd>
 
 <dt><code>"full"</code></dt>
 <dd><p>with the hyperparameters chosen again by the fit's own
-criteria, so their uncertainty enters the interval too. A
-cross-validated criterion needs the data's folds and is rejected.</p></dd>
+criteria, so their uncertainty enters the interval too, and the path
+of a kinked penalty is walked again, warm started from the fit's
+coefficients. A cross-validated criterion needs the data's folds and
+is rejected.</p></dd>
 
 
-</dl><p>Every refit starts at the optimum the fit found: its coefficients, the
-criterion's own coefficients among them, and its hyperparameters. A
-kinked penalty's path is the one search that walks its own grid, warm
-started from the fit's coefficients.
-Each replica gives the component \((\hat\eta^*_b, C^*_b)\): its
-predictors at the rows predicted and the covariance the effects set aside
-add, at its own hyperparameters. The interval is the mixture's, which is
-the parametric bootstrap predictive distribution of Harris (1989); the
+</dl><p>Every refit starts at the optimum that the fit found: its coefficients,
+the criterion's own coefficients among them, and its hyperparameters.
+The bootstrap is rejected for a model with a block that moves with its
+coefficients (<code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>) and for a response that is not
+one number per observation.</p>
+<p>Each replica gives the component \((\hat\eta^*_b, C^*_b)\): its
+predictors at the rows predicted and the covariance that the effects set
+aside add, at its own hyperparameters. The interval is the mixture's, which
+is the parametric bootstrap predictive distribution of Harris (1989); the
 default <code>predictive = "averaged"</code> is its normal approximation, the
 sampling distribution of the estimates replaced by \(\mathrm{N}(\hat
-\beta, \widehat{V})\). A replica whose refit fails is left out, and a
-warning says how many were.</p>
+\beta, \widehat{V})\). A replica whose refit fails is left out, and the
+warning reports how many were.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

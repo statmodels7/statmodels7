@@ -9,7 +9,7 @@ the fallback strategy's answer everywhere else."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,16 +62,16 @@ the fallback strategy's answer everywhere else.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A block is matched by the name the formula gave its term: column by column
-for the parametric block, and as a whole for every other where the
-coefficient names agree. What is left over – the same term written on
-another basis, paired by <code><a href="block_stem.html">block_stem()</a></code> and <code><a href="same_term_kind.html">same_term_kind()</a></code> – goes to
-<code><a href="project_blocks.html">project_blocks()</a></code>, which estimates it against the partial residual of the
-reference's predictor. See <code><a href="start_from.html">start_from()</a></code> for why the three rules differ.</p>
-<p>The result carries an attribute <code>"taken"</code>, a data frame naming every
-coefficient the reference answered for and whether it was <code>matched</code> or
-<code>projected</code>, so a caller can see what was reused rather than infer it from
-the fit that follows.</p>
+    <p>A block is matched by the name that the formula gave its term: column by
+column for the parametric block, and as a whole for every other block where
+the coefficient names agree. The remaining blocks, which are the same term
+written on another basis and paired by <code><a href="block_stem.html">block_stem()</a></code> and
+<code><a href="same_term_kind.html">same_term_kind()</a></code>, go to <code><a href="project_blocks.html">project_blocks()</a></code>, which estimates them against
+the partial residual of the reference's predictor. See <code><a href="start_from.html">start_from()</a></code> for
+the three rules.</p>
+<p>The result carries an attribute <code>"taken"</code>, a data frame that names every
+coefficient taken from the reference and records whether it was <code>matched</code>
+or <code>projected</code>, so that the reused coefficients can be read directly.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

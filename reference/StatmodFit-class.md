@@ -51,8 +51,11 @@ StatmodFit(
 
 - structural:
 
-  A named list, one entry per structural term, holding that term's own
-  parameters on the unconstrained scale.
+  A named list with one entry per structural term. Each entry is a list
+  with the term's parameters on their own scale (`parameter`), on the
+  unconstrained scale (`unconstrained`), the equation that carries the
+  term (`equation`) and the names of the parameters that the term holds
+  (`held`).
 
 - hyper:
 
@@ -60,8 +63,8 @@ StatmodFit(
 
 - loglik:
 
-  The maximized weighted log-likelihood, a single number. The
-  **conditional** one, read at the fitted coefficients.
+  The weighted log-likelihood at the fitted coefficients, a single
+  number. It is the **conditional** one.
 
 - objective:
 
@@ -69,7 +72,9 @@ StatmodFit(
 
 - edf:
 
-  A data frame of effective degrees of freedom, one row per term.
+  A data frame of effective degrees of freedom with the columns
+  `parameter`, `term`, `coefficients` and `edf`, one row per term of
+  each equation.
 
 - fitted:
 
@@ -78,19 +83,30 @@ StatmodFit(
 
 - converged:
 
-  A single logical: whether every loop stopped on its own rule.
+  A single logical. Where the model has nothing to alternate between, it
+  is the verdict of the inner method. Where the model has a kinked block
+  or a structural term, it is read at the point reached: the Newton
+  decrement of the smooth part and the optimality decrement of every
+  coefficient that a kinked penalty holds at zero are both within
+  [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
+  A term that recomputes its own block, such as a break-point term,
+  contributes its own verdict in place of that of the inner method.
 
 - aliased:
 
-  The labels of the coefficients the design does not identify, which the
-  pivot that fitted the model left out, as
+  The labels, as
   [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
-  names them. Empty where the design is of full rank. Their estimate,
-  standard error and interval are reported as missing, and they are not
-  counted among the degrees of freedom; the stored coefficient is left
-  WHERE IT WAS, the pivot dropping the coordinate from the increment
-  rather than from the parameter, so every predictor reads the vector as
-  before.
+  names them, of the coefficients that the fitted point does not
+  identify. A coefficient is listed when the pivoted decomposition of
+  the inner fit drops it, when the penalized information at the fitted
+  point is singular in its direction (this applies to every
+  decomposition and to an optimizers7 inner optimizer), or when its
+  design column has vanished. The vector is empty where the design has
+  full rank. The estimate, standard error and interval of a listed
+  coefficient are reported as missing, and it is not counted in the
+  degrees of freedom. The stored coefficient keeps the value it had when
+  the coordinate was left out of the increment, so every predictor reads
+  the vector unchanged.
 
 - elapsed:
 
@@ -98,18 +114,34 @@ StatmodFit(
 
 - criterion:
 
-  The marginal criterion at the estimated hyperparameters, `NA` when no
-  criterion ran.
+  The value of the criterion that chose the hyperparameters:
+  [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+  including the criterion that swept the path of a kinked penalty. `NA`
+  when no criterion ran.
 
 - history:
 
   A list of data frames recording the run: `outer`, `blocks` and
-  `inner`.
+  `inner`. An entry is `NULL` where the run produced no such record.
 
 - methods:
 
-  A list naming what fitted each block, and the optimizer the outer
-  search used.
+  A list of what the fit decided, which can differ from what was
+  supplied: `smooth`, the inner method after
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  has settled its information (never `"auto"`); `outer`, the criterion
+  after resolution, `NULL` when no marginal or prediction-error
+  criterion ran; `search`, the optimizer that the outer search used;
+  `pinned`, the coordinates that the criterion left out of its
+  determinant; `kkt`, the edge violations that survived the restarts;
+  `sparse`, the blocks of kinked penalties; `sparse_criterion`, the
+  criterion that swept their paths; and `sparse_hyper`, the
+  hyperparameters it reached.
 
 - call:
 

@@ -13,7 +13,7 @@ the contraction \(u\)."><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,12 +77,18 @@ the contraction \(u\).</p>
 
 
 <dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>The matrix the trace is taken against.</p></dd>
+<dd><p>The matrix against which the trace is taken.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of the shared quantities.</p>
+    <p>A list with <code>u</code>, <code>V</code>, <code>Vk</code>, <code>VM</code>, <code>G</code>, <code>H</code>, <code>D3</code>, <code>D4</code>, <code>gl</code>,
+<code>s_at</code>, <code>sd_at</code>, <code>cd_at</code>, <code>seed</code>, <code>blocks</code>, <code>blocks_data</code> and <code>w</code>: the
+contraction \(u\), the rows of the joint predictor derivative with the
+filter's Jacobian in place, their products with \(M\), the
+per-observation diagonals of \(M\), the family's derivatives, the score
+and curvature that drive the recursion, the seed of the recursion, the
+<code>blocks</code> callback with its data, and the observation weights.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

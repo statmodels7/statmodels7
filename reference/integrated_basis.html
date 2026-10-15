@@ -9,7 +9,7 @@ of the penalty's range space for ML."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,25 +67,30 @@ of the penalty's range space for ML.</p>
 <dt id="arg-gamma">gamma<a class="anchor" aria-label="anchor" href="#arg-gamma"></a></dt>
 <dd><p><code>TRUE</code> where the criterion also estimates coefficients
 (<code><a href="marginal_coords.html">marginal_coords()</a></code>); a model with no penalized direction then gets an
-empty basis rather than an error.</p></dd>
+empty basis in place of an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>NULL</code> for <code>"reml"</code>, which integrates every direction and needs no
 basis. For <code>"ml"</code>, a <code>p x r</code> matrix with orthonormal columns spanning
-the penalty's range space, <code>p</code> the total coefficient count and <code>r</code> its
-rank.</p>
+the range space of the penalties, <code>p</code> the total coefficient count and <code>r</code>
+the total rank. The matrix has no columns (\(r = 0\)) where nothing is
+penalized and the criterion estimates coefficients or a structural term
+is penalized. Where neither holds, an error is signaled.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The total penalty is block diagonal over the terms, each owning its own
 columns, so its null space is the direct sum of the unpenalized columns
 and each penalty's own null space. The basis is assembled that way.</p>
-<p>It is never read off the eigenvalues of the assembled matrix. Such a count
-measures the arithmetic and not the family: with two smoothing parameters
-ten orders of magnitude apart the small contributions sink below any
-tolerance and the count falls, while the null space itself does not move.</p>
+<p>It is not read off the eigenvalues of the assembled matrix. A count of
+eigenvalues above a tolerance depends on the scale of the smoothing
+parameters: with two smoothing parameters many orders of magnitude apart
+the small contributions fall below the tolerance, while the null space
+itself does not change. A penalty with a kink contributes no column, and a
+penalty over the own parameters of a structural term is appended by
+<code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

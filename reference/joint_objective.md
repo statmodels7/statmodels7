@@ -31,21 +31,22 @@ holds one coefficient and takes every other one to the joint mode of the
 penalized likelihood. The unrestricted side has to be read at the same
 kind of point, or the statistic compares two fits whose other
 coefficients were chosen by different rules. Where the outer criterion
-estimated some coefficients itself – by default,
+estimated some coefficients itself (by default
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-estimates a dispersion's unpenalized coefficients on the criterion
-([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md))
-– the point the fit returned is not the joint mode, and `fit@objective`
-is not its minimum. Measured on a gaussian linear regression at \\n =
-40\\, differencing against it gave a likelihood ratio of 1.0458 against
-the 1.1643 that [`stats::lm()`](https://rdrr.io/r/stats/lm.html) gives,
-and -0.118 at the estimate itself.
+and
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+estimate on the criterion the unpenalized coefficients of every
+parameter but the first, see
+[`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
+the point that the fit returned is not the joint mode, and
+`fit@objective` is not its minimum. A likelihood ratio differenced
+against `fit@objective` then contains the difference between the
+objective at the fitted point and at the joint mode.
 
 The full model is therefore refitted with nothing held, from the fitted
 coefficients, which are already close to the joint mode, at the fitted
-hyperparameters. Where the criterion estimated nothing the fit IS at the
-joint mode and `fit@objective` is returned unchanged, so every such
-statistic is what it was.
+hyperparameters. Where the criterion estimated nothing, the fit is at
+the joint mode and `fit@objective` is returned unchanged.
 
 ## See also
 

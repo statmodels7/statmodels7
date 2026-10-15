@@ -20,7 +20,7 @@ prior_draw_groups(pen, th, D, n_draw)
 
 - D:
 
-  The coordinates one group carries.
+  The number of coordinates that one group carries.
 
 - n_draw:
 

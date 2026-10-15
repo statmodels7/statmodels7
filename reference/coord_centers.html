@@ -11,7 +11,7 @@ working weights and solves it with the intercept profiled out."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,15 +86,9 @@ intercept is one of them. Where the columns are not centered, each change
 of a coefficient moves the mean of the fit, which only the intercept can
 take back, and the intercept is updated in another block. The alternation
 between the two then converges at a rate set by how close each column is
-to the constant. Measured on <code><a href="https://rdrr.io/pkg/MASS/man/UScrime.html" class="external-link">MASS::UScrime</a></code>, whose columns have means up
-to 33 times their spread, a lasso on the fifteen raw predictors of
-<code>log(y)</code> stopped at a fixed \(\lambda\) of 17.4 with the objective
-\(-\ell + \rho\) at -17.84 where its minimum is -21.93, six
-coefficients against nine, reporting <code>converged = FALSE</code>, and the path
-chose the empty model at \(\lambda = 374.5\). With the columns centered
-the path chooses nine of them at \(\lambda = 17.4\), the point it
-reaches with the predictors centered in the data, in 7.0 seconds of
-processor time against 38.2.</p>
+to the constant. Centering the columns removes this dependence, and the
+alternation then converges to the same point that a fit with centered
+predictors reaches.</p>
 <p>Solving with the intercept profiled out is the Frisch-Waugh-Lovell
 reading of an unpenalized constant: the coefficients of the block are
 those of the centered columns against the centered working response, and

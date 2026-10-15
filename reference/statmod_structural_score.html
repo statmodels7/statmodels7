@@ -9,7 +9,7 @@ parameters of each structural term, one entry per term."><meta property="og:imag
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,9 @@ reverse pass is needed.</p>
 <p>The reverse pass answers a different question: the derivative in the
 coefficients of the equations, where a coefficient reaches the level only
 through the scores at earlier times. That is <code><a href="https://statmodels7.github.io/modelterms7/reference/term_adjoint.html" class="external-link">modelterms7::term_adjoint()</a></code>.</p>
+<p>For a term of the likelihood shape, a mixture over latent states, the
+derivative is the Jacobian of the term's log-likelihood in its parameters,
+weighted by the observation weights.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

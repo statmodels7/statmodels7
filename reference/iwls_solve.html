@@ -9,7 +9,7 @@ requested decomposition."><meta property="og:image" content="https://statmodels7
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,8 +63,7 @@ length <code>p</code>.</p></dd>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
-<dd><p>The decomposition: <code>"qr"</code>, <code>"svd"</code>, <code>"chol"</code> or
-<code>"chol_crossprod"</code>.</p></dd>
+<dd><p>The decomposition: <code>"qr"</code>, <code>"svd"</code> or <code>"chol"</code>.</p></dd>
 
 
 <dt id="arg-damp">damp<a class="anchor" aria-label="anchor" href="#arg-damp"></a></dt>
@@ -81,7 +80,7 @@ problem reduced to the rest. Empty by default.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of four:</p><dl><dt><code>delta</code></dt>
+    <p>A list of five:</p><dl><dt><code>delta</code></dt>
 <dd><p>the increment, a numeric vector of length <code>p</code>, zero in
 every held coordinate.</p></dd>
 
@@ -89,12 +88,17 @@ every held coordinate.</p></dd>
 <dd><p>the rank of the system solved, an integer.</p></dd>
 
 <dt><code>route</code></dt>
-<dd><p>which decomposition was used, including <code>"floor"</code> when
-the augmented route fell back to the floored assembled matrix.</p></dd>
+<dd><p>which decomposition was used: the one requested, or
+<code>"qr-&gt;chol"</code> or <code>"svd-&gt;chol"</code> when the augmented route fell back to
+the assembled matrix with its eigenvalues floored.</p></dd>
 
 <dt><code>held</code></dt>
 <dd><p>the positions dropped from the system, an integer
 vector, empty when nothing was held.</p></dd>
+
+<dt><code>dropped</code></dt>
+<dd><p>the positions that the pivoted <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> left out as
+aliased, an integer vector, empty on every other route.</p></dd>
 
 
 </dl></div>
@@ -106,21 +110,22 @@ and the condition number is never squared. That route needs the
 per-observation curvature to be positive definite and the penalty positive
 semidefinite. Where either fails, as with an observed Hessian far from the
 optimum or a non-convex penalty, there is no square root to take: the step
-falls back to the assembled matrix with its eigenvalues floored, and says
-so in <code>route</code>.</p>
-<p><code>"chol"</code> and <code>"chol_crossprod"</code> factor the assembled information directly.
-Faster per iteration, worse conditioned, and the trade the caller chose.</p>
+falls back to the assembled matrix with its eigenvalues floored, and
+records the fallback in <code>route</code> as <code>"qr-&gt;chol"</code> or <code>"svd-&gt;chol"</code>.</p>
+<p><code>"chol"</code> factors the assembled information directly, after flooring the
+eigenvalues of a matrix that is not positive definite.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-damping-is-levenberg-s-and-is-zero-unless-a-step-has-failed">The damping is Levenberg's, and is zero unless a step has failed<a class="anchor" aria-label="anchor" href="#the-damping-is-levenberg-s-and-is-zero-unless-a-step-has-failed"></a></h2>
+    <h2 id="levenberg-damping">Levenberg damping<a class="anchor" aria-label="anchor" href="#levenberg-damping"></a></h2>
     <p><code>damp</code> adds \(\lambda I\) to the system, which shortens a coordinate in
 proportion to how little curvature it has. A coordinate whose diagonal is
-0.24 beside neighbors at 2328 is shortened by
-\((0.24 + \lambda)/0.24\) while theirs move by
-\((2328 + \lambda)/2328\): a differential shrink, which a scalar step
-length cannot give.</p>
-<p>It goes in as further rows of the augmented design, so the QR route keeps
-its conditioning. The matrix added is the identity. A damping
+\(d\) is shortened by \((d + \lambda)/d\), so that a coordinate with a
+small diagonal is shortened more than one with a large diagonal: a
+differential shrink, which a scalar step length cannot give. The damping is
+zero unless a step has failed.</p>
+<p>On the augmented route the damping enters as further rows of the augmented
+design, so the QR route keeps its conditioning; on the assembled route it is
+added to the diagonal. The matrix added is the identity. A damping
 proportional to \(\mathrm{diag}(K)\) would shrink every coordinate
 alike and leave the disparity exactly where it was.</p>
     </div>
@@ -130,16 +135,18 @@ alike and leave the disparity exactly where it was.</p>
 the family's curvature there is zero or <code>NaN</code>, and no step can move that
 coordinate. Those coordinates are dropped from the system and the rest is
 solved, which is the active set the boundary defines; the step stays a
-descent step for the reduced problem.</p>
-<p>Holding them keeps one boundary coordinate from stopping the others. With
-a single <code>NaN</code> in the curvature the whole step came back zero, and a
-Student t whose \(\nu\) had reached <code>double.xmax</code> stopped with a score
-of -617.6 in \(\sigma\), an ordinary coordinate nowhere near stationary,
-while \(\nu\)'s own score was exactly 0.</p>
-<p>The test is on the <strong>diagonal</strong> of the curvature. A boundary coordinate
-makes its entire row non-finite, cross terms included, so a test over
-whole columns marks its neighbors too and holds coordinates that were
-perfectly movable.</p>
+descent step for the reduced problem. Coordinates in <code>frozen</code> and
+coordinates with a non-finite right-hand side are held in the same way.</p>
+<p>Holding them keeps a single boundary coordinate from preventing the others
+from moving: a <code>NaN</code> in one entry of the curvature would otherwise make the
+whole step zero.</p>
+<p>On the augmented route a coordinate is held when its column of the
+square-root design or of the penalty factor has a non-finite entry. On the
+assembled route the test is on the diagonal of the curvature. A boundary
+coordinate makes its entire row non-finite, cross terms included, so a test
+over whole columns would mark its neighbors too and hold coordinates that
+can move. After the diagonal test, the columns of the reduced matrix are
+tested again, and the test repeats until none is non-finite.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

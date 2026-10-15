@@ -9,7 +9,7 @@ list, built the same way deriv3_key() builds its own."><meta property="og:image"
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,11 +66,11 @@ list, built the same way <code><a href="deriv3_key.html">deriv3_key()</a></code>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The fourth order is wanted where a filter's third derivative is: each
-order of differentiating the predictor through the recursion pulls in one
-more order of the family, the score the recursion is driven by being read
-at the predictor it produces. Every family of <span class="pkg">distributions7</span> carries
-it in closed form.</p>
+    <p>The fourth order is needed where a filter's third derivative is: each
+order of differentiating the predictor through the recursion requires one
+more order of the family, because the score that drives the recursion is
+read at the predictor that the recursion produces. The values come from
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_deriv4.html" class="external-link">distributions7::distrib_deriv4()</a></code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,7 +1,7 @@
 # The Fitted Values of a Model
 
-One distribution parameter's fitted values, as a vector of the data's
-length.
+One distribution parameter's fitted values, as a vector with one value
+per row of the fitting data.
 
 ## Usage
 
@@ -24,12 +24,13 @@ fitted(object, what = NULL, ...)
 
 - ...:
 
-  Unused.
+  Not used. Any further argument signals an error, since the values at
+  new data are given by `predict(fit, what, newdata = new_data)`.
 
 ## Value
 
-A numeric vector of length `nobs(object)`, that parameter's fitted
-values on its own scale.
+A numeric vector with one value per row of the fitting data, that
+parameter's fitted values on its own scale.
 
 ## Details
 
@@ -37,9 +38,8 @@ The result is one vector, never the whole set, so that this and
 [`residuals.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/residuals.StatmodFit.md)
 are a matched pair and a diagnostic drawn from them needs no unpacking.
 
-The default is the **first** parameter, never the mean. A family may
-have no mean, a Cauchy being one, and a default that fails on a
-legitimate family is worse than one that always answers.
+The default is the first parameter, not the mean. A family may have no
+mean, a Cauchy being one, whereas every family has a first parameter.
 
 The whole set at once is `predict(fit, "parameter")`, and the mean,
 where it exists, is `predict(fit, "mean")`.

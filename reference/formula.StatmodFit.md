@@ -29,10 +29,11 @@ with its bars and its original environment intact.
 
 ## Details
 
-The formula comes back whole, bars included, because the bars are part
-of what was written. A caller who wants the equations separately gets
-them from the fit's specification through
-[`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md).
+The formula is returned whole, bars included, because the bars are part
+of what was written.
+[`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
+splits the formula into one equation per distribution parameter; it
+takes the formula and the names of the parameters.
 
 ## See also
 
@@ -49,5 +50,5 @@ dd$y <- 1 + dd$x + rnorm(40, sd = 0.3)
 fit <- statmod(y ~ x | sigma ~ x, distributions7::gaussian1_distrib(), dd)
 formula(fit)
 #> y ~ x | sigma ~ x
-#> <environment: 0x55c3d532d770>
+#> <environment: 0x562fa9d72a30>
 ```

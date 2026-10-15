@@ -31,8 +31,8 @@ A single number.
 The information is block diagonal over the equations wherever the
 family's per-observation information is, and in any case a coordinate is
 identified only if its own equation's active columns identify it, so the
-rank is read per equation and added. Nothing of size \\n \times \|A\|\\
-is formed twice: the columns are subset once and decomposed once.
+rank is read per equation and added. Each matrix of size \\n \times
+\|A\|\\ is formed once: the columns are subset once and decomposed once.
 
 ## See also
 

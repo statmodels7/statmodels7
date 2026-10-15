@@ -11,7 +11,7 @@ scale, ready for the fit to begin from."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,9 @@ scale, ready for the fit to begin from.</p>
 
 <dt id="arg-obj">obj<a class="anchor" aria-label="anchor" href="#arg-obj"></a></dt>
 <dd><p>The objective, as <code><a href="statmod_objective.html">statmod_objective()</a></code> returns it, or <code>NULL</code>.
-Only <code><a href="start_search.html">start_search()</a></code> reads it; the other three accept <code>NULL</code>.</p></dd>
+Only <code><a href="start_search.html">start_search()</a></code> reads it, and <code><a href="start_search.html">start_search()</a></code> signals an error
+when <code>obj</code> is <code>NULL</code>. The other four shipped strategies run with <code>NULL</code>;
+<code><a href="start_from.html">start_from()</a></code> passes <code>obj</code> on to its <code>rest</code> strategy.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -89,9 +91,9 @@ only the design's widths, <code><a href="start_intercepts.html">start_intercepts
 <code><a href="start_random.html">start_random()</a></code> draws from the caller's generator, and <code><a href="start_search.html">start_search()</a></code>
 runs an optimizer over <code>obj</code>.</p>
 <p>A method must return a full-length vector for every distribution
-parameter, including the ones it has nothing to say about. Zero is the
-conventional filler, and it is the value a penalized block wants anyway,
-its penalty being smallest there.</p>
+parameter, including the ones it does not set. Zero is the conventional
+filler, and it is the value at which the penalty of a penalized block is
+smallest.</p>
     </div>
 
     <div class="section level2">
@@ -101,8 +103,8 @@ its penalty being smallest there.</p>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span>, sd <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_spec.html">statmod_spec</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/gaussian1_distrib.html" class="external-link">gaussian1_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod_design.html">statmod_design</a></span><span class="op">(</span><span class="va">spec</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># a strategy that needs no objective is asked with NULL for it; the ones</span></span></span>
-<span class="r-in"><span><span class="co"># that search the likelihood are handed the objective by statmod()</span></span></span>
+<span class="r-in"><span><span class="co"># a strategy that needs no objective is called with NULL for it; the ones</span></span></span>
+<span class="r-in"><span><span class="co"># that search the likelihood receive the objective from statmod()</span></span></span>
 <span class="r-in"><span><span class="fu">start_at</span><span class="op">(</span><span class="fu"><a href="start_origin.html">start_origin</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">spec</span>, <span class="va">design</span>, <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0 0</span>

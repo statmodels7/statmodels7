@@ -11,7 +11,7 @@ prices a point of a path with, one coordinate at a time."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,9 +89,12 @@ trace is read through the same Cholesky factor. A coordinate in the
 concave zone of SCAD or MCP has a negative penalty curvature and counts more
 than one, which is Stein's count for those penalties.</p>
 <p>It answers only for a model with a kinked block and no structural term,
-and declines (<code>NULL</code>) where the active columns are not of full rank,
-where <code><a href="statmod_pe.html">statmod_pe()</a></code> reads a rank in place of a count, or where the factor
-does not exist; <code><a href="statmod_edf.html">statmod_edf()</a></code> then reads its other rules.</p>
+and declines (<code>NULL</code>) where the penalty has no curvature over the active
+coordinates and the count of one per column cannot be certified
+(<code><a href="design_count_exact.html">design_count_exact()</a></code> is <code>FALSE</code>, where <code><a href="statmod_pe.html">statmod_pe()</a></code> reads a rank in
+place of a count), or where the penalized curvature of the active
+coordinates is not positive definite, so that its Cholesky factor does not
+exist; <code><a href="statmod_edf.html">statmod_edf()</a></code> then reads its other rules.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

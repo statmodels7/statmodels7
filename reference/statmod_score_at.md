@@ -44,16 +44,17 @@ family's order, each as long as that equation's design is wide. With
 
 ## Details
 
-This is the score of the likelihood alone, with no penalty in it, and it
-is the gradient of a model whose design is fixed.
-
-A model carrying a structural term needs a correction that is not here:
-the term's level is driven by scores read at earlier predictors, so a
-coefficient reaches it through the recursion.
-[`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md)
-and
+This is the score of the likelihood with no penalty in it. The vectors
+\\g_k\\ are those of
+[`statmod_score_obs()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_obs.md),
+which already contain the contribution of a structural term. Where a
+filter drives an equation, a coefficient also reaches the filter's level
+through the scores at earlier times, and the reverse recursion of
 [`modelterms7::term_adjoint()`](https://statmodels7.github.io/modelterms7/reference/term_adjoint.html)
-supply that.
+adds that part. Where the likelihood is a mixture over latent states,
+the score is the posterior-weighted average of the ordinary scores. The
+score in the parameters of a structural term itself is returned by
+[`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md).
 
 ## See also
 

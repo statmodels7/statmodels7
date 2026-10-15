@@ -1,7 +1,7 @@
 # A Vector of a Simulated Truth, Short Enough to Read
 
-The values where there are few, and the count with their spread where
-there are many.
+The values where there are six or fewer, and otherwise the first two
+values with the count and the standard deviation.
 
 ## Usage
 
@@ -22,8 +22,8 @@ A single string.
 ## Details
 
 A random effect over a hundred groups is a hundred numbers, and printing
-them buries the handful a reader came for. What a reader wants of a
-block that size is that it is there and how wide it is.
+them hides the few numbers that a reader needs. For a block of that size
+the printed form gives the count and the spread.
 
 ## See also
 

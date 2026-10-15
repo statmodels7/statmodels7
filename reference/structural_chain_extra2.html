@@ -11,7 +11,7 @@ and contracted against a second direction."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,7 @@ and contracted against a second direction.</p>
 
 
 <dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>The matrix the trace is taken against.</p></dd>
+<dd><p>The matrix against which the trace is taken.</p></dd>
 
 
 <dt id="arg-st">st<a class="anchor" aria-label="anchor" href="#arg-st"></a></dt>
@@ -90,18 +90,17 @@ derivative, as <code><a href="dot-structural_blocks.html">.structural_blocks()</
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Nine terms, and none of them assembles a matrix over the coefficients: a
-term in \(V_a^\top V_b\) traces as a weighted sum of the
-per-observation diagonal \(G\), a term carrying
-\(\mathrm{d}\varphi\) traces against the rows \(M\) has already been
-applied to, and the three terms carrying the recursion's own derivatives
-trace against what <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>,
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>
-return at the right weights.</p>
+    <p>The terms are listed in the comments of the code. None of them assembles a
+matrix over the coefficients: a term in \(V_a^\top V_b\) traces as a
+weighted sum of the per-observation diagonal \(G\), a term carrying
+\(\mathrm{d}\varphi\) traces against the rows to which \(M\) has
+already been applied, and the terms that carry the derivatives of the
+recursion trace against what <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code> return at the
+appropriate weights.</p>
 <p>The last of those is the fourth derivative of the predictor through the
-recursion, which is the object this whole route exists for, and the only
-place the family's FIFTH derivative enters is <code>P</code> inside its
-<code>blocks</code> callback.</p>
+recursion. The fifth derivative of the family enters only through <code>P</code> in
+the <code>blocks</code> callback of that call.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

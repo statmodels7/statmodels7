@@ -1,8 +1,9 @@
 # Settle the Changes of Slope on the Profile
 
-After the working phase and the restarts, every sharp
+After the working phase and the restarts, every
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
-term is moved to the minimum of its exact least-squares profile over
+term that is not smoothed, not developed and not marginal is moved to
+the minimum of the least-squares profile of its working response over
 every interval of the covariate
 ([`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)),
 and the model is refitted from there with the positions free.
@@ -47,6 +48,11 @@ statmod_settle_seg(
   [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
   returns it.
 
+- rounds:
+
+  The maximum number of times that the polished positions are read again
+  after a refit, 5 by default.
+
 ## Value
 
 A list: `res`, the fit, and `moved`, `TRUE` where a polished position
@@ -56,14 +62,9 @@ replaced the one the iteration reached.
 
 The profile of a change of slope is smooth inside each interval between
 consecutive observed values and has a kink at each of them, so the
-iteration of Muggeo (2003) can stop on a kink that is not a minimum:
-measured on
-[`segmented::globTempAnom`](https://rdrr.io/pkg/segmented/man/globTempAnom.html)
-with four break-points, it stopped with two positions on observed years
-and the inner fit 0.106 log-likelihood units above its mode, and the
-REML criterion could not be evaluated at its start. Inside an interval
-the profile has one stationary point, so its minimum over every interval
-is exact
+iteration of Muggeo (2003) can stop on a kink that is not a minimum.
+Inside an interval the profile has one stationary point, so its minimum
+over every interval is exact
 ([`modelterms7::seg_polish_exact()`](https://statmodels7.github.io/modelterms7/reference/seg_polish_exact.html)).
 The profile is read on the working response of the term's equation, and
 a polished position is kept only where the refit from it reaches a

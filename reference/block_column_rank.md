@@ -1,8 +1,8 @@
 # The Column Rank of One Design Block
 
 The number of linearly independent columns, by the pivoted decomposition
-the fit's own solve uses, so that the two cannot disagree about which
-columns a model identifies.
+that the fit's own solve uses, so that the two agree on which columns a
+model identifies.
 
 ## Usage
 

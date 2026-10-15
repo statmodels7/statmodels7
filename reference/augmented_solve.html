@@ -3,17 +3,15 @@
 \(A'A = R'R + C'C\) is the penalized information, and returns the
 increment solving
 $$(R'R + C'C)\,\delta = u$$
-The augmented form is the point: neither \(R'R\) nor the penalized
-information is ever formed, so a design whose condition number is
-\(\kappa\) is decomposed at \(\kappa\). Forming the normal equations
-would square it."><meta property="og:description" content="Decomposes the augmented matrix \(A = [R;\, C]\), whose cross-product
+The augmented form never forms \(R'R\) or the penalized information, so
+a design with condition number \(\kappa\) is decomposed at \(\kappa\)
+and not at \(\kappa^2\), which the normal equations would give."><meta property="og:description" content="Decomposes the augmented matrix \(A = [R;\, C]\), whose cross-product
 \(A'A = R'R + C'C\) is the penalized information, and returns the
 increment solving
 $$(R'R + C'C)\,\delta = u$$
-The augmented form is the point: neither \(R'R\) nor the penalized
-information is ever formed, so a design whose condition number is
-\(\kappa\) is decomposed at \(\kappa\). Forming the normal equations
-would square it."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+The augmented form never forms \(R'R\) or the penalized information, so
+a design with condition number \(\kappa\) is decomposed at \(\kappa\)
+and not at \(\kappa^2\), which the normal equations would give."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -21,7 +19,7 @@ would square it."><meta property="og:image" content="https://statmodels7.github.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,10 +53,9 @@ would square it."><meta property="og:image" content="https://statmodels7.github.
 \(A'A = R'R + C'C\) is the penalized information, and returns the
 increment solving</p>
 <p>$$(R'R + C'C)\,\delta = u$$</p>
-<p>The augmented form is the point: neither \(R'R\) nor the penalized
-information is ever formed, so a design whose condition number is
-\(\kappa\) is decomposed at \(\kappa\). Forming the normal equations
-would square it.</p>
+<p>The augmented form never forms \(R'R\) or the penalized information, so
+a design with condition number \(\kappa\) is decomposed at \(\kappa\)
+and not at \(\kappa^2\), which the normal equations would give.</p>
     </div>
 
     <div class="section level2">
@@ -86,62 +83,68 @@ model.</p></dd>
 
 
 <dt id="arg-how">how<a class="anchor" aria-label="anchor" href="#arg-how"></a></dt>
-<dd><p><code>"qr"</code> or <code>"svd"</code>. <code>"svd"</code> has no sparse counterpart, so a
-sparse pair asked for it is densified first.</p></dd>
+<dd><p><code>"qr"</code> or <code>"svd"</code>. <code>"svd"</code> has no sparse counterpart, so with
+<code>how = "svd"</code> a sparse pair is densified first.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
 <dd><p>How many threads the triangular factor may use, a plain
-integer. <code>1L</code> takes <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> unconditionally.</p></dd>
+integer. With <code>1L</code> the threaded route is not used.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of two:</p><dl><dt><code>delta</code></dt>
+    <p>A list with the elements <code>delta</code>, <code>rank</code> and <code>dropped</code>:</p><dl><dt><code>delta</code></dt>
 <dd><p>the increment, an unnamed numeric vector of length <code>p</code>.
-Zero in any coordinate the pivoted route dropped.</p></dd>
+Zero in every coordinate that the pivoted route dropped.</p></dd>
 
 <dt><code>rank</code></dt>
 <dd><p>the rank used, an integer. Always <code>p</code> on the threaded
 and sparse routes, which decline on a deficient matrix instead of
-reporting a smaller rank.</p></dd>
+reporting a smaller rank, and the number of retained singular
+values on the <code>"svd"</code> route.</p></dd>
+
+<dt><code>dropped</code></dt>
+<dd><p>the integer positions of the columns that the pivoted
+<code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> route left out (the aliased coordinates); <code>integer(0)</code> on the
+sparse, threaded and <code>"svd"</code> routes.</p></dd>
 
 
 </dl></div>
     <div class="section level2">
     <h2 id="the-four-routes">The four routes<a class="anchor" aria-label="anchor" href="#the-four-routes"></a></h2>
-    <p>Tried in this order.</p><ol><li><p><strong>Sparse QR</strong>, when either factor is a <span class="pkg">Matrix</span> object. Handed to
-<code><a href="sparse_augmented_solve.html">sparse_augmented_solve()</a></code>, which declines on a rank-deficient matrix.</p></li>
+    <p>The routes are tried in this order.</p><ol><li><p><strong>Sparse QR</strong>, when either factor is a <span class="pkg">Matrix</span> object. The pair is
+passed to <code><a href="sparse_augmented_solve.html">sparse_augmented_solve()</a></code>, which declines on a
+rank-deficient matrix.</p></li>
 <li><p><strong>SVD</strong>, when <code>how = "svd"</code>. The singular values below
 \(\max(\dim A)\,\epsilon\,\sigma_{\max}\) are dropped and the
 increment is built from the retained right singular vectors, so a
-deficient system gets the minimum-norm answer.</p></li>
+deficient system gets the minimum-norm solution.</p></li>
 <li><p><strong>The threaded triangular factor</strong>, when <code>how = "qr"</code>, <code>threads &gt; 1</code>
-and the work \(n p^2\) is at least <code>5e7</code>. Only the triangular factor
-is ever read, so a kernel that produces it and never accumulates
-\(Q\) does the whole job.</p></li>
-<li><p><strong><code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code></strong>, the pivoted LINPACK route, which reports a rank and can
-drop columns. A sparse solve that declined falls through to here on
+and \(m p^2\) is at least <code>5e7</code>, where \(m\) is the number of rows
+of \(A\). Only the triangular factor is read, so a kernel that
+produces it without accumulating \(Q\) does the whole job.</p></li>
+<li><p><strong><code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code></strong>, the pivoted LINPACK route, which returns a rank and can
+drop columns. A sparse solve that declined continues here on
 densified factors.</p></li>
 </ol></div>
     <div class="section level2">
     <h2 id="why-the-rank-test-is-equilibrated">Why the rank test is equilibrated<a class="anchor" aria-label="anchor" href="#why-the-rank-test-is-equilibrated"></a></h2>
-    <p>The threaded route is taken only where the matrix is comfortably of full
-rank, and the test reads the diagonal of the triangular factor <strong>divided
-by each column's norm</strong>. Since \(A'A = R'R\), scaling \(A\)'s columns
-scales that diagonal by the same factors, so the ratio is the diagonal of
-a decomposition with unit column norms.</p>
-<p>Reading the raw diagonal instead reports a matrix as near-singular
-whenever its columns differ in size, and a large smoothing parameter does
-exactly that to the penalty rows of its own block beside an unpenalized
-one. Per-column scaling forgives separation from any source; an exact
-collinearity stays exactly singular.</p>
-<p>The tolerance is <code>1e-7</code> on that ratio, the same one <code>dqrdc2</code> uses, so
-anything the pivoted route would call deficient still goes there and is
-reported with its rank.</p>
-<p>Measured against <code><a href="https://rdrr.io/r/base/qr.html" class="external-link">qr()</a></code> at \(n = 40000\) with the column scales spread
-over \(10^8\): 2.6x at \(p = 51\) and 3.8x at \(p = 145\) to 600 on
-eight threads, with the increment agreeing to \(1.6 \times 10^{-16}\).</p>
+    <p>The threaded route is taken only where the matrix has full rank by a
+comfortable margin. The test reads the diagonal of the triangular factor
+<strong>divided by each column's norm</strong>. Writing \(T\) for the triangular
+factor of \(A\), so that \(A'A = T'T\), scaling the columns of \(A\)
+scales the diagonal of \(T\) by the same factors, so the ratio is the
+diagonal of a decomposition with unit column norms.</p>
+<p>The raw diagonal would report a matrix as near-singular whenever its
+columns differ in size, and a large smoothing parameter produces that
+difference between the penalty rows of its own block and an unpenalized
+block. Scaling each column to unit norm removes differences in column size
+from any source and leaves an exact collinearity exactly singular.</p>
+<p>The route is taken when the smallest equilibrated entry exceeds <code>1e-7</code>
+times the largest, the tolerance that <code>dqrdc2</code> uses, so a matrix that the
+pivoted route would call deficient is solved there and its rank is
+returned.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

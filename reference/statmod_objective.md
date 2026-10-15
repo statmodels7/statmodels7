@@ -43,7 +43,11 @@ statmod_objective(
 
 ## Value
 
-A list of five functions:
+A list with the elements
+
+- `npar`:
+
+  the number of coefficients of each equation, an integer vector.
 
 - `fn(b)`:
 
@@ -53,9 +57,14 @@ A list of five functions:
 
   its gradient, a numeric vector as long as `b`.
 
+- `gr_sub(b, idx)`:
+
+  the gradient at the positions `idx` alone.
+
 - `he(b)`:
 
-  its Hessian, a `p x p` matrix.
+  its Hessian, the information matrix (expected or observed according to
+  `expected`) plus the Hessian of the penalties, a `p x p` matrix.
 
 - `split(b)`:
 
@@ -78,11 +87,12 @@ read. See
 and
 [`iwls_score()`](https://statmodels7.github.io/statmodels7/reference/iwls_score.md).
 
-## The five closures share one design
+## The closures share one design
 
-All five close over `design`, `hyper` and the two information settings,
-so a caller who changes a hyperparameter builds a new objective. That is
-what the outer search does at every point it visits.
+The functions `fn`, `gr`, `gr_sub` and `he` close over `design` and
+`hyper`, and `he` also over the two information settings, so that a
+change of a hyperparameter requires a new objective. The outer search
+builds a new objective at every point that it visits.
 
 ## See also
 

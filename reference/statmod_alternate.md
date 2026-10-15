@@ -88,18 +88,16 @@ statmod_alternate(
   `TRUE` holds every frozen break-point block at its committed
   positions: the fit is then an ordinary smooth fit, no read-off runs
   and no schedule advances. The outer machinery passes it at every
-  criterion evaluation, path point and fold, for two reasons measured
-  together: the working phase inside each of dozens of evaluations
-  multiplied a fit's cost by twenty, and a break-point moving between
-  evaluations makes the criterion path-dependent while its cycling flags
-  read as unavailable points to the search. The positions are refined
-  once, by the full alternation
+  criterion evaluation, path point and fold. A working phase inside each
+  evaluation would multiply the cost of the fit, and a break-point that
+  moves between evaluations makes the criterion depend on the path of
+  the search. The positions are refined once, by the full alternation
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   runs at the chosen hyperparameters before the restarts.
 
 ## Value
 
-A list of six:
+A list of nine:
 
 - `par`:
 
@@ -111,33 +109,65 @@ A list of six:
 
 - `converged`:
 
-  a single logical: the objective settled, every block settled, and
-  every refreshable term reported it had.
+  a single logical. Where a term recomputes its own block, the verdict
+  is the objective's together with that term's own flags, and the flag
+  of the smooth block is not part of it. Beside a kinked block or a
+  structural term it also requires
+  [`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
+  at the point. Where nothing alternates, it is the flag of the inner
+  method.
 
 - `obj`:
 
   the objective object the last pass used.
 
+- `note`:
+
+  the `note` element of the last smooth fit, as
+  [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
+  returns it.
+
+- `aliased`:
+
+  the sorted stacked positions that the pivot left out.
+
 - `hist_blocks`:
 
-  a data frame, one row per pass.
+  a list of one-row data frames, one for each block fitted in each pass,
+  with `pass`, `block`, `objective`, `change`, `iterations` and
+  `converged`.
 
 - `hist_inner`:
 
-  a data frame, one row per inner iteration.
+  a list of data frames, one for each pass whose smooth fit recorded
+  steps, holding the inner history with the columns `pass` and `block`
+  added.
+
+- `spec`:
+
+  the specification after the last pass, with the SCAD and MCP
+  curvatures that the fit used.
 
 ## Details
 
-This is a function of its own because the outer search calls it once per
-hyperparameter it tries, warm-started from the previous coefficients. A
-whole fit at one point of the search is one call of this.
+The outer search calls this function once for each hyperparameter value
+that it tries, warm-started from the previous coefficients, so a whole
+fit at one point of the search is one call.
 
-One pass does the smooth block, then each kinked block with everything
-else held, then commits any refreshable term's schedule. The passes
-repeat until the objective's relative change falls below `tol`, every
-block reports it has settled, and
+One pass fits the smooth block (beside a structural term of the filter
+shape, the joint system of the coefficients and the term's parameters),
+then the structural block of a term of the likelihood shape, then each
+kinked block with the other blocks held, and then commits the schedule
+of any refreshable term. The passes stop when the relative change of the
+objective falls below `tol`. The verdict is the inner fit's flag where
+there is nothing to alternate with. Otherwise it also requires
+[`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
+(the Newton decrement of the smooth part and the KKT decrement of each
+coefficient that a kinked penalty holds at zero, both within
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)),
+and
 [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
-agrees.
+where the model has refreshable terms.
 
 ## See also
 

@@ -1,4 +1,4 @@
-# Refuse a Number of Trials That Cannot Follow These Rows
+# Reject a Number of Trials That Cannot Follow These Rows
 
 Signals an error where the family carries one number of trials per
 observation and the rows it is being applied to are a different number.
@@ -25,19 +25,17 @@ check_trials(distrib, n)
 
 ## Details
 
-A `size` handed to `binomial_distrib()` is a vector fixed when the fit
-was written, so at other rows it is neither right nor obviously wrong:
-it is recycled, and the answer comes back with no complaint. Measured
-directly on the density, a size of length 200 against 20 observations
-returns **200** log-densities summing to -1125.63 and signals nothing –
-the response is recycled against the size, so the number of terms is
-decided by the family rather than by the data.
+A `size` given to `binomial_distrib()` is a vector fixed when the fit
+was written, so at other rows it is recycled and the density returns a
+value without any signal: a size of length 200 against 20 observations
+returns 200 log-densities, the number of terms being decided by the
+family and not by the data.
 
-The alternative to erroring is not a better number, it is a guess:
-nothing on the fit says which rows those trials belonged to. What the
-caller can do instead is write the response as
-`cbind(successes, failures)`, whose row sums are recomputed wherever the
-expression is evaluated, and the message says so.
+The function signals an error because no correct number can be returned:
+the fit does not record which rows the trials belonged to. The caller
+can write the response as `cbind(successes, failures)` instead, whose
+row sums are recomputed wherever the expression is evaluated, and the
+error message gives that remedy.
 
 ## See also
 

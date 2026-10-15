@@ -13,7 +13,7 @@ density, computed by numericals7::quad_vec() over the rows at once."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@ density, computed by <code><a href="https://statmodels7.github.io/numericals7/re
 
 
 <dt id="arg-z">Z<a class="anchor" aria-label="anchor" href="#arg-z"></a></dt>
-<dd><p>The within-group column of the term, one value a row.</p></dd>
+<dd><p>The within-group column of the term, one value per row.</p></dd>
 
 
 <dt id="arg-param">param<a class="anchor" aria-label="anchor" href="#arg-param"></a></dt>
@@ -79,7 +79,7 @@ density, computed by <code><a href="https://statmodels7.github.io/numericals7/re
 
 
 <dt id="arg-what-kind">what, kind<a class="anchor" aria-label="anchor" href="#arg-what-kind"></a></dt>
-<dd><p>What was asked for and its kind, as in
+<dd><p>The quantity predicted and its kind, as in
 <code><a href="random_marginal.html">random_marginal()</a></code>.</p></dd>
 
 
@@ -93,9 +93,7 @@ density, computed by <code><a href="https://statmodels7.github.io/numericals7/re
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Measured on a Bernoulli with a logit link and a Student t prior, 10000
-Monte Carlo draws were 3e-3 out against <code><a href="https://rdrr.io/r/stats/integrate.html" class="external-link">integrate()</a></code>; this is within the
-default tolerances of <code>quad_vec()</code>.</p>
+    <p>The integral is evaluated with the default tolerances of <code>quad_vec()</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

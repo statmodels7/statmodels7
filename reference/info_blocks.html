@@ -13,7 +13,7 @@ scoring step is built from, before any design enters."><meta property="og:image"
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,8 +76,15 @@ negated observed Hessian.</p></dd>
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
 <dd><p>How the expected information is approximated for a family
 that has no closed form, passed through to <span class="pkg">distributions7</span>:
-<code>"bartlett"</code>, <code>"integrate"</code> or <code>"mc"</code>. Ignored when <code>expected</code> is
-<code>FALSE</code> or when the family computes its expected information exactly.</p></dd>
+<code>"opg"</code> (the default), <code>"bartlett"</code>, <code>"integrate"</code> or <code>"mc"</code>. Ignored
+when <code>expected</code> is <code>FALSE</code> or when the family computes its expected
+information exactly.</p></dd>
+
+
+<dt id="arg-h">H<a class="anchor" aria-label="anchor" href="#arg-h"></a></dt>
+<dd><p>The family's link-scale second derivatives, as
+<code><a href="statmod_family_hessian.html">statmod_family_hessian()</a></code> returns them, when the caller has already
+computed them at <code>theta</code>; <code>NULL</code> computes them here.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -93,7 +100,7 @@ nothing here multiplies by a link's derivative. With <code>expected = TRUE</code
 expected information is taken and the blocks are positive definite
 wherever the family is regular; with <code>expected = FALSE</code> the observed
 Hessian is negated, which far from the optimum is routinely indefinite.
-<code><a href="chol_blocks.html">chol_blocks()</a></code>'s refusal is the ordinary consequence.</p>
+In that case <code><a href="chol_blocks.html">chol_blocks()</a></code> returns <code>NULL</code>.</p>
 <p>The weights enter as given, without normalization, so a weight of two
 counts an observation twice.</p>
     </div>

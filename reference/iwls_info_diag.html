@@ -9,7 +9,7 @@ entry per stacked coefficient."><meta property="og:image" content="https://statm
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,14 +69,15 @@ third branch.</p>
 square-root design, whose cross-product is the unpenalized information, so
 the penalty does not enter.</p>
 <p>On the assembled route it is the diagonal of the matrix itself, which
-folds the penalty in. That is a different normalizer, and it is accepted
-because the assembled route is already the fallback: it is reached only
-where no square root exists, and the reading it feeds arbitrates a verdict
-rather than driving the loop.</p>
+folds the penalty in. That is a different normalizer. It is accepted
+because the reading only arbitrates a verdict and does not drive the loop,
+and because the assembled route is used either where no square root
+exists or when <code>"chol"</code> is requested.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="iwls_score.html">iwls_score()</a></code>, the only caller.</p></div>
+    <div class="dont-index"><p><code><a href="iwls_score.html">iwls_score()</a></code>, which normalizes by it, and <code><a href="iwls_fit.html">iwls_fit()</a></code>, the only
+caller.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,9 +1,9 @@
 # The Factor of a Diagonal Penalty
 
-One row per coordinate the penalty reaches, carrying the square root of
-that coordinate's entry, which is
-[`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)'s
-answer where the matrix is diagonal.
+One row per coordinate that the penalty reaches, carrying the square
+root of that coordinate's entry, which is the value of
+[`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
+where the matrix is diagonal.
 
 ## Usage
 
@@ -36,11 +36,11 @@ a diagonal matrix is its spectrum. A negative entry beyond the tolerance
 makes the penalty indefinite and there is no factor to return; an entry
 at or below the tolerance is a null direction and contributes no row.
 
-The class of the result mirrors the argument's and is not chosen here.
+The class of the result follows the argument's: a sparse `S` gives a
+sparse factor and a dense `S` a dense one.
 [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
-routes on whether either of its two factors is sparse, so a sparse
-factor returned for a dense design would send a dense fit down the
-sparse route.
+takes the sparse route whenever either of its two factors is sparse, so
+the class is not changed here.
 
 ## See also
 

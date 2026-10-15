@@ -30,6 +30,12 @@ statmod_terms(equations, data, env, response = NULL, linpar = list())
   [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   and by nothing else.
 
+- linpar:
+
+  The options of the implicit parametric block, as
+  [`linpar_options()`](https://statmodels7.github.io/statmodels7/reference/linpar_options.md)
+  returns them.
+
 ## Value
 
 A list of two:
@@ -55,7 +61,9 @@ for the shim and the collision it removes.
 A factor covariate needs no handling of its own: the interpreter
 collects the bare covariates of an equation into one
 [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html),
-whose block comes from `model.matrix` and so carries the contrasts.
+whose block comes from `model.matrix`, or from
+[`Matrix::sparse.model.matrix()`](https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html)
+when the block is sparse, and so carries the contrasts.
 
 A break-point term whose starting positions the caller did not name has
 them chosen on a grid, through

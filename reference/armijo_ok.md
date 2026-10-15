@@ -29,7 +29,7 @@ armijo_ok(vnew, value, step, gd, c1 = 1e-04)
 
 - c1:
 
-  The share of the predicted decrease that is asked for.
+  The share of the predicted decrease that the trial point must achieve.
 
 ## Value
 
@@ -37,20 +37,15 @@ A single logical.
 
 ## Details
 
-\$\$f(x + s d) \\\le\\ f(x) + c_1 s\\ g^\top d .\$\$ **The sign of
-\\g^\top d\\ is the whole of it.** The increment solves \\(H + S)\delta
-= -g\\, so \\g^\top\delta = -g^\top(H+S)^{-1}g\\ is NEGATIVE – measured,
-in 19 of 19 solves of one fit, over \\\[-6435, -0.0119\]\\ – and the
-bound therefore sits BELOW \\f(x)\\ and asks for a decrease. Written
-with the term SUBTRACTED it changes sign and the test permits an
-INCREASE of \\c_1 s \|g^\top\delta\|\\, which on that fit was as much as
-0.6435 a step, where the loop's own comment said sufficient decrease
-rather than mere non-increase. It is named rather than written inline so
-that the sign carries a test of its own: a test over a fit sees the
-condition only through the steps that fit happens to take, and none of
-them relied on the extra licence.
+\$\$f(x + s d) \\\le\\ f(x) + c_1 s\\ g^\top d .\$\$ The increment
+solves \\(H + S)\delta = -g\\, so \\g^\top\delta = -g^\top(H+S)^{-1}g\\
+is negative and the bound lies below \\f(x)\\, which requires a
+decrease. If the term were subtracted instead, the bound would lie above
+\\f(x)\\ and the test would permit an increase of \\c_1 s \lvert
+g^\top\delta\rvert\\. The condition is a separate function so that its
+sign can be tested directly.
 
 ## See also
 
 [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md),
-the loop that asks it.
+the loop that applies it.

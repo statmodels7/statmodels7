@@ -11,7 +11,7 @@ as a vector over the stacked coefficients."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,13 +108,6 @@ the first reading the block's first derivative and the second its second,
 \(F_a = (\partial^2X_a/\partial\beta^2)[v,u]\). Both are one
 <code>crossprod</code> against a per-observation weight, so neither the
 third-derivative array of the predictor nor any contraction of it is formed.</p>
-<p><strong>Measured</strong> against the mode refitted at four hyperparameter values
-and differenced twice, on <code>nl(a ~ 0 + ridge(~grp))</code>: \(b_m\) is right
-to 3.8e-08 without this and \(b_{ml}\) is wrong by 7.6 to 9.0 per cent at
-every step tried, which is a systematic error and no reference's noise.
-With it
-the gap falls to 1.8e-05 at the reference's best step, which is inside the
-spread between the reference's own consecutive steps.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

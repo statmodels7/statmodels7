@@ -9,7 +9,7 @@ penalized objective contracted once, or the fourth contracted twice."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,8 +81,8 @@ third.</p></dd>
 <dd><p>A function of the three or four parameter positions returning
 the component of <code>deriv</code> to read, or <code>NULL</code> for the observed route's keys,
 which are symmetric in every position. On the expected route <code>deriv</code> is
-the derivative of the expected information, symmetric in its first pair
-and in its second separately, and carries its own builder.</p></dd>
+the derivative of the expected information, symmetric in its first two
+positions only, and carries its own builder.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -97,9 +97,9 @@ result is only ever traced against \(M\) the assembly is waste: the trace
 of that block against \(M_{ab}\) is \(-\sum_i \omega_i w_i G_{ab,i}\).
 The block and its transpose both contribute, so an off-diagonal pair counts
 twice.</p>
-<p>The weights \(w_i\) are built exactly as those two functions build them,
-and that keeps the two routes the same arithmetic in the same order
-where it matters.</p>
+<p>The contraction of the derivative with the direction is formed exactly as
+those two functions form it, which keeps the two routes on the same
+arithmetic.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -21,7 +21,7 @@ d4_key(params, a, b, k, q, keys)
 
 - keys:
 
-  The names the derivative returned.
+  The names that the derivative returned.
 
 ## Value
 

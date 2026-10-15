@@ -33,12 +33,14 @@ nested_prepare(fit, spec, nest, unseen)
 
 ## Value
 
-A list with `spec`, `design`, `coef` and `cols`, the latter from
-[`nested_columns()`](https://statmodels7.github.io/statmodels7/reference/nested_columns.md).
+A list with `spec`, `design`, `coef`, `cols` (from
+[`nested_columns()`](https://statmodels7.github.io/statmodels7/reference/nested_columns.md))
+and `terms`, the distinct pairs of `param` and `term` among the rows of
+`nest`.
 
 ## Details
 
-Every term holding such an effect is replaced by the copy
+Every term holding such an effect is replaced by the copy that
 [`pool_nested_random()`](https://statmodels7.github.io/statmodels7/reference/pool_nested_random.md)
 returns, its effects' coefficients are set to zero and its columns are
 recomputed there. The columns of the effects themselves are then set to

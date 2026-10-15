@@ -9,7 +9,7 @@ coefficients in hand."><meta property="og:image" content="https://statmodels7.gi
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,19 +79,19 @@ coefficient vector back into one piece per distribution parameter.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is the step the sweeps of <code><a href="coord_fit.html">coord_fit()</a></code> use, and it is what
-decides whether a shape parameter is admissible: SCAD's proximal operator
-needs \(t &lt; a - 1\) and MCP's \(t &lt; \gamma\), tightened to
-\(t d^2\) under the diagonal map standardization applies. So the useful
-lower limit of a shape is a property of the data, not the constant 2 or 1
-the penalty is defined above, and it binds at ordinary settings: measured,
-a standardized penalty on a column of spread 20 at \(n = 200\) needs
-\(a &gt; 3\), and a Poisson block whose fitted means are near
-\(10^{-3}\) needs \(a &gt; 11\).</p>
-<p>Everything is guarded, and <code>NULL</code>, which the caller reads as "the
-penalty's own bound and nothing more", is the answer wherever the
-working weights are not usable. A starting grid may be approximate; what
-it may not do is fail.</p>
+    <p>This is the step the sweeps of <code><a href="coord_fit.html">coord_fit()</a></code> use, and it decides whether a
+shape parameter is admissible: SCAD's proximal operator requires the step
+to be below \(a - 1\) and MCP's below \(\gamma\), the step being
+multiplied by the squared entries of the diagonal map that standardization
+applies. The lower limit of a shape is therefore a property of the data,
+and not only the constant 2 or 1 over which the penalty is defined.</p>
+<p>The working weights are those of <code><a href="coord_working.html">coord_working()</a></code> for the observed
+information at the coefficients in hand. The result is <code>NULL</code> for a structural block, for a block without
+columns, and wherever the working weights or the squared column sums are
+not finite and positive; the caller reads <code>NULL</code> as the penalty's own bound
+and nothing more. Any error inside the computation is also answered with
+<code>NULL</code>, since the grid built from the steps is a starting grid and may be
+approximate.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -23,4 +23,5 @@ A condition.
 
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 calls [`vcov()`](https://rdrr.io/r/stats/vcov.html) more than once and
-would raise the warning once per call; it says it once, as a note.
+would raise the warning once per call; the summary records it once, as a
+note.

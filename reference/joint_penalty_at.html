@@ -11,7 +11,7 @@ joint vector \([\beta; \zeta_{\mathrm{free}}]\)."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,27 +94,27 @@ length <code>n</code>; for <code>"hessian"</code> an <code>n</code> by <code>n</
 class is mixed.</p>
     </div>
     <div class="section level2">
-    <h2 id="why-one-function-and-not-two-halves">Why one function and not two halves<a class="anchor" aria-label="anchor" href="#why-one-function-and-not-two-halves"></a></h2>
-    <p>A class's prior is one object over one stacked vector. <span class="pkg">penalties7</span>
-computes one gradient and one Hessian over that vector, in the class's own
-order, and knows nothing of the split – to it these are \(m\) blocks of
-\(d\) numbers with a covariance in common. Splitting the answer into a
-coefficient half and a parameter half would report each as though the other
-were not there, and would lose the CROSS block entirely, which is the only
-place the correlation between the two enters at all.</p>
-<p>So the scatter is written once and the three assemblies that build the joint
-matrix add what it returns: the inner step
+    <h2 id="one-function-for-both-parts">One function for both parts<a class="anchor" aria-label="anchor" href="#one-function-for-both-parts"></a></h2>
+    <p>The prior of a class is one object over one stacked vector. <span class="pkg">penalties7</span>
+computes one gradient and one Hessian over that vector, in the order of the
+class, and has no notion of the split: it treats the coordinates as \(m\)
+blocks of \(d\) numbers with a covariance in common. Splitting the result
+into a coefficient part and a parameter part would report each as though
+the other were absent and would lose the cross block, the only place where
+the correlation between the two enters.</p>
+<p>The scatter is therefore written once, and the three assemblies that build
+the joint matrix add what it returns: the inner step
 (<code><a href="statmod_fit_joint.html">statmod_fit_joint()</a></code>), the marginal criterion
 (<code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>) and the variance
 (<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>). <code><a href="statmod_penalty_at.html">statmod_penalty_at()</a></code> and
 <code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> skip a mixed class for the same reason.</p>
     </div>
     <div class="section level2">
-    <h2 id="where-the-values-come-from">Where the values come from<a class="anchor" aria-label="anchor" href="#where-the-values-come-from"></a></h2>
-    <p>Each coordinate is read where it lives – a coefficient from <code>coef</code>, a
-filter parameter from the design's structural state – and assembled in the
-class's own order, which <code>joint</code> on the unit already records. The result is
-written back at those same positions, so no ordering is composed twice.</p>
+    <h2 id="source-of-the-values">Source of the values<a class="anchor" aria-label="anchor" href="#source-of-the-values"></a></h2>
+    <p>Each coordinate is read where it is stored (a coefficient from <code>coef</code>, a
+filter parameter from the structural state of the design) and assembled in
+the order of the class, which <code>joint</code> on the unit records. The result is
+written back at the same positions, so that the ordering is composed once.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

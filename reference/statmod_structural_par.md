@@ -1,8 +1,8 @@
 # The Structural Terms' Estimated Parameters
 
-One named vector per structural term, on the scale the term's own
-documentation describes them on, together with the unconstrained values
-they were estimated as.
+One named vector per structural term, on the scale that the term's own
+documentation uses for its parameters, together with the unconstrained
+values that were estimated.
 
 ## Usage
 
@@ -24,7 +24,10 @@ statmod_structural_par(spec, design)
 ## Value
 
 A named list, one entry per structural term, each a list with
-`parameter` and `unconstrained`. Empty when there is none.
+`parameter` (the named vector on the parameter scale), `unconstrained`,
+`equation` (the distribution parameter in which the term sits) and
+`held` (the names of the parameters that an intercept of the equation
+carries). Empty when there is none.
 
 ## See also
 

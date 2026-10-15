@@ -1,6 +1,6 @@
 # The Values a Term Wrote Out for One Hyperparameter
 
-The grid the term named, or `NULL` where it left the path to build one.
+The grid the term specifies, or `NULL` where the path builds one.
 
 ## Usage
 

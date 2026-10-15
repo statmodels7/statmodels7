@@ -11,7 +11,7 @@ structural_chain_extra() returns only its trace against \(M\)."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,23 +81,23 @@ coefficients and the filter's own parameters, where
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The gradient needs the trace and nothing else, so it never forms this. The
-HESSIAN needs the matrix twice over: in \(\mathrm{tr}(M K_l M K_m)\),
-which no contraction reduces, and as the operator carrying the mode's
-second movement. Writing \(V_a\) for each equation's rows,
-\(\mathrm{d}\varphi = E v\) for the filter's own moving, and \(E\) for
-the second derivative of the predictor the filter produces,</p>
+    <p>The gradient uses only the trace of this matrix against \(M\) and does
+not form the matrix. The Hessian uses the matrix in two places: in
+\(\mathrm{tr}(M K_l M K_m)\), which no contraction reduces, and as the
+operator that carries the second movement of the mode. Write \(V_a\) for
+the rows of each equation, \(\mathrm{d}\varphi = E v\) for the movement of
+the filter's own parameters, and \(E\) for the second derivative of the
+predictor that the filter produces. Then</p>
 <p>$$\frac{\partial K}{\partial u}[v] =
   -\sum_i w_i\Big[\sum_{a,b}\Big(\sum_k\ell_{abk}(V_k\cdot v)\Big)
     V_a^\top V_b
   + \sum_b \ell_{pb}\big(\mathrm{d}\varphi\otimes V_b
     + V_b\otimes\mathrm{d}\varphi\big)\Big]
   - W(\kappa_v) - W_3[v],$$</p>
-<p>with \(\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)\) the weight the level's
-own term is re-read at and \(W_3[v]\) what
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code> returns. Traced against \(M\) it
-reproduces <code><a href="structural_chain_extra.html">structural_chain_extra()</a></code> exactly, which is what a test
-asserts of it.</p>
+<p>with \(\kappa_v = \sum_k \ell_{pk}(V_k\cdot v)\) the weight at which the
+term of the level is read again and \(W_3[v]\) the curvature that
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code> returns. The trace of the matrix against
+\(M\) equals the value of <code><a href="structural_chain_extra.html">structural_chain_extra()</a></code> up to rounding.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

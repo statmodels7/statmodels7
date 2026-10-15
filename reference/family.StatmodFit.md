@@ -23,22 +23,24 @@ family(object, ...)
 ## Value
 
 The distributions7 distribution object the model was fitted with, links
-included, exactly as it was supplied. Its `@params` property names the
-parameters and `@links` holds their charts.
+included. A binomial family fitted to a two-column response carries the
+row sums as its `size`, so in that case the object differs from the one
+supplied. Its `@params` property names the parameters and `@link_params`
+holds their links.
 
 ## Details
 
-What comes back is the family object itself, so everything the family
-can do is reachable from a fit: its density, its derivatives, its
-moments and its parameters' links. Compare
-[`stats::glm()`](https://rdrr.io/r/stats/glm.html), whose
-[`family()`](https://rdrr.io/r/stats/family.html) returns a description.
+The object returned is the family itself, so its density, its
+derivatives, its moments and its parameters' links are available from a
+fit. In contrast, [`stats::glm()`](https://rdrr.io/r/stats/glm.html) has
+a [`family()`](https://rdrr.io/r/stats/family.html) that returns a
+description.
 
 ## See also
 
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md);
 [`distributions7::distrib_pdf()`](https://statmodels7.github.io/distributions7/reference/distrib_pdf.html)
-and its siblings for what can then be asked of the family
+and its siblings for the quantities that can be computed from the family
 
 ## Examples
 

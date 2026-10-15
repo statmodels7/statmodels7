@@ -15,13 +15,21 @@ block_rows_shown(tb, max_coef = NULL, cap = 12L, show = 10L)
 
   A summary table.
 
+- max_coef:
+
+  How many coefficient rows a long table keeps, `Inf` or `NA` for all of
+  them. `NULL` reads the option `statmodels7.summary_max_coef`, and then
+  `show`.
+
 - cap:
 
-  The length above which a table is cut.
+  The number of rows up to which a table is printed whole. A table is
+  cut only above `max(cap, max_coef + number of hyperparameter rows)`.
 
 - show:
 
-  How many coefficient rows a cut table keeps.
+  The number of coefficient rows kept when `max_coef` is `NULL` and the
+  option is not set.
 
 ## Value
 
@@ -29,9 +37,8 @@ An integer vector of row positions.
 
 ## Details
 
-A block of a few coefficients is printed whole: a threshold that cut it
-would hide the very numbers a reader opened the summary for. A block of
-many is a column of numbers nobody reads to the end, and what is dropped
-is still in [`coef()`](https://rdrr.io/r/stats/coef.html). The
-hyperparameters are never dropped, whatever the length: they govern
-every coefficient under them.
+A block of a few coefficients is printed whole. A long block is abridged
+to its first `max_coef` coefficient rows, and the rows that are dropped
+remain in [`coef()`](https://rdrr.io/r/stats/coef.html). The
+hyperparameters are never dropped, whatever the length, because they
+govern every coefficient under them.

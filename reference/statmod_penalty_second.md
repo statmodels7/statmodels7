@@ -72,22 +72,21 @@ S_l}{\partial\beta}\[b_m\] + \frac{\partial^2 S}{\partial\beta^2}\[b_l,
 b_m\] + \frac{\partial S}{\partial\beta}\[b\_{ml}\]\$\$ beside
 \\S\_{ml}\\, which
 [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
-already carries. The first two are one quantity by the symmetry of mixed
-partials, read from
+already carries. The first two are the mixed derivative \\\partial^2
+S/\partial\beta\\\partial\theta\\ taken along two directions, \\b_l\\
+for the hyperparameters of row \\m\\ and \\b_m\\ for those of row \\l\\;
+each is read from
 [`penalties7::penalty_dhessian_beta_theta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html)
-for the hyperparameters a penalty owns; the third is
+for the hyperparameters that the penalty owns. The third is
 [`penalties7::penalty_d2hessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html)
 and the fourth
 [`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html).
 A penalty that
 [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)
-calls quadratic contributes nothing, so a model carrying only those gets
-`NULL` and its Hessian is untouched.
-
-Measured on a Student t prior over 30 groups before it was written, the
-assembly without these pieces is 122 per cent out and flat in the step,
-and with them it converges on a central difference of the exact gradient
-as \\h^2\\ down to the reference's own floor.
+calls quadratic contributes nothing, and neither do a kinked penalty, a
+mixed covariance class and a penalty over a structural term's own
+parameters, so a model carrying only those gets `NULL` and its Hessian
+is untouched.
 
 ## See also
 

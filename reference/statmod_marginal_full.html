@@ -11,7 +11,7 @@ design columns."><meta property="og:image" content="https://statmodels7.github.i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,18 +90,20 @@ the penalty is a structural term's own, as with the deviations of a panel,
 those quantities are not coefficients.</p>
 <p>Taken over the coefficients alone the determinant then does not depend on
 the hyperparameter at all, and the criterion reduces to the penalized
-likelihood, whose maximum in a shrinkage parameter is at no shrinkage. It
-does not merely lose accuracy: it answers a different question.</p>
+likelihood, whose maximum in a shrinkage parameter is at no shrinkage. The
+criterion then answers a different question from the marginal likelihood.</p>
     </div>
     <div class="section level2">
-    <h2 id="both-pieces-already-exist">Both pieces already exist<a class="anchor" aria-label="anchor" href="#both-pieces-already-exist"></a></h2>
+    <h2 id="the-matrix">The matrix<a class="anchor" aria-label="anchor" href="#the-matrix"></a></h2>
     <p><code><a href="statmod_full_information.html">statmod_full_information()</a></code> spans the coefficients followed by the term's
 free parameters, which is the order the joint fit uses, and
-<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> gives the penalty's Hessian in those same
-parameters.</p>
-<p>The information here is the <strong>observed</strong> one whatever the method asks for.
-The expected information over a filter's own parameters is not a quantity
-the toolkit carries, the recursion's state entering the expectation.</p>
+<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> gives the Hessian of the penalty in those same
+parameters. A covariance class split between the two halves is placed by
+<code><a href="joint_penalty_at.html">joint_penalty_at()</a></code>.</p>
+<p>The information here is the observed one whatever the <code>hessian</code> of the
+method is. The expected information over the own parameters of a filter is
+not a quantity that the toolkit carries, since the state of the recursion
+enters the expectation.</p>
     </div>
     <div class="section level2">
     <h2 id="under-ml">Under ML<a class="anchor" aria-label="anchor" href="#under-ml"></a></h2>

@@ -20,18 +20,19 @@ path.
 
 ## Details
 
-Each member's own startup messages are suppressed: the caller asked for
-the toolkit and gets one message about it, not eight. The masking
+Each member's own startup messages are suppressed, so that attaching the
+toolkit prints one message instead of one per member. The masking
 warnings are suppressed too, and
 [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
 reports the same information once, at the end, in one block.
 
 Attachment order follows
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md),
-which is alphabetical. The members export no name in common, so nothing
-about the result depends on that order;
+which is alphabetical. The members export no name in common, so the
+result does not depend on that order. If a name were exported by two
+members,
 [`statmodels7_conflicts()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_conflicts.md)
-is what would report it if one day they did.
+would report it.
 
 ## See also
 

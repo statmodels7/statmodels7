@@ -9,7 +9,7 @@ a supplied structure against the design before returning it."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,11 +71,12 @@ parameter in the family's order.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Three things are checked: that <code>par</code> is a named list, that it names every
-distribution parameter, and that each vector is as long as that equation's
-design is wide. Each failure signals an error naming the parameter, which
-is the alternative to R recycling a short vector into a different model
-without a word.</p>
+    <p>Three things are checked: that <code>par</code> is a named list, that every name of
+<code>par</code> is a distribution parameter, and that the vector given for each is
+as long as that equation's design is wide. Each failure signals an error.
+The messages for a name and for a length name the parameter, so that a
+short vector is not recycled into a different model. A distribution
+parameter that <code>par</code> omits keeps its fitted coefficients.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

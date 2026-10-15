@@ -24,7 +24,7 @@ ctx_information(ctx, spec, design, coef, hyper, expected, approx = "opg")
 
 - expected:
 
-  Whether the expected information is wanted.
+  Whether the expected information is read.
 
 - approx:
 

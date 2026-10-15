@@ -2,7 +2,8 @@
 
 `design_sparse()` reports whether any equation's block is sparse, and
 `zero_information()` gives the square zero matrix of the right kind to
-accumulate the information into.
+accumulate the information into. `as_dense()` and `as_sparse()` convert
+a matrix to the other storage.
 
 ## Usage
 
@@ -23,6 +24,10 @@ zero_information(design, total)
   The design, a list with one entry per distribution parameter, each
   carrying its block as `X`.
 
+- A:
+
+  A matrix, dense or sparse.
+
 - total:
 
   The number of stacked coefficients across the equations, which is the
@@ -32,7 +37,9 @@ zero_information(design, total)
 
 `design_sparse()` gives a single logical. `zero_information()` gives a
 `total x total` matrix of zeros, a `dgCMatrix` when the design is sparse
-and a base matrix otherwise.
+and a base matrix otherwise. `as_dense()` gives `A` as a base matrix,
+and `as_sparse()` gives `A` as a Matrix object, converting a base matrix
+to compressed column storage.
 
 ## Details
 
@@ -40,8 +47,8 @@ The information is assembled one `crossprod` per parameter pair and each
 product is written into a square accumulator. With a sparse design each
 product is sparse, and writing a sparse block into a dense accumulator
 signals that the number of items to replace is not a multiple of the
-replacement length, from inside the assembly and naming nothing a caller
-wrote. The accumulator therefore follows the design.
+replacement length, from inside the assembly. The accumulator therefore
+follows the design.
 
 ## See also
 

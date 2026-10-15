@@ -23,12 +23,14 @@ A single logical.
 ## Details
 
 The criterion's own second derivative reads a fourth order through the
-recursion, so a term that has written the third and not the fourth
-supplies an exact gradient and no exact Hessian. That is the state
-`regime()` is in: it implements neither, and a term implementing only
-the third would be answered here with `FALSE` and left to
-[`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md),
-which is the same fallback its search already has.
+recursion, so a term that implements the third derivative and not the
+fourth supplies an exact gradient and no exact Hessian. For such a term
+the function returns `FALSE` and the Hessian is computed by
+[`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md).
+A term of the likelihood shape (`regime()` and the marginal break-point
+term) implements neither derivative, and
+[`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+returns `FALSE` for it at both orders.
 
 ## See also
 

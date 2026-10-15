@@ -13,7 +13,7 @@ rows of every equation in the same columns."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,10 +75,11 @@ rows of every equation in the same columns.</p>
     <p><code>NULL</code> where the model carries no filter, otherwise a list with
 <code>J</code> (the filter equation's rows), <code>V</code> (every equation's rows, the
 filter's being <code>J</code>), <code>H</code> (the family's second derivatives on the link
-scale), <code>ap</code> (the index of the filter's parameter), <code>nb</code> (the number of
-coefficient columns), <code>key</code> (the names of the columns in the variance
-matrix) and <code>free</code> (the term's free parameters), all columns restricted
-to the free ones.</p>
+scale), <code>Hd</code> (the derivatives of the filter's driving quantity, which
+are <code>H</code> where the filter is not scaled), <code>ap</code> (the index of the filter's
+parameter), <code>nb</code> (the number of coefficient columns), <code>key</code> (the names of
+the columns in the variance matrix) and <code>free</code> (the term's free
+parameters), all columns restricted to the free ones.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

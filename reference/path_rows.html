@@ -9,7 +9,7 @@ hyperparameters whose penalty has a kink."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ hyperparameters whose penalty has a kink.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_rows</span><span class="op">(</span><span class="va">spec</span>, <span class="va">blocks</span>, <span class="va">hyper</span>, <span class="va">method</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">path_rows</span><span class="op">(</span><span class="va">spec</span>, <span class="va">blocks</span>, <span class="va">hyper</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -63,14 +63,13 @@ hyperparameters whose penalty has a kink.</p>
 <dt id="arg-hyper">hyper<a class="anchor" aria-label="anchor" href="#arg-hyper"></a></dt>
 <dd><p>The hyperparameters.</p></dd>
 
-
-<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>An <code><a href="OuterMethod-class.html">OuterMethod()</a></code>.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame of <code>parameter</code>, <code>term</code> and <code>name</code>.</p>
+    <p>A data frame with one row per axis, with columns <code>parameter</code>,
+<code>term</code> and <code>name</code>, and a list column <code>members</code> that holds, for each axis,
+the data frame of the hyperparameters it stands for. It has zero rows
+where no hyperparameter is to be estimated.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -80,8 +79,8 @@ active set holds and turning a corner every time a coefficient joins it or
 leaves, so a criterion read at that mode inherits the corners and a
 quasi-Newton step is reading a slope that is about to change. A grid does
 not care, and warm starts make it cheap.</p>
-<p>Which hyperparameters are varied is read from the penalty by
-<code><a href="kink_hypers.html">kink_hypers()</a></code> unless the method names them.</p>
+<p>Every hyperparameter of a kinked penalty is varied, except those that
+its term holds and those of an <code>id</code> group that one member holds.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

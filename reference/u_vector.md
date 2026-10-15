@@ -39,7 +39,7 @@ u_vector(
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params:
 
@@ -51,8 +51,11 @@ u_vector(
 
 - d3:
 
-  The array \\\partial K/\partial\eta\\ is read from, or `NULL` for the
-  family's third derivative at the fitted predictors.
+  The array from which \\\partial K/\partial\eta\\ is read, with a
+  negative sign: the third derivatives of the log-likelihood on the
+  observed route, the derivatives in the predictors of \\E\[\ell''\]\\
+  on the expected one. `NULL` for the family's third derivative at the
+  fitted predictors.
 
 - G:
 

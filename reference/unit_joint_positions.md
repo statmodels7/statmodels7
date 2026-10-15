@@ -35,18 +35,18 @@ the joint vector does not carry.
 
 ## Details
 
-The three kinds are addressed in three different vectors and the caller
-that wants a trace wants one. A mixed class already records the answer,
+The three kinds are addressed in three different vectors, and a caller
+that forms a trace needs one. A mixed class already records the answer,
 its `joint` field being built by
 [`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md).
-A structural unit records positions among ALL of a term's parameters,
+A structural unit records positions among all of a term's parameters,
 where the joint vector holds only the free ones, so a held coordinate
 has to be mapped out rather than offset past. An ordinary unit's stacked
 index is already a position in the joint vector, coefficients coming
 first and none of them being held.
 
-Written once because the convention is composed in three places
-otherwise, and two of them would agree only by accident.
+Written once so that the convention is composed in one place and not in
+three.
 
 ## See also
 

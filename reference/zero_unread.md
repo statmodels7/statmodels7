@@ -3,7 +3,7 @@
 Sets to zero the rows and columns of a variance matrix whose diagonal is
 not finite, which is how
 [`hyper_variance()`](https://statmodels7.github.io/statmodels7/reference/hyper_variance.md)
-marks a coordinate whose curvature it could not read.
+marks a coordinate whose curvature could not be read.
 
 ## Usage
 

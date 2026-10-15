@@ -25,7 +25,7 @@ print(x, ...)
 
 ## Value
 
-`x`, invisibly, as a print method should.
+`x`, invisibly.
 
 ## See also
 

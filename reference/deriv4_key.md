@@ -27,8 +27,9 @@ A single string.
 
 ## Details
 
-The fourth order is wanted where a filter's third derivative is: each
-order of differentiating the predictor through the recursion pulls in
-one more order of the family, the score the recursion is driven by being
-read at the predictor it produces. Every family of distributions7
-carries it in closed form.
+The fourth order is needed where a filter's third derivative is: each
+order of differentiating the predictor through the recursion requires
+one more order of the family, because the score that drives the
+recursion is read at the predictor that the recursion produces. The
+values come from
+[`distributions7::distrib_deriv4()`](https://statmodels7.github.io/distributions7/reference/distrib_deriv4.html).

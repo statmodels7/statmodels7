@@ -1,5 +1,136 @@
 # Changelog
 
+## statmodels7 0.200.0
+
+The documentation of every page was checked against the code and
+rewritten in the register of the toolkit, and the defects that the check
+found were repaired. Requires modelterms7 0.98.0.
+
+#### Changes of behavior
+
+- `outer_criterion = cv()` is an error:
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  chooses only the hyperparameter of a penalty with a kink, and is
+  passed as `sparse_criterion`.
+  [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md),
+  [`statmod_path()`](https://statmodels7.github.io/statmodels7/reference/statmod_path.md)
+  and
+  [`statmod_select()`](https://statmodels7.github.io/statmodels7/reference/statmod_select.md)
+  have no `weights` or `offsets` arguments; the folds read the fit’s
+  own, on the held-out rows as well.
+- `iwls(decomposition = "chol_crossprod")` is removed (it ran the
+  `"chol"` route). `start_search(over =)` names a coefficient by its
+  `parameter:name` label.
+  [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
+  projects onto the true predictors through
+  [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
+  beside a block that moves with its coefficients.
+- The weights are frequency weights in every count:
+  [`nobs()`](https://rdrr.io/r/stats/nobs.html),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`BIC()`](https://rdrr.io/r/stats/AIC.html), the cBIC,
+  [`df.residual()`](https://rdrr.io/r/stats/df.residual.html) and the
+  `nobs` of [`logLik()`](https://rdrr.io/r/stats/logLik.html) read the
+  sum of the weights, an integer where it is whole, and
+  [`summary()`](https://rdrr.io/r/base/summary.html) prints it beside
+  the number of rows.
+- A sharp break-point that sits on an observation at the mode is a
+  linear constraint on the coefficients: the inner fit solves on its
+  null space
+  ([`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md)),
+  the outer gradient and Hessian move the mode by
+  [`mode_solver()`](https://statmodels7.github.io/statmodels7/reference/mode_solver.md),
+  and the certificate reads the inner gradient and the mode error over
+  the same directions. On `y ~ s(x) + seg(z) | sigma ~ w` the outer
+  gradient was 0.07 to 0.12 off against differences of the criterion,
+  5e-5 now; a developed position slides along its hyperplane.
+- [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
+  and
+  [`outer_curvature()`](https://statmodels7.github.io/statmodels7/reference/outer_curvature.md)
+  difference over the hyperparameters and the coefficients that the
+  criterion estimates; under
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+  the edf correction and the unconditional variance read the ML
+  criterion’s curvature (-0.6362 against -0.6198 before), and
+  `summary(correct = TRUE)` reads the fit’s own information.
+- `predict(se = TRUE)` beside `regime()` or a marginal break-point term
+  differentiates the posterior mean of the term’s shift in every
+  coordinate
+  ([`modelterms7::term_shift_jacobian()`](https://statmodels7.github.io/modelterms7/reference/term_shift_jacobian.html)).
+  It read the static design alone: one standard error, 0.035, on every
+  row of a two-state chain, 0.106 now on the rows of the second state,
+  against a numerical delta method to 1e-11.
+- [`summary()`](https://rdrr.io/r/base/summary.html) says “did not
+  converge” only where the certificate reads “not converged”, or where
+  the fit’s own flag is FALSE; a point that the certificate cannot read
+  by construction
+  ([`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
+  held hyperparameters, a path, no criterion) carries a note giving the
+  reason. A hyperparameter that no criterion moved is marked `[start]`,
+  and a smooth’s hyperparameter under
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  is described as minimized, not chosen along a path.
+- `logLik(type = "marginal")` counts the directions that a penalty
+  leaves free and only the hyperparameters estimated (3 on `y ~ s(x)`
+  under
+  [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+  4 now; lme4’s count on a random intercept).
+
+#### Repairs
+
+- [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md):
+  `step_halving = 0` tried no step and a Poisson fit stopped at a
+  log-likelihood of -745.5 ([`glm()`](https://rdrr.io/r/stats/glm.html)
+  -477.7); the count is now the number of halvings after the full step.
+  `maxit`, `tol` and `step_halving` are validated, and the final verdict
+  reads the masked gradient.
+- The threaded cross-product read past a block of another height.
+- Infinite weights and offsets, an unnamed `start`, a count with a
+  fractional part (`rstatmod(n_sim = 2.5)`, `simulate(nsim = 2.5)`, the
+  break-point test’s `k` and `n_boot`), an unnamed `par` of
+  [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md),
+  a `level` outside (0, 1) and an argument that
+  [`predict()`](https://rdrr.io/r/stats/predict.html) or
+  [`fitted()`](https://rdrr.io/r/stats/fitted.values.html) would ignore
+  are rejected.
+- [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  folds lost `offsets=` and the weights of the held-out rows (lambda
+  41.4, the empty fit, against 2.98). The path warned at its sparse end
+  on pure noise, and the restart at an edge compared in the outer
+  criterion’s direction on the path’s BIC.
+- Zero weights sent a lasso to the proximal fallback; an unreadable KKT
+  reading counted as settled; `crit_all()` reported the largest
+  tolerance of its parts.
+- The structural table of
+  [`summary()`](https://rdrr.io/r/base/summary.html) lacked the prior of
+  a covariance class shared with a filter, so every structural standard
+  error was missing.
+- Two links of one class tied by a label (`power_link(0.5)` and
+  `power_link(2)`) were merged; a frozen block on new data read the
+  current coefficients; a restart budget of zero and the verbose headers
+  were wrong.
+- [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
+  with `data`, `covariates` and `n_sim > 1` lost the columns that were
+  not drawn after the first replicate.
+- A Laplace prior on a random effect was averaged as a Gaussian of zero
+  precision; a group interval under a Student t prior stopped on a row
+  with a missing covariate; a group interval that leaves the link’s
+  domain is NA with a warning, as the marginal route is.
+- `summary(test = "lr")` printed the Wald statistic on the rows of a
+  break-point term; the second member of a shared hyperparameter had no
+  standard error; a hyperparameter at an edge carried two contradictory
+  notes.
+- The forecast warning named equations without a filter, a parameter
+  with no coefficients had a missing standard error instead of zero, an
+  unknown `what` under `random = "marginal"` got another route’s
+  message, and
+  [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)
+  printed “60 s” for 59.99 seconds.
+
 ## statmodels7 0.199.6
 
 - Requires modelterms7 0.96.0, which rejects arguments that it accepted
@@ -29,7 +160,7 @@
   search, instead of on the resolution read at the start of the search.
   On the battery’s gas-panel-omega that resolution is about 2 REML units
   and moves with rounding, so the restart’s first step was taken or
-  refused by chance: a change of one or two ulps in the rhobit link’s
+  rejected by chance: a change of one or two ulps in the rhobit link’s
   derivatives left the fit at -609.4932 with a decrement of 2.6e-3,
   where it reached -609.4905 before. The restart now reaches -609.490415
   from either, with a decrement of 1e-6.
@@ -155,7 +286,7 @@
   outside the basis interval”, a smooth beside a lasso on
   `gamlss.data::rent`).
 - The matrix that moves the mode, which the exact outer gradient reads,
-  leaves out the directions the model does not identify, as the
+  leaves out the directions that the model does not identify, as the
   criterion’s determinant does. A lasso codes every level of the first
   factor of its formula, and two of its coefficients away from zero span
   the intercept: the gradient came back missing, the search read it as
@@ -208,9 +339,9 @@
   the expected information ran 100 s and did not converge, and it now
   converges in 7.6 s at the point the observed information reaches.
 - `predict(se = TRUE)` beside a lasso, an elastic net, a SCAD or an MCP
-  treats a coefficient the penalty holds at zero as fixed, so it carries
-  no variance into the prediction. The standard errors were `NA` on
-  every row where such a coefficient met a non-zero covariate.
+  treats a coefficient that the penalty holds at zero as fixed, so it
+  carries no variance into the prediction. The standard errors were `NA`
+  on every row where such a coefficient met a non-zero covariate.
 - `predict(what = )` naming one parameter does not need the covariates
   of the other equations in `newdata`.
 - Pearson and response residuals are `NA`, with a warning, where the
@@ -280,10 +411,10 @@
   so every family and link those registries cover, wrappers included,
   runs the recursion without calling back into R.
 - The degrees of freedom of a filter are reported missing, with the
-  warning that says why, where the count read off the joint smoother is
-  negative: the joint penalized information can be positive definite
-  while the information it smooths is not, and a filter’s count then
-  read -3.21.
+  warning that gives the reason, where the count read off the joint
+  smoother is negative: the joint penalized information can be positive
+  definite while the information it smooths is not, and a filter’s count
+  then read -3.21.
 - Requires distributions7 0.70.0, linkfunctions7 0.5.0, modelterms7
   0.94.0 and numericals7 0.21.0.
 
@@ -321,8 +452,8 @@
   are read at every predictor, so a coefficient of the scale moves a
   filter in the mean; the standard error read only the filter’s own
   equation. On the gaussian model of the Nile flow the standard error of
-  the filtered mean was up to 12 per cent too large, and that of the
-  forecast one year ahead 8.7 per cent too large.
+  the filtered mean was up to 12 percent too large, and that of the
+  forecast one year ahead 8.7 percent too large.
 - Where a `gas()` fit from the term’s own start (a loading of 0.1) does
   not converge, it is fitted once more with each loading at `0.1 / I`,
   where `I` is the mean expected information of the predictor at the
@@ -362,7 +493,7 @@
   [`MASS::GAGurine`](https://rdrr.io/pkg/MASS/man/GAGurine.html)
   children it gives p = 0.0016 against 0.0026 for
   [`segmented::davies.test()`](https://rdrr.io/pkg/segmented/man/davies.test.html);
-  on 100 samples without a break-point it rejected at 5 per cent in 5.
+  on 100 samples without a break-point it rejected at 5 percent in 5.
 - A sharp `seg()` is settled on its exact profile after the working
   phase, as `jump()` and `jseg()` are
   ([`statmod_settle_seg()`](https://statmodels7.github.io/statmodels7/reference/statmod_settle_seg.md)).
@@ -391,8 +522,8 @@
   a panel whose score-driven level is developed
   (`omega ~ 1 + random(~ 1 | id)`) no longer stops with “‘qr’ and ‘y’
   must have the same number of rows”: the check that a development’s
-  column lies in the equation’s span is asked of the fitting rows only.
-  The forecast agrees with the recursion written out to 4e-15 on
+  column lies in the equation’s span is applied to the fitting rows
+  only. The forecast agrees with the recursion written out to 4e-15 on
   [`nlme::Ovary`](https://rdrr.io/pkg/nlme/man/Ovary.html).
 
 ## statmodels7 0.187.0
@@ -543,10 +674,10 @@
   and was refitted. The profile is a quadratic model of the objective
   there, so the polish is followed by a search on the objective itself:
   the five deepest local minima of the working profile and the
-  neighbouring intervals of the best are refitted with the positions
-  held
+  neighboring intervals of the best are refitted with the positions held
   ([`working_exact()`](https://statmodels7.github.io/statmodels7/reference/working_exact.md)
-  says where the profile is the objective and the search is skipped). On
+  indicates where the profile is the objective and the search is
+  skipped). On
   [`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html),
   `sigma ~ jseg(times)` beside `s(times)` took 2961 s and stopped at the
   confinement limit (49.52) with the logLik at -584.54; it takes about
@@ -591,9 +722,9 @@
   with conditional standard errors equal to
   [`lm()`](https://rdrr.io/r/stats/lm.html)’s; the position has no
   standard error (the profile has no curvature), counts one degree of
-  freedom, and [`summary()`](https://rdrr.io/r/base/summary.html) says
-  why in a note. The slot that carried it is held in the solve and in
-  the information
+  freedom, and [`summary()`](https://rdrr.io/r/base/summary.html) gives
+  the reason in a note. The slot that carried it is held in the solve
+  and in the information
   ([`term_held_stack()`](https://statmodels7.github.io/statmodels7/reference/term_held_stack.md)),
   and [`vcov()`](https://rdrr.io/r/stats/vcov.html) holds it without a
   warning.
@@ -619,10 +750,11 @@
   counts fewer (12.49 for 13 coefficients on
   [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html)), and
   SCAD and MCP count more where the penalty curves. Until now the fit
-  counted a kinked block by its non-zero coefficients, so the count a
-  fit printed was not the count its path had chosen it with: a scaled
-  MCP on [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html)
-  scored 9.72 at lambda = 37.45 where the fit reported 8.
+  counted a kinked block by its non-zero coefficients, so the count that
+  a fit printed was not the count that its path had chosen it with: a
+  scaled MCP on
+  [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) scored
+  9.72 at lambda = 37.45 where the fit reported 8.
 - The top of a lasso path is read with every coordinate against its own
   kink, and a hyperparameter shared through `id` starts its path at the
   largest of its members’ tops, each read with the other members held at
@@ -813,11 +945,11 @@
   and the error is large because carries the variance of the random
   effects: measured against
   [`integrate()`](https://rdrr.io/r/stats/integrate.html), the delta
-  method was 20 per cent too small for the mean of a Poisson random
+  method was 20 percent too small for the mean of a Poisson random
   intercept ([`MASS::epil`](https://rdrr.io/pkg/MASS/man/epil.html)), 42
-  per cent for the dispersion of a negative binomial with a random
-  effect on it (`glmmTMB::Owls`, kappa 0.83), and 18 per cent too large
-  for a Bernoulli probability
+  percent for the dispersion of a negative binomial with a random effect
+  on it (`glmmTMB::Owls`, kappa 0.83), and 18 percent too large for a
+  Bernoulli probability
   ([`MASS::bacteria`](https://rdrr.io/pkg/MASS/man/bacteria.html)).
   Under Gaussian priors it is now for the identity link (unchanged), for
   the log link and a 40-node Gauss-Hermite rule for every other link,
@@ -866,7 +998,7 @@
   turns from 0 to 1 between two nodes: the error in probability is 2e-11
   at a ratio of 1, 1.5e-03 at 3 and 1.8e-02 at 5, for a Gaussian prior
   as for any other. Under a Student t prior with nu = 0.95, where many
-  nodes of the scale mixture have that shape, the 95 per cent interval
+  nodes of the scale mixture have that shape, the 95 percent interval
   read (-1.885, 5.898) where it is (-1.803, 5.816), the probabilities at
   its ends being 0.0244 and 0.9756. The direction of largest variance is
   now integrated by
@@ -879,7 +1011,7 @@
   probabilities within 1e-6 of 0.025 and 0.975 by
   [`integrate()`](https://rdrr.io/r/stats/integrate.html). On
   `sleepstudy` with a random slope, where the ratio is about 2, the 95
-  per cent interval at day 9 moves from (217.39, 473.83) to (217.38,
+  percent interval at day 9 moves from (217.39, 473.83) to (217.38,
   473.85). The cost, stated: one prediction under the Student t prior
   takes 1.1 s, and 50 rows under `predictive = "averaged"` 68 s.
 - [`gamma_nodes()`](https://statmodels7.github.io/statmodels7/reference/gamma_nodes.md)
@@ -895,9 +1027,9 @@
 
 ## statmodels7 0.174.0
 
-- `predict(interval = "prediction")` takes `predictive`, which says what
-  the family is averaged over besides the family itself and a new
-  group’s effects: `"averaged"` (the default and the previous behaviour)
+- `predict(interval = "prediction")` takes `predictive`, which specifies
+  what the family is averaged over besides the family itself and a new
+  group’s effects: `"averaged"` (the default and the previous behavior)
   averages over the estimates’ approximate normal sampling distribution,
   the normal approximation to the parametric bootstrap predictive
   distribution of Harris (1989); `"plugin"` holds the estimates at their
@@ -915,9 +1047,9 @@
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md))
   being estimated there again; `"full"` chooses the hyperparameters
   again on every replica. It holds for every family and every parameter
-  alike. Measured at 95 per cent on a Gaussian regression at n = 12,
-  over 200 samples: plug-in 0.900, averaged 0.950, bootstrap 0.945; over
-  400 samples of a Gamma with its dispersion modelled at n = 25, plug-in
+  alike. Measured at 95 percent on a Gaussian regression at n = 12, over
+  200 samples: plug-in 0.900, averaged 0.950, bootstrap 0.945; over 400
+  samples of a Gamma with its dispersion modeled at n = 25, plug-in
   0.935 and averaged 0.948. A replica costs one inner fit, about 0.28 s
   on `sleepstudy` with a random slope, and a full one about 0.9 s.
   [`predictive_response()`](https://statmodels7.github.io/statmodels7/reference/predictive_response.md)
@@ -1016,7 +1148,7 @@
   `s(x) + s(x, by = z)` fitted with duplicated names in
   [`coef()`](https://rdrr.io/r/stats/coef.html) and
   [`vcov()`](https://rdrr.io/r/stats/vcov.html). The second no longer
-  collides, modelterms7 0.86.0 labelling the varying coefficient
+  collides, modelterms7 0.86.0 labeling the varying coefficient
   `s(x):z`.
 
 - Requires basis7 0.14.0, whose `pspline_smooth()` and
@@ -1034,14 +1166,14 @@
   predictor alone, but the family carried the numbers of trials of the
   fitting rows, and
   [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
-  refused them against a grid of another length:
+  rejected them against a grid of another length:
   `predict(fit, what = "mu", newdata = grid)` with five rows against a
   fit of twelve stopped on *“the family carries 12 numbers of trials and
   these are 5 rows”*, and the same call was right only if the grid
   carried made-up columns for the response. The numbers of trials are
   now missing at such rows, the parameters are predicted, and a moment
   of the response (`what = "mean"`, `"variance"`, …) or a prediction
-  interval says that it needs the trials and how to supply them. A
+  interval states that it needs the trials and how to supply them. A
   family given a constant `size` is unchanged.
 
 - A response matrix at new rows is no longer compared with the numbers
@@ -1077,7 +1209,7 @@
   direction were read in the coefficients’ own units: the variance
   above, started at 651 where the restricted likelihood is not concave
   in it, moved one unit per evaluation for 185 evaluations, and the
-  standard deviation of 1538 took 201 and stopped 0.9 per cent short.
+  standard deviation of 1538 took 201 and stopped 0.9 percent short.
   Both now take 7. A fit whose standard errors at the start are all at
   most one is unchanged. Requires optimizers7 0.10.0.
 
@@ -1134,10 +1266,10 @@ choosing a model, each decided with the measurement beside it.
   Student t’s nu, and under `scad(a = 30)` the point skipped was the
   best, BIC 30.40 against the 37.25 chosen. Reading them on the
   criterion once, at the chosen lambda, returned another model than the
-  one the path had scored in 4 of 5 cases measured (a SCAD scored with 7
-  covariates came back with 6 and not converged, the criterion jumping
-  in log sigma where the active set changes). Every parameter is now
-  read at the joint mode, along the path and in the returned fit. A
+  one that the path had scored in 4 of 5 cases measured (a SCAD scored
+  with 7 covariates came back with 6 and not converged, the criterion
+  jumping in log sigma where the active set changes). Every parameter is
+  now read at the joint mode, along the path and in the returned fit. A
   parameter named in `marginal` is still estimated on the criterion.
 - **A kinked block’s step is halved until the penalized objective
   falls.** The coordinate descent took each proximal Newton step whole.
@@ -1187,8 +1319,8 @@ choosing a model, each decided with the measurement beside it.
   sides.** Since 0.155.0 the default
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   estimates the unpenalized coefficients of a dispersion on the
-  criterion, so the point a fit returns is not the joint mode of the
-  penalized likelihood. The restricted refit of
+  criterion, so the point that a fit returns is not the joint mode of
+  the penalized likelihood. The restricted refit of
   [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
   `summary(test = "lr")` and `confint(test = "lr")` goes to that joint
   mode, and the statistic differenced the two, subtracting 2(l_ML -
@@ -1228,7 +1360,7 @@ choosing a model, each decided with the measurement beside it.
   values of its support. Both are conditional on the covariance the fit
   estimated.
 
-  Measured at 95 per cent over 200 fits of a random intercept at eight
+  Measured at 95 percent over 200 fits of a random intercept at eight
   observations a group, with 200 new groups each: on a gaussian response
   `"group"` covers a new group’s predictor 0.898 of the time over 10
   groups and 0.943 over 40, and `"prediction"` a new observation 0.939
@@ -1253,7 +1385,7 @@ choosing a model, each decided with the measurement beside it.
   coefficients treated as known; for
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   they are left out of the integrated basis. `reml(marginal = "sigma")`
-  beside a kink was refused and is accepted. A path over a kinked
+  beside a kink was rejected and is accepted. A path over a kinked
   hyperparameter now searches the criterion at every point, as it did
   for a smoothing parameter. Measured on \`y ~ x1 + … + x20 \| sigma ~
   lasso(~ z1
@@ -1280,7 +1412,7 @@ choosing a model, each decided with the measurement beside it.
   lasso over a dispersion it put a fit at its mode 2.47 log-likelihood
   units above it, against 4.5e-08 over the free coordinates
   ([`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)).
-  A nested search refused a resolution for that reason ran out of
+  A nested search rejected a resolution for that reason ran out of
   backtracks at the optimum.
 
 - **A path point counts where its nested search stands at the optimum.**
@@ -1294,7 +1426,7 @@ choosing a model, each decided with the measurement beside it.
 
 - A test pins the default
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  on a modelled gaussian dispersion to the restricted likelihood of
+  on a modeled gaussian dispersion to the restricted likelihood of
   Verbyla (1993) written out.
 
 - On the reference battery the lasso fit, whose only hyperparameter used
@@ -1334,11 +1466,11 @@ choosing a model, each decided with the measurement beside it.
   2026-09-29). c_j is the curvature the coordinate descent steps with,
   the weighted sum of squares of the column centered where the
   equation’s intercept is profiled out, read again at every pass of the
-  alternation and at the fitted coefficients, and inside the descent the
-  table takes the current step’s curvature damped as the geometric mean
-  with the previous one. 0.159.0 read the uncentered diagonal of the
-  information once at the start, which failed the step condition on
-  columns far from centered (`scad(X)` and `mcp(X)` on raw
+  alternation and at the fitted coefficients, and inside the descent
+  that the table takes the current step’s curvature damped as the
+  geometric mean with the previous one. 0.159.0 read the uncentered
+  diagonal of the information once at the start, which failed the step
+  condition on columns far from centered (`scad(X)` and `mcp(X)` on raw
   [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) stopped,
   with or without `standardize`), and with the table misaligned failed
   it on a logistic SCAD too. Over 60 simulated regressions (gaussian,
@@ -1369,12 +1501,12 @@ choosing a model, each decided with the measurement beside it.
   identified on four samples where the width of one spacing left it
   unidentified, and that the old width still does, and the page of
   [`warn_aliased()`](https://statmodels7.github.io/statmodels7/reference/warn_aliased.md)
-  says where that case remains reachable.
+  states where that case remains reachable.
 
 ## statmodels7 0.160.0
 
 - **[`predict()`](https://rdrr.io/r/stats/predict.html) takes
-  `random`**, which says how a `random()` term is read: `"conditional"`
+  `random`**, which sets how a `random()` term is read: `"conditional"`
   (the default) with each group’s own estimated effect, so a level the
   fit never saw still signals an error, whose message now names this
   argument; `"zero"` with every effect at zero at every row, the typical
@@ -1519,7 +1651,7 @@ choosing a model, each decided with the measurement beside it.
   -1.24, -425 and a flat one), so nothing there moves. Requires
   modelterms7 0.81.0.
 - A structural coordinate that an intercept in the same equation holds
-  starts at zero whatever the term’s own start says, and a free level is
+  starts at zero whatever the term’s own start is, and a free level is
   replaced by the intercept-only fit only where the term’s start left it
   at zero. With modelterms7 0.81.0 a regime term reads its levels off
   the response, and without this the held level kept that value (0.059
@@ -1592,19 +1724,20 @@ choosing a model, each decided with the measurement beside it.
   outer search runs once more from the restarted point, so the estimated
   coefficients belong to the basin the fit ends in.
 - Not covered yet, where the default keeps the convention of `"none"`
-  and an explicit request is refused: a model with a structural term, an
-  equation with a block that moves with its coefficients, a model with a
-  kinked penalty, a block that is a working linearization rather than a
-  Jacobian (a sharp `jump()` or `jseg()`), a penalty whose null space is
-  not spanned by coordinates (`te()`), and multivariate families. Beside
-  a sharp `jseg()` the determinant over the block’s columns reads no
-  curvature: two fits reaching the same break-point read REML criteria
-  of -132.9 and -109.8 according to where they began.
+  and an explicit request is rejected: a model with a structural term,
+  an equation with a block that moves with its coefficients, a model
+  with a kinked penalty, a block that is a working linearization rather
+  than a Jacobian (a sharp `jump()` or `jseg()`), a penalty whose null
+  space is not spanned by coordinates (`te()`), and multivariate
+  families. Beside a sharp `jseg()` the determinant over the block’s
+  columns reads no curvature: two fits reaching the same break-point
+  read REML criteria of -132.9 and -109.8 according to where they began.
 - A fit that went through the outer search reports the columns the pivot
   of its final refit left out, as a fit without one always did; before,
   it was read only on the information at the mode.
 - An `optimizers7` inner method now respects a held coefficient by
-  leaving it out of the block it fits, where it used to be refused.
+  leaving it out of the block that it fits, where it used to be
+  rejected.
 - The exact outer gradient of a correlated random effect is exact near a
   singular covariance. On the battery’s `random-slope` case the search
   drove the log-Cholesky coordinate `log L22` to -11.5, where the trace
@@ -1667,7 +1800,7 @@ choosing a model, each decided with the measurement beside it.
   intercept. On
   [`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) the path
   now chooses nine predictors at lambda = 17.4 from the raw columns, the
-  point it reaches with the predictors centered in the data, in 7.0
+  point that it reaches with the predictors centered in the data, in 7.0
   seconds of processor time where it took 38.2. A held intercept, or an
   equation with no intercept, leaves the block uncentered as before.
 - **The default outer optimizer bounds a Newton step.** Where the exact
@@ -1696,7 +1829,7 @@ choosing a model, each decided with the measurement beside it.
   reaches a free value of 8.05, where the maximum is at 1.97. The search
   now takes a step of 5 and reaches the same maximum by another path, so
   it stops at a different point within the criterion’s resolution: on
-  two gaussian smooths lambda moves by 0.02 per cent, the effective
+  two gaussian smooths lambda moves by 0.02 percent, the effective
   degrees of freedom by 2e-4 and 4e-4, and the log-likelihood by 1.3e-4
   and 4.2e-4, while the searches take 6 and 5 evaluations against 7 and
   8 and the certificate reads `converged` in both releases.
@@ -1834,10 +1967,10 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.150.0
 
 - **A criterion on the expected information reaches the two
-  Poisson-inverse Gaussians, and no shipped family is refused there any
+  Poisson-inverse Gaussians, and no shipped family is rejected there any
   longer.** distributions7 0.65.0 computes their expected information
   exactly, with its first and second derivatives, by one pass over the
-  support per observation, so the refusal of
+  support per observation, so the rejection of
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
@@ -1846,7 +1979,7 @@ choosing a model, each decided with the measurement beside it.
   with `hessian = "expected"` no longer applies to them:
   [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
   answers `FALSE`, and a fit on that route carries an analytic
-  certificate. The refusal stays for a family that approximates its
+  certificate. The rejection stays for a family that approximates its
   expected information, which only a family written outside the toolkit
   now does; the tests use one written for the purpose, borrowing pig1’s
   mass and derivatives.
@@ -1873,18 +2006,18 @@ choosing a model, each decided with the measurement beside it.
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   and
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-  with `hessian = "expected"` are no longer refused on them and carry
+  with `hessian = "expected"` are no longer rejected on them and carry
   the exact outer gradient and Hessian. Measured at 1000 observations
   with a smooth on the location and the shape held constant,
   `reml("expected")` converges with an analytic certificate on all four,
-  at 0.6 to 1.2 times the cost of `reml("observed")`. The refusal of
+  at 0.6 to 1.2 times the cost of `reml("observed")`. The rejection of
   0.148.0 now applies to `pig1_distrib()` and `pig2_distrib()` alone.
 
 - `iwls(hessian = "auto")` stays on the observed information for these
   four families, reading
   `distributions7::expected_hessian_by_quadrature()` beside
   `expected_hessian_exact()`. The expected information is exact there
-  but costs one integral per distinct shape, and with the shape modelled
+  but costs one integral per distinct shape, and with the shape modeled
   that is one per observation. Measured at 1000 observations with the
   shape developed over a covariate, a fit taking the scoring step on it
   reaches the same estimate at 7 to 21 times the cost: 3.5 against 24.3
@@ -1922,8 +2055,8 @@ choosing a model, each decided with the measurement beside it.
   now stops at the start, naming the family and
   `reml(hessian = "observed")` as the remedy.
 
-- Whether a family is one of these is asked at a probe, not read from a
-  list:
+- Whether a family is one of these is determined by a probe, not read
+  from a list:
   [`expected_is_opg()`](https://statmodels7.github.io/statmodels7/reference/expected_is_opg.md)
   evaluates the expected information at two responses and one parameter
   value, which an expectation cannot tell apart. Over the 40 univariate
@@ -1932,27 +2065,28 @@ choosing a model, each decided with the measurement beside it.
   `zero_inflated(pig1_distrib())`); `truncated()`, which reports no
   closed form either, returns a quadrature and is not caught. The
   caller’s random stream is restored. An expectation asked for by name,
-  `iwls(approx = "bartlett")`, is not refused: it is a genuine expected
+  `iwls(approx = "bartlett")`, is not rejected: it is a genuine expected
   information, at 66 to 1930 seconds per evaluation at 4000
   observations.
 
 - The observed route is exact on all six, which is what makes the
-  refusal a redirection rather than a loss. At 4000 observations with a
-  smooth on the first parameter it fits in 3 to 5 criterion evaluations
-  with `newton()` and an analytic certificate; its outer Hessian against
-  a difference of the exact gradient at a polished mode converges as to
-  3.8e-08 to 7.3e-08 on five families. On the skew t it stays near 1e-06
-  at every step, its derivatives in `nu` being single stencils, and the
-  fit costs 13.7 s where the outer-product route cost 2.9 s.
+  rejection a redirection rather than a loss. At 4000 observations with
+  a smooth on the first parameter it fits in 3 to 5 criterion
+  evaluations with `newton()` and an analytic certificate; its outer
+  Hessian against a difference of the exact gradient at a polished mode
+  converges as to 3.8e-08 to 7.3e-08 on five families. On the skew t it
+  stays near 1e-06 at every step, its derivatives in `nu` being single
+  stencils, and the fit costs 13.7 s where the outer-product route cost
+  2.9 s.
 
 - The pages of
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   and
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-  said the exact gradient needs the observed information and that the
+  stated the exact gradient needs the observed information and that the
   expected route is derivative-free. Neither has been true since the
   expected information’s derivatives reached 33 families; both pages now
-  say which route is exact where.
+  state which route is exact where.
 
 - **A zero-inflated model’s mixing weight starts at the proportion of
   zeros, on its own link**, read through
@@ -1980,18 +2114,18 @@ choosing a model, each decided with the measurement beside it.
   which distributions7 0.62.0 supplies analytically for 28 more
   families, so nothing in this package’s assembly moves:
   [`expected_deriv2_ok()`](https://statmodels7.github.io/statmodels7/reference/expected_deriv2_ok.md)
-  asks the family and the family now answers. Where it did not,
+  queries the family and the family now answers. Where it did not,
   [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
   differenced the exact gradient, `4 n_h` refits of the mode.
 
 - What it buys, measured at n = 4000 with one smooth in the first
   parameter under `reml("expected")`: the certificate goes from a median
-  of 38.9 to 14.3 per cent of the fit over 31 families, every one read
-  analytically where 29 were differenced – the Bernoulli 57.9 to 4.5 per
-  cent, the Student t 60.2 to 24.3, the beta-binomial 70.9 to 20.4, the
-  von Mises 31.5 to 2.5 – and `vonmises2_distrib()`’s certificate reads
-  `converged` where it read `unknown`. A beta-binomial smooth by its
-  shapes, which could not be fitted under REML because its expected
+  of 38.9 to 14.3 percent of the fit over 31 families, every one read
+  analytically where 29 were differenced – the Bernoulli 57.9 to 4.5
+  percent, the Student t 60.2 to 24.3, the beta-binomial 70.9 to 20.4,
+  the von Mises 31.5 to 2.5 – and `vonmises2_distrib()`’s certificate
+  reads `converged` where it read `unknown`. A beta-binomial smooth by
+  its shapes, which could not be fitted under REML because its expected
   information was wrong wherever the shapes varied, fits.
 
 - The check is the one D4(b) set: against a difference of the exact
@@ -2004,14 +2138,14 @@ choosing a model, each decided with the measurement beside it.
   family by mocking the method away rather than naming a family that has
   since gained one. Three more tests named a gaussian2 or a gamma2 as
   the family without that derivative and failed on this release for that
-  reason alone; they inject the refusal the same way, and one now also
+  reason alone; they inject the rejection the same way, and one now also
   asserts that a gaussian2 is admitted at order 2.
 
 ## statmodels7 0.146.0
 
 - **A scoring step at a kink holds the coordinates that move it.** Where
-  a sharp `seg()` break-point sits on an observation the objective is
-  not differentiable in the coordinates that move it, the scoring
+  a sharp `seg()` break-point sits on an observation that the objective
+  is not differentiable in the coordinates that move it, the scoring
   direction crosses the kink, and no length of it decreases the
   objective. Since 0.144.0 the inner fit stopped there, and it stopped
   with every OTHER coordinate wherever it happened to be: measured on
@@ -2021,21 +2155,20 @@ choosing a model, each decided with the measurement beside it.
   the one it is defined at. Restoring the Levenberg damping does not
   help – measured, it stops where it started.
   [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md)
-  now asks
+  now calls
   [`modelterms7::term_kinks()`](https://statmodels7.github.io/modelterms7/reference/term_kinks.html),
-  through
-  [`kink_positions()`](https://statmodels7.github.io/statmodels7/reference/kink_positions.md),
-  which coordinates sit on a kink, holds them and retries; once the run
-  has converged with them held it tries one step on every coordinate and
-  takes it if the objective falls. From the stopped point the mode is
-  reached in four iterations. With modelterms7 0.77.0 reading an
-  observation on the break-point on one side, the three routes of that
-  case agree at -224.38909, -224.38912 and -224.38909, where they read
-  -224.449, -224.385 and -224.449: the battery’s last unexplained
-  failure. ⚠️ The cost is stated: 13 criterion evaluations and 6.2 s
-  against 6 and 2.5 s on the default route. The four other sharp
-  break-point cases do not reach it and are unchanged, and the lots 0
-  and D1 nets are identical to the previous release.
+  through `kink_positions()`, which coordinates sit on a kink, holds
+  them and retries; once the run has converged with them held it tries
+  one step on every coordinate and takes it if the objective falls. From
+  the stopped point the mode is reached in four iterations. With
+  modelterms7 0.77.0 reading an observation on the break-point on one
+  side, the three routes of that case agree at -224.38909, -224.38912
+  and -224.38909, where they read -224.449, -224.385 and -224.449: the
+  battery’s last unexplained failure. ⚠️ The cost is stated: 13
+  criterion evaluations and 6.2 s against 6 and 2.5 s on the default
+  route. The four other sharp break-point cases do not reach it and are
+  unchanged, and the lots 0 and D1 nets are identical to the previous
+  release.
 
 ## statmodels7 0.145.0
 
@@ -2047,7 +2180,7 @@ choosing a model, each decided with the measurement beside it.
   the incumbent’s basin and could not come back. It now starts from the
   best usable point so far, which is the iterate a monotone line search
   stands on, and so does the refit at the reported point. The comment
-  that already said “the last ACCEPTED point” now describes the code.
+  that already stated “the last ACCEPTED point” now describes the code.
   Measured on the widened reference battery’s
   `gas(p = 1, q = 1, by = g, alpha1 ~ 1 + random(~1 | g))`: the first
   evaluation read -1367.360 at the starting hyperparameter and every
@@ -2078,7 +2211,7 @@ choosing a model, each decided with the measurement beside it.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   passes `damp_on_reject = FALSE` where
   [`has_sharp_breakpoint()`](https://statmodels7.github.io/statmodels7/reference/has_sharp_breakpoint.md)
-  says the model carries `seg()`, `jump()` or `jseg()` without
+  reports that the model carries `seg()`, `jump()` or `jseg()` without
   `smoothed`. Measured on the reference battery’s
   `seg(x, psi ~ random(~1 | id))`: 28 outer evaluations and 16.7 s
   become 6 and 2.9 s, and the criterion returns to -224.3627, the value
@@ -2099,13 +2232,13 @@ choosing a model, each decided with the measurement beside it.
   search runs, at a coordinate the criterion pins.**
   [`pin_boundary()`](https://statmodels7.github.io/statmodels7/reference/pin_boundary.md)
   replaces the row and column of a coordinate whose curvature is not
-  finite – a parameter at the clamp its link keeps it strictly inside –
-  by the identity’s, so in the criterion that block is a constant and
-  differentiates to zero. The gradient read it through the identity
-  instead, multiplying the family’s third derivative there by one, and
-  at a Student t’s `nu` on its clamp that derivative is `NaN`.
+  finite – a parameter at the clamp that its link keeps it strictly
+  inside – by the identity’s, so in the criterion that block is a
+  constant and differentiates to zero. The gradient read it through the
+  identity instead, multiplying the family’s third derivative there by
+  one, and at a Student t’s `nu` on its clamp that derivative is `NaN`.
   [`ctx_trace_matrix()`](https://statmodels7.github.io/statmodels7/reference/ctx_trace_matrix.md)
-  now zeroes the pinned rows and columns of the matrix the trace is
+  now zeroes the pinned rows and columns of the matrix that the trace is
   taken against, the coordinate’s own entry of the contraction is zero,
   and
   [`u_vector()`](https://statmodels7.github.io/statmodels7/reference/u_vector.md)
@@ -2132,7 +2265,7 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.142.0
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)’s
-  page says what happens where a structural term’s level meets an
+  page describes what happens where a structural term’s level meets an
   intercept in the same equation. The intercept is kept and the level
   held at zero, which a summary reports as `omega (held)`; written
   without the intercept, as `0 + gas(...)`, the level is estimated
@@ -2141,7 +2274,8 @@ choosing a model, each decided with the measurement beside it.
   the intercept estimates the stationary level . The identity is on the
   page of
   [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html).
-  Nothing computed reads it, so the pin on that package does not move.
+  It is read by no computed value, so the pin on that package does not
+  move.
 
 - Documentation only. Nothing computed moves.
 
@@ -2165,7 +2299,7 @@ choosing a model, each decided with the measurement beside it.
   5.89 and 5.90 with the trace 0.139.0 replaced. The certificate is two
   decompositions and 0.04 s of a 3.9 s fit.
 - ⚠️ **What it buys is exactness and not a different fit**, and the
-  measurement says so rather than a tolerance: over seven models that
+  measurement shows this rather than a tolerance: over seven models that
   reach the branch – four ordinary and the three carrying the dependence
   – the count and the exact rank give the same log-likelihood, the same
   effective degrees of freedom, the same count of non-zero coefficients
@@ -2195,10 +2329,10 @@ choosing a model, each decided with the measurement beside it.
   warning fires on exactly the two that are not identified.
 - ⚠️ **The message names no cause, and a measurement is why.** Two
   shapes reach it. In one the DESIGN is deficient, a column being the
-  sum of others. In the other the design has full rank and does not: on
-  `jump(x, smoothed = smooth_quintic())` and on `jseg()` under the same
-  smoother the block is of rank 3 of 3 while `mu:jump.psi1` is named,
-  the quintic being exact outside its own width so that the
+  sum of others. In the other that the design has full rank and does
+  not: on `jump(x, smoothed = smooth_quintic())` and on `jseg()` under
+  the same smoother the block is of rank 3 of 3 while `mu:jump.psi1` is
+  named, the quintic being exact outside its own width so that the
   break-point’s derivative column is non-zero at a handful of
   observations. Both are genuine and a message asserting the first would
   be wrong about the second. The two smoothers whose derivative has
@@ -2316,8 +2450,8 @@ choosing a model, each decided with the measurement beside it.
   design.**
   [`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md)
   returns the enumeration from the design’s `eta_memo` environment where
-  the terms and the family’s parameters are the ones it was built for,
-  and
+  the terms and the family’s parameters are the ones for which it was
+  built, and
   [`coord_block_at()`](https://statmodels7.github.io/statmodels7/reference/coord_block_at.md)
   keeps the block’s copy.
 - Every fit is [`identical()`](https://rdrr.io/r/base/identical.html) to
@@ -2350,8 +2484,8 @@ choosing a model, each decided with the measurement beside it.
 - [`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
   reads the one diagonal entry of the information it uses, where it
   built the whole array and took a slice. The family still computes
-  every component, which is where the cost is; the array was under 1 per
-  cent of a fit.
+  every component, which is where the cost is; the array was under 1
+  percent of a fit.
 - Measured in CPU time, the minimum of three alternated runs against
   0.136.0: a gaussian lasso path 7.85 s to 6.96 s, a lasso on both
   equations of a gaussian 29.82 s to 25.82 s, of a gamma 48.90 s to
@@ -2365,7 +2499,7 @@ choosing a model, each decided with the measurement beside it.
   [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)
   keeps the last point it computed in an environment
   [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
-  attaches to the design, and returns it when asked again at the same
+  attaches to the design, and returns it when called again at the same
   coefficients. On a lasso path over two equations 2950 of 5007 calls
   repeated the call before. A design with a term that recomputes its own
   block, or with a structural term, has no such memo: its blocks move
@@ -2423,7 +2557,7 @@ choosing a model, each decided with the measurement beside it.
   curvature is positive nothing moves: five other shapes are
   [`identical()`](https://rdrr.io/r/base/identical.html) to before.
   Reading the expected information always was measured and not taken,
-  costing 1.6x to 1.8x on a gaussian or a gamma with a modelled
+  costing 1.6x to 1.8x on a gaussian or a gamma with a modeled
   dispersion.
 
 ## statmodels7 0.134.0
@@ -2475,14 +2609,14 @@ choosing a model, each decided with the measurement beside it.
   parameters beside the coefficients, read from
   [`statmod_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/statmod_joint_pieces.md),
   the closures the joint inner step minimizes. The outer reading covers
-  the coordinates the decrement reads; where none remains the foot says
-  `outer not available: at a boundary`. Measured on ten shapes: healthy
-  fits read an inner gradient of 1.4e-11 to 6.2e-03 standard errors and
-  an outer one of 2.4e-06 to 1.8e-02, against 0.84 on an inner fit
-  stopped after one iteration and 2.6 on an outer search stopped after
-  one; a gas volatility model reads 4.3e-13 and a minimum eigenvalue of
-  0.034, where the coefficient-only reading gave exactly 1.
-  `search_verdict()` is removed.
+  the coordinates the decrement reads; where none remains the foot
+  prints `outer not available: at a boundary`. Measured on ten shapes:
+  healthy fits read an inner gradient of 1.4e-11 to 6.2e-03 standard
+  errors and an outer one of 2.4e-06 to 1.8e-02, against 0.84 on an
+  inner fit stopped after one iteration and 2.6 on an outer search
+  stopped after one; a gas volatility model reads 4.3e-13 and a minimum
+  eigenvalue of 0.034, where the coefficient-only reading gave
+  exactly 1. `search_verdict()` is removed.
 
 ## statmodels7 0.132.0
 
@@ -2512,13 +2646,14 @@ choosing a model, each decided with the measurement beside it.
   route’s own analytic Hessian reaches on the same data (`1.8e-06`,
   `7.7e-07`, `8.7e-07` on the gamma) – and at the 4000 observations of a
   single smooth it converges O(h^2), `1.4e-05`, `1.1e-06`, `3.5e-08`,
-  where the stencil the certificate used to read sits `7.6e-05` away.
-  Reading one matrix for both, in either direction, fails the new test.
+  where the stencil that the certificate used to read sits `7.6e-05`
+  away. Reading one matrix for both, in either direction, fails the new
+  test.
 - **The certificate on the expected route no longer differences.**
   Measured at 4000 observations on one smooth, its share of the fit goes
-  from 49 to 16 per cent on a gaussian, 42 to 12 on a Poisson, 47 to 16
+  from 49 to 16 percent on a gaussian, 42 to 12 on a Poisson, 47 to 16
   on a gamma, 48 to 18 on a negative binomial, 29 to 10 on a beta, and
-  from 94 to 11 per cent – 3.14 s to 0.38 s – on three smooths beside a
+  from 94 to 11 percent – 3.14 s to 0.38 s – on three smooths beside a
   random effect over 40 levels.
 - **[`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md),
   [`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md)
@@ -2530,7 +2665,7 @@ choosing a model, each decided with the measurement beside it.
   without the order-2 gate, and on the expected route the assembly
   traced the OBSERVED third and fourth derivatives against the EXPECTED
   penalized matrix: 1e-4 to 3e-4 relative against a second difference of
-  the criterion at 4000 observations, 1.6 per cent on a hyperparameter’s
+  the criterion at 4000 observations, 1.6 percent on a hyperparameter’s
   variance at 400, exact only on the Poisson. A family that answers now
   reads the analytic Hessian, any other the stencil of the exact
   gradient.
@@ -2553,12 +2688,12 @@ choosing a model, each decided with the measurement beside it.
   difference then missed the mode’s movement by an amount constant in
   the step, which the check at three times the step passed. Measured at
   `n = 4000` on one smooth against the analytic Hessian: `4.8e-02` on a
-  gaussian, where the check refused and the certificate on the expected
+  gaussian, where the check rejected and the certificate on the expected
   information had no curvature to read, `1.6e-04` on a gamma and a
   negative binomial and `9.1e-03` on a Student t prior over a random
   effect, all accepted; now `4.5e-06`, `2.8e-06`, `5.7e-06` and
   `2.8e-04`. A penalized filter reads `2.6e-08` either way and a mixed
-  covariance class at the boundary of its chart is still refused. The
+  covariance class at the boundary of its chart is still rejected. The
   stencil costs 1.1 to 1.9 times what it did, paid only where a
   curvature is differenced. The step stays `1e-3`.
 
@@ -2570,9 +2705,9 @@ choosing a model, each decided with the measurement beside it.
   criterion reads how itself moves: along a second direction and in each
   hyperparameter.
   [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  refused order 2 there, so the certificate differenced the exact
+  rejected order 2 there, so the certificate differenced the exact
   gradient – and on a Student t prior over 30 groups that stencil
-  refused on every one of four samples, leaving the certificate
+  rejected on every one of four samples, leaving the certificate
   `unknown` and
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
   `NULL`. The assembly in
@@ -2635,15 +2770,16 @@ choosing a model, each decided with the measurement beside it.
 
 ## statmodels7 0.129.0
 
-- **The exact outer gradient beside a structural term no penalty covers
-  reads how the mode moves jointly.** With no penalty over a filter’s
-  own parameters the criterion’s determinant is over the coefficients
-  alone, on the static design, but the predictors it is read at carry
-  the filter’s level, which depends on the coefficients through the
-  recursion and on the filter’s parameters, and those are estimated
-  beside the coefficients and move with the hyperparameter too. The
-  gradient read the coefficients alone for both the mode’s movement and
-  the determinant’s. It now solves with the joint penalized curvature,
+- **The exact outer gradient beside a structural term that no penalty
+  covers reads how the mode moves jointly.** With no penalty over a
+  filter’s own parameters the criterion’s determinant is over the
+  coefficients alone, on the static design, but the predictors at which
+  it is read carry the filter’s level, which depends on the coefficients
+  through the recursion and on the filter’s parameters, and those are
+  estimated beside the coefficients and move with the hyperparameter
+  too. The gradient read the coefficients alone for both the mode’s
+  movement and the determinant’s. It now solves with the joint penalized
+  curvature,
   [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
   plus the penalty on the coefficients, and reads the determinant’s
   movement along the total derivative of every predictor, the forward
@@ -2681,13 +2817,13 @@ choosing a model, each decided with the measurement beside it.
   [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
   answered order 2 for an unpenalized `gas()` all the same: it read
   `-3.97422` where a second difference of the criterion reads
-  `-4.00272`, 0.71 per cent out and flat, while
+  `-4.00272`, 0.71 percent out and flat, while
   [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
-  reads `-4.00270`. Order 2 is refused there now, on both the marginal
+  reads `-4.00270`. Order 2 is rejected there now, on both the marginal
   and the prediction-error routes, so the certificate’s curvature is
   differenced; it costs `0.41` s against the joint assembly’s `0.67` s
   at the fit.
-- **A term of the likelihood shape, `regime()`, is refused at both
+- **A term of the likelihood shape, `regime()`, is rejected at both
   orders.** Its exact gradient needs how the smoothed posterior moves
   along the direction the mode moves in, which `modelterms7` does not
   expose, and read on the coefficients alone it was out by `2.05e-04`,
@@ -2741,7 +2877,7 @@ choosing a model, each decided with the measurement beside it.
 - The piece is summed over **every** penalty whose Hessian moves, not
   only the one owning the hyperparameter being differentiated, the mode
   moving in all of the coefficients at once; and a penalty held at given
-  values is asked as well. It comes from
+  values is requested as well. It comes from
   [`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html),
   which is zero for every penalty quadratic in the coefficients, so a
   model carrying only ridges, smooths and Gaussian random effects
@@ -2754,9 +2890,9 @@ choosing a model, each decided with the measurement beside it.
   [`identical()`](https://rdrr.io/r/base/identical.html), 84 leaves of
   84.
 - [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  refuses the exact gradient where a penalty whose Hessian moves cannot
+  rejects the exact gradient where a penalty whose Hessian moves cannot
   supply that movement – a multivariate t prior, a covariance class
-  whose prior is not quadratic – and refuses order 2 for any such
+  whose prior is not quadratic – and rejects order 2 for any such
   penalty, the order-2 assembly being written for a Hessian that does
   not move.
 - Requires `penalties7 (>= 0.24.0)`.
@@ -2764,7 +2900,7 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.127.2
 
 - **A coordinate at an edge is NAMED on its free value alone, whatever
-  its own curvature says.** 0.127.1 repaired the branch where no
+  its own curvature indicates.** 0.127.1 repaired the branch where no
   curvature can be read at all and left the deeper half of the same
   defect: where the analytic route DOES answer, `boundary` and
   `boundary_key` were reported on the conjunction of the value with
@@ -2794,7 +2930,7 @@ choosing a model, each decided with the measurement beside it.
 
 ## statmodels7 0.127.1
 
-- **The two repairs 0.127.0’s own CI asked for**, on the one platform of
+- **The two repairs 0.127.0’s own CI required**, on the one platform of
   five that failed. Nothing else moves: the suite is 0 failures with the
   2 documented skips and `--as-cran` the expected pair either way.
 
@@ -2805,12 +2941,12 @@ choosing a model, each decided with the measurement beside it.
   [`summary()`](https://rdrr.io/r/base/summary.html) reads to leave a
   standard error off a coordinate pinned at an edge, so it would have
   been taken away on exactly the fits least able to spare it – a mixed
-  covariance class inside a filter, where the order-2 route is refused
-  and the stencil refuses too. The state stays `"unknown"` and the
-  reason says why, so nothing is certified on a value alone; the second
-  conjunct of the edge test is dropped in that branch and only there, it
-  existing to keep `edge` from deciding a verdict that this branch does
-  not give.
+  covariance class inside a filter, where the order-2 route is rejected
+  and the stencil rejects too. The state stays `"unknown"` and the
+  reason gives the cause, so nothing is certified on a value alone; the
+  second conjunct of the edge test is dropped in that branch and only
+  there, it existing to keep `edge` from deciding a verdict that this
+  branch does not give.
 
 - ⚠️ **A tolerance placed where this machine stops.**
   `test-hess-stencil.R` compares the analytic structural Hessian against
@@ -2839,8 +2975,8 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.127.0
 
 - **[`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-  reads the rise the criterion would still buy rather than the size of
-  its gradient.** The verdict is the Newton decrement against the
+  reads the rise that the criterion would still buy rather than the size
+  of its gradient.** The verdict is the Newton decrement against the
   criterion’s own curvature, so `tol` is now a threshold in the
   criterion’s units and means the same thing at every sample size and on
   every shape. The default does not move and its meaning does.
@@ -2870,9 +3006,9 @@ choosing a model, each decided with the measurement beside it.
 - The decrement is a reading in criterion units rather than a statistic
   calibrated to be one: over the 838 of those fits whose gap exceeds
   `1e-6`, with , over a gap running from `1.3e-06` to 137 – eight orders
-  of magnitude. ⚠️ The figure recorded when the decision was taken said
-  four orders; re-derived from the saved census for this release it is
-  eight, the slope and the fit reproducing to the digit.
+  of magnitude. ⚠️ The figure recorded when the decision was taken
+  stated four orders; re-derived from the saved census for this release
+  it is eight, the slope and the fit reproducing to the digit.
 
 - ⚠️ **The premise that the outer gradient grows with does not
   reproduce.** At a fixed model structure its slope in is -0.42, -0.46
@@ -2907,7 +3043,7 @@ choosing a model, each decided with the measurement beside it.
   which is the route
   [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
   already takes for a model carrying a filter. Two forms reach it: a
-  criterion asked for on the **expected** information, and a
+  criterion computed on the **expected** information, and a
   **separable** penalty whose curvature moves with the coefficient, such
   as a heavy-tailed prior on a random effect. Both carry an exact
   gradient, so what is differenced is a derivative the package computes.
@@ -2922,8 +3058,8 @@ choosing a model, each decided with the measurement beside it.
 
 - ⚠️ **What the certificate costs has risen, and on both paths.** It is
   no longer one gradient and one solve: over 40 fits whose form carries
-  the analytic Hessian it goes from 2.4 to 11.4 per cent of the fit
-  itself, and on the eight that difference it, from 3.4 to 26 per cent –
+  the analytic Hessian it goes from 2.4 to 11.4 percent of the fit
+  itself, and on the eight that difference it, from 3.4 to 26 percent –
   refits, 0.05 to 0.13 seconds on the shapes tried. A fit whose form
   carries the analytic Hessian still refits nothing.
 
@@ -3000,13 +3136,13 @@ choosing a model, each decided with the measurement beside it.
   1.1e-02 of criterion on the table, which is the worst figure anywhere
   and 100 times the worst on the ten-shape battery. In what a reader
   reads, over six such fits: the smoothing parameters move by at most
-  **0.8 per cent**, the effective degrees of freedom by at most **0.39
-  of 600**, the fitted values by at most **4.7e-04** against an rmse to
-  the truth of 0.33, and that rmse is identical to four figures. Elapsed
+  **0.8 percent**, the effective degrees of freedom by at most **0.39 of
+  600**, the fitted values by at most **4.7e-04** against an rmse to the
+  truth of 0.33, and that rmse is identical to four figures. Elapsed
   falls from 4.9 to 2.4 seconds on the largest. \# statmodels7 0.126.0
 
 - **[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)’s
-  page says where a dispersion is read.** What these criteria estimate
+  page states where a dispersion is read.** What these criteria estimate
   are the hyperparameters; everything else is a coefficient, read at the
   joint mode, and that includes the intercept of a dispersion equation –
   a negative binomial’s `theta`, a Gamma’s dispersion, a gaussian’s
@@ -3021,7 +3157,7 @@ choosing a model, each decided with the measurement beside it.
   not which coefficients the determinant spans, which the two effects
   separated say rather than an argument: over eight designs, moving the
   dispersion intercept out of the determinant and leaving it at the
-  joint mode accounts for 0.01 to 1.75 per cent of the gap, and reading
+  joint mode accounts for 0.01 to 1.75 percent of the gap, and reading
   it as an outer parameter instead for the other 98 to 100. Our `theta`
   is the larger by a factor of 1.03 to 1.33.
 
@@ -3060,13 +3196,13 @@ choosing a model, each decided with the measurement beside it.
   `iwls(hessian = "observed")` the observed information alone, with no
   fallback, as before. The fit records the settled method, so
   `fit@methods$smooth@hessian` reads `"expected"` or `"observed"`, and
-  its `fallback` says whether the expected pieces could step in.
+  its `fallback` records whether the expected pieces could step in.
   [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md)
-  refuses an `"auto"` method it is given without the distribution that
-  settles it. What moves in a fit of such a family is where the inner
-  iteration stops, within its tolerance, and the effective degrees of
-  freedom, which read the information the step inverts and so read the
-  observed information now, as
+  rejects an `"auto"` method that it is given without the distribution
+  that settles it. What moves in a fit of such a family is where the
+  inner iteration stops, within its tolerance, and the effective degrees
+  of freedom, which read the information the step inverts and so read
+  the observed information now, as
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) and the REML criterion
   already did: in the net of this batch they move by between 0.0009 and
   0.234 on eight smooths (pig2 2.517 to 2.750), the criterion within
@@ -3107,7 +3243,7 @@ choosing a model, each decided with the measurement beside it.
   difference of the criterion with the mode refitted, at steps of 1e-2,
   3e-3 and 1e-3, the relative gap goes from 9.5e-02, 4.6e-03, 1.7e-02,
   1.2e-02 and 4.1e-04 on a Gamma smooth under each criterion, two Gamma
-  smooths, a beta smooth and a Gaussian with its scale modelled, to the
+  smooths, a beta smooth and a Gaussian with its scale modeled, to the
   floor the observed route reaches on the same harness, 1.9e-04,
   1.9e-06, 5.7e-07, 1.2e-04 and 6.1e-07; against `numDeriv` with the
   inner fit at a tolerance of 1e-10, the beta smooth reads 2.3e-08 to
@@ -3115,14 +3251,15 @@ choosing a model, each decided with the measurement beside it.
   2.8e-04.
 
 - ⚠️ **The first version read that array under the wrong key, and only
-  the beta family said so.** The derivative of the expected information
-  is symmetric in its first two positions and not in the third, and
+  the beta family stated so.** The derivative of the expected
+  information is symmetric in its first two positions and not in the
+  third, and
   [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
   read it through the observed route’s fully symmetric key. On a Gamma
   or a Gaussian the mean-dispersion block of the expected information is
   zero, so the misread components were zero too and the gradient matched
-  to the harness’s floor; on a beta smooth the contraction was 32 per
-  cent out against a difference of the information along the mode’s
+  to the harness’s floor; on a beta smooth the contraction was 32
+  percent out against a difference of the information along the mode’s
   movement and the gradient 1.7e-03.
   [`contract3()`](https://statmodels7.github.io/statmodels7/reference/contract3.md)
   takes the key now, 1.7e-10 against the same difference.
@@ -3131,12 +3268,12 @@ choosing a model, each decided with the measurement beside it.
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   and
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-  refuse a hyperparameter of a penalty over a structural term’s own
+  reject a hyperparameter of a penalty over a structural term’s own
   parameters, by name and with the route that works.** Such a penalty
   covers positions among the term’s own parameters and no column of a
   design, while those criteria read the degrees of freedom, their
   gradient and the cross-validation path over the coefficients alone.
-  Measured before the refusal, the exact gradient of
+  Measured before the rejection, the exact gradient of
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   there was exactly 0, the search stopped at its first evaluation
   reporting convergence, and the traces it priced were 2 and 1 where the
@@ -3148,16 +3285,16 @@ choosing a model, each decided with the measurement beside it.
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   for a smooth penalty and no remedy for one with a kink.
 
-- ⚠️ **No remedy is named for a penalty with a kink, because holding its
-  hyperparameter does not fit either.** A lasso over a filter’s own
-  parameters held at `lambda = 2` dies on *“subscript out of bounds”*
-  inside the coordinate-descent route, in 0.124.0 as well, the route
-  reading the penalized coordinates as columns of a design. A ridge or a
-  random effect held there fits.
+- ⚠️ **The message names no remedy for a penalty with a kink, because
+  holding its hyperparameter does not fit either.** A lasso over a
+  filter’s own parameters held at `lambda = 2` dies on *“subscript out
+  of bounds”* inside the coordinate-descent route, in 0.124.0 as well,
+  the route reading the penalized coordinates as columns of a design. A
+  ridge or a random effect held there fits.
 
-- **The certificate of a fit with no outer gradient says which case it
-  is.** It used to give every such fit the reason written for a penalty
-  with a kink, so a Gamma smooth under
+- **The certificate of a fit with no outer gradient names the case.** It
+  used to give every such fit the reason written for a penalty with a
+  kink, so a Gamma smooth under
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   read *“the only hyperparameters here belong to a penalty with a kink”*
   of a model carrying none. It now distinguishes hyperparameters all
@@ -3184,7 +3321,7 @@ choosing a model, each decided with the measurement beside it.
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   and
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-  which are refused, their REML fits identical. The suite passes: 2785
+  which are rejected, their REML fits identical. The suite passes: 2785
   expectations in 598 blocks, none failing, with the two skips
   `test-robustness.R` documents.
 
@@ -3213,13 +3350,13 @@ choosing a model, each decided with the measurement beside it.
 
 ## statmodels7 0.123.0
 
-- **A criterion refuses a family whose log-density does not carry the
+- **A criterion rejects a family whose log-density does not carry the
   curvature it reads, by name and with the remedy, where the question is
   posed.** `statmod(y ~ random(~1|id), distrib = laplace_distrib())`
   died with *“the REML criterion is unavailable at the starting
   hyperparameters: the inner fit did not converge there”* — true, and
   three layers from the cause. It now names the family, the parameter,
-  the order it needs against the order there is, and what to write
+  the order that it needs against the order there is, and what to write
   instead:
 
   > the REML criterion needs 2 derivatives of the log-density in every
@@ -3230,7 +3367,7 @@ choosing a model, each decided with the measurement beside it.
   > hyperparameters yourself through hyper, or model ‘mu’ with a family
   > that is smooth in it.
 
-- ⚠️ **All five criteria refuse, and that is the behaviour to keep**:
+- ⚠️ **All five criteria reject, and that is the behavior to keep**:
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   on either information,
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
@@ -3238,11 +3375,11 @@ choosing a model, each decided with the measurement beside it.
   and
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   all read `K = -grad^2 l + S`, so all five died on the same line before
-  and all five say so now. The refusal is raised once the criterion is
-  known to have something to do, so a model whose criterion is inert is
-  not refused for a reason that would never have arisen.
+  and all five report it now. The rejection is raised once the criterion
+  is known to have something to do, so a model whose criterion is inert
+  is not rejected for a reason that would never have arisen.
 
-- ⚠️ **A fit with no criterion is NOT refused.** What the refusal
+- ⚠️ **A fit with no criterion is NOT rejected.** What the rejection
   protects is the criterion, which reads a curvature that is not there;
   the coefficients are a different question, and on `y ~ x` with a
   Laplace the layer reaches 3.6e-04 of the exact LAD fit, whose
@@ -3250,14 +3387,14 @@ choosing a model, each decided with the measurement beside it.
   estimating the coefficients at hyperparameters the caller sets, which
   is what the message points at.
 
-- Each consumer reads the order it needs rather than one blanket rule,
-  on the scale distributions7’s `params_order()` records: 1 for a score
-  continuous in the coefficients, 2 for IWLS,
+- Each consumer reads the order that it needs rather than one blanket
+  rule, on the scale distributions7’s `params_order()` records: 1 for a
+  score continuous in the coefficients, 2 for IWLS,
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) and the determinant of a
   marginal criterion, 3 for that criterion’s exact gradient, 4 for its
   exact Hessian, 5 for the fourth derivative of a filtered predictor.
   [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  gates on 3 and 4 rather than refusing, the search falling back on a
+  gates on 3 and 4 rather than rejecting, the search falling back on a
   difference, so the two kinds of consumer are told apart: at an order
   of 2 the criterion runs and the exact gradient does not.
 
@@ -3273,7 +3410,7 @@ choosing a model, each decided with the measurement beside it.
 
 - ⚠️ **This does not make the model estimable.** It makes it
   diagnosable, which is the whole of what it claims; a Laplace with a
-  penalised term still cannot have its hyperparameters chosen, because
+  penalized term still cannot have its hyperparameters chosen, because
   the Laplace expansion those criteria are built on does not exist at a
   mode that sits on the kink.
 
@@ -3285,7 +3422,7 @@ choosing a model, each decided with the measurement beside it.
   [`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html),
   and penalties7 0.22.0 repaired that predicate for a MULTIVARIATE
   parent – which is what a covariance class declares – from `FALSE` to
-  `TRUE`; with it true the loop stops refusing, and
+  `TRUE`; with it true the loop stops rejecting, and
   [`answers_term_fourth()`](https://statmodels7.github.io/statmodels7/reference/answers_term_fourth.md)
   admits a `gas()` since 0.115.0 built the joint twin
   [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
@@ -3294,31 +3431,31 @@ choosing a model, each decided with the measurement beside it.
   criterion (-345.4673505), the identical 62 evaluations, the identical
   hyperparameters and the identical certificate, because
   [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
-  holds such a model at `lbfgs()` whatever the predicate says. The
-  assertion in `test-covariance-structural.R` records the answer the
-  predicate gives and states that the Hessian has NOT been validated for
-  that shape: the route is reachable and unexercised, which is a
+  holds such a model at `lbfgs()` whatever the predicate returns. The
+  assertion in `test-covariance-structural.R` records the answer that
+  the predicate gives and states that the Hessian has NOT been validated
+  for that shape: the route is reachable and unexercised, which is a
   different thing from verified.
 
 ## statmodels7 0.122.0
 
 - **A stopping rule that was not met is not a fit that failed, and the
-  printed line said otherwise.** The convergence line read
+  printed line stated otherwise.** The convergence line read
   `search: DID NOT CONVERGE` – in capitals, where its own success reads
   `converged` in lower case, so it shouted only when it was negative and
   louder than the `certificate:` line beneath it. Those two answer
   different questions: the first is a property of the SEARCH, the second
-  of the POINT it stopped at, and the second is the one a reader has. It
-  now reads `search: stopping rule not met`.
+  of the POINT it stopped at, and the second is the one that a reader
+  has. It now reads `search: stopping rule not met`.
 
   ⚠️ **Measured, the loud line was a false alarm four times in five.**
   Over 22 fits the flag fires 5 times, and on 4 of those
   [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
   certifies the point – located to between 1.3e-09 and 2.1e-05 above
-  their own mode. The one honest failure is a Student t whose `nu` runs
-  to its chart’s edge, where the certificate agrees and refuses. On a
+  their own mode. The one genuine failure is a Student t whose `nu` runs
+  to its chart’s edge, where the certificate agrees and rejects. On a
   battery of fourteen ordinary models – smooths, tensors, random
-  effects, ridge, Poisson, Gamma, Bernoulli, both equations modelled –
+  effects, ridge, Poisson, Gamma, Bernoulli, both equations modeled –
   the flag does not fire at all, so the wording was misleading exactly
   on the harder fits a reader most needs to judge.
 
@@ -3365,14 +3502,14 @@ choosing a model, each decided with the measurement beside it.
       certificate: BOUNDARY   7.49e-14 above the mode
         at a boundary: mu/s(x, bspline_smooth(k = 10))/lambda
 
-  ⚠️ **The verdict is unchanged, and the definition says so rather than
-  a tolerance chosen for the occasion**: a coordinate reaches the
-  boundary set only with its own gradient already at or under `tol`, so
-  where every coordinate is at an edge the largest gradient still under
-  test is vacuously small and the state is `"boundary"` – which is what
-  the `0` produced. A fit with an interior coordinate reports its
-  gradient exactly as before, which the test asserts as a negative
-  control.
+  ⚠️ **The verdict is unchanged, and the definition states the rule
+  rather than a tolerance chosen for the occasion**: a coordinate
+  reaches the boundary set only with its own gradient already at or
+  under `tol`, so where every coordinate is at an edge the largest
+  gradient still under test is vacuously small and the state is
+  `"boundary"` – which is what the `0` produced. A fit with an interior
+  coordinate reports its gradient exactly as before, which the test
+  asserts as a negative control.
 
 ## statmodels7 0.120.0
 
@@ -3385,17 +3522,18 @@ choosing a model, each decided with the measurement beside it.
   penalty carrying no matrix at all, a lasso or a heavy-tailed prior,
   which shrinks every coordinate it indexes; the block then printed its
   smoothing parameters and nothing else, losing the row a reader of a
-  smooth most wants. It is the defect 0.118.0 repaired for the SINGULAR
+  smooth most needs. It is the defect 0.118.0 repaired for the SINGULAR
   question, one class further along.
 
-  ⚠️ **No existing model moves, and the measurement says why rather than
-  a tolerance.** The only penalty class misread is `AdditivePenalty`,
-  whose one consumer before basis7 0.12.0 was the anisotropic `te()` –
-  and a tensor product is centered, so it has no free leading column
-  under either class and reports 0 either way. Measured over five
-  shapes, a B-spline smooth and a P-spline smooth report 1 free column
-  before and after, both tensor shapes report 0 before and after, and
-  only `adaptive_smooth()` moves, from 0 to the 1 it has.
+  ⚠️ **No existing model moves, and the measurement gives the reason
+  rather than a tolerance.** The only penalty class misread is
+  `AdditivePenalty`, whose one consumer before basis7 0.12.0 was the
+  anisotropic `te()` – and a tensor product is centered, so it has no
+  free leading column under either class and reports 0 either way.
+  Measured over five shapes, a B-spline smooth and a P-spline smooth
+  report 1 free column before and after, both tensor shapes report 0
+  before and after, and only `adaptive_smooth()` moves, from 0 to the 1
+  it has.
 
   The reading is a sum of the components’ ABSOLUTE values, which answers
   “does any component touch this coordinate” exactly and without an
@@ -3430,7 +3568,7 @@ choosing a model, each decided with the measurement beside it.
   – while `predict(fit, "mu", newdata)` was wrong, that branch recycling
   to `n_obs`. Two targets of one call disagreeing about how many rows
   there are is the kind of internal contradiction this package’s history
-  says to look for.
+  indicates where to look for.
 
 - The regression is injection-checked against a genuinely different
   binary rather than against a mock: run under the previously released
@@ -3448,13 +3586,13 @@ choosing a model, each decided with the measurement beside it.
 - **A smooth shows its linear part whatever penalty it declares.**
   [`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
   decides which coefficient rows of a smooth’s block a summary lists,
-  and it asked `term_penalty()` – the singular question, which answers
+  and it called `term_penalty()` – the singular question, which answers
   only where one penalty covers the whole block. Since 0.73.0 a smooth
   may declare one penalty over its penalized coordinates alone, where
   the smoother carries a penalty factory, or one per level of a factor
   `by`; in neither case is there a single penalty to fetch, so the block
   printed its smoothing parameter and nothing else – losing the linear
-  row, which is the one a reader of a smooth most wants. It reads
+  row, which is the one a reader of a smooth most needs. It reads
   `term_penalties()` now and marks the leading columns no entry’s
   penalty touches, whether because no entry indexes them or because the
   entry that does carries a matrix with a zero column there.
@@ -3467,9 +3605,9 @@ choosing a model, each decided with the measurement beside it.
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   fits the new shapes with no routing work at all, which is what the
-  entry contract was for. A kinked penalty on a smooth is chosen by the
-  path over `sparse_criterion` that `lasso()` and its siblings already
-  take, and one smoothing parameter per level is m entries keyed
+  structure of the entry was for. A kinked penalty on a smooth is chosen
+  by the path over `sparse_criterion` that `lasso()` and its siblings
+  already take, and one smoothing parameter per level is m entries keyed
   `term::level`, which is the shape `test-two-penalties.R` has pinned
   since two penalties on one term became possible. Measured on 400
   observations: a lasso smooth reaches an effective count of 4.00
@@ -3488,7 +3626,7 @@ choosing a model, each decided with the measurement beside it.
   smooth that keeps `f(0) = f(1)` to 2.2e-16 against the 2.2125 the old
   route gave.
 
-- ⚠️ **Every fit is unchanged, and what says so is an identity.**
+- ⚠️ **Every fit is unchanged, and what shows this is an identity.**
   Against a battery captured from 0.116.x before the change – fifteen
   term shapes and twelve fitted models, with and without `by`, factor
   and numeric, sparse and dense, tensor products isotropic and not, a
@@ -3501,9 +3639,9 @@ choosing a model, each decided with the measurement beside it.
 
 - ⚠️
   **[`smooth_linear_cols()`](https://statmodels7.github.io/statmodels7/reference/smooth_linear_cols.md)
-  asks the construction rather than a flag.** It read `spec$linear`,
+  reads the construction rather than a flag.** It read `spec$linear`,
   which was the term’s record of the same fact while a smooth was always
-  a B-spline with a second-derivative penalty. It now asks which
+  a B-spline with a second-derivative penalty. It now reads which
   **leading columns the penalty leaves free**, which is what
   `null_space = "keep"` means and which follows the smoother: one column
   at order 2, two at order 3, none for a periodic basis whose null space
@@ -3582,7 +3720,7 @@ choosing a model, each decided with the measurement beside it.
   count was joint and its correction was on the coefficients: two halves
   of one number read on two different vectors.
 
-- Neither matrix is assembled here.
+- The two matrices are not assembled here.
   [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
   is the one place is built on that vector and
   [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
@@ -3615,7 +3753,7 @@ choosing a model, each decided with the measurement beside it.
   (2026-09-09), with the measurement: `regime()` is NOT given
   `term_third()` or `term_fourth()`. Nothing would consume the third –
   [`answers_term_third()`](https://statmodels7.github.io/statmodels7/reference/answers_term_third.md)
-  is asked only inside
+  is called only inside
   [`structural_penalized()`](https://statmodels7.github.io/statmodels7/reference/structural_penalized.md),
   which is `FALSE` for it – and `RegimeTerm` answers none of the filter
   rungs, not even `term_curvature()` one below, those being derivatives
@@ -3629,7 +3767,7 @@ choosing a model, each decided with the measurement beside it.
   coefficient-space route back fails three of its six blocks – the
   value, the hand assembly and the identity against
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) – and leaves the three
-  structural ones green, which is what says they discriminate.
+  structural ones green, which is what shows they discriminate.
 
 ## statmodels7 0.115.0
 
@@ -3690,10 +3828,10 @@ choosing a model, each decided with the measurement beside it.
   certificate and the printed summary are every one
   [`identical()`](https://rdrr.io/r/base/identical.html).
 
-- ⚠️ WHAT IT BUYS WHERE THE STENCIL REFUSES IS A NUMBER AND NOT AN
+- ⚠️ WHAT IT BUYS WHERE THE STENCIL REJECTS IS A NUMBER AND NOT AN
   INTERVAL. On a mixed covariance class whose correlation the search
   leaves at the boundary of the spherical chart, the stencil’s two-step
-  guard refuses and the analytic route returns a matrix, differencing
+  guard rejects and the analytic route returns a matrix, differencing
   nothing. That matrix is NOT verifiable there – a difference of the
   exact gradient reads 3.7e-02, 4.7e-01 and 1.6e-01 at of 1e-2, 3e-3 and
   1e-3, which is noise.
@@ -3710,7 +3848,7 @@ choosing a model, each decided with the measurement beside it.
   oldrel-1. The first correction pinned the sign of one rounding-level
   eigenvalue and the second pinned the ratio; both are assertions about
   the platform. What is stable, and is what the test was written for, is
-  that the STENCIL refuses. What a READER is told does not turn on any
+  that the STENCIL rejects. What a READER is told does not turn on any
   of it: the certificate names that coordinate a boundary and the
   summary suppresses its interval whatever the variance matrix holds.
 
@@ -3725,7 +3863,7 @@ choosing a model, each decided with the measurement beside it.
 
 - [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
   opens order 2 where the structural term answers `term_fourth()` and
-  refuses where it does not, which is the rule order 1 already follows
+  rejects where it does not, which is the rule order 1 already follows
   with `term_third()`. `regime()` answers neither and keeps
   [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md),
   which stays in place as the route for any term that has not written
@@ -3754,11 +3892,11 @@ choosing a model, each decided with the measurement beside it.
   one-hyperparameter convergence check green and fails only the
   off-diagonal and the symmetry checks, which is why both exist.
 
-- ⚠️ AND A SECOND DERIVATIVE IS A STATEMENT ABOUT THE POINT IT IS READ
-  AT. The first version of the off-diagonal test used a panel of six
-  groups where the search stops with the outer gradient at **-734**;
-  there the assembled curvature reads 1.8e+06, the stencil refuses, and
-  a difference of the gradient is 80 per cent asymmetric at every step.
+- ⚠️ AND A SECOND DERIVATIVE IS A STATEMENT ABOUT THE POINT AT WHICH IT
+  IS READ. The first version of the off-diagonal test used a panel of
+  six groups where the search stops with the outer gradient at **-734**;
+  there the assembled curvature reads 1.8e+06, the stencil rejects, and
+  a difference of the gradient is 80 percent asymmetric at every step.
   The test asserts the mode before the arithmetic, so a fit landing
   elsewhere fails on the premise rather than on the derivative.
 
@@ -3778,14 +3916,14 @@ choosing a model, each decided with the measurement beside it.
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) already inverts there,
   the coefficients followed by the term’s free parameters, and
   [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
-  already said where each unit’s coordinates sit in it.
+  already stated where each unit’s coordinates sit in it.
 
 - Measured on a panel of eight groups of twenty-five whose loading is
   developed over a random effect: the correction is no longer identical
   to the conditional matrix, no warning is raised, no penalty is
   skipped, the added term’s smallest eigenvalue is -5.7e-18 against a
-  largest of 1.8e-01, and the standard errors widen by up to 11.35 per
-  cent.
+  largest of 1.8e-01, and the standard errors widen by up to 11.35
+  percent.
 
 - The movement of the mode is checked against a reference sharing no
   arithmetic with it: the joint mode refitted either side of the
@@ -3848,7 +3986,7 @@ choosing a model, each decided with the measurement beside it.
   coefficients, and a filter’s own parameters are estimated beside them
   and move with the hyperparameter too: measured against a second
   difference of the criterion, it reads -1.927925 where the criterion’s
-  is -1.944612 on an unpenalized filter beside a smooth, 0.86 per cent
+  is -1.944612 on an unpenalized filter beside a smooth, 0.86 percent
   out and flat in the step, and -1.1e-08 against -1.971456 on a
   penalized one. The stencil is flat over four decades, reading
   -1.971435 at every step from 1e-2 down to 3e-5.
@@ -3865,17 +4003,17 @@ choosing a model, each decided with the measurement beside it.
   (6.0e-01, 5.7e-01).
 
 - [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-  therefore stops refusing a mixed covariance class and a penalty over a
-  structural term’s own parameters. What that replaces is a wrong number
-  rather than a missing one: measured on twenty groups whose level is
-  developed over a random effect, the assembled curvature read 1.09e-06
-  where the criterion’s is 28.096, so the standard error came out 669.2
-  on the free scale against 0.18866 and the interval covered the whole
-  positive line.
+  therefore stops rejecting a mixed covariance class and a penalty over
+  a structural term’s own parameters. What that replaces is a wrong
+  number rather than a missing one: measured on twenty groups whose
+  level is developed over a random effect, the assembled curvature read
+  1.09e-06 where the criterion’s is 28.096, so the standard error came
+  out 669.2 on the free scale against 0.18866 and the interval covered
+  the whole positive line.
 
 - ⚠️ THE SEARCH IS DELIBERATELY LEFT WITHOUT IT.
   [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  refuses order 2 wherever a structural term is present, penalized or
+  rejects order 2 wherever a structural term is present, penalized or
   not: `lbfgs()` on the exact gradient is measured better than
   `newton()` differencing it, 15 evaluations against 86 and 112 against
   245, and a stencil per iteration would pay four refits per
@@ -3915,11 +4053,11 @@ choosing a model, each decided with the measurement beside it.
   and keeps its drawn row.
 
 - ⚠️ THE FIX IS NECESSARY AND NOT SUFFICIENT FOR A LEGIBLE PICTURE,
-  which is worth saying because the report that prompted it was a
+  which is needs saying because the report that prompted it was a
   scatterplot showing no break. The kink’s amplitude goes from 0.0102 to
   0.0778 (7.6x), the break-point now having a segment on either side to
   bend over – and against a response standard deviation of 4.39, itself
-  drawn, that is still 1.8 per cent. What makes a simulated break-point
+  drawn, that is still 1.8 percent. What makes a simulated break-point
   VISIBLE is the change of slope and the scale, which are measured in
   the response’s units and stay the caller’s to write.
 
@@ -3933,12 +4071,12 @@ choosing a model, each decided with the measurement beside it.
   two standard deviations beside it keep their standard errors and their
   intervals.
 
-- Which quantities a held coordinate costs is asked of the readable
+- Which quantities a held coordinate costs is read from the readable
   block’s Jacobian rather than of the chart, so a chart of another shape
   is covered without an edit: on the two-dimensional covariance a class
   carries, the correlation is the only reading the angle enters.
 
-- ⚠️ AND IT IS ASKED AGAINST EACH ROW’S OWN SCALE, not exactly. A
+- ⚠️ AND IT IS EVALUATED AGAINST EACH ROW’S OWN SCALE, not exactly. A
   standard deviation is a function of its own log coordinate and of
   nothing else, so its entry in the correlation column is structurally
   zero – and at one fitted point that entry came back **1.338e-23**
@@ -3950,26 +4088,26 @@ choosing a model, each decided with the measurement beside it.
       the boundary, two lost one, and after it over twenty-four fits of
       which seven do, none does.
       [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
-      is the one place the question is asked and its tolerance is
+      is the one place where the test is made and its tolerance is
       `sqrt(.Machine$double.eps)`; the same exact test decided whether a
       coordinate keeps its own row, one function up, and carried the
       same hazard.
 
-- The summary says which of the two reasons a blank cell has. A
+- The summary states which of the two reasons a blank cell has. A
   coordinate at a boundary sits at a proper maximum, so the note about a
   curvature that is not negative would state the opposite of what
   happened. ⚠️ Both notes are printed where NOTHING carries a standard
-  error, which a boundary cannot explain: it holds the coordinates it
-  names and leaves the rest computed, so a table blank throughout was
-  refused for the other reason.
+  error, which a boundary cannot explain: it holds the coordinates that
+  it names and leaves the rest computed, so a table blank throughout was
+  rejected for the other reason.
 
 - A pre-existing gap closed with it: the notes were gathered by walking
   the equations’ tables alone, and a shared covariance block’s rows are
   held apart, so a fit whose only penalized rows are a covariance a
   label collects printed one note where it now prints two.
 
-- THE FITTED CASE OF THE REGRESSION TEST IS ASKED OF A MEASURED FACT
-  rather than asserted, the repair being pinned by the unit block
+- THE FITTED CASE OF THE REGRESSION TEST IS TESTED AGAINST A MEASURED
+  FACT rather than asserted, the repair being pinned by the unit block
   instead. Whether a search stops past
   [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)’s
   edge of 8 is arithmetic for a covariance class: measured over
@@ -3989,17 +4127,17 @@ choosing a model, each decided with the measurement beside it.
   DRAWS EVERYTHING BY DEFAULT, and what `par` names is held. Writing the
   model is now the whole of what getting data from it takes.
 
-- The rule is that whoever knows what a quantity means draws it. A
-  coefficient of a design column has no other owner and comes from a
-  normal of width `sd`. A coordinate some penalty covers is drawn from
-  that penalty read as a prior, through
+- The rule is that whichever component defines what a quantity means
+  draws it. A coefficient of a design column has no other owner and
+  comes from a normal of width `sd`. A coordinate some penalty covers is
+  drawn from that penalty read as a prior, through
   [`penalties7::penalty_draw()`](https://statmodels7.github.io/penalties7/reference/penalty_draw.html),
   so a Gaussian random effect gives Gaussian effects and a lasso Laplace
   ones; the prior’s own scale is drawn too and comes back in the new
   `hyper` field. A structural term’s own parameters are drawn by the
   term, through
   [`modelterms7::term_draw()`](https://statmodels7.github.io/modelterms7/reference/term_draw.html),
-  which knows the chart each one rides.
+  which has the chart that each one rides.
 
 - THE DEFECT THIS CLOSES: a `random()` inside a structural term’s
   subformula was set to zero, the term’s own starting value, while the
@@ -4022,19 +4160,19 @@ choosing a model, each decided with the measurement beside it.
   vocabulary `par` already had:
   `par = list(omega.random = function(k) rnorm(k, 0, 0.4))`.
 
-- A PRIOR OVER COORDINATES THAT RIDE A CHART is centred half as far from
-  its bound, by the rule `term_draw()` halves its own width by. Measured
-  on a partial-autocorrelation chart, a prior scale of 1 puts 10.1 per
-  cent of the persistences past 0.95 and one of 0.5 puts 0.9 per cent
-  there, the middle ninety running -0.82 to 0.82. On the panel above the
-  difference is a between-group level spread of 6.44 against 0.93 and a
-  response spread of 8.57 against 2.94, with no failures either way;
-  three ordinary shapes – a random intercept, a smooth and a ridge – are
-  unchanged to the digit, which is the control saying the change is
-  confined to the charts.
+- A PRIOR OVER COORDINATES THAT RIDE A CHART is centered half as far
+  from its bound, by the rule `term_draw()` halves its own width by.
+  Measured on a partial-autocorrelation chart, a prior scale of 1 puts
+  10.1 percent of the persistences past 0.95 and one of 0.5 puts 0.9
+  percent there, the middle ninety running -0.82 to 0.82. On the panel
+  above the difference is a between-group level spread of 6.44 against
+  0.93 and a response spread of 8.57 against 2.94, with no failures
+  either way; three ordinary shapes – a random intercept, a smooth and a
+  ridge – are unchanged to the digit, which is the control stating the
+  change is confined to the charts.
 
 - A hyperparameter the term holds is used rather than drawn, so
-  `s(x, lambda = 2)` simulates at the smoothing it names.
+  `s(x, lambda = 2)` simulates at the smoothing that it names.
 
 - What no prior reaches falls back to the plain draw, and it is a short
   list: SCAD and MCP are improper by construction, an anisotropic tensor
@@ -4050,16 +4188,16 @@ choosing a model, each decided with the measurement beside it.
   [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
   returns 0 for a coordinate unbounded on both sides, where it
   returned 1. One is a scale for a hyperparameter bounded below, which
-  is the argument the page gives; a free coordinate of a `parameters7`
-  chart is not such a thing, and on `dr_prod(2)` one reads as standard
-  deviations of 2.718 and a correlation of -0.664 against the neutral
-  point’s unit scales and no correlation. Measured on 31 fits across the
-  four charts a caller can reach, the two agree to 3e-05 or better
-  wherever both produce a criterion; one model errors from one and fits
-  from zero, one returns no criterion from one, and two converge from
-  zero where they do not from one. The cost is one panel of six where
-  the better criterion sits at a correlation of twelve nines and
-  [`vcov()`](https://rdrr.io/r/stats/vcov.html) refuses. A
+  is the argument that the page gives; a free coordinate of a
+  `parameters7` chart is not such a thing, and on `dr_prod(2)` one reads
+  as standard deviations of 2.718 and a correlation of -0.664 against
+  the neutral point’s unit scales and no correlation. Measured on 31
+  fits across the four charts a caller can reach, the two agree to 3e-05
+  or better wherever both produce a criterion; one model errors from one
+  and fits from zero, one returns no criterion from one, and two
+  converge from zero where they do not from one. The cost is one panel
+  of six where the better criterion sits at a correlation of twelve
+  nines and [`vcov()`](https://rdrr.io/r/stats/vcov.html) rejects. A
   hyperparameter with a finite bound is untouched.
 
 - The same function takes the unit its one-sided bound is measured in,
@@ -4073,11 +4211,11 @@ choosing a model, each decided with the measurement beside it.
   cannot be factorized there is no trace, and returning the old one – a
   parameter apiece – put a different quantity under the same name.
   Measured on a panel where it fires, 20.00 against a penalized count of
-  10.40, with nothing saying the definition had changed.
+  10.40, with nothing showing the definition had changed.
 
   It fires where the joint matrix is INDEFINITE and not merely
   ill-conditioned: at one such point its smallest eigenvalue is
-  -7.111e-05, [`chol()`](https://rdrr.io/r/base/chol.html) refuses it as
+  -7.111e-05, [`chol()`](https://rdrr.io/r/base/chol.html) rejects it as
   [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   does, and only a plain solve succeeds, returning a diagonal with an
   entry of -7.56e-05, which is not a smoother’s. So there is nothing to
@@ -4092,7 +4230,7 @@ choosing a model, each decided with the measurement beside it.
   corrected with it. It replaces a missing count by the term’s number of
   COLUMNS, on the stated reading that this is an upper bound and that
   dropping the term would flatter every criterion. A structural term has
-  no columns, so that bound was zero and said the opposite of what it
+  no columns, so that bound was zero and stated the opposite of what it
   means: measured, a filter carrying eighteen free parameters reported a
   df of 2, and now reports 20.
 
@@ -4108,7 +4246,7 @@ choosing a model, each decided with the measurement beside it.
   already read. A filter’s parameters are estimated beside the
   coefficients and, since 0.24.0, may carry a penalty of their own – a
   development of a loading over the groups of a panel, a covariance
-  class – so the same definition wants the joint matrix:
+  class – so the same definition requires the joint matrix:
   [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md)
   reads it off
   [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
@@ -4117,14 +4255,14 @@ choosing a model, each decided with the measurement beside it.
   the two the criterion of such a model already assembles.
 
   The rule this replaces is that same trace restricted to the
-  coordinates no penalty covers, and the identity says so rather than a
-  tolerance: with carrying a zero row and column outside its own
+  coordinates no penalty covers, and the identity shows this rather than
+  a tolerance: with carrying a zero row and column outside its own
   support, so a coordinate outside that support has exactly one.
   Measured on three models, the unpenalized coordinates of a filter come
   back at 1.000000000000000 with a gap of 0.000e+00, while eight
   deviations of a developed loading read between 0.080 and 0.247 where
-  the count says eight, and sixteen under a covariance class read
-  between -0.0003 and 0.829 where the count says sixteen.
+  the count gives eight, and sixteen under a covariance class read
+  between -0.0003 and 0.829 where the count gives sixteen.
 
   What it moves, on the three reference panels:
 
@@ -4151,7 +4289,7 @@ choosing a model, each decided with the measurement beside it.
   [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
   has no determinant for it, and `regime()` takes no subformula, so its
   own parameters carry no penalty and one apiece is what the joint trace
-  would say.
+  would give.
 
   What does move beside a filter is an ORDINARY term’s row, by the
   coupling: measured, a random effect beside an unpenalized filter goes
@@ -4169,12 +4307,12 @@ choosing a model, each decided with the measurement beside it.
   count and the criterion agree with each other.
 
 - THE EXACT OUTER GRADIENT ANSWERS FOR A COVARIANCE CLASS SPANNING A
-  FILTER AND AN ORDINARY TERM, where 0.109.0 refused it at both orders
+  FILTER AND AN ORDINARY TERM, where 0.109.0 rejected it at both orders
   because it came back exactly zero in every coordinate.
 
-  The refusal was necessary and its stated cost was not what it seemed.
-  That release recorded the work as assembling the movement of the joint
-  curvature inside
+  The rejection was necessary and its stated cost was not what it
+  seemed. That release recorded the work as assembling the movement of
+  the joint curvature inside
   [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md),
   “which today works on the coefficients alone”. Measured, that is not
   where the work was:
@@ -4213,10 +4351,10 @@ choosing a model, each decided with the measurement beside it.
   which reads as a missing term and is not one, and is recorded because
   that signature does not distinguish the two.
 
-  Order 2 stays refused, and not for a reason of a mixed class’s own:
+  Order 2 stays rejected, and not for a reason of a mixed class’s own:
   [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
   is written over the stacked coefficients and has no joint twin, so
-  every model carrying a penalized structural term is refused there.
+  every model carrying a penalized structural term is rejected there.
   Measured, what it would have to beat is small: `newton()` differencing
   the now-exact gradient reaches the same criterion as `lbfgs()` on it,
   -532.040118 against -532.040118 and -442.107128 against -442.107128 on
@@ -4225,12 +4363,12 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.109.0
 
 - A COVARIANCE CLASS MAY SPAN A FILTER’S OWN PARAMETERS AND AN ORDINARY
-  TERM’S COEFFICIENTS, which is the case 0.108.0 refused and the one the
-  request came from: one prior over a mean’s random intercept and a
+  TERM’S COEFFICIENTS, which is the case 0.108.0 rejected and the one
+  the request came from: one prior over a mean’s random intercept and a
   score-driven loading’s, correlated across the groups of a panel.
 
-  That refusal was right about the vector and wrong about the work. The
-  two halves are positions in two different vectors and a penalty is
+  That rejection was right about the vector and wrong about the work.
+  The two halves are positions in two different vectors and a penalty is
   read at one index, but the vector holding both already exists and
   three places assemble it – the joint inner step, the marginal
   criterion and the variance – as the stacked coefficients followed by
@@ -4280,8 +4418,8 @@ choosing a model, each decided with the measurement beside it.
   away, to `exp(3.7)` and `exp(14.4)`. The objective reads the value
   from the joint route, where the two derivative blocks are not.
 
-- ⚠️ THE EXACT OUTER DERIVATIVES ARE REFUSED FOR A MIXED CLASS, and the
-  measurement says the refusal is necessary rather than cautious: the
+- ⚠️ THE EXACT OUTER DERIVATIVES ARE REJECTED FOR A MIXED CLASS, and the
+  measurement shows the rejection is necessary rather than cautious: the
   exact gradient returns EXACTLY ZERO in all three coordinates where a
   central difference of the criterion reads -9.43, -7.80 and +3.29. Its
   contribution lives in the joint matrix
@@ -4298,11 +4436,11 @@ choosing a model, each decided with the measurement beside it.
   0.389 and +0.733: 1.48 criterion units, and the difference between a
   fitted correlation and a boundary.
   [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
-  prefers `lbfgs()` wherever a mixed class is present.
+  selects `lbfgs()` wherever a mixed class is present.
 
 - ⚠️
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  REFUSES A MIXED CLASS WHOSE PRIOR IS NOT PROPER rather than projecting
+  REJECTS A MIXED CLASS WHOSE PRIOR IS NOT PROPER rather than projecting
   onto half of it.
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   integrates over the range of the penalty, and for a proper prior
@@ -4347,14 +4485,14 @@ choosing a model, each decided with the measurement beside it.
   any others, so the level and the loading of one filter may be
   correlated across groups:
 
-  which was refused until now, on the reading that a class is addressed
+  which was rejected until now, on the reading that a class is addressed
   at positions in the stacked coefficient vector and a filter
   contributes no column to it. That is true of the vector and not of the
   work: a filter’s parameters are estimated beside the coefficients, its
   own penalties are already read at positions among them, and a class
-  inside one is read at the same positions by the same functions.
-  Nothing new is derived. `penalties7` computes one Hessian over the
-  class’s stacked vector, in the class’s own order, and what this
+  inside one is read at the same positions by the same functions. The
+  code derives no new quantity. `penalties7` computes one Hessian over
+  the class’s stacked vector, in the class’s own order, and what this
   release adds is where to scatter it.
 
   The summary reports the block ahead of the equations, as it does for a
@@ -4363,10 +4501,10 @@ choosing a model, each decided with the measurement beside it.
   these are effects inside one term of `mu`. Forty groups, effects drawn
   with a correlation of 0.7 and both scales at 0.5:
 
-  The control that says the addressing is right is an identity rather
+  The control that shows the addressing is right is an identity rather
   than a tolerance: a class collecting ONE member describes the same
   prior over the same coordinates as no label at all, and has to
-  reproduce the unlabelled fit exactly. Measured on a panel of ten
+  reproduce the unlabeled fit exactly. Measured on a panel of ten
   groups, `gas(alpha1 ~ 1 + random(~ 1 | u | g))` against
   `gas(alpha1 ~ 1 + random(~ 1 | g))`: the log-likelihood agrees at
   `0.000e+00` (-1168.705194827967 on both sides), and so do every
@@ -4374,34 +4512,34 @@ choosing a model, each decided with the measurement beside it.
   effective degrees of freedom and the hyperparameter. The two printed
   summaries differ in three lines, which are the formula text twice and
   the elapsed time. The derivative route does not move either: the exact
-  outer gradient is available and the exact outer Hessian is refused,
+  outer gradient is available and the exact outer Hessian is rejected,
   which is what a filter’s own penalty already gave, so the search is
   `lbfgs()` as it was.
 
   ⚠️ AND THE GRADIENT IS CHECKED WHERE THE IDENTITY CONTROL CANNOT
   REACH. A class collecting one member carries a SCALAR hyperparameter
-  and would reproduce the unlabelled answer whatever the assembly did
+  and would reproduce the unlabeled answer whatever the assembly did
   with a chart; a class collecting two carries three – two scales and a
-  correlation – so that is the case that says whether the new addressing
-  is right in every coordinate. Against a central difference of the
-  criterion with the mode refitted, the relative gap is 9.8e-06, 8.8e-07
-  and 9.8e-08 at steps of 1e-2, 3e-3 and 1e-3: clean `O(h^2)`, which is
-  what separates a correct gradient from one missing a term, that being
-  flat in the step.
+  correlation – so that is the case that shows whether the new
+  addressing is right in every coordinate. Against a central difference
+  of the criterion with the mode refitted, the relative gap is 9.8e-06,
+  8.8e-07 and 9.8e-08 at steps of 1e-2, 3e-3 and 1e-3: clean `O(h^2)`,
+  which is what separates a correct gradient from one missing a term,
+  that being flat in the step.
 
-- ⚠️ A CLASS SPLIT BETWEEN A FILTER AND AN ORDINARY TERM IS REFUSED, and
-  this is the case the request came from –
+- ⚠️ A CLASS SPLIT BETWEEN A FILTER AND AN ORDINARY TERM IS REJECTED,
+  and this is the case the request came from –
   `random(~ 1 | u | g) + gas(alpha1 ~ 1 + random(~ 1 | u | g))`, one
   prior over a mean’s random intercept and a loading’s. Its two halves
   are positions in two different vectors, and a penalty is read at one
   index. The joint vector they would be positions in exists – the inner
   step, the marginal criterion and the variance all build it – but the
   penalty enters each of the three as two diagonal blocks with no cross
-  block between them. The refusal names both members and says which is
-  which, and a label inside a filter shared with another effect of the
-  same filter is the case that is fitted.
+  block between them. The rejection names both members and states which
+  is which, and a label inside a filter shared with another effect of
+  the same filter is the case that is fitted.
 
-- ⚠️ AND A LABEL UNDER A TERM OF THE LIKELIHOOD SHAPE STAYS REFUSED FOR
+- ⚠️ AND A LABEL UNDER A TERM OF THE LIKELIHOOD SHAPE STAYS REJECTED FOR
   A DIFFERENT REASON, which is the model’s rather than the addressing’s:
   what such a term carries is a latent the likelihood integrates out,
   and a covariance block is a prior over coefficients, so correlating
@@ -4410,15 +4548,15 @@ choosing a model, each decided with the measurement beside it.
   `regime()` takes no subformula at all and a marginal break-point
   rejects one in `modelterms7` 0.68.0 – so the guard is unreachable from
   the formula language and is tested on a term of that shape written for
-  the purpose. A guard nothing can reach is a guard nothing keeps
-  honest.
+  the purpose. A guard nothing can reach is a guard that no test
+  exercises.
 
 - ⚠️ The effective degrees of freedom of a shared block counted one row
   PER MEMBER where the count is filed per term, so two members that are
   two developments of ONE term read that term’s row twice: measured, a
   class inside a filter reported `edf 44.00` in a model whose whole
   effective count is 24.00. It counts each distinct term once, and
-  reports 22.00. The defect is not the filter’s – two labelled
+  reports 22.00. The defect is not the filter’s – two labeled
   subformulas of one `nl()` have the same shape – and no existing case
   moves, a class whose members are separate terms being unaffected.
 
@@ -4427,14 +4565,14 @@ choosing a model, each decided with the measurement beside it.
   term’s hyperparameters are built from its own entries PLUS the
   class’s, which
   [`modelterms7::term_penalties()`](https://statmodels7.github.io/modelterms7/reference/term_penalties.html)
-  does not report – a labelled sub-term declares none, the block being
+  does not report – a labeled sub-term declares none, the block being
   the class’s – while the code pairing each row with its penalty walked
   `term_penalties()` again and came back one entry shorter. The
   penalties travel with their rows now.
 
 - ⚠️
   [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
-  asked a structural term’s penalty for a derivative at an EMPTY
+  requested a derivative from a structural term’s penalty at an EMPTY
   coefficient vector. Everything it builds is placed in a matrix over
   the stacked coefficients, where such a penalty has no position at all,
   so it was already contributing nothing – the writes land at `NULL`
@@ -4443,11 +4581,11 @@ choosing a model, each decided with the measurement beside it.
   warns, sixteen times per
   [`summary()`](https://rdrr.io/r/base/summary.html). It is skipped
   explicitly, with the reason, and no number moves: a fit carrying an
-  unlabelled filter is
+  unlabeled filter is
   [`identical()`](https://rdrr.io/r/base/identical.html) across the
   change.
 
-- ⚠️ What the model costs to estimate is worth stating before it is
+- ⚠️ What the model costs to estimate should be stated before it is
   written: the correlation between a loading deviation and a level
   deviation is identified by the DATA and not by the construction, the
   two entering the likelihood by very different routes. Measured against
@@ -4458,13 +4596,13 @@ choosing a model, each decided with the measurement beside it.
   simulated at 0.96 to 0.98 for the level and 0.59 to 0.81 for the
   loading, which is the same asymmetry from the other side. The model is
   one that can be written and fitted; it is not one that is easy to
-  estimate, and where it is not the certificate says so.
+  estimate, and where it is not the certificate reports it.
 
 ## statmodels7 0.107.0
 
 - A COVARIANCE SHARED BETWEEN TERMS IS REPORTED AHEAD OF THE EQUATIONS,
   WITH EACH COORDINATE NAMED FOR THE EQUATION, THE TERM AND THE COLUMN
-  IT IS. A label shared across a bar –
+  THAT IT IS. A label shared across a bar –
   `y ~ x + random(~ 1 | a | id) | sigma ~ random(~ 1 | a | id)` – gives
   one covariance over effects of two different equations, and it used to
   be printed inside whichever member the walk reached first, under the
@@ -4472,21 +4610,21 @@ choosing a model, each decided with the measurement beside it.
 
   while the other member’s block read `(nothing to report on its own)`.
   Both statements are true of the term and neither is what a reader
-  wants: half of what is printed under `mu` is about `sigma`, and
-  nothing on the page says which half. The block belongs to none of the
+  needs: half of what is printed under `mu` is about `sigma`, and the
+  page does not state which half. The block belongs to none of the
   terms, so it is lifted out of all of them and printed once, before the
   equations:
 
-  and each member says where its numbers are instead of reporting that
+  and each member states where its numbers are instead of reporting that
   there is nothing to report.
 
-- The coordinates of a covariance a term carries ALONE are named the
-  same way, so `random(~ 1 + x | id)` reports `sd[(Intercept)]`, `sd[x]`
-  and `cor[(Intercept), x]` where it reported `sd_v1`, `sd_v2` and
-  `cor_v1_v2`. The equation goes in front of the column only where more
-  than one term is involved, and the term as well where two terms of one
-  equation write the same column name, so a label is the shortest one
-  that separates the coordinates.
+- The coordinates of a covariance that a term carries ALONE are named
+  the same way, so `random(~ 1 + x | id)` reports `sd[(Intercept)]`,
+  `sd[x]` and `cor[(Intercept), x]` where it reported `sd_v1`, `sd_v2`
+  and `cor_v1_v2`. The equation goes in front of the column only where
+  more than one term is involved, and the term as well where two terms
+  of one equation write the same column name, so a label is the shortest
+  one that separates the coordinates.
 
   A label written in a subformula carries the parameter it develops:
   `seg(x, psi ~ random(~ 1 | u | id))` beside
@@ -4505,25 +4643,25 @@ choosing a model, each decided with the measurement beside it.
   from that sub-term’s columns. A correlated random effect developing
   one of a nonlinear term’s parameters –
   `nl(~ a * exp(-r * x), a ~ 1 + random(~ 1 + z | id))` – had its
-  coordinates numbered, the question having been asked of the parent:
-  `nl()` has no grouping and the random effect inside it does.
+  coordinates numbered, the test having been made on the parent: `nl()`
+  has no grouping and the random effect inside it does.
   [`entry_owner()`](https://statmodels7.github.io/statmodels7/reference/entry_owner.md)
   finds the term an entry belongs to, at any depth of development, and
   the compartment now reads `sd[(Intercept)]`, `sd[z]`,
   `cor[(Intercept), z]`.
 
-- A TERM WHOSE ONLY PENALIZED EFFECT IS A LABELLED SUB-TERM IS NO LONGER
+- A TERM WHOSE ONLY PENALIZED EFFECT IS A LABELED SUB-TERM IS NO LONGER
   REPORTED AS AN UNPENALIZED PARAMETRIC BLOCK. It declares no penalty of
   its own – the covariance class carries it – and read after the
   penalties it came back parametric, so
   `y ~ 0 + nl(~ a * exp(-r * x), a ~ 1 + random(~ 1 | u | id))` printed
   twelve predictions one per line with a `z` and a `p` beside them,
-  under a heading saying they are an unpenalized block, with the term’s
-  own compartment and its other parameters gone – and the shared block,
-  whose rows are held by that term, disappeared with it while the other
-  member went on saying they were reported above. The question is asked
-  of everything under the term, so a term written later is covered
-  without an edit.
+  under a heading stating that they are an unpenalized block, with the
+  term’s own compartment and its other parameters gone – and the shared
+  block, whose rows are held by that term, disappeared with it while the
+  other member went on stating that they were reported above. The test
+  is made on everything under the term, so a term written later is
+  covered without an edit.
 
   The fit was never affected: the log-likelihood, the coefficients and
   the hyperparameters are identical to the printed digit before and
@@ -4537,8 +4675,8 @@ choosing a model, each decided with the measurement beside it.
   so a reader with the object has what the page shows.
   [`print()`](https://rdrr.io/r/base/print.html) takes them from there.
 
-- [`vcov()`](https://rdrr.io/r/stats/vcov.html)’s refusal names what it
-  can when the flat direction lies in a structural term’s own
+- [`vcov()`](https://rdrr.io/r/stats/vcov.html)’s rejection names what
+  it can when the flat direction lies in a structural term’s own
   parameters: the matrix spans those beside the coefficients and only
   the coefficients are named, so the message used to read
   `flat along a direction carried by: ,`.
@@ -4548,7 +4686,7 @@ choosing a model, each decided with the measurement beside it.
 - TESTING ONE COEFFICIENT AGAINST ONE VALUE IS AN EXPORTED FUNCTION,
   [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md),
   RETURNING AN S7 OBJECT. `summary(fit, test =)` reports the same four
-  statistics for every row and always against zero; this asks about one
+  statistics for every row and always against zero; this checks one
   coefficient and any value, which is the question a summary cannot be
   put – whether a slope is one, whether an elasticity is unity, whether
   a coefficient matches a value fixed outside the data.
@@ -4560,10 +4698,10 @@ choosing a model, each decided with the measurement beside it.
   Everything a caller of this toolkit receives is an object, and this is
   no exception.
 
-- ⚠️ WHAT THE RESULT SAYS ABOUT THE RESTRICTED REFIT IS THE MODE ERROR
+- ⚠️ WHAT THE RESULT STATES ABOUT THE RESTRICTED REFIT IS THE MODE ERROR
   AND NOT THE OPTIMIZER’S FLAG, which is the rule 0.81.0 established for
-  the same question one layer up. The flag says whether a stopping rule
-  fired; whether the point is usable is a matter of distance, and
+  the same question one layer up. The flag records whether a stopping
+  rule fired; whether the point is usable is a matter of distance, and
   [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)
   measures it as on the free coordinates, in log-likelihood units
   against
@@ -4591,40 +4729,41 @@ choosing a model, each decided with the measurement beside it.
   and from there it would have gone to
   [`vcov()`](https://rdrr.io/r/stats/vcov.html), which has no such
   argument either, so the request would have been answered with the Wald
-  limits in silence. It is refused by name instead, and a test pins the
-  refusal.
+  limits in silence. It is rejected by name instead, and a test pins the
+  rejection.
 
 - `statmod_stat()` is
   [`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md),
-  which says that it reads the statistic AT a value; it stays internal,
-  and it is what [`summary()`](https://rdrr.io/r/base/summary.html), the
-  inverted interval and
+  which states that it reads the statistic AT a value; it stays
+  internal, and it is what
+  [`summary()`](https://rdrr.io/r/base/summary.html), the inverted
+  interval and
   [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
   are all built on. It gains a `mode_error` argument, `FALSE` by
-  default: reading the mode error costs one Hessian, which is 63 per
-  cent of the refit on a Poisson of twenty-six coefficients and 2.3 per
-  cent on a penalized smooth, and the two loops that call the helper in
+  default: reading the mode error costs one Hessian, which is 63 percent
+  of the refit on a Poisson of twenty-six coefficients and 2.3 percent
+  on a penalized smooth, and the two loops that call the helper in
   quantity – [`summary()`](https://rdrr.io/r/base/summary.html), one row
   at a time, and the interval, five to seven times over – do not read
   it.
   [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
-  does, being the surface a reader reads one row of. Rao’s score
+  does, being the surface that a reader reads one row of. Rao’s score
   statistic pays nothing either way, reading the same matrix anyway.
 
 - A restricted fit reads its Hessian at most once however often it is
-  asked for it, and not at all where nothing asks: the likelihood ratio
-  and the gradient statistic need no matrix.
+  requested, and not at all where no statistic requires it: the
+  likelihood ratio and the gradient statistic need no matrix.
 
 - ⚠️
   [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
-  refuses a held value that is not a single finite number, where one
+  rejects a held value that is not a single finite number, where one
   used to reach the hold as a named vector of that length and fail
   several frames down, inside the objective, on a names assignment – an
   error naming neither the argument nor the mistake.
 
 ## statmodels7 0.105.0
 
-- HOW MANY COEFFICIENTS A SUMMARY PRINTS IS ASKED OF
+- HOW MANY COEFFICIENTS A SUMMARY PRINTS IS SET IN
   [`summary()`](https://rdrr.io/r/base/summary.html), AND THE ARGUMENT
   IS `max_coef`. An R session prints a summary by evaluating it, so a
   reader writes `summary(fit)` and never `print(summary(fit), ...)`: the
@@ -4640,36 +4779,37 @@ choosing a model, each decided with the measurement beside it.
 - The name is no longer `n`, which is the sample size in every other
   context. What it bounds is the COEFFICIENT rows of a block – a
   hyperparameter row is never hidden, whatever it is set to – so
-  `max_coef` says what it does. The option follows the argument and is
-  `statmodels7.summary_max_coef`.
+  `max_coef` describes what it does. The option follows the argument and
+  is `statmodels7.summary_max_coef`.
 
 - ⚠️ THE OLD SPELLING DID NOT REACH THE DOTS AND COULD NOT HAVE BEEN
   CAUGHT THERE. `n` is a prefix of `notes`, so R matches it partially
   onto that argument: measured, in a function carrying these formals
   `print(s, n = 4)` sets `notes` to 4 and leaves
   [`...names()`](https://rdrr.io/r/base/dots.html) empty, so the old
-  spelling silently asked for the notes and printed ten rows. A guard
+  spelling silently requested the notes and printed ten rows. A guard
   reading the dots would have found nothing. What catches it is the type
   – `notes` is `TRUE` or `FALSE` – and the error names `max_coef` and
-  says it is on [`summary()`](https://rdrr.io/r/base/summary.html). The
-  test pins the partial match itself, so the guard cannot be replaced by
-  one that reads the dots.
+  states that it is set on
+  [`summary()`](https://rdrr.io/r/base/summary.html). The test pins the
+  partial match itself, so the guard cannot be replaced by one that
+  reads the dots.
 
 ## statmodels7 0.104.0
 
-- A COEFFICIENT UNDER A TWICE DIFFERENTIABLE PENALTY IS TESTED AND
-  INTERVALLED LIKE ANY OTHER. 0.103.0 refused every coordinate a penalty
-  covers; the refusal was wider than its own reason, and what remains
-  refused is only the kinked case. A ridge, a random effect and both
-  parts of a smooth – the unpenalized linear column `s(x).lin`, which
-  lies in the null space of and is estimated as freely as any parametric
-  coefficient, and the rotated coordinates the penalty really does
-  shrink – all reach `statmod_stat()`, `summary(test =)` and
+- A COEFFICIENT UNDER A TWICE DIFFERENTIABLE PENALTY IS TESTED AND GIVEN
+  AN INTERVAL LIKE ANY OTHER. 0.103.0 rejected every coordinate a
+  penalty covers; the rejection was wider than its own reason, and what
+  remains rejected is only the kinked case. A ridge, a random effect and
+  both parts of a smooth – the unpenalized linear column `s(x).lin`,
+  which lies in the null space of and is estimated as freely as any
+  parametric coefficient, and the rotated coordinates the penalty really
+  does shrink – all reach `statmod_stat()`, `summary(test =)` and
   `confint(method =)`. `unpenalized_coords()` is replaced by
   [`kinked_coords()`](https://statmodels7.github.io/statmodels7/reference/kinked_coords.md),
-  which asks each penalty for
+  which queries each penalty for
   [`penalty_has_kink()`](https://statmodels7.github.io/statmodels7/reference/penalty_has_kink.md)
-  rather than asking whether a penalty is there at all.
+  rather than testing whether a penalty is there at all.
 
 - THE LIKELIHOOD RATIO READS THE PENALIZED OBJECTIVE, WHICH IS WHAT THE
   OTHER THREE ALREADY READ. Writing for the objective the fit maximizes,
@@ -4689,7 +4829,7 @@ choosing a model, each decided with the measurement beside it.
 
 - WHAT AN INTERVAL ON A SHRUNK COORDINATE MEANS, stated rather than left
   to be inferred. The penalty there is a log-prior, so is a log
-  posterior at the hyperparameters the fit reached and the inverted
+  posterior at the hyperparameters that the fit reached and the inverted
   interval is the credible set – exactly the reading
   `vcov(type = "bayesian")` already gives that row, and conditional on
   the smoothing chosen once in the same way the three restricted
@@ -4697,7 +4837,7 @@ choosing a model, each decided with the measurement beside it.
   measured, the two agree to between **2.55e-04** and **2.50e-03** on a
   smooth’s coordinates.
 
-- A kinked penalty – a lasso, a SCAD or an MCP – is still refused, and
+- A kinked penalty – a lasso, a SCAD or an MCP – is still rejected, and
   now for both of its reasons rather than for the fact of being a
   penalty. Its block is fitted by a coordinate descent, which updates
   every coordinate of its own block and cannot leave one where it was;
@@ -4708,7 +4848,7 @@ choosing a model, each decided with the measurement beside it.
   REJECTS A HELD COORDINATE INSTEAD OF MOVING IT SILENTLY. The kernel
   never read `held_coef`, so a hold that reached it was ignored without
   a word: measured, a coefficient held at 3 came back at **2.7348**. It
-  is an error now, naming the term, which is what makes the refusal
+  is an error now, naming the term, which is what makes the rejection
   above a property of the code rather than a promise.
 
 - ⚠️ AT AN EXTREME SMOOTHING PARAMETER AN INVERTED INTERVAL IS EXACTLY
@@ -4753,7 +4893,7 @@ choosing a model, each decided with the measurement beside it.
 - ⚠️ THE HYPERPARAMETERS ARE HELD TOO, at the values the unrestricted
   fit reached, and no outer search runs inside a restricted refit. The
   three restricted statistics are therefore CONDITIONAL on the smoothing
-  the data chose once. That is the honest reading of a penalized fit,
+  the data chose once. That is the accurate reading of a penalized fit,
   and it is also what makes an interval affordable: re-selecting the
   smoothing at every held value would put a whole outer search inside
   every step of a root find.
@@ -4780,13 +4920,13 @@ choosing a model, each decided with the measurement beside it.
   skewed fit the likelihood-ratio interval sits further right than the
   Wald one and the gradient interval , against a width of .
 
-- ⚠️ WHERE THEY GENUINELY PART IS THE HAUCK-DONNER EFFECT, and it is
-  worth the cost there. On a separated logistic model at a FIXED , the
-  separation widening from 1 to 6, Wald’s statistic goes 19.48, 35.03,
-  23.38, 7.94, **0.011** while the likelihood ratio rises 25.06, 78.91,
-  123.68, 152.20, **166.36** – Wald’s curvature being read at rather
-  than under the null, so the evidence against the null appears to
-  vanish as it becomes overwhelming.
+- ⚠️ WHERE THEY GENUINELY PART IS THE HAUCK-DONNER EFFECT, and it
+  justifies the cost there. On a separated logistic model at a FIXED ,
+  the separation widening from 1 to 6, Wald’s statistic goes 19.48,
+  35.03, 23.38, 7.94, **0.011** while the likelihood ratio rises 25.06,
+  78.91, 123.68, 152.20, **166.36** – Wald’s curvature being read at
+  rather than under the null, so the evidence against the null appears
+  to vanish as it becomes overwhelming.
 
 - ⚠️ WALD’S NON-INVARIANCE IS TO A NONLINEAR REPARAMETRIZATION AND NOT
   TO A RESCALING. All four statistics are invariant to , measured, so a
@@ -4804,18 +4944,18 @@ choosing a model, each decided with the measurement beside it.
   THE WALD READING, so one column never carries two tests unmarked.
   Which rows those are is
   [`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)’s
-  answer: a penalized coefficient, whose null is not the one it is
-  fitted under; an aliased one, which has no estimate to test; and every
+  answer: a penalized coefficient, whose null is not the one under which
+  it is fitted; an aliased one, which has no estimate to test; and every
   coefficient of a model carrying a structural term, whose contribution
-  is a recursion’s state rather than . A summary says how many rows and
-  why in a note.
+  is a recursion’s state rather than . A summary reports in a note how
+  many rows are affected and why.
 
-- ⚠️ A COORDINATE A PENALTY COVERS IS REFUSED EVEN WHERE THE PENALTY IS
-  FLAT IN IT, which is wider than the reason the refusal gives. The
-  measured case is a smooth’s linear column: `s()` is penalized by , so
-  `s(x).lin` lies in the null space of its own penalty and is estimated
-  as freely as any parametric coefficient. Narrowing the rule would let
-  a hold reach a block fitted by the kinked scheme, and
+- ⚠️ A COORDINATE A PENALTY COVERS IS REJECTED EVEN WHERE THE PENALTY IS
+  FLAT IN IT, which is wider than the reason that the rejection gives.
+  The measured case is a smooth’s linear column: `s()` is penalized by ,
+  so `s(x).lin` lies in the null space of its own penalty and is
+  estimated as freely as any parametric coefficient. Narrowing the rule
+  would let a hold reach a block fitted by the kinked scheme, and
   [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
   does not read `held_coef` at all: a coefficient held there would be
   moved by the sweep without a word.
@@ -4823,7 +4963,7 @@ choosing a model, each decided with the measurement beside it.
 - The statistic a summary prints is the SIGNED ROOT of the value with
   the sign of the estimate, so the column carries one kind of quantity
   whatever produced it and Wald’s own is the case where that root is
-  exact. The header says which, `z` or `r`, and the p-value is the one
+  exact. The header shows which, `z` or `r`, and the p-value is the one
   either way. Only the statistic and its p-value move with `test`: the
   interval stays Wald’s, `confint(method =)` being where the other one
   is asked for, one coefficient at a time.
@@ -4852,15 +4992,15 @@ choosing a model, each decided with the measurement beside it.
 - ⚠️ THE BLOCK KEY IS THE TERM’S DEPARSED CALL, so `s(x, k = 6)` and
   `s(x, k = 10)` are two keys and never met by name – which means the
   all-or-nothing rule 0.101.0 documented for a differing basis was, in
-  that case, unreachable: the block was not found rather than refused.
+  that case, unreachable: the block was not found rather than rejected.
   Two blocks are paired by the STEM of their coefficient names (`s(x)`
   on both sides, taken from the last dot so a covariate called `my.var`
   keeps its own) and by the term’s class.
 
 - ⚠️ WHAT IT BUYS ON A PROJECTED BLOCK IS A DIFFERENT ORDER OF MAGNITUDE
-  ON THE START AND A MODEST ONE IN TIME, and the two are worth
-  separating. Measured at , widening `s(x, k = 6)` to `s(x, k = 12)`,
-  the root mean square gap between the starting predictor and the
+  ON THE START AND A MODEST ONE IN TIME, and the two should be
+  separated. Measured at , widening `s(x, k = 6)` to `s(x, k = 12)`, the
+  root mean square gap between the starting predictor and the
   reference’s is **3.1e-15 against the fallback’s 1.046**; a quadratic
   basis carried onto a cubic one at the same `k` gives 0.0101 against
   1.049, and `te(4, 4)` onto `te(7, 7)` 8.2e-16 against 0.500. In TIME
@@ -4876,11 +5016,11 @@ choosing a model, each decided with the measurement beside it.
   – three equally spaced intervals refined into nine – against 4.6e-03
   for `k = 10` and 4.0e-04 for `k = 20`, which are not refinements of
   it. Where the two bases coincide the projection returns the
-  coefficients it was given, so the name match is a fast path and not a
-  different answer.
+  coefficients that it was given, so the name match is a fast path and
+  not a different answer.
 
 - ⚠️ Three conditions gate it, each leaving the block to the fallback:
-  the two responses must be IDENTICAL, which is what says the two
+  the two responses must be IDENTICAL, which is what shows the two
   designs are read at the same rows – the projection compares two
   predictors observation by observation and means nothing across
   different data – neither model may carry a structural term, whose
@@ -4944,10 +5084,9 @@ choosing a model, each decided with the measurement beside it.
   1.57 times depending on where the dropped coefficient is held, a
   two-equation gaussian 1.89, a negative binomial with 40 columns at n =
   20000 **2.05** (0.81 s against 0.40 s), and a negative binomial
-  started from a Poisson’s estimates 1.29. It is worth having where the
-  same model is refitted many times over – a coefficient held at a
-  sequence of values, which is what a confidence interval by inversion
-  walks.
+  started from a Poisson’s estimates 1.29. It is useful where the same
+  model is refitted many times over – a coefficient held at a sequence
+  of values, which is what a confidence interval by inversion walks.
 
 - A distribution parameter the reference does not carry falls back like
   any unmatched block, so the two families need not agree: a Poisson fit
@@ -4975,7 +5114,7 @@ choosing a model, each decided with the measurement beside it.
 
   V’ = Vb + J Vtheta J’, J = -(H + S)^-1 d2rho/dbeta dtheta
 
-  is what that costs. It is the matrix mgcv returns as
+  is what that costs. It is the matrix that mgcv returns as
   `unconditional = TRUE`, and every ingredient of it was already
   computed:
   [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md)
@@ -4983,13 +5122,13 @@ choosing a model, each decided with the measurement beside it.
   price a parameter count, and threw the matrix away.
   [`confint()`](https://rdrr.io/r/stats/confint.html) and
   [`summary()`](https://rdrr.io/r/base/summary.html) pass the argument
-  through, so an interval around a penalized term can be asked for
+  through, so an interval around a penalized term can be obtained
   without reading its smoothing parameter as known.
 
   Measured on a univariate smooth at n = 200, 400 and 2000, the band of
-  the fitted mean widens by 1.12, 0.25 and 0.22 per cent on average and
-  by 7.60, 1.24 and 1.28 per cent at its widest point, against mgcv’s
-  own 2.00/8.54, 0.76/1.68 and 0.42/1.72 on the same data. Ours is the
+  the fitted mean widens by 1.12, 0.25 and 0.22 percent on average and
+  by 7.60, 1.24 and 1.28 percent at its widest point, against mgcv’s own
+  2.00/8.54, 0.76/1.68 and 0.42/1.72 on the same data. Ours is the
   smaller correction for the reason already documented on
   [`statmod_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf_correction.md):
   mgcv adds a second term for the gaussian scale, which it profiles out
@@ -4997,8 +5136,8 @@ choosing a model, each decided with the measurement beside it.
   inside H.
 
 - ⚠️ IT COSTS 4 TO 5 TIMES THE
-  [`vcov()`](https://rdrr.io/r/stats/vcov.html) IT IS ADDED TO, which is
-  worth stating because a first reading said otherwise. With a
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) IT IS ADDED TO, which
+  needs stating because a first reading stated otherwise. With a
   repetition loop sized by elapsed time the two are 2.7 ms against 10.6
   ms at n = 200 and 4.0 ms against 20.0 ms at n = 2000; a first
   measurement, taken with one call and Windows’ own clock, read the
@@ -5007,7 +5146,7 @@ choosing a model, each decided with the measurement beside it.
   milliseconds – but the ratio is not one, and the dearest part is
   [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md),
   the outer criterion’s own curvature, which the conditional matrices
-  never ask for.
+  never use.
 
 - `predict(se = TRUE)` reaches it too, through the dots it already
   passed to [`vcov()`](https://rdrr.io/r/stats/vcov.html), and that is
@@ -5015,14 +5154,14 @@ choosing a model, each decided with the measurement beside it.
   the fitted values, which are what a smoothing parameter moves.
   Measured on the smooth above,
   `predict(fit, "mu", se = TRUE, type = "unconditional")` widens the
-  interval by 1.1 per cent on average and 7.6 at its widest, with the
+  interval by 1.1 percent on average and 7.6 at its widest, with the
   fitted values themselves unchanged.
 
-- ⚠️ WHERE IT SHOWS IS WHERE THE PENALTY BINDS, and the size is worth
+- ⚠️ WHERE IT SHOWS IS WHERE THE PENALTY BINDS, and the size needs
   knowing before reading one. On a smooth beside a score-driven term,
   whose smoothing parameter is determined so poorly that the standard
   deviation of its logarithm is 2.4, the two coordinates the penalty
-  compresses widen by 80 and 88 per cent while the unpenalized linear
+  compresses widen by 80 and 88 percent while the unpenalized linear
   component moves by 4e-06 and the filter’s own parameters by between
   3e-04 and 7e-04. That the structural tail moves at all is right rather
   than spurious: those parameters are estimated jointly with the
@@ -5053,14 +5192,14 @@ choosing a model, each decided with the measurement beside it.
   [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
   cannot produce, which is the same gap
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-  refuses. The warning carries the class `statmod_conditional_variance`,
+  rejects. The warning carries the class `statmod_conditional_variance`,
   so [`summary()`](https://rdrr.io/r/base/summary.html) – which calls
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) more than once – reports
   it as one note instead of repeating it.
 
-- The check that says the mapping is right is that `tr(V' H) - tr(Vb H)`
-  reproduces `statmod_edf_correction()$total` to 7e-16. The two routes
-  share the new
+- The check that shows the mapping is right is that
+  `tr(V' H) - tr(Vb H)` reproduces `statmod_edf_correction()$total` to
+  7e-16. The two routes share the new
   [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
   and nothing else: one inverts on the kept coordinates through
   [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md),
@@ -5077,7 +5216,7 @@ choosing a model, each decided with the measurement beside it.
   from passed over it: a penalty over a structural term’s own parameters
   indexes those parameters and not columns of a design, and a correction
   assembled without it is a lower bound, which
-  [`vcov()`](https://rdrr.io/r/stats/vcov.html) now says.
+  [`vcov()`](https://rdrr.io/r/stats/vcov.html) now reports.
 
 ## statmodels7 0.99.0
 
@@ -5087,11 +5226,11 @@ choosing a model, each decided with the measurement beside it.
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   on a pivoting decomposition reports one, so under an `optimizers7`
   method, or under `chol`, `svd` or `chol_crossprod`, nothing was named
-  and [`vcov()`](https://rdrr.io/r/stats/vcov.html) refused the whole
-  matrix – the behaviour 0.98.0 had just replaced everywhere else.
+  and [`vcov()`](https://rdrr.io/r/stats/vcov.html) rejected the whole
+  matrix – the behavior 0.98.0 had just replaced everywhere else.
   [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
-  asks the same question after the fact, on the penalized information at
-  the mode, and
+  queries the same question after the fact, on the penalized information
+  at the mode, and
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   uses it wherever the fit itself named nothing.
 
@@ -5114,8 +5253,8 @@ choosing a model, each decided with the measurement beside it.
   collinear to within 1e-4 – an ordinary pair of correlated covariates –
   the bare pivot names one of them while
   [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
-  inverts the matrix without difficulty, so a coefficient the data does
-  identify would have been thrown away. With the gate that case is
+  inverts the matrix without difficulty, so a coefficient that the data
+  does identify would have been thrown away. With the gate that case is
   untouched, at 1e-6 and below the column is named, and the alias can
   never disagree with the variance reported beside it.
 
@@ -5133,17 +5272,17 @@ choosing a model, each decided with the measurement beside it.
   number, and [`vcov()`](https://rdrr.io/r/stats/vcov.html) holds that
   one coordinate and reports the rest.
 
-- ⚠️ An assertion in `test-robustness.R` had been DORMANT. The refusal
-  it pinned sat at the end of a block behind that block’s own
+- ⚠️ An assertion in `test-robustness.R` had been DORMANT. The rejection
+  that it pinned sat at the end of a block behind that block’s own
   `skip_if(lam < 1e8, ...)`, so on a machine where the criterion does
   not reach the separation regime it never ran – and it had gone on
-  asserting a refusal that 0.98.0 already replaced with an alias on the
-  default route. It stands on its own now and asserts what happens
+  asserting a rejection that 0.98.0 already replaced with an alias on
+  the default route. It stands on its own now and asserts what happens
   instead.
 
 ## statmodels7 0.98.0
 
-- A design of less than full rank is ALIASED rather than refused, which
+- A design of less than full rank is ALIASED rather than rejected, which
   is what [`lm()`](https://rdrr.io/r/stats/lm.html) and
   [`glm()`](https://rdrr.io/r/stats/glm.html) do. The fit already
   dropped the redundant column:
@@ -5155,7 +5294,7 @@ choosing a model, each decided with the measurement beside it.
   coordinate, so [`coef()`](https://rdrr.io/r/stats/coef.html) returned
   an estimate of **zero** where base R returns `NA` – a reader could not
   tell a coefficient estimated at zero from a column that was left out –
-  and [`vcov()`](https://rdrr.io/r/stats/vcov.html) then refused the
+  and [`vcov()`](https://rdrr.io/r/stats/vcov.html) then rejected the
   WHOLE matrix, losing three standard errors for the sake of one that
   does not exist.
 
@@ -5169,7 +5308,7 @@ choosing a model, each decided with the measurement beside it.
   `stats::vcov(complete = TRUE)` on an aliased
   [`lm()`](https://rdrr.io/r/stats/lm.html) – and
   [`summary()`](https://rdrr.io/r/base/summary.html) prints `NA` with a
-  note saying how many coefficients were not estimated and which.
+  note stating how many coefficients were not estimated and which.
   Measured against [`glm()`](https://rdrr.io/r/stats/glm.html) on the
   same data: the same column aliased, the same estimates, and standard
   errors of 0.06273, 0.06518 and 0.06017 against 0.06305, 0.06550 and
@@ -5195,7 +5334,7 @@ choosing a model, each decided with the measurement beside it.
   [`glm()`](https://rdrr.io/r/stats/glm.html) at 3.6e-15, with the
   log-likelihoods identical.
 
-  ⚠️ AND IT IS NOT A ZERO, which an earlier draft of this entry said.
+  ⚠️ AND IT IS NOT A ZERO, which an earlier draft of this entry stated.
   The pivot drops the coordinate from the INCREMENT, so the parameter
   keeps the value it held at that iterate; on a linear design started at
   zero, which is the default, that value is zero, and the claim looked
@@ -5217,9 +5356,9 @@ choosing a model, each decided with the measurement beside it.
 
 - ⚠️ The aliasing is what a PIVOTED route finds, so it depends on the
   decomposition: under `iwls(decomposition = "chol")`, `"svd"` or
-  `"chol_crossprod"` nothing is aliased and the old refusal stands. That
-  is stated rather than hidden, and the tests assert both sides of it –
-  which is also what keeps the refusal itself under test.
+  `"chol_crossprod"` nothing is aliased and the old rejection stands.
+  That is stated rather than hidden, and the tests assert both sides of
+  it – which is also what keeps the rejection itself under test.
 
 ## statmodels7 0.97.0
 
@@ -5235,10 +5374,10 @@ choosing a model, each decided with the measurement beside it.
   IT NEEDS A FAMILY THAT HAS A NUMBER OF TRIALS – `binomial_distrib()`
   or a beta-binomial. `bernoulli_distrib()` is one trial by
   construction, so there is nothing to write successes and failures
-  onto, and it is refused with the family that should have been used
+  onto, and it is rejected with the family that should have been used
   named in the message. So is a matrix with any number of columns but
   two, and a `size` given to the family that disagrees with the row
-  sums: given twice, only the modeller knows which was meant. A
+  sums: given twice, only the modeler knows which was meant. A
   multivariate family keeps its matrix response, where one row is one
   observation.
 
@@ -5249,7 +5388,7 @@ choosing a model, each decided with the measurement beside it.
   1e-10.
 
 - THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is
-  the half of this worth having beyond the convenience. A `size` handed
+  the half of this that matters beyond the convenience. A `size` handed
   to `binomial_distrib()` is a vector fixed when the fit is written, so
   it cannot follow the rows anywhere else, and recycling it there
   returns a number rather than an error: measured on the density, a size
@@ -5262,12 +5401,12 @@ choosing a model, each decided with the measurement beside it.
 
   Where the row sums cannot be had,
   [`check_trials()`](https://statmodels7.github.io/statmodels7/reference/check_trials.md)
-  now refuses instead of recycling: a fit carrying one number of trials
+  now rejects instead of recycling: a fit carrying one number of trials
   per observation, applied to a different number of rows, signals an
   error naming both counts and pointing at
   [`cbind()`](https://rdrr.io/r/base/cbind.html). The alternative to
-  erroring is not a better number but a guess, since nothing on the fit
-  says which rows those trials were.
+  erroring is not a better number but a guess, since the fit records
+  nothing about which rows those trials were.
 
 - A categorical response is carried onto the numeric scale instead of
   reaching [`stats::dbinom()`](https://rdrr.io/r/stats/Binomial.html)
@@ -5289,16 +5428,16 @@ choosing a model, each decided with the measurement beside it.
 
   The conversion is made for EVERY family and not only for the binary
   ones, and that is where it departs from base R – in the direction of
-  working. `glm(f ~ x, gaussian)` on a factor does not refuse cleanly:
+  working. `glm(f ~ x, gaussian)` on a factor does not reject cleanly:
   it signals *“NA/NaN/Inf in ‘y’”* after three warnings from
   `Ops.factor`. A two-level factor has one numeric reading, and on a
   gaussian family the result is the linear probability model, which is
   what [`lm()`](https://rdrr.io/r/stats/lm.html) gives on
   `as.numeric(f == "b")` – checked, identical.
 
-  A factor with any other number of levels is refused by name, saying
+  A factor with any other number of levels is rejected by name, stating
   how many it has and which, rather than coded by a choice this package
-  cannot make on the modeller’s behalf.
+  cannot make on the modeler’s behalf.
 
   The levels travel on the specification as an attribute and
   [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
@@ -5307,11 +5446,11 @@ choosing a model, each decided with the measurement beside it.
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
   fold holding only one of the two values would have been coded the
   other way round and the deviance would have come back wrong without a
-  word. A value the fit never saw is refused rather than coded.
+  word. A value the fit never saw is rejected rather than coded.
 
 ## statmodels7 0.96.0
 
-- `print(summary(fit), n = )` says how many coefficient rows a block
+- `print(summary(fit), n = )` sets how many coefficient rows a block
   shows, `Inf` for all of them, defaulting to the option
   `statmodels7.summary_rows` and to the 10 that were hard-coded. The two
   numbers behind the abridgement were reachable from nowhere: a block of
@@ -5329,9 +5468,9 @@ choosing a model, each decided with the measurement beside it.
   of ordinary size.
 
 - A hyperparameter keeps its standard error where its OWN curvature can
-  produce one, instead of losing it because a neighbour’s cannot.
+  produce one, instead of losing it because a neighbor’s cannot.
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-  used to refuse the whole matrix when the inverse of the negative outer
+  used to reject the whole matrix when the inverse of the negative outer
   Hessian had any non-positive diagonal entry, which is one coordinate’s
   failure charged to every other.
 
@@ -5352,7 +5491,7 @@ choosing a model, each decided with the measurement beside it.
   computes the Schur correction and compares it against the kept
   diagonal; above `schur`, whose default is the size at which the
   correction cannot move the four significant digits the summary prints,
-  the whole matrix is refused as before. On the measurement above the
+  the whole matrix is rejected as before. On the measurement above the
   correction is 5.6e-05 against a diagonal of 1.1017.
 
   A fit that converges is untouched: the full inverse is usable and is
@@ -5361,13 +5500,13 @@ choosing a model, each decided with the measurement beside it.
   correlation, standard error and interval agrees to every printed
   digit.
 
-- The notes say what is true of the fit in front of the reader. The note
-  promising that a hyperparameter marked `[reml]` or `[ml]` carries a
-  standard error and an interval was emitted whenever such a
+- The notes state what is true of the fit in front of the reader. The
+  note promising that a hyperparameter marked `[reml]` or `[ml]` carries
+  a standard error and an interval was emitted whenever such a
   hyperparameter existed, whether or not one had been read – so on the
   fit above it stated the opposite of the table beside it. It is emitted
   where at least one such row has a standard error, and a second note,
-  where at least one has none, says that the criterion’s curvature in
+  where at least one has none, states that the criterion’s curvature in
   that coordinate’s own direction is not negative and that no variance
   follows from it. Both may appear together, which is what the change to
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
@@ -5376,14 +5515,14 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.95.0
 
 - [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
-  asks the family for its second-derivative components ONCE a point and
-  hands them to both routes, through the new
+  requests from the family its second-derivative components ONCE a point
+  and hands them to both routes, through the new
   [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
   and an `H` argument on
   [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   and
   [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md).
-  It used to let each route ask for itself, which cost one full
+  It used to let each route request them itself, which cost one full
   evaluation an iteration wherever the square-root decomposition is
   abandoned – and where the expected information IS the outer product of
   scores that is EVERY point, the per-observation block being , of rank
@@ -5402,18 +5541,18 @@ choosing a model, each decided with the measurement beside it.
   [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md)
   and once again by the fallback. It is now twice, and a Poisson-inverse
   gaussian regression at n = 12096 goes from 1.032 s to 0.944 s with the
-  dispersion held and from 0.848 s to 0.753 s with it modelled, the
+  dispersion held and from 0.848 s to 0.753 s with it modeled, the
   log-likelihood identical to the printed digit.
 
   ⚠️ **The two that remain cannot be shared as things stand.** The outer
   product reads the PARAMETER-scale score and
   [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)
   reads the LINK-scale one; they run the same compiled kernel, but
-  nothing in the contract returns both, and deriving one from the other
-  here would put ’s chain rule in the modelling layer.
+  nothing in the generic returns both, and deriving one from the other
+  here would put ’s chain rule in the modeling layer.
 
   ⚠️ **A mixture over regimes reads a different set of components per
-  regime**, so it is left to ask for its own and `H` is not passed
+  regime**, so it is left to request its own and `H` is not passed
   there.
 
 ## statmodels7 0.94.0
@@ -5424,10 +5563,10 @@ choosing a model, each decided with the measurement beside it.
   named so that the sign carries a test of its own. The increment solves
   `(H + S) delta = -g`, so `g'delta` is negative – measured, in 19 of 19
   solves of one fit, over `[-6435, -0.0119]` – and Armijo’s bound
-  `f(x) + c1 s g'delta` therefore sits BELOW `f(x)` and asks for a
+  `f(x) + c1 s g'delta` therefore sits BELOW `f(x)` and requires a
   decrease. Written with that term SUBTRACTED it changes sign and
   permits an INCREASE of `c1 s |g'delta|` instead, up to 0.6435 a step
-  on that fit, where the loop’s own comment said sufficient decrease
+  on that fit, where the loop’s own comment stated sufficient decrease
   rather than mere non-increase.
 
   ⚠️ **It changed no fit measured.** On the model that motivated the
@@ -5436,7 +5575,7 @@ choosing a model, each decided with the measurement beside it.
   a battery of seven models nothing moved. That is also why a test over
   a fit could not have caught it, and why the condition is named: it
   takes the form it replaced as its negative control, which accepts an
-  increase where this one refuses.
+  increase where this one rejects.
 
 - [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   raises the Levenberg damping where the LINE SEARCH FINDS NO ACCEPTABLE
@@ -5471,14 +5610,15 @@ choosing a model, each decided with the measurement beside it.
 
 - [`vcov()`](https://rdrr.io/r/stats/vcov.html) HOLDS a coordinate the
   penalized information carries nothing about and reports the rest,
-  where it refused the whole matrix before. A combination `c'beta` has a
-  finite variance exactly where `c` is orthogonal to the null space of
+  where it rejected the whole matrix before. A combination `c'beta` has
+  a finite variance exactly where `c` is orthogonal to the null space of
   `K`, so a coefficient the null space does not touch keeps its variance
   whatever happens to the others; the held ones come back `NA`, as
   `stats::vcov.lm(complete = TRUE)` returns for an aliased column. It
   runs ONLY where
   [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
-  has already refused, so a fit whose matrix is invertible is untouched.
+  has already rejected, so a fit whose matrix is invertible is
+  untouched.
 
   [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)
   is the new function and
@@ -5498,7 +5638,7 @@ choosing a model, each decided with the measurement beside it.
   in equilibrated units is `max_k (|K_jk|/sqrt(K_kk))^2 / K_jj` and is
   dimensionless: a coordinate scaled down by 1e-14 leaves that ratio at
   one and is not held. Where the diagonal is not positive the ratio is
-  0/0 and says nothing, so the row is read against the matrix’s own
+  0/0 and gives no value, so the row is read against the matrix’s own
   scale instead. Measured on a Poisson-inverse gaussian regression whose
   dispersion left its range, `K_jj` is exactly zero, the row’s largest
   entry is 1.2e-15 against a matrix whose largest is 2562, and
@@ -5506,16 +5646,16 @@ choosing a model, each decided with the measurement beside it.
 
   Where the flat direction is a COMBINATION – two collinear columns, the
   null vector `(e_1 - e_2)/sqrt(2)`, each carrying half of it – nothing
-  is held and the refusal stands: dropping one would report the variance
-  conditional on the other as if it were marginal.
+  is held and the rejection stands: dropping one would report the
+  variance conditional on the other as if it were marginal.
 
   Measured, holding is the Moore-Penrose inverse restricted to what is
   kept, to 2.6e-18 and 1.7e-18 on the two shapes the tests pin. On the
   count model above, [`vcov()`](https://rdrr.io/r/stats/vcov.html) goes
   from an error to 51 usable coordinates of 57, with the 45 coefficients
-  of the mean carrying standard errors within 2.6 per cent of `gamlss`’;
+  of the mean carrying standard errors within 2.6 percent of `gamlss`’;
   with the dispersion held inside its range one coordinate is held and
-  they are within **0.17 per cent**.
+  they are within **0.17 percent**.
 
 - [`inner_settings()`](https://statmodels7.github.io/statmodels7/reference/inner_settings.md)
   gives an optimizer the OBSERVED information. It minimizes
@@ -5523,9 +5663,9 @@ choosing a model, each decided with the measurement beside it.
   [`optimizers7::minimize()`](https://statmodels7.github.io/optimizers7/reference/minimize.html)
   documents `he` as that function’s second derivative, which is what the
   observed information is; the expected one is a different matrix, so a
-  method asked for a Newton step was performing Fisher scoring under
-  another name. `approx` is `"opg"` there rather than `"bartlett"`,
-  which is what
+  method configured for a Newton step was performing Fisher scoring
+  under another name. `approx` is `"opg"` there rather than
+  `"bartlett"`, which is what
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   itself defaults to; it is read only where `expected` is `TRUE`, so for
   an optimizer it records a default rather than a choice.
@@ -5577,8 +5717,8 @@ choosing a model, each decided with the measurement beside it.
   AND the family writes it out, so
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) falls back to the
   observed Hessian where the step used an approximation. Measured on the
-  same regression: standard errors 5.7 per cent from those of the exact
-  expectation under the outer product, 0.6 per cent under the observed
+  same regression: standard errors 5.7 percent from those of the exact
+  expectation under the outer product, 0.6 percent under the observed
   information.
 
 - [`vcov()`](https://rdrr.io/r/stats/vcov.html) takes `approx` beside
@@ -5588,8 +5728,8 @@ choosing a model, each decided with the measurement beside it.
   above.
 
 - [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)’s
-  page no longer claims that asking for `approx` where it would be
-  ignored is an error. No such check exists, and it cannot live in the
+  page no longer claims that passing `approx` where it would be ignored
+  is an error. No such check exists, and it cannot live in the
   constructor: an
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   object is built before it meets a distribution.
@@ -5624,10 +5764,10 @@ choosing a model, each decided with the measurement beside it.
   the criterion, 6.2e-07 at h = 3e-3 with clean second-order
   convergence.
 
-- Two labelled groups are rejected rather than approximated. A label
+- Two labeled groups are rejected rather than approximated. A label
   written on a smooth penalty and on a kinked one names two machines and
   cannot have one value; a label tying hyperparameters whose links
-  differ asks one free value to lie in two domains.
+  differ requires one free value to lie in two domains.
 
 - ⚠️ A shared group has no exact outer HESSIAN, so the search falls to
   `lbfgs()`. The criterion’s second derivative is assembled from
@@ -5676,22 +5816,22 @@ choosing a model, each decided with the measurement beside it.
   `distrib` the default is a centered multivariate gaussian on
   [`parameters7::dr_prod()`](https://statmodels7.github.io/parameters7/reference/dr_prod.html),
   whose coordinates are the log standard deviations and the
-  correlations’ angles, so a printed hyperparameter is the quantity it
-  names; at a total of one column there is no correlation and the
-  default is the centered univariate gaussian a single unlabelled term
+  correlations’ angles, so a printed hyperparameter is the quantity that
+  it names; at a total of one column there is no correlation and the
+  default is the centered univariate gaussian a single unlabeled term
   builds, which makes a class of one member the same fit as
   `random(~ 1 | g)` to the last bit.
 
-  Refused, at the specification and with the reason: a label used on two
-  groupings, a `distrib` named on more than one member, and one whose
-  dimension is not the class’s total.
+  Rejected, at the specification and with the reason: a label used on
+  two groupings, a `distrib` named on more than one member, and one
+  whose dimension is not the class’s total.
 
-- A label written inside a subformula is refused, naming the parameter
-  the labelled term develops.
+- A label written inside a subformula is rejected, naming the parameter
+  the labeled term develops.
   [`term_tags_deep()`](https://statmodels7.github.io/statmodels7/reference/term_tags_deep.md)
   reaches it through
   [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html),
-  a labelled term inside `seg(x, psi ~ ...)` not being one of the
+  a labeled term inside `seg(x, psi ~ ...)` not being one of the
   equation’s terms. The block would have to reach coefficients this
   layer addresses differently, which is work the shared penalty does not
   yet do.
@@ -5700,20 +5840,20 @@ choosing a model, each decided with the measurement beside it.
   [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
   names every equation the block spans, `mu, sigma` rather than the
   first of them: `param` on a class’s unit is the first member’s and is
-  a convention the hyperparameter store is keyed by, which a table a
-  reader reads must not repeat as though it were a fact.
+  a convention the hyperparameter store is keyed by, which a table that
+  a reader reads must not repeat as though it were a fact.
   [`summary()`](https://rdrr.io/r/base/summary.html) reports the class’s
   hyperparameters once, under its first member, and adds a note naming
   the label, the grouping and the terms that share the block; without it
   a reader sees a covariance of four coordinates under a term carrying
-  two columns and nothing saying where the other two came from. A class
+  two columns and nothing stating where the other two came from. A class
   of one member shares nothing and gets no note.
 
-  A labelled random effect is also reported AS a random effect. The kind
-  of a block was read after its penalties, and a labelled term declares
+  A labeled random effect is also reported AS a random effect. The kind
+  of a block was read after its penalties, and a labeled term declares
   none, so it came back `parametric`: forty grouping indicators printed
-  one per line under a heading saying they are an unpenalized block,
-  with the covariance that produced them nowhere on the page.
+  one per line under a heading stating that they are an unpenalized
+  block, with the covariance that produced them nowhere on the page.
 
   The effective degrees of freedom needed no change and that was
   measured, not assumed:
@@ -5721,7 +5861,7 @@ choosing a model, each decided with the measurement beside it.
   reads one smoother matrix assembled over every equation at once, so
   the class’s cross block is already in it. On a shared block over 40
   groups the total agrees with the trace computed apart to 1.4e-14, and
-  dropping the cross block moves it by 0.2477, which is what says the
+  dropping the cross block moves it by 0.2477, which is what states the
   coupling is really being counted.
 
 - A label written inside the subformula of an additive term joins the
@@ -5733,9 +5873,9 @@ choosing a model, each decided with the measurement beside it.
   deviations 0.6 and 0.5 and a correlation of 0.6, the fit returns
   0.538, 0.532 and 0.612.
 
-  It needed no new address space, which is what made it cheap. A
-  labelled effect inside `seg()` or `nl()` occupies columns of that
-  term’s block – exactly the ones
+  It needed no new address space, which is what made it cheap. A labeled
+  effect inside `seg()` or `nl()` occupies columns of that term’s block
+  – exactly the ones
   [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html)
   reports as the component’s `sub_index` – so
   [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
@@ -5743,36 +5883,37 @@ choosing a model, each decided with the measurement beside it.
   the stacked vector as it does for any other term. The walk recurses,
   composing `within` on the way down.
 
-  A label under a STRUCTURAL term is still refused, and the message now
-  says why it is the one shape that cannot be reached: what such a term
-  contributes is its own parameters rather than columns of the design,
-  and only
+  A label under a STRUCTURAL term is still rejected, and the message now
+  explains why it is the one shape that cannot be reached: what such a
+  term contributes is its own parameters rather than columns of the
+  design, and only
   [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
   spans both – for one filter and in one place.
 
-  A parent keeps its own penalties beside a labelled sub-term: the
+  A parent keeps its own penalties beside a labeled sub-term: the
   class’s entry is added to them and never replaces them.
 
-  ⚠️ Measured, and worth knowing before reading a flag: a random
-  break-point beside a modelled scale reports `converged = FALSE`
-  whether or not the two share a block – 48.9 s labelled and 6.4 s
-  unlabelled, both not certified, against the same break-point without a
-  modelled scale, which converges in 2.0 s, and two labelled random
-  effects without a break-point, which converge in 5.7 s. The label is
-  not what stops it.
+  ⚠️ Measured, and useful to know before reading a flag: a random
+  break-point beside a modeled scale reports `converged = FALSE` whether
+  or not the two share a block – 48.9 s labeled and 6.4 s unlabeled,
+  both not certified, against the same break-point without a modeled
+  scale, which converges in 2.0 s, and two labeled random effects
+  without a break-point, which converge in 5.7 s. The label is not what
+  stops it.
 
 ## statmodels7 0.90.0
 
 - [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  fits a model carrying an anisotropic tensor smooth, where it refused.
+  fits a model carrying an anisotropic tensor smooth, where it rejected.
   The criterion projects the determinant’s matrix onto the range of each
   penalty, and `te()`’s is an `additive_penalty()`, which exposed no
   null basis to take the complement of; `penalties7` 0.19.0 supplies
   one, and it is a property of the components rather than of any setting
   of the hyperparameters, so there is nothing to guess at.
 
-  Measured on the model the refusal was written for, 200 observations of
-  a surface quadratic in one margin and linear in the other:
+  Measured on the model for which the rejection was written, 200
+  observations of a surface quadratic in one margin and linear in the
+  other:
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   and
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
@@ -5786,7 +5927,7 @@ choosing a model, each decided with the measurement beside it.
   and `mcp_penalty()` are improper by construction and are not
   quadratic, so they have no null basis, and
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  refuses by name rather than guess which directions are profiled.
+  rejects by name rather than guess which directions are profiled.
 
 ## statmodels7 0.89.0
 
@@ -5795,10 +5936,10 @@ choosing a model, each decided with the measurement beside it.
   install branch hands the work to
   [`pak::pak()`](https://pak.r-lib.org/reference/pak.html), which takes
   no `quiet` argument of its own. `statmodels7_update(quiet = TRUE)` was
-  as loud as the default and nothing said the setting had been dropped,
-  which is the shape recorded twice for `fit_distrib(maxit =, tol =)`
-  and once for `ridge(n_lambda =)`: an argument accepted and ignored is
-  worse than one that errors.
+  as loud as the default and nothing stated the setting had been
+  dropped, which is the shape recorded twice for
+  `fit_distrib(maxit =, tol =)` and once for `ridge(n_lambda =)`: an
+  argument accepted and ignored is worse than one that errors.
 
   Nothing is lost. The report exists to be read, and its return value is
   [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md),
@@ -5822,9 +5963,10 @@ choosing a model, each decided with the measurement beside it.
 
   Nine claims were corrected against measurement.
   [`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md)’s
-  page said a full p-squared kernel ships, where the kernel accumulates
-  the upper triangle and mirrors it; `statmod_commit_refresh(which =)`
-  defaults to `"all"` and not to `"jacobian"`;
+  page stated a full p-squared kernel ships, where the kernel
+  accumulates the upper triangle and mirrors it;
+  `statmod_commit_refresh(which =)` defaults to `"all"` and not to
+  `"jacobian"`;
   [`statmod_fitted_spec()`](https://statmodels7.github.io/statmodels7/reference/statmod_fitted_spec.md)
   commits only the Jacobian entries and also copies a structural term’s
   own parameters;
@@ -5855,7 +5997,7 @@ choosing a model, each decided with the measurement beside it.
   associative, so the two differed in the last bit – on Linux and not on
   Windows or macOS, which turned a bit-for-bit assertion into a red job
   on one platform of five. A variance matrix is symmetric, so the
-  halving is the contract and not a repair.
+  halving is the definition and not a repair.
 
 - `rstatmod(n_sim =)` draws several data sets in one call, and the truth
   is drawn ONCE and shared: what a study over replicates measures is the
@@ -5879,7 +6021,7 @@ choosing a model, each decided with the measurement beside it.
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   returns the truth BESIDE the data rather than attached to it, which is
   what a simulation study reads: a list of `data`, `par`, `theta`,
-  `latent`, `structural` and `call`, with a `print` that says where the
+  `latent`, `structural` and `call`, with a `print` that shows where the
   two halves are instead of dumping a parameter at every row. They were
   attributes of the data frame, and that was worse than it looks – an
   attribute survives a row subset without being subset itself, so
@@ -5893,7 +6035,7 @@ choosing a model, each decided with the measurement beside it.
 
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   simulates from the model that was written, whatever terms it carries.
-  Its predictor now comes from the assembly a fit reads –
+  Its predictor now comes from the assembly that a fit reads –
   [`statmod_design_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_design_at.md)
   and the adjustment beside it – so a term whose block moves with its
   coefficients contributes `term_value()` at them rather than its block
@@ -5908,30 +6050,31 @@ choosing a model, each decided with the measurement beside it.
 
 - [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
   takes `n` in place of `data` for a model with no covariates,
-  `structural` for a structural term’s own parameters (on the scale
-  `term_params()` names, and worth naming: left out they take the term’s
-  deliberately weak starting values), and accepts a `par` entry that is
-  one number, used for every coefficient, or a FUNCTION of the
-  coefficient count – which is how a structured truth is expressed
-  without a vocabulary for it, `function(k) c(2, -1.5, rep(0, k - 2))`
-  being a sparse vector for a lasso to find. A response that is not a
-  symbol is now rejected rather than written to a column of the wrong
-  name, and a censored one is rejected for the reason
+  `structural` for a structural term’s own parameters (on the scale that
+  `term_params()` names, and given explicitly because, left out, they
+  take the term’s deliberately weak starting values), and accepts a
+  `par` entry that is one number, used for every coefficient, or a
+  FUNCTION of the coefficient count – which is how a structured truth is
+  expressed without a vocabulary for it,
+  `function(k) c(2, -1.5, rep(0, k - 2))` being a sparse vector for a
+  lasso to find. A response that is not a symbol is now rejected rather
+  than written to a column of the wrong name, and a censored one is
+  rejected for the reason
   [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   rejects one.
 
 - [`predict()`](https://rdrr.io/r/stats/predict.html) at new data for a
   model carrying a score-driven term reads the RESPONSE to decide what
-  was asked. Rows carrying it are a re-reading, the filter run over them
-  from the term’s own seed, which is what a caller means by predicting a
-  model on another series and is why
+  was requested. Rows carrying it are a re-reading, the filter run over
+  them from the term’s own seed, which is what a caller means by
+  predicting a model on another series and is why
   `predict(fit, newdata = <the fitting data>)` returns the fitted
   values; rows without it are a continuation and must come after the
   observed series. A frame with the response on some rows and not others
   is rejected.
 
-- The ordinary generics of `stats` answer, or say why they cannot.
-  [`nobs()`](https://rdrr.io/r/stats/nobs.html),
+- The ordinary generics of `stats` answer, or give the reason they
+  cannot. [`nobs()`](https://rdrr.io/r/stats/nobs.html),
   [`formula()`](https://rdrr.io/r/stats/formula.html),
   [`family()`](https://rdrr.io/r/stats/family.html) (the distributions7
   object itself, so everything the family can do is reachable from a
@@ -5984,16 +6127,17 @@ choosing a model, each decided with the measurement beside it.
 - [`coef()`](https://rdrr.io/r/stats/coef.html),
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
   [`confint()`](https://rdrr.io/r/stats/confint.html) report the
-  quantities the model is written in, and take `readable = FALSE` for
-  the coordinates it was estimated on. Most coefficients are the same
-  either way; what moves is the two kinds of parameter reported under a
-  name they are not carried under. A discontinuous break-point term
-  carries `g` and reports , so the old vector held a number that is no
-  quantity of the model and the position appeared nowhere; a
-  score-driven term’s persistence rides a partial autocorrelation and
-  what the literature calls is the autoregressive coefficient the whole
-  chart produces. The variance follows by the delta method and each
-  interval is built on the scale that keeps its quantity in its own set.
+  quantities that the model is written in, and take `readable = FALSE`
+  for the coordinates that it was estimated on. Most coefficients are
+  the same either way; what moves is the two kinds of parameter reported
+  under a name that they are not carried under. A discontinuous
+  break-point term carries `g` and reports , so the old vector held a
+  number that is no quantity of the model and the position appeared
+  nowhere; a score-driven term’s persistence rides a partial
+  autocorrelation and what the literature calls is the autoregressive
+  coefficient the whole chart produces. The variance follows by the
+  delta method and each interval is built on the scale that keeps its
+  quantity in its own set.
 
 - The three views are built from ONE map,
   [`readable_joint()`](https://statmodels7.github.io/statmodels7/reference/readable_joint.md),
@@ -6047,10 +6191,10 @@ choosing a model, each decided with the measurement beside it.
   auxiliary coordinate a standard error of EXACTLY ZERO, against 0.063
   and 0.540, and the position read off them 1.8e-05 against 0.090. A
   zero looks like a number and is worse than a gap. Before this the
-  whole matrix was refused and a sharp `jump()` or `jseg()` had no
+  whole matrix was rejected and a sharp `jump()` or `jseg()` had no
   summary at all; now the coefficients beside the term keep their
   inference, conditional on the break-points where they are. The
-  question is asked of the term through
+  question is put to the term through
   [`modelterms7::term_jacobian_block()`](https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html),
   so a continuous `seg()` and a smoothed discontinuous one, whose blocks
   ARE Jacobians, keep everything.
@@ -6076,7 +6220,7 @@ choosing a model, each decided with the measurement beside it.
   nothing here parses a coefficient name.
 
 - A random development reports the scale of its effects with its
-  interval and one line saying how many predictions there are and how
+  interval and one line stating how many predictions there are and how
   far they spread. The predictions themselves are not printed: they are
   a column of numbers nobody reads to the end, and they are in
   [`coef()`](https://rdrr.io/r/stats/coef.html). This is what a
@@ -6084,11 +6228,11 @@ choosing a model, each decided with the measurement beside it.
   sit inside another term.
 
 - A compartment opens with its own hyperparameter, under a name that
-  says what the hyperparameter is rather than which coordinate carries
-  it. A gaussian prior’s `sigma` is the scale of the effects it shrinks
-  and a quadratic penalty’s `lambda` is a precision; under a term of a
-  model whose distribution has a `sigma` of its own, the coordinate’s
-  name is the name of a different quantity.
+  describes what the hyperparameter is rather than which coordinate
+  carries it. A gaussian prior’s `sigma` is the scale of the effects it
+  shrinks and a quadratic penalty’s `lambda` is a precision; under a
+  term of a model whose distribution has a `sigma` of its own, the
+  coordinate’s name is the name of a different quantity.
 
 - A term that develops one of its parameters is printed with that
   parameter read at a glance before its tables: the population value of
@@ -6098,24 +6242,25 @@ choosing a model, each decided with the measurement beside it.
   is labeled by the development’s intercept, so this is the only place
   the parameter’s own name appears beside a number.
 
-- Each equation’s heading names the link it is written on. Every
+- Each equation’s heading names the link on which it is written. Every
   coefficient in the blocks below it is a coefficient of the LINEAR
   PREDICTOR, so what it means for the parameter depends on the link, and
-  a summary that did not say which one left the reader to remember the
+  a summary that did not state which one left the reader to remember the
   family’s defaults.
 
 - A structural term is headed by the call and nothing else. The word
-  `Structural` said what the call already shows.
+  `Structural` stated what the call already shows.
 
 - The prefix a term repeats on every row is dropped for the printing, in
   its own table and inside each compartment: the heading has already
-  said which term this is. [`coef()`](https://rdrr.io/r/stats/coef.html)
-  and the summary’s own tables keep the names the fit was built with,
-  which are the ones another call can be indexed by.
+  stated which term this is.
+  [`coef()`](https://rdrr.io/r/stats/coef.html) and the summary’s own
+  tables keep the names the fit was built with, which are the ones
+  another call can be indexed by.
 
 - A block of more than twelve rows shows the first ten coefficients and
-  says how many it did not show. A hyperparameter is never among them:
-  it governs every coefficient under it.
+  reports how many it did not show. A hyperparameter is never among
+  them: it governs every coefficient under it.
 
 - The whole of a block is formatted in one pass, its own rows and every
   compartment’s together, so the columns line up down the block rather
@@ -6128,7 +6273,7 @@ choosing a model, each decided with the measurement beside it.
   it does in an additive term. `gas(omega ~ random(~1 | id))` used to
   print its population value and every one of its per-group deviations
   in a flat table below the equation’s blocks; it prints the scale of
-  the deviations and one line saying how many there are.
+  the deviations and one line stating how many there are.
 
 - And its hyperparameter sits with the coordinates it shrinks. It used
   to be reported in a block of its own headed
@@ -6137,7 +6282,7 @@ choosing a model, each decided with the measurement beside it.
   under a different heading.
 
 - [`term_block_kind()`](https://statmodels7.github.io/statmodels7/reference/term_block_kind.md)
-  answers `"structural"`, asked before anything else. A structural term
+  answers `"structural"`, tested before anything else. A structural term
   carrying no penalty came back `"parametric"`, which put a term with no
   columns among the terms whose columns are one unpenalized block.
 
@@ -6192,12 +6337,12 @@ choosing a model, each decided with the measurement beside it.
   since the gradient was written, and which this equation did not.
   Measured against the mode refitted at four hyperparameter values and
   differenced twice, `b_m` was already right to 3.8e-08 and `b_ml` was
-  wrong by 7.6 to 9.0 per cent at every step tried; with `dD/dbeta` in,
+  wrong by 7.6 to 9.0 percent at every step tried; with `dD/dbeta` in,
   the gap is 1.8e-05, inside the spread between the reference’s own
   consecutive steps.
 
-- What it is worth, against a central difference of the exact gradient
-  with the mode refitted warm, at an inner tolerance of 1e-10 and read
+- What it gains, against a central difference of the exact gradient with
+  the mode refitted warm, at an inner tolerance of 1e-10 and read
   against the same harness’s own floor of 2.3e-07 on a fixed design:
 
   | model                          | before   | after    |
@@ -6229,19 +6374,19 @@ choosing a model, each decided with the measurement beside it.
   It was written inline as 8, and it belongs beside the tolerance it
   works with, where the signature shows both rules rather than one.
 
-- The comment on that test now says why the threshold is safe rather
-  than only that it is: a coordinate is called an edge only if it has
-  ALREADY met `tol`, so removing it from the interior set cannot raise
-  the maximum that decides the verdict, and moving the threshold changes
-  only whether the state reads `converged` or `boundary`, both of which
-  are certified. Delete the `abs(g) <= tol` conjunct and that stops
-  being true, which is the thing a later reader needs told. The same
-  explanation is on the page.
+- The comment on that test now gives the reason the threshold is safe
+  rather than only that it is: a coordinate is called an edge only if it
+  has ALREADY met `tol`, so removing it from the interior set cannot
+  raise the maximum that decides the verdict, and moving the threshold
+  changes only whether the state reads `converged` or `boundary`, both
+  of which are certified. Delete the `abs(g) <= tol` conjunct and that
+  stops being true, which is the thing a later reader needs told. The
+  same explanation is on the page.
 
 ## statmodels7 0.84.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-  says WHICH coefficient is at a boundary where the outer gradient
+  names WHICH coefficient is at a boundary where the outer gradient
   cannot be read there, instead of reporting only that it is not finite.
   [`boundary_coords()`](https://statmodels7.github.io/statmodels7/reference/boundary_coords.md)
   names the coordinates whose curvature is gone – the diagonal and not
@@ -6253,8 +6398,8 @@ choosing a model, each decided with the measurement beside it.
 
       the outer gradient is not finite at the reported point
 
-  into a sentence naming `nu`, the bound its link keeps it inside, the
-  fact that the family’s third and fourth derivatives are not finite
+  into a sentence naming `nu`, the bound that its link keeps it inside,
+  the fact that the family’s third and fourth derivatives are not finite
   there, and the 1.3e-10 log-likelihood units the fit sits above its own
   mode.
 
@@ -6328,7 +6473,7 @@ choosing a model, each decided with the measurement beside it.
   on every step that moves and is floored back to zero, so a run that
   never stalls performs the plain scoring iteration and is unchanged.
   Eleven control fits are identical to the printed digit and the suite’s
-  two warnings are the two it had.
+  two warnings are the two that it had.
 
 - [`iwls_scale()`](https://statmodels7.github.io/statmodels7/reference/iwls_scale.md)
   reads the curvature’s largest diagonal off the pieces without
@@ -6344,10 +6489,10 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.82.0
 
 - A coordinate at a boundary is one coordinate and no longer stops the
-  others. Where a parameter reaches the clamp its link keeps it strictly
-  inside, the family’s curvature there is `NaN`, and one such entry was
-  enough to deny the whole system a solve and the whole criterion a
-  Cholesky factor.
+  others. Where a parameter reaches the clamp that its link keeps it
+  strictly inside, the family’s curvature there is `NaN`, and one such
+  entry was enough to deny the whole system a solve and the whole
+  criterion a Cholesky factor.
   [`iwls_solve()`](https://statmodels7.github.io/statmodels7/reference/iwls_solve.md)
   holds those coordinates and solves the rest, which is the active set
   the boundary defines, and
@@ -6367,8 +6512,8 @@ choosing a model, each decided with the measurement beside it.
   the run had been stopping with `sigma` – an ordinary coordinate –
   utterly non-stationary, because the zero step the failed solve
   returned applied to every coordinate. `nu`’s own score there is
-  exactly 0, which is what says the point is a stationary point of the
-  constrained problem rather than a place the fit was stopped at.
+  exactly 0, which is what shows the point is a stationary point of the
+  constrained problem rather than a place that the fit was stopped at.
 
   End to end, `fam-studentt` goes from raising on all three routes to
   fitting on all three, in 0.4 to 1.1 s. On the same data with the mean
@@ -6396,17 +6541,17 @@ choosing a model, each decided with the measurement beside it.
   position.
 
 - ⚠️ **What this does NOT repair, measured and stated.** There are two
-  regimes and only the first is covered. AT the clamp the curvature is
-  `NaN`, the solve dies for every coordinate, and that is what is fixed.
-  APPROACHING the clamp without reaching it – `nu` = 9.1e+12, where the
-  information is `3.5/nu^4` = 5e-52 – the curvature is finite, nothing
-  is held, and the step in that coordinate is astronomically long: the
-  line search shrinks the WHOLE step to keep it admissible (1, 0.125,
-  1.5e-05, 1.5e-08) and the run stalls with a score of 2.9e-02. That is
-  one coordinate holding the others hostage through a step length rather
-  than through a failed solve, and it needs the cap `optimizers7` 0.5.0
-  put on `newton()` for the same reason, or a hold read off the
-  curvature’s scale rather than its finiteness.
+  regimes and only the first is covered. AT the clamp that the curvature
+  is `NaN`, the solve dies for every coordinate, and that is what is
+  fixed. APPROACHING the clamp without reaching it – `nu` = 9.1e+12,
+  where the information is `3.5/nu^4` = 5e-52 – the curvature is finite,
+  nothing is held, and the step in that coordinate is astronomically
+  long: the line search shrinks the WHOLE step to keep it admissible (1,
+  0.125, 1.5e-05, 1.5e-08) and the run stalls with a score of 2.9e-02.
+  That is one coordinate holding the others hostage through a step
+  length rather than through a failed solve, and it needs the cap
+  `optimizers7` 0.5.0 put on `newton()` for the same reason, or a hold
+  read off the curvature’s scale rather than its finiteness.
 
 - `iwls`’s inner history gains a `held` column, the number of
   coordinates dropped from that iteration’s system.
@@ -6416,10 +6561,10 @@ choosing a model, each decided with the measurement beside it.
 - Whether a hyperparameter is AVAILABLE to the outer search is decided
   by how far above its mode the inner fit stopped, and not by the inner
   optimizer’s convergence flag. The two answer different questions: the
-  flag says whether a stopping rule fired, while availability asks
-  whether the criterion – a Laplace expansion AT THE MODE – is valid at
-  that point, which is a matter of distance and has a natural scale in
-  log-likelihood units.
+  flag records whether a stopping rule fired, while availability
+  concerns whether the criterion – a Laplace expansion AT THE MODE – is
+  valid at that point, which is a matter of distance and has a natural
+  scale in log-likelihood units.
 
   Measured on `y ~ s(x, k = 15) | sigma ~ s(z, k = 10)`, a gaussian with
   a smooth in each equation and nothing else: of the 38 inner fits one
@@ -6448,7 +6593,7 @@ choosing a model, each decided with the measurement beside it.
 
   End to end the model now reaches **-1558.352**, 4.33 better, and its
   certificate goes from `not converged` to `converged`. The rule ADDS
-  points and never removes one – a run whose flag says converged stays
+  points and never removes one – a run whose flag reads converged stays
   usable whatever the mode error reads – so no model that fitted before
   can stop fitting: a single smooth, a smooth with a random effect, two
   smooths with a random effect, and a smooth on pure noise whose
@@ -6473,7 +6618,7 @@ choosing a model, each decided with the measurement beside it.
   test in 0.79.0 and cost 20 to 31 ms at every inner iteration: measured
   on the three shapes a penalized fit meets here, 50.00 ms against 1.74,
   26.56 against 0.76 and 19.69 against 0.64, which is 29x to 35x, and on
-  those shapes the norms were 70 to 74 per cent of the whole augmented
+  those shapes the norms were 70 to 74 percent of the whole augmented
   solve against a QR of 21.25, 9.53 and 7.50 ms. End to end, with the
   log-likelihood, the effective degrees of freedom and every coefficient
   identical: 1.29x on a gaussian smooth with a random effect over 500
@@ -6489,13 +6634,13 @@ choosing a model, each decided with the measurement beside it.
   built seven vectors as long as the PAIR count – about 190 MB at the
   3.38 million pairs a REML fit over 500 random-effect levels reaches –
   for a quantity that is a short double loop per observation. Measured
-  there, it was **31.6 per cent of the fit** at 262 ms a call. The
-  kernel decomposes over the rows, so row `i` is written in full by one
-  thread and the answer does not depend on the count. End to end, with
-  the fit identical to the bit: **1.95x** over 500 levels (12.52 s to
-  6.42) and 1.35x over 1000. Against the dense route the same function
-  takes when the density gate refuses the sparse one – a computation
-  sharing no arithmetic with it – the agreement is exact.
+  there, it was **31.6 percent of the fit** at 262 ms a call. The kernel
+  decomposes over the rows, so row `i` is written in full by one thread
+  and the answer does not depend on the count. End to end, with the fit
+  identical to the bit: **1.95x** over 500 levels (12.52 s to 6.42) and
+  1.35x over 1000. Against the dense route the same function takes when
+  the density gate rejects the sparse one – a computation sharing no
+  arithmetic with it – the agreement is exact.
 
 - [`statmod_pe_derivs()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe_derivs.md)
   forms `P Am`, `P Am PH` and `P Bm` once per hyperparameter rather than
@@ -6544,14 +6689,13 @@ choosing a model, each decided with the measurement beside it.
   and the trailing columns of each Householder step are independent:
   column k is written in full by one thread in the order the sequential
   loop writes it, so the factor is bit-identical at any count BY
-  CONSTRUCTION and no arithmetic is added over the sequential form. It
-  is engaged above a measured gate and only where the matrix is
-  comfortably of full rank on the equilibrated diagonal, at the
-  tolerance `dqrdc2` itself uses, so anything the pivoted route would
-  call deficient still goes there. Measured end to end at eight threads:
-  `s(x, k = 50)` 2.07x, `te(x, z)` 2.82x, `ridge(X)` at p = 300
-  **2.89x** (164 s to 57), with the log-likelihood identical to the bit
-  in two of the three.
+  CONSTRUCTION and adds no arithmetic over the sequential form. It is
+  engaged above a measured gate and only where the matrix is comfortably
+  of full rank on the equilibrated diagonal, at the tolerance `dqrdc2`
+  itself uses, so anything the pivoted route would call deficient still
+  goes there. Measured end to end at eight threads: `s(x, k = 50)`
+  2.07x, `te(x, z)` 2.82x, `ridge(X)` at p = 300 **2.89x** (164 s to
+  57), with the log-likelihood identical to the bit in two of the three.
 
 - The count reaches `distrib_pdf()`, which no call site had ever passed
   it.
@@ -6586,13 +6730,13 @@ choosing a model, each decided with the measurement beside it.
   assert holds by construction rather than by the optimizer’s leave.
 
 - `threads` is passed to `parallelFor()` instead of being left to
-  `RCPP_PARALLEL_NUM_THREADS`, so a kernel called outside a fit honours
+  `RCPP_PARALLEL_NUM_THREADS`, so a kernel called outside a fit honors
   the count it is given rather than using every core the machine has.
 
 ## statmodels7 0.77.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-  tells apart the TWO ways a fit can have no outer gradient, which it
+  distinguishes the TWO ways a fit can have no outer gradient, which it
   used to lump into one `"unknown"`.
 
   A model with NO PENALTY – `linpar`, `nl`, `seg`, `jump`, `jseg` – has
@@ -6603,12 +6747,12 @@ choosing a model, each decided with the measurement beside it.
   A model whose only hyperparameters are KINKED – `lasso`, `scad`, `mcp`
   – has one, but it is the argmin over a path rather than the root of a
   derivative, a Laplace approximation at a mode sitting on the kink
-  having no meaning. It stays `"unknown"`, and the reason now says which
-  of the two it is. ⚠️ The mode error is not a reading there either: at
-  a coefficient the penalty has set to zero the score does not vanish
-  but lies in the subdifferential. Measured on a lasso, its 4.7e-03 is
-  carried by a coordinate whose coefficient is exactly 0 and whose score
-  is -0.715.
+  having no meaning. It stays `"unknown"`, and the reason now states
+  which of the two it is. ⚠️ The mode error is not a reading there
+  either: at a coefficient the penalty has set to zero the score does
+  not vanish but lies in the subdifferential. Measured on a lasso, its
+  4.7e-03 is carried by a coordinate whose coefficient is exactly 0 and
+  whose score is -0.715.
 
 - Measured on the reference battery, the certificate now reads 28 cases
   of 29 where it read 22, and the share passing goes from **62.1% to
@@ -6630,7 +6774,7 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.76.0
 
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-  reads three things AT THE REPORTED POINT, so what a fit says about
+  reads three things AT THE REPORTED POINT, so what a fit states about
   itself is a property of the point rather than of the search: the outer
   criterion’s gradient, how far the coefficients sit above the penalized
   mode (`g'K^-1 g / 2`, in log-likelihood units), and which
@@ -6638,8 +6782,8 @@ choosing a model, each decided with the measurement beside it.
   `boundary`, `not converged`, and `unknown` where there is nothing to
   read.
 
-- Why not the convergence flag. It says whether a search stopped on its
-  own rule, and measured across shapes it does not order fits by
+- Why not the convergence flag. It records whether a search stopped on
+  its own rule, and measured across shapes it does not order fits by
   quality: on one model the default reported success at a criterion of
   -1783.47 while the same data under `lbfgs()` reached -1664.43 and
   reported failure.
@@ -6651,35 +6795,35 @@ choosing a model, each decided with the measurement beside it.
   one that is not – while the mode error does not: 1.8e-16 to 6.1e-12 on
   four of them, 22.8 on the failing one, and 0.114 on a
   random-changepoint `seg` whose answer is right to a correlation of
-  0.9932. A number that does not separate cannot decide a state, and a
-  certificate that says how far from the mode is worth more than a
-  boolean that hides it. That `seg` fit certifies as converged and
-  carries the 0.114 as a line of its own.
+  0.9932. A number that does not separate cannot decide a state, so the
+  certificate reports how far the point is from the mode instead of a
+  boolean. That `seg` fit certifies as converged and carries the 0.114
+  as a line of its own.
 
 - `tol` is 1e-2 rather than the geometric middle of the two groups
   because the two ways of being wrong are not symmetric: a certificate
-  that says NOT CONVERGED at a good point is visible and checkable, one
-  that certifies a bad point is the failure it exists to remove.
+  that states NOT CONVERGED at a good point is visible and checkable,
+  one that certifies a bad point is the failure it exists to remove.
 
 - It costs one outer gradient and one solve, once, and refits nothing.
-  The criterion reconstructed from `fit@spec` equals the one the fit
-  reports EXACTLY on every shape measured, so the reading is of the
+  The criterion reconstructed from `fit@spec` equals the one that the
+  fit reports EXACTLY on every shape measured, so the reading is of the
   fitted model. A form with no exact outer gradient, or a fit with no
   marginal criterion, leaves the gradient `NA` and the state `unknown`
   rather than differencing it at 2p refits.
 
 - [`summary()`](https://rdrr.io/r/base/summary.html) carries it and
   prints it, boundary coordinates by name and the reasons in full. A
-  quantity no view displays is a quantity nothing checks.
+  quantity that no view displays is not checked by anything.
 
 ## statmodels7 0.75.0
 
 - [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
-  refuses to report a resolution where the inner fit is not at a mode.
-  The reading displaces the coefficients to where the inner score says
-  the mode is and asks how far the criterion moved, which is a
-  resolution while that displacement is a CORRECTION and something else
-  once it is not. The test is the displacement’s own predicted decrease,
+  does not report a resolution where the inner fit is not at a mode. The
+  reading displaces the coefficients to the mode that the inner score
+  gives and measures how far the criterion moved, which is a resolution
+  while that displacement is a CORRECTION and something else once it is
+  not. The test is the displacement’s own predicted decrease,
   `g'K^-1 g / 2`, in log-likelihood units rather than the coefficients’,
   so one limit
   ([`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md),
@@ -6692,7 +6836,7 @@ choosing a model, each decided with the measurement beside it.
   genuinely is uncertain by 28, which is more than its whole movement
   over the search (18.31) and four orders above the 1.6e-03 its
   reproducibility measures directly. The arithmetic was right and the
-  point was not, so what is refused is the conversion of an unlocated
+  point was not, so what is rejected is the conversion of an unlocated
   mode into a stopping tolerance, not the reading. **The inner fit’s
   convergence claim at a score of 247.8 is a separate and larger
   defect**, recorded in `piano_stabilita.txt`.
@@ -6706,16 +6850,16 @@ choosing a model, each decided with the measurement beside it.
   and -1664.434**, a gain of **99.85 REML units**; `newton()` is
   unchanged at -1815.372, stopping for another reason.
 
-- The trace says when a resolution was refused and what the inner fit’s
-  excess was, once per fit rather than once per evaluation.
+- The trace records when a resolution was rejected and what the inner
+  fit’s excess was, once per fit rather than once per evaluation.
 
-- ⚠️ The guard alone was not enough, and one test said so. The rule the
-  criterion carries is a NUMBER settled before the run, so it can only
-  be built from the reading at the starting point – a cold start, the
-  worst-located mode of the whole fit – while the line search reads a
-  CLOSURE over the running minimum. Nesting the line search inside the
+- ⚠️ The guard alone was not enough, and one test recorded so. The rule
+  the criterion carries is a NUMBER settled before the run, so it can
+  only be built from the reading at the starting point – a cold start,
+  the worst-located mode of the whole fit – while the line search reads
+  a CLOSURE over the running minimum. Nesting the line search inside the
   test for a usable first reading threw that away:
-  `seg(x, psi ~ random(~1|id))`, whose first reading is refused because
+  `seg(x, psi ~ random(~1|id))`, whose first reading is rejected because
   its cold mode sits 0.046 above its own minimum while the RUNNING
   MINIMUM is 3.1e-11, went from 5 evaluations to 18 and from converged
   to not, at an identical answer – cor 0.9932 and rmse 0.0674 either
@@ -6778,10 +6922,11 @@ choosing a model, each decided with the measurement beside it.
   by
   [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md),
   and could not have been: the search objective is the likelihood with
-  the penalties off, in which a hyperparameter does not appear, so no
-  proposal could change one. A global search over the hyperparameters is
-  a search over the outer criterion and is available as
-  `statmod(outer_optimizer = optimizers7::sa())`; the page says so.
+  the penalties off, in which a hyperparameter does not appear, so a
+  proposal could not change one. A global search over the
+  hyperparameters is a search over the outer criterion and is available
+  as `statmod(outer_optimizer = optimizers7::sa())`; the page states
+  this.
 
 ## statmodels7 0.72.1
 
@@ -6854,7 +6999,7 @@ choosing a model, each decided with the measurement beside it.
   on contaminated positions beats the gaussian on the inliers (rmse
   0.173 against 0.241); and a lasso fits beside the marginal term with
   its selection intact, which is the composition `piano_marginal.txt` F4
-  asked to be measured rather than promised.
+  required to be measured rather than promised.
 
 ## statmodels7 0.71.0
 
@@ -6878,17 +7023,17 @@ choosing a model, each decided with the measurement beside it.
 
 - [`solve_pd()`](https://statmodels7.github.io/statmodels7/reference/solve_pd.md)
   tests and inverts on the JACOBI-EQUILIBRATED matrix (unit diagonal),
-  which tells a flat direction from scale separation whatever produced
-  the separation, and the caller-supplied reference scale is gone. The
-  reference covered one source only: a smoothing parameter at 1e15 was
-  forgiven, but a break-point term’s committed working block carries
-  auxiliary columns near 1/(2cd) – 1e16 on the information’s diagonal at
-  the annealed floor – so the DESIGN set the reference and ordinary
-  curvature at 242 in the ordinary-scale directions read as flat:
-  [`summary()`](https://rdrr.io/r/base/summary.html) on a converged
-  three-break-point jseg refused its own variance matrix. Per-direction
-  scaling forgives both sources; an exact collinearity stays exactly
-  singular.
+  which distinguishes a flat direction from scale separation whatever
+  produced the separation, and the caller-supplied reference scale is
+  gone. The reference covered one source only: a smoothing parameter at
+  1e15 was forgiven, but a break-point term’s committed working block
+  carries auxiliary columns near 1/(2cd) – 1e16 on the information’s
+  diagonal at the annealed floor – so the DESIGN set the reference and
+  ordinary curvature at 242 in the ordinary-scale directions read as
+  flat: [`summary()`](https://rdrr.io/r/base/summary.html) on a
+  converged three-break-point jseg rejected its own variance matrix.
+  Per-direction scaling forgives both sources; an exact collinearity
+  stays exactly singular.
 
 - An outer criterion, a path and a fold all HOLD a frozen break-point
   block at its committed positions
@@ -6943,7 +7088,7 @@ choosing a model, each decided with the measurement beside it.
   break-point away from; then, alternating, the same sweep on a
   bootstrap resample’s profile (the multinomial counts as weights) and
   from random positions over the confinement interval. Only a proposal
-  the profile prefers earns a refit, accepted on the true objective;
+  that the profile favors earns a refit, accepted on the true objective;
   four consecutive dry proposals end the loop. Measured on three evident
   break-points at n = 10000: the default fit recovers the truth in 7.6 s
   where refitting every proposal took 945 s, a dry proposal costing half
@@ -7016,7 +7161,7 @@ choosing a model, each decided with the measurement beside it.
   point it has already read. Measured on the gas panel at 60 groups, 62
   of the 154 recursions of one fit revisited a point – the criterion,
   its exact gradient and the joint step’s information all read the same
-  mode, up to five times each, and the recursion is 35 per cent of the
+  mode, up to five times each, and the recursion is 35 percent of the
   fit at 226 ms a call.
   [`structural_memo()`](https://statmodels7.github.io/statmodels7/reference/structural_memo.md)
   is a depth-one exact memo on the design’s structural state (the same
@@ -7110,7 +7255,7 @@ choosing a model, each decided with the measurement beside it.
   converged with every one of its 150 subject deviations estimated as
   exactly zero.
   [`parametric_intercept()`](https://statmodels7.github.io/statmodels7/reference/parametric_intercept.md)
-  asks which term is the parametric block instead of asking a name.
+  identifies the parametric block by its term instead of by a name.
 
 - **A term with parameters of its own is handed the response on the
   scale of the predictor**,
@@ -7119,7 +7264,7 @@ choosing a model, each decided with the measurement beside it.
   [`modelterms7::term_coef_start()`](https://statmodels7.github.io/modelterms7/reference/term_coef_start.html)
   takes as its new `target`. It exists only where the response reads the
   parameter directly – a mean or a location, which
-  `params_interpretation` says – and a term in a scale’s equation is
+  `params_interpretation` states – and a term in a scale’s equation is
   handed nothing rather than a quantity invented for it. The scale is
   not a detail: measured on a Poisson whose predictor is a logistic
   curve with `phi = 4`, a term handed the raw response estimated `phi`
@@ -7142,7 +7287,8 @@ choosing a model, each decided with the measurement beside it.
   Jacobian at the current coefficients, so `dX/dbeta` enters the
   criterion’s second derivative in three places – the matrix `dK/dt`,
   its trace against `M`, and the twice-contracted fourth derivative –
-  and none of them had it. The derivative is asked of the term through
+  and none of them had it. The derivative is obtained from the term
+  through
   [`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
   and never differenced here.
 
@@ -7183,7 +7329,7 @@ choosing a model, each decided with the measurement beside it.
   location and not a missing term.
 
 - What is NOT computed is `d2X/dbeta2`, the term’s own third derivative,
-  for which no contract exists. It is what keeps the weakly identified
+  for which no method is defined. It is what keeps the weakly identified
   cell at `3.5e-03` rather than at the floor.
 
 - A model with no refreshable term is untouched bit for bit – the
@@ -7200,7 +7346,7 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.60.0
 
 - **A kinked penalty on a block that MOVES with its coefficients is
-  fitted rather than refused.**
+  fitted rather than rejected.**
   [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
   read the block as it arrived and solved against the linear predictor
   `X beta`, and a term registering `term_refresh()` has neither
@@ -7220,7 +7366,7 @@ choosing a model, each decided with the measurement beside it.
   the compiled descent exists because the design stands still while it
   walks the columns, and the refresh state advances where the
   alternation commits it. A model with no refreshable term is untouched,
-  the question being asked only where something moves.
+  the test being made only where something moves.
 
 - The KKT conditions at the point reached, differentiated numerically so
   that the check shares no arithmetic with the proximal sweep: the
@@ -7248,7 +7394,7 @@ choosing a model, each decided with the measurement beside it.
 - The quadratic form `0.5 * g' K^-1 g` alone is not enough, for a
   structural reason: the criterion carries `-0.5*log|K(beta)|`, which is
   NOT stationary in `beta`, so a mode error enters there at FIRST order.
-  Measured, it is right to one per cent at an inner tolerance of `1e-4`,
+  Measured, it is right to one percent at an inner tolerance of `1e-4`,
   where the second-order term dominates, and undershoots by 50 to 1000
   times at `1e-6` and below.
 
@@ -7307,10 +7453,10 @@ choosing a model, each decided with the measurement beside it.
   warm start, so the value at one hyperparameter depends on the path
   taken to it, and a line search cannot verify a decrease smaller than
   that. Both halves of an optimizer’s default rule are then unreachable:
-  `crit_grad()` asks `1e-6` of a gradient that bottoms out where the
-  decrease stops being verifiable, and `crit_rel_obj()` asks `1e-12` of
-  a value of order `1e4`, which is an absolute `1e-8`. A run then
-  reports failure at a point it does not leave.
+  `crit_grad()` requires `1e-6` of a gradient that bottoms out where the
+  decrease stops being verifiable, and `crit_rel_obj()` requires `1e-12`
+  of a value of order `1e4`, which is an absolute `1e-8`. A run then
+  reports failure at a point that it does not leave.
 
 - The resolution is DECLARED rather than discovered, as the criterion’s
   own scale times the INNER tolerance, so the two move together and
@@ -7338,7 +7484,7 @@ choosing a model, each decided with the measurement beside it.
   answer.
 
 - Known and not covered: a search that exhausts its line search instead
-  of meeting a rule. `descent.cpp` asks the criterion there with
+  of meeting a rule. `descent.cpp` evaluates the criterion there with
   `have_old = FALSE`, where a rule reading a CHANGE in the objective
   cannot fire by construction, so the backstop does not reach that path.
 
@@ -7352,9 +7498,9 @@ choosing a model, each decided with the measurement beside it.
   intercept over 500 levels. A bound loose enough to cover the second is
   four orders too large for the first, where it fires while the outer
   gradient is still `1.8e-2` and a stationary point was within reach;
-  six tests asserting stationarity said so. What the layer would need is
-  the resolution of THIS fit, computable from the score the inner fit
-  stopped at and the penalized information
+  six tests asserting stationarity recorded so. What the layer would
+  need is the resolution of THIS fit, computable from the score the
+  inner fit stopped at and the penalized information
   [`outer_context()`](https://statmodels7.github.io/statmodels7/reference/outer_context.md)
   already holds factorized.
 
@@ -7363,11 +7509,12 @@ choosing a model, each decided with the measurement beside it.
 - `linpar_options(sparse = NULL)` is the default, so the IMPLICIT
   parametric block settles its own storage through
   [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html)
-  instead of being built dense unless asked. A model carrying a factor
-  of many levels is then fitted sparse without the caller knowing the
-  argument exists: measured on `y ~ 0 + g + s(x)` at 20000 observations,
-  103.690 s against 2.370 s at four hundred levels and 5.160 s against
-  0.900 s at a hundred, with the log-likelihood identical.
+  instead of being built dense unless requested. A model carrying a
+  factor of many levels is then fitted sparse without the caller knowing
+  the argument exists: measured on `y ~ 0 + g + s(x)` at 20000
+  observations, 103.690 s against 2.370 s at four hundred levels and
+  5.160 s against 0.900 s at a hundred, with the log-likelihood
+  identical.
 
 - The storage is a storage and nothing else moves. On three shapes whose
   settled storage FLIPS under the new default – a parametric block of
@@ -7405,21 +7552,21 @@ choosing a model, each decided with the measurement beside it.
 - ⚠️ **The mode’s movement is read off the penalized likelihood, not off
   the criterion.** `v = db/dt` solves `(H_obs + S) v = -d2rho/dbeta dt`
   whatever matrix the determinant is of, which is what this file’s own
-  derivation says; the code used the criterion’s `K` for both, and the
+  derivation states; the code used the criterion’s `K` for both, and the
   two coincide only on the observed route. It was therefore invisible
   until the expected route existed, and there it is a systematic error
   shrinking with n exactly as the observed information approaches the
   expected one: measured on a gamma smooth at 300, 1000 and 3000
   observations, 1.9e-03, 1.4e-03 and 1.1e-04, and FLAT in the inner
-  tolerance while the mode’s score fell two decades – which is what said
-  a reference was not the weak side. Corrected, the same comparison is
-  1.8e-08. The observed route is bit-identical throughout.
+  tolerance while the mode’s score fell two decades – which is what
+  showed a reference was not the weak side. Corrected, the same
+  comparison is 1.8e-08. The observed route is bit-identical throughout.
 
 - **The exact gradient is exact where the block MOVES with the
   coefficients.** `nl()`’s block is the Jacobian, so a penalty on a
   nonlinear parameter – a ridge or a random effect over its groups –
   used to be differentiated as though the design were fixed. Two pieces
-  were missing and both are now asked of the TERM, through the new
+  were missing and both are now obtained from the TERM, through the new
   [`modelterms7::term_block_contract()`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html):
   `dX/dbeta` enters `dK/dbeta`
   ([`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)),
@@ -7430,9 +7577,9 @@ choosing a model, each decided with the measurement beside it.
   from a fixed start: **4.6e-03 to 4.0e-09** on the observed route and
   **1.1e-09** on the expected one.
 
-- ⚠️ **The derivative is asked of the term and never differenced here.**
-  A break-point column is a step function in its break-point, so a
-  difference quotient of it diverges as the step shrinks – measured at
+- ⚠️ **The derivative is obtained from the term and never differenced
+  here.** A break-point column is a step function in its break-point, so
+  a difference quotient of it diverges as the step shrinks – measured at
   h, h/4 and h/16: 3.6e4, 1.4e5, 5.8e5, against `nl`’s 0.6038
   throughout. A term that has not written the contraction inherits
   zeros, which is exactly right for a fixed design and leaves `seg()`,
@@ -7448,8 +7595,8 @@ choosing a model, each decided with the measurement beside it.
   where a lasso and a ridge must nearly agree because neither shrinks:
   the log-likelihood was -40.41 against the ridge’s 226.88 and the rate
   came back 0.885 against 0.712, with `converged = TRUE`. The same lasso
-  on a linear model is exact, which is what says it is the moving block.
-  The message names the term and the way out;
+  on a linear model is exact, which is what shows it is the moving
+  block. The message names the term and the way out;
   `piano_kink_blocco_mobile.txt` is how the rejection is lifted.
 
 - ⚠️ **The exact gradient reads the design block AT THE MODE.** It was
@@ -7473,13 +7620,13 @@ choosing a model, each decided with the measurement beside it.
 
 - What remains there is the term’s own SECOND derivative: with
   `X = X(beta)`, `dK/dbeta` gains everything coming from `dX/dbeta`, and
-  the criterion’s own second derivative asks for the third. The layer
+  the criterion’s own second derivative requires the third. The layer
   cannot difference the block to get them – measured at h, h/4 and h/16,
   `nl`’s converges (0.6038 throughout) and `seg`’s break-point column
   diverges as 1/h (3.6e4, 1.4e5, 5.8e5), being a step function in psi –
   so the term has to supply them. Designed in `piano_nl_derivate.txt`;
   the gradient is left admitted meanwhile, the search reaching the same
-  hyperparameter to 0.01-0.14 per cent while refusing would cost 1.3x on
+  hyperparameter to 0.01-0.14 percent while rejecting would cost 1.3x on
   those models and 3.6x to 7.4x beside a smooth.
 
 - [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
@@ -7502,9 +7649,9 @@ choosing a model, each decided with the measurement beside it.
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   is exact to 3.5e-14.
 
-- The route is refused at order 2, the criterion’s own second derivative
-  wanting the next order of the same object, and where a penalty covers
-  a STRUCTURAL term’s own parameters,
+- The route is rejected at order 2, the criterion’s own second
+  derivative wanting the next order of the same object, and where a
+  penalty covers a STRUCTURAL term’s own parameters,
   [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
   assembling the joint curvature from `term_curvature()` – the observed
   one – so that branch has no expected criterion for a gradient to be
@@ -7549,15 +7696,15 @@ choosing a model, each decided with the measurement beside it.
   all.
 
 - An [`offset()`](https://rdrr.io/r/stats/offset.html) buried inside
-  another term’s formula is REFUSED, naming the place it belongs.
+  another term’s formula is REJECTED, naming the place it belongs.
   `ridge(~ z + offset(o))`, `random(~ 1 + offset(o) | g)`,
   `linpar(~ x + offset(o))` and a subformula’s own
   `ridge(~ g + offset(o))` all used to fit, each dropping the offset in
   that term’s own `model.matrix` – the same defect one level down, and
-  just as quiet. It is refused rather than routed up because the meaning
-  differs by where it sits: in a penalized term’s formula it would be a
-  contribution to the equation’s predictor, and in a subformula a
-  contribution to that parameter’s own chart.
+  just as quiet. It is rejected rather than routed up because the
+  meaning differs by where it sits: in a penalized term’s formula it
+  would be a contribution to the equation’s predictor, and in a
+  subformula a contribution to that parameter’s own chart.
 
 - The starting values account for the offset.
   [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
@@ -7587,13 +7734,13 @@ choosing a model, each decided with the measurement beside it.
   (0.98x, 1.05x, 1.02x).
 
 - The win is NOT the allocation, which is 0.229 ms of a 0.992 ms call
-  and would have capped the whole thing at four per cent. It is that a
+  and would have capped the whole thing at four percent. It is that a
   sparse `S` stays sparse downstream:
   [`penalty_sqrt()`](https://statmodels7.github.io/statmodels7/reference/penalty_sqrt.md)
   returns a factor of 0.010 MB where it returned 2.0 MB, and
   [`augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/augmented_solve.md)
   no longer converts it. Measuring the accumulator alone would have
-  refused a change worth 2.31x.
+  rejected a change worth 2.31x.
 
 - [`zap_nonfinite()`](https://statmodels7.github.io/statmodels7/reference/zap_nonfinite.md)
   replaces the seven copies of `S[!is.finite(S)] <- 0`. That expression
@@ -7617,8 +7764,8 @@ choosing a model, each decided with the measurement beside it.
   calls for. `H` is already sparse wherever the design is, and
   [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
   was densifying the sum only because the penalty’s accumulator is a
-  base matrix. Where the sum is large enough and sparse enough to be
-  worth it
+  base matrix. Where the sum is large enough and sparse enough to pay
+  off
   ([`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md),
   whose two thresholds are the measured crossover), it is kept sparse
   and factorized as such, and the log-determinant and the full inverse
@@ -7659,28 +7806,28 @@ choosing a model, each decided with the measurement beside it.
   Higham’s one-norm estimator against the factor’s solves):
   [`Matrix::rcond`](https://rdrr.io/pkg/Matrix/man/rcond-methods.html)
   costs 10.3 ms at p = 503 and 500 ms at p = 2003, more than the
-  factorization it would be guarding, where the estimator is 0.58 ms to
-  0.80 ms and nearly flat. As on the dense route, the verdict never
-  turns on whether a factorization raised.
+  factorization that it would be guarding, where the estimator is 0.58
+  ms to 0.80 ms and nearly flat. As on the dense route, the verdict
+  never turns on whether a factorization raised.
 
 - The route is a property of the matrix and not of the term that built
   it, which is checked rather than asserted. With every design built the
-  same way it is worth 1.38x on `0 + g + s(x)` over 400 levels, 1.33x on
+  same way it gives 1.38x on `0 + g + s(x)` over 400 levels, 1.33x on
   `random(~1|g)` over 500 and 1.07x on `s(x, by = g)` over 60 – an
   unpenalized indicator block, a random effect and a factor-`by` smooth,
   gaining together and in the order their sizes predict. It also
   survives the prior changing: with
   `random(~1|g, distrib = fixed(student_t1_distrib(), mu = 0))`, whose
   penalty is separable and moves with the coefficients at every inner
-  iteration and whose `nu` is estimated, the same route is taken and is
-  worth 1.24x against the Gaussian prior’s 1.45x on the same data.
+  iteration and whose `nu` is estimated, the same route is taken and
+  gives 1.24x against the Gaussian prior’s 1.45x on the same data.
 
 - Sharing that factorization with the criterion was MEASURED AND NOT
   TAKEN. Where the criterion’s matrix is the one
   [`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
   holds, the same matrix is factorized twice at one point – 12.4 ms
   spent twice at p = 503 – and reading the determinant from the context
-  removes one of them. End to end it is worth nothing: 1.01x at p = 503,
+  removes one of them. End to end it gains nothing: 1.01x at p = 503,
   and 0.92x to 1.04x over the four shapes. The criterion is evaluated at
   many points the gradient never reaches, every trial point of a line
   search among them, and there is nothing to share at those.
@@ -7699,8 +7846,8 @@ choosing a model, each decided with the measurement beside it.
   502, so the `(sigma, mu)` block was materializing a dense 20000 x 502
   product – 80 MB – to keep 20000 numbers out of it.
   [`block_leverage()`](https://statmodels7.github.io/statmodels7/reference/block_leverage.md)
-  was still 41 per cent of that fit after the sparse route of 0.50.0; it
-  is 2.7 per cent now, and the fit goes from 3.700 s to 2.420 s.
+  was still 41 percent of that fit after the sparse route of 0.50.0; it
+  is 2.7 percent now, and the fit goes from 3.700 s to 2.420 s.
 
 - Where the four shapes stand against the release that began this work:
 
@@ -7725,7 +7872,7 @@ choosing a model, each decided with the measurement beside it.
   it is read is the method’s business and a closure costs nothing until
   it is called.
 
-  The gradient count is the tell, and the answers are identical
+  The gradient count shows this, and the answers are identical
   throughout:
 
   |                                | `fn` | `gr` | `he` | time    |           |
@@ -7761,22 +7908,22 @@ choosing a model, each decided with the measurement beside it.
   block, R’s per-element indexing being far dearer than a BLAS flop.
   Interpolating puts the crossover near 1.1e-03, which is the threshold,
   with an absolute cap on the number of pairs besides – the density gate
-  bounds the ratio of work and says nothing about its size.
+  bounds the ratio of work and gives no information about its size.
 
   End to end at 20000 observations with a random intercept, the two
   routes forced either way: 1.17x at 200 levels, 1.89x at 500, 1.26x at
-  1000 and 1.11x at 2000. The win peaks and falls back, which says where
-  the bottleneck moves: past about a thousand levels the dense `O(p^3)`
-  inverse takes over, and at 503 coefficients it had been 4.4 per cent
-  of the fit.
+  1000 and 1.11x at 2000. The win peaks and falls back, which shows
+  where the bottleneck moves: past about a thousand levels the dense
+  `O(p^3)` inverse takes over, and at 503 coefficients it had been 4.4
+  percent of the fit.
 
 - The exact gradient and the exact Hessian are computed WHEN THE SEARCH
-  ASKS FOR THEM, not whenever the criterion could supply them. Which of
-  the two a search reads varies – `nelder_mead()` reads neither,
+  REQUESTS FOR THEM, not whenever the criterion could supply them. Which
+  of the two a search reads varies – `nelder_mead()` reads neither,
   `lbfgs()` and `bfgs()` read the gradient and never the Hessian,
   `newton()` reads both – and a line search evaluates the objective at
-  many trial points where it wants no derivative at all. Measured on the
-  counts, the inner objective is asked for a value three to four times
+  many trial points where it needs no derivative at all. Measured on the
+  counts, the inner objective is evaluated a value three to four times
   more often than for a gradient.
 
   This needs no predicate about the optimizer and follows what it does
@@ -7805,12 +7952,12 @@ choosing a model, each decided with the measurement beside it.
 
 - An INNER context was measured and NOT built. The objective’s `fn`,
   `gr` and `he` are already separate closures, so an optimizer that
-  reads no Hessian never pays for one – measured, `he` is asked for zero
+  reads no Hessian never pays for one – measured, `he` is requested zero
   times per fit under every inner method. What they do repeat at one
-  point is the linear predictors, and that is 15 to 16 per cent of one
-  `fn` plus `gr`; since a value is asked for three to four times more
+  point is the linear predictors, and that is 15 to 16 percent of one
+  `fn` plus `gr`; since a value is requested three to four times more
   often than a gradient, most evaluations have no partner to share with,
-  and the whole saving is about 7 per cent of the inner objective. It
+  and the whole saving is about 7 percent of the inner objective. It
   does not pay for the machinery.
 
 - The criterion, the gradient, the effective degrees of freedom and
@@ -7827,7 +7974,7 @@ choosing a model, each decided with the measurement beside it.
   additionally called the gradient, which repeated the whole of it a
   fourth time – measured by `Rprof`’s `by.total` on a random intercept
   over 500 levels, the gradient and the Hessian together accounted for
-  128 per cent of the fit, the overlap being exactly that repetition.
+  128 percent of the fit, the overlap being exactly that repetition.
 
 - A contraction of a third or fourth derivative is never assembled where
   it is only traced against `M`. `tr(M X'WX)` is a weighted sum of the
@@ -7851,7 +7998,7 @@ choosing a model, each decided with the measurement beside it.
   | random(500), gaussian, n = 20000     | 24.310 s | 10.320 s | 2.36x |
 
 - Two changes were measured and NOT made. Carrying a block-supported
-  quantity without its surrounding zeros is worth 0.023 ms a call at 69
+  quantity without its surrounding zeros saves 0.023 ms a call at 69
   coefficients, which is 5 ms of a 14.7 s fit, and at 503 the subsetting
   is 0.4x – slower than the full product – because the penalty covers
   500 of the 503 columns. And computing `tr(M K_l M K_m)` through
@@ -7881,7 +8028,7 @@ choosing a model, each decided with the measurement beside it.
 - The accumulator stays a base matrix, which is measured rather than
   timid. Making it the design’s own kind saved 0.8x end to end (17.0x
   against 16.2x), and it would have put twenty-two consumers on a
-  contract only the two a sparse design happens to exercise are covered
+  structure only the two a sparse design happens to exercise are covered
   by. What the blocked penalty buys is its CONSTRUCTION and its own
   storage, and neither passes through this accumulator.
 
@@ -7908,7 +8055,7 @@ choosing a model, each decided with the measurement beside it.
   fold of
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
   that built a dense design where the fit built a sparse one would be
-  paying for a storage the model did not ask for.
+  paying for a storage that the model did not request.
 
 - Measured on 150 groups, the parametric block goes from 1.54 MB to 0.12
   MB with an identical log-likelihood and identical coefficients, and
@@ -7953,9 +8100,9 @@ choosing a model, each decided with the measurement beside it.
   the same rows by position.
   [`cv_bind_inputs()`](https://statmodels7.github.io/statmodels7/reference/cv_bind_inputs.md)
   binds the subset as a column of the fold, which builds for the fold
-  the spelling the documentation asks the caller for. Measured, the two
-  spellings now give identical coefficients, an identical criterion and
-  an identical lambda on the same folds.
+  the spelling that the documentation requires of the caller. Measured,
+  the two spellings now give identical coefficients, an identical
+  criterion and an identical lambda on the same folds.
 
 - Nothing is relearned that should be. A matrix carries no knots, no
   contrasts and no levels, so subsetting it and re-evaluating it give
@@ -8033,7 +8180,7 @@ choosing a model, each decided with the measurement beside it.
 ## statmodels7 0.42.0
 
 - [`summary()`](https://rdrr.io/r/base/summary.html) reports a
-  correlated random effect by the quantities it is about. Where a
+  correlated random effect by the quantities that it is about. Where a
   penalty answers
   [`penalties7::penalty_readable()`](https://statmodels7.github.io/penalties7/reference/penalty_readable.html)
   the coordinate rows are replaced by the standard deviations and
@@ -8044,9 +8191,10 @@ choosing a model, each decided with the measurement beside it.
   mapped back: log for a standard deviation, Fisher’s z for a
   correlation. A standard deviation therefore cannot be given a negative
   lower end and a correlation cannot be given one that leaves (-1, 1),
-  which is the rule every other interval in the toolkit follows. No test
-  is printed, the null a z would report on being that the quantity is
-  zero, which for a standard deviation is the edge of its range.
+  which is the rule every other interval in the toolkit follows. The
+  summary prints no test, since the null that a z would test is that the
+  quantity is zero, which for a standard deviation is the edge of its
+  range.
 
 - Measured against `lme4` on random slopes over 40 groups, the effects’
   standard deviations and correlation are (1.2370, 0.4820, -0.1399)
@@ -8056,11 +8204,11 @@ choosing a model, each decided with the measurement beside it.
 
 - Nothing in the fitting layer changed: a random effect whose prior is
   read blockwise is one penalty entry like any other, and one per
-  within-group column is the enumeration this layer has run on since
-  0.12.0. What changed is what a fit reports – the hyperparameter of a
-  gaussian random effect is now the standard deviation of the effects
-  rather than a precision, so the tests that constructed or interpreted
-  its value were turned round with it.
+  within-group column is the enumeration that this layer has run on
+  since 0.12.0. What changed is what a fit reports – the hyperparameter
+  of a gaussian random effect is now the standard deviation of the
+  effects rather than a precision, so the tests that constructed or
+  interpreted its value were turned round with it.
 
 - Measured against `lme4` on a random intercept over 40 groups: the
   fixed effects agree to 1.3e-05 and the standard deviation of the
@@ -8101,9 +8249,9 @@ choosing a model, each decided with the measurement beside it.
 
 - A hyperparameter a term wrote out as a vector is visited as it stands.
   The value emptying the block does not cap it and `min_ratio` does not
-  extend it, both of those being ways to build a grid, and the order it
-  is walked in is the penalty’s – from the emptiest fit towards the
-  fullest – so the warm starts run as they do on a built grid.
+  extend it, both of those being ways to build a grid, and the order in
+  which it is walked is the penalty’s – from the emptiest fit towards
+  the fullest – so the warm starts run as they do on a built grid.
 
 - A shape parameter is swept above the smallest value at which the block
   can be FITTED. SCAD’s proximal operator needs `t < a - 1` and MCP’s
@@ -8111,8 +8259,9 @@ choosing a model, each decided with the measurement beside it.
   map, and `t = 1/sum(w x^2)` is a property of the data: measured, a
   standardized penalty on a column of spread 20 needs `a > 3` where
   SCAD’s own bound is 2, and a Poisson block whose fitted means are near
-  1e-3 needs `a > 11`. The limit is asked of the penalty and bisected
-  rather than written out, so neither constant appears in the path.
+  1e-3 needs `a > 11`. The limit is obtained from the penalty and
+  bisected rather than written out, so neither constant appears in the
+  path.
 
 - The size of the kink is inverted in closed form. Measured over four
   decades, it is exactly a power of each hyperparameter – one for the
@@ -8123,7 +8272,7 @@ choosing a model, each decided with the measurement beside it.
   checked at the values it produced, and a penalty that does not obey
   one falls back to bracketing. Measured, a bracketing solve cost 4.18
   ms against a fit’s 62.5 ms, so a path of twenty-five points spent 6.7
-  per cent of itself locating the values it would visit.
+  percent of itself locating the values it would visit.
 
 - A pass that would visit the points just scored is not run. The top of
   the path is refreshed between passes because the rest of the model
@@ -8139,10 +8288,11 @@ choosing a model, each decided with the measurement beside it.
   kink that empties the block, taken from the score at the coefficients
   in hand, so it moves with the rest of the model: a smooth beside a
   kinked term has its own smoothing parameter estimated INSIDE each
-  point of the path, and every such fit changes the score it is read
-  from. Reading it once left the path anchored to the state the search
-  began in. Measured on an elastic net, the largest lambda of the path
-  moves from 37.0307 to 46.2884 between the first sweep and the second.
+  point of the path, and every such fit changes the score from which it
+  is read. Reading it once left the path anchored to the state the
+  search began in. Measured on an elastic net, the largest lambda of the
+  path moves from 37.0307 to 46.2884 between the first sweep and the
+  second.
 
   It bites where there is more than one sweep, which today means more
   than one hyperparameter under estimation; a single kinked
@@ -8150,18 +8300,18 @@ choosing a model, each decided with the measurement beside it.
 
 ## statmodels7 0.38.0
 
-- The path visits as many values as the TERM asked for, per
+- The path visits as many values as the TERM requested, per
   hyperparameter: `lasso(~x, n_lambda = 50)`,
   `enet(~x, n_lambda = 40, n_alpha = 12)`. How finely a hyperparameter
   is swept is a property of the term for the same reason as whether it
   is swept at all, and the criterion applies to every term of the model
-  at once and cannot know which it is looking at.
+  at once and cannot identify which it is looking at.
   [`statmod_grid_size()`](https://statmodels7.github.io/statmodels7/reference/statmod_grid_size.md)
   reads it from the penalty’s entry and falls back to the criterion’s
-  `n_values` where the term said nothing.
+  `n_values` where the term gave no value.
 
-- And as far DOWN as it asked: `lasso(~x, min_ratio = 1e-6)` sets the
-  fraction of the emptying kink the path descends to. One number per
+- And as far DOWN as it requested: `lasso(~x, min_ratio = 1e-6)` sets
+  the fraction of the emptying kink the path descends to. One number per
   term, since only the sweep by kink size uses it.
   [`statmod_min_ratio()`](https://statmodels7.github.io/statmodels7/reference/statmod_min_ratio.md)
   reads it and falls back to the criterion’s.
@@ -8181,20 +8331,20 @@ choosing a model, each decided with the measurement beside it.
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   and
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md).
-  Both said the same thing as the terms, and whichever of the two a
+  Both gave the same value as the terms, and whichever of the two a
   reader believed, the other was read by nobody when they disagreed.
   Passing `hyper` now signals an error naming the spelling that works.
 
-- A hyperparameter no path could reach is swept over a grid of its own.
-  The elastic net’s `alpha` scales the kink and is bounded by one, so no
-  admissible value of it empties the block; the shape of SCAD and MCP
-  has no upper bound and does not move the kink at all. Neither is
+- A hyperparameter that no path could reach is swept over a grid of its
+  own. The elastic net’s `alpha` scales the kink and is bounded by one,
+  so no admissible value of it empties the block; the shape of SCAD and
+  MCP has no upper bound and does not move the kink at all. Neither is
   reachable by the geometric path over kink sizes, and leaving them out
-  was how `alpha` stayed at 0.5 while the summary said a criterion had
-  chosen it. A bounded one is swept over its interval and an unbounded
-  shape over a geometric grid above its lower bound, which spans the
-  values the literature uses (3.7 for the SCAD of Fan and Li, 3 for the
-  MCP of Zhang).
+  was how `alpha` stayed at 0.5 while the summary reported a criterion
+  had chosen it. A bounded one is swept over its interval and an
+  unbounded shape over a geometric grid above its lower bound, which
+  spans the values that the literature uses (3.7 for the SCAD of Fan and
+  Li, 3 for the MCP of Zhang).
 
 - The summary reads what was held from the terms, so a hyperparameter is
   marked fixed if and only if a term fixed it.
@@ -8234,13 +8384,13 @@ choosing a model, each decided with the measurement beside it.
 
 - A hyperparameter chosen by `sparse_criterion` is reported as estimated
   by the criterion that chose it.
-  [`summary()`](https://rdrr.io/r/base/summary.html) asked
+  [`summary()`](https://rdrr.io/r/base/summary.html) read
   `methods$outer`, which carries the marginal criterion alone, so a
-  lambda a path had selected was printed `(fixed)` beside a note saying
-  it was held at the value it was given – of a number the caller had
-  never seen. The fit now records which criterion swept the kinked
-  penalties and exactly which hyperparameters it reached, and the cell
-  says `(bic)`, `(cv)` or `(fixed)` accordingly.
+  lambda that a path had selected was printed `(fixed)` beside a note
+  stating that it was held at the value that it was given – of a number
+  that the caller had never seen. The fit now records which criterion
+  swept the kinked penalties and exactly which hyperparameters it
+  reached, and the cell shows `(bic)`, `(cv)` or `(fixed)` accordingly.
 
 - The hyperparameters come first in every penalized block. They govern
   every coefficient under them, and a table opening with a hundred
@@ -8259,17 +8409,17 @@ choosing a model, each decided with the measurement beside it.
   [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
   returns it. The interval is built on the free scale its link defines
   and mapped back, as every other interval in the toolkit is, so a
-  positive hyperparameter keeps a positive lower end. No test is printed
-  beside it: the null a `z` would report on is that the hyperparameter
-  is zero, which is the edge of its range rather than an interior
-  hypothesis. Validated against the criterion itself, refitted at each
-  probe and differenced twice on the free scale.
+  positive hyperparameter keeps a positive lower end. The summary prints
+  no test beside it: the null a `z` would report on is that the
+  hyperparameter is zero, which is the edge of its range rather than an
+  interior hypothesis. Validated against the criterion itself, refitted
+  at each probe and differenced twice on the free scale.
 
   A hyperparameter chosen by a path –
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-  over a kinked penalty – still carries none, and that is a refusal
+  over a kinked penalty – still carries none, and that is a rejection
   rather than an omission: it is the argument of a minimum over a grid,
   not the root of a derivative, so there is no curvature to read and its
   uncertainty is a resampling question.
@@ -8301,19 +8451,20 @@ choosing a model, each decided with the measurement beside it.
   A break-point gets an estimate, a standard error and an interval, and
   no test. The null a `z` of estimate over standard error reports on is
   that the position is zero, which is not a hypothesis anyone holds; the
-  one a reader wants is that there is no break-point at all, and under
+  one a reader needs is that there is no break-point at all, and under
   it the position is a nuisance parameter that vanishes, so the
   classical p-value is wrong by a factor of three to five. `segmented`
   prints the estimate and the standard error alone for the same reason.
 
-- The default start asks each term where its own block begins, through
+- The default start queries each term for where its own block begins,
+  through
   [`modelterms7::term_coef_start()`](https://statmodels7.github.io/modelterms7/reference/term_coef_start.html).
   It used to put every coefficient at zero except an equation’s
   intercept, and for a term that recomputes its block from its
   coefficients zero is a singular point rather than a neutral one:
   `y ~ jump(x, npsi = 3)` returned every coefficient exactly zero and
   reported failure, the three break-points having collapsed onto one
-  clamped position. A term asking for zeros is left alone, so an
+  clamped position. A term requesting zeros is left alone, so an
   ordinary block is unchanged, and
   [`start_origin()`](https://statmodels7.github.io/statmodels7/reference/start_origin.md)
   still means the origin.
@@ -8323,11 +8474,11 @@ choosing a model, each decided with the measurement beside it.
 - The exact gradient of the marginal criterion reaches a penalty over a
   STRUCTURAL term’s own parameters.
   [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  no longer refuses `isTRUE(u$structural)`; it asks whether the term
+  no longer rejects `isTRUE(u$structural)`; it tests whether the term
   answers
   [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html),
-  read from the class the method is registered on, so a term written
-  later is covered without a list of class names here.
+  read from the class that the method is registered on, so a term
+  written later is covered without a list of class names here.
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)/[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   on a score-driven panel therefore run `lbfgs()` on an exact derivative
   where they ran `nelder_mead()` on values.
@@ -8362,9 +8513,9 @@ choosing a model, each decided with the measurement beside it.
    20 groups x 60      9 against 41     88.0 s against 88.9 s
   ```
 
-  The last row is worth reading as it is: the evaluation count is what
-  the exact route buys and it is 4.6x there, while the WALL TIME is a
-  wash, because each exact evaluation also pays for the gradient (one
+  The last row should be read as it is: the evaluation count is what the
+  exact route buys and it is 4.6x there, while the WALL TIME is a wash,
+  because each exact evaluation also pays for the gradient (one
   `term_third()` and one extra `term_curvature()` per hyperparameter)
   and one point on that path is still unavailable and costs a long inner
   fit that does not converge.
@@ -8394,7 +8545,7 @@ choosing a model, each decided with the measurement beside it.
   and the same answer `nelder_mead()` reaches in 41 – prior scale
   0.3783702 against 0.37837, criterion -1696.89343 both.
 
-  ⚠️ Two explanations were measured and refused before this one. The
+  ⚠️ Two explanations were measured and rejected before this one. The
   criterion is NOT noisy here: repeated at one hyperparameter from a
   running warm start, and arrived at from eight different previous
   hyperparameters as far as six units away, its spread is exactly zero.
@@ -8443,15 +8594,16 @@ choosing a model, each decided with the measurement beside it.
   criterion agreeing to four decimals throughout.
 
   ⚠️ It has a cost, and it is on the criterion’s PLATEAU. Once the
-  penalty dominates the information the criterion is flat – its kept
-  normalizing constant cancels the Laplace determinant – and with the
-  exact Hessian Newton walks the whole of it: on a response scaled by
-  1e4 the smoothing parameter reaches 9.5e-20 where the simplex stopped
-  at 3.2e-8, the fitted function identical to five decimals. The fit is
-  unharmed, the reported hyperparameter is not meaningful there, and
+  penalty dominates the information that the criterion is flat – its
+  kept normalizing constant cancels the Laplace determinant – and with
+  the exact Hessian Newton walks the whole of it: on a response scaled
+  by 1e4 the smoothing parameter reaches 9.5e-20 where the simplex
+  stopped at 3.2e-8, the fitted function identical to five decimals. The
+  fit is unharmed, the reported hyperparameter is not meaningful there,
+  and
   [`modelterms7::edf()`](https://statmodels7.github.io/modelterms7/reference/edf.html)’s
   plain [`solve()`](https://rdrr.io/r/base/solve.html) cannot invert
-  `H + S` that far out. Three tests now ask for `reml("expected")` where
+  `H + S` that far out. Three tests now request `reml("expected")` where
   what they check is their own reference or the inner rule rather than
   the outer surface.
 
@@ -8468,7 +8620,7 @@ choosing a model, each decided with the measurement beside it.
   carry the values. A sparse block’s line names the route that actually
   ran, coordinate descent or proximal gradient, rather than one guessed
   at beforehand: whether the compiled descent applies depends on the
-  operator being admissible at the step the fit takes.
+  operator being admissible at the step that the fit takes.
 
 - An outer point where the criterion is unavailable is now a FINITE
   barrier, strictly worse than everything seen, instead of an infinity.
@@ -8496,8 +8648,8 @@ choosing a model, each decided with the measurement beside it.
 
 - A fit records the optimizer that searched over its hyperparameters, in
   `methods$search`, the caller’s where one was given and otherwise the
-  one chosen from what the criterion can supply. A fit says what fitted
-  it rather than leaving a reader to reconstruct the default.
+  one chosen from what the criterion can supply. A fit records what
+  fitted it rather than leaving a reader to reconstruct the default.
 
 - `statmod(start =)` takes a STRATEGY as well as a list of values:
   [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
@@ -8507,12 +8659,12 @@ choosing a model, each decided with the measurement beside it.
   [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md).
   A strategy answers the generic
   [`start_at()`](https://statmodels7.github.io/statmodels7/reference/start_at.md)
-  and is asked ONCE, before the alternation between the coefficients and
-  the hyperparameters begins. That is the whole reason it is an argument
-  of its own rather than an optimizer: handed to `inner_optimizer` as
-  `chain(sa(), iwls())`, a search would rerun at every hyperparameter
-  the outer criterion tried – 46 times on an ordinary fit, the folds
-  times the path inside
+  and is called ONCE, before the alternation between the coefficients
+  and the hyperparameters begins. That is the whole reason it is an
+  argument of its own rather than an optimizer: handed to
+  `inner_optimizer` as `chain(sa(), iwls())`, a search would rerun at
+  every hyperparameter the outer criterion tried – 46 times on an
+  ordinary fit, the folds times the path inside
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) –
   returning the same answer each time. `start = NULL` and a list of
   values are unchanged to the bit, which a test asserts.
@@ -8536,7 +8688,7 @@ choosing a model, each decided with the measurement beside it.
   best there.
 
   ⚠️ Measured, on every model tried it changes NOTHING, and that is the
-  honest report rather than an omission: `nl()` reaches
+  accurate report rather than an omission: `nl()` reaches
   [`nls()`](https://rdrr.io/r/stats/nls.html)’s answer from both a poor
   start and a good one, `jseg()` reaches the same likelihood from three
   starting positions, and a filter’s fit is unchanged. The toolkit’s
@@ -8569,30 +8721,30 @@ choosing a model, each decided with the measurement beside it.
   `rcond * ||A||_1` is 1/\|\|A^-1\|\|\_1, which for a symmetric matrix
   lies between lambda_min/sqrt(p) and lambda_min. The estimate therefore
   errs on the SMALL side – the verdict is conservative and can never
-  accept a matrix the exact test would refuse – and by a bounded factor:
+  accept a matrix the exact test would reject – and by a bounded factor:
   measured over dimensions 5 to 300 and condition numbers 1e2 to 1e15
   the ratio to the true smallest eigenvalue stays between 0.29 and 0.75,
   where the two cases the test must keep apart are separated by some
   fifty orders of magnitude. Both sides are unchanged and still
   asserted: a smoothing parameter at 6e15 is accepted, two identical
-  columns refused. Measured at p = 1022: **4.5x** on the operation (1.40
-  s to 0.31 s) and a fit carrying a random effect over 1000 groups from
-  4.00 s to 2.78 s. `src/lapack_rcond.cpp` is the wrapper and
+  columns rejected. Measured at p = 1022: **4.5x** on the operation
+  (1.40 s to 0.31 s) and a fit carrying a random effect over 1000 groups
+  from 4.00 s to 2.78 s. `src/lapack_rcond.cpp` is the wrapper and
   `src/Makevars` links R’s own LAPACK and BLAS.
 
 - The penalty’s square-root factor is taken from the diagonal where the
   penalty is diagonal, instead of from a dense eigendecomposition. The
   eigenvalues of a diagonal matrix are its diagonal, so the two routes
   agree by construction and a test pins them together; what makes it
-  worth having is how often the case arises, a ridge, a random effect
-  and the Demmler-Reinsch penalty of `s()` all being diagonal, and that
-  the factor is recomputed at every iteration of the scoring loop.
-  Measured on a random intercept over 1000 groups at n = 20000: one
-  factorization went from 0.63 s to under a millisecond and the fit from
-  6.52 s to 1.97 s, **3.3x**, with the objective and every coefficient
-  identical. With a smooth beside the random effect, 3.0x. A
-  non-diagonal penalty – a tensor’s, an anisotropic sum – still goes
-  through the eigen route, and a test asserts that it does.
+  useful is how often the case arises, a ridge, a random effect and the
+  Demmler-Reinsch penalty of `s()` all being diagonal, and that the
+  factor is recomputed at every iteration of the scoring loop. Measured
+  on a random intercept over 1000 groups at n = 20000: one factorization
+  went from 0.63 s to under a millisecond and the fit from 6.52 s to
+  1.97 s, **3.3x**, with the objective and every coefficient identical.
+  With a smooth beside the random effect, 3.0x. A non-diagonal penalty –
+  a tensor’s, an anisotropic sum – still goes through the eigen route,
+  and a test asserts that it does.
 
 ## statmodels7 0.29.0
 
@@ -8605,12 +8757,12 @@ choosing a model, each decided with the measurement beside it.
   that read as singularity –
   [`vcov()`](https://rdrr.io/r/stats/vcov.html),
   [`summary()`](https://rdrr.io/r/base/summary.html) and every `edf`
-  refused a CORRECT fit on a poisson smooth over weak signal.
+  rejected a CORRECT fit on a poisson smooth over weak signal.
   [`vcov()`](https://rdrr.io/r/stats/vcov.html) and
   [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)’s
   whole-model smoother pass the unpenalized information’s diagonal as
   the scale; a genuinely flat direction (two identical columns) is still
-  refused, being small against that scale too, and a test asserts both
+  rejected, being small against that scale too, and a test asserts both
   sides. The eigen-inverse also removes the Cholesky that could fail
   outright at such conditioning, each eigenvalue inverted exactly and
   the shrunk directions simply reporting variances near zero.
@@ -8623,7 +8775,7 @@ choosing a model, each decided with the measurement beside it.
   threshold and a run stalled AT the optimum reported failure; the
   dimensionless reading relabels exactly that run and never stops one,
   so every trajectory is unchanged. Two stronger designs were tried and
-  REFUSED by measurement: a per-coordinate normalization by (H+S)\_jj
+  REJECTED by measurement: a per-coordinate normalization by (H+S)\_jj
   let penalized coordinates converge loosely at extreme shrinkage and
   moved every outer trajectory, and driving the loop with the
   per-equation form made the tolerance unreachable at y\*1e4 – the stall
@@ -8659,7 +8811,7 @@ choosing a model, each decided with the measurement beside it.
   exp(31) with `converged = TRUE`) fell through to a non-finite value
   and the optimizer stopped with “the objective is not finite at the
   starting value”, naming the point and not the reason. The error now
-  says what is unavailable and why, and points at
+  states what is unavailable and why, and points at
   `outer_criterion = NULL` for inspection.
 
 - The subformulas of a term’s own parameters (modelterms7 0.27.0) fit
@@ -8714,9 +8866,9 @@ choosing a model, each decided with the measurement beside it.
   [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
   materialized the penalized block dense to hand the kernel an
   `arma::mat`. A coordinate descent reads one column at a time, so a
-  compressed-column matrix is the storage the method wants rather than
-  one it tolerates: column `j` of a `dgCMatrix` is a contiguous run of
-  its own nonzeros, which is exactly the walk every step of this
+  compressed-column matrix is the storage that the method uses rather
+  than one it tolerates: column `j` of a `dgCMatrix` is a contiguous run
+  of its own nonzeros, which is exactly the walk every step of this
   algorithm makes.
 
   The algorithm is written ONCE against a column accessor and
@@ -8776,14 +8928,15 @@ choosing a model, each decided with the measurement beside it.
   first where the failure was not an R error.
 
 - [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
-  asked whether a penalty has a proximal table AT A STEP OF 1, which is
+  tested whether a penalty has a proximal table AT A STEP OF 1, which is
   a different question from the one it meant. SCAD and MCP have no table
   past their convex region, and under a diagonal map the condition is
   `t < (a-1)/d^2`, so a standardized block on a column of spread 20 was
-  refused at the probe and sent to the general proximal route, which
+  rejected at the probe and sent to the general proximal route, which
   then raised on the same condition. The probe is taken at a step short
   enough to answer only the question about the family; the step that
-  will be used is asked below it, once the working weights are known.
+  will be used is evaluated below it, once the working weights are
+  known.
 
 - Standardization needs nothing here, which was the point of putting it
   on the penalty: a standardized term fits what a hand-standardized
@@ -8814,7 +8967,7 @@ choosing a model, each decided with the measurement beside it.
 
   It took two steps and the first alone was not enough. With the block
   sparse the fit was 0.9x to 1.4x: `crossprod` left the profile
-  entirely, and `.Fortran` ROSE from 57.9 to 72.6 per cent, because
+  entirely, and `.Fortran` ROSE from 57.9 to 72.6 percent, because
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   still ran a dense QR. **A profile share is not a speedup: removing the
   cheaper half leaves the dearer one.**
@@ -8852,7 +9005,7 @@ choosing a model, each decided with the measurement beside it.
 
   The joint step passed `optimizer = NULL` unconditionally, so
   `inner_optimizer` was ACCEPTED AND IGNORED for exactly the models it
-  matters most for. Measured now that it is honoured: `lbfgs` is 2x on a
+  matters most for. Measured now that it is honored: `lbfgs` is 2x on a
   three-parameter filter (5.08 s against 9.95) and `newton` is 2.8x on a
   33-parameter panel (4.58 s against 12.97, 14 iterations against 130),
   the log-likelihood identical throughout. The default stays Newton,
@@ -8895,18 +9048,18 @@ choosing a model, each decided with the measurement beside it.
 
   ⚠️ The warning that reports a choice at an end fired on the INDEX
   alone while its text claimed the criterion was still falling. With the
-  top now emptying the block the criterion is FLAT across that stretch,
-  so index one is a legitimate minimum and the message was naming a
-  cause that was not the real one. It compares against the neighboring
-  point now, and the two warnings the suite carried were both of that
-  kind.
+  top now emptying the block that the criterion is FLAT across that
+  stretch, so index one is a legitimate minimum and the message was
+  naming a cause that was not the real one. It compares against the
+  neighboring point now, and the two warnings the suite carried were
+  both of that kind.
 
 ## statmodels7 0.25.0
 
-- A structural term is reported under the names its literature uses, and
-  under the quantities rather than the coordinates. For a score-driven
-  term that is `omega`, `alpha1` and `beta1`: the last is the
-  AUTOREGRESSIVE COEFFICIENT, taken through the Levinson-Durbin
+- A structural term is reported under the names that its literature
+  uses, and under the quantities rather than the coordinates. For a
+  score-driven term that is `omega`, `alpha1` and `beta1`: the last is
+  the AUTOREGRESSIVE COEFFICIENT, taken through the Levinson-Durbin
   recursion, where the free coordinate is a partial autocorrelation and
   above `q = 1` a different number.
 
@@ -8986,7 +9139,7 @@ choosing a model, each decided with the measurement beside it.
   reaches
   [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
   which rejected deviations, so every such model – with or without a
-  penalty – signalled an error rather than fitting. It needs
+  penalty – signaled an error rather than fitting. It needs
   `modelterms7` 0.21.0.
 
 ## statmodels7 0.23.0
@@ -9008,7 +9161,7 @@ choosing a model, each decided with the measurement beside it.
   [`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)
   runs one Newton step over the stacked coefficients and the term’s free
   parameters. The unknowns are ordered as the information orders them,
-  so no permutation is needed, and a level an intercept in the same
+  so the permutation is not needed, and a level an intercept in the same
   equation carries is held and leaves the system exactly as it leaves
   the information. Measured on a panel of 25 groups and 750
   observations: 16.91 s to 3.21 s, a factor of 5.3, at a slightly higher
@@ -9034,11 +9187,11 @@ choosing a model, each decided with the measurement beside it.
   The gradient of the structural block adds that derivative, which its
   objective had been including all along: two functions differing by a
   penalty are not each other’s gradient, and optimizers7’s own check had
-  been saying so. Verified against `numDeriv` at three points, agreeing
-  to the reference’s own accuracy.
+  been reporting so. Verified against `numDeriv` at three points,
+  agreeing to the reference’s own accuracy.
 
 - The per-observation callbacks a filter runs reuse one buffer instead
-  of rebuilding a list of scalars on every call. Worth 1.09x on its own;
+  of rebuilding a list of scalars on every call. Gives 1.09x on its own;
   the number of filter runs, which the joint step addresses, is where
   the time actually was.
 
@@ -9105,10 +9258,10 @@ choosing a model, each decided with the measurement beside it.
   kinked penalty, whose lambda
   [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   skips by construction, or a held one – the correction is exactly zero
-  and says so. That is a refusal rather than an approximation: the map
-  from the hyperparameter to the penalized mode turns a corner whenever
-  a coefficient joins or leaves the active set, and a delta method needs
-  a derivative that does not exist there.
+  and reports it. That is a rejection rather than an approximation: the
+  map from the hyperparameter to the penalized mode turns a corner
+  whenever a coefficient joins or leaves the active set, and a delta
+  method needs a derivative that does not exist there.
 
   It is off by default because it changes a number a reader may be
   comparing with an earlier fit.
@@ -9136,8 +9289,8 @@ choosing a model, each decided with the measurement beside it.
   held level is shown as held, with no standard error rather than a zero
   one.
 
-- [`logLik()`](https://rdrr.io/r/stats/logLik.html) says which
-  likelihood it is, and the other one is reachable.
+- [`logLik()`](https://rdrr.io/r/stats/logLik.html) reports which
+  likelihood it returns, and the other one is reachable.
 
   What it returns is the CONDITIONAL log-likelihood – the density at the
   fitted coefficients, a penalized coefficient among them – paired with
@@ -9185,7 +9338,7 @@ choosing a model, each decided with the measurement beside it.
   closure and rebuilt the second-derivative component key with
   [`match()`](https://rdrr.io/r/base/match.html) and
   [`paste()`](https://rdrr.io/r/base/paste.html), both on every step of
-  every filter pass. Worth about 12 per cent of a gas fit.
+  every filter pass. Saves about 12 percent of a gas fit.
 
   It is not a change of order:
   [`rep_len()`](https://rdrr.io/r/base/rep.html) on a vector already of
@@ -9199,14 +9352,14 @@ choosing a model, each decided with the measurement beside it.
   `regime()` term reports the OBSERVED information. What it inverted
   before was the complete-data information, the ordinary one averaged
   over the smoothed states, which is the matrix a scoring step inverts
-  and is not the information the fit carries: the two differ by the
+  and is not the information that the fit carries: the two differ by the
   conditional variance of the complete-data score, so the complete-data
   one is the larger and every standard error read off it is too small.
   Measured on a two-regime gaussian at 300 observations, the matrices
-  differ by 25 per cent and the worst standard error is understated by
-  30 per cent where the regimes overlap; the gap closes as they separate
-  and the states become known, which is what the missing-information
-  principle says it should do.
+  differ by 25 percent and the worst standard error is understated by 30
+  percent where the regimes overlap; the gap closes as they separate and
+  the states become known, which is what the missing-information
+  principle states it should do.
 
 - [`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)
   supplies the model’s side of
@@ -9239,8 +9392,8 @@ choosing a model, each decided with the measurement beside it.
   [`modelterms7::term_posterior()`](https://statmodels7.github.io/modelterms7/reference/term_posterior.html).
   Against `numDeriv`: 1.8e-07 in the coefficients on a scale of 246, and
   6.0e-09 in the term’s own parameters. On 600 observations simulated
-  from the model the fit returns levels (-0.033, 3.057) against a truth
-  of (0, 3) with the scale at 0.973.
+  from the model that the fit returns levels (-0.033, 3.057) against a
+  truth of (0, 3) with the scale at 0.973.
 
   The matrix the scoring step inverts there is the COMPLETE-DATA
   information, the ordinary one averaged over the smoothed states, which
@@ -9261,20 +9414,20 @@ choosing a model, each decided with the measurement beside it.
 
   Which parameter is the level is the term’s own answer, through
   [`modelterms7::term_level_param()`](https://statmodels7.github.io/modelterms7/reference/term_level_param.html);
-  which one is dropped is this layer’s, since only it knows what else
-  the equation carries. The question is asked of the SPAN of the
-  equation’s design and not of a column named `"(Intercept)"`, a factor
+  which one is dropped is this layer’s, since only it records what else
+  the equation carries. The test is applied to the SPAN of the
+  equation’s design and not to a column named `"(Intercept)"`, a factor
   coded without one summing to the constant just as well. The held
   parameter leaves the information as well as the fit, its row and
   column dropped from the joint matrix.
 
-  Measured, and this is what says the two parametrizations are one
+  Measured, and this is what shows the two parametrizations are one
   model: with the level held and with it free the fits reach the same
   maximum (-553.793723 against -553.7937276) and the fitted intercept,
   0.952936, is the other fit’s stationary level `omega/(1 - b)`,
   0.95295.
 
-- `fit@structural` carries `held`, the parameters an intercept is
+- `fit@structural` carries `held`, the parameters that an intercept is
   carrying instead.
 
 ## statmodels7 0.15.0
@@ -9302,8 +9455,8 @@ choosing a model, each decided with the measurement beside it.
   information. Measured against numDeriv on the exact gradient, AWAY
   from the optimum, where a wrong and a right Hessian are told apart:
   4.3e-11 relative. The naive curvature differs from the exact one by
-  17.5 per cent of the coefficient block on a one-equation model and
-  35.3 per cent on a two-equation one, the second larger because the
+  17.5 percent of the coefficient block on a one-equation model and 35.3
+  percent on a two-equation one, the second larger because the
   cross-equation feedback contributes there too.
 
 - [`vcov()`](https://rdrr.io/r/stats/vcov.html) inverts the joint matrix
@@ -9319,13 +9472,13 @@ choosing a model, each decided with the measurement beside it.
   affine in the level given the score path and the score path depending
   on the predictor alone. The fit reached that ridge reporting
   convergence and only the information saw it, so
-  `reject_confounded_level()` asks at design time, where the terms can
+  `reject_confounded_level()` tests at design time, where the terms can
   be named.
 
-  It asks whether the CONSTANT LIES IN THE SPAN of the equation’s design
-  and not whether a column is called `"(Intercept)"`: a factor coded
-  without one still sums to the constant, and the span test rejects it
-  where a name test would not.
+  It tests whether the CONSTANT LIES IN THE SPAN of the equation’s
+  design and not whether a column is called `"(Intercept)"`: a factor
+  coded without one still sums to the constant, and the span test
+  rejects it where a name test would not.
 
 - No compiled code for any of it, and the measurement is the reason. One
   curvature costs 1.4 filter runs and is FLAT in the number of unknowns
@@ -9334,9 +9487,9 @@ choosing a model, each decided with the measurement beside it.
   What it is spent on is the per-observation callbacks, and there the
   win was in R: a curvature runs at a point already reached, so the
   score and the curvature of the density can be computed vectorized once
-  and looked up, where the filter must evaluate them at a predictor it
-  has just produced. That change took the curvature from 10.83 s to 3.95
-  s at n = 8000, a factor of 2.7, and the answer is bit-identical.
+  and looked up, where the filter must evaluate them at a predictor that
+  it has just produced. That change took the curvature from 10.83 s to
+  3.95 s at n = 8000, a factor of 2.7, and the answer is bit-identical.
 
 ## statmodels7 0.14.0
 
@@ -9359,7 +9512,7 @@ choosing a model, each decided with the measurement beside it.
   The refresh is committed once per sweep and not once per objective
   evaluation, since the rescaling factor of a discontinuous term is a
   state of the iteration rather than a function of the point: a schedule
-  advancing at the speed of a line search is not the one the
+  advancing at the speed of a line search is not the one for which the
   construction was designed with, and one that never advanced would
   solve a permanently smoothed problem.
 
@@ -9387,15 +9540,15 @@ choosing a model, each decided with the measurement beside it.
   second derivatives, which reaches the coefficients of the OTHER
   equations too. Against `numDeriv` the whole gradient agrees to 2e-8,
   and the naive one is out by 9.7. On 2000 observations simulated from
-  the model the fit returns (0.299, 0.440, 0.732) against a truth of
-  (0.3, 0.4, 0.7), with the scale at 0.998 against 1.
+  the model that the fit returns (0.299, 0.440, 0.732) against a truth
+  of (0.3, 0.4, 0.7), with the scale at 0.998 against 1.
 
   `fit@structural` carries each term’s estimated parameters, on their
   own scale and on the unconstrained one.
 
-- `regime()` is still rejected, and the message now says what the layer
-  is missing – the derivative of a likelihood mixed over latent states
-  in the predictor it is handed – rather than naming an internal
+- `regime()` is still rejected, and the message now states what the
+  layer is missing – the derivative of a likelihood mixed over latent
+  states in the predictor it is handed – rather than naming an internal
   generic.
 
 - A formula carrying more than one structural term is rejected, whatever
@@ -9405,9 +9558,9 @@ choosing a model, each decided with the measurement beside it.
 
 - An accepted step that moves the objective by less than its own
   rounding ends the scoring run. The sufficient-decrease test cannot
-  tell such a step from no step – at a step of 1e-9 the decrease it asks
-  for is of that order – so the run spent its budget standing still,
-  which is what a term whose gradient belongs to a working model
+  tell such a step from no step – at a step of 1e-9 the decrease it
+  requires is of that order – so the run spent its budget standing
+  still, which is what a term whose gradient belongs to a working model
   produces at its own fixed point.
 
 ## statmodels7 0.13.0
@@ -9423,9 +9576,9 @@ choosing a model, each decided with the measurement beside it.
     [`modelterms7::edf()`](https://statmodels7.github.io/modelterms7/reference/edf.html)
     the hyperparameters of every penalty the term carries, keyed by the
     penalty names, which is the shape that function reads them in. It
-    asked for `term_penalty()` before, so a term whose penalty covers
-    part of its parameters was counted as unpenalized – its coefficient
-    count – and a term carrying two had the hyperparameters of neither.
+    called `term_penalty()` before, so a term whose penalty covers part
+    of its parameters was counted as unpenalized – its coefficient count
+    – and a term carrying two had the hyperparameters of neither.
   - [`term_block_kind()`](https://statmodels7.github.io/statmodels7/reference/term_block_kind.md)
     reads the same enumeration, so a term penalized over part of itself
     is a penalized block, and a selection where any of its penalties has
@@ -9436,7 +9589,7 @@ choosing a model, each decided with the measurement beside it.
     hyperparameters in one block not being the same number.
 
   The row of the degrees of freedom stays per TERM, which is the
-  granularity a table of terms wants.
+  granularity a table of terms needs.
 
 - [`statmod_entry_key()`](https://statmodels7.github.io/statmodels7/reference/statmod_entry_key.md)
   composes the key – the term’s name, with the entry’s after `::` where
@@ -9500,7 +9653,7 @@ choosing a model, each decided with the measurement beside it.
   0.955 and the threshold 0.95 of the kink, just under it, so most
   inactive coordinates fall below. The rule lives on fine grids and ours
   is deliberately coarse, each point being a whole fit. Measured over a
-  path: 5 per cent of the columns discarded and 0.93 to 0.96 times the
+  path: 5 percent of the columns discarded and 0.93 to 0.96 times the
   speed.
 
 - A fit that did not converge now reports the range each distribution
@@ -9514,12 +9667,12 @@ choosing a model, each decided with the measurement beside it.
   scale kept the five that were real.
 
   Nothing diagnoses that. The parameters it reached are a fact and a
-  scale at 1e-15 says the rest, where naming a cause would mean choosing
-  a threshold for running away – and the same fit at 100 columns
-  converges to a scale of 0.77 that is nothing of the kind. What that
-  fit is doing is the joint mode over coefficients and scale, which is
-  degenerate wherever the likelihood can be driven up without bound; it
-  is the reason the hyperparameters here are estimated by a marginal
+  scale at 1e-15 gives the rest, where naming a cause would mean
+  choosing a threshold for running away – and the same fit at 100
+  columns converges to a scale of 0.77 that is nothing of the kind. What
+  that fit is doing is the joint mode over coefficients and scale, which
+  is degenerate wherever the likelihood can be driven up without bound;
+  it is the reason the hyperparameters here are estimated by a marginal
   criterion or by prediction rather than jointly.
 
 ## statmodels7 0.10.1
@@ -9530,7 +9683,7 @@ choosing a model, each decided with the measurement beside it.
 
   Covariance updating replaces an O(n) read of the gradient with an O(m)
   one, at the cost of building a column of X’WX the first time a
-  coordinate moves off zero. That column costs O(nm), so it is worth it
+  coordinate moves off zero. That column costs O(nm), so it pays off
   only while m is small: at 5000 observations with 200 columns and
   nothing screened away, taking that route cost 70 milliseconds against
   55 for the residual.
@@ -9603,10 +9756,10 @@ choosing a model, each decided with the measurement beside it.
 - [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
   chooses the hyperparameters of a penalty with a kink, which no
   criterion in the package could reach before. A marginal criterion
-  approximates an integral at the penalized mode and asks for the
+  approximates an integral at the penalized mode and requires the
   penalty’s second derivative there; the mode of a lasso, a SCAD or an
-  MCP sits at the kink for every coefficient it sets to zero, which is
-  where that derivative does not exist. Cross-validation asks about
+  MCP sits at the kink for every coefficient that it sets to zero, which
+  is where that derivative does not exist. Cross-validation concerns
   prediction instead and needs nothing from the penalty beyond a fit.
   `rule = "1se"` takes the largest kink whose criterion is within one
   standard error of the smallest.
@@ -9651,10 +9804,11 @@ choosing a model, each decided with the measurement beside it.
   replays that record; rebuilding gives a block of the same shape
   multiplying the same coefficients that means something else. Measured
   on `y ~ s(x, k = 10)` at 200 observations, predicting on 40 of the
-  rows the model was fitted to differed from the fitted values there by
-  0.237, and on the 51 rows with `|x| < 0.5`, where rebuilt knots move
-  furthest, by 1.19. The whole data handed back agreed exactly, which is
-  why nothing noticed, and cross-validation would have inherited it.
+  rows that the model was fitted to differed from the fitted values
+  there by 0.237, and on the 51 rows with `|x| < 0.5`, where rebuilt
+  knots move furthest, by 1.19. The whole data handed back agreed
+  exactly, which is why nothing noticed, and cross-validation would have
+  inherited it.
 
 - The information matrix, its approximation and the budget are read off
   `inner_method` in one place, so a refit inside a path or a fold runs
@@ -9664,7 +9818,7 @@ choosing a model, each decided with the measurement beside it.
 
 - `scad()` and `mcp()` are fitted by the proximal scheme, as `lasso()`
   already was. The hyperparameters were passed to the penalty as a named
-  numeric vector where the contract asks for a list, which
+  numeric vector where the generic requires a list, which
   `penalty_kinks()` accepts for some branches and rejects for these two;
   the failure was caught and read as “no kink”, so both terms went into
   the jointly fitted system – solved by the curvature of a function that
@@ -9673,9 +9827,10 @@ choosing a model, each decided with the measurement beside it.
   and `y ~ scad(x)` stopped with “\$ operator is invalid for atomic
   vectors” before reaching it.
 
-  A penalty that stops when asked whether it has a kink is now reported,
-  naming the term: the two schemes differ by exactly that property, so a
-  penalty that does not answer cannot be assigned to one of them.
+  A penalty that stops when queried whether it has a kink is now
+  reported, naming the term: the two schemes differ by exactly that
+  property, so a penalty that does not answer cannot be assigned to one
+  of them.
 
   The point the proximal scheme reaches satisfies the subdifferential
   conditions of the objective (stationarity 8e-8 where a coefficient is
@@ -9759,8 +9914,8 @@ choosing a model, each decided with the measurement beside it.
 - [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
   takes an order and does not call the second-order generics at order 1,
   so a penalty that supplies only `penalty_dhessian()` gives an exact
-  gradient rather than being rejected for a quantity the gradient does
-  not use.
+  gradient rather than being rejected for a quantity that the gradient
+  does not use.
 
 ## statmodels7 0.7.0
 
@@ -9778,11 +9933,11 @@ choosing a model, each decided with the measurement beside it.
 
 - The marginal criterion has an exact Hessian as well as an exact
   gradient, and both are modular: everything the penalty contributes is
-  asked of the penalty through penalties7’s generics, so a ridge, a
-  random effect and a structured prior are covered by the same assembly
-  as a spline. The route used to require a Hessian linear in the
-  hyperparameters, measured rather than asked, which excluded every
-  penalty built from a density.
+  requested from the penalty through penalties7’s generics, so a ridge,
+  a random effect and a structured prior are covered by the same
+  assembly as a spline. The route used to require a Hessian linear in
+  the hyperparameters, measured rather than assumed, which excluded
+  every penalty built from a density.
 
 - `outer_optimizer` defaults to `newton()` where the Hessian exists,
   `lbfgs()` where only the gradient does, and `nelder_mead()` otherwise.

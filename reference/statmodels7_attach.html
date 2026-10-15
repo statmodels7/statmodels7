@@ -13,7 +13,7 @@ is skipped without an error."><meta property="og:image" content="https://statmod
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,14 +62,14 @@ path.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Each member's own startup messages are suppressed: the caller asked for
-the toolkit and gets one message about it, not eight. The masking warnings
+    <p>Each member's own startup messages are suppressed, so that attaching the
+toolkit prints one message instead of one per member. The masking warnings
 are suppressed too, and <code><a href="statmodels7_conflicts.html">statmodels7_conflicts()</a></code> reports the same
 information once, at the end, in one block.</p>
 <p>Attachment order follows <code><a href="statmodels7_packages.html">statmodels7_packages()</a></code>, which is alphabetical.
-The members export no name in common, so nothing about the result depends
-on that order; <code><a href="statmodels7_conflicts.html">statmodels7_conflicts()</a></code> is what would report it if one
-day they did.</p>
+The members export no name in common, so the result does not depend on
+that order. If a name were exported by two members,
+<code><a href="statmodels7_conflicts.html">statmodels7_conflicts()</a></code> would report it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

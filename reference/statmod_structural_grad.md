@@ -1,8 +1,8 @@
 # The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
 
-[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
-over the joint vector of coefficients and a structural term's
-parameters, over which the determinant spans there.
+The exact gradient of the marginal criterion where a penalty covers a
+structural term's own parameters, so that the determinant spans the
+joint vector of the coefficients and those parameters.
 
 ## Usage
 

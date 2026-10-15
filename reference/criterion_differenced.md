@@ -41,17 +41,18 @@ criterion_differenced(fit, spec, design, blocks, method, idx, cf, hy, h = 0.01)
 
 ## Value
 
-A list with the gradient `g` and the curvature `A` (minus the Hessian),
-or `NULL` where a refit did not reach a mode.
+A list with the gradient `g` and the curvature `A` (minus the Hessian).
+An error is signaled where a refit gives no finite criterion; the caller
+reads it as `NULL`.
 
 ## Details
 
 With one coordinate the readings are \\g = (c\_+ - c\_-)/(2h)\\ and \\A
 = -(c\_+ - 2c_0 + c\_-)/h^2\\; with two the four axial points give the
-diagonal and the four diagonal points the cross term, \\(c\_{++} -
-c\_{+-} - c\_{-+} + c\_{--})/(4h^2)\\. The centre \\c_0\\ is refitted
-too, so every reading comes from the same inner iteration. The step is
-\\h = 10^{-2}\\ on the free scale, where a hyperparameter's logarithm
-moves by one per cent; the truncation error is of order \\h^2\\ and the
-effect of an inner tolerance \\\epsilon\\ on the curvature of order
-\\\epsilon/h^2\\.
+diagonal and the four diagonal points the off-diagonal entry \\A\_{12} =
+-(c\_{++} - c\_{+-} - c\_{-+} + c\_{--})/(4h^2)\\. The center \\c_0\\ is
+refitted too, so every reading comes from the same inner iteration. The
+step is \\h = 10^{-2}\\ on the free scale, where the logarithm of a
+hyperparameter moves by one percent; the truncation error is of order
+\\h^2\\ and the effect of an inner tolerance \\\epsilon\\ on the
+curvature of order \\\epsilon/h^2\\.

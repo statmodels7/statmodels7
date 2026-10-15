@@ -27,26 +27,30 @@ statmod_penalized_units(spec, design)
 ## Value
 
 A list of entries, each with `param`, `term` (the name in the formula),
-`key`, `cols` (positions within the parameter's coefficients), `index`
-(positions in the stacked vector) and `penalty`.
+`key`, `within`, `penalty`, `fixed`, `n_values`, `values`, `min_ratio`,
+`search`, `ids`, `structural`, `cols` and `index`. For an ordinary unit
+`cols` are positions within the parameter's coefficients and `index`
+positions in the stacked vector. For a structural unit `cols` are
+positions among the term's own parameters and `index` is `NULL`. The
+entry of a covariance class also carries `class`, `params`, `pieces`,
+`mixed` and, for a mixed class, `joint` and `beta_index`.
 
 ## Details
 
-Twelve places used to run the same loop: over the distribution
-parameters, over each one's terms, asking each term for its penalty.
-Every one of them assumed a term carries at most one.
+The enumeration runs over the distribution parameters and over the terms
+of each, and reads the penalties of each term. A term may carry several
+penalties, over different subsets of its own parameters, as a panel
+model with a population value and a shrunk deviation per group needs. A
+covariance class (see
+[`statmod_classes()`](https://statmodels7.github.io/statmodels7/reference/statmod_classes.md))
+is one unit over the stacked columns of its members. The callers that
+need the penalties of a model read this one enumeration.
 
-A term may carry several, over different subsets of its own parameters,
-as a panel model with a population value and a shrunk deviation per
-group needs. Enumerating once is both the generalization and the removal
-of eleven copies.
-
-**The key** is the term's name in the formula, and the entry's own name
-appended after `::` when the term carries more than one. Two `ridge()`
-terms are two terms with two keys and two hyperparameters, which they
-already were; a term with one penalty over the whole of itself keys
-exactly as before, so nothing that reads a hyperparameter by term name
-changes.
+**The key** is the term's name in the formula, with the entry's own name
+appended after `::` when the term carries more than one penalty and the
+entry is named. Two `ridge()` terms are two terms with two keys and two
+hyperparameters. A term with one penalty has its name alone as key, so a
+hyperparameter is read by the term's name.
 
 `statmod_penalized_units()` builds the list. `statmod_penalized()`
 returns it from the design's `eta_memo` environment where the design has

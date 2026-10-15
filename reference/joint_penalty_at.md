@@ -51,18 +51,18 @@ For `"value"` a single number; for `"gradient"` a numeric vector of
 length `n`; for `"hessian"` an `n` by `n` matrix. Zero throughout where
 no class is mixed.
 
-## Why one function and not two halves
+## One function for both parts
 
-A class's prior is one object over one stacked vector. penalties7
-computes one gradient and one Hessian over that vector, in the class's
-own order, and knows nothing of the split – to it these are \\m\\ blocks
-of \\d\\ numbers with a covariance in common. Splitting the answer into
-a coefficient half and a parameter half would report each as though the
-other were not there, and would lose the CROSS block entirely, which is
-the only place the correlation between the two enters at all.
+The prior of a class is one object over one stacked vector. penalties7
+computes one gradient and one Hessian over that vector, in the order of
+the class, and has no notion of the split: it treats the coordinates as
+\\m\\ blocks of \\d\\ numbers with a covariance in common. Splitting the
+result into a coefficient part and a parameter part would report each as
+though the other were absent and would lose the cross block, the only
+place where the correlation between the two enters.
 
-So the scatter is written once and the three assemblies that build the
-joint matrix add what it returns: the inner step
+The scatter is therefore written once, and the three assemblies that
+build the joint matrix add what it returns: the inner step
 ([`statmod_fit_joint()`](https://statmodels7.github.io/statmodels7/reference/statmod_fit_joint.md)),
 the marginal criterion
 ([`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md))
@@ -73,13 +73,13 @@ and
 [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
 skip a mixed class for the same reason.
 
-## Where the values come from
+## Source of the values
 
-Each coordinate is read where it lives – a coefficient from `coef`, a
-filter parameter from the design's structural state – and assembled in
-the class's own order, which `joint` on the unit already records. The
-result is written back at those same positions, so no ordering is
-composed twice.
+Each coordinate is read where it is stored (a coefficient from `coef`, a
+filter parameter from the structural state of the design) and assembled
+in the order of the class, which `joint` on the unit records. The result
+is written back at the same positions, so that the ordering is composed
+once.
 
 ## See also
 

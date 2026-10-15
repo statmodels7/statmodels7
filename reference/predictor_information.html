@@ -13,7 +13,7 @@ the intercept-only fit."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,8 +71,10 @@ the intercept-only fit.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>It sets the scale of a score-driven term's second start
 (<code><a href="structural_start_fixups.html">structural_start_fixups()</a></code>): the score of a predictor has variance equal
-to this information, so a loading of \(0.1/\mathcal{I}\) moves the
-predictor by a tenth of the score's natural unit whatever the family.</p>
+to this information, so a loading of \(0.1/\mathcal{I}\) on the unscaled
+score moves the predictor by a tenth of the score's natural unit whatever
+the family. For a filter with <code>scaling</code> \(d\) the loading is
+\(0.1\,\mathcal{I}^{d-1}\), which gives the same step.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

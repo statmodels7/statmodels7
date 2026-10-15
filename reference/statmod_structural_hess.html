@@ -9,7 +9,7 @@ a filter's own parameters, which is what the determinant spans there."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,24 +82,26 @@ a filter's own parameters, which is what the determinant spans there.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A square matrix on the free scale, one row per row of <code>idx</code>,
-or <code>NULL</code> where the joint matrix could not be formed.</p>
+    <p>A square matrix on the free scale with one row for each row of
+<code>idx</code>, or <code>NULL</code> where the joint matrix cannot be formed or factorized or
+the fifth derivative of the family is unavailable.</p>
     </div>
     <div class="section level2">
-    <h2 id="why-it-needs-a-fourth-order">Why it needs a fourth order<a class="anchor" aria-label="anchor" href="#why-it-needs-a-fourth-order"></a></h2>
-    <p>Each order of differentiating the predictor through the recursion pulls in
-one more order of the response's family, the score the recursion is driven
-by being read at the predictor it produces. The gradient reads
-\(\partial^3 e/\partial u^3\) in one direction through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code>; the criterion's own second derivative
-reads \(\partial^4 e/\partial u^4\) in two, through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>, and the family's FIFTH derivative with
-it.</p>
+    <h2 id="orders-of-differentiation">Orders of differentiation<a class="anchor" aria-label="anchor" href="#orders-of-differentiation"></a></h2>
+    <p>Each order of differentiating the predictor through the recursion requires
+one more order of the response's family, because the score that drives the
+recursion is read at the predictor that the recursion produces. The gradient
+reads \(\partial^3 e/\partial u^3\) in one direction through
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_third.html" class="external-link">modelterms7::term_third()</a></code>. The second derivative of the criterion reads
+\(\partial^4 e/\partial u^4\) in two directions through
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>, and the fifth derivative of the family, from
+<code><a href="https://statmodels7.github.io/distributions7/reference/distrib_deriv5.html" class="external-link">distributions7::distrib_deriv5()</a></code>, enters with it.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-shape-is-statmod-marginal-hess-s">The shape is <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>'s<a class="anchor" aria-label="anchor" href="#the-shape-is-statmod-marginal-hess-s"></a></h2>
-    <p>With \(u\) the joint vector, \(K\) the penalized information over it
-and \(M\) the matrix the trace is taken against,</p>
+    <h2 id="form-of-the-assembly">Form of the assembly<a class="anchor" aria-label="anchor" href="#form-of-the-assembly"></a></h2>
+    <p>The assembly has the form of <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>. With \(u\) the
+joint vector, \(K\) the penalized information over it and \(M\) the
+matrix against which the trace is taken,</p>
 <p>$$\frac{\partial^2 V}{\partial t_m\partial t_l}
   = -\rho_{ml} + \hat b_m^\top K \hat b_l
   + \tfrac{1}{2}\mathrm{tr}(MK_lMK_m)
@@ -107,26 +109,28 @@ and \(M\) the matrix the trace is taken against,</p>
 <p>with \(\hat b_m = -K^{-1}c_m\) the mode's movement, \(K_m = S_m +
 \partial K/\partial u[\hat b_m]\) and the last trace carrying the penalty's
 second derivative, the twice-contracted second derivative of \(K\) and
-the once-contracted one at the mode's second movement. Every piece is the
-one the coefficient-space assembly uses, read on the joint vector.</p>
+the once-contracted one at the second movement of the mode. Every piece is
+the one that the coefficient-space assembly uses, read on the joint vector.</p>
     </div>
     <div class="section level2">
-    <h2 id="what-it-does-not-carry">What it does not carry<a class="anchor" aria-label="anchor" href="#what-it-does-not-carry"></a></h2>
-    <p>A block that MOVES with its coefficients – <code>nl()</code>, <code>seg()</code> –
-beside the filter contributes nothing here, exactly as it contributes
-nothing to <code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>: that correction is written
-in the coefficient-space assembly and has no joint twin. Such a model is
-admitted at both orders and the approximation is the gradient's own.</p>
+    <h2 id="blocks-that-move-with-their-coefficients">Blocks that move with their coefficients<a class="anchor" aria-label="anchor" href="#blocks-that-move-with-their-coefficients"></a></h2>
+    <p>A block that moves with its coefficients (<code>nl()</code>, <code>seg()</code>) beside the filter
+contributes nothing here, as it contributes nothing to
+<code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>: the correction for such a block is written in
+the coefficient-space assembly and has no counterpart on the joint vector.
+Such a model is admitted at both orders, and the result has the
+approximation of the gradient.</p>
     </div>
     <div class="section level2">
     <h2 id="cost">Cost<a class="anchor" aria-label="anchor" href="#cost"></a></h2>
-    <p>One <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code> and three lower recursions per PAIR
-of hyperparameters, against the stencil's four refits per hyperparameter.</p>
+    <p>The assembly makes one call of <code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code>, together with
+calls of the lower-order recursions, for each pair of hyperparameters. The
+stencil refits the model four times for each hyperparameter.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>, <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>,
-<code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> for the route it replaces.</p></div>
+<code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> for the route that it replaces.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

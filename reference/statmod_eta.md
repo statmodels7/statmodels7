@@ -32,17 +32,31 @@ statmod_eta(spec, design, coef)
 
 ## Value
 
-A list of two named lists, each with one entry per distribution
-parameter in the family's order:
+A list with the elements
 
 - `eta`:
 
-  the linear predictors, numeric vectors of length `spec@n_obs`.
+  a named list of the linear predictors, one numeric vector of length
+  `spec@n_obs` per distribution parameter in the family's order.
 
 - `theta`:
 
-  the parameters they imply, the same shape, each strictly inside its
-  parameter's bounds.
+  the parameters that the predictors imply, in the same shape.
+
+- `filters`:
+
+  the runs of the filter-shaped structural term, an empty list when the
+  model has none.
+
+- `regimes`:
+
+  the latent-state structure of a term of the likelihood shape, an empty
+  list when the model has none.
+
+- `eta_static`:
+
+  present only when the model carries a structural term: the predictors
+  before the term's level is added.
 
 ## Details
 
@@ -52,10 +66,16 @@ g_k^{-1}(\eta_k)\$\$
 with \\o_k\\ the equation's offset and \\a_k\\ the adjustment a
 refreshable term contributes, zero for an ordinary design.
 
-The inverse link clamps \\\theta_k\\ strictly inside its own open
-bounds, so a predictor far out on the link scale gives a parameter a
-density can be evaluated at. A structural term of the filter shape adds
-its level to \\\eta_k\\ before the link is inverted.
+The inverse link is evaluated by
+[`linkfunctions7::linkinv()`](https://statmodels7.github.io/linkfunctions7/reference/linkinv.html).
+The links onto a bounded interval keep the result within the bounds of
+the parameter, at or next to a bound for a predictor far out on the link
+scale, so that a density can still be evaluated. The `inverse` link is
+an exception: a negative predictor gives a negative parameter.
+
+A structural term of the filter shape adds its level to \\\eta_k\\
+before the link is inverted. A term whose contribution is a likelihood
+mixed over latent states reports the posterior-weighted predictor.
 
 ## See also
 

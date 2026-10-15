@@ -9,7 +9,7 @@ everywhere – a lasso, a SCAD, an MCP – as an integer vector."><meta property
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,22 +66,21 @@ everywhere – a lasso, a SCAD, an MCP – as an integer vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It is the question <code><a href="statmod_blocks.html">statmod_blocks()</a></code> asks to decide which of the two
-fitting schemes a block goes to, asked of the coordinates instead of the
-blocks, and it reads the same predicate (<code><a href="penalty_has_kink.html">penalty_has_kink()</a></code>) so the two
-cannot disagree. A penalty that is twice differentiable contributes
-nothing, which is what makes a ridge, a random effect and a smooth
-testable.</p>
-<p>A penalty's own enumeration is what answers, so a partial penalty – one
-covering some of a term's coordinates and not the rest – names only what
-it covers, and a term is not classified as a whole. A structural term's
-penalty covers positions among the TERM'S own parameters rather than the
-design's, and contributes nothing here.</p>
+    <p>It applies to the coordinates the test that <code><a href="statmod_blocks.html">statmod_blocks()</a></code> applies to
+the blocks to decide which of the two fitting schemes a block goes to, and
+it reads the same predicate (<code><a href="penalty_has_kink.html">penalty_has_kink()</a></code>), so that the two cannot
+disagree. A penalty that is twice differentiable contributes nothing, so
+that a ridge, a random effect and a smooth are testable.</p>
+<p>The enumeration of each penalty decides, so a partial penalty (one
+covering some of a term's coordinates and not the rest) names only what it
+covers, and a term is not classified as a whole. The penalty of a
+structural term covers positions among the term's own parameters and not
+among the design's, and contributes nothing here.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_penalized.html">statmod_penalized()</a></code>, the enumeration it reads, and
-<code><a href="statmod_blocks.html">statmod_blocks()</a></code>, which asks the same question of a whole block.</p></div>
+    <div class="dont-index"><p><code><a href="statmod_penalized.html">statmod_penalized()</a></code>, the enumeration that it reads, and
+<code><a href="statmod_blocks.html">statmod_blocks()</a></code>, which answers the same question for a whole block.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

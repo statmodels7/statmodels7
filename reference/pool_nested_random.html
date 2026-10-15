@@ -13,7 +13,7 @@ other levels."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,8 +67,8 @@ other levels.</p>
 
 
 <dt id="arg-coef">coef<a class="anchor" aria-label="anchor" href="#arg-coef"></a></dt>
-<dd><p>The term's coefficients to record as the ones it was last
-committed at, so that its block at new rows is the Jacobian there.</p></dd>
+<dd><p>The term's coefficients to record as the ones at which it was
+last committed, so that its block at new rows is the Jacobian there.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -78,15 +78,15 @@ committed at, so that its block at new rows is the Jacobian there.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A random effect set aside contributes \(z_i^\top u\) at every row, with
-\(z_i\) the row's within-group design and \(u\) the value it is read
-at: zero for <code>random = "zero"</code>, a node of the prior for <code>"marginal"</code>.
+\(z_i\) the row's within-group design and \(u\) the value at which it
+is read: zero for <code>random = "zero"</code>, a node of the prior for <code>"marginal"</code>.
 Inside a nonlinear term the effect enters the parameter, and the
 contribution of the term is not linear in it, so the columns cannot
 simply be set to zero as they are for a term written in an equation. With
 every row in the first level, writing \(u\) into that level's
 coefficients gives every row the effect \(z_i^\top u\), and the term is
-evaluated at those coefficients by its own methods. A group the fit never
-saw is read the same way, so it needs no effect of its own.</p>
+evaluated at those coefficients by its own methods. A group that the fit
+never saw is read the same way, so it needs no effect of its own.</p>
 <p>Two places are rewritten. At the fitting rows the term reads the stored
 design of the developed parameter, <code>blueprint$Z</code>, whose columns for the
 sub-term become the within-group rows (the sum of the group's columns, a

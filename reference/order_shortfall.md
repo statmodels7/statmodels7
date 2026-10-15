@@ -1,8 +1,9 @@
 # Why a Consumer Cannot Run on This Family
 
-The message a consumer refuses with: the family, the parameter, the
-order it needs against the order there is, and what to write instead.
-`NULL` when there is nothing to refuse.
+The error message of a consumer that cannot run on the family: the
+family, the parameter, the order that the consumer needs against the
+order that the family has, and what to write instead. `NULL` when the
+family has enough derivatives.
 
 ## Usage
 
@@ -46,5 +47,5 @@ says that instead of inventing a number.
 ``` r
 statmodels7:::order_shortfall(distributions7::laplace_distrib(), 2L,
                               "the REML criterion")
-#> [1] "the REML criterion needs 2 derivatives of the log-density in every parameter, and 'laplace' has 0 of them in 'mu' -- its log-density carries an absolute value of an argument that moves with 'mu', so the curvature the REML criterion reads sits on a set of measure zero in the response. Fit with outer_criterion = NULL, setting the hyperparameters yourself through hyper, or model 'mu' with a family that is smooth in it."
+#> [1] "the REML criterion needs 2 derivatives of the log-density in every parameter, and 'laplace' has 0 of them in 'mu' -- its log-density carries an absolute value of an argument that moves with 'mu', so the curvature that the REML criterion reads sits on a set of measure zero in the response. Fit with outer_criterion = NULL, which holds each smoothing hyperparameter at the value written in its term or at its starting value, or model 'mu' with a family that is smooth in it."
 ```

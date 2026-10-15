@@ -1,8 +1,9 @@
 # The Terms Whose Block Moves With Their Coefficients
 
 One entry per refreshable term, carrying everything its derivative
-needs: the distribution parameter it sits in, its columns in the stacked
-coefficient vector, its own coefficients and the term rebuilt at them.
+needs: the distribution parameter it sits in, its columns within that
+equation and in the stacked coefficient vector, its own coefficients and
+the term rebuilt at them.
 
 ## Usage
 
@@ -31,7 +32,12 @@ refresh_units(spec, design, coef, params, npar, offs)
 
 ## Value
 
-A list, empty where no block moves.
+A list, empty where no block moves. Each element is a list with `a`, the
+index of the term's equation; `param`, the distribution parameter of
+that equation; `term`, the name of the term within the equation; `cols`,
+its columns within the equation; `ra`, the same columns in the stacked
+coefficient vector; `bt`, the term's coefficients; and `built`, the term
+refreshed at `bt`.
 
 ## Details
 

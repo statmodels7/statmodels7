@@ -11,7 +11,7 @@ have been written onto."><meta property="og:image" content="https://statmodels7.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,27 +66,31 @@ have been written onto.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>response</code>, the successes, and <code>distrib</code>, carrying the
-row sums as its <code>size</code>. Both unchanged where the response is not a
-two-column matrix on a univariate family.</p>
+row sums as its <code>size</code>. Both are unchanged where the response is not a
+matrix or the family is multivariate. A matrix response on a univariate
+family signals an error where it has a number of columns other than two,
+is not numeric, holds a negative count, or where the family has no
+<code>size</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>cbind(y, n - y) ~ x</code> is how aggregated binomial data are written in R, and
-it was not read here: the matrix went down as a vector of twice the length
-and the run died on <em>"Parameter dimension mismatch. All parameters should
-have length 1 or 400"</em>, a message about a length nobody had asked for.</p>
-<p>THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is the
-half of this worth having. A size handed to the family is a vector fixed at
-fitting time, so it cannot follow the rows anywhere else; the row sums of a
-response expression are recomputed wherever that expression is evaluated,
-which is what makes a fold of <code><a href="cv.html">cv()</a></code> or a prediction at new data come out
-right. That the alternative is not merely awkward but silently wrong is
-measured on the density itself: a size of length 200 against 20
-observations returns 200 log-densities, summing to -1125.63, and signals
-nothing. See <code><a href="check_trials.html">check_trials()</a></code>, which refuses that case where the row sums
-cannot be had.</p>
+    <p><code>cbind(y, n - y) ~ x</code> is how aggregated binomial data are written in R.
+The two columns are read as the successes and the failures: the response
+becomes the successes and the family's <code>size</code> becomes the row sums.</p>
+<p>The number of trials is taken from the response and not from the family.
+A size given to the family is a vector fixed at fitting time, so it cannot
+follow the rows anywhere else, whereas the row sums of a response
+expression are recomputed wherever that expression is evaluated, which is
+what makes a fold of <code><a href="cv.html">cv()</a></code> or a prediction at new data use the right
+trials. A size of another length than the rows is recycled by the density
+without any signal (a size of length 200 against 20 observations returns
+200 log-densities). See <code><a href="check_trials.html">check_trials()</a></code>, which rejects that case where the
+row sums cannot be had.</p>
+<p>A size given to the family as well must agree with the row sums, and the
+two statements disagreeing is an error; the default size of one is not a
+statement and is replaced.</p>
 <p>A matrix response is left alone for a multivariate family, where it is the
-ordinary thing and each row is one observation.</p>
+ordinary response and each row is one observation.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

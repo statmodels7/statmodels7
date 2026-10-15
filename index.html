@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,32 +74,33 @@
 <p>Attaching it attaches the eight member packages.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://statmodels7.github.io/statmodels7/">statmodels7</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.91.0</span></span>
-<span><span class="co">#&gt; v basis7         0.6.0    v numericals7    0.12.0</span></span>
-<span><span class="co">#&gt; v distributions7 0.43.0   v optimizers7    0.8.0</span></span>
-<span><span class="co">#&gt; v linkfunctions7 0.3.0    v parameters7    0.20.0</span></span>
-<span><span class="co">#&gt; v modelterms7    0.66.0   v penalties7     0.20.0</span></span></code></pre></div>
+<span><span class="co">#&gt; -- Attaching the statmodels7 toolkit 0.200.0</span></span>
+<span><span class="co">#&gt; v basis7         0.15.0   v numericals7    0.22.1</span></span>
+<span><span class="co">#&gt; v distributions7 0.78.1   v optimizers7    0.14.0</span></span>
+<span><span class="co">#&gt; v linkfunctions7 0.5.2    v parameters7    0.24.0</span></span>
+<span><span class="co">#&gt; v modelterms7    0.98.0   v penalties7     0.31.0</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="fitting-a-model">Fitting a model<a class="anchor" aria-label="anchor" href="#fitting-a-model"></a>
 </h2>
-<p>The equations are separated by a bar, one for each parameter of the distribution, and a parameter with no equation of its own is given an intercept. Below, the mean carries a penalized smooth of <code>x</code> and a random intercept over <code>g</code>, while the standard deviation is linear in <code>x</code> on its log scale.</p>
+<p>The equations are separated by a bar, one for each parameter of the distribution, and a parameter with no equation of its own is given an intercept. Below, the mean carries a penalized smooth of <code>x</code> and a random intercept over <code>g</code>, and the standard deviation is linear in <code>x</code> on its log scale.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">400</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, length.out <span class="op">=</span> <span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>, max <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, length.out <span class="op">=</span> <span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, mean <span class="op">=</span> <span class="fl">0</span>, sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="va">u</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">g</span><span class="op">)</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.7</span> <span class="op">+</span> <span class="fl">0.4</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu">random</span><span class="op">(</span><span class="op">~</span> <span class="fl">1</span> <span class="op">|</span> <span class="va">g</span><span class="op">)</span> <span class="op">|</span> <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span>,</span>
-<span>               <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">)</span></span></code></pre></div>
-<p>The smoothing parameter of the smooth and the scale of the random effect are hyperparameters rather than coefficients. They are estimated by REML, whose gradient and Hessian are computed exactly, and <code><a href="reference/hyper.html">hyper()</a></code> reports each value with what put it there.</p>
+<span>               distrib <span class="op">=</span> <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<p>The smoothing parameter of the smooth and the scale of the random effect are hyperparameters. They are estimated by REML, whose gradient and Hessian are computed exactly, and <code><a href="reference/hyper.html">hyper()</a></code> reports each value with its source: the criterion that estimated it, or <code>fixed</code> for a value held in the term.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/hyper.html">hyper</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   parameter           term   name  estimate  held source</span></span>
-<span><span class="co">#&gt; 1        mu           s(x) lambda 1.3902202 FALSE   reml</span></span>
-<span><span class="co">#&gt; 2        mu random(~1 | g)  sigma 0.5796875 FALSE   reml</span></span></code></pre></div>
-<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the two together, one block per equation, with the effective degrees of freedom each penalized term spends.</p>
+<span><span class="co">#&gt;   parameter           term   name  estimate  held source   id</span></span>
+<span><span class="co">#&gt; 1        mu           s(x) lambda 1.3774223 FALSE   reml &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2        mu random(~1 | g)  sigma 0.5804077 FALSE   reml &lt;NA&gt;</span></span></code></pre></div>
+<p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints the coefficients and the hyperparameters of each equation, with the effective degrees of freedom of each penalized term.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A statmod fit</span></span>
@@ -113,58 +114,60 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric terms</span></span>
 <span><span class="co">#&gt;                estimate     se      z      p   lower  upper</span></span>
-<span><span class="co">#&gt;   (Intercept)   0.02981 0.1329 0.2243 0.8225 -0.2307 0.2903</span></span>
+<span><span class="co">#&gt;   (Intercept)   0.02975 0.1332 0.2234 0.8233 -0.2313 0.2908</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; s(x)   [9 coefficients, edf 6.85]</span></span>
-<span><span class="co">#&gt;                  estimate      se     z         p  lower  upper</span></span>
-<span><span class="co">#&gt;   lambda [reml]    1.3900 0.81460                 0.4409 4.3840</span></span>
-<span><span class="co">#&gt;   lin              0.2187 0.03498 6.251 4.076e-10 0.1501 0.2872</span></span>
+<span><span class="co">#&gt; s(x)   [9 coefficients, edf 6.81]</span></span>
+<span><span class="co">#&gt;                  estimate     se    z        p  lower  upper</span></span>
+<span><span class="co">#&gt;   lambda [reml]     1.377 0.8096               0.4353  4.359</span></span>
+<span><span class="co">#&gt;   lin              0.2184 0.0354 6.17 6.83e-10 0.1491 0.2878</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; random(~1 | g)   [20 coefficients, edf 18.50]</span></span>
+<span><span class="co">#&gt; random(~1 | g)   [20 coefficients, edf 18.45]</span></span>
 <span><span class="co">#&gt;                 estimate      se  lower  upper</span></span>
-<span><span class="co">#&gt;   sigma [reml]    0.5797 0.09684 0.4178 0.8043</span></span>
+<span><span class="co">#&gt;   sigma [reml]    0.5804 0.09696 0.4184 0.8052</span></span>
+<span><span class="co">#&gt;   predicted effects (20 levels of g)</span></span>
+<span><span class="co">#&gt;                  Min. 1st Qu.   Median Mean 3rd Qu.  Max.</span></span>
+<span><span class="co">#&gt;     (Intercept)  -1.1 -0.3411 0.008096    0  0.2206 1.151</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === sigma   [log link]</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Parametric terms</span></span>
-<span><span class="co">#&gt;                estimate      se      z       p   lower   upper</span></span>
-<span><span class="co">#&gt;   (Intercept)   -0.7032 0.03537 -19.89 &lt; 1e-16 -0.7726 -0.6339</span></span>
-<span><span class="co">#&gt;   x              0.3903 0.03181  12.27 &lt; 1e-16  0.3280  0.4527</span></span>
+<span><span class="co">#&gt;                estimate      se      z       p  lower   upper</span></span>
+<span><span class="co">#&gt;   (Intercept)   -0.6693 0.03661 -18.28 &lt; 1e-16 -0.741 -0.5976</span></span>
+<span><span class="co">#&gt;   x              0.3736 0.03385  11.04 &lt; 1e-16 0.3072  0.4399</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 95% intervals, bayesian variance</span></span>
-<span><span class="co">#&gt; conditional log-likelihood -282.115367    effective df 28.35</span></span>
-<span><span class="co">#&gt; cAIC 620.936    cBIC 734.104</span></span>
-<span><span class="co">#&gt; fitted in 1.17 s   search: converged</span></span>
-<span><span class="co">#&gt; certificate: CONVERGED   outer gradient 6.79e-07   2.19e-11 above the mode</span></span>
+<span><span class="co">#&gt; conditional log-likelihood -282.744059    effective df 28.26</span></span>
+<span><span class="co">#&gt; cAIC 622.006    cBIC 734.801</span></span>
+<span><span class="co">#&gt; fitted in 1.98 s</span></span>
+<span><span class="co">#&gt; inner   max |grad|/se 1.9e-15   min eigen 0.014</span></span>
+<span><span class="co">#&gt; outer   max |grad|/se 2.9e-12   min eigen 0.97</span></span>
 <span><span class="co">#&gt; 1 note: print(summary(fit), notes = TRUE)</span></span></code></pre></div>
-<p>The last line of that table comes from <code><a href="reference/statmod_certificate.html">statmod_certificate()</a></code>, which is computed at the point the fit reached rather than read off the optimizer’s stopping rule: it reports how far above its own mode the coefficients stopped and whether the hyperparameters are stationary there.</p>
+<p>After the conditional log-likelihood and the information criteria, the table ends with two lines headed <code>inner</code> and <code>outer</code>. Each gives the largest gradient in standard errors and the smallest eigenvalue of the curvature, for the coefficients and for the hyperparameters respectively, both read at the point the fit reached.</p>
+<p><code><a href="reference/statmod_certificate.html">statmod_certificate()</a></code> is computed at the same point and not read off the stopping rule of the optimizer. Its <code>mode_error</code> is how far above its own penalized mode the coefficients stopped, in log-likelihood units, and its <code>state</code> is <code>converged</code>, <code>boundary</code>, <code>not converged</code> or <code>unknown</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"state"</span>, <span class="st">"gradient"</span>, <span class="st">"mode_error"</span><span class="op">)</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/statmod_certificate.html">statmod_certificate</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"state"</span>, <span class="st">"mode_error"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; $state</span></span>
 <span><span class="co">#&gt; [1] "converged"</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $gradient</span></span>
-<span><span class="co">#&gt; [1] 6.791092e-07</span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $mode_error</span></span>
-<span><span class="co">#&gt; [1] 2.192239e-11</span></span></code></pre></div>
-<p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> answers for any parameter, or for a moment of the response, and carries a standard error through whatever the terms are.</p>
+<span><span class="co">#&gt; [1] 4.831658e-30</span></span></code></pre></div>
+<p><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> returns the fitted value of any parameter, or of a moment of the response, with a standard error that follows from every term in the model.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">3</span><span class="op">)</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt;           fit         se      lower      upper</span></span>
-<span><span class="co">#&gt; 1 -0.81662977 0.09999405 -1.0126145 -0.6206450</span></span>
-<span><span class="co">#&gt; 2  0.06755757 0.09687091 -0.1223059  0.2574211</span></span>
-<span><span class="co">#&gt; 3  1.41839312 0.12838002  1.1667729  1.6700133</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, what <span class="op">=</span> <span class="st">"mu"</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           fit        se      lower      upper</span></span>
+<span><span class="co">#&gt; 1 -0.81384092 0.1046663 -1.0189830 -0.6086988</span></span>
+<span><span class="co">#&gt; 2  0.06690214 0.1012942 -0.1316309  0.2654351</span></span>
+<span><span class="co">#&gt; 3  1.41682665 0.1327520  1.1566376  1.6770157</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="what-the-layer-fits">What the layer fits<a class="anchor" aria-label="anchor" href="#what-the-layer-fits"></a>
 </h2>
-<p>Every term <code>modelterms7</code> defines goes in any equation: the parametric block, penalized smooths of one and several covariates, grouped random intercepts and slopes, ridge, lasso, elastic net, SCAD and MCP, a nonlinear parametric term, effects that change at estimated break-points, score-driven dynamics and latent Markov regimes. A term that rewrites the likelihood rather than contributing a design block is fitted in the same system as the coefficients, with the observed information of the joint model behind <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>.</p>
-<p>The hyperparameters of a smooth penalty come from <code><a href="reference/reml.html">reml()</a></code> or <code><a href="reference/reml.html">ml()</a></code>, or from <code><a href="reference/aic.html">aic()</a></code>, <code><a href="reference/aic.html">bic()</a></code> or <code><a href="reference/cv.html">cv()</a></code> on an estimate of prediction error. A penalty with a kink has no second derivative at the mode, so its hyperparameter is chosen instead along a path of its own values, from the value that empties the block downwards.</p>
-<p>Random effects written with the same label and the same grouping share one covariance block, whatever equation they sit in, which is <code>brms</code>’s second bar. <code>y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)</code> estimates the correlation between a subject’s level and its dispersion, and the label reaches a subformula too, so <code>seg(x, psi ~ random(~ 1 | u | id))</code> beside it correlates a random break-point with a random scale. The block is one multivariate prior over the effects of one level, on <code>dr_prod()</code> by default, where a coordinate is the logarithm of a standard deviation exactly.</p>
-<p><code><a href="reference/rstatmod.html">rstatmod()</a></code> simulates from a model written the same way, which is what a simulation study needs: the truth is returned beside the data.</p>
+<p>Any term of <code>modelterms7</code> goes in any equation: the parametric block, penalized smooths of one and several covariates, grouped random intercepts and slopes, ridge, lasso, elastic net, SCAD and MCP, a nonlinear parametric term, effects that change at estimated break-points, score-driven dynamics and latent Markov regimes. A formula carries at most one score-driven term, regime term or break-point term built with <code>marginal = TRUE</code>. A score-driven term is fitted in one system with the coefficients, and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> is built from the observed information of that joint model. A regime term, or a marginal break-point term, is fitted by alternating with the coefficients.</p>
+<p>The hyperparameters of a smooth penalty are estimated by <code><a href="reference/reml.html">reml()</a></code> or <code><a href="reference/reml.html">ml()</a></code>, or by <code><a href="reference/aic.html">aic()</a></code> or <code><a href="reference/aic.html">bic()</a></code> on an estimate of prediction error, all passed as <code>outer_criterion</code>. A penalty with a kink (<code>lasso()</code>, <code>enet()</code>, <code>scad()</code> and <code>mcp()</code>) has no second derivative at the mode, so its hyperparameter is chosen along a path of its own values, from the value that empties the block downwards. The path is scored by <code>sparse_criterion</code>, which is <code><a href="reference/aic.html">bic()</a></code> by default and may also be <code><a href="reference/aic.html">aic()</a></code> or <code><a href="reference/cv.html">cv()</a></code>. The function <code><a href="reference/cv.html">cv()</a></code> serves only as <code>sparse_criterion</code>.</p>
+<p>Random effects written with the same label and the same grouping share one covariance block, whatever equation they sit in, as with the middle bar of <code>(1 | u | id)</code> in <code>brms</code>. The formula <code>y ~ random(~ 1 | u | id) | sigma ~ random(~ 1 | u | id)</code> estimates the correlation between a subject’s level and the logarithm of its scale. The label reaches a subformula too, so <code>seg(x, psi ~ random(~ 1 | u | id))</code> in the same formula correlates a random break-point with a random scale. The block is one multivariate prior over the effects of one level, parametrized by <code>dr_prod()</code> by default, whose free coordinates are the logarithms of the standard deviations followed by the angles of the correlation.</p>
+<p><code><a href="reference/rstatmod.html">rstatmod()</a></code> simulates from a model written the same way and returns the parameters used beside the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rstatmod.html">rstatmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, <span class="va">d</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>
+<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rstatmod.html">rstatmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, distrib <span class="op">=</span> <span class="fu">gaussian1_distrib</span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="op">]</span>,</span>
 <span>                par <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mu <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">0.3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">sim</span><span class="op">$</span><span class="va">par</span></span>
 <span><span class="co">#&gt; $mu</span></span>
@@ -179,7 +182,7 @@
 <div class="section level2">
 <h2 id="the-toolkit-in-one-package">The toolkit in one package<a class="anchor" aria-label="anchor" href="#the-toolkit-in-one-package"></a>
 </h2>
-<p>Installing this package installs the eight members, and attaching it attaches them. They sit in <code>Imports</code> rather than <code>Depends</code>, which is what lets the attaching be reported rather than merely happen: <code>Depends</code> would attach them in the order the field lists them, with no message and no way for a caller to see what arrived at which version.</p>
+<p>Installing this package installs the eight members, and attaching it attaches them. The members are listed in <code>Imports</code> and attached by the package itself, which prints one message with the version of each; <code>Depends</code> would attach them without a report.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/statmodels7_packages.html">statmodels7_packages</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "basis7"         "distributions7" "linkfunctions7" "modelterms7"   </span></span>
@@ -200,7 +203,7 @@
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/linkfunctions7/" class="external-link">linkfunctions7</a></td>
-<td>link functions as objects, with exact derivatives to fourth order in both directions</td>
+<td>link functions as objects, with exact derivatives to fifth order in both directions</td>
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/distributions7/" class="external-link">distributions7</a></td>
@@ -220,7 +223,7 @@
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/penalties7/" class="external-link">penalties7</a></td>
-<td>penalties as objects, with their normalizing constants and the pieces a marginal criterion consumes</td>
+<td>penalties as objects, with exact derivatives, proximal operators and the pieces a marginal criterion consumes</td>
 </tr>
 <tr>
 <td><a href="https://statmodels7.github.io/modelterms7/" class="external-link">modelterms7</a></td>
@@ -228,12 +231,12 @@
 </tr>
 </tbody>
 </table>
-<p><code><a href="reference/statmodels7_versions.html">statmodels7_versions()</a></code> reports what is installed, <code><a href="reference/statmodels7_conflicts.html">statmodels7_conflicts()</a></code> what masks what, and <code>statmodels7_update("install")</code> installs or updates every member.</p>
+<p><code><a href="reference/statmodels7_versions.html">statmodels7_versions()</a></code> reports the installed version of each member, <code><a href="reference/statmodels7_conflicts.html">statmodels7_conflicts()</a></code> the names that members mask from one another, and <code>statmodels7_update(action = "install")</code> installs or updates every member.</p>
 </div>
 <div class="section level2">
 <h2 id="related">Related<a class="anchor" aria-label="anchor" href="#related"></a>
 </h2>
-<p>The mathematical companion to the whole toolkit is the <a href="https://statmodels7.github.io/book/" class="external-link">book</a>, which gives every formula the packages implement with its derivation and its citation.</p>
+<p>The mathematical companion to the toolkit is the <a href="https://statmodels7.github.io/book/" class="external-link">book</a>, which presents the formulas that the packages implement, explains where each quantity comes from and cites the source of the full argument.</p>
 </div>
 </div>
 

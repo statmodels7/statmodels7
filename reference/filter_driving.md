@@ -33,7 +33,7 @@ filter_driving(
 
 - ap:
 
-  The index of the parameter the filter sits in.
+  The index of the parameter in whose equation the filter sits.
 
 - scaling:
 

@@ -2,9 +2,10 @@
 
 Checks the first-order condition for a maximum at every free coordinate
 that has run past the edge of a chart mapping onto a bounded set,
-reading it on the bounded scale rather than on the free one. Returns the
-coordinates where moving back inside raises the log-likelihood, so the
-point the fit stopped at is not a maximum.
+reading it on the bounded scale and not on the free one. Returns the
+coordinates where moving back towards the interior raises the
+log-likelihood, so that the point at which the fit stopped is not a
+maximum.
 
 ## Usage
 
@@ -35,9 +36,11 @@ edge_violations(spec, design, coef, edge = 8, tol = mode_error_limit())
 ## Value
 
 A data frame with one row per violating coordinate and columns `kind`
-(`"structural"` or `"coefficient"`), `param`, `term`, `name`, `eta`,
-`target` and `gain`; zero rows where every coordinate at an edge points
-outward. The design's structural state is left as it was found.
+(`"structural"` or `"coefficient"`), `param`, `term`, `name`, `eta` (the
+free value), `target` (the value it is moved to) and `gain`; zero rows
+where every coordinate at an edge points outward, and also where the
+log-likelihood at the fit is not finite. The design's structural state
+is left as it was found.
 
 ## Details
 
@@ -52,16 +55,18 @@ Tucker) is that the derivative on the bounded scale points outward, and
 that is what is checked.
 
 The derivative is read as a one-sided difference: each coordinate beyond
-`edge` in absolute value is moved to \\\pm\\`edge`, the rest held, and
-the log-likelihood is evaluated there. A coordinate is reported where
-the gain exceeds `tol`, in log-likelihood units. The coordinates checked
-are those
+`edge` in absolute value is moved, one at a time and with the others
+held, to \\\pm\\`edge`, and the log-likelihood is evaluated there. A
+coordinate is reported where the gain exceeds `tol`, in log-likelihood
+units. The coordinates checked are those that
 [`modelterms7::term_charted()`](https://statmodels7.github.io/modelterms7/reference/term_charted.html)
-names for a structural term and for
+names for a structural term (leaving out the ones the term holds) and
+for
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
 and the intercept of an equation that has no other column and carries a
-link that is not the identity. None of them carries a penalty, so the
-log-likelihood difference is the objective's.
+link that is not the identity. The comparison is made on the
+log-likelihood alone, and a penalty on these coordinates is not
+included.
 
 ## See also
 

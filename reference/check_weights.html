@@ -9,7 +9,7 @@ per observation."><meta property="og:image" content="https://statmodels7.github.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,10 +67,12 @@ per observation.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>They are not normalized. Making them sum to one would turn
-\(\sum_i w_i \ell_i\) into a mean, which is the averaging trap the
-objective's own scale already has to avoid: every standard error would
-shrink by \(\sqrt{n}\) and the information criteria would stop being
-comparable.</p>
+\(\sum_i w_i \ell_i\) into a mean: every standard error would be
+multiplied by \(\sqrt{n}\) and the information criteria would stop being
+comparable with those of an unweighted fit. The weights act as frequency
+weights.</p>
+<p>The weights must be numeric, of length <code>n</code>, non-negative, finite and
+complete, and not all zero; anything else is an error.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

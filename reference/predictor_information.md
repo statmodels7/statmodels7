@@ -27,5 +27,7 @@ where the intercept-only fit is not available.
 It sets the scale of a score-driven term's second start
 ([`structural_start_fixups()`](https://statmodels7.github.io/statmodels7/reference/structural_start_fixups.md)):
 the score of a predictor has variance equal to this information, so a
-loading of \\0.1/\mathcal{I}\\ moves the predictor by a tenth of the
-score's natural unit whatever the family.
+loading of \\0.1/\mathcal{I}\\ on the unscaled score moves the predictor
+by a tenth of the score's natural unit whatever the family. For a filter
+with `scaling` \\d\\ the loading is \\0.1\\\mathcal{I}^{d-1}\\, which
+gives the same step.

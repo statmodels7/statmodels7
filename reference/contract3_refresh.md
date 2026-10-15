@@ -52,10 +52,10 @@ beside the third derivative
 carries, two terms in \\\partial X/\partial\beta\\: with \\D_a =
 (\partial X_a/\partial\beta)v\\, \$\$R\[(a,j),(b,k)\] = -\sum_i
 w_i\\\ell\_{ab,i}\\D_a\[i,j\]\\X_b\[i,k\],\$\$ and the other is its
-transpose, so the correction is \\R + R^\top\\. The derivative is asked
-of the term through
+transpose, so the correction is \\R + R^\top\\. The derivative is read
+from the term through
 [`modelterms7::term_block_deriv()`](https://statmodels7.github.io/modelterms7/reference/term_block_deriv.html)
-and never differenced here, for the reason
+and is never differenced here, for the reason
 [`u_refresh()`](https://statmodels7.github.io/statmodels7/reference/u_refresh.md)
 records: a break-point column is a step function in its break-point.
 

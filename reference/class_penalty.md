@@ -26,16 +26,14 @@ A penalties7 penalty over `m * dim` coefficients.
 
 The prior describes the effects of **one group** over every column the
 label collects, so its dimension is the class's total and the penalty
-covers \\m\\ such blocks. Which chart the covariance rides is a modeling
-choice and is
-[`parameters7::dr_prod()`](https://statmodels7.github.io/parameters7/reference/dr_prod.html)
-by default, where a coordinate is the logarithm of a standard deviation
-exactly; the alternative, log-Cholesky, is the same family of matrices
-written so that only the first coordinate reads as one.
+covers \\m\\ such blocks. The default prior is a centered multivariate
+Gaussian whose covariance is written by
+[`parameters7::dr_prod()`](https://statmodels7.github.io/parameters7/reference/dr_prod.html),
+where a coordinate is the logarithm of a standard deviation exactly.
 
-Naming a `distrib` on more than one member is an error rather than a
-precedence rule: the prior is one object and there is nothing to say
-which of two should win.
+Naming a `distrib` on more than one member is an error and not a
+precedence rule: the prior is one object, so two of them cannot both be
+used.
 
 ## See also
 

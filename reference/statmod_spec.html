@@ -15,7 +15,7 @@ inspected without being fitted."><meta property="og:image" content="https://stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,17 +81,22 @@ how many equations there are and what they are called.</p></dd>
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data frame holding the response, the covariates and any
-matrix columns the terms name.</p></dd>
+matrix columns the terms name. A missing value in the response, or in a
+variable that an equation names, is an error, because a fit does not
+drop rows.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>Optional prior weights, a numeric vector of length
-<code>nrow(data)</code>, or <code>NULL</code> for all ones.</p></dd>
+<code>nrow(data)</code> (not the name of a column), or <code>NULL</code> for all ones. The
+weights must be non-negative, finite and complete, and not all zero. They
+act as frequency weights and are not normalized.</p></dd>
 
 
 <dt id="arg-offsets">offsets<a class="anchor" aria-label="anchor" href="#arg-offsets"></a></dt>
 <dd><p>Optional named list of offsets, one entry per parameter,
-summed with any the formula names.</p></dd>
+each a finite numeric vector of length 1 or <code>nrow(data)</code>, summed with any
+offset the formula names for the same parameter.</p></dd>
 
 
 <dt id="arg-need-response">need_response<a class="anchor" aria-label="anchor" href="#arg-need-response"></a></dt>
@@ -122,12 +127,27 @@ term constructors sit in front of the search path, so <code>s()</code> means thi
 toolkit's even with <span class="pkg">mgcv</span> attached.</p>
     </div>
     <div class="section level2">
+    <h2 id="rejected-before-any-fit">Rejected before any fit<a class="anchor" aria-label="anchor" href="#rejected-before-any-fit"></a></h2>
+    <p>The function signals an error for a multivariate family (which
+<code><a href="https://statmodels7.github.io/distributions7/reference/fit_distrib.html" class="external-link">distributions7::fit_distrib()</a></code> fits with constant parameters), a censored
+response written with <code>cens()</code>, a family method whose signature has no
+<code>...</code>, a missing value in the response or in a variable that an equation
+names, a two-column response on a family without <code>size</code>, an offset written
+inside another term, and a structural term that cannot be fitted or a
+formula with more than one structural term.</p>
+    </div>
+    <div class="section level2">
     <h2 id="prior-weights-are-not-normalized">Prior weights are not normalized<a class="anchor" aria-label="anchor" href="#prior-weights-are-not-normalized"></a></h2>
     <p>They enter the log-likelihood as \(\sum_i w_i \ell_i\) and are taken as
-given. Dividing by their sum would turn the log-likelihood into a mean,
-shrinking every standard error by \(\sqrt{n}\) and making the
-information criteria incomparable with an unweighted fit of the same
-model.</p>
+given, so they act as frequency weights: a constant weight \(c\) on every
+row is \(c\) copies of the data. Dividing the weights by their sum would
+turn the log-likelihood into a mean, multiplying every standard error by
+\(\sqrt{n}\) and making the information criteria incomparable with an
+unweighted fit of the same model.</p>
+<p>The restricted (REML) criterion counts \(c n\) observations against the
+\(p\) coefficients when the weights are the constant \(c\). The REML
+estimate of a dispersion parameter therefore changes under a constant
+rescaling of the weights, and the ML estimate does not.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -147,11 +167,11 @@ model.</p>
 <span class="r-in"><span><span class="va">spec</span><span class="op">@</span><span class="va">equations</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $mu</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ~x</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x55c3c4b21000&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x562f9ae80620&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $sigma</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ~z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x55c3c4b21000&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x562f9ae80620&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Unweighted, so the weights are ones.</span></span></span>

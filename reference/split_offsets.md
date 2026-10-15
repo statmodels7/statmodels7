@@ -35,15 +35,13 @@ A list of two:
 An offset is a column of the linear predictor whose coefficient is known
 to be one, and `y ~ x + offset(log_n)` is how R has always written it.
 
-Taking it out here is the whole of what makes it work. Left in, the term
-reached `model.matrix` through
+The offset has to be taken out before the interpreter reads the
+equation. Left in, the term would reach `model.matrix` through
 [`modelterms7::linpar()`](https://statmodels7.github.io/modelterms7/reference/linpar.html),
 where [`terms()`](https://rdrr.io/r/stats/terms.html) marks it in the
-`"offset"` attribute and the design excludes it: the term contributed no
-column, no offset and no message, and the model fitted was the one
-without it. On a count model over person-years that moved the intercept
-from -7.5 to -0.6, which is the difference between a log rate and a log
-count.
+`"offset"` attribute and the design excludes it: the term would
+contribute no column, no offset and no message, and the model fitted
+would be the one without it.
 
 Only a top-level additive term is taken, which is where R recognizes one
 too, and `stats::offset(x)` is recognized beside `offset(x)`. Several in

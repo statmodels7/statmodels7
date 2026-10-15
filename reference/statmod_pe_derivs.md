@@ -1,6 +1,6 @@
 # The Exact Derivatives of a Prediction-Error Criterion
 
-The gradient and, when asked, the Hessian of \\-2\ell + \kappa\tau\\
+The gradient and, at order 2, the Hessian of \\-2\ell + \kappa\tau\\
 over the free scale of the hyperparameters.
 
 ## Usage
@@ -65,19 +65,21 @@ information is not invertible.
 Writing \\P = J^{-1}\\, \\A_m = \partial J/\partial\theta_m = S_m +
 T\[\hat\beta_m\]\\ and \\B_m = \partial H/\partial\theta_m =
 T\[\hat\beta_m\]\\, \$\$\tau_m = \mathrm{tr}(PB_m) -
-\mathrm{tr}(PA_mPH),\$\$ and the log-likelihood contributes
-\\(\partial\rho/\partial\beta)' \hat\beta_m\\. Differentiating once more
-brings in \\A\_{ml}\\, \\B\_{ml}\\ and \\\hat\beta\_{ml}\\, which are
-the quantities
+\mathrm{tr}(PA_mPH),\$\$ and the term \\-2\ell\\ contributes
+\\-2(\partial\rho/\partial\beta)'\hat\beta_m\\. Differentiating once
+more brings in \\A\_{ml}\\, \\B\_{ml}\\ and \\\hat\beta\_{ml}\\, which
+are quantities that
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
-already assembles.
+assembles.
 
 Where `method@hessian` is `"expected"`, \\\tau\\ reads the expected
 information \\H_E\\, so its derivative contracts the derivative of
 \\H_E\\ in the predictors, read from
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
 under its own key, while the mode still moves by the observed penalized
-information. That route has no Hessian and is refused at order 2.
+information. That route has no Hessian, and a request for order 2
+signals an error. Beside an unpenalized filter the mode moves jointly
+with the filter's own parameters, and only the gradient is available.
 
 ## See also
 

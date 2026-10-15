@@ -11,7 +11,7 @@ returned; otherwise compute() runs and replaces it."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@ returned; otherwise <code>compute()</code> runs and replaces it.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>The exact inputs the value depends on.</p></dd>
+<dd><p>The exact inputs on which the value depends.</p></dd>
 
 
 <dt id="arg-compute">compute<a class="anchor" aria-label="anchor" href="#arg-compute"></a></dt>
@@ -77,11 +77,9 @@ returned; otherwise <code>compute()</code> runs and replaces it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Measured on the gas panel at 60 groups, 62 of the 154 curvature
-recursions of one fit recompute a point already visited: the same
-coefficients and the same term parameters, up to five times each, the
-criterion and its gradient and the joint step's curvature all reading the
-same mode. The recursion is 35 per cent of the fit. The
+    <p>The criterion, its gradient and the joint step's curvature all read the
+same mode, so the same coefficients and the same term parameters recur
+within a fit. The
 cache returns the previously computed object itself, so a hit is
 bit-identical to recomputing by construction, and the key is compared
 with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> on the full numeric inputs, so a collision

@@ -5,8 +5,8 @@
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 or
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
-without `smoothed`, whose contribution has a kink in the break-point at
-the observations.
+with neither `smoothed` nor `marginal = TRUE`, whose contribution has a
+kink in the break-point at the observations.
 
 ## Usage
 

@@ -1,12 +1,9 @@
 # The Unweighted Cross Product of a Square-Root Design
 
 Computes \\A^\top A\\ for a square-root design, through the package's
-threaded kernel above the measured work threshold and through
-`crossprod(A)` everywhere else. This is what
-[`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)'s
-subset route assembles at every scoring iteration: the design has
-already been scaled by the square root of the working weights, so no
-weight vector enters.
+threaded kernel above a work threshold and through `crossprod(A)`
+everywhere else. The argument is a design that has already been scaled
+by the square root of the working weights, so no weight vector enters.
 
 ## Usage
 
@@ -50,14 +47,13 @@ accumulates in the same ascending row order, so the two routes agree to
 the last bit there. An optimized BLAS blocks its accumulations and
 agrees to the rounding of one dot product.
 
-A full \\p^2\\ version was measured and is not what ships: it was no
-better than `dsyrk` at eight threads, so the second half of the work
-bought nothing.
+Only the upper triangle is computed, as `dsyrk` does, because computing
+all \\p^2\\ entries gave no gain.
 
 ## When the kernel is used
 
 `threads > 1`, `A` a base dense matrix, and \\n \times p^2\\ at least
-`2e5`. Note the \\p^2\\: this kernel writes \\p^2\\ outputs where
+`2e5`. This kernel writes \\p^2\\ outputs where
 [`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
 writes \\p\\, so a design wide enough to reach the threshold here can be
 too narrow to reach it there.

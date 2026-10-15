@@ -29,14 +29,15 @@ row of the two-column layout, each already trimmed of trailing spaces.
 
 ## Details
 
-Padding is applied inside a line and stripped at its end, since a
-trailing run of spaces is invisible where it is written and visible
-wherever the message is pasted. A member that is not installed is marked
-`x` and named with the text `not installed`; leaving it blank would hide
-the difference between an absent member and a present one.
+Padding is applied inside a line and stripped at its end, because a
+trailing run of spaces is invisible where it is written and becomes
+visible when the message is pasted elsewhere. A member that is not
+installed is marked `x` and shown with the text `not installed`, so that
+an absent member differs visibly from a present one.
 
-Plain ASCII throughout. A non-ASCII character in a package's startup
-message is a portability risk taken for a decoration.
+The message uses plain ASCII only. A non-ASCII character in a startup
+message can print incorrectly in a session with another encoding, and
+the layout needs none.
 
 ## See also
 

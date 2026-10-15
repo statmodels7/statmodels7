@@ -11,7 +11,7 @@ stops moving."><meta property="og:image" content="https://statmodels7.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,47 +124,73 @@ pass a short one: an excursion needs to travel, not to converge.</p></dd>
 <dd><p><code>TRUE</code> holds every frozen break-point block at
 its committed positions: the fit is then an ordinary smooth fit, no
 read-off runs and no schedule advances. The outer machinery passes it
-at every criterion evaluation, path point and fold, for two reasons
-measured together: the working phase inside each of dozens of
-evaluations multiplied a fit's cost by twenty, and a break-point
-moving between evaluations makes the criterion path-dependent while
-its cycling flags read as unavailable points to the search. The
-positions are refined once, by the full alternation <code><a href="statmod.html">statmod()</a></code>
-runs at the chosen hyperparameters before the restarts.</p></dd>
+at every criterion evaluation, path point and fold. A working phase
+inside each evaluation would multiply the cost of the fit, and a
+break-point that moves between evaluations makes the criterion depend on
+the path of the search. The positions are refined once, by the full
+alternation <code><a href="statmod.html">statmod()</a></code> runs at the chosen hyperparameters before the
+restarts.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of six:</p><dl><dt><code>par</code></dt>
+    <p>A list of nine:</p><dl><dt><code>par</code></dt>
 <dd><p>the stacked coefficients reached.</p></dd>
 
 <dt><code>value</code></dt>
 <dd><p>the penalized objective there, unaveraged.</p></dd>
 
 <dt><code>converged</code></dt>
-<dd><p>a single logical: the objective settled, every
-block settled, and every refreshable term reported it had.</p></dd>
+<dd><p>a single logical. Where a term recomputes its own
+block, the verdict is the objective's together with that term's own
+flags, and the flag of the smooth block is not part of it. Beside a
+kinked block or a structural term it also requires
+<code><a href="alternation_readings.html">alternation_settled()</a></code> at the point. Where nothing alternates, it
+is the flag of the inner method.</p></dd>
 
 <dt><code>obj</code></dt>
 <dd><p>the objective object the last pass used.</p></dd>
 
+<dt><code>note</code></dt>
+<dd><p>the <code>note</code> element of the last smooth fit, as
+<code><a href="fit_smooth.html">fit_smooth()</a></code> returns it.</p></dd>
+
+<dt><code>aliased</code></dt>
+<dd><p>the sorted stacked positions that the pivot left
+out.</p></dd>
+
 <dt><code>hist_blocks</code></dt>
-<dd><p>a data frame, one row per pass.</p></dd>
+<dd><p>a list of one-row data frames, one for each block
+fitted in each pass, with <code>pass</code>, <code>block</code>, <code>objective</code>, <code>change</code>,
+<code>iterations</code> and <code>converged</code>.</p></dd>
 
 <dt><code>hist_inner</code></dt>
-<dd><p>a data frame, one row per inner iteration.</p></dd>
+<dd><p>a list of data frames, one for each pass whose
+smooth fit recorded steps, holding the inner history with the columns
+<code>pass</code> and <code>block</code> added.</p></dd>
+
+<dt><code>spec</code></dt>
+<dd><p>the specification after the last pass, with the SCAD and
+MCP curvatures that the fit used.</p></dd>
 
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is a function of its own because the outer search calls it once per
-hyperparameter it tries, warm-started from the previous coefficients. A
-whole fit at one point of the search is one call of this.</p>
-<p>One pass does the smooth block, then each kinked block with everything
-else held, then commits any refreshable term's schedule. The passes repeat
-until the objective's relative change falls below <code>tol</code>, every block
-reports it has settled, and <code><a href="statmod_refresh_settled.html">statmod_refresh_settled()</a></code> agrees.</p>
+    <p>The outer search calls this function once for each hyperparameter value
+that it tries, warm-started from the previous coefficients, so a whole fit
+at one point of the search is one call.</p>
+<p>One pass fits the smooth block (beside a structural term of the filter
+shape, the joint system of the coefficients and the term's parameters),
+then the structural block of a term of the likelihood shape, then each
+kinked block with the other blocks held, and then commits the schedule of
+any refreshable term. The passes stop when the relative change of the
+objective falls below <code>tol</code>. The verdict is the inner fit's flag where
+there is nothing to alternate with. Otherwise it also requires
+<code><a href="alternation_readings.html">alternation_settled()</a></code> (the Newton decrement of the smooth part and the
+KKT decrement of each coefficient that a kinked penalty holds at zero,
+both within <code><a href="mode_error_limit.html">mode_error_limit()</a></code>), and <code><a href="statmod_refresh_settled.html">statmod_refresh_settled()</a></code> where
+the model has refreshable terms.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

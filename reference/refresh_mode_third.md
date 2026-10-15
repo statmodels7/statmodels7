@@ -73,13 +73,6 @@ derivative and the second its second, \\F_a =
 against a per-observation weight, so neither the third-derivative array
 of the predictor nor any contraction of it is formed.
 
-**Measured** against the mode refitted at four hyperparameter values and
-differenced twice, on `nl(a ~ 0 + ridge(~grp))`: \\b_m\\ is right to
-3.8e-08 without this and \\b\_{ml}\\ is wrong by 7.6 to 9.0 per cent at
-every step tried, which is a systematic error and no reference's noise.
-With it the gap falls to 1.8e-05 at the reference's best step, which is
-inside the spread between the reference's own consecutive steps.
-
 ## See also
 
 [`mode_curvature()`](https://statmodels7.github.io/statmodels7/reference/mode_curvature.md),

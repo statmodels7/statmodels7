@@ -1,9 +1,9 @@
 # The Terms as the Fit Left Them
 
 Returns the specification with every refreshable term replaced by the
-one the fit arrived at. A break-point, a nonlinear parameter and the
-design block they imply are then read off the fitted object, and the
-specification a caller passed to
+term at which the fit arrived. A break-point, a nonlinear parameter and
+the design block they imply are then read off the fitted object, and the
+specification that a caller passed to
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 no longer decides what
 [`summary()`](https://rdrr.io/r/base/summary.html),
@@ -27,7 +27,8 @@ statmod_fitted_spec(spec, coef, design)
 
 - coef:
 
-  A named list of coefficient vectors, the ones the fit reached.
+  A named list of coefficient vectors, the coefficients at which the fit
+  stopped.
 
 - design:
 
@@ -38,8 +39,9 @@ statmod_fitted_spec(spec, coef, design)
 
 A
 [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
-identical to `spec` except that each refreshable term is the object the
-fit left behind.
+identical to `spec` except that each refreshable term is the term held
+in the design's state and that `structural` holds the fitted parameters
+of a structural term, when the design carries one.
 
 ## Details
 

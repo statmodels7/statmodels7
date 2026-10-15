@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,10 +71,10 @@ otherwise. Zero columns for an equation carrying only a structural term.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A fit has one design per parameter, so which one is wanted is an argument.
-<code>NULL</code> gives the first, as <code><a href="fitted.StatmodFit.html">fitted.StatmodFit()</a></code> does. A term whose block moves with its
-coefficients is returned at the fitted ones, which is the block the fit
-ended on.</p>
+    <p>A fit has one design per parameter, and <code>what</code> selects the parameter.
+<code>NULL</code> selects the first, as <code><a href="fitted.StatmodFit.html">fitted.StatmodFit()</a></code> does. A term whose block
+moves with its coefficients is returned at the fitted coefficients, which
+is the block the fit ended on.</p>
 <p>A structural term contributes no columns at all, so an equation carrying
 one alone gives a matrix of no columns; what such a term contributes is a
 recursion, reported by <code><a href="predict.StatmodFit.html">predict.StatmodFit()</a></code>.</p>

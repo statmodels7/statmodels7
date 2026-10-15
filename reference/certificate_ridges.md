@@ -50,10 +50,10 @@ direction is returned on the original coordinates, scaled so that its
 largest entry is one in absolute value, with entries below 1e-3 set to
 zero. Its own decrement is \\(q'\tilde g)^2/(2\|\lambda\|)\\, with \\q\\
 the equilibrated eigenvector and \\\tilde g = g/s\\; the absolute value
-is taken because the sign of an eigenvalue this small is the sign of
-rounding. No direction is returned where an eigenvalue is below `-flat`:
-the point is then not a maximum, and a flat direction there is not a
-ridge of one.
+is taken because the sign of an eigenvalue as small as this is the sign
+of rounding. No direction is returned when any eigenvalue is below
+`-flat`: the point is then not a maximum, and a flat direction there is
+not a ridge of one.
 
 ## See also
 

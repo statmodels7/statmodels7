@@ -1,6 +1,6 @@
-# Every Labelled Effect a Term Carries, Its Sub-Terms Included
+# Every Labeled Effect in a Term, Its Sub-Terms Included
 
-One piece per labelled random effect reachable from a term: the term
+One piece per labeled random effect reachable from a term: the term
 itself where it carries a label, and the sub-terms developing its own
 parameters otherwise, walked to any depth.
 
@@ -39,8 +39,8 @@ label_pieces(
 - path:
 
   Which of the parent's parameters were developed to reach the piece,
-  outermost first, empty at the top level. It says what the effect is an
-  effect ON: a labelled random intercept written inside
+  outermost first, empty at the top level. It identifies the quantity on
+  which the effect acts: a labeled random intercept written inside
   `seg(x, psi ~ ...)` is an effect on the break-point and not on the
   mean, and a report naming only the equation would be read as the
   second.
@@ -49,7 +49,7 @@ label_pieces(
 
   Whether `within` indexes a structural term's own parameters rather
   than columns of the design. `NULL` at the top level, where it is read
-  from the term; a recursive call passes what it was told.
+  from the term; a recursive call passes the value it received.
 
 ## Value
 
@@ -57,34 +57,32 @@ A list of pieces, each with `param`, `term`, `within`, `path`, `dim`,
 `tag`, `group` (as
 [`modelterms7::term_group()`](https://statmodels7.github.io/modelterms7/reference/term_group.html)
 returns it), `structural` and `distrib`. Empty where nothing under the
-term is labelled.
+term is labeled.
 
 ## Why a sub-term is reachable at all
 
 `seg(x, psi ~ random(~ 1 | u | id))` develops a break-point over a
-labelled random effect. The labelled term is not one of the equation's
-terms – the equation carries one `SegTerm`, whose own label is absent –
-and its coefficients are columns of that term's block. Measured, they
-are exactly the ones
+labeled random effect. The labeled term is not one of the equation's
+terms (the equation carries one `SegTerm`, whose own label is absent),
+and its coefficients are columns of that term's block. They are the
+columns that
 [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html)
 reports as that component's `sub_index`, so a piece records them as
 `within`, positions in the parent's block, and the design turns them
 into positions in the stacked vector the same way it does for any other
 term.
 
-That is the whole of what a subformula costs here, and it is why the
-case is covered: a labelled effect written in a subformula of an
-**additive** term lives in the same vector as one written in an
-equation.
+A labeled effect written in a subformula of an **additive** term lives
+in the same vector as one written in an equation, so the same positions
+apply.
 
 A **structural** parent addresses its coefficients differently: they are
 the term's own parameters, which contribute no design column and live in
 the design's structural state. The walk is the same and the positions it
-composes are the same numbers – measured, a labelled effect inside
-`gas(kappa1 ~ 1 + random(~ 1 | u | g))` comes out at 3 to 12, exactly
-the `cols` the unlabelled sub-term's own penalty is read at – so what a
-piece records is which vector they index rather than a different
-arithmetic.
+composes are the same numbers (for a labeled effect inside
+`gas(kappa1 ~ 1 + random(~ 1 | u | g))` they are the `cols` at which the
+unlabeled sub-term's own penalty is read), so a piece records which
+vector the positions index and not a different arithmetic.
 
 ## Depth
 
@@ -93,7 +91,7 @@ the walk recurses and composes `within` on the way down: a depth-two
 sub-term's columns are positions in its parent's block, which are
 themselves positions in the equation-level term's.
 
-A labelled term's own sub-terms are not walked. Its columns are the
+A labeled term's own sub-terms are not walked. Its columns are the
 class's already, and anything inside it belongs to that block rather
 than to another.
 

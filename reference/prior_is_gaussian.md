@@ -1,8 +1,9 @@
 # Whether a Prior Is Gaussian
 
-A penalty whose Hessian in the coefficients does not move with them and
-has no kink is a Gaussian prior. The second condition matters: a Laplace
-prior also has a constant Hessian, zero away from its kink.
+A penalty is read as a Gaussian prior when its Hessian in the
+coefficients is constant and the penalty has no kink. The second
+condition is needed because a Laplace prior also has a constant Hessian,
+which is zero away from its kink.
 
 ## Usage
 

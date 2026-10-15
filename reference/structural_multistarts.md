@@ -1,9 +1,9 @@
-# The Starting Points a Structural Term Asks For
+# The Starting Points of a Structural Term
 
-The starts
+The starts that
 [`modelterms7::term_starts()`](https://statmodels7.github.io/modelterms7/reference/term_starts.html)
-gives for the model's structural term, where it gives more than one and
-the specification carries no values a fit arrived at.
+returns for the structural term of the model, when it returns more than
+one and the specification carries no values from a previous fit.
 
 ## Usage
 

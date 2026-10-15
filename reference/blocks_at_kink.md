@@ -25,15 +25,15 @@ blocks_at_kink(blocks, hyper)
 ## Value
 
 `blocks`, with each entry of its `sparse` list carrying a `prev_kink`
-element: the size of that penalty's kink at `hyper`. The `smooth` list
-is untouched.
+element: the size of that penalty's kink at `hyper`. An entry whose kink
+size is not finite and positive, or cannot be read, carries no
+`prev_kink` element. The `smooth` list is untouched.
 
 ## Details
 
-The previous point travels on the blocks themselves, sparing every layer
-between the path and the descent an argument. Where a penalty was a
-moment ago is a property of its block, and the path rebuilds the blocks
-at each point in any case.
+The size at the previous point travels on the blocks themselves, so that
+no argument has to pass through the layers between the path and the
+descent.
 
 ## See also
 

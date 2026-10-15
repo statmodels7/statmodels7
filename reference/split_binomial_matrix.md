@@ -23,32 +23,36 @@ split_binomial_matrix(response, distrib)
 ## Value
 
 A list with `response`, the successes, and `distrib`, carrying the row
-sums as its `size`. Both unchanged where the response is not a
-two-column matrix on a univariate family.
+sums as its `size`. Both are unchanged where the response is not a
+matrix or the family is multivariate. A matrix response on a univariate
+family signals an error where it has a number of columns other than two,
+is not numeric, holds a negative count, or where the family has no
+`size`.
 
 ## Details
 
-`cbind(y, n - y) ~ x` is how aggregated binomial data are written in R,
-and it was not read here: the matrix went down as a vector of twice the
-length and the run died on *"Parameter dimension mismatch. All
-parameters should have length 1 or 400"*, a message about a length
-nobody had asked for.
+`cbind(y, n - y) ~ x` is how aggregated binomial data are written in R.
+The two columns are read as the successes and the failures: the response
+becomes the successes and the family's `size` becomes the row sums.
 
-THE TRIALS COME FROM THE RESPONSE AND NOT FROM THE FAMILY, and that is
-the half of this worth having. A size handed to the family is a vector
-fixed at fitting time, so it cannot follow the rows anywhere else; the
-row sums of a response expression are recomputed wherever that
-expression is evaluated, which is what makes a fold of
+The number of trials is taken from the response and not from the family.
+A size given to the family is a vector fixed at fitting time, so it
+cannot follow the rows anywhere else, whereas the row sums of a response
+expression are recomputed wherever that expression is evaluated, which
+is what makes a fold of
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) or a
-prediction at new data come out right. That the alternative is not
-merely awkward but silently wrong is measured on the density itself: a
-size of length 200 against 20 observations returns 200 log-densities,
-summing to -1125.63, and signals nothing. See
+prediction at new data use the right trials. A size of another length
+than the rows is recycled by the density without any signal (a size of
+length 200 against 20 observations returns 200 log-densities). See
 [`check_trials()`](https://statmodels7.github.io/statmodels7/reference/check_trials.md),
-which refuses that case where the row sums cannot be had.
+which rejects that case where the row sums cannot be had.
+
+A size given to the family as well must agree with the row sums, and the
+two statements disagreeing is an error; the default size of one is not a
+statement and is replaced.
 
 A matrix response is left alone for a multivariate family, where it is
-the ordinary thing and each row is one observation.
+the ordinary response and each row is one observation.
 
 ## See also
 

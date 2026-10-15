@@ -36,21 +36,21 @@ A data frame with `fit` (the median), `se`, `lower` and `upper`.
 Each component \\c\\ gives, at row \\i\\, the predictors' mean
 \\\eta\_{ci}\\ and their covariance \\C\_{ci}\\, the predictors being
 taken jointly Gaussian within it. The distribution of \\Y\\ is the
-equally weighted mixture of the family over the components and, within
-each, over the predictors, \$\$G_i(y) = \frac{1}{B}\sum\_{c=1}^{B}
-E\_{\eta \sim \mathrm{N}(\eta\_{ci}, C\_{ci})}\[F(y \mid
-h^{-1}(\eta))\],\$\$ each expectation evaluated at the single node
-\\\eta\_{ci}\\ where \\C\_{ci}\\ is zero at every row. Otherwise
-\\C\_{ci} = LL^\top\\ is split by its eigenvectors: the directions after
-the first are a Gauss-Hermite product grid of at most 64 nodes, and the
-first, the one of largest variance, a 20-node Gauss-Hermite rule. Where
-that variance is large against the spread of the conditional law, the
-law's distribution function turns from 0 to 1 between two adjacent
-nodes, which the rule integrates badly: with \\r\\ the ratio of the two
-standard deviations of a Gaussian law, its error in probability is 2e-11
-at \\r = 1\\, 1.5e-03 at \\r = 3\\ and 1.8e-02 at \\r = 5\\. A direction
-whose values at two adjacent nodes differ by more than 0.3 is therefore
-integrated by
+mixture of the family over the components, with weights \\w_c\\ that sum
+to one (equal where a component carries none), and, within each
+component, over the predictors, \$\$G_i(y) = \sum\_{c} w_c E\_{\eta \sim
+\mathrm{N}(\eta\_{ci}, C\_{ci})}\[F(y \mid h^{-1}(\eta))\],\$\$ each
+expectation evaluated at the single node \\\eta\_{ci}\\ where
+\\C\_{ci}\\ is zero at every row. Otherwise \\C\_{ci} = LL^\top\\ is
+split by its eigenvectors, and \\r\\ directions carry variance. The
+directions after the first are a Gauss-Hermite product grid with
+\\k^{r-1}\\ nodes, where \\k = \max(2, \min(8, \lfloor 64^{1/(r-1)}
+\rfloor))\\, and the first, the one of largest variance, a 20-node
+Gauss-Hermite rule. Where that variance is large against the spread of
+the conditional law, the law's distribution function turns from 0 to 1
+between two adjacent nodes, which the rule integrates badly. A direction
+cell whose distribution function differs by more than 0.3 between two
+adjacent nodes is therefore integrated by
 [`numericals7::quad_vec()`](https://statmodels7.github.io/numericals7/reference/quad_vec.html)
 instead, at its default tolerances. A direction cell is left to
 Gauss-Hermite whatever its values when it is among the lightest, whose
@@ -63,8 +63,10 @@ an average of theirs. For a continuous family it is found by Newton's
 method on \\G_i(y) = p\\ with the mixture's density as the derivative,
 started at the weighted median of those quantiles and kept inside a
 bracket every evaluation shrinks; for a discrete one by bisection on the
-integers, as the smallest value at which \\G_i\\ reaches the level. Only
-the family's distribution function, density and quantile are read, so no
-location parameter is needed. The standard deviation is
-\\\sqrt{E\[\mathrm{Var}(Y\mid\eta)\] + \mathrm{Var}(E\[Y\mid\eta\])}\\,
-`NA` where the family's mean or variance does not exist.
+integers, as the smallest value at which \\G_i\\ reaches the level. The
+quantiles read the family's distribution function and quantile function,
+and the density for a continuous family, so no location parameter is
+needed. The standard deviation reads the family's mean and variance, and
+is \\\sqrt{E\[\mathrm{Var}(Y\mid\eta)\] +
+\mathrm{Var}(E\[Y\mid\eta\])}\\, `NA` where the family's mean or
+variance does not exist.

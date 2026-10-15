@@ -22,13 +22,15 @@ A condition of class `statmod_conditional_variance`.
 
 ## Details
 
-It carries a class of its own for the same reason the other two do:
+It carries a class of its own for the same reason as the condition of a
+frozen block
+([`frozen_condition()`](https://statmodels7.github.io/statmodels7/reference/frozen_condition.md)):
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
 calls
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-more than once, so without one the same message would reach the reader
-several times, and muffling it by position would swallow whatever else
-was raised on the way.
+more than once, so without a class the same message would reach the
+reader several times, and muffling it by position would suppress
+whatever else was raised on the way.
 
 ## See also
 

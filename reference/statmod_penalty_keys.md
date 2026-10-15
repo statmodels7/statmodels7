@@ -21,7 +21,9 @@ statmod_penalty_keys(spec)
 ## Value
 
 A list of entries with `param`, `term`, `key`, `within` (positions among
-the term's own parameters) and `penalty`.
+the term's own parameters), `penalty`, `fixed`, `n_values`, `values`,
+`min_ratio`, `search` and `ids`. The entry of a covariance class also
+carries `class` and `params`.
 
 ## See also
 

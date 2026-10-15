@@ -1,9 +1,11 @@
 # The Hyperparameters a Specification Starts From
 
-Builds the hyperparameter structure a fit begins from: one entry per
-penalized term, each at the midpoint of its own bounds. That is the
-probe rule modelterms7 already uses when it reads a penalty's kinks, so
-the two layers start a penalty at the same place.
+Builds the hyperparameter structure that a fit starts from: one entry
+per penalized term, each hyperparameter at the value given by
+[`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md).
+That value is the probe value that modelterms7 uses when it reads the
+kinks of a penalty, so that both layers start a penalty at the same
+place.
 
 ## Usage
 
@@ -19,6 +21,12 @@ statmod_hyper_start(spec, design = NULL)
   [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md),
   whose terms are walked equation by equation.
 
+- design:
+
+  The design, as
+  [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
+  returns it. It is built from `spec` when `NULL`.
+
 ## Value
 
 A named list with one entry per distribution parameter, each a named
@@ -28,19 +36,18 @@ an empty list.
 
 ## Details
 
-A hyperparameter the term holds keeps the held value instead of the
-probe. Which ones those are is said by the term and by nothing else,
-through
-[`modelterms7::term_hyper()`](https://statmodels7.github.io/modelterms7/reference/term_hyper.html).
+A hyperparameter that its term holds takes the value that the term
+carries. A value held on one member of a group of terms that share a
+hyperparameter through a common label applies to every member of the
+group.
 
-The probe is a placeholder. Every hyperparameter left `NULL` on its term
-is estimated afterwards, by a marginal criterion or along a path.
+The start value is a placeholder. Every hyperparameter that is `NULL` on
+its term is estimated afterwards, by a marginal criterion or along a
+path.
 
 ## See also
 
 [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
-for one penalty's midpoints,
-[`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
-for a caller's overrides,
+for the start values of one penalty,
 [`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
-for which are held.
+for the hyperparameters that are held.

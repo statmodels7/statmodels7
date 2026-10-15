@@ -49,12 +49,11 @@ statmod_stat_at(
   Whether to read how far above its mode the restricted fit stopped
   ([`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md)).
   `FALSE` by default, because it costs one Hessian where the likelihood
-  ratio and the gradient statistic need none, and the two loops that
-  call this in quantity –
+  ratio and the gradient statistic need none.
   [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md),
-  one row at a time, and
+  which calls this once per row, and
   [`statmod_invert()`](https://statmodels7.github.io/statmodels7/reference/statmod_invert.md),
-  five to seven times per interval – do not read it.
+  which calls it once per evaluation of the statistic, do not read it.
 
 - objective0:
 
@@ -67,11 +66,11 @@ statmod_stat_at(
 
 A list with `test`, `statistic`, `df`, `p.value`, `converged` – `NA` for
 the Wald statistic and the restricted fit's flag for the other three –
-and `mode_error`, `NA` unless it was asked for.
+and `mode_error`, `NA` unless it is requested.
 
 ## Details
 
-All four read the PENALIZED objective, which is the function the fit
+All four read the penalized objective, which is the function the fit
 maximizes. Writing \\\ell_p(\beta) = \ell(\beta) - \rho(\beta;\theta)\\
 for it, \\\hat\beta\\ for the unrestricted estimates, \\\tilde\beta\\
 for those with \\\beta_j\\ held at \\b\\, \\U = \partial\ell_p\\ for its
@@ -80,51 +79,46 @@ score and \\K\\ for the penalized information, the four are \$\$W =
 2\\\ell_p(\hat\beta) - \ell_p(\tilde\beta)\\,\$\$ \$\$S =
 U_j(\tilde\beta)^2 \\ \[K(\tilde\beta)^{-1}\]\_{jj}, \qquad T =
 U_j(\tilde\beta)\\(\hat\beta_j - b),\$\$ each compared with a
-\\\chi^2_1\\. Where the model carries no penalty \\\ell_p\\ IS the
+\\\chi^2_1\\. Where the model carries no penalty \\\ell_p\\ is the
 log-likelihood and these are the classical four.
 
-The score statistic's general form is \\U'K^{-1}U\\, which reduces to
+The score statistic has the general form \\U'K^{-1}U\\. It reduces to
 the product above because every other component of \\U\\ vanishes at the
-restricted maximum – and that is worth knowing rather than assuming,
-since it is what says the restricted fit converged.
+restricted maximum, which also indicates that the restricted fit has
+converged.
 
-## Why the penalized objective and not the likelihood
+## The penalized objective and the likelihood
 
-Reading the likelihood alone would make the four incoherent with one
-another and the second of them not a ratio at all. \\\tilde\beta\\
-maximizes \\\ell_p\\ under the restriction and not \\\ell\\, so
-\\\ell(\tilde\beta)\\ can exceed \\\ell(\hat\beta)\\ and the difference
-come out NEGATIVE – measured on a smooth, holding `s(z).z3` at two
-values either side of its estimate gives -0.0379 and -0.1075 where
-\\\ell_p\\ gives +0.0054 and +0.1355. The other three were already
-reading the penalized objective, \\U\\ and \\K\\ being its gradient and
-its curvature and the Wald variance being \\(H+S)^{-1}\\, so one table
-would have carried two different tests.
+The likelihood ratio is taken on \\\ell_p\\ and not on \\\ell\\.
+\\\tilde\beta\\ maximizes \\\ell_p\\ under the restriction and not
+\\\ell\\, so \\\ell(\tilde\beta)\\ can exceed \\\ell(\hat\beta)\\ and
+the difference of log-likelihoods can be negative. The other three
+statistics read the penalized objective as well: \\U\\ and \\K\\ are its
+gradient and its curvature, and the Wald variance is \\(H+S)^{-1}\\
+under `type = "bayesian"`.
 
-What it means for a SHRUNK coordinate is the reading
+For a shrunk coordinate this is the reading that
 [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-already gives it under `type = "bayesian"`: the penalty is a log-prior,
-so \\\ell_p\\ is a log posterior at the hyperparameters in force and the
-interval by inversion is the set the posterior does not reject,
-conditional on them. Nothing new is claimed; the claim the Wald interval
-on such a row already carries is extended to the other three. Measured,
-the two agree as they must: on a smooth at \\n = 300\\ the inverted
-interval and the Wald one differ by 8.7e-04 on `s(z).z1`, 1.1e-03 on an
-unpenalized covariate and 2.5e-03 on the smooth's linear column, which
-is second-order agreement, and what the inversion adds is the asymmetry.
+gives under `type = "bayesian"`: the penalty is a log-prior, so
+\\\ell_p\\ is a log posterior at the hyperparameters in force, and the
+interval by inversion is the set that the posterior does not reject,
+conditional on them. The interpretation that the Wald interval on such a
+row carries therefore extends to the other three statistics. On a smooth
+the inverted interval and the Wald one agree to second order, and the
+inversion adds the asymmetry.
 
-## What separates them
+## Differences between the statistics
 
-Wald reads the unrestricted fit alone and needs no refit, which is why
-it is the one every summary prints and also the one that is NOT
-invariant to how the parameter is written: a reparametrization moves it
-and moves none of the other three. It is also the one that loses power
-against a distant alternative, the Hauck-Donner effect, the curvature
-being read at \\\hat\beta\\ rather than under the null.
+The Wald statistic reads the unrestricted fit alone and needs no refit,
+which is why the summary reports it by default. It depends on how the
+parameter is written: a nonlinear reparametrization of the coefficient
+changes it, whereas the likelihood ratio, a difference of objective
+values at the same two points, is not changed. The Wald statistic also
+loses power against a distant alternative (the Hauck-Donner effect), the
+curvature being read at \\\hat\beta\\ rather than under the null.
 
-The gradient statistic needs the restricted fit but NO matrix inversion
-at all, which is its whole point: it is the score contracted with the
-distance between the two fits.
+The gradient statistic needs the restricted fit and no matrix inversion:
+it is the score contracted with the distance between the two fits.
 
 ## See also
 

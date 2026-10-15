@@ -1,9 +1,9 @@
 # The Step and the Tolerance of the Outer Hessian's Stencil
 
-The step
+The step at which
 [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md)
-differences at, and how far its two readings may disagree before it
-refuses.
+differences, the largest relative disagreement between its two readings,
+and the tolerance of the probes' inner fit.
 
 ## Usage
 
@@ -21,43 +21,26 @@ A single number.
 
 ## Details
 
-Both are measured rather than taken from a library rule.
-[`numericals7::fd_step()`](https://statmodels7.github.io/numericals7/reference/fd_step.html)
-would give \\\epsilon^{1/3}\\, about 6e-6, which is right for
-differencing a function evaluated to machine precision and wrong here:
-the gradient is computed by refitting a mode, so what bounds the step
-below is that reproducibility and not the rounding of a double.
+`hess_stencil_step()` is `1e-3`, on the free scale of the
+hyperparameters. The default of
+[`numericals7::fd_step()`](https://statmodels7.github.io/numericals7/reference/fd_step.html),
+about 6e-6, is intended for a function evaluated to machine precision.
+Here the gradient is computed by refitting a mode, and the
+reproducibility of that refit bounds the step from below.
 
-Swept on a penalized filter against a second difference of the
-criterion, the result is 8.0e-05 out at \\h = 0.1\\, where the
-truncation still shows, and then FLAT at 1.06e-05 – the reference's own
-error – for every \\h\\ from 1e-2 down to 3e-5. `1e-3` is two decades
-below where truncation matters and two above where anything else begins.
+`hess_stencil_tol()` is `1e-3`. It is compared with the largest absolute
+difference between the matrices at `h` and `3 * h`, divided by the
+largest absolute entry of the first. A relative error of `1e-3` in the
+curvature corresponds to a relative error of about `5e-4` in a standard
+error.
 
-The tolerance separates two regimes that are SIX ORDERS apart, with
-nothing between them: 5.5e-08, 9.3e-07 and 1.1e-06 where the mode is
-well located, against 6.0e-01 and 5.7e-01 where it is not. `1e-3` sits
-three orders above the worst resolved reading and three below the best
-unresolved one, and a relative error of that size in the curvature is
-5e-4 in a standard error, under the fourth significant figure a summary
-prints.
-
-The probes are refitted by
-[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-at `hess_stencil_inner_tol()` and a budget of at least 500 iterations,
-whatever the fit itself used, and without the fit's own stopping rule.
-At the fit's tolerance of `1e-6` a probe can stop where it started, the
-score there being already under the threshold, and the difference then
-misses the mode's movement. The bias this leaves is CONSTANT in the step
-rather than growing as \\1/h\\, so the check at `3 * h` passes it
-wherever both steps share it. Measured at \\n = 4000\\ on one smooth,
-against the analytic Hessian: 4.8e-02 at \\h\\ of 3e-4 and 1e-3 on a
-gaussian, 1.6e-04 at 1e-3 and 3e-3 on a gamma and a negative binomial,
-and 9.1e-03 on a Student t prior over a random effect, all passing the
-check; at `1e-10` the same readings are 4.5e-06, 2.8e-06, 5.7e-06 and
-2.8e-04. A penalized filter reads 2.6e-08 either way, and a mixed
-covariance class at the boundary of its chart is still refused at every
-step. The stencil costs 1.1 to 1.9 times what it did.
+`hess_stencil_inner_tol()` is `1e-10`, the largest tolerance that the
+probes use when the inner optimizer is
+[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md).
+At the tolerance of a fit a probe can stop at its starting point, and
+the difference then misses the movement of the mode. The resulting bias
+does not grow as \\1/h\\, so the comparison of the two steps does not
+detect it.
 
 ## See also
 

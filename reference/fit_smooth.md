@@ -50,7 +50,7 @@ fit_smooth(obj, beta, idx, spec, design, hyper, method, vb)
 
 ## Value
 
-A list of five:
+A list with the following elements:
 
 - `par`:
 
@@ -71,7 +71,23 @@ A list of five:
 
 - `history`:
 
-  a data frame, one row per iteration.
+  for
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+  a data frame with one row per accepted step, or `NULL` where no step
+  was taken; `NULL` for an optimizers7 method.
+
+- `aliased`:
+
+  the stacked positions of the coefficients that the solve left out,
+  `integer(0)` for an optimizers7 method.
+
+- `note`:
+
+  the note of
+  [`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md),
+  a string that states why the run stopped where it did not stop on its
+  rule, or that it was read as converged by the dimensionless rule, and
+  `NULL` otherwise; `NULL` for an optimizers7 method.
 
 ## Details
 
@@ -81,12 +97,12 @@ value it reports is the model's objective, never a block's own.
 
 With
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-the step is solved through `fit_smooth()`'s own scoring loop, which
-reads the exact information. With an optimizers7 optimizer the
-objective's `fn`, `gr` and `he` are all supplied, so `newton()` gets the
-exact second derivative instead of differencing the gradient: measured,
-that is 2.5x on one smooth and 5.5x on three smooths with a random
-effect, at identical answers.
+the step is solved by the scoring loop of
+[`iwls_fit()`](https://statmodels7.github.io/statmodels7/reference/iwls_fit.md),
+which reads the expected or the observed information, as the settled
+method specifies. With an optimizers7 optimizer the objective's `fn`,
+`gr` and `he` are all supplied, so `newton()` receives the second
+derivative of the objective and does not difference the gradient.
 
 ## See also
 

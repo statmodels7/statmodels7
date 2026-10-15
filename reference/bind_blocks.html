@@ -9,7 +9,7 @@ result sparse whenever any block is."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,20 +74,17 @@ carrying only a structural term gives.</p>
     <p>A grouping indicator is sparse by construction. A row belongs to one group,
 so a random effect over \(m\) groups has density \(1/m\), and
 <span class="pkg">modelterms7</span> builds it that way.</p>
-<p>Binding such a block beside a dense one with <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code> fails: base
-dispatch reads the sparse block as a vector and reports that the number of
-items to replace is not a multiple of the replacement length, three frames
-from anything a caller wrote. <code><a href="https://rdrr.io/r/methods/cbind2.html" class="external-link">Matrix::cbind2()</a></code> is what handles the mixed
-pair.</p>
+<p>Blocks are bound with <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind()</a></code> when all of them are base matrices. When
+any block is sparse, they are bound with <code><a href="https://rdrr.io/r/methods/cbind2.html" class="external-link">Matrix::cbind2()</a></code>, so that the
+result is a <span class="pkg">Matrix</span> object whatever the order of the blocks.</p>
 <p>The result is sparse when <strong>one</strong> block is. Sparsity is a property of the
-assembled matrix, never of its pieces: a dense fixed block beside a
-large
+assembled matrix and not of its pieces: a dense fixed block beside a large
 indicator leaves a matrix that is still overwhelmingly zero, and its
 factorization stays sparse under a fill-reducing ordering.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="design_sparse.html">design_sparse()</a></code> for the same question asked of a whole design,
+    <div class="dont-index"><p><code><a href="design_sparse.html">design_sparse()</a></code> for the same test applied to a whole design,
 <code><a href="statmod_design.html">statmod_design()</a></code> for the assembly this serves.</p></div>
     </div>
 

@@ -22,9 +22,8 @@ one_sided(expr, env)
 
 - env:
 
-  The environment to attach. Passed through with no check, so a caller
-  supplying `NULL` gets a formula with a `NULL` environment rather than
-  an error.
+  The environment to attach. It is not checked, and `NULL` gives a
+  formula with a `NULL` environment.
 
 ## Value
 
@@ -34,10 +33,11 @@ A one-sided formula of length 2, whose `[[2]]` is `expr` and whose
 ## Details
 
 The formula is built with `eval(bquote(~ .(expr)), envir = env)`, and
-the environment is then assigned again. The second step makes the result
-reliable: [`eval()`](https://rdrr.io/r/base/eval.html) gives the formula
-whatever environment it was evaluated in, and the assignment states the
-intended one, so the two cannot come apart if the construction changes.
+the environment is then assigned again.
+[`eval()`](https://rdrr.io/r/base/eval.html) gives the formula the
+environment in which it was evaluated, and the assignment states the
+intended environment explicitly, so the result carries `env` whatever
+the construction does.
 
 ## See also
 

@@ -11,7 +11,7 @@ at zero or averaged over their prior."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,12 +73,13 @@ at zero or averaged over their prior.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>spec</code>, <code>design</code>, <code>coef</code> and <code>cols</code>, the latter from
-<code><a href="nested_columns.html">nested_columns()</a></code>.</p>
+    <p>A list with <code>spec</code>, <code>design</code>, <code>coef</code>, <code>cols</code> (from
+<code><a href="nested_columns.html">nested_columns()</a></code>) and <code>terms</code>, the distinct pairs of <code>param</code> and <code>term</code>
+among the rows of <code>nest</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Every term holding such an effect is replaced by the copy
+    <p>Every term holding such an effect is replaced by the copy that
 <code><a href="pool_nested_random.html">pool_nested_random()</a></code> returns, its effects' coefficients are set to zero
 and its columns are recomputed there. The columns of the effects
 themselves are then set to zero, so that the delta method of the

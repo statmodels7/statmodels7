@@ -34,5 +34,10 @@ A list with `gaussian = TRUE`, `dim` and `chol`.
 The penalty unit is the outer term's, keyed by the outer term where it
 carries one penalty and by the row's key where it carries several. Only
 a Gaussian prior is integrated: inside a nonlinear term the average is
-taken over the nodes of a product grid at which the term is evaluated,
-and a prior of another family signals an error naming `random = "zero"`.
+taken over the nodes of
+[`random_nodes()`](https://statmodels7.github.io/statmodels7/reference/random_nodes.md)
+at which the term is evaluated, those of a product grid up to three
+coordinates in all and Monte Carlo draws beyond that. A prior of another
+family signals an error naming `random = "zero"`; the Gaussian test is
+[`prior_is_gaussian()`](https://statmodels7.github.io/statmodels7/reference/prior_is_gaussian.md),
+which excludes a prior with a kink.

@@ -11,7 +11,7 @@ ratio statmod_stat_at() computes."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,17 +70,16 @@ every other one to the joint mode of the penalized likelihood. The
 unrestricted side has to be read at the same kind of point, or the
 statistic compares two fits whose other coefficients were chosen by
 different rules. Where the outer criterion estimated some coefficients
-itself – by default, <code><a href="reml.html">reml()</a></code> estimates a dispersion's unpenalized
-coefficients on the criterion (<code><a href="marginal_coords.html">marginal_coords()</a></code>) – the point the fit
-returned is not the joint mode, and <code>fit@objective</code> is not its minimum.
-Measured on a gaussian linear regression at \(n = 40\), differencing
-against it gave a likelihood ratio of 1.0458 against the 1.1643 that
-<code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code> gives, and -0.118 at the estimate itself.</p>
+itself (by default <code><a href="reml.html">reml()</a></code> and <code><a href="reml.html">ml()</a></code> estimate on the criterion the
+unpenalized coefficients of every parameter but the first, see
+<code><a href="marginal_coords.html">marginal_coords()</a></code>), the point that the fit returned is not the joint
+mode, and <code>fit@objective</code> is not its minimum. A likelihood ratio
+differenced against <code>fit@objective</code> then contains the difference between
+the objective at the fitted point and at the joint mode.</p>
 <p>The full model is therefore refitted with nothing held, from the fitted
 coefficients, which are already close to the joint mode, at the fitted
-hyperparameters. Where the criterion estimated nothing the fit IS at the
-joint mode and <code>fit@objective</code> is returned unchanged, so every such
-statistic is what it was.</p>
+hyperparameters. Where the criterion estimated nothing, the fit is at the
+joint mode and <code>fit@objective</code> is returned unchanged.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -1,9 +1,9 @@
 # A Table's Statistics From a Restricted Fit
 
-The likelihood-ratio, score or gradient statistic for each coefficient a
-restricted fit can hold, against the null that it is zero, reported as
-the signed root of the \\\chi^2_1\\ value together with that value's
-p-value.
+The likelihood-ratio, score or gradient statistic for each coefficient
+that a restricted fit can hold, against the null that it is zero,
+reported as the signed root of the \\\chi^2_1\\ value together with the
+p-value of that value.
 
 ## Usage
 
@@ -37,20 +37,19 @@ restricted_stat_rows(fit, ci, test, type, spec, design)
 ## Value
 
 A list with `statistic`, `p_value` and `note`, the last a character
-vector of what the reader has to be told about the column.
+vector of the notes that qualify the column.
 
 ## Details
 
 The root carries the sign of the estimate, so the column holds one kind
-of quantity whatever produced it and Wald's own \\z\\ is the case where
-the root is exact. The p-value is the \\\chi^2_1\\ one and is not
-recomputed from the root.
+of quantity whichever statistic produced it, and Wald's own \\z\\ is the
+case where the root is exact. The p-value is the \\\chi^2_1\\ one and is
+not recomputed from the root.
 
-A row
+A row that
 [`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)
-does not name keeps `NA` in both columns rather than the Wald reading it
-arrived with: a column carrying two different tests, one row apiece and
-unmarked, is worse than a column with holes in it.
+does not name keeps `NA` in both columns instead of the Wald value that
+it arrived with, so that no column carries two different tests.
 
 ## See also
 

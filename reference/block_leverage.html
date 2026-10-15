@@ -9,7 +9,7 @@ X_b'\) taken one observation at a time."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,7 @@ X_b'\) taken one observation at a time.</p>
 
 
 <dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>The matrix the traces are taken against.</p></dd>
+<dd><p>The matrix against which the traces are taken.</p></dd>
 
 
 <dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
@@ -74,7 +74,8 @@ X_b'\) taken one observation at a time.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of lists, <code>G[[a]][[b]]</code> a vector as long as the sample.</p>
+    <p>A list of lists, <code>G[[a]][[b]]</code> a vector as long as the sample, or
+<code>NULL</code> where equation <code>a</code> or equation <code>b</code> has no coefficients.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -82,12 +83,15 @@ X_b'\) taken one observation at a time.</p>
 matrix of the design's own form,
 $$\mathrm{tr}(M\,X'WX) = \sum_i w_i\,(XMX')_{ii},$$
 so a contraction of a third or fourth derivative never has to be assembled
-as a \(p\times p\) matrix in order to be traced against \(M\): measured
-at 8000 observations and 69 coefficients, forming it and taking the trace
-costs 25.5 ms where the weighted sum costs 0.031 ms, and at 20000
-observations and 503 coefficients 3480 ms against 0.066 ms.</p>
+as a \(p\times p\) matrix in order to be traced against \(M\).</p>
 <p>It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.</p>
+<p>Where both blocks are sparse, the product of their densities is below
+\(10^{-3}\) and the number of pairs is below \(2 \times 10^{7}\), the
+diagonal is computed by <code><a href="leverage_pairs.html">leverage_pairs()</a></code> from the nonzeros of each row.
+The pair count bounds the work in absolute terms, which the density alone
+does not. Otherwise the diagonal is read off the dense product that has the
+fewer columns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

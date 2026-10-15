@@ -36,6 +36,7 @@ The variance over the quantities.
 
 A quantity that reads a coordinate whose variance is missing has no
 variance either, and its row and column are left missing. Such a
-coordinate is one a kinked penalty set to zero, or a parameter held by
-an intercept. Computing the entry from the coordinates that do have a
-variance would report a number for something the fit did not estimate.
+coordinate is one that a kinked penalty has set to zero, or a parameter
+that an intercept holds. Computing the entry from the coordinates that
+do have a variance would report a number for something that the fit did
+not estimate.

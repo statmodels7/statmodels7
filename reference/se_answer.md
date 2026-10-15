@@ -2,7 +2,7 @@
 
 The rows
 [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md)
-computed, reduced to what was asked for.
+computed, reduced to the quantity requested.
 
 ## Usage
 
@@ -18,7 +18,8 @@ se_answer(su, what, params, spec)
 
 - what:
 
-  What was asked for.
+  The quantity requested, as in
+  [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md).
 
 - params:
 
@@ -34,8 +35,7 @@ A data frame, or a named list of them.
 
 ## Details
 
-The vocabulary is the one a prediction without uncertainty answers,
+The vocabulary is the one that a prediction without uncertainty answers,
 minus the moments: a moment's delta method needs its derivative in every
-parameter, which distributions7 does not offer as a generic, and an
-interval assembled from what is at hand instead would be a number nobody
-could check.
+parameter, which distributions7 does not offer as a generic, so a moment
+signals an error.

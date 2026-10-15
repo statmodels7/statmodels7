@@ -41,6 +41,10 @@ gives the other half of the objective, and
 [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
 combines them.
 
+For a model with a term of the likelihood shape, a mixture over latent
+states, the log-likelihood of the term replaces the sum of the
+log-densities at the observations.
+
 ## See also
 
 [`statmod_score_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_score_at.md)

@@ -9,7 +9,7 @@ at a point its penalty is not differentiable at."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,11 +82,12 @@ at a point its penalty is not differentiable at.</p>
 the hyperparameters in force, and a coefficient is inactive when it sits at
 one of them. Everything outside a kinked block is active, having no kink to
 sit at.</p>
-<p>The map of a kinked penalty is the identity here: a separable penalty under
-a general map is the generalized-lasso problem, which
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_prox.html" class="external-link">penalties7::penalty_prox()</a></code> rejects, so a block that reaches this
-function penalizes its coefficients one at a time and a kink of the penalty
-is a kink in a coefficient.</p>
+<p>A kinked penalty reaches this function with no map or with a diagonal map,
+which is what <code>standardize = TRUE</code> writes. A separable penalty under a
+general map is the generalized-lasso problem, which
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_prox.html" class="external-link">penalties7::penalty_prox()</a></code> rejects. A block that reaches this function
+therefore penalizes its coefficients one at a time, and a kink of the
+penalty is a kink in a coefficient.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

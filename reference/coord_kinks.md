@@ -1,8 +1,9 @@
 # The Size of the Kink in Each Coordinate
 
-Returns, for every coordinate of a kinked penalty, the jump of its
-derivative at the kink, which is the threshold a coordinate's gradient
-is compared with to decide whether it can stay at zero.
+Returns, for every coordinate of a kinked penalty, the size of its kink:
+half the jump of its derivative across the kink, which is the threshold
+a coordinate's gradient is compared with to decide whether it can stay
+at zero.
 
 ## Usage
 
@@ -37,7 +38,7 @@ answer.
 reads the first coordinate only, which is what a path needs to place its
 grid. A coordinate descent needs every coordinate's: under a diagonal
 map \\D\\, which is what `standardize` writes, coordinate \\j\\'s kink
-is \\\lambda\lvert d_j\rvert\\. The jump is measured as in
+is \\\lambda\lvert d_j\rvert\\. The size is measured as in
 [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md),
 by a Richardson extrapolation of the one-sided derivatives, on every
 coordinate at once. A scaled SCAD or MCP has its kink at \\\lambda\lvert

@@ -9,7 +9,7 @@ problem the log-likelihood is locally."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,15 +86,19 @@ with no closed form.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>w</code> and <code>z</code>, each a numeric vector of length
-<code>spec@n_obs</code>. <code>NULL</code> where the curvature is not usable, which is any
-non-finite or non-positive \(h_i\); the observed information can
-produce both far from the optimum.</p>
+<code>spec@n_obs</code>. A row of weight zero has <code>w</code> zero and <code>z</code> equal to its
+predictor. <code>NULL</code> where the working problem is not usable: a non-finite
+or non-positive \(h_i\), or a non-finite score, on a row of positive
+weight. The observed information can produce non-positive values far from
+the optimum.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For a Gaussian response on the identity link the quadratic is exact and
-one pass answers the problem. Elsewhere it is the local approximation a
-scoring step works on, and the weights are rebuilt at each iteration.</p>
+the first iteration answers the problem. Elsewhere it is the local
+approximation a scoring step works on, and the weights are rebuilt at each
+iteration. A row of weight zero has no curvature and no score, and it
+enters the descent with weight zero at its own predictor.</p>
 <p>Where the design carries a structural term, the predictor of an equation
 includes a part that belongs to that term, and no column of a block
 carries it. The working response is then built on the static predictor,

@@ -1,7 +1,7 @@
-# The Weight a Refreshable Block Is Contracted Against
+# The Weight for Contracting a Refreshable Block
 
 \\A_a\[i,j\] = w_i\sum_b c\_{ab}(i)\\(X_b M\_{ab}^\top)\[i,j\]\\, the
-matrix a term's own derivative is paired with.
+matrix with which a term's own derivative is paired.
 
 ## Usage
 
@@ -22,7 +22,7 @@ refresh_amat(spec, design, M, params, npar, offs, ra, cw)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params, npar, offs:
 

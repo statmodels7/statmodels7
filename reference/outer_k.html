@@ -13,7 +13,7 @@ every other criterion returns the k it was constructed with."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,8 @@ every other criterion returns the <code>k</code> it was constructed with.</p>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>The number of observations, a single positive number.</p></dd>
+<dd><p>The number of observations, a single positive number. The fit
+passes the total of the weights, which are frequencies.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -74,8 +75,8 @@ none of which charges per degree of freedom.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The resolution happens at fit time because <code><a href="aic.html">bic()</a></code> takes no data and
-cannot know \(n\) at construction. A criterion object is a
+    <p>The resolution happens at fit time because <code><a href="aic.html">bic()</a></code> takes no data, so
+\(n\) is not available at construction. A criterion object is a
 specification, reusable across models of different sizes.</p>
     </div>
     <div class="section level2">

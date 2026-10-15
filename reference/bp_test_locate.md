@@ -1,9 +1,9 @@
 # Where the Break-Point Term of a Fit Is
 
-Finds the break-point term a test reads: its equation, the prefix of its
-coefficient names, the built term, and whether its step is sharp. The
-term is looked for among the terms of every equation and among the
-sub-terms of the parameters of a
+Finds the break-point term that a test reads and returns its equation,
+the prefix of its coefficient names, the built term and whether its step
+is sharp. The term is looked for among the terms of every equation and
+among the sub-terms of the parameters of a
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
 term.
 

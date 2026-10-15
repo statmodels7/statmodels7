@@ -25,7 +25,7 @@ marginal_quad(spec, eta0, Z, param, prior, what, kind, inv)
 
 - Z:
 
-  The within-group column of the term, one value a row.
+  The within-group column of the term, one value per row.
 
 - param:
 
@@ -39,7 +39,7 @@ marginal_quad(spec, eta0, Z, param, prior, what, kind, inv)
 
 - what, kind:
 
-  What was asked for and its kind, as in
+  The quantity predicted and its kind, as in
   [`random_marginal()`](https://statmodels7.github.io/statmodels7/reference/random_marginal.md).
 
 - inv:
@@ -53,7 +53,4 @@ As
 
 ## Details
 
-Measured on a Bernoulli with a logit link and a Student t prior, 10000
-Monte Carlo draws were 3e-3 out against
-[`integrate()`](https://rdrr.io/r/stats/integrate.html); this is within
-the default tolerances of `quad_vec()`.
+The integral is evaluated with the default tolerances of `quad_vec()`.

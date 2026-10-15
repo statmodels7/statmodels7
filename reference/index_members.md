@@ -24,7 +24,6 @@ A data frame with columns `row`, `parameter`, `term` and `name`.
 ## Details
 
 Where nothing is shared it is the index itself with a `row` column
-counting up, so a loop over members is the loop over rows that was there
-before sharing existed. Where a label ties several, they carry the same
-`row`, and a quantity accumulated over members lands on the group's
-coordinate.
+counting up. Where a label ties several, they carry the same `row`, and
+a quantity accumulated over members lands on the coordinate of the
+group.

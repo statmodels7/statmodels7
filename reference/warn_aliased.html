@@ -11,7 +11,7 @@ does not identify every column of its design."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,44 +66,42 @@ does not identify every column of its design.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A coefficient the model does not identify is one point of a flat ridge: the
-fit converges and reports numbers, and nothing in what it prints by default
-says which of them mean anything. <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> put <code>NA</code> in <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>
-and say no more, and <code><a href="statmod.html">statmod()</a></code> has followed that convention since 0.98.0,
-but an <code>NA</code> among a hundred rows of a <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> nobody printed is not a
-report.</p>
-<p>Which coordinates those are is <code><a href="deficient_coords.html">deficient_coords()</a></code>'s answer, read at the
-fitted coefficients on \(K = H + S\) and gated by <code><a href="solve_pd.html">solve_pd()</a></code>, and that
-is what makes the warning safe to raise. A rank test on the RAW design
-answers a different question and has false positives that would make this
-noise: measured over fourteen models it reports a deficiency on
-<code>random(~ 1 | g)</code>, on <code>random(~ x | g)</code> and on <code>s(x) + random(~ 1 | g)</code>,
-whose columns are identified by their own penalty and whose fits are
-perfectly ordinary. Read on \(K\), the penalty's curvature is in the
-matrix and none of the three is named. Over the same fourteen the warning
-fires on exactly two, both of them
-<code>nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))</code>, where a parameter's own
-intercept sits beside a complete set of indicators that sum to it.</p>
-<p>Reading it at the FITTED coefficients rather than at the start is part of
-the rule: a Jacobian block is degenerate at a starting value of zero for a
-reason that goes away as soon as the parameter moves, and
+    <p>A coefficient that the model does not identify is one point of a flat ridge:
+the fit converges and reports numbers, and the default print does not
+indicate which of them are meaningful. <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> put <code>NA</code> in
+<code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>, and <code><a href="statmod.html">statmod()</a></code> follows that convention. The warning also reports
+the coordinates when <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> is not printed, where an <code>NA</code> among the
+rows of a table is easy to overlook.</p>
+<p>The coordinates are those of <code><a href="deficient_coords.html">deficient_coords()</a></code>, read at the fitted
+coefficients on \(K = H + S\) and gated by <code><a href="solve_pd.html">solve_pd()</a></code>, which makes the
+warning safe to raise. A rank test on the raw design answers a different
+question and has false positives that would make the warning noisy: it
+reports a deficiency on <code>random(~ 1 | g)</code>, on <code>random(~ x | g)</code> and on
+<code>s(x) + random(~ 1 | g)</code>, whose columns are identified by their own penalty
+and whose fits are ordinary. Read on \(K\), the curvature of the penalty
+is in the matrix and none of the three is named. The warning does fire on
+<code>nl(~ a * exp(-r * x), a ~ 1 + lasso(~ g))</code>, where the intercept of a
+parameter sits beside a complete set of indicators that sum to it.</p>
+<p>Reading the matrix at the fitted coefficients and not at the start is part
+of the rule: a Jacobian block is degenerate at a starting value of zero for
+a reason that goes away as soon as the parameter moves, and
 <code>nl(~ a * exp(-r * x), a ~ 0 + lasso(~ g))</code>, which is identified, is
 deficient there and is not named here.</p>
-<p>THE MESSAGE NAMES NO CAUSE, and a measurement is why. Two shapes reach it
-and they are not the same defect. In the one above the DESIGN is deficient,
-a column being the sum of others. In the other the design has full rank and
-\(K\) does not: measured on <code>jump(x, smoothed = smooth_quintic(h = g))</code>
-at one median spacing \(g\), and on <code>jseg()</code> under the same smoother, the
-block is of rank 3 of 3 while <code>mu:jump.psi1</code> is named, the quintic being
-exact outside its own width so that where no observation falls within
-\(h\) of the break-point its derivative column carries no curvature.
-Since numericals7 0.16.0 the quintic resolves its width at
-\(5/(2\log 2)\) spacings, which removes this on a uniform covariate, and
-the case remains reachable with a width supplied by hand. Both are genuine – neither
-coefficient has a standard error – and a message asserting the first would
-be wrong about the second, so it reports the fact and leaves the diagnosis
-to the reader. The two smoothers whose derivative has unbounded support,
-<code>smooth_probit()</code> and <code>smooth_hyperbolic()</code>, are not named on the same data.</p>
+<p>The message names no cause, because two different shapes reach it. In the
+first the design is deficient, a column being the sum of others. In the
+second the design has full rank and \(K\) does not, as for
+<code>jump(x, smoothed = smooth_quintic(h = g))</code> at one median spacing \(g\),
+and for <code>jseg()</code> under the same smoother: the block has rank 3 of 3 while
+<code>mu:jump.psi1</code> is named, the quintic being exact outside its own width, so
+that where no observation falls within \(h\) of the break-point its
+derivative column carries no curvature. The quintic resolves its width at
+\(5/(2\log 2)\) median spacings, which avoids this on a uniform covariate;
+a width supplied by hand can still produce it. Both cases are genuine
+(neither coefficient has a standard error), and a message asserting the
+first would be wrong about the second, so the message reports the fact and
+leaves the diagnosis to the reader. The two smoothers whose derivative has
+unbounded support, <code>smooth_probit()</code> and <code>smooth_hyperbolic()</code>, are not
+named on the same data.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

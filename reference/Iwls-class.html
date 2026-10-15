@@ -15,7 +15,7 @@ argument; this raw constructor does not."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,16 +83,16 @@ with no closed form: <code>"opg"</code>, <code>"bartlett"</code>, <code>"integra
 
 
 <dt id="arg-decomposition">decomposition<a class="anchor" aria-label="anchor" href="#arg-decomposition"></a></dt>
-<dd><p>How the step is solved: <code>"qr"</code>, <code>"svd"</code>, <code>"chol"</code> or
-<code>"chol_crossprod"</code>.</p></dd>
+<dd><p>How the step is solved: <code>"qr"</code>, <code>"svd"</code> or <code>"chol"</code>.</p></dd>
 
 
 <dt id="arg-maxit">maxit<a class="anchor" aria-label="anchor" href="#arg-maxit"></a></dt>
-<dd><p>The iteration budget, a single positive number.</p></dd>
+<dd><p>The iteration budget, a single positive whole number.</p></dd>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
-<dd><p>The stopping tolerance on the score per observation.</p></dd>
+<dd><p>The stopping tolerance on the score per observation, a single
+positive number.</p></dd>
 
 
 <dt id="arg-criterion">criterion<a class="anchor" aria-label="anchor" href="#arg-criterion"></a></dt>
@@ -101,23 +101,30 @@ in place of <code>tol</code>, or <code>NULL</code> for the built-in rule.</p></d
 
 
 <dt id="arg-step-halving">step_halving<a class="anchor" aria-label="anchor" href="#arg-step-halving"></a></dt>
-<dd><p>How many halvings are allowed before a step is
-abandoned, a single non-negative number.</p></dd>
+<dd><p>The number of halvings tried after the full step before
+a step is abandoned, a single non-negative whole number. The line search
+tries the full step and then at most <code>step_halving</code> halved steps, so <code>0</code>
+tries the full step alone.</p></dd>
 
 
 <dt id="arg-fallback">fallback<a class="anchor" aria-label="anchor" href="#arg-fallback"></a></dt>
 <dd><p>A single logical: whether the expected information takes
-the step wherever the observed penalized information is not positive
-definite or its step finds no acceptable point. <code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it,
-for <code>"auto"</code> on a family whose expected information is not exact.</p></dd>
+the step where the observed step finds no acceptable point. An observed
+penalized information that is not positive definite is first repaired by
+flooring its eigenvalues, and the step on the repaired matrix is tried.
+<code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets this argument to <code>TRUE</code> for <code>"auto"</code> on a family
+that it does not settle on the expected information.</p></dd>
 
 
 <dt id="arg-switch-after">switch_after<a class="anchor" aria-label="anchor" href="#arg-switch-after"></a></dt>
 <dd><p>A single number: the iteration after which a run on
-the expected information continues on the observed one, the expected
-then taking the step only where the observed cannot. <code>Inf</code> never
-switches. <code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it, for <code>"auto"</code> on a family whose
-expected information is exact, to <code><a href="iwls_switch_after.html">iwls_switch_after()</a></code>.</p></dd>
+the expected information continues on the observed one, unless it
+switched earlier because the score contracted slowly (see
+<code><a href="iwls_slow.html">iwls_slow()</a></code>). The expected information then takes the step only where
+the observed step finds no acceptable point. <code>Inf</code> never switches.
+<code><a href="iwls_resolve.html">iwls_resolve()</a></code> sets it, for <code>"auto"</code> on a family whose expected
+information is exact and not costly to evaluate, to
+<code><a href="iwls_switch_after.html">iwls_switch_after()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

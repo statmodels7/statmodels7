@@ -1,9 +1,9 @@
-# The Random-Effect Terms a Prediction Can Set Aside
+# The Random-Effect Terms That a Prediction Can Set Aside
 
 Lists the
 [`modelterms7::random()`](https://statmodels7.github.io/modelterms7/reference/random.html)
-terms written in the model's equations, with the mode
-[`predict()`](https://rdrr.io/r/stats/predict.html) reads each at.
+terms written in the model's equations, with the mode that
+[`predict()`](https://rdrr.io/r/stats/predict.html) applies to each.
 
 ## Usage
 
@@ -32,10 +32,11 @@ nested terms in the attribute `"nested"`.
 ## Details
 
 `random` is a single string, applied to every such term, or a character
-vector named by the terms' keys, one mode per term named, the rest
-staying conditional. A key is matched with its white space removed, so
+vector named by the terms' keys, one mode per key named, applying to
+every term with that key in any equation, and the rest staying
+conditional. A key is matched with its white space removed, so
 `"random(~1|g)"` finds the term written `random(~ 1 | g)`. A name that
-matches no term signals an error listing those there are.
+matches no term signals an error that lists the terms of the model.
 
 Only a term written in an equation is listed. One written inside a
 subformula develops another term's parameter; those are listed by

@@ -11,7 +11,7 @@ the Hessian exists."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,11 @@ the Hessian exists.</p>
 <dt id="arg-exact-">exact2<a class="anchor" aria-label="anchor" href="#arg-exact-"></a></dt>
 <dd><p>Whether the criterion has an exact Hessian at all.</p></dd>
 
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>An <code><a href="OuterMethod-class.html">OuterMethod()</a></code>, or <code>NULL</code>. Where its <code>hessian</code> is
+<code>"expected"</code> the function returns <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -74,26 +79,22 @@ the Hessian exists.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The two are separated because a criterion may have an exact second
-derivative that is a poor thing to steer by. Over a COVARIANCE CLASS the
-criterion's Hessian is strongly indefinite wherever the chart's angle
-approaches its boundary – measured on ten groups of ten whose truth
-carries a correlation of exactly one, the eigenvalues of −H at the point
-the search reports are 1.13e+07, -1.48e+10 and -4.20e+17 – so
-<code>newton()</code> takes its eigen-floor branch and the repaired step lands
-elsewhere. On that panel it ends at an angle of -11.35 against -8.14, at a
-criterion of -127.6696 against -126.3168, reporting <code>not converged</code> where
-the shorter run reports <code>boundary</code>, and there the whole outer curvature is
-unreadable so NO coordinate keeps a standard error rather than only the
-correlation. Away from the boundary the same shape is fine and merely
-dearer: on twenty groups <code>newton()</code> reaches the same criterion in 32
-evaluations against 85 and 13.4 seconds against 7.0.</p>
-<p>What the Hessian's availability still governs is untouched: it is supplied
-to an optimizer the caller NAMES, it is what <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> and
-<code>vcov(type = "unconditional")</code> read, and it is recorded as
-<code>exact_hessian</code>. Only the default direction is held back, and only for the
-shape the measurement names.</p>
-<p>The block width is asked of the penalty with <code><a href="https://rconsortium.github.io/S7/reference/prop_names.html" class="external-link">S7::prop_names()</a></code> rather
-than assumed, a branch that does not carry one being univariate.</p>
+derivative that is a poor direction for the search. Over a covariance class
+the Hessian of the criterion is strongly indefinite wherever the angle of
+the chart approaches its boundary, so that <code><a href="https://statmodels7.github.io/optimizers7/reference/newton.html" class="external-link">optimizers7::newton()</a></code> repairs
+an indefinite Hessian and the repaired step can end elsewhere than a
+quasi-Newton search. The default therefore uses <code><a href="https://statmodels7.github.io/optimizers7/reference/lbfgs.html" class="external-link">optimizers7::lbfgs()</a></code> for a
+covariance class, whose Hessian is exact but not a reliable direction.</p>
+<p>The function returns <code>FALSE</code> for the expected information, for a model with
+a structural term, and for a penalty with a covariance block wider than one.
+In the first two cases the cost of the Hessian at each evaluation outweighs
+the saving in evaluations.</p>
+<p>The availability of the Hessian still governs the rest: it is supplied to an
+optimizer that the caller names, it is what <code><a href="statmod_hyper_vcov.html">statmod_hyper_vcov()</a></code> and
+<code>vcov(type = "unconditional")</code> read, and it is recorded as <code>exact_hessian</code>.
+Only the default direction is held back.</p>
+<p>The block width is read from the <code>block</code> property of the penalty where it
+has one; a penalty without that property is treated as univariate.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

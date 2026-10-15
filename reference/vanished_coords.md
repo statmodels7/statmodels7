@@ -40,7 +40,7 @@ possibly empty.
 
 ## Details
 
-It answers the one case
+It answers the one case that
 [`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
 leaves unnamed by design. That function reads \\K\\ alone, and an empty
 row of \\K\\ is two different things a matrix cannot tell apart. At a
@@ -48,13 +48,12 @@ parameter's boundary the design column is alive and the working weight
 vanishes: the estimate stands and only its variance does not, which is
 [`uninformative_coords()`](https://statmodels7.github.io/statmodels7/reference/uninformative_coords.md)'
 business. Where a coefficient's own column vanishes, nothing in the data
-moves with it and it is not identified at all – a break-point run out of
-the data, whose change and position columns are identically zero there.
-Measured on a sharp step and a truncated line written into
-[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
-the fit parked the break-point at 1.9e+12 with the change's column at
-2e-67 and the position's at 2e-23, and without this rule one of the two,
-or neither, was named.
+moves with it and it is not identified at all: a break-point run out of
+the data has change and position columns that are identically zero
+there. A sharp step or a truncated line written into
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+can park a break-point beyond the data in this way, and without this
+rule one of the two coordinates, or neither, would be named.
 
 Both conditions are required. The design column alone would name a
 penalized coordinate whose column is empty – a level of a random effect

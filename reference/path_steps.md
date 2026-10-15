@@ -41,19 +41,22 @@ A numeric vector, one step per column, or `NULL`.
 
 This is the step the sweeps of
 [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
-use, and it is what decides whether a shape parameter is admissible:
-SCAD's proximal operator needs \\t \< a - 1\\ and MCP's \\t \< \gamma\\,
-tightened to \\t d^2\\ under the diagonal map standardization applies.
-So the useful lower limit of a shape is a property of the data, not the
-constant 2 or 1 the penalty is defined above, and it binds at ordinary
-settings: measured, a standardized penalty on a column of spread 20 at
-\\n = 200\\ needs \\a \> 3\\, and a Poisson block whose fitted means are
-near \\10^{-3}\\ needs \\a \> 11\\.
+use, and it decides whether a shape parameter is admissible: SCAD's
+proximal operator requires the step to be below \\a - 1\\ and MCP's
+below \\\gamma\\, the step being multiplied by the squared entries of
+the diagonal map that standardization applies. The lower limit of a
+shape is therefore a property of the data, and not only the constant 2
+or 1 over which the penalty is defined.
 
-Everything is guarded, and `NULL`, which the caller reads as "the
-penalty's own bound and nothing more", is the answer wherever the
-working weights are not usable. A starting grid may be approximate; what
-it may not do is fail.
+The working weights are those of
+[`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md)
+for the observed information at the coefficients in hand. The result is
+`NULL` for a structural block, for a block without columns, and wherever
+the working weights or the squared column sums are not finite and
+positive; the caller reads `NULL` as the penalty's own bound and nothing
+more. Any error inside the computation is also answered with `NULL`,
+since the grid built from the steps is a starting grid and may be
+approximate.
 
 ## See also
 

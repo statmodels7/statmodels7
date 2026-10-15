@@ -13,7 +13,7 @@ information carries nothing on its diagonal either."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,18 +82,17 @@ vector, possibly empty.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It answers the one case <code><a href="deficient_coords.html">deficient_coords()</a></code> leaves unnamed by design. That
+    <p>It answers the one case that <code><a href="deficient_coords.html">deficient_coords()</a></code> leaves unnamed by design. That
 function reads \(K\) alone, and an empty row of \(K\) is two different
 things a matrix cannot tell apart. At a parameter's boundary the design
 column is alive and the working weight vanishes: the estimate stands and
 only its variance does not, which is <code><a href="uninformative_coords.html">uninformative_coords()</a></code>' business.
 Where a coefficient's own column vanishes, nothing in the data moves with it
-and it is not identified at all – a break-point run out of the data, whose
-change and position columns are identically zero there. Measured on a
-sharp step and a truncated line written into <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, the fit
-parked the break-point at 1.9e+12 with the change's column at 2e-67 and the
-position's at 2e-23, and without this rule one of the two, or neither, was
-named.</p>
+and it is not identified at all: a break-point run out of the data has
+change and position columns that are identically zero there. A sharp step
+or a truncated line written into <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> can park a break-point
+beyond the data in this way, and without this rule one of the two
+coordinates, or neither, would be named.</p>
 <p>Both conditions are required. The design column alone would name a
 penalized coordinate whose column is empty – a level of a random effect
 with no observations, which its prior identifies – and the diagonal alone

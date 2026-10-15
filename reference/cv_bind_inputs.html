@@ -9,7 +9,7 @@ rebuilding the model on those rows finds it there."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,17 +79,18 @@ rebuilding the model on those rows finds it there.</p>
 and in the formula's environment after. <code>data.frame(X = X, y = y)</code>
 splits a matrix into <code>X.x1 ... X.xp</code>, leaving no column <code>X</code>, so
 <code>lasso(X)</code> reaches past the data to the matrix in the calling
-environment. The fit itself is right, the matrix being captured once and
-the coefficients identical to the other spelling, but the fold cannot
-rebuild: the name still resolves to all the rows.</p>
+environment. The fit itself is correct, the matrix being captured once and
+the coefficients being identical to those of the other spelling, but the
+fold cannot evaluate the term on its rows: the name still resolves to all
+the rows.</p>
 <p>The matrix is already on the built term, and <code>term_build()</code> checked at
 the full fit that it has one row per observation, so the rows of a fold are
-the same rows by position. Binding the subset here builds, for the fold,
-the spelling the documentation asks the caller for.</p>
-<p>Nothing is relearned that should be: a matrix carries no knots, no
-contrasts and no levels, so subsetting it and re-evaluating it give the
-same block. A formula input is untouched and keeps being rebuilt on the
-fold's own rows, and that is what the rule exists for.</p>
+the same rows by position. Binding the subset here gives the fold the
+spelling that the documentation of the matrix input recommends, with the
+matrix as a column of the data.</p>
+<p>A matrix carries no knots, contrasts or levels, so subsetting it and
+evaluating it again give the same block. A formula input is left
+untouched.</p>
 <p>It applies where <code>input_expr</code> is a plain symbol, which is the case the
 name can be bound for. A call such as <code>lasso(scale(X))</code> keeps only its own
 value on the term, never the <code>X</code> its re-evaluation would need, so

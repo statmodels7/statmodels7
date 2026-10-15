@@ -37,13 +37,14 @@ A list with `coef` and `psi`.
 
 ## Details
 
-One namespace covers the whole model, so a caller names what it cares
-about and everything else stays drawn. A key may be a distribution
-parameter, which is that whole equation; one of its coefficients or a
-group of them, written `parameter.coefficient`; a structural term's own
-parameter; or a group of those. A group is a name the members extend at
-a dot, so `omega.random` is every deviation a development of `omega`
-carries and `mu.s(x)` is every coordinate of that smooth.
+A single namespace covers the whole model, so the caller names the
+quantities to fix and everything else stays drawn. A key may be a
+distribution parameter, which is that whole equation; one of its
+coefficients or a group of them, written `parameter.coefficient`; a
+structural term's own parameter; or a group of those. A group is a name
+that its members extend at a dot, so `omega.random` is every deviation
+in a development of `omega` and `mu.s(x)` is every coordinate of that
+smooth.
 
 A value may be a vector of the group's own length, a single number used
 for all of them, or a function of the count. The function is how a
@@ -51,8 +52,8 @@ structured truth is written: `function(k) rnorm(k, 0, 0.4)` is a random
 effect at a scale of its own and `function(k) c(2, -1.5, rep(0, k - 2))`
 is a sparse truth for a lasso to find.
 
-A structural parameter is named on the scale a reader knows, which is
-[`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html)'s:
+A structural parameter is named on the scale of
+[`modelterms7::term_params()`](https://statmodels7.github.io/modelterms7/reference/term_params.html):
 a loading is the loading and not its logarithm.
 
 ## See also

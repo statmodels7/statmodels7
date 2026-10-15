@@ -1,8 +1,8 @@
 # Advance the Refresh State
 
-Replaces the terms the design refreshes from by the ones they refresh to
-at the given coefficients, so that whatever a term carries as a state of
-its iteration moves on one step.
+Replaces each term in the design state by the term that results from
+refreshing it at the given coefficients, so that the state of each
+term's iteration advances one step.
 
 ## Usage
 
@@ -46,7 +46,11 @@ direction it last traveled in, which modelterms7 halves on a reversal.
 Advancing that once per objective evaluation would anneal at the speed
 of the line search instead of the speed of the fit; never advancing it
 would solve a permanently smoothed problem, whose fixed point is not the
-model's. Once per sweep is what this call is for.
+model's. The alternation commits the Jacobian entries once per pass
+(`which = "jacobian"`), and
+[`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
+commits the frozen entries, which include the discontinuous terms, once
+per working fit (`which = "frozen"`).
 
 ## Why a frozen block is committed elsewhere
 
@@ -57,14 +61,14 @@ coefficients and the rescaling reaches only the columns.
 Where the block is a frozen working linearization, that is false twice
 over, which is why those terms are committed by
 [`fit_working()`](https://statmodels7.github.io/statmodels7/reference/fit_working.md)
-and skipped here at the default. A
+and skipped when `which = "jacobian"`, the value that the alternation
+passes. A
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
 reads its position from a quadratic that is incremental in the position
 already committed, so a second commit at the same coefficients takes a
-further hidden step, measured at up to 0.71 per observation on the
-contribution. And a refresh may relabel crossed break-point lineages,
-after which the caller's own copy of the coefficients names them in the
-old order.
+further hidden step and changes the contribution. And a refresh may
+relabel crossed break-point lineages, after which the caller's own copy
+of the coefficients names them in the old order.
 
 The relabeling is why the committed coefficients are returned. A caller
 continues from what the terms stored, not from what it passed in.

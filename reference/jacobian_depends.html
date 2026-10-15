@@ -11,7 +11,7 @@ floating-point image of a structural zero."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,26 +67,23 @@ throughout depends on nothing and comes back all <code>FALSE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Two callers ask this question and both used to ask it as <code>== 0</code>, which is
-an exact test on a quantity the chart arrives at by arithmetic.
-⚠️ <strong>Measured, it is wrong.</strong> On a covariance a class carries, whose chart
-is <code>parameters7::dr_prod(2)</code>, a standard deviation is a function of its own
-log coordinate and of nothing else, so its entry in the correlation column
-is structurally zero – and at one fitted point that entry came back
-<code>1.338e-23</code> against a row whose own size is <code>0.5056</code>, a relative
-<code>2.6e-23</code>, while at another it came back exactly <code>0</code>. Read exactly, the
-first blanks the standard deviation's standard error and its interval for
-a dependence that is not there.</p>
-<p>The scale a Jacobian entry means anything against is the row's own largest
-entry, that row being a gradient, and the tolerance is
-<code>sqrt(.Machine$double.eps)</code> – the point past which a differentiated
-quantity cannot be told from the rounding of what it was formed from,
-which is the constant this toolkit derives for that question everywhere
-else. The two errors it arbitrates are wildly asymmetric, which is why the
-generous side is the right one: a genuine dependence of relative size
-below <code>sqrt(eps)</code> read as zero costs a variance contribution of relative
-order <code>1e-16</code>, while a cancellation artifact read as a dependence costs a
-quantity its standard error outright.</p>
+    <p>The reading replaces the test <code>== 0</code>, an exact comparison on a quantity
+that the chart produces by arithmetic. On a covariance that a class
+carries, whose chart is <code>parameters7::dr_prod(2)</code>, a standard deviation is
+a function of its own log coordinate only, so its entry in the correlation
+column is structurally zero. The entry that is computed can be a small
+nonzero number from cancellation, and an exact comparison then reads it as
+a dependence, which removes the standard error and the interval of the
+standard deviation for a dependence that does not exist.</p>
+<p>A Jacobian entry is judged against the largest entry of its own row, a row
+being a gradient, and the tolerance is <code>sqrt(.Machine$double.eps)</code>, the
+point beyond which a differentiated quantity cannot be distinguished from
+the rounding of the quantities it was formed from. The two possible errors
+are asymmetric, so the tolerance errs on the generous side: a genuine
+dependence of relative size below <code>sqrt(eps)</code> that is read as zero changes
+a variance contribution by a relative amount of order <code>1e-16</code>, whereas a
+cancellation artifact read as a dependence removes the standard error of a
+quantity.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

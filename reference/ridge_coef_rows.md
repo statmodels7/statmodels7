@@ -40,8 +40,9 @@ matrix carries that: the change of coefficient \\j\\ per unit along the
 combination \\x'\gamma\\ is \\b_j = (Vx)\_j / (x'Vx)\\, and a
 coefficient with \\\|b_j\| \ge 10^{-2}\\ is taken too, the direction
 being scaled so that its largest entry is one. Where the variance matrix
-has no finite entries for the ridge's coordinates (the mode reading
-already held one of them), the named coefficients alone are taken.
+lacks a row for one of the ridge's coefficients or has a non-finite
+entry among them (the mode reading already held one of them), only the
+coefficients that the ridge names are taken.
 
 ## See also
 

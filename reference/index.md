@@ -26,9 +26,11 @@ separated by a bar, and each equation’s terms come from modelterms7.
 
 ## Fitting
 
-One formula, one distribution, and a scheme that fits the terms whose
-penalties are differentiable all together while the others are
-alternated around them.
+One formula and one distribution. The coefficients of the terms with a
+differentiable penalty are fitted in one system, together with a
+score-driven term, and the terms with a kinked penalty and the regime
+terms are alternated with that system. The section also holds the inner
+method, the criteria that choose the hyperparameters and the simulator.
 
 - [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
   : Fit a Model
@@ -52,11 +54,11 @@ alternated around them.
 
 ## Where a fit begins
 
-A starting value as a strategy rather than a vector of numbers, asked
-once before the fit alternates. The default is the intercept-only fit;
-what the others offer is a procedure, from a random perturbation to a
-global search of the likelihood to the estimates of a model already
-fitted.
+A starting value given as a strategy and not as a vector of numbers, and
+evaluated once before the fit alternates. The default builds the start
+from intercept-only fits; the other strategies are procedures, from a
+random perturbation to a global search of the likelihood to the
+estimates of a model already fitted.
 
 - [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
   : S7 Class for a Starting-Value Strategy
@@ -75,9 +77,10 @@ fitted.
 
 ## Reading a fit
 
-The model as a function of parameters and data, any parameter or moment
-predicted at new data, what the fit says about its own uncertainty, and
-the elapsed time in the unit it deserves.
+The log-likelihood, gradient and Hessian of the model as functions of
+the parameters and the data, the hyperparameters of a fit with their
+source, the certificate of convergence, the latent variables of a
+structural term, and a duration written in a readable unit.
 
 - [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
@@ -90,15 +93,18 @@ the elapsed time in the unit it deserves.
 - [`statmod_latent()`](https://statmodels7.github.io/statmodels7/reference/statmod_latent.md)
   : The Latent Variables of a Fitted Structural Term
 - [`format_duration()`](https://statmodels7.github.io/statmodels7/reference/format_duration.md)
-  : Format a Duration in the Unit It Deserves
+  : Format a Duration in a Readable Unit
 
 ## Testing a coefficient
 
 One coefficient against one value, by Wald’s statistic, the likelihood
 ratio, Rao’s score or Terrell’s gradient. The same four are what
 `summary(test =)` reports for every row against zero and what
-`confint(test =)` inverts; this is the surface that takes a null of its
-own.
+`confint(test =)` inverts;
+[`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
+also takes a null value other than zero. The test that a break-point
+exists is a separate function, which reads the supremum of a score
+process over the positions of the break-point.
 
 - [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
   : Test One Coefficient Against One Value
@@ -115,8 +121,9 @@ dependencies among the members are resolved by pak.
 
 ## Internals
 
-The machinery the exported functions are built from. None of it is
-exported, and none is needed to use the package.
+The machinery that the exported functions are built from: the classes
+behind a fit, the methods registered for the generics of stats, and the
+helper functions. None of it is needed to use the package.
 
 - [`Iwls()`](https://statmodels7.github.io/statmodels7/reference/Iwls-class.md)
   : The Iterated Weighted Least Squares Method
@@ -169,15 +176,13 @@ exported, and none is needed to use the package.
   : A Symmetric Matrix From Its Upper Blocks
 
 - [`assert_criterion_information()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_information.md)
-  : Refuse an Expected-Information Criterion That Would Read the Scores'
-  Outer Product
+  : Expected-Information Criteria and the Scores' Outer Product
 
 - [`assert_criterion_order()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_order.md)
-  : Refuse Where a Criterion Cannot Be Computed
+  : Derivative Orders Read by a Criterion
 
 - [`assert_criterion_reach()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.md)
-  : Refuse a Prediction-Error Criterion on a Structural Term's Own
-  Parameters
+  : Prediction-Error Criteria and a Structural Term's Own Parameters
 
 - [`assert_method_signatures()`](https://statmodels7.github.io/statmodels7/reference/assert_method_signatures.md)
   : Check the Signatures of a Family's Own Methods
@@ -248,10 +253,10 @@ exported, and none is needed to use the package.
   : Validate Offsets
 
 - [`check_trials()`](https://statmodels7.github.io/statmodels7/reference/check_trials.md)
-  : Refuse a Number of Trials That Cannot Follow These Rows
+  : Reject a Number of Trials That Cannot Follow These Rows
 
 - [`check_trials_known()`](https://statmodels7.github.io/statmodels7/reference/check_trials_known.md)
-  : Refuse a Quantity That Needs Trials the Rows Do Not Carry
+  : Reject a Quantity That Needs Trials the Rows Lack
 
 - [`check_weights()`](https://statmodels7.github.io/statmodels7/reference/check_weights.md)
   : Validate Prior Weights
@@ -267,7 +272,7 @@ exported, and none is needed to use the package.
   : Where a Mixed Covariance Class's Members Sit in the Joint Vector
 
 - [`class_notes()`](https://statmodels7.github.io/statmodels7/reference/class_notes.md)
-  : What a Summary Says About the Covariance Classes
+  : The Notes on Covariance Classes
 
 - [`class_penalty()`](https://statmodels7.github.io/statmodels7/reference/class_penalty.md)
   : The Joint Prior of a Covariance Class
@@ -374,10 +379,10 @@ exported, and none is needed to use the package.
   : The Outer Criterion Differenced by Refitting
 
 - [`criterion_resolution()`](https://statmodels7.github.io/statmodels7/reference/criterion_resolution.md)
-  : What the Marginal Criterion Can Resolve at This Fit
+  : What the Outer Criterion Can Resolve at This Fit
 
 - [`criterion_tol()`](https://statmodels7.github.io/statmodels7/reference/criterion_tol.md)
-  : The Tolerance a Criterion Asks For
+  : The Tolerance of a Criterion
 
 - [`ctx_approx()`](https://statmodels7.github.io/statmodels7/reference/ctx_approx.md)
   : The Approximation a Context Was Built With
@@ -410,7 +415,7 @@ exported, and none is needed to use the package.
   : The Matrix the Traces Are Taken Against
 
 - [`ctx_usable()`](https://statmodels7.github.io/statmodels7/reference/ctx_usable.md)
-  : Refuse a Context That Belongs Somewhere Else
+  : Check That a Context Belongs to the Point Read
 
 - [`curv_blocks()`](https://statmodels7.github.io/statmodels7/reference/curv_blocks.md)
   : The Blocks With the Penalties a Specification Now Carries
@@ -422,7 +427,7 @@ exported, and none is needed to use the package.
   : Carry a Term's Matrix Input Onto a Subset of the Rows
 
 - [`cv_curve()`](https://statmodels7.github.io/statmodels7/reference/cv_curve.md)
-  : The Held-Out Deviance of Every Point of a Path
+  : The Held-Out Criterion of Every Point of a Path
 
 - [`cv_folds()`](https://statmodels7.github.io/statmodels7/reference/cv_folds.md)
   : Assign the Observations to Folds
@@ -464,7 +469,7 @@ exported, and none is needed to use the package.
   : Is a Design Sparse, and the Zero Matrix to Accumulate It Into
 
 - [`df.residual(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/df.residual.StatmodFit.md)
-  : What a Fit Leaves Unspent
+  : Residual Degrees of Freedom of a Fitted Model
 
 - [`diagonal_sqrt()`](https://statmodels7.github.io/statmodels7/reference/diagonal_sqrt.md)
   : The Factor of a Diagonal Penalty
@@ -530,7 +535,7 @@ exported, and none is needed to use the package.
   : Which Information Matrix a Fit Reports
 
 - [`fit_marginal_context()`](https://statmodels7.github.io/statmodels7/reference/fit_marginal_context.md)
-  : The Criterion a Fit Maximized, Rebuilt From the Fit
+  : The Criterion That a Fit Maximized, Rebuilt From the Fit
 
 - [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   : Fit the Smooth Block
@@ -560,7 +565,7 @@ exported, and none is needed to use the package.
   : The Formula a Model Was Written With
 
 - [`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)
-  : A Score Over the Coordinates a Kink Leaves Free
+  : A Score Over the Coordinates That a Kink Leaves Free
 
 - [`free_scale()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
   [`free_scale2()`](https://statmodels7.github.io/statmodels7/reference/free_scale.md)
@@ -598,7 +603,7 @@ exported, and none is needed to use the package.
   : Whether a Model Carries a Sharp Break-Point Term
 
 - [`heavy_variance()`](https://statmodels7.github.io/statmodels7/reference/heavy_variance.md)
-  : The Variance the Priors That Are Not Gaussian Add to Each Predictor
+  : The Variance Added to Each Predictor by Priors Other Than Gaussian
 
 - [`held_condition()`](https://statmodels7.github.io/statmodels7/reference/held_condition.md)
   : The Condition a Held Coordinate Warns Through
@@ -607,7 +612,7 @@ exported, and none is needed to use the package.
   : Where a Specification's Held Coefficients Sit in the Stacked Vector
 
 - [`held_stack()`](https://statmodels7.github.io/statmodels7/reference/held_stack.md)
-  : The Stacked Positions a Specification Holds
+  : The Stacked Positions That a Specification Holds
 
 - [`hess_key()`](https://statmodels7.github.io/statmodels7/reference/hess_key.md)
   : The Name of a Second-Derivative Component
@@ -628,7 +633,7 @@ exported, and none is needed to use the package.
   Hyperparameters
 
 - [`hyper_plain()`](https://statmodels7.github.io/statmodels7/reference/hyper_plain.md)
-  : The Hyperparameters in the Shape statmod() Accepts
+  : The Hyperparameters as Plain Named Vectors
 
 - [`hyper_set()`](https://statmodels7.github.io/statmodels7/reference/hyper_set.md)
   : Set One Hyperparameter
@@ -665,13 +670,16 @@ exported, and none is needed to use the package.
   : The Subspace a Marginal Criterion Integrates Over
 
 - [`intercept_chart_limit()`](https://statmodels7.github.io/statmodels7/reference/intercept_chart_limit.md)
-  : Where an Intercept on a Non-Identity Chart Stops Being an Estimate
+  : Limit of an Intercept on a Non-Identity Chart
 
 - [`intercept_start_from_data()`](https://statmodels7.github.io/statmodels7/reference/intercept_start_from_data.md)
-  : Replace an Intercept Where the Family Reads Its Start Off the Data
+  : Data-Based Intercepts of Families That Supply Them
 
 - [`invert_rows()`](https://statmodels7.github.io/statmodels7/reference/invert_rows.md)
   : Replace a Table's Limits by an Inverted Test
+
+- [`is_count()`](https://statmodels7.github.io/statmodels7/reference/is_count.md)
+  : A Positive Whole Number
 
 - [`is_parametric_block()`](https://statmodels7.github.io/statmodels7/reference/is_parametric_block.md)
   : Whether a Term Is the Equation's Parametric Block
@@ -729,11 +737,14 @@ exported, and none is needed to use the package.
 - [`iwls_switch_rate()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_rate.md)
   : The Contraction Rate Above Which Fisher Scoring Yields
 
+- [`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md)
+  : The Scoring Fit on the Subspace That a Kink Leaves Free
+
 - [`jacobian_depends()`](https://statmodels7.github.io/statmodels7/reference/jacobian_depends.md)
   : Which Readings a Chart's Coordinate Enters
 
 - [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md)
-  : The Rise a Criterion Would Still Buy at a Point
+  : The Newton Decrement of a Criterion at a Point
 
 - [`joint_design_rows()`](https://statmodels7.github.io/statmodels7/reference/joint_design_rows.md)
   : The Rows of the Joint Predictor Derivative
@@ -754,14 +765,17 @@ exported, and none is needed to use the package.
 - [`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
   : Invert the Size of the Kink Through a Power Law
 
+- [`kink_constraints()`](https://statmodels7.github.io/statmodels7/reference/kink_constraints.md)
+  : The Constraints That the Kinks Place on the Stacked Coefficients
+
 - [`kink_hypers()`](https://statmodels7.github.io/statmodels7/reference/kink_hypers.md)
   : Which Hyperparameters Set the Size of the Kink
 
-- [`kink_positions()`](https://statmodels7.github.io/statmodels7/reference/kink_positions.md)
-  : Where the Objective Has a Kink, in the Stacked Coefficients
-
 - [`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
   : How the Size of the Kink Scales With a Hyperparameter
+
+- [`kink_readings()`](https://statmodels7.github.io/statmodels7/reference/kink_readings.md)
+  : The Inner Readings on the Directions That the Kinks Leave Free
 
 - [`kink_scale()`](https://statmodels7.github.io/statmodels7/reference/kink_scale.md)
   : The Size of a Penalty's Kink
@@ -776,10 +790,10 @@ exported, and none is needed to use the package.
   : The Count of Each Coordinate Where a Block Has a Kink
 
 - [`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md)
-  : Every Labelled Effect a Term Carries, Its Sub-Terms Included
+  : Every Labeled Effect in a Term, Its Sub-Terms Included
 
 - [`laplace_pinned()`](https://statmodels7.github.io/statmodels7/reference/laplace_pinned.md)
-  : The Coordinates the Marginal Determinant Leaves Out
+  : The Coordinates That the Marginal Determinant Leaves Out
 
 - [`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
   : The Leverage Diagonal Over the Nonzeros of Two Rows
@@ -791,18 +805,22 @@ exported, and none is needed to use the package.
   : A Least-Squares Start for a Location on the Identity Link
 
 - [`logLik(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/logLik.StatmodFit.md)
-  : The Maximized Log-Likelihood of a Fit
+  : The Log-Likelihood of a Fit
 
 - [`loglik()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`gradient()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   [`hessian()`](https://statmodels7.github.io/statmodels7/reference/loglik.md)
   : The Model as a Function of Parameters and Data
 
+- [`loglik_shift_jacobian()`](https://statmodels7.github.io/statmodels7/reference/loglik_shift_jacobian.md)
+  : The Derivative Row of an Equation Carrying a Likelihood Mixed Over
+  States
+
 - [`marginal_blocks()`](https://statmodels7.github.io/statmodels7/reference/marginal_blocks.md)
   : The Pieces of the Block Variance Over the Estimated Coefficients
 
 - [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)
-  : The Coefficients a Marginal Criterion Estimates
+  : The Coefficients That a Marginal Criterion Estimates
 
 - [`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md)
   : The Correction for the Estimated Hyperparameters, With Estimated
@@ -812,7 +830,7 @@ exported, and none is needed to use the package.
   : Rows Where a New Group's Predictor Leaves the Domain of Its Link
 
 - [`marginal_params()`](https://statmodels7.github.io/statmodels7/reference/marginal_params.md)
-  : The Distribution Parameters a Marginal Criterion Estimates
+  : The Distribution Parameters That a Marginal Criterion Estimates
 
 - [`marginal_quad()`](https://statmodels7.github.io/statmodels7/reference/marginal_quad.md)
   : A Marginal Prediction by Adaptive Quadrature Over One Univariate
@@ -833,6 +851,9 @@ exported, and none is needed to use the package.
 - [`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
   : How Far Above Its Minimum an Inner Fit May Sit and Still Report a
   Resolution
+
+- [`mode_solver()`](https://statmodels7.github.io/statmodels7/reference/mode_solver.md)
+  : The Movement of the Mode Under Held Coordinates and Kinks
 
 - [`model.matrix(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/model.matrix.StatmodFit.md)
   : The Design of One Equation
@@ -858,6 +879,10 @@ exported, and none is needed to use the package.
 
 - [`nobs(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/nobs.StatmodFit.md)
   : The Number of Observations a Model Was Fitted To
+
+- [`null_basis()`](https://statmodels7.github.io/statmodels7/reference/null_basis.md)
+  : A Basis of the Directions That a Set of Linear Constraints Leaves
+  Free
 
 - [`null_coordinates()`](https://statmodels7.github.io/statmodels7/reference/null_coordinates.md)
   : The Null Coordinates of a Penalty
@@ -890,7 +915,7 @@ exported, and none is needed to use the package.
   : Estimate the Hyperparameters
 
 - [`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-  : Can the Exact Gradient Be Computed Here?
+  : Can the Exact Derivatives of the Criterion Be Computed Here?
 
 - [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
   : The Hyperparameters an Outer Method Estimates
@@ -954,7 +979,8 @@ exported, and none is needed to use the package.
   : The Values a Caller Wrote Out
 
 - [`path_grid()`](https://statmodels7.github.io/statmodels7/reference/path_grid.md)
-  : The Values a Path Visits Over a Bounded Hyperparameter
+  : The Values a Path Visits Over a Hyperparameter Not Swept by Kink
+  Size
 
 - [`path_group()`](https://statmodels7.github.io/statmodels7/reference/path_group.md)
   : Collapse the Shared Hyperparameters of a Path
@@ -1086,7 +1112,7 @@ exported, and none is needed to use the package.
   : The Predictive Mixture by Monte Carlo
 
 - [`prior_parts()`](https://statmodels7.github.io/statmodels7/reference/prior_parts.md)
-  : The Priors of the Effects a Prediction Sets Aside, by Kind
+  : The Priors of the Effects That a Prediction Sets Aside, by Kind
 
 - [`prior_student()`](https://statmodels7.github.io/statmodels7/reference/prior_student.md)
   : The Scale Matrix and Degrees of Freedom of a Student t Prior
@@ -1102,10 +1128,11 @@ exported, and none is needed to use the package.
   : A Marginal Prediction: the Population Average Over New Groups
 
 - [`random_modes()`](https://statmodels7.github.io/statmodels7/reference/random_modes.md)
-  : The Random-Effect Terms a Prediction Can Set Aside
+  : The Random-Effect Terms That a Prediction Can Set Aside
 
 - [`random_nodes()`](https://statmodels7.github.io/statmodels7/reference/random_nodes.md)
-  : Nodes and Weights for the Effects a Marginal Prediction Integrates
+  : Nodes and Weights for the Effects That a Marginal Prediction
+  Integrates
 
 - [`random_prior()`](https://statmodels7.github.io/statmodels7/reference/random_prior.md)
   : The Prior of One Random-Effect Term, for Integrating a New Group
@@ -1126,10 +1153,10 @@ exported, and none is needed to use the package.
   : The Variance of the Quantities a Fit Reports
 
 - [`refresh_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_amat.md)
-  : The Weight a Refreshable Block Is Contracted Against
+  : The Weight for Contracting a Refreshable Block
 
 - [`refresh_curv_amat()`](https://statmodels7.github.io/statmodels7/reference/refresh_curv_amat.md)
-  : The Weight the Second Derivative of a Block Is Paired With
+  : The Weight for the Second Derivative of a Block
 
 - [`refresh_dblock()`](https://statmodels7.github.io/statmodels7/reference/refresh_dblock.md)
   : A Refreshable Block's Derivative Along One Direction
@@ -1138,10 +1165,10 @@ exported, and none is needed to use the package.
   : A Refreshable Block's Second Derivative Along Two Directions
 
 - [`refresh_direction()`](https://statmodels7.github.io/statmodels7/reference/refresh_direction.md)
-  : What One Direction Costs a Moving Block
+  : The Derivatives of a Moving Block Along One Direction
 
 - [`refresh_hessian()`](https://statmodels7.github.io/statmodels7/reference/refresh_hessian.md)
-  : The Log-Density's Curvature the Refresh Corrections Read
+  : The Log-Density's Curvature Used by the Refresh Corrections
 
 - [`refresh_mode_third()`](https://statmodels7.github.io/statmodels7/reference/refresh_mode_third.md)
   : How a Moving Block Enters the Mode's Second Movement
@@ -1231,7 +1258,7 @@ exported, and none is needed to use the package.
   : Which Coefficients a Search Should Cover
 
 - [`seg_boot_total()`](https://statmodels7.github.io/statmodels7/reference/seg_boot_total.md)
-  : How Many Restarts the Terms Ask For
+  : Restart Budget of the Break-Point Terms
 
 - [`seg_grid_start()`](https://statmodels7.github.io/statmodels7/reference/seg_grid_start.md)
   : Choose a Break-Point Term's Starting Positions on a Grid
@@ -1321,7 +1348,7 @@ exported, and none is needed to use the package.
   : Split a Specification's Terms Into the Smooth Block and the Rest
 
 - [`statmod_boot_restart()`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md)
-  : Restarting Around a Fitted Model, Screened on the Exact Profile
+  : Bootstrap Restarting of a Break-Point Fit
 
 - [`statmod_classes()`](https://statmodels7.github.io/statmodels7/reference/statmod_classes.md)
   : The Covariance Classes of a Specification
@@ -1430,7 +1457,7 @@ exported, and none is needed to use the package.
   : The Exact Hessian of the Marginal Criterion
 
 - [`statmod_min_ratio()`](https://statmodels7.github.io/statmodels7/reference/statmod_min_ratio.md)
-  : How Far Down the Path Reaches for One Term
+  : The Depth of a Path for One Term
 
 - [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   : The Objective, Its Gradient and Its Hessian, Stacked
@@ -1471,25 +1498,19 @@ exported, and none is needed to use the package.
   Derivative
 
 - [`statmod_refresh_settled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_settled.md)
-  : Have the Refreshable Terms Settled?
+  : The Refreshable Terms' Own Verdict
 
 - [`statmod_refresh_stalled()`](https://statmodels7.github.io/statmodels7/reference/statmod_refresh_stalled.md)
-  : Have the Refreshable Terms Run Out of Step Control?
+  : Refreshable Terms That Have Stalled
 
 - [`statmod_refreshable()`](https://statmodels7.github.io/statmodels7/reference/statmod_refreshable.md)
   : Which Terms Recompute Their Own Block
 
-- [`terms(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
-  [`model.frame(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
-  [`anova(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
-  [`plot(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_refusals.md)
-  : What a Fit Does Not Answer
-
 - [`statmod_regime_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_at.md)
-  : Run the Structural Terms at the Current Parameters
+  : Run the Terms of the Likelihood Shape at the Current Parameters
 
 - [`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md)
-  : The Observed Information of a Model Carrying a Regime Term
+  : The Observed Information of a Model Carrying a Mixture Term
 
 - [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
   : The Same Model Read on Other Rows
@@ -1525,7 +1546,7 @@ exported, and none is needed to use the package.
   : One Likelihood Statistic for One Coefficient
 
 - [`statmod_structural()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural.md)
-  : Which Terms Rewrite the Likelihood
+  : The Structural Terms of a Specification
 
 - [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md)
   : The Exact Gradient Where a Penalty Covers a Filter's Own Parameters
@@ -1554,6 +1575,12 @@ exported, and none is needed to use the package.
 - [`statmod_theta_shifted()`](https://statmodels7.github.io/statmodels7/reference/statmod_theta_shifted.md)
   : The Parameters Under One Regime
 
+- [`terms(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
+  [`model.frame(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
+  [`anova(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
+  [`plot(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/statmod_unavailable.md)
+  : Generics Not Available for a Fit
+
 - [`statmod_unit()`](https://statmodels7.github.io/statmodels7/reference/statmod_unit.md)
   : One Penalized Unit, by Parameter and Key
 
@@ -1570,6 +1597,9 @@ exported, and none is needed to use the package.
 - [`statmodels7_attach_message()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_attach_message.md)
   : The Body of the Attach Message
 
+- [`stop_cv_nothing()`](https://statmodels7.github.io/statmodels7/reference/stop_cv_nothing.md)
+  : The Error for a Cross-Validation With Nothing to Select
+
 - [`structural_blocks_data()`](https://statmodels7.github.io/statmodels7/reference/structural_blocks_data.md)
   : The Same Pieces as Data for the Compiled Recursion
 
@@ -1577,7 +1607,7 @@ exported, and none is needed to use the package.
   : The Score and Curvature a Filter Is Driven By
 
 - [`structural_chain_extra()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra.md)
-  : The Two Pieces of the Chain Term That Read the Direction
+  : The Chain Term of the Joint Gradient Along a Direction
 
 - [`structural_chain_extra2()`](https://statmodels7.github.io/statmodels7/reference/structural_chain_extra2.md)
   : The Joint Second Derivative of the Penalized Information, Traced
@@ -1598,13 +1628,13 @@ exported, and none is needed to use the package.
   : The Subspace a Marginal Criterion Integrates Over, Jointly
 
 - [`structural_kind()`](https://statmodels7.github.io/statmodels7/reference/structural_kind.md)
-  : Which Shape of the Structural Contract a Term Implements
+  : Which Shape a Structural Term Implements
 
 - [`structural_memo()`](https://statmodels7.github.io/statmodels7/reference/structural_memo.md)
   : Reuse a Structural Quantity Computed at the Same Point
 
 - [`structural_multistarts()`](https://statmodels7.github.io/statmodels7/reference/structural_multistarts.md)
-  : The Starting Points a Structural Term Asks For
+  : The Starting Points of a Structural Term
 
 - [`structural_outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/structural_outer_pieces.md)
   : The Penalty's Pieces on the Joint Vector
@@ -1623,7 +1653,7 @@ exported, and none is needed to use the package.
   : Which of a Structural Term's Free Parameters a Penalty Covers
 
 - [`structural_se_columns()`](https://statmodels7.github.io/statmodels7/reference/structural_se_columns.md)
-  : The Derivative Row of an Equation Carrying a Filter
+  : The Derivative Row of an Equation Carrying a Structural Term
 
 - [`structural_start_fixups()`](https://statmodels7.github.io/statmodels7/reference/structural_start_fixups.md)
   : Settle a Fresh Start of a Structural Term Against Its Equation
@@ -1741,6 +1771,9 @@ exported, and none is needed to use the package.
 - [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
   : The Weighted Cross Product of the Assembly
 
+- [`weight_total()`](https://statmodels7.github.io/statmodels7/reference/weight_total.md)
+  : The Number of Observations the Weights Count
+
 - [`weights(`*`<StatmodFit>`*`)`](https://statmodels7.github.io/statmodels7/reference/weights.StatmodFit.md)
   : The Prior Weights of a Fitted Model
 
@@ -1751,7 +1784,7 @@ exported, and none is needed to use the package.
   : Is the Working Profile of an Equation Its Objective?
 
 - [`worth_sparse()`](https://statmodels7.github.io/statmodels7/reference/worth_sparse.md)
-  : Is a Matrix Worth Factorizing Sparsely?
+  : When a Matrix Is Factorized Sparsely
 
 - [`x_times_b()`](https://statmodels7.github.io/statmodels7/reference/x_times_b.md)
   : A Design Times Coefficients, Over the Nonzero Ones
@@ -1767,11 +1800,11 @@ exported, and none is needed to use the package.
   : Zero the Non-Finite Entries of a Penalty's Hessian
 
 - [`zero_kinked()`](https://statmodels7.github.io/statmodels7/reference/zero_kinked.md)
-  : The Coordinates a Kinked Penalty Holds at Zero
+  : The Coordinates That a Kinked Penalty Holds at Zero
 
 - [`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md)
-  : The Optimality Check of the Coefficients a Kinked Penalty Set to
-  Zero
+  : The Optimality Check of the Coefficients That a Kinked Penalty Sets
+  to Zero
 
 - [`zero_unread()`](https://statmodels7.github.io/statmodels7/reference/zero_unread.md)
   : A Variance Matrix With Its Unreadable Coordinates Set to Zero

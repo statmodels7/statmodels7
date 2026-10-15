@@ -3,12 +3,12 @@
 \(\theta^* = h^{-1}(\eta^*)\), with
 \(\eta^* = \eta_0 + e + z^\top b\), where \(e\) is the estimation
 error of the fixed part and \(b\) the effects of a new group, drawn from
-the prior the fit estimated. Returns the ends of its interval and its
+the prior that the fit estimated. Returns the ends of its interval and its
 standard deviation, on the predictor's scale and on the parameter's."><meta property="og:description" content="For interval = &quot;group&quot;: the distribution of a new group's parameter
 \(\theta^* = h^{-1}(\eta^*)\), with
 \(\eta^* = \eta_0 + e + z^\top b\), where \(e\) is the estimation
 error of the fixed part and \(b\) the effects of a new group, drawn from
-the prior the fit estimated. Returns the ends of its interval and its
+the prior that the fit estimated. Returns the ends of its interval and its
 standard deviation, on the predictor's scale and on the parameter's."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -17,7 +17,7 @@ standard deviation, on the predictor's scale and on the parameter's."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ standard deviation, on the predictor's scale and on the parameter's."><meta prop
 \(\theta^* = h^{-1}(\eta^*)\), with
 \(\eta^* = \eta_0 + e + z^\top b\), where \(e\) is the estimation
 error of the fixed part and \(b\) the effects of a new group, drawn from
-the prior the fit estimated. Returns the ends of its interval and its
+the prior that the fit estimated. Returns the ends of its interval and its
 standard deviation, on the predictor's scale and on the parameter's.</p>
     </div>
 
@@ -96,22 +96,27 @@ them.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>su</code>, with <code>se_eta</code>, <code>eta_lower</code>, <code>eta_upper</code>, <code>se</code>, <code>lower</code> and
-<code>upper</code> replaced for every parameter a new group's effects reach.</p>
+<code>upper</code> replaced for every parameter that a new group's effects reach.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The inverse link is monotone, so a quantile of \(\theta^*\) is the
-inverse link of the same quantile of \(\eta^*\), and the interval is
-exact whatever the link. Under Gaussian priors \(\eta^*\) is Gaussian
+    <p>Where the inverse link is monotone over the whole line, a quantile of
+\(\theta^*\) is the inverse link of the same quantile of
+\(\eta^*\), and the interval is exact. For a link whose predictor is
+restricted to a half line (square root, inverse, inverse square, power),
+the ends of the interval are <code>NA</code> at the rows where the interval of
+\(\eta^*\) leaves the link's domain, and a warning gives their number.
+Under Gaussian priors \(\eta^*\) is Gaussian
 with variance \(s^2 = \mathrm{se}_0^2 + z^\top\Sigma_b z\), and the ends
 are \(h^{-1}(\eta_0 \pm z_{(1+\ell)/2}\, s)\). Under any other prior
 \(\eta^*\) is a mixture of Gaussians: a scale mixture over the nodes
-of <code><a href="gamma_nodes.html">gamma_nodes()</a></code> for a Student t, the prior's own quantiles for one
-univariate prior of another family (<code><a href="group_quantile_nodes.html">group_quantile_nodes()</a></code>), and the
-Monte Carlo draws of <code><a href="predictive_mixture.html">predictive_mixture()</a></code> for anything else. Each end is
-found by bisection on the mixture's distribution function.</p>
-<p>The standard deviation is that of \(\theta^*\), not the delta method,
-which under a log link and \(s = 0.85\) is 42 per cent too small. Under
+of <code><a href="gamma_nodes.html">gamma_nodes()</a></code> for one or two Student t priors, the prior's own
+quantiles for one univariate prior of another family
+(<code><a href="group_quantile_nodes.html">group_quantile_nodes()</a></code>), and the Monte Carlo draws of
+<code><a href="predictive_mixture.html">predictive_mixture()</a></code> for anything else. Each end is found by bisection on
+the mixture's distribution function (<code><a href="mixture_quantile.html">mixture_quantile()</a></code>).</p>
+<p>The standard deviation is that of \(\theta^*\) and not the delta method,
+which does not equal it under a nonlinear link. Under
 a Gaussian \(\eta^*\) it is \(s\) for the identity link,
 \(e^{\eta_0 + s^2/2}\sqrt{e^{s^2} - 1}\) for the log link and a
 40-node Gauss-Hermite rule for any other link. It is reported only where

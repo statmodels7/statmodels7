@@ -9,7 +9,7 @@ before it gives up, where the optimizer is the one this package chose."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,32 +50,20 @@ before it gives up, where the optimizer is the one this package chose.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single number.</p>
+    <p>A single number, 12.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><span class="pkg">optimizers7</span> defaults to 30, which suits an objective costing
+    <p><span class="pkg">optimizers7</span> defaults to 30, which suits an objective that costs
 microseconds. Every trial here is a penalized refit, and a line search that
-is going to fail spends its whole budget finding that out.</p>
-<p>The saving is smaller than the evaluation count implies. Every trial
-warm-starts from the last accepted point, so as the step shrinks the refit
-begins at nearly its own answer: measured, removing 22 evaluations of 38
-removed 2.8 seconds of 30.8, which is 0.13 seconds each against an average
-evaluation's 0.81.</p>
-<p>What it costs is nothing on the shapes where nothing was wrong. Measured at
-30, 12 and 8 backtracks on a smooth, on two smooths with a random effect and
-on a random intercept, all three are unchanged in evaluations, in criterion
-to six decimals, in effective degrees of freedom and in the convergence
-flag: the resolution <code><a href="criterion_resolution.html">criterion_resolution()</a></code> supplies stops the
-search before the budget is ever reached. A hierarchical break-point model
-goes from 31 evaluations and 25.6 seconds to 13 and 20.3, with the criterion
-1.3e-04 better and the same degrees of freedom.</p>
-<p>The value is 12 rather than 8 because 12 takes 5.3 seconds of the 6.6 there
-are to take, and because the criterion 8 gives up is larger: swept with the
-optimizer named, so that the resolution does not mask it, the criterion lost
-against a budget of 30 is 4.8e-05 at 12, 7.8e-04 at 8 and 3.3e-03 at 6, the
-last being past the 1.6e-03 that criterion can resolve.</p>
-<p>An optimizer the caller named keeps its own budget, as it keeps its own
+fails spends its whole budget before it stops.</p>
+<p>Every trial warm-starts from the incumbent, the best usable point found so
+far, so as the step shrinks the refit begins near its own answer and a
+rejected backtrack costs less than an average evaluation. The budget applies
+only to the line search of an optimizer that this package chose; the
+resolution that <code><a href="criterion_resolution.html">criterion_resolution()</a></code> supplies ends the search before the
+budget on most shapes.</p>
+<p>An optimizer that the caller named keeps its own budget, as it keeps its own
 stopping rule.</p>
     </div>
     <div class="section level2">

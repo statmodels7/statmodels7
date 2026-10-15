@@ -11,7 +11,7 @@ carry, where what names one parameter."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,13 +70,12 @@ carry, where <code>what</code> names one parameter.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A prediction of one parameter reads that parameter's equation alone, so
-the covariates of the other equations need not be in <code>newdata</code>. They used
-to be required all the same, the design being rebuilt for every equation:
-<code>predict(fit, what = "mu", newdata)</code> on <code>accel ~ s(times) | sigma ~ z</code>
-stopped with "object 'z' not found". Nothing is left out where every
-equation can be built, where <code>what</code> asks for every parameter or a moment,
-or where the model carries a structural term, whose recursion reads the
-predictors of every equation.</p>
+the covariates of the other equations need not be in <code>newdata</code>: on
+<code>accel ~ s(times) | sigma ~ z</code>, <code>predict(fit, what = "mu", newdata)</code> does
+not need <code>z</code>. Nothing is left out where <code>what</code> is not the name of a
+parameter (<code>"parameter"</code>, <code>"link"</code>, <code>"link:&lt;parameter&gt;"</code> or a moment),
+where <code>interval</code> is not <code>"confidence"</code>, or where the model carries a
+structural term, whose recursion reads the predictors of every equation.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

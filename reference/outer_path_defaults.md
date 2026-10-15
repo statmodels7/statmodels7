@@ -1,6 +1,6 @@
 # The Properties Every Criterion Carries
 
-The defaults for the three properties only
+The defaults for `nfolds`, `rule` and `folds`, which only
 [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
 reads, so that one class can serve every criterion and each constructor
 names only what it needs.
@@ -19,13 +19,18 @@ call.
 
 ## Details
 
-What a **path** does is not among them. How many values it visits, how
-far down it reaches, and whether a term's own hyperparameters are
-combined or swept one at a time all belong to the term. The same
-criterion object is put to the model's smooth hyperparameters as well,
-and those are read at the mode instead of being swept, so a path setting
-on the criterion would be meaningless for most of what it is asked
-about.
+The settings of a **path** are not among them. How many values a path
+visits, how far down it reaches, and whether a term's own
+hyperparameters are combined or swept one at a time all belong to the
+term.
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+and
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+are also used for a model's smooth hyperparameters, which are read at
+the mode and not swept, so a path setting on the criterion would not
+apply to them.
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md) is
+accepted only as a `sparse_criterion`.
 
 ## See also
 

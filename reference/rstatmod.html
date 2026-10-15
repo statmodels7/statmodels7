@@ -11,7 +11,7 @@ behind it."><meta property="og:image" content="https://statmodels7.github.io/sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,12 +80,14 @@ how many equations there are and what is drawn from.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>The number of observations, where <code>data</code> is <code>NULL</code>. One of the
-two is required.</p></dd>
+<dd><p>The number of observations, a positive whole number. It is
+required where <code>data</code> is <code>NULL</code>, and where <code>data</code> is given it must equal
+the number of rows.</p></dd>
 
 
 <dt id="arg-n-sim">n_sim<a class="anchor" aria-label="anchor" href="#arg-n-sim"></a></dt>
-<dd><p>How many data sets to draw. <code>1</code> by default.</p></dd>
+<dd><p>How many data sets to draw, a positive whole number. <code>1</code> by
+default.</p></dd>
 
 
 <dt id="arg-par">par<a class="anchor" aria-label="anchor" href="#arg-par"></a></dt>
@@ -98,8 +100,8 @@ details. <code>NULL</code>, the default, draws everything.</p></dd>
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
 <dd><p>The width of the draws, <code>1</code> by default. A quantity that rides a
-chart – a structural parameter, a prior's own scale – is drawn at half
-of it, the chart carrying a width of one onto most of its parameter's
+chart (a structural parameter, a prior's own scale) is drawn at half of
+it, the chart carrying a width of one onto most of its parameter's
 range.</p></dd>
 
 
@@ -111,12 +113,13 @@ range.</p></dd>
 <dt id="arg-covariates">covariates<a class="anchor" aria-label="anchor" href="#arg-covariates"></a></dt>
 <dd><p>Optional named list of functions of the observation
 count, one per covariate, drawn afresh at every replicate. A drawn
-factor must have its levels fixed.</p></dd>
+factor should have its levels fixed, since a replicate that loses a
+level stops the simulation with an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>"StatmodSim"</code>, a list of seven:</p><dl><dt><code>data</code></dt>
+    <p>An object of class <code>"StatmodSim"</code>, a list with the elements:</p><dl><dt><code>data</code></dt>
 <dd><p>the data frame with the response column added, named
 after the formula's left-hand side.</p></dd>
 
@@ -129,7 +132,9 @@ design names them.</p></dd>
 named list with one vector per parameter.</p></dd>
 
 <dt><code>latent</code></dt>
-<dd><p>what a term with state drew, or <code>NULL</code>.</p></dd>
+<dd><p>what a term with state drew (the filtered level of a
+score-driven term, the states of a latent chain, or the positions of
+a marginal break-point term), or <code>NULL</code>.</p></dd>
 
 <dt><code>structural</code></dt>
 <dd><p>such a term's own parameters, or <code>NULL</code>.</p></dd>
@@ -137,50 +142,51 @@ named list with one vector per parameter.</p></dd>
 <dt><code>hyper</code></dt>
 <dd><p>a data frame of the hyperparameters, one row per
 penalty and name, with the value drawn or held. Its columns are
-those of <code><a href="hyper.html">hyper()</a></code> as far as they mean the same thing, so a study
-compares the two directly.</p></dd>
+those of <code><a href="hyper.html">hyper()</a></code> as far as they mean the same thing, <code>value</code>
+taking the place of <code>estimate</code>, so a study compares the two
+directly.</p></dd>
 
 <dt><code>n_sim</code></dt>
-<dd><p>as supplied.</p></dd>
+<dd><p>the number of data sets, as an integer.</p></dd>
 
 <dt><code>call</code></dt>
 <dd><p>the matched call.</p></dd>
 
 
-</dl><p>With <code>n_sim &gt; 1</code> the fields <code>data</code>, <code>theta</code> and <code>latent</code> are lists of
-that length.</p>
+</dl><p>With <code>n_sim &gt; 1</code> the fields <code>data</code> and <code>theta</code> are lists of that length,
+and <code>latent</code> is such a list when the model has a term with state and
+<code>NULL</code> otherwise; <code>par</code>, <code>structural</code> and <code>hyper</code> stay single.</p>
     </div>
     <div class="section level2">
     <h2 id="what-it-is-for">What it is for<a class="anchor" aria-label="anchor" href="#what-it-is-for"></a></h2>
     <p>Data whose truth is known: write the model, draw from it, fit it back, and
 see whether the fit recovers what was put in. That is the shape of a
-simulation study, and of a check on a term one has just written.</p>
+simulation study, and of a check on a term that has just been written.</p>
 <p>This is not <code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">stats::simulate()</a></code>, which draws from a model already fitted.
-The <code>r</code> prefix is R's own for a random draw, so the two names stay apart.</p>
-<p>A covariate needs no declaring. A factor becomes its contrasts and a
-numeric stays itself, the design coming from the same interpreter a fit
-uses.</p>
+The <code>r</code> prefix is the one that R uses for a random draw, so the two names
+stay apart.</p>
+<p>A covariate needs no declaration. A factor becomes its contrasts and a
+numeric variable stays as it is, the design being built by the interpreter
+that a fit uses.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-truth-comes-back-beside-the-data">The truth comes back beside the data<a class="anchor" aria-label="anchor" href="#the-truth-comes-back-beside-the-data"></a></h2>
-    <p>A simulation study compares against the coefficients, the parameters they
-gave and whatever a term with state drew, so the result is a list holding
-all of them. Pass <code>sim$data</code> where a data frame is wanted.</p>
-<p>They were attributes of the data frame until version 0.88.0, and that was
-worse than it looks: an attribute survives a row subset without being
-subset itself, so <code>sim[1:10, ]</code> silently kept a <code>theta</code> of the original
-length, while <code><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset()</a></code> and <code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code> dropped it altogether.</p>
+    <h2 id="the-returned-truth">The returned truth<a class="anchor" aria-label="anchor" href="#the-returned-truth"></a></h2>
+    <p>A simulation study compares against the coefficients, the parameters that
+they gave and whatever a term with state drew, so the result is a list
+holding all of them. Pass <code>sim$data</code> where a data frame is wanted.</p>
+<p>The truth is kept as elements of a list and not as attributes of the data
+frame, because an attribute is not subset with the rows: <code>sim[1:10, ]</code>
+would keep a <code>theta</code> of the original length, while <code><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset()</a></code> and
+<code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code> drop it.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-predictor-is-assembled-as-a-fit-assembles-it">The predictor is assembled as a fit assembles it<a class="anchor" aria-label="anchor" href="#the-predictor-is-assembled-as-a-fit-assembles-it"></a></h2>
-    <p>Through <code><a href="statmod_design_at.html">statmod_design_at()</a></code>, so the simulated data come from the model
-that was written, never from a linearization of it.</p>
+    <h2 id="assembly-of-the-predictor">Assembly of the predictor<a class="anchor" aria-label="anchor" href="#assembly-of-the-predictor"></a></h2>
+    <p>The predictor is built through <code><a href="statmod_design_at.html">statmod_design_at()</a></code>, so the simulated data
+come from the model that was written and not from a linearization of it.</p>
 <p>A term whose block moves with its coefficients, <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>,
 <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, contributes
 <code>term_value()</code> at the coefficients supplied, not its block times them. The
-two differ by the whole nonlinearity, and an earlier version of this
-function used the second: measured, the gap is 3 on a <code>seg()</code>, 4.05 on an
-<code>nl()</code> and a missing value on a <code>jseg()</code>.</p>
+two differ by the whole nonlinearity, and the simulation uses the first.</p>
     </div>
     <div class="section level2">
     <h2 id="data-or-a-row-count">Data, or a row count<a class="anchor" aria-label="anchor" href="#data-or-a-row-count"></a></h2>
@@ -190,115 +196,114 @@ they must agree.</p>
     </div>
     <div class="section level2">
     <h2 id="fixed-covariates-or-drawn-ones">Fixed covariates or drawn ones<a class="anchor" aria-label="anchor" href="#fixed-covariates-or-drawn-ones"></a></h2>
-    <p><code>covariates</code> takes one function of the observation count per column, as
-<code>par</code> takes one per equation, and they are drawn afresh at every
-replicate.</p>
+    <p><code>covariates</code> takes one function of the observation count per column, as an
+entry of <code>par</code> may be, and the columns are drawn afresh at every replicate.
+A column of <code>data</code> under the same name is overwritten, and the columns of
+<code>data</code> that are not drawn are the same in every replicate.</p>
 <p>The choice decides what a study measures. With <code>data</code> the covariates are
-the same throughout, so what is measured is the estimator's behavior
-<strong>conditional</strong> on that design; with <code>covariates</code> it is measured over the
-design as well. Neither is more correct, and a study should say which it
-ran. Measured on a simple regression at \(n = 40\), the slope's standard
-deviation is 0.1465 under the first and 0.1443 under the second, so the
-distinction is about what a study claims, never about a large numerical
-difference.</p>
-<p>A drawn factor is refused unless its levels are fixed. Drawn freely it
-loses a level on some replicate, and the coefficients drawn against the
-first design would then be recycled into a different model.</p>
+the same throughout, so the study measures the behavior of the estimator
+conditional on that design; with <code>covariates</code> it measures that behavior
+over the design as well. Neither is more correct, and a study should state
+which one it ran.</p>
+<p>A drawn factor should have its levels fixed. A factor drawn with free
+levels can lose a level at some replicate. The design then has another
+shape than the one that the coefficients were drawn for, and the
+simulation stops at that replicate with an error.</p>
     </div>
     <div class="section level2">
     <h2 id="several-replicates">Several replicates<a class="anchor" aria-label="anchor" href="#several-replicates"></a></h2>
-    <p><code>n_sim</code> draws that many data sets. The truth is drawn <strong>once</strong> and shared:
-a study over replicates measures the variability of an estimator at a set
-of parameters, so the replicates differ in what is random, never in what
-is being estimated. Varying the truth as well is a loop over calls and
-reads differently.</p>
-<p>With <code>n_sim &gt; 1</code> the per-replicate fields, <code>data</code>, <code>theta</code> and <code>latent</code>,
-come back as lists of that length, while <code>par</code> and <code>structural</code> stay
+    <p><code>n_sim</code> draws that many data sets. The truth is drawn once and shared by
+the replicates: a study over replicates measures the variability of an
+estimator at a given set of parameters, so the replicates differ in what is
+random and not in what is being estimated. Varying the truth as well
+requires a loop over calls and reads differently.</p>
+<p>With <code>n_sim &gt; 1</code> the per-replicate fields <code>data</code> and <code>theta</code> come back as
+lists of that length, and <code>latent</code> does so when the model has a term with
+state (otherwise it is <code>NULL</code>), while <code>par</code>, <code>structural</code> and <code>hyper</code> stay
 single.</p>
     </div>
     <div class="section level2">
-    <h2 id="everything-is-drawn">Everything is drawn<a class="anchor" aria-label="anchor" href="#everything-is-drawn"></a></h2>
+    <h2 id="the-quantities-that-are-drawn">The quantities that are drawn<a class="anchor" aria-label="anchor" href="#the-quantities-that-are-drawn"></a></h2>
     <p>A call that names nothing draws the whole truth, so writing the model is
-the whole of what getting data from it takes. The rule is that whoever
-knows what a quantity means draws it:</p><ul><li><p>a coefficient of a design column has no other owner and comes from
+all that getting data from it requires. Each quantity is drawn by the
+component that defines its meaning:</p><ul><li><p>a coefficient of a design column has no other owner and comes from
 <code>rnorm(1, 0, sd)</code>, which on the link scale gives predictors of order
 one;</p></li>
-<li><p>a coordinate some penalty covers is drawn from that penalty read as a
-prior, through <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_draw.html" class="external-link">penalties7::penalty_draw()</a></code>. A Gaussian random effect
+<li><p>a coordinate that some penalty covers is drawn from that penalty read as
+a prior, through <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_draw.html" class="external-link">penalties7::penalty_draw()</a></code>. A Gaussian random effect
 gives Gaussian effects, a lasso Laplace ones and a heavy-tailed prior
 heavy-tailed ones. The prior's own scale is drawn as well, on the chart
-the penalty carries for it, and comes back in <code>hyper</code>;</p></li>
+that the penalty carries for it, and comes back in <code>hyper</code>;</p></li>
 <li><p>a structural term's own parameters are drawn by the term, through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_draw.html" class="external-link">modelterms7::term_draw()</a></code>, which knows the chart each one rides. A
-loading stays positive and a persistence stationary whatever comes out;</p></li>
-<li><p>a coefficient of a design column whose meaning only the term knows is
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_draw.html" class="external-link">modelterms7::term_draw()</a></code>, on the chart that each one rides. A loading
+stays positive and a persistence stationary whatever comes out;</p></li>
+<li><p>a coefficient of a design column whose meaning only the term defines is
 drawn by the term, through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_coef_draw.html" class="external-link">modelterms7::term_coef_draw()</a></code>, last of all
 so that what it writes is what survives. A break-point is the case: it
 is a position on the covariate's own axis, so a normal of width <code>sd</code>
-lands outside the data as often as not and the confinement then pins it
-to the interval's edge, where one of the two segments holds a twentieth
-of the rows. Measured over fifty groups with the covariate uniform on
-\((0, 1)\), thirty-eight of the fifty came back pinned and twelve
-strictly interior.</p></li>
-</ul><p>A hyperparameter the term holds is used rather than drawn, so
-<code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> simulates at the smoothing it names. A prior whose
-coordinates a term drew is reported at the width the term used, the values
-there no longer being that prior's own draw – and drawn Gaussian at that
+often lands outside the data, and the confinement then pins it to an edge
+of the interval, where one of the two segments holds a small share of the
+rows.</p></li>
+</ul><p>A hyperparameter that the term holds is used and not drawn, so
+<code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> simulates at the smoothing
+parameter that it names. If a term draws the coordinates that a prior
+covers, the prior is reported at the width that the term used, since those
+values are no longer the prior's own draw. They are drawn Gaussian at that
 width, so a heavy-tailed prior over a break-point keeps its family for the
-fitting and not for the simulation.</p>
-<p>What no prior reaches falls back to the plain draw, and it is a short
-list: SCAD and MCP are improper by construction, an anisotropic tensor
-smooth is flat along its null space, and a covariance class spanning a
-filter and an equation at once is in neither vector on its own.</p>
+fitting but not for the simulation.</p>
+<p>What no prior reaches falls back to the plain draw. The cases are SCAD and
+MCP, which are improper by construction; an anisotropic tensor smooth,
+which is flat along its null space; a covariance class spanning a filter
+and an equation at once, which is in neither vector on its own; and a
+coordinate for which the draw of the penalty is missing.</p>
     </div>
     <div class="section level2">
-    <h2 id="holding-what-you-care-about">Holding what you care about<a class="anchor" aria-label="anchor" href="#holding-what-you-care-about"></a></h2>
+    <h2 id="fixing-quantities-by-name">Fixing quantities by name<a class="anchor" aria-label="anchor" href="#fixing-quantities-by-name"></a></h2>
     <p><code>par</code> is one named list over the whole model, and a key may be</p><ul><li><p>a distribution parameter, <code>mu</code>, which is that whole equation;</p></li>
 <li><p>one of its coefficients or a group of them, <code>mu.(Intercept)</code> or
-<code>mu.random</code>, a group being a name the members extend at a dot;</p></li>
+<code>mu.random</code>, a group being a name that the members extend at a dot;</p></li>
 <li><p>a structural term's own parameter, <code>kappa1</code>, or a group of those,
 <code>omega.random</code>.</p></li>
 </ul><p>A value is a vector of that key's own length, a single number used for all
-of them, or a <strong>function</strong> of the count. The function is how a structured
+of them, or a function of the count. The function is how a structured
 truth is written without a vocabulary of its own:
-<code>function(k) rnorm(k, 0, 0.4)</code> is a random effect at a scale one chose and
-<code>function(k) c(1.5, -2, rep(0, k - 2))</code> is a sparse truth for a lasso to
-find. A function answering with the wrong count is refused, R being
-willing to recycle it into a different model, and a key that reaches
-nothing is refused with what the model does carry.</p>
-<p>A structural parameter is named on the scale a reader knows, which is
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">modelterms7::term_params()</a></code>'s: a loading is the loading and not its
-logarithm, a persistence the partial autocorrelation its chart carries.
-A parameter a subformula DEVELOPS is different, and it has to be: its
+<code>function(k) rnorm(k, 0, 0.4)</code> is a random effect at a scale chosen by the
+caller and <code>function(k) c(1.5, -2, rep(0, k - 2))</code> is a sparse truth for a
+lasso to find. A function that returns the wrong number of values or a
+missing value is rejected, because R would recycle a vector of the wrong
+length into a different model. A key that addresses nothing is rejected
+with a message that lists what the model does carry.</p>
+<p>A structural parameter is named on the scale of
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_params.html" class="external-link">modelterms7::term_params()</a></code>: a loading is the loading and not its
+logarithm, and a persistence is the partial autocorrelation that its chart
+carries. A parameter that a subformula develops is different. Its
 coordinates are the coefficients of that development, which act on the
 unconstrained scale of the parameter's own chart, so <code>kappa1</code> is a loading
-and <code>kappa1.random.3</code> is a group's departure on the log scale that
-loading rides. That is what keeps every group's loading positive whatever
-the departure is.</p>
+and <code>kappa1.random.3</code> is a group's departure on the log scale that the
+loading rides. This keeps every group's loading positive whatever the
+departure is.</p>
     </div>
     <div class="section level2">
     <h2 id="a-term-with-state">A term with state<a class="anchor" aria-label="anchor" href="#a-term-with-state"></a></h2>
-    <p>Simulated through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">modelterms7::term_simulate()</a></code>, so the recursion that
-generates is the term's own. A score-driven term draws the response as it
-runs, its level at one time driven by the score at the time before; a
-latent chain draws its path from the stationary law the likelihood is
-written with; a marginal break-point term draws each group's positions
-from their prior. What each drew comes back in <code>latent</code>, and that is what
-a recovery check compares against.</p>
-<p>Such a term's own parameters are not coefficients of any equation and are
-named in <code>par</code> alongside them, a formula holding at most one such term so
-that no key is needed. They are drawn like everything else, which they
-were not until version 0.111.0: a filter whose level was developed over a
-hundred groups took its starting values, and those are zero for every
-deviation, so the panel came out with no heterogeneity between groups at
-all – three distinct values of the mean over six hundred observations.</p>
+    <p>The simulation runs through <code><a href="https://statmodels7.github.io/modelterms7/reference/term_simulate.html" class="external-link">modelterms7::term_simulate()</a></code>, so the
+recursion that generates the data is the term's own. A score-driven term
+draws the response as it runs, its level at one time being driven by the
+score at the time before; a latent chain draws its path from the stationary
+law that the likelihood is written with; a marginal break-point term draws
+each group's positions from their prior. What each drew comes back in
+<code>latent</code>, which is what a recovery check compares against.</p>
+<p>The parameters of such a term are not coefficients of any equation. They
+are named in <code>par</code> beside the equations' coefficients, and since a formula
+holds at most one such term, the names carry no term key. They are drawn
+like every other coefficient.</p>
     </div>
     <div class="section level2">
     <h2 id="the-response-s-name">The response's name<a class="anchor" aria-label="anchor" href="#the-response-s-name"></a></h2>
-    <p>The formula's left-hand side, which must be a symbol. <code>log(y) ~ x</code> is
-refused: the model generates values of <code>log(y)</code>, and no column could
-honestly be called either name. A censored response is refused too, for
-the reason <code><a href="statmod.html">statmod()</a></code> refuses one.</p>
+    <p>The left-hand side of the formula must be a symbol. <code>log(y) ~ x</code> is
+rejected because the model generates values of <code>log(y)</code>, which cannot be
+stored in a column under either name. A censored response is rejected too,
+for the reason that <code><a href="statmod.html">statmod()</a></code> rejects one: there is no censored
+likelihood.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -1,9 +1,13 @@
-# The Derivative Row of an Equation Carrying a Filter
+# The Derivative Row of an Equation Carrying a Structural Term
 
-The derivative of the predictor of the equation carrying a score-driven
+The derivative of the predictor of the equation carrying a structural
 term, one row per observation, in every coordinate of the variance
 matrix it moves with: the coefficients of every equation and the term's
-free parameters on their unconstrained scale.
+free parameters on their unconstrained scale. A score-driven term is
+read through
+[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md)
+and a term of the likelihood shape through
+[`loglik_shift_jacobian()`](https://statmodels7.github.io/statmodels7/reference/loglik_shift_jacobian.md).
 
 ## Usage
 
@@ -39,7 +43,7 @@ structural_se_columns(spec, design, ep, p, coef)
 
 A list with `X` (the derivative rows) and `key` (the names of their
 columns in the variance matrix), or `NULL` where the equation carries no
-filter.
+structural term.
 
 ## Details
 
@@ -49,9 +53,8 @@ design. Its derivative is the forward Jacobian of the recursion, which
 returns. Every equation's coefficients enter it, not only those of the
 filter's own equation: the scores that drive the recursion are read at
 the predictors of every equation, so a coefficient of the scale moves
-the level of a filter in the mean. Leaving those columns out, on the
-gaussian score-driven model of the Nile flow, gave a standard error of
-the filtered mean up to 12 per cent too large.
+the level of a filter in the mean. Leaving those columns out gives a
+wrong standard error for the filtered mean.
 
 A parameter that an intercept in the same equation holds is not
 estimated and is not in that matrix, so it is not here either.
@@ -59,4 +62,5 @@ estimated and is not in that matrix, so it is not here either.
 ## See also
 
 [`predict_se()`](https://statmodels7.github.io/statmodels7/reference/predict_se.md),
-[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md)
+[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md),
+[`loglik_shift_jacobian()`](https://statmodels7.github.io/statmodels7/reference/loglik_shift_jacobian.md)

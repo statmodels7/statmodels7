@@ -18,8 +18,10 @@ add_offsets(a, b)
 
 ## Value
 
-A named list with one entry per parameter named in either input, `NULL`
-where neither supplied one.
+`a` with each entry summed with the entry of `b` for the same parameter
+where both are present, and replaced by `b`'s where only `b` names one.
+A parameter named only in `b` is not added, and the result is `NULL`
+when `a` is.
 
 ## Details
 

@@ -1,7 +1,8 @@
-# What a Summary Says About the Covariance Classes
+# The Notes on Covariance Classes
 
-One note per class spanning more than one term, naming the label, the
-grouping and the terms whose coefficients share the block.
+One note per class with two or more pieces (terms, or developments of
+one term), naming the label, the grouping and the terms whose
+coefficients share the block.
 
 ## Usage
 
@@ -27,12 +28,13 @@ A character vector, possibly empty.
 ## Details
 
 A class's hyperparameters are printed once, at the head of the summary,
-where each coordinate is named for the equation and the column it
-belongs to. The note says the same thing in one sentence, for a reader
-who has the summary object rather than the printed page.
+where each coordinate is named by the equation and the column to which
+it belongs. The note gives the same information in one sentence, for a
+reader who has the summary object and not the printed page.
 
 A class of one member gets no note: there is nothing shared to report,
-and its block is the random effect it would have been without a label.
+and its block is the random effect that it would have been without a
+label.
 
 ## See also
 

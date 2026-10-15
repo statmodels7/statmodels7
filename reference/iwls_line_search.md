@@ -2,6 +2,8 @@
 
 Solves for the scoring increment from the given pieces and halves the
 step until Armijo's condition holds or the budget of halvings is spent.
+The full step is tried first, so a budget of `step_halving` halvings
+allows `step_halving + 1` trial points.
 
 ## Usage
 

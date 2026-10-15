@@ -9,7 +9,7 @@ members named, or the centered multivariate Gaussian that is the default."><meta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,14 +64,11 @@ members named, or the centered multivariate Gaussian that is the default.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The prior describes the effects of <strong>one group</strong> over every column the label
 collects, so its dimension is the class's total and the penalty covers
-\(m\) such blocks. Which chart the covariance rides is a modeling choice
-and is <code><a href="https://statmodels7.github.io/parameters7/reference/dr_prod.html" class="external-link">parameters7::dr_prod()</a></code> by default, where a coordinate is the
-logarithm of a standard deviation exactly; the alternative, log-Cholesky,
-is the same family of matrices written so that only the first coordinate
-reads as one.</p>
-<p>Naming a <code>distrib</code> on more than one member is an error rather than a
-precedence rule: the prior is one object and there is nothing to say which
-of two should win.</p>
+\(m\) such blocks. The default prior is a centered multivariate Gaussian
+whose covariance is written by <code><a href="https://statmodels7.github.io/parameters7/reference/dr_prod.html" class="external-link">parameters7::dr_prod()</a></code>, where a coordinate
+is the logarithm of a standard deviation exactly.</p>
+<p>Naming a <code>distrib</code> on more than one member is an error and not a precedence
+rule: the prior is one object, so two of them cannot both be used.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

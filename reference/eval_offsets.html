@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,7 @@ evaluation.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>The number of observations, the length to recycle to.</p></dd>
+<dd><p>The number of observations.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -79,16 +79,17 @@ offset.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The expressions are kept and re-evaluated, never carried as numbers, and
-that is how an offset survives prediction. <code><a href="statmod_respec.html">statmod_respec()</a></code> calls
-this against the new data; a vector supplied through <code><a href="statmod.html">statmod()</a></code>'s
-<code>offsets</code> argument at fitting time has the wrong length for other rows and
-cannot be reused. Before this, <code>predict(fit, newdata =)</code> returned the
-predictor of a model with no offset at all.</p>
+    <p>The expressions are kept and re-evaluated, not carried as numbers, which
+is how an offset written in the formula applies in prediction.
+<code><a href="statmod_respec.html">statmod_respec()</a></code> calls this against the new data; a vector supplied
+through <code><a href="statmod.html">statmod()</a></code>'s <code>offsets</code> argument at fitting time has the length of
+the fitting data and cannot be reused on other rows.</p>
 <p>Each expression is evaluated in <code>data</code> with <code>env</code> behind it, so a symbol
 resolves as a column first and as a variable of the caller's environment
-second. A result shorter than <code>n</code> is recycled, so a single number is a
-constant offset.</p>
+second. A result of length one is recycled to <code>n</code>, so a single number is a
+constant offset, and a result of any other length except <code>n</code> is an error.
+A value that is missing or not finite is an error. Several offsets in one
+equation are summed.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

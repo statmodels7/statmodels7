@@ -1,9 +1,10 @@
 # Install or Update the Toolkit
 
-Installs the eight member packages of the toolkit from their GitHub
+Installs the member packages of the toolkit from their GitHub
 repositories under `github.com/statmodels7`, or prints what is installed
 and stops. The default is to print: installing packages is a side
-effect, and this function asks for it to be requested by name.
+effect, so the installation runs only when `action = "install"` is
+given.
 
 ## Usage
 
@@ -28,8 +29,8 @@ A data frame as
 returns, with columns `package` and `version`. Returned invisibly under
 both actions: the report prints to the console with
 [`cat()`](https://rdrr.io/r/base/cat.html) and is not the return value.
-Under `"install"` the versions are read **after** the install, so the
-result is the state the call left behind.
+Under `"install"` the versions are read after the installation, so the
+result is the state that the call left behind.
 
 ## Where the packages come from
 
@@ -41,35 +42,36 @@ the members itself and installs only what is missing or behind. The
 order the names are passed in therefore does not matter.
 
 pak is not a dependency of this package. When `action = "install"` is
-asked for and pak is not installed, the call stops with a message giving
-both the `install.packages("pak")` line and the equivalent
-`remotes::install_github()` call spelled out with all eight
-repositories, so a caller who prefers remotes can paste it.
+given and pak is not installed, the call stops with a message that
+contains the `install.packages("pak")` line and the equivalent
+`remotes::install_github()` call written out for every member
+repository, so that it can be pasted where remotes is used instead.
 
 ## Installing over a loaded package
 
 A member that is attached in the current session holds its own DLL open
-on Windows, and pak cannot replace a file that is in use. Restart R
-before installing, or the install of a compiled member fails partway and
-leaves that member in a state where
+on Windows, and pak cannot replace a file that is in use. R should be
+restarted before the installation. Otherwise the installation of a
+compiled member can fail partway and leave that member in a state in
+which
 [`packageVersion()`](https://rdrr.io/r/utils/packageDescription.html)
-reports it absent.
+reports it as absent.
 
 ## Printing
 
-Both actions print, and neither takes an argument to suppress it. The
-report exists to be read, and its return value is
+Both actions print, and no argument suppresses the output. The return
+value of the report is the result of
 [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md),
 so a caller who wants the versions without the console output calls that
-instead. The install hands the work to pak, which prints its own
-progress and takes no `quiet` argument.
+function instead. The installation is carried out by pak, which prints
+its own progress and has no `quiet` argument.
 
 ## See also
 
 [`statmodels7_versions()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_versions.md)
 for the versions alone,
 [`statmodels7_packages()`](https://statmodels7.github.io/statmodels7/reference/statmodels7_packages.md)
-for the members installed.
+for the names of the members.
 
 ## Examples
 
@@ -81,7 +83,7 @@ v <- statmodels7_update()
 #>   basis7           0.15.0
 #>   distributions7   0.78.1
 #>   linkfunctions7   0.5.2
-#>   modelterms7      0.96.0
+#>   modelterms7      0.98.0
 #>   numericals7      0.22.1
 #>   optimizers7      0.14.0
 #>   parameters7      0.24.0

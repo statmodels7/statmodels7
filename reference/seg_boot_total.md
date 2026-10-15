@@ -1,11 +1,12 @@
-# How Many Restarts the Terms Ask For
+# Restart Budget of the Break-Point Terms
 
-Returns the largest `n_boot` any break-point term of the specification
-declares, and zero when the model carries no such term. This is the
-budget
+Returns the largest `n_boot` set in a break-point term that is written
+directly in an equation of the specification, and zero when there is no
+such term. A break-point term nested inside a parameter of
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+is not counted.
 [`statmod_boot_restart()`](https://statmodels7.github.io/statmodels7/reference/statmod_boot_restart.md)
-spends: how many proposals it may try before giving up on improving the
-fit.
+takes this number as the maximum number of proposals that it tries.
 
 ## Usage
 
@@ -18,31 +19,32 @@ seg_boot_total(spec)
 - spec:
 
   A
-  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md),
-  whose terms are walked in every equation.
+  [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md).
+  The terms of every equation are examined.
 
 ## Value
 
-A single non-negative integer. Zero when no term declares `n_boot`, and
-a budget of zero turns the restart loop off.
+A single non-negative integer. It is zero when no term sets `n_boot`,
+and
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+does not run the restart loop for a budget of zero.
 
 ## Details
 
-The number is declared on the term.
+The number is set in the term.
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html)
 and
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html)
-each take `n_boot`, with a default of 10, because those are the terms
-whose objective has the spurious local optima the device exists for.
-Running the restarts belongs here, in the layer that can refit the
-model, and the split follows the one a penalty already uses: the term
-says what it needs, this package does it.
+each take `n_boot`, with a default of 10, because the objective of these
+terms has spurious local optima that the restarts search for. The
+restarts are run by this package, which can refit the model.
 
-A model with two break-point terms asking for 10 and 25 gets 25. The
-restart loop works on all of them together, since a proposal moves every
-break-point in the model at once, so the budget is one number and the
-largest request is the one honored.
+A model with two break-point terms that set `n_boot` to 10 and to 25
+gets 25. The restart loop works on all of the terms together, since a
+proposal is a configuration of positions for every break-point term in
+the model, so the budget is a single number and the largest of the set
+values is used.
 
 ## See also
 

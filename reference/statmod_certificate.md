@@ -1,9 +1,13 @@
 # What the Fit Certifies About the Point It Reports
 
-Three readings taken at the reported point and independent of the path
-the search took: the outer criterion's gradient, how far the
-coefficients sit above the penalized mode, and which hyperparameters
-have run to a boundary.
+Reads the outer criterion at the reported point, independently of the
+path of the search, and returns a state (`"converged"`, `"boundary"`,
+`"not converged"` or `"unknown"`) decided by the Newton decrement of the
+criterion. The result also holds the mode error of the coefficients, the
+hyperparameters and flat directions at a boundary, and the dimensionless
+readings that
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+prints.
 
 ## Usage
 
@@ -21,9 +25,7 @@ statmod_certificate(fit, tol = 0.01, flat = 0.002, edge = 8)
 - tol:
 
   The largest rise, in the criterion's own units, that a certified point
-  may still have available to it. ⚠️ Until 0.127.0 this was a threshold
-  on the outer gradient. The default has not moved and its meaning has:
-  a caller who set one should read
+  may still have available; see
   [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md).
 
 - flat:
@@ -48,160 +50,148 @@ A list with `state` (`"converged"`, `"boundary"`, `"not converged"` or
 `boundary`, `boundary_key`, `ridge` and `reason`. `ridge` is a list with
 one named vector per flat direction of the outer curvature, over the
 coordinates that move along it. `decrement` is what the verdict is made
-on and `gradient` is reported beside it; `curvature` says whether that
-decrement was read against an analytic Hessian or against one
-differenced from the exact gradient. `boundary_key` names the same
-coordinates as `boundary` does, in the key
+on and `gradient` is reported beside it. `curvature` is `"analytic"`
+when the decrement was read against an analytic Hessian, `"differenced"`
+against one differenced from the exact gradient,
+`"differenced criterion"` when the criterion itself was differenced by
+refits, and `NA` when no curvature was read. `boundary_key` names the
+hyperparameters among the coordinates of `boundary`, in the key that
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md)
-labels its rows by, which is what
+labels its rows by;
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-reads to leave a standard error off a coordinate pinned there.
+reads it to leave a standard error off a hyperparameter pinned at an
+edge. The state is `"not converged"` also when the fit recorded a
+coordinate at the edge of its chart whose return raises the
+log-likelihood.
 
-Three further fields are what
+Three further fields are those that
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-prints, and its page says how they are read: `inner` and `outer`, each a
-named vector with `gradient` and `eigen` from
+prints, and its page describes how they are read: `inner` and `outer`,
+each a named vector with `gradient` and `eigen` from
 [`certificate_readings()`](https://statmodels7.github.io/statmodels7/reference/certificate_readings.md)
-(`NA` where there is nothing to read), and `zeros`, `NULL` where no
-coefficient sits at the kink of a penalty and otherwise a named vector
-with `ratio` and `n` from
+(`NA` where there is nothing to read), and `zeros`, which reads `NULL`
+where no coefficient sits at the kink of a penalty and is otherwise a
+named vector with `ratio` and `n` from
 [`zero_readings()`](https://statmodels7.github.io/statmodels7/reference/zero_readings.md).
 
 ## Details
 
-**Why a certificate and not the optimizer's flag.** The flag says
-whether a search stopped on its own rule, which is a statement about the
-search. Measured across shapes, it does not order fits by quality: on
-one model the default reported success at a criterion of -1783.47 while
-the same data under
-[`optimizers7::lbfgs()`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
-reached -1664.43 and reported failure. What a reader wants is a property
-of the point.
+The flag of an optimizer records whether a search stopped on its own
+rule, which describes the search and does not order fits by quality. The
+certificate describes the reported point and does not depend on the path
+that led to it.
 
-**The state comes from the rise the criterion would still buy, and the
-mode error is reported beside it rather than folded into it.** That rise
-is the Newton decrement \\\tfrac{1}{2}g^\top A^{-1}g\\ of
+**The state comes from the rise that the criterion would still buy, and
+the mode error is reported beside it.** That rise is the Newton
+decrement \\\tfrac{1}{2}g^\top A^{-1}g\\ of
 [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md),
 in the criterion's own units, and `tol` is a threshold on it. The mode
-error does not decide a state and could not: measured over six shapes it
-reads 1.8e-16 to 6.1e-12 on four fits that are right, 22.8 on one that
-is not, and 0.114 on a random-changepoint `seg` whose answer is right to
-a correlation of 0.9932. A number that does not separate cannot decide a
-state, and a certificate that says how far from the mode is worth more
-than a boolean that hides it.
+error is the number of log-likelihood units by which the coefficients
+lie above the penalized mode. Where an outer criterion exists, the mode
+error does not enter the verdict; for a model with no penalty and no
+coefficient estimated on a criterion there is no other reading, and the
+state is decided by the mode error against
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+(see below).
 
-**A threshold on the GRADIENT was what this read until 0.127.0, and it
-is not scale-free.** The gradient of a criterion summed over \\n\\
-observations and \\p\\ penalized coefficients carries both, so one
-number cannot serve every shape: measured over 1350 fits against an
-independently located optimum, `max|g| > 1e-2` flags **131 of 663 fits
-that are within 1e-3 of their own optimum** while finding all 552 that
-are more than 1e-2 short of it. The decrement at the same cut flags **0
-of the 663** and finds the same 552. See
-[`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md)
-for the calibration behind that and for the two scaled gradients that
-were measured and rejected.
+The verdict is a threshold on the Newton decrement and not on the
+gradient, because the gradient of a criterion summed over \\n\\
+observations and \\p\\ penalized coefficients depends on the model, so
+that no single threshold serves every model. See
+[`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md).
+The default `tol` is 1e-2. A report of `"not converged"` at a good point
+can be seen and checked, whereas the certification of a point that is
+not a maximum cannot, so the threshold is set low.
 
-`tol` is 1e-2 rather than the middle of the two groups: the two ways of
-being wrong are not symmetric, and a certificate that says not converged
-at a good point is visible and checkable where one that certifies a bad
-point is the failure this exists to remove.
-
-**What it costs** is one outer gradient, one curvature and one solve, at
-a point the fit already holds; the criterion reconstructed from
-`fit@spec` equals the one the fit reports exactly on every shape, so the
-reading is of the fitted model and of no other. Where the form carries
-an analytic outer Hessian nothing is refitted. Where it does not – a
-criterion asked for on the expected information, or a penalty whose
-Hessian moves with the coefficients beside a structural term – the
-curvature comes from one central difference of the **exact** gradient,
-which is \\4n_h\\ refits and was measured at 0.05 to 0.13 seconds, 5 to
-37 per cent of the fit itself.
+**Cost.** The certificate needs one outer gradient, one curvature and
+one solve, at a point that the fit already holds. The criterion is
+reconstructed from `fit@spec`, so the reading refers to the fitted
+model. Where the form carries an analytic outer Hessian nothing is
+refitted. Where it does not (a criterion on the expected information for
+a family that does not supply the second derivative of its expected
+information, a model with a refreshable block or a structural term, or a
+penalty whose Hessian moves with the coefficients beside a structural
+term), the curvature is obtained by central differences of the **exact**
+gradient over the hyperparameters and the coefficients that the
+criterion estimates, which takes \\4(n_h + n\_\gamma)\\ refits.
 [`outer_curvature()`](https://statmodels7.github.io/statmodels7/reference/outer_curvature.md)
-says which route was taken, the result reports it in `curvature`, and
-[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-says so on the certificate's own line where it was differenced – a
-verdict resting on a curvature the package estimated rather than
-computed should not have to be asked for.
+records which route was taken, and the result reports it in `curvature`.
 
-**Where there is no outer gradient there are two cases, and they get
-different answers.** A model with **no penalty**, which covers `linpar`,
-`nl`, `seg`, `jump` and `jseg`, has no hyperparameter for a gradient to
-be about, so the only question left is whether the inner fit reached its
-mode, and the mode error answers it: measured over the reference battery
-it reads 5.2e-11 to 7.9e-05 on fits that are right against 1.215 on a
-`jump` fitted to data carrying a slope and a slope change it has no term
-for. A model whose only hyperparameters are **kinked**, `lasso`, `scad`,
-`mcp`, swept along a path because a Laplace approximation at a mode
-sitting on the kink has no meaning, stays `"unknown"`: its
-hyperparameter is the argument of a minimum over a grid and there is no
-gradient to read. Its mode error is reported over the coordinates the
-kink leaves free
+**Where there is no outer gradient to read, the answer depends on the
+case.** A model with **no penalty** and no coefficient that the
+criterion estimates (a family of one parameter, or `marginal` empty), as
+with `linpar`, `nl`, `seg`, `jump` and `jseg`, has no coordinate for an
+outer gradient to be about, so the only question left is whether the
+inner fit reached its mode. The state is `"converged"` when the mode
+error is at most
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
+and `"not converged"` otherwise. In every other case without an outer
+gradient the state is `"unknown"` and `reason` names the case: a model
+whose only hyperparameters are **kinked** (`lasso`, `scad`, `mcp`),
+which are chosen along a path because a Laplace approximation at a mode
+that sits on the kink has no meaning, so that the hyperparameter is the
+argument of a minimum over a grid; hyperparameters that are all held;
+hyperparameters chosen by
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md); and
+a model fitted with no outer criterion. `"unknown"` states that the
+certificate has no outer gradient to read and is not a report of failure
+to converge. With a kinked penalty the mode error is reported over the
+coordinates that the kink leaves free
 ([`free_of_kinks()`](https://statmodels7.github.io/statmodels7/reference/free_of_kinks.md)):
-at a coefficient the penalty has set to zero the score does not vanish
-but lies in the subdifferential, and read there it put a lasso's fit
-4.7e-03 above its mode on a coordinate whose coefficient is exactly 0
-and whose score is -0.715. Where the default
+at a coefficient that the penalty has set to zero the score does not
+vanish but lies in the subdifferential, so that reading the score there
+would give a false mode error. A model that also carries a smooth
+penalty estimated by
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-also estimates a dispersion's unpenalized coefficients beside the kink,
-those carry a gradient and the certificate reads it as usual.
+or [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+has an outer gradient, which the certificate reads as usual.
 
-A form whose criterion has no exact GRADIENT
+A form whose criterion has no exact gradient
 ([`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
-at order 1) is also `"unknown"` and never approximated: 2p refits to
-difference it would cost more than the fit. That is not in tension with
+at order 1) has the criterion itself differenced by refits when it has
+at most two hyperparameters and no coefficient estimated on the
+criterion (three refits for one coordinate, nine for two), and
+`curvature` is then `"differenced criterion"`. Otherwise the state is
+`"unknown"`, and `reason` gives the cause. This does not conflict with
 [`outer_curvature()`](https://statmodels7.github.io/statmodels7/reference/outer_curvature.md)
-differencing a HESSIAN where the analytic one is missing – what it
-differences there is the exact gradient, so the reading still rests on a
-derivative the package computes rather than on one it estimates twice
-over.
+differencing a Hessian where the analytic one is missing, because there
+it is the exact gradient that is differenced.
 
 **The boundary label.** A hyperparameter may run to an edge and belong
-there: on a covariate that is pure noise the smoothing parameter reaches
-9.2e+08, the criterion is genuinely flat, and calling that fit
-unconverged would be wrong. A coordinate is **reported** as sitting at a
-boundary where the criterion no longer moves with it, that is where its
-own curvature \\\lvert A\_{jj}\rvert\\ is at most `flat`. Such a
-hyperparameter has no meaningful interval, \\1/\sqrt{A\_{jj}}\\ being
-the conditional standard error of its free value, and that is what
-`boundary_key` tells
-[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md).
+there: on a covariate with no effect the smoothing parameter grows
+without bound, the criterion is flat in it, and the fit is not
+unconverged. A coordinate is **reported** as sitting at a boundary where
+the criterion no longer moves with it, that is where its own curvature
+\\\lvert A\_{jj}\rvert\\ is at most `flat`. Such a hyperparameter has no
+meaningful interval, \\1/\sqrt{A\_{jj}}\\ being the conditional standard
+error of its free value, and `boundary_key` gives
+[`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
+the keys of these hyperparameters, so that it leaves their standard
+errors out.
 
-Until 0.153.0 the label read the free value alone, \\\lvert\eta_j\rvert
-\> 8\\, and the size of a smoothing parameter depends on how its penalty
-is normalized and on the units of the response. Measured on the
-reference battery, one smooth beside a random effect puts its smoothing
-parameter at \\\eta\\ of \\-0.20\\, \\9.01\\ and \\-13.96\\ as the
-response is multiplied by 1, 0.01 and 1000, while its curvature reads
-2.50, 2.50 and 2.71; and on
-[`MASS::mcycle`](https://rdrr.io/pkg/MASS/man/mcycle.html) a mean smooth
-at \\\eta = -9.57\\ was named a boundary while its curvature is 5.57 and
-its effective degrees of freedom move by 1.63 per unit of \\\eta\\. Over
-the battery, the lotto 0 and D1 nets and those fits, the coordinates
-that really sit at an edge read \\A\_{jj}\\ of 4.2e-07 to 2.6e-04 and
-the interior ones 1.5e-02 to 168, so the default of 2e-3 sits in a gap
-of a factor 57 and reads as a conditional standard error of the free
-value above 22.
+The label is read from the curvature and not from the free value,
+because the size of a smoothing parameter depends on how its penalty is
+normalized and on the units of the response. The default `flat` of 2e-3
+corresponds to a conditional standard error of the free value above 22.
 
-What may be **excluded from the verdict** is narrower – the value
-together with
+What is **excluded from the verdict** is narrower: a coordinate that is
+reported at a boundary and whose
 [`coord_decrement()`](https://statmodels7.github.io/statmodels7/reference/coord_decrement.md),
-what that coordinate alone would still buy, having already met `tol` –
-and that second condition is what keeps `edge` from deciding the state,
-by an exact inequality rather than an argument about a maximum:
-restricting a decrement to a subset of the coordinates is that same
-maximum under a constraint and so no larger, hence a coordinate moved
-out of the interior set cannot raise what decides the state. A
-coordinate at an edge that has NOT settled stays under test and is named
-all the same, which is the honest pair of statements about it. Both
+the rise that the coordinate alone would still give, is at most `tol`.
+The second condition keeps `flat` from deciding the state: restricting a
+decrement to a subset of the coordinates is that same maximum under a
+constraint and so no larger, hence a coordinate moved out of the
+interior set cannot raise what decides the state. A coordinate at an
+edge that has not settled stays under test and is also named. Both
 `"converged"` and `"boundary"` are certified.
 
-⚠️ The two sets genuinely differ, and exactly where `edge` matters most:
-at a boundary the curvature collapses along with the gradient, so the
-one-coordinate reading \\g_j^2/(2A\_{jj})\\ is a ratio of two quantities
-going to zero and can come back large. Reporting on the conjunction left
-such a coordinate unnamed on the one platform where that fit landed
-there.
+The set of reported coordinates and the set excluded from the verdict
+can differ: at a boundary the curvature collapses along with the
+gradient, so the one-coordinate reading \\g_j^2/(2A\_{jj})\\ is a ratio
+of two quantities going to zero and can be large. Such a coordinate is
+named and stays under test.
 
 A **coefficient** that the criterion estimates beside the
 hyperparameters (the argument `marginal` of
@@ -212,32 +202,32 @@ is read the same way, with its curvature multiplied by \\\max(1,
 \gamma_j^2)\\: it is reported at a boundary where its conditional
 standard error exceeds \\22\\ times \\\max(1, \lvert\gamma_j\rvert)\\. A
 coefficient carries the units of its parameter and of its covariate,
-which a hyperparameter's free value does not, and the bare curvature
-then depends on them: on `cars`, the intercept of a constant \\\sigma\\
-on the identity link reads 15.38 with a standard error of 1.54 and the
-same fit with the distance in centimeters reads 1538 with 154, and only
-the second fell under 2e-3; so did a variance \\\sigma^2 = 236.5\\ with
-a standard error of 48.3. The ratio of the two is the same in any units.
-A Student \\t\\'s degrees of freedom at their gaussian limit, which is
-the case the label exists for, has a curvature of 3e-13 at a free value
-above 13 and is still named.
+which a hyperparameter's free value does not, so the bare curvature
+depends on those units. The ratio of the coefficient to its conditional
+standard error does not. The degrees of freedom of a Student \\t\\ at
+their gaussian limit are an example of such a coordinate.
 
-Where no curvature can be read at all – neither route produces one, and
-the state is then `"unknown"` – the label falls back on the free value,
-`edge`, there being nothing else to read.
+Where no curvature can be read at all (neither route produces one, and
+the state is then `"unknown"`) the label falls back on the free value,
+`edge`.
 
-A **ridge** is a direction rather than a coordinate: several coordinates
-move together and the criterion does not change, while each of them
-alone is curved. It is read on the equilibrated curvature \\A/(ss')\\,
-\\s_j = \sqrt{\|A\_{jj}\|}\\, whose eigenvalues are dimensionless; an
-eigenvalue of at most `flat` in absolute value names its eigenvector,
-written on the original coordinates in `boundary` and in `ridge` (see
+A **ridge** is a direction along which several coordinates move together
+while the criterion does not change, each of them alone being curved. It
+is read on the equilibrated curvature \\A/(ss')\\, \\s_j =
+\sqrt{\|A\_{jj}\|}\\, whose eigenvalues are dimensionless. An eigenvalue
+of at most `flat` in absolute value names its eigenvector, written on
+the original coordinates in `boundary` and in `ridge` (see
 [`certificate_ridges()`](https://statmodels7.github.io/statmodels7/reference/certificate_ridges.md)).
 A ridge whose own decrement is within `tol` leaves the verdict and the
-state is `"boundary"`. Measured on a Burr XII model whose shape \\k\\
-runs to its Weibull limit in one level of a factor, the eigenvalue was
-\\\pm 2 \times 10^{-7}\\ and the eigenvector the change of that level
-alone; over the reference battery the smallest eigenvalue was 0.375.
+state is `"boundary"`. A Burr XII shape that runs to its Weibull limit
+in one level of a factor is an example: the eigenvector is the change of
+that level alone.
+
+A fit that
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+has recorded with a coordinate at the edge of its chart whose return
+raises the log-likelihood has the state `"not converged"` whatever the
+readings above give, and `reason` names the coordinate.
 
 ## See also
 

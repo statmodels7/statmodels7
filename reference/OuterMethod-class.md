@@ -10,9 +10,16 @@ all return one. It carries which subspace of the coefficients is
 integrated over, which information matrix enters the determinant, and
 the settings a path or a cross-validation needs.
 
-One class serves all five, so a property a given criterion does not read
-is present and unused. Use the five constructors, which validate; this
-raw one does not.
+One class serves every criterion, so a property that a given criterion
+does not read is present and unused. The class validates the values of
+its properties. The constructors
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+and [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+also match `hessian` and `rule` against their choices and check `k` and
+`marginal`.
 
 ## Usage
 
@@ -39,8 +46,11 @@ OuterMethod(
 
 - hessian:
 
-  `"expected"` or `"observed"`. Which information enters the Laplace
-  determinant, and whether the exact gradient is available.
+  `"auto"`, `"expected"` or `"observed"`. Which information enters the
+  Laplace determinant.
+  [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+  settles `"auto"` against the family through
+  [`outer_resolve()`](https://statmodels7.github.io/statmodels7/reference/outer_resolve.md).
 
 - k:
 

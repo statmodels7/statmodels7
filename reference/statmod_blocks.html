@@ -9,7 +9,7 @@ with a kink and are therefore fitted by a method of their own."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,22 +63,23 @@ with a kink and are therefore fitted by a method of their own.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>smooth</code> (the stacked column indices fitted
-jointly) and <code>sparse</code> (a list, one entry per non-smooth term, each
-with the parameter, the term's name, its stacked columns and its
-penalty).</p>
+jointly) and <code>sparse</code> (a list with one entry per penalized unit that has
+a kink). Each entry holds <code>param</code>, <code>term</code> (the penalty's key), <code>cols</code>
+(positions within the parameter's coefficients), <code>index</code> (positions in the
+stacked vector), <code>penalty</code>, <code>structural</code>, <code>zterm</code> (the term's own name)
+and <code>ids</code> (the labels under which hyperparameters are shared).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The property that decides is one each term already reports: a penalty whose
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_kinks.html" class="external-link">penalties7::penalty_kinks()</a></code> is non-empty is not twice
-differentiable in its coefficients, so its block cannot enter a system
-solved by a curvature. Everything else goes into one system and is
-estimated all together: an unpenalized block, a ridge, a spline, a random
-effect, a structured or additive penalty. Their joint curvature exists,
-and using it closes a fit in a handful of iterations.</p>
-<p>A term whose penalty gains a smooth approximation would answer
-<code>penalty_kinks()</code> differently and move into the smooth block with no
-change here.</p>
+    <p>The split depends on the penalty of each penalized unit (see
+<code><a href="statmod_penalized.html">statmod_penalized()</a></code>). A penalty for which <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_kinks.html" class="external-link">penalties7::penalty_kinks()</a></code>
+returns a finite point is not twice differentiable in its coefficients, so
+its block cannot enter a system solved by a curvature. Everything else goes
+into one system and is estimated all together: an unpenalized block, a
+ridge, a spline, a random effect, a structured or additive penalty. Their
+joint curvature exists, so a scoring or Newton step applies to them.</p>
+<p>The classification is made by <code><a href="penalty_has_kink.html">penalty_has_kink()</a></code>, so a penalty that
+becomes smooth moves into the smooth block with no change here.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

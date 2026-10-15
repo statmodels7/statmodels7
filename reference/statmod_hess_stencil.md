@@ -17,7 +17,8 @@ statmod_hess_stencil(
   idx,
   basis = NULL,
   inner = NULL,
-  h = hess_stencil_step()
+  h = hess_stencil_step(),
+  gam = NULL
 )
 ```
 
@@ -34,7 +35,7 @@ statmod_hess_stencil(
 
 - coef:
 
-  The coefficients the probes start from.
+  The coefficients from which the probes start.
 
 - hyper:
 
@@ -56,64 +57,78 @@ statmod_hess_stencil(
 
 - inner:
 
-  The inner optimizer the probes refit with;
+  The inner optimizer with which the probes refit;
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
   where none is given.
 
 - h:
 
-  The step, on the free scale the search runs on.
+  The step, on the free scale on which the search runs. For a
+  coefficient that the criterion estimates the step is \\h \max(1,
+  \|\gamma_j\|)\\.
+
+- gam:
+
+  The coefficients that the criterion estimates, from
+  [`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md),
+  or `NULL`. Each probe holds them at its own values and refits the
+  rest, as
+  [`outer_fit()`](https://statmodels7.github.io/statmodels7/reference/outer_fit.md)
+  does.
 
 ## Value
 
-The Hessian on the free scale, or `NULL` where a probe could not be
-evaluated or the two steps disagree.
+The Hessian on the free scale over the hyperparameters followed by the
+coefficients in `gam`, or `NULL` where a probe could not be evaluated or
+the two steps disagree.
 
 ## Details
 
-This is what a model carrying a structural term gets, and the reason is
-that the analytic assembly of
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
-spans the stacked coefficients while a filter's own parameters are
-estimated beside them and move with the hyperparameter as well.
-Extending it is not a matter of bookkeeping: each order of
-differentiation through the recursion pulls in one more order of the
-response's family, so the first derivative reads the family's fourth
-through
-[`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
-and the second would read a fifth, which does not exist.
+uses this function for a model with a structural term for which the
+joint assembly
+[`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+does not apply: a filter without a penalty over its own parameters, a
+term of the likelihood shape such as `regime()`, or a term that does not
+implement
+[`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html).
+It also uses it on the expected information where
+[`outer_gradient_ok()`](https://statmodels7.github.io/statmodels7/reference/outer_gradient_ok.md)
+does not admit order 2. The analytic assembly over the coefficients
+alone is not the criterion's Hessian when a filter's own parameters move
+with the hyperparameter.
+[`statmod_structural_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_hess.md)
+covers that case with the fourth derivative of the recursion from
+[`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)
+and the fifth derivative of the family from
+[`distributions7::distrib_deriv5()`](https://statmodels7.github.io/distributions7/reference/distrib_deriv5.html).
 
-Differencing an ANALYTIC quantity once is the licence this toolkit
-already grants itself for the Student t's degrees of freedom and for the
-marginal break-point's prior rows. What it forbids is a difference of a
-difference, and there is one layer here.
+The function differences the exact gradient once, so the result contains
+a single layer of finite differences. The matrix is symmetrized by
+averaging it with its transpose.
 
-## The two probes start from the same place
+## Probes
 
-Both refit from the coefficients given and from the structural state as
-it stands, restored before each probe, so the two differ in the
-hyperparameter alone. That is what makes the result stable: the mode's
-own location error is nearly the same at \\+h\\ and \\-h\\ and cancels
-in the difference rather than being amplified by \\1/h\\. Measured on a
-penalized filter against a second difference of the criterion, the
-result is FLAT over four decades of the step – -1.971435 at every \\h\\
-from 1e-2 down to 3e-5, against a criterion second difference of
--1.971456 – where the assembled Hessian reads -1.1e-08.
+Each probe refits the coefficients from the coefficients supplied and
+from the structural state as it stands, which is restored before each
+probe, so that the two probes of a column differ in the hyperparameter
+alone. The location error of the mode is nearly the same at \\+h\\ and
+\\-h\\ and cancels in the difference. Where the inner optimizer is
+[`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md),
+the probes use its tolerance `min(tol, hess_stencil_inner_tol())`, a
+budget of at least 500 iterations and no stopping criterion of its own;
+any other inner optimizer is used as given.
 
-## Where it refuses
+## Rejection of an unresolved stencil
 
-A stencil inherits the reproducibility of the quantity it differences,
-divided by the step, so where the mode is poorly located the answer is
-noise rather than a curvature. It is therefore computed TWICE, at `h`
-and at `3 * h`, and refused where the two disagree by more than
-[`hess_stencil_tol()`](https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.md).
-The two regimes are six orders apart and nothing sits between them:
-measured, 5.5e-08 on a penalized filter, 9.3e-07 on an unpenalized one
-beside a smooth and 1.1e-06 on an ordinary smooth, against 6.0e-01 and
-5.7e-01 on two mixed covariance classes whose correlation the search
-left at \\\|z\| = 8.53\\, where the chart's conditioning is 1e10 and the
-exact gradient itself reads 1e-3. A refusal there is the answer, and the
-consumers already handle `NULL`.
+A stencil inherits the reproducibility of the quantity that it
+differences, divided by the step, so where the mode is poorly located
+the result is noise. The matrix is therefore computed at `h` and at
+`3 * h`, and the function returns `NULL` where the largest absolute
+difference between the two exceeds
+[`hess_stencil_tol()`](https://statmodels7.github.io/statmodels7/reference/hess_stencil_step.md)
+times the largest absolute entry of the first. Callers treat a `NULL`
+result as an unavailable curvature.
 
 ## See also
 

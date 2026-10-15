@@ -9,7 +9,7 @@ the order that function returns those positions in."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,15 +77,14 @@ the order that function returns those positions in.</p>
     <p>The three kinds are read from two different places. An ordinary unit's
 coordinates are coefficients and come from <code>coef</code>. A structural unit's
 are a filter's own parameters and come from the design's structural state,
-on the UNCONSTRAINED scale, which is the scale the recursion is
+on the unconstrained scale, which is the scale the recursion is
 differentiated on and the one the penalty covers. A mixed class holds some
 of each and interleaves them group by group, so its pieces are read
 separately and put back in the class's own order, which is what
 <code><a href="class_joint_pieces.html">class_joint_pieces()</a></code> records.</p>
-<p>Written beside <code><a href="unit_joint_positions.html">unit_joint_positions()</a></code> because a value and its address
-are one convention: a caller composing them separately would scatter one
-unit's numbers at another's coordinates, and the two would agree only by
-accident.</p>
+<p>Written beside <code><a href="unit_joint_positions.html">unit_joint_positions()</a></code> because a value and its position
+must follow the same convention. A caller that composed them separately
+could place one unit's values at another unit's positions.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

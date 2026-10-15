@@ -13,7 +13,7 @@ other name the caller wrote resolves as usual, one step further out."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,23 +66,22 @@ of the result. Everything visible from <code>env</code> stays visible.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A new environment holding one binding per exported function of
-<span class="pkg">modelterms7</span>, currently 82 of them, with <code>env</code> as its parent.</p>
+<span class="pkg">modelterms7</span>, with <code>env</code> as its parent.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The masking this removes is real and its symptom names nothing.
-<span class="pkg">mgcv</span> exports <code>s()</code> and <code>te()</code>, and <span class="pkg">segmented</span> exports <code>seg()</code>.
-With either package attached, a caller writing a <code><a href="statmod.html">statmod()</a></code> formula gets
-that package's function, whose value is not a model term; the failure then
-surfaces inside <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code> as <code>invalid type (list) for variable 's(x)'</code>, which names neither the call nor the mask.</p>
+    <p><span class="pkg">mgcv</span> exports <code>s()</code> and <code>te()</code>, and <span class="pkg">segmented</span> exports <code>seg()</code>.
+With either package attached, a <code><a href="statmod.html">statmod()</a></code> formula that uses one of these
+names would call that package's function, whose value is not a model term.
+The failure then occurs inside <code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code> as <code>invalid type (list) for variable 's(x)'</code>, a message that does not mention the masking package.</p>
 <p>Putting <span class="pkg">modelterms7</span> in front removes the ambiguity at the point
 where the formula is read. A caller who wants the other package's function
-writes <code>mgcv::s(x)</code>, which reaches past the shim; <span class="pkg">modelterms7</span>'s
-formula interpreter then rejects it, naming the class returned and the
-package that supplied it.</p>
-<p>Only functions are copied. <span class="pkg">modelterms7</span> exports objects that are not
-functions, S7 classes among them, and shadowing those would change what a
-name means without any of the benefit.</p>
+writes <code>mgcv::s(x)</code>, which reaches past the shim; the formula interpreter
+of <span class="pkg">modelterms7</span> then rejects the value, naming the class returned
+and the call as written.</p>
+<p>A binding is made for each export of <span class="pkg">modelterms7</span> for which
+<code><a href="https://rdrr.io/r/base/is.function.html" class="external-link">is.function()</a></code> is <code>TRUE</code>. The S7 class generators of that package are
+functions and are copied with the others.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

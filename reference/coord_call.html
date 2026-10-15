@@ -9,7 +9,7 @@ dgCMatrix apart into the slots the second reads."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,20 +84,26 @@ sweep.</p></dd>
 columns, <code>FALSE</code> to hold the running residual. <code><a href="coord_covariance.html">coord_covariance()</a></code>
 decides.</p></dd>
 
+
+<dt id="arg-means">means<a class="anchor" aria-label="anchor" href="#arg-means"></a></dt>
+<dd><p>The weighted column means of the block, one per column, with
+which the kernel centers the columns and the working response implicitly,
+or <code>numeric(0)</code> for an uncentered block.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The kernel's list of three: <code>beta</code> (the fitted coefficients,
 length <code>p</code>), <code>sweeps</code> (how many passes it took) and <code>grad</code> (the gradient
-at the point reached, length <code>p</code>).</p>
+of the weighted quadratic at the point reached, length <code>p</code>, computed only
+when the strong rule left some column out and a vector of zeros
+otherwise).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The two kernels are one algorithm instantiated twice over a column
 accessor, and they agree bit for bit. The arithmetic licenses that:
-skipping a structural zero omits an addition of zero, which is exact. It
-is the one place in this toolkit where an identity assertion over compiled
-floating point is correct.</p>
+skipping a structural zero omits an addition of zero, which is exact.</p>
 <p>The <code>dgCMatrix</code> is taken apart in R, so the compiled code needs no
 dependency on the <span class="pkg">Matrix</span> package's C API.</p>
     </div>

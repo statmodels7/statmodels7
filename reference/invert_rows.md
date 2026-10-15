@@ -44,11 +44,11 @@ invert_rows(fit, out, level, test, type)
 
 A row the restricted fit cannot hold keeps `NA` limits rather than the
 Wald ones it arrived with, so that one column never carries two
-different intervals. Which rows those are is
-[`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)'s
-answer, asked once; where it is none of them the request is refused, a
-table of nothing but missing values being a worse answer than the reason
-for it.
+different intervals.
+[`testable_coords()`](https://statmodels7.github.io/statmodels7/reference/testable_coords.md)
+determines which rows those are; if it names none of the rows of the
+table, the function signals an error, since a table of missing values
+alone is less informative than the reason.
 
 ## See also
 

@@ -1,9 +1,9 @@
 # Rebuild a Specification Against New Data
 
-Returns the fit's own specification when `data` is `NULL`, and one
-carrying the fitted terms reapplied to the new rows otherwise. This is
-the one place the two cases are told apart, so every route that accepts
-a `data` argument treats `NULL` alike.
+Returns the fit's own specification when `data` is `NULL`, and a
+specification with the fitted terms reapplied to the new rows otherwise.
+The two cases are distinguished here only, so that every route that
+accepts a `data` argument treats `NULL` alike.
 
 ## Usage
 

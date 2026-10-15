@@ -37,9 +37,9 @@ A single logical.
 ## Details
 
 The outer search always minimizes, so this decides whether the criterion
-goes in as it stands or with its sign turned. Asking the method, rather
-than writing the list of kinds into the search, means a criterion added
-later declares its own orientation in one place.
+goes in as it stands or with its sign turned. Reading the orientation
+from the method, and not from a list of kinds written into the search,
+lets a criterion added later declare its own orientation in one place.
 
 ## See also
 

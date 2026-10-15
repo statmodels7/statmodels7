@@ -52,14 +52,14 @@ information from
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
 and the penalty's Hessian from
 [`statmod_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalty_at.md).
-It is written once because three readers want the same matrix at the
-same point and must not disagree about it –
-[`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)'s
-smoother,
-[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)'s
-variance and
-[`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)'s
-rank test.
+It is written once because its readers, the rank test of
+[`deficient_coords()`](https://statmodels7.github.io/statmodels7/reference/deficient_coords.md)
+in
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md),
+the readings of the alternation
+([`alternation_readings()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md))
+and the flat-direction test of the outer search, must use the same
+matrix at the same point.
 
 A kinked penalty contributes no curvature away from its kink, and any
 non-finite entry would be the kink itself reached by a hair, so the

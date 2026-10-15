@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,11 +68,9 @@ the schedule.</p></dd>
 <code><a href="iwls_scale.html">iwls_scale()</a></code> measures it. That is negligible beside a well-curved
 coordinate and already large beside one whose information has fallen by
 eight orders, which is the disparity the damping exists to correct.</p>
-<p>Each further escalation multiplies by a hundred, so eight of them span
-sixteen orders and reach a damping that dominates the largest diagonal.
-Measured on the case this was built for, the offending coordinate needed
-\(\lambda \approx 100\) against a largest diagonal of 2328, which the
-sixth escalation passes.</p>
+<p>Each further escalation multiplies by a hundred, so that the eight
+escalations that a run may use span fourteen orders of magnitude, from
+\(10^{-8}\) to \(10^{6}\) times the largest diagonal.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

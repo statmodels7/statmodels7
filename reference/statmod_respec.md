@@ -30,8 +30,12 @@ statmod_respec(spec, data, need_response = TRUE)
 A
 [`StatmodSpec()`](https://statmodels7.github.io/statmodels7/reference/StatmodSpec-class.md)
 carrying the fitted terms, with `newdata` set to `data`, `n_obs` its row
-count, and the offsets and response evaluated there. Every other
-property is `spec`'s.
+count, and the response and the offsets named in the formula evaluated
+there. The weights are reset to ones, the family carries the numbers of
+trials of these rows (missing where the rows have no response and the
+family holds one per observation), and a structural term is rebuilt on
+them where they carry a complete response. Every other property is
+`spec`'s.
 
 ## Details
 
@@ -40,29 +44,27 @@ a spline's knots, a basis reparametrization.
 [`modelterms7::term_predict()`](https://statmodels7.github.io/modelterms7/reference/term_predict.html)
 reapplies that record to new rows.
 
-Rebuilding instead gives a block of the same shape, multiplying the same
-coefficients, that means something else. Measured on
-`y ~ s(x, bspline_smooth(k = 10))` at 200 observations: predicting on 40
-of the rows the model was fitted to differed from the fitted values
-there by 0.237, and on the 51 rows with \\\|x\| \< 0.5\\, where the
-rebuilt knots move furthest, by 1.19. Handing back the whole data agrees
-exactly, which is why nothing noticed.
+Rebuilding the block on the new rows instead would give a block of the
+same shape, multiplying the same coefficients, with a different meaning:
+the knots of a spline, for example, would move with the rows. A
+structural term is the exception. Where the rows carry a complete
+response, it is rebuilt on them with
+[`modelterms7::term_build()`](https://statmodels7.github.io/modelterms7/reference/term_build.html),
+so that its recursion runs over their times and groups from its own
+start; where they do not, it continues the fitted series.
 
-The offsets are re-evaluated against `data` rather than carried across,
-since a vector of the fitting data's length says nothing about other
-rows.
+The offsets named in the formula are re-evaluated against `data` rather
+than carried across, since a vector of the fitting data's length does
+not apply to other rows.
 
 ## The rows are the data's
 
 `n_obs` is `nrow(data)` and never the length of whatever the response
 expression evaluates to. `eval(expr, data, env)` falls through to the
 formula's environment for anything `data` does not carry, and a
-prediction grid carries the covariates and not the response, so the
-response resolved to whatever variable of that name was in scope – in an
-ordinary session, the fit's own – and the count came back as the fitting
-one. Measured on a fit of 400 rows and a grid of 37,
-[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-returned 400 values.
+prediction grid carries the covariates and not the response. A response
+expression would then resolve to a variable of that name in scope, such
+as the fit's own response, and the row count would be that variable's.
 
 So a response whose variables are not columns of `data` is **absent**
 where `need_response` is `FALSE`, and one of a length other than

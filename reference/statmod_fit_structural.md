@@ -59,15 +59,17 @@ A list with `value`, `converged` and `iterations`.
 
 ## Details
 
-A general optimizer serves here and the scoring step does not, because
-these are not coefficients of a design block: there is no \\X'WX\\ to
-invert, the predictor being a recursion and not a product.
+The scoring step does not apply to these parameters, because they are
+not coefficients of a design block: the predictor is a recursion and not
+a product, so there is no \\X'WX\\ to invert. A general optimizer
+([`optimizers7::lbfgs()`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
+by default) is used instead.
 
 The gradient is exact.
 [`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md)
 chains the filter's own Jacobian, which is already the total derivative
-of the predictor in those parameters, so a quasi-Newton method has
-everything it needs.
+of the predictor in those parameters, and the derivative of the term's
+own penalties is added.
 
 ## See also
 

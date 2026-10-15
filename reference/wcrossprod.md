@@ -2,10 +2,10 @@
 
 Computes \\A^\top \mathrm{diag}(w) B\\, the weighted cross product the
 information matrix and the outer Hessian are assembled from. Above a
-measured work threshold, and only when the caller asked for more than
-one thread, the work goes to the package's own threaded kernel.
-Everywhere else it evaluates `crossprod(A * w, B)`, which is the
-expression the kernel replaces.
+work threshold, and only when more than one thread is requested, the
+work goes to the package's own threaded kernel. Everywhere else the
+function evaluates `crossprod(A * w, B)`, which is the expression the
+kernel replaces.
 
 ## Usage
 
@@ -17,9 +17,9 @@ wcrossprod(A, w, B, threads = 1L)
 
 - A, B:
 
-  Dense design blocks with the same number of rows, `n x pa` and
-  `n x pb`. Either may be sparse, in which case the Matrix route is
-  taken and the result is whatever
+  Design blocks with the same number of rows, `n x pa` and `n x pb`. If
+  either is not a base dense matrix, the sequential route is taken and
+  the result is whatever
   [`crossprod()`](https://rdrr.io/r/base/crossprod.html) gives for that
   pair.
 
@@ -48,7 +48,7 @@ thread owns one entry \\(j,k)\\ and accumulates its whole dot product,
 in ascending row order, with the weight multiplied onto `A`'s entry
 before the product is formed. No accumulation is ever split between
 threads, so the sum is the same sequence of additions at any count and
-the result is identical bit for bit at 1, 2 or 24 threads.
+the result is identical bit for bit at any thread count.
 
 That guarantee is about the kernel alone. It says nothing about the two
 routes agreeing with each other: engaging the kernel replaces a BLAS
@@ -59,20 +59,18 @@ product elsewhere.
 
 ## When the kernel is used
 
-All four conditions must hold: `threads > 1`, `A` and `B` are base dense
-matrices, `w` has one entry per row, and the work \\n \times p_A \times
-p_B\\ is at least `2e5` multiply-adds. A sparse design keeps its Matrix
-route, where a dense kernel would gain nothing: the cost there is set by
-the number of stored nonzeros, and the threshold above reads the dense
-shape.
+All of the following must hold: `threads > 1`; `A` and `B` are base
+dense matrices with the same number of rows; `w` has one entry per row;
+and the work \\n \times p_A \times p_B\\ is at least `2e5`
+multiply-adds. Otherwise `crossprod(A * w, B)` is evaluated, which
+signals its own error for blocks of different heights. A sparse design
+keeps its Matrix route, where a dense kernel would gain nothing: the
+cost there is set by the number of stored nonzeros, and the threshold
+reads the dense shape.
 
 The threshold is a constant in the source, with no argument to set it.
-It was measured: the crossover where opening a parallel region costs
-what it saves sits near \\9 \times 10^4\\ multiply-adds on the
-development machine (0.94x at \\8 \times 10^4\\, 1.7x at \\10^5\\, 10x
-at \\2 \times 10^6\\, 19x to 20x at the shapes a real fit assembles),
-and the gate is set above it, where a misjudgment in either direction
-costs almost nothing.
+It lies above the work at which opening a parallel region costs what it
+saves.
 
 ## Dimnames
 
@@ -83,7 +81,14 @@ so both routes name their output alike.
 
 ## See also
 
-[`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
+[`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md),
+[`wxsq()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
 and
 [`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md),
-the other two threaded assembly kernels, which share this threshold.
+the other threaded assembly kernels. They use the same constant, \\2
+\times 10^5\\, on their own measures of work: \\n p\\ for
+[`xtv()`](https://statmodels7.github.io/statmodels7/reference/xtv.md)
+and
+[`wxsq()`](https://statmodels7.github.io/statmodels7/reference/xtv.md),
+and \\n p^2\\ for
+[`xtx()`](https://statmodels7.github.io/statmodels7/reference/xtx.md).

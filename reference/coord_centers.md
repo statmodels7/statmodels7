@@ -48,16 +48,9 @@ intercept is one of them. Where the columns are not centered, each
 change of a coefficient moves the mean of the fit, which only the
 intercept can take back, and the intercept is updated in another block.
 The alternation between the two then converges at a rate set by how
-close each column is to the constant. Measured on
-[`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html), whose
-columns have means up to 33 times their spread, a lasso on the fifteen
-raw predictors of `log(y)` stopped at a fixed \\\lambda\\ of 17.4 with
-the objective \\-\ell + \rho\\ at -17.84 where its minimum is -21.93,
-six coefficients against nine, reporting `converged = FALSE`, and the
-path chose the empty model at \\\lambda = 374.5\\. With the columns
-centered the path chooses nine of them at \\\lambda = 17.4\\, the point
-it reaches with the predictors centered in the data, in 7.0 seconds of
-processor time against 38.2.
+close each column is to the constant. Centering the columns removes this
+dependence, and the alternation then converges to the same point that a
+fit with centered predictors reaches.
 
 Solving with the intercept profiled out is the Frisch-Waugh-Lovell
 reading of an unpenalized constant: the coefficients of the block are

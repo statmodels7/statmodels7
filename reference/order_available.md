@@ -4,7 +4,7 @@
 in every parameter the model carries an equation for. Used as a gate by
 the consumers that can fall back on something else, and through
 [`order_shortfall()`](https://statmodels7.github.io/statmodels7/reference/order_shortfall.md)
-as a refusal by the ones that cannot.
+as an error message by the ones that cannot.
 
 ## Usage
 
@@ -20,7 +20,10 @@ order_available(distrib, need)
 
 - need:
 
-  The order asked for; see the table in `R/order.R`.
+  The order required, an integer from 1 to 5: 1 for a score continuous
+  in the coefficients, 2 for the curvature, 3 and 4 for the exact
+  gradient and Hessian of a marginal criterion, and 5 for the fourth
+  derivative of a filtered predictor.
 
 ## Value
 

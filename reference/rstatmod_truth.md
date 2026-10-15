@@ -38,21 +38,20 @@ the structural term's own parameters or `NULL`.
 
 ## Details
 
-The rule the whole function is written from is that **whoever knows what
-a quantity means draws it**. A coefficient of a design column has no
-other owner and is drawn from a normal of width `sd`. A coordinate some
-penalty covers is drawn from that penalty read as a prior, so a Gaussian
-random effect gives Gaussian effects and a lasso gives Laplace ones; the
-prior's own scale is drawn too, on the chart its penalty carries. A
-structural term's parameters are drawn by the term, which knows their
-charts.
+Each quantity is drawn by the component that defines its meaning. A
+coefficient of a design column has no other owner and is drawn from a
+normal of width `sd`. A coordinate that some penalty covers is drawn
+from that penalty read as a prior, so a Gaussian random effect gives
+Gaussian effects and a lasso gives Laplace ones; the prior's own scale
+is drawn too, on the chart that its penalty carries. A structural term's
+parameters are drawn by the term, on the chart that each one rides.
 
 The truth is drawn once whatever `n_sim` is, so the replicates differ in
 what is random and not in what is being estimated.
 
-A hyperparameter the term holds is used as given rather than drawn:
-`s(x, bspline_smooth(), hyper = c(lambda = 2))` says what the smoothing
-is and the simulation says it too.
+A hyperparameter that the term holds is used as given and not drawn: in
+`s(x, bspline_smooth(), hyper = c(lambda = 2))` the simulation uses the
+smoothing parameter that the term specifies.
 
 ## See also
 

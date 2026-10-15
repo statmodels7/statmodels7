@@ -26,56 +26,58 @@ outer_hyper_index(spec, blocks)
 
 A data frame with one row per estimated hyperparameter, or per group of
 shared ones, and three character columns, `parameter`, `term` and
-`name`. The links that carry each onto the whole line ride on the
-`"links"` attribute, a list the same length as the frame has rows, since
-a list column would not survive the subsetting the search does; the
+`name`. The links that carry each onto the whole line are in the
+`"links"` attribute, a list with one element per row of the frame (a
+list column would not survive the subsetting that the search does). The
 `"members"` attribute is a data frame of the same three columns plus
-`row`, saying which hyperparameters each row stands for.
+`row`, which lists the hyperparameters that each row stands for.
 
 ## Details
 
 A term whose penalty has a kink is left out. Its coefficients are
 estimated by a coordinate descent with everything else held fixed, and
-the criterion is a Laplace approximation, which asks for a second
-derivative that does not exist at a kink. Those hyperparameters go to a
-path instead.
+the criterion is a Laplace approximation, which needs a second
+derivative that does not exist at a kink. Those hyperparameters are
+chosen by a path instead.
 
-A hyperparameter its own term holds is left out too, whatever kind of
-penalty it belongs to:
-[`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
-is what says so.
+A hyperparameter that its own term holds is left out too, whatever kind
+of penalty it belongs to, and so is every member of a shared label when
+one member holds it.
 
-The result is the index the whole outer search runs on. Its row count is
-the dimension of that search, and at zero rows the criterion does not
-run at all.
+The result is the index of the hyperparameters on the outer search. The
+search also moves the coefficients that the criterion estimates (see
+[`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
+so its dimension is the number of rows plus the number of those
+coefficients. With no rows and no such coefficients the criterion does
+not run.
 
 ## Shared hyperparameters
 
 Hyperparameters carrying the same label through
 [`modelterms7::term_ids()`](https://statmodels7.github.io/modelterms7/reference/term_ids.html)
-are estimated at one value, so they occupy ONE row: the search has one
-coordinate for the group. The row is identified by its first member,
-which is what keeps every lookup that reads `parameter`/`term`/`name`
-working, and the `"members"` attribute says which hyperparameters that
-row stands for.
+are estimated at one value, so they occupy one row: the search has one
+coordinate for the group. The row is identified by its first member, so
+that every lookup that reads `parameter`, `term` and `name` keeps
+working, and the `"members"` attribute lists the hyperparameters that
+the row stands for.
 
-Sharing does not merge the penalties, which stay two objects estimated
-at one value, so the row's derivative is the SUM of its members' and the
-value is written back under each member's own key. Where nothing is
-shared the member table is the index itself, one line per row, and every
-loop written over members is the loop that was there before.
+Sharing does not merge the penalties, which remain two objects estimated
+at one value, so the derivative of the row is the sum of the derivatives
+of its members and the value is written back under the key of each
+member. Where nothing is shared the member table is the index itself,
+one line per row.
 
-Two members must carry the same link, since one free value has to land
-in both their domains, and a label may not span a smooth penalty and a
-kinked one, which are estimated by two different machines and would be
-given two different values. Both are rejected here, where both sides are
-visible.
+Two members must carry the same link, since one free value has to lie in
+both of their domains, and a label may not span a smooth penalty and a
+kinked one, which are estimated by two different procedures and would be
+given two different values. Both cases are rejected here, where both
+sides are visible.
 
 ## See also
 
 [`hyper_to_eta()`](https://statmodels7.github.io/statmodels7/reference/hyper_to_eta.md)
 for the map those links define,
-[`statmod_held()`](https://statmodels7.github.io/statmodels7/reference/statmod_held.md)
-for what is excluded,
+[`statmod_held_ids()`](https://statmodels7.github.io/statmodels7/reference/statmod_held_ids.md)
+for the shared labels that a term holds,
 [`index_members()`](https://statmodels7.github.io/statmodels7/reference/index_members.md)
 for the member table.

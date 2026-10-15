@@ -13,7 +13,7 @@ m &amp;lt;= 32 &amp;amp;&amp;amp; n &amp;gt; 8 * m."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,13 +74,10 @@ covariance form, which holds the gradient itself and caches columns of
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The covariance form replaces an \(O(n)\) read of the gradient with an
 \(O(m)\) one, and pays for it by building a column of \(X'WX\) at
-\(O(nm)\) the first time a coordinate moves off zero. It is worth having
-only while \(m\) is small next to \(n\), and the two conditions say
-exactly that.</p>
-<p>The measurement is unambiguous in the other direction: at 5000
-observations with 200 columns and nothing screened away, the covariance
-form cost 70 milliseconds against 55 for the residual, the Gram columns
-being dearer than the residual passes they replaced.</p>
+\(O(nm)\) the first time the coordinate is nonzero. It is used only
+while \(m\) is small next to \(n\): \(m \le 32\) and \(n &gt; 8m\).
+When many coordinates are live, the Gram columns cost more than the
+residual passes that they replace, so the residual form is used.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

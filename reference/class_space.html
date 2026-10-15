@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,12 +64,13 @@ has columns in the stacked coefficient vector. A member inside a structural
 term has none: its coordinates are that term's own parameters, which the
 design carries in its structural state.</p>
 <p>A class whose members are all of one kind is read in that vector. A class
-<strong>split between them</strong> is read in the JOINT vector the fit already builds,
+<strong>split between them</strong> is read in the joint vector the fit already builds,
 \([\beta; \zeta_{\mathrm{free}}]\): the inner step, the marginal
 criterion and the variance all assemble it, with the coefficients first and
 a filter's free parameters after them. What such a class adds to those three
-is the CROSS block, which the penalty produces on its own – it is one
-Hessian over the class's stacked vector and knows nothing of the split.</p>
+is the cross block, which the penalty produces on its own: it is one
+Hessian over the class's stacked vector, computed without reference to the
+split between coefficients and filter parameters.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

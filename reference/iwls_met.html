@@ -11,7 +11,7 @@ optimizers7 criterion read on the same state."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,14 +70,15 @@ documents it.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Both routes live here, in one place, although the loop asks the question
-at two. That is what keeps the state a criterion is shown identical in
-both.</p>
+    <p>Both routes are implemented here, although the loop evaluates the rule at
+two places. This keeps the state that a criterion receives identical at
+both places.</p>
 <p>Two properties of that state matter to a caller writing a rule.
 <code>state$gradient</code> is already the score per observation, so <code>crit_grad(t)</code>
-and <code>tol = t</code> are the same rule. <code>state$objective</code> is the penalized
-log-likelihood unaveraged, that being the scale the penalty is added
-on.</p>
+and <code>tol = t</code> apply the same threshold to the score; the built-in rule
+also requires a small Newton decrement, which a criterion does not receive.
+<code>state$f_new</code> is the negative penalized log-likelihood, not divided by the
+sample size, which is the scale on which the penalty is added.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -9,7 +9,7 @@ differentiable at, which is the half-width of the subdifferential there."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,8 @@ differentiable at, which is the half-width of the subdifferential there.</p>
 
 
 <dt id="arg-eps">eps<a class="anchor" aria-label="anchor" href="#arg-eps"></a></dt>
-<dd><p>How far either side of the kink to read the derivative.</p></dd>
+<dd><p>The larger of the two distances from the kink at which the
+derivative is read.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -77,16 +78,17 @@ MCP, and \(\lambda\alpha\) for the elastic net, but it is read and never
 assumed: a penalty built from a density carries the same information in a
 hyperparameter of its own, and a Laplace prior written by its scale has a
 kink whose size falls as that scale grows.</p>
-<p>The penalty is separable over the coefficients wherever it has a kink, a
-kinked penalty under a general map being the generalized-lasso problem and
-rejected upstream, so one coordinate answers for all of them.</p>
-<p>The derivative just past the kink carries the distance it was read at,
-MCP's being \(\lambda - \epsilon/\gamma\), so the two readings are
-extrapolated to the limit. Without that the shape parameters appear to move
-the kink by a millionth of themselves, which is enough to be selected for a
-path, and measures \(\epsilon\) in place of the penalty. The
-extrapolation is exact for a penalty that is affine on each side of the
-kink, which the lasso, SCAD, MCP and the elastic net all are.</p>
+<p>A kinked penalty is separable over the coefficients, and one under a general
+map (the generalized-lasso problem) is rejected upstream. Under a diagonal
+map, which <code>standardize = TRUE</code> writes, the kink differs by coordinate. This
+function reads the first coordinate's kink, and <code><a href="coord_kinks.html">coord_kinks()</a></code> returns the
+kink of every coordinate.</p>
+<p>The derivative just past the kink depends on the distance it is read at
+(MCP's, for example, is \(\lambda - \epsilon/\gamma\)), so the one-sided
+derivatives at distances \(\epsilon/2\) and \(\epsilon\) are combined by
+Richardson extrapolation to the limit. The extrapolation is exact for a
+penalty that is affine on each side of the kink, as the lasso, SCAD, MCP and
+the elastic net are.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

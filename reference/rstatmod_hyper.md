@@ -1,7 +1,7 @@
 # Draw One Penalty's Hyperparameters
 
-A value per hyperparameter, drawn on the chart the penalty carries for
-it around the neutral point
+A value per hyperparameter, drawn on the chart that the penalty carries
+for it around the neutral point that
 [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md)
 gives.
 
@@ -23,10 +23,10 @@ rstatmod_hyper(pen, sd, unit = 1)
 
 - unit:
 
-  How far from a one-sided bound the draw is centred, passed to
+  How far from a one-sided bound the draw is centered, passed to
   [`penalty_theta_start()`](https://statmodels7.github.io/statmodels7/reference/penalty_theta_start.md).
-  Half for a prior over a structural term's own parameters, which ride
-  charts.
+  It is one half for a prior over a structural term's own parameters,
+  which ride charts.
 
 ## Value
 
@@ -42,13 +42,12 @@ width is half of `sd` for the reason
 halves it, a chart mapping a width of one onto most of its parameter's
 range.
 
-`unit` moves the centre away from a ONE-SIDED bound and reaches nothing
-else, so a hyperparameter unbounded on both sides – a coordinate of a
-multivariate prior's own chart – is drawn around that chart's neutral
-point whatever the term is. That is the point a fit starts from as well,
-and on `dr_prod` it reads as unit standard deviations and no
-correlation, so a simulation of a covariance block begins where a reader
-would put it.
+`unit` moves the center away from a one-sided bound and affects nothing
+else, so a hyperparameter that is unbounded on both sides (a coordinate
+of a multivariate prior's own chart) is drawn around the neutral point
+of that chart whatever the term is. This is also the point that a fit
+starts from; on `dr_prod` it corresponds to unit standard deviations and
+no correlation.
 
 ## See also
 

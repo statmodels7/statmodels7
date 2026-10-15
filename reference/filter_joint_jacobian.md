@@ -30,11 +30,12 @@ filter_joint_jacobian(spec, design, coef)
 
 `NULL` where the model carries no filter, otherwise a list with `J` (the
 filter equation's rows), `V` (every equation's rows, the filter's being
-`J`), `H` (the family's second derivatives on the link scale), `ap` (the
-index of the filter's parameter), `nb` (the number of coefficient
-columns), `key` (the names of the columns in the variance matrix) and
-`free` (the term's free parameters), all columns restricted to the free
-ones.
+`J`), `H` (the family's second derivatives on the link scale), `Hd` (the
+derivatives of the filter's driving quantity, which are `H` where the
+filter is not scaled), `ap` (the index of the filter's parameter), `nb`
+(the number of coefficient columns), `key` (the names of the columns in
+the variance matrix) and `free` (the term's free parameters), all
+columns restricted to the free ones.
 
 ## Details
 

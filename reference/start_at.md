@@ -36,7 +36,12 @@ start_at(strategy, spec, design, obj, ...)
   [`statmod_objective()`](https://statmodels7.github.io/statmodels7/reference/statmod_objective.md)
   returns it, or `NULL`. Only
   [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
-  reads it; the other three accept `NULL`.
+  reads it, and
+  [`start_search()`](https://statmodels7.github.io/statmodels7/reference/start_search.md)
+  signals an error when `obj` is `NULL`. The other four shipped
+  strategies run with `NULL`;
+  [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md)
+  passes `obj` on to its `rest` strategy.
 
 - ...:
 
@@ -62,9 +67,9 @@ draws from the caller's generator, and
 runs an optimizer over `obj`.
 
 A method must return a full-length vector for every distribution
-parameter, including the ones it has nothing to say about. Zero is the
-conventional filler, and it is the value a penalized block wants anyway,
-its penalty being smallest there.
+parameter, including the ones it does not set. Zero is the conventional
+filler, and it is the value at which the penalty of a penalized block is
+smallest.
 
 ## Examples
 
@@ -74,8 +79,8 @@ dd <- data.frame(x = runif(40))
 dd$y <- 1 + 2 * dd$x + rnorm(40, sd = 0.3)
 spec <- statmod_spec(y ~ x, distributions7::gaussian1_distrib(), dd)
 design <- statmod_design(spec)
-# a strategy that needs no objective is asked with NULL for it; the ones
-# that search the likelihood are handed the objective by statmod()
+# a strategy that needs no objective is called with NULL for it; the ones
+# that search the likelihood receive the objective from statmod()
 start_at(start_origin(), spec, design, NULL)
 #> $mu
 #> [1] 0 0

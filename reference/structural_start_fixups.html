@@ -4,18 +4,20 @@ once the design is known: a level held by an intercept in the same
 equation starts at zero, and an unheld level that the term's own start
 left at zero starts at the equation's data-based intercept. A filter also
 receives a second start, kept beside the first, with each score loading
-at \(0.1/\mathcal{I}\), \(\mathcal{I}\) the expected information of
-its equation's predictor at the intercept-only fit
-(predictor_information()); statmod() fits from it where the fit from
-the first start does not converge."><meta property="og:description" content="The adjustments a start of a structural term's own parameters needs
+at \(0.1\,\mathcal{I}^{d-1}\), where \(d\) is the scaling of the
+filter (so that the loading is \(0.1/\mathcal{I}\) for \(d = 0\)) and
+\(\mathcal{I}\) is the expected information of its equation's predictor
+at the intercept-only fit (predictor_information()); statmod() fits
+from it where the fit from the first start does not converge."><meta property="og:description" content="The adjustments a start of a structural term's own parameters needs
 once the design is known: a level held by an intercept in the same
 equation starts at zero, and an unheld level that the term's own start
 left at zero starts at the equation's data-based intercept. A filter also
 receives a second start, kept beside the first, with each score loading
-at \(0.1/\mathcal{I}\), \(\mathcal{I}\) the expected information of
-its equation's predictor at the intercept-only fit
-(predictor_information()); statmod() fits from it where the fit from
-the first start does not converge."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+at \(0.1\,\mathcal{I}^{d-1}\), where \(d\) is the scaling of the
+filter (so that the loading is \(0.1/\mathcal{I}\) for \(d = 0\)) and
+\(\mathcal{I}\) is the expected information of its equation's predictor
+at the intercept-only fit (predictor_information()); statmod() fits
+from it where the fit from the first start does not converge."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -23,7 +25,7 @@ the first start does not converge."><meta property="og:image" content="https://s
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,10 +60,11 @@ once the design is known: a level held by an intercept in the same
 equation starts at zero, and an unheld level that the term's own start
 left at zero starts at the equation's data-based intercept. A filter also
 receives a second start, kept beside the first, with each score loading
-at \(0.1/\mathcal{I}\), \(\mathcal{I}\) the expected information of
-its equation's predictor at the intercept-only fit
-(<code><a href="predictor_information.html">predictor_information()</a></code>); <code><a href="statmod.html">statmod()</a></code> fits from it where the fit from
-the first start does not converge.</p>
+at \(0.1\,\mathcal{I}^{d-1}\), where \(d\) is the <code>scaling</code> of the
+filter (so that the loading is \(0.1/\mathcal{I}\) for \(d = 0\)) and
+\(\mathcal{I}\) is the expected information of its equation's predictor
+at the intercept-only fit (<code><a href="predictor_information.html">predictor_information()</a></code>); <code><a href="statmod.html">statmod()</a></code> fits
+from it where the fit from the first start does not converge.</p>
     </div>
 
     <div class="section level2">

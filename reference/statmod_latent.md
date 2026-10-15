@@ -1,7 +1,7 @@
 # The Latent Variables of a Fitted Structural Term
 
-The posterior summary of the latent variable a structural term of the
-likelihood shape integrates over: the posterior mean and standard
+The posterior summary of the latent variable over which a structural
+term of the likelihood shape integrates: the posterior mean and standard
 deviation of each group's break-points for a marginal break-point term
 ([`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html)
@@ -28,21 +28,23 @@ statmod_latent(fit)
 ## Value
 
 For a break-point term, a data frame with one row per group and
-break-point: `group`, `psi`, `mean` and `sd`. For a regime term, a data
-frame with one row per observation, in the order of the data, and one
-column per regime, `state1`, `state2`, and so on.
+break-point: `group`, `psi` (the index of the break-point within the
+term), `mean` and `sd` (the posterior mean and standard deviation of its
+position). For a regime term, a data frame with one row per observation,
+in the order of the data, and one column per regime, `state1`, `state2`,
+and so on.
 
 ## Details
 
-The quantities come from the same decomposition the marginal likelihood
-is computed on. For a break-point term it is the posterior over a
-group's intervals or quadrature nodes, with the within-interval moments
-those of the fitted prior truncated to it. For a regime term it is the
-forward and backward recursions, which give \\P(S_t = j \mid y_1, \dots,
-y_n)\\. The computation is
+The quantities come from the same decomposition on which the marginal
+likelihood is computed. For a break-point term it is the posterior over
+a group's intervals or quadrature nodes, with the within-interval
+moments those of the fitted prior truncated to it. For a regime term it
+is the forward and backward recursions, which give \\P(S_t = j \mid y_1,
+\dots, y_n)\\. The computation is
 [`modelterms7::term_latent()`](https://statmodels7.github.io/modelterms7/reference/term_latent.html)'s;
-this function supplies what the term cannot see, the fitted predictors
-and the model's log-density.
+this function supplies the quantities that the term does not hold, the
+fitted predictors and the model's log-density.
 
 ## See also
 

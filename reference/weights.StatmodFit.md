@@ -22,9 +22,18 @@ weights(object, ...)
 
 ## Value
 
-A numeric vector of length `nobs(object)`, the prior weights as
-supplied. All ones when none were given. They enter as given and are
+A numeric vector with one entry per row of the data, the prior weights
+as supplied. All ones when none were given. They enter as given and are
 never normalized, so a weight of two counts an observation twice.
+
+## Details
+
+The weights multiply the log-likelihood of each observation, so they act
+as frequency weights: a constant weight \\c\\ on every row is \\c\\
+copies of the data. The restricted likelihood then counts \\n c\\
+observations against the \\p\\ coefficients, so the REML estimate of a
+dispersion changes under a constant rescaling of the weights, while the
+ML estimate does not.
 
 ## See also
 
@@ -41,7 +50,7 @@ fit <- statmod(y ~ x, distributions7::gaussian1_distrib(), dd)
 head(weights(fit))
 #> [1] 1 1 1 1 1 1
 
-# An unweighted fit carries ones, so the weights sum to the row count.
+# The weights are frequencies, so nobs() is their sum.
 sum(weights(fit)) == nobs(fit)
 #> [1] TRUE
 ```

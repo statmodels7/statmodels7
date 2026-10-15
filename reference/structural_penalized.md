@@ -1,8 +1,9 @@
 # Does a Structural Term Carry a Penalty of Its Own?
 
 Reports whether any penalty of the model covers the own parameters of a
-structural term, as opposed to a block of design columns. The deviations
-of a score-driven filter over a panel are the case.
+structural term, as opposed to a block of design columns, as with the
+deviations of a score-driven filter over a panel. A covariance class
+that spans both the coefficients and those parameters counts as well.
 
 ## Usage
 
@@ -25,8 +26,11 @@ mixed_penalized(spec, design)
 
 ## Value
 
-A single logical. `FALSE` for a model with no structural term, and for
-one whose structural term declares no penalty.
+A single logical. `TRUE` where a penalty covers a structural term's own
+parameters, or a covariance class spans both the coefficients and those
+parameters. `FALSE` for a model with no structural term, and for one
+whose structural term has no such penalty. `mixed_penalized()` answers
+`TRUE` for the second case alone.
 
 ## Details
 
@@ -39,6 +43,6 @@ leaves it over the coefficients alone.
 ## See also
 
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
-for the matrix it selects,
+for the matrix that it selects,
 [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
-for the penalties it looks for.
+for the penalties that it looks for.

@@ -47,21 +47,36 @@ statmod(
 
 - data:
 
-  A data frame.
+  A data frame. Missing values in the response or in a variable that an
+  equation uses are rejected, with the variable and the rows.
 
 - weights:
 
-  Optional prior weights, taken as given and not normalized.
+  Optional prior weights, a numeric vector of length \\n\\ or the name
+  of a column of `data`. The weights must be non-negative, finite and
+  complete, and are taken as given and not normalized. They multiply the
+  log-likelihood, so they act as frequency weights: a constant weight
+  \\c\\ on every row is \\c\\ copies of the data, and the restricted
+  (REML) criterion counts \\n c\\ observations against the coefficients.
+  The REML estimate of a dispersion therefore changes under a constant
+  rescaling of the weights, and the ML estimate does not.
 
 - offsets:
 
-  Optional named list of offsets, one per parameter.
+  Optional named list of offsets, one entry per distribution parameter,
+  each of length 1 or \\n\\. An offset written in the formula is added
+  to the entry for the same parameter.
 
 - inner_optimizer:
 
   How the smooth block is fitted:
   [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-  or an optimizers7 optimizer.
+  or an optimizers7 optimizer. Beside a structural term of the filter
+  shape, the coefficients and the term's parameters are fitted in one
+  system, for which
+  [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
+  stands for the system's own default optimizer and an optimizers7
+  optimizer is used as given.
 
 - outer_criterion:
 
@@ -69,26 +84,42 @@ statmod(
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   (the default),
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
-  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
-  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-  or `NULL` to hold them where they are.
+  or `NULL` to hold them where their terms left them.
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  cross-validates the hyperparameter of a kinked penalty only: it is
+  passed as `sparse_criterion`, and as `outer_criterion` it is an error.
+  A prediction-error criterion beside a kinked penalty is rejected
+  unless `sparse_criterion` is `NULL`.
 
 - sparse_criterion:
 
-  How the hyperparameter of a kinked penalty – lasso, scad, mcp – is
-  chosen:
+  How the hyperparameter of a kinked penalty (lasso, elastic net, scad,
+  mcp) is chosen:
   [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   (the default),
   [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
   [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md),
-  or `NULL` to hold it. A marginal criterion is rejected here, being
-  read at a mode that sits on the kink.
+  or `NULL`. With `NULL` the hyperparameter is held at its value, unless
+  the model also carries a smooth penalty and `outer_criterion` is a
+  prediction-error criterion, which then sweeps the path. A marginal
+  criterion is rejected here, being read at a mode that sits on the
+  kink.
 
 - outer_optimizer:
 
-  The optimizer that searches over them, or `NULL` to let the
-  availability of the exact gradient decide.
+  The optimizer that searches over the smooth hyperparameters, or `NULL`
+  to choose one from the derivatives of the criterion that exist:
+  [`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html)
+  where the exact Hessian is usable,
+  [`optimizers7::lbfgs()`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
+  with the exact gradient,
+  [`optimizers7::brent()`](https://statmodels7.github.io/optimizers7/reference/brent.html)
+  for one coordinate without a gradient, and
+  [`optimizers7::nelder_mead()`](https://statmodels7.github.io/optimizers7/reference/nelder_mead.html)
+  otherwise.
 
 - start:
 
@@ -100,10 +131,10 @@ statmod(
   [`start_from()`](https://statmodels7.github.io/statmodels7/reference/start_from.md),
   which takes the estimates of a model already fitted, or `NULL` for
   [`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md).
-  A strategy is asked once, before the alternation between the
-  coefficients and the hyperparameters begins, which is why a global
-  search belongs here instead of in `inner_optimizer`: there it would
-  rerun at every hyperparameter the outer search tried.
+  A strategy runs once, before the alternation between the coefficients
+  and the hyperparameters begins. A global search therefore belongs here
+  and not in `inner_optimizer`, where it would run again at every
+  hyperparameter value that the outer search tries.
 
 - linpar_control:
 
@@ -121,36 +152,41 @@ statmod(
 
 - verbose:
 
-  A level from 0 to 3, or a named logical vector.
+  A level from 0 to 3, or a named logical vector with any of `outer`,
+  `blocks`, `inner` and `optimizer`.
 
 - threads:
 
   How many threads the fit may use, as
   [`numericals7::n_threads()`](https://statmodels7.github.io/numericals7/reference/n_threads.html)
   constructs it. The default, `n_threads(1)`, is sequential and takes
-  exactly the sequential code path. A larger count reaches the compiled
-  per-observation kernels of the family and the dense assembly products
-  as an argument; below a kernel's measured internal threshold it stays
-  sequential whatever the count says, and a sparse design keeps its
+  the sequential code path. A larger count is passed to the compiled
+  per-observation kernels of the family and to the dense assembly
+  products; below a kernel's internal size threshold the computation
+  stays sequential whatever the count, and a sparse design keeps its
   Matrix route. The object's `workers` fans the units that are
-  independent by construction out over separate R processes – the folds
+  independent by construction out over separate R processes: the folds
   of a cross-validation, and the combinations of a kinked path's product
   grid, each of which restarts its warm chain from the sweep's own
-  starting coefficients – each unit fitting sequentially, so the two
-  levels never nest. The points within one chain stay sequential:
-  measured, a point paid cold costs 2.2-3.2 times the warm chain, so
-  splitting a chain would slow the single-process default or make the
-  result depend on the count. The result does not depend on either
-  count, bit for bit: every parallel region decomposes its work over the
-  elements of its output and never splits a reduction, and the folds are
-  seeded per fold and collected in fold order.
+  starting coefficients. Each unit fits sequentially, so the two levels
+  never nest. The points within one chain stay sequential, because a
+  point fitted from a cold start costs more than one warm-started from
+  the previous point, and splitting a chain would slow the
+  single-process default or make the result depend on the count. For any
+  two counts above one the result is identical bit for bit: every
+  parallel region decomposes its work over the elements of its output
+  and never splits a reduction, and the folds are seeded per fold and
+  collected in fold order. Between the default and a count above one the
+  route can change where the work is large (the BLAS crossproduct
+  against the compiled one, and the pivoted
+  [`qr()`](https://rdrr.io/r/base/qr.html) against the compiled
+  triangular factor), and the results then agree to rounding.
 
 - ...:
 
-  Not used, and reported. `hyper` was removed from here: a
-  hyperparameter is held in the term that carries the penalty, and a
-  second place to say so would be read by nobody whenever the two
-  disagreed.
+  Not used. A named argument signals an error. `hyper` was removed from
+  `statmod()`: a hyperparameter is held in the term that carries the
+  penalty.
 
 ## Value
 
@@ -167,9 +203,9 @@ The equations are separated by `|`, and the first carries the response:
 A parameter with no equation of its own gets an intercept, so `y ~ x` on
 a two-parameter family fits a constant scale.
 [`statmod_equations()`](https://statmodels7.github.io/statmodels7/reference/statmod_equations.md)
-does the split; the recovery is not the obvious one, since R's
-precedence makes the whole right-hand side of a three-equation formula
-the last term alone.
+does the split. R's operator precedence nests the equations on the left,
+so the right-hand side of the whole formula holds only the last
+equation, and the split walks down the left side instead.
 
 The terms available are modelterms7's:
 [`modelterms7::s()`](https://statmodels7.github.io/modelterms7/reference/s.html),
@@ -180,7 +216,11 @@ The terms available are modelterms7's:
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html),
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
-and the rest. Bare covariates collapse into one parametric block.
+and the rest. Bare covariates collapse into one parametric block. A
+formula can carry at most one structural term, which is
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
+or the marginal break-point term.
 
 A structural term whose level adds a constant to the predictor, the
 \\\omega\\ of
@@ -188,12 +228,16 @@ A structural term whose level adds a constant to the predictor, the
 or the first level of
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html),
 is confounded with an intercept in the same equation. The intercept is
-kept and the level held at zero, reported as `omega (held)`; writing
-`0 + gas(...)` estimates the level instead. The two spellings are the
-same model with the same log-likelihood, and the constants differ
-because they measure different quantities: for a score-driven term the
-intercept is the stationary level \\\omega / (1 - \sum_j b_j)\\, which
-is \\\omega\\ divided by one minus the persistence. The page of
+kept and the level held at zero, reported as `omega (held)` for
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
+and as `level1 (held)` for
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html);
+writing `0 + gas(...)` estimates the level instead. The two spellings
+are the same model with the same log-likelihood, and the constants
+differ because they measure different quantities: for a score-driven
+term the intercept is the stationary level \\\omega / (1 - \sum_j
+\xi_j)\\, which is \\\omega\\ divided by one minus the sum of the
+persistences \\\xi_j\\. The page of
 [`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html)
 gives the identity.
 
@@ -206,12 +250,26 @@ unpenalized block, a ridge, a spline or a random effect, is estimated in
 one system by `inner_optimizer`. Their joint curvature exists, and using
 it is what closes a fit in a handful of iterations.
 
-A term whose penalty has a **kink**, a lasso, a SCAD or an MCP, is
-estimated by a coordinate descent of its own with everything else held
-fixed.
+A term whose penalty has a **kink**, a lasso, an elastic net, a SCAD or
+an MCP, is estimated as a block of its own with the other blocks held
+fixed. The block is fitted by a compiled coordinate descent where the
+penalty describes its proximal operator as a table at the step taken,
+and otherwise by an accelerated proximal gradient. Where the equation
+has a free unpenalized intercept, the descent centers the block and
+moves that intercept jointly with it.
 
-The fit alternates between the two until the objective and every block
-stop moving.
+A structural term of the filter shape,
+[`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+is fitted in one system with the coefficients. A structural term of the
+likelihood shape,
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
+or the marginal break-point term, is alternated with them.
+
+The fit alternates between the blocks until the relative change of the
+objective falls below the tolerance. Where a kinked block or a
+structural term is present, the point reached must in addition satisfy
+the optimality conditions of the smooth part and of every coefficient
+held at a kink, and `converged` reports that reading.
 
 ## The objective is unaveraged
 
@@ -222,63 +280,82 @@ hyperparameter mean something that depends on \\n\\. What is scaled
 instead is the stopping rule, so a threshold means the same at \\n =
 10\\ and at \\n = 10^7\\.
 
+The weights multiply the log-likelihood, so they act as frequency
+weights: a constant weight \\c\\ on every row is \\c\\ copies of the
+data. The restricted (REML) criterion then counts \\n c\\ observations
+against the \\p\\ coefficients, so the REML estimate of a dispersion
+changes under a constant rescaling of the weights, and the ML estimate
+does not.
+
 ## The budget and the stopping rule belong to the method
 
 There is no `maxit` and no `tol` here. Both are set on
 `inner_optimizer`, which is
 [`iwls(maxit =, tol =)`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-or an optimizers7 optimizer with its own `maxit` and `criterion`, and
-the alternation reads them from there. A second copy here would let a
-caller set both and be obeyed by neither.
+or an optimizers7 optimizer with its own `maxit` and `criterion`. The
+alternation reads them from there as its budget in passes and its
+relative tolerance on the objective, so that one setting governs both
+the inner fit and the alternation.
 
 ## Every hyperparameter is estimated unless its term holds it
 
-Which ones are held is said by the **term** that carries the penalty:
-`lasso(x, lambda = 3)`, `ridge(x, sigma = 0.5)`,
+The term that carries the penalty states which hyperparameters are held:
+`lasso(x, lambda = 3)`, `ridge(x, lambda = 0.5)`,
 `s(x, bspline_smooth(), hyper = c(lambda = 2))`, `enet(x, alpha = 0.5)`.
-Everything left `NULL`, which is each term's default, is chosen from the
-data. The term is where the penalty is named and so is where that
-belongs; an argument here saying the same thing would be read by nobody
-whenever the two disagreed.
+Every hyperparameter left `NULL`, which is each term's default, is
+estimated from the data. A hyperparameter is held in the term and
+nowhere else, so that the model has one statement of each held value.
 
 The **smooth** hyperparameters go to `outer_criterion`,
 [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
 by default, with `outer_optimizer` searching over them and the
 coefficients refitted at each point.
 
-A **kinked** penalty is a different instrument with its own argument.
-`sparse_criterion`,
+A **kinked** penalty has its own argument. `sparse_criterion`,
 [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) by
-default, sweeps it along a path of its own values, from the kink that
-empties the block down to a fraction of it. The penalized mode is only
-piecewise smooth in such a hyperparameter, turning a corner whenever a
-coefficient joins the active set or leaves it, so a criterion read there
-inherits the corners and a gradient search would read a slope about to
-change.
+default, sweeps its hyperparameters along a path of their own values,
+from the kink that empties the block down to a fraction of it. The
+penalized mode is only piecewise smooth in such a hyperparameter,
+turning a corner whenever a coefficient joins the active set or leaves
+it, so a gradient search on a criterion read there would meet those
+corners.
 
 The top of that path depends on the data **and on the rest of the
 model**: it is the kink that empties the block, found at the
-coefficients in hand never at a refitted null, so the other terms' fits
-enter it.
+coefficients in hand and not at a refitted null, so the fits of the
+other terms enter it.
 
 Where a model carries both kinds the path is outside and the marginal
 criterion is estimated inside each of its points, so a smoothing
 parameter can come from REML and a lasso's \\\lambda\\ from BIC in one
 fit.
 
-`outer_criterion` runs if and only if the model carries a smooth
-penalty. On an ordinary `y ~ x`, or on a model whose only penalty is
-kinked, there is nothing for it to estimate and it is not run, so typing
-the default changes nothing. `outer_criterion = NULL` holds every smooth
-hyperparameter where its term left it.
+With the default `marginal = NULL`,
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+and
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+also estimate on the criterion the unpenalized coefficients of every
+distribution parameter other than the first. `outer_criterion` therefore
+runs when the model carries a smooth hyperparameter or such a
+coefficient, and on an ordinary `y ~ x` with a two-parameter family it
+estimates the dispersion by REML. Beside a kinked penalty, a structural
+term or a block that moves with its coefficients, the default names no
+coefficient, so a model whose only penalties are kinked does not run the
+criterion. The default criterion is also not run when the family lacks
+the two derivatives that it needs. With `outer_criterion = NULL`, every
+smooth hyperparameter stays where its term left it and the coefficients
+of all parameters are fitted at the joint mode, which gives the
+maximum-likelihood estimate of a dispersion on an ordinary model.
 
 ## Verbosity
 
-Three levels, naming the loops: `1` the outer search and the
-alternation, `2` the inner method's own iterations, `3` the optimizers'
-traces as well. A named form is accepted too,
-`verbose = c(outer = TRUE, blocks = FALSE)`, for watching the
-hyperparameters move while silencing a chatty inner optimizer.
+Three levels name the loops: `1` shows the outer search and the
+alternation, `2` adds the inner method's own iterations, and `3` adds
+the optimizers' traces. A named logical vector sets the four switches
+`outer`, `blocks`, `inner` and `optimizer` independently, and a switch
+that is left out is off. For example
+`verbose = c(outer = TRUE, blocks = FALSE)` shows the hyperparameters
+moving while a chatty inner optimizer stays silent.
 
 ## See also
 

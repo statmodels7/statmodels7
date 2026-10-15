@@ -1,6 +1,6 @@
 # A Marginal Prediction: the Population Average Over New Groups
 
-Integrates the quantity asked for over the prior of every random-effect
+Integrates the requested quantity over the prior of every random-effect
 term read at `"marginal"`, at the fixed part of each equation's
 predictor.
 
@@ -46,7 +46,8 @@ random_marginal(
 
 - what:
 
-  What was asked for.
+  The quantity predicted: a parameter name, `"parameter"`, `"mean"`,
+  `"variance"` or `"std_dev"`.
 
 - eta_at:
 
@@ -81,5 +82,6 @@ A parameter is averaged, \\E_b\[h^{-1}(\eta_0 + Zb)\]\\; the mean is
 averaged too, by the law of total expectation; the variance adds the
 variance of the conditional mean, \\E_b\[\mathrm{Var}(Y\mid b)\] +
 \mathrm{Var}\_b(E\[Y\mid b\])\\, which is where a random effect on the
-scale enters. A predictor, `"link"` or `"link:p"`, is \\\eta_0\\ itself,
-the effects having mean zero.
+scale enters. A predictor, `"link"` or `"link:p"`, is not computed here:
+[`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
+returns \\\eta_0\\ itself for it, the effects having mean zero.

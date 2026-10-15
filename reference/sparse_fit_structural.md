@@ -80,38 +80,27 @@ is
 [`statmod_structural_score()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_score.md)'s
 with the same correction, and the operator is the penalty's own.
 
-Measured on a panel of eight groups of forty where three carry a level,
-the route selects: the coordinates at exactly zero are 0, 0, 1, 3 and 8
-of 8 at `lambda` of 0.1, 1, 5, 20 and 80, and the survivors are the
-three that carry one. What says the point is the model's is the
-Karush-Kuhn-Tucker condition, computed by differencing the smooth
-objective with numDeriv and sharing no arithmetic with either the
-filter's adjoint or the operator: the stationarity \\\|g +
-\lambda\\\mathrm{sign}(b)\|\\ on the coordinates away from zero is
-2.1e-08, 2.3e-08 and 6.9e-07 at `lambda` of 1, 5 and 20, and the ones at
-zero sit inside the interval the kink opens, 0.83 against 5 and 17.6
-against 20.
+The iteration stops when the gradient criterion `crit_grad(tol)` is met.
+A coordinate at exactly zero is one whose gradient of the smooth part
+lies inside the interval that the kink opens.
 
-The hyperparameter is HELD. A criterion that would select it is refused
-by
+The hyperparameter is held. A prediction-error or cross-validation
+criterion
+([`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md))
+that would select it is rejected by
 [`assert_criterion_reach()`](https://statmodels7.github.io/statmodels7/reference/assert_criterion_reach.md),
-a prediction-error criterion reading the degrees of freedom over the
-coefficients alone, where such a penalty covers nothing.
+because such a criterion works over the coefficients alone, where this
+penalty covers nothing.
 
-THE FIT REPORTS `converged = FALSE` AT A POINT THAT IS AT ITS MODE, and
-the flag is not this route's. Traced on the panel above at `lambda` of
-20, the passes are: the joint block converges in 58 iterations, this
-block runs its budget of 500 and moves the objective by 8.6e-03, then at
-the second pass the joint block takes ONE iteration and moves it by
-exactly 0 while this block converges in 189. What reports `FALSE` is the
-joint block at a pass where there is nothing left to move, which is the
-stall guard firing at the mode – the reading
-[`inner_mode_error()`](https://statmodels7.github.io/statmodels7/reference/inner_mode_error.md)
-replaces for availability and which the alternation's own flag does not
-yet use. The control is that the same model under
-`ridge(~ id, lambda = 20)` and with the levels unpenalized reports
-`TRUE`, so the flag follows the extra pass a kinked block costs rather
-than anything about the point.
+The convergence flag of a fit that uses this route is the flag of the
+alternation. Beside a structural term or a kinked block the alternation
+requires the point to be settled in the sense of
+[`alternation_settled()`](https://statmodels7.github.io/statmodels7/reference/alternation_readings.md)
+(the Newton decrement of the smooth part and the decrement of the kinked
+zeros both at most
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)).
 
 ## See also
 

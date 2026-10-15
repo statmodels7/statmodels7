@@ -1,10 +1,11 @@
 # The Model's Derivative Pieces for a Filter's Recursion
 
-Builds the `blocks` callback
-[`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
-and
+Builds the `blocks` callback that
+[`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
 [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
-take, at a direction or without one.
+and
+[`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)
+take, at a direction, at two directions or without one.
 
 ## Usage
 
@@ -42,13 +43,13 @@ returning a `blocks` callback.
 
 ## Details
 
-The pieces are built on the active set the term asks for, so a panel's
-outer products are of the same size whatever the number of groups.
-`dcurv` serves twice, as the derivative of the curvature along the
-direction and as the factor multiplying the movement of \\V_p\\, and `N`
-is where the family's fourth derivative enters: each order of
-differentiating the predictor through the recursion pulls in one more
-order of the family.
+The pieces are built on the active set that the term passes to the
+callback, so a panel's outer products have the same size whatever the
+number of groups. `dcurv` serves twice, as the derivative of the
+curvature along the direction and as the factor multiplying the movement
+of \\V_p\\, and `N` is where the family's fourth derivative enters: each
+order of differentiating the predictor through the recursion pulls in
+one more order of the family.
 
 With TWO directions the callback serves
 [`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)

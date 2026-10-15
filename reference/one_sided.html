@@ -13,7 +13,7 @@ parameter with no equation."><meta property="og:image" content="https://statmode
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,9 +65,8 @@ run here.</p></dd>
 
 
 <dt id="arg-env">env<a class="anchor" aria-label="anchor" href="#arg-env"></a></dt>
-<dd><p>The environment to attach. Passed through with no check, so a
-caller supplying <code>NULL</code> gets a formula with a <code>NULL</code> environment rather
-than an error.</p></dd>
+<dd><p>The environment to attach. It is not checked, and <code>NULL</code> gives a
+formula with a <code>NULL</code> environment.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -78,10 +77,10 @@ than an error.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The formula is built with <code>eval(bquote(~ .(expr)), envir = env)</code>, and the
-environment is then assigned again. The second step makes the result
-reliable: <code><a href="https://rdrr.io/r/base/eval.html" class="external-link">eval()</a></code> gives the formula whatever environment it was evaluated
-in, and the assignment states the intended one, so the two cannot come
-apart if the construction changes.</p>
+environment is then assigned again. <code><a href="https://rdrr.io/r/base/eval.html" class="external-link">eval()</a></code> gives the formula the
+environment in which it was evaluated, and the assignment states the
+intended environment explicitly, so the result carries <code>env</code> whatever the
+construction does.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

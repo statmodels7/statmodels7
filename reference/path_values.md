@@ -48,15 +48,13 @@ hyperparameter grows is swept in the same order as one whose kink
 widens: from the empty model towards the full one. Values the penalty
 cannot reach are dropped.
 
-The exponent relating the two is read once and every target inverted
-through it, in place of bracketing each target on its own. Measured, a
-bracketing solve costs 4.18 ms against a fit's 62.5 ms, so a path of
-twenty-five points spent 6.7 per cent of itself locating the values it
-would visit; through the exponent the whole grid costs four evaluations
-of the size.
+The exponent relating the two is read once by
+[`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
+and every target is inverted through it, in place of bracketing each
+target on its own.
 [`kink_by_power()`](https://statmodels7.github.io/statmodels7/reference/kink_by_power.md)
 checks the relation before the values are used and returns `NA` where it
-does not hold, and those fall back to
+does not hold, and those targets fall back to
 [`kink_solve()`](https://statmodels7.github.io/statmodels7/reference/kink_solve.md)
 one at a time.
 

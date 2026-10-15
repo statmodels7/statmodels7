@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,11 +76,11 @@ power law did not answer.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The check is what licenses the closed route: the exponent came from two
-points and the relation is asserted at a third before the answer is used.
-A target that misses by more than a rounding, or that lands outside the
-hyperparameter's own interval, comes back <code>NA</code> and the caller falls
-back to bracketing.</p>
+    <p>The exponent comes from two points, and the relation is checked at the
+first and the last admissible target before any answer is used. If either
+check misses by more than a rounding, every target comes back <code>NA</code>; a
+target whose value lands outside the hyperparameter's own interval comes
+back <code>NA</code> on its own. The caller then falls back to bracketing.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

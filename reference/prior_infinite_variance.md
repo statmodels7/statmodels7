@@ -17,6 +17,6 @@ prior_infinite_variance(ob)
 
 ## Value
 
-`TRUE` where the prior is univariate and the variance its family reports
-is infinite or not a number (a Cauchy); `FALSE` otherwise, including
-where no variance can be read.
+`TRUE` where the prior is univariate and the variance that its family
+reports is infinite or not a number (a Cauchy); `FALSE` otherwise,
+including where no variance can be read.

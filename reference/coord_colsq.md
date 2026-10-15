@@ -1,7 +1,7 @@
 # Weighted Sums of Squares of Centered Columns
 
-\\\sum_i w_i (x\_{ik} - m_k)^2\\ for the columns \\k\\ asked for, which
-is the curvature a coordinate of a centered block has.
+\\\sum_i w_i (x\_{ik} - m_k)^2\\ for the columns \\k\\ given in `k`,
+which is the curvature a coordinate of a centered block has.
 
 ## Usage
 

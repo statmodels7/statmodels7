@@ -11,7 +11,7 @@ difference of the exact gradient where it does not."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,47 +82,36 @@ takes them.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>A</code>, the symmetric negated Hessian or <code>NULL</code>;
-<code>source</code>, <code>"analytic"</code> or <code>"differenced"</code>; and <code>why</code>, the reason where
-there is no <code>A</code>.</p>
+<code>source</code>, <code>"analytic"</code> or <code>"differenced"</code>, or <code>NA</code> where there is no <code>A</code>;
+and <code>why</code>, the reason where there is no <code>A</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="statmod_certificate.html">statmod_certificate()</a></code> reads the rise the criterion would still buy, which
-needs a curvature and not only a gradient. The analytic route is
-<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>, gated by <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> at order 2 –
-the gate is load-bearing rather than defensive, since the assembly returns
-a number wherever it is called and the wrong one where the order is not
-covered.</p>
-<p><strong>Where the order is not covered the gradient is differenced instead</strong>,
-which is <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> and the same route
-<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> already takes for a model carrying a filter. The
-two forms that reach it are a criterion asked for on the <strong>expected</strong>
-information, where order 2 is refused because the criterion's own second
-derivative would want the next order of \(\partial\mathbb{E}[\ell'']/
-\partial\eta\), and a penalty whose Hessian moves with the coefficients –
-a heavy-tailed prior on a random effect – placed beside a structural term,
-where <code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code> reads no movement of that Hessian. The
-same prior without a structural term is analytic since 0.130.0, through
-<code><a href="statmod_penalty_second.html">statmod_penalty_second()</a></code>. Both forms carry an exact gradient, which is
-what the difference is taken of.</p>
-<p>The two routes agree where both exist: on a gaussian smooth the decrement
-reads <code>3.01e-10</code> by either. What the difference costs is measured and is
-not nothing – it is \(4n_h\) refits, 0.05 to 0.13 seconds on the three
-shapes tried, 5 to 37 per cent of the fit itself, where the analytic route
-is below the clock's own resolution. So a fit whose form carries the
-analytic Hessian refits nothing, and one that does not pays for its
-verdict once, at the summary.</p>
-<p>⚠️ The difference is a stopgap and not the destination. One gap is a
-quantity nobody has written – the second derivative of an expected
-information – and the other is an assembly written under an assumption
-one penalty does not satisfy; until both are closed, a certificate on those
-forms rests on a stencil where every other reading in this package rests on
-algebra.</p>
-<p>⚠️ <code>source</code> is informative and is not load-bearing, and one case can
-mislabel: for a model carrying a filter <code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> falls
-back to <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> itself where the analytic assembly fails,
-and that is reported here as <code>"analytic"</code>, this function having asked only
-whether the order was covered. Nothing reads <code>source</code> to decide anything.</p>
+    <p><code><a href="statmod_certificate.html">statmod_certificate()</a></code> reads the rise that the criterion would still buy,
+which needs a curvature and not only a gradient. The analytic route is
+<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code>, gated by <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> at order 2. The
+gate is required for correctness, since the assembly returns a number
+wherever it is called and a wrong one where the order is not covered.</p>
+<p>Where the order is not covered, the exact gradient is differenced instead
+by <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code>, which is also the route that
+<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> takes for a model carrying a filter. The forms
+that reach it are a criterion on the <strong>expected</strong> information for a family
+that does not supply the second derivative of its expected information (or
+for a model with a refreshable block or a structural term), and a penalty
+whose Hessian moves with the coefficients, such as a heavy-tailed prior on
+a random effect, placed beside a structural term, where
+<code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code> reads no movement of that Hessian. The same
+prior without a structural term is analytic, through
+<code><a href="statmod_penalty_second.html">statmod_penalty_second()</a></code>. Both kinds of form carry an exact gradient,
+which is the quantity that the difference is taken of.</p>
+<p>The two routes agree where both exist. The difference costs
+\(4(n_h + n_\gamma)\) refits, \(n_\gamma\) being the number of
+coefficients that the criterion estimates; the analytic route refits
+nothing.</p>
+<p><code>source</code> is informative only. For a model carrying a filter
+<code><a href="statmod_marginal_hess.html">statmod_marginal_hess()</a></code> falls back to <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> where the
+analytic assembly fails, and <code>source</code> then still reads <code>"analytic"</code>,
+because this function has checked only whether the order was covered.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

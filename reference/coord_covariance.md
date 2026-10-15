@@ -29,14 +29,10 @@ A single logical.
 
 The covariance form replaces an \\O(n)\\ read of the gradient with an
 \\O(m)\\ one, and pays for it by building a column of \\X'WX\\ at
-\\O(nm)\\ the first time a coordinate moves off zero. It is worth having
-only while \\m\\ is small next to \\n\\, and the two conditions say
-exactly that.
-
-The measurement is unambiguous in the other direction: at 5000
-observations with 200 columns and nothing screened away, the covariance
-form cost 70 milliseconds against 55 for the residual, the Gram columns
-being dearer than the residual passes they replaced.
+\\O(nm)\\ the first time the coordinate is nonzero. It is used only
+while \\m\\ is small next to \\n\\: \\m \le 32\\ and \\n \> 8m\\. When
+many coordinates are live, the Gram columns cost more than the residual
+passes that they replace, so the residual form is used.
 
 ## See also
 

@@ -17,7 +17,7 @@ block_leverage(design, M, params, npar, offs, threads = 1L)
 
 - M:
 
-  The matrix the traces are taken against.
+  The matrix against which the traces are taken.
 
 - params:
 
@@ -33,7 +33,8 @@ block_leverage(design, M, params, npar, offs, threads = 1L)
 
 ## Value
 
-A list of lists, `G[[a]][[b]]` a vector as long as the sample.
+A list of lists, `G[[a]][[b]]` a vector as long as the sample, or `NULL`
+where equation `a` or equation `b` has no coefficients.
 
 ## Details
 
@@ -41,13 +42,18 @@ This is the one quantity every trace against \\M\\ reduces to. For a
 matrix of the design's own form, \$\$\mathrm{tr}(M\\X'WX) = \sum_i
 w_i\\(XMX')\_{ii},\$\$ so a contraction of a third or fourth derivative
 never has to be assembled as a \\p\times p\\ matrix in order to be
-traced against \\M\\: measured at 8000 observations and 69 coefficients,
-forming it and taking the trace costs 25.5 ms where the weighted sum
-costs 0.031 ms, and at 20000 observations and 503 coefficients 3480 ms
-against 0.066 ms.
+traced against \\M\\.
 
 It is computed once per evaluation point and read by the gradient's
 contraction and by every pair of the Hessian.
+
+Where both blocks are sparse, the product of their densities is below
+\\10^{-3}\\ and the number of pairs is below \\2 \times 10^{7}\\, the
+diagonal is computed by
+[`leverage_pairs()`](https://statmodels7.github.io/statmodels7/reference/leverage_pairs.md)
+from the nonzeros of each row. The pair count bounds the work in
+absolute terms, which the density alone does not. Otherwise the diagonal
+is read off the dense product that has the fewer columns.
 
 ## See also
 

@@ -1,4 +1,4 @@
-# What One Direction Costs a Moving Block
+# The Derivatives of a Moving Block Along One Direction
 
 The two quantities every consumer of \\\partial X/\partial\beta\\ reads
 for a given direction: the block's own derivative along it, and the
@@ -24,7 +24,7 @@ refresh_direction(spec, design, M, params, npar, offs, d3, tv, v, units)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params, npar, offs:
 

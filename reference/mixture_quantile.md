@@ -3,7 +3,9 @@
 The value at which \\\sum_c w_c \Phi((e - m_c)/s_c)\\ reaches `p`, one a
 row, a component with \\s_c = 0\\ being a point mass at \\m_c\\. Found
 by bisection, which needs no derivative and is exact to the tolerance
-for a step function as well.
+for a step function as well. A row in which some mean or standard
+deviation is not finite (a missing covariate) is `NA`, and the bisection
+runs over the other rows.
 
 ## Usage
 
@@ -19,7 +21,7 @@ mixture_quantile(M, S, W, p)
 
 - W:
 
-  The components' weights, summing to one.
+  The components' weights, rescaled to sum to one.
 
 - p:
 
@@ -27,4 +29,4 @@ mixture_quantile(M, S, W, p)
 
 ## Value
 
-One value a row.
+One value a row, `NA` for a row that has no finite mixture.

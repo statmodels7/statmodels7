@@ -21,4 +21,4 @@ flat_directions(A, labels)
 
 ## Value
 
-A single string, empty when nothing can be said.
+A single string, empty when no direction can be named.

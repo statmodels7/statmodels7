@@ -20,13 +20,13 @@ prior_student(pen, th, d)
 
 - d:
 
-  The number of coefficients a group carries.
+  The number of coefficients that a group carries.
 
 ## Value
 
 A list with `Sigma` and `nu` where the penalty is a Student t prior with
-one mixing variable a group (a multivariate t, or a univariate one on a
-single coefficient), and `NULL` otherwise.
+one mixing variable per group (a multivariate t, or a univariate one on
+a single coefficient), and `NULL` otherwise.
 
 ## Examples
 

@@ -11,7 +11,7 @@ recursion's own curvature in it."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,15 +76,18 @@ already in hand at the caller.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A square matrix over the coefficients and the term's parameters,
-or the ordinary information where there is no structural term.</p>
+    <p>A square matrix over the coefficients followed by the term's free
+parameters (a level held because an intercept carries it leaves the
+matrix), or the ordinary observed information where there is no
+structural term.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The gradient of such a model is exact already, through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_adjoint.html" class="external-link">modelterms7::term_adjoint()</a></code>. Its curvature is not: the matrix
-the scoring step inverts is assembled as though the level were an offset,
-which is a legitimate scoring matrix and is not the information. Writing
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_adjoint.html" class="external-link">modelterms7::term_adjoint()</a></code>. The matrix that the scoring step inverts is
+assembled as though the level were an offset; it serves as a scoring
+matrix and differs from the observed information, which this function
+computes. Writing
 \(u\) for the coefficients followed by the term's parameters on the
 unconstrained scale, \(V_{q,t}\) for the derivative of equation
 \(q\)'s predictor in \(u\), and \(E_t\) for the second derivative
@@ -96,7 +99,7 @@ of the predictor the filter produces,</p>
 design: there it is the forward Jacobian of the recursion, which
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code> returns beside the contracted
 \(E\). The third derivatives the second sum needs are
-<span class="pkg">distributions7</span>'s, in closed form for every family.</p>
+<span class="pkg">distributions7</span>'s, from <code><a href="https://statmodels7.github.io/distributions7/reference/distrib_deriv3.html" class="external-link">distributions7::distrib_deriv3()</a></code>.</p>
 <p>The term's parameters are the last columns, which is the convention
 <code>term_curvature()</code> shares with its caller.</p>
 <p>A term that mixes over latent states, in place of shifting the predictor,

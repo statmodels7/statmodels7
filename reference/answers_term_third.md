@@ -23,10 +23,11 @@ A single logical.
 
 ## Details
 
-A structural term that has not written it inherits a method that signals
-an error, and an additive term inherits one that returns zero, which is
-the right answer for a predictor that is a block of columns. The
-question is therefore whether the owning class is the refusing base.
+A structural term that has not implemented the method inherits one that
+signals an error, and an additive term inherits one that returns zero,
+which is correct for a predictor that is a block of columns. The
+function therefore returns `FALSE` where the class that owns the method
+is the base class `structural_term`.
 
 ## See also
 

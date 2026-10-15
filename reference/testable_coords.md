@@ -31,26 +31,26 @@ gives them.
 
 ## Details
 
-It is the enumeration
+It applies to the whole vector the enumeration that
 [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
-refuses one coordinate at a time, asked once for the whole vector
-instead. A caller reporting a table needs it that way round, since each
-restricted statistic is a refit and an interval by inversion is a few
-dozen: a row that cannot be tested has to be recognized before it is
-paid for rather than after.
+applies to one coordinate at a time, signaling an error for a coordinate
+that cannot be held. A caller reporting a table needs it in this form,
+since each restricted statistic is a refit and an interval by inversion
+requires many, so that a row that cannot be tested has to be recognized
+before its refit is computed and not after.
 
-A coordinate under a penalty that is twice differentiable IS included –
-a smooth's linear column and its rotated coordinates, a ridge, a random
-effect – and the restricted fit holds it exactly as it holds an
-unpenalized one,
+A coordinate under a penalty that is twice differentiable is included: a
+smooth's linear column and its rotated coordinates, a ridge, a random
+effect. The restricted fit holds it exactly as it holds an unpenalized
+one,
 [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
 enforcing the hold in the solve. Only a kinked penalty is excluded, for
-the reasons
+the reasons that
 [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md)
 gives.
 
 ## See also
 
 [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md),
-which refuses the same coordinates one at a time, and
+which rejects the same coordinates one at a time, and
 [`kinked_coords()`](https://statmodels7.github.io/statmodels7/reference/kinked_coords.md).

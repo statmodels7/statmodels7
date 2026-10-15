@@ -17,8 +17,8 @@ hyper_variance(A, schur = 1e-04, at_edge = integer(0))
 
 - schur:
 
-  The largest relative Schur correction a held coordinate may contribute
-  to a kept one's curvature.
+  The largest ratio of the Schur correction to the diagonal entry of a
+  kept coordinate. The default is `1e-4`.
 
 - at_edge:
 
@@ -28,8 +28,9 @@ hyper_variance(A, schur = 1e-04, at_edge = integer(0))
 ## Value
 
 A matrix of the same shape as `A` with the variance in the kept rows and
-columns and `NA` elsewhere, or `NULL` when no coordinate is usable or
-the coupling is too large to ignore.
+columns and `NA` elsewhere, or `NULL` when the matrix is not positive
+definite and no coordinate can be held to make the kept part so, when no
+coordinate remains, or when the Schur test fails.
 
 ## Details
 
@@ -39,42 +40,34 @@ its range, or one the search left before reaching a maximum, has a
 curvature there that is zero or of the wrong sign, and no variance
 follows from it.
 
-Such a coordinate used to cost every other one its standard error, the
-whole matrix being refused. It is held instead and the rest is inverted,
-which is the variance CONDITIONAL on it — the same reading
-[`vcov()`](https://rdrr.io/r/stats/vcov.html) gives a coefficient the
-information carries nothing about. That is the marginal variance only
-where the coupling contributes nothing to the kept curvature, so the
-Schur correction \\A\_{kb}A\_{bb}^{-1}A\_{bk}\\ is computed and compared
-against the kept diagonal rather than assumed negligible; above `schur`
-the whole matrix is refused as before. The default is the size at which
-the correction cannot move the four significant digits the summary
-prints.
+Such a coordinate is held, and the remaining coordinates are inverted.
+The result is the variance conditional on the held coordinates, which is
+the reading that
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
+gives to the remaining coefficients when it leaves out a coefficient
+about which the information is flat. The conditional variance equals the
+marginal variance only where the coupling contributes nothing to the
+curvature of the kept coordinates. The Schur correction
+\\A\_{kb}A\_{bb}^{-1}A\_{bk}\\ is therefore computed and compared with
+the kept diagonal. Above `schur` times the kept diagonal, the function
+returns `NULL`.
 
-A variance is returned only where the matrix inverted is positive
-definite, which is read off the smallest eigenvalue of the matrix
-equilibrated to a unit diagonal. A positive diagonal of the inverse is
-not enough: an indefinite matrix can have one. Measured on a
-zero-inflated negative binomial with a random effect on each equation,
-stopped where the criterion's curvature has an eigenvalue of -5 on that
-scale, every diagonal entry of `A` was negative and the inverse's
-diagonal was positive, so the two standard deviations were reported with
-standard errors of 0.015 and 0.0009 on the free scale.
+A variance is returned only where the inverted matrix is positive
+definite, which is decided from the smallest eigenvalue of the matrix
+equilibrated to a unit diagonal. A positive diagonal of the inverse does
+not suffice, because an indefinite matrix can have one.
 
-A coordinate the certificate names at the edge of its range is held
-whatever its curvature, and the Schur test is not applied to it: there
-the criterion has stopped moving in it, so its curvature and its
-coupling to the others are below the resolution of the criterion.
-Measured on two correlated random intercepts whose correlation runs to
-one, at an angle of -9.14 the analytic coupling of the angle to the two
-standard deviations read 3.9e-3 and 5.2e-3 beside its own curvature of
-8e-7, while the criterion differenced by refitting read 1.2e-3 and
--2.5e-6 at a step of 0.05 and -5.0e-5 and 1.3e-4 at a step of 0.2. That
-coupling made the whole matrix indefinite, and the two standard
-deviations lost their standard errors to a coordinate whose own were
-already missing.
+A coordinate that the certificate places at the edge of its range is
+held whatever its curvature, and the Schur test is not applied to it,
+because the criterion is flat in that coordinate and its curvature and
+its coupling to the other coordinates are below the resolution of the
+criterion.
 
 ## See also
 
 [`statmod_hyper_vcov()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_vcov.md),
-its only caller.
+[`hyper_correction()`](https://statmodels7.github.io/statmodels7/reference/hyper_correction.md),
+[`marginal_vcov()`](https://statmodels7.github.io/statmodels7/reference/marginal_vcov.md)
+and
+[`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md),
+which also call it.

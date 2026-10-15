@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,17 +63,16 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="statmod_certificate.html">statmod_certificate()</a></code> reads it for the boundary label, where a verdict
-over the whole vector would say nothing about which coordinate has stopped
-moving. It is the same maximum <code><a href="joint_decrement.html">joint_decrement()</a></code> takes, restricted to
-one coordinate, so it is bounded by the joint reading and a coordinate it
-calls settled had already passed the test the verdict applies – which is
-what keeps <code>edge</code> a label and never a verdict.</p>
-<p>As a verdict of its own it is the weaker reading, and that is why it is not
-one: over the same 1350 fits it misses 10 of the 552 that the joint
-decrement finds.</p>
-<p><code>Inf</code> where the diagonal is not positive, so that such a coordinate is
-never called settled.</p>
+    <p><code><a href="statmod_certificate.html">statmod_certificate()</a></code> reads it for the boundary label, because a verdict
+over the whole vector does not show which coordinate has stopped moving. It
+is the same maximum that <code><a href="joint_decrement.html">joint_decrement()</a></code> takes, restricted to one
+coordinate, so it is bounded by the joint reading, and a coordinate that it
+calls settled has already passed the test that the verdict applies. This
+keeps <code>flat</code> a label and not a verdict. It is a weaker reading than the
+joint decrement and is not used as a verdict.</p>
+<p><code>Inf</code> where the diagonal or the gradient entry is not finite or the
+diagonal is not positive, so that such a coordinate is never called
+settled.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

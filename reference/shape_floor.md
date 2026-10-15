@@ -32,17 +32,21 @@ shape_floor(pen, theta, name, steps = NULL)
 
 ## Value
 
-A single number strictly above the penalty's lower bound.
+A single number: the penalty's lower bound where `steps` is `NULL` or
+not finite, or where no admissible value is found below the upper bound;
+otherwise the smallest value, to bisection accuracy, at which the
+proximal table exists.
 
 ## Details
 
-The limit is derived from the condition, with nothing written down. The
-question is put to the penalty, namely whether it produces a table at
-this step, and bisected, so a family added later is covered and neither
-the \\a - 1\\ of SCAD nor the \\\gamma\\ of MCP appears here. A grid
-starting just above the constant the penalty is defined over would
-otherwise contain points at which that block, with those data, cannot be
-fitted by the only route a kinked penalty has.
+The limit is found by bisection on whether
+[`penalties7::penalty_prox_spec()`](https://statmodels7.github.io/penalties7/reference/penalty_prox_spec.html)
+returns a table for the penalty at the block's steps, so that a family
+added later is covered and neither the \\a - 1\\ of SCAD nor the
+\\\gamma\\ of MCP appears here. A grid starting just above the constant
+over which the penalty is defined would otherwise contain points at
+which the block cannot be fitted with those data by the only route that
+a kinked penalty has.
 
 ## See also
 

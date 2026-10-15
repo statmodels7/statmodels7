@@ -37,7 +37,16 @@ statmod_design(spec, unseen = NULL, skip = character(0))
 ## Value
 
 A named list with one entry per parameter, each a list with `X`,
+`asked_sparse` (whether a block is sparse because the caller requested
+it, absent for an equation that holds only structural terms),
 `coef_names`, `npar` and `blocks` (the column range each term occupies).
+
+The list carries attributes where the model needs them. `structural` and
+`structure` are present when a structural term is, `structural` listing
+the structural units and `structure` being an environment with the
+term's current parameters and held levels. `refresh` and `state` are
+present when a term recomputes its own block, `refresh` listing those
+terms and `state` being an environment with the terms they chain from.
 Where no term moves with the coefficients and none is structural, the
 attribute `eta_memo` is an environment holding the last predictors
 [`statmod_eta()`](https://statmodels7.github.io/statmodels7/reference/statmod_eta.md)

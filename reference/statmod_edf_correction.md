@@ -43,8 +43,10 @@ statmod_edf_correction(
 
 - expected:
 
-  Whether the information is the expected one. Not read where the model
-  carries a filter, whose information is observed.
+  Whether the information \\H\\ is the expected one. Not read where the
+  model carries a filter, whose information is observed. The caller
+  passes the information that the fit used, so that \\V\_\beta\\, \\H\\
+  and the criterion's Hessian read one information.
 
 - approx:
 
@@ -53,23 +55,25 @@ statmod_edf_correction(
 
 - pinned:
 
-  The coordinates the fit left out of the criterion's determinant, as it
-  records them in `methods$pinned`.
+  The coordinates that the fit left out of the criterion's determinant,
+  as it records them in `methods$pinned`.
 
 ## Value
 
-A list with `total`, the scalar correction, `per`, one entry per penalty
-key, and `n_hyper`, how many hyperparameters were estimated. Zero
-throughout where none was; a zero `total` beside a positive `n_hyper`
-means the curvature could not be read, and a caller reporting to a
-reader has to tell the two apart.
+A list with `total`, the scalar correction, `per`, one entry for each
+parameter and term, and `n_hyper`, the number of hyperparameters that
+were estimated. `per` uses the diagonal of \\V\_\theta\\ alone, so its
+sum differs from `total` when the estimated hyperparameters are
+correlated. The total and `n_hyper` are zero and `per` is empty where no
+hyperparameter was estimated. A zero `total` beside a positive `n_hyper`
+means that the curvature could not be read.
 
 ## Details
 
-The ordinary effective degrees of freedom read the smoothing parameters
-as though they were known, and they were not: they were chosen from the
-same data. Propagating their uncertainty into the coefficients gives the
-corrected Bayesian covariance
+The ordinary effective degrees of freedom treat the smoothing parameters
+as known, although they were chosen from the same data. Propagating
+their uncertainty into the coefficients gives the corrected Bayesian
+covariance
 
 \$\$V' = V\_\beta + J V\_\theta J^\top, \qquad J =
 \partial\hat\beta/\partial\theta,\$\$
@@ -79,63 +83,70 @@ implicit function theorem at the penalized mode: differentiating
 \\\partial(-\ell + \rho)/\partial\beta = 0\\ in the hyperparameter gives
 \\(H+S)J_k = -\partial^2\rho/\partial\beta\\\partial\theta_k\\, whose
 right-hand side is penalties7's `penalty_cross()`. \\V\_\theta\\ is the
-inverse of the outer criterion's own Hessian, which
+inverse of the negative of the outer criterion's Hessian, which
 [`statmod_marginal_hess()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_hess.md)
-returns, negated because that criterion is a maximand.
+returns; the negative is taken because the criterion is maximized. The
+Hessian is that of the criterion the fit maximized, so for
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+the determinant spans the range space of the penalty
+([`integrated_basis()`](https://statmodels7.github.io/statmodels7/reference/integrated_basis.md)).
 
-Everything is on the hyperparameter's link scale, which is where the
-outer criterion optimizes and therefore the only scale on which its
-Hessian is a variance.
+Everything is on the hyperparameter's link scale, which is the scale on
+which the outer criterion is optimized and therefore the only scale on
+which its Hessian is a variance.
 
-**Against mgcv.** This is the first of the two terms mgcv sums into
-`edf2`, and it agrees with mgcv's to about 3e-4 on a univariate smooth
-once the difference between the two bases is allowed for. mgcv adds a
-second term for the Gaussian scale, which it profiles out of the fit and
-whose uncertainty it must therefore add back; here every distribution
-parameter carries its own equation and its own coefficients, so that
-uncertainty is already inside \\H\\. The residual difference is measured
-at 0.16, 0.10 and 0.05 effective parameters at n = 200, 400 and 2000,
-falling with the sample size.
+**Relation to mgcv.** The correction corresponds to the term of the
+effective degrees of freedom `edf2` of mgcv that arises from the
+uncertainty of the smoothing parameters (Wood, Pya and Safken, 2016).
+The scale of a Gaussian response is a distribution parameter with its
+own coefficients here, so its uncertainty is part of \\H\\ and needs no
+separate term.
 
-**Where it does not apply.** A kinked penalty has no hyperparameter the
-outer criterion estimates,
+**Where it does not apply.** The function returns zero, with `n_hyper`
+zero, for every outer criterion other than
+[`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
+and
+[`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md),
+including
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+and
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+used for a smooth penalty. A kinked penalty has no hyperparameter that
+the outer criterion estimates, because
 [`outer_hyper_index()`](https://statmodels7.github.io/statmodels7/reference/outer_hyper_index.md)
-skipping it, so there is nothing to propagate and the correction is
-zero. That is not an approximation: the map from the hyperparameter to
-the penalized mode turns a corner whenever a coefficient joins or leaves
-the active set, and a delta method needs a derivative that does not
-exist there.
+skips it, so there is nothing to propagate and the correction is zero.
+The map from the hyperparameter to the penalized mode turns a corner
+whenever a coefficient joins or leaves the active set, and a delta
+method needs a derivative that does not exist there.
 
-**A model carrying a filter.** There the mode moves in the JOINT vector,
-the coefficients followed by the structural term's own parameters, which
-is what the criterion's determinant spans. A penalty over those
-parameters is a column of no design, so read on the coefficients alone
+**Coefficients estimated on the criterion.** Where the criterion also
+estimates coefficients
+([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md)),
+the function returns
+[`marginal_edf_correction()`](https://statmodels7.github.io/statmodels7/reference/marginal_edf_correction.md).
+
+**A model carrying a filter.** The mode of such a model moves in the
+joint vector of the coefficients and the own parameters of the
+structural term, which is the vector that the determinant of the
+criterion spans. A penalty over those parameters is not a column of any
+design, so
 [`hyper_mode_cross()`](https://statmodels7.github.io/statmodels7/reference/hyper_mode_cross.md)
-skips it and the mode moves by nothing in exactly the coordinates that
-penalty shrinks. Measured on a converged filter with a penalized loading
-over ten groups of forty, the correction on the coefficients was EXACTLY
-0 against 1.108889 on the joint vector, a quarter of that model's whole
-effective count of 4.4976, moving cAIC by 2.22 and cBIC by 6.64.
-
-The count this corrects was ALREADY read on that vector.
+omits it when it is called for the coefficients alone. The correction is
+therefore computed on the joint vector.
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
-takes a structural model's effective degrees of freedom from
+takes the effective degrees of freedom of a structural model from
 [`joint_smoother_diag()`](https://statmodels7.github.io/statmodels7/reference/joint_smoother_diag.md),
-which reads the very same two matrices, so the base count was joint
-while its correction was on the coefficients – two halves of one number
-read on two different vectors.
-
-The two matrices are the ones
+which reads the same two matrices, so the base count and the correction
+are both computed on the joint vector. The two matrices are those that
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
 and
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
-already build, so there is no second assembly to disagree with the
-criterion's. That route reads the OBSERVED information, a filter having
-no expected one to offer, so `expected` and `approx` do not reach it. A
-model with no structural term of the filter shape is untouched by
-construction rather than by tolerance,
+build, so that this function and the criterion use one assembly. The
+joint route reads the observed information, and `expected` and `approx`
+do not reach it. A model with no structural term of the filter shape
+takes the coefficient route, because
 [`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md)
-returning `NULL` there.
+returns `NULL` there.
 
 ## References
 

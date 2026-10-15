@@ -2,8 +2,8 @@
 
 Whether
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html)
-answers for this family, asked at a probe and never inferred from its
-class.
+returns a value for this family. The generic is called once, at a probe
+value, and the result is not inferred from the family's class.
 
 ## Usage
 
@@ -23,14 +23,13 @@ A single logical.
 
 ## Details
 
-The default route in distributions7 is one central difference of the
-family's own expected information, which is a single stencil on an
-analytic quantity wherever that information is a written-out formula and
-refuses where it is itself an integral. Six of forty univariate families
-refuse, and the reason is cost, never accuracy: measured at 100
-observations they cost 1880 to 147300 ms against a median of 0.183 ms
-for the others, so 2p of those calls per criterion evaluation is not a
-slower route but an unusable one.
+The default method in distributions7 is one central difference of the
+family's expected information. It applies where that information is a
+written-out formula and signals an error where the information is itself
+approximated, because differencing an approximation would be a
+difference of a difference. The function returns `FALSE` for a family on
+which the generic signals an error, and also where a random parameter
+vector or a response cannot be drawn for the probe.
 
 ## See also
 

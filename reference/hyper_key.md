@@ -1,7 +1,11 @@
 # Resolve a Term's Name Against a Specification
 
-Turns the name a caller used into the key the specification holds the
-term under, accepting either that key or the term's `label`.
+Returns the key under which the specification holds a term, given either
+that key or the `label` of the term.
+[`statmod_hyper_merge()`](https://statmodels7.github.io/statmodels7/reference/statmod_hyper_merge.md)
+is the only caller, and
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+does not use it.
 
 ## Usage
 
@@ -38,12 +42,10 @@ terms at once.
 ## Details
 
 A specification keys its terms by the call as written, so a lasso is
-`"lasso(~noise1 + noise2)"`. The call is what distinguishes two lassos
-on different covariates, and it is also nothing anybody wants to type.
-The `label` the term constructor carries is the short form, `"lasso"`,
-and both are accepted here. Where two terms share a label the request is
-ambiguous and the keys are asked for, guessing having a fair chance of
-setting a hyperparameter on the wrong block.
+`"lasso(~noise1 + noise2)"`. The call distinguishes two lassos on
+different covariates. The `label` of a term is a shorter name,
+`"lasso"`, and both are accepted. Where two terms share a label the name
+is ambiguous, and the function signals an error that lists the keys.
 
 ## See also
 

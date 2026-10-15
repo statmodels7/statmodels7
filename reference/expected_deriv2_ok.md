@@ -2,7 +2,8 @@
 
 Whether
 [`distributions7::distrib_d2expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_d2expected_hessian.html)
-answers for this family, asked at a probe.
+returns a value for this family. The generic is called once, at a probe
+value.
 
 ## Usage
 
@@ -22,13 +23,11 @@ A single logical.
 
 ## Details
 
-There is no numerical default in distributions7 – a difference of the
-first derivative, itself a difference for most families, would be the
-nested differencing that package forbids – so the families that answer
-are the ones that wrote the derivative out: `gaussian1_distrib()`,
-`poisson_distrib()`, `gamma1_distrib()`, `negbin2_distrib()` and
-`beta1_distrib()`. Every other family keeps the expected route's order 2
-on
+The default method in distributions7 signals an error, because
+differencing the first derivative of the expected information would be a
+difference of a difference. The function therefore returns `TRUE` only
+for a family that provides the derivative itself. For any other family
+the order-2 Hessian of the expected route is computed by
 [`statmod_hess_stencil()`](https://statmodels7.github.io/statmodels7/reference/statmod_hess_stencil.md).
 
 ## See also

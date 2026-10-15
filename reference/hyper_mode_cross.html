@@ -9,7 +9,7 @@ stacked coefficient vector with one column per estimated hyperparameter."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,8 +79,7 @@ with <code>joint</code> a structural term's free parameters after them.</p></dd>
 
 <dt id="arg-joint">joint<a class="anchor" aria-label="anchor" href="#arg-joint"></a></dt>
 <dd><p>Whether those rows include that tail. <code>FALSE</code>, the default,
-is the coefficient-only matrix, which is what
-<code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code> contracts.</p></dd>
+gives the matrix over the coefficients alone.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -90,29 +89,30 @@ how many penalties contributed nothing to it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is the one ingredient of the penalized mode's movement that nothing
-else computes, and both consumers of that movement read it here rather than
-assembling it each: <code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code>, which contracts it against
-the information to price what estimating a hyperparameter cost, and
-<code><a href="hyper_correction.html">hyper_correction()</a></code>, which keeps the matrix and adds it to a variance.</p>
-<p>A shared hyperparameter is ONE column standing for several penalties, so
-each member writes into the group's column and they accumulate. Where
-nothing is shared each member is its own row and the lookup is what was
-here before the groups existed.</p>
-<p>A penalty over a STRUCTURAL term's own parameters covers positions among
-those parameters rather than columns of a design, so where the caller's
-matrix spans the coefficients alone there is nowhere to write it and it is
-skipped. It is counted rather than passed over in silence: a correction
-assembled without it is incomplete, and a caller reporting to a reader has
-to be able to say so.</p>
-<p>With <code>joint</code> the matrix spans the vector the mode really moves in for such
-a model, the coefficients followed by the term's own free parameters, and
-those penalties have rows after all. What they lacked was an address and
-not a derivative: <code><a href="unit_joint_positions.html">unit_joint_positions()</a></code> says where each unit's
-coordinates live in that vector and <code><a href="unit_joint_beta.html">unit_joint_beta()</a></code> reads their values,
-so nothing here is derived. <code><a href="hyper_correction.html">hyper_correction()</a></code> asks for it because
-<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> inverts the joint penalized information; the
-coefficient-space consumer does not, and its answer is unchanged.</p>
+    <p>This function computes the cross derivative of the penalty that the
+movement of the penalized mode requires. Three functions read it here
+instead of assembling it separately: <code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code>, which
+contracts the movement with the information to obtain the additional
+effective degrees of freedom, <code><a href="hyper_correction.html">hyper_correction()</a></code>, which adds the resulting
+matrix to a variance, and <code><a href="marginal_blocks.html">marginal_blocks()</a></code>, which builds the movement of
+the integrated coefficients.</p>
+<p>A shared hyperparameter is one column that stands for several penalties, so
+each member writes into the column of its group and the contributions
+accumulate. Where nothing is shared, each member has its own column.</p>
+<p>A penalty over the own parameters of a structural term covers positions among
+those parameters, which are not columns of a design. Where the matrix spans
+the coefficients alone, there is no position to write to and the penalty is
+skipped. The skipped penalties are counted in <code>skipped</code>, because a
+correction assembled without them is incomplete.</p>
+<p>With <code>joint</code> the matrix spans the vector in which the mode of such a model
+moves, the coefficients followed by the free parameters of the term, and
+the penalties over those parameters have rows. <code><a href="unit_joint_positions.html">unit_joint_positions()</a></code>
+returns the positions of the coordinates of each unit in that vector and
+<code><a href="unit_joint_beta.html">unit_joint_beta()</a></code> returns their values. <code><a href="hyper_correction.html">hyper_correction()</a></code> and
+<code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code> pass <code>joint = TRUE</code> for a model that carries a
+filter, because <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> and <code><a href="statmod_edf.html">statmod_edf()</a></code> use the joint
+penalized information. <code><a href="marginal_blocks.html">marginal_blocks()</a></code> uses the matrix over the
+coefficients alone.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

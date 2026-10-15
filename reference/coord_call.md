@@ -45,19 +45,24 @@ coord_call(X, z, w, b0, tab, screen, tol, covariance, means = numeric(0))
   [`coord_covariance()`](https://statmodels7.github.io/statmodels7/reference/coord_covariance.md)
   decides.
 
+- means:
+
+  The weighted column means of the block, one per column, with which the
+  kernel centers the columns and the working response implicitly, or
+  `numeric(0)` for an uncentered block.
+
 ## Value
 
 The kernel's list of three: `beta` (the fitted coefficients, length
-`p`), `sweeps` (how many passes it took) and `grad` (the gradient at the
-point reached, length `p`).
+`p`), `sweeps` (how many passes it took) and `grad` (the gradient of the
+weighted quadratic at the point reached, length `p`, computed only when
+the strong rule left some column out and a vector of zeros otherwise).
 
 ## Details
 
 The two kernels are one algorithm instantiated twice over a column
 accessor, and they agree bit for bit. The arithmetic licenses that:
-skipping a structural zero omits an addition of zero, which is exact. It
-is the one place in this toolkit where an identity assertion over
-compiled floating point is correct.
+skipping a structural zero omits an addition of zero, which is exact.
 
 The `dgCMatrix` is taken apart in R, so the compiled code needs no
 dependency on the Matrix package's C API.

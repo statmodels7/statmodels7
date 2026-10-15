@@ -8,13 +8,13 @@ gradient read: `v` is the running residual, or the residual times the
 working weights.
 
 `wxsq()` computes \\\sum_i w_i x\_{ij}^2\\ for each column \\j\\, the
-column curvatures of a working model. The `n x p` matrix of squares is
-never formed.
+column curvatures of a working model. The threaded kernel does not form
+the `n x p` matrix of squares, whereas the sequential expression does.
 
-Both take the package's threaded kernel above the same measured work
-threshold
+Both take the package's threaded kernel above a work threshold, the one
+constant that
 [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
-uses, and otherwise evaluate the expressions they replace,
+also uses, and otherwise evaluate the expressions they replace,
 `as.numeric(crossprod(X, v))` and `as.numeric(crossprod(w, X^2))`.
 
 ## Usage
@@ -74,6 +74,6 @@ and \\n \times p\\ at least `2e5`. A sparse `X` takes the Matrix route.
 ## See also
 
 [`wcrossprod()`](https://statmodels7.github.io/statmodels7/reference/wcrossprod.md)
-for the matrix-valued kernel and the measured threshold both share,
+for the matrix-valued kernel and the work threshold,
 [`coord_fit()`](https://statmodels7.github.io/statmodels7/reference/coord_fit.md)
 for the descent that calls these.

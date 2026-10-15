@@ -1,9 +1,9 @@
 # The Penalty's Pieces on the Joint Vector
 
 [`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)
-over the coefficients AND a filter's own parameters, which is the vector
-a marginal criterion's determinant spans where a penalty covers those
-parameters.
+for the vector that consists of the coefficients and the own parameters
+of a filter. The determinant of a marginal criterion spans that vector
+where a penalty covers those parameters.
 
 ## Usage
 
@@ -46,16 +46,17 @@ returns them.
 
 ## Details
 
-The arithmetic is
-[`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md)'s
-and the difference is where each unit's coordinates live: an ordinary
-unit is matched into the kept coefficients, a penalty over a structural
-term's own parameters is placed among the filter's free ones, and a
-MIXED covariance class is read where each of its coordinates lives and
-put back in the class's own interleaved order. Those three readings are
-the gradient's own, in
+The arithmetic is that of
+[`outer_pieces()`](https://statmodels7.github.io/statmodels7/reference/outer_pieces.md);
+the difference is where the coordinates of each unit are placed. An
+ordinary unit is matched into the kept coefficients, a penalty over the
+own parameters of a structural term is placed among the free parameters
+of the filter, and a mixed covariance class is read where each of its
+coordinates lives and put back in the interleaved order of the class.
+These three readings are those of
 [`statmod_structural_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_grad.md),
-and are composed here so the two cannot disagree about a position.
+and they are reused here so that the gradient and the Hessian place each
+coordinate at the same position.
 
 ## See also
 

@@ -1,7 +1,7 @@
 # Estimate the Hyperparameters
 
 Runs `outer_optimizer` on the marginal criterion, refitting the
-coefficients at every hyperparameter it tries.
+coefficients at every hyperparameter that it tries.
 
 ## Usage
 
@@ -52,8 +52,10 @@ outer_fit(
 
 - optimizer:
 
-  An optimizers7 optimizer, or `NULL` to let the availability of the
-  exact gradient decide.
+  An optimizers7 optimizer, or `NULL` to choose one with
+  [`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
+  from the derivatives that the criterion supplies. With `NULL`, the
+  stopping rule and the line search are also set by the function.
 
 - beta:
 
@@ -78,26 +80,32 @@ outer_fit(
 
 ## Value
 
-A list with `par`, `hyper`, `value`, `criterion`, `converged`, `history`
-and the inner results.
+A list with `par`, `hyper`, `value`, `criterion`, `converged`,
+`settled`, `obj`, `hist_blocks`, `hist_inner`, `aliased`, `spec`,
+`hist_outer`, `iterations`, `evaluations`, `exact_gradient`,
+`exact_hessian`, `optimizer`, `held_coef`, `marginal` and `pinned`.
+`hist_outer` holds the trace of the search.
 
 ## Details
 
-Each evaluation is a whole inner fit, warm-started from the previous
-one, and that is what makes the search affordable: after the first few
-hyperparameters the coefficients move very little and the inner loop
-converges in two or three iterations.
+Each evaluation is a whole inner fit, warm-started from the incumbent,
+the best usable point found so far. Near the optimum the coefficients
+move little, so the inner fit converges in few iterations.
 
-**The optimizer is chosen by whether the gradient exists.** Where
-[`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
-applies – the observed information, and penalties whose Hessian is
-linear in their hyperparameters – the criterion is handed its exact
-derivative and
+The optimizer is chosen by
+[`outer_default_optimizer()`](https://statmodels7.github.io/statmodels7/reference/outer_default_optimizer.md)
+from the derivatives that the criterion supplies:
+[`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html)
+where the exact Hessian is used,
 [`optimizers7::lbfgs()`](https://statmodels7.github.io/optimizers7/reference/lbfgs.html)
-is the default; otherwise the search compares values and
+where the gradient is exact (or a covariance class spans a structural
+term's parameters),
+[`optimizers7::brent()`](https://statmodels7.github.io/optimizers7/reference/brent.html)
+for a single coordinate without a gradient, and
 [`optimizers7::nelder_mead()`](https://statmodels7.github.io/optimizers7/reference/nelder_mead.html)
-is. An optimizer given explicitly is used as given, and one that needs a
-gradient it cannot be given will say so itself.
+otherwise. An optimizer given explicitly is used as given, and an
+optimizer that needs a gradient that is not available signals its own
+error.
 
 ## See also
 

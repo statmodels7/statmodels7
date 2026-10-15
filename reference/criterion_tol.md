@@ -1,7 +1,8 @@
-# The Tolerance a Criterion Asks For
+# The Tolerance of a Criterion
 
-Returns the largest tolerance a criterion asks for, descending into a
-combined rule and taking the maximum over its parts.
+Returns the tolerance of a criterion, descending into a combined rule:
+the largest tolerance of its parts for a rule built by `crit_any()` and
+the smallest for a rule built by `crit_all()`.
 
 ## Usage
 
@@ -25,11 +26,14 @@ that function's formals.
 
 ## Details
 
-The maximum is the right reduction because a combined rule stops when
-**any** part fires, so the loop it drives is no more precise than its
-loosest term. A caller of
+A rule built by `crit_any()` stops when **any** part holds, so the loop
+it drives is no more precise than its loosest part, and the maximum is
+taken. A rule built by `crit_all()` stops only when every part holds, so
+the loop reaches the precision of its tightest part, and the minimum is
+taken. The value is the precision that the loop delivers, which is what
+a caller of
 [`method_budget()`](https://statmodels7.github.io/statmodels7/reference/method_budget.md)
-wants the precision the loop will actually deliver.
+needs.
 
 ## See also
 

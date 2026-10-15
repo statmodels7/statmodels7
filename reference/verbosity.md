@@ -1,7 +1,7 @@
 # Resolve the Verbosity Setting
 
-Turns a level or a named logical vector into the three switches the fit
-reads.
+Turns a level or a named logical vector into the four switches `outer`,
+`blocks`, `inner` and `optimizer` that the fit reads.
 
 ## Usage
 
@@ -13,17 +13,19 @@ verbosity(verbose)
 
 - verbose:
 
-  A number from 0 to 3, or a named logical vector with any of `blocks`,
-  `inner`, `optimizer`.
+  A number from 0 to 3, or a named logical vector with any of `outer`,
+  `blocks`, `inner`, `optimizer`.
 
 ## Value
 
-A list of three logicals.
+A list of four logicals named `outer`, `blocks`, `inner` and
+`optimizer`.
 
 ## Details
 
-The levels name the loops rather than counting them: `1` shows the
-alternation, `2` the inner method's own iterations, `3` the optimizers'
-traces. The named form exists because the three are genuinely
-independent – watching the alternation while silencing a chatty inner
-optimizer is the common case.
+Each level adds output: `1` shows the outer search and the alternation
+(switches `outer` and `blocks`), `2` adds the inner method's own
+iterations (`inner`), and `3` adds the traces of the optimizers
+(`optimizer`). The named form sets the four switches independently,
+which allows the alternation to be shown while a chatty inner optimizer
+is silent. A switch that is left out is off.

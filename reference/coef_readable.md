@@ -1,7 +1,7 @@
 # The Quantities a Term Reports in Place of Its Coordinates
 
-The coefficient vector of one equation with each term's declared
-quantities put where the coordinates they are read from were.
+The coefficient vector of one equation, with each term's declared
+quantities put in place of the coordinates from which they are computed.
 
 ## Usage
 
@@ -35,24 +35,25 @@ coef_readable(spec, design, fit, p, v)
 ## Value
 
 `v`, with each term's declared quantities in place of the coordinates
-they are read from. `v` unchanged where no term of the equation declares
-any.
+from which they are computed. `v` unchanged where no term of the
+equation declares any.
 
 ## Details
 
-A term says what it is about through
+A term declares its quantities through
 [`modelterms7::term_readable()`](https://statmodels7.github.io/modelterms7/reference/term_readable.html),
-which returns the quantities and the Jacobian from the coefficients they
-are read from. The columns that Jacobian touches are exactly the
-coordinates to replace; a coordinate no quantity reads stays where it
-is.
+which returns the quantities and their Jacobian with respect to the
+coefficients from which they are computed. The columns that the Jacobian
+touches are exactly the coordinates to replace. A coordinate that enters
+no declared quantity stays in place.
 
 That rule keeps a developed parameter intact. A development is a vector
 of coefficients over covariates with no single value to report, so the
-term declares nothing for it and nothing is taken away.
+term declares nothing for it and its coefficients stay.
 
-The names are composed as the term composes its coefficients', from its
-own label, so two terms of one kind in one formula stay apart.
+The names are composed from the term's own label, as the names of its
+coefficients are, so that two terms of one kind in one formula stay
+apart.
 
 ## See also
 

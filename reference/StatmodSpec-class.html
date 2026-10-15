@@ -19,7 +19,7 @@ validates. This raw constructor takes the pieces already made."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,12 +122,47 @@ where an equation has none.</p></dd>
 <dd><p>A named logical, one per parameter: whether that
 equation's parametric block carried an intercept.</p></dd>
 
+
+<dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
+<dd><p>The rows a respecification reads, or <code>NULL</code> for the fitting
+rows.</p></dd>
+
+
+<dt id="arg-structural">structural<a class="anchor" aria-label="anchor" href="#arg-structural"></a></dt>
+<dd><p>A named list of the parameters of the structural term,
+keyed by the term; empty where no fit has set them.</p></dd>
+
+
+<dt id="arg-linpar">linpar<a class="anchor" aria-label="anchor" href="#arg-linpar"></a></dt>
+<dd><p>A list, the options of the implicit parametric block as
+<code><a href="linpar_options.html">linpar_options()</a></code> returns them.</p></dd>
+
+
+<dt id="arg-held-coef">held_coef<a class="anchor" aria-label="anchor" href="#arg-held-coef"></a></dt>
+<dd><p>A named list, one entry per distribution parameter, of
+coefficients held at a value, each a named numeric vector keyed by
+coefficient name. Empty by default.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>The number of threads, a single integer.</p></dd>
+
+
+<dt id="arg-workers">workers<a class="anchor" aria-label="anchor" href="#arg-workers"></a></dt>
+<dd><p>The number of worker processes for the independent fits of
+a cross-validation, a single integer.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>StatmodSpec</code> with one property per argument
-above, plus <code>threads</code>, <code>workers</code>, <code>linpar</code>, <code>newdata</code> and <code>structural</code>,
-which <code><a href="statmod.html">statmod()</a></code> fills in.</p>
+above and the properties described next. <code>linpar</code> holds the options of the implicit
+parametric block and is set by <code><a href="statmod_spec.html">statmod_spec()</a></code>. <code>newdata</code> holds the rows
+a respecification reads, <code>NULL</code> until <code><a href="statmod_respec.html">statmod_respec()</a></code> sets it.
+<code>structural</code> holds the parameters of a structural term where a fit has
+set them. <code>held_coef</code> holds coefficients held at a value, by name, empty
+by default. <code>threads</code> and <code>workers</code> hold the thread and worker counts
+that <code><a href="statmod.html">statmod()</a></code> sets.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

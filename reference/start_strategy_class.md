@@ -1,9 +1,9 @@
 # The start_strategy Class Object
 
-Fetches the
+Returns the
 [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md)
-class object from the namespace at the moment it is asked for, so a
-membership test reads the class as it now exists.
+class object from the namespace at the time of the call, so that a
+membership test reads the class as it exists then.
 
 ## Usage
 
@@ -22,7 +22,9 @@ under covr, which re-evaluates a package's code and so re-creates the
 class.
 [`S7::S7_inherits()`](https://rconsortium.github.io/S7/reference/S7_inherits.html)
 against the captured copy is then `FALSE` for an object of the live
-class. `distributions7` and `linkfunctions7` record the same trap.
+class. `distributions7` and `linkfunctions7` document the same behavior
+of [`identical()`](https://rdrr.io/r/base/identical.html) on a class
+that has been re-created.
 
 ## See also
 

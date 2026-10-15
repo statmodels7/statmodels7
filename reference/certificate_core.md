@@ -21,9 +21,7 @@ certificate_core(fit, tol, flat, edge)
 - tol:
 
   The largest rise, in the criterion's own units, that a certified point
-  may still have available to it. ⚠️ Until 0.127.0 this was a threshold
-  on the outer gradient. The default has not moved and its meaning has:
-  a caller who set one should read
+  may still have available; see
   [`joint_decrement()`](https://statmodels7.github.io/statmodels7/reference/joint_decrement.md).
 
 - flat:

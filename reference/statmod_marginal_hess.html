@@ -9,7 +9,7 @@ of the hyperparameters under estimation."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,8 +107,10 @@ the hyperparameters.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A square matrix, one row per row of <code>idx</code>, or <code>NULL</code> where
-the determinant does not exist.</p>
+    <p>A square matrix with one row for each row of <code>idx</code>, followed by one
+row for each coefficient in <code>gam</code>, or <code>NULL</code> where the penalized
+information or the matrix of the determinant cannot be formed or, on a
+differenced route, where the two steps disagree.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -116,18 +118,27 @@ the determinant does not exist.</p>
 hyperparameter Hessian of the penalty, the movement of the mode read
 through the penalized curvature, and two contributions from the
 determinant, one from \(M\) moving and one from \(K_m\) moving.</p>
-<p><strong>Everything the penalty contributes is asked of the penalty</strong>
-(<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_hess_theta()</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalties7::penalty_dhessian()</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalties7::penalty_d2hessian()</a></code>,
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalties7::penalty_dcross()</a></code>), so a penalty that is not
-quadratic in its hyperparameters is covered by the same assembly with no
-branch here: a ridge, a random effect, a structured prior.</p>
+<p><strong>Contributions of the penalty.</strong> Every contribution of the penalty comes
+from a generic of <span class="pkg">penalties7</span>: <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_hess_theta()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_cross()</a></code>, <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalties7::penalty_dhessian()</a></code>,
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalties7::penalty_dcross()</a></code> and <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalties7::penalty_d2hessian()</a></code>, with
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html" class="external-link">penalties7::penalty_dhessian_beta()</a></code> and its second-order companions for a
+penalty whose Hessian depends on the coefficients. The assembly therefore
+contains no branch for a particular penalty class (a ridge, a random
+effect, a structured prior).</p>
 <p><strong>Onto the free scale</strong> the chain rule is second order and diagonal,
 each hyperparameter having its own link: with \(\theta = h(\eta)\),
 $$\partial^2 V/\partial\eta_m\partial\eta_l =
   h_m'h_l'\,\partial^2 V/\partial\theta_m\partial\theta_l
   + \delta_{ml}\,h_m''\,\partial V/\partial\theta_m.$$</p>
+<p><strong>Routes.</strong> For a model with a structural term the function returns
+<code><a href="statmod_structural_hess.html">statmod_structural_hess()</a></code> where the term implements
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_fourth.html" class="external-link">modelterms7::term_fourth()</a></code> and a penalty covers the term's own parameters,
+and <code><a href="statmod_hess_stencil.html">statmod_hess_stencil()</a></code> otherwise, including the case where that
+assembly returns no finite matrix. On the expected information the
+assembly runs only where <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code> admits order 2, and the
+stencil is used elsewhere. Any other model is answered by the assembly
+described above.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

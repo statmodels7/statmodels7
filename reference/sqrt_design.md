@@ -29,9 +29,9 @@ sqrt_design(design, L)
 
 An \\nK \times p\\ matrix, dense or a Matrix sparse matrix according to
 the design's own storage, where \\p\\ is the total number of
-coefficients across the equations. `NULL` when `L` is `NULL`, so the
-refusal propagates from the factorization to the solve without a test at
-each step.
+coefficients across the equations. `NULL` when `L` is `NULL` or has a
+missing or infinite entry, so the `NULL` propagates from the
+factorization to the solve without a test at each step.
 
 ## Details
 

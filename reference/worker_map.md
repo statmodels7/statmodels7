@@ -2,7 +2,7 @@
 
 Applies a body to each of `n` independent units – a cross-validation
 fold, a combination of a path's product grid – over the worker processes
-the specification asks for (`spec@workers`, from
+that the specification requests (`spec@workers`, from
 [`n_threads(workers =)`](https://statmodels7.github.io/numericals7/reference/n_threads.html))
 and in this process otherwise. Results come back in unit order whatever
 the number of workers, and that is what makes the answer independent of

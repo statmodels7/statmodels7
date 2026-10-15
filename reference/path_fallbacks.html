@@ -9,7 +9,7 @@ term named neither."><meta property="og:image" content="https://statmodels7.gith
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,19 +54,19 @@ term named neither.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The five penalized constructors carry these on their own signatures, where
-a reader can see them, <code>lasso(x, n_lambda = 25, min_ratio = 1e-4)</code> and
-<code>enet(x, n_lambda = 25, n_alpha = 5)</code>, so nothing here is reached
-for them. What reaches it is a term that declares a kinked penalty without
-offering an argument for the grid: <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code> under
-a Laplace prior is the case, its hyperparameters being whatever the
-effects' distribution happens to carry.</p>
-<p><code>kink</code> is the length of the path over the size of the kink, which
-runs geometrically over <code>1/min_ratio</code>, which is four decades, and wants
-that many points to be smooth in. <code>other</code> serves an axis that spans
-one bounded interval instead, \(\alpha\) between the ridge and the lasso
-or a shape over its useful range, and needs fewer; with a product every
-extra point there multiplies the fits.</p>
+    <p>The constructors <code><a href="https://statmodels7.github.io/modelterms7/reference/lasso.html" class="external-link">modelterms7::lasso()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/enet.html" class="external-link">modelterms7::enet()</a></code>,
+<code><a href="https://statmodels7.github.io/modelterms7/reference/scad.html" class="external-link">modelterms7::scad()</a></code> and <code><a href="https://statmodels7.github.io/modelterms7/reference/mcp.html" class="external-link">modelterms7::mcp()</a></code> carry these settings on
+their own signatures, for example <code>lasso(x, n_lambda = 25, min_ratio = 1e-4)</code> and <code>enet(x, n_lambda = 25, n_alpha = 5)</code>, so that nothing here is
+used for them. The settings here are used by a term that declares a kinked
+penalty without an argument for the grid, such as <code><a href="https://statmodels7.github.io/modelterms7/reference/random.html" class="external-link">modelterms7::random()</a></code>
+under a Laplace prior, whose hyperparameters are those of the effects'
+distribution.</p>
+<p><code>kink</code> is the number of points on the axis swept by the size of the kink,
+which runs geometrically over a factor of <code>1/min_ratio</code> (four decades at
+the default). <code>other</code> is the number of points on an axis that is swept over
+an interval instead, such as \(\alpha\) between the ridge and the lasso
+or the shape of SCAD or MCP over its usual range; with a product of axes,
+every point added there multiplies the number of fits.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -25,9 +25,7 @@ StatmodTest(
 
 - test:
 
-  Which of the four statistics, as
-  [`statmod_test()`](https://statmodels7.github.io/statmodels7/reference/statmod_test.md)
-  was asked for it.
+  Which of the four statistics was computed.
 
 - statistic:
 
@@ -83,27 +81,23 @@ printed.
 fired, a boolean about a threshold on a score whose size depends on the
 model. `mode_error` is
 [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md),
-how much of the penalized objective is still on the table at the point
-the refit returned, in log-likelihood units against
-[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md)
-– the rule statmodels7 0.81.0 established for exactly this question.
-
-The flag is not merely a false negative: it is anti-correlated with the
-quality of the point, because a stopping rule reads a change and a
-distance reads a point. Measured on `y ~ x` with a Poisson response at
-\\n = 200\\ over nineteen held values, all nineteen are at their mode
-and the four the flag rejects are the four best-located of them. See
+the decrease of the penalized objective that a Newton step from the
+point returned by the refit would predict, in log-likelihood units,
+judged against
+[`mode_error_limit()`](https://statmodels7.github.io/statmodels7/reference/mode_error_limit.md).
+The two need not agree, because a stopping rule reads a change in the
+objective whereas the mode error reads the distance to the mode. See
 [`restricted_mode_error()`](https://statmodels7.github.io/statmodels7/reference/restricted_mode_error.md).
 
-A statistic read off a refit that stopped short is the value at wherever
-it stopped, and [`print()`](https://rdrr.io/r/base/print.html) says so –
-reading `mode_error`, so that it says it where it is true.
+A statistic computed from a refit that stopped short is the value at the
+point where the refit stopped.
+[`print()`](https://rdrr.io/r/base/print.html) reports this, reading
+`mode_error`.
 
-The class exists rather than a bare list because everything a caller of
-this toolkit receives is an object with declared properties. R's own
-tests return an `htest`, which is a list with a class attribute and no
-contract; nothing here can validate one, and a reader cannot ask it what
-it carries.
+The class declares its properties, as every object that this toolkit
+returns does, whereas the `htest` returned by the tests of base R is a
+list with a class attribute and no declared structure, so that it cannot
+be validated.
 
 ## See also
 
@@ -118,6 +112,7 @@ which `mode_error` reports.
 dd <- data.frame(x = seq(-1, 1, length.out = 40))
 dd$y <- rpois(40, exp(0.3 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-S7::S7_inherits(statmod_test(fit, "mu", "x", 1), StatmodTest)
+S7::S7_inherits(statmod_test(fit, param = "mu", coefname = "x", value = 1),
+                StatmodTest)
 #> [1] TRUE
 ```

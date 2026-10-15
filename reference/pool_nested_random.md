@@ -25,8 +25,8 @@ pool_nested_random(tm, rows, coef)
 
 - coef:
 
-  The term's coefficients to record as the ones it was last committed
-  at, so that its block at new rows is the Jacobian there.
+  The term's coefficients to record as the ones at which it was last
+  committed, so that its block at new rows is the Jacobian there.
 
 ## Value
 
@@ -35,15 +35,15 @@ The modified term.
 ## Details
 
 A random effect set aside contributes \\z_i^\top u\\ at every row, with
-\\z_i\\ the row's within-group design and \\u\\ the value it is read at:
-zero for `random = "zero"`, a node of the prior for `"marginal"`. Inside
-a nonlinear term the effect enters the parameter, and the contribution
-of the term is not linear in it, so the columns cannot simply be set to
-zero as they are for a term written in an equation. With every row in
-the first level, writing \\u\\ into that level's coefficients gives
-every row the effect \\z_i^\top u\\, and the term is evaluated at those
-coefficients by its own methods. A group the fit never saw is read the
-same way, so it needs no effect of its own.
+\\z_i\\ the row's within-group design and \\u\\ the value at which it is
+read: zero for `random = "zero"`, a node of the prior for `"marginal"`.
+Inside a nonlinear term the effect enters the parameter, and the
+contribution of the term is not linear in it, so the columns cannot
+simply be set to zero as they are for a term written in an equation.
+With every row in the first level, writing \\u\\ into that level's
+coefficients gives every row the effect \\z_i^\top u\\, and the term is
+evaluated at those coefficients by its own methods. A group that the fit
+never saw is read the same way, so it needs no effect of its own.
 
 Two places are rewritten. At the fitting rows the term reads the stored
 design of the developed parameter, `blueprint$Z`, whose columns for the

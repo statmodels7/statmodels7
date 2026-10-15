@@ -52,9 +52,7 @@ design, and the solve on a subset reads the assembled matrix anyway. So
 the information is formed over the subset's own columns through
 [`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)'s
 `index`, and the penalty's Hessian is added on the same rows and
-columns. Forming the whole \\X'WX\\ to keep its submatrix was measured
-at 54 per cent of a lasso path at \\n = 5000\\ and 200 columns, the
-subset being the two intercepts.
+columns, which avoids forming the whole \\X'WX\\ to keep a submatrix.
 
 Where the whole route went through the square roots it read \\R'R +
 C'C\\, which equals \\X'WX + S\\ up to rounding wherever the factors

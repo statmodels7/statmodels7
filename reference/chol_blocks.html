@@ -9,7 +9,7 @@ every observation, as a \(n \times K \times K\) array."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,18 +67,17 @@ so a single bad observation declines for the whole sample.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>\(K\) is the number of distribution parameters, so it is 1, 2 or 3 for
-most families and never large; \(n\) is the number of observations and
-is. The standard Cholesky recursion is therefore written out over the
+    <p>\(K\) is the number of distribution parameters, which is small for every
+family, whereas \(n\), the number of observations, can be large. The
+standard Cholesky recursion is therefore written out over the
 \(K\) indices and evaluated over all \(n\) observations at once, one
 vectorized pass per entry of the factor, so no loop runs over
 observations.</p>
 <p>A block that is not positive definite produces a non-positive pivot, and
 the function returns <code>NULL</code> at that point instead of taking its square
-root. That is an expected outcome: the observed curvature far from the
-optimum is routinely indefinite, and the caller answers by falling back to
-the assembled route. A warning about a <code>NaN</code> would report an ordinary
-branch as a defect.</p>
+root. This outcome is expected, because the observed curvature far from the
+optimum is routinely indefinite, and the caller then falls back to the
+assembled route.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

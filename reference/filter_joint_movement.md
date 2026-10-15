@@ -1,6 +1,6 @@
 # How the Mode Moves Where an Unpenalized Filter Moves With It
 
-The pieces
+The pieces that
 [`statmod_marginal_grad()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_grad.md)
 reads on the joint vector of coefficients and a filter's own parameters
 where no penalty covers those parameters: a solve with the joint

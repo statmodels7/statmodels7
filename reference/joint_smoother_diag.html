@@ -11,7 +11,7 @@ followed by the term's own free parameters."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,25 +94,22 @@ read on the joint vector: \(K\) is <code><a href="statmod_full_information.html"
 <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code>.</p>
     </div>
     <div class="section level2">
-    <h2 id="one-apiece-is-this-matrix-s-own-answer-exactly">One apiece is this matrix's own answer, exactly<a class="anchor" aria-label="anchor" href="#one-apiece-is-this-matrix-s-own-answer-exactly"></a></h2>
-    <p>Writing \(P\) for the coordinates some penalty covers, \(S\) has a zero
-row and a zero column outside \(P\), so
+    <h2 id="the-count-of-an-unpenalized-parameter">The count of an unpenalized parameter<a class="anchor" aria-label="anchor" href="#the-count-of-an-unpenalized-parameter"></a></h2>
+    <p>Writing \(P\) for the coordinates that some penalty covers, \(S\) has a
+zero row and a zero column outside \(P\), so
 $$F = M^{-1}K = M^{-1}(M - S) = I - M^{-1}S,$$
 and for \(j\) outside \(P\) the whole column \(S_{\cdot j}\) vanishes,
-which makes \(F_{jj}\) exactly one. The rule this replaces – one degree
-of freedom per free parameter of a structural term, on the reading that
-those are estimated and unpenalized – is therefore what this matrix says
-wherever that rule is right, and measured it is so to the last bit: the
-unpenalized coordinates come back at 1.000000000000000 with a gap of
-0.000e+00. What moves is a coordinate a prior shrinks, which since 0.24.0 a
-filter's own parameters may be. Measured on a developed loading over eight
-groups the eight deviations read between 0.080 and 0.247 where the count
-says eight, and under a covariance class over two developed parameters
-sixteen of them read between -0.0003 and 0.829 where the count says sixteen.</p>
+which makes \(F_{jj}\) exactly one. The rule that counts one degree of
+freedom per free parameter of a structural term, on the reading that those
+parameters are estimated and unpenalized, is therefore what this matrix
+gives wherever that rule is right. The count differs for a coordinate that
+a prior shrinks, which a filter's own parameters may be (for example the
+deviations of a developed loading, or the parameters under a covariance
+class); such a coordinate counts less than one.</p>
 <p>A structural term that mixes over latent states rather than shifting the
 predictor has no such joint determinant, <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> answering
 <code>NULL</code> for it, and falls back to the coefficient-only reading.</p>
-<p>The joint route reads the OBSERVED information, there being no expected one
+<p>The joint route reads the observed information, there being no expected one
 for a filter: <code><a href="statmod_marginal_full.html">statmod_marginal_full()</a></code> assembles from
 <code><a href="https://statmodels7.github.io/modelterms7/reference/term_curvature.html" class="external-link">modelterms7::term_curvature()</a></code>, and the criterion of such a model already
 reads that same matrix. A model carrying no filter never reaches here and is
@@ -120,7 +117,7 @@ untouched.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_edf.html">statmod_edf()</a></code>, its only caller.</p></div>
+    <div class="dont-index"><p><code><a href="statmod_edf.html">statmod_edf()</a></code> and <code><a href="summary_class_blocks.html">summary_class_blocks()</a></code>, its callers.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

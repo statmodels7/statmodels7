@@ -1,9 +1,9 @@
-# Refuse a Quantity That Needs Trials the Rows Do Not Carry
+# Reject a Quantity That Needs Trials the Rows Lack
 
 Signals an error where the family's numbers of trials are missing, which
 is what
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
-leaves when a prediction is asked at rows with no response.
+leaves when a prediction is made at rows with no response.
 
 ## Usage
 
@@ -21,7 +21,7 @@ check_trials_known(distrib, what)
 
 - what:
 
-  The quantity asked for, in words, for the message.
+  The quantity requested, in words, for the message.
 
 ## Value
 

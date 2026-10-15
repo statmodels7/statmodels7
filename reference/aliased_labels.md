@@ -1,7 +1,7 @@
 # Name the Aliased Coefficients of a Fit
 
-Turns the coordinates the scoring step's pivot dropped into the labels a
-reader sees.
+Converts the coordinates that the pivot of the scoring step dropped into
+coefficient labels.
 
 ## Usage
 
@@ -34,26 +34,24 @@ A character vector of coefficient labels, possibly empty.
 
 A design of less than full rank has no estimate for the columns that
 repeat information already carried: only combinations are estimable, and
-which column is left out is settled by the pivot, exactly as
+the pivot determines which column is left out, as in
 [`lm()`](https://rdrr.io/r/stats/lm.html) and
-[`glm()`](https://rdrr.io/r/stats/glm.html) settle it. Those columns
-come back from the solve as coordinates of the coefficient vector; here
-they become the labels
+[`glm()`](https://rdrr.io/r/stats/glm.html). Those columns come back
+from the solve as coordinates of the coefficient vector; this function
+converts them into the labels that
 [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md)
-gives, so that nothing downstream has to rebuild a design to say which
-coefficient is which.
+supplies, so that no later step has to rebuild a design to identify a
+coefficient.
 
-A coordinate a penalty covers is never among them, and that falls out of
-where the test is made rather than being written as a rule: the pivot
-runs on the AUGMENTED system, design and penalty factor together, so a
-column the design alone does not identify is identified there and is not
-dropped. Measured on two identical columns, `ridge(~ 0 + x + v)` fits
-and splits the effect evenly between them, at 0.421897 each, with a full
-variance matrix.
+A coordinate that a penalty covers is never among them, because the
+pivot runs on the augmented system (design and penalty factor together),
+in which a column that the design alone does not identify is identified.
+Under `ridge(~ 0 + x + v)` with two identical columns, the effect is
+split evenly between the columns and the variance matrix is complete.
 
 ## See also
 
 [`coef_labels()`](https://statmodels7.github.io/statmodels7/reference/coef_labels.md),
 which supplies the names, and
-[`vcov()`](https://rdrr.io/r/stats/vcov.html), which holds these
-coordinates rather than refusing the whole matrix.
+[`vcov()`](https://rdrr.io/r/stats/vcov.html), which reports these
+coordinates as missing and inverts the rest of the matrix.

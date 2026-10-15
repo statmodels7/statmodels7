@@ -45,16 +45,20 @@ coord_working(spec, ep, coef, design, p, expected, approx)
 
 ## Value
 
-A list with `w` and `z`, each a numeric vector of length `spec@n_obs`.
-`NULL` where the curvature is not usable, which is any non-finite or
-non-positive \\h_i\\; the observed information can produce both far from
-the optimum.
+A list with `w` and `z`, each a numeric vector of length `spec@n_obs`. A
+row of weight zero has `w` zero and `z` equal to its predictor. `NULL`
+where the working problem is not usable: a non-finite or non-positive
+\\h_i\\, or a non-finite score, on a row of positive weight. The
+observed information can produce non-positive values far from the
+optimum.
 
 ## Details
 
 For a Gaussian response on the identity link the quadratic is exact and
-one pass answers the problem. Elsewhere it is the local approximation a
-scoring step works on, and the weights are rebuilt at each iteration.
+the first iteration answers the problem. Elsewhere it is the local
+approximation a scoring step works on, and the weights are rebuilt at
+each iteration. A row of weight zero has no curvature and no score, and
+it enters the descent with weight zero at its own predictor.
 
 Where the design carries a structural term, the predictor of an equation
 includes a part that belongs to that term, and no column of a block

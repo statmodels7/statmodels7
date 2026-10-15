@@ -13,7 +13,7 @@ turns out to be."><meta property="og:image" content="https://statmodels7.github.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,8 +68,8 @@ turns out to be.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The question <code><a href="statmod_pe.html">statmod_pe()</a></code> asks is about one active set at one point, and
-answering it there would cost a decomposition per evaluation. Full column
+    <p>The question that <code><a href="statmod_pe.html">statmod_pe()</a></code> answers concerns one active set at one
+point, and answering it there would cost a decomposition per evaluation. Full column
 rank of the whole design answers it for every active set at once, so it is
 read once and reused, which is what keeps the count free on the path it was
 introduced for.</p>
@@ -79,14 +79,13 @@ each design. A term registering <code><a href="https://statmodels7.github.io/mod
 its block as the coefficients move, so the same column counts do not imply
 the same columns and a memo that cannot see the refresh must not answer;
 there the certificate is declined outright and <code><a href="active_rank.html">active_rank()</a></code> runs
-instead. That route is bounded by the trace it replaced, being a
-decomposition of \(X_A\) where the trace needs the cross product of the
-same columns.</p>
+instead. That route is a decomposition of \(X_A\), where the trace needs
+the cross product of the same columns.</p>
 <p>A design carrying a structural term has no <code>eta_memo</code> either, so there the
-certificate is recomputed at each call rather than declined. It is correct
-and it is not free; what makes it affordable is that a structural term's
-own penalty covers no coefficient, so the branch this serves is reached
-only where some other block is penalized by a kink and nothing else.</p>
+certificate is recomputed at each call and costs one decomposition per
+equation. The branch that this serves is reached only where a penalty with
+a kink is present and the penalty's Hessian vanishes on the active
+coordinates.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

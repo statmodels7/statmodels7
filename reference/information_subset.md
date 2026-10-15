@@ -35,7 +35,7 @@ information_subset(spec, design, ev, expected, approx, H, index)
 
 - H:
 
-  The second-derivative components, or `NULL` to ask for them.
+  The second-derivative components, or `NULL` to compute them here.
 
 - index:
 

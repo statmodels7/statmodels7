@@ -1,9 +1,9 @@
 # Start From a Random Draw
 
-Draws every coefficient from a generator of the caller's choosing and,
-by default, adds the draw to the intercept-only fit. Built for running a
-model from several starts and comparing where they land, which is how a
-multimodal likelihood is explored.
+Draws every coefficient from a generator chosen by the caller and, by
+default, adds the draw to the intercept-only fit. It is intended for
+running a model from several starts and comparing where they land, which
+is one way to explore a multimodal likelihood.
 
 ## Usage
 
@@ -36,25 +36,27 @@ A `StartRandom` object, inheriting from
 [`start_strategy()`](https://statmodels7.github.io/statmodels7/reference/start_strategy.md),
 with properties `fn`, `args` and `center`.
 
-## Why the draw is centered by default
+## Centering
 
-A coefficient drawn from a standard normal is a sensible perturbation
-and a hopeless absolute value: the intercept of a location equation is
-on the scale of the response, which may be a thousand. Adding the draw
-to
-[`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)'s
-answer keeps that scale and randomizes the direction, leaving the
-several starts something to differ in.
+A coefficient drawn from a standard normal is a reasonable perturbation
+but not a reasonable absolute value, because the intercept of a location
+equation is on the scale of the response, which may be a thousand.
+Adding the draw to the answer of
+[`start_intercepts()`](https://statmodels7.github.io/statmodels7/reference/start_intercepts.md)
+keeps that scale and randomizes the position around it, so that the
+several starts differ from one another.
 
-`center = FALSE` uses the draw alone, which is right when the generator
-is already scaled to the problem.
+With `center = FALSE` the draw is used alone, which is appropriate when
+the generator is already scaled to the problem.
 
 ## The random stream
 
 The draw comes from the session's generator, so
-[`set.seed()`](https://rdrr.io/r/base/Random.html) governs the result
-and a fit begun this way repeats only alongside its seed. Nothing is
-seeded internally.
+[`set.seed()`](https://rdrr.io/r/base/Random.html) governs the result,
+and a fit begun this way repeats only with the same seed. The
+intercept-only fit to which a centered draw is added sets a seed of its
+own and restores the caller's stream afterwards, so it does not change
+the draw.
 
 ## See also
 

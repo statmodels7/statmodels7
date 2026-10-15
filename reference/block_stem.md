@@ -27,12 +27,14 @@ A block is keyed in the design by the term's deparsed call, so
 different keys and never meet by name. Their coefficients, on the other
 hand, are `s(x).lin`, `s(x).z1`, ... on both sides, so the stem `s(x)`
 names the term without naming the basis. The suffix is taken from the
-LAST dot rather than the first, so a covariate whose own name carries
-one – `s(my.var)` – keeps it.
+last dot and not the first, so a covariate whose own name carries one –
+`s(my.var)` – keeps it.
 
-`NA` is returned where the names carry no suffix at all, which is the
-parametric block, whose columns are variables and levels and which is
-matched column by column instead.
+`NA` is returned where the names do not reduce to one common stem, as
+for the parametric block of several columns, whose columns are variables
+and levels and which is matched column by column instead. A block of a
+single column whose name contains a dot, such as `my.var`, reduces to
+the stem `my`.
 
 ## See also
 

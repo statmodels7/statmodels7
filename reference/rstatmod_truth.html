@@ -11,7 +11,7 @@ by whatever par names."><meta property="og:image" content="https://statmodels7.g
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,18 +79,18 @@ the structural term's own parameters or <code>NULL</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The rule the whole function is written from is that <strong>whoever knows what a
-quantity means draws it</strong>. A coefficient of a design column has no other
-owner and is drawn from a normal of width <code>sd</code>. A coordinate some penalty
-covers is drawn from that penalty read as a prior, so a Gaussian random
-effect gives Gaussian effects and a lasso gives Laplace ones; the prior's
-own scale is drawn too, on the chart its penalty carries. A structural
-term's parameters are drawn by the term, which knows their charts.</p>
+    <p>Each quantity is drawn by the component that defines its meaning. A
+coefficient of a design column has no other owner and is drawn from a
+normal of width <code>sd</code>. A coordinate that some penalty covers is drawn from
+that penalty read as a prior, so a Gaussian random effect gives Gaussian
+effects and a lasso gives Laplace ones; the prior's own scale is drawn too,
+on the chart that its penalty carries. A structural term's parameters are
+drawn by the term, on the chart that each one rides.</p>
 <p>The truth is drawn once whatever <code>n_sim</code> is, so the replicates differ in
 what is random and not in what is being estimated.</p>
-<p>A hyperparameter the term holds is used as given rather than drawn:
-<code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> says what the smoothing is and the simulation says it
-too.</p>
+<p>A hyperparameter that the term holds is used as given and not drawn: in
+<code>s(x, bspline_smooth(), hyper = c(lambda = 2))</code> the simulation uses the
+smoothing parameter that the term specifies.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

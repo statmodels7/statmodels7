@@ -1,4 +1,4 @@
-# The Log-Density's Curvature the Refresh Corrections Read
+# The Log-Density's Curvature Used by the Refresh Corrections
 
 \\\ell\_{ab}\\ on the link scale, from whichever route the criterion's
 \\K\\ was assembled on.

@@ -11,7 +11,7 @@ decomposition will actually use."><meta property="og:image" content="https://sta
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,8 @@ parameter.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of three, of which the ones the route does not need are
+    <p>A list with <code>R</code>, <code>C</code> and <code>A</code> and, on the square-root route,
+<code>threads</code>, the thread count. The matrices that the route does not need are
 <code>NULL</code>:</p><dl><dt><code>R</code></dt>
 <dd><p>the square-root design, as <code><a href="sqrt_design.html">sqrt_design()</a></code> returns it, or
 <code>NULL</code>.</p></dd>
@@ -98,10 +99,11 @@ factor, and <code><a href="iwls_solve.html">iwls_solve()</a></code> falls back t
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Only what the decomposition will read is built. <code>"qr"</code> and <code>"svd"</code> need
-the square-root design <code>R</code> and the penalty's factor <code>C</code> and never form the
-information; <code>"chol"</code> and <code>"chol_crossprod"</code> need the assembled <code>A</code> and
-neither square root. Building all three unconditionally would pay for the
-route not taken at every iteration of the loop.</p>
+the square-root design <code>R</code> and the penalty's factor <code>C</code>, and build the
+information only when one of the two factors does not exist; <code>"chol"</code> needs
+the assembled <code>A</code> and neither square root. Building all three
+unconditionally would pay for the route not taken at every iteration of the
+loop.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

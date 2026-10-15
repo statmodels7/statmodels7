@@ -1,10 +1,10 @@
 # The Penalty Over a Structural Term's Free Parameters, as a Block
 
 The Hessian of whatever penalty covers a structural term's own
-parameters, over the free ones and in their order, which is the order
-the tail of
+parameters, over the free ones and in their order, which is the order in
+which the tail of
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md)
-carries them in.
+carries them.
 
 ## Usage
 
@@ -38,11 +38,16 @@ A square matrix, or `NULL`.
 
 ## Details
 
-Written once because three readers need it and a block each of them
-placed for itself would agree only by accident: the joint fit, the
-variance matrix, and the marginal criterion. Where no structural term
-carries a penalty the answer is `NULL`, and a caller pads with zeros as
-before.
+Written once because its three readers (the variance matrix of
+[`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md),
+the marginal criterion and
+[`statmod_structural_table()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_table.md))
+would otherwise each place the block for themselves. The result is
+`NULL` where no structural term carries a penalty, where the only such
+penalty belongs to a mixed covariance class (placed by
+[`joint_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.md)),
+or where no term has `nfree` free parameters, and the caller then pads
+with zeros.
 
 ## See also
 

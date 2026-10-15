@@ -1,9 +1,9 @@
 # Predict From a Fitted Model
 
 Predicts from a fitted model: any one of the distribution's parameters,
-any of its moments, or every parameter or linear predictor at once, at
-the fitting data or at new data, with standard errors and intervals on
-request.
+any of its moments, every parameter or linear predictor at once, or a
+new observation of the response, at the fitting data or at new data,
+with standard errors and intervals on request.
 
 ## Usage
 
@@ -34,23 +34,38 @@ predict(
 - what:
 
   What to predict: a parameter's name, optionally prefixed `"link:"`; a
-  moment's name; `"parameter"` (the default) or `"link"`. An
-  unrecognized name signals an error listing what is available.
+  moment's name; `"parameter"` (the default) or `"link"`; or
+  `"response"`, which requires `interval = "prediction"` and is the only
+  value that this interval accepts. An unrecognized name signals an
+  error listing what is available.
 
 - newdata:
 
-  A data frame, or `NULL` for the fitting data. Needs the covariates the
-  model names but not the response.
+  A data frame, or `NULL` for the fitting data. It needs the variables
+  of the equations that are read: where `what` names one parameter and
+  `interval` is `"confidence"`, the variables that only the other
+  equations use may be absent. It does not need the response, except
+  that a moment or a prediction interval of a binomial fitted with
+  [`cbind()`](https://rdrr.io/r/base/cbind.html) reads the number of
+  trials from it. For a model with a structural term, rows that all
+  carry the response are read as a series of their own, and rows without
+  it continue the fitted series. A data frame with no rows signals an
+  error.
 
 - se:
 
   `TRUE` to report the standard error and an interval as well. `FALSE`
-  by default.
+  by default. A moment has no standard error, and `se = TRUE` with a
+  moment signals an error. `interval = "group"` sets it to `TRUE`, and
+  `interval = "prediction"` does not read it, its result carrying its
+  own `se` column.
 
 - level:
 
-  The interval's level, `0.95` by default. Read only where `se` is
-  `TRUE`.
+  The interval's level, `0.95` by default, a single number strictly
+  between 0 and 1. It is read wherever an interval is returned: with
+  `se = TRUE`, with `interval = "group"` and with
+  `interval = "prediction"`, which gives its interval without `se`.
 
 - random:
 
@@ -59,7 +74,7 @@ predict(
   term is read: `"conditional"` (the default) with each group's own
   estimated effect, so a level the fit never saw signals an error;
   `"zero"` with every effect at zero, the typical group; `"marginal"`
-  averaged over the prior the fit estimated, the population average
+  averaged over the prior that the fit estimated, the population average
   \\E_b\[h^{-1}(\eta + z^\top b)\]\\. A single string applies to every
   such term; a character vector named by the terms' keys chooses term by
   term, the rest staying conditional. See the section on new groups.
@@ -88,32 +103,35 @@ predict(
 
 - ...:
 
-  Passed to
-  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-  where `se` is `TRUE`. That is where `type` chooses between the
-  Bayesian variance, the frequentist one and the unconditional one. A
-  band around a penalized term is where the last of the three differs
-  most from the others, since it is the fitted values that a smoothing
-  parameter moves: measured on a univariate smooth at \\n = 200\\,
-  `type = "unconditional"` widens this interval by 1.1 per cent on
-  average and 7.6 per cent at its widest point.
+  Only `type`, the variance type of
+  [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md):
+  the Bayesian variance, the frequentist one or the unconditional one,
+  which also accounts for the estimated smoothing parameters. It is read
+  where `se` is `TRUE`, with `interval = "group"`, and with
+  `interval = "prediction"` and `predictive = "averaged"`, and it
+  signals an error elsewhere. Any other argument signals an error that
+  names it. The unconditional variance differs most from the others in a
+  band around a penalized term, since it is the fitted values that a
+  smoothing parameter moves.
 
 ## Value
 
-With `se = FALSE`, a numeric vector of `nrow(newdata)` values when
-`what` names one quantity, and a named list of such vectors for
-`"parameter"` and `"link"`.
+With `se = FALSE`, a numeric vector with one value per row of `newdata`
+(of the fitting data where `newdata` is `NULL`) when `what` names one
+quantity, and a named list of such vectors for `"parameter"` and
+`"link"`.
 
 With `se = TRUE`, a data frame with columns `fit`, `se`, `lower` and
-`upper` in place of each vector. `se` is `NA` for an observation whose
-predictor reads a coefficient that has no variance, which is the truth
-about such a fit, and no gap in the arithmetic.
+`upper` in place of each vector, or, for `"parameter"` and `"link"`, a
+named list of such data frames, one per parameter. `se` is `NA` for an
+observation whose predictor reads a coefficient that has no variance.
 
 With `interval = "prediction"`, a data frame with columns `fit` (the
-predictive median), `se` (the predictive standard deviation), `lower`
-and `upper`.
+predictive median), `se` (the predictive standard deviation, `NA` where
+it does not exist), `lower` and `upper`, all `NA` for a row whose
+predictor reads a coefficient that has no variance.
 
-## What can be asked for
+## Quantities that can be predicted
 
 `what` takes
 
@@ -128,7 +146,10 @@ and `upper`.
   `"mean"`, `"variance"`, `"std_dev"`, `"skewness"`, `"kurtosis"`.
   Available where the family has one, and answering `NaN` or `NA` where
   it does not exist. A Cauchy's mean is `NaN`, which is the correct
-  answer for it.
+  answer for it. A moment has no standard error. For a binomial fitted
+  with [`cbind()`](https://rdrr.io/r/base/cbind.html), a moment needs
+  the number of trials of each row, so `newdata` has to carry the
+  variables that the response is written with.
 
 - `"parameter"`:
 
@@ -140,11 +161,11 @@ and `upper`.
 
 - `"response"`:
 
-  the response itself, with `interval = "prediction"`: its median and
-  the ends of an interval that a new observation falls in. See the
-  section on intervals.
+  the response itself, with `interval = "prediction"`, which it
+  requires: its median and the ends of an interval that a new
+  observation falls in. See the section on intervals.
 
-A parameter's name may be prefixed by `"link:"` to ask for its predictor
+A parameter's name may be prefixed by `"link:"` to return its predictor
 instead of its value, as `"link:sigma"`.
 
 ## The argument order departs from [`stats::predict()`](https://rdrr.io/r/stats/predict.html)
@@ -153,24 +174,36 @@ There the second argument is `newdata`; here it is `what`. A statmod fit
 has several parameters and several moments, so choosing among them is
 the ordinary variation and predicting on new data is the occasional one.
 
-Passing a data frame second is caught and named, instead of failing
-somewhere inside.
+A data frame passed second is detected, and the error names the argument
+order.
 
 ## New data
 
-Goes through each term's blueprint, so a factor keeps the levels and
-contrasts it was fitted with, a spline its knots, and a basis its
-reparametrization. Nothing is rebuilt from whatever the new frame
-happens to contain.
+New data is passed through each term's blueprint, so a factor keeps the
+levels and contrasts that it was fitted with, a spline its knots, and a
+basis its reparametrization. The new frame supplies the values at which
+the terms are evaluated and does not change how they are built. Offsets
+are evaluated again at the new rows.
+
+The new frame needs the variables of the equations that are read. Where
+`what` names one parameter and `interval` is `"confidence"`, the other
+equations are not read, and the variables that only they use may be
+absent from `newdata`. The response is not needed, except that a
+binomial fitted with [`cbind()`](https://rdrr.io/r/base/cbind.html)
+reads the number of trials from it for a moment or a prediction
+interval.
 
 ## A score-driven term is predicted past the series
 
-Such a term's contribution at one row is the state a recursion has
-reached, so new rows without the response continue the series instead of
-being read on their own. Each row is placed by its own time within its
-own group, and must come after every observed time of that group; a row
-falling inside the observed series is rejected, since there the response
-is known and the filter must be run, never continued.
+The contribution of such a term at one row is the state that a recursion
+has reached, so new rows without the response continue the series
+instead of being read on their own. Each row is placed by its own time
+within its own group, and must come after every observed time of that
+group. A row that falls inside the observed series is rejected, since
+there the response is known and the filter has to be run, not continued.
+A group that the fit never saw is rejected as well, and a term built
+without `time` cannot be continued, because the place of a row in the
+series is then its position in the data frame.
 
 New rows that carry the response are a series of their own: the
 structural term is rebuilt on them with the fitted parameters, and they
@@ -178,7 +211,11 @@ are read as the fitting rows are, standard errors included. With the
 fitting data as `newdata` the result is `predict(fit)`'s; this holds for
 a
 [`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
-term as well, whose prediction is the posterior-weighted predictor.
+term as well, whose prediction is the posterior-weighted predictor. A
+frame that carries the response on some rows only is rejected. A
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
+term cannot be continued past the series, since what it reports at an
+observed row is a posterior over states.
 
 Beyond the data the score sits at its conditional mean of zero, which
 the model's own definition guarantees, so the continuation is the
@@ -186,18 +223,18 @@ deterministic recursion and involves no simulation.
 
 ## A new group, and the typical one
 
-A random-effect term predicts a group the fit saw with that group's
-estimated effect. A group it never saw has none, and `random` says what
-to put in its place. `"zero"` sets every effect of the term to zero, at
-every row, which is the prediction for the typical group (lme4's and
-glmmTMB's `re.form = NA`). `"marginal"` averages over the prior instead,
-\\E_b\[h^{-1}(\eta_0 + z^\top b)\]\\, which is the population average.
-With an identity link the two agree for the mean; with a log link the
-marginal mean is \\\exp(\eta_0 + \sigma_b^2/2)\\, and with a logit it is
-pulled towards one half. A moment is averaged by the law of total
-expectation and the variance adds the variance of the conditional mean,
-so a random effect on the scale enters the marginal variance of the
-response.
+A random-effect term predicts a group that the fit saw with that group's
+estimated effect. A group that it never saw has none, and `random`
+determines what is put in its place. `"zero"` sets every effect of the
+term to zero, at every row, which is the prediction for the typical
+group (lme4's and glmmTMB's `re.form = NA`). `"marginal"` averages over
+the prior instead, \\E_b\[h^{-1}(\eta_0 + z^\top b)\]\\, which is the
+population average. With an identity link the two agree for the mean;
+with a log link the marginal mean is \\\exp(\eta_0 + \sigma_b^2/2)\\,
+and with a logit it is pulled towards one half. A moment is averaged by
+the law of total expectation and the variance adds the variance of the
+conditional mean, so a random effect on the scale enters the marginal
+variance of the response.
 
 The average is a Gauss-Hermite product grid where every prior is
 Gaussian and there are at most three coordinates in all; adaptive
@@ -213,9 +250,10 @@ signals an error. Under a link whose predictor has a restricted domain
 since a Gaussian effect leaves the domain with positive probability; it
 is reported where that probability is below 1e-8 and is `NA`, with a
 warning, elsewhere. A term that shares a covariance with others through
-a label has no prior of its own and is read at `"zero"` only. The
-standard error of a marginal parameter is the delta method on the fixed
-part, conditional on the prior's scale.
+a label has no prior of its own, so `"marginal"` cannot average over it;
+it can be read `"conditional"` or set aside at `"zero"`. The standard
+error of a marginal parameter is the delta method on the fixed part,
+conditional on the prior's scale.
 
 A random effect written inside a term's subformula, such as
 `nl(~ Asym / (1 + exp((xmid - age) / scal)), Asym ~ 1 + random(~ 1 | g))`
@@ -226,26 +264,27 @@ term's parameter, and the term is not linear in it, so the term is
 evaluated at the effect's value rather than having its columns removed:
 `"zero"` evaluates it with the effect at zero at every row, and the
 delta method reads its Jacobian there. `"marginal"` averages the term's
-contribution, carried through the inverse link, over the nodes of the
-product grid of a Gaussian prior; a prior of another family signals an
-error. A predictor (`"link"`) is the average of the predictors at the
-nodes. The standard error of a marginal parameter is the delta method of
-that average, whose gradient sums the design at each node, and its
-interval is the delta method's on the link scale carried through the
-link. `interval = "group"` and `"prediction"` are not available for such
-an effect, and neither is a standard error where effects of both kinds
-are averaged over.
+contribution, carried through the inverse link, over the nodes that the
+rule above builds for the priors set aside; a prior of another family
+signals an error. A predictor (`"link"`) is the average of the
+predictors at the nodes. The standard error of a marginal parameter is
+the delta method of that average, whose gradient sums the design at each
+node, and its interval is the delta method's on the link scale carried
+through the link. `interval = "group"` and `"prediction"` are not
+available for such an effect, and neither is a standard error where
+effects of both kinds are averaged over.
 
 ## Three intervals
 
-`interval` says what an interval is for.
+The value of `interval` selects the uncertainty that the interval
+describes.
 
 - `"confidence"`:
 
   the default, with `se = TRUE`: the uncertainty of the estimates alone.
   For a term set aside by `random` it is the interval of the typical
   group's value, which a new group's value falls outside of far more
-  often than the level says.
+  often than the level implies.
 
 - `"group"`:
 
@@ -256,14 +295,17 @@ are averaged over.
   drawn from the prior, in the parameter's own equation, so a random
   effect on `sigma` widens the interval for `sigma`. Under Gaussian
   priors the variance of \\\eta^\*\\ is \\se^2 + z^\top \Sigma_b z\\,
-  the standard error glmmTMB reports at a new level on the link scale.
-  The interval's ends are quantiles of \\\eta^\*\\ carried through the
-  inverse link, which is monotone, so they are the quantiles of
-  \\\theta^\*\\ under any link; under a prior that is not Gaussian they
-  are the quantiles of the mixture of
+  the standard error that glmmTMB reports at a new level on the link
+  scale. The interval's ends are quantiles of \\\eta^\*\\ carried
+  through the inverse link, which is monotone, so they are the quantiles
+  of \\\theta^\*\\ under any link; under a prior that is not Gaussian
+  they are the quantiles of the mixture of
   [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md).
-  The standard error is the standard deviation of \\\theta^\*\\, not the
-  delta method, and is `NA` where it is not known to exist (see
+  Where the interval of \\\eta^\*\\ leaves the domain of the link (a
+  square root link and a negative predictor), the ends are `NA` at that
+  row, with a warning. The standard error is the standard deviation of
+  \\\theta^\*\\, not the delta method, and is `NA` where it is not known
+  to exist (see
   [`group_interval()`](https://statmodels7.github.io/statmodels7/reference/group_interval.md)).
   The fit is the typical group's value under `random = "zero"` and the
   population average under `"marginal"`. Implies `se = TRUE`.
@@ -283,28 +325,34 @@ are averaged over.
   interval of a new observation of a group the fit saw. What the average
   is over is `predictive`, below.
 
+`interval = "group"` and `interval = "prediction"` are rejected for a
+multivariate family and for a model with a structural term. The
+structural term also rejects `random = "zero"` and
+`random = "marginal"`: its level is a recursion read at the predictor,
+so setting a random effect aside would move the recursion as well.
+
 ## The predictive distribution
 
 A new observation varies for three reasons: the family itself, the
 effects of a new group where `random` sets them aside, and the error in
 the estimates. The first two are random in the model and always enter.
-The third is what `predictive` decides, for every parameter alike,
-whether the family has one parameter (a Poisson) or several, modelled or
-not.
+The third is what `predictive` decides. It does so for every parameter
+alike, whether the family has one parameter (a Poisson) or several, and
+whether or not a parameter has covariates.
 
 - `"averaged"`:
 
   the default. The family is averaged over the predictors at the fit's
   estimates with the covariance of the estimates from
   [`vcov.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/vcov.StatmodFit.md)
-  plus the one the effects add. This is the normal approximation to the
-  parametric bootstrap predictive distribution of Harris (1989): the
-  estimates are averaged over their approximate sampling distribution,
-  centred at the fit. For a Gaussian with a constant \\\sigma =
-  e^{\gamma_0}\\, \\\hat\gamma_0\\ of variance \\v\\, the variance of a
-  new observation is \\\mathrm{se}\_0^2 + z^\top\Sigma_b z +
-  \hat\sigma^2 e^{2v}\\, the last term being the average of
-  \\\hat\sigma^{\*2}\\ over that distribution.
+  plus the covariance that the effects add. This is the normal
+  approximation to the parametric bootstrap predictive distribution of
+  Harris (1989): the estimates are averaged over their approximate
+  sampling distribution, centered at the fit. For a Gaussian with a
+  constant \\\sigma = e^{\gamma_0}\\, \\\hat\gamma_0\\ of variance
+  \\v\\, the variance of a new observation is \\\mathrm{se}\_0^2 +
+  z^\top\Sigma_b z + \hat\sigma^2 e^{2v}\\, the last term being the
+  average of \\\hat\sigma^{\*2}\\ over that distribution.
 
 - `"plugin"`:
 
@@ -319,25 +367,29 @@ not.
   afresh, each refitted, and the family at each refit averaged over the
   effects. `boot_refit = "coefficients"` refits at the fit's
   hyperparameters; `"full"` chooses them again on every replica, so
-  their uncertainty enters too, at the cost of a whole fit each. See
+  their uncertainty enters too, at the cost of a whole fit each. It is
+  rejected for a model with a block that moves with its coefficients
+  ([`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
+  [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
+  [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html),
+  [`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)),
+  for a response that is not one number per observation, and, with
+  `boot_refit = "full"`, for a cross-validated criterion. See
   [`predictive_bootstrap()`](https://statmodels7.github.io/statmodels7/reference/predictive_bootstrap.md).
 
-Measured at 95 per cent over 400 samples, the coverage of a new
-observation is 0.887 (plug-in) against 0.925 (averaged) for a Gaussian
-regression at \\n = 12\\ (over a further 200 samples, 0.900, 0.950 and
-0.945 with the bootstrap), and 0.935 against 0.948 for a Gamma with its
-dispersion modelled at \\n = 25\\. Both intervals for a new group are
-conditional on the covariance the fit estimated: its uncertainty is not
-propagated. Measured at 95 per cent over 200 fits of a random intercept
-at eight observations a group, a new group's predictor is covered 0.898
-of the time over 10 groups and 0.943 over 40 by `"group"`, and a new
-observation 0.939 and 0.951 by `"prediction"`, where the confidence
-interval of the typical group covers 0.45 and 0.26; on a Poisson
-response the same read 0.909 and 0.937 and, the support being discrete,
-0.975 and 0.976. Under a prior that is not Gaussian both
-`interval = "group"` and `interval = "prediction"` read its quantiles, a
-Student t prior as a scale mixture of Gaussians and any other prior by
-Monte Carlo (see
+The interval for a new group (`interval = "group"`) is conditional on
+the covariance that the fit estimated, and so is the interval for a new
+observation, so the uncertainty of the hyperparameters is not
+propagated. The exception is `predictive = "bootstrap"` with
+`boot_refit = "full"`, where the hyperparameters are chosen again on
+every replica.
+
+Under a prior that is not Gaussian, both `interval = "group"` and
+`interval = "prediction"` read the quantiles of the prior: a Student t
+prior as a scale mixture of Gaussians; a single univariate prior of
+another family, where it is the only prior that is not Gaussian, on
+quantile nodes, which do not depend on the seed; and any other
+combination of priors by Monte Carlo, which does (see
 [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)).
 A term that shares a label with an effect read with its own estimate, or
 with one written inside a subformula, is rejected.
@@ -347,7 +399,7 @@ estimated parameters alone, carried by the delta method through the
 continued recursion, whose derivative is exact. A forecast also carries
 the uncertainty of the future scores, which the delta method does not
 reach, so the standard error and the interval leave it out, and a
-warning says so.
+warning is issued for the equations that the continued filter reaches.
 
 ## References
 
@@ -428,8 +480,8 @@ predict(fg, "response", new, random = "zero", interval = "prediction")
 #>   fit       se lower upper
 #> 1   1 1.658936     0     6
 
-# A name the family does not have is refused, and the message says what
-# is available.
+# A name that the family does not have is rejected, and the message lists
+# what is available.
 try(predict(fit, "median"))
 #> Error : 'median' is neither a parameter of this distribution nor a
 #>   moment. The parameters are: mu, sigma.

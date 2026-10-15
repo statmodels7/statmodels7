@@ -11,7 +11,7 @@ from the coordinates those were estimated on."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,21 +76,20 @@ the quantity reads a parameter that is not estimated), <code>jacobian</code>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is the one place the readable view is built, so that
-<code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code>, <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> and
-<code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> cannot report a quantity under one name
-and index it under another.</p>
-<p>A term says what it is about through
-<code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>, which gives the quantities and
-the Jacobian. The coordinates that Jacobian touches are replaced by the
-quantities; a coordinate no quantity reads stands where it is, with a unit
-row of its own. That is what leaves a developed parameter intact: its
+    <p>This function builds the readable view that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> and
+<code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> share. <code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code> builds its own readable
+vector from the same <code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code> declarations.</p>
+<p>A term declares its quantities through
+<code><a href="https://statmodels7.github.io/modelterms7/reference/term_readable.html" class="external-link">modelterms7::term_readable()</a></code>, which returns the quantities and
+the Jacobian. The coordinates that the Jacobian touches are replaced by the
+quantities; a coordinate that no quantity reads stands where it is, with a
+unit row of its own. A developed parameter is therefore left intact: its
 development is a vector of coefficients over covariates with no single
-value, so nothing is declared for it and nothing is taken away.</p>
+value, so nothing is declared for it and nothing is replaced.</p>
 <p>The joint coordinate vector is the design coefficients of every equation
-in order, then the <strong>free</strong> parameters of each structural term. Free,
-because a level an intercept in the same equation carries is held and is
-absent from the information the variance comes from. A quantity that reads a held
+in order, then the <strong>free</strong> parameters of each structural term. A level that
+an intercept in the same equation carries is held and is absent from the
+information that the variance comes from. A quantity that reads a held
 parameter is marked: its value stands, and its variance would be that of
 the rest alone, so it is not reported. A quantity that reads a coordinate
 past the edge of its chart is marked in the same way

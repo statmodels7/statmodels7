@@ -1,4 +1,4 @@
-# Replace an Intercept Where the Family Reads Its Start Off the Data
+# Data-Based Intercepts of Families That Supply Them
 
 Overwrites, in the list
 [`statmod_intercepts()`](https://statmodels7.github.io/statmodels7/reference/statmod_intercepts.md)
@@ -29,17 +29,18 @@ intercept_start_from_data(spec, eta)
 
 ## Details
 
-The intercept-only fit is the right start for almost every family, and
+The intercept-only fit is the right start for almost every family. It is
 the wrong one for the mixing weight of
-[`distributions7::zero_inflated()`](https://statmodels7.github.io/distributions7/reference/zero_inflated.html):
-without covariates the parent's overdispersion can absorb the excess
-zeros, the weight goes to the edge of its domain, and the link is flat
-there, so a model with covariates started from it never leaves –
-measured on a negative binomial with a true weight of 0.25, the fit
-reported convergence at a weight of zero, 7.6 log-likelihood units below
-the interior maximum. The family answers with the observed proportion of
-zeros, and the value is mapped through the parameter's link, so a probit
-or a cloglog chart gets its own linear predictor and not a logit.
+[`distributions7::zero_inflated()`](https://statmodels7.github.io/distributions7/reference/zero_inflated.html),
+and for `skewnormal1_distrib()` and the pseudo-Huber families, for which
+[`distributions7::distrib_intercept_start()`](https://statmodels7.github.io/distributions7/reference/distrib_intercept_start.html)
+has methods of their own. For the mixing weight, the overdispersion of
+the parent can absorb the excess zeros without covariates, the weight
+goes to the edge of its domain, and the link is flat there, so that a
+model with covariates started from it does not leave the edge. The
+family answers with the observed proportion of zeros, and the value is
+mapped through the parameter's link, so a probit or a cloglog chart gets
+its own linear predictor and not a logit.
 
 ## See also
 

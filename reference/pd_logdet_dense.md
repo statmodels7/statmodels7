@@ -22,8 +22,9 @@ pd_logdet_dense(M, scale = NULL)
 
 ## Value
 
-A list with `logdet`, `ok` and, on a refusal reached through the
-eigendecomposition, `min_ev` and `max_ev`.
+A list with `logdet` and `ok`; `factor`, the Cholesky factor, when the
+Cholesky route accepted the matrix; and `min_ev` and `max_ev` when the
+eigendecomposition rejected it.
 
 ## Details
 

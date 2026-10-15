@@ -2,8 +2,8 @@
 
 The table
 [`predict.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/predict.StatmodFit.md)
-resolves a moment name against: the five names it understands, each
-mapped to the distributions7 generic that computes it.
+resolves a moment name against: the recognized names, each mapped to the
+distributions7 generic that computes it.
 
 ## Usage
 
@@ -13,9 +13,9 @@ predict_moments()
 
 ## Value
 
-A named list of five functions, keyed `"mean"`, `"variance"`,
-`"std_dev"`, `"skewness"` and `"kurtosis"`. Each takes a distribution
-and a parameter list and returns one value per observation.
+A named list of functions, keyed `"mean"`, `"variance"`, `"std_dev"`,
+`"skewness"` and `"kurtosis"`. Each takes a distribution and a parameter
+list and returns one value per observation.
 
 ## Details
 

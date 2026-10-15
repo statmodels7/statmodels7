@@ -43,9 +43,11 @@ class_zeta_cols(cl)
 
 ## Value
 
-`class_pieces()` a list of lists with `param`, `term`, `cols` and
-`index`; `class_index()` and `class_zeta_cols()` an integer vector of
-`m * dim` positions.
+`class_pieces()` a list with one element per member: the member's piece
+(see
+[`label_pieces()`](https://statmodels7.github.io/statmodels7/reference/label_pieces.md))
+with `cols` and `index` added; `class_index()` and `class_zeta_cols()`
+an integer vector of `m * dim` positions.
 
 ## Details
 
@@ -57,19 +59,21 @@ group's columns from each member.
 
 Each member's own block is already group-major, so member \\k\\'s
 columns for group \\i\\ are its positions \\(i-1)d_k + 1\\ to \\id_k\\.
-The union across members is **not** contiguous – one member's columns
-all precede the next member's in the stacked vector, and the two may be
-in different equations – so what comes out is a permutation rather than
-a range. Nothing downstream minds: reading and writing a matrix at
-`[index, index]` is correct for any index, provided the penalty's own
-output is in the same order, which is what this ordering arranges.
+The union across members is **not** contiguous (one member's columns all
+precede the next member's in the stacked vector, and the two may be in
+different equations), so what comes out is a permutation and not a
+range. Reading and writing a matrix at `[index, index]` is correct for
+any index, provided the penalty's own output is in the same order, which
+is what this ordering arranges.
 
 A class whose members are all inside a structural term is addressed in
 that term's own parameters instead, which is the vector its penalty is
 read at and where the design has no column. `class_zeta_cols()`
 interleaves those positions by the same rule, and `class_pieces()` is
 not consulted at all, there being no design block to look the columns up
-in.
+in. A class split between coefficients and a structural term's
+parameters is addressed in the joint vector by
+[`class_joint_pieces()`](https://statmodels7.github.io/statmodels7/reference/class_joint_pieces.md).
 
 ## See also
 

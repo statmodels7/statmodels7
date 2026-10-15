@@ -9,7 +9,7 @@ in the stacked coefficient space."><meta property="og:image" content="https://st
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,10 +90,16 @@ of each pair).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>At order 1 the second-order generics are not called at all. That is what
-lets a penalty supplying only <code>penalty_dhessian()</code> give an exact
-gradient: asking it for a derivative the gradient does not use would have
-rejected it for a quantity nobody wanted.</p>
+    <p>At order 1 the function calls <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html" class="external-link">penalties7::penalty_dhessian()</a></code> and
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_cross()</a></code> only. The second-order generics
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html" class="external-link">penalties7::penalty_d2hessian()</a></code>, <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dcross.html" class="external-link">penalties7::penalty_dcross()</a></code> and
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_grad_theta.html" class="external-link">penalties7::penalty_hess_theta()</a></code> are called at order 2, so a penalty that
+supplies the first two generics gives an exact gradient without
+implementing the others.</p>
+<p>A shared hyperparameter occupies one row of <code>idx</code> and receives the sum of
+the contributions of its members. A penalty over the own parameters of a
+structural term and a mixed covariance class contribute nothing here;
+<code><a href="structural_outer_pieces.html">structural_outer_pieces()</a></code> places them on the joint vector.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

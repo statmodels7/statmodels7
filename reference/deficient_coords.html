@@ -9,7 +9,7 @@ the mode leaves out, for a fit whose own solve named none."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,54 +71,50 @@ possibly empty.</p>
     <p>Only <code><a href="iwls.html">iwls()</a></code> on a pivoting decomposition reports which column it
 dropped, that being a by-product of the solve that fitted the model. An
 <code>optimizers7</code> method solves nothing by a pivot, and neither do the
-<code>chol</code>, <code>svd</code> and <code>chol_crossprod</code> routes, so a design of less than full
-rank left every coordinate unnamed and <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> refused the
-whole matrix. The question a pivot answers is asked here instead, on the
-matrix <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> inverts anyway, so the two cannot disagree about which
-model is being reported.</p>
-<p>The matrix is \(K = H + S\), which is what makes a PENALIZED coordinate
-safe without a clause of its own: the penalty's own curvature is in
-\(S\), so a column the design alone does not identify is identified in
-\(K\), exactly as it is identified in the augmented system the pivoted
-route factorizes. Measured on two identical columns under
-<code>ridge(~ 0 + x1 + x3)</code>, nothing is named.</p>
-<p>\(K\) is EQUILIBRATED to a unit diagonal before the pivot runs, which
-is the correction <code><a href="solve_pd.html">solve_pd()</a></code> and the sparse rank test already carry: a
-smoothing parameter a criterion sends to 1e15 and a break-point term's
-annealed columns both separate the scales without flattening a direction,
-and per-direction scaling forgives either. Measured, a coordinate whose
-curvature is 1e-14 of its neighbours' is not named.</p>
-<p>A coordinate is a candidate only where its OWN curvature is finite and
-positive, which is <code><a href="boundary_coords.html">boundary_coords()</a></code>' rule read once more: a parameter
-at its link's clamp makes its whole row non-finite, and a coordinate the
-information carries nothing about has an empty one. Neither is an
-aliasing. There the estimate stands and only the variance does not, which
-is what <code><a href="uninformative_coords.html">uninformative_coords()</a></code> handles and why the two must not be
-confused: aliasing reports the coefficient itself as missing.</p>
-<p>WHETHER THERE IS ANYTHING TO NAME IS <code><a href="solve_pd.html">solve_pd()</a></code>'S VERDICT and not a
-tolerance of this function's, so a fit whose information inverts is
-untouched and the alias can never disagree with the variance reported
-beside it. That gate is load-bearing rather than an economy. \(K\) is
-\(X'X\) up to the weights, so it SQUARES the conditioning of the
-design, and a pivoted QR read at <code>dqrdc2</code>'s own tolerance is therefore
-twice as strict here as it is on the augmented system: measured on two
-columns made collinear to within 1e-4 – an ordinary pair of correlated
-covariates – the bare pivot names one of them while <code><a href="solve_pd.html">solve_pd()</a></code> inverts
-the matrix without difficulty, so the column would have been thrown away
-for nothing. With the gate, that case is untouched and the naming runs
-only where the whole matrix would otherwise have been refused.</p>
-<p>Which coordinate is then named is the pivot's, as it is in
-<code><a href="augmented_solve.html">augmented_solve()</a></code>. Measured against that pivot where both speak, the
-two agree on a duplicated column under four families and on an
-over-parametrized <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> term.</p>
-<p>A coordinate a kinked penalty holds at zero is left out of the test,
-as <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> leaves it out of the matrix it inverts. The kink
-identifies such a coordinate although \(K\) carries no curvature for
-it: under <code>1 + lasso(~ g)</code>, with every level of <code>g</code> coded, the direction
+<code>chol</code> and <code>svd</code> routes, so a design of less than full
+rank left every coordinate unnamed and <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> signaled an
+error for the whole matrix. The question that a pivot answers is answered
+here on the matrix that <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> inverts, so the two agree on which model is
+being reported.</p>
+<p>The matrix is \(K = H + S\), which makes a penalized coordinate safe
+without a clause of its own: the curvature of the penalty is in \(S\), so
+a column that the design alone does not identify is identified in \(K\),
+as it is identified in the augmented system that the pivoted route
+factorizes. Under <code>ridge(~ 0 + x1 + x3)</code> with two identical columns, no
+coordinate is named.</p>
+<p>\(K\) is equilibrated to a unit diagonal before the pivot runs, as in
+<code><a href="solve_pd.html">solve_pd()</a></code> and the sparse rank test: a smoothing parameter sent to 1e15
+and the annealed columns of a break-point term both separate the scales
+without flattening a direction, and per-direction scaling accommodates both.
+A coordinate whose curvature is small only because of its scale is not
+named.</p>
+<p>A coordinate is a candidate only where its own curvature is finite and
+positive, which is the rule of <code><a href="boundary_coords.html">boundary_coords()</a></code>: a parameter at the clamp
+of its link makes its whole row non-finite, and a coordinate about which the
+information carries nothing has an empty row. Neither is an aliasing. There
+the estimate stands and only the variance does not, which is what
+<code><a href="uninformative_coords.html">uninformative_coords()</a></code> handles; aliasing reports the coefficient itself as
+missing.</p>
+<p>Whether there is anything to name is decided by <code><a href="solve_pd.html">solve_pd()</a></code> and not by a
+tolerance of this function, so a fit whose information inverts is untouched
+and the alias cannot disagree with the variance reported beside it. The gate
+is necessary. \(K\) is \(X'X\) up to the weights, so it squares the
+conditioning of the design, and a pivoted QR read at the tolerance of
+<code>dqrdc2</code> is twice as strict here as it is on the augmented system. For two
+columns collinear to within 1e-4 (an ordinary pair of correlated
+covariates), the bare pivot would name one of them while <code><a href="solve_pd.html">solve_pd()</a></code>
+inverts the matrix without difficulty. With the gate, such a case is
+untouched and the naming runs only where the whole matrix would otherwise
+have been rejected.</p>
+<p>Which coordinate is then named is determined by the pivot, as in
+<code><a href="augmented_solve.html">augmented_solve()</a></code>.</p>
+<p>A coordinate that a kinked penalty holds at zero is left out of the test,
+as <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> leaves it out of the matrix that it inverts. The
+kink identifies such a coordinate although \(K\) carries no curvature for
+it: under <code>1 + lasso(~ g)</code> with every level of <code>g</code> coded, the direction
 that raises the intercept and lowers every level is flat in \(K\) and
-not in the objective, whose minimum over it is unique. Read on the whole
-matrix the pivot named the last level, reported it as missing, and
-<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> failed where that level was the only one selected.</p>
+not in the objective, whose minimum over it is unique. Reading the pivot on
+the whole matrix would name the last level, so that coordinate is excluded.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

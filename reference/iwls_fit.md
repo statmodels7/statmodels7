@@ -59,8 +59,8 @@ iwls_fit(
 
 - verbose:
 
-  `TRUE` to print one line per iteration: the objective, the score, the
-  step length and the route taken.
+  `TRUE` to print one line per iteration: the objective, the score per
+  observation and the step length.
 
 - groups:
 
@@ -72,19 +72,19 @@ iwls_fit(
 
   Positions held at their starting values, an integer vector in the same
   numbering. They are dropped from every solve, so the run maximizes
-  over the rest, and the stopping rule reads the free coordinates alone
-  – a held coordinate's score is what the constrained optimum leaves
-  there and does not vanish.
+  over the rest, and the stopping rule reads the free coordinates alone:
+  a held coordinate's score is what the constrained optimum leaves there
+  and does not vanish.
 
 - backup_at:
 
   `NULL`, or a function like `pieces_at` building the pieces on the
   expected information, which takes the step where the observed step
-  finds no acceptable point; an observed penalized information that is
+  finds no acceptable point. An observed penalized information that is
   not positive definite is first repaired by
   [`pd_repair()`](https://statmodels7.github.io/statmodels7/reference/pd_repair.md)
-  and tried. A trial point whose objective raises an error is then read
-  as rejected.
+  and its step tried. A trial point whose objective raises an error is
+  read as rejected.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   passes one for a method
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
@@ -98,18 +98,22 @@ iwls_fit(
   passes `FALSE` where the design carries a sharp break-point term,
   whose objective has a kink in the break-point at the observations:
   there every Gauss-Newton step from the minimum is rejected, and
-  escalating the damping eight times at every inner fit costs iterations
-  without reaching anything a stop would not.
+  escalating the damping at every inner fit costs iterations without
+  reaching anything that a stop would not.
 
 - kinks_at:
 
-  `NULL`, or a function of the coefficients returning the positions at
-  which the objective has a kink there, as
-  [`kink_positions()`](https://statmodels7.github.io/statmodels7/reference/kink_positions.md)
-  finds them. Where a line search rejects every step length those
-  positions are held and the step is retried on the rest; once the run
-  has converged with them held, one step on every coordinate is tried,
-  and taken if it decreases the objective.
+  `NULL`, or a function of the coefficients returning the rows of the
+  linear constraints that hold the objective on its kinks there, a
+  matrix with one column per coefficient, as
+  [`kink_constraints()`](https://statmodels7.github.io/statmodels7/reference/kink_constraints.md)
+  finds them. Where a line search rejects every step length, the problem
+  is solved on the subspace that those constraints and `frozen` leave
+  free
+  ([`iwls_tied()`](https://statmodels7.github.io/statmodels7/reference/iwls_tied.md));
+  from the point reached one step on every coordinate is tried, and
+  where it is rejected too the run stops there, with the verdict of the
+  constrained fit.
 
 - newton_at:
 
@@ -124,8 +128,10 @@ iwls_fit(
 
   `NULL`, or a function like `pieces_at` building the pieces on the
   observed information. After `switch_after` iterations without
-  convergence it takes the place of `pieces_at`, and `pieces_at` that of
-  `backup_at`.
+  convergence, or earlier when
+  [`iwls_slow()`](https://statmodels7.github.io/statmodels7/reference/iwls_slow.md)
+  reports a slow contraction of the score, it takes the place of
+  `pieces_at`, and `pieces_at` that of `backup_at`.
   [`fit_smooth()`](https://statmodels7.github.io/statmodels7/reference/fit_smooth.md)
   passes one for a method
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
@@ -140,12 +146,13 @@ iwls_fit(
 A list of ten: the six below; `note`, the reason a run stopped or
 `NULL`; `aliased`, the coordinates the pivot left out; `switched`, the
 iteration at which the run moved to `switch_at`, or 0; and `fallback`, a
-named integer vector counting the iterations at which the observed
-penalized information was not positive definite (`indefinite`) and those
-at which the expected pieces stepped in for a step that found no
-acceptable point (`search`), the trial points whose objective raised
-(`error`), and the iterations at which the Newton step on the full
-Hessian was taken in place of the scoring step (`newton`). Of the six:
+named integer vector of four counts. The count `indefinite` is the
+number of iterations at which the observed penalized information was not
+positive definite, `search` the number at which the expected pieces
+stepped in for a step that found no acceptable point, `error` the number
+of trial points whose objective raised, and `newton` the number of
+iterations at which the Newton step on the full Hessian was taken in
+place of the scoring step. Of the six:
 
 - `par`:
 
@@ -162,8 +169,9 @@ Hessian was taken in place of the scoring step (`newton`). Of the six:
 
 - `iterations`:
 
-  how many steps were taken. `1` means the rule was met at the first
-  check with no step taken, as a warm start already at the mode reports.
+  the index of the iteration at which the loop ended. `1` means the rule
+  was met at the first check, as a warm start already at the mode
+  reports; the full step taken after the rule is met is not counted.
 
 - `score`:
 
@@ -171,19 +179,24 @@ Hessian was taken in place of the scoring step (`newton`). Of the six:
 
 - `history`:
 
-  a data frame with one row per iteration.
+  a data frame with one row per accepted step, or `NULL` when no step
+  was accepted.
 
-## Two departures from a plain Newton iteration
+## Repair of the curvature
 
 A curvature that is not positive definite is repaired by flooring its
 eigenvalues, and the run continues.
 [`solve()`](https://rdrr.io/r/base/solve.html) would signal an error
 there and abandon a start that is merely far from the optimum.
 
-The stopping rule is read at the iterate, on a score divided by the
-sample size, so a threshold means the same at \\n = 10\\ and at \\n =
-10^7\\. The objective itself stays unaveraged, that being the scale the
-penalty is added on.
+## The stopping rule
+
+The built-in stopping rule compares a score divided by the sample size
+with `tol`, so that a threshold has the same meaning at \\n = 10\\ and
+at \\n = 10^7\\, and it also requires the Newton decrement to be at most
+\\10^{-6}\\. After the rule is met, one more full step is taken. The
+objective itself is not averaged, because the penalty is added on that
+scale.
 
 ## The dimensionless final verdict
 
@@ -196,11 +209,11 @@ The verdict therefore adds a second, dimensionless reading, \$\$\max_j
 H\_{jj} / n},\$\$ with \\s_p\\ taken over the equation each coordinate
 belongs to.
 
-It can relabel a run that has already stopped as converged, and it can
-never stop a run that is still moving. Driving the loop with it was
-tried and made the tolerance unreachable at the other end of the scale,
-where the objective's magnitude grows with \\\log y\\ and the stall
-guard fires first.
+It can relabel a run that has already stopped as converged, and it never
+stops a run that is still moving. Driving the loop with it would make
+the tolerance unreachable at the other end of the scale, where the
+magnitude of the objective grows with \\\log y\\ and the stall guard
+fires first.
 
 ## See also
 

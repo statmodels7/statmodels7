@@ -41,7 +41,7 @@ answer.
 The three kinds are read from two different places. An ordinary unit's
 coordinates are coefficients and come from `coef`. A structural unit's
 are a filter's own parameters and come from the design's structural
-state, on the UNCONSTRAINED scale, which is the scale the recursion is
+state, on the unconstrained scale, which is the scale the recursion is
 differentiated on and the one the penalty covers. A mixed class holds
 some of each and interleaves them group by group, so its pieces are read
 separately and put back in the class's own order, which is what
@@ -50,9 +50,9 @@ records.
 
 Written beside
 [`unit_joint_positions()`](https://statmodels7.github.io/statmodels7/reference/unit_joint_positions.md)
-because a value and its address are one convention: a caller composing
-them separately would scatter one unit's numbers at another's
-coordinates, and the two would agree only by accident.
+because a value and its position must follow the same convention. A
+caller that composed them separately could place one unit's values at
+another unit's positions.
 
 ## See also
 

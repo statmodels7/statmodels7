@@ -21,7 +21,8 @@ kink_scale(pen, theta, eps = 1e-04)
 
 - eps:
 
-  How far either side of the kink to read the derivative.
+  The larger of the two distances from the kink at which the derivative
+  is read.
 
 ## Value
 
@@ -37,17 +38,19 @@ is read and never assumed: a penalty built from a density carries the
 same information in a hyperparameter of its own, and a Laplace prior
 written by its scale has a kink whose size falls as that scale grows.
 
-The penalty is separable over the coefficients wherever it has a kink, a
-kinked penalty under a general map being the generalized-lasso problem
-and rejected upstream, so one coordinate answers for all of them.
+A kinked penalty is separable over the coefficients, and one under a
+general map (the generalized-lasso problem) is rejected upstream. Under
+a diagonal map, which `standardize = TRUE` writes, the kink differs by
+coordinate. This function reads the first coordinate's kink, and
+[`coord_kinks()`](https://statmodels7.github.io/statmodels7/reference/coord_kinks.md)
+returns the kink of every coordinate.
 
-The derivative just past the kink carries the distance it was read at,
-MCP's being \\\lambda - \epsilon/\gamma\\, so the two readings are
-extrapolated to the limit. Without that the shape parameters appear to
-move the kink by a millionth of themselves, which is enough to be
-selected for a path, and measures \\\epsilon\\ in place of the penalty.
-The extrapolation is exact for a penalty that is affine on each side of
-the kink, which the lasso, SCAD, MCP and the elastic net all are.
+The derivative just past the kink depends on the distance it is read at
+(MCP's, for example, is \\\lambda - \epsilon/\gamma\\), so the one-sided
+derivatives at distances \\\epsilon/2\\ and \\\epsilon\\ are combined by
+Richardson extrapolation to the limit. The extrapolation is exact for a
+penalty that is affine on each side of the kink, as the lasso, SCAD, MCP
+and the elastic net are.
 
 ## See also
 

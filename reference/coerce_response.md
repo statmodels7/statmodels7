@@ -28,31 +28,28 @@ attribute `"response_levels"`.
 ## Details
 
 A binary outcome recorded as a factor is how these data are ordinarily
-written, and [`glm()`](https://rdrr.io/r/stats/glm.html) has always
-accepted one: its binomial family reads the first level as the failure.
-Without this the response reached
-[`stats::dbinom()`](https://rdrr.io/r/stats/Binomial.html) untouched and
-the run died on *"Non-numeric argument to mathematical function"*, which
-names neither the variable nor the cause.
+written, and [`glm()`](https://rdrr.io/r/stats/glm.html) accepts one:
+its binomial family reads the first level as the failure. The conversion
+makes the response a number before it reaches the density, which would
+otherwise receive a factor.
 
 The first level is the failure, which is
 [`glm()`](https://rdrr.io/r/stats/glm.html)'s rule, so a model moved
 from [`glm()`](https://rdrr.io/r/stats/glm.html) keeps its signs. The
-conversion is made for EVERY family and not only for the binary ones,
-which is where this departs from base R – and it departs in the
-direction of working: `glm(f ~ x, gaussian)` on a factor `f` does not
-refuse cleanly, it signals *"NA/NaN/Inf in 'y'"* after three warnings
-from `Ops.factor`. A two-level factor has one numeric reading and this
-is it; on a gaussian family the result is the linear probability model,
-which is what `as.numeric(f == "b")` would have given.
+conversion is made for every family and not only for the binary ones,
+which differs from base R, where `glm(f ~ x, gaussian)` on a factor `f`
+signals *"NA/NaN/Inf in 'y'"* after three warnings from `Ops.factor`. A
+two-level factor has one numeric reading and this is it; on a gaussian
+family the result is the linear probability model, which is what
+`as.numeric(f == "b")` gives.
 
-The levels used are returned as the attribute `"response_levels"`. That
-is what lets
+The levels used are returned as the attribute `"response_levels"`, which
+lets
 [`statmod_respec()`](https://statmodels7.github.io/statmodels7/reference/statmod_respec.md)
-reproduce the SAME mapping on other rows: a factor carries its levels
+reproduce the same mapping on other rows. A factor carries its levels
 through a subset, but a character vector does not, so a cross-validation
 fold holding only one of the two values would otherwise be coded the
-other way round and the deviance would come back wrong without a word.
+other way round, and the deviance would be wrong with no signal.
 
 ## See also
 

@@ -52,15 +52,16 @@ the edge or no probe gains more than `tol`.
 ## Details
 
 A hyperparameter lives on a chart such as \\\sigma = e^\eta\\ or \\\rho
-= \tanh(\eta/2)\\, and the slope of the criterion in \\\eta\\ is its
-slope in the bounded quantity times \\d\sigma/d\eta\\ or
-\\d\rho/d\eta\\, which tend to zero at the edge. A search can therefore
-stop at the edge with a vanishing gradient where the criterion still
-rises towards the inside. A finite step reads that rise where a
-derivative cannot: on the free scale the step to \\\eta = \pm 8\\ is
-still at the edge (a standard deviation of 3.4e-4), so each coordinate
-is tried at three quarters, one half, one quarter and the whole of the
-way back to its starting value. A coordinate that really sits at an
-edge, such as the smoothing parameter of a smooth of noise, loses
-criterion at every probe and is left where it is; what that costs is
-four evaluations of the criterion, one inner fit each.
+= \tanh(\eta)\\, and the slope of the criterion in \\\eta\\ is its slope
+in the bounded quantity times \\d\sigma/d\eta\\ or \\d\rho/d\eta\\,
+which tend to zero at the edge. A search can therefore stop at the edge
+with a vanishing gradient where the criterion still rises towards the
+inside. A finite step reads that rise where a derivative cannot. Each
+coordinate past the edge is probed at the points \\s + f(\hat\eta -
+s)\\, with \\s\\ its starting value (or zero where the start itself is
+past the edge), \\\hat\eta\\ the reported value and \\f\\ equal to three
+quarters, one half, one quarter and zero, the last being the starting
+value itself. A coordinate that sits at an edge, such as the smoothing
+parameter of a smooth of noise, loses criterion at every probe and is
+left where it is. The cost is four evaluations of the criterion per
+coordinate at the edge, one inner fit each.

@@ -11,7 +11,7 @@ tested."><meta property="og:image" content="https://statmodels7.github.io/statmo
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,8 +67,7 @@ tested.</p>
 
 
 <dl><dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
-<dd><p>Which of the four statistics, as <code><a href="statmod_test.html">statmod_test()</a></code> was asked
-for it.</p></dd>
+<dd><p>Which of the four statistics was computed.</p></dd>
 
 
 <dt id="arg-statistic">statistic<a class="anchor" aria-label="anchor" href="#arg-statistic"></a></dt>
@@ -122,24 +121,19 @@ refits nothing. They answer different questions and only the first is
 printed.</p>
 <p><code>converged</code> is the inner optimizer's flag: whether a stopping rule fired,
 a boolean about a threshold on a score whose size depends on the model.
-<code>mode_error</code> is <code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>, how much of the penalized
-objective is still on the table at the point the refit returned, in
-log-likelihood units against <code><a href="mode_error_limit.html">mode_error_limit()</a></code> – the rule statmodels7
-0.81.0 established for exactly this question.</p>
-<p>The flag is not merely a false negative: it is anti-correlated with the
-quality of the point, because a stopping rule reads a change and a
-distance reads a point. Measured on <code>y ~ x</code> with a Poisson response at
-\(n = 200\) over nineteen held values, all nineteen are at their mode
-and the four the flag rejects are the four best-located of them. See
+<code>mode_error</code> is <code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>, the decrease of the penalized
+objective that a Newton step from the point returned by the refit would
+predict, in log-likelihood units, judged against <code><a href="mode_error_limit.html">mode_error_limit()</a></code>.
+The two need not agree, because a stopping rule reads a change in the
+objective whereas the mode error reads the distance to the mode. See
 <code><a href="restricted_mode_error.html">restricted_mode_error()</a></code>.</p>
-<p>A statistic read off a refit that stopped short is the value at wherever
-it stopped, and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> says so – reading <code>mode_error</code>, so that it says
-it where it is true.</p>
-<p>The class exists rather than a bare list because everything a caller of
-this toolkit receives is an object with declared properties. R's own
-tests return an <code>htest</code>, which is a list with a class attribute and no
-contract; nothing here can validate one, and a reader cannot ask it what
-it carries.</p>
+<p>A statistic computed from a refit that stopped short is the value at the
+point where the refit stopped. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reports this, reading
+<code>mode_error</code>.</p>
+<p>The class declares its properties, as every object that this toolkit
+returns does, whereas the <code>htest</code> returned by the tests of base R is a list
+with a class attribute and no declared structure, so that it cannot be
+validated.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -152,7 +146,8 @@ it carries.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">40</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">0.3</span> <span class="op">+</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/S7_inherits.html" class="external-link">S7_inherits</a></span><span class="op">(</span><span class="fu"><a href="statmod_test.html">statmod_test</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span>, <span class="st">"x"</span>, <span class="fl">1</span><span class="op">)</span>, <span class="va">StatmodTest</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/S7_inherits.html" class="external-link">S7_inherits</a></span><span class="op">(</span><span class="fu"><a href="statmod_test.html">statmod_test</a></span><span class="op">(</span><span class="va">fit</span>, param <span class="op">=</span> <span class="st">"mu"</span>, coefname <span class="op">=</span> <span class="st">"x"</span>, value <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                <span class="va">StatmodTest</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

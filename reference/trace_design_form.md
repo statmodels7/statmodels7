@@ -43,7 +43,7 @@ trace_design_form(spec, G, deriv, params, npar, tv, tu = NULL, key = NULL)
   component of `deriv` to read, or `NULL` for the observed route's keys,
   which are symmetric in every position. On the expected route `deriv`
   is the derivative of the expected information, symmetric in its first
-  pair and in its second separately, and carries its own builder.
+  two positions only, and carries its own builder.
 
 ## Value
 
@@ -60,9 +60,9 @@ waste: the trace of that block against \\M\_{ab}\\ is \\-\sum_i \omega_i
 w_i G\_{ab,i}\\. The block and its transpose both contribute, so an
 off-diagonal pair counts twice.
 
-The weights \\w_i\\ are built exactly as those two functions build them,
-and that keeps the two routes the same arithmetic in the same order
-where it matters.
+The contraction of the derivative with the direction is formed exactly
+as those two functions form it, which keeps the two routes on the same
+arithmetic.
 
 ## See also
 

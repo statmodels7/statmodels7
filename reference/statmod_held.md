@@ -26,12 +26,12 @@ A character vector, possibly empty.
 
 ## Details
 
-which hyperparameters are estimated is a property of the terms, not of
-the criterion: the term is where the penalty is named, and a criterion
-argument saying otherwise was read by nothing when the two disagreed.
-Everything here consults this one enumeration: the outer index, the
-path, and the summary's account of what was estimated and what was
-given.
+Which hyperparameters are estimated is a property of the terms and not
+of the criterion, because the term is where the penalty is named.
+[`path_rows()`](https://statmodels7.github.io/statmodels7/reference/path_rows.md)
+and the summary's account of what was estimated and what was held read
+this enumeration. The outer index reads the same `fixed` entries of
+[`statmod_penalized()`](https://statmodels7.github.io/statmodels7/reference/statmod_penalized.md).
 
 ## See also
 

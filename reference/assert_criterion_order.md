@@ -1,13 +1,12 @@
-# Refuse Where a Criterion Cannot Be Computed
+# Derivative Orders Read by a Criterion
 
 Raises
 [`order_shortfall()`](https://statmodels7.github.io/statmodels7/reference/order_shortfall.md)'s
 message when the family does not carry the two derivatives every
 criterion reads. Called from
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-once the criterion is known to have something to do, so a model whose
-criterion is inert is not refused for a reason that would never have
-arisen.
+once the criterion is known to have something to do, so that a model
+whose criterion is inert does not signal an error that cannot arise.
 
 ## Usage
 

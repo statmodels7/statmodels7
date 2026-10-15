@@ -1,15 +1,14 @@
 # Quantile Nodes for One Univariate Prior That Is Not Gaussian
 
-Where the only prior a new group's interval sets aside that is not
-Gaussian is one univariate prior of a family other than the Student t,
-the mixture over its effect is built from the prior's own quantiles,
-\\b_k = Q((k - 1/2)/K)\\ with \\K = 1000\\ and equal weights, each node
-a Gaussian component carrying the estimation error and the Gaussian
-effects. The result does not depend on the random seed, where the Monte
-Carlo draws of
+Where one univariate prior of a family other than the Student t is the
+only prior that is not Gaussian among those a new group's interval sets
+aside, the mixture over its effect is built from the prior's own
+quantiles, \\b_k = Q((k - 1/2)/K)\\ with \\K = 1000\\ and equal weights,
+each node a Gaussian component carrying the estimation error and the
+Gaussian effects. The result does not depend on the random seed, whereas
+the Monte Carlo draws of
 [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md)
-give the ends of a group interval with a standard deviation of 0.030 to
-0.037 over 20 seeds on a logistic prior.
+do.
 
 ## Usage
 

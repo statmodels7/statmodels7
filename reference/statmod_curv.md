@@ -39,22 +39,18 @@ returns for the coordinate's own equation and \\\bar x_j\\ the column's
 weighted mean where the equation's intercept is profiled out of the
 descent
 ([`coord_centers()`](https://statmodels7.github.io/statmodels7/reference/coord_centers.md)),
-and \\\sum_i w_i x\_{ij}^2\\ where it is not. Reading the uncentered
-diagonal of the information instead, as 0.159.0 did, gave a curvature
-the centered step does not have: on
-[`MASS::UScrime`](https://rdrr.io/pkg/MASS/man/UScrime.html) with raw
-predictors, whose means reach 33 standard deviations, the ratio of the
-two reached 1138 and the step condition failed on every fit.
+and \\\sum_i w_i x\_{ij}^2\\ where it is not. The uncentered diagonal of
+the information is not used, because it differs from the curvature of
+the centered step when the column means are large relative to their
+standard deviations.
 
-It is called at every pass of
+It is called at the starting coefficients, at every pass of
 [`statmod_alternate()`](https://statmodels7.github.io/statmodels7/reference/statmod_alternate.md)
-and once more at the fitted coefficients, which makes the scaling
-SELF-CONSISTENT (decided 2026-09-29): at the fit, \\c_j\\ is the
-curvature at the fit. Measured on 60 simulated sparse regressions it
-gives 44 false positives against the 58 of a curvature read once at the
-start, and it cannot fail the step condition,
+and once more at the fitted coefficients, so that the scaling is
+self-consistent: at the fit, \\c_j\\ is the curvature at the fit. The
+step condition of the descent is met because
 [`coord_table_penalty()`](https://statmodels7.github.io/statmodels7/reference/coord_table_penalty.md)
-writing the current step's curvature into the table. Under a diagonal
-map \\u = D\beta\\ the curvature is divided by \\d_j^2\\, the penalty
-being written on \\u\\. A penalty under any other map, or reached
-through a sub-term, is left as it is.
+writes the current step's curvature into the table. Under a diagonal map
+\\u = D\beta\\ the curvature is divided by \\d_j^2\\, the penalty being
+written on \\u\\. A penalty under any other map, or reached through a
+sub-term, is left as it is.

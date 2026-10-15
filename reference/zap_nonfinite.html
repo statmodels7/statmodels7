@@ -11,7 +11,7 @@ using the matrix."><meta property="og:image" content="https://statmodels7.github
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,14 +66,12 @@ it arrived in.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Seven places wrote <code>S[!is.finite(S)] &lt;- 0</code>. That is correct on a base
-matrix and a trap on a sparse one: the logical index is a dense
-\(p \times p\) matrix, so the storage the accumulator exists to keep is
-thrown away at the first consumer.</p>
+    <p>The assignment <code>S[!is.finite(S)] &lt;- 0</code> is correct on a base matrix. On a
+sparse matrix the logical index is a dense \(p \times p\) matrix, so the
+storage the accumulator exists to keep would be lost.</p>
 <p>On a sparse matrix only the <strong>stored</strong> values can be non-finite, a
-structural zero being finite by construction, so the same answer comes
-from the value slot alone in \(O(\mathrm{nnz})\). The two branches are
-written once here in place of seven times.</p>
+structural zero being finite by construction, so the same result comes
+from the value slot alone in \(O(\mathrm{nnz})\) operations.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

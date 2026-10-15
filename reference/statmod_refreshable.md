@@ -37,21 +37,22 @@ two:
 
 - `term`:
 
-  the term's index within that equation, an integer.
+  the name of the term within that equation, a string (for example
+  `"seg(x)"`).
 
 An empty list when no term refreshes, which is the common case.
 
 ## Details
 
-Membership is decided by asking whether the term registers a
+Membership is decided by testing whether the term registers a
 `term_refresh()` method of its own, which is
 [`refreshes_own_block()`](https://statmodels7.github.io/statmodels7/reference/refreshes_own_block.md).
 The base method on `model_term` is the identity, so a term written later
 is covered without an edit here.
 
-This is the list every other function in the file walks. Its emptiness
-is what makes a model of ordinary terms pay nothing for the refresh
-machinery.
+The design stores this list, and every other function in the file walks
+it. When it is empty, a model of ordinary terms incurs no cost from the
+refresh machinery.
 
 ## See also
 

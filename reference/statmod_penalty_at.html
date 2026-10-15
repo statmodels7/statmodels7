@@ -9,7 +9,7 @@ and Hessian placed in the columns that term owns."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,27 +90,38 @@ unpenalized model.</p></dd>
 distribution parameter, zero in every unpenalized coordinate.</p></dd>
 
 <dt><code>"hessian"</code></dt>
-<dd><p>a symmetric <code>p x p</code> base matrix over the stacked
-coefficients, zero outside the penalized blocks.</p></dd>
+<dd><p>a symmetric <code>p x p</code> matrix over the stacked
+coefficients, zero outside the penalized blocks: a <span class="pkg">Matrix</span>
+object when any equation's design is sparse, a base matrix
+otherwise.</p></dd>
 
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Each penalized term is asked for the quantity at its own coefficients and
-its own hyperparameters, and the answer is placed in the columns that term
-owns. A term declaring several penalties, each over a subset of its
-coefficients, contributes each one at its own coordinates.</p>
-<p>The accumulator is a base matrix even where a penalty answers with a
-sparse Hessian, and the coercion is written once at that boundary. Making
-it the design's own kind was measured at 0.8x end to end against a blast
-radius of twenty-two consumers.</p>
+    <p>For each penalized term the function evaluates the quantity at the
+coefficients and the hyperparameters of that term and places the result in
+the columns that the term owns. A term declaring several penalties, each
+over a subset of its coefficients, contributes each one at its own
+coordinates. A covariance class that spans several equations is gathered
+from the stacked vector, and its gradient is scattered back to the
+equations that own the coordinates.</p>
+<p>The accumulator for the Hessian follows the design, by the rule of
+<code><a href="design_sparse.html">zero_information()</a></code>: it is a sparse matrix where any equation's design is
+sparse and a base matrix otherwise. The Hessian of a penalty is added to a
+sparse accumulator as it is, and it is converted to a base matrix when the
+accumulator is a base matrix.</p>
+<p>A penalty over the parameters of a structural term enters the value only,
+and its derivatives are returned by <code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code>. A
+covariance class whose coordinates are partly coefficients and partly
+parameters of a structural term enters the value only, and its derivatives
+are placed in the joint vector by <code><a href="joint_penalty_at.html">joint_penalty_at()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="statmod_loglik_at.html">statmod_loglik_at()</a></code> for the other half of the objective,
-<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> for penalties over a structural term's
-own parameters, which this does not cover.</p></div>
+<code><a href="statmod_structural_penalty.html">statmod_structural_penalty()</a></code> for the derivatives of penalties over a
+structural term's own parameters, whose value this function includes.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

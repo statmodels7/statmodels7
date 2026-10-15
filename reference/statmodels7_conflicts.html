@@ -3,15 +3,15 @@
 together with the packages exporting them, ordered so that the package a
 bare name reaches comes first. Attaching several packages puts several
 environments on the search path, and a name exported by two of them
-resolves to whichever was attached last; this is how a caller sees which
-function that is. As of statmodels7 0.88.1 the eight members export no
-name in common, so the result is empty."><meta property="og:description" content="Reports the names exported by more than one attached member package,
+resolves to whichever was attached last; this function shows which
+function that is. The members currently export no name in common, so the
+result is empty."><meta property="og:description" content="Reports the names exported by more than one attached member package,
 together with the packages exporting them, ordered so that the package a
 bare name reaches comes first. Attaching several packages puts several
 environments on the search path, and a name exported by two of them
-resolves to whichever was attached last; this is how a caller sees which
-function that is. As of statmodels7 0.88.1 the eight members export no
-name in common, so the result is empty."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+resolves to whichever was attached last; this function shows which
+function that is. The members currently export no name in common, so the
+result is empty."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +19,7 @@ name in common, so the result is empty."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +53,9 @@ name in common, so the result is empty."><meta property="og:image" content="http
 together with the packages exporting them, ordered so that the package a
 bare name reaches comes first. Attaching several packages puts several
 environments on the search path, and a name exported by two of them
-resolves to whichever was attached last; this is how a caller sees which
-function that is. As of <code>statmodels7</code> 0.88.1 the eight members export no
-name in common, so the result is empty.</p>
+resolves to whichever was attached last; this function shows which
+function that is. The members currently export no name in common, so the
+result is empty.</p>
     </div>
 
     <div class="section level2">
@@ -72,32 +72,32 @@ named list when nothing is masked, so <code><a href="https://rdrr.io/r/base/leng
 conflicts and <code><a href="https://rdrr.io/r/base/names.html" class="external-link">names()</a></code> are the masked names.</p>
     </div>
     <div class="section level2">
-    <h2 id="what-counts-as-a-conflict">What counts as a conflict<a class="anchor" aria-label="anchor" href="#what-counts-as-a-conflict"></a></h2>
-    <p>Two members exporting the same name. A name that one member exports and
-another only registers an S7 or S3 method on is not a conflict and does
-not appear: methods dispatch on the class of the argument, they do not
-mask.</p>
+    <h2 id="definition-of-a-conflict">Definition of a conflict<a class="anchor" aria-label="anchor" href="#definition-of-a-conflict"></a></h2>
+    <p>A conflict is a name exported by two members. A name that one member
+exports and another only registers an S7 or S3 method on is not a conflict
+and does not appear, since methods dispatch on the class of the argument
+and do not mask.</p>
 <p>Only members that are attached are examined. A package that is merely
 installed puts nothing on the search path and masks nothing, so it cannot
 contribute, and with fewer than two members attached the result is empty
 by construction.</p>
     </div>
     <div class="section level2">
-    <h2 id="what-it-does-not-cover">What it does not cover<a class="anchor" aria-label="anchor" href="#what-it-does-not-cover"></a></h2>
-    <p>The comparison is <strong>between the members</strong>. <code>statmodels7</code>'s own exports are
-not compared against theirs, so a name this package and a member both
-export would go unreported here. There is no such name today, and the
-example below is the one-line check.</p>
+    <h2 id="scope-of-the-comparison">Scope of the comparison<a class="anchor" aria-label="anchor" href="#scope-of-the-comparison"></a></h2>
+    <p>The comparison is between the members. The exports of <code>statmodels7</code>
+itself are not compared with theirs, so a name that this package and a
+member both export would not be reported here. No such name exists at
+present, and the example below performs the check.</p>
     </div>
     <div class="section level2">
-    <h2 id="namespaces-not-attached-environments">Namespaces, not attached environments<a class="anchor" aria-label="anchor" href="#namespaces-not-attached-environments"></a></h2>
-    <p>The names are read with <code><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getNamespaceExports()</a></code>, and not off the attached
-environment. The two agree for an installed package. They diverge under
-<span class="pkg">pkgload</span>, which attaches a package's internal objects along with its
-exports and adds shims of its own, <code>system.file</code> and
+    <h2 id="namespaces-and-attached-environments">Namespaces and attached environments<a class="anchor" aria-label="anchor" href="#namespaces-and-attached-environments"></a></h2>
+    <p>The names are read with <code><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getNamespaceExports()</a></code> and not from the attached
+environment. The two agree for an installed package. They differ under
+<span class="pkg">pkgload</span>, which attaches the internal objects of a package along with
+its exports and adds shims of its own, <code>system.file</code> and
 <code>library.dynam.unload</code> among them. Reading the attached environment there
-reports those shims as names every member exports, a conflict between
-packages that export no such thing.</p>
+would report those shims as names that every member exports, a conflict
+between packages that export no such thing.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -108,13 +108,14 @@ message uses.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Empty: the eight members are disjoint in what they export.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Empty: the members export disjoint sets of names.</span></span></span>
 <span class="r-in"><span><span class="fu">statmodels7_conflicts</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> named list()</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu">statmodels7_conflicts</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># The check this function does not do, spelled out.</span></span></span>
+<span class="r-in"><span><span class="co"># The check that this function does not perform: for each member, the</span></span></span>
+<span class="r-in"><span><span class="co"># number of names shared with the exports of statmodels7 itself.</span></span></span>
 <span class="r-in"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getNamespaceExports</a></span><span class="op">(</span><span class="st">"statmodels7"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="statmodels7_packages.html">statmodels7_packages</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>       <span class="kw">function</span><span class="op">(</span><span class="va">p</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">own</span>, <span class="fu"><a href="https://rdrr.io/r/base/ns-reflect.html" class="external-link">getNamespaceExports</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>

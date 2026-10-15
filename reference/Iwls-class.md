@@ -42,16 +42,16 @@ Iwls(
 
 - decomposition:
 
-  How the step is solved: `"qr"`, `"svd"`, `"chol"` or
-  `"chol_crossprod"`.
+  How the step is solved: `"qr"`, `"svd"` or `"chol"`.
 
 - maxit:
 
-  The iteration budget, a single positive number.
+  The iteration budget, a single positive whole number.
 
 - tol:
 
-  The stopping tolerance on the score per observation.
+  The stopping tolerance on the score per observation, a single positive
+  number.
 
 - criterion:
 
@@ -60,26 +60,33 @@ Iwls(
 
 - step_halving:
 
-  How many halvings are allowed before a step is abandoned, a single
-  non-negative number.
+  The number of halvings tried after the full step before a step is
+  abandoned, a single non-negative whole number. The line search tries
+  the full step and then at most `step_halving` halved steps, so `0`
+  tries the full step alone.
 
 - fallback:
 
   A single logical: whether the expected information takes the step
-  wherever the observed penalized information is not positive definite
-  or its step finds no acceptable point.
+  where the observed step finds no acceptable point. An observed
+  penalized information that is not positive definite is first repaired
+  by flooring its eigenvalues, and the step on the repaired matrix is
+  tried.
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
-  sets it, for `"auto"` on a family whose expected information is not
-  exact.
+  sets this argument to `TRUE` for `"auto"` on a family that it does not
+  settle on the expected information.
 
 - switch_after:
 
   A single number: the iteration after which a run on the expected
-  information continues on the observed one, the expected then taking
-  the step only where the observed cannot. `Inf` never switches.
+  information continues on the observed one, unless it switched earlier
+  because the score contracted slowly (see
+  [`iwls_slow()`](https://statmodels7.github.io/statmodels7/reference/iwls_slow.md)).
+  The expected information then takes the step only where the observed
+  step finds no acceptable point. `Inf` never switches.
   [`iwls_resolve()`](https://statmodels7.github.io/statmodels7/reference/iwls_resolve.md)
-  sets it, for `"auto"` on a family whose expected information is exact,
-  to
+  sets it, for `"auto"` on a family whose expected information is exact
+  and not costly to evaluate, to
   [`iwls_switch_after()`](https://statmodels7.github.io/statmodels7/reference/iwls_switch_after.md).
 
 ## Value

@@ -28,15 +28,17 @@ integrated_basis(spec, design, kind, gamma = FALSE)
 
   `TRUE` where the criterion also estimates coefficients
   ([`marginal_coords()`](https://statmodels7.github.io/statmodels7/reference/marginal_coords.md));
-  a model with no penalized direction then gets an empty basis rather
-  than an error.
+  a model with no penalized direction then gets an empty basis in place
+  of an error.
 
 ## Value
 
 `NULL` for `"reml"`, which integrates every direction and needs no
 basis. For `"ml"`, a `p x r` matrix with orthonormal columns spanning
-the penalty's range space, `p` the total coefficient count and `r` its
-rank.
+the range space of the penalties, `p` the total coefficient count and
+`r` the total rank. The matrix has no columns (\\r = 0\\) where nothing
+is penalized and the criterion estimates coefficients or a structural
+term is penalized. Where neither holds, an error is signaled.
 
 ## Details
 
@@ -44,11 +46,13 @@ The total penalty is block diagonal over the terms, each owning its own
 columns, so its null space is the direct sum of the unpenalized columns
 and each penalty's own null space. The basis is assembled that way.
 
-It is never read off the eigenvalues of the assembled matrix. Such a
-count measures the arithmetic and not the family: with two smoothing
-parameters ten orders of magnitude apart the small contributions sink
-below any tolerance and the count falls, while the null space itself
-does not move.
+It is not read off the eigenvalues of the assembled matrix. A count of
+eigenvalues above a tolerance depends on the scale of the smoothing
+parameters: with two smoothing parameters many orders of magnitude apart
+the small contributions fall below the tolerance, while the null space
+itself does not change. A penalty with a kink contributes no column, and
+a penalty over the own parameters of a structural term is appended by
+[`statmod_marginal_full()`](https://statmodels7.github.io/statmodels7/reference/statmod_marginal_full.md).
 
 ## See also
 

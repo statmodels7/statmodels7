@@ -27,9 +27,9 @@ A single logical.
 
 ## Details
 
-Asked at a probe rather than read from a list of families, so a family
-written later is covered: two distinct responses drawn at one parameter
-value, and the two answers compared. A family that
+The answer comes from a probe and not from a list of families, so that a
+family written later is covered: two distinct responses drawn at one
+parameter value, and the two answers compared. A family that
 [`distributions7::expected_hessian_exact()`](https://statmodels7.github.io/distributions7/reference/expected_hessian_exact.html)
 reports as writing its information out is never probed, and neither is
 any `approx` other than `"opg"`, the only strategy that reads the

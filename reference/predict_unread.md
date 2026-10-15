@@ -30,10 +30,9 @@ A character vector of parameter names, possibly empty.
 ## Details
 
 A prediction of one parameter reads that parameter's equation alone, so
-the covariates of the other equations need not be in `newdata`. They
-used to be required all the same, the design being rebuilt for every
-equation: `predict(fit, what = "mu", newdata)` on
-`accel ~ s(times) | sigma ~ z` stopped with "object 'z' not found".
-Nothing is left out where every equation can be built, where `what` asks
-for every parameter or a moment, or where the model carries a structural
-term, whose recursion reads the predictors of every equation.
+the covariates of the other equations need not be in `newdata`: on
+`accel ~ s(times) | sigma ~ z`, `predict(fit, what = "mu", newdata)`
+does not need `z`. Nothing is left out where `what` is not the name of a
+parameter (`"parameter"`, `"link"`, `"link:<parameter>"` or a moment),
+where `interval` is not `"confidence"`, or where the model carries a
+structural term, whose recursion reads the predictors of every equation.

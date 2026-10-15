@@ -1,7 +1,7 @@
-# The Priors of the Effects a Prediction Sets Aside, by Kind
+# The Priors of the Effects That a Prediction Sets Aside, by Kind
 
-Sorts the terms `random` sets aside into Gaussian blocks, Student t
-scale mixtures and other priors. See
+Sorts the random-effect terms that a prediction sets aside into Gaussian
+blocks, Student t scale mixtures and other priors. See
 [`predictive_mixture()`](https://statmodels7.github.io/statmodels7/reference/predictive_mixture.md).
 
 ## Usage

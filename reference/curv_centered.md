@@ -1,10 +1,10 @@
 # Whether a Kinked Block's Curvature Is Read Centered
 
-Answers, for an equation, the question
+Decides, for an equation, whether its parametric intercept is profiled
+out of the coordinate descent, so that a column's curvature is its
+centered weighted sum of squares, as
 [`coord_centers()`](https://statmodels7.github.io/statmodels7/reference/coord_centers.md)
-answers for a coordinate descent: whether its parametric intercept is
-profiled out of the descent, so that a column's curvature is its
-centered weighted sum of squares.
+decides for a descent.
 
 ## Usage
 
@@ -31,8 +31,9 @@ curv_centered(spec, design, p)
 The intercept is profiled out where the equation has one and it is not
 held at a value.
 [`coord_centers()`](https://statmodels7.github.io/statmodels7/reference/coord_centers.md)
-asks the same of the positions a hold reaches through the objective;
-this asks it of the specification's `held_coef` directly, which is what
+decides this from the positions that a hold reaches through the
+objective; this function decides it from the `held_coef` of the
+specification directly, which is what
 [`statmod_curv()`](https://statmodels7.github.io/statmodels7/reference/statmod_curv.md)
 has in hand.
 

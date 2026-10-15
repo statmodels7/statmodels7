@@ -39,13 +39,15 @@ structural_callbacks(spec, theta, p, scaling = 0)
 
 ## Value
 
-A list with `score`, `curvature` and `logdens`.
+A list with `score`, `curvature`, `logdens` and `fast`, the last being
+the context for the compiled filter, or `NULL` where the registries of
+distributions7 and linkfunctions7 do not cover the family and the link.
 
 ## Details
 
 They are read one observation at a time because a score-driven filter
-evaluates them at the predictor it has just produced, which is not known
-before the recursion reaches that observation. A term whose callbacks do
-not depend on the state is given the whole index vector instead. A
-regime chain is such a term: its levels shift a predictor known in
-advance.
+evaluates them at the predictor that it has just produced, and that
+predictor is not known before the recursion reaches the observation. A
+term whose callbacks do not depend on the state is given the whole index
+vector instead. A regime chain is such a term: its levels shift a
+predictor known in advance.

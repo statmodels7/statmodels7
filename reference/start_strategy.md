@@ -1,10 +1,10 @@
 # S7 Class for a Starting-Value Strategy
 
-The abstract parent of the starting-value strategies. A strategy says
-where a fit begins as a **procedure**, not as a vector of numbers: fit
-the intercept-only model, draw around it, or search the likelihood for a
-basin. `statmod(start =)` accepts one, or a plain named list of
-coefficients.
+The abstract parent of the starting-value strategies. A strategy defines
+where a fit begins as a procedure and not as a vector of numbers: fit
+the intercept-only model, draw around it, search the likelihood for a
+basin, or reuse the estimates of another fit. `statmod(start =)` accepts
+a strategy, or a named list of coefficient vectors.
 
 ## Usage
 
@@ -31,11 +31,12 @@ subclass inherits.
 
 ## Details
 
-A strategy is asked exactly once, before the alternation between the
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+calls a strategy exactly once, before the alternation between the
 coefficients and the hyperparameters begins. An optimizer runs at every
 step of that alternation, which is why a global search belongs here:
-given to `inner_optimizer` it would rerun at every hyperparameter the
-outer search tried and return the same answer each time.
+given to `inner_optimizer` it would rerun at every hyperparameter value
+that the outer search tries and reach the same point each time.
 
 **The class is abstract and cannot be instantiated.** Calling
 `start_strategy()` signals an error; what the class is for is to be

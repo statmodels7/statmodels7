@@ -24,8 +24,8 @@ assert_method_signatures(distrib)
 
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 passes further arguments to these methods, the number of threads among
-them, and a method without `...` stopped with "unused argument (threads
-= 1)" from inside the fit. The derivative methods also take `scale`,
-which the generic resolves and passes on. The methods of the families
-shipped with distributions7 all carry `...`; a family written by a user
-is where this is met, and where the message is read.
+them, and a method without `...` fails from inside the fit with "unused
+argument (threads = 1)". The derivative methods also take `scale`, which
+the generic resolves and passes on. The methods of the families shipped
+with distributions7 all carry `...`, so the error arises for a family
+written by a user.

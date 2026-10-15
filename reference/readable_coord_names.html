@@ -13,7 +13,7 @@ cor[mu:(Intercept), sigma:(Intercept)]."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,13 +72,12 @@ coordinates this model is written in: <code>sd[mu:(Intercept)]</code>,
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The family names its coordinates by position because that is all it has,
-and every one of its readings – a standard deviation, a correlation, a
-partial correlation, a conditional scale – is named <code>prefix_vi</code> or
-<code>prefix_vi_vj</code>. The rewrite is on that shape alone: a name it does not
-match, or one whose index no label answers for, is left exactly as it is,
-so a family declaring a reading of another kind keeps its own name rather
-than being renamed into a wrong one.</p>
+    <p>A multivariate family names its coordinates by position, and each of its
+readings – a standard deviation, a correlation, a partial correlation, a
+conditional scale – is named <code>prefix_vi</code> or <code>prefix_vi_vj</code>. The rewrite
+applies to that shape alone: a name that does not match, or whose index has
+no label, is left unchanged, so a family declaring a reading of another
+kind keeps its own name.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -11,7 +11,7 @@ derivative, whose formals have no ...."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,11 +66,11 @@ derivative, whose formals have no <code>...</code>.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code><a href="statmod.html">statmod()</a></code> passes further arguments to these methods, the number of
-threads among them, and a method without <code>...</code> stopped with "unused
-argument (threads = 1)" from inside the fit. The derivative methods also
-take <code>scale</code>, which the generic resolves and passes on. The methods of the
-families shipped with <span class="pkg">distributions7</span> all carry <code>...</code>; a family
-written by a user is where this is met, and where the message is read.</p>
+threads among them, and a method without <code>...</code> fails from inside the fit
+with "unused argument (threads = 1)". The derivative methods also take
+<code>scale</code>, which the generic resolves and passes on. The methods of the
+families shipped with <span class="pkg">distributions7</span> all carry <code>...</code>, so the error
+arises for a family written by a user.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

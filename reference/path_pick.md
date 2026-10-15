@@ -32,7 +32,9 @@ A single index, or `NA` where no point was usable.
 The one-standard-error rule takes the sparsest fit that is not
 measurably worse than the best one, which is Breiman's rule as glmnet
 applies it. The path runs from the emptiest fit to the fullest, so the
-largest kink among the admissible points is the first of them.
+largest kink among the admissible points is the first of them. The rule
+falls back to the smallest criterion where `se` is `NULL` or not finite
+there.
 
 ## References
 

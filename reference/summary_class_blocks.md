@@ -1,9 +1,9 @@
 # The Covariance Blocks a Summary Prints Ahead of the Equations
 
-One block record per covariance class spanning more than one term: the
-standard deviations and correlations of the shared prior, with each
-coordinate named for the equation, the term and the column it belongs
-to.
+One block record per covariance class shared by more than one member:
+the standard deviations and correlations of the shared prior, with each
+coordinate named for the equation, the term and the column to which it
+belongs.
 
 ## Usage
 
@@ -51,27 +51,26 @@ summary_class_blocks(
 A list of block records, in the shape
 [`print_block()`](https://statmodels7.github.io/statmodels7/reference/print_block.md)
 reads, each carrying its coordinates in `coords`. Empty where no class
-spans more than one term.
+has two or more members.
 
 ## Details
 
-A shared block is the property of no single term. Printed inside one
-member's block – which is where it was, under whichever member the walk
-reached first – it reports the standard deviation of an effect on
-`sigma` under a term of `mu`, and the other member's block says there is
-nothing to report on its own. Both statements are true of the term and
-neither is what a reader wants, so the block is lifted out and printed
-once, before the equations, where its coordinates can be given names.
+A shared block belongs to no single member. Printed inside the block of
+one member, it would report the standard deviation of an effect on
+`sigma` under a term of `mu`, and the block of the other member would
+state that there is nothing to report on its own. The block is therefore
+printed once, before the equations, where its coordinates can be given
+names.
 
-The rows are the ones
+The rows are those that
 [`summary_blocks()`](https://statmodels7.github.io/statmodels7/reference/summary_blocks.md)
-held apart, so the numbers are produced in exactly one place; what is
-added here is the class's own heading and the legend saying which term
-each coordinate came from.
+held apart, so the numbers are produced in one place; this function adds
+the heading of the class and the legend that gives the term of each
+coordinate.
 
 ## See also
 
 [`class_coords()`](https://statmodels7.github.io/statmodels7/reference/class_coords.md)
 for the naming,
 [`class_notes()`](https://statmodels7.github.io/statmodels7/reference/class_notes.md)
-for the note that says the same thing in prose.
+for the note that gives the same information in prose.

@@ -13,7 +13,7 @@ its coefficient in \(x_b\) are non-zero."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,12 +74,12 @@ coefficient of the two blocks.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A coefficient a kinked prior holds at its kink, such as a random effect
-under a Laplace prior estimated at exactly zero, has no variance, and
-<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> reports <code>NA</code> there. A prediction whose design does not
-reach that coefficient, the typical group's under <code>random = "zero"</code> for
-one, has a standard error all the same; requiring every entry of the block
-to be finite made it <code>NA</code> as well.</p>
+    <p>A coefficient that a kinked prior holds at its kink, such as a random
+effect under a Laplace prior estimated at exactly zero, has no variance,
+and <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> reports <code>NA</code> there. A prediction whose design does
+not reach that coefficient, the typical group's under <code>random = "zero"</code> for
+one, has a standard error all the same, so that only the rows whose design
+reaches a missing entry are <code>NA</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

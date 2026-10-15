@@ -6,10 +6,9 @@ increment solving
 
 \$\$(R'R + C'C)\\\delta = u\$\$
 
-The augmented form is the point: neither \\R'R\\ nor the penalized
-information is ever formed, so a design whose condition number is
-\\\kappa\\ is decomposed at \\\kappa\\. Forming the normal equations
-would square it.
+The augmented form never forms \\R'R\\ or the penalized information, so
+a design with condition number \\\kappa\\ is decomposed at \\\kappa\\
+and not at \\\kappa^2\\, which the normal equations would give.
 
 ## Usage
 
@@ -38,73 +37,78 @@ augmented_solve(R, C, u, how, threads = 1L)
 
 - how:
 
-  `"qr"` or `"svd"`. `"svd"` has no sparse counterpart, so a sparse pair
-  asked for it is densified first.
+  `"qr"` or `"svd"`. `"svd"` has no sparse counterpart, so with
+  `how = "svd"` a sparse pair is densified first.
 
 - threads:
 
-  How many threads the triangular factor may use, a plain integer. `1L`
-  takes [`qr()`](https://rdrr.io/r/base/qr.html) unconditionally.
+  How many threads the triangular factor may use, a plain integer. With
+  `1L` the threaded route is not used.
 
 ## Value
 
-A list of two:
+A list with the elements `delta`, `rank` and `dropped`:
 
 - `delta`:
 
-  the increment, an unnamed numeric vector of length `p`. Zero in any
-  coordinate the pivoted route dropped.
+  the increment, an unnamed numeric vector of length `p`. Zero in every
+  coordinate that the pivoted route dropped.
 
 - `rank`:
 
   the rank used, an integer. Always `p` on the threaded and sparse
   routes, which decline on a deficient matrix instead of reporting a
-  smaller rank.
+  smaller rank, and the number of retained singular values on the
+  `"svd"` route.
+
+- `dropped`:
+
+  the integer positions of the columns that the pivoted
+  [`qr()`](https://rdrr.io/r/base/qr.html) route left out (the aliased
+  coordinates); `integer(0)` on the sparse, threaded and `"svd"` routes.
 
 ## The four routes
 
-Tried in this order.
+The routes are tried in this order.
 
-1.  **Sparse QR**, when either factor is a Matrix object. Handed to
+1.  **Sparse QR**, when either factor is a Matrix object. The pair is
+    passed to
     [`sparse_augmented_solve()`](https://statmodels7.github.io/statmodels7/reference/sparse_augmented_solve.md),
     which declines on a rank-deficient matrix.
 
 2.  **SVD**, when `how = "svd"`. The singular values below \\\max(\dim
     A)\\\epsilon\\\sigma\_{\max}\\ are dropped and the increment is
     built from the retained right singular vectors, so a deficient
-    system gets the minimum-norm answer.
+    system gets the minimum-norm solution.
 
 3.  **The threaded triangular factor**, when `how = "qr"`, `threads > 1`
-    and the work \\n p^2\\ is at least `5e7`. Only the triangular factor
-    is ever read, so a kernel that produces it and never accumulates
-    \\Q\\ does the whole job.
+    and \\m p^2\\ is at least `5e7`, where \\m\\ is the number of rows
+    of \\A\\. Only the triangular factor is read, so a kernel that
+    produces it without accumulating \\Q\\ does the whole job.
 
 4.  **[`qr()`](https://rdrr.io/r/base/qr.html)**, the pivoted LINPACK
-    route, which reports a rank and can drop columns. A sparse solve
-    that declined falls through to here on densified factors.
+    route, which returns a rank and can drop columns. A sparse solve
+    that declined continues here on densified factors.
 
 ## Why the rank test is equilibrated
 
-The threaded route is taken only where the matrix is comfortably of full
-rank, and the test reads the diagonal of the triangular factor **divided
-by each column's norm**. Since \\A'A = R'R\\, scaling \\A\\'s columns
-scales that diagonal by the same factors, so the ratio is the diagonal
-of a decomposition with unit column norms.
+The threaded route is taken only where the matrix has full rank by a
+comfortable margin. The test reads the diagonal of the triangular factor
+**divided by each column's norm**. Writing \\T\\ for the triangular
+factor of \\A\\, so that \\A'A = T'T\\, scaling the columns of \\A\\
+scales the diagonal of \\T\\ by the same factors, so the ratio is the
+diagonal of a decomposition with unit column norms.
 
-Reading the raw diagonal instead reports a matrix as near-singular
-whenever its columns differ in size, and a large smoothing parameter
-does exactly that to the penalty rows of its own block beside an
-unpenalized one. Per-column scaling forgives separation from any source;
-an exact collinearity stays exactly singular.
+The raw diagonal would report a matrix as near-singular whenever its
+columns differ in size, and a large smoothing parameter produces that
+difference between the penalty rows of its own block and an unpenalized
+block. Scaling each column to unit norm removes differences in column
+size from any source and leaves an exact collinearity exactly singular.
 
-The tolerance is `1e-7` on that ratio, the same one `dqrdc2` uses, so
-anything the pivoted route would call deficient still goes there and is
-reported with its rank.
-
-Measured against [`qr()`](https://rdrr.io/r/base/qr.html) at \\n =
-40000\\ with the column scales spread over \\10^8\\: 2.6x at \\p = 51\\
-and 3.8x at \\p = 145\\ to 600 on eight threads, with the increment
-agreeing to \\1.6 \times 10^{-16}\\.
+The route is taken when the smallest equilibrated entry exceeds `1e-7`
+times the largest, the tolerance that `dqrdc2` uses, so a matrix that
+the pivoted route would call deficient is solved there and its rank is
+returned.
 
 ## See also
 

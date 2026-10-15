@@ -13,7 +13,7 @@ than tol."><meta property="og:image" content="https://statmodels7.github.io/stat
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,18 +98,19 @@ is at the edge or no probe gains more than <code>tol</code>.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A hyperparameter lives on a chart such as \(\sigma = e^\eta\) or
-\(\rho = \tanh(\eta/2)\), and the slope of the criterion in \(\eta\)
+\(\rho = \tanh(\eta)\), and the slope of the criterion in \(\eta\)
 is its slope in the bounded quantity times \(d\sigma/d\eta\) or
 \(d\rho/d\eta\), which tend to zero at the edge. A search can therefore
 stop at the edge with a vanishing gradient where the criterion still rises
 towards the inside. A finite step reads that rise where a derivative
-cannot: on the free scale the step to \(\eta = \pm 8\) is still at the
-edge (a standard deviation of 3.4e-4), so each coordinate is tried at
-three quarters, one half, one quarter and the whole of the way back to its
-starting value. A coordinate that really sits at an edge, such as the
-smoothing parameter of a smooth of noise, loses criterion at every probe
-and is left where it is; what that costs is four evaluations of the
-criterion, one inner fit each.</p>
+cannot. Each coordinate past the edge is probed at the points
+\(s + f(\hat\eta - s)\), with \(s\) its starting value (or zero where
+the start itself is past the edge), \(\hat\eta\) the reported value and
+\(f\) equal to three quarters, one half, one quarter and zero, the last
+being the starting value itself. A coordinate that sits at an edge, such as
+the smoothing parameter of a smooth of noise, loses criterion at every probe
+and is left where it is. The cost is four evaluations of the criterion per
+coordinate at the edge, one inner fit each.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

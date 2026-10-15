@@ -11,7 +11,7 @@ uncertainty and returns the conditional variance instead."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,10 +65,11 @@ uncertainty and returns the conditional variance instead.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It carries a class of its own for the same reason the other two do:
-<code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> calls <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> more than once, so
-without one the same message would reach the reader several times, and
-muffling it by position would swallow whatever else was raised on the way.</p>
+    <p>It carries a class of its own for the same reason as the condition of a
+frozen block (<code><a href="frozen_condition.html">frozen_condition()</a></code>): <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> calls
+<code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> more than once, so without a class the same message
+would reach the reader several times, and muffling it by position would
+suppress whatever else was raised on the way.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -15,7 +15,7 @@ of the penalty's null space as the hyperparameter grows."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,7 @@ matrices are subset to it before the trace.</p></dd>
     <div class="section level2">
     <h2 id="restricting-to-the-active-set">Restricting to the active set<a class="anchor" aria-label="anchor" href="#restricting-to-the-active-set"></a></h2>
     <p>A penalty with a kink is not twice differentiable everywhere, and the mode
-of such a fit sits on the kink for every coefficient it sets to zero. It
+of such a fit sits on the kink for every coefficient that it sets to zero. It
 is twice differentiable away from the kink, so the trace is taken over the
 active coordinates alone, which is the submodel the fit has selected.</p>
 <p>For a penalty that is linear there, the lasso, \(S_{AA}\) vanishes and
@@ -92,10 +92,9 @@ active coordinates alone, which is the submodel the fit has selected.</p>
 unbiased count of Zou, Hastie and Tibshirani (2007). The elastic net keeps
 its quadratic part and spends slightly less; SCAD and MCP contribute their
 own curvature and spend slightly more.</p>
-<p>Taking the trace over the whole vector instead cannot see the selection at
-all: measured on twenty noise columns it read 14 at every value of
-\(\lambda\), so a criterion built on it prices a model that selects
-nothing the same as one that selects everything.</p>
+<p>The trace over the whole vector does not depend on which coefficients are at
+the kink, so a criterion built on it assigns the same degrees of freedom to
+a model that selects nothing and to one that selects everything.</p>
     </div>
     <div class="section level2">
     <h2 id="the-inverse">The inverse<a class="anchor" aria-label="anchor" href="#the-inverse"></a></h2>
@@ -112,8 +111,8 @@ the lasso. <em>The Annals of Statistics</em> 35(5), 2173–2192.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="aic.html">aic()</a></code> for the criterion this feeds,
-<code><a href="statmod_edf.html">statmod_edf()</a></code> for the per-term reading, which inverts each block
-instead.</p></div>
+<code><a href="statmod_edf.html">statmod_edf()</a></code> for the per-term reading, which splits the same trace
+by term.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -16,4 +16,5 @@ ctx_approx(ctx)
 
 ## Value
 
-A single string.
+A single string: the approximation that the context carries, or `"opg"`
+where `ctx` is `NULL` or carries none.

@@ -13,7 +13,7 @@ penalty_dbeta_blocks() the per-penalty pieces both are assembled from."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@ coefficient space. <code>penalty_dbeta_trace()</code> is its trace against a mat
 
 
 <dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>The matrix the trace is taken against, <code>total</code> square.</p></dd>
+<dd><p>The matrix against which the trace is taken, <code>total</code> square.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -108,12 +108,10 @@ differentiated, because the mode moves in all of the coefficients at once.</p>
 <p>A penalty that <code><a href="https://statmodels7.github.io/penalties7/reference/beta_quadratic.html" class="external-link">penalties7::beta_quadratic()</a></code> calls quadratic is skipped,
 which is every ridge, smooth and Gaussian random effect, so a model carrying
 only those assembles nothing: the matrix is <code>NULL</code> and the trace exactly
-<code>0</code>, which leaves its gradient identical to the bit. A kinked penalty is
-skipped as well, and a penalty over a structural term's own parameters
-belongs to the joint route.</p>
-<p>Measured on a Student t prior over 30 groups, the gradient without this
-piece is 4.3e-04 out and flat in the step; with it, 1.5e-06 against a
-central difference of the criterion with the mode refitted.</p>
+<code>0</code>, which leaves the gradient unchanged. A kinked penalty and a mixed
+covariance class are skipped as well, and a penalty over a structural term's
+own parameters is read on the joint vector by
+<code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

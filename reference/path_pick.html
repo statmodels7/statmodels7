@@ -9,7 +9,7 @@ is within one standard error of it."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,8 @@ is within one standard error of it.</p>
     <p>The one-standard-error rule takes the sparsest fit that is not measurably
 worse than the best one, which is Breiman's rule as <span class="pkg">glmnet</span> applies it.
 The path runs from the emptiest fit to the fullest, so the largest kink
-among the admissible points is the first of them.</p>
+among the admissible points is the first of them. The rule falls back to
+the smallest criterion where <code>se</code> is <code>NULL</code> or not finite there.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

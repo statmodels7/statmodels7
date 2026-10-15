@@ -29,17 +29,19 @@ path_forced(pen, theta, name, values)
 
 ## Value
 
-A numeric vector, from the emptiest fit to the fullest.
+The distinct values sorted, from the emptiest fit to the fullest.
 
 ## Details
 
-Which end is the sparse one is a property of the penalty, never of the
+Which end is the sparse one is a property of the penalty and not of the
 numbers: the kink of a lasso widens with \\\lambda\\ and that of a
-Laplace prior written by its scale narrows with \\\sigma\\, so the order
-is settled by asking the penalty which way its kink moves, never by
-sorting downwards. Nothing else is applied: the value that empties the
-block does not cap the grid and `min_ratio` does not extend it, both of
-those being ways to build one.
+Laplace prior written by its scale narrows with \\\sigma\\. The order is
+therefore taken from the sign of the exponent that
+[`kink_power()`](https://statmodels7.github.io/statmodels7/reference/kink_power.md)
+reads, descending where the kink widens with the hyperparameter and
+ascending otherwise. No other rule is applied: the value that empties
+the block does not cap the grid and `min_ratio` does not extend it, both
+of those being ways to build a grid.
 
 ## See also
 

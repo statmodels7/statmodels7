@@ -50,9 +50,11 @@ iwls_newton_step(obj, beta, value, g, H, frozen, halvings)
 The Hessian of an objective whose design moves with its coefficients
 need not be positive definite away from the mode, so its eigenvalues are
 replaced by their absolute values and floored at \\10^{-8}\\ times the
-largest, the repair
-[`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html)
-makes, which keeps the increment a descent direction.
+largest, which keeps the increment a descent direction. The repair
+differs from the one of
+[`optimizers7::newton()`](https://statmodels7.github.io/optimizers7/reference/newton.html),
+which raises each eigenvalue below the floor to the floor without taking
+absolute values.
 
 ## See also
 

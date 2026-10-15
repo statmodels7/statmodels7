@@ -1,15 +1,21 @@
 # Test That a Break-Point Exists
 
 Tests the hypothesis that a model has no break-point against the
-alternative of the break-point term it carries: no change of slope for a
+alternative of the break-point term that the model carries: no change of
+slope for a
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 no change of level for a
 [`modelterms7::jump()`](https://statmodels7.github.io/modelterms7/reference/jump.html),
 and neither for a
 [`modelterms7::jseg()`](https://statmodels7.github.io/modelterms7/reference/jseg.html).
 The term can sit in the equation of any distribution parameter, beside
-any other term, and inside a parameter of
-[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html).
+any other term that is not structural, and inside a parameter of
+[`modelterms7::nl()`](https://statmodels7.github.io/modelterms7/reference/nl.html)
+when it is a change of slope or a smoothed step. A model that carries a
+structural term
+([`modelterms7::gas()`](https://statmodels7.github.io/modelterms7/reference/gas.html),
+[`modelterms7::regime()`](https://statmodels7.github.io/modelterms7/reference/regime.html)
+or the marginal break-point term) has no break-point test.
 
 ## Usage
 
@@ -45,11 +51,13 @@ statmod_breakpoint_test(
 
 - k:
 
-  The number of positions at which a continuous process is read.
+  The number of positions at which a continuous process is read, a whole
+  number of at least 3. It is not used for a sharp step.
 
 - n_boot:
 
-  The number of bootstrap replicates for a sharp step.
+  The number of bootstrap replicates for a sharp step, a positive whole
+  number. It is not used for a continuous process.
 
 - seed:
 
@@ -83,9 +91,10 @@ bound of Davies (1987) for a \\\chi^2_s\\ process, \$\$P(\sup_q S(q) \>
 M) \le P(\chi^2_s \> M) + V M^{(s-1)/2} e^{-M/2} 2^{-s/2} /
 \Gamma(s/2),\$\$ with \\V = \sum_j \|S(q\_{j+1})^{1/2} -
 S(q_j)^{1/2}\|\\ the total variation of the root of the process and
-\\s\\ the number of change coefficients. This is the test of
-[`segmented::davies.test()`](https://rdrr.io/pkg/segmented/man/davies.test.html),
-read on the score of the model at hand.
+\\s\\ the number of change coefficients. The bound is the one that
+[`segmented::davies.test()`](https://rdrr.io/pkg/segmented/man/davies.test.html)
+also applies; the process read here is the score statistic of the model
+at hand.
 
 Where the step is sharp the process is constant between consecutive
 values of the covariate and jumps at each of them, and the bound, which
@@ -93,14 +102,17 @@ counts the variation over every interval, is too wide to be useful. The
 supremum is then taken over every interval inside the confinement
 limits, and its distribution under the null is estimated by a parametric
 bootstrap: `n_boot` responses are drawn from the null fit, the null
-model is refitted to each, and the p-value is the share of replicates
-whose supremum reaches the observed one, \\(1 + \\\\M^\* \ge M\\)/(1 +
-B)\\. The draws are conditional on the fitted random effects, if any.
+model is refitted to each, and the p-value is \\(1 + \\\\M^\* \ge
+M\\)/(1 + B)\\, where \\M^\*\\ is the supremum of the score process of a
+replicate and \\B\\ is the number of replicates that were refitted. The
+draws are conditional on the fitted random effects, if any.
 
 The hyperparameters are held at the values of the fit, so the test is
-conditional on the smoothing the data chose. The term must carry one
-break-point whose position has no development; for a choice between one
-and several break-points, compare the fits by an information criterion.
+conditional on the smoothing that the data chose. The term must carry
+one break-point, and none of its coefficients (the position, the change
+of slope or the change of level) may have a development on covariates.
+For a choice between one and several break-points, the fits can be
+compared by an information criterion.
 
 ## References
 

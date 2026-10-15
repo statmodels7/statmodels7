@@ -1,6 +1,7 @@
 # One Setting of the Path, Read From the Term
 
-One Setting of the Path, Read From the Term
+Reads one setting of the path from the penalty's entry in the term, and
+returns `default` where the term does not set it.
 
 ## Usage
 
@@ -27,7 +28,9 @@ statmod_path_setting(spec, row, field, default, name = NULL)
 
 - default:
 
-  What the criterion asks for.
+  The fallback of
+  [`path_fallbacks()`](https://statmodels7.github.io/statmodels7/reference/path_fallbacks.md)
+  for this setting, used where the term specifies none.
 
 - name:
 

@@ -37,7 +37,8 @@ iwls_pieces(spec, design, coef, hyper, method)
 
 ## Value
 
-A list of three, of which the ones the route does not need are `NULL`:
+A list with `R`, `C` and `A` and, on the square-root route, `threads`,
+the thread count. The matrices that the route does not need are `NULL`:
 
 - `R`:
 
@@ -63,10 +64,11 @@ falls back to the assembled route there.
 ## Details
 
 Only what the decomposition will read is built. `"qr"` and `"svd"` need
-the square-root design `R` and the penalty's factor `C` and never form
-the information; `"chol"` and `"chol_crossprod"` need the assembled `A`
-and neither square root. Building all three unconditionally would pay
-for the route not taken at every iteration of the loop.
+the square-root design `R` and the penalty's factor `C`, and build the
+information only when one of the two factors does not exist; `"chol"`
+needs the assembled `A` and neither square root. Building all three
+unconditionally would pay for the route not taken at every iteration of
+the loop.
 
 ## See also
 

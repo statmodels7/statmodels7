@@ -1,8 +1,9 @@
 # Check the `marginal` Argument of a Marginal Criterion
 
 Checks the shape of `marginal` before any family is known: `NULL`, or a
-character vector with no missing and no empty entry. Whether the names
-belong to the family is checked by
+character vector with no missing and no empty entry. `"none"` and
+`"all"` must stand alone. Whether the names belong to the family is
+checked by
 [`marginal_params()`](https://statmodels7.github.io/statmodels7/reference/marginal_params.md),
 at fit time.
 
@@ -20,4 +21,5 @@ check_marginal_arg(marginal)
 
 ## Value
 
-`marginal`, unchanged, or an error naming the argument.
+`marginal` with repeated names removed, or an error that names the
+argument.

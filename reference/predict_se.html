@@ -9,7 +9,7 @@ parameter it gives, with an interval."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,57 +74,59 @@ returns them.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>.</p></dd>
+<dd><p>Passed to <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code>, which also receives <code>readable = FALSE</code> from
+this function.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list, one entry per distribution parameter, each a data
-frame with <code>fit</code>, <code>se</code>, <code>lower</code> and <code>upper</code> on the
-link scale and the same four on the parameter scale.</p>
+frame with the columns <code>eta</code>, <code>se_eta</code>, <code>eta_lower</code> and <code>eta_upper</code> on
+the link scale and <code>fit</code>, <code>se</code>, <code>lower</code> and <code>upper</code> on the parameter
+scale.</p>
     </div>
     <div class="section level2">
     <h2 id="the-delta-method-equation-by-equation">The delta method, equation by equation<a class="anchor" aria-label="anchor" href="#the-delta-method-equation-by-equation"></a></h2>
     <p>An equation's predictor is \(\eta_{ip} = x_{ip}'\beta_p\), so its
 variance is \(x_{ip}' V_{pp} x_{ip}\), with \(V\) the variance of the
-coefficients <strong>as estimated</strong>: the coordinates, since the design is
-written in them, never the quantities <code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code> reports by
-default.</p>
+coefficients as estimated: the coordinates, since the design is written in
+them, not the quantities that <code><a href="coef.StatmodFit.html">coef.StatmodFit()</a></code> reports by default.</p>
 <p>The equations do not mix. One equation's predictor reads that equation's
-coefficients alone, whatever the covariance between the blocks.</p>
+coefficients alone, whatever the covariance between the blocks. A
+predictor that reads no coefficient (an equation written as <code>~ 0</code>, or an
+offset alone) is a known constant, with a standard error of zero.</p>
     </div>
     <div class="section level2">
     <h2 id="a-term-whose-block-moves-needs-no-special-case">A term whose block moves needs no special case<a class="anchor" aria-label="anchor" href="#a-term-whose-block-moves-needs-no-special-case"></a></h2>
     <p>Its block is the Jacobian \(\partial\eta/\partial\beta\) by
 construction, that being why a linear fit on it is a Gauss-Newton step,
 so the row already is the derivative and the delta method is exact to
-first order. That covers <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> and
-<code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code>, including the parameters of a nonlinear term
-developed over covariates.</p>
-<p>Measured against a numerical derivative of the predictor in the estimated
-coefficients, which shares no arithmetic with the design row: 1.7e-12 on a
-parametric block, 8.9e-11 on a smooth with a random effect, 1.3e-10 on a
-<code>seg()</code> and 1.1e-11 on an <code>nl()</code> with a ridge.</p>
+first order. That covers <code><a href="https://statmodels7.github.io/modelterms7/reference/seg.html" class="external-link">modelterms7::seg()</a></code>, <code><a href="https://statmodels7.github.io/modelterms7/reference/nl.html" class="external-link">modelterms7::nl()</a></code> and a
+smoothed <code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code>, including the
+parameters of a nonlinear term developed over covariates. A sharp
+<code><a href="https://statmodels7.github.io/modelterms7/reference/jump.html" class="external-link">modelterms7::jump()</a></code> or <code><a href="https://statmodels7.github.io/modelterms7/reference/jseg.html" class="external-link">modelterms7::jseg()</a></code> is fitted as an ordinary
+block at its settled break-point, so the standard error of a prediction
+that reads it is finite and is conditional on that position.</p>
     </div>
     <div class="section level2">
     <h2 id="the-interval">The interval<a class="anchor" aria-label="anchor" href="#the-interval"></a></h2>
-    <p>Built on the scale the equation is written on and mapped back through the
-link, as every interval in this toolkit is. A scale rides a logarithm, so
-its lower end cannot come out negative.</p>
+    <p>Built on the scale on which the equation is written and mapped back through the
+link, as every interval in this toolkit is. A scale parameter under a log
+link, for example, cannot have a negative lower end.</p>
     </div>
     <div class="section level2">
     <h2 id="a-coefficient-with-no-variance-carries-none-forward">A coefficient with no variance carries none forward<a class="anchor" aria-label="anchor" href="#a-coefficient-with-no-variance-carries-none-forward"></a></h2>
-    <p>A discontinuous break-point term's block is a working linearization and is
-held out of <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, so every observation whose predictor
-reads it reports <code>NA</code> for its standard error. That is the truth about such
-a fit, no gap in the arithmetic.</p>
+    <p>An entry of the variance that is not finite blanks the standard error of
+the rows whose design reaches it, and of no other row. An aliased
+coefficient is such a case. The position of a sharp break-point term is
+held and has no variance either, but its column of the design is zero, so
+it blanks no row.</p>
 <p>A coefficient that a lasso, an elastic net, a SCAD or an MCP holds at
-exactly zero is the other case, and it is treated as fixed: the model
-selected without it, its row of the variance is <code>NA</code>, and its column of
-the design is left out of the quadratic form, so it contributes nothing.
-Without this, a prediction at new data read every such coefficient against
-a non-zero covariate and returned <code>NA</code> on every row (a smooth beside a
-lasso on <code><a href="https://rdrr.io/pkg/MASS/man/Boston.html" class="external-link">MASS::Boston</a></code>, one coefficient at zero).</p>
+exactly zero is treated as fixed: the model is selected without it, its
+row of the variance is <code>NA</code>, and its column of the design is left out of
+the quadratic form, so it contributes nothing. Otherwise a prediction at
+new data would read every such coefficient against a non-zero covariate
+and return <code>NA</code> on every row.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

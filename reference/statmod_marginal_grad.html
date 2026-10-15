@@ -9,7 +9,7 @@ the hyperparameters under estimation."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,8 +93,8 @@ the hyperparameters under estimation.</p>
 
 <dt id="arg-free">free<a class="anchor" aria-label="anchor" href="#arg-free"></a></dt>
 <dd><p>Whether to carry the result onto the free scale. The Hessian
-asks for the parameter scale, having its own second-order chain rule to
-apply.</p></dd>
+assembly calls this function with <code>free = FALSE</code> and applies its own
+second-order chain rule.</p></dd>
 
 
 <dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
@@ -102,7 +102,7 @@ apply.</p></dd>
 
 
 <dt id="arg-gam">gam<a class="anchor" aria-label="anchor" href="#arg-gam"></a></dt>
-<dd><p>The coefficients the criterion estimates, from
+<dd><p>The coefficients that the criterion estimates, from
 <code><a href="marginal_coords.html">marginal_coords()</a></code>, or <code>NULL</code>.</p></dd>
 
 </dl></div>
@@ -113,12 +113,26 @@ position of <code>gam$where</code>, or <code>NULL</code> where the determinant d
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The three pieces are the envelope term \(-\partial\rho/\partial\theta\),
-the explicit derivative of the determinant \(\mathrm{tr}(M\,\partial
-S/\partial\theta)\), and the implicit one \(u'v\), where
-\(v = -(H+S)^{-1}\partial^2\rho/\partial\beta\partial\theta\) is how the
-mode moves and \(u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)\) is how
-the determinant reads that movement.</p>
+    <p>The gradient is the sum of the envelope term
+\(-\partial\rho/\partial\theta\), the explicit derivative of the
+determinant, \(-\tfrac12\mathrm{tr}(M\,\partial S/\partial\theta)\), the
+implicit one, \(-\tfrac12 u'v\), and, where a penalty's Hessian depends on
+the coefficients, \(-\tfrac12\mathrm{tr}(M\,\partial S/\partial\beta[v])\).
+Here \(v = -J^{-1}\,\partial^2\rho/\partial\beta\partial\theta\) is how the
+mode moves, \(u_c = \mathrm{tr}(M\,\partial K/\partial\beta_c)\) is how
+the determinant reads that movement, and \(M\) is \(K^{-1}\) under
+<code><a href="reml.html">reml()</a></code> and the inverse of \(K\) on the integrated subspace under
+<code><a href="reml.html">ml()</a></code>.</p>
+<p>The matrix \(J\) is the curvature of the penalized likelihood at the mode,
+the observed information plus the penalty's Hessian, with the second
+derivative of a block that moves with its coefficients added
+(<code><a href="mode_curvature.html">mode_curvature()</a></code>). It differs from \(K\) when the criterion reads the
+expected information. A coefficient that the criterion estimates, a
+direction that the model does not identify and a coordinate that a kink of a
+break-point term holds do not move with \(\theta\), and the solve is made
+on the directions that they leave free (<code><a href="mode_solver.html">mode_solver()</a></code>). Where a penalty
+covers the parameters of a structural term, the function delegates to
+<code><a href="statmod_structural_grad.html">statmod_structural_grad()</a></code>.</p>
 <p>\(u\) is assembled without forming any third-derivative array. Writing
 \(G_{ab,i} = x_{ia}'M_{[a][b]}x_{ib}\) for the per-observation diagonal of
 the block of \(M\),
@@ -126,6 +140,10 @@ $$u_{k} = -X_k'\Big(w \sum_{a,b} \ell'''_{abk}\, G_{ab}\Big),$$
 one crossprod per distribution parameter. The component
 \(\ell'''_{abk}\) is looked up by a name built from the parameter names in
 the family's own order, never parsed out of one.</p>
+<p>For each coefficient in <code>gam</code>, which the criterion estimates, the entry is
+the score of the log-likelihood in that coefficient minus half of the
+movement of the determinant along the direction in which the mode moves
+when the coefficient changes by one unit.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

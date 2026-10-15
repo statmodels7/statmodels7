@@ -9,7 +9,7 @@ writes the two limits back, leaving the rest of the table as it was."><meta prop
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,9 +80,9 @@ writes the two limits back, leaving the rest of the table as it was.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A row the restricted fit cannot hold keeps <code>NA</code> limits rather than the
 Wald ones it arrived with, so that one column never carries two different
-intervals. Which rows those are is <code><a href="testable_coords.html">testable_coords()</a></code>'s answer, asked
-once; where it is none of them the request is refused, a table of nothing
-but missing values being a worse answer than the reason for it.</p>
+intervals. <code><a href="testable_coords.html">testable_coords()</a></code> determines which rows those are; if it names
+none of the rows of the table, the function signals an error, since a table
+of missing values alone is less informative than the reason.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

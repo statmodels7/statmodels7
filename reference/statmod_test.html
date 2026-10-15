@@ -9,7 +9,7 @@ statistic, the likelihood ratio, Rao's score or Terrell's gradient."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,26 +81,26 @@ which is what a summary reports.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>summary(fit, test =)</code> reports the same four statistics for every row of
-the coefficient tables, and always against zero. This tests ONE
-coefficient against ANY value, which is the question a summary cannot be
-asked: whether a slope is one, whether an elasticity is unity, whether a
-coefficient matches a value fixed outside the data.</p>
-<p>What the statistics are, what they read and what they cost is at
-<code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>; the restricted fit the last three are built on is
-<code><a href="statmod_restrict.html">statmod_restrict()</a></code>, and the interval obtained by inverting one is
+    <p><code>summary(fit, test =)</code> reports one of the four statistics for the rows of
+the coefficient tables that can be held (not a row under a kinked penalty,
+not an aliased one, and none for a model with a structural term), always
+against zero. This function tests one coefficient against any value, which
+is a question that a summary cannot answer: whether a slope is one, whether
+an elasticity is unity, whether a coefficient matches a value fixed outside
+the data.</p>
+<p>The statistics, the quantities that they read and their cost are described
+at <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>. The last three are built on the restricted fit of
+<code><a href="statmod_restrict.html">statmod_restrict()</a></code>, and inverting one gives the interval of
 <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code>.</p>
-<p>Reading one row costs one restricted refit, where <code>summary(test =)</code> costs
-one per row: measured on a Poisson fit of twenty-five covariates, one
-statistic is 0.010 s against the summary's 0.220 s over twenty-six rows.
-It also reads the refit's mode error, which is one Hessian – 63 per cent
-of the refit on that fit and 2.3 per cent on a penalized smooth, and none
-at all for Rao's score, which reads the same matrix anyway. The summary
-and the interval do not pay it.</p>
+<p>Reading one row costs one restricted refit, whereas <code>summary(test =)</code>
+costs one per row. The function also reads the mode error of the refit,
+which costs one Hessian of the restricted fit; the Rao score statistic
+reads that matrix anyway, so that it adds no cost there. The summary and
+the interval do not read the mode error.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> for every row against zero,
+    <div class="dont-index"><p><code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code> for the rows that can be held, against zero,
 <code><a href="confint.StatmodFit.html">confint.StatmodFit()</a></code> for the interval a test inverts.</p></div>
     </div>
 
@@ -110,8 +110,8 @@ and the interval do not pay it.</p>
 <span class="r-in"><span><span class="va">dd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dd</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">0.3</span> <span class="op">+</span> <span class="va">dd</span><span class="op">$</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="statmod.html">statmod</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">x</span>, <span class="fu">distributions7</span><span class="fu">::</span><span class="fu"><a href="https://statmodels7.github.io/distributions7/reference/poisson_distrib.html" class="external-link">poisson_distrib</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">dd</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co">## the summary asks whether the slope is zero; this asks whether it is one</span></span></span>
-<span class="r-in"><span><span class="fu">statmod_test</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span>, <span class="st">"x"</span>, <span class="fl">1</span>, <span class="st">"lr"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## the summary tests whether the slope is zero; this tests whether it is one</span></span></span>
+<span class="r-in"><span><span class="fu">statmod_test</span><span class="op">(</span><span class="va">fit</span>, param <span class="op">=</span> <span class="st">"mu"</span>, coefname <span class="op">=</span> <span class="st">"x"</span>, value <span class="op">=</span> <span class="fl">1</span>, test <span class="op">=</span> <span class="st">"lr"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 	Likelihood-ratio test on a statmod fit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -119,7 +119,7 @@ and the interval do not pay it.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> X-squared = 1.27,  df = 1,  p-value 0.2597</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> alternative hypothesis: true x is not equal to 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> estimate: 1.056</span>
-<span class="r-in"><span><span class="fu">statmod_test</span><span class="op">(</span><span class="va">fit</span>, <span class="st">"mu"</span>, <span class="st">"x"</span>, <span class="fl">0</span>, <span class="st">"lr"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">statmod_test</span><span class="op">(</span><span class="va">fit</span>, param <span class="op">=</span> <span class="st">"mu"</span>, coefname <span class="op">=</span> <span class="st">"x"</span>, value <span class="op">=</span> <span class="fl">0</span>, test <span class="op">=</span> <span class="st">"lr"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 	Likelihood-ratio test on a statmod fit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

@@ -26,19 +26,18 @@ bad observation declines for the whole sample.
 
 ## Details
 
-\\K\\ is the number of distribution parameters, so it is 1, 2 or 3 for
-most families and never large; \\n\\ is the number of observations and
-is. The standard Cholesky recursion is therefore written out over the
-\\K\\ indices and evaluated over all \\n\\ observations at once, one
+\\K\\ is the number of distribution parameters, which is small for every
+family, whereas \\n\\, the number of observations, can be large. The
+standard Cholesky recursion is therefore written out over the \\K\\
+indices and evaluated over all \\n\\ observations at once, one
 vectorized pass per entry of the factor, so no loop runs over
 observations.
 
 A block that is not positive definite produces a non-positive pivot, and
 the function returns `NULL` at that point instead of taking its square
-root. That is an expected outcome: the observed curvature far from the
-optimum is routinely indefinite, and the caller answers by falling back
-to the assembled route. A warning about a `NaN` would report an ordinary
-branch as a defect.
+root. This outcome is expected, because the observed curvature far from
+the optimum is routinely indefinite, and the caller then falls back to
+the assembled route.
 
 ## See also
 

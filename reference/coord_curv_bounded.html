@@ -3,11 +3,11 @@
 \(v_j = \sum_i w_i x_{ij}^2\) of a block would be finite and positive,
 from the block's column norms and the range of the weights, so that
 coord_fit() need not compute the curvatures of columns it never visits.
-coord_curv() computes them on the columns asked for."><meta property="og:description" content="coord_curv_bounded() decides whether every column curvature
+coord_curv() computes them on the columns given in k."><meta property="og:description" content="coord_curv_bounded() decides whether every column curvature
 \(v_j = \sum_i w_i x_{ij}^2\) of a block would be finite and positive,
 from the block's column norms and the range of the weights, so that
 coord_fit() need not compute the curvatures of columns it never visits.
-coord_curv() computes them on the columns asked for."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+coord_curv() computes them on the columns given in k."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +15,7 @@ coord_curv() computes them on the columns asked for."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ coord_curv() computes them on the columns asked for."><meta property="og:image" 
 \(v_j = \sum_i w_i x_{ij}^2\) of a block would be finite and positive,
 from the block's column norms and the range of the weights, so that
 <code><a href="coord_fit.html">coord_fit()</a></code> need not compute the curvatures of columns it never visits.
-<code>coord_curv()</code> computes them on the columns asked for.</p>
+<code>coord_curv()</code> computes them on the columns given in <code>k</code>.</p>
     </div>
 
     <div class="section level2">
@@ -104,9 +104,8 @@ gives a numeric vector of <code>length(k)</code> curvatures.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The condition is sufficient and not necessary. With the weights finite and
 positive, which <code><a href="coord_working.html">coord_working()</a></code> has already checked, a column's
-curvature is at least its largest term, which is at least
-\(\min_i w_i\, \lVert x_j\rVert^2 / n\), and at most
-\(n \max_i w_i \max_i x_{ij}^2\). So where every column norm is
+curvature is at least \(\min_i w_i\, \lVert x_j\rVert^2\) and at most
+\(\max_i w_i\, \lVert x_j\rVert^2\). So where every column norm is
 positive and \(\min w \min_j \lVert x_j\rVert^2 &gt; 10^{-200}\) and
 \(\max w \max_j \lVert x_j\rVert^2 &lt; 10^{200}\), no curvature can be
 zero, underflow or overflow. Where any of this fails, <code>FALSE</code> sends the

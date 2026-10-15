@@ -1,8 +1,8 @@
 # Factorize a Penalized Information Once
 
-The Cholesky factor of a matrix a Laplace approximation needs positive
-definite, together with its log-determinant, in whichever storage the
-matrix itself calls for.
+The Cholesky factor of a matrix that a Laplace approximation requires to
+be positive definite, together with its log-determinant, in the storage
+of the matrix itself.
 
 ## Usage
 
@@ -29,21 +29,18 @@ where the answer came from the eigendecomposition.
 
 ## Details
 
-This is the one place the penalized matrix is factorized. The criterion
-wants its log-determinant, the gradient wants the mode's movement and
-the Hessian wants both plus the inverse; before this existed the
-criterion and
-[`ctx_penalized()`](https://statmodels7.github.io/statmodels7/reference/ctx_penalized.md)
-each factorized the same matrix at the same point, which at \\p = 503\\
-was 12.4 ms spent twice.
+This function is the single place where the penalized matrix is
+factorized. The criterion needs its log-determinant, the gradient needs
+the movement of the mode and the Hessian needs both and the inverse, so
+one factorization serves all three.
 
-**The verdict is unchanged and so is its property.** Whether the matrix
-is accepted never turns on whether a factorization raised: where the
-cheap test is inconclusive the eigendecomposition answers about the
-matrix. The sparse route carries its own condition estimate
+**Definiteness.** Whether the matrix is accepted never depends on
+whether a factorization raised an error: where the cheap test is
+inconclusive, the eigendecomposition answers about the matrix. The
+sparse route carries its own condition estimate
 ([`sparse_lmin()`](https://statmodels7.github.io/statmodels7/reference/sparse_lmin.md))
-rather than the dense one, and falls back to the dense route where that
-estimate cannot be formed, so a refusal is reached by the same reasoning
+in place of the dense one, and falls back to the dense route where that
+estimate cannot be formed, so the matrix is judged by the same criterion
 on either storage.
 
 ## See also

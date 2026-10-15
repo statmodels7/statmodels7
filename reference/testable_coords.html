@@ -13,7 +13,7 @@ structural term."><meta property="og:image" content="https://statmodels7.github.
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,20 +74,21 @@ the labels <code><a href="coef_labels.html">coef_labels()</a></code> gives them.
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It is the enumeration <code><a href="statmod_restrict.html">statmod_restrict()</a></code> refuses one coordinate at a
-time, asked once for the whole vector instead. A caller reporting a table
-needs it that way round, since each restricted statistic is a refit and an
-interval by inversion is a few dozen: a row that cannot be tested has to
-be recognized before it is paid for rather than after.</p>
-<p>A coordinate under a penalty that is twice differentiable IS included –
+    <p>It applies to the whole vector the enumeration that <code><a href="statmod_restrict.html">statmod_restrict()</a></code>
+applies to one coordinate at a time, signaling an error for a coordinate
+that cannot be held. A caller reporting a table needs it in this form,
+since each restricted statistic is a refit and an interval by inversion
+requires many, so that a row that cannot be tested has to be recognized
+before its refit is computed and not after.</p>
+<p>A coordinate under a penalty that is twice differentiable is included:
 a smooth's linear column and its rotated coordinates, a ridge, a random
-effect – and the restricted fit holds it exactly as it holds an
-unpenalized one, <code><a href="fit_smooth.html">fit_smooth()</a></code> enforcing the hold in the solve. Only a
-kinked penalty is excluded, for the reasons <code><a href="statmod_restrict.html">statmod_restrict()</a></code> gives.</p>
+effect. The restricted fit holds it exactly as it holds an unpenalized
+one, <code><a href="fit_smooth.html">fit_smooth()</a></code> enforcing the hold in the solve. Only a kinked penalty
+is excluded, for the reasons that <code><a href="statmod_restrict.html">statmod_restrict()</a></code> gives.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="statmod_restrict.html">statmod_restrict()</a></code>, which refuses the same coordinates one at a
+    <div class="dont-index"><p><code><a href="statmod_restrict.html">statmod_restrict()</a></code>, which rejects the same coordinates one at a
 time, and <code><a href="kinked_coords.html">kinked_coords()</a></code>.</p></div>
     </div>
 

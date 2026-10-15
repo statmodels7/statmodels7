@@ -39,10 +39,12 @@ needs \\\partial K/\partial\beta\\. With the observed information that
 is \\-\ell'''\\, which every family carries in closed form. With the
 expected one it is \\-\partial\\\mathbb{E}\[\ell''\]/\partial\eta\\,
 which is not \\-\mathbb{E}\[\ell'''\]\\: differentiating an expectation
-moves the measure as well as the integrand, and the missing piece
-\\\mathbb{E}\[\ell\_{ab}\ell\_{c}\]\\ is a mixed moment no Bartlett
-identity isolates: the third ties the symmetrized sum, never the single
-term.
+moves the measure as well as the integrand, so that
+\\\partial\mathbb{E}\[\ell\_{ab}\]/\partial\eta_c =
+\mathbb{E}\[\ell\_{abc}\] + \mathbb{E}\[\ell\_{ab}\ell\_{c}\]\\. The
+mixed moment \\\mathbb{E}\[\ell\_{ab}\ell\_{c}\]\\ is not available from
+a Bartlett identity on its own, which relates only symmetrized sums of
+such moments.
 
 distributions7 supplies it as
 [`distributions7::distrib_dexpected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_dexpected_hessian.html).

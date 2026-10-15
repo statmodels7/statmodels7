@@ -1,7 +1,7 @@
-# Format a Duration in the Unit It Deserves
+# Format a Duration in a Readable Unit
 
-Turns a number of seconds into a string in microseconds, milliseconds,
-seconds, minutes, hours or days, whichever keeps it readable.
+Converts a number of seconds to a string in microseconds, milliseconds,
+seconds, minutes, hours or days, whichever keeps the number readable.
 
 ## Usage
 
@@ -23,28 +23,29 @@ format_duration(seconds, digits = 3L)
 
 ## Value
 
-A character vector the length of `seconds`, each element a number and a
-unit separated by a space, as `"340 us"` or `"2.6 h"`.
+A character vector of the length of `seconds`. Each element is a number
+and a unit separated by a space, as `"340 us"` or `"2.6 h"`. A
+non-finite value gives `"NA"` and a negative value gives `"negative"`.
 
 ## Details
 
-A fit that took 340 microseconds and one that took 2.6 hours must both
-read at a glance, and no single unit does that.
+Fit times range from a few hundred microseconds to several hours, so the
+unit is chosen from the magnitude of the value.
 
-The thresholds are the obvious ones: below a millisecond it reads in
-microseconds, below a second in milliseconds, below a minute in seconds,
-then minutes, hours and days.
+The thresholds are the usual ones: a value reads in microseconds below a
+millisecond, in milliseconds below a second, in seconds below a minute,
+and then in minutes, hours and days. The unit is chosen after the value
+is rounded to `digits` significant digits, so that a value just below a
+threshold reads in the larger unit (59.99 seconds reads `"1 min"`).
 
-Zero is a reading. On a coarse clock a fast fit measures exactly zero
-seconds, and it is reported as `"0 s"` rather than suppressed. A guard
-of the form `if (elapsed > 0)` would claim that zero cannot be measured,
-which for a duration is false, and would make what the object prints
-depend on the platform's timer resolution.
+A duration of zero is reported as `"0 s"`. On a coarse clock a fast fit
+can measure exactly zero seconds, and suppressing that value would make
+the printed output depend on the timer resolution of the platform.
 
 ## See also
 
 [`print.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/print.StatmodFit.md),
-which reports a fit's elapsed time with this.
+which reports the elapsed time of a fit with this function.
 
 ## Examples
 
@@ -52,7 +53,7 @@ which reports a fit's elapsed time with this.
 format_duration(c(3.4e-4, 0.25, 90, 7200))
 #> [1] "340 us"  "250 ms"  "1.5 min" "2 h"    
 
-# Zero is a reading, not a missing value.
-format_duration(0)
-#> [1] "0 s"
+# A duration of zero is reported in seconds, a missing value as "NA".
+format_duration(c(0, NA))
+#> [1] "0 s" "NA" 
 ```

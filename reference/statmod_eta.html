@@ -13,7 +13,7 @@ parameter's own link inverts it to \(\theta_k\)."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,14 +75,26 @@ parameter, each as long as its equation's design is wide.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of two named lists, each with one entry per distribution
-parameter in the family's order:</p><dl><dt><code>eta</code></dt>
-<dd><p>the linear predictors, numeric vectors of length
-<code>spec@n_obs</code>.</p></dd>
+    <p>A list with the elements</p><dl><dt><code>eta</code></dt>
+<dd><p>a named list of the linear predictors, one numeric vector
+of length <code>spec@n_obs</code> per distribution parameter in the family's
+order.</p></dd>
 
 <dt><code>theta</code></dt>
-<dd><p>the parameters they imply, the same shape, each
-strictly inside its parameter's bounds.</p></dd>
+<dd><p>the parameters that the predictors imply, in the same
+shape.</p></dd>
+
+<dt><code>filters</code></dt>
+<dd><p>the runs of the filter-shaped structural term, an
+empty list when the model has none.</p></dd>
+
+<dt><code>regimes</code></dt>
+<dd><p>the latent-state structure of a term of the likelihood
+shape, an empty list when the model has none.</p></dd>
+
+<dt><code>eta_static</code></dt>
+<dd><p>present only when the model carries a structural
+term: the predictors before the term's level is added.</p></dd>
 
 
 </dl></div>
@@ -91,10 +103,14 @@ strictly inside its parameter's bounds.</p></dd>
     <p>$$\eta_k = X_k \beta_k + o_k + a_k, \qquad \theta_k = g_k^{-1}(\eta_k)$$</p>
 <p>with \(o_k\) the equation's offset and \(a_k\) the adjustment a
 refreshable term contributes, zero for an ordinary design.</p>
-<p>The inverse link clamps \(\theta_k\) strictly inside its own open
-bounds, so a predictor far out on the link scale gives a parameter a
-density can be evaluated at. A structural term of the filter shape adds
-its level to \(\eta_k\) before the link is inverted.</p>
+<p>The inverse link is evaluated by <code><a href="https://statmodels7.github.io/linkfunctions7/reference/linkinv.html" class="external-link">linkfunctions7::linkinv()</a></code>. The links
+onto a bounded interval keep the result within the bounds of the parameter,
+at or next to a bound for a predictor far out on the link scale, so that a
+density can still be evaluated. The <code>inverse</code> link is an exception: a
+negative predictor gives a negative parameter.</p>
+<p>A structural term of the filter shape adds its level to \(\eta_k\)
+before the link is inverted. A term whose contribution is a likelihood
+mixed over latent states reports the posterior-weighted predictor.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

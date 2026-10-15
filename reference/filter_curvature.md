@@ -2,7 +2,7 @@
 
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html)
 run at the parameters the filter was fitted at, with the family's
-derivatives looked up rather than asked for again, returning the forward
+derivatives looked up instead of evaluated again, returning the forward
 Jacobian of the filtered predictor beside the contracted second
 derivative.
 
@@ -56,27 +56,28 @@ returns.
 
 ## Details
 
-Two readers need it at the same point:
+Three callers read it at the same point:
 [`statmod_full_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_full_information.md),
-for the joint information, and
+for the joint information;
 [`filter_joint_movement()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_movement.md),
 for the rows along which the exact outer gradient reads how the mode's
-movement reaches the determinant. Both go through the one memo slot, so
-the recursion runs once at a point.
+movement reaches the determinant; and
+[`filter_joint_jacobian()`](https://statmodels7.github.io/statmodels7/reference/filter_joint_jacobian.md),
+for the standard error of a filtered predictor. All go through the one
+memo slot, so the recursion runs once at a point.
 
-The recursion is re-run here at parameters it has already been run at,
-so the predictor it reaches is the one the derivatives were read at and
-the callbacks can LOOK THEM UP rather than ask the family again. That is
-the difference between this and the filter itself, where the score is
-evaluated at a predictor the recursion has just produced and cannot be
-known in advance: measured, it is where the time goes. The seed is part
-of the memo's key, so a caller whose layout differed would miss the
-cache rather than take the wrong shape.
+The recursion is run again here at parameters at which it has already
+been run, so the predictor that it reaches is the one at which the
+derivatives were read, and the callbacks read the stored values instead
+of evaluating the family again. In the filter itself the score is
+evaluated at a predictor that the recursion has just produced, which
+cannot be known in advance. The seed is part of the memo's key, so a
+caller whose layout differed would miss the cache and not take the wrong
+shape.
 
 The assembly of the callback is written once, in
 [`.structural_blocks()`](https://statmodels7.github.io/statmodels7/reference/dot-structural_blocks.md):
 the exact gradient of a penalized filter needs the same pieces at one
-order higher, and two copies would drift the moment either was touched.
-The same pieces are also passed as DATA, with which an eligible term
-runs its second-order recursion compiled, the callback being kept for
-the cases the kernel declines.
+order higher. The same pieces are also passed as data, with which an
+eligible term runs its second-order recursion compiled, the callback
+being kept for the cases that the kernel declines.

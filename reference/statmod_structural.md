@@ -1,4 +1,4 @@
-# Which Terms Rewrite the Likelihood
+# The Structural Terms of a Specification
 
 The parameter, name and shape of every structural term in a
 specification.
@@ -23,9 +23,10 @@ A list of entries with `param`, `term` and `kind`, possibly empty.
 ## Details
 
 The shape is `"filter"` for a term that produces a predictor, which the
-layer adds to the equation the term sits in, and `"loglik"` for one
-whose contribution is a likelihood mixed over states and cannot be
-written as a predictor at all.
+layer adds to the equation in which the term sits, and `"loglik"` for a
+term whose contribution is a likelihood mixed over components (the
+states of a regime chain, the intervals or nodes of a marginal
+break-point term), which cannot be written as a predictor.
 
 ## See also
 

@@ -1,13 +1,14 @@
 # Options for the Unpenalized Parametric Block
 
-Says how the parametric part of each linear predictor is built: in what
-storage, and with which contrasts for its factors. Pass the result as
+Specifies how the parametric part of each linear predictor is built: in
+what storage, and with which contrasts for its factors. Pass the result
+as
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)'s
 `linpar_control`.
 
-The one case it exists for is a formula naming a factor of many levels,
-where `sparse = TRUE` turns a design that would be gigabytes into one
-that is megabytes.
+It is meant for a formula naming a factor of many levels, where
+`sparse = TRUE` keeps the design in sparse storage instead of a dense
+matrix with one column per level.
 
 ## Usage
 
@@ -35,16 +36,10 @@ linpar_options(sparse = NULL, contrasts = NULL)
 
 ## Value
 
-A named list with elements `sparse` and `contrasts`, to be passed as
+A named list with the element `sparse` (possibly `NULL`) and, when
+`contrasts` is not `NULL`, the element `contrasts`, to be passed as
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)'s
 `linpar_control`.
-
-The argument and this function are named differently on purpose. With
-one name for both, the argument's default would resolve to its own
-promise and R would report *promise already under evaluation*.
-[`stats::glm()`](https://rdrr.io/r/stats/glm.html) and
-[`stats::glm.control()`](https://rdrr.io/r/stats/glm.control.html) are
-kept apart for the same reason.
 
 ## Which term it reaches
 
@@ -60,29 +55,31 @@ this.
 `sparse = TRUE` builds the block through
 [`Matrix::sparse.model.matrix()`](https://rdrr.io/pkg/Matrix/man/sparse.model.matrix.html),
 which **builds** it sparse instead of building a dense matrix and
-compressing it. The second would cost the memory the choice exists to
-avoid.
+compressing it, so no dense intermediate is formed. Sparse storage pays
+where the formula carries a factor of many levels. A numeric covariate
+has no zeros to exploit, and its sparse block costs more than it saves.
 
-Measured at 20000 rows and a factor of 1000 levels, 0.002 s and 1.8 MB
-against
-[`stats::model.matrix`](https://rdrr.io/r/stats/model.matrix.html)'s
-0.100 s and 161.5 MB, the numbers identical; and a design that would be
-32 GB dense builds in 0.02 s and 19 MB, which settles that there is no
-dense intermediate. It pays where the formula carries a factor of many
-levels and costs more than it saves on numeric covariates, whose block
-is dense whatever is asked for.
+## Scaling of the columns
 
-**There is no rescaling here, and that is measured rather than
-omitted.** Scaling the columns and carrying the coefficients back is the
-remedy for a conditioning that squares, as forming \\X'X\\ does;
+The block is not rescaled. Scaling the columns and carrying the
+coefficients back is a remedy for a conditioning that squares, as
+forming \\X'X\\ does.
 [`iwls()`](https://statmodels7.github.io/statmodels7/reference/iwls.md)
-fits through a QR of the design and never forms it. On columns spanning
-fifteen decades the raw fit and the scaled one converge in the same
-number of iterations, and both agree with
-[`stats::lm()`](https://rdrr.io/r/stats/lm.html) to \\10^{-14}\\. What
-does move is the score the fit reports, 1.5e+02 against 9.2e-05, and
-that is a reading rather than an answer: the final verdict is already
-arbitrated on a dimensionless scale.
+with its default `decomposition = "qr"` fits through a QR factorization
+of the augmented design and does not form \\X'X\\, and its final
+convergence verdict is read on a dimensionless scale, so the scale of a
+column does not decide it.
+
+## The name of the argument
+
+The argument of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+and this function are named differently on purpose. With one name for
+both, the argument's default would resolve to its own promise and R
+would report *promise already under evaluation*.
+[`stats::glm()`](https://rdrr.io/r/stats/glm.html) and
+[`stats::glm.control()`](https://rdrr.io/r/stats/glm.control.html) are
+kept apart for the same reason.
 
 ## See also
 
@@ -110,7 +107,7 @@ sparse <- statmod_spec(y ~ g, distributions7::gaussian1_distrib(), dd,
 Xd <- statmod_design(dense)$mu$X
 Xs <- statmod_design(sparse)$mu$X
 
-# Same numbers, one two orders of magnitude smaller.
+# Same numbers, stored in much less memory.
 c(dense = class(Xd)[1], sparse = class(Xs)[1])
 #>       dense      sparse 
 #>    "matrix" "dgCMatrix" 

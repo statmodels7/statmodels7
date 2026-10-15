@@ -1,7 +1,7 @@
 # The State of the Structural Terms
 
-The environment a design carries the structural terms' own parameters
-in, on the unconstrained scale of
+The environment in which a design carries the own parameters of the
+structural terms, on the unconstrained scale of
 [`modelterms7::term_links()`](https://statmodels7.github.io/modelterms7/reference/term_links.html).
 
 ## Usage

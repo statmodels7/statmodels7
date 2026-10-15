@@ -34,22 +34,19 @@ A grouping indicator is sparse by construction. A row belongs to one
 group, so a random effect over \\m\\ groups has density \\1/m\\, and
 modelterms7 builds it that way.
 
-Binding such a block beside a dense one with
-[`cbind()`](https://rdrr.io/r/base/cbind.html) fails: base dispatch
-reads the sparse block as a vector and reports that the number of items
-to replace is not a multiple of the replacement length, three frames
-from anything a caller wrote.
-[`Matrix::cbind2()`](https://rdrr.io/r/methods/cbind2.html) is what
-handles the mixed pair.
+Blocks are bound with [`cbind()`](https://rdrr.io/r/base/cbind.html)
+when all of them are base matrices. When any block is sparse, they are
+bound with [`Matrix::cbind2()`](https://rdrr.io/r/methods/cbind2.html),
+so that the result is a Matrix object whatever the order of the blocks.
 
 The result is sparse when **one** block is. Sparsity is a property of
-the assembled matrix, never of its pieces: a dense fixed block beside a
+the assembled matrix and not of its pieces: a dense fixed block beside a
 large indicator leaves a matrix that is still overwhelmingly zero, and
 its factorization stays sparse under a fill-reducing ordering.
 
 ## See also
 
 [`design_sparse()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md)
-for the same question asked of a whole design,
+for the same test applied to a whole design,
 [`statmod_design()`](https://statmodels7.github.io/statmodels7/reference/statmod_design.md)
 for the assembly this serves.

@@ -13,7 +13,7 @@ differentiated in hyperparameter \(m\)."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,16 +116,16 @@ $$\frac{\partial S_m}{\partial\beta}[b_l]
   + \frac{\partial^2 S}{\partial\beta^2}[b_l, b_m]
   + \frac{\partial S}{\partial\beta}[b_{ml}]$$
 beside \(S_{ml}\), which <code><a href="outer_pieces.html">outer_pieces()</a></code> already carries. The first two
-are one quantity by the symmetry of mixed partials, read from
-<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html" class="external-link">penalties7::penalty_dhessian_beta_theta()</a></code> for the hyperparameters a
-penalty owns; the third is <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html" class="external-link">penalties7::penalty_d2hessian_beta()</a></code> and the
+are the mixed derivative \(\partial^2 S/\partial\beta\,\partial\theta\)
+taken along two directions, \(b_l\) for the hyperparameters of row \(m\)
+and \(b_m\) for those of row \(l\); each is read from
+<code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html" class="external-link">penalties7::penalty_dhessian_beta_theta()</a></code> for the hyperparameters that the
+penalty owns. The third is <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html" class="external-link">penalties7::penalty_d2hessian_beta()</a></code> and the
 fourth <code><a href="https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html" class="external-link">penalties7::penalty_dhessian_beta()</a></code>. A penalty that
-<code><a href="https://statmodels7.github.io/penalties7/reference/beta_quadratic.html" class="external-link">penalties7::beta_quadratic()</a></code> calls quadratic contributes nothing, so a
-model carrying only those gets <code>NULL</code> and its Hessian is untouched.</p>
-<p>Measured on a Student t prior over 30 groups before it was written, the
-assembly without these pieces is 122 per cent out and flat in the step, and
-with them it converges on a central difference of the exact gradient as
-\(h^2\) down to the reference's own floor.</p>
+<code><a href="https://statmodels7.github.io/penalties7/reference/beta_quadratic.html" class="external-link">penalties7::beta_quadratic()</a></code> calls quadratic contributes nothing, and
+neither do a kinked penalty, a mixed covariance class and a penalty over a
+structural term's own parameters, so a model carrying only those gets <code>NULL</code>
+and its Hessian is untouched.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

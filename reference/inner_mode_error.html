@@ -11,7 +11,7 @@ log-likelihood is still on the table there."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,34 +86,23 @@ one the criterion will read rather than a second copy.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single number, or <code>NA</code> where the penalized system could not
-be read there – which is itself a reason to call the point unavailable.</p>
+    <p>A single number, or <code>NA</code> where the penalized system could not be
+read there, which is itself a reason to call the point unavailable.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It answers the question <strong>availability</strong> asks, which is a different
-question from the one the inner optimizer's flag answers. The flag says
-whether a stopping rule fired. Availability asks whether the criterion, a
-Laplace expansion at the mode, is valid at this point.</p>
-<p>The second is a matter of distance and has a natural scale, log-likelihood
-units. The first is a boolean about a threshold on a score whose size
-depends on the model.</p>
-<p>The two come apart on nearly every point. Measured on
-<code>y ~ s(x) | sigma ~ s(z)</code>, of 38 inner fits during one search, 38 are at
-their mode by this reading, between 1e-09 and 3e-09 against a limit of
-1e-03, and <strong>four</strong> report convergence. The
-other 34 stopped on the objective-stall guard with the objective already
-fixed to twelve significant digits and a score oscillating between 2.5e-06
-and 3.3e-06, just above the absolute tolerance of 1e-06. Read as
-unavailable, they made the outer line search backtrack eleven times per
-iteration and accept a step of 0.0026 where the Newton step is 1.4, so the
-search moved 0.005 in eta over 38 evaluations and stopped 4.0 criterion
-units below the optimum its own gradient was correctly pointing at.</p>
-<p>It is used to add points and never to remove one: a run whose flag says
-converged stays usable whatever this reads, so no model that fitted before
-can stop fitting. That is also why it is not folded into the flag itself,
-which <code>piano_stabilita.txt</code> section 13 measured and withdrew – there
-the flag was made stricter, and it cost a false negative on a good fit.</p>
+    <p>It decides whether a point is available, which is a different question from
+the one that the inner optimizer's flag answers. The flag reports whether a
+stopping rule fired. Availability is whether the criterion, a Laplace
+expansion at the mode, is valid at this point.</p>
+<p>Availability is a matter of distance and has a natural scale, log-likelihood
+units. The flag is a boolean about a threshold on a score whose size depends
+on the model. The two can differ: an inner fit may stop on the
+objective-stall guard with the score slightly above the absolute tolerance
+and the penalized likelihood already at its mode to many digits. Such a
+point is available by this reading and unavailable by the flag.</p>
+<p>It is used to add points and not to remove any: a run whose flag reports
+convergence stays usable whatever this reads.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

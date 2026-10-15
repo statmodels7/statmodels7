@@ -11,7 +11,7 @@ are, by a general optimizer with the exact gradient."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,12 +98,13 @@ are, by a general optimizer with the exact gradient.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A general optimizer serves here and the scoring step does not, because
-these are not coefficients of a design block: there is no \(X'WX\) to
-invert, the predictor being a recursion and not a product.</p>
+    <p>The scoring step does not apply to these parameters, because they are not
+coefficients of a design block: the predictor is a recursion and not a
+product, so there is no \(X'WX\) to invert. A general optimizer
+(<code><a href="https://statmodels7.github.io/optimizers7/reference/lbfgs.html" class="external-link">optimizers7::lbfgs()</a></code> by default) is used instead.</p>
 <p>The gradient is exact. <code><a href="statmod_structural_score.html">statmod_structural_score()</a></code> chains the filter's
 own Jacobian, which is already the total derivative of the predictor in
-those parameters, so a quasi-Newton method has everything it needs.</p>
+those parameters, and the derivative of the term's own penalties is added.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

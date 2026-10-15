@@ -6,20 +6,24 @@ Below the criteria the point is described by dimensionless numbers from
 statmod_certificate(): for the inner fit, and for the outer criterion
 where there is one, the largest gradient in conditional standard errors
 and the smallest eigenvalue of the equilibrated curvature
-(certificate_readings()), and for the coefficients a kinked penalty set
-to zero the largest ratio of the likelihood's pull to the kink
+(certificate_readings()), and for the coefficients that a kinked penalty
+has set to zero the largest ratio of the pull of the likelihood to the kink
 (zero_readings()). No verdict is printed. How each is read is on the
-page of summary.StatmodFit(), under &quot;Reading the foot&quot;."><meta property="og:description" content="The call, then the covariance blocks shared between equations, then each
+page of summary.StatmodFit(), under &quot;Reading the foot&quot;. The line of the
+observations also gives the sum of the prior weights where they are not
+all 1."><meta property="og:description" content="The call, then the covariance blocks shared between equations, then each
 distribution parameter's blocks, then the degrees of freedom, the criteria
 and the notes.
 Below the criteria the point is described by dimensionless numbers from
 statmod_certificate(): for the inner fit, and for the outer criterion
 where there is one, the largest gradient in conditional standard errors
 and the smallest eigenvalue of the equilibrated curvature
-(certificate_readings()), and for the coefficients a kinked penalty set
-to zero the largest ratio of the likelihood's pull to the kink
+(certificate_readings()), and for the coefficients that a kinked penalty
+has set to zero the largest ratio of the pull of the likelihood to the kink
 (zero_readings()). No verdict is printed. How each is read is on the
-page of summary.StatmodFit(), under &quot;Reading the foot&quot;."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
+page of summary.StatmodFit(), under &quot;Reading the foot&quot;. The line of the
+observations also gives the sum of the prior weights where they are not
+all 1."><meta property="og:image" content="https://statmodels7.github.io/statmodels7/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -27,7 +31,7 @@ page of summary.StatmodFit(), under &quot;Reading the foot&quot;."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,10 +68,12 @@ and the notes.</p>
 <code><a href="statmod_certificate.html">statmod_certificate()</a></code>: for the inner fit, and for the outer criterion
 where there is one, the largest gradient in conditional standard errors
 and the smallest eigenvalue of the equilibrated curvature
-(<code><a href="certificate_readings.html">certificate_readings()</a></code>), and for the coefficients a kinked penalty set
-to zero the largest ratio of the likelihood's pull to the kink
+(<code><a href="certificate_readings.html">certificate_readings()</a></code>), and for the coefficients that a kinked penalty
+has set to zero the largest ratio of the pull of the likelihood to the kink
 (<code><a href="zero_readings.html">zero_readings()</a></code>). No verdict is printed. How each is read is on the
-page of <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>, under "Reading the foot".</p>
+page of <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>, under "Reading the foot". The line of the
+observations also gives the sum of the prior weights where they are not
+all 1.</p>
     </div>
 
     <div class="section level2">
@@ -89,11 +95,11 @@ page of <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>,
 
 
 <dt id="arg-notes">notes<a class="anchor" aria-label="anchor" href="#arg-notes"></a></dt>
-<dd><p>Whether to print the qualifications the numbers carry.
-<code>FALSE</code> by default, when the foot says how many there are: they
-state conventions, never facts of the fit, so they read the same
-under every model. They are on the summary's <code>notes</code> property
-either way.</p></dd>
+<dd><p>Whether to print the notes that qualify the numbers. With the
+default <code>FALSE</code> the foot gives only the number of notes. Most of them
+state conventions of the model, and some name the coefficients or the
+values that the fit reached, so they can differ between models. The
+notes are on the summary's <code>notes</code> property in either case.</p></dd>
 
 
 <dt id="arg-max-coef">max_coef<a class="anchor" aria-label="anchor" href="#arg-max-coef"></a></dt>
@@ -102,7 +108,7 @@ for all of them. <code>NULL</code>, the default, reads what <code><a href="summa
 was told; failing that the option <code>statmodels7.summary_max_coef</code>, and
 failing that 10. A hyperparameter row is shown whatever <code>max_coef</code> is:
 it governs the coefficients under it, and every one of them is
-conditional on the value it reached. A block short enough to fit in
+conditional on the value that it reached. A block short enough to fit in
 twelve rows is never abridged, so raising <code>max_coef</code> changes nothing
 for a parametric block of ordinary size.</p></dd>
 

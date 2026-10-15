@@ -8,14 +8,14 @@ be a smooth, a random effect or a penalized block.
 
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
 reads one formula carrying all of them, the equations separated by a
-bar, and fits it. This vignette walks through a fit and the questions a
-reader asks of one.
+bar, and fits it. This vignette walks through a fit and then through the
+functions that read it.
 
 ``` r
 
 n <- 300
-da <- data.frame(x = sort(runif(n, -3, 3)))
-da$y <- rnorm(n, 1 + 0.8 * da$x, exp(-0.6 + 0.35 * da$x))
+da <- data.frame(x = sort(runif(n, min = -3, max = 3)))
+da$y <- rnorm(n, mean = 1 + 0.8 * da$x, sd = exp(-0.6 + 0.35 * da$x))
 ```
 
 The scale of these data grows with `x`, from about $`0.19`$ at
@@ -23,12 +23,13 @@ $`x = -3`$ to about $`1.57`$ at $`x = 3`$.
 
 ## A first fit
 
-The first equation belongs to the distribution’s first parameter, so a
-formula with no bar models the mean and leaves the rest as intercepts:
+The first equation belongs to the first parameter of the distribution,
+so a formula with no bar models the mean and leaves the other parameters
+as intercepts:
 
 ``` r
 
-f1 <- statmod(y ~ x, gaussian1_distrib(), da)
+f1 <- statmod(y ~ x, distrib = gaussian1_distrib(), data = da)
 coef(f1)
 #> $mu
 #> (Intercept)           x 
@@ -39,26 +40,28 @@ coef(f1)
 #>  -0.2493397
 ```
 
-[`coef()`](https://rdrr.io/r/stats/coef.html) answers with **one
-compartment per parameter**, because the coefficients of the mean and of
-the scale are different quantities on different scales and a single flat
-vector would run them together. Where the model is an ordinary
-regression, it is one:
+[`coef()`](https://rdrr.io/r/stats/coef.html) returns **one compartment
+per parameter**, because the coefficients of the mean and of the scale
+are different quantities on different scales, and a single flat vector
+would run them together. For this model the compartment of the mean
+holds the coefficients of an ordinary regression, which the following
+check confirms:
 
 ``` r
 
-all.equal(unname(coef(f1)$mu), unname(coef(lm(y ~ x, da))), tolerance = 1e-6)
+all.equal(unname(coef(f1)$mu), unname(coef(lm(y ~ x, data = da))),
+          tolerance = 1e-6)
 #> [1] TRUE
 ```
 
 ## Modeling the scale
 
-Name a parameter on the left of its own equation, after a bar:
+A parameter is named on the left of its own equation, after a bar:
 
 ``` r
 
-f2 <- statmod(y ~ x | sigma ~ x, gaussian1_distrib(), da)
-lapply(coef(f2), round, 3)
+f2 <- statmod(y ~ x | sigma ~ x, distrib = gaussian1_distrib(), data = da)
+lapply(coef(f2), round, digits = 3)
 #> $mu
 #> (Intercept)           x 
 #>       1.008       0.795 
@@ -68,13 +71,14 @@ lapply(coef(f2), round, 3)
 #>      -0.575       0.356
 ```
 
-against a truth of $`\mu = 1 + 0.8x`$ and $`\log\sigma = -0.6 + 0.35x`$.
-The scale’s equation is on the **log scale**, which is that parameter’s
-own link: an equation is fitted on the scale that keeps its parameter
+The truth is $`\mu = 1 + 0.8x`$ and $`\log\sigma = -0.6 + 0.35x`$. The
+equation of the scale is on the **log scale**, which is the link of that
+parameter: an equation is fitted on the scale that keeps its parameter
 inside its domain, so no combination of covariates can produce a
 negative standard deviation.
 
-Comparing the two fits shows what the second equation bought:
+The log-likelihoods of the two fits show the gain from the second
+equation:
 
 ``` r
 
@@ -86,15 +90,16 @@ c(constant_scale = loglik(f1), modeled_scale = loglik(f2))
 ## Terms
 
 Any `modelterms7` term goes in any equation. A smooth carries a penalty,
-and its smoothing parameter is estimated, not set:
+and its smoothing parameter is estimated from the data:
 
 ``` r
 
-db <- data.frame(z = sort(runif(n, -3, 3)),
+db <- data.frame(z = sort(runif(n, min = -3, max = 3)),
                  g = factor(rep(1:20, length.out = n)))
-db$y <- rnorm(n, 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], 0.4)
+db$y <- rnorm(n, mean = 1 + sin(1.4 * db$z) + rnorm(20, sd = 0.6)[db$g], sd = 0.4)
 
-f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)), gaussian1_distrib(), db)
+f3 <- statmod(y ~ s(z, bspline_smooth(k = 8)),
+              distrib = gaussian1_distrib(), data = db)
 f3@edf
 #>   parameter                        term coefficients      edf
 #> 1        mu                      linpar            1 1.000000
@@ -102,11 +107,11 @@ f3@edf
 #> 3     sigma                      linpar            1 1.000000
 ```
 
-The smooth carries 7 coefficients and **spends** about 5.3 of them: that
-is what the penalty buys, and it is the number a criterion should count,
-and never the 7.
+The smooth has 7 coefficients and **spends** about 5.3 of them. This
+effective number of degrees of freedom is the one a criterion counts, in
+place of the number of coefficients.
 [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
-reports the hyperparameters and who chose each:
+reports the hyperparameters and the source of each:
 
 ``` r
 
@@ -115,12 +120,13 @@ hyper(f3)
 #> 1        mu s(z, bspline_smooth(k = 8)) lambda 1.064316 FALSE   reml <NA>
 ```
 
-A random effect is written the same way and is the same machinery, its
-penalty being a Gaussian prior over the group effects:
+A random effect is written the same way and is fitted by the same
+machinery, its penalty being a Gaussian prior over the group effects:
 
 ``` r
 
-f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g), gaussian1_distrib(), db)
+f4 <- statmod(y ~ s(z, bspline_smooth(k = 8)) + random(~ 1 | g),
+              distrib = gaussian1_distrib(), data = db)
 f4@edf
 #>   parameter                        term coefficients       edf
 #> 1        mu                      linpar            1  1.000000
@@ -133,36 +139,65 @@ hyper(f4)
 #> 2        mu              random(~1 | g)  sigma 0.7070243 FALSE   reml <NA>
 ```
 
-20 group effects spend about 18.6 degrees of freedom here, and the
-estimated prior scale is close to the 0.6 the groups were drawn at. A
-random intercept is a ridge penalty on an indicator block, which is why
-it needs no separate machinery.
+The 20 group effects spend about 18.5 degrees of freedom here, and the
+estimated prior scale is 0.71, against the 0.6 that the groups were
+drawn with. A random intercept is a ridge penalty on an indicator block,
+so it is fitted like a smooth.
 
 ## Who chooses the hyperparameters
 
-Every hyperparameter is estimated unless the term holds it. Which
-criterion does the choosing is `outer_criterion`:
+Every hyperparameter is estimated unless the term holds it. Two
+arguments of
+[`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
+choose the criterion. The argument `outer_criterion` applies to the
+hyperparameters of a penalty that is twice differentiable, such as a
+smooth or a random effect:
 
 - [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   and
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  are marginal criteria: they integrate out what the penalty shrinks and
-  are differentiable, so the search uses an exact gradient and, where it
-  exists, an exact Hessian.
+  are marginal criteria. They integrate out the penalized coefficients
+  and are differentiable, so the search uses an exact gradient and,
+  where it exists, an exact Hessian.
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
   is the default.
-- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
-  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+- [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
   and
-  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
-  score an estimate of prediction error instead, and are what a penalty
-  with a **kink** needs: a marginal criterion expands around the
-  penalized mode, and for a lasso that mode sits *at* the kink, where
-  the second derivative it wants does not exist.
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  score an estimate of prediction error instead.
 
-A term holds a hyperparameter by naming it, and
+A penalty with a **kink** (`lasso()`, `enet()`, `scad()` and `mcp()`) is
+chosen along a path of its own values, from the value that empties the
+block downwards, and the path is scored by `sparse_criterion`. This
+argument is
+[`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) by
+default and may be
+[`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md) or
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md), and
+a marginal criterion is rejected there. A marginal criterion expands the
+penalized objective around the penalized mode, and for a lasso that mode
+lies *at* the kink, where the second derivative does not exist. The
+function
+[`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+serves only as `sparse_criterion`.
+
+A term holds a hyperparameter when the call names its value, for example
+`lasso(x, lambda = 3)` or
+`s(z, bspline_smooth(k = 8), hyper = c(lambda = 2))`, and the `held`
+column of
 [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
-then says so in its `held` column.
+then reports `TRUE`:
+
+``` r
+
+f5 <- statmod(y ~ s(z, bspline_smooth(k = 8), hyper = c(lambda = 2)),
+              distrib = gaussian1_distrib(), data = db)
+hyper(f5)
+#>   parameter                                               term   name estimate
+#> 1        mu s(z, bspline_smooth(k = 8), hyper = c(lambda = 2)) lambda        2
+#>   held source   id
+#> 1 TRUE  fixed <NA>
+```
 
 ## Reading a fit
 
@@ -196,46 +231,54 @@ summary(f3)
 #> 95% intervals, bayesian variance
 #> conditional log-likelihood -362.616546    effective df 7.26
 #> cAIC 739.762    cBIC 766.668
-#> fitted in 272 ms
-#> inner   max |grad|/se 3.7e-16   min eigen 1
+#> fitted in 168 ms
+#> inner   max |grad|/se 1.3e-15   min eigen 1
 #> outer   max |grad|/se 2.1e-08   min eigen 0.99
 #> 1 note: print(summary(fit), notes = TRUE)
 ```
 
-Three things in that output are worth naming. The log-likelihood is the
-**conditional** one, read at the fitted coefficients, and the effective
-degrees of freedom go with it: `cAIC` and `cBIC` are built from that
-pair, and comparing a conditional log-likelihood against a marginal one
-from another package is comparing two different quantities. Every
-interval is built on the scale that keeps its quantity in its own set
-and mapped back, so a scale’s interval cannot contain a negative number.
-And the last line is the certificate.
+The output has three features that need explanation. The log-likelihood
+is the **conditional** one, read at the fitted coefficients, and the
+effective degrees of freedom go with it: `cAIC` and `cBIC` are built
+from that pair, and comparing a conditional log-likelihood with a
+marginal one from another package compares two different quantities. The
+interval of a hyperparameter, such as a smoothing parameter or a prior
+standard deviation, is built on the scale that keeps it positive and
+mapped back, so it cannot contain a negative number, while the interval
+of a coefficient is on the link scale of its equation. The last lines,
+headed `inner` and `outer`, give the largest gradient in standard errors
+and the smallest eigenvalue of the curvature for the coefficients and
+for the hyperparameters, both read at the point the fit reached.
 
 ## The certificate
 
-The optimizer’s convergence flag answers whether a stopping rule fired.
+The convergence flag of an optimizer records whether a stopping rule
+fired.
 [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-answers a different question: is the point reported the one the model
-asks for?
+tests a different property: whether the point reported is a mode of the
+penalized objective and a stationary point of the criterion in the
+hyperparameters.
 
 ``` r
 
 cert <- statmod_certificate(f4)
-c(state = cert$state, mode_error = signif(cert$mode_error, 3))
+c(state = cert$state, mode_error = signif(cert$mode_error, digits = 3))
 #>       state  mode_error 
-#> "converged"  "4.93e-30"
+#> "converged"  "6.77e-30"
 ```
 
 `mode_error` is how far above its own penalized mode the inner fit
 stopped, in log-likelihood units, so one limit serves every model
-whatever its scale. The `state` is `converged`, `boundary` where a
-hyperparameter has run to an edge and the criterion is genuinely flat
-there, or `not converged`.
+whatever its scale. The `state` is `converged`; `boundary`, where a
+hyperparameter or an estimated coefficient lies at an edge of its range
+with the criterion flat in it, or the outer curvature has a flat
+direction; `not converged`; or `unknown`, where the derivatives that the
+certificate needs cannot be computed.
 
 ## Prediction, and the ordinary generics
 
-[`predict()`](https://rdrr.io/r/stats/predict.html) answers per
-parameter, with a standard error on request:
+[`predict()`](https://rdrr.io/r/stats/predict.html) returns one
+compartment per parameter, with a standard error on request:
 
 ``` r
 
@@ -248,12 +291,12 @@ predict(f4, newdata = nd, se = TRUE)$mu
 #> 3  2.4646126 0.1219466  2.2256016  2.70362367
 ```
 
-Prediction **reapplies** each term’s blueprint rather than rebuilding
-it, so the knots of a smooth and the levels of a factor are the ones the
-model was fitted with. The identity that pins it is that predicting on
-rows the model saw returns the fitted values there.
+Prediction **reapplies** each term’s blueprint instead of rebuilding it,
+so the knots of a smooth and the levels of a factor are those of the
+fitted model. As a consequence, predicting at rows that the model saw
+returns the fitted values there.
 
-The `stats` generics behave as they read:
+The generics of `stats` apply to a fit:
 
 ``` r
 
@@ -264,72 +307,78 @@ length(sigma(f4))
 #> [1] 300
 ```
 
-[`sigma()`](https://rdrr.io/r/stats/sigma.html) returns a **vector**,
-because the whole point of the layer is that a scale may be modeled: a
-single residual standard deviation exists only where that equation is an
-intercept, and returning its first value everywhere else would answer a
-different question.
+[`sigma()`](https://rdrr.io/r/stats/sigma.html) returns the standard
+deviation of the response at each observation, so it is a **vector**
+wherever the scale is modeled or the variance depends on the mean.
 [`df.residual()`](https://rdrr.io/r/stats/df.residual.html) subtracts
-the *effective* count, so it is not an integer.
+the *effective* count of degrees of freedom from the number of
+observations, so it is not an integer.
 
-Three generics signal an error instead of guessing.
-[`terms()`](https://rdrr.io/r/stats/terms.html) would have to choose one
-equation’s terms of several;
-[`model.frame()`](https://rdrr.io/r/stats/model.frame.html) has no frame
-to return, a fit keeping each term’s blueprint and never the data; and
-[`anova()`](https://rdrr.io/r/stats/anova.html) has no null distribution
-to test against when the hyperparameters were chosen from the same data.
+Three generics signal an error, each naming the function to use instead.
+[`terms()`](https://rdrr.io/r/stats/terms.html) fails because a fit has
+one set of terms per distribution parameter,
+[`model.frame()`](https://rdrr.io/r/stats/model.frame.html) fails
+because a fit keeps the blueprint of each term and not the data, and
+[`anova()`](https://rdrr.io/r/stats/anova.html) fails because a
+penalized fit whose hyperparameters were chosen from the same data has
+no null distribution to test against.
 
 ## Simulating from a model
 
 [`rstatmod()`](https://statmodels7.github.io/statmodels7/reference/rstatmod.md)
-draws from a model at coefficients you supply, as a simulation study
-needs:
+draws from a model at coefficients supplied by the caller, as a
+simulation study needs:
 
 ``` r
 
-sim <- rstatmod(y ~ x, gaussian1_distrib(), da,
+sim <- rstatmod(y ~ x, distrib = gaussian1_distrib(), data = da,
                 par = list(mu = c(1, 0.8), sigma = -0.6))
 names(sim)
 #> [1] "data"       "par"        "theta"      "latent"     "structural"
 #> [6] "hyper"      "n_sim"      "call"
-head(sim$data, 3)
+head(sim$data, n = 3)
 #>           x          y
 #> 1 -2.921535 -1.6210728
 #> 2 -2.919658 -0.3713365
 #> 3 -2.860013 -1.1992527
 ```
 
-It returns the truth **beside** the data and never as an attribute of
-it: an attribute survives a row subset without being subset itself, so
-`attr(sim[1:10, ], "theta")` would still hold every row’s parameters and
-be silently misaligned, which for a simulation study is the worse
-failure.
+It returns the true parameters beside the data and not as an attribute
+of the data. An attribute survives a row subset without being subset
+itself, so if the parameters were stored in `attr(sim$data, "theta")`,
+the result of `attr(sim$data[1:10, ], "theta")` would still hold every
+row’s parameters and would be misaligned with the rows kept.
 
 ## Summary
 
 - One formula, the equations separated by a bar, one per distribution
   parameter; an equation omitted is an intercept.
-- Each equation is fitted on its parameter’s own link scale, so no
-  combination of covariates leaves the parameter’s domain.
+- Each equation is fitted on the link scale of its parameter, so no
+  combination of covariates leaves the domain of the parameter.
 - [`coef()`](https://rdrr.io/r/stats/coef.html),
   [`predict()`](https://rdrr.io/r/stats/predict.html) and
-  [`summary()`](https://rdrr.io/r/base/summary.html) answer with one
+  [`summary()`](https://rdrr.io/r/base/summary.html) return one
   compartment per parameter.
 - Any `modelterms7` term goes in any equation, and its penalty travels
   with it.
-- Hyperparameters are estimated unless a term holds one:
+- Hyperparameters are estimated unless a term holds one: by
   [`reml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  and
+  or
   [`ml()`](https://statmodels7.github.io/statmodels7/reference/reml.md)
-  where the penalty is twice differentiable,
-  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md),
-  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
-  or [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md)
+  (or
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md))
+  as `outer_criterion` where the penalty is twice differentiable, and
+  along a path scored by `sparse_criterion`
+  ([`bic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  by default, or
+  [`aic()`](https://statmodels7.github.io/statmodels7/reference/aic.md)
+  or
+  [`cv()`](https://statmodels7.github.io/statmodels7/reference/cv.md))
   where it has a kink.
 - The log-likelihood reported is the conditional one, and `cAIC` and
-  `cBIC` go with the effective degrees of freedom, never a parameter
-  count.
+  `cBIC` use the effective degrees of freedom and not a parameter count.
 - [`statmod_certificate()`](https://statmodels7.github.io/statmodels7/reference/statmod_certificate.md)
-  asks whether the point is the model’s mode, which the optimizer’s flag
-  does not.
+  tests whether the point is a mode of the model, which the flag of the
+  optimizer does not do.

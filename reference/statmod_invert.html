@@ -9,7 +9,7 @@ two points where the statistic crosses its critical value."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,23 +87,27 @@ statistic reads.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric vector of two, <code>lower</code> and <code>upper</code>. An end the search
-could not bracket is <code>NA</code>, which is what an unbounded interval looks
-like and is reported rather than guessed at.</p>
+    <p>A numeric vector of two, <code>lower</code> and <code>upper</code>. An end that the
+search could not bracket within <code>maxit</code> widenings, or at which the
+statistic could not be evaluated, is <code>NA</code>; both ends are <code>NA</code> when the
+standard error of the coefficient is not finite and positive.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>An interval by inversion is \(\{b : T(b) \le \chi^2_{1,\alpha}\}\), and
 it is not symmetric about the estimate unless the statistic is a parabola
-in \(b\) – which the Wald statistic is BY CONSTRUCTION, the curvature
-being read once at \(\hat\beta\), and which the other three are not.
-That asymmetry is the whole reason to invert one of the others: it follows
-the likelihood's own shape rather than a quadratic fitted at its top.</p>
-<p>The search starts from the Wald interval, widens by a factor of 1.6 until
-the statistic exceeds its critical value, and then bisects. Each
-evaluation is one restricted refit, warm-started at the unrestricted
-estimates and run at the fitted hyperparameters, so an interval costs a
-few dozen inner fits and no outer search at all.</p>
+in \(b\). The Wald statistic is a parabola by construction, the
+curvature being read once at \(\hat\beta\), and the other three
+statistics are not. The asymmetry is the reason to invert one of the other
+three: the interval follows the shape of the likelihood and not a quadratic
+fitted at its maximum.</p>
+<p>The search starts at the half-width of the Wald interval and widens the
+distance from the estimate by a factor of 1.6, at most <code>maxit</code> times on
+each side, until the statistic exceeds its critical value. It then locates
+the crossing with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">stats::uniroot()</a></code> (Brent's method) at tolerance 1e-7.
+Each evaluation is one restricted refit, warm-started at the unrestricted
+estimates and run at the fitted hyperparameters, so the interval requires
+no outer search.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

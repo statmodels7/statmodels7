@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@
 
 
 <dt id="arg-theta">theta<a class="anchor" aria-label="anchor" href="#arg-theta"></a></dt>
-<dd><p>The other hyperparameters.</p></dd>
+<dd><p>The hyperparameters in force; the value of <code>name</code> is where
+the search starts.</p></dd>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
@@ -73,18 +74,16 @@
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The size of the kink is monotone in such a hyperparameter but not
 necessarily increasing: a Laplace prior written by its scale has a kink of
-\(1/\sigma\), which narrows as the hyperparameter grows. Which way to walk
-is therefore measured before walking, by comparing the size at the current
-value with the size at twice it, and only then is the root bracketed by
-doubling and found with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">stats::uniroot()</a></code>. A version that assumed
-the size increases returned <code>NA</code> for every target on the Laplace,
-having walked away from the answer.</p>
-<p>Where the size is a power of the hyperparameter, which every kinked
-penalty here turns out to be, the hyperparameter entering a separable
-penalty as a scale is, the inversion is closed and the search is not run at
-all. <code><a href="kink_power.html">kink_power()</a></code> measures the exponent and the answer is
-checked against the size before it is returned, so a penalty that does not
-obey a power law falls back to the search and is never assumed into one.</p>
+\(1/\sigma\), which narrows as the hyperparameter grows. The direction of
+the walk is therefore measured before the root is bracketed, by comparing
+the size at the current value with the size at twice it. The root is then
+bracketed by doubling or halving and found with <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">stats::uniroot()</a></code>.</p>
+<p>Where the size is a power of the hyperparameter, as it is for the shipped
+kinked penalties because the hyperparameter enters a separable penalty as a
+scale, the inversion is closed and the search is not run. <code><a href="kink_power.html">kink_power()</a></code>
+measures the exponent and <code><a href="kink_by_power.html">kink_by_power()</a></code> checks the answer against the
+size before it is returned, so that a penalty that does not obey a power
+law falls back to the search.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

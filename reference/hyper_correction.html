@@ -9,7 +9,7 @@ hyperparameters, as a matrix to be added to \(V_b\)."><meta property="og:image" 
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,16 +73,16 @@ hyperparameters, as a matrix to be added to \(V_b\).</p>
 
 
 <dt id="arg-vb">Vb<a class="anchor" aria-label="anchor" href="#arg-vb"></a></dt>
-<dd><p>The bayesian variance the correction is to be added to, over the
-coordinates <code>keep</code> names.</p></dd>
+<dd><p>The bayesian variance to which the correction is added, over the
+coordinates that <code>keep</code> marks.</p></dd>
 
 
 <dt id="arg-keep">keep<a class="anchor" aria-label="anchor" href="#arg-keep"></a></dt>
-<dd><p>A logical vector over the joint vector, the stacked
-coefficients followed by any structural tail, saying which coordinates
-<code>Vb</code> spans. It is the caller's whole vector and not its head: a tail
-coordinate dropped as a flat direction leaves <code>Vb</code> narrower than the
-count alone would say.</p></dd>
+<dd><p>A logical vector over the joint vector (the stacked
+coefficients followed by any structural tail) that marks the coordinates
+<code>Vb</code> spans. It is the whole vector of the caller and not its head,
+because a tail coordinate dropped as a flat direction leaves <code>Vb</code> narrower
+than the count alone would indicate.</p></dd>
 
 
 <dt id="arg-nz">nz<a class="anchor" aria-label="anchor" href="#arg-nz"></a></dt>
@@ -91,48 +91,51 @@ count alone would say.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>C</code>, the correction or <code>NULL</code>, <code>n_hyper</code>, how many
-hyperparameters a differentiable criterion estimated, and <code>complete</code>,
-whether every one of them contributed.</p>
+    <p>A list with <code>C</code>, the correction or <code>NULL</code>, <code>n_hyper</code>, the number of
+hyperparameters that <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code> estimated, and <code>complete</code>,
+whether every one of them contributed and no penalty was skipped.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The two matrices <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> reports by default are conditional on
-the hyperparameters: both are read at the value the outer search stopped
-at, as though it had been known. It was estimated from the same data, and
-what that costs is
+    <p>The matrices that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> returns for <code>type = "bayesian"</code> and
+<code>type = "frequentist"</code> are conditional on the hyperparameters: each is read
+at the value at which the outer search stopped, as though that value were
+known. The value was estimated from the same data, and the cost of that is
 $$V' = V_b + J V_\theta J', \qquad
   J = -(H + S)^{-1} \frac{\partial^2 \rho}{\partial\beta \partial\theta},$$
 the delta method applied to the map from the hyperparameter to the mode
-(Wood, Pya and Safken, 2016). It is the same quantity
-<code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code> contracts against the information to obtain a
-count of parameters; here the matrix itself is what is wanted.</p>
-<p>\(V_b\) is PASSED IN rather than recomputed, and that is what keeps the
-two halves of the sum describing one model. The caller has already settled
+(Wood, Pya and Safken, 2016). The same quantity is contracted against the
+information by <code><a href="statmod_edf_correction.html">statmod_edf_correction()</a></code> to obtain a count of parameters;
+this function returns the matrix.</p>
+<p>\(V_b\) is passed in and is not recomputed. The caller has already settled
 which information \(H\) is, which coordinates are held and which are
-aliased; a correction built on a second inverse, regularized differently,
-would not be the movement of the mode whose variance it is added to.</p>
+aliased, and a correction built on a second inverse, regularized
+differently, would not describe the movement of the mode to whose variance
+it is added.</p>
     </div>
     <div class="section level2">
-    <h2 id="where-there-is-nothing-to-add-and-where-it-cannot-be-read">Where there is nothing to add, and where it cannot be read<a class="anchor" aria-label="anchor" href="#where-there-is-nothing-to-add-and-where-it-cannot-be-read"></a></h2>
-    <p>The correction is exactly zero where no hyperparameter was estimated by a
-differentiable criterion. A kinked penalty's is the argument of a minimum
-over a grid, which <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> skips, and the map from it to the
-mode turns a corner whenever a coefficient joins or leaves the active set,
-so there is no derivative to propagate. That is a property of the model and
-not a failure, and <code>n_hyper</code> is zero.</p>
-<p>It is UNAVAILABLE, with <code>n_hyper</code> positive and <code>C</code> <code>NULL</code>, where the
-criterion's own Hessian cannot be read, which is where the search left a
-coordinate at the edge of its range.</p>
-<p>It is PARTIAL, with <code>complete</code> false, where some of it could be read and
-some could not: a hyperparameter <code><a href="hyper_variance.html">hyper_variance()</a></code> held contributes
-nothing. The matrix returned is then a lower bound on the correction rather
-than the whole of it.</p>
-<p>A penalty over a STRUCTURAL term's own parameters no longer makes it
-partial. The mode of such a model moves in the joint vector, coefficients
-and the term's free parameters together, which is what <code>Vb</code> already spans
-here, and <code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code> is asked for the same vector rather than for
-the coefficients with a tail of zeros after them.</p>
+    <h2 id="availability-of-the-correction">Availability of the correction<a class="anchor" aria-label="anchor" href="#availability-of-the-correction"></a></h2>
+    <p>The function returns <code>C = NULL</code> with <code>n_hyper = 0</code> where no hyperparameter
+was estimated by <code><a href="reml.html">reml()</a></code> or <code><a href="reml.html">ml()</a></code>. That includes a fit whose outer
+criterion is <code><a href="aic.html">aic()</a></code> or <code><a href="aic.html">bic()</a></code>, and a kinked penalty, whose hyperparameter
+is the argument of a minimum over a grid that <code><a href="outer_hyper_index.html">outer_hyper_index()</a></code> skips.
+The map from that hyperparameter to the mode turns a corner whenever a
+coefficient joins or leaves the active set, so no derivative exists to
+propagate.</p>
+<p>The correction is unavailable, with <code>n_hyper</code> positive and <code>C</code> <code>NULL</code>, where
+the criterion's own Hessian cannot be read, or where <code><a href="hyper_variance.html">hyper_variance()</a></code>
+cannot invert it because the coupling of a held coordinate to the kept ones
+is too large to ignore.</p>
+<p>The correction is partial, with <code>complete</code> false, where some of it could be
+read and some could not: a hyperparameter that <code><a href="hyper_variance.html">hyper_variance()</a></code> held
+contributes nothing, and a penalty for which <code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code> could not
+return a column (counted in its <code>skipped</code>) contributes nothing. The matrix
+returned then omits those contributions.</p>
+<p>A penalty over the own parameters of a structural term does not make the
+correction partial. The mode of such a model moves in the joint vector of
+the coefficients and the free parameters of the term, which <code>Vb</code> spans, and
+<code><a href="hyper_mode_cross.html">hyper_mode_cross()</a></code> is called with <code>joint = TRUE</code> to return rows for the
+whole vector.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

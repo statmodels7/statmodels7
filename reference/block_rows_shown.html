@@ -9,7 +9,7 @@ together with the first few coefficients, the rest reported as a count."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,12 +56,20 @@ together with the first few coefficients, the rest reported as a count.</p>
 <dd><p>A summary table.</p></dd>
 
 
+<dt id="arg-max-coef">max_coef<a class="anchor" aria-label="anchor" href="#arg-max-coef"></a></dt>
+<dd><p>How many coefficient rows a long table keeps, <code>Inf</code> or <code>NA</code>
+for all of them. <code>NULL</code> reads the option <code>statmodels7.summary_max_coef</code>,
+and then <code>show</code>.</p></dd>
+
+
 <dt id="arg-cap">cap<a class="anchor" aria-label="anchor" href="#arg-cap"></a></dt>
-<dd><p>The length above which a table is cut.</p></dd>
+<dd><p>The number of rows up to which a table is printed whole. A table
+is cut only above <code>max(cap, max_coef + number of hyperparameter rows)</code>.</p></dd>
 
 
 <dt id="arg-show">show<a class="anchor" aria-label="anchor" href="#arg-show"></a></dt>
-<dd><p>How many coefficient rows a cut table keeps.</p></dd>
+<dd><p>The number of coefficient rows kept when <code>max_coef</code> is <code>NULL</code>
+and the option is not set.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -70,11 +78,10 @@ together with the first few coefficients, the rest reported as a count.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A block of a few coefficients is printed whole: a threshold that cut it
-would hide the very numbers a reader opened the summary for. A block of
-many is a column of numbers nobody reads to the end, and what is dropped
-is still in <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>. The hyperparameters are never dropped,
-whatever the length: they govern every coefficient under them.</p>
+    <p>A block of a few coefficients is printed whole. A long block is abridged to
+its first <code>max_coef</code> coefficient rows, and the rows that are dropped remain
+in <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>. The hyperparameters are never dropped, whatever the length,
+because they govern every coefficient under them.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

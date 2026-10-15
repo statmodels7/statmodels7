@@ -20,13 +20,12 @@ A single number.
 Fisher scoring is robust far from the mode, the expected information
 being positive definite wherever the family is defined, and it converges
 only linearly near the mode wherever the expected and the observed
-information differ there – which they do for every model whose
-dispersion has an equation of its own. Newton's step converges
-quadratically near the mode. A run that has not converged after this
-many scoring steps is near enough for the second to pay, and the
-expected information still takes the step wherever the observed
-penalized information is not positive definite or its step finds no
-acceptable point.
+information differ there, which they do for every model whose dispersion
+has an equation of its own. Newton's step converges quadratically near
+the mode. A run that has not converged after this many scoring steps is
+near enough for the second to pay. After the switch the expected
+information takes the step only where the observed step, after the
+repair of an indefinite information, finds no acceptable point.
 
 ## See also
 

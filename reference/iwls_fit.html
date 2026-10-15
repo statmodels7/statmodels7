@@ -11,7 +11,7 @@ coefficients and the history of the run."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,7 +95,7 @@ rule.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p><code>TRUE</code> to print one line per iteration: the objective, the
-score, the step length and the route taken.</p></dd>
+score per observation and the step length.</p></dd>
 
 
 <dt id="arg-groups">groups<a class="anchor" aria-label="anchor" href="#arg-groups"></a></dt>
@@ -108,17 +108,18 @@ group, which is right where the whole vector is being fitted.</p></dd>
 <dd><p>Positions held at their starting values, an integer vector
 in the same numbering. They are dropped from every solve, so the run
 maximizes over the rest, and the stopping rule reads the free
-coordinates alone – a held coordinate's score is what the constrained
+coordinates alone: a held coordinate's score is what the constrained
 optimum leaves there and does not vanish.</p></dd>
 
 
 <dt id="arg-backup-at">backup_at<a class="anchor" aria-label="anchor" href="#arg-backup-at"></a></dt>
 <dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
 on the expected information, which takes the step where the observed
-step finds no acceptable point; an observed penalized information that is
-not positive definite is first repaired by <code><a href="pd_repair.html">pd_repair()</a></code> and tried. A
-trial point whose objective raises an error is then read as rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method
-<code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled with the fallback.</p></dd>
+step finds no acceptable point. An observed penalized information that
+is not positive definite is first repaired by <code><a href="pd_repair.html">pd_repair()</a></code> and its step
+tried. A trial point whose objective raises an error is read as
+rejected. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method <code><a href="iwls_resolve.html">iwls_resolve()</a></code> settled
+with the fallback.</p></dd>
 
 
 <dt id="arg-damp-on-reject">damp_on_reject<a class="anchor" aria-label="anchor" href="#arg-damp-on-reject"></a></dt>
@@ -127,17 +128,19 @@ raises the Levenberg damping and retries (the default) or ends the run.
 <code><a href="fit_smooth.html">fit_smooth()</a></code> passes <code>FALSE</code> where the design carries a sharp
 break-point term, whose objective has a kink in the break-point at the
 observations: there every Gauss-Newton step from the minimum is
-rejected, and escalating the damping eight times at every inner fit
-costs iterations without reaching anything a stop would not.</p></dd>
+rejected, and escalating the damping at every inner fit costs iterations
+without reaching anything that a stop would not.</p></dd>
 
 
 <dt id="arg-kinks-at">kinks_at<a class="anchor" aria-label="anchor" href="#arg-kinks-at"></a></dt>
 <dd><p><code>NULL</code>, or a function of the coefficients returning the
-positions at which the objective has a kink there, as
-<code><a href="kink_positions.html">kink_positions()</a></code> finds them. Where a line search rejects every step
-length those positions are held and the step is retried on the rest;
-once the run has converged with them held, one step on every coordinate
-is tried, and taken if it decreases the objective.</p></dd>
+rows of the linear constraints that hold the objective on its kinks
+there, a matrix with one column per coefficient, as
+<code><a href="kink_constraints.html">kink_constraints()</a></code> finds them. Where a line search rejects every step
+length, the problem is solved on the subspace that those constraints and
+<code>frozen</code> leave free (<code><a href="iwls_tied.html">iwls_tied()</a></code>); from the point reached one step on
+every coordinate is tried, and where it is rejected too the run stops
+there, with the verdict of the constrained fit.</p></dd>
 
 
 <dt id="arg-newton-at">newton_at<a class="anchor" aria-label="anchor" href="#arg-newton-at"></a></dt>
@@ -152,7 +155,8 @@ taken.</p></dd>
 <dt id="arg-switch-at">switch_at<a class="anchor" aria-label="anchor" href="#arg-switch-at"></a></dt>
 <dd><p><code>NULL</code>, or a function like <code>pieces_at</code> building the pieces
 on the observed information. After <code>switch_after</code> iterations without
-convergence it takes the place of <code>pieces_at</code>, and <code>pieces_at</code> that of
+convergence, or earlier when <code><a href="iwls_slow.html">iwls_slow()</a></code> reports a slow contraction of
+the score, it takes the place of <code>pieces_at</code>, and <code>pieces_at</code> that of
 <code>backup_at</code>. <code><a href="fit_smooth.html">fit_smooth()</a></code> passes one for a method <code><a href="iwls_resolve.html">iwls_resolve()</a></code>
 settled on the expected information from <code>"auto"</code>.</p></dd>
 
@@ -166,13 +170,13 @@ settled on the expected information from <code>"auto"</code>.</p></dd>
     <p>A list of ten: the six below; <code>note</code>, the reason a run stopped or
 <code>NULL</code>; <code>aliased</code>, the coordinates the pivot left out; <code>switched</code>, the
 iteration at which the run moved to <code>switch_at</code>, or 0; and <code>fallback</code>, a
-named integer vector counting the iterations at which the observed
-penalized information was not positive definite (<code>indefinite</code>) and those
-at which the expected pieces stepped in for a step that found no
-acceptable point (<code>search</code>), the trial
-points whose objective raised (<code>error</code>), and the iterations at which the
-Newton step on the full Hessian was taken in place of the scoring step
-(<code>newton</code>). Of the six:</p><dl><dt><code>par</code></dt>
+named integer vector of four counts. The count <code>indefinite</code> is the number
+of iterations at which the observed penalized information was not
+positive definite, <code>search</code> the number at which the expected pieces
+stepped in for a step that found no acceptable point, <code>error</code> the number
+of trial points whose objective raised, and <code>newton</code> the number of
+iterations at which the Newton step on the full Hessian was taken in
+place of the scoring step. Of the six:</p><dl><dt><code>par</code></dt>
 <dd><p>the stacked coefficients reached, a numeric vector.</p></dd>
 
 <dt><code>value</code></dt>
@@ -183,27 +187,34 @@ Newton step on the full Hessian was taken in place of the scoring step
 the dimensionless verdict included.</p></dd>
 
 <dt><code>iterations</code></dt>
-<dd><p>how many steps were taken. <code>1</code> means the rule was
-met at the first check with no step taken, as a warm
-start already at the mode reports.</p></dd>
+<dd><p>the index of the iteration at which the loop
+ended. <code>1</code> means the rule was met at the first check, as a warm start
+already at the mode reports; the full step taken after the rule is
+met is not counted.</p></dd>
 
 <dt><code>score</code></dt>
 <dd><p>the score per observation at the point reached.</p></dd>
 
 <dt><code>history</code></dt>
-<dd><p>a data frame with one row per iteration.</p></dd>
+<dd><p>a data frame with one row per accepted step, or <code>NULL</code>
+when no step was accepted.</p></dd>
 
 
 </dl></div>
     <div class="section level2">
-    <h2 id="two-departures-from-a-plain-newton-iteration">Two departures from a plain Newton iteration<a class="anchor" aria-label="anchor" href="#two-departures-from-a-plain-newton-iteration"></a></h2>
+    <h2 id="repair-of-the-curvature">Repair of the curvature<a class="anchor" aria-label="anchor" href="#repair-of-the-curvature"></a></h2>
     <p>A curvature that is not positive definite is repaired by flooring its
 eigenvalues, and the run continues. <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code> would signal an error there
 and abandon a start that is merely far from the optimum.</p>
-<p>The stopping rule is read at the iterate, on a score divided by the sample
-size, so a threshold means the same at \(n = 10\) and at
-\(n = 10^7\). The objective itself stays unaveraged, that being the
-scale the penalty is added on.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-stopping-rule">The stopping rule<a class="anchor" aria-label="anchor" href="#the-stopping-rule"></a></h2>
+    <p>The built-in stopping rule compares a score divided by the sample size with
+<code>tol</code>, so that a threshold has the same meaning at \(n = 10\) and at
+\(n = 10^7\), and it also requires the Newton decrement to be at most
+\(10^{-6}\). After the rule is met, one more full step is taken. The
+objective itself is not averaged, because the penalty is added on that
+scale.</p>
     </div>
     <div class="section level2">
     <h2 id="the-dimensionless-final-verdict">The dimensionless final verdict<a class="anchor" aria-label="anchor" href="#the-dimensionless-final-verdict"></a></h2>
@@ -214,11 +225,10 @@ threshold, and a run stalled exactly at the optimum reads as a failure.</p>
 $$\max_j \lvert g_j \rvert / (n\,s_p), \qquad
       s_p = \sqrt{\mathrm{median}_j H_{jj} / n},$$
 with \(s_p\) taken over the equation each coordinate belongs to.</p>
-<p>It can relabel a run that has already stopped as converged, and it can
-never stop a run that is still moving. Driving the loop with it was tried
-and made the tolerance unreachable at the other end of the scale, where
-the objective's magnitude grows with \(\log y\) and the stall guard
-fires first.</p>
+<p>It can relabel a run that has already stopped as converged, and it never
+stops a run that is still moving. Driving the loop with it would make the
+tolerance unreachable at the other end of the scale, where the magnitude of
+the objective grows with \(\log y\) and the stall guard fires first.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

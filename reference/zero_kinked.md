@@ -1,6 +1,8 @@
-# The Coordinates a Kinked Penalty Holds at Zero
+# The Coordinates That a Kinked Penalty Holds at Zero
 
-The Coordinates a Kinked Penalty Holds at Zero
+The positions among those of
+[`kinked_coords()`](https://statmodels7.github.io/statmodels7/reference/kinked_coords.md)
+whose coefficient equals zero.
 
 ## Usage
 

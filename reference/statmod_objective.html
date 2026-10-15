@@ -9,7 +9,7 @@ coefficients of every parameter stacked into one vector."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,15 +83,24 @@ with no closed form.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of five functions:</p><dl><dt><code>fn(b)</code></dt>
+    <p>A list with the elements</p><dl><dt><code>npar</code></dt>
+<dd><p>the number of coefficients of each equation, an integer
+vector.</p></dd>
+
+<dt><code>fn(b)</code></dt>
 <dd><p>the objective at the stacked coefficients <code>b</code>, a single
 number.</p></dd>
 
 <dt><code>gr(b)</code></dt>
 <dd><p>its gradient, a numeric vector as long as <code>b</code>.</p></dd>
 
+<dt><code>gr_sub(b, idx)</code></dt>
+<dd><p>the gradient at the positions <code>idx</code> alone.</p></dd>
+
 <dt><code>he(b)</code></dt>
-<dd><p>its Hessian, a <code>p x p</code> matrix.</p></dd>
+<dd><p>its Hessian, the information matrix (expected or
+observed according to <code>expected</code>) plus the Hessian of the penalties,
+a <code>p x p</code> matrix.</p></dd>
 
 <dt><code>split(b)</code></dt>
 <dd><p>the stacked vector as a named list, one entry per
@@ -111,10 +120,11 @@ alone would make a hyperparameter mean something that depends on \(n\).</p>
 See <code><a href="iwls.html">iwls()</a></code> and <code><a href="iwls_score.html">iwls_score()</a></code>.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-five-closures-share-one-design">The five closures share one design<a class="anchor" aria-label="anchor" href="#the-five-closures-share-one-design"></a></h2>
-    <p>All five close over <code>design</code>, <code>hyper</code> and the two information settings, so
-a caller who changes a hyperparameter builds a new objective. That is what
-the outer search does at every point it visits.</p>
+    <h2 id="the-closures-share-one-design">The closures share one design<a class="anchor" aria-label="anchor" href="#the-closures-share-one-design"></a></h2>
+    <p>The functions <code>fn</code>, <code>gr</code>, <code>gr_sub</code> and <code>he</code> close over <code>design</code> and
+<code>hyper</code>, and <code>he</code> also over the two information settings, so that a
+change of a hyperparameter requires a new objective. The outer search
+builds a new objective at every point that it visits.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

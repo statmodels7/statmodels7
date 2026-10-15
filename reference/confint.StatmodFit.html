@@ -9,7 +9,7 @@ by default the Wald ones and otherwise by inverting a likelihood test."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,8 +66,9 @@ by default the Wald ones and otherwise by inverting a likelihood test.</p>
 
 
 <dt id="arg-parm">parm<a class="anchor" aria-label="anchor" href="#arg-parm"></a></dt>
-<dd><p>Which coefficients: a distribution parameter's name, a vector of
-<code>parameter:coefficient</code> labels, or <code>NULL</code> for all of them.</p></dd>
+<dd><p>Which coefficients: a distribution parameter's name, a term's
+name, a vector of <code>parameter:coefficient</code> labels, or <code>NULL</code> for all of
+them. With <code>readable = TRUE</code>, the name of a quantity is accepted as well.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
@@ -80,20 +81,20 @@ or <code>"unconditional"</code>.</p></dd>
 
 
 <dt id="arg-readable">readable<a class="anchor" aria-label="anchor" href="#arg-readable"></a></dt>
-<dd><p>Whether to report the quantities the model is written in
-– a term's own parameters under the names its literature gives them –
-rather than the raw coordinates. Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, and
-necessarily <code>FALSE</code> for the three restricted <code>method</code>s.</p></dd>
+<dd><p>Whether to report the quantities in which the model is written
+(a term's own parameters under the names of the literature) and not the
+raw coordinates. Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, and necessarily <code>FALSE</code>
+for the three restricted tests.</p></dd>
+
+
+<dt id="arg-test">test<a class="anchor" aria-label="anchor" href="#arg-test"></a></dt>
+<dd><p>Which test the interval is the acceptance region of:
+<code>"wald"</code>, the default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each
+inverted by <code><a href="statmod_invert.html">statmod_invert()</a></code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Passed to <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>.</p></dd>
-
-
-<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Which test the interval is the acceptance region of:
-<code>"wald"</code>, the default, or <code>"lr"</code>, <code>"score"</code> or <code>"gradient"</code>, each
-inverted by <code><a href="statmod_invert.html">statmod_invert()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -103,57 +104,58 @@ estimate, its standard error and the two limits.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The interval is symmetric about the estimate and needs no mapping back. A
-coefficient of a linear predictor is unbounded whatever the distribution
-parameter it belongs to, the link having already carried that parameter onto
-the whole line, so the scale the interval is built on is the scale the
-quantity lives on. What the interval does not do is respect a bound on the
-parameter itself; for that, map an interval for the predictor through the
-inverse link at the covariate values of interest.</p>
+    <p>With <code>readable = FALSE</code>, the interval for a coefficient of a linear
+predictor is symmetric about the estimate and needs no mapping back. Such a
+coefficient is unbounded whatever the distribution parameter it belongs to,
+the link having already carried that parameter onto the whole line, so the
+scale on which the interval is built is the scale on which the quantity
+lives. The interval does not respect a bound on the distribution parameter
+itself; for that, map an interval for the predictor through the inverse link
+at the covariate values of interest. With the default <code>readable = TRUE</code>, each
+quantity that a structural term declares (a loading or a persistence, for
+example) has an interval built on the link scale of that quantity and mapped
+back, so that interval is not symmetric.</p>
 <p>The variance comes from <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, so the same three
-conventions apply, and a coefficient a kinked penalty set to zero has
-<code>NA</code> in place of an interval. An interval around a penalized term is worth
-asking for as <code>type = "unconditional"</code>, which does not read the smoothing
-parameter as though it had been known.</p>
+conventions apply, and a coefficient that a kinked penalty has set to zero
+has <code>NA</code> in place of an interval. For an interval around a penalized term,
+<code>type = "unconditional"</code> does not treat the smoothing parameter as known.</p>
     </div>
     <div class="section level2">
     <h2 id="inverting-a-test-instead">Inverting a test instead<a class="anchor" aria-label="anchor" href="#inverting-a-test-instead"></a></h2>
-    <p><code>method</code> chooses which statistic the interval is the acceptance region of.
-The Wald interval is the set of \(b\) the Wald statistic does not
-reject, and it is symmetric BY CONSTRUCTION: that statistic is a parabola
+    <p><code>test</code> chooses which statistic the interval is the acceptance region of.
+The Wald interval is the set of \(b\) that the Wald statistic does not
+reject, and it is symmetric by construction: that statistic is a parabola
 in \(b\), the curvature having been read once at \(\hat\beta\). The
 other three read the likelihood at each \(b\) in turn, so their
-intervals follow its own shape and are not symmetric where it is not.
-Measured on a Poisson regression at \(n = 500\), where the likelihood is
-nearly quadratic, the four agree to three decimals; at \(n = 25\) with a
-skewed fit the likelihood-ratio interval sits \(0.046\) further right
-than the Wald one and the gradient interval \(0.071\).</p>
-<p>Each of the three is found by <code><a href="statmod_invert.html">statmod_invert()</a></code>, which brackets from the
-Wald interval and bisects, so one interval is a few dozen restricted
-refits – measured, about six times one fit of the model. It is therefore
-asked for one coefficient at a time in practice, through <code>parm</code>, and the
-subsetting happens BEFORE the search rather than after so that nothing is
-paid for that is not reported.</p>
-<p>A row the restricted fit is not defined for keeps <code>NA</code> limits:
-<code><a href="testable_coords.html">testable_coords()</a></code> says which those are – a coefficient under a KINKED
+intervals follow its shape and are not symmetric where it is not. Where the
+likelihood is nearly quadratic the four intervals agree; with a small sample
+and a skewed likelihood the likelihood-ratio and gradient intervals shift
+away from the Wald interval.</p>
+<p>Each of the three is found by <code><a href="statmod_invert.html">statmod_invert()</a></code>, which brackets the
+crossing outward from the Wald interval and locates it with a root finder,
+so one interval requires a few dozen restricted refits. The <code>parm</code> argument
+therefore selects the coefficients before the search and not after it, so
+that only the requested intervals are computed.</p>
+<p>A row for which the restricted fit is not defined keeps <code>NA</code> limits.
+<code><a href="testable_coords.html">testable_coords()</a></code> identifies those rows: a coefficient under a kinked
 penalty, an aliased one, and every coefficient of a model carrying a
-structural term. The estimate and the standard error in such a row are the
-fit's own and stand whatever <code>method</code> is.</p>
-<p>A coefficient under a penalty that is twice differentiable – a smooth's
-own coordinates, a ridge, a random effect – is inverted like any other,
-and the interval is the credible one <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> already gives it
-under <code>type = "bayesian"</code>, conditional on the hyperparameters the fit
+structural term. The estimate and the standard error in such a row are those
+of the fit and do not depend on <code>test</code>.</p>
+<p>A coefficient under a penalty that is twice differentiable (a smooth's own
+coordinates, a ridge, a random effect) is inverted like any other, and the
+interval is the credible one that <code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code> gives for it under
+<code>type = "bayesian"</code>, conditional on the hyperparameters that the fit
 reached. See <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>.</p>
-<p>The three restricted methods need <code>readable = FALSE</code>, since a test is
-about one coefficient and a readable quantity is a function of several at
-once.</p>
+<p>The three restricted tests (<code>"lr"</code>, <code>"score"</code> and <code>"gradient"</code>) need
+<code>readable = FALSE</code>, since a test is about one coefficient and a readable
+quantity is a function of several at once.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="vcov.StatmodFit.html">vcov.StatmodFit()</a></code>, <code><a href="summary.StatmodFit.html">summary.StatmodFit()</a></code>,
 <code><a href="statmod_test.html">statmod_test()</a></code>, which tests one coefficient against a value of its
-own, and <code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>, the two internals
-an inverted interval is built from</p></div>
+own, and <code><a href="statmod_invert.html">statmod_invert()</a></code> and <code><a href="statmod_stat_at.html">statmod_stat_at()</a></code>, the two internal
+functions from which an inverted interval is built</p></div>
     </div>
 
     <div class="section level2">

@@ -25,21 +25,19 @@ A logical vector over the coefficients.
 
 ## Details
 
-A discontinuous break-point term is fitted through a block whose weight
-is held at the previous iterate, so the curvature that block carries is
-the working model's, never the model's. Measured on a jump at 400
-observations against a bootstrap of 200 resamples: the working
-information gives the change of level and the auxiliary coordinate a
-standard error of **exactly zero**, where the resamples give 0.063 and
-0.540, and the position read off them 1.8e-05 against 0.090. A zero
-looks like a number and is worse than a gap, so those coefficients are
-left missing.
-
-The question is asked of the term through
+A block whose term answers `FALSE` to
 [`modelterms7::term_jacobian_block()`](https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html)
-and never of its class, so a construction whose block is a Jacobian
+is a working linearization with a weight held at the previous iterate,
+so the curvature that the block carries is that of the working model and
+not that of the model. The standard errors computed from it would be
+zero, which would be reported as a measurement, and those coefficients
+are left missing.
+
+The check reads the term through
+[`modelterms7::term_jacobian_block()`](https://statmodels7.github.io/modelterms7/reference/term_jacobian_block.html)
+and never through its class, so a construction whose block is a Jacobian
 keeps its inference: a continuous
 [`modelterms7::seg()`](https://statmodels7.github.io/modelterms7/reference/seg.html),
 and a discontinuous one smoothed by an
 [`numericals7::abs_smoother()`](https://statmodels7.github.io/numericals7/reference/abs_smoother.html),
-both answer yes.
+both answer `TRUE`.

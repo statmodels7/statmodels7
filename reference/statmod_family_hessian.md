@@ -1,6 +1,6 @@
 # The Family's Second-Derivative Components at a Point
 
-Asks the distribution for its Hessian, or for its expected information,
+Computes the Hessian of the distribution, or its expected information,
 on the link scale at one value of the parameters.
 
 ## Usage
@@ -33,24 +33,26 @@ statmod_family_hessian(spec, theta, expected = TRUE, approx = "opg")
 ## Value
 
 The named list of second-derivative components on the link scale, as
+[`distributions7::distrib_expected_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_expected_hessian.html)
+returns it when `expected` is `TRUE` and as
 [`distributions7::distrib_hessian()`](https://statmodels7.github.io/distributions7/reference/distrib_hessian.html)
-returns it.
+otherwise.
 
 ## Details
 
-Written once because two routes read it at the same point.
+The components are computed in one place because several routes read
+them at the same point.
 [`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
-builds a square-root decomposition out of the per-observation blocks and
-falls back to the assembled information when that decomposition cannot
-be formed, and both of those used to ask the family themselves. Where
-the expected information IS the outer product of scores the
-per-observation block is rank one, so the square-root route is abandoned
-at every point and the work done for it was thrown away; passing the
-components down instead of recomputing them is what stops that.
+builds a square-root decomposition from the per-observation blocks and
+uses the assembled information when that decomposition cannot be formed.
+Both routes receive the components computed here, so the family is
+evaluated once per point.
 
 ## See also
 
-[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md)
-and
+[`statmod_information_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_information_at.md),
 [`info_blocks()`](https://statmodels7.github.io/statmodels7/reference/info_blocks.md),
-its two readers.
+[`iwls_pieces()`](https://statmodels7.github.io/statmodels7/reference/iwls_pieces.md)
+and
+[`coord_working()`](https://statmodels7.github.io/statmodels7/reference/coord_working.md),
+which read it.

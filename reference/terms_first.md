@@ -21,29 +21,29 @@ terms_first(env)
 ## Value
 
 A new environment holding one binding per exported function of
-modelterms7, currently 82 of them, with `env` as its parent.
+modelterms7, with `env` as its parent.
 
 ## Details
 
-The masking this removes is real and its symptom names nothing. mgcv
-exports `s()` and `te()`, and segmented exports `seg()`. With either
-package attached, a caller writing a
+mgcv exports `s()` and `te()`, and segmented exports `seg()`. With
+either package attached, a
 [`statmod()`](https://statmodels7.github.io/statmodels7/reference/statmod.md)
-formula gets that package's function, whose value is not a model term;
-the failure then surfaces inside
+formula that uses one of these names would call that package's function,
+whose value is not a model term. The failure then occurs inside
 [`model.matrix()`](https://rdrr.io/r/stats/model.matrix.html) as
-`invalid type (list) for variable 's(x)'`, which names neither the call
-nor the mask.
+`invalid type (list) for variable 's(x)'`, a message that does not
+mention the masking package.
 
 Putting modelterms7 in front removes the ambiguity at the point where
 the formula is read. A caller who wants the other package's function
-writes `mgcv::s(x)`, which reaches past the shim; modelterms7's formula
-interpreter then rejects it, naming the class returned and the package
-that supplied it.
+writes `mgcv::s(x)`, which reaches past the shim; the formula
+interpreter of modelterms7 then rejects the value, naming the class
+returned and the call as written.
 
-Only functions are copied. modelterms7 exports objects that are not
-functions, S7 classes among them, and shadowing those would change what
-a name means without any of the benefit.
+A binding is made for each export of modelterms7 for which
+[`is.function()`](https://rdrr.io/r/base/is.function.html) is `TRUE`.
+The S7 class generators of that package are functions and are copied
+with the others.
 
 ## See also
 

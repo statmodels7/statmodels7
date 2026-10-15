@@ -28,7 +28,7 @@ structural_chain_extra2(spec, design, jd, M, st, blk4, v, w)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - st:
 
@@ -51,21 +51,21 @@ A single number.
 
 ## Details
 
-Nine terms, and none of them assembles a matrix over the coefficients: a
-term in \\V_a^\top V_b\\ traces as a weighted sum of the per-observation
-diagonal \\G\\, a term carrying \\\mathrm{d}\varphi\\ traces against the
-rows \\M\\ has already been applied to, and the three terms carrying the
-recursion's own derivatives trace against what
+The terms are listed in the comments of the code. None of them assembles
+a matrix over the coefficients: a term in \\V_a^\top V_b\\ traces as a
+weighted sum of the per-observation diagonal \\G\\, a term carrying
+\\\mathrm{d}\varphi\\ traces against the rows to which \\M\\ has already
+been applied, and the terms that carry the derivatives of the recursion
+trace against what
 [`modelterms7::term_curvature()`](https://statmodels7.github.io/modelterms7/reference/term_curvature.html),
 [`modelterms7::term_third()`](https://statmodels7.github.io/modelterms7/reference/term_third.html)
 and
 [`modelterms7::term_fourth()`](https://statmodels7.github.io/modelterms7/reference/term_fourth.html)
-return at the right weights.
+return at the appropriate weights.
 
 The last of those is the fourth derivative of the predictor through the
-recursion, which is the object this whole route exists for, and the only
-place the family's FIFTH derivative enters is `P` inside its `blocks`
-callback.
+recursion. The fifth derivative of the family enters only through `P` in
+the `blocks` callback of that call.
 
 ## See also
 

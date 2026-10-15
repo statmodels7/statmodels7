@@ -14,7 +14,7 @@ iwls_switch_rate()
 
 ## Value
 
-A single number, or `NA` for the count alone.
+A single number.
 
 ## See also
 

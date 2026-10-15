@@ -50,10 +50,14 @@ SCAD or MCP has a negative penalty curvature and counts more than one,
 which is Stein's count for those penalties.
 
 It answers only for a model with a kinked block and no structural term,
-and declines (`NULL`) where the active columns are not of full rank,
-where
+and declines (`NULL`) where the penalty has no curvature over the active
+coordinates and the count of one per column cannot be certified
+([`design_count_exact()`](https://statmodels7.github.io/statmodels7/reference/design_count_exact.md)
+is `FALSE`, where
 [`statmod_pe()`](https://statmodels7.github.io/statmodels7/reference/statmod_pe.md)
-reads a rank in place of a count, or where the factor does not exist;
+reads a rank in place of a count), or where the penalized curvature of
+the active coordinates is not positive definite, so that its Cholesky
+factor does not exist;
 [`statmod_edf()`](https://statmodels7.github.io/statmodels7/reference/statmod_edf.md)
 then reads its other rules.
 

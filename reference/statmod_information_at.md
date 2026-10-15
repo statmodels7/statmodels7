@@ -40,14 +40,15 @@ statmod_information_at(
 - approx:
 
   How the expected information is approximated for a family with no
-  closed form: `"bartlett"`, `"integrate"` or `"mc"`.
+  closed form: `"opg"` (the default), `"bartlett"`, `"integrate"` or
+  `"mc"`.
 
 - H:
 
   The second-derivative components at this point, as
   [`statmod_family_hessian()`](https://statmodels7.github.io/statmodels7/reference/statmod_family_hessian.md)
-  returns them, or `NULL` to ask for them. A mixture over regimes reads
-  a different set per component and ignores this.
+  returns them, or `NULL` to compute them here. A mixture over regimes
+  reads a different set per component and ignores this.
 
 - index:
 
@@ -78,8 +79,15 @@ the optimum may be indefinite.
 closed expected information.
 
 With `index` only the requested columns of each design enter a cross
-product, so a caller that reads a few rows and columns does not pay for
+product, so that reading a few rows and columns does not require
 \\X'WX\\ over every coefficient.
+
+For a likelihood mixed over latent states the matrix is the
+complete-data information, the ordinary information averaged over the
+smoothed states. It is positive definite and serves as a scoring matrix,
+and it is not the observed information of the mixture. The variance of a
+fit comes from
+[`statmod_regime_information()`](https://statmodels7.github.io/statmodels7/reference/statmod_regime_information.md).
 
 ## See also
 

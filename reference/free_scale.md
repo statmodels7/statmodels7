@@ -1,7 +1,7 @@
 # Carry a Hyperparameter Derivative onto the Free Scale
 
-The diagonal chain rule each hyperparameter's own link induces, at first
-order for a gradient and at second order for a Hessian.
+The diagonal chain rule that each hyperparameter's own link induces, at
+first order for a gradient and at second order for a Hessian.
 
 ## Usage
 
@@ -33,4 +33,6 @@ link_slopes(hyper, idx)
 
 ## Value
 
-A vector, or a matrix.
+For `free_scale()` a vector, for `free_scale2()` a matrix, and for
+`link_slopes()` a list with the components `h1` and `h2`, the first and
+second derivatives of each hyperparameter's inverse link at its value.

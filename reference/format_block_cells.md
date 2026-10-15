@@ -1,8 +1,8 @@
 # The Rows of a Block Formatted for Printing
 
 The six numeric columns of a summary table rendered as strings, with the
-cells a hyperparameter row has no number for left empty and the name of
-each such row carrying what put the value there.
+cells that have no number for a hyperparameter row left empty and the
+name of each such row carrying the origin of its value.
 
 ## Usage
 
@@ -34,13 +34,10 @@ row labels.
 A hyperparameter row prints numbers where there are any: one estimated
 by a marginal criterion carries a standard error and an interval. Where
 there is none the columns are blank. What put the value there goes in
-the name, on every hyperparameter row, never only on the ones with
-nothing else in them: written into the column where a standard error
-would have been it marked a held or path-chosen row and never a REML
-one, whose column is occupied, so the note at the foot spoke of a mark
-that was never printed.
+the name of every hyperparameter row, in square brackets (the role
+`"fixed"` or the criterion that chose the value).
 
 The whole block is formatted in one call, its own rows and every
-compartment's together, so that the widths a column is padded to are the
-same throughout and the compartments line up under the table they sit
-beneath.
+compartment's together, so that the widths to which a column is padded
+are the same throughout and the compartments line up with the table
+above them.

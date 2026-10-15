@@ -34,11 +34,11 @@ Zero columns for an equation carrying only a structural term.
 
 ## Details
 
-A fit has one design per parameter, so which one is wanted is an
-argument. `NULL` gives the first, as
+A fit has one design per parameter, and `what` selects the parameter.
+`NULL` selects the first, as
 [`fitted.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/fitted.StatmodFit.md)
 does. A term whose block moves with its coefficients is returned at the
-fitted ones, which is the block the fit ended on.
+fitted coefficients, which is the block the fit ended on.
 
 A structural term contributes no columns at all, so an equation carrying
 one alone gives a matrix of no columns; what such a term contributes is

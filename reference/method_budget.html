@@ -9,7 +9,7 @@ smooth block, which is where they are set."><meta property="og:image" content="h
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,21 +63,19 @@ relative tolerance on the objective.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code><a href="statmod.html">statmod()</a></code> carries neither a <code>maxit</code> nor a <code>tol</code> of its own. An argument
-accepted and ignored is worse than one that signals an error, and a second
-copy would be exactly that: a caller setting <code>iwls(maxit = 20)</code> alongside
-a loose <code>maxit = 100</code> would be obeyed in one and never told about the
-other.
-<span class="pkg">distributions7</span>'s <code>fit_distrib()</code> shed the same pair for the same
-reason.</p>
+    <p><code><a href="statmod.html">statmod()</a></code> has no <code>maxit</code> and no <code>tol</code>. Both are read from
+<code>inner_optimizer</code>, so that one setting governs the inner fit and the
+alternation.</p>
 <p><code><a href="iwls.html">iwls()</a></code> carries both directly. An <span class="pkg">optimizers7</span> optimizer carries
-<code>maxit</code> and a <code>criterion</code>, and the tolerance is taken as the <strong>largest</strong>
-one in the criterion tree: a combined rule stops at whichever of its parts
-fires first, so the alternation should not ask for more precision than the
-loop inside it can deliver.</p>
-<p>A criterion carrying no tolerance at all leaves the default of
+<code>maxit</code> and a <code>criterion</code>, and the tolerance is read from the criterion
+tree by <code><a href="criterion_tol.html">criterion_tol()</a></code>: the largest tolerance of the parts of a rule
+built by <code>crit_any()</code>, which stops when any part holds, and the smallest
+of the parts of a rule built by <code>crit_all()</code>, which stops only when every
+part holds. The alternation then requires no more precision than the loop
+inside it delivers.</p>
+<p>A criterion carrying no tolerance at all takes the default of
 <code><a href="https://statmodels7.github.io/optimizers7/reference/crit_grad.html" class="external-link">optimizers7::crit_grad()</a></code>, read from that function's own formals and
-never copied as a number, so a change there reaches here.</p>
+not copied as a number, so that a change there reaches this function.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

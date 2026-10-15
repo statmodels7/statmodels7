@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,7 @@
       </dl></div><div class="section level2">
       <h2 id="fitting">Fitting<a class="anchor" aria-label="anchor" href="#fitting"></a></h2>
 
-      <div class="section-desc"><p>One formula, one distribution, and a scheme that fits the terms whose penalties are differentiable all together while the others are alternated around them.</p></div>
+      <div class="section-desc"><p>One formula and one distribution. The coefficients of the terms with a differentiable penalty are fitted in one system, together with a score-driven term, and the terms with a kinked penalty and the regime terms are alternated with that system. The section also holds the inner method, the criteria that choose the hyperparameters and the simulator.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -162,7 +162,7 @@
       </dl></div><div class="section level2">
       <h2 id="where-a-fit-begins">Where a fit begins<a class="anchor" aria-label="anchor" href="#where-a-fit-begins"></a></h2>
 
-      <div class="section-desc"><p>A starting value as a strategy rather than a vector of numbers, asked once before the fit alternates. The default is the intercept-only fit; what the others offer is a procedure, from a random perturbation to a global search of the likelihood to the estimates of a model already fitted.</p></div>
+      <div class="section-desc"><p>A starting value given as a strategy and not as a vector of numbers, and evaluated once before the fit alternates. The default builds the start from intercept-only fits; the other strategies are procedures, from a random perturbation to a global search of the likelihood to the estimates of a model already fitted.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -220,7 +220,7 @@
       </dl></div><div class="section level2">
       <h2 id="reading-a-fit">Reading a fit<a class="anchor" aria-label="anchor" href="#reading-a-fit"></a></h2>
 
-      <div class="section-desc"><p>The model as a function of parameters and data, any parameter or moment predicted at new data, what the fit says about its own uncertainty, and the elapsed time in the unit it deserves.</p></div>
+      <div class="section-desc"><p>The log-likelihood, gradient and Hessian of the model as functions of the parameters and the data, the hyperparameters of a fit with their source, the certificate of convergence, the latent variables of a structural term, and a duration written in a readable unit.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -260,11 +260,11 @@
           <code><a href="format_duration.html">format_duration()</a></code>
 
         </dt>
-        <dd>Format a Duration in the Unit It Deserves</dd>
+        <dd>Format a Duration in a Readable Unit</dd>
       </dl></div><div class="section level2">
       <h2 id="testing-a-coefficient">Testing a coefficient<a class="anchor" aria-label="anchor" href="#testing-a-coefficient"></a></h2>
 
-      <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. The same four are what <code>summary(test =)</code> reports for every row against zero and what <code>confint(test =)</code> inverts; this is the surface that takes a null of its own.</p></div>
+      <div class="section-desc"><p>One coefficient against one value, by Wald’s statistic, the likelihood ratio, Rao’s score or Terrell’s gradient. The same four are what <code>summary(test =)</code> reports for every row against zero and what <code>confint(test =)</code> inverts; <code><a href="../reference/statmod_test.html">statmod_test()</a></code> also takes a null value other than zero. The test that a break-point exists is a separate function, which reads the supremum of a score process over the positions of the break-point.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -303,7 +303,7 @@
       </dl></div><div class="section level2">
       <h2 id="internals">Internals<a class="anchor" aria-label="anchor" href="#internals"></a></h2>
 
-      <div class="section-desc"><p>The machinery the exported functions are built from. None of it is exported, and none is needed to use the package.</p></div>
+      <div class="section-desc"><p>The machinery that the exported functions are built from: the classes behind a fit, the methods registered for the generics of stats, and the helper functions. None of it is needed to use the package.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -420,21 +420,21 @@
           <code><a href="assert_criterion_information.html">assert_criterion_information()</a></code>
 
         </dt>
-        <dd>Refuse an Expected-Information Criterion That Would Read the Scores' Outer Product</dd>
+        <dd>Expected-Information Criteria and the Scores' Outer Product</dd>
 
         <dt>
 
           <code><a href="assert_criterion_order.html">assert_criterion_order()</a></code>
 
         </dt>
-        <dd>Refuse Where a Criterion Cannot Be Computed</dd>
+        <dd>Derivative Orders Read by a Criterion</dd>
 
         <dt>
 
           <code><a href="assert_criterion_reach.html">assert_criterion_reach()</a></code>
 
         </dt>
-        <dd>Refuse a Prediction-Error Criterion on a Structural Term's Own Parameters</dd>
+        <dd>Prediction-Error Criteria and a Structural Term's Own Parameters</dd>
 
         <dt>
 
@@ -595,14 +595,14 @@
           <code><a href="check_trials.html">check_trials()</a></code>
 
         </dt>
-        <dd>Refuse a Number of Trials That Cannot Follow These Rows</dd>
+        <dd>Reject a Number of Trials That Cannot Follow These Rows</dd>
 
         <dt>
 
           <code><a href="check_trials_known.html">check_trials_known()</a></code>
 
         </dt>
-        <dd>Refuse a Quantity That Needs Trials the Rows Do Not Carry</dd>
+        <dd>Reject a Quantity That Needs Trials the Rows Lack</dd>
 
         <dt>
 
@@ -637,7 +637,7 @@
           <code><a href="class_notes.html">class_notes()</a></code>
 
         </dt>
-        <dd>What a Summary Says About the Covariance Classes</dd>
+        <dd>The Notes on Covariance Classes</dd>
 
         <dt>
 
@@ -875,14 +875,14 @@
           <code><a href="criterion_resolution.html">criterion_resolution()</a></code>
 
         </dt>
-        <dd>What the Marginal Criterion Can Resolve at This Fit</dd>
+        <dd>What the Outer Criterion Can Resolve at This Fit</dd>
 
         <dt>
 
           <code><a href="criterion_tol.html">criterion_tol()</a></code>
 
         </dt>
-        <dd>The Tolerance a Criterion Asks For</dd>
+        <dd>The Tolerance of a Criterion</dd>
 
         <dt>
 
@@ -959,7 +959,7 @@
           <code><a href="ctx_usable.html">ctx_usable()</a></code>
 
         </dt>
-        <dd>Refuse a Context That Belongs Somewhere Else</dd>
+        <dd>Check That a Context Belongs to the Point Read</dd>
 
         <dt>
 
@@ -987,7 +987,7 @@
           <code><a href="cv_curve.html">cv_curve()</a></code>
 
         </dt>
-        <dd>The Held-Out Deviance of Every Point of a Path</dd>
+        <dd>The Held-Out Criterion of Every Point of a Path</dd>
 
         <dt>
 
@@ -1078,7 +1078,7 @@
           <code><a href="df.residual.StatmodFit.html">df.residual(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>What a Fit Leaves Unspent</dd>
+        <dd>Residual Degrees of Freedom of a Fitted Model</dd>
 
         <dt>
 
@@ -1232,7 +1232,7 @@
           <code><a href="fit_marginal_context.html">fit_marginal_context()</a></code>
 
         </dt>
-        <dd>The Criterion a Fit Maximized, Rebuilt From the Fit</dd>
+        <dd>The Criterion That a Fit Maximized, Rebuilt From the Fit</dd>
 
         <dt>
 
@@ -1302,7 +1302,7 @@
           <code><a href="free_of_kinks.html">free_of_kinks()</a></code>
 
         </dt>
-        <dd>A Score Over the Coordinates a Kink Leaves Free</dd>
+        <dd>A Score Over the Coordinates That a Kink Leaves Free</dd>
 
         <dt>
 
@@ -1386,7 +1386,7 @@
           <code><a href="heavy_variance.html">heavy_variance()</a></code>
 
         </dt>
-        <dd>The Variance the Priors That Are Not Gaussian Add to Each Predictor</dd>
+        <dd>The Variance Added to Each Predictor by Priors Other Than Gaussian</dd>
 
         <dt>
 
@@ -1407,7 +1407,7 @@
           <code><a href="held_stack.html">held_stack()</a></code>
 
         </dt>
-        <dd>The Stacked Positions a Specification Holds</dd>
+        <dd>The Stacked Positions That a Specification Holds</dd>
 
         <dt>
 
@@ -1449,7 +1449,7 @@
           <code><a href="hyper_plain.html">hyper_plain()</a></code>
 
         </dt>
-        <dd>The Hyperparameters in the Shape statmod() Accepts</dd>
+        <dd>The Hyperparameters as Plain Named Vectors</dd>
 
         <dt>
 
@@ -1533,14 +1533,14 @@
           <code><a href="intercept_chart_limit.html">intercept_chart_limit()</a></code>
 
         </dt>
-        <dd>Where an Intercept on a Non-Identity Chart Stops Being an Estimate</dd>
+        <dd>Limit of an Intercept on a Non-Identity Chart</dd>
 
         <dt>
 
           <code><a href="intercept_start_from_data.html">intercept_start_from_data()</a></code>
 
         </dt>
-        <dd>Replace an Intercept Where the Family Reads Its Start Off the Data</dd>
+        <dd>Data-Based Intercepts of Families That Supply Them</dd>
 
         <dt>
 
@@ -1548,6 +1548,13 @@
 
         </dt>
         <dd>Replace a Table's Limits by an Inverted Test</dd>
+
+        <dt>
+
+          <code><a href="is_count.html">is_count()</a></code>
+
+        </dt>
+        <dd>A Positive Whole Number</dd>
 
         <dt>
 
@@ -1670,6 +1677,13 @@
 
         <dt>
 
+          <code><a href="iwls_tied.html">iwls_tied()</a></code>
+
+        </dt>
+        <dd>The Scoring Fit on the Subspace That a Kink Leaves Free</dd>
+
+        <dt>
+
           <code><a href="jacobian_depends.html">jacobian_depends()</a></code>
 
         </dt>
@@ -1680,7 +1694,7 @@
           <code><a href="joint_decrement.html">joint_decrement()</a></code>
 
         </dt>
-        <dd>The Rise a Criterion Would Still Buy at a Point</dd>
+        <dd>The Newton Decrement of a Criterion at a Point</dd>
 
         <dt>
 
@@ -1726,6 +1740,13 @@
 
         <dt>
 
+          <code><a href="kink_constraints.html">kink_constraints()</a></code>
+
+        </dt>
+        <dd>The Constraints That the Kinks Place on the Stacked Coefficients</dd>
+
+        <dt>
+
           <code><a href="kink_hypers.html">kink_hypers()</a></code>
 
         </dt>
@@ -1733,17 +1754,17 @@
 
         <dt>
 
-          <code><a href="kink_positions.html">kink_positions()</a></code>
-
-        </dt>
-        <dd>Where the Objective Has a Kink, in the Stacked Coefficients</dd>
-
-        <dt>
-
           <code><a href="kink_power.html">kink_power()</a></code>
 
         </dt>
         <dd>How the Size of the Kink Scales With a Hyperparameter</dd>
+
+        <dt>
+
+          <code><a href="kink_readings.html">kink_readings()</a></code>
+
+        </dt>
+        <dd>The Inner Readings on the Directions That the Kinks Leave Free</dd>
 
         <dt>
 
@@ -1778,14 +1799,14 @@
           <code><a href="label_pieces.html">label_pieces()</a></code>
 
         </dt>
-        <dd>Every Labelled Effect a Term Carries, Its Sub-Terms Included</dd>
+        <dd>Every Labeled Effect in a Term, Its Sub-Terms Included</dd>
 
         <dt>
 
           <code><a href="laplace_pinned.html">laplace_pinned()</a></code>
 
         </dt>
-        <dd>The Coordinates the Marginal Determinant Leaves Out</dd>
+        <dd>The Coordinates That the Marginal Determinant Leaves Out</dd>
 
         <dt>
 
@@ -1813,7 +1834,7 @@
           <code><a href="logLik.StatmodFit.html">logLik(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
-        <dd>The Maximized Log-Likelihood of a Fit</dd>
+        <dd>The Log-Likelihood of a Fit</dd>
 
         <dt>
 
@@ -1821,6 +1842,13 @@
 
         </dt>
         <dd>The Model as a Function of Parameters and Data</dd>
+
+        <dt>
+
+          <code><a href="loglik_shift_jacobian.html">loglik_shift_jacobian()</a></code>
+
+        </dt>
+        <dd>The Derivative Row of an Equation Carrying a Likelihood Mixed Over States</dd>
 
         <dt>
 
@@ -1834,7 +1862,7 @@
           <code><a href="marginal_coords.html">marginal_coords()</a></code>
 
         </dt>
-        <dd>The Coefficients a Marginal Criterion Estimates</dd>
+        <dd>The Coefficients That a Marginal Criterion Estimates</dd>
 
         <dt>
 
@@ -1855,7 +1883,7 @@
           <code><a href="marginal_params.html">marginal_params()</a></code>
 
         </dt>
-        <dd>The Distribution Parameters a Marginal Criterion Estimates</dd>
+        <dd>The Distribution Parameters That a Marginal Criterion Estimates</dd>
 
         <dt>
 
@@ -1898,6 +1926,13 @@
 
         </dt>
         <dd>How Far Above Its Minimum an Inner Fit May Sit and Still Report a Resolution</dd>
+
+        <dt>
+
+          <code><a href="mode_solver.html">mode_solver()</a></code>
+
+        </dt>
+        <dd>The Movement of the Mode Under Held Coordinates and Kinks</dd>
 
         <dt>
 
@@ -1954,6 +1989,13 @@
 
         </dt>
         <dd>The Number of Observations a Model Was Fitted To</dd>
+
+        <dt>
+
+          <code><a href="null_basis.html">null_basis()</a></code>
+
+        </dt>
+        <dd>A Basis of the Directions That a Set of Linear Constraints Leaves Free</dd>
 
         <dt>
 
@@ -2030,7 +2072,7 @@
           <code><a href="outer_gradient_ok.html">outer_gradient_ok()</a></code>
 
         </dt>
-        <dd>Can the Exact Gradient Be Computed Here?</dd>
+        <dd>Can the Exact Derivatives of the Criterion Be Computed Here?</dd>
 
         <dt>
 
@@ -2170,7 +2212,7 @@
           <code><a href="path_grid.html">path_grid()</a></code>
 
         </dt>
-        <dd>The Values a Path Visits Over a Bounded Hyperparameter</dd>
+        <dd>The Values a Path Visits Over a Hyperparameter Not Swept by Kink Size</dd>
 
         <dt>
 
@@ -2478,7 +2520,7 @@
           <code><a href="prior_parts.html">prior_parts()</a></code>
 
         </dt>
-        <dd>The Priors of the Effects a Prediction Sets Aside, by Kind</dd>
+        <dd>The Priors of the Effects That a Prediction Sets Aside, by Kind</dd>
 
         <dt>
 
@@ -2513,14 +2555,14 @@
           <code><a href="random_modes.html">random_modes()</a></code>
 
         </dt>
-        <dd>The Random-Effect Terms a Prediction Can Set Aside</dd>
+        <dd>The Random-Effect Terms That a Prediction Can Set Aside</dd>
 
         <dt>
 
           <code><a href="random_nodes.html">random_nodes()</a></code>
 
         </dt>
-        <dd>Nodes and Weights for the Effects a Marginal Prediction Integrates</dd>
+        <dd>Nodes and Weights for the Effects That a Marginal Prediction Integrates</dd>
 
         <dt>
 
@@ -2569,14 +2611,14 @@
           <code><a href="refresh_amat.html">refresh_amat()</a></code>
 
         </dt>
-        <dd>The Weight a Refreshable Block Is Contracted Against</dd>
+        <dd>The Weight for Contracting a Refreshable Block</dd>
 
         <dt>
 
           <code><a href="refresh_curv_amat.html">refresh_curv_amat()</a></code>
 
         </dt>
-        <dd>The Weight the Second Derivative of a Block Is Paired With</dd>
+        <dd>The Weight for the Second Derivative of a Block</dd>
 
         <dt>
 
@@ -2597,14 +2639,14 @@
           <code><a href="refresh_direction.html">refresh_direction()</a></code>
 
         </dt>
-        <dd>What One Direction Costs a Moving Block</dd>
+        <dd>The Derivatives of a Moving Block Along One Direction</dd>
 
         <dt>
 
           <code><a href="refresh_hessian.html">refresh_hessian()</a></code>
 
         </dt>
-        <dd>The Log-Density's Curvature the Refresh Corrections Read</dd>
+        <dd>The Log-Density's Curvature Used by the Refresh Corrections</dd>
 
         <dt>
 
@@ -2807,7 +2849,7 @@
           <code><a href="seg_boot_total.html">seg_boot_total()</a></code>
 
         </dt>
-        <dd>How Many Restarts the Terms Ask For</dd>
+        <dd>Restart Budget of the Break-Point Terms</dd>
 
         <dt>
 
@@ -3017,7 +3059,7 @@
           <code><a href="statmod_boot_restart.html">statmod_boot_restart()</a></code>
 
         </dt>
-        <dd>Restarting Around a Fitted Model, Screened on the Exact Profile</dd>
+        <dd>Bootstrap Restarting of a Break-Point Fit</dd>
 
         <dt>
 
@@ -3262,7 +3304,7 @@
           <code><a href="statmod_min_ratio.html">statmod_min_ratio()</a></code>
 
         </dt>
-        <dd>How Far Down the Path Reaches for One Term</dd>
+        <dd>The Depth of a Path for One Term</dd>
 
         <dt>
 
@@ -3346,14 +3388,14 @@
           <code><a href="statmod_refresh_settled.html">statmod_refresh_settled()</a></code>
 
         </dt>
-        <dd>Have the Refreshable Terms Settled?</dd>
+        <dd>The Refreshable Terms' Own Verdict</dd>
 
         <dt>
 
           <code><a href="statmod_refresh_stalled.html">statmod_refresh_stalled()</a></code>
 
         </dt>
-        <dd>Have the Refreshable Terms Run Out of Step Control?</dd>
+        <dd>Refreshable Terms That Have Stalled</dd>
 
         <dt>
 
@@ -3364,24 +3406,17 @@
 
         <dt>
 
-          <code><a href="statmod_refusals.html">terms(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_refusals.html">model.frame(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_refusals.html">anova(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_refusals.html">plot(<i>&lt;StatmodFit&gt;</i>)</a></code>
-
-        </dt>
-        <dd>What a Fit Does Not Answer</dd>
-
-        <dt>
-
           <code><a href="statmod_regime_at.html">statmod_regime_at()</a></code>
 
         </dt>
-        <dd>Run the Structural Terms at the Current Parameters</dd>
+        <dd>Run the Terms of the Likelihood Shape at the Current Parameters</dd>
 
         <dt>
 
           <code><a href="statmod_regime_information.html">statmod_regime_information()</a></code>
 
         </dt>
-        <dd>The Observed Information of a Model Carrying a Regime Term</dd>
+        <dd>The Observed Information of a Model Carrying a Mixture Term</dd>
 
         <dt>
 
@@ -3465,7 +3500,7 @@
           <code><a href="statmod_structural.html">statmod_structural()</a></code>
 
         </dt>
-        <dd>Which Terms Rewrite the Likelihood</dd>
+        <dd>The Structural Terms of a Specification</dd>
 
         <dt>
 
@@ -3532,6 +3567,13 @@
 
         <dt>
 
+          <code><a href="statmod_unavailable.html">terms(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">model.frame(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">anova(<i>&lt;StatmodFit&gt;</i>)</a></code> <code><a href="statmod_unavailable.html">plot(<i>&lt;StatmodFit&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Generics Not Available for a Fit</dd>
+
+        <dt>
+
           <code><a href="statmod_unit.html">statmod_unit()</a></code>
 
         </dt>
@@ -3567,6 +3609,13 @@
 
         <dt>
 
+          <code><a href="stop_cv_nothing.html">stop_cv_nothing()</a></code>
+
+        </dt>
+        <dd>The Error for a Cross-Validation With Nothing to Select</dd>
+
+        <dt>
+
           <code><a href="structural_blocks_data.html">structural_blocks_data()</a></code>
 
         </dt>
@@ -3584,7 +3633,7 @@
           <code><a href="structural_chain_extra.html">structural_chain_extra()</a></code>
 
         </dt>
-        <dd>The Two Pieces of the Chain Term That Read the Direction</dd>
+        <dd>The Chain Term of the Joint Gradient Along a Direction</dd>
 
         <dt>
 
@@ -3626,7 +3675,7 @@
           <code><a href="structural_kind.html">structural_kind()</a></code>
 
         </dt>
-        <dd>Which Shape of the Structural Contract a Term Implements</dd>
+        <dd>Which Shape a Structural Term Implements</dd>
 
         <dt>
 
@@ -3640,7 +3689,7 @@
           <code><a href="structural_multistarts.html">structural_multistarts()</a></code>
 
         </dt>
-        <dd>The Starting Points a Structural Term Asks For</dd>
+        <dd>The Starting Points of a Structural Term</dd>
 
         <dt>
 
@@ -3682,7 +3731,7 @@
           <code><a href="structural_se_columns.html">structural_se_columns()</a></code>
 
         </dt>
-        <dd>The Derivative Row of an Equation Carrying a Filter</dd>
+        <dd>The Derivative Row of an Equation Carrying a Structural Term</dd>
 
         <dt>
 
@@ -3952,6 +4001,13 @@
 
         <dt>
 
+          <code><a href="weight_total.html">weight_total()</a></code>
+
+        </dt>
+        <dd>The Number of Observations the Weights Count</dd>
+
+        <dt>
+
           <code><a href="weights.StatmodFit.html">weights(<i>&lt;StatmodFit&gt;</i>)</a></code>
 
         </dt>
@@ -3976,7 +4032,7 @@
           <code><a href="worth_sparse.html">worth_sparse()</a></code>
 
         </dt>
-        <dd>Is a Matrix Worth Factorizing Sparsely?</dd>
+        <dd>When a Matrix Is Factorized Sparsely</dd>
 
         <dt>
 
@@ -4011,14 +4067,14 @@
           <code><a href="zero_kinked.html">zero_kinked()</a></code>
 
         </dt>
-        <dd>The Coordinates a Kinked Penalty Holds at Zero</dd>
+        <dd>The Coordinates That a Kinked Penalty Holds at Zero</dd>
 
         <dt>
 
           <code><a href="zero_readings.html">zero_readings()</a></code>
 
         </dt>
-        <dd>The Optimality Check of the Coefficients a Kinked Penalty Set to Zero</dd>
+        <dd>The Optimality Check of the Coefficients That a Kinked Penalty Sets to Zero</dd>
 
         <dt>
 

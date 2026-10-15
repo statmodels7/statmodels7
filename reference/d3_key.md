@@ -30,5 +30,5 @@ A single string.
 ## Details
 
 The name is built by putting the three parameter names in the family's
-own order and joining them, the direction distributions7 sanctions, and
-then checked against the enumeration, never trusted.
+order and joining them with an underscore, and is then checked against
+the names that the derivative returned.

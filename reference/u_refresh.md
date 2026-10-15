@@ -41,7 +41,7 @@ u_refresh(
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 - params, npar, offs, total:
 
@@ -82,14 +82,15 @@ computes one. The other two are transposes under the trace, so with
 = w_i\sum_b \ell\_{ab,i}R\_{ab}\[i,j\]\\, \$\$\Delta u_c =
 -2\sum\_{i,j}A_a\[i,j\]\\\partial X_a\[i,j\]/\partial\beta_c.\$\$
 
-**The derivative is asked of the term**, through
+The derivative is read from the term, through
 [`modelterms7::term_block_contract()`](https://statmodels7.github.io/modelterms7/reference/term_block_contract.html),
-and never differenced here. Two reasons, both measured. A term carries
-its own chain rule, the links on its parameters and a subformula's
-design; and a break-point column is a step function in its break-point,
-so a difference quotient of it diverges as the step shrinks and never
-converges. A term that does not implement the contraction inherits
-zeros, which is exactly right for a fixed design.
+and is never differenced. A term carries its own chain rule, the links
+on its parameters and a subformula's design. A break-point column is a
+step function of its break-point, so a difference quotient of it
+diverges as the step shrinks. A term that does not implement the
+contraction inherits zeros, which is correct for a fixed design. A sharp
+`jump()` or `jseg()` returns zeros as well, its block being a working
+linearization with a frozen weight.
 
 ## See also
 

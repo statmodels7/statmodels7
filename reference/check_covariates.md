@@ -22,9 +22,8 @@ The list, or `NULL`.
 
 Each entry is a function of the observation count, as an entry of `par`
 may be, so the two arguments read alike. A value that is not a function
-is rejected rather than recycled: a constant column is what `data` is
-for, and the whole point of this argument is that the covariates are
-drawn afresh at every replicate.
+is rejected, since a constant column belongs in `data` and the
+covariates of this argument are drawn afresh at every replicate.
 
 ## See also
 

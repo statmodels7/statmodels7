@@ -30,11 +30,14 @@ A single logical.
 
 ## Details
 
-Both routes live here, in one place, although the loop asks the question
-at two. That is what keeps the state a criterion is shown identical in
-both.
+Both routes are implemented here, although the loop evaluates the rule
+at two places. This keeps the state that a criterion receives identical
+at both places.
 
 Two properties of that state matter to a caller writing a rule.
 `state$gradient` is already the score per observation, so `crit_grad(t)`
-and `tol = t` are the same rule. `state$objective` is the penalized
-log-likelihood unaveraged, that being the scale the penalty is added on.
+and `tol = t` apply the same threshold to the score; the built-in rule
+also requires a small Newton decrement, which a criterion does not
+receive. `state$f_new` is the negative penalized log-likelihood, not
+divided by the sample size, which is the scale on which the penalty is
+added.

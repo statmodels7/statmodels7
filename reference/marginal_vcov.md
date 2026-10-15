@@ -38,8 +38,8 @@ marginal_vcov(object, design, A, keep, type)
 ## Value
 
 The variance over the kept coordinates, or `NULL` where the fit
-estimated no coefficient on its criterion, or where a piece cannot be
-read.
+estimated no coefficient on its criterion, where the model carries a
+structural term, or where a piece cannot be read.
 
 ## Details
 

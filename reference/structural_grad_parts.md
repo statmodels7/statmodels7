@@ -36,11 +36,17 @@ structural_grad_parts_impl(spec, design, coef, jd, M)
 
 - M:
 
-  The matrix the trace is taken against.
+  The matrix against which the trace is taken.
 
 ## Value
 
-A list of the shared quantities.
+A list with `u`, `V`, `Vk`, `VM`, `G`, `H`, `D3`, `D4`, `gl`, `s_at`,
+`sd_at`, `cd_at`, `seed`, `blocks`, `blocks_data` and `w`: the
+contraction \\u\\, the rows of the joint predictor derivative with the
+filter's Jacobian in place, their products with \\M\\, the
+per-observation diagonals of \\M\\, the family's derivatives, the score
+and curvature that drive the recursion, the seed of the recursion, the
+`blocks` callback with its data, and the observation weights.
 
 ## Details
 

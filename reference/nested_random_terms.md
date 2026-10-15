@@ -30,8 +30,8 @@ random-effect sub-term, or zero rows.
 
 The terms are read through
 [`modelterms7::term_components()`](https://statmodels7.github.io/modelterms7/reference/term_components.html),
-which every term carrying developed parameters answers. The key of a row
-is the outer term's key, the parameter and the sub-term joined by
-`"::"`, which is the key
+which returns the developed parameters of a term that carries any and an
+empty list otherwise. The key of a row is the outer term's key, the
+parameter and the sub-term joined by `"::"`, which is the key that
 [`hyper()`](https://statmodels7.github.io/statmodels7/reference/hyper.md)
 reports where a term carries more than one penalty.

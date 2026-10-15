@@ -43,31 +43,32 @@ A
 
 ## Details
 
-`summary(fit, test =)` reports the same four statistics for every row of
-the coefficient tables, and always against zero. This tests ONE
-coefficient against ANY value, which is the question a summary cannot be
-asked: whether a slope is one, whether an elasticity is unity, whether a
-coefficient matches a value fixed outside the data.
+`summary(fit, test =)` reports one of the four statistics for the rows
+of the coefficient tables that can be held (not a row under a kinked
+penalty, not an aliased one, and none for a model with a structural
+term), always against zero. This function tests one coefficient against
+any value, which is a question that a summary cannot answer: whether a
+slope is one, whether an elasticity is unity, whether a coefficient
+matches a value fixed outside the data.
 
-What the statistics are, what they read and what they cost is at
-[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md);
-the restricted fit the last three are built on is
+The statistics, the quantities that they read and their cost are
+described at
+[`statmod_stat_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_stat_at.md).
+The last three are built on the restricted fit of
 [`statmod_restrict()`](https://statmodels7.github.io/statmodels7/reference/statmod_restrict.md),
-and the interval obtained by inverting one is
+and inverting one gives the interval of
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md).
 
-Reading one row costs one restricted refit, where `summary(test =)`
-costs one per row: measured on a Poisson fit of twenty-five covariates,
-one statistic is 0.010 s against the summary's 0.220 s over twenty-six
-rows. It also reads the refit's mode error, which is one Hessian – 63
-per cent of the refit on that fit and 2.3 per cent on a penalized
-smooth, and none at all for Rao's score, which reads the same matrix
-anyway. The summary and the interval do not pay it.
+Reading one row costs one restricted refit, whereas `summary(test =)`
+costs one per row. The function also reads the mode error of the refit,
+which costs one Hessian of the restricted fit; the Rao score statistic
+reads that matrix anyway, so that it adds no cost there. The summary and
+the interval do not read the mode error.
 
 ## See also
 
 [`summary.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/summary.StatmodFit.md)
-for every row against zero,
+for the rows that can be held, against zero,
 [`confint.StatmodFit()`](https://statmodels7.github.io/statmodels7/reference/confint.StatmodFit.md)
 for the interval a test inverts.
 
@@ -78,8 +79,8 @@ set.seed(1)
 dd <- data.frame(x = rnorm(200))
 dd$y <- rpois(200, exp(0.3 + dd$x))
 fit <- statmod(y ~ x, distributions7::poisson_distrib(), dd)
-## the summary asks whether the slope is zero; this asks whether it is one
-statmod_test(fit, "mu", "x", 1, "lr")
+## the summary tests whether the slope is zero; this tests whether it is one
+statmod_test(fit, param = "mu", coefname = "x", value = 1, test = "lr")
 #> 
 #>  Likelihood-ratio test on a statmod fit
 #> 
@@ -87,7 +88,7 @@ statmod_test(fit, "mu", "x", 1, "lr")
 #> X-squared = 1.27,  df = 1,  p-value 0.2597
 #> alternative hypothesis: true x is not equal to 1
 #> estimate: 1.056
-statmod_test(fit, "mu", "x", 0, "lr")
+statmod_test(fit, param = "mu", coefname = "x", value = 0, test = "lr")
 #> 
 #>  Likelihood-ratio test on a statmod fit
 #> 

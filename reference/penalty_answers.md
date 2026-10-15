@@ -1,7 +1,7 @@
 # Does a Penalty Supply What a Marginal Criterion Needs?
 
-Asks the penalty for the derivatives, at a probe value of its
-hyperparameters, and reports whether it answered.
+Evaluates the derivatives of a penalty at a probe value of its
+hyperparameters and reports whether they could be computed.
 
 ## Usage
 
@@ -25,9 +25,19 @@ A single logical.
 
 ## Details
 
-The order-2 route additionally requires the penalty to be quadratic in
-the coefficients
-([`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html)),
-since otherwise the third and fourth derivatives of the penalty in
-\\\beta\\ enter the criterion's own second derivative and penalties7
-does not carry them.
+The gradient requires
+[`penalties7::penalty_dhessian()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian.html).
+A penalty that is not quadratic in the coefficients
+([`penalties7::beta_quadratic()`](https://statmodels7.github.io/penalties7/reference/beta_quadratic.html))
+must also supply
+[`penalties7::penalty_dhessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_dhessian_beta.html),
+because its Hessian moves with the mode. The order-2 route additionally
+requires
+[`penalties7::penalty_d2hessian()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian.html)
+and
+[`penalties7::penalty_dcross()`](https://statmodels7.github.io/penalties7/reference/penalty_dcross.html)
+and, for a penalty that is not quadratic,
+[`penalties7::penalty_d2hessian_beta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html)
+and
+[`penalties7::penalty_dhessian_beta_theta()`](https://statmodels7.github.io/penalties7/reference/penalty_d2hessian_beta.html).
+A penalty without hyperparameters returns `FALSE`.

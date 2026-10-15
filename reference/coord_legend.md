@@ -1,7 +1,7 @@
 # The Legend of a Covariance Block
 
-One line per coordinate, giving its label and the term it comes from,
-for the head of the block a summary prints.
+One line per coordinate, giving its label and the term from which it
+comes, for the head of the block that a summary prints.
 
 ## Usage
 

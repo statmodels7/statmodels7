@@ -9,7 +9,7 @@ returns it for a term written in an equation."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">statmodels7</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.199.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.200.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,8 +73,11 @@ returns it for a term written in an equation.</p>
     <p>The penalty unit is the outer term's, keyed by the outer term where it
 carries one penalty and by the row's key where it carries several. Only a
 Gaussian prior is integrated: inside a nonlinear term the average is taken
-over the nodes of a product grid at which the term is evaluated, and a
-prior of another family signals an error naming <code>random = "zero"</code>.</p>
+over the nodes of <code><a href="random_nodes.html">random_nodes()</a></code> at which the term is evaluated, those of
+a product grid up to three coordinates in all and Monte Carlo draws
+beyond that. A prior of another family signals an error naming
+<code>random = "zero"</code>; the Gaussian test is <code><a href="prior_is_gaussian.html">prior_is_gaussian()</a></code>, which
+excludes a prior with a kink.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

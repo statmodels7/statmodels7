@@ -37,7 +37,7 @@ One entry, or `NULL`.
 
 ## Details
 
-The places that read a penalty from a `(parameter, term)` pair used to
-fetch it with `term_penalty()` and take the term's whole block, which
-assumes one penalty per term. Looking it up here answers the same
-question where that holds and the right question where it does not.
+A reader that starts from a `(parameter, term)` pair looks the penalty
+up here and not from the term's whole block, which assumes one penalty
+per term. The lookup returns that penalty where the term has one, and
+the penalty with the given key where it has several.

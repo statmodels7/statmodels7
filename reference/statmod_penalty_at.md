@@ -54,25 +54,39 @@ Depends on `what`:
 
 - `"hessian"`:
 
-  a symmetric `p x p` base matrix over the stacked coefficients, zero
-  outside the penalized blocks.
+  a symmetric `p x p` matrix over the stacked coefficients, zero outside
+  the penalized blocks: a Matrix object when any equation's design is
+  sparse, a base matrix otherwise.
 
 ## Details
 
-Each penalized term is asked for the quantity at its own coefficients
-and its own hyperparameters, and the answer is placed in the columns
-that term owns. A term declaring several penalties, each over a subset
-of its coefficients, contributes each one at its own coordinates.
+For each penalized term the function evaluates the quantity at the
+coefficients and the hyperparameters of that term and places the result
+in the columns that the term owns. A term declaring several penalties,
+each over a subset of its coefficients, contributes each one at its own
+coordinates. A covariance class that spans several equations is gathered
+from the stacked vector, and its gradient is scattered back to the
+equations that own the coordinates.
 
-The accumulator is a base matrix even where a penalty answers with a
-sparse Hessian, and the coercion is written once at that boundary.
-Making it the design's own kind was measured at 0.8x end to end against
-a blast radius of twenty-two consumers.
+The accumulator for the Hessian follows the design, by the rule of
+[`zero_information()`](https://statmodels7.github.io/statmodels7/reference/design_sparse.md):
+it is a sparse matrix where any equation's design is sparse and a base
+matrix otherwise. The Hessian of a penalty is added to a sparse
+accumulator as it is, and it is converted to a base matrix when the
+accumulator is a base matrix.
+
+A penalty over the parameters of a structural term enters the value
+only, and its derivatives are returned by
+[`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md).
+A covariance class whose coordinates are partly coefficients and partly
+parameters of a structural term enters the value only, and its
+derivatives are placed in the joint vector by
+[`joint_penalty_at()`](https://statmodels7.github.io/statmodels7/reference/joint_penalty_at.md).
 
 ## See also
 
 [`statmod_loglik_at()`](https://statmodels7.github.io/statmodels7/reference/statmod_loglik_at.md)
 for the other half of the objective,
 [`statmod_structural_penalty()`](https://statmodels7.github.io/statmodels7/reference/statmod_structural_penalty.md)
-for penalties over a structural term's own parameters, which this does
-not cover.
+for the derivatives of penalties over a structural term's own
+parameters, whose value this function includes.
